@@ -3,11 +3,11 @@
   
 */
 
-define(['backbone','views/MainView','models/UserList','config','views/CollectionTableView',
-			'../other/AddStudentManView','../other/AddStudentFileView','models/ProblemSetList','views/ModalView',
-			'views/ChangePasswordView','views/EmailStudentsView','config','bootstrap'], 
-function(Backbone,MainView,UserList,config,CollectionTableView, AddStudentManView,AddStudentFileView,
-				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView,config){
+define(['backbone','views/MainView','models/UserList','models/User','config','views/CollectionTableView',
+			'models/ProblemSetList','views/ModalView',
+			'views/ChangePasswordView','views/EmailStudentsView','config','apps/util','moment','bootstrap'], 
+function(Backbone,MainView,UserList,User,config,CollectionTableView,
+				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView,config,util,moment){
 var ClasslistView = MainView.extend({
 	msgTemplate: _.template($("#classlist-messages").html()),
 	initialize: function (options) {
@@ -16,24 +16,45 @@ var ClasslistView = MainView.extend({
 		_.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
     	
-		
 		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
-	    this.tableSetup();
+	    this.addStudentManView.on("modal-opened",function (){
+            self.state.set("man_user_modal_open",true);
+        }).on("modal-closed",function(){
+            self.state.set("man_user_modal_open",false);
+            self.render(); // for some reason the checkboxes don't stay checked. 
+        })
+
+        this.tableSetup();
 	    
             
         this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
     					"remove": this.removeUser});
-	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, 
+	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, row_id_field: "user_id",
                             paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
 
-	    this.userTable.on("page-changed",function(num){
-	    	self.state.set("page_number",num);
-	    }).on("table-sorted",function(info){
-            self.state.set({sort_class: info.classname, sort_direction: info.direction});
-        })
-	    this.state.on("change:filter_text", function () {self.filterUsers();});
-	    	    
+	    this.userTable.on({
+            "page-changed": function(num){ 
+                self.state.set("current_page",num);
+                self.update();
+            },
+	        "table-sorted": function(info){
+                self.state.set({sort_class: info.classname, sort_direction: info.direction});
+            },
+            "selected-row-changed": function(rowIDs){
+                self.state.set({selected_rows: rowIDs});
+            },
+            "table-changed": function(){  // I18N
+                self.$(".num-users").html(self.userTable.getRowCount() + " of " + self.users.length + " users shown.");
+            }
+        });
+
+	    this.state.on("change:filter_string", function () {
+            self.state.set("current_page",0);
+            self.userTable.set(self.state.pick("filter_string","current_page"));
+            self.userTable.updateTable();
+        });
+    
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
 	      
@@ -41,8 +62,6 @@ var ClasslistView = MainView.extend({
 	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation	  
 	    this.users.each(function(model){
 	    	model.bind('validated:invalid', function(_model, errors) {
-			    console.log("running invalid");
-			    console.log(errors);
 			    var row; 
 			    self.$("td.user-id").each(function(i,v){
 			    	if($(v).text()===_model.get("user_id")){
@@ -79,29 +98,37 @@ var ClasslistView = MainView.extend({
         // set up some styling
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
-      
-        this.showRows(this.state.get("page_size"));
-        this.filterUsers();
+        
+        var opts = this.state.pick("page_size","filter_string","current_page","selected_rows");
         if(this.state.get("sort_class")&&this.state.get("sort_direction")){
-            this.userTable.sortTable({sort_info: this.state.pick("sort_direction","sort_class")});
+            _.extend(opts,{sort_info: this.state.pick("sort_direction","sort_class")});
         }
-        this.userTable.gotoPage(this.state.get("page_number"));
-        MainView.prototype.render.apply(this);
+        this.showRows(this.state.get("page_size"));
+        this.userTable.set(opts).updateTable();
         this.stickit(this.state,this.bindings);
+
+
+        MainView.prototype.render.apply(this);
+        if(this.state.get("man_user_modal_open")){
+            this.addStudentManView.setElement(this.$(".modal-container")).render();
+        }
+        this.update();
 
 	    return this;
     },  
-    bindings: { ".filter-text": "filter_text"},
+    bindings: { ".filter-text": "filter_string"},
     getDefaultState: function () {
-        return {filter_text: "", page_number: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
-                    sort_class: "", sort_direction: ""};
+        return {filter_string: "", current_page: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
+                    sort_class: "", sort_direction: "", selected_rows: []};
     },
     addUser: function (_user){
     	_user.changingAttributes = {user_added: ""};
     	_user.save();
     },
     changeUser: function(_user){
-    	if(_(_user.changingAttributes).has("user_added") || _.keys(_user.changed)[0]==="action"){
+       
+    	if(( _user.changingAttributes && _(_user.changingAttributes).has("user_added")) 
+                  || _.keys(_user.changed)[0]==="action"){
     		return;
     	}
     	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
@@ -140,30 +167,23 @@ var ClasslistView = MainView.extend({
 	    "click .add-students-file-option": "addStudentsByFile",
 	    "click .add-students-man-option": "addStudentsManually",
 	    "click .export-students-option": "exportStudents",
-		'keyup input.filter-text' : function(){  
-            this.filterUsers();
-            this.userTable.render();
-        },
 	    'click button.clear-filter-button': 'clearFilterText',
-	    'change .user-action': 'takeAction',
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
-	    "click a.delete-selected": "deleteSelectedUsers",
-	    "change th[data-class-name='select-user'] input": "selectAll",
+	    "click a.delete-selected": "deleteUsers",
 	    "click a.show-rows": function(evt){ 
             this.showRows(evt);
-            this.userTable.render();
+            this.userTable.updateTable();
         }
 	},
 	addStudentsByFile: function () {
-		this.addStudentFileView.openDialog();
+		this.addStudentFileView.setElement(this.$(".modal-container")).render();
 	},
 	addStudentsManually: function () {
-		this.addStudentManView.openDialog();
+		this.addStudentManView.setElement(this.$(".modal-container")).render();
 	},
 	exportStudents: function () {
-	    var textFileContent = "";
-	    textFileContent += _(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";}).join(",") + "\n";
+	    var textFileContent = _(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";}).join(",") + "\n";
 	    
         // Write out the user Props
         this.users.each(function(user){
@@ -174,58 +194,48 @@ var ClasslistView = MainView.extend({
 	    var blob = new Blob([textFileContent], {type:_mimetype});
         var _url = URL.createObjectURL(blob);
         var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY") + ".csv";
-        var modalView = new ModalView({template: $("#export-to-file-template").html(), 
-        	templateOptions: {url: _url, filename: _filename, mimetype: _mimetype}});
-        modalView.render().open();
+        var body = _.template($("#export-to-file-template").html(),{url: _url, filename: _filename});
+        var modalView = new ModalView({
+            modal_size: "modal-lg",
+            modal_buttons: $("#close-button-template").html(),
+            modal_header: "Export Users",
+            modal_body: body});
+        this.$el.append(modalView.render().el);
+        //modalView.render().open();
 	},	
-	filterUsers: function () {
-        this.userTable.filter(this.state.get("filter_text"));
-        if(this.state.get("filter_text").length>0){
-            this.state.set("page_number",0);
-        }
-        this.$(".num-users").html(this.userTable.getRowCount() + " of " + this.users.length + " users shown.");
-    },
     clearFilterText: function () {
-        this.state.set("filter_text","");
-        this.userTable.render();
+        this.state.set("filter_string","");
     },
-	selectAll: function (evt) {
-		this.$("td:nth-child(1) input[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
-	},
-    showRows: function(evt){
-        this.state.set("page_size", _.isNumber(evt) || _.isString(evt) ? parseInt(evt) : $(evt.target).data("num"));
+    update: function (){
+        $("tr[data-row-id='profa'] select.permission").attr("disabled","disabled");
+    },
+    showRows: function(arg){
+        this.state.set("page_size", _.isNumber(arg) || _.isString(arg) ? parseInt(arg) : $(arg.target).data("num"));
         this.$(".show-rows i").addClass("not-visible");
-        this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible")
-        if(this.state.get("page_size") < 0) {
-            this.userTable.set({num_rows: this.users.length});
-        } else {
-            this.userTable.set({num_rows: this.state.get("page_size")});
-        }
+        this.$(".show-rows[data-num='"+this.state.get("page_size")+"'] i").removeClass("not-visible");
+        this.userTable.set({page_size: this.state.get("page_size")});
     },
 	tableSetup: function () {
         var self = this;
-        this.cols = [{name: "Select", key: "select_row", classname: "select-user", 
-            stickit_options: {update: function($el, val, model, options) {
-                $el.html($("#checkbox-template").html());
-            }}, colHeader: "<input type='checkbox'></input>"},
+        this.cols = [{name: "Select", key: "_select_row", classname: "select-user"},
             {name: "Login Name", key: "user_id", classname: "login-name", datatype: "string",
                 editable: false},
             {name: "LS", key: "logged_in",classname:"logged-in-status", datatype: "none", editable: false,
-                title: "Logged in status",
+                title: "Logged in status", searchable: false,
                 stickit_options: {update: function($el, val, model, options) {
                     $el.html(val?"<i class='fa fa-circle' style='color: green'></i>":"")
                 }}
             },
             {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
+                searchable: false, 
             	value: function(model){
             		return self.problemSets.filter(function(_set) { 
             				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
            		},
-            	stickit_options: {update: function($el, val, model, options) {
-            		$el.html(self.problemSets.filter(function(_set) { 
-            				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length + "/"
-            		+ self.problemSets.size()); }
-            }},
+                display: function(val){
+                    return val + "/" + self.problemSets.length;
+                }
+            },
             {name: "First Name", key: "first_name", classname: "first-name", editable: true, datatype: "string",
             	stickit_options: {events: ['blur']}},
             {name: "Last Name", key: "last_name", classname: "last-name", editable: true, datatype: "string",
@@ -263,7 +273,7 @@ var ClasslistView = MainView.extend({
             {name: "Student ID", key: "student_id", classname: "student-id",  editable: true, datatype: "string",
         		stickit_options: {events: ['blur']}},
             {name: "Status", key: "status", classname: "status", datatype: "string",
-                value: function(model){
+                search_value: function(model){
                     return _(config.enrollment_statuses).findWhere({value: model.get("status")}).label;
                 },
         		stickit_options: { selectOptions: { collection: config.enrollment_statuses }}},
@@ -274,33 +284,28 @@ var ClasslistView = MainView.extend({
         	{name: "Comment", key: "comment", classname: "comment",  editable: true, datatype: "string",
         		stickit_options: {events: ['blur']}},
         	{name: "Permission", key: "permission", classname: "permission", datatype: "string",
-                value: function(model){
+                search_value: function(model){
                     return _(config.permissions).findWhere({value: ""+model.get("permission")}).label;  // the ""+ is needed to stringify the permission level
                 },
         		stickit_options: { selectOptions: { collection: config.permissions }}
         }];
 	},
-	getSelectedUsers: function () {
-		var self = this;
-		return $("tbody td:nth-child(1) input[type='checkbox']:checked").map(function(i,v) { 
-				return self.users.findWhere({user_id: $(v).closest("tr").children("td.login-name").text()}); 
-			});
-	}, 
-	deleteSelectedUsers: function(){
-		this.deleteUsers(this.getSelectedUsers());
-	},
-	deleteUsers: function(_users){ // need to put the string below in the template file
-		if(_users.length === 0){
+	deleteUsers: function(){
+		var userIDs = this.userTable.getVisibleSelectedRows();
+		if(userIDs.length === 0){
 			alert("You haven't selected any users to delete.");
 			return;
 		}
+        var usersToDelete = this.users.filter(function(u){ return _(userIDs).contains(u.get("user_id"));});
 		var self = this
 	    	, str = "Do you wish to delete the following students: " + 
-	    			_(_users).map(function (user) {return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
+	    			_(usersToDelete).map(function (user) {
+                        return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
 		    , del = confirm(str);
 	    if (del){
-	    	self.users.remove($.makeArray(_users));
-			this.userTable.render();
+	    	this.users.remove(usersToDelete);
+			this.userTable.updateTable();
+            this.state.set("selected_rows",[]);
 	    }
 	},
 	checkLoginStatus: function () {
@@ -332,7 +337,7 @@ var ClasslistView = MainView.extend({
 		alert("Emailing students is not implemented yet");
 	},
 	emailStudents: function(rows){
-	    this.emailPane.users = this.getSelectedUsers();
+	    this.emailPane.users = this.state.get("selected_rows")
 	    this.emailPane.render();
 	    this.emailPane.$el.dialog("open");
     }, 
@@ -340,6 +345,325 @@ var ClasslistView = MainView.extend({
     	return $("#classlist-help-template").html();
     }
 });
+
+var AddStudentManView = ModalView.extend({
+    initialize: function(options){
+        var self=this;
+        _.bindAll(this, 'render','saveAndClose','saveAndAddStudent'); // every function that uses 'this' as the current object should be in here
+        _(this).extend(_(options).pick("users","messageTemplate"));
+        this.collection = new UserList();
+        this.model = new User();
+        this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
+            {"user_id": ".user-id", "email_address": ".email"});
+        _(options).extend({
+            modal_size: "modal-lg",
+            modal_header: "Add Users to Course",
+            modal_body: $("#manual-import-template").html(),
+            modal_buttons: $("#manual-import-buttons").html()
+        })
+        this.setValidation();
+        ModalView.prototype.initialize.apply(this,[options]);
+    },
+    childEvents: {
+        "click .action-button": "saveAndClose",
+        "click .add-more-button": "saveAndAddStudent",
+    },
+    setValidation: function (){
+        var self = this;
+        Backbone.Validation.bind(this, {
+            invalid: function(view,attr,error){
+                self.$(self.invBindings[attr]).popover("destroy")
+                    .popover({placement: "right", content: error})
+                    .popover("show").addClass("error");
+            },
+            valid: function(view,attr){
+                self.$(self.invBindings[attr]).popover("destroy").removeClass("error");
+            }
+        });
+    },
+    render: function(){
+        ModalView.prototype.render.apply(this);
+        this.stickit();
+    },
+    bindings : { 
+        ".student-id": "student_id",
+        ".last-name": "last_name",          
+        ".first-name": "first_name",
+        ".status": "status",
+        ".comment": "comment",
+        ".status": "status",
+        ".recitation": "recitation",
+        ".email": {observe: "email_address",events: ["blur"]},
+        ".user-id": {observe: "user_id",events: ["blur"]},
+        ".password": "password",
+        ".permission": { 
+            observe: "permission",
+            selectOptions: { collection: function() { return config.permissions;}}
+        }
+    },
+
+    saveAndClose: function(){ 
+        var save = this.saveAndAddStudent();
+        if(save){
+            this.users.add(this.collection.models);
+            this.collection.reset();
+            this.close();               
+        }
+    },
+    saveAndAddStudent: function (){ 
+        var userExists = this.model.userExists(this.users);
+        if(userExists){
+            this.$(".message-pane").addClass("alert-danger").html(this.messageTemplate({type:"user_already_exists",
+                opts: {user_id: this.model.get("user_id")}}));
+            return false;
+        }
+        if(this.model.isValid(true)){
+            this.collection.add(new User(this.model.attributes));
+            this.$(".message-pane").addClass("alert-info").html(this.messageTemplate({type: "man_user_added",
+                            opts: {users: this.collection.pluck("user_id")}}));
+            
+            this.model.set(this.model.defaults);
+            return true;
+        }
+        return false;
+    }
+});
+
+var AddStudentFileView = ModalView.extend({
+        initialize: function(options){
+            _.bindAll(this, 'render','importStudents','validateColumn'); // every function that uses 'this' as the current object should be in here
+            _(this).extend(_(options).pick("users","messageTemplate"));
+            this.collection = new UserList();
+            this.model = new User();
+            this.model.collection = this.collection; // helps with the validation. 
+            Backbone.Validation.bind(this);
+
+            _(options).extend({
+                modal_size: "modal-lg",
+                modal_header: "Add Users from a File",
+                modal_body: $("#add_student_file_dialog_content").html(),
+                modal_buttons: $("#import-file-buttons").html()
+            })
+            //this.setValidation();
+            ModalView.prototype.initialize.apply(this,[options]);
+        },
+        childEvents: {
+            "click .import-students-button": "importStudents",
+            "change input#files": "readFile",
+            "change input#useLST" : "setHeadersForLST",
+            "change input#useFirst" : "useFirstRow",
+            "click  .reload-file": "loadFile",
+            "change select.colHeader": "validateColumn",
+            "change #selectAllASW":  "selectAll",
+            "click  .close-button": "closeErrorPane",
+            "click  .cancel-button": "close",
+            "click  .import-help-button": "showImportHelp",
+            "click  .help-pane button": "closeHelpPane"
+        },
+        closeHelpPane: function () {
+            this.$(".help-pane").hide("slow");
+        },
+        closeErrorPane: function () {
+            this.$(".error-pane").hide("slow");
+        },
+        showError: function(errorMessage){
+            this.$(".error-pane").show("slow");
+            this.$(".error-pane-text").text(errorMessage);
+        },
+        showImportHelp: function () {
+            this.$(".help-pane").removeClass("hidden").show("slow");
+        },
+        render: function(){
+            ModalView.prototype.render.apply(this);
+            return this; 
+        },
+        readFile: function(evt){
+            var self = this; 
+            $("li#step1").css("display","none");  // Hide the first step of the Wizard
+            $("li#step2").css("display","block");  // And show the next step.
+            $("button#importStudFromFileButton").css("display","block");
+            
+            this.loadFile();
+        },
+        
+        loadFile: function (event) {
+            var self = this;
+            this.file = $("#files").get(0).files[0];
+            $('#list').html('<em>' + escape(this.file.name) + '</em>');
+        
+            // Need to test if the browser can handle this new object.  If not, find alternative route.
+        
+
+            if (!(this.file.name.match(/\.(lst|csv)$/))){
+                this.showError(this.messageTemplate({type: "csv_file_needed"}));
+                return;
+            }
+            this.reader = new FileReader();
+
+            this.reader.readAsText(this.file);
+            this.reader.onload = function (evt) {           
+                var content = evt.target.result
+                    , headers = _(config.userProps).pluck("longName");
+                headers.splice(0,0,"");
+                // Parse the CSV file
+                
+                //var str = util.CSVToHTMLTable(content,headers);
+                var arr = util.CSVToHTMLTable(content,headers);
+
+                $("#studentTable").html(_.template($("#imported-from-file-table").html(),{array: arr, headers: headers}))
+
+                // build the table and set it up to scroll nicely.      
+                //$("#studentTable").html(str);
+                $("div.inner").width(25+($("#studentTable table thead td").length)*125);
+                $("#inner-table td").width($("#studentTable table thead td:nth-child(2)").width()+4)
+                $("#inner-table td:nth-child(1)").width($("#studentTable table thead td:nth-child(1)").width())
+
+                // test if it is a classlist file and then set the headers appropriately
+                
+                var re=new RegExp("\.lst$","i");
+                if (re.test(self.file.name)){self.setHeadersForLST();}
+
+                self.$(".import-students-button").removeClass("disabled");
+                self.$(".reload-file").removeClass("disabled");
+                self.delegateEvents();
+            }
+        },
+        selectAll: function () {
+            var self = this;
+            this.$(".selRow").prop("checked",this.$("#selectAllASW").is(":checked"));
+            if(this.$("#useFirst").prop("checked")){
+                this.$("#cbrow0").prop("checked",false);
+            }
+            _($.makeArray($(".colHeader").map(function(i,v) { return $(v).val();}))).chain().compact().each(function(col){
+                self.validateColumn(col);
+            })
+        },
+        importStudents: function () {  // PLS:  Still need to check if student import is sucessful, like making sure that user_id is valid (not repeating, ...)
+            // First check to make sure that the headers are not repeated.
+            var self = this;
+            var tmp = $("select.colHeader").map(function(i,v){return {header: $(v).val(), position: i};});
+            var headers = _(tmp).filter(function(h) { return h.header!=="";})
+            _(headers).each(function(h){ h.shortName = _(config.userProps).findWhere({longName: h.header}).shortName;});
+            
+
+            // check that the heads are unique
+
+            var sortedHeads = _(_(headers).pluck("header")).sortBy();
+            var uniqueHeads = _.uniq(sortedHeads,true);
+
+            if(! _.isEqual(sortedHeads,uniqueHeads)){
+
+                this.$(".error-pane-text").html("Each Column must have a unique Header.")
+                this.$(".error-pane").show("slow");
+                return false;
+            }
+
+            // check that "First Name", "Last Name" and "Login name" are among the chosen headers.
+
+            var requiredHeaders = ["First Name","Last Name", "Login Name"];
+            var containedHeaders = _(sortedHeads).intersection(requiredHeaders).sort();
+            if (! _.isEqual(requiredHeaders,containedHeaders)) {
+                self.$(".error-pane").removeClass("hidden")
+                this.$(".error-pane-text").html("There must be the following fields imported: " + requiredHeaders.join(", "))
+                this.$(".error-pane").show("slow");
+                return;
+            }
+            
+
+            // Determine the rows that have been selected.
+            
+            var rows = _.map($("input.selRow:checked"),function(val,i) {return parseInt(val.id.split("row")[1]);});
+            _(rows).each(function(row){
+                var props = {};
+                _(headers).each(function(obj){
+                    props[obj.shortName] = $.trim($("tr#row"+row+" td.column" + obj.position).html());
+                });
+                var user = new User(props);
+                user.id = void 0;  // make sure that the new users will be added with a POST instead of a PUT
+                self.users.add(user);
+            
+            });
+            this.close();
+        },
+        useFirstRow: function (){
+            var self = this;        
+            // If the useFirstRow checkbox is selected, try to match the first row to the headers. 
+            
+            if ($("input#useFirst").is(":checked")) {
+                _(config.userProps).each(function(user,j){
+                var re = new RegExp(user.regexp,"i");
+                
+                $("#studentTable thead td").each(function (i,head){
+                    if (re.test($("#inner-table tr:nth-child(1) td:nth-child(" + (i+1) + ")").html())) {
+                        $(".colHeader",head).val(user.longName);
+                        self.validateColumn(user.longName);  // keep track of the location of the Login Name
+                    }
+                });
+                });
+            } else {  // set the headers to blank. 
+                $("#studentTable thead td").each(function (i,head){ $(".colheader",head).val("");});
+                $("#inner-table tr").css("background-color","none");
+            }
+        },
+        validateColumn: function(arg) {  
+            var headerName = _.isString(arg) ? arg : $(arg.target).val()
+                , self = this
+                , headers = this.$(".colHeader").map(function (i,col) { return $(col).val();})
+                , loginCol = _(headers).indexOf("Login Name")
+                , changedProperty = _(config.userProps).findWhere({longName: headerName})
+                , colNumber = _(this.$(".colHeader option:selected").map(function(i,v) { return $(v).val()})).indexOf(headerName);
+            if(typeof(changedProperty)==="undefined"){
+                return; 
+            }
+
+            // Detect where the Login Name column is in the table and show duplicate entries of users.           
+            if (loginCol < 0 ) { 
+                $("#inner-table tr#row").css("background","white");  // if Login Name is not a header turn off the color of the rows
+            } else {
+                var impUsers = $(".column" + loginCol).map(function (i,cell) { 
+                            return $.trim($(cell).html());});  
+            
+                var userIDs = this.users.pluck("user_id");
+                var duplicateUsers = _.intersection(impUsers,userIDs);
+            
+                // highlight where the duplicates users are and notify that there are duplicates.  
+
+                $(".column" + loginCol).each(function (i,cell) {    
+                   if (_(duplicateUsers).any(function (user) { 
+                        return user.toLowerCase() == $.trim($(cell).html()).toLowerCase();}
+                        )){
+                        $("#inner-table tr#row" + i).css("background-color","rgba(255,128,0,0.5)"); 
+                    }
+                });
+
+            }
+             
+             // Validate the user property in the changed Header
+             
+            this.$("input.selRow:checked").map(function(i,v) { return $(v).closest("tr").children(".column" + colNumber);}).each(function(i,cell){
+                var value = $(cell).html().trim(),
+                    errorMessage = self.model.preValidate(changedProperty,value);
+                if ((errorMessage !== "") && (errorMessage !== false)) {
+                    self.$(".error-pane").removeClass("hidden")
+                    self.$(".error-pane-text").html("Error for the " + headerName + " with value " +  value + ":  " + errorMessage)
+                    self.$(".error-pane").show("slow");
+                    $(cell).css("background-color","rgba(255,0,0,0.5)");
+                } else {
+                    self.$(".error-pane").addClass("hidden")
+                }
+            });
+             
+        },
+        setHeadersForLST: function(){
+            var self = this;
+            _(config.userProps).each(function (prop,i) {
+                var col = $("select#col"+i);
+                col.val(prop.longName);
+                self.validateColumn(prop.longName);
+            });
+        }
+    });
+   
 
 return ClasslistView;
     

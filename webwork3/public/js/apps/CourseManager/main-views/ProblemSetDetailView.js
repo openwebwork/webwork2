@@ -8,9 +8,10 @@
 
 
 define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
-    'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList', 'config','bootstrap'], 
+    'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList','sidebars/ProblemListOptionsSidebar',
+    'config','bootstrap'], 
     function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList, config){
+        UserSetList,ProblemListOptionsSidebar, config){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
@@ -21,9 +22,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
 
             this.views = options.views = {
                 propertiesView : new DetailsView(opts),
-                problemsView : new ShowProblemsView(_.extend({},opts,{messageTemplate: this.messageTemplate})),
+                problemsView : new ShowProblemsView(_.extend({messageTemplate: this.messageTemplate, parent: this},opts)),
                 usersAssignedView : new AssignUsersView(opts),
-                unassignUsersView: new UnassignUserView(opts),
                 customizeUserAssignView : new CustomizeUserAssignView(opts)
             };
             this.views.problemsView.on("page-changed",function(num){
@@ -76,6 +76,14 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             "show-hide-path": function(_show){
                 this.views[this.state.get("tab_name")].tabState.set("show_path",_show);
             },
+            "undo-problem-delete": function(){
+                this.views.problemsView.problemSetView.undoDelete();
+                this.views.problemsView.problemSetView.updateNumProblems()
+                if(this.views.problemsView.problemSetView.undoStack.length==0 && 
+                    this.sidebar instanceof ProblemListOptionsSidebar){
+                        this.sidebar.$(".undo-delete-button").attr("disabled","disabled");
+                }
+            }
         },
         changeProblemSet: function (setName)
         {
@@ -136,22 +144,37 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
     var DetailsView = TabView.extend({
         tabName: "Set Details",
         initialize: function (options) {
+            var self = this;
             _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
             this.users = options.users;
             this.settings = options.settings;
             TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.on("change:show_time",function (val){
+                self.showTime(self.tabState.get("show_time"));
+                self.stickit();
+                // gets rid of the line break for showing the time in this view. 
+                $('span.time-span').children('br').attr("hidden",true)    
+                
+            });
         },
         render: function(){
             if(this.model){
                 this.$el.html($("#set-properties-tab-template").html());
                 this.showHideReducedScoringDate();
+                this.showTime(this.tabState.get("show_time"));
+                this.$(".show-time-toggle").prop("checked",this.tabState.get("show_time"));
                 this.stickit();
+                // gets rid of the line break for showing the time in this view. 
+                $('span.time-span').children('br').attr("hidden",true)    
+                
             }
             return this;
         },
         events: {
             "click .assign-all-users": "assignAllUsers",
-            //"change .reduced-scoring": "showHideReducedScoringDate"
+            "change .show-time-toggle": function(evt){
+                this.tabState.set("show_time",$(evt.target).prop("checked"));
+            },
         },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
@@ -197,7 +220,16 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.$(".reduced-scoring").closest("tr").addClass("hidden")
             }
         },
-        getDefaultState: function () { return {set_id: ""};}
+        showTime: function(_show){
+            if(_show){
+                this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                    .addClass("edit-datetime-showtime").removeClass("edit-datetime");
+            } else {
+                this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")
+                    .removeClass("edit-datetime-showtime").addClass("edit-datetime");
+            }
+        },
+        getDefaultState: function () { return {set_id: "", show_time: false};}
 
     });
 
@@ -205,6 +237,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         tabName: "Problems",
         initialize: function (options) {
             var self = this;
+            _(this).bindAll("setProblemSet");
+            this.parent = options.parent;
             this.problemSetView = new ProblemSetView({settings: options.settings, messageTemplate: options.messageTemplate});
             TabView.prototype.initialize.apply(this,[options]);
             this.tabState.on("change:show_path",function(){
@@ -218,7 +252,13 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.problemSetView.render();
         },
         setProblemSet: function(_set){
+            var self = this;
             this.problemSetView.setProblemSet(_set);
+            if(this.problemSetView.problemSet){
+                this.problemSetView.problemSet.on("problem-deleted",function(p){
+                    self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
+                })    
+            }
             return this;
         },
         set: function(options){
@@ -232,213 +272,154 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             return {set_id: "", library_path: "", page_num: 0, rendered: false, page_size: 10, show_path: false, show_tags: false};
         },
 
-    })
+    });
 
-	var AssignUsersView = TabView.extend({
+var AssignUsersView = Backbone.View.extend({
         tabName: "Assign Users",
         initialize: function (options) {
-            _.bindAll(this,'render','selectAll','assignUsers','setProblemSet');
             this.users = options.users;
-            this.userList = this.users.map(function(user){ 
-                return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
             TabView.prototype.initialize.apply(this,[options]);
         },
-
-
         render: function() {
-            if(this.model){
-                this.$el.html(_.template($("#assign-users-template").html(),{setname: this.model.get("set_id")}));
-                this.stickit();
-            }
+            this.$el.html($("#assign-users-template").html());
+            this.update();
             return this;
         },
-         events: {  "click .assign-button": "assignUsers",
-                    "click .select-all": "selectAll"
+         events: {  
+            "click .assign-users-btn": "assignUsers",
+            "click .unassign-users-btn": "unassignUsers",
+            "click .select-all": "selectAll"
         },
-        bindings: { ".user-list": {observe: "assigned_users", 
-            selectOptions: { collection: "this.userList", disabledCollection: "this.originalAssignedUsers"},   
+        update: function (){
+            var self = this;
+            if(typeof(this.problemSet)==="undefined"){
+                return;
             }
+            var assignedUsers = this.problemSet.get("assigned_users");
+            var unassignedUsers = _(this.users.pluck("user_id")).difference(assignedUsers);
+            var assignedSelect = this.$(".assigned-user-list").empty();
+            var unassignedSelect = this.$(".unassigned-user-list").empty();
+            var userTemplate = _.template($("#assigned-user-list-user-template").html());
+            _(assignedUsers).each(function(userID){
+                assignedSelect.append(userTemplate(self.users.findWhere({user_id: userID}).attributes));
+            });
+            _(unassignedUsers).each(function(userID){
+                unassignedSelect.append(userTemplate(self.users.findWhere({user_id: userID}).attributes));
+            });
         },
         setProblemSet: function(_set) {
             var self = this; 
             this.problemSet = _set;
             if(_set){
-                this.model = new ProblemSet(_set.attributes);
-                this.model.set("assigned_users",[]);
-                this.updateModel();
-                this.problemSet.on("change", function(){
-                    self.updateModel();
-                    self.render();
-                });
+                this.render();
             }
-
             return this;
         },
-        updateModel: function () {
-            this.originalAssignedUsers = this.problemSet.get("assigned_users");
-            this.originalUnassignedUsers = _(this.users.pluck("user_id")).difference(this.originalAssignedUsers);
-        },
         selectAll: function (){
-            this.model.set("assigned_users",this.$(".select-all").prop("checked")?
+            this.tabState.set("assigned_users",this.$(".select-all").prop("checked")?
                             this.originalUnassignedUsers: []);
         },
         assignUsers: function(){
-            this.problemSet.set("assigned_users",_(this.originalAssignedUsers).union(this.model.get("assigned_users")));
-        },        
-        getDefaultState: function () { return {set_id: ""};}
-    });
-
-
-   
-
-    var UnassignUserView = TabView.extend({
-        tabName: "Unassign Users",
-        initialize: function (options) {
-            _.bindAll(this,'render','selectAll','unassignUsers','setProblemSet');
-            this.users = options.users;
-            this.userList = this.users.map(function(user){ 
-                return {label: user.get("first_name") + " " + user.get("last_name"), value: user.get("user_id")}});
-            TabView.prototype.initialize.apply(this,[options]);
-        },
-
-
-        render: function() {
-            if(this.model){
-                this.$el.html(_.template($("#unassign-users-template").html(),{setname: this.model.get("set_id")}))
-                this.stickit();            
-            }
-            return this;
-        },
-         events: {  "click .unassign-button": "unassignUsers",
-                    "click .select-all": "selectAll"
-        },
-        bindings: { ".user-list": {observe: "assigned_users", 
-            selectOptions: { collection: "this.userList", disabledCollection: "this.unassignedUsers"},   
-            }
-        },
-        setProblemSet: function(_set) {
-            var self = this; 
-            this.problemSet = _set; 
-            if(_set){
-                this.model = new ProblemSet(_set.attributes);
-                this.model.set("assigned_users",[]);
-                this.updateModel();
-                this.problemSet.on("change", function(){
-                    self.updateModel();
-                    self.render();
-                });
-            }
-
-            return this;
-        },
-        updateModel: function () {
-            this.originalAssignedUsers = this.problemSet.get("assigned_users");
-            this.unassignedUsers = _(this.users.pluck("user_id")).difference(this.originalAssignedUsers);
-        },
-        selectAll: function (){
-            this.model.set("assigned_users",this.$(".select-all").prop("checked")?
-                            this.originalAssignedUsers: []);
+            var selectedUnassignedUsers = this.$(".unassigned-user-list").val();
+            this.problemSet.set("assigned_users", _(this.problemSet.get("assigned_users")).union(selectedUnassignedUsers));
+            this.update();
         },
         unassignUsers: function(){
-            var self = this;
-            var currentUsers = _(this.originalAssignedUsers).difference(this.model.get("assigned_users"));
-            var confirmDelete = confirm(this.messageTemplate({type: "unassign_users", 
-                    opts: {users: this.model.get("assigned_users").join(", ")}}));
-            if (confirmDelete){
-                this.problemSet.set("assigned_users",currentUsers);
-                this.problemSet.save();
+            var selectedAssignedUsers = this.$(".assigned-user-list").val();
+            var conf = confirm("Do you want to unassign the users: " + selectedAssignedUsers.join(", ") + "?" 
+                + " All data will be removed and this cannot be undone.");
+            if(conf){
+                this.problemSet.set("assigned_users",_(this.problemSet.get("assigned_users")).difference(selectedAssignedUsers));
+                this.update();                
             }
-        },       
-        getDefaultState: function () { return {set_id: ""};}
+        },
+        getDefaultState: function () {
+            return {assigned_users: [], unassigned_users: []};
+        }
     });
-
-    // Trying a new UI for this View
 
     var CustomizeUserAssignView = TabView.extend({
         tabName: "Student Overrides",
         initialize: function(options){
-            _.bindAll(this,"render","updateTable","saveChanges","filter","buildCollection","setProblemSet");
-
+            _.bindAll(this,"render","saveChanges","buildCollection","setProblemSet");
+            var self = this;
             // this.model is a clone of the parent ProblemSet.  It is used to save properties for multiple students.
 
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             _.extend(this,_(options).pick("users","settings","eventDispatcher"));
             TabView.prototype.initialize.apply(this,[options]);
+            this.tabState.on({
+                "change:filter_string": function(){
+                    self.userSetTable.set(self.tabState.pick("filter_string")).updateTable();
+                    self.update();
+                },
+                "change:show_section change:show_recitation change:show_time": function(){
+                    self.update();}
+                });
         },
         render: function () {
             var self = this;
             if(! this.model){
                 return;
             }
-            var reducedScoring = this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") 
-                && this.problemSet.get("enable_reduced_scoring"); 
-            this.tableSetup({show_reduced_scoring: reducedScoring});
+            this.tableSetup();
             this.$el.html($("#loading-usersets-template").html());
-
             if (this.collection.size()>0){
                 this.$el.html($("#customize-assignment-template").html());
                 (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
-                        paginator: {showPaginator: false}, tablename: ".users-table"}))
-                    .render().$el.addClass("table table-bordered table-condensed");
+                        paginator: {showPaginator: false}, tablename: ".users-table", page_size: -1,
+                        row_id_field: "user_id", table_classes: "table table-bordered table-condensed"})).render();
+                this.userSetTable.set(this.tabState.pick("selected_rows"))
+                    .on({
+                        "selected-row-changed": function(rowIDs){
+                            self.tabState.set({selected_rows: rowIDs});
+                            }, 
+                        "table-sorted": function (){
+                            self.update();
+                            }
+                        })
+                    .updateTable();
                 this.$el.append(this.userSetTable.el);
-
-                // show/hide the bottom row reduced-scoring
-                if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-                    this.$(".reduced-scoring-date,.reduced-scoring-header").removeClass("hidden")
-                } else {
-                    this.$(".reduced-scoring-date,.reduced-scoring-header").addClass("hidden")
-                }
-
+                this.update();
                 this.stickit();
+                this.stickit(this.tabState,{
+                    ".filter-text": "filter_string",
+                    ".show-section": "show_section",
+                    ".show-recitation": "show_recitation",
+                    ".show-time": "show_time"
+                });
             } else {
-                this.userSetList.fetch({success: function () {self.buildCollection(); self.render();}});
+                this.userSetList.fetch({success: function () {self.buildCollection().render();}});
             }
         },
         events: {
-            "change .show-section,.show-recitation": "updateTable",
             "click .save-changes": "saveChanges",
-            "keyup .search-box": "filter",
-            "change th[data-class-name='select-user'] input": "selectAllUsers"
+            "click .clear-filter-button": function () { 
+                this.tabState.set("filter_string", "");
+                this.userSetTable.set({filter_string: ""}).updateTable();
+                this.update();
+            }
         },
         bindings: { "#customize-problem-set-controls .open-date" : "open_date",
                     "#customize-problem-set-controls .due-date": "due_date",
                     "#customize-problem-set-controls .answer-date": "answer_date",
-                    "#customize-problem-set-controls .reduced-scoring-date": "reduced_scoring_date"
-        },
-        selectAllUsers: function(evt){
-            $("table.users-table input[type='checkbox']").prop("checked", $(evt.target).prop("checked"));
-        },
-        filter: function(evt) {
-            var str = $(evt.target).val()
-                , match = str.match(/(\w+):(\w+)/)
-                , obj={}; 
-            if(match){
-                obj[match[1]]=match[2];
-                this.userSetTable.filter(obj).render();
-            } else {
-                this.userSetTable.filter(str).render();    
-            }
+                    "#customize-problem-set-controls .reduced-scoring-date": "reduced_scoring_date",
         },
         saveChanges: function (){
             var self = this;
-            _($(".select-user input:checked").siblings(".user-id").map(function(i,v) { 
-                    return self.userSetList.findWhere({user_id: $(v).val()});
-                })).each(function(_model){
+            _(this.userSetTable.getVisibleSelectedRows()).chain().map(function(_userID) { 
+                    return self.userSetList.findWhere({user_id: _userID});
+                }).each(function(_model){
                     _model.set(self.model.pick("open_date","due_date","answer_date","reduced_scoring_date"));
                 });
-        },
-        updateTable: function (){
-            this.tableSetup({show_recitation: this.$(".show-recitation").prop("checked"), 
-                    show_section: this.$(".show-section").prop("checked")});
-            this.userSetTable.setColumns(this.cols).render();
         },
         setProblemSet: function(_set) {
             this.problemSet = _set;  // this is the globalSet
             if(_set){
                 this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
                 this.userSetList = new UserSetList([],{problemSet: this.model,type: "users"});
-                this.userSetList.on("change:due_date change:answer_date change:open_date", function(model){
-                    model.save();
+                this.userSetList.on("change:due_date change:answer_date change:reduced_scoring_date change:open_date"
+                    , function(model){ model.save();
                 });
             }
 
@@ -450,50 +431,46 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             var self = this;
             this.collection.reset(this.userSetList.models);
             this.collection.each(function(model){
-                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation"));
+                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation","first_name","last_name"));
             });
             this.collection.on({change: function(model){
-                self.userSetList.findWhere({user_id: model.get("user_id")}).set(model.pick("open_date","due_date","answer_date")).save();
+                self.userSetList.findWhere({user_id: model.get("user_id")})
+                    .set(model.pick("open_date","due_date","answer_date","enable_reduced_scoring")).save();
             }});
             this.setMessages();
 
             return this;
         },
-        tableSetup: function (opts) {
+        update: function () {
+            config.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
+            config.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
+            config.changeClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+                els: this.$(".reduced-scoring-date,.reduced-scoring-header"), remove_class: "hidden"});
+            config.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
+                els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")})
+            this.userSetTable.refreshTable();
+            this.stickit();
+        },
+        tableSetup: function () {
             var self = this;
-            this.cols = [
-                {name: "Select", key: "select-user", classname: "select-user", 
-                    stickit_options: {update: function($el, val, model, options) {
-                        $el.html($("#checkbox-template").html());
-                        $el.children(".user-id").val(model.get("user_id"));
-                    }},
-                    colHeader: "<input type='checkbox'></input>"
-                },
-                {name: "Student", key: "user_id", classname: "student",
-                    stickit_options: {update: function($el,val,model,options){
-                        var user = self.users.findWhere({user_id: val});
-                        $el.html(_.template($("#user-name-template").html(),user.attributes));
-                    }}},
-                {name: "Open Date", key: "open_date", classname: ["open-date","edit-datetime"], 
+            this.cols = [{name: "Select", key: "_select_row", classname: "select-set"},
+                {name: "User ID", key: "user_id", classname: "user-id", show_column: false},
+                {name: "First Name", key: "first_name", classname: "first-name", datatype: "string"},
+                {name: "Last Name", key: "last_name", classname: "last-name", datatype: "string"},
+                {name: "Open Date", key: "open_date", classname: "open-date edit-datetime", 
                         editable: false, datatype: "integer", use_contenteditable: false},
-                {name: "Due Date", key: "due_date", classname: ["due-date","edit-datetime"], 
+                {name: "Reduced Scoring Date", key: "reduced_scoring_date", classname: "reduced-scoring-date edit-datetime", 
                         editable: false, datatype: "integer", use_contenteditable: false},
-                {name: "Answer Date", key: "answer_date", classname: ["answer-date","edit-datetime"], 
-                        editable: false, datatype: "integer", use_contenteditable: false}
+                {name: "Due Date", key: "due_date", classname: "due-date edit-datetime", 
+                        editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Answer Date", key: "answer_date", classname: "answer-date edit-datetime", 
+                        editable: false, datatype: "integer", use_contenteditable: false},
+                {name: "Section", key: "section", classname: "section", editable: false, datatype: "string"},
+                {name: "Recitation", key: "recitation", classname: "recitation", editable: false,datatype: "string"},
+                {name: "Enable Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
+                    editable: false, datatype: "boolean", show_column: false}
                 ];
-                if(opts && opts.show_section){
-                    this.cols.push({name: "Section", key: "section", classname: "section", editable: false,
-                        datatype: "string"});
-                }
-                if(opts && opts.show_recitation){
-                    this.cols.push({name: "Recitation", key: "recitation", classname: "recitation", editable: false,
-                        datatype: "string"});
-                }
-                if(opts && opts.show_reduced_scoring){
-                    this.cols.splice(3,0,{name: "Reduced Scoring Date", key: "reduced_scoring_date", 
-                        classname: ["reduced-scoring-date","edit-datetime"], editable: true,
-                        datatype: "integer"});
-                }
+                
         },
         messageTemplate: _.template($("#customize-users-messages-template").html()),
         setMessages: function(){
@@ -520,7 +497,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             })
 
         },        
-        getDefaultState: function () { return {set_id: ""};}
+        getDefaultState: function () { return {set_id: "", filter_string: "", show_recitation: false, show_section: false,
+                show_time: false, selected_rows: []};}
 
     });
         

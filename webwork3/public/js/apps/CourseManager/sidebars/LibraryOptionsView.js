@@ -3,6 +3,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
     initialize: function(options){
         Sidebar.prototype.initialize.apply(this,[options]);
         var self = this;
+        _(this).bindAll("addProblemSet");
         this.problemSets = options.problemSets;
         this.problemSets.on({
             add: this.addProblemSet, sync: function(_set){               
@@ -27,7 +28,7 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
             });
         this.state.validation = {
             new_problem_set: function(value, attr, computedState) {
-                if(_(computedState.problemSets.pluck("set_id")).contains(value)){
+                if(_(self.problemSets.pluck("set_id")).contains(value)){
                     return "The problem set " + value + " already exists.";
                 }
             }

@@ -505,9 +505,11 @@ ENDDOCUMENT();
 <script type="text/template" id="problem-template">
 <div class="col-md-4 loading btn-small">Problem Loading<img src="/webwork2_files/images/ajax-loader-small.gif"></div>
 <div class="handle row-fluid">
-<%if(reorderable){%><div class="col-md-1"><a class="reorder-handle btn btn-small" href="#"><i class="icon-resize-vertical icon-large"></i></a></div><%}%>
+<%if(reorderable){%><div class="col-md-1">
+  <a class="reorder-handle btn btn-small" href="#" onclick="return false">
+    <i class="icon-resize-vertical icon-large"></i></a></div><%}%>
 <%if(draggable){%>
-  <div class="col-md-1"> <a class="drag-handle btn btn-small" href="#"><i class="icon-move"></i></a></div>
+  <div class="col-md-1"> <a class="drag-handle btn btn-small" href="#" onclick="return false"><i class="icon-move"></i></a></div>
 <%}%>
 <%if(showPoints){%>
 <div class="col-md-3 form-">
@@ -516,11 +518,11 @@ ENDDOCUMENT();
   </div>
 <%}%>
 <div class="col-md-4 btn-group">
-<%if(showAddTool){%><a class="btn btn-small add-problem" href="#"><i class="icon-plus-sign"></i></a><%}%>
+<%if(showAddTool){%><a class="btn btn-small add-problem" href="#" onclick="return false"><i class="icon-plus-sign"></i></a><%}%>
 <%if(showEditTool){%><a class="btn btn-small" target="WW_editor" href="<%=editUrl%>"><i class="icon-pencil"></i></a><%}%>
-<%if(showRefreshTool){%><a href="#"  class="btn btn-small refresh-problem"><i class="icon-refresh"></i></a><%}%>    
+<%if(showRefreshTool){%><a href="#" onclick="return false"  class="btn btn-small refresh-problem"><i class="icon-refresh"></i></a><%}%>    
 <%if(showViewTool){%><a class="btn btn-small" target="WW_view" href='<%=viewUrl%>'><i class="icon-eye-open"></i></a><%}%>    
-<%if(showHideTool){%><a href="#" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
+<%if(showHideTool){%><a href="#" onclick="return false" class="btn btn-small hide-problem link"><i class="icon-remove"></i></a><%}%>
 </div>
 <%if(deletable){ %><col-md- class="col-md-1 remove pull-right btn"><i class="icon-trash"></i></col-md-><%}%></div>    
 

@@ -8,38 +8,73 @@
           <span class="input-group-btn">
             <button class="btn btn-default clear-filter-button" type="button"><i class="fa fa-times"></i></button>
           </span>
-        </div><!-- /input-group -->
-      </div><!-- /.col-md-4 -->
-
-    <div class="pull-right btn-group">
-      <div class="btn-group">
-      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-        Show Rows
-        <span class="caret"></span>
-      </button>
-      <ul class="dropdown-menu">
-        <li><a href="#" class="show-rows" data-num="10"><i class="fa fa-check"></i>Show 10 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="25"><i class="fa fa-check not-visible"></i>Show 25 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="50"><i class="fa fa-check not-visible"></i>Show 50 rows</a></li>
-        <li><a href="#" class="show-rows" data-num="-1"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
-
-      </ul>
+        </div>
+      </div>
+    <div class="col-md-2" style="padding: 5px">
+    <label type="checkbox">Show Time <input type="checkbox" class="show-time-toggle"></label>
     </div>
+    <div class="col-md-2 num-sets" style="padding: 5px">
+    </div>
+    <div class="pull-right btn-group">
+
+      <div class="btn-group">
+        <button class="btn btn-default dropdown-toggle" onclick="return false" data-toggle="dropdown" 
+            href="#">Action on Selected
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a onclick="return false" href="#" class="change-set-props" data-toggle="modal">Change Set Properties</a></li>
+          <li><a onclick="return false" href="#" class="delete-sets-button">Delete Sets</a></li>
+        </ul>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">Show Rows
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a href="#" onclick="return false" class="show-rows" data-num="10"><i class="fa fa-check"></i>Show 10 rows</a></li>
+          <li><a href="#" onclick="return false" class="show-rows" data-num="25"><i class="fa fa-check not-visible"></i>Show 25 rows</a></li>
+          <li><a href="#" onclick="return false" class="show-rows" data-num="50"><i class="fa fa-check not-visible"></i>Show 50 rows</a></li>
+          <li><a href="#" onclick="return false" class="show-rows" data-num="-1"><i class="fa fa-check not-visible"></i>Show All rows</a></li>
+
+        </ul>
+      </div>
 
       <button class="btn btn-default add-problem-set-button">Add Problem Set</button>
     </div>
   </div>
+  <div class="modal-container">
+  </div>
+</script>
+
+<script type="text/template"  id="change-set-props-template">
+  <p>To change the desired dates and other properties below then click "Save Changes".</p>
+  <table class="table">
+    <tbody>
+    <tr><td class="header">Set Names</td><td class="set-names"></td></tr>
+    <tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
+    <tr class="hidden"><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
+    <tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
+    <tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
+    <tr><td class="header">Problem Set Visible to Users</td><td><input type="checkbox" class='prob-set-visible'></td></tr>
+    <tr><td class="header">Reduced Scoring Enabled</td><td><input type="checkbox" class='reduced-scoring'></td></tr>
+    </tbody>
+  </table>
 </script>
 
 <script type="text/template" id="add-hw-set-template">
   <div class="add-problem-set-dialog-content">
   <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
-  (user: <%= name %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
-  <table><tr>
+  (user: <%= users %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
+  <table style="table-layout-fixed; width: 100%"><tr>
     <td>Homework Set Name:</td>
     <td><input type='text' size='20' class='problem-set-name'></td>
     </tr>
-    <tr><td  colcol-md-="2" class="problem-set-name-error" style="color: red"></td></tr>
+    <tr><td  colspan="2" class="problem-set-name-error" style="color: red"></td></tr>
+    <tr> 
+    <td>Assign to All Users</td><td><input type='checkbox' class="assign-to-all-users"></td>
+    </tr>
     </table>
     </div>
 
@@ -90,7 +125,7 @@ var messages = {
     setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
     setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
                                 opt.oldValue + " to " + opt.newValue + "."},
- 
+    empty_selected_sets_error: function () { return "You must select at least one set.";}
 }
 print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>

@@ -12,41 +12,40 @@
 define(['backbone','underscore'], function(Backbone, _){
 
     var ModalView = Backbone.View.extend({
- 	  initialize: function (options) {
+        template: _.template($("#modal-template").html()),
+ 	    initialize: function (options) {
             var self = this;
             _.bindAll(this,"render");
-            this.template = _.template(options.template);
-            this.templateOptions = options.templateOptions? options.templateOptions: {};
-            this.buttons = [ { text: "Cancel", click: function() { self.close(); }} ]
-            if(options.buttons){
-                this.buttons.push(options.buttons);
-            }
-            this.title = options.title;
+            this.modal_size = options.modal_size;
+            this.templateOptions = {
+                header: options.modal_header, 
+                body: options.modal_body, 
+                action_button_text: options.modal_action_button_text,
+                buttons: options.modal_buttons
+            };
+            _(this).extend(Backbone.Events);
+        },
+        parentEvents: {
+            "shown.bs.modal": function () { this.trigger("modal-opened");},
+            "hidden.bs.modal": function() { this.trigger("modal-closed");}
+        },
+        childEvents: {},
+        events: function (){
+            return _({}).extend(this.childEvents,this.parentEvents);
         },
         render: function () {
             var self = this; 
             this.$el.html(this.template(this.templateOptions));
-            this.$el.dialog({height: 400, width: 500,modal: true,
-                buttons: this.buttons, title: this.title});
-            this.$el.siblings(".ui-dialog-buttonpane").children(".ui-dialog-buttonset").addClass("btn-group");
-            this.$el.siblings(".ui-dialog-buttonpane").find("button").addClass("btn btn-default");
-            if(this.model){
-                this.stickit();
-            }
-            return this;
-        },
-        set: function(opts){
-            _(_.keys(opts)).each(function(key){
-                this[key]=opts[key];
-            });
+            this.$(".modal-dialog").addClass(this.modal_size)
+            this.$(".modal").modal();
             return this;
         },
         open: function () {
-            this.$el.dialog("open");
+            this.$(".modal").modal("show");
             
         },
         close: function () {
-            this.$el.dialog("close");
+            this.$(".modal").modal("hide");
         }
 
  });

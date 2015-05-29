@@ -6,82 +6,163 @@
  * The following must also be passed into the View:
  *  
  * columnInfo:  An array of {name: _name, key: _key, editable: boolean, classnames: _classnames,
- 		datatype: _datatype, binding: _binding} where 
- 	-  _name will be the header of the column
- 	-  _key is the field name of the model 
- 	-  _editable is a boolean for whether or not the column is editable
- 	-  _classnames will assign the td element in the table those classnames.  It can be either a string or an
- 			array of strings.
- 	-  _datatype will be the type of data for the column.  This is important for sorting.
- 	-  _use_contenteditable: boolean  (this uses the contenteditable attribute whenever a column is editable. Set to 
- 	         false if you don't want to use this or true or nothing to use it.)
- 	-  _stickit_options: is an stickit bindings object.  You don't need to define observe because the classname will 
- 	        be passed in.
- 	-  _sortFxn: is a function that returns a value to be sorted on.   
+        datatype: _datatype, searchable: _searchable, binding: _binding} where 
+    -  _name will be the header of the column
+    -  _key is the field name of the model 
+    -  _editable is a boolean for whether or not the column is editable
+    -  _classnames will assign the td element in the table those classnames.  It can be either a string or an
+        array of strings.
+    -  _datatype will be the type of data for the column.  This is important for sorting.
+    -  _searchable (a boolean) whether or not the value should be available in search/filter
+    -  _search_function (function) to be used to set the value of the searchable field instead of the field itself. 
+    -  _use_contenteditable: boolean  (this uses the contenteditable attribute whenever a column is editable. Set to 
+        false if you don't want to use this or true or nothing to use it.)
+    -  _stickit_options: is an stickit bindings object.  You don't need to define observe because the classname will 
+        be passed in.
+    -  _sortFxn: is a function that returns a value to be sorted on.   
 
+Required options:
+    - row_id_field: the field from the collections model that acts like an id.  
 
 Other options:
-	pageSize: the number of rows in a visible table (or -1 for all rows shown.)
+    page_size: the number of rows in a visible table (or -1 for all rows shown.)
+    table_classes: a string consisting of all classes to be set on the table.  
 
 
 Sorting: 
    The table will sort unless the datatype field is not set.  It will sort both ascending and descending. 
-   Currently only "integer" and "string" data is set. 
+   Currently only "integer" and "string" data is set, however boolean data sorts as expected as well. 
    If you want to sort on a different piece of data, you need to specify the key (field) where the data is stored. 
  */
 
-
-define(['backbone', 'underscore','config','stickit'], function(Backbone, _,config){
-
+define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, config) {
 	var CollectionTableView = Backbone.View.extend({
 		tagName: "table",
-		className: "collection-table",
 		initialize: function (options) {
 			var self = this;
-			_.bindAll(this,"render","sortTable","filter");
-			this.collection = options.collection;
-			this.collection.on("add",function(model){
-				_(self.columnInfo).each(function(col){
-					self.updateValues(model,col);
-				})
-			})
-			this.filteredCollection = [];
-			this.showFiltered = false;
-			this.columnInfo = options.columnInfo;
+			_.bindAll(this, "render", "sortTable");
+			this.original_collection = this.collection; 
+			this.collection = new Backbone.Collection();
+			_(this).extend(_(options).pick("columnInfo", "row_id_field", "page_size", "table_classes"))
+			this.filteredCollection = new Backbone.Collection();
+			this.filter_string = "";
+			this.selectedRows = [];  // keep track of the rows that are selected. 
 			this.paginatorProp = options.paginator;
-			this.tableClasses = options.classes; 
 			this.setColumns(options.columnInfo);
 			if($(options.tablename).length>0){ // if the tablename was passed use it as the $el
 				this.$el=$(options.tablename);
 			}
+			if(typeof(this.row_id_field)==="undefined"){
+				console.error("The option row_id_field must be passed to the table");
+			}
 			if(typeof(options.paginator.showPaginator)==="undefined"){
 				this.paginatorProp.showPaginator = true;	
 			}
-			// setup the paginator 
 			this.initializeTable();
 		},
 		initializeTable: function () {
+			var self = this;
+			this.original_collection.each(function(_model){
+				self.addRow(_model);
+			});
 
-			this.pageSize =  (this.paginatorProp && this.paginatorProp.page_size)? this.paginatorProp.page_size: 
-				this.collection.size();
-			this.pageRange = this.pageSize > 0 ?  _.range(this.pageSize) : _.range(this.collection.length) ;
+			// this connects the collection in the table to the original collection so changes can be made automatically. 
+			this.collection.on({
+				change: function(model){
+					var id = model.get(self.row_id_field);
+					var original_model = self.original_collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					original_model.set(model.changed);
+				},
+				remove: function(model){
+					var id = model.get(self.row_id_field);
+					var original_model = self.original_collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					self.original_collection.remove(original_model);
+				}
+			});
+
+			this.original_collection.on({
+				change: function(model){
+					var id = model.get(self.row_id_field);
+					self.addRow(model,{add: false});
+				},
+				add: function(model){
+					self.addRow(model);
+				},
+				remove: function(model){
+					var id = model.get(self.row_id_field);
+					var _model = self.collection.find(function(_m){ return _m.get(self.row_id_field)===id});
+					self.collection.remove(_model);
+					self.filteredCollection.remove(_model);
+				}
+			});
+
+			this.pageRange = this.page_size > 0 ?  _.range(this.page_size) : _.range(this.original_collection.length) ;
 			this.currentPage = 0;
 			this.rowViews = [];
-			this.$el.addClass(this.tableClasses);
+
 
 			this.sortInfo = {};  //stores the sort column and sort direction
 		},
-		setColumns: function(columnInfo){
+		addRow: function(_model,opts){
+			opts = opts || {add: true};
+			var model = new Backbone.Model();
+			_(this.columnInfo).each(function(col){
+				var value;
+				if(col.nested){
+					model[col.key]=_model[col.key];
+					model.set(col.key,model[col.key]);
+				} 
+
+				if(_.isFunction(col.value)){
+					value = col.value(_model);
+				} else if(_model.get(col.key)){
+					value = _model.get(col.key)
+				}
+				if(col.searchable){
+					var v = _.isFunction(col.search_value) ? col.search_value(_model) : value; 
+					if(typeof(v)!=="undefined"){
+						model.set("_searchable_fields",
+							typeof(model.get("_searchable_fields"))==="undefined"? v : 
+							model.get("_searchable_fields")+";" + v); 	
+					}
+				}
+				if(!col.nested){
+					switch(col.datatype){
+						case "integer": 
+							model.set(col.key,parseInt(value));
+							break;
+						case "string": 
+							model.set(col.key,(typeof(value)==="undefined") ? "" : ""+value);
+							break;
+						case "boolean":
+						default: 
+							model.set(col.key,typeof(value)==="undefined" ? "" : value);
+					}
+				}
+			})
+			if(opts.add){
+				this.collection.add(model);
+			} else {
+				var _model = this.collection.findWhere(_.object([[this.row_id_field,model.get(this.row_id_field)]]));
+                _model.set(model.attributes,{silent: true});
+                var _row = _(this.rowViews).findWhere({rowID: _model.get(this.row_id_field)});
+                if(_row){
+                  _row.refresh();
+                }
+			}
+			this.trigger("table-changed");
+		},
+		setColumns: function(){
 			var self = this;
-			this.columnInfo = columnInfo;
 			this.bindings = {};
 			_(this.columnInfo).each(function(col){ 
 				var obj = {};
-				obj["."+col.classname] = {observe: col.key}; // set it up for stickit format
+				var classname = / +/.test(col.classname) ? col.classname.split(/ +/)[0] : col.classname;
+				obj["."+classname] = {observe: col.key}; // set it up for stickit format
 				
-				if(typeof col.use_contenteditable == 'undefined'){ col.use_contenteditable=true;}
+				if(typeof col.use_contenteditable == 'undefined'){ col.use_contenteditable=false;}
 				if(typeof col.stickit_options != 'undefined'){
-					_.extend(obj["."+col.classname],col.stickit_options);
+					_.extend(obj["."+classname],col.stickit_options);
 					col.use_contenteditable = col.editable;
 				}
 				self.collection.each(function(_model){
@@ -90,81 +171,76 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 				if(typeof(col.datatype)!=="undefined"){
 					col.sortable = true;
 				}
+				if(typeof(col.searchable)==="undefined"){
+					col.searchable = true;
+				}
+				if(typeof(col.nested)==="undefined"){
+					col.nested = false;
+				}
+				if(col.key==="_select_row"){
+					col.searchable = false; 
+				}
+				if(typeof(col.show_column)==="undefined"){
+					col.show_column = true;
+				}
 				_.extend(self.bindings, obj);
 			});
 			return this;
 		},
-		// Add an _extra field to the collection for some columns. 
-		updateValues: function(_model,col){
-			if(col.value && _.isFunction(col.value)) { // then the value is calculated.
-				if(!_model._extra){
-					_model._extra= {};
-				}
-				_model._extra[col.key]=col.value.apply(this,[_model]);	
-			}
-		},
 		render: function () {
-			console.log("in CollectionTableView.render");
 			var self = this, i;
-			this.$el.empty();
-			var tbody = $("<tbody>");
-			this.$el.append($("<thead>").append(this.tableHeader())).append(tbody);
-
+			this.$el.empty().append($("<thead>")).append($("<tbody>"));
+			this.updateHeader();
 			this.updateTable();
-			if(this.paginatorProp.showPaginator){
-				this.$el.append($("<tr class='paginator-row'>"));
-				this.updatePaginator();
-			}
-
-
+			this.$el.addClass("sortable-table").addClass(this.table_classes);
 			return this;
 		},
-		tableHeader: function () {
+		updateHeader: function () {
 			var self = this;
 						// set up the HTML for the table header
 			var headRow = $("<tr>");
 
 			_(this.columnInfo).each(function (col){
-				var className = _.isArray(col.classname)?col.classname[0] : col.classname;
+				if(col.key==="_select_row"){
+					col.colHeader = "<input type='checkbox' class='_select_row' data-key-name='"+col.key+"'>";
+				}
 				
 				var spanIcon = ""; 
-				if(self.sortInfo && ! _.isEqual(self.sortInfo,{}) && self.sortInfo.classname == className){
-					//var type = _(self.columnInfo).findWhere({classname: self.sortInfo.classname}).datatype;
-					var type = _(self.columnInfo).find(function(obj){ 
-						return _.isArray(obj.classname)? obj.classname[0]===self.sortInfo.classname 
-									: obj.classname===self.sortInfo.classname ;}).datatype;
+				if(self.sortInfo && ! _.isEqual(self.sortInfo,{}) && self.sortInfo.key == col.key){
+					var type = _(self.columnInfo).findWhere({key: col.key}).datatype;
 					var iconClass = config.sortIcons[type+self.sortInfo.direction];
 					spanIcon = "<i class='fa " + iconClass + "'></i>";
 				}
-				var th = $("<th data-class-name='" + className + "'>").addClass(className)
+				var th = $("<th data-key-name='" + col.key + "'>").addClass(col.classname)
 					.html(col.colHeader? col.colHeader: col.name + spanIcon);
 				if(col.title){
 					th.attr("title",col.title);
 				}
-				headRow.append(th);
+				if(col.show_column){
+					headRow.append(th);	
+				}
 			});
-
-			return headRow; 
+			this.$("thead").html(headRow);
 		},
 		updateTable: function () {
 			var self = this;
 			this.rowViews = [];
 			_(this.pageRange).each(function(i,j){
-				if(self.showFiltered){ 
-					if(self.filteredCollection[i]){
-						self.rowViews[j] = new TableRowView({model: self.filteredCollection[i],columnInfo: self.columnInfo,
-							bindings: self.bindings});
+				if(self.filter_string.length>0){ 
+					if(self.filteredCollection.at(i)){
+						self.rowViews[j] = new TableRowView({model: self.filteredCollection.at(i),columnInfo: self.columnInfo,
+							bindings: self.bindings,rowID: self.filteredCollection.at(i).get(self.row_id_field)});
 					}
 				} else {
 					if(self.collection.at(i)){
 						self.rowViews[j]=new TableRowView({model: self.collection.at(i),columnInfo: self.columnInfo, 
-							bindings: self.bindings});
+							bindings: self.bindings,rowID: self.collection.at(i).get(self.row_id_field)});
 					}
 				}
 			});
 			var tbody = this.$("tbody").empty();
-			if(this.pageSize >0){
-				for(i=0;i<this.pageSize;i++){
+			if(this.page_size >0){
+				for(i=0;i<this.page_size;i++){
 					if(this.rowViews[i]){
 						tbody.append(self.rowViews[i].render().el);
 					}
@@ -174,19 +250,27 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 					tbody.append(row.render().el);
 				});
 			}
+			_(this.selectedRows).each(function(rowID){
+				self.$("tr[data-row-id='"+rowID+"'] ._select_row").prop("checked",true);
+			})
+
+			if(this.paginatorProp.showPaginator){
+				tbody.append($("<tr class='paginator-row'>"));
+				this.updatePaginator();
+			}
+			this.delegateEvents(); // why is this needed?
+			this.trigger("table-changed");
 			return this;
 		},
 		refreshTable: function (){
 			_(this.rowViews).each(function(row){row.refresh();});
 			return this;
 		},
-		updatePaginator: function() {
-			// render the paginator
-
-			if (this.showFiltered){
-				this.maxPages = Math.ceil(this.filteredCollection.length/this.paginatorProp.page_size);
+		updatePaginator: function() {   // render the paginator
+			if (this.filter_string.length>0){
+				this.maxPages = Math.ceil(this.filteredCollection.length/this.page_size);
 			} else {
-				this.maxPages = Math.ceil(this.collection.length / this.paginatorProp.page_size);
+				this.maxPages = Math.ceil(this.collection.length / this.page_size);
 			}
 
 			var cell = $("<div>")
@@ -216,7 +300,6 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 
 			this.$(".paginator-row").html(td);
 
-
 			if(this.paginatorProp.button_class){
 				this.$(".paginator-page").addClass(this.paginatorProp.button_class);
 			}
@@ -232,116 +315,144 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			} else {
 				this.$(".paginator-row").removeClass("hidden")
 			}
-			this.delegateEvents();
-		},
-		filter: function(filterText) {
-			if(this.currentPage != 0){
-				this.gotoPage(0);
-			}
-			var filterText;
-			if(filterText===""){
-				this.showFiltered = false;
-				return this;
-			}
-			if(_(filterText).isObject()){
-				this.filteredCollection =this.collection.where(filterText);
-			} else {
-				filterRE = new RegExp(filterText,"i");
-				this.filteredCollection = this.collection.filter(function(model){
-					return _(model.attributes).values().join(";").search(filterRE) > -1;
-				});
-			}
-			this.showFiltered = true;
+
 			return this;
 		},
+		// this is the workhorse for changing the table.  Call set with an object of properties/values
 		set: function(options){
-			if(options.num_rows){
-				this.paginatorProp.page_size = options.num_rows;
-				this.initializeTable();
-				this.updatePaginator();
+			var self = this;
+			if(options.page_size){
+				this.page_size = options.page_size;
+				this.currentPage = 0;
+				this.paginatorProp.showPaginator = this.page_size > 0; 
 			}
+			if(options.sort_info){
+				this.sortTable(options.sort_info);
+			}
+			if(options.selected_rows){
+				this.selectedRows = options.selected_rows;
+			}
+			if(typeof(options.filter_string)!=="undefined"){
+				if(this.currentPage != 0){
+					this.gotoPage(0);
+				}
+				this.filter_string = options.filter_string;
+		        var containsColon = /^\s*(.*):(.*)\s*$/.exec(this.filter_string)  // filter on a specific field
+		        	, filterRE; 
+				if(containsColon){
+		            containsColon.shift();  // remove the first element of the array
+		            this.filteredCollection.reset(this.collection.where(_.object([containsColon])));
+		        } else if (this.filter_string.length>0) {
+					filterRE = new RegExp(this.filter_string,"i");
+					this.filteredCollection.reset(this.collection.filter(function(model){
+						return model.get("_searchable_fields").search(filterRE) > -1;
+					}));
+				}
+			}
+			if(typeof(options.current_page)!=="undefined"){
+				this.currentPage = options.current_page;
+			
+			}
+			if(this.page_size>0){
+				if(this.currentPage*this.page_size>this.collection.length){
+					this.currentPage = 0; 
+				}
+				this.pageRange = _.range(this.currentPage*this.page_size,
+					(this.currentPage+1)*this.page_size>this.collection.size()? this.collection.size():(this.currentPage+1)*this.page_size);
+			} else {
+				this.pageRange = _.range(0,this.collection.length);
+			}
+
+			return this;
 		},
 		getRowCount: function () {
-			return (this.showFiltered)? this.filteredCollection.length : this.collection.length;
+			return this.rowViews.length;
+			//return (this.filter_string.length>0)? this.filteredCollection.length : this.collection.length;
 		},
 		events: {
-			"click th": function (evt) {
-				this.sortTable(evt).render();
-				this.trigger("table-sorted",this.sortInfo);
-			},
+			"click th": "headerClicked",
 			"click .first-page": "firstPage",
 			"click .prev-page": "prevPage",
 			"click .numbered-page": "gotoPage",
 			"click .next-page": "nextPage",
 			"click .last-page": "lastPage",
-			"click button.paginator-page": "pageChanged"
+			"click button.paginator-page": "pageChanged",
+			"change input._select_row": "selectRow"
+		},
+		headerClicked: function (evt) {
+			var target = $(evt.target).is("i") ? $(evt.target).parent() : $(evt.target); 
+			if(_(this.columnInfo).findWhere({key: target.data("key-name")}).sortable){
+				this.sortTable(evt).render();
+				this.trigger("table-sorted",this.sortInfo);				
+			} else if ($(evt.target).hasClass("_select_row")){
+				this.$("input._select_row[type='checkbox']").prop("checked",$(evt.target).prop("checked"));
+				this.selectedRows = $.makeArray(this.$("tr[data-row-id]:has(input._select_row:checked)")
+					.map(function(i,v){ return $(v).data("row-id");}));
+				this.trigger("selected-row-changed",this.selectedRows);	
+			}
+		},
+		selectRow: function (evt){
+			var rowID = $(evt.target).closest("tr").data("row-id");
+			if($(evt.target).prop("checked")){
+				this.selectedRows.push(rowID);
+			} else {
+				this.selectedRows = _(this.selectedRows).without(rowID);
+			}
+			this.trigger("selected-row-changed",this.selectedRows);
+		},
+		getVisibleSelectedRows: function (){ // returns only the selected rows on the current page. 
+			var self = this;
+			var visibleRows = $.makeArray(this.$("tr").map(function(i,v){ return self.$(v).data("row-id");}));
+			return _.intersection(visibleRows, this.selectedRows);
 		},
 		sortTable: function(evt){
 			var self = this
 				, sort 
-				, sortField = evt.sort_info? evt.sort_info.sort_class : $(evt.target).data("class-name");
+				, sortKey = evt.sort_key || $(evt.target).data("key-name") || $(evt.target).parent().data("key-name");
 
-			if(typeof(sortField)==="undefined"){
+			if(typeof(sortKey)==="undefined"){
 				return this;
 			}
 
-			sort = _(this.columnInfo).find(function(col){
-				return (_.isArray(col.classname)? col.classname[0] : col.classname ) == sortField;
-			});
+			sort = _(this.columnInfo).findWhere({key: sortKey});
 			if(typeof(sort)=="undefined" || !sort.sortable){ // The user clicked on the select all button.
 				return this;
 			}
 
 
-			if(evt.sort_info && evt.sort_info.sort_direction && evt.sort_info.sort_class){
-				this.sortInfo = {key: sort.key, direction: evt.sort_info.sort_direction, classname: sort.classname};
+			if(evt.sort_direction && evt.sort_key){
+				this.sortInfo = {key: sort.key, direction: evt.sort_direction};
 			}	else {
 				if(this.sortInfo && this.sortInfo.key==sort.key){
 					this.sortInfo.direction = -1*this.sortInfo.direction;
 				} else {
-					this.sortInfo = {key: sort.key, direction: 1, 
-							classname: _.isArray(sort.classname)? sort.classname[0] : sort.classname};
+					this.sortInfo = {key: sort.key, direction: 1};
 				}
 			}
-
-			// determine the sort Function
-
-			var sortFunction = sort.sort_function || function(val) {return val;};
 
 			if(typeof(sort.datatype)==="undefined"){
 				console.error("You need to define a datatype to sort");
 				return this;
 			}
 
-			/* Need a more robust comparator function. */
-			this.collection.comparator = function(model1,model2) { 
-				var value1 = typeof(model1.get(sort.key)) === "undefined" || (model1._extra && model1._extra[sort.key])
-						? model1._extra[sort.key] : model1.get(sort.key);
-				var value2 = typeof(model2.get(sort.key)) === "undefined" || (model2._extra && model2._extra[sort.key])
-						? model2._extra[sort.key] : model2.get(sort.key);
-				switch(sort.datatype){
-					case "integer":
-						if(parseInt(sortFunction(value1,model1))===parseInt(sortFunction(value2,model2))){return 0;}
-					    return self.sortInfo.direction*(parseInt(sortFunction(value1,model1))<parseInt(sortFunction(value2,model2))? -1:1);
-						break;
-					case "boolean":
-						if(sortFunction(value1,model1)===sortFunction(value2,model2)){ return 0;}
-						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)?-1:1);
-						break;
-					case "number":
-						if(parseFloat(sortFunction(value1,model1))===parseFloat(sortFunction(value2,model2))){return 0;}
-					    return self.sortInfo.direction*(parseFloat(sortFunction(value1,model1))<parseFloat(sortFunction(value2,model2))? -1:1);
-						break;
-					case "string":
-					default:
-						if (sortFunction(value1,model1)===sortFunction(value2,model2))
-							return 0;
-						return self.sortInfo.direction*(sortFunction(value1,model1)<sortFunction(value2,model2)? -1: 1);
-						break;
-				} 
+			var comp = _.isFunction(sort.search_value) ? sort.search_value : sort.key;
 
-			};
-			this.collection.sort();
+			if(this.filter_string.length>0){
+				this.filteredCollection.comparator = comp;
+				this.filteredCollection.sort();
+				if(self.sortInfo.direction<0){
+					this.filteredCollection.models = this.filteredCollection.models.reverse();
+				}
+	
+			} else {
+				//this.collection.comparator = comparator;
+				this.collection.comparator = comp;
+				this.collection.sort();	
+				if(self.sortInfo.direction<0){
+					this.collection.models = this.collection.models.reverse();
+				}
+			}
+			this.updateHeader();
 			return this;
 		},
 		firstPage: function() { this.gotoPage(0);},
@@ -351,10 +462,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 		},
 		lastPage: function() {this.gotoPage(this.maxPages-1);},
 		gotoPage: function(arg){
-			this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
-			this.pageRange = _.range(this.currentPage*this.pageSize,
-				(this.currentPage+1)*this.pageSize>this.collection.size()? this.collection.size():(this.currentPage+1)*this.pageSize);
-			this.render();
+			this.set({current_page: /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1});
 			if(this.currentPage==0){
 				this.$("button.first-page,button.prev-page").attr("disabled","disabled");
 			} else {
@@ -365,6 +473,7 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 			} else {
 				this.$("button.last-page,button.next-page").removeAttr("disabled");
 			}
+			this.updateTable();
 			return this;
 		},
 		pageChanged: function(){
@@ -375,26 +484,36 @@ define(['backbone', 'underscore','config','stickit'], function(Backbone, _,confi
 	var TableRowView = Backbone.View.extend({
 		tagName: "tr",
 		initialize: function (options) {
+			var self = this;
 			_.bindAll(this,"render");
 			this.bindings = options.bindings;
 			this.columnInfo = options.columnInfo;
+			this.rowID = options.rowID;
+			this.model.on("remove",function(model){
+				self.remove();
+			});
 		},
 		render: function () {
 			var self = this;
+			this.$el.attr("data-row-id",this.rowID);
 			_(this.columnInfo).each(function (col){
-				var classname = _.isArray(col.classname) ? col.classname.join(" ") : col.classname;
-				if (col.datatype === "boolean"){
-					var select = $("<select>").addClass(classname).addClass("input-sm form-control");
-					self.$el.append($("<td>").append(select));
+				if(!col.show_column){
+
+				} else if (col.datatype === "boolean"){
+					var checkbox = $("<input type='checkbox'>").addClass(col.classname);
+					self.$el.append($("<td align='center'>").append(checkbox));
+				} else if(col.key==="_select_row"){
+					var cb = $("<input type='checkbox' class='_select_row'>");
+					self.$el.append($("<td>").append(cb));
 				} else if(col.use_contenteditable){
-					self.$el.append($("<td>").addClass(classname).attr("contenteditable",col.editable));
+					self.$el.append($("<td>").addClass(col.classname).attr("contenteditable",col.editable));
+				} else if(col.display) {
+					self.$el.append($("<td>").text(col.display(self.model.get(col.key),self.model)));
+				} else if (col.stickit_options && col.stickit_options.selectOptions){
+					var select = $("<select>").addClass("input-sm form-control").addClass(col.classname);
+					self.$el.append($("<td>").append(select));
 				} else {
-					if (col.stickit_options && col.stickit_options.selectOptions){
-						var select = $("<select>").addClass("input-sm form-control").addClass(classname);
-						self.$el.append($("<td>").append(select));
-					} else {
-						self.$el.append($("<td>").addClass(classname));
-					}
+					self.$el.append($("<td>").addClass(col.classname));
 				}
 			});
 			if(this.model){

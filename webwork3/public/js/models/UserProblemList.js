@@ -3,6 +3,7 @@ define(['backbone', 'models/ProblemList','models/UserProblem','config'], functio
 		initialize: function(models,options){
 			this.user_id = options.user_id;
 			this.set_id = options.set_id;
+			ProblemList.prototype.initialize.apply(this,arguments);
 		},
 		model: UserProblem,
 		url: function(){
