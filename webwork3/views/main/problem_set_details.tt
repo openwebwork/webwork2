@@ -167,18 +167,22 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <table class="table" style="table-layout:fixed">
 <tbody>
 <tr><td class="header">Set Name</td><td class="set-name"></td>
-  <td><label type="checkbox">Show Time <input type="checkbox" class="show-time-toggle"></label></td></tr>
-<tr><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
-<tr><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
-<tr><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
-<tr><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
-<tr><td class="header">Problem Set Visible to Users</td>
-  <td><input type='checkbox' class='prob-set-visible'></td></tr>
-<tr><td class="header">Reduced Scoring Enabled</td>
-  <td><input type='checkbox' class='reduced-scoring'></select></td></tr>
+  <!--<td><label type="checkbox">Show Time <input type="checkbox" class="show-time-toggle"></label></td>-->
+  <td><div class="btn-group btn-group-sm" role="group">
+      <button type="button" class="btn btn-default show-time-toggle" data-hide-text="Hide Time">Show Time</button>
+      <button type="button" class="btn btn-default show-calendar-toggle" data-hide-text="Hide Calendar">Show Calendar</button>
+      </div></td>
+    </tr>
+<tr class="hideable"><td class="header">Open Date</td><td class="open-date edit-datetime"></td></tr>
+<tr class="hideable"><td class="header">Reduced Scoring Date</td><td class="reduced-scoring-date edit-datetime"></td></tr>
+<tr class="hideable"><td class="header">Due Date</td><td class="due-date edit-datetime"></td></tr>
+<tr class="hideable"><td class="header">Answer Date</td><td class="answer-date edit-datetime"></td></tr>
+<tr class="calendar-row hidden"><td class="calendar-cell" colspan="3"> Calendar Goes Here</td></tr>
+<tr><td class="header">Problem Set Visible to Users</td><td><input type='checkbox' class='prob-set-visible'></td></tr>
+<tr><td class="header">Reduced Scoring Enabled</td><td><input type='checkbox' class='reduced-scoring'></select></td></tr>
+<tr><td class="header">Hide Hints from Users</td><td><input type='checkbox' class='hide-hint'></td></tr>
 <tr><td class="header">Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
-
 </tbody>
 </table>
 </script>

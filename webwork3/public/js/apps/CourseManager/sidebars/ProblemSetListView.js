@@ -9,7 +9,7 @@
 */
 
 define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config','views/Sidebar',
-           'main-views/AssignmentCalendar', 'views/ModalView','main-views/LibraryBrowser'], 
+           'views/AssignmentCalendar', 'views/ModalView','main-views/LibraryBrowser'], 
 function(Backbone, _,ProblemSetList,ProblemSet,config,Sidebar,AssignmentCalendar,ModalView,LibraryBrowser){
 	
     var ProblemSetListView = Sidebar.extend({
