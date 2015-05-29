@@ -36,7 +36,8 @@ var ProblemSet = Backbone.Model.extend({
         relax_restrict_ip: "No",
         restricted_login_proctor: "No",
         assigned_users: [],
-        problems: null
+        problems: null,
+        description: "",
     },
     validation: {
        open_date: "checkDates",

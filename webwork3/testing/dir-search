@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+
+#use strict; 
+use warnings;
+
+use File::Find::Rule;
+use Data::Dumper;
+
+my $dir = "/Library/WebServer/Documents/webwork/courses/test";
+
+my $inclRE = qr/header.*\.pg$/i;
+my @skip = ('set40','Library');
+my $rule = File::Find::Rule->new;
+$rule->or($rule->new->directory->name(@skip)->prune->discard,$rule->new);
+my @files = $rule->file()->name($inclRE)->in($dir);
+
+my @x = map { my @dirs = split("/templates/",$_); $dirs[1];} @files;
+                            
+print Dumper(@x);

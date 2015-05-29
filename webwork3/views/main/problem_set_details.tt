@@ -233,6 +233,23 @@ The results will be dispayed below.  To search for section 2 type "section:2" or
 
 </script>
 
+<script type="text/template" id="set-headers-template"> 
+<h4>Set Headers and Description for <%=set_id%></h4>
+<table class="table">
+  <tbody>
+    <tr><td class="header col-md-3">Set Description</td><td><textarea rows="5" style="width: 100%" class="set-description"></textarea></td></tr>
+    <tr><td class="header col-md-3">Set Header</td><td><select class="set-header"></td></tr>
+    <tr><td class="col-md-3"><button class="btn btn-default view-header-button">View Header File</button></td><td rowspan="2">Stuff goes here</td></tr>
+    <tr><td class="col-md-3"><button class="btn btn-default edit-header-button">Edit Header File</button></td></tr>
+    <tr><td class="header col-md-3">Hardcopy Set Header</td><td><select class="hard-set-header"></td></tr>
+    <tr><td class="col-md-3"><button class="btn btn-default view-hard-header-button">View Hardcopy Header File</button></td><td rowspan="2">Stuff goes here</td></tr>
+    <tr><td class="col-md-3"><button class="btn btn-default edit-hard-header-button">Edit Hardcopy Header File</button></td></tr>
+    
+    </tbody>
+    </table>
+
+</script>
+
 <script type="text/template" id="problem-set-view-help-template">
 <h4>Problems</h4>
   <ul>

@@ -18,6 +18,7 @@ use Utils::CourseUtils qw/getCourseSettings/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw/first max/;
+use Data::Dumper;
 
 our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
@@ -1116,6 +1117,34 @@ get '/courses/:course_id/pgeditor' => sub {
 
     template 'simple-editor.tt', {course_id=> params->{course_id},theSetting => to_json(getCourseSettings),
         pagename=>"Simple Editor",user=>session->{user}};
+};
+
+####
+#
+#  get /courses/:course_id/headers
+#
+#  returns an array of possible header files for a given course.
+#
+####
+
+get '/courses/:course_id/headers' => sub {
+
+    #checkPermissions(10,session->{user});
+
+    my $templateDir = vars->{ce}->{courseDirs}->{templates};
+    my $include = qr/header.*\.pg$/i;
+    my $skipDIRS = join("|", keys %{ vars->{ce}->{courseFiles}->{problibs} });
+    my $skip = qr/^(?:$skipDIRS|svn)$/;
+    
+    debug(Dumper($skip));
+    
+    my $rule = File::Find::Rule->new;
+    $rule->or($rule->new->directory->name($skip)->prune->discard,$rule->new);  #skip the directories that match $skip
+    my @files = $rule->file()->name($include)->in($templateDir);
+
+    # return the files relative to the templates/ directory. 
+    my @relativeFiles = map { my @dirs = split(params->{course_id}."/templates/",$_); $dirs[1];} @files;
+    return \@relativeFiles;
 };
 
 

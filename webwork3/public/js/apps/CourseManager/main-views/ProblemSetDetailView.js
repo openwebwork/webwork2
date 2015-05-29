@@ -23,6 +23,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
 
             this.views = options.views = {
                 propertiesView : new DetailsView(opts),
+                setHeaderView: new SetHeadersView(opts),
                 problemsView : new ShowProblemsView(_.extend({messageTemplate: this.messageTemplate, parent: this},opts)),
                 usersAssignedView : new AssignUsersView(opts),
                 customizeUserAssignView : new CustomizeUserAssignView(opts)
@@ -255,6 +256,39 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         getDefaultState: function () { return {set_id: "", show_time: false, show_calendar: false};}
 
+    });
+    
+    var SetHeadersView = TabView.extend({
+        tabName: "Set Headers",
+        initialize: function(opts){
+            TabView.prototype.initialize.apply(this,[opts]);
+            this.headerFiles = null; 
+        },
+        render: function(){
+            var self = this; 
+            this.$el.html(_.template($("#set-headers-template").html(),this.tabState.attributes));  
+            if(this.headerFiles){
+                this.stickit();
+            } else {
+                $.get(config.urlPrefix +  "courses/" + config.courseSettings.course_id + "/headers", function( data ) {
+                    self.headerFiles = _(data).map(function(f){ return {label: f, value: f};});
+                    self.render();
+                });   
+            }
+        },
+        bindings: {
+            '.set-description': 'description',
+            '.set-header': { observe: "set_header", selectOptions: {collection: 'this.headerFiles'}},
+            '.hard-set-header': { observe: "hardcopy_header", selectOptions: {collection: 'this.headerFiles'}},
+        },
+        setProblemSet: function(_set){
+            this.tabState.set({set_id: _set.get("set_id")});
+            this.model = _set;
+            return this;
+        },
+        getDefaultState: function () {
+            return {set_id: ""};   
+        }
     });
 
     var ShowProblemsView = TabView.extend({
