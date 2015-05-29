@@ -106,12 +106,7 @@ var CourseManager = WebPage.extend({
         this.problemSets.on("change",function(_set){
             _set.save();
         })        
-
-        // The following is useful in many different views, so is defined here. 
-        // It adjusts dates to ensure that they aren't illegal.
-
-        this.problemSets.on("change:due_date change:reduced_scoring_date change:open_date change:answer_date",this.setDates);
-                
+            
         this.navigationBar.on({
             "stop-acting": this.stopActing,
         });
