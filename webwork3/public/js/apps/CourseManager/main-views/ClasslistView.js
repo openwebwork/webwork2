@@ -194,7 +194,8 @@ var ClasslistView = MainView.extend({
 	    var blob = new Blob([textFileContent], {type:_mimetype});
         var _url = URL.createObjectURL(blob);
         var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY") + ".csv";
-        var body = _.template($("#export-to-file-template").html(),{url: _url, filename: _filename});
+        var tmpl = _.template($("#export-to-file-template").html());
+        var body = tmpl({url: _url, filename: _filename});
         var modalView = new ModalView({
             modal_size: "modal-lg",
             modal_buttons: $("#close-button-template").html(),
@@ -509,8 +510,9 @@ var AddStudentFileView = ModalView.extend({
                 
                 //var str = util.CSVToHTMLTable(content,headers);
                 var arr = util.CSVToHTMLTable(content,headers);
-
-                $("#studentTable").html(_.template($("#imported-from-file-table").html(),{array: arr, headers: headers}))
+                
+                var tmpl = _.template($("#imported-from-file-table").html());
+                $("#studentTable").html(tmpl({array: arr, headers: headers}));
 
                 // build the table and set it up to scroll nicely.      
                 //$("#studentTable").html(str);

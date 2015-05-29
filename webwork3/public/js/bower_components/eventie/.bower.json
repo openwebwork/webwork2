@@ -1,18 +1,33 @@
 {
   "name": "eventie",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "eventie.js",
   "description": "event binding helper",
   "ignore": [
     "component.json",
-    "test"
+    "test.html",
+    "**/.*",
+    "node_modules",
+    "bower_components"
   ],
   "homepage": "https://github.com/desandro/eventie",
-  "_release": "1.0.5",
+  "authors": [
+    "David DeSandro"
+  ],
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "event"
+  ],
+  "license": "MIT",
+  "_release": "1.0.6",
   "_resolution": {
     "type": "version",
-    "tag": "v1.0.5",
-    "commit": "546e3c8582ca5e2dca2e9134b9ec53149cf46ecd"
+    "tag": "v1.0.6",
+    "commit": "14d2ca3df97da64c820829a8310f9198fbafbcfa"
   },
   "_source": "git://github.com/desandro/eventie.git",
   "_target": ">=1.0.4 <2",

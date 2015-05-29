@@ -14,25 +14,19 @@ eventie.bind( elem, 'click', onElemClick );
 eventie.unbind( elem, 'click', onElemClick );
 ```
 
-## Bower
+## Install
 
-eventie is a [Bower](http://bower.io) component.
+Download [eventie.js](eventie.js)
 
-``` bash
-bower install desandro/eventie
-```
+Install with [Bower :bird:](http://bower.io) `bower install eventie`
 
-## Component
+Install with npm :truck: `npm install eventie`
 
-component can also be installed via [component](http://github.com/component/component).
-
-``` bash
-component install desandro/eventie
-```
+Install with [Component :nut_and_bolt:](https://github.com/component/component) `component install desandro/eventie`
 
 ## IE 8
 
-eventie add support for `event.target` and [`.handleEvent` method](https://developer.mozilla.org/en-US/docs/DOM/EventListener#handleEvent(\)) for Internet Explorer 8.
+eventie add support for `event.target` and [`.handleEvent` method](https://developer.mozilla.org/en-US/docs/DOM/EventListener#handleEvent\(\)) for Internet Explorer 8.
 
 ## MIT license
 

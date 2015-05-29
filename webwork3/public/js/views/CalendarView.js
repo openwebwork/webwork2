@@ -31,12 +31,12 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             var numberOfWeeks = this.state.get("calendar_type")==="month"? 6 : 2; 
             this.weekViews = [];
             for(var i = 0; i<numberOfWeeks; i++){
-                this.weekViews[i] = new WeekView({first_day: moment(this.state.get("first_day")).add("days",7*i),
+                this.weekViews[i] = new WeekView({first_day: moment(this.state.get("first_day")).add(7*i,"days"),
                     calendar: this});
             }
             
 
-            this.$el.html(_.template($("#calendar-template").html()));
+            this.$el.html($("#calendar-template").html());
             var calendarHead = this.$("#calendar-table thead");
             for(var i = 0; i<7; i++){
                 var day = moment().day(i);
@@ -59,7 +59,7 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         },
         getDefaultState: function () {
             var firstOfMonth = moment(this.date||moment()).date(1)
-                , firstDay = moment(firstOfMonth).subtract("days",firstOfMonth.date(1).day());
+                , firstDay = moment(firstOfMonth).subtract(firstOfMonth.date(1).day(),"days");
             return {
                 answer_date: true,
                 due_date: true,
@@ -70,10 +70,10 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             };
         },
         viewPreviousWeek: function (){
-            this.state.set("first_day",moment(this.state.get("first_day")).subtract("days",7).format("YYYY-MM-DD"));
+            this.state.set("first_day",moment(this.state.get("first_day")).subtract(7,"days").format("YYYY-MM-DD"));
         },
         viewNextWeek: function() {
-            this.state.set("first_day",moment(this.state.get("first_day")).add("days",7).format("YYYY-MM-DD"));
+            this.state.set("first_day",moment(this.state.get("first_day")).add(7,"days").format("YYYY-MM-DD"));
         },
         showWeekView: function () {
             this.state.set("calendar_type","week");
@@ -84,8 +84,8 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         gotoToday: function () {
             var firstOfMonth = moment().date(1);
             var firstDay = this.state.get("calendar_type")==="month"?
-                moment(firstOfMonth).date(1).subtract("days",firstOfMonth.date(1).day()):
-                moment().subtract("days",moment().day());
+                moment(firstOfMonth).date(1).subtract(firstOfMonth.date(1).day(),"days"):
+                moment().subtract(moment().day(),"days");
             this.state.set("first_day",firstDay);
             this.trigger("calendar-change");
         },
@@ -106,7 +106,7 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             this.days = []; // an array of DayViews;
             var i;
             for(i=0;i<7;i++){
-                this.days[i] = new DayView({model: moment(this.first_day).add("days",i),
+                this.days[i] = new DayView({model: moment(this.first_day).add(i,"days"),
                     calendar: options.calendar});
             }
         },

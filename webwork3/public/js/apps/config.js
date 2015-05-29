@@ -180,12 +180,12 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                     && ! model.show_reduced_scoring){
                 $el.html("");
             } else {
-                $el.html(_.template($("#edit-date-time-template").html(),{date: moment.unix(val).format("MM/DD/YYYY")}));        
+                var tmpl = _.template($("#edit-date-time-template").html());
+                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));        
             }
             
-            
-            var popoverHTML = _.template($("#time-popover-template").html(),
-                        {time : moment.unix(model.get(options.observe)).format("h:mm a")});
+            var tmpl = _.template($("#time-popover-template").html());
+            var popoverHTML = tmpl({time : moment.unix(model.get(options.observe)).format("h:mm a")});
             var timeIcon = $el.children(".open-time-editor");
             timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
                 trigger: "manual"});
@@ -214,7 +214,8 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                     && ! model.show_reduced_scoring){
                 $el.html("");
             } else {
-                $el.html(_.template($("#edit-date-time2-template").html(),{date: moment.unix(val).format("MM/DD/YYYY")}));        
+                var tmpl = _.template($("#edit-date-time2-template").html());
+                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));        
             }
             $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, config.setDate);
             $el.children(".wwtime").text(moment.unix(model.get(options.observe)).format("h:mm a"))
