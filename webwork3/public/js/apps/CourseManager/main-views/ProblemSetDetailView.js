@@ -170,7 +170,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             "click .assign-all-users": "assignAllUsers",
             "change .show-time-toggle": function(evt){
                 this.tabState.set("show_time",$(evt.target).prop("checked"));
-            },
+            }
         },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
@@ -191,6 +191,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             ".prob-set-visible": "visible",
             ".reduced-scoring": "enable_reduced_scoring",
             ".reduced-scoring-date": "reduced_scoring_date",
+            ".hide-hint": "hide_hint",
             ".users-assigned": {
                 observe: "assigned_users",
                 onGet: function(value, options){ return value.length + "/" +this.users.size();}

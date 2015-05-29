@@ -30,6 +30,7 @@ var ProblemSet = Backbone.Model.extend({
         hide_score: "N",
         hide_score_by_problem: "N",
         hide_work: "N",
+        hide_hint: false,
         time_limit_cap: "0",
         restrict_ip: "No",
         relax_restrict_ip: "No",
