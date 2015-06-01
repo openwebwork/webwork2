@@ -23,7 +23,7 @@ var LiveGraphics3D = function (container, options) {
 	showAxes : false,
         numTicks : 4,
 	tickSize : .1,
-	tickFontSize : .15,
+	tickFontSize : .20,
 	axisKey : ['X','Y','Z'],
 	drawMesh : true,
     };
