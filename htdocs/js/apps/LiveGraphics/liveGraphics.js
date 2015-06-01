@@ -484,7 +484,7 @@ var LiveGraphics3D = function (container, options) {
 			     .attr('solid','true')
 			     .append($("<fontstyle/>")
 				     .attr('size',options.tickFontSize*windowScale)
-				     .attr('family', 'sans-serif')
+				     .attr('family', "mono")
 				     .attr('style', 'bold')
 				     .attr('justify', 'MIDDLE')));
 	    
@@ -507,7 +507,7 @@ var LiveGraphics3D = function (container, options) {
 			 .attr('solid','true')
 			 .append($("<fontstyle/>")
 				 .attr('size',options.tickFontSize*windowScale)
-				 .attr('family', 'sans-serif')
+				 .attr('family', "mono")
 				 .attr('style', 'bold')
 				 .attr('justify', 'MIDDLE')));
 	
@@ -567,7 +567,7 @@ var LiveGraphics3D = function (container, options) {
 			.attr('solid','true')
 			.append($("<fontstyle/>")
 				.attr('size',size)
-				.attr('family', 'sans-serif')
+				.attr('family', "mono")
 				.attr('justify', 'MIDDLE')));
 	    
 	    text.parent().parent().appendTo(scene);
