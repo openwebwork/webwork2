@@ -22,6 +22,10 @@ var LiveGraphics3D = function (container, options) {
 	.css('overflow','hidden')
 	.attr('swfpath','/webwork2_files/js/vendor/x3dom/x3dom.swf');
 
+    $("<div/>").addClass('sr-only')
+	.text('A manipulable 3d graph.')
+	.prependTo(container);
+
     // disable mousewheel on container because its used for zoom
     $(x3d).bind('DOMMouseScroll mousewheel',function(event) {
 	event.preventDefault();
