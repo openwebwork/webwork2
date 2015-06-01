@@ -1,3 +1,16 @@
+// liveGraphics.js
+// This is a javascript based replacement for the LiveGraphics3D java library
+// 
+// This program is free software; you can redistribute it and/or modify it under
+// the terms of either: (a) the GNU General Public License as published by the
+// Free Software Foundation; either version 2, or (at your option) any later
+// version, or (b) the "Artistic License" which comes with this package.
+// 
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+// Artistic License for more details.
+
 var LiveGraphics3D = function (container, options) {
     var my = this;    
     
@@ -20,11 +33,17 @@ var LiveGraphics3D = function (container, options) {
     var defaults = {
 	width : 200,
 	height : 200,
+	// Controls if axis are shown or not
 	showAxes : false,
+	// If the axis are shown determines if a full cube is drawn or just
+	// the three axis lines
+	showAxesCube : true,
         numTicks : 4,
 	tickSize : .1,
-	tickFontSize : .20,
+	tickFontSize : .15,
 	axisKey : ['X','Y','Z'],
+	// Determines if the polygons forming the surface have their edges 
+	// drawn
 	drawMesh : true,
     };
 
@@ -135,7 +154,7 @@ var LiveGraphics3D = function (container, options) {
 		     attr('rotation',[1,0,0,Math.PI/2])
 		     .append($("<viewpoint/>")
 			     .attr( "fieldofview", .9)
-			     .attr( "position", [3*windowScale,0,0] )
+			     .attr( "position", [2*windowScale,0,0] )
 			     .attr( "orientation", [0,1,0,Math.PI/2])));
 	
 	scene.append($('<background/>').attr('skycolor','1 1 1'));
@@ -180,7 +199,6 @@ var LiveGraphics3D = function (container, options) {
     // find max and min of all mesh coordinate points and
     // the maximum coordinate value for the scale. 
     var setExtremum = function () {
-	var scale = 1;
 	var min = [0,0,0];
 	var max = [0,0,0];
 	
@@ -208,16 +226,13 @@ var LiveGraphics3D = function (container, options) {
 	coordMins = min;
 	coordMaxs = max;
 	
+	var sum = 0;
+
 	for (var i=0; i< 3; i++) {
-	    if (Math.abs(min[i]) > scale) {
-		scale = Math.abs(min[i]);
-	    }
-	    if (Math.abs(max[i]) > scale) {
-		scale = Math.abs(max[i]);
-	    }
+	    sum += max[i]-min[i];
 	}
 	
-	windowScale = scale;
+	windowScale = sum/3;
     };
     
     var drawLines = function() {
@@ -333,8 +348,6 @@ var LiveGraphics3D = function (container, options) {
 	if (surfaceBlockIndex in colors) {
 	    flatcolor = true;
 	    color = colors[surfaceBlockIndex];
-	    console.log(colors);
-	    console.log(surfaceBlockIndex);
 	}
 
 	// Add surface to scene as an indexedfaceset
@@ -408,6 +421,24 @@ var LiveGraphics3D = function (container, options) {
 	$.each(makeAxisTicks(0),function() {
 	    this.appendTo(xgroup)});
 
+	if (options.showAxesCube) {
+	    
+	    var trans = [[0,coordMins[1],coordMaxs[2]],
+			 [0,coordMaxs[1],coordMins[2]],
+			 [0,coordMaxs[1],coordMaxs[2]]];
+
+	    trans.forEach(function (tran) {
+		$("<transform/>").attr('translation',tran)
+		    .appendTo(scene)
+		    .append($("<shape/>").append($("<appearance/>")
+						 .append($("<material/>")
+							 .attr("emissiveColor", 'black')
+							))
+			    .append($("<Polyline2D/>")
+				    .attr("lineSegments", coordMins[0]+' 0 '+coordMaxs[0]+' 0')));
+	    });
+	}
+
 	// build y axis and add the ticks
 	var ygroup = $("<group/>").appendTo($("<transform/>")
 					    .appendTo(scene)
@@ -424,8 +455,26 @@ var LiveGraphics3D = function (container, options) {
 
 	$.each(makeAxisTicks(1),function() {
 	    this.appendTo(ygroup)});
-
-
+	
+	if (options.showAxesCube) {
+	    
+	    var trans = [[coordMins[0],0,coordMaxs[2]],
+			 [coordMaxs[0],0,coordMins[2]],
+			 [coordMaxs[0],0,coordMaxs[2]]];
+	    
+	    trans.forEach(function (tran) {
+		$("<transform/>").attr('translation',tran)
+		    .attr('rotation',[0,0,1,Math.PI/2])
+		    .appendTo(scene)
+		    .append($("<shape/>").append($("<appearance/>")
+						 .append($("<material/>")
+							 .attr("emissiveColor", 'black')
+							))
+			    .append($("<Polyline2D/>")
+				    .attr("lineSegments", coordMins[1]+' 0 '+coordMaxs[1]+' 0')));
+	    });
+	}
+	
 	// build z axis and add the ticks
 	var zgroup = $("<group/>").appendTo($("<transform/>")
 					   .appendTo(scene)
@@ -444,6 +493,25 @@ var LiveGraphics3D = function (container, options) {
 	$.each(makeAxisTicks(2),function() {
 	    this.appendTo(zgroup)});
 
+	if (options.showAxesCube) {
+	    
+	    var trans = [[coordMins[0],coordMaxs[1],0],
+			 [coordMaxs[0],coordMins[1],0],
+			 [coordMaxs[0],coordMaxs[1],0]];
+
+	    trans.forEach(function (tran) {
+		$("<transform/>").attr('translation',tran)
+		    .attr('rotation',[0,1,0,-Math.PI/2])
+		    .appendTo(scene)
+		    .append($("<shape/>").append($("<appearance/>")
+						 .append($("<material/>")
+							 .attr("emissiveColor", 'black')
+							))
+			    .append($("<Polyline2D/>")
+				    .attr("lineSegments", coordMins[2]+' 0 '+coordMaxs[2]+' 0')));
+	    });
+	}
+	
     }
     
     // biuilds the ticks, the tick labels, and the axis label for 
@@ -595,7 +663,7 @@ var LiveGraphics3D = function (container, options) {
 		var point = {};
 		
 		if (!str) {
-		    console.log('Couldnt parse point');
+		    console.log('Error Parsing Point');
 		    return;
 		}
 		
@@ -619,7 +687,7 @@ var LiveGraphics3D = function (container, options) {
 		// Otherwise its a list of commands that we need to 
 		// process individually
 		var commands = splitMathematicaBlocks(block);
-		console.log(commands);
+		
 		commands.forEach(function(command) {
 		    if (command.match(/^\s*\{/)) {
 			// This is a block inside of a block.
@@ -709,7 +777,7 @@ var LiveGraphics3D = function (container, options) {
 			var label = {};
 			
 			if (!str) {
-			    console.log('Couldnt Parse Label');
+			    console.log('Error Parsing Label');
 			    return;
 			}
 			
@@ -717,7 +785,7 @@ var LiveGraphics3D = function (container, options) {
 			str = command.match(/StyleForm\[\s*(\w+),\s*FontSize\s*->\s*(\d+)\s*\]/);
 			
 			if (!str) {
-			    console.log('Couldnt Parse Label');
+			    console.log('Error Parsing Label');
 			    return;
 			}
 			
