@@ -458,9 +458,11 @@ var AddProblemSetView = ModalView.extend({
         this.model = new ProblemSet({},util.pluckDateSettings(options.settings));
         this.model.problemSets = options.problemSets; 
 
+        var tmpl = _.template($("#add-hw-set-template").html());
+        
         _(options).extend({
             modal_header: "Add Problem Set to Course",
-            modal_body: _.template($("#add-hw-set-template").html(),{users: [config.courseSettings.user]}),
+            modal_body:  tmpl({users: [config.courseSettings.user]}),
             modal_action_button_text: "Add New Set"
         })
 

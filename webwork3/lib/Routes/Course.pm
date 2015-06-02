@@ -111,8 +111,7 @@ get '/courses/:course_id' => sub {
 
 post '/courses/:new_course_id' => sub {
 
-	if(session->{permission} < 15){send_error($PERMISSION_ERROR,403)}
-
+    checkPermissions(15,session->{user});
 
     my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
 	my $courseDir = "$coursesDir/" . params->{new_course_id};
@@ -207,7 +206,7 @@ post '/courses/:new_course_id' => sub {
 
 put '/courses/:course_id' => sub {
 
-	if(session->{permission} < 15){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(15,session->{user});
 
 	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
 
@@ -240,7 +239,7 @@ put '/courses/:course_id' => sub {
 
 del '/courses/:course_id' => sub {
 
-	if(session->{permission} < 15){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(15,session->{user});
 
  #    my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
 	# my $courseDir = "$coursesDir/" . params->{course_id};
@@ -340,7 +339,6 @@ get '/courses/:course_id/manager' =>  sub {
 
 	#debug "case 3";
 
-
 	## check if the user passed in via the URL is the same as the session user.
 
 	if(session 'user'){
@@ -354,7 +352,6 @@ get '/courses/:course_id/manager' =>  sub {
 	} else {
 		session->destroy;
 	}
-
 
 	#debug "case 4";
 

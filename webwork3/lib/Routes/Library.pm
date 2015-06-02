@@ -451,6 +451,8 @@ any ['get', 'post'] => '/renderer/courses/:course_id/sets/:set_id/problems/:prob
     $renderParams->{displayMode} = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
     
     ### The user is not a professor
+    
+    checkPermissions(0,session->{user});
 
     if(session->{permission} < 10){  ### check that the user belongs to the course and set. 
 

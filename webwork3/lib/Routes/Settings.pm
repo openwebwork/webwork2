@@ -11,6 +11,7 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 use strict;
 use warnings;
 use Utils::CourseUtils qw/getCourseSettings/;
+use Routes::Authentication qw/checkPermissions/;
 use Dancer ':syntax';
 
 ####
@@ -23,7 +24,7 @@ use Dancer ':syntax';
 
 get '/courses/:course_id/settings' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	return getCourseSettings;
 
@@ -39,7 +40,7 @@ get '/courses/:course_id/settings' => sub {
 
 get '/courses/:course_id/settings/:setting_id' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	my $ConfigValues = getConfigValues(vars->{ce});
 
@@ -63,7 +64,7 @@ get '/courses/:course_id/settings/:setting_id' => sub {
 
 put '/courses/:course_id/settings/:setting_id' => sub {
 
-	if(session->{permission} < 10){send_error($PERMISSION_ERROR,403)}
+	checkPermissions(10,session->{user});
 
 	#debug "in PUT /course/:course_id/settings/:setting_id";
 	

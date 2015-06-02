@@ -1,10 +1,26 @@
 {
   "name": "eventie",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "eventie.js",
   "description": "event binding helper",
   "ignore": [
     "component.json",
-    "test"
-  ]
+    "test.html",
+    "**/.*",
+    "node_modules",
+    "bower_components"
+  ],
+  "homepage": "https://github.com/desandro/eventie",
+  "authors": [
+    "David DeSandro"
+  ],
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "event"
+  ],
+  "license": "MIT"
 }

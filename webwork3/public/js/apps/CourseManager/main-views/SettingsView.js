@@ -7,7 +7,8 @@ var SettingsView = MainView.extend({
     messageTemplate : _.template($("#settings-messages-template").html()),
     initialize: function (options) {
         this.categories = options.settings.chain().pluck("attributes").pluck("category")
-            .unique().difference("timezone").value();
+             //.unique().difference("timezone").value();
+            .unique().value();
 
         MainView.prototype.initialize.call(this,options);
 
@@ -18,7 +19,8 @@ var SettingsView = MainView.extend({
         "shown.bs.tab a[data-toggle='tab']": "changeSettingTab"
      },
      render: function () {
-        this.$el.html(_.template($("#settings-template").html(),{categories: this.categories}));
+        var tmpl = _.template($("#settings-template").html());
+        this.$el.html(tmpl({categories: this.categories}));
         this.changeSettingTab(this.state.get("category"));
         MainView.prototype.render.apply(this);
         return this;

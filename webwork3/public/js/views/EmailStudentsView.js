@@ -9,7 +9,8 @@ define(['backbone', 'underscore'], function(Backbone, _){
      render: function ()
      {
           var self = this; 
-          this.$el.html(_.template($("#emailStudentTemplate").html(),this.model));
+         var tmpl = _.template($("#emailStudentTemplate").html());
+          this.$el.html(tmpl(this.model));
           _(this.users).each(function (user){
             $("#emailStudentList",self.$el).append(user.attributes.first_name + " " + user.attributes.last_name + ","); 
           });

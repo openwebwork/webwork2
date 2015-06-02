@@ -827,5 +827,7 @@ sub handle_error {
 	}
 }
 
+sub DESTROY {
+}
 1;
 

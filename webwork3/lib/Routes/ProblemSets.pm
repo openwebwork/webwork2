@@ -90,7 +90,7 @@ get '/courses/:course_id/sets/:set_id' => sub {
 ##
 
 post '/courses/:course_id/sets/:set_id' => sub {
-    checkPermissions(10);
+    checkPermissions(10,session->{user});
 
   # call validator directly instead
 
@@ -130,7 +130,7 @@ post '/courses/:course_id/sets/:set_id' => sub {
 
 put '/courses/:course_id/sets/:set_id' => sub {
 
-    checkPermissions(10);
+    checkPermissions(10,session->{user});
 
     send_error("The set name: " . param('set_id'). " does not exist.",404)
         if (! vars->{db}->existsGlobalSet(params->{set_id})); 
@@ -909,7 +909,8 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
 get '/courses/:course_id/status/usersets' => sub {
 
-
+    checkPermissions(10,session->{user});
+    
     my @setNames = vars->{db}->listGlobalSets;
 
     my @sets = map { {set_id=>$_} } @setNames; 
@@ -954,6 +955,8 @@ get '/courses/:course_id/status/usersets' => sub {
 ###
 
 post '/courses/:course_id/fix/usersets' => sub {
+
+    checkPermissions(10,session->{user});
 
     my $p = vars->{db}->getUserProblem("profa","HW5.2",6);
     debug $p;

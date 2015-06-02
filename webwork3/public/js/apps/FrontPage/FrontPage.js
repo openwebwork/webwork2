@@ -90,7 +90,8 @@ var FrontPage = WebPage.extend({
         }});
         this.userSetList = new UserSetListOfSets([],{user: config.courseSettings.user});
         this.userSetList.fetch({success: this.buildProblemSetPulldown});
-        $(".login-container").html(_.template($("#logged-in-template").html(),{user: config.courseSettings.user}));
+        var tmpl = _.template($("#logged-in-template").html());
+        $(".login-container").html(tmpl({user: config.courseSettings.user}));
     },
     checkLogin: function(data){
         if(data.logged_in==1){
@@ -184,7 +185,8 @@ var UserSetRowView = Backbone.View.extend({
     },
 //    events: { "click .setname": "showSet"},
     bindings: {".setname": {observe: "set_id" , update: function($el,val,model,options){
-        $el.html(_.template($("#problem-set-name-template").html(),{set_id: val}));
+        var tmpl = _.template($("#problem-set-name-template").html()); 
+        $el.html(tmpl({set_id: val}));
         }},
         ".due-date": "due_date",
         ".problems": "problems",
@@ -216,21 +218,10 @@ var SetInfoView = Backbone.View.extend({
         ".reduced-credit-date": {observe: "due_date",
             onGet: function(val){
                 var mins = config.settings.findWhere({var: "pg{ansEvalDefaults}{reducedScoringPeriod}"}).get("value");
-                return moment.unix(val).subtract("minutes",mins).format("MM/DD/YYYY [at] hh:mmA")
+                return moment.unix(val).subtract(mins,"minutes").format("MM/DD/YYYY [at] hh:mmA")
             }
         }
     }
-    //         updateMethod: "html",
-    //         update: function($el, val, model, options) { 
-    //             if(model.get("enable_reduced_scoring")==="1"){
-    //                 var mins = config.settings.findWhere({var: "pg{ansEvalDefaults}{reducedScoringPeriod}"}).get("value");
-    //                 var reduced_credit_date = moment.unix(model.get("due_date")).subtract("minutes",mins);
-    //                $el.html(this.reducedCreditTemplate({reduced_credit_date: reduced_credit_date.format("MM/DD/YYYY [at] hh:mmA")}));                   
-    //             }
- 
-    //         }
-    //     }
-    // }
 });
 
 

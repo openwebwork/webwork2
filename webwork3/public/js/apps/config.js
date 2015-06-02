@@ -66,7 +66,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         setDate: function(evt){
             var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
             var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-            theDate.year(newDate.year()).months(newDate.months()).date(newDate.date());
+            theDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
             evt.data.model.set(evt.data.options.observe,theDate.unix()); 
         },
         setTime: function(evt,timeStr){
@@ -180,12 +180,12 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                     && ! model.show_reduced_scoring){
                 $el.html("");
             } else {
-                $el.html(_.template($("#edit-date-time-template").html(),{date: moment.unix(val).format("MM/DD/YYYY")}));        
+                var tmpl = _.template($("#edit-date-time-template").html());
+                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));        
             }
             
-            
-            var popoverHTML = _.template($("#time-popover-template").html(),
-                        {time : moment.unix(model.get(options.observe)).format("h:mm a")});
+            var tmpl = _.template($("#time-popover-template").html());
+            var popoverHTML = tmpl({time : moment.unix(model.get(options.observe)).format("h:mm a")});
             var timeIcon = $el.children(".open-time-editor");
             timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
                 trigger: "manual"});
@@ -214,7 +214,8 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                     && ! model.show_reduced_scoring){
                 $el.html("");
             } else {
-                $el.html(_.template($("#edit-date-time2-template").html(),{date: moment.unix(val).format("MM/DD/YYYY")}));        
+                var tmpl = _.template($("#edit-date-time2-template").html());
+                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));        
             }
             $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, config.setDate);
             $el.children(".wwtime").text(moment.unix(model.get(options.observe)).format("h:mm a"))

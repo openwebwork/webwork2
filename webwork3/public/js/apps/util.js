@@ -4,8 +4,9 @@
  * 
  */
              
-define(['underscore','config','models/AssignmentDateList','models/AssignmentDate'], function(_,config,AssignmentDateList,AssignmentDate){
+define(['underscore','config','models/AssignmentDateList','models/AssignmentDate','moment'], function(_,config,AssignmentDateList,AssignmentDate,moment){
 var util = {             
+    // as of 2015-01-02, this function is no longer used in lieu of a library.  To delete after some testing. 
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
         
@@ -42,6 +43,16 @@ var util = {
         }
 
         return arr; 
+     },
+     // this function escapes both commas and double quotes (")
+     csvEscape: function(str){
+        if(/[\"|,]/.test(str))
+        {
+            str = str.replace(/\"/g,'""');
+            return '"' + str + '"';
+        }   else {
+            return str;
+        }
      },
      readSetDefinitionFile: function(file){
         var self = this;

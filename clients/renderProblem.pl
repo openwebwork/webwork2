@@ -34,45 +34,68 @@ Rembember to configure the local output file and display command !!!!!!!!
 use strict;
 use warnings;
 
-
-
-##################################################
-#  configuration section for client
-##################################################
-
-# Use address to WeBWorK code library where WebworkClient.pm is located.
-use lib '/opt/webwork/webwork2/lib';
-#use Crypt::SSLeay;  # needed for https
+# Find webwork2 library
+BEGIN {
+        die "WEBWORK_ROOT not found in environment. \n
+             WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
+             It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
+                unless exists $ENV{WEBWORK_ROOT};
+	# Unused variable, but define it twice to avoid an error message.
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
+}
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use Crypt::SSLeay;  # needed for https
 use WebworkClient;
 use MIME::Base64 qw( encode_base64 decode_base64);
-
 
 #############################################
 # Configure
 #############################################
 
+
+ # verbose output when UNIT_TESTS_ON =1;
+ our $UNIT_TESTS_ON             = 0;
+
+ # Command line for displaying the temporary file in a browser.
+ #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
+  use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
+ #use constant DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
+
+
+
+my $use_site;
+# select a rendering site  
+ #$use_site = 'test_webwork';    # select a rendering site 
+ #$use_site = 'local';           # select a rendering site 
+ $use_site = 'hosted2';        # select a rendering site 
+
+# credentials file location -- search for one of these files 
+my $credential_path;
+my @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials',);
+# Place a credential file containing the following information at one of the locations above.
+# 	%credentials = (
+# 			userID          => "my login name for the webwork course",
+# 			password        => "my password ",
+# 			courseID        => "the name of the webwork course",
+# 	);
+
+
  ############################################################
- # configure the local output file and display command !!!!!!!!
+ # End configure
  ############################################################
 
  # Path to a temporary file for storing the output of renderProblem.pl
- use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; 
+ use constant  TEMPOUTPUTFILE   => "$ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html"; 
  
- # Command line for displaying the temporary file in a browser.
- # use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
-   use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
+use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
+
+die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissions 777 " unless
+-w TEMPOUTPUTFILE();
 
  ############################################################
  
- my $use_site;
- #$use_site = 'test_webwork';    # select a rendering site 
- #$use_site = 'local';           # select a rendering site 
- $use_site = 'hosted2';  # select a rendering site 
- 
- 
- ############################################################
- 
-# To configure the target webwork server
+# To configure a new target webwork server
 # two URLs are required
 # 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
 #    points to the Webservice.pm and Webservice/RenderProblem modules
@@ -112,13 +135,13 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE, %credentials);
 if ($use_site eq 'local') {
 	# the rest can work!!
-	$XML_URL      =  'http://localhost:80';
+	$XML_URL          =  'http://localhost:80';
 	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
-	$XML_PASSWORD     =  'xmlwebwork';
+	$XML_PASSWORD     =  'xmlwebwork';    #matches password in renderViaXMLRPC.pm
 	$XML_COURSE       =  'daemon_course';
 } elsif ($use_site eq 'hosted2') {  
 	
-	$XML_URL      =  'https://hosted2.webwork.rochester.edu';
+	$XML_URL          =  'https://hosted2.webwork.rochester.edu';
 	$FORM_ACTION_URL  =  'https://hosted2.webwork.rochester.edu/webwork2/html2xml';
  	$XML_PASSWORD     = 'xmlwebwork';
  	$XML_COURSE       = 'daemon_course';
@@ -136,15 +159,12 @@ if ($use_site eq 'local') {
 #  END configuration section for client
 ##################################################
 
-our $UNIT_TESTS_ON             = 0;
 
 ####################################################
 # get credentials
 ####################################################
 
 
-my $credential_path;
-my @path_list = ('.ww_credentials', '/Users/gage/.ww_credentials', '/Users/gage/ww_session_credentials');
 foreach my $path (@path_list) {
 	if (-r "$path" ) {
 		$credential_path = $path;
@@ -166,7 +186,7 @@ EOF
 }
 
 eval{require $credential_path};
-if ($@  or not defined %credentials) {
+if ($@  or not  %credentials) {
 
 print STDERR <<EOF;
 
@@ -181,8 +201,6 @@ EOF
 die;
 }
 
-
-use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
 
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
@@ -218,27 +236,27 @@ our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
 	displayMode            => DISPLAYMODE(),
-	site_password          =>  $credentials{site_password},
+	site_password          =>  $XML_PASSWORD//'',
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
-	session_key            =>  $credentials{session_key},
+	session_key            =>  $credentials{session_key}//'',
 );
  
  $xmlrpc_client->encodeSource($source);
  
  my $input = { 
-		userID      	=> $credentials{userID}||'',
-		session_key	 	=> $credentials{session_key}||'',
-		courseID   		=> $credentials{courseID}||'',
-		courseName   	=> $credentials{courseID}||'',
-		password     	=> $credentials{password}||'',	
-		site_password   => $credentials{site_password}||'',
+		userID      	=> $credentials{userID}//'',
+		session_key	 	=> $credentials{session_key}//'',
+		courseID   		=> $credentials{courseID}//'',
+		courseName   	=> $credentials{courseID}//'',
+		password     	=> $credentials{password}//'',	
+		site_password   => $XML_PASSWORD//'',
 		envir           => $xmlrpc_client->environment(),
 		                 
  };
 
 
-$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
+#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
 $input->{envir}->{fileName} = $fileName;
 
 #xmlrpcCall('renderProblem');

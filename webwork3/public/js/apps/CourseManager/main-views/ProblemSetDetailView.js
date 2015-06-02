@@ -220,8 +220,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 // fill in a reduced_scoring_date if the field is empty or 0. 
                 // I think this should go into the ProblemSet model upon either parsing or creation. 
                 if(this.model.get("reduced_scoring_date")=="" || this.model.get("reduced_scoring_date")==0){
-                    var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
-                        this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+                    var rcDate = moment.unix(this.model.get("due_date"))
+                        .subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"),"minutes");
                     this.model.set({reduced_scoring_date: rcDate.unix()});
                 }
             } else {

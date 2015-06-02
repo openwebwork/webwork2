@@ -242,4 +242,7 @@ sub keyparts_to_where {
 *sql_table_name=  *WeBWorK::DB::Schema::NewSQL::Std::sql_table_name;
 *sql_field_name=  *WeBWorK::DB::Schema::NewSQL::Std::sql_field_name;
 
+
+sub DESTROY {
+}
 1;
