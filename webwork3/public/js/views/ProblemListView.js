@@ -58,7 +58,8 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             return this;
         },
         render: function() {
-            this.$el.html(_.template($("#problem-list-template").html(),{show_undo: this.viewAttrs.show_undo}));
+            var tmpl = _.template($("#problem-list-template").html());
+            this.$el.html(tmpl({show_undo: this.viewAttrs.show_undo}));
             _(this.problemViews).each(function(pv){
                 pv.rendered = false;  
             })
@@ -111,8 +112,9 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 stop = start+8<this.maxPages?start+8 : this.maxPages;
             }
             if(this.maxPages>1){
-                this.$(".problem-paginator").html(_.template($("#paginator-template").html(),
-                        {current_page: this.currentPage, page_start:start,page_stop:stop,num_pages:this.maxPages}));
+                var tmpl = _.template($("#paginator-template").html()); 
+                this.$(".problem-paginator").html(tmpl({current_page: this.currentPage, page_start:start,               
+                                                        page_stop:stop,num_pages:this.maxPages}));
             }
             return this;
         },

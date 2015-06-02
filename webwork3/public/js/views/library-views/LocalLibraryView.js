@@ -71,7 +71,8 @@ function(Backbone, _, LibraryView,ProblemList,config,Problem){
             if (index >-1){
                 _menu[index]= "TOPDIR";
             }
-            this.$(".library-tree-container").html(_.template($("#local-library-tree-template").html(),{menu: _menu}));
+            var tmpl = _.template($("#local-library-tree-template").html());
+            this.$(".library-tree-container").html(tmpl({menu: _menu}));
             this.delegateEvents();
         }
     });

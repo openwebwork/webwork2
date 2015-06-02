@@ -23,6 +23,7 @@ Additionally if the text has been shortened you can set a class to be appended t
 - **addclass** (string) Add a class to the truncated strings element *[default: false]*
 - **addtitle** (bool) Add/Set "title" attribute with original text to the truncated strings element *[default: false]*
 - **multiline** (bool) Applies truncation to multi-line, wrapped text *[default: false]*
+- **assumeSameStyle** (bool) When working with multiple elements with the same style, cache the style for improved performance *[default: false]*
 
 ## License ##
 

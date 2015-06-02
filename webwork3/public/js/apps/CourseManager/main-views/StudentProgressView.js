@@ -10,7 +10,10 @@ var StudentProgressView = MainView.extend({
 		this.tableSetup();
 		this.state.on({
 			"change:type": this.changeDisplay, 
-			"change:set_id change:user_id": this.buildTable,
+			"change:user_id": self.buildTable,
+            "change:set_id": self.buildTable
+		}).on("change:user_id",function(m){
+			console.log(m.changed);
 		})
 
 	},

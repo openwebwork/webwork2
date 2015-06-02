@@ -304,9 +304,10 @@ var LoginView = ModalView.extend({
     initialize: function (options) {
         _.bindAll(this,"login");
 
+        var tmpl = _.template($("#login-template").html());
         _(options).extend({
             modal_header: "Login to Course",
-            modal_body: _.template($("#login-template").html(),{message: options.messageTemplate({type: "relogin"})}),
+            modal_body: tmpl({message: options.messageTemplate({type: "relogin"})}),
             modal_action_button_text: "Login"
         })
 

@@ -1,8 +1,8 @@
 /*!
- * jQuery UI Dialog 1.11.0
+ * jQuery UI Dialog 1.11.4
  * http://jqueryui.com
  *
- * Copyright 2014 jQuery Foundation and other contributors
+ * Copyright jQuery Foundation and other contributors
  * Released under the MIT license.
  * http://jquery.org/license
  *
@@ -30,7 +30,7 @@
 }(function( $ ) {
 
 return $.widget( "ui.dialog", {
-	version: "1.11.0",
+	version: "1.11.4",
 	options: {
 		appendTo: "body",
 		autoOpen: true,
@@ -150,6 +150,7 @@ return $.widget( "ui.dialog", {
 		var next,
 			originalPosition = this.originalPosition;
 
+		this._untrackInstance();
 		this._destroyOverlay();
 
 		this.element
@@ -228,10 +229,10 @@ return $.widget( "ui.dialog", {
 
 	_moveToTop: function( event, silent ) {
 		var moved = false,
-			zIndicies = this.uiDialog.siblings( ".ui-front:visible" ).map(function() {
+			zIndices = this.uiDialog.siblings( ".ui-front:visible" ).map(function() {
 				return +$( this ).css( "z-index" );
 			}).get(),
-			zIndexMax = Math.max.apply( null, zIndicies );
+			zIndexMax = Math.max.apply( null, zIndices );
 
 		if ( zIndexMax >= +this.uiDialog.css( "z-index" ) ) {
 			this.uiDialog.css( "z-index", zIndexMax + 1 );
@@ -260,10 +261,23 @@ return $.widget( "ui.dialog", {
 		this._position();
 		this._createOverlay();
 		this._moveToTop( null, true );
+
+		// Ensure the overlay is moved to the top with the dialog, but only when
+		// opening. The overlay shouldn't move after the dialog is open so that
+		// modeless dialogs opened after the modal dialog stack properly.
+		if ( this.overlay ) {
+			this.overlay.css( "z-index", this.uiDialog.css( "z-index" ) - 1 );
+		}
+
 		this._show( this.uiDialog, this.options.show, function() {
 			that._focusTabbable();
 			that._trigger( "focus" );
 		});
+
+		// Track the dialog immediately upon openening in case a focus event
+		// somehow occurs outside of the dialog before an element inside the
+		// dialog is focused (#10152)
+		this._makeFocusTarget();
 
 		this._trigger( "open" );
 	},
@@ -576,12 +590,16 @@ return $.widget( "ui.dialog", {
 
 	_trackFocus: function() {
 		this._on( this.widget(), {
-			"focusin": function( event ) {
-				this._untrackInstance();
-				this._trackingInstances().unshift( this );
+			focusin: function( event ) {
+				this._makeFocusTarget();
 				this._focusedElement = $( event.target );
 			}
 		});
+	},
+
+	_makeFocusTarget: function() {
+		this._untrackInstance();
+		this._trackingInstances().unshift( this );
 	},
 
 	_untrackInstance: function() {

@@ -1,8 +1,8 @@
 /*!
- * jQuery UI Core 1.11.0
+ * jQuery UI Core 1.11.4
  * http://jqueryui.com
  *
- * Copyright 2014 jQuery Foundation and other contributors
+ * Copyright jQuery Foundation and other contributors
  * Released under the MIT license.
  * http://jquery.org/license
  *
@@ -24,7 +24,7 @@
 $.ui = $.ui || {};
 
 $.extend( $.ui, {
-	version: "1.11.0",
+	version: "1.11.4",
 
 	keyCode: {
 		BACKSPACE: 8,
@@ -48,15 +48,16 @@ $.extend( $.ui, {
 
 // plugins
 $.fn.extend({
-	scrollParent: function() {
+	scrollParent: function( includeHidden ) {
 		var position = this.css( "position" ),
 			excludeStaticParent = position === "absolute",
+			overflowRegex = includeHidden ? /(auto|scroll|hidden)/ : /(auto|scroll)/,
 			scrollParent = this.parents().filter( function() {
 				var parent = $( this );
 				if ( excludeStaticParent && parent.css( "position" ) === "static" ) {
 					return false;
 				}
-				return (/(auto|scroll)/).test( parent.css( "overflow" ) + parent.css( "overflow-y" ) + parent.css( "overflow-x" ) );
+				return overflowRegex.test( parent.css( "overflow" ) + parent.css( "overflow-y" ) + parent.css( "overflow-x" ) );
 			}).eq( 0 );
 
 		return position === "fixed" || !scrollParent.length ? $( this[ 0 ].ownerDocument || document ) : scrollParent;
@@ -93,10 +94,10 @@ function focusable( element, isTabIndexNotNaN ) {
 		if ( !element.href || !mapName || map.nodeName.toLowerCase() !== "map" ) {
 			return false;
 		}
-		img = $( "img[usemap=#" + mapName + "]" )[0];
+		img = $( "img[usemap='#" + mapName + "']" )[ 0 ];
 		return !!img && visible( img );
 	}
-	return ( /input|select|textarea|button|object/.test( nodeName ) ?
+	return ( /^(input|select|textarea|button|object)$/.test( nodeName ) ?
 		!element.disabled :
 		"a" === nodeName ?
 			element.href || isTabIndexNotNaN :

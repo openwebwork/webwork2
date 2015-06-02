@@ -20,6 +20,7 @@ var require = {
         "eventie":              "/webwork3/js/bower_components/eventie",
         "eventEmitter":         "/webwork3/js/bower_components/eventEmitter",
         "knowl":                "/webwork2_files/js/vendor/other/knowl",
+        "jquery-csv":           "/webwork3/js/bower_components/jquery-csv/src/jquery.csv",
         "views":                "/webwork3/js/views",
         "models":               "/webwork3/js/models",
         "apps":                 "/webwork3/js/apps",
@@ -41,9 +42,6 @@ var require = {
         'jquery-truncate': ['jquery'],
         'editablegrid': {deps: ['jquery'], exports: 'EditableGrid'},
         'blob': {exports : 'Blob'},
-        //'eventie' : {exports :'Eventie'},
-        //'eventEmitter': {exports: 'EventEmitter'},
-        //'jquery-tablesorter': ['jquery'],
         'imagesloaded': ['jquery'],
         'knowl': ['jquery']
     }

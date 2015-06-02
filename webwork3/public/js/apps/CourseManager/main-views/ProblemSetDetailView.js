@@ -9,9 +9,9 @@
 
 define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
     'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList','sidebars/ProblemListOptionsSidebar',
-    'config','bootstrap'], 
+    'config','moment','bootstrap'], 
     function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList,ProblemListOptionsSidebar, config){
+        UserSetList,ProblemListOptionsSidebar, config,moment){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
@@ -207,8 +207,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
 
                 // fill in a reduced_scoring_date if the field is empty or 0. 
                 if(this.model.get("reduced_scoring_date")=="" || this.model.get("reduced_scoring_date")==0){
-                    var rcDate = moment.unix(this.model.get("due_date")).subtract("minutes",
-                        this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"));
+                    var rcDate = moment.unix(this.model.get("due_date"))
+                        .subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"),"minutes");
                     this.model.set({reduced_scoring_date: rcDate.unix()});
                 }
             } else {
