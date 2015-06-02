@@ -66,7 +66,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         setDate: function(evt){
             var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
             var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-            theDate.year(newDate.year()).months(newDate.months()).date(newDate.date());
+            theDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
             evt.data.model.set(evt.data.options.observe,theDate.unix()); 
         },
         setTime: function(evt,timeStr){

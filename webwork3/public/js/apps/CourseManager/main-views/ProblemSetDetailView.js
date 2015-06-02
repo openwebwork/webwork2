@@ -9,9 +9,9 @@
 
 define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
     'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList','sidebars/ProblemListOptionsSidebar',
-    'config','bootstrap'], 
+    'config','moment','bootstrap'], 
     function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList,ProblemListOptionsSidebar, config){
+        UserSetList,ProblemListOptionsSidebar, config,moment){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
