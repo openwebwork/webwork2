@@ -12,6 +12,7 @@
     "jquery-1.9": "jquery#1.9.*",
     "jquery": "2.1.4",
     "jquery-ui": "1.11.4",
+    "jquery-csv": "*",
     "requirejs": "2.1.18",
     "bootstrap-2": "bootstrap#2.*",
     "bootstrap": "3.3.4",

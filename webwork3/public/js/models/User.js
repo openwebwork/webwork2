@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config'], function(Backbone, _, config){
+define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, config,util){
     var User = Backbone.Model.extend({
         initialize: function (model){
             this.changingAttributes = {};
@@ -29,7 +29,7 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
         },
         toCSVString: function (){
             var self = this;
-            return (config.userProps.map(function(prop){return '"' + self.get(prop.shortName)+'"';})).join(",") + "\n";
+            return (config.userProps.map(function(prop){return util.csvEscape(self.get(prop.shortName));})).join(",") + "\n";
         },
         parse: function(response){
             // check the response.  Perhaps an error should be thrown a valid value isn't sent from the server. 
