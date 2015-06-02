@@ -268,7 +268,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         render: function(){
             var self = this; 
-            this.$el.html(_.template($("#set-headers-template").html(),this.tabState.attributes));  
+            var tmpl = _.template($("#set-headers-template").html());
+            this.$el.html(tmpl(this.tabState.attributes));  
             if(this.headerFiles && this.setHeader){
                 this.showSetHeaders();
                 this.stickit();
