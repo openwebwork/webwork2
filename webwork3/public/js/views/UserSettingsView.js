@@ -28,9 +28,7 @@ var UserSettingsView = MainView.extend({
             if(attr==="new_password"){
               attr = "confirm_password";
             }
-            console.log("oops");
-            self.$(self.invBindings[attr]).parent().addClass("has-error")
-              .popover({title: "Error", content: error}).popover("show");
+            $(".confirm-password").closest("tr").find(".error-cell").html(error).addClass("bg-danger");
           }
         });
         
@@ -63,6 +61,7 @@ var UserSettingsView = MainView.extend({
         ".save-old-answers": "showOldAnswers"
 	},
 	submitPassword: function (){
+        this.$(".error-cell").removeClass("bg-danger").html("");
 		if(this.model.isValid(true)){
 			this.user.savePassword(this.model.pick("new_password","old_password"),{
 				success: this.saveSuccess, error: this.saveError});
@@ -129,7 +128,9 @@ var UserSettings = Backbone.Model.extend({
   	validatePassword: function(value, attr, computedState) {
     	if(this.get("new_password") !== this.get('confirm_password')) {
       		return 'The confirmed password is not equal to the new password'; // #I18N
-    	}
+    	} else if(this.get("new_password").length<6){
+            return 'You should not set a short password';
+        }
   	}, 
     checkPassword: function(value, attr, computedState) {
           console.log("testing");
