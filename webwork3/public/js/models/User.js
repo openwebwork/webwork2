@@ -29,7 +29,7 @@ define(['backbone', 'underscore','config'], function(Backbone, _, config){
         },
         toCSVString: function (){
             var self = this;
-            return (config.userProps.map(function(prop){return self.get(prop.shortName);})).join(",") + "\n";
+            return (config.userProps.map(function(prop){return '"' + self.get(prop.shortName)+'"';})).join(",") + "\n";
         },
         parse: function(response){
             // check the response.  Perhaps an error should be thrown a valid value isn't sent from the server. 
