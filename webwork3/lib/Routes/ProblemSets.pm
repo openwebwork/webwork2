@@ -4,11 +4,15 @@
 #
 ##
 
-package ProblemSets;
+package Routes::ProblemSets;
 
 use strict;
 use warnings;
 use Dancer ':syntax';
+use Dancer::FileUtils qw/read_file_content dirname path/;
+use File::Slurp qw/write_file/;
+use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
+use Utils::LibraryUtils qw/render/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
@@ -20,7 +24,7 @@ use Dancer::Plugin::Ajax;
 use List::Util qw/first max/;
 use Data::Dumper;
 
-our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
+our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts source_file/;
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint/;
@@ -1135,9 +1139,7 @@ get '/courses/:course_id/headers' => sub {
     my $include = qr/header.*\.pg$/i;
     my $skipDIRS = join("|", keys %{ vars->{ce}->{courseFiles}->{problibs} });
     my $skip = qr/^(?:$skipDIRS|svn)$/;
-    
-    debug(Dumper($skip));
-    
+        
     my $rule = File::Find::Rule->new;
     $rule->or($rule->new->directory->name($skip)->prune->discard,$rule->new);  #skip the directories that match $skip
     my @files = $rule->file()->name($include)->in($templateDir);
@@ -1149,6 +1151,60 @@ get '/courses/:course_id/headers' => sub {
 
 
 
+####
+#
+#  get,put,post /courses/:course_id/sets/:set_id/setheader
+#
+#  gets, creates a new or updates the set header for the problem set :set_id
+#
+####
+
+any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub { 
+     checkPermissions(10,session->{user});
+  
+    if (!vars->{db}->existsGlobalSet(param('set_id'))){
+        send_error("The problem set with name: " . param('set_id'). " does not exist.",404);  
+    }
+    
+    my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
+    my $setHeaderURL = $globalSet->{set_header};
+    my $hardcopyHeaderURL = $globalSet->{hardcopy_header};
+    my $templateDir = vars->{ce}->{courseDirs}->{templates};
+    my $setHeaderFile = path(dirname($templateDir),'templates',$setHeaderURL);
+    my $hardcopyHeaderFile = path(dirname($templateDir),'templates',$hardcopyHeaderURL);
+    my $headerContent = params->{set_header_content}; 
+    my $hardcopyHeaderContent = params->{hardcopy_header_content};
+    if(request->is_put()){
+        write_file($setHeaderFile,params->{set_header_content});
+        write_file($hardcopyHeaderFile,params->{hardcopy_header_content});
+    } else {
+        $headerContent = read_file_content($setHeaderFile);
+        $hardcopyHeaderContent = read_file_content($hardcopyHeaderFile);
+    }
+    
+    my $renderParams = {
+        displayMode => param('displayMode') || vars->{ce}->{pg}{options}{displayMode},
+        problemSeed => defined(params->{problemSeed}) ? params->{problemSeed} : 1,
+        showHints=> 0,
+        showSolutions=>0,
+        showAnswers=>0,
+        user=>vars->{db}->getUser(session->{user}),
+        set=>vars->{db}->getMergedSet(session->{user},params->{set_id}),
+        problem=>fake_problem(vars->{db}) };
+    
+	# check to see if the problem_path is defined
+    $renderParams->{problem}->{source_file} = $setHeaderFile;
+    my $ren = render($renderParams);
+    my $setHeaderHTML = $ren->{text};
+    $renderParams->{problem}->{source_file} = $hardcopyHeaderURL;
+    $ren = render($renderParams);
+    my $hardcopyHeaderHTML = $ren->{text};
+    
+    return {_id=>params->{set_id},set_header=>$setHeaderURL,hardcopy_header=>$hardcopyHeaderURL,
+            set_header_content=>$headerContent, hardcopy_header_content=>$hardcopyHeaderContent,
+            set_header_html=>$setHeaderHTML, hardcopy_header_html=>$hardcopyHeaderHTML
+        };
+};
 
 
 

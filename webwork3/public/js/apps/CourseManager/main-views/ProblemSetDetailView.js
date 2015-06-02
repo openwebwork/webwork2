@@ -10,9 +10,9 @@
 
 define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
     'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList','sidebars/ProblemListOptionsSidebar',
-    'views/AssignmentCalendar','models/ProblemSetList','apps/util','config','bootstrap'], 
+    'views/AssignmentCalendar','models/ProblemSetList','models/SetHeader','apps/util','config','bootstrap'], 
     function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList,ProblemListOptionsSidebar, AssignmentCalendar,ProblemSetList,util, config){
+        UserSetList,ProblemListOptionsSidebar, AssignmentCalendar,ProblemSetList,SetHeader,util, config){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
@@ -262,33 +262,79 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         tabName: "Set Headers",
         initialize: function(opts){
             TabView.prototype.initialize.apply(this,[opts]);
-            this.headerFiles = null; 
+            this.headerFiles = null;
+            this.setHeader = null;
+            
         },
         render: function(){
             var self = this; 
             this.$el.html(_.template($("#set-headers-template").html(),this.tabState.attributes));  
-            if(this.headerFiles){
+            if(this.headerFiles && this.setHeader){
+                this.showSetHeaders();
                 this.stickit();
             } else {
                 $.get(config.urlPrefix +  "courses/" + config.courseSettings.course_id + "/headers", function( data ) {
                     self.headerFiles = _(data).map(function(f){ return {label: f, value: f};});
                     self.render();
-                });   
+                });
+                
+                this.setHeader = new SetHeader({set_id: this.model.get("set_id")});
+                this.setHeader.on("change", function(model){
+                    model.save(model.changed,{success: function () { self.showSetHeaders();}});
+                    self.showSetHeaders();
+                }).fetch({success: function (){
+                    self.render();
+                }});
             }
         },
+        showSetHeaders: function (){
+            switch($(".view-options input:checked").attr("id")){
+                case "view-header-button": 
+                    this.$(".header-output").addClass("rounded-border").html(this.setHeader.get("set_header_html"));    
+                    break;   
+                case "view-hardcopy-button": 
+                    this.$(".header-output").addClass("rounded-border").html(this.setHeader.get("hardcopy_header_html"));    
+                    break; 
+                case "edit-header-button":
+                    this.$(".header-output").html($("#edit-header-template").html());
+                    break;
+                case "edit-hardcopy-button":
+                    this.$(".header-output").html($("#edit-hardcopy-template").html());
+                    break;
+
+            }
+            this.stickit(this.setHeader,this.headerBindings);
+        },
+        events: {
+            "change .view-options input": function () { 
+                this.showSetHeaders();
+            }  
+        },
         bindings: {
-            '.set-description': 'description',
-            '.set-header': { observe: "set_header", selectOptions: {collection: 'this.headerFiles'}},
-            '.hard-set-header': { observe: "hardcopy_header", selectOptions: {collection: 'this.headerFiles'}},
+            '#set-description': {observe: 'description', events: ['blur']},
+            '#set-header': { observe: "set_header", selectOptions: {collection: 'this.headerFiles'}},
+            '#hardcopy-header': { observe: "hardcopy_header", selectOptions: {collection: 'this.headerFiles'}},
+            
+        },
+        headerBindings: {
+            '#edit-header-textarea': {observe: "set_header_content", events: ['blur']},
+            '#edit-hardcopy-textarea': {observe: "hardcopy_header_content", events: ['blur']},
         },
         setProblemSet: function(_set){
+            var self = this; 
             this.tabState.set({set_id: _set.get("set_id")});
             this.model = _set;
+            this.model.on("change:set_header change:hardcopy_header",function (model) {
+                if(self.setHeader){
+                    self.setHeader.set(model.changed);
+                }
+            });
             return this;
         },
         getDefaultState: function () {
             return {set_id: ""};   
         }
+        
     });
 
     var ShowProblemsView = TabView.extend({

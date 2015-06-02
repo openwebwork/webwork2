@@ -23,11 +23,7 @@ my %ignoredir = (
 ###
 
 sub render {
-
-	debug "in general render sub";
-
 	my $renderParams = shift;
-
 	my @anskeys = split(";",params->{answer_fields} || ""); 
 	
 	$renderParams->{formFields}= {};

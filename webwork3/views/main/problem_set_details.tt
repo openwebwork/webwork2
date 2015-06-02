@@ -235,20 +235,57 @@ The results will be dispayed below.  To search for section 2 type "section:2" or
 
 <script type="text/template" id="set-headers-template"> 
 <h4>Set Headers and Description for <%=set_id%></h4>
-<table class="table">
-  <tbody>
-    <tr><td class="header col-md-3">Set Description</td><td><textarea rows="5" style="width: 100%" class="set-description"></textarea></td></tr>
-    <tr><td class="header col-md-3">Set Header</td><td><select class="set-header"></td></tr>
-    <tr><td class="col-md-3"><button class="btn btn-default view-header-button">View Header File</button></td><td rowspan="2">Stuff goes here</td></tr>
-    <tr><td class="col-md-3"><button class="btn btn-default edit-header-button">Edit Header File</button></td></tr>
-    <tr><td class="header col-md-3">Hardcopy Set Header</td><td><select class="hard-set-header"></td></tr>
-    <tr><td class="col-md-3"><button class="btn btn-default view-hard-header-button">View Hardcopy Header File</button></td><td rowspan="2">Stuff goes here</td></tr>
-    <tr><td class="col-md-3"><button class="btn btn-default edit-hard-header-button">Edit Hardcopy Header File</button></td></tr>
-    
-    </tbody>
-    </table>
 
+<div class="form-horizontal">
+  <div class="form-group">
+    <label class="col-md-3 control-label">Set Description</label>
+    <div class="col-md-9"><textarea rows="5" style="width: 100%" style="form-control" id="set-description"></textarea></div>
+  </div>
+</div>
+
+ <div class="row">
+  <div class="form-horizontal">
+      <div class="form-group">
+          <label class="col-md-3 control-label" for="set-header">Set Header</label>
+          <div class="col-md-6"><select id="set-header" class="form-control col-md-3"></select></div>
+          </div>
+    </div>
+  </div>
+  <div class="row">
+  <div class="form-horizontal">
+      <div class="form-group">
+          <label class="col-md-3 control-label" for="hardcopy-header">Hardcopy Header</label>
+          <div class="col-md-6"><select id="hardcopy-header" class="form-control col-md-3"></select></div>
+          </div>
+    </div>
+  </div>
+</div> 
+  <div class="btn-group view-options" data-toggle="buttons">
+    <label class="btn btn-primary active">
+      <input type="radio" name="options" id="view-header-button" autocomplete="off" checked>View Set Header
+    </label>
+    <label class="btn btn-primary">
+      <input type="radio" name="options" id="edit-header-button" autocomplete="off">Edit Set Header
+    </label>
+    <label class="btn btn-primary">
+      <input type="radio" name="options" id="view-hardcopy-button" autocomplete="off">View Hardcopy Header
+    </label>
+    <label class="btn btn-primary">
+      <input type="radio" name="options" id="edit-hardcopy-button" autocomplete="off">Edit HardCopy Header
+    </label>
+
+  </div>
+  <div class="header-output"></div>
 </script>
+
+<script type="text/template" id="edit-header-template">
+    <textarea class="form-control" id="edit-header-textarea" rows="15"></textarea>
+</script>
+<script type="text/template" id="edit-hardcopy-template">
+    <textarea class="form-control" id="edit-hardcopy-textarea" rows="15"></textarea>
+</script>
+
+
 
 <script type="text/template" id="problem-set-view-help-template">
 <h4>Problems</h4>

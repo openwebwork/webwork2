@@ -21,12 +21,6 @@ use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;
 use WeBWorK::Constants;
 
-# use constant MY_PROBLEMS => '  My Problems  ';
-# use constant MAIN_PROBLEMS => '  Unclassified Problems  ';
-# use constant fakeSetName => "Undefined_Set";
-# use constant fakeUserName => "Undefined_User";
-
-
 get '/Library/subjects' => sub {
 
 	my $webwork_dir = config->{webwork_dir};
