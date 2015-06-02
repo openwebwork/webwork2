@@ -7,7 +7,8 @@ var SettingsView = MainView.extend({
     messageTemplate : _.template($("#settings-messages-template").html()),
     initialize: function (options) {
         this.categories = options.settings.chain().pluck("attributes").pluck("category")
-            .unique().difference("timezone").value();
+             //.unique().difference("timezone").value();
+            .unique().value();
 
         MainView.prototype.initialize.call(this,options);
 

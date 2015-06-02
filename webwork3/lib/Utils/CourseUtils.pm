@@ -65,7 +65,6 @@ sub getAllUsers {
 
 sub getCourseSettings {
 
-
 	my $ConfigValues = vars->{ce}->{ConfigValues};
 	my @settings = ();
 
@@ -97,17 +96,11 @@ sub getCourseSettings {
 				if($setting->{type} eq 'boolean'){
 					$setting->{value} = $setting->{value} ? JSON::true : JSON::false;
 				}
-
+                
 				push(@settings,$setting);
 			}
 		}
 	}
-
-	my $tz = DateTime::TimeZone->new( name => vars->{ce}->{siteDefaults}->{timezone}); 
-	my $dt = DateTime->now();
-	my $timeZone = {var=>"timezone",value=>$tz->short_name_for_datetime( $dt ), category=>"timezone"};
-
-	push(@settings,$timeZone);
 
 	return \@settings;
 }
