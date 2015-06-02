@@ -1,5 +1,11 @@
 # Backbone.Validation
 
+![Version](https://img.shields.io/npm/v/backbone-validation.svg?style=flat)
+![Downlodas](https://img.shields.io/npm/dm/backbone-validation.svg?style=flat)
+![Dependencies](https://david-dm.org/thedersen/backbone.validation.svg?style=flat)
+![license](http://img.shields.io/npm/l/backbone.validation.svg?style=flat)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thedersen/backbone.validation?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 A validation plugin for [Backbone.js](http://documentcloud.github.com/backbone) that validates both your model as well as form input.
 
 ## Introduction
@@ -29,6 +35,10 @@ You can download the raw source from [GitHub](http://github.com/thedersen/backbo
 #### Node.js builds
 
     npm install backbone-validation
+
+#### Bower builds
+
+    bower install backbone-validation
 
 ## Getting started
 
@@ -79,7 +89,7 @@ var SomeModel = Backbone.Model.extend({
     return {
       name: {
         required: true
-      };
+      }
     }
   }
 });
@@ -183,6 +193,14 @@ For this to work, your view must have an instance property named *model* that ho
 
 When binding to a view with a model, Backbone's [validate](http://documentcloud.github.com/backbone/#Model-validate) method on the model is overridden to perform the validation. In addition, the model's [isValid](http://backbonejs.org/#Model-isValid) method is also overridden to provide some extra functionality.
 
+### Binding multiple views to same model
+
+It is possible to bind several views to the same model. This is specially useful in UI structures where forms are made with components that share models.
+
+When the model is validated all associated views with attributes from that model will validate its related elements.
+
+It is also possible to unbind each view separately without affecting other bindings.
+
 ### Binding to view with a collection
 
 For this to work, your view must have an instance property named *collection* that holds your collection before you perform the binding, or you can pass an optional collection in the options as shown in the example above.
@@ -233,7 +251,13 @@ Check to see if an attribute, an array of attributes or the entire model is vali
 
 `isValid` returns `undefined` when no validation has occurred and the model has validation (except with Backbone v0.9.9 where validation is called from the constructor), otherwise, `true` or `false`.
 
-If you pass `true` as an argument, this will force an validation before the result is returned:
+If you don't pass an argument, the properties defined by the `attributes` bind option will be validated. If no `attributes` option is used there will be no validation.
+
+```js
+var isValid = model.isValid();
+```
+
+If you pass `true` as an argument, this will force a validation before the result is returned:
 
 ```js
 var isValid = model.isValid(true);
@@ -266,7 +290,7 @@ var errorMessage = model.preValidate('attributeName', 'Value');
 //   name: 'Name is required',
 //   email: 'Email must be a valid email'
 // }
-var errors = model.preValidate({name: 'value', email: 'foo@example.com');
+var errors = model.preValidate({name: 'value', email: 'foo@example.com'});
 ```
 
 ## Configuration
@@ -277,7 +301,7 @@ The `Backbone.Validation.callbacks` contains two methods: `valid` and `invalid`.
 
 The default implementation of `invalid` tries to look up an element within the view with an name attribute equal to the name of the attribute that is validated. If it finds one, an `invalid` class is added to the element as well as a `data-error` attribute with the error message. The `valid` method removes these if they exists.
 
-The implementation is a bit naïve, so I recomend that you override it with your own implementation
+The implementation is a bit naïve, so I recommend that you override it with your own implementation
 
 globally:
 
@@ -399,6 +423,42 @@ Backbone.Validation.configure({
 });
 ```
 
+### Attributes
+
+The `attributes` option passed in Backbone.Validation.bind determines what model attributes must be validated. It can be an array, a function returning an array or an string that points to an registered attribute loader. By default, the 'inputNames' attribute loader is provided. It returns the name attribute of input elements in the view.
+
+Per view when binding:
+
+```js
+var SomeView = Backbone.View.extend({
+  render: function(){
+    Backbone.Validation.bind(this, {
+        attributes: function(view) {
+          return ['name', 'age']; // only name and age will be validated
+        }
+      }
+    });
+  }
+});
+```
+
+Set default globally:
+
+```js
+Backbone.Validation.configure({
+  attributes: 'inputNames' // returns the name attributes of bound view input elements
+});
+```
+
+Register an attribute loader:
+
+```js
+_.extend(Backbone.Validation.attributeLoaders, {
+  myLoader: function(view) {
+    // return an array with the attributes to be validated
+  }
+});
+```
 
 ## Events
 
@@ -862,7 +922,7 @@ The default implementation of the callbacks are a bit naïve, since it is very d
 
 My recommendation is to override the callbacks and implement your own strategy for displaying the error messages.
 
-Please refer to [this section](/#configuration/callbacks) for more details.
+Please refer to [this section](#callbacks) for more details.
 
 ### How can I use it with Twitter Bootstrap?
 
@@ -873,10 +933,38 @@ https://gist.github.com/2909552
 Basic behaviour:
 
 * The control-group gets an error class so that inputs get the red border
-* By default error messages get rendered as &lt;p class="help-block"&gt; (which has red text because of the error class)
+* By default error messages get rendered as `<p class="help-block">` (which has red text because of the error class)
 * You may use &lt;input .... data-error-style="inline"&gt; in your form to force rendering of a &lt;span class="help-inline"&gt;
 
 ## Release notes
+
+#### v0.11.3 [commits](https://github.com/thedersen/backbone.validation/compare/v0.11.2...v0.11.3)
+
+* Upgrading version in source file. Fixes #274.
+
+#### v0.11.2 [commits](https://github.com/thedersen/backbone.validation/compare/v0.11.1...v0.11.2)
+
+* Triggers 'invalid' event when calling `isValid` and call `valid`/`invalid` callbacks when passing array or name to `isValid`.
+
+#### v0.11.1 [commits](https://github.com/thedersen/backbone.validation/compare/v0.11.0...v0.11.1)
+
+* Support intermediate nested levels
+
+#### v0.11.0 [commits](https://github.com/thedersen/backbone.validation/compare/v0.10.0...v0.11.0)
+
+* Support for binding multiple views to same model
+
+#### v0.10.1 [commits](https://github.com/thedersen/backbone.validation/compare/v0.10.0...v0.10.1)
+
+* Removed duplicated calls of `flatten` in `validate` method
+
+#### v0.10.0 [commits](https://github.com/thedersen/backbone.validation/compare/v0.9.2...v0.10.0)
+
+* `attributes` bind option allows to configure the attributes that will be validated
+
+#### v0.9.2 [commits](https://github.com/thedersen/backbone.validation/compare/v0.9.1...v0.9.2)
+
+* Fixed `flatten()` method causing `Maximum call stack size exceeded` errors. Fixes [#260](https://github.com/thedersen/backbone.validation/issues/260) [#180](https://github.com/thedersen/backbone.validation/issues/180) [#210](https://github.com/thedersen/backbone.validation/issues/210) [#224](https://github.com/thedersen/backbone.validation/issues/224) [#233](https://github.com/thedersen/backbone.validation/issues/233)
 
 #### v0.9.1 [commits](https://github.com/thedersen/backbone.validation/compare/v0.9.0...v0.9.1)
 

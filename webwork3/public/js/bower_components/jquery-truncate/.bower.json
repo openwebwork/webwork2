@@ -1,11 +1,11 @@
 {
   "name": "jquery-truncate",
   "homepage": "https://github.com/tbasse/jquery-truncate",
-  "_release": "ed59e7c599",
+  "_release": "2247c21d70",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "ed59e7c5995a92a75e5991692924ad5312f4131b"
+    "commit": "2247c21d70591a516d9a484aaba83db0a908e32f"
   },
   "_source": "git://github.com/tbasse/jquery-truncate.git",
   "_target": "*",

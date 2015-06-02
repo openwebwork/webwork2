@@ -171,20 +171,15 @@ sub body {
 		);
 	}
 
-	if ( $externalAuth ) {
+	if ($externalAuth ) {
 		if ($authen_error) {
 			if ($r -> authen() eq "WeBWorK::Authen::LTIBasic") {
-				print CGI::div({class=>"ResultsWithError"},
-				CGI::p({}, CGI::b($course), "uses an external", 
-				"authentication system.  Please go there to try again."));
+				print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
 			} else {
 				print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
 			}
 		} else {
-	    	print CGI::p({}, "Your session has expired due to inactivity.  ",
-			CGI::b($course), "uses an external", 
-			"authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  ",
-			"Please return to system you used and enter WeBWorK anew.");
+		    print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
 		} 
 	} else {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($r->maketext($course))));

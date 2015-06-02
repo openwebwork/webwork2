@@ -11,7 +11,8 @@ define(['backbone', 'underscore','config'],
        render: function ()
        {
           var self = this; 
-          this.$el.html(_.template($("#passwordDialogText").html(),this.model));
+           var tmpl = _.template($("#passwordDialogText").html());
+          this.$el.html(tmpl(this.model));
           _(this.users).each(function (user) {
               var tableRow = new ChangePasswordRowView({model: user});
               $("table tbody",self.$el).append(tableRow.el);

@@ -1,5 +1,6 @@
 (function ($) {
   'use strict';
+
   function findTruncPoint(dim, max, txt, start, end, $worker, token, reverse) {
     var makeContent = function (content) {
       $worker.text(content);
@@ -62,29 +63,61 @@
       side: 'right',
       addclass: false,
       addtitle: false,
-      multiline: false
+      multiline: false,
+      assumeSameStyle: false
     };
     options = $.extend(defaults, options);
 
-    return this.each(function () {
-      var $element = $(this);
-      var fontCSS = {
+    var fontCSS;
+    var $element;
+    var $truncateWorker;
+    var elementText;
+    
+    if (options.assumeSameStyle) {
+      $element = $(this[0]);
+      fontCSS = {
         'fontFamily': $element.css('fontFamily'),
         'fontSize': $element.css('fontSize'),
         'fontStyle': $element.css('fontStyle'),
         'fontWeight': $element.css('fontWeight'),
         'font-variant': $element.css('font-variant'),
         'text-indent': $element.css('text-indent'),
+        'line-height': $element.css('line-height'),
         'text-transform': $element.css('text-transform'),
         'letter-spacing': $element.css('letter-spacing'),
         'word-spacing': $element.css('word-spacing'),
         'display': 'none'
       };
-      var elementText = $element.text();
-      var $truncateWorker = $('<span/>')
-                            .css(fontCSS)
-                            .text(elementText)
-                            .appendTo('body');
+      $truncateWorker = $('<span/>')
+                         .css(fontCSS)
+                         .appendTo('body');
+    }
+
+    return this.each(function () {
+      $element = $(this);
+      elementText = $element.text();
+      if (!options.assumeSameStyle) {
+        fontCSS = {
+          'fontFamily': $element.css('fontFamily'),
+          'fontSize': $element.css('fontSize'),
+          'fontStyle': $element.css('fontStyle'),
+          'fontWeight': $element.css('fontWeight'),
+          'font-variant': $element.css('font-variant'),
+          'text-indent': $element.css('text-indent'),
+          'line-height': $element.css('line-height'),
+          'text-transform': $element.css('text-transform'),
+          'letter-spacing': $element.css('letter-spacing'),
+          'word-spacing': $element.css('word-spacing'),
+          'display': 'none'
+        };
+        $truncateWorker = $('<span/>')
+                           .css(fontCSS)
+                           .text(elementText)
+                           .appendTo('body');
+      } else {
+        $truncateWorker.text(elementText);
+      }
+      
       var originalWidth = $truncateWorker.width();
       var truncateWidth = parseInt(options.width, 10) || $element.width();
       var dimension = 'width';
@@ -101,7 +134,7 @@
         truncateDim = truncateWidth;
       }
 
-      truncatedText = {before: "", after: ""};
+      truncatedText = {before: '', after: ''};
       if (originalDim > truncateDim) {
         var truncPoint, truncPoint2;
         $truncateWorker.text('');
@@ -142,13 +175,25 @@
           $element.attr('title', elementText);
         }
 
-        truncatedText.before = $truncateWorker.text(truncatedText.before).html();
-        truncatedText.after = $truncateWorker.text(truncatedText.after).html();
-        $element.empty().html(truncatedText.before + options.token + truncatedText.after);
+        truncatedText.before = $truncateWorker
+                               .text(truncatedText
+                                .before).html();
+        truncatedText.after = $truncateWorker
+                               .text(truncatedText.after)
+                               .html();
+        $element.empty().html(
+          truncatedText.before + options.token + truncatedText.after
+        );
 
       }
 
-      $truncateWorker.remove();
+      if (!options.assumeSameStyle) {
+        $truncateWorker.remove();
+      }
     });
+    
+    if (options.assumeSameStyle) {
+      $truncateWorker.remove();
+    }
   };
 })(jQuery);

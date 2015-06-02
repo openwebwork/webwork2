@@ -12,7 +12,8 @@ var UserSetView = Backbone.View.extend({
         var self = this;
 		if(this.userSet){
 			this.userSet.get("problems").on("rendered",this.showLastAnswer);
-			this.$el.html(_.template($("#problem-list-template").html(),this.userSet.attributes));
+            var tmpl = _.template($("#problem-list-template").html());
+			this.$el.html(tmpl(this.userSet.attributes));
 			this.changeProblem(1);
             this.userSet.get("problems").each(function(prob){
                 self.labelProblemButton(prob.get("problem_id"));

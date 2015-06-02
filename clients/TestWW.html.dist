@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Test WW</title>
+	<meta name="generator" content="BBEdit 11.0" />
+	<link href="https://hosted2.webwork.rochester.edu/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+	<link href="https://hosted2.webwork.rochester.edu/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script>
+	$(document).ready(function(){
+		$( ".clickme" ).click(function() {
+		  $( this).next().slideToggle( "slow", function() {
+			// Animation complete.
+		  });
+		});
+
+	   // jQuery methods go here...
+	});
+	</script>
+	<style>
+	.clickme {background-color: #ccccFF ;}
+	</style>
+</head>
+<body>
+Example of embedding WeBWorK problems in HTML pages. 
+<h1>Problem 1</h1>
+<p>
+This problem will help you to understand averages. 
+</p>
+<div class="clickme">
+  Click here to show problem1
+</div>
+<div class="wwproblem" style="display: none;">
+<hr>
+<iframe  width="800" height="600" 
+src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
+	&answersSubmitted=0
+	&sourceFilePath=Library/LoyolaChicago/Precalc/Chap1Sec2/Q03.pg
+	&problemSeed=123567
+	&courseID=2014_07_UR_demo
+	&userID=daemon
+	&password=daemon
+	&outputformat=simple">
+</iframe>
+<hr>
+</div>
+
+<h1>Problem 2</h1>
+<p>
+This problem gives you practice finding tangents to curves in the plane.
+</p>
+
+<div class="clickme">
+  Click here to show problem 2
+</div>
+<div class="wwproblem" style="display: none;">
+<hr>
+<iframe  width="800" height="600" 
+src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
+	&answersSubmitted=0
+	&sourceFilePath=Library/Utah/Calculus_I/set5_The_Derivative/1210s5p17/1210s5p17.pg
+	&problemSeed=123567
+	&courseID=2014_07_UR_demo
+	&userID=daemon	
+	&password=daemon
+	&outputformat=simple">
+</iframe>
+<HR>
+
+</div>
+</body>
+</html>

@@ -5,15 +5,14 @@
 
 define(['backbone','views/MainView','models/UserList','models/User','config','views/CollectionTableView',
 			'models/ProblemSetList','views/ModalView',
-			'views/ChangePasswordView','views/EmailStudentsView','config','apps/util','moment','bootstrap'], 
+			'views/ChangePasswordView','views/EmailStudentsView','config','apps/util','moment','bootstrap','jquery-csv'], 
 function(Backbone,MainView,UserList,User,config,CollectionTableView,
 				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView,config,util,moment){
 var ClasslistView = MainView.extend({
 	msgTemplate: _.template($("#classlist-messages").html()),
 	initialize: function (options) {
 		MainView.prototype.initialize.call(this,options);
-
-		_.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
+        _.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
     	
 		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
@@ -202,7 +201,8 @@ var ClasslistView = MainView.extend({
 	    var blob = new Blob([textFileContent], {type:_mimetype});
         var _url = URL.createObjectURL(blob);
         var _filename = config.courseSettings.course_id + "-classlist-" + moment().format("MM-DD-YYYY") + ".csv";
-        var body = _.template($("#export-to-file-template").html(),{url: _url, filename: _filename});
+        var tmpl = _.template($("#export-to-file-template").html());
+        var body = tmpl({url: _url, filename: _filename});
         var modalView = new ModalView({
             modal_size: "modal-lg",
             modal_buttons: $("#close-button-template").html(),
@@ -516,9 +516,13 @@ var AddStudentFileView = ModalView.extend({
                 // Parse the CSV file
                 
                 //var str = util.CSVToHTMLTable(content,headers);
-                var arr = util.CSVToHTMLTable(content,headers);
-
-                $("#studentTable").html(_.template($("#imported-from-file-table").html(),{array: arr, headers: headers}))
+                //var arr = util.CSVToHTMLTable(content,headers);
+                var arr = $.csv.toArrays(content);
+                
+                console.log(arr);
+                
+                var tmpl = _.template($("#imported-from-file-table").html());
+                $("#studentTable").html(tmpl({array: arr, headers: headers}));
 
                 // build the table and set it up to scroll nicely.      
                 //$("#studentTable").html(str);

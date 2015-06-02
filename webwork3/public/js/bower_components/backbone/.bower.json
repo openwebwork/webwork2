@@ -1,28 +1,32 @@
 {
   "name": "backbone",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "main": "backbone.js",
   "dependencies": {
-    "underscore": ">=1.5.0"
+    "underscore": ">=1.7.0"
   },
   "ignore": [
-    "backbone-min.js",
     "docs",
     "examples",
     "test",
     "*.yml",
-    "*.map",
-    ".html",
-    "*.ico"
+    "*.html",
+    "*.ico",
+    "*.md",
+    "CNAME",
+    ".*",
+    "karma.*",
+    "component.json",
+    "package.json"
   ],
   "homepage": "https://github.com/jashkenas/backbone",
-  "_release": "1.1.2",
+  "_release": "1.2.0",
   "_resolution": {
     "type": "version",
-    "tag": "1.1.2",
-    "commit": "53f77901a4ea9c7cf75d3db93ddddf491998d90f"
+    "tag": "1.2.0",
+    "commit": "6541698ff67eaf0a9baf9121cbd22d0f0e90e7b6"
   },
   "_source": "git://github.com/jashkenas/backbone.git",
-  "_target": "1.1.2",
+  "_target": "1.2.0",
   "_originalSource": "backbone"
 }

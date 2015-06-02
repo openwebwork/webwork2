@@ -103,8 +103,8 @@ var CourseManager = WebPage.extend({
         
         this.postInitialize();
         
-        // can't we just pull this from the settings when needed.  Why do we need another variable. 
-        config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
+        // not sure why this is needed.
+        //config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
     
         // this will automatically save (sync) any change made to a problem set.
         this.problemSets.on("change",function(_set){

@@ -25,6 +25,7 @@ function(Backbone, _,config){
             _(this.settings).each(function(setting){
                 var opts, propHTML; 
                 switch(setting.get("type")){
+                    case "timezone":
                     case "text":
                     case "number": 
                         propHTML = "<input class='property'>";
@@ -56,6 +57,7 @@ function(Backbone, _,config){
                 var options = {model: setting, theOptions: opts,rowTemplate: self.rowTemplate,
                                                                     prop_html: propHTML};
                 switch(setting.get("type")){
+                    case "timezone":
                     case "text":
                     case "number": 
                         table.append(new TextSettingView(options).render().el);
