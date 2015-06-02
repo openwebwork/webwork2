@@ -4,8 +4,8 @@ define(['backbone', 'views/ProblemListView'],
             viewName: "Problems",
     		initialize: function (options) {
     			this.viewAttrs = {reorderable: true, showPoints: true, showAddTool: false, 
-                                  showEditTool: true, problem_seed: 1, showRefreshTool: true, 
-                                  showViewTool: true, showHideTool: false, deletable: true, 
+                                  showEditTool: false, problem_seed: 1, showRefreshTool: true, 
+                                  showViewTool: false, showHideTool: false, deletable: true, 
                                   draggable: false, show_undo: true};
                 this.problemSet = options.problemSet;
                 options.type = "problem_set";
