@@ -111,6 +111,12 @@ var util = {
         _.extend(obj,_.object(fields,values));
         return obj;
     },
+    // this returns the object for a Backbone.Stickit bindings object.  This is useful for error reporting.
+    invBindings: function(bindings){
+        var keys = _(bindings).keys()
+        var vals = _(bindings).chain().values().map(function(x) { return _.isObject(x)? x.observe : x;}).value();
+        return _.object(vals,keys);
+    },
     // This travels through all of the assignments and determines the days that assignment dates fall
     buildAssignmentDates: function (problemSets) {
         var assignmentDateList = new AssignmentDateList();
@@ -127,7 +133,14 @@ var util = {
             }
         });
         return assignmentDateList;
-    }
+    },
+    changeClass:function(opts){
+        if(opts.state){
+            opts.els.removeClass(opts.remove_class).addClass(opts.add_class)
+        } else {
+            opts.els.addClass(opts.remove_class).removeClass(opts.add_class)
+        }
+    },
 }
 
 

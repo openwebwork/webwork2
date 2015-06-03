@@ -1,4 +1,5 @@
-define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl','bootstrap'], function(Backbone, _,config,Problem){
+define(['backbone', 'underscore','config','models/Problem','apps/util','imagesloaded','knowl','bootstrap'], 
+       function(Backbone, _,config,Problem,util){
     //##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -8,6 +9,7 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
     
         reorderable (boolean): whether the reorder arrow should be shown
         showPoints (boolean): whether the # of points should be shown
+        showMaxAttemptes (boolean): whether the maximum number of attempts is shown. 
         showAddTool (boolean): whether the + should be shown to be added to a problemSet
         showEditTool (boolean): whether the edit button should be shown
         showViewTool (boolean): whether the show button should be shown (to be taken to the userSetView )
@@ -48,9 +50,10 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
                     self.showPath(self.state.get("show_path"));
                 });
 
-            this.model.on('change:value', function () {
+            this.model.on('change:value change:max_attempts', function () {
                 self.model.save();
             });
+            this.invBindings = util.invBindings(this.bindings);
         },
 
         render:function () {
@@ -91,10 +94,10 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
                 this.stickit();
                 Backbone.Validation.bind(this,{
                     valid: function(view,attr){
-                        view.$(".prob-value").popover("hide").popover("destroy");
+                        view.$(self.invBindings[attr]).popover("hide").popover("destroy");
                     },
                     invalid: function(view,attr,error){
-                        view.$(".prob-value").popover({title: "Error", content: error}).popover("show");
+                        view.$(self.invBindings[attr]).popover({title: "Error", content: error}).popover("show");
                     }
                 });
                 
@@ -135,6 +138,7 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
         },
         bindings: {
             ".prob-value": {observe: "value", events: ['blur']},
+            ".max-attempts": {observe: "max_attempts", events: ['blur']},
             ".mlt-tag": "morelt",
             ".level-tag": "level",
             ".keyword-tag": "keyword",
@@ -156,28 +160,18 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
             this.render();
         },
         showPath: function (_show){
-            if(_show){
-                this.$(".path-row").removeClass("hidden");
-            } else {
-                this.$(".path-row").addClass("hidden");
-            }
+            util.changeClass({els: this.$(".path-row"), state: _show, remove_class: "hidden"});
         },
         showTags: function (_show){
             var self = this;
-            if(_show){
-                if(this.state.get("tags_loaded")){
-                    this.$(".tag-row").removeClass("hidden");
-                } else {
-                    this.$(".loading-row").removeClass("hidden");
-                    this.model.loadTags({success: function (){ 
+            if(_show && ! this.state.get("tags_loaded")){
+                this.model.loadTags({success: function (){ 
                         self.$(".loading-row").addClass("hidden");
                         self.$(".tag-row").removeClass("hidden");
                         self.state.set('tags_loaded',true);
                     }});
-                }
-            } else {
-                this.$(".tag-row").addClass("hidden");
             }
+            util.changeClass({els:this.$(".tag-row"),state: _show, remove_class: "hidden"});
         },
         toggleSeed: function () {
             this.$(".problem-seed").toggleClass("hidden");
