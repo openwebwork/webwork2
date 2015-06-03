@@ -16,6 +16,10 @@ define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
             flags: "",
             problem_seed: 1
         },
+        validation: {
+             // need to put the validation message in a template
+            value: {pattern: /^[1-9]\d*$/, msg: "The value must be a positive whole number." }
+        },
         idAttribute: "source_file",
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser

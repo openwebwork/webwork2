@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl'], function(Backbone, _,config,Problem){
+define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl','bootstrap'], function(Backbone, _,config,Problem){
     //##The problem View
 
     //A view defined for the browser app for the webwork Problem model.
@@ -49,9 +49,7 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
                 });
 
             this.model.on('change:value', function () {
-                if(self.model.get("value").match(/^\d+$/)) {
-                    self.model.save();
-                }
+                self.model.save();
             });
         },
 
@@ -91,6 +89,14 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
 
                 this.showPath(this.state.get("show_path"));
                 this.stickit();
+                Backbone.Validation.bind(this,{
+                    valid: function(view,attr){
+                        view.$(".prob-value").popover("hide").popover("destroy");
+                    },
+                    invalid: function(view,attr,error){
+                        view.$(".prob-value").popover({title: "Error", content: error}).popover("show");
+                    }
+                });
                 
                  
                 // send rendered signal after MathJax 
@@ -127,7 +133,8 @@ define(['backbone', 'underscore','config','models/Problem','imagesloaded','knowl
             "click .path-button": function () {this.state.set("show_path",!this.state.get("show_path"))},
             "click .tags-button": function () {this.state.set("show_tags",!this.state.get("show_tags"))}
         },
-        bindings: {".prob-value": "value",
+        bindings: {
+            ".prob-value": {observe: "value", events: ['blur']},
             ".mlt-tag": "morelt",
             ".level-tag": "level",
             ".keyword-tag": "keyword",
