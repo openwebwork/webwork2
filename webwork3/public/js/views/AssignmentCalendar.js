@@ -146,7 +146,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 keys = _(keys).without("reduced_scoring_date");
             }
             _(keys).each(function(key){
-                config.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
+                util.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
             });
 
             if(!model.get("reduced_scoring_date")){
@@ -161,7 +161,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 return;
             }
             this.problemSets.chain().each(function(_set) { 
-                config.changeClass({state: _set.get("enable_reduced_scoring"), remove_class: "hidden", 
+                util.changeClass({state: _set.get("enable_reduced_scoring"), remove_class: "hidden", 
                     els: self.$(".assign-reduced-scoring[data-setname='"+_set.get("set_id")+"']")});
             });
         },

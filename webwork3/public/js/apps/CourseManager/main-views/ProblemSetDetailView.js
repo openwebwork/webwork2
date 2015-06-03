@@ -211,7 +211,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             }
         },
         showHideReducedScoringDate: function(){
-            config.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+            util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
                                 add_class:"",remove_class: "hidden", els: this.$(".reduced-scoring-date").closest("tr")});
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
                     this.model.get("enable_reduced_scoring")) { // show reduced credit field
@@ -231,7 +231,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         showTime: function(_show){
             this.tabState.set("show_time",_show);
             // hide or show the date rows in the table
-            config.changeClass({state: _show, remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
+            util.changeClass({state: _show, remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
                                 els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")});
             // change the button text
             this.$(".show-time-toggle").button(_show?"hide":"reset");
@@ -240,8 +240,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         showCalendar: function(_show){
             var self = this;
             this.tabState.set("show_calendar",_show);
-            config.changeClass({state: _show, remove_class: "", add_class: "hidden",els: this.$(".hideable")});
-            config.changeClass({state: _show, remove_class: "hidden", add_class: "",els: this.$(".calendar-row")});
+            util.changeClass({state: _show, remove_class: "", add_class: "hidden",els: this.$(".hideable")});
+            util.changeClass({state: _show, remove_class: "hidden", add_class: "",els: this.$(".calendar-row")});
             // change the button text
             this.$(".show-calendar-toggle").button(_show?"hide":"reset");
             if(! _show) return;
@@ -359,7 +359,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             // disable the ability to drag problems when the set is open. 
             
             this.problemSetView.on("rendered",function(){
-                config.changeClass({els: $(".reorder-handle"), state: self.problemSetView.problemSet.isOpen(),
+                util.changeClass({els: $(".reorder-handle"), state: self.problemSetView.problemSet.isOpen(),
                                 add_class:"disabled",remove_class:""})  
             });
         },
@@ -554,11 +554,11 @@ var AssignUsersView = Backbone.View.extend({
             return this;
         },
         update: function () {
-            config.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
-            config.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
-            config.changeClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+            util.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
+            util.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
+            util.changeClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
                 els: this.$(".reduced-scoring-date,.reduced-scoring-header"), remove_class: "hidden"});
-            config.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
+            util.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
                 els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")})
             this.userSetTable.refreshTable();
             this.stickit();

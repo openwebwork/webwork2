@@ -105,7 +105,7 @@ var ProblemSetsManager = MainView.extend({
         return this;
     },
     update: function (){
-        config.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"), remove_class: "hidden",
+        util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"), remove_class: "hidden",
                 els: this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")})
         this.problemSetTable.refreshTable();
         return this;
@@ -127,7 +127,7 @@ var ProblemSetsManager = MainView.extend({
         }
     },
     showTime: function(_show){
-        config.changeClass({state: _show, els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date"), 
+        util.changeClass({state: _show, els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date"), 
                 remove_class: "edit-datetime", add_class: "edit-datetime-showtime"})
         this.problemSetTable.refreshTable();
     },
@@ -392,13 +392,13 @@ var ChangeSetPropertiesView = ModalView.extend({
     render: function (){
         ModalView.prototype.render.apply(this);
         this.$(".set-names").text(this.setNames.join(", "));
-        config.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+        util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
             els: this.$(".reduced-scoring-date").closest("tr"), remove_class: "hidden"});
-        config.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+        util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
             els: this.$(".reduced-scoring").closest("tr"), remove_class: "hidden"});
-        config.changeClass({state: this.state.get("show_time"), add_class: "edit-datetime-showtime", remove_class: "edit-datetime",
+        util.changeClass({state: this.state.get("show_time"), add_class: "edit-datetime-showtime", remove_class: "edit-datetime",
             els: this.$("td.open-date,td.reduced-scoring-date,td.answer-date,td.due-date")});
-        config.changeClass({state: this.model.get("enable_reduced_scoring"), remove_class: "hidden", 
+        util.changeClass({state: this.model.get("enable_reduced_scoring"), remove_class: "hidden", 
             els: this.$(".reduced-scoring-date").closest("tr"), remove_class: "hidden"});
         this.stickit();
     },
