@@ -93,12 +93,17 @@
   <%if(draggable){%>
     <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
   <%}%>
-  <%if(showPoints){%>
-  <div class="col-md-3 form-">
+
+  <div class="col-md-4 form-horizontal">
+      <%if(showPoints){%>
       <label class="control-label">Value: 
         <input type="text" class="prob-value input-small"></label>
+        <%}%>
+      <%if(showMaxAttempts){%>
+      <label class="control-label">Max Attempts: 
+        <input type="text" class="max-attempts input-small"></label>  
+      <%}%>
     </div>
-  <%}%>
 
   <div class="col-md-4 btn-group btn-group-sm">
   <%if(showAddTool){%><a class="btn btn-default add-problem" href="#" title="add to target set">

@@ -76,7 +76,7 @@ label.checklist {display: inline; margin-left: 8px;}
 
 /* #probSetList {margin:0;padding:0px; height:100%; overflow-y: auto;} */
 /*.prob-set-container {overflow-y: scroll; width: 100%;}*/
-.prob-value {width: 20px;}
+.prob-value, .max-attempts {width: 30px;}
 
 .loading {background-color: orange;}
 

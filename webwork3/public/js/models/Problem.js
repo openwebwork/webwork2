@@ -18,7 +18,8 @@ define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
         },
         validation: {
              // need to put the validation message in a template
-            value: {pattern: /^[1-9]\d*$/, msg: "The value must be a positive whole number." }
+            value: {pattern: /^[1-9]\d*$/, msg: "The value must be a positive whole number." },
+            max_attempts: {pattern: /^(-1|\d*)$/, msg: "The value must be a whole number or -1 for unlimited attempts." }
         },
         idAttribute: "source_file",
         url: function () {

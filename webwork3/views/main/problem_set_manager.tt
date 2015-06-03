@@ -116,8 +116,9 @@ var messages = {
     problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
     problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},
     problems_reordered_details: function(opt){ return "The problems were reordered in " + opt.setname},
-    problems_values_details: function(opt) { return "The value for problem " + opt.problem_id + " of set " + opt.set_id +
-      " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
+    problems_values_details: function(opt) { return "The attribute " + opt.attribute + "  for problem " 
+        + opt.problem_id + " of set " + opt.set_id +
+        " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
     problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
     problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
         + " was deleted from set " + opt.setname},  

@@ -301,6 +301,8 @@ var ProblemSetsManager = MainView.extend({
                                     oldValue: _old, newValue: _new}})});
                     } // switch 
                 }); // .each
+                
+                // Not sure what this does.  Investigate. 
                 _(_set._network).chain().keys().each(function(key){ 
                     switch(key){
                         case "add":
@@ -327,15 +329,20 @@ var ProblemSetsManager = MainView.extend({
 
         this.problemSets.each(function(_set) {
             _set.problems.on({
-                "change:value": function(prob){ self.changeProblemValueEvent(prob,_set)},
                 add: function(prob){ self.addProblemEvent(prob,_set)},
                 sync: function(prob){ self.syncProblemEvent(prob,_set)},
-            });
+            }).on("change:problem change:max_attempts", function(prob){ self.changeProblemValueEvent(prob,_set)})
         });
     }, // setMessages
     changeProblemValueEvent: function (prob,_set){    // not sure this is actually working.
-        _set.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
-            newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}};
+        var attr = _(prob.changed).keys()[0]; 
+        console.log(attr);
+        _set.changingAttributes={
+                "value_changed": {  attribute: attr, 
+                                    oldValue: prob._previousAttributes[attr], 
+                                    newValue: prob.get(attr), 
+                                    name: _set.get("set_id"), 
+                                    problem_id: prob.get("problem_id")}};
             
     },
     addProblemEvent: function(prob,_set){
