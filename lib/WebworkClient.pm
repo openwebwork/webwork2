@@ -643,7 +643,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 </head>
 <body>
 			
-<h2> WeBWorK Editor using host: $XML_URL,  format: simple</h2>
+<h2> WeBWorK Editor using host: $XML_URL,  format: simple seed: $problemSeed</h2>
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
