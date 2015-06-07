@@ -421,7 +421,7 @@ sub environment {
 sub formatAnswerRow {
 	my $self = shift;
 	my $rh_answer = shift;
-	my $problemNumber = shift;
+	my $answerNumber = shift;
 	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
 	my $correctAnswer = $rh_answer->{correct_ans}||'';
 	my $ans_message   = $rh_answer->{ans_message}||'';
@@ -429,7 +429,7 @@ sub formatAnswerRow {
 	my $row = qq{
 		<tr>
 		    <td>
-				Prob: $problemNumber
+				Prob: $answerNumber
 			</td>
 			<td>
 				$answerString
@@ -516,10 +516,10 @@ sub formatRenderedProblem {
 	# and create answer template if they have been
 	my $answerssubmitted =""; 
 	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
-	my $problemNumber     = 1;
+	my $answerNumber     = 1;
     foreach my $key (sort  keys %{$rh_answers}) {
         $answerssubmitted .= $rh_answers->{$key}->{original_student_ans};
-    	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $problemNumber++);
+    	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $answerNumber++);
     }
 	$answerTemplate      .= q{</table> <hr>};
     $answerTemplate = "" unless $answerssubmitted;
@@ -532,6 +532,7 @@ sub formatRenderedProblem {
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
 	my $password         =  $self->{password};
+	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
 	my $session_key      =  $rh_result->{session_key}//'';
 	
 	
@@ -545,7 +546,31 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 
 
 <html>
-<head>
+<head><link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+
+<!-- CSS Loads -->
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
+<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
+<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+
+<!-- JS Loads -->
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
+<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
+<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
+<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
+<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
+<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+
+
 <base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
 </head>
@@ -558,7 +583,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="1234"> 
+	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
@@ -614,7 +639,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 
 
 <base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple</title>
+<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
 </head>
 <body>
 			
@@ -625,7 +650,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="1234"> 
+	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
