@@ -82,6 +82,7 @@ package WebworkClient;
 #use Crypt::SSLeay;  # needed for https
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
+use WeBWorK::Utils::AttemptsTable;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -419,9 +420,9 @@ sub environment {
 };
 
 sub formatAnswerRow {
-	my $self = shift;
-	my $rh_answer = shift;
-	my $answerNumber = shift;
+	my $self          = shift;
+	my $rh_answer     = shift;
+	my $answerNumber  = shift;
 	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
 	my $correctAnswer = $rh_answer->{correct_ans}||'';
 	my $ans_message   = $rh_answer->{ans_message}||'';
@@ -472,6 +473,7 @@ sub formatRenderedProblem {
 		format_hash_ref($rh_result);
 	}
 	my $rh_answers        = $rh_result->{answers};
+	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
 	my $encodedSource     = $self->{encodedSource}//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
@@ -514,20 +516,38 @@ sub formatRenderedProblem {
 	#####################################################
 	# determine whether any answers were submitted
 	# and create answer template if they have been
-	my $answerssubmitted =""; 
-	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
-	my $answerNumber     = 1;
-    foreach my $key (sort  keys %{$rh_answers}) {
-        $answerssubmitted .= $rh_answers->{$key}->{original_student_ans};
-    	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $answerNumber++);
-    }
-	$answerTemplate      .= q{</table> <hr>};
-    $answerTemplate = "" unless $answerssubmitted;
+# 	my $answerssubmitted =""; 
+# 	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
+# 	my $answerNumber     = 1;
+#     foreach my $key (sort  keys %{$rh_answers}) {
+#         $answerssubmitted .= $rh_answers->{$key}->{original_student_ans};
+#     	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $answerNumber++);
+#     }
+# 	$answerTemplate      .= q{</table> <hr>};
+#     $answerTemplate = "" unless $answerssubmitted;
+my $tbl = WeBWorK::Utils::AttemptsTable->new(
+	$rh_answers,
+	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
+	answerOrder            => $answerOrder//[],
+	displayMode            => 'MathJax',
+	imgGen                 => '',	
+	showAttemptPreviews    => 1,
+	showAttemptResults     => 1,
+	showCorrectAnswers     => 1,
+	showMessages           => 1,
+);
+my $answerTemplate = $tbl->answerTemplate;
+my $color_input_blanks_script = $tbl->color_answer_blanks;
+#warn "answerOrder ", $tbl->answerOrder;
+#warn "answersSubmitted ", $tbl->answersSubmitted;
+# render equation images
+$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+
     #################################################
 
 
 	$self->{outputformats}={};
-	my $XML_URL      	 = $self->url;
+	my $XML_URL      	 =  $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
@@ -578,6 +598,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 
 <h2> WeBWorK Editor using host: $XML_URL,  format: standard</h2>
 		    $answerTemplate
+		    $color_input_blanks_script
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
 	       <input type="hidden" name="answersSubmitted" value="1"> 
