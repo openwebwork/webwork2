@@ -529,7 +529,7 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	$rh_answers,
 	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
 	answerOrder            => $answerOrder//[],
-	displayMode            => 'MathJax',
+	displayMode            => $self->{displayMode},
 	imgGen                 => '',	
 	showAttemptPreviews    => 1,
 	showAttemptResults     => 1,
