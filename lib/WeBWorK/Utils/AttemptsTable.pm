@@ -91,10 +91,10 @@ sub formatAnswerRow {
 	my $rh_answer     = shift;
 	my $answerNumber  = shift;
 	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
-	my $answerPreview = $self->previewAnswer($rh_answer);
-	my $correctAnswer = $rh_answer->{correct_ans}||'';
+	my $answerPreview = $self->previewAnswer($rh_answer)||'&nbsp;';
+	my $correctAnswer = $self->previewCorrectAnswer($rh_answer)||'&nbsp;';
 	
-	my $answerMessage   = $rh_answer->{ans_message}||'';
+	my $answerMessage   = $rh_answer->{ans_message}||'&nbsp;';
 	my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
 	
 	my $score         = (($rh_answer->{type}//'') eq 'essay') ?
