@@ -83,6 +83,7 @@ package WebworkClient;
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Utils::AttemptsTable;
+use WeBWorK::CourseEnvironment;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -90,6 +91,33 @@ use constant  REQUEST_URI      => 'mod_xmlrpc';
 
 our $UNIT_TESTS_ON             = 0;
 
+##################
+# static variables
+
+# create seed_ce
+# then create imgGen
+our $seed_ce = WeBWorK::CourseEnvironment->new( 
+				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY, 
+				 courseName         =>      '',
+				 webworkURL         =>      '',
+				 pg_dir             =>      "$WeBWorK::Constants::WEBWORK_DIRECTORY/../pg",
+				 });
+	warn "Unable to find environment for WebworkClient: " unless ref($seed_ce);
+
+our %imagesModeOptions = %{$seed_ce->{pg}->{displayModeOptions}->{images}};
+our $site_url = $seed_ce->{server_root_url};	
+our $imgGen = WeBWorK::PG::ImageGenerator->new(
+		tempDir         => $seed_ce->{webworkDirs}->{tmp},
+		latex	        => $seed_ce->{externalPrograms}->{latex},
+		dvipng          => $seed_ce->{externalPrograms}->{dvipng},
+		useCache        => 1,
+		cacheDir        => $seed_ce->{webworkDirs}->{equationCache},
+		cacheURL        => $site_url . $seed_ce->{webworkURLs}->{equationCache},
+		cacheDB         => $seed_ce->{webworkFiles}->{equationCacheDB},
+		dvipng_align    => $imagesModeOptions{dvipng_align},
+		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
+	);
+#####################
 # error formatting
 sub format_hash_ref {
 	my $hash = shift;
@@ -525,17 +553,24 @@ sub formatRenderedProblem {
 #     }
 # 	$answerTemplate      .= q{</table> <hr>};
 #     $answerTemplate = "" unless $answerssubmitted;
+
+	
+
+
+
 my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	$rh_answers,
 	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
 	answerOrder            => $answerOrder//[],
 	displayMode            => $self->{displayMode},
-	imgGen                 => '',	
+	imgGen                 => $imgGen,
+	ce                     => '',	#used only to build the imgGen
 	showAttemptPreviews    => 1,
 	showAttemptResults     => 1,
 	showCorrectAnswers     => 1,
 	showMessages           => 1,
 );
+# warn "imgGen is ", $tbl->imgGen;
 my $answerTemplate = $tbl->answerTemplate;
 my $color_input_blanks_script = $tbl->color_answer_blanks;
 #warn "answerOrder ", $tbl->answerOrder;
