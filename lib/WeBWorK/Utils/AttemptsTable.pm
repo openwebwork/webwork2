@@ -79,8 +79,23 @@ sub _init {
 		if ( blessed( $options{imgGen} ) ) {
 			$self->{imgGen} = $options{imgGen};
 		} elsif ( blessed( $options{ce} ) ) {
-			# build imgGen using $ce
 			warn "building imgGen"; 
+			my $ce = $options{ce};
+			my $site_url = $ce->{server_root_url};	
+			my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
+	
+			my $imgGen = WeBWorK::PG::ImageGenerator->new(
+				tempDir         => $ce->{webworkDirs}->{tmp},
+				latex	        => $ce->{externalPrograms}->{latex},
+				dvipng          => $ce->{externalPrograms}->{dvipng},
+				useCache        => 1,
+				cacheDir        => $ce->{webworkDirs}->{equationCache},
+				cacheURL        => $self->site_url.$ce->{webworkURLs}->{equationCache},
+				cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
+				dvipng_align    => $imagesModeOptions{dvipng_align},
+				dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
+			);
+	        $self->{imgGen} = $imgGen;
 		} else {
 			warn "Must provide image Generator (imgGen) or a course environment (ce) to build attempts table.";
 		}
@@ -132,7 +147,7 @@ sub answerTemplate {
 			CGI::th("Answer"),
 			($self->showAttemptPreviews)? CGI::th("Preview"):'',
 			($self->showAttemptResults)?  CGI::th("Score"):'',
-			($self->showCorrectAnswers)?  CGI::th("CorrectAns"):'',
+			($self->showCorrectAnswers)?  CGI::th("Correct Answer"):'',
 			($self->showMessages)?        CGI::th("Message"):'',
 		);
 	my $answerNumber     = 1;
@@ -192,7 +207,7 @@ sub previewCorrectAnswer {
 		return $tex;
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
-		warn "adding $tex";
+		# warn "adding $tex";
 	} elsif ($displayMode eq "MathJax") {
 		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
 	}
