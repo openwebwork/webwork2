@@ -90,7 +90,7 @@ sub _init {
 				dvipng          => $ce->{externalPrograms}->{dvipng},
 				useCache        => 1,
 				cacheDir        => $ce->{webworkDirs}->{equationCache},
-				cacheURL        => $self->site_url.$ce->{webworkURLs}->{equationCache},
+				cacheURL        => $site_url.$ce->{webworkURLs}->{equationCache},
 				cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
 				dvipng_align    => $imagesModeOptions{dvipng_align},
 				dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
