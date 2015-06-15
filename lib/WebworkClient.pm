@@ -699,7 +699,6 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 </head>
 <body>
 			
-<h2> WeBWorK Editor using host: $XML_URL,  format: simple, seed: $problemSeed</h2>
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
@@ -716,7 +715,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
 	       <p><input type="submit" name="submit" value="submit answers"></p>
-	     </form>
+	       </form>
 </body>
 </html>
 
