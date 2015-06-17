@@ -13,6 +13,67 @@ var basicRequestObject = {
     "command":"searchLib"
 };
 
+// Get the taxonomy
+
+var taxo=[];  // Global variable to hold it
+var loadtaxo = $.ajax({
+  dataType: "json",
+  url: "/webwork2_files/DATA/tagging-taxonomy.json", 
+  success: function(data) {
+    taxo = data;
+  },
+  error: function() {
+    alert("Failed to load OPL taxonomy from server.");
+  }
+});
+
+// If needed, wait until asynchronous load is done
+function fetch_taxo() {
+  if(taxo.length>0) {
+    return(taxo);
+  } else {
+    loadtaxo.done(fetch_taxo());
+  }
+}
+
+function readfromtaxo(who, valarray) {
+  var mytaxo = fetch_taxo();
+  if(who == 'subjects') {
+	return(mytaxo.map(function(z) {return(z['name']);} ));
+  }
+  var failed = true;
+  for(var i=0; i<mytaxo.length; i++) {
+    if(mytaxo[i]['name'] == valarray[0]) {
+	  mytaxo = mytaxo[i]['subfields'];
+	  failed=false;
+	  break;
+	}
+  }
+  if(failed) {
+    alert('Provided value is not in my taxonomy.');
+	return([]);
+  }
+  if(who == 'chapters') {
+	return(mytaxo.map(function(z) {return(z['name']);} ));
+  }
+  failed = true;
+  for(var i=0; i<mytaxo.length; i++) {
+    if(mytaxo[i]['name'] == valarray[1]) {
+	  mytaxo = mytaxo[i]['subfields'];
+	  failed=false;
+	  break;
+	}
+  }
+  if(failed) {
+    alert('Provided value is not in my taxonomy.');
+	return([]);
+  }
+  if(who == 'sections') {
+	return(mytaxo.map(function(z) {return(z['name']);} ));
+  }
+  return([]); // Should not get here
+}
+
 function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_courseID').val();
@@ -197,25 +258,23 @@ tag_widget_update = function(who, what, where, values) {
   mydefaultRequestObject.command = subcommand;
   // console.log("Setting menu "+where+who);
   // console.log(mydefaultRequestObject);
-  return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
-      var response = $.parseJSON(data);
-      //console.log(response);
-      var arr = response.result_data;
-      arr.splice(0,0,all);
-      setselectbyid(where+who, arr);
-      if(values.DBsubject && who=='subjects') { 
-        $('#'+where+who).val(values.DBsubject); 
-      }
-      if(values.DBchapter && who=='chapters') { 
-        $('#'+where+who).val(values.DBchapter);
-      }
-      if(values.DBsection && who=='sections') { 
-        $('#'+where+who).val(values.DBsection);
-      }
-      tag_widget_update(child[who], 'get',where, values);
-    });
+  var arr = readfromtaxo(who, [subj, chap, sect]);
+  arr.splice(0,0,all);
+  setselectbyid(where+who, arr);
+  if(values.DBsubject && who=='subjects') { 
+	$('#'+where+who).val(values.DBsubject); 
+  }
+  if(values.DBchapter && who=='chapters') { 
+	$('#'+where+who).val(values.DBchapter);
+  }
+  if(values.DBsection && who=='sections') { 
+	$('#'+where+who).val(values.DBsection);
+  }
+  tag_widget_update(child[who], 'get',where, values);
   return true;
 }
+
+
 
 // Two utility functions
 function setselectbyid(id, newarray) {
