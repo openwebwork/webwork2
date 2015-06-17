@@ -2008,12 +2008,11 @@ sub output_JS{
 	# This is for knowls
         # Javascript and style for knowls
         print qq{
-           <script type="textx/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
+           <script type="text/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
            <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/underscore/underscore.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 	}
 
