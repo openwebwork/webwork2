@@ -158,13 +158,15 @@ sub checkForAchievements {
 
     #loop through the various achievements, see if they have been obtained, 
     foreach my $achievement (@achievements) {
-	#skip achievements not assigned, not enabled, and that are already earned
+	#skip achievements not assigned, not enabled, and that are already earned, or if it doesn't match the set type
 	next unless $achievement->enabled;
 	my $achievement_id = $achievement->achievement_id;
 	next unless ($db->existsUserAchievement($user_id,$achievement_id));
 	my $userAchievement = $db->getUserAchievement($user_id,$achievement_id);
 	next if ($userAchievement->earned);
+	next unless $achievement->assignment_type =~ /${$set->assignment_type}/;
 	
+
 	#thaw localData hash
 	if ($userAchievement->frozen_hash) {
 	    $localData = thaw($userAchievement->frozen_hash);
