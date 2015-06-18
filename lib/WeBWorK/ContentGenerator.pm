@@ -2096,6 +2096,7 @@ sub warningOutput($$) {
 	    # This used to be commented out because it interfered with warnings
 	    # from PG.  But now PG has a seperate warning channel thats not
 	    # encoded.  
+
 	    $warning = HTML::Entities::encode_entities($warning);  
 	    $warning = CGI::li(CGI::code($warning));
 	}

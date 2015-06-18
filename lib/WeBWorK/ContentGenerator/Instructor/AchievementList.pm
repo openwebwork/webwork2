@@ -53,6 +53,7 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortAchievements);
 use DateTime;
+use Text::CSV;
 
 #constants for forms and the various handlers
 use constant BLANK_ACHIEVEMENT => "blankachievement.at";
@@ -62,11 +63,19 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(edit assign import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select enabled achievement_id category name users ) ];
-use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name category enabled points max_counter description icon_file test_file) ];
+use constant VIEW_FIELD_ORDER => [ qw( enabled achievement_id name number category ) ];
+use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name number assignment_type category enabled points max_counter description icon_file test_file) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select achievement_id name) ];
 
 use constant STATE_PARAMS => [qw(user effectiveUser key editMode exportMode)];
+
+use constant ASSIGNMENT_TYPES => [qw(default gateway jitar)];
+
+use constant ASSIGNMENT_NAMES => {
+    default => 'homework',
+    gateway => 'gateways',
+    jitar => 'just-in-time',
+};
 
 #properites for the fields shown in the tables
 use constant  FIELD_PROPERTIES => {
@@ -80,9 +89,19 @@ use constant  FIELD_PROPERTIES => {
 		size => 30,
 		access => "readwrite",
 	},
+	assignment_type => {
+		type => "assignment_type",
+		size => 30,
+		access => "readwrite",
+	},
 	category => {
 		type => "text",
 		size => 30,
+		access => "readwrite",
+	},
+	number => {
+		type => "text",
+		size => 8,
 		access => "readwrite",
 	},
 	icon => {
@@ -763,30 +782,30 @@ sub import_handler {
 	my $filePath = $ce->{courseDirs}->{achievements}.'/'.$fileName;
 	
 	#open file name
-	local *IMPORT;
-	open EXPORT, "$filePath" or return CGI::div({class=>"ResultsWithError"}, "Failed to open $filePath");
+	my $fh;
+	open $fh, "$filePath" or return CGI::div({class=>"ResultsWithError"}, "Failed to open $filePath");
 
 	#read in lines from file
 	my $count = 0;
-	while (my $line = <EXPORT>) {
-	    chomp $line;
-	    my @data = split(', ',$line);
-	    my $achievement_id = $data[0];
+	my $csv = Text::CSV->new();
+	while (my $data = $csv->getline($fh)) {
+
+	    my $achievement_id = $$data[0];
 	    #skip achievements that already exist
 	    next if $db->existsAchievement($achievement_id);
 
 	    #write achievement data.  The "format" for this isn't written down anywhere (!)
 	    my $achievement = $db->newAchievement();
 	    $achievement->achievement_id($achievement_id);
-	    $data[1] =~ s/\;/,/;
-	    $achievement->name($data[1]);
-	    $achievement->category($data[2]);
-	    $data[3] =~ s/\;/,/;
-	    $achievement->description($data[3]);
-	    $achievement->points($data[4]);
-	    $achievement->max_counter($data[5]);
-	    $achievement->test($data[6]);
-	    $achievement->icon($data[7]);
+	    $achievement->name($$data[1]);
+	    $achievement->number($$data[2]);
+	    $achievement->category($$data[3]);
+	    $achievement->assignment_type($$data[4]);
+	    $achievement->description($$data[5]);
+	    $achievement->points($$data[6]);
+	    $achievement->max_counter($$data[7]);
+	    $achievement->test($$data[8]);
+	    $achievement->icon($$data[9]);
 	    $achievement->enabled($assign eq "all"?1:0);
 	    
 	    #add achievement
@@ -899,25 +918,26 @@ sub saveExport_handler {
 
 	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{achievements}, $FilePath);
 	#open file
-	local *EXPORT;
-	open EXPORT, ">$FilePath" or return CGI::div({class=>"ResultsWithError"}, "Failed to open $FilePath");
+	my $fh;
+	open $fh, ">$FilePath" or return CGI::div({class=>"ResultsWithError"}, "Failed to open $FilePath");
 
+	my $csv = Text::CSV->new({eol=>"\n"});
 	my @achievements = $db->getAchievements(@achievementIDsToExport);
 	#run through achievements outputing data as csv list.  This format is not documented anywhere
 	foreach my $achievement (@achievements) {
-	    print EXPORT $achievement->achievement_id.", ";
-	    my $name = $achievement->name;
-	    $name =~ s/,/\;/;
-	    print EXPORT $name.", ";
-	    print EXPORT $achievement->category.", ";
-	    my $description = $achievement->description;
-	    $description =~ s/,/\;/;
-	    print EXPORT $description.", ";
-	    print EXPORT $achievement->points.", ";
-	    print EXPORT $achievement->max_counter.", ";
-	    print EXPORT $achievement->test.", ";
-	    print EXPORT $achievement->icon.", ";
-	    print EXPORT "\n";
+	    my $line = [$achievement->achievement_id,
+			$achievement->name,
+			$achievement->number,
+			$achievement->category,
+			$achievement->assignment_type,
+			$achievement->description,
+			$achievement->points,
+			$achievement->max_counter,
+			$achievement->test,
+			$achievement->icon,];
+
+	    warn("Error Exporting Achievement ".$achievement->achievement_id)
+		unless $csv->print($fh, $line);
 	}
 
 	close EXPORT;
@@ -965,8 +985,23 @@ sub saveEdit_handler {
 		#update fields
 		foreach my $field ($Achievement->NONKEYFIELDS()) {
 			my $param = "achievement.${achievementID}.${field}";
-			if (defined $tableParams->{$param}->[0]) {
-			    $Achievement->$field($tableParams->{$param}->[0]);
+
+			if ($field eq 'assignment_type') {
+			    my @types = ();
+			    my $i = 0;
+
+			    while (defined ($tableParams->{$param}->[$i])) {
+				push @types,  $tableParams->{$param}->[$i];
+				$i++;
+			    }
+
+			    $Achievement->assignment_type(join(',',@types));
+
+			} else {
+
+			    if (defined $tableParams->{$param}->[0]) {
+				$Achievement->$field($tableParams->{$param}->[0]);
+			    }
 			}
 		}
 		
@@ -1013,6 +1048,17 @@ sub fieldEditHTML {
 		) . CGI::hidden(
 			-name => $fieldName,
 			-value => 0
+		);
+	}
+
+	if ($type eq "assignment_type") {
+	    my @allowedTypes = split(',',$value);
+
+	    return CGI::checkbox_group(-name=> $fieldName,
+				       -values=> ASSIGNMENT_TYPES,
+				       -labels=> ASSIGNMENT_NAMES,
+				       -default=> \@allowedTypes,
+				       -linebreaks=>'false'
 		);
 	}
 }
@@ -1112,15 +1158,21 @@ sub recordEditHTML {
 	    $fieldName = "achievement.".$achievement_id.".".$field;
 	    $fieldValue = $Achievement->$field;
 	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
-
+	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties))
+;
 	    push @tableCells, $tableCell;
+
+	    $field = "number";
+	    $fieldName = "achievement.".$achievement_id.".".$field;
+	    $fieldValue = $Achievement->$field;
+	    %properties = %{ FIELD_PROPERTIES()->{$field} };
+	    $tableCell=CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties)).CGI::br();
 
 	    $field = "enabled";
 	    $fieldName = "achievement.".$achievement_id.".".$field;
 	    $fieldValue = $Achievement->$field;
 	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-	    $tableCell=CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties)).CGI::br();
+	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties)).CGI::br();
 
 	    $field = "points";
 	    $fieldName = "achievement.".$achievement_id.".".$field;
@@ -1154,6 +1206,12 @@ sub recordEditHTML {
 	    %properties = %{ FIELD_PROPERTIES()->{$field} };
 	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 
+	    $field = "assignment_type";
+	    $fieldName = "achievement.".$achievement_id.".".$field;
+	    $fieldValue = $Achievement->$field;
+	    %properties = %{ FIELD_PROPERTIES()->{$field} };
+	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+
 	    push @tableCells, $tableCell;
 
 	    #format for regular viewing mode
@@ -1167,14 +1225,12 @@ sub recordEditHTML {
 		label => "",
 		});
 	    
-	    my @fields = ("enabled", "achievement_id", "category", "name");
 	    my $AchievementEditURL = $self->systemLink($urlpath->new(type=>'instructor_achievement_list', args=>{courseID => $courseName})) . "&editMode=1&selected_achievements=" . $achievement_id;
 	    my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
 	    my $imageLink = CGI::a({href => $AchievementEditURL}, CGI::img({src=>$imageURL, border=>0}));
 
-
+            my @fields = @{VIEW_FIELD_ORDER()};
 	    foreach my $field (@fields) {
-		
 		my $fieldName = "achievement.".$achievement_id.".".$field;
 		my $fieldValue = $Achievement->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
@@ -1236,20 +1292,23 @@ sub printTableHTML {
 	    @tableHeadings = ($r->maketext("Icon"),
 			      $r->maketext("Achievement ID").CGI::br().
 			      $r->maketext("Name").CGI::br().
-			      $r->maketext("Category"),
+			      $r->maketext("Category").CGI::br().
+			      $r->maketext("Number"),
 			      $r->maketext("Enabled").CGI::br().
 			      $r->maketext("Points").CGI::br().
 			      $r->maketext("Counter"),
 			      $r->maketext("Description").CGI::br().
 			      $r->maketext("Evaluator File").CGI::br().
-			      $r->maketext("Icon File")
+			      $r->maketext("Icon File").CGI::br().
+			      $r->maketext("Type")
 		);
 	} else {
 	    @tableHeadings = ($selectBox,
 			      $r->maketext("Enabled"),
 			      $r->maketext("Achievement ID"),
-			      $r->maketext("Category"),
 			      $r->maketext("Name"),
+			      $r->maketext("Number"),
+			      $r->maketext("Category"),
 			      $r->maketext("Edit").CGI::br().$r->maketext("Users"),
 			      $r->maketext("Edit").CGI::br().$r->maketext("Evaluator")
 		);
