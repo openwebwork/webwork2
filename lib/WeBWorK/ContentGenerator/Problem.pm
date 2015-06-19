@@ -2160,7 +2160,13 @@ sub output_past_answer_button{
 	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, 
 		courseID => $courseName);
 	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
-		
+	
+	my $problemNumber = $problem->problem_id;
+	my $setRecord = $r->db->getGlobalSet($problem->set_id);
+	if ( $setRecord->assignment_type eq 'jitar' ) {
+	    $problemNumber = join('.',jitar_id_to_seq($problemNumber));
+	}
+
 	# print answer inspection button
 	if ($authz->hasPermissions($user, "view_answers")) {
 	        my $hiddenFields = $self->hidden_authen_fields;
@@ -2169,7 +2175,7 @@ sub output_past_answer_button{
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
-			CGI::hidden(-name => 'problemID', -value=>$problem->problem_id), "\n",
+			CGI::hidden(-name => 'problemID', -value=>$problemNumber), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
                		CGI::hidden(-name => 'studentUser',  -value=>$problem->user_id), "\n",
 			CGI::p(
