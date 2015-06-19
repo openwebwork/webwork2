@@ -52,7 +52,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id,icon: _view.info.icon}));
         });
 
-        // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
+        // this ensures that the rerender call on resizing the window only occurs once every 250 ms.  
 
         var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();

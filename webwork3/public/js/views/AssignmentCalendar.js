@@ -10,51 +10,49 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     var AssignmentCalendar = CalendarView.extend({
         template: this.$("#calendar-date-bar").html(),
         popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
-        headerInfo: {template: "#calendar-header", events: 
-                { "click .previous-week": "viewPreviousWeek",
-                    "click .next-week": "viewNextWeek",
-                    "click .view-week": "showWeekView",
-                    "click .view-month": "showMonthView"}
-        },
     	initialize: function (options) {
             var self = this;
             CalendarView.prototype.initialize.call(this,options);
     		_.bindAll(this,"render","renderDay","update","showHideAssigns");
+            _(this).extend(_(options).pick("problemSets","settings","users","eventDispatcher"));
   
             this.assignmentDates = util.buildAssignmentDates(this.problemSets);
-            this.problemSets.on({sync: this.render,
-                "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
-                    _set.adjustDates();
-                    self.assignmentDates.chain().filter(function(assign) { 
-                            return assign.get("problemSet").get("set_id")===_set.get("set_id");})
-                        .each(function(assign){
-                            assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type").replace("-","_")+"_date"))
-                                .format("YYYY-MM-DD"));
-                    });
-                },
-                remove: function(_set){
+            this.problemSets.on({sync: function(){
+                                    console.log("here"); self.render()},                
+                     remove: function(_set){
                   // update the assignmentDates to delete the proper assignments
 
                     self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
                         return assign.get("problemSet").get("set_id")===_set.get("set_id");}));  
-                }
-            });
-                                
-            this.state.on("change:reduced_scoring_date change:answer_date change:due_date change:open_date",
-                    this.showHideAssigns);
-            this.state.on("change",this.render);
+                }}).on("change:due_date change:open_date change:answer_date change:reduced_scoring_date",
+                        function(_set){
+                            _set.adjustDates();
+                            self.assignmentDates.chain().filter(function(assign) { 
+                                    return assign.get("problemSet").get("set_id")===_set.get("set_id");})
+                                .each(function(assign){
+                                    assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")
+                                                                        .replace("-","_")+"_date"))
+                                .format("YYYY-MM-DD"));
+                    });
+                });
             return this;
     	},
     	render: function (){
     		CalendarView.prototype.render.apply(this);
-            this.update();
+            
+            
+            // remove any popups that exist already.  
+            this.$(".show-set-popup-info").popover("destroy")
 
 
     		this.$(".assign").popover({html: true});
 
 
             // set up the calendar to scroll correctly
-            this.$(".calendar-container").height($(window).height()-160);
+            var navbarHeight = $(".navbar-fixed-top").outerHeight(true);
+            var footerHeight = $(".navbar-fixed-bottom").outerHeight(true);
+            var buttonRow = $(".calendar-button-row").outerHeight(true); 
+            this.$(".calendar-container").height($(window).height()-navbarHeight - buttonRow-footerHeight);
             $('.show-date-types input, .show-date-types label').click(function(e) {
                 e.stopPropagation();
             });
@@ -73,9 +71,11 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     }
                 });
             });
-
-            this.stickit(this.state,this.bindings);
-            this.showHideAssigns(this.state);
+            console.log(this);
+            this.update();
+            //this.stickit(this.state,this.bindings);
+            //this.showHideAssigns(this.state);
+            
             return this;
     	},
         bindings: {
@@ -95,6 +95,10 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
 
     	},
+        // make sure that the events within the Calendar class are included. 
+        //events : function() {
+	   //   	return CalendarView.prototype.events;
+	    //},
         getHelpTemplate: function (){
             return $("#calendar-help-template").html();
         },

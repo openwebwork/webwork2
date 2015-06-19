@@ -86,6 +86,7 @@ border-top: solid 1px rgb(220, 220, 220);}
 #calendar-table {background: lightgray; min-width: 90%;}
 
 #calendar-table td {border: 1px solid black; width: 13%;  vertical-align: top;}
+#calendar-table th {text-align: center}
 
 .calendar-day {z-index: 5; height: 100px;}
 
