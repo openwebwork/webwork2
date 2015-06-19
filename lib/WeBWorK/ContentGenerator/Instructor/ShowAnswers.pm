@@ -106,7 +106,7 @@ sub body {
 	    
 	    print CGI::p(),CGI::hr();
 	    
-	    print CGI::start_form({-target=>'information',-id=>'past-answer-form'},"POST", $showAnswersURL),
+	    print CGI::start_form({-target=>'WW_Info',-id=>'past-answer-form'},"POST", $showAnswersURL),
 	    $self->hidden_authen_fields;
 	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
 	    " &nbsp;".CGI::label($r->maketext('User:')." &nbsp;",
