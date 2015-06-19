@@ -1158,8 +1158,8 @@ sub recordEditHTML {
 	    $fieldName = "achievement.".$achievement_id.".".$field;
 	    $fieldValue = $Achievement->$field;
 	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties))
-;
+	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+
 	    push @tableCells, $tableCell;
 
 	    $field = "number";
@@ -1204,7 +1204,7 @@ sub recordEditHTML {
 	    $fieldName = "achievement.".$achievement_id.".".$field;
 	    $fieldValue = $Achievement->$field;
 	    %properties = %{ FIELD_PROPERTIES()->{$field} };
-	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
+	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties)).CGI::br();
 
 	    $field = "assignment_type";
 	    $fieldName = "achievement.".$achievement_id.".".$field;
@@ -1292,8 +1292,8 @@ sub printTableHTML {
 	    @tableHeadings = ($r->maketext("Icon"),
 			      $r->maketext("Achievement ID").CGI::br().
 			      $r->maketext("Name").CGI::br().
-			      $r->maketext("Category").CGI::br().
-			      $r->maketext("Number"),
+			      $r->maketext("Category"),
+			      $r->maketext("Number").CGI::br().
 			      $r->maketext("Enabled").CGI::br().
 			      $r->maketext("Points").CGI::br().
 			      $r->maketext("Counter"),

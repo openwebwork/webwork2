@@ -2277,17 +2277,11 @@ sub body {
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them.  
 	#Gateways are special.  We only provide the first problem just to seed the data, but all of the problems from the gateway will be provided to the achievement evaluator
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
-	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
-
-	    print  WeBWorK::AchievementEvaluator::checkForAchievements(@problems[0], $pg, $db, $ce);
-
+	    && $submitAnswers && $set->set_id ne 'Undefined_Set') {
+	    print  WeBWorK::AchievementEvaluator::checkForAchievements($problems[0], $pg_results[0], $db, $ce);
+	    
 	}
 	
-
-	return "";
-}
-
-
 # debugging verbiage
 #     if ( $can{checkAnswersNextTime} ) {
 # 	print "Can check answers next time\n";
