@@ -2278,7 +2278,7 @@ sub body {
 	#Gateways are special.  We only provide the first problem just to seed the data, but all of the problems from the gateway will be provided to the achievement evaluator
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
 	    && $submitAnswers && $set->set_id ne 'Undefined_Set') {
-	    print  WeBWorK::AchievementEvaluator::checkForAchievements($problems[0], $pg_results[0], $db, $ce);
+	    print  WeBWorK::AchievementEvaluator::checkForAchievements($problems[0], $pg_results[0], $db, $ce, setVersion=>$versionNumber);
 	    
 	}
 	

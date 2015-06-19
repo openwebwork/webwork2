@@ -37,6 +37,8 @@ sub checkForAchievements {
     my $pg = shift;
     my $db = shift;
     my $ce = shift;
+    my %options = @_;
+
 
     #set up variables and get achievements
     my $cheevoMessage = '';
@@ -47,6 +49,9 @@ sub checkForAchievements {
     my @achievements = $db->getAchievements(@allAchievementIDs);
     @achievements = sortAchievements(@achievements);
     my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
+
+    my $isGatewaySet = ( $set->assignment_type =~ /gateway/ ) ? 1 : 0;
+    my $isJitarSet = ( $set->assignment_type eq 'jitar' ) ? 1 : 0;
 
     # If no global data then initialize
     if (not $globalUserAchievement) {
@@ -62,12 +67,13 @@ sub checkForAchievements {
     # important bits here.  The only thing that gets left behind is last_answer, which is
     # still the previous last answer. 
     # 
+    
     $problem->status($pg->{state}->{recorded_score});
     $problem->sub_status($pg->{state}->{sub_recorded_score});
     $problem->attempted(1);
     $problem->num_correct($pg->{state}->{num_of_correct_ans});
     $problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-
+    
     #These need to be "our" so that they can share to the safe container
     our $counter;
     our $maxCounter;
@@ -76,6 +82,7 @@ sub checkForAchievements {
     our $localData = {};
     our $globalData = {};
     our $tags;
+    our @setProblems = ();
 
     my $compartment = new WWSafe;
 
@@ -95,18 +102,35 @@ sub checkForAchievements {
 
     #Update a couple of "standard" variables in globalData hash.
     my $allcorrect = 0;
-    if ($problem->status == 1 && $problem->num_correct == 1) {
-		$globalUserAchievement->achievement_points(
-	    $globalUserAchievement->achievement_points + 
-	    $ce->{achievementPointsPerProblem});
-	#this variable is shared and should be considered iffy
-		$achievementPoints += $ce->{achievementPointsPerProblem};
-		$globalData->{'completeProblems'} += 1;
-		$allcorrect = 1;
+
+    if ($isGatewaySet) {
+	@setProblems = $db->getAllMergedProblemVersions($user_id, $set_id, $options{setVersion});
+    } else {
+	@setProblems = $db->getAllUserProblems( $user_id, $set_id);
     }
 
-    our @setProblems = $db->getAllUserProblems( $user_id, $problem->set_id);
-    
+    # for gateway sets we have to do check all of the problems to see
+    # if we need to reward points since we submit all at once
+    # otherwise we only do the main problem. 
+    my @problemsToCheck = ($problem);
+
+    if ($isGatewaySet) {
+	@problemsToCheck = @setProblems;
+    }
+
+    foreach my $thisProblem (@problemsToCheck) {
+
+	if ($thisProblem->status == 1 && $thisProblem->num_correct == 1) {
+	    $globalUserAchievement->achievement_points(
+		$globalUserAchievement->achievement_points + 
+		$ce->{achievementPointsPerProblem});
+	    #this variable is shared and should be considered iffy
+	    $achievementPoints += $ce->{achievementPointsPerProblem};
+	    $globalData->{'completeProblems'} += 1;
+	    $allcorrect = 1;
+	}
+    }
+
     #check and see of all problems are correct.  (also update the current
     # problem in setProblems, since the database might be out of date)
     my $index = 0;
@@ -123,9 +147,14 @@ sub checkForAchievements {
 	$globalData->{'completeSets'}++;
     }
 
-    # get the problem tags
-    my $templateDir = $ce->{courseDirs}->{templates};
-    $tags = WeBWorK::Utils::Tags->new($templateDir.'/'.$problem->source_file());
+    # get the problem tags if its not a gatway
+    # if it is a gateway get rid of $problem since it doensn't make sense
+    if ($isGatewaySet) {
+	$problem = 0;
+    } else {
+	my $templateDir = $ce->{courseDirs}->{templates};
+	$tags = WeBWorK::Utils::Tags->new($templateDir.'/'.$problem->source_file());
+    }
 
     #These variables are shared with the safe compartment.  The achievement evaulators
     # have access too 
@@ -140,9 +169,8 @@ sub checkForAchievements {
     # $achievementPoints - the number of achievmeent points
     # $tags -this is the tag data associated to the problem from the problem library
 
-    $compartment->share(qw($problem @setProblems $localData $maxCounter 
+    $compartment->share(qw( $problem @setProblems $localData $maxCounter 
              $globalData $counter $nextLevelPoints $set $achievementPoints $tags));
-
 
     #load any preamble code
     # this line causes the whole file to be read into one string
@@ -155,7 +183,6 @@ sub checkForAchievements {
 	$preamble = <PREAMB>;
 	close(PREAMB);
     }
-
     #loop through the various achievements, see if they have been obtained, 
     foreach my $achievement (@achievements) {
 	#skip achievements not assigned, not enabled, and that are already earned, or if it doesn't match the set type
@@ -164,8 +191,8 @@ sub checkForAchievements {
 	next unless ($db->existsUserAchievement($user_id,$achievement_id));
 	my $userAchievement = $db->getUserAchievement($user_id,$achievement_id);
 	next if ($userAchievement->earned);
-	next unless $achievement->assignment_type =~ /${$set->assignment_type}/;
-	
+	my $setType = $set->assignment_type;
+	next unless $achievement->assignment_type =~ /$setType/;
 
 	#thaw localData hash
 	if ($userAchievement->frozen_hash) {

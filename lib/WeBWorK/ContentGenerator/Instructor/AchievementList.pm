@@ -719,6 +719,7 @@ sub create_handler {
 	if ($type eq "empty") {
 		$newAchievementRecord->achievement_id($newAchievementID);
 		$newAchievementRecord->enabled(0);
+		$newAchievementRecord->assignment_type('default');
 		$newAchievementRecord->test(BLANK_ACHIEVEMENT());
 		$db->addAchievement($newAchievementRecord);
 	} elsif ($type eq "copy") {
