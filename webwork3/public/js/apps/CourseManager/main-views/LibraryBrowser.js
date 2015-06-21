@@ -29,6 +29,10 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
             };
             options.views.setDefinition.tabName = "Set Defn. files";
             TabbedMainView.prototype.initialize.call(this,options);
+            
+            this.state.on("change",function(){
+                console.log(self.state.attributes);  
+            })
     	},
         changeTab: function(options){
             TabbedMainView.prototype.changeTab.apply(this,[options]);
