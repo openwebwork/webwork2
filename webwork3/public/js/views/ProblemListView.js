@@ -85,17 +85,23 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             // check if all of the problems are rendered.  When they are, trigger an event
             //
-            // I think this needs work.  It appears that MathJax fires lots of "Math End" signals, although why not just one. 
+            // I think this needs work.  It appears that MathJax fires lots of "Math End" signals, 
+            // although why not just one. 
             // 
             // this may also be part of the many calls to render throughout the app. 
-            //
+            // (Note: after further work on another branch, this may not be necessary)
             
             _(this.problemViews).each(function(pv){
-              pv.model.on("rendered", function () {
-                  if(_(self.problemViews).chain().map(function(pv){return pv.state.get("rendered");}).every().value()){
-                    self.trigger("rendered");   
-                  }
-              });
+                if(pv && pv.model){
+                      pv.model.on("rendered", function () {
+                          if(_(self.problemViews).chain().map(function(pv){
+                               if(pv) {
+                                    return pv.state.get("rendered");}
+                                }).every().value()){
+                            self.trigger("rendered");   
+                          }
+                      }); 
+                }
             })
             this.showPath(this.show_path);
             this.showTags(this.show_tags);
@@ -151,12 +157,12 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         showPath: function(_show){
             this.show_path = _show;
-            _(this.problemViews).each(function(pv){ pv.set({show_path: _show})});
+            _(this.problemViews).each(function(pv){ if(pv){pv.set({show_path: _show})}});
             return this;
         },
         showTags: function (_show) {
             this.show_tags = _show;
-            _(this.problemViews).each(function(pv){ pv.set({show_tags: _show})});
+            _(this.problemViews).each(function(pv){ if(pv){pv.set({show_tags: _show})}});
             return this;
         },
         firstPage: function() { this.gotoPage(0);},
