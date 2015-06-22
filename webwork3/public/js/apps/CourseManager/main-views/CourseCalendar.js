@@ -3,7 +3,7 @@ define(['backbone','views/MainView','views/AssignmentCalendar','moment'],
 var CourseCalendar = MainView.extend({
     initialize: function (options) {
         var self = this; 
-        //_(this).bindAll("render");
+        _(this).bindAll("render");
         MainView.prototype.initialize.call(this,options);
         this.calendar = new AssignmentCalendar(_.extend({},options,this.state.attributes));
         this.state.on("change:reduced_scoring_date change:answer_date change:due_date change:open_date",

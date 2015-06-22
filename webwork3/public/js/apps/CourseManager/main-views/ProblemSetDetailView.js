@@ -24,10 +24,11 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
 
             this.views = options.views = {
                 propertiesView : new DetailsView(opts),
-                setHeaderView: new SetHeadersView(opts),
-                problemsView : new ShowProblemsView(_.extend({messageTemplate: this.messageTemplate, parent: this},opts)),
+                problemsView : new ShowProblemsView(_.extend({messageTemplate: this.messageTemplate, 
+                                                              parent: this},opts)),
                 usersAssignedView : new AssignUsersView(opts),
-                customizeUserAssignView : new CustomizeUserAssignView(opts)
+                customizeUserAssignView : new CustomizeUserAssignView(opts),
+                setHeaderView: new SetHeadersView(opts)
             };
             this.views.problemsView.on("page-changed",function(num){
                 self.eventDispatcher.trigger("save-state");
@@ -84,6 +85,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                         this.sidebar.$(".undo-delete-button").attr("disabled","disabled");
                 }
             }
+        },
+        getDefaultState: function () {
+            return _.extend({set_id: ""}, TabbedMainView.prototype.getDefaultState.apply(this));   
         },
         changeProblemSet: function (setName)
         {
@@ -148,6 +152,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
             _(this).extend(_(options).pick("users","settings","problemSets"));
             TabView.prototype.initialize.apply(this,[options]);
+            this.model = this.problemSets.findWhere({set_id: this.tabState.get("set_id")});
             this.tabState.on("change:show_time",function (val){
                 self.showTime(self.tabState.get("show_time"));
                 self.stickit();
@@ -159,14 +164,19 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
              // this sets up a problem set list containing only the current ProblemSet and builds a calendar.
             this.calendarProblemSets = new ProblemSetList([],{dateSettings: util.pluckDateSettings(this.settings)});
             //this.problemSetList.add(this.problemSet);
-            this.calendar = new AssignmentCalendar({users: this.users,settings: this.settings, problemSets: this.calendarProblemSets});
+            this.calendar = new AssignmentCalendar({users: this.users,settings: this.settings,
+                                                problemSets: this.calendarProblemSets});
+            this.calendar.on("calendar-change",function() {
+                self.tabState.set({first_day: self.calendar.state.get("first_day")});  
+            })
         },
         render: function(){
             if(this.model){
                 this.$el.html($("#set-properties-tab-template").html());
                 this.showTime(this.tabState.get("show_time"));
-                this.showCalendar(this.tabState.get("show_calendar"));
                 this.showHideReducedScoringDate();
+                this.showCalendar(this.tabState.get("show_calendar"));
+                
                 this.stickit();
                 // gets rid of the line break for showing the time in this view. 
                 $('span.time-span').children('br').attr("hidden",true)    
@@ -188,7 +198,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         setProblemSet: function(_set) {
             var self = this; 
-            this.model = _set; 
+            this.model = _set;
+            this.tabState.set("set_id",this.model.get("set_id"));
             if(this.model){
                 this.model.on("change:enable_reduced_scoring",this.render);
             }
@@ -246,16 +257,17 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             // change the button text
             this.$(".show-calendar-toggle").button(_show?"hide":"reset");
             if(! _show) return;
+            if(typeof(this.model)==="undefined") return;
             this.calendarProblemSets.reset(this.problemSets.where({set_id: this.model.get("set_id")}));
             var assignmentDateList = util.buildAssignmentDates(this.calendarProblemSets);
-            this.calendar.set({assignmentDates: assignmentDateList})
+            this.calendar.set({assignmentDates: assignmentDateList,first_day: this.tabState.get("first_day")})
                 .setElement(this.$(".calendar-cell")).render();
             this.problemSets.on("change",function(m){
                 self.calendarProblemSets.findWhere({set_id: m.get("set_id")}).set(m.changed);
                 self.calendar.render();
             });
         },
-        getDefaultState: function () { return {set_id: "", show_time: false, show_calendar: false};}
+        getDefaultState: function () { return {set_id: "", show_time: false, show_calendar: false, first_day: ""};}
 
     });
     

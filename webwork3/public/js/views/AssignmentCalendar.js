@@ -95,10 +95,10 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
 
     	},
-        // make sure that the events within the Calendar class are included. 
-        //events : function() {
-	   //   	return CalendarView.prototype.events;
-	    //},
+        set: function(opts){
+            if(opts.assignmentDates)this.assignmentDates = opts.assignmentDates; 
+            return CalendarView.prototype.set.apply(this,[opts]);
+        },
         getHelpTemplate: function (){
             return $("#calendar-help-template").html();
         },

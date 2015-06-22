@@ -11,6 +11,7 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
     var CalendarView = Backbone.View.extend({
         className: "calendar",
         initialize: function (options){
+            var self = this;
             _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');
             
             var defaults = {num_of_weeks: 6, first_day: ""};
@@ -19,6 +20,9 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             if (! this.date){
                 this.date = moment();  // today!
             }
+            this.state.on("change:first_day",function(){
+                self.trigger("calendar-change");
+            });
 
             this.weekViews = []; // array of CalendarWeekViews
             return this;
@@ -78,13 +82,12 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
                 moment(firstOfMonth).date(1).subtract(firstOfMonth.date(1).day(),"days"):
                 moment().subtract(moment().day(),"days");
             this.state.set("first_day",firstDay);
-            this.trigger("calendar-change");
         },
         renderDay: function(){
             // this is called from the CalendarDayView.render() to be useful, this should be overridden in the subclass
         },
         set: function(options){
-            _(this).extend(_(options).pick("assignmentDates","viewType","reducedScoringMinutes","first_day"));
+            this.state.set(_(options).pick("num_of_weeks","first_day"));
             return this;
         }
     });
