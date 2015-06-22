@@ -429,7 +429,7 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 
 ###
 #
-# Problem render.  Given information about the problem (problem_id, set_id, course_id, or path) return the
+# Problem render for a UserProblem.  Given information about the problem (problem_id, set_id, course_id, or path) return the
 # HTML for the problem. 
 #
 #  The displayMode parameter will determine the exact HTML code that is returned (images, MathJax, plain, PDF) 
@@ -438,12 +438,15 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 #
 ###
 
-any ['get', 'post'] => '/renderer/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
+any ['get', 'post'] => '/renderer/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => sub {
 
 	send_error("The set " . params->{set_id} . " does not exist.",404) unless vars->{db}->existsGlobalSet(params->{set_id});
 
 	send_error("The problem with id " . params->{problem_id} . " does not exist in set " . params->{set_id},404) 
 		unless vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id});
+
+	send_error("The user " . params->{user_id} . " is not assigned to the set " . params->{set_id} . ".") 
+		unless vars->{db}->existsUserProblem(params->{user_id},params->{set_id},params->{problem_id});
 
 
 	my $renderParams = {};
@@ -465,15 +468,14 @@ any ['get', 'post'] => '/renderer/courses/:course_id/sets/:set_id/problems/:prob
     	$renderParams->{showAnswers} = 0; 
 
     } else { 
-		$renderParams->{showHints} = defined(param('show_hints'))? param('show_hints') : 0;
-		$renderParams->{showSolutions} = defined(param('show_solutions'))? param('show_solutions') : 0;
-		$renderParams->{showAnswers} = defined(param('show_answers'))? param('show_answers') : 0;
+		$renderParams->{showHints} = defined(param('show_hints'))? int(param('show_hints')) : 0;
+		$renderParams->{showSolutions} = defined(param('show_solutions'))? int(param('show_solutions')) : 0;
+		$renderParams->{showAnswers} = defined(param('show_answers'))? int(param('show_answers')) : 0;
     }	
 
-	$renderParams->{problem} = vars->{db}->getMergedProblem(params->{effectiveUser}|| session->{user},
-															params->{set_id},params->{problem_id});
-	$renderParams->{user} = vars->{db}->getUser(params->{effectiveUser}|| session->{user});
-	$renderParams->{set} = vars->{db}->getUserSet(params->{effectiveUser}|| session->{user},params->{set_id});		
+	$renderParams->{problem} = vars->{db}->getMergedProblem(params->{user_id},params->{set_id},params->{problem_id});
+	$renderParams->{user} = vars->{db}->getUser(params->{user_id});
+	$renderParams->{set} = vars->{db}->getMergedSet(params->{user_id},params->{set_id});		
 
 	my $results = render($renderParams);
 

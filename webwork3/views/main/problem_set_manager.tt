@@ -127,7 +127,9 @@ var messages = {
     setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
     setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
                                 opt.oldValue + " to " + opt.newValue + "."},
-    empty_selected_sets_error: function () { return "You must select at least one set.";}
+    empty_selected_sets_error: function () { return "You must select at least one set.";},
+    problem_updated: function(opt) { return "Problem # " + opt.problem_id + " for set " + opt.set_id +
+                                        " and user " + opt.user_id + " has been updated.";}
 }
 print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>

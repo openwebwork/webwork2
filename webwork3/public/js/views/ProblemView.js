@@ -180,7 +180,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
         markCorrect: function () {
             var conf = confirm(this.problem_set_view.messageTemplate({type:"mark_all_correct"}));
             if(conf){
-                this.problem_set_view.markAllCorrect(this.model);   
+                this.problem_set_view.markAllCorrect(this.model.get("problem_id"));   
             }
         },
         addProblem: function (evt){

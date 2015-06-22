@@ -26,7 +26,7 @@ use Data::Dumper;
 
 our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
-our @problem_props = qw/problem_id flags value max_attempts source_file/;
+our @problem_props = qw/problem_id flags value max_attempts status source_file/;
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint/;
 
 ###
@@ -653,7 +653,7 @@ get '/courses/:course_id/sets/:set_id/users/all/problems' => sub {
     my @allUsers = vars->{db}->listSetUsers(params->{set_id});
     my @userSets = ();
     for my $userID (@allUsers){
-        my $userSet = convertObjectToHash(vars->{db}->getUserSet($userID,params->{set_id}));
+        my $userSet = convertObjectToHash(vars->{db}->getMergedSet($userID,params->{set_id}));
 
         my @problems = vars->{db}->getAllMergedUserProblems($userID,params->{set_id});
         my @userProblems = ();
@@ -688,7 +688,7 @@ get '/courses/:course_id/users/:user_id/sets/all/problems' => sub {
     my @userSetNames = vars->{db}->listUserSets(params->{user_id});
     my @userSets = ();
     for my $setID (@userSetNames){
-         my $userSet = convertObjectToHash(vars->{db}->getUserSet(params->{user_id},$setID));
+         my $userSet = convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},$setID));
 
         my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},$setID);
         my @userProblems = ();
@@ -1025,12 +1025,33 @@ get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => su
     send_error("The user " . params->{user_id} . " is not assigned to set " . params->{set_id})
         unless vars->{db}->existsUserSet(params->{user_id},params->{set_id});
 
-    my $problem = convertObjectToHash(vars->{db}->getUserProblem(params->{user_id},params->{set_id},params->{problem_id}));
+    my $problem = convertObjectToHash(vars->{db}->getMergedProblem(params->{user_id},params->{set_id},params->{problem_id}));
     my @answers = decodeAnswers($problem->{last_answer});
     $problem->{last_answer} = \@answers;
     return $problem;
 
 
+};
+
+put '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => sub {
+    checkPermissions(10,session->{user});
+    send_error("The problem set with name: " . params->{set_id} . " does not exist.",404) 
+        unless vars->{db}->existsGlobalSet(params->{set_id});
+
+    send_error("The problem with id " . params->{problem_id} . " doesn't exist in set " . params->{set_id},404)
+        unless vars->{db}->existsGlobalProblem(params->{set_id},params->{problem_id});
+
+    send_error("The user " . params->{user_id} . " is not assigned to set " . params->{set_id})
+        unless vars->{db}->existsUserSet(params->{user_id},params->{set_id});
+
+    my $problem = vars->{db}->getMergedProblem(params->{user_id},params->{set_id},params->{problem_id});
+    for my $key (@problem_props){
+        $problem->{$key} = params->{$key}
+    }
+    
+    vars->{db}->putUserProblem($problem);
+    return convertObjectToHash(vars->{db}->getMergedProblem(params->{user_id},params->{set_id}
+                                ,params->{problem_id}));
 };
 
 ###

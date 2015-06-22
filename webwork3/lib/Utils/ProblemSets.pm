@@ -7,6 +7,7 @@ use Dancer ':syntax';
 use Data::Dumper;
 use List::Util qw(first);
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog/;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 

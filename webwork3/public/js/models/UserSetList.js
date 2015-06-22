@@ -27,9 +27,11 @@ define(['backbone','models/UserSet','config'], function(Backbone, UserSet,config
                         console.error("UserSetList error. The user field must be defined.");
                     }
                     if(this.loadProblems){
-                        return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.user + "/sets/all/problems";
+                        return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" 
+                                + this.user + "/sets/all/problems";
                     } else {
-                        return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.user + "/sets";
+                        return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" 
+                                + this.user + "/sets";
                     }
                 case "users":
                     if(typeof(this.problemSet)==="undefined"){

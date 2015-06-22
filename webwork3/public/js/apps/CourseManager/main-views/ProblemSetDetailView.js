@@ -345,7 +345,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             var self = this;
             _(this).bindAll("setProblemSet");
             this.parent = options.parent;
-            this.problemSetView = new ProblemSetView({settings: options.settings, messageTemplate: options.messageTemplate});
+            this.problemSetView 
+                = new ProblemSetView(_(options).pick("settings","messageTemplate","eventDispatcher"));
             TabView.prototype.initialize.apply(this,[options]);
             this.tabState.on("change:show_path",function(){
                 self.problemSetView.showPath(self.tabState.get("show_path"));
