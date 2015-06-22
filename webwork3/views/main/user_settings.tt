@@ -34,6 +34,9 @@
 <%
 var messages = {
     password_saved: function(opt){return "The password for user " + opt.user_id + "  has been updated.";},
+    not_equal_pass: function () { return "The new password and confirmed passwords are not equal.";},
+    wrong_pass: function () { return "Your original password is not correct.";},
+    short_pass: function () { return "The new password should not be less than 6 characters";}
 }
 print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>

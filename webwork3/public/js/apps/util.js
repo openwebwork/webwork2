@@ -117,6 +117,13 @@ var util = {
         var values = _(obj).chain().pick(fields).values().map(function(d) {return d?parseInt(d):d;}).value();
         _.extend(obj,_.object(fields,values));
         return obj;
+    },
+    changeClass:function(opts){
+        if(opts.state){
+            opts.els.removeClass(opts.remove_class).addClass(opts.add_class)
+        } else {
+            opts.els.addClass(opts.remove_class).removeClass(opts.add_class)
+        }
     }
 }
 

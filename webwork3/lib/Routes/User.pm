@@ -123,8 +123,6 @@ put '/courses/:course_id/users/:user_id' => sub {
         $user->{$key} = params->{$key} if (defined(params->{$key}));
     }
     
-    debug to_json convertObjectToHash($user);
-    
 	vars->{db}->putUser($user);
 	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
 
@@ -137,8 +135,7 @@ put '/courses/:course_id/users/:user_id' => sub {
 
 	my $u =convertObjectToHash($user, \@boolean_user_props);
     
-    debug to_json($u);
-	$u->{_id} = $u->{user_id}; 
+    $u->{_id} = $u->{user_id}; 
 
 	return $u;
 
@@ -201,22 +198,19 @@ post '/courses/:course_id/users/:user_id/password' => sub {
 	#
 	# if the user is not a professor, check that the current password is correct.
 	#
+    
 	if(session->{permission} < 10 and session->{user} ne params->{user_id}){
 		send_error("You don't have the permission to change another password");
 	}
 
 	my $password = vars->{db}->getPassword(params->{user_id});
 	if(crypt(params->{old_password}, $password->password) eq $password->password){
-		debug "setting a new password.";
     	$password->{password} = cryptPassword(params->{new_password});
     	vars->{db}->putPassword($password);
+        return {message => "password changed", success => 1}
 	} else {
-		debug "The old passwod was wrong.";
-		send_error("The password for user " . params->{user_id} . " is incorrect.",404);
+        return {message => "orig password not correct", success => 0}
 	}
-
-	return {message=>"success"};
-
 };
 
 

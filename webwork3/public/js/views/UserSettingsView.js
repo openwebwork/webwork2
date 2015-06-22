@@ -4,36 +4,26 @@ var UserSettingsView = MainView.extend({
 	messageTemplate: _.template($("#user-settings-messages-template").html()),
 	initialize: function(options){
 		var self = this;
-		_(this).bindAll("saveSuccess","saveError");
+		_(this).bindAll("parseResponse","showError");
 		MainView.prototype.initialize.call(this,options);
 		this.model = new UserSettings();
         this.model.on("change:displayMode change:showOldAnswers change:email_address",function(model){
-            console.log(model.changed);
             self.user.set(model.changed);
+        }).bind('validated:invalid', function(model, errors) {
+           _(errors).chain().keys().each(function(key){
+                self.showError({state: false, attr: key, error: errors[key]});
+           });
+        }).bind('validated:valid', function(model){
+            self.$(".error-cell").html("");
+            util.changeClass({state: true, els: self.$(".error-cell"), remove_class: "bg-danger"});
         });
         this.invBindings = util.getInverseBindings(this.bindings);
-      
-        Backbone.Validation.bind(this, {
-          valid: function(view, attr) {
-            if(attr==="new_password"){
-              attr = "confirm_password";
-            }
-            self.$(self.invBindings[attr]).parent().removeClass("has-error")
-              .popover("destroy");
-            
-            console.log(attr);
-            
-          },
-          invalid: function(view, attr, error) {
-            if(attr==="new_password"){
-              attr = "confirm_password";
-            }
-            $(".confirm-password").closest("tr").find(".error-cell").html(error).addClass("bg-danger");
-          }
-        });
-        
-      
 	},
+    showError: function(opts){
+        var el = this.$(this.invBindings[opts.attr]).closest("tr").find(".error-cell"); 
+        util.changeClass({els: el, state: opts.state, remove_class: "bg-danger" });
+        el.html(opts.error);
+    },
 	render: function (){
 		this.$el.html($("#user-settings-template").html())
 		MainView.prototype.render.apply(this);
@@ -44,12 +34,14 @@ var UserSettingsView = MainView.extend({
 	events: {
 		"click .reset-history-button": function () { localStorage.removeItem("ww3_cm_state");},
 		"click .change-password-button": function() { this.changePassword(!this.state.get("show_password"));},
-		"click .submit-password-button": "submitPassword"
+		"click .submit-password-button": "submitPassword",
+        "keyup .email": function(evt){
+            if(evt.keyCode == 13) { $(evt.target).blur();}
+        }
 	},
 	bindings: {
 		".user-id": "user_id",
-		".email": {observe: "email_address", events: ["blur"], setOptions: {validate: true}, onSet: function(s){
-          console.log(s); return s;}},
+		".email": {observe: "email_address", events: ["blur"], setOptions: {validate: true}},
 		".new-password": "new_password",
 		".old-password": "old_password",
 		".confirm-password": "confirm_password",
@@ -61,10 +53,19 @@ var UserSettingsView = MainView.extend({
         ".save-old-answers": "showOldAnswers"
 	},
 	submitPassword: function (){
+        var error = ""; 
+        if(this.model.get("new_password") !== this.model.get('confirm_password')) {
+            this.showError({attr: "confirm_password", error: this.messageTemplate({type: "not_equal_pass"})});
+            return;
+    	} else if(this.model.get("new_password").length<6){
+            this.showError({attr: "confirm_password", error: this.messageTemplate({type: "short_pass"})});
+            return;
+        }
+        
         this.$(".error-cell").removeClass("bg-danger").html("");
 		if(this.model.isValid(true)){
 			this.user.savePassword(this.model.pick("new_password","old_password"),{
-				success: this.saveSuccess, error: this.saveError});
+				success: this.parseResponse});
 		}
 	},
 	changePassword: function (_show){
@@ -79,17 +80,17 @@ var UserSettingsView = MainView.extend({
 			this.$(".change-password-button").button("reset");
 		}	
 	},
-    saveSuccess: function(data){
+    parseResponse: function(data){
+        if(data.success == 0){
+            this.showError({attr: "old_password", error: this.messageTemplate({type: "wrong_pass"})});
+            return;  
+        } 
 		this.eventDispatcher.trigger("add-message",{type: "success", 
                 short: this.messageTemplate({type:"password_saved",opts:{user_id: this.user.get("user_id")}}),
                 text: this.messageTemplate({type:"password_saved",opts:{user_id: this.user.get("user_id")}})});
         this.$(".old-password").parent().removeClass("has-error");
         this.$(".old-password").popover("hide");
         this.changePassword(false);
-    },
-    saveError: function (response) {
-        this.$(".old-password").parent().addClass("has-error");
-        this.$(".old-password").popover({content: response.responseJSON.error}).popover("show");
     },
 	set: function(options){
 		if(options.user_id){
@@ -122,19 +123,7 @@ var UserSettings = Backbone.Model.extend({
 	},
 	validation: {
         email_address: { pattern: "email", required: false},
-    	new_password: 'validatePassword',
-    	confirm_password: 'validatePassword'
-  	},
-  	validatePassword: function(value, attr, computedState) {
-    	if(this.get("new_password") !== this.get('confirm_password')) {
-      		return 'The confirmed password is not equal to the new password'; // #I18N
-    	} else if(this.get("new_password").length<6){
-            return 'You should not set a short password';
-        }
-  	}, 
-    checkPassword: function(value, attr, computedState) {
-          console.log("testing");
-        },
+  	}
 });
 
 return UserSettingsView;
