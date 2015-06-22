@@ -1046,7 +1046,7 @@ sub make_data_row {
 		my $sourceFilePath = $templatedir .'/'. $sourceFileName;
 		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}). CGI::end_script();
+		#$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}). CGI::end_script();
 		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
 	}
 
@@ -1698,6 +1698,10 @@ sub output_JS {
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
   print "\n";
+  if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
+  }
   return '';
 
 }
