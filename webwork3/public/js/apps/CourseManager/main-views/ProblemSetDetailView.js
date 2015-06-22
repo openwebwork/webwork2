@@ -8,11 +8,12 @@
  **/
 
 
-define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView','views/ProblemSetView',
-    'models/ProblemList','views/CollectionTableView','models/ProblemSet','models/UserSetList','sidebars/ProblemListOptionsSidebar',
-    'views/AssignmentCalendar','models/ProblemSetList','models/SetHeader','apps/util','config','bootstrap'], 
+define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView',
+        'views/ProblemSetView', 'models/ProblemList','views/CollectionTableView','models/ProblemSet',
+        'models/UserSetList','sidebars/ProblemListOptionsSidebar','views/AssignmentCalendar',
+        'models/ProblemSetList','models/SetHeader','apps/util','config','moment','bootstrap'], 
     function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList,ProblemListOptionsSidebar, AssignmentCalendar,ProblemSetList,SetHeader,util, config){
+        UserSetList,ProblemListOptionsSidebar, AssignmentCalendar,ProblemSetList,SetHeader,util,config,moment){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
@@ -567,10 +568,10 @@ var AssignUsersView = Backbone.View.extend({
                 var val = $("#customize-problem-set-controls " + date + " .wwdate").val()
                 $(date +" .wwdate").filter(function(i,v) {return $(v).val()!=val;}).css("color","blue");
             });
-            var h = $(window).height()-($(".navbar-fixed-top").outerHeight(true) + $(".header-set-name").outerHeight(true)+
-                                       $("#customize-problem-set-controls").parent().outerHeight()+
-                                       $("#footer").outerHeight());
-            console.log(h);
+            var h = $(window).height()-($(".navbar-fixed-top").outerHeight(true) 
+                                        + $(".header-set-name").outerHeight(true)
+                                        + $("#customize-problem-set-controls").parent().outerHeight()
+                                        + $("#footer").outerHeight());
             $("#student-override-container").height(h);
 
         },
@@ -595,7 +596,7 @@ var AssignUsersView = Backbone.View.extend({
                 ];
                 
         },
-        messageTemplate: _.template($("#customize-users-messages-template").html()),
+        messageTemplate: _.template($("#problem-set-messages").html()),
         setMessages: function(){
             var self = this;
             this.userSetList.on({

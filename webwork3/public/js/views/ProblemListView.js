@@ -42,6 +42,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                     this.problems.problemSet = opts.problemSet;
                 }
             }
+            _(this).extend(_(opts).pick("problem_set_view"));
             if(opts.current_page){
                 this.currentPage = opts.current_page || 0;
             }
@@ -73,7 +74,8 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var self = this;
             var ul = this.$(".prob-list").empty(); 
             _(this.pageRange).each(function(i){
-                ul.append((self.problemViews[i] = new ProblemView({model: self.problems.at(i), 
+                ul.append((self.problemViews[i] = new ProblemView({model: self.problems.at(i),
+                                                                   problem_set_view: self.problem_set_view,
                     libraryView: self.libraryView, viewAttrs: self.viewAttrs})).render().el); 
                     
             });

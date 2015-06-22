@@ -299,7 +299,7 @@ The results will be dispayed below.  To search for section 2 type "section:2" or
 </script>
 
 
-<script type="text/template" id="customize-users-messages-template">
+<script type="text/template" id="problem-set-messages">
 <%
 var messages = {
     set_saved: function(opt){return "The set " + opt.set_id + " for user " + opt.user_id + " has been saved.";},

@@ -32,7 +32,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
         initialize:function (options) {
             var self = this;
             _.bindAll(this,"render","removeProblem","showPath","showTags");
-            this.libraryView = options.libraryView;
+            _(this).extend(_(options).pick("libraryView","problem_set_view"));
             if(typeof(this.model)==="undefined"){
                 this.model = new Problem();
             }
@@ -134,7 +134,8 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             "click .add-problem": "addProblem",
             "click .seed-button": "toggleSeed",
             "click .path-button": function () {this.state.set("show_path",!this.state.get("show_path"))},
-            "click .tags-button": function () {this.state.set("show_tags",!this.state.get("show_tags"))}
+            "click .tags-button": function () {this.state.set("show_tags",!this.state.get("show_tags"))},
+            "click .mark-correct-btn": "markCorrect"
         },
         bindings: {
             ".prob-value": {observe: "value", events: ['blur']},
@@ -175,6 +176,12 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
         },
         toggleSeed: function () {
             this.$(".problem-seed").toggleClass("hidden");
+        },
+        markCorrect: function () {
+            var conf = confirm(this.problem_set_view.messageTemplate({type:"mark_all_correct"}));
+            if(conf){
+                this.problem_set_view.markAllCorrect(this.model);   
+            }
         },
         addProblem: function (evt){
             if(this.libraryView){

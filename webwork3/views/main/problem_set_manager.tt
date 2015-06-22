@@ -112,6 +112,7 @@ var messages = {
     set_error_details: function(opt){ return "The set " + opt.setname + " had an error."},
     set_assigned_users_saved: function(opt){ 
       return "The assigned users for set " + opt.setname + " was updated."},
+    mark_all_correct: function (opt) {return "Would you like to mark this problem correct for all assigned students?  This can not be undone.";},
     problem_added: function(opt){ return "A problem was added to " + opt.setname},
     problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
     problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},

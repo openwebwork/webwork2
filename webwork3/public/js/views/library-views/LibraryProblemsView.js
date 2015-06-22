@@ -32,7 +32,7 @@ define(['backbone', 'views/ProblemListView','config'],
                                 pv.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
                             } else {
                                 pv.model.once("rendered", function(v) {
-                                    v.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
+                                    pv.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
                                 });
                             }
                         });

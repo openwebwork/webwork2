@@ -125,6 +125,11 @@
       <a href="#" onclick="return false;" class="remove-problem btn btn-default" title="delete problem">
         <i class="fa fa-trash-o"></i></a>
     <%}%>
+    <%if(markCorrect){ %>
+      <a href="#" onclick="return false;" class="mark-correct-btn btn btn-default" title="Mark this problem correct for all assigned users.">
+        <i class="fa fa-check"></i></a>
+    <%}%>
+    
   <a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
   <a href="#" class="btn btn-default path-button" title="show/hide path"><i class="fa fa-file"></i></a>
   </div>
