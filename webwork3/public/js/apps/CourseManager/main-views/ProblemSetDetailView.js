@@ -149,7 +149,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         tabName: "Set Details",
         initialize: function (options) {
             var self = this;
-            _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate");
+            _.bindAll(this,'render','setProblemSet',"showHideReducedScoringDate","showHideGateway");
             _(this).extend(_(options).pick("users","settings","problemSets"));
             TabView.prototype.initialize.apply(this,[options]);
             this.model = this.problemSets.findWhere({set_id: this.tabState.get("set_id")});
@@ -163,7 +163,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             });
              // this sets up a problem set list containing only the current ProblemSet and builds a calendar.
             this.calendarProblemSets = new ProblemSetList([],{dateSettings: util.pluckDateSettings(this.settings)});
-            //this.problemSetList.add(this.problemSet);
             this.calendar = new AssignmentCalendar({users: this.users,settings: this.settings,
                                                 problemSets: this.calendarProblemSets});
             this.calendar.on("calendar-change",function() {
@@ -176,12 +175,12 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.showTime(this.tabState.get("show_time"));
                 this.showHideReducedScoringDate();
                 this.showCalendar(this.tabState.get("show_calendar"));
-                
+                this.showHideGateway();
                 this.stickit();
                 // gets rid of the line break for showing the time in this view. 
                 $('span.time-span').children('br').attr("hidden",true)    
-                
-            }
+                this.model.on("change:assignment_type",this.showHideGateway);
+            }   
             return this;
         },
         events: {
@@ -191,6 +190,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             },
             "click .show-calendar-toggle": function(evt){
                 this.tabState.set("show_calendar",!this.tabState.get("show_calendar"));
+            },
+            "keyup .input-blur": function(evt){ 
+                if(evt.keyCode == 13) { $(evt.target).blur()}
             },
         },
         assignAllUsers: function(){
@@ -217,14 +219,45 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             ".num-problems": { observe: "problems", onGet:function(value,options) {
                 return value.length;  
             }},
+            ".set-type": {observe: "assignment_type", selectOptions: { 
+                collection: [{label: "Homework", value: "default"},
+                             {label: "Gateway/Quiz",value: "gateway"}]}},
             ".users-assigned": {
                 observe: "assigned_users",
                 onGet: function(value, options){ return value.length + "/" +this.users.size();}
-            }
+            },
+            ".version-time-limit": "version_time_limit",
+            ".time-limit-cap": "time_limit_cap",
+            /*{observe: "time_limit_cap", 
+                                onGet: function (val){return val==1?true:false;},
+                                onSet: function (val){return val?1:0;},
+            },*/
+            ".attempts-per-version": "attempts_per_version",
+            ".time-interval": "time_interval",
+            ".version-per-interval": "version_per_interval",
+            ".problem-random-order": "problem-randorder",
+            ".problems-per-page": "problems_per_page",
+            // I18N
+            ".hide-score": {observe: ["hide_score","hide_score_by_problem"], selectOptions: {
+                collection: [{label: "Yes", value: "N:"},{label: "No", value: "Y:N"},
+                        {label: "Only After Set Answer Date", value: "BeforeAnswerDate:N"},
+                        {label: "Totals only (not problem scores)", value: "Y:Y"},
+                        {label: "Totals only, only after answer date", value: "BeforeAnswerDate:Y"}]},
+                           onGet: function(values){ return values.join(":"); },
+                           onSet: function(val) { return val.split(":");}
+                           },
+            ".hide-work": {observe: "hide_work", selectOptions: { 
+                // are these labels correct?  
+                collection: [{label:"Yes",value: "N"},{label: "No", value: "Y"},
+                                {label: "Only After Set Answer Date", value: "BeforeAnswerDate"}]}}
+        },
+        showHideGateway: function () {
+             util.changeClass({state: this.model.get("assignment_type")=="gateway",
+                                     els: this.$(".gateway-row"),remove_class: "hidden"});
         },
         showHideReducedScoringDate: function(){
             util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
-                                add_class:"",remove_class: "hidden", els: this.$(".reduced-scoring-date").closest("tr")});
+                                remove_class: "hidden", els: this.$(".reduced-scoring-date").closest("tr")});
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
                     this.model.get("enable_reduced_scoring")) { // show reduced credit field
                 this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");

@@ -166,7 +166,7 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <script type="text/template" id="set-properties-tab-template">
 <table class="table" style="table-layout:fixed">
 <tbody>
-<tr><td class="header">Set Name</td><td class="set-name"></td>
+<tr><td class="header col-md-5">Set Name</td><td class="set-name col-md-3"></td>
   <!--<td><label type="checkbox">Show Time <input type="checkbox" class="show-time-toggle"></label></td>-->
   <td><div class="btn-group btn-group-sm" role="group">
       <button type="button" class="btn btn-default show-time-toggle" data-hide-text="Hide Time">Show Time</button>
@@ -181,9 +181,31 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <tr><td class="header">Problem Set Visible to Users</td><td><input type='checkbox' class='prob-set-visible'></td></tr>
 <tr><td class="header">Reduced Scoring Enabled</td><td><input type='checkbox' class='reduced-scoring'></select></td></tr>
 <tr><td class="header">Hide Hints from Users</td><td><input type='checkbox' class='hide-hint'></td></tr>
+<tr><td class="header">Set Type</td><td><select class='set-type form-control input-sm'></select></tr>
 <tr><td class="header">Number of Problems in Set</td><td class="num-problems"></td></tr>
 <tr><td class="header">Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
+<tr class="gateway-row"><td class="header" style="color: darkblue; font-style:italic">
+        Gateway/Quiz parameters</td><td></td></tr>
+<tr class="gateway-row"><td class="header">Test Time Limit (min; 0=Due Date)</td>
+        <td><input type="text" class="version-time-limit input-blur"></td></tr>
+<tr class="gateway-row"><td class="header">Cap Test Time at Set Due Date?</td>
+        <td><input type="checkbox" class="time-limit-cap"></td></tr>
+<tr class="gateway-row"><td class="header">Number of Graded Submissions per Test (0=infty)</td>
+        <td><input type="text" class="attempts-per-version input-blur"></td></tr>
+<tr class="gateway-row"><td class="header">Time Interval for New Test Versions (min; 0=infty)</td>
+        <td><input type="text" class="time-interval input-blur"></td></tr>
+<tr class="gateway-row"><td class="header">Number of Tests per Time Interval (0=infty)</td>
+        <td><input type="text" class="version-per-interval input-blur"></td></tr>
+<tr class="gateway-row"><td class="header">	Order Problems Randomly</td>
+        <td><input type="checkbox" class="problem-random-order"></td></tr>
+<tr class="gateway-row"><td class="header">Number of Problems per Page (0=all)</td>
+        <td><input type="text" class="problems-per-page input-blur"></td></tr>
+<tr class="gateway-row"><td class="header">Show Scores on Finished Assignments?</td>
+        <td><select class="hide-score form-control input-sm"></select></td></tr>
+<tr class="gateway-row"><td class="header">Show Problems on Finished Tests?</td>
+        <td><select class="hide-work form-control input-sm"></select></td></tr>
+
 </tbody>
 </table>
 </script>

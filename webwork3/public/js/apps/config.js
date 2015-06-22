@@ -318,6 +318,12 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             return val==="yes";
         }
     })
+    
+    Backbone.Stickit.addHandler({
+        selector: ".input-blur",
+        events: ["blur"],
+        
+    });
 
 
     return config;

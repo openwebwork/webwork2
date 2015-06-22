@@ -21,14 +21,14 @@ use Routes::PastAnswers;
 
 set serializer => 'JSON';
 
-hook 'before' => sub {
-
-    # for my $key (keys(%{request->params})){
-    # 	my $value = defined(params->{$key}) ? params->{$key} : ''; 
-    # 	debug($key . " : " . $value);
-    # } 
-
-};
+#hook 'before' => sub {
+#
+#     for my $key (keys(%{request->params})){
+#     	my $value = defined(params->{$key}) ? params->{$key} : ''; 
+#     	debug($key . " : " . $value);
+#     } 
+#
+#};
 
 ## right now, this is to help handshaking between the original webservice and dancer.  
 ## it does nothing except sets the session using the hook 'before' above. 

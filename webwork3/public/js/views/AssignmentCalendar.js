@@ -17,8 +17,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             _(this).extend(_(options).pick("problemSets","settings","users","eventDispatcher"));
   
             this.assignmentDates = util.buildAssignmentDates(this.problemSets);
-            this.problemSets.on({sync: function(){
-                                    console.log("here"); self.render()},                
+            this.problemSets.on({sync: self.render,                
                      remove: function(_set){
                   // update the assignmentDates to delete the proper assignments
 
@@ -71,7 +70,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     }
                 });
             });
-            console.log(this);
             this.update();
             //this.stickit(this.state,this.bindings);
             //this.showHideAssigns(this.state);
