@@ -589,6 +589,7 @@ $tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	my $password         =  $self->{password};
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
 	my $session_key      =  $rh_result->{session_key}//'';
+	my $displayMode      =  $self->{displayMode};
 	
 	
 	
@@ -646,6 +647,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name="userID" value="$userID">
 	       <input type="hidden" name="password" value="$password">
 	       <input type="hidden" name="passwd" value="$password">
+	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <p><input type="submit" name="submit" value="submit answers"></p>
 	     </form>
@@ -712,6 +714,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name="userID" value="$userID">
 	       <input type="hidden" name="password" value="$password">
 	       <input type="hidden" name="passwd" value="$password">
+	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
 	       <p><input type="submit" name="submit" value="submit answers"></p>
