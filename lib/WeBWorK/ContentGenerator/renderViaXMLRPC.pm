@@ -152,7 +152,7 @@ sub pre_header_initialize {
 	$xmlrpc_client->{encodedSource}   = $r->param('problemSource') ; # this source has already been encoded
 	$xmlrpc_client->url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
-	$xmlrpc_client->{displayMode}     = DISPLAYMODE();
+	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
 	$xmlrpc_client->{password}        = $inputs_ref{password};
 	$xmlrpc_client->{site_password}   = $XML_PASSWORD;
