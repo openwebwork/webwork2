@@ -804,16 +804,39 @@ sub import_handler {
 
 	    #write achievement data.  The "format" for this isn't written down anywhere (!)
 	    my $achievement = $db->newAchievement();
+
 	    $achievement->achievement_id($achievement_id);
-	    $achievement->name($$data[1]);
-	    $achievement->number($$data[2]);
-	    $achievement->category($$data[3]);
-	    $achievement->assignment_type($$data[4]);
-	    $achievement->description($$data[5]);
-	    $achievement->points($$data[6]);
-	    $achievement->max_counter($$data[7]);
-	    $achievement->test($$data[8]);
-	    $achievement->icon($$data[9]);
+
+	    # fall back for importing an old list without numbers
+	    if (scalar(@$data) == 9) {
+		# old lists tend to have an extraneous space. 
+		for (my $i=1; $i<=7; $i++) {
+		    $$data[$i] =~ s/^\s+//;
+		}
+
+		$$data[1] =~ s/\;/,/;
+		$achievement->name($$data[1]);
+		$achievement->category($$data[2]);
+		$$data[3] =~ s/\;/,/;
+		$achievement->description($$data[3]);
+		$achievement->points($$data[4]);
+		$achievement->max_counter($$data[5]);
+		$achievement->test($$data[6]);
+		$achievement->icon($$data[7]);
+		$achievement->assignment_type('default');
+		$achievement->number($count+1);
+	    } else {
+		$achievement->name($$data[1]);
+		$achievement->number($$data[2]);
+		$achievement->category($$data[3]);
+		$achievement->assignment_type($$data[4]);
+		$achievement->description($$data[5]);
+		$achievement->points($$data[6]);
+		$achievement->max_counter($$data[7]);
+		$achievement->test($$data[8]);
+		$achievement->icon($$data[9]);
+	    }
+
 	    $achievement->enabled($assign eq "all"?1:0);
 	    
 	    #add achievement
