@@ -663,7 +663,7 @@ ENDPROBLEMTEMPLATE
 
 $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 
-
+<!DOCTYPE html>
 <html>
 <head>
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
@@ -695,10 +695,14 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
 </head>
 <body>
-			
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span12 problem">			
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
+<div class="problem-content">
 			$problemText
+</div>
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
@@ -719,6 +723,8 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 		   </p>
 
 	       </form>
+</div>
+</div></div>
 </body>
 </html>
 
@@ -727,7 +733,7 @@ ENDPROBLEMTEMPLATE
 $self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 
