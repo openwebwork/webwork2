@@ -807,9 +807,10 @@ sub import_handler {
 
 	    $achievement->achievement_id($achievement_id);
 
-	    # fall back for importing an old list without numbers
+	    # fall back for importing an old list without the number
+	    # or assignment_type fields
 	    if (scalar(@$data) == 9) {
-		# old lists tend to have an extraneous space. 
+		# old lists tend to have an extraneous space at the front. 
 		for (my $i=1; $i<=7; $i++) {
 		    $$data[$i] =~ s/^\s+//;
 		}
