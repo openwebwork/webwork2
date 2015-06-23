@@ -705,7 +705,8 @@ sub create_handler {
 	my $r      = $self->r;
 	my $db     = $r->db;
 	my $ce     = $r->ce;
-	
+	my $user         = $r->param('user');
+
 	#create achievement
 	my $newAchievementID = $actionParams->{"action.create.id"}->[0];
 	return CGI::div({class => "ResultsWithError"}, "Failed to create new achievement: no achievement ID specified!") unless $newAchievementID =~ /\S/;
@@ -729,6 +730,12 @@ sub create_handler {
 		$db->addAchievement($newAchievementRecord);
 
 	}
+
+	# assign achievement to current user
+	my $userAchievement = $db->newUserAchievement();
+	$userAchievement->user_id($user);
+	$userAchievement->achievement_id($newAchievementID);
+	$db->addUserAchievement($userAchievement);
 
 	#add to local list of achievements
 	push @{ $self->{allAchievementIDs} }, $newAchievementID;
@@ -1129,7 +1136,6 @@ sub recordEditHTML {
 		$tableCell = CGI::img({-src=>$ce->{webworkURLs}->{htdocs}."/images/defaulticon.png"
 					   ,-alt=>"Achievement Icon",-height=>60,-vspace=>10});
 	    }
-	    $tableCell = $tableCell.CGI::br().CGI::center(CGI::a({href=>$editorURL},"Edit"));
 
 	    push @tableCells, $tableCell;
 
