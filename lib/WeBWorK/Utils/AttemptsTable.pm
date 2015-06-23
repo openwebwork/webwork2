@@ -56,7 +56,7 @@ sub new {
 		answerOrder         => $options{answerOrder}//(),
 		answersSubmitted    => $options{answersSubmitted}//0,
 	    displayMode 		=> $options{displayMode} || "MathJax",
-	    #showAttemptAnswers =>                                     # show student answer as entered and simplified 
+	    #showAttemptAnswers =>  # answers are always shown         # show student answer as entered and simplified 
 	                                                               #  (e.g numerical formulas are calculated to produce numbers)
 	    showAttemptPreviews => $options{showAttemptPreviews}//1,   # show preview of student answer
 	    showAttemptResults 	=> $options{showAttemptResults}//1,    # show whether student answer is correct
@@ -127,7 +127,7 @@ sub formatAnswerRow {
 	
 	my $row = join('',
 			  CGI::td({},$answerNumber) ,
-			  CGI::td({},$answerString) ,
+			  CGI::td({},$answerString) ,   # student original answer
 			  ($self->showAttemptPreviews)?  CGI::td({},$answerPreview):"" ,
 			  ($self->showAttemptResults)?  $score :"" ,
 			  ($self->showCorrectAnswers)?  CGI::td({},$correctAnswer):"" ,
@@ -151,7 +151,7 @@ sub answerTemplate {
 
 	push @tableRows, 	CGI::Tr(
 			CGI::th("#"),
-			CGI::th("Answer"),
+			CGI::th("Answer"),  # student original answer
 			($self->showAttemptPreviews)? CGI::th("Preview"):'',
 			($self->showAttemptResults)?  CGI::th("Result"):'',
 			($self->showCorrectAnswers)?  CGI::th("Correct Answer"):'',

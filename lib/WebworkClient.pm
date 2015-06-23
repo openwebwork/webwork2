@@ -540,43 +540,7 @@ sub formatRenderedProblem {
     $internal_debug_messages = join("<br/>\n", @{ $internal_debug_messages  } );
     
     my $fileName = $self->{input}->{envir}->{fileName} || "";
-	# collect answers
-	#####################################################
-	# determine whether any answers were submitted
-	# and create answer template if they have been
-# 	my $answerssubmitted =""; 
-# 	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
-# 	my $answerNumber     = 1;
-#     foreach my $key (sort  keys %{$rh_answers}) {
-#         $answerssubmitted .= $rh_answers->{$key}->{original_student_ans};
-#     	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $answerNumber++);
-#     }
-# 	$answerTemplate      .= q{</table> <hr>};
-#     $answerTemplate = "" unless $answerssubmitted;
 
-	
-
-
-
-my $tbl = WeBWorK::Utils::AttemptsTable->new(
-	$rh_answers,
-	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
-	answerOrder            => $answerOrder//[],
-	displayMode            => $self->{displayMode},
-	imgGen                 => $imgGen,
-	ce                     => '',	#used only to build the imgGen
-	showAttemptPreviews    => 1,
-	showAttemptResults     => 1,
-	showCorrectAnswers     => 1,
-	showMessages           => 1,
-);
-# warn "imgGen is ", $tbl->imgGen;
-my $answerTemplate = $tbl->answerTemplate;
-my $color_input_blanks_script = $tbl->color_answer_blanks;
-#warn "answerOrder ", $tbl->answerOrder;
-#warn "answersSubmitted ", $tbl->answersSubmitted;
-# render equation images
-$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
     #################################################
 
@@ -590,8 +554,34 @@ $tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
+	my $previewMode      =  defined($self->{inputs_ref}->{preview});
+	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
+	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
 	
-	
+
+my $tbl = WeBWorK::Utils::AttemptsTable->new(
+	$rh_answers,
+	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
+	answerOrder            => $answerOrder//[],
+	displayMode            => $self->{displayMode},
+	imgGen                 => $imgGen,
+	ce                     => '',	#used only to build the imgGen
+	showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
+	showAttemptResults     => ($submitMode or $showCorrectMode),
+	showCorrectAnswers     => ($showCorrectMode),
+	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
+);
+
+my $answerTemplate = $tbl->answerTemplate;
+my $color_input_blanks_script = $tbl->color_answer_blanks;
+$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+
+# warn "imgGen is ", $tbl->imgGen;
+#warn "answerOrder ", $tbl->answerOrder;
+#warn "answersSubmitted ", $tbl->answersSubmitted;
+# render equation images
+
+
 	
 	###########################
 	# Define problem templates
@@ -649,7 +639,12 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name="passwd" value="$password">
 	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
-	       <p><input type="submit" name="submit" value="submit answers"></p>
+		   <p>
+		      <input type="submit" name="preview"  value="Preview" /> 
+			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
+		      <input type="submit" name="WWgrade" value="Show correct answer"/>
+		   </p>
+	       
 	     </form>
 <HR>
 <h3> Perl warning section </h3>
@@ -717,7 +712,12 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
-	       <p><input type="submit" name="submit" value="submit answers"></p>
+		   <p>
+		      <input type="submit" name="preview"  value="Preview" /> 
+			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
+		      <input type="submit" name="WWgrade" value="Show correct answer"/>
+		   </p>
+
 	       </form>
 </body>
 </html>
