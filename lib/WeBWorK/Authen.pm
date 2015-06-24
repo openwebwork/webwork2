@@ -71,7 +71,7 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 #use vars qw($GENERIC_ERROR_MESSAGE);
 our $GENERIC_ERROR_MESSAGE = "";  # define in new
 
-my $cookie_prefix = "WeBWorKCourseAuthen";
+my $cookie_prefix = "WeBWorK.CourseAuthen";
 
 ## WeBWorK-tr end modification 
 #####################
