@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -38,6 +38,8 @@
 #ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
 
 PerlModule mod_perl2
+
+SetEnv MOD_PERL_API_VERSION 2
 
 <Perl>
 
