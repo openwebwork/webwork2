@@ -31,6 +31,7 @@ var WWLocalStorage = function(givenContainer) {
 		    storedData['inputs'][$(input).attr('name')] = $(input).val();
 		}
 	    });
+
 	$.jStorage.set(identifier,storedData);
     }
 
@@ -44,6 +45,23 @@ var WWLocalStorage = function(givenContainer) {
 	    $(container).find('[name="'+key+'"]').val(storedData['inputs'][key]);
 	    });	    
 	}
+	
+	console.log($('#problem-result-score').val());
+	console.log(storedData['score']);
+
+	if ($('#problem-result-score').length > 0) {
+	    if (!storedData['score'] ||
+		storedData['score'] < $('#problem-result-score').val()) {
+		storedData['score'] = $('#problem-result-score').val();
+	    }
+	}	    
+
+	if (storedData['score']) {
+	    $('#problem-overall-score').html(Math.round(storedData['score']*100)+'%');
+	} else {
+	    $('#problem-overall-score').html("0%");
+	}
+
     }
 
 }

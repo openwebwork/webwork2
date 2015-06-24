@@ -82,6 +82,7 @@ package WebworkClient;
 #use Crypt::SSLeay;  # needed for https
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
+use WeBWorK::Utils qw( wwRound);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
 
@@ -557,7 +558,9 @@ sub formatRenderedProblem {
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
-	
+        my $problemResult    =  $rh_result->{problem_result}//'';
+        my $problemState     =  $rh_result->{problem_state}//'';
+	my $scoreSummary     =  '';
 
 my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	$rh_answers,
@@ -581,8 +584,22 @@ $tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 #warn "answersSubmitted ", $tbl->answersSubmitted;
 # render equation images
 
+if ($submitMode) {
+    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+    if ($problemResult->{msg}) {
+         $scoreSummary .= CGI::p($problemResult->{msg});
+    }
 
-	
+    $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+    $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+}
+
+# This stuff is put here because eventually we will add locale support so the 
+# text will have to be done server side. 
+my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
+$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
+$localStorageMessages .= CGI::end_div();	
+
 	###########################
 	# Define problem templates
 	###########################
@@ -703,6 +720,8 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <div class="problem-content">
 			$problemText
 </div>
+$scoreSummary
+
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
@@ -774,6 +793,8 @@ $answerTemplate
 <div class="problem-content">
 $problemText
 </div>
+$scoreSummary
+$localStorageMessages
 <input type="hidden" name="answersSubmitted" value="1"> 
 <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 <input type="hidden" name="problemSource" value="$encodedSource"> 
