@@ -183,14 +183,18 @@ sub renderProblem {
 
 ###########################################
 # Determine the method for accessing data   ???? what was this
+# these are not used -- but something like this was probably
+# meant to determine whether the problem source was being supplied
+# directly (as a kind of HERE document) or whether only the path to 
+# the problem source was being supplied
 ###########################################
-	my $problem_source_access    =   $rh->{problem_source_access};
+	# my $problem_source_access    =   $rh->{problem_source_access};
 	# One of
 	#	source_from_course_set_problem
 	#   source_from_source_file_path
 	#   source_from_request
 	
-	my $data_access              =   $rh->{data_access};
+	# my $data_access              =   $rh->{data_access};
 	# One of 
 	#   data_from_course
 	#   data_from_request
