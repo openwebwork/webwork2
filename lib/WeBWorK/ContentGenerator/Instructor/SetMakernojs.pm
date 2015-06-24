@@ -1386,7 +1386,7 @@ sub body {
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 		$self->hidden_authen_fields,
 			'<div align="center">',
-	CGI::start_table({-border=>2});
+	CGI::start_table({-class=>'library-browser-table library-browser-table-nojs', -border=>2});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
 				 'browse_which'=> $browse_which);
 	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),

@@ -324,14 +324,13 @@ sub add_selected {
 	my @selected = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
 	# DBFIXME count would work just as well
-	$freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	my $addedcount=0;
 
 	for $selected (@selected) {
 		if($selected->[1] & ADDED) {
 			$file = $selected->[0];
 			my $problemRecord = $self->addProblemToSet(setName => $setName,
-				sourceFile => $file, problemID => $freeProblemID);
+				sourceFile => $file);
 			$freeProblemID++;
 			$self->assignProblemToAllSetUsers($problemRecord);
 			$selected->[1] |= SUCCESS;

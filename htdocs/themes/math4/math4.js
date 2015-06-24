@@ -188,7 +188,7 @@ $(function(){
     $('table.stats-table').addClass('table table-bordered');
     $('#sp-gateway-form').addClass('well');
 
-    //Library browser 1 tweaks
+    //Library browser tweaks
     $('#mainform ').addClass('form-inline');
     $('#mainform input:button').addClass('btn btn-primary');
     $('#mainform input[type="submit"]').removeClass('btn-primary');
@@ -199,6 +199,9 @@ $(function(){
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
     $('#mainform select[name=local_sets]').addClass('input').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
+
+    //Library browser nojs tweaks
+    $('.library-browser-table-nojs label.checkbox').css('display','inline-block');
 
     //Change tabber tabs to twitter tabs
     if ($('div.tabber').length > 0) {tabberAutomatic({});}

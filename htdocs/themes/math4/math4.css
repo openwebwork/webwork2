@@ -506,6 +506,11 @@ table.classlist-table .tbody {
 	border-bottom: 1px solid #ccc;
 }
 
+.library-browser-table-nojs td {
+    padding-right: 0.2em;
+    padding-left: 0.2em;
+}
+
 /* Footer */
 #footer {
 	clear: both;
