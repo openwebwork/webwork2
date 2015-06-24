@@ -15,8 +15,8 @@ use WeBWorK::GeneralUtils qw/cryptPassword/;
 use Data::Dumper;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status 
-                    section recitation comment displayMode showOldAnswers/;
-our @boolean_user_props = qw/showOldAnswers/;
+                    section recitation comment displayMode showOldAnswers useMathView/;
+our @boolean_user_props = qw/showOldAnswers useMathView/;
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 

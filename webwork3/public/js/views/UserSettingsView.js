@@ -7,7 +7,8 @@ var UserSettingsView = MainView.extend({
 		_(this).bindAll("parseResponse","showError");
 		MainView.prototype.initialize.call(this,options);
 		this.model = new UserSettings();
-        this.model.on("change:displayMode change:showOldAnswers change:email_address",function(model){
+        this.model.on("change:displayMode change:showOldAnswers change:useMathView " +
+                      "change:email_address",function(model){
             self.user.set(model.changed);
         }).bind('validated:invalid', function(model, errors) {
            _(errors).chain().keys().each(function(key){
@@ -28,29 +29,32 @@ var UserSettingsView = MainView.extend({
 		this.$el.html($("#user-settings-template").html())
 		MainView.prototype.render.apply(this);
 		this.changePassword(this.state.get("show_password"));
+        util.changeClass({state: this.settings.getSettingValue("pg{specialPGEnvironmentVars}{MathView}"), 
+                          els: this.$("#equation-editor").closest("tr"), remove_class: "hidden"});
 		this.stickit();
         return this;
 	},
 	events: {
-		"click .reset-history-button": function () { localStorage.removeItem("ww3_cm_state");},
-		"click .change-password-button": function() { this.changePassword(!this.state.get("show_password"));},
-		"click .submit-password-button": "submitPassword",
-        "keyup .email": function(evt){
+		"click #reset-history-button": function () { localStorage.removeItem("ww3_cm_state");},
+		"click #change-password-button": function() { this.changePassword(!this.state.get("show_password"));},
+		"click #submit-password-button": "submitPassword",
+        "keyup #email": function(evt){
             if(evt.keyCode == 13) { $(evt.target).blur();}
         }
 	},
 	bindings: {
-		".user-id": "user_id",
-		".email": {observe: "email_address", events: ["blur"], setOptions: {validate: true}},
-		".new-password": "new_password",
-		".old-password": "old_password",
-		".confirm-password": "confirm_password",
-        ".display-option": {observe: "displayMode", selectOptions: {
+		"#user-id": "user_id",
+		"#email": {observe: "email_address", events: ["blur"], setOptions: {validate: true}},
+		"#new-password": "new_password",
+		"#old-password": "old_password",
+		"#confirm-password": "confirm_password",
+        "#display-option": {observe: "displayMode", selectOptions: {
             collection: function () {
                 return this.settings.getSettingValue("pg{displayModes}").slice();  // makes a copy. 
             }
         }},
-        ".save-old-answers": "showOldAnswers"
+        "#save-old-answers": "showOldAnswers",
+        "#equation-editor": "useMathView"
 	},
 	submitPassword: function (){
         var error = ""; 
