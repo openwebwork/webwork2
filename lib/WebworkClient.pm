@@ -199,6 +199,9 @@ sub xmlrpcCall {
 	  
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
+		}
+	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
+	  		$result->result()->{header_text} = decode_base64($result->result()->{header_text});
 	  	}
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
@@ -501,6 +504,7 @@ sub formatRenderedProblem {
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}
+	my $problemHeadText = $rh_result->{header_text};
 	my $rh_answers        = $rh_result->{answers}//{};
 	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
 	my $encodedSource     = $self->{encodedSource}//'';
@@ -632,7 +636,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-
+$problemHeadText;
 
 <base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
@@ -706,7 +710,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-
+$problemHeadText;
 
 <base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
@@ -780,6 +784,7 @@ $self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
 <script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" type="text/javascript"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+$problemHeadText;
 
 <base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL, format: sticky seed: $problemSeed</title>

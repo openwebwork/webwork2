@@ -46,13 +46,13 @@ var WWLocalStorage = function(givenContainer) {
 	    });	    
 	}
 	
-	console.log($('#problem-result-score').val());
-	console.log(storedData['score']);
-
 	if ($('#problem-result-score').length > 0) {
+	    console.log($('#problem-result-score').val());
+	    console.log(storedData.score);
 	    if (!storedData['score'] ||
 		storedData['score'] < $('#problem-result-score').val()) {
 		storedData['score'] = $('#problem-result-score').val();
+		$.jStorage.set(identifier,storedData);
 	    }
 	}	    
 
