@@ -504,7 +504,7 @@ sub formatRenderedProblem {
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}
-	my $problemHeadText = $rh_result->{header_text};
+	my $problemHeadText = $rh_result->{header_text}//'';
 	my $rh_answers        = $rh_result->{answers}//{};
 	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
 	my $encodedSource     = $self->{encodedSource}//'';
@@ -588,7 +588,7 @@ $tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 #warn "answersSubmitted ", $tbl->answersSubmitted;
 # render equation images
 
-if ($submitMode) {
+if ($submitMode && $problemResult) {
     $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
     if ($problemResult->{msg}) {
          $scoreSummary .= CGI::p($problemResult->{msg});
@@ -618,6 +618,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
@@ -692,6 +693,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
@@ -763,6 +765,7 @@ $self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />

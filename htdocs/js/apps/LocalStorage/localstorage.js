@@ -42,6 +42,7 @@ var WWLocalStorage = function(givenContainer) {
 	    var keys = Object.keys(storedData['inputs']);
 	    
 	    keys.forEach(function(key) {
+		console.log(storedData['inputs'][key]);
 	    $(container).find('[name="'+key+'"]').val(storedData['inputs'][key]);
 	    });	    
 	}
