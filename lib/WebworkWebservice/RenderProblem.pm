@@ -148,7 +148,7 @@ sub renderProblem {
 	#FIXME  put in check to make sure the course exists.
 	eval {
 		$ce = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $courseName});
-		$ce->{apache_root_url}= $HOSTURL;
+		#$ce->{apache_root_url}= $HOSTURL;
 	# Create database object for this course
 		$db = WeBWorK::DB->new($ce->{dbLayout});
 	};
@@ -379,7 +379,7 @@ sub renderProblem {
 ##################################################
 	my $translationOptions = {
 		displayMode     => $rh->{envir}->{displayMode},
-		showHints	    => $rh->{envir}->{showHints},
+		showHints	=> $rh->{envir}->{showHints},
 		showSolutions   => $rh->{envir}->{showSolutions},
  		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
  		processAnswers  => 1,
