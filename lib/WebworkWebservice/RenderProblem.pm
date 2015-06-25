@@ -148,7 +148,7 @@ sub renderProblem {
 	#FIXME  put in check to make sure the course exists.
 	eval {
 		$ce = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $courseName});
-		#$ce->{apache_root_url}= $HOSTURL;
+		$ce->{apache_root_url}= $HOSTURL;
 	# Create database object for this course
 		$db = WeBWorK::DB->new($ce->{dbLayout});
 	};
