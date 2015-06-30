@@ -2,6 +2,8 @@
 use Dancer;
 use Dancer::Plugin::Database;
 
+BEGIN {$ENV{MOD_PERL_API_VERSION}=2}
+
 # link to WeBWorK code libraries
 use lib config->{webwork_dir}.'/lib';
 use lib config->{pg_dir}.'/lib';
