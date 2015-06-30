@@ -19,6 +19,11 @@ use Routes::User;
 use Routes::Settings;
 use Routes::PastAnswers;
 
+BEGIN {
+    $ENV{MOD_PERL_API_VERSION}=2;
+    
+}
+
 set serializer => 'JSON';
 
 hook 'before' => sub {
