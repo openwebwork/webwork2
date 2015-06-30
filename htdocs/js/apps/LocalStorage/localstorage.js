@@ -8,7 +8,9 @@ var WWLocalStorage = function(givenContainer) {
 	container = $('#problemMainForm');
     }
 
-    var identifier = $("input[name='sourceFilePath']").val()+
+    var identifier = $("input[name='problemIdentifierPrefix']").val()+
+	$("input[name='sourceFilePath']").val()+
+	$("input[name='problemSource']").val()+
 	$("input[name='problemSeed']").val();
 
     var storedData = $.jStorage.get(identifier);
@@ -42,14 +44,11 @@ var WWLocalStorage = function(givenContainer) {
 	    var keys = Object.keys(storedData['inputs']);
 	    
 	    keys.forEach(function(key) {
-		console.log(storedData['inputs'][key]);
-	    $(container).find('[name="'+key+'"]').val(storedData['inputs'][key]);
+		$(container).find('[name="'+key+'"]').val(storedData['inputs'][key]);
 	    });	    
 	}
 	
 	if ($('#problem-result-score').length > 0) {
-	    console.log($('#problem-result-score').val());
-	    console.log(storedData.score);
 	    if (!storedData['score'] ||
 		storedData['score'] < $('#problem-result-score').val()) {
 		storedData['score'] = $('#problem-result-score').val();

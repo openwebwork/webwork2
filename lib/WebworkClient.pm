@@ -562,6 +562,9 @@ sub formatRenderedProblem {
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
+        # Can be added to the request as a parameter.  Adds a prefix to the 
+        # identifier used by the sticky format.  
+	my $problemIdentifierPrefix = $self->{inputs_ref}->{problemIdentifierPrefix} //'';
         my $problemResult    =  $rh_result->{problem_result}//'';
         my $problemState     =  $rh_result->{problem_state}//'';
 	my $scoreSummary     =  '';
@@ -808,9 +811,10 @@ $localStorageMessages
 <input type="hidden" name="problemSource" value="$encodedSource"> 
 <input type="hidden" name="problemSeed" value="$problemSeed"> 
 <input type="hidden" name="pathToProblemFile" value="$fileName">
-<input type="hidden" name=courseName value="$courseID">
-<input type="hidden" name=courseID value="$courseID">
+<input type="hidden" name="courseName" value="$courseID">
+<input type="hidden" name="courseID" value="$courseID">
 <input type="hidden" name="userID" value="$userID">
+<input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
 <input type="hidden" name="password" value="$password">
 <input type="hidden" name="passwd" value="$password">
 <input type="hidden" name="displayMode" value="$displayMode">
