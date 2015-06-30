@@ -61,10 +61,7 @@ sub render {
 		$translationOptions,
     );
     
-    
-    #debug to_dumper $pg->{pgcore};
-    
-	my $warning_messages="";
+  	my $warning_messages="";
     my (@internal_debug_messages, @pgwarning_messages, @pgdebug_messages);
     if (ref ($pg->{pgcore}) ) {
     	@internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
