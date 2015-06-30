@@ -787,7 +787,7 @@ $self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
 <script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" type="text/javascript"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-$problemHeadText;
+$problemHeadText
 
 <base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL, format: sticky seed: $problemSeed</title>
