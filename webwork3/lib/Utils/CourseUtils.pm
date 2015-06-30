@@ -54,13 +54,19 @@ sub getAllUsers {
 		for my $key (keys %{$u}) {
 			$s->{$key} = $u->{$key}
 		}
+        my $showOldAnswers = $u->{showOldAnswers} || vars->{ce}{pg}{options}{showOldAnswers};
+        $s->{showOldAnswers} = $showOldAnswers ? JSON::true : JSON::false;
         
-        $s->{showOldAnswers} = $u->{showOldAnswers} ? JSON::true : JSON::false;
-
-		$s->{_id} = $s->{user_id};
+        my $useMathView = $u->{useMathView} || vars->{ce}{pg}{options}{useMathView};
+        $s->{useMathView} = $useMathView ? JSON::true : JSON::false;
+        
+        $s->{_id} = $s->{user_id};
 
 		push(@allUsers,$s);
     }
+    
+    debug vars->{ce}{pg}{options}{showOldAnswers};
+    debug vars->{ce}{pg}{options}{useMathView};
 
     return \@allUsers;
 }
