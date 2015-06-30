@@ -9,6 +9,9 @@ use Plack::Handler::FCGI;
 set apphandler => 'PSGI';
 set environment => 'development';
 
+# this makes sure that the application knows that we are running apache2. 
+$ENV{MOD_PERL_API_VERSION}=2;
+
 my $psgi = path($RealBin, '..', 'bin', 'app.pl');
 my $app = do($psgi);
 die "Unable to read startup script: $@" if $@;
