@@ -34,7 +34,8 @@ sub render {
 	for my $key (@anskeys){
 		$renderParams->{formFields}->{$key} = params->{$key};
 	}
-
+    $renderParams->{formFields}->{effectiveUser} = params->{effectiveUser} || session->{user};
+    
 	# remove any pretty garbage around the problem
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
@@ -47,8 +48,8 @@ sub render {
 		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
 		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
 	};
-
-
+    
+    
 	my $pg = new WeBWorK::PG(
 		vars->{ce},
 		$renderParams->{user},
@@ -59,6 +60,10 @@ sub render {
 		$renderParams->{formFields},
 		$translationOptions,
     );
+    
+    
+    #debug to_dumper $pg->{pgcore};
+    
 	my $warning_messages="";
     my (@internal_debug_messages, @pgwarning_messages, @pgdebug_messages);
     if (ref ($pg->{pgcore}) ) {
@@ -89,6 +94,9 @@ sub render {
      	if (ref($pg->{flags}->{$key}) ne "CODE"){
      	$flags->{$key}=$pg->{flags}->{$key};}
      }
+     
+     # FIXME: need to do a better job with problemRandomizes.  The follow works in the library, but not sure about the student view
+     $flags->{problemRandomize} = undef;
 
     my $problem_hash = {
 		text 						=> $pg->{body_text},
