@@ -379,7 +379,7 @@ sub renderProblem {
 ##################################################
 	my $translationOptions = {
 		displayMode     => $rh->{envir}->{displayMode},
-		showHints	    => $rh->{envir}->{showHints},
+		showHints	=> $rh->{envir}->{showHints},
 		showSolutions   => $rh->{envir}->{showSolutions},
  		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
  		processAnswers  => 1,
@@ -389,6 +389,7 @@ sub renderProblem {
         # if reference is not defined then the path is obtained 
         # from the problem object.
         permissionLevel => $rh->{envir}->{permissionLevel} || 0,
+	effectivePermissionLevel => $rh->{envir}->{effectivePermissionlevel} || $rh->{envir}->{permissionLevel} || 0,
 	};
 	
 	my $formFields = $rh->{envir}->{inputs_ref};
@@ -482,7 +483,7 @@ sub renderProblem {
 		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
 	
-	$out2->{answers} = xml_filter($out2->{answers}); # check this -- it might not be working correctly
+	$out2 = xml_filter($out2); # check this -- it might not be working correctly
 	##################
 	close(DEBUGCODE) if $debugXmlCode;
 	###################

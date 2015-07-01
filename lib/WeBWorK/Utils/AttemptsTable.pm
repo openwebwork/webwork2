@@ -145,11 +145,11 @@ sub formatAnswerRow {
 sub answerTemplate {
 	my $self = shift;
 	my $rh_answers = $self->{answers};
-	my @tableRows=();
+	my @tableRows;
 	my @correct_ids;
 	my @incorrect_ids;
 
-	push @tableRows, 	CGI::Tr(
+	push @tableRows,CGI::Tr(
 			CGI::th("#"),
 			CGI::th("Answer"),  # student original answer
 			($self->showAttemptPreviews)? CGI::th("Preview"):'',
@@ -157,16 +157,17 @@ sub answerTemplate {
 			($self->showCorrectAnswers)?  CGI::th("Correct Answer"):'',
 			($self->showMessages)?        CGI::th("Message"):'',
 		);
+
 	my $answerNumber     = 1;
 	#FIXME need to use answer order variable, not sort.
     foreach my $ans_id (@{ $self->answerOrder() }) {  
         #FIXME -- need something more sophisticated to get the answer order correct
-    	push @tableRows, $self->formatAnswerRow($rh_answers->{$ans_id}, $answerNumber++);
+    	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $answerNumber++));
     	push @correct_ids,   $ans_id if $rh_answers->{$ans_id}->{score} >= 1;
     	push @incorrect_ids,   $ans_id if $rh_answers->{$ans_id}->{score} < 1;
     }
 	my $answerTemplate = CGI::h3("Results for this submission") .
-    	CGI::table({class=>"attemptResults"}, CGI::Tr(\@tableRows));
+    	CGI::table({class=>"attemptResults"},@tableRows);
     $answerTemplate = "" unless $self->answersSubmitted; # only print if there is at least one non-blank answer
     $self->correct_ids(\@correct_ids);
     $self->incorrect_ids(\@incorrect_ids);
