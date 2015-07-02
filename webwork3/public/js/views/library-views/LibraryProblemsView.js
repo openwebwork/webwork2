@@ -6,7 +6,7 @@ define(['backbone', 'views/ProblemListView','config'],
 	            this.viewAttrs = {
                     reorderable: false, showPoints: false, showAddTool: true, showEditTool: true, 
                     problem_seed: 1, showMaxAttempts: false, showRefreshTool: true, showViewTool: true, 
-                    showHideTool: true, deletable: false, draggable: true};
+                    showHideTool: true, deletable: false, draggable: true, markCorrect: false};
                 _.extend(this,_(options).pick("problemSets","libraryView","settings","type"));
                 ProblemListView.prototype.initialize.apply(this,[options]); 
     		},

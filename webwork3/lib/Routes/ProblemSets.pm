@@ -130,6 +130,10 @@ post '/courses/:course_id/sets/:set_id' => sub {
 
 put '/courses/:course_id/sets/:set_id' => sub {
 
+    debug 'in put /courses/:course_id/sets/:set_id';
+    
+    debug to_dumper(params->{problems});
+
     checkPermissions(10,session->{user});
 
     send_error("The set name: " . param('set_id'). " does not exist.",404)
@@ -178,15 +182,12 @@ put '/courses/:course_id/sets/:set_id' => sub {
     }
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
+    
+    for my $prob (@globalProblems) {
+        $prob->{_id} = $prob->{set_id} . ":" . $prob->{problem_id};  # this helps backbone on the client side
+    }
 
     addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
-
-    ## why is this here?  it doesn't do anything.
-
-    if (scalar(@usersToDelete)>0){
-        debug "Deleting users to set " . params->{set_id};
-        debug join("; ", @usersToDelete);
-    }
 
     my $setFromDB = vars->{db}->getGlobalSet(params->{set_id});
 

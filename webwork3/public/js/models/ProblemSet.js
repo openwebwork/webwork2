@@ -60,12 +60,20 @@ var ProblemSet = Backbone.Model.extend({
         this.problems = new ProblemList(pbs);
         this.attributes.problems = this.problems;
         this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
-
+        this.problems.on("add",function(_m){
+            console.log("The following was added");
+            console.log(_m);
+        }).on("remove",function(_m){
+            console.log("The following was removed");
+            console.log(_m);
+        });
+        console.log("initialize called for problem set " + this.get("set_id"));
     },
     parse: function (response) {
         if (response.problems){
             this.problems.set(response.problems);
             this.attributes.problems = this.problems;
+            console.log(response.problems);
         }
         response = util.parseAsIntegers(response,this.integerFields);
         return _.omit(response, 'problems');
@@ -92,12 +100,11 @@ var ProblemSet = Backbone.Model.extend({
     },
     addProblem: function (prob) {  
         var self = this; 
-        var newProblem = new Problem(prob.attributes);
         var lastProblem = this.get("problems").last();
-        newProblem.set("problem_id",lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1);
-        this.get("problems").add(newProblem);
+        var attrs = _.extend({},prob.attributes,{ problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1});
+        this.get("problems").add(new Problem(attrs));
         this.trigger("change:problems",this); // 
-        this.save();
+        //this.save();
     },
     setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
         var currentDate = moment.unix(this.get(attr))

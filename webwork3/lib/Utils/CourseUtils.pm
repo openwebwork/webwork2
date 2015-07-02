@@ -27,8 +27,8 @@ sub getAllSets {
 
 sub getAllUsers {
 
-    my @tempArray = vars->{db}->listUsers;
-    my @userInfo = vars->{db}->getUsers(@tempArray);
+    my @userIDs = vars->{db}->listUsers;
+    my @userInfo = vars->{db}->getUsers(@userIDs);
     my $numGlobalSets = vars->{db}->countGlobalSets;
     
     my @allUsers = ();

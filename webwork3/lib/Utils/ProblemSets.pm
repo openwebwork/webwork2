@@ -20,6 +20,9 @@ sub getGlobalSet {
     my $problemSet = convertObjectToHash($set,\@boolean_set_props);
     my @users = vars->{db}->listSetUsers($setName);
     my @problems = vars->{db}->getAllGlobalProblems($setName);
+    for my $problem (@problems){
+        $problem->{_id} = $problem->{set_id} . ":" . $problem->{problem_id};  # this helps backbone on the client side
+    }
 
     $problemSet->{assigned_users} = \@users;
     $problemSet->{problems} = convertArrayOfObjectsToHash(\@problems);
@@ -53,16 +56,10 @@ sub reorderProblems {
                 $userProblem->set_id(params->{set_id});
                 $userProblem->user_id($user);
                 $userProblem->problem_id($p->{problem_id});
-                debug $userProblem;
                 vars->{db}->addUserProblem($userProblem);
             }
         }
     }
-
-    ## take care of the userProblems now
-
-
-
 
     return vars->{db}->getAllGlobalProblems(params->{set_id});
 }
@@ -107,8 +104,8 @@ sub addGlobalProblems {
 	for my $p (@{$problems}){
         my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
 
-        debug $problem;
         if(! vars->{db}->existsGlobalProblem($setID,$p->{problem_id})){
+            debug "making a new problem with id: " . $p->{problem_id};
         	my $prob = vars->{db}->newGlobalProblem();
         	$prob->{problem_id} = $p->{problem_id};
         	$prob->{source_file} = $p->{source_file};

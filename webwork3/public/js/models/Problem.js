@@ -21,7 +21,7 @@ define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
             value: {pattern: /^[1-9]\d*$/, msg: "The value must be a positive whole number." },
             max_attempts: {pattern: /^(-1|\d*)$/, msg: "The value must be a whole number or -1 for unlimited attempts." }
         },
-        idAttribute: "source_file",
+        idAttribute: "_id",
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser
             if(typeof(this.collection.problemSet)!=="undefined") { // the problem comes from a problem set
