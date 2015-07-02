@@ -85,6 +85,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Utils qw( wwRound);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
+use WeBWorK::Localize;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -510,6 +511,7 @@ sub formatRenderedProblem {
 	my $encodedSource     = $self->{encodedSource}//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
+	
 	#################################################
 	# regular Perl warning messages generated with warn
 	#################################################
@@ -559,6 +561,7 @@ sub formatRenderedProblem {
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
+	
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
@@ -567,6 +570,11 @@ sub formatRenderedProblem {
 	my $problemIdentifierPrefix = $self->{inputs_ref}->{problemIdentifierPrefix} //'';
         my $problemResult    =  $rh_result->{problem_result}//'';
         my $problemState     =  $rh_result->{problem_state}//'';
+    my $showSummary          = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
+	my $formLanguage      = $self->{inputs_ref}->{language};
+	# warn "\n  formLanguage $formLanguage";
+	# warn "inputs_ref = ", join(" ", %{ $self->{inputs_ref} } );
+
 	my $scoreSummary     =  '';
 
 my $tbl = WeBWorK::Utils::AttemptsTable->new(
@@ -580,6 +588,8 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	showAttemptResults     => ($submitMode or $showCorrectMode),
 	showCorrectAnswers     => ($showCorrectMode),
 	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
+	showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
+	maketext               => WeBWorK::Localize::getLoc($formLanguage//'en'),
 );
 
 my $answerTemplate = $tbl->answerTemplate;
@@ -664,6 +674,9 @@ $problemHeadText
 	       <input type="hidden" name="passwd" value="$password">
 	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
+	       <input type="hidden" name="outputformat" value="standard">
+	       <input type="hidden" name="language" value="$formLanguage">
+	
 		   <p>
 		      <input type="submit" name="preview"  value="Preview" /> 
 			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
@@ -744,6 +757,7 @@ $scoreSummary
 	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
+	       <input type="hidden" name="language" value="$formLanguage">
 		   <p>
 		      <input type="submit" name="preview"  value="Preview" /> 
 			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
@@ -820,6 +834,8 @@ $localStorageMessages
 <input type="hidden" name="displayMode" value="$displayMode">
 <input type="hidden" name="session_key" value="$session_key">
 <input type="hidden" name="outputformat" value="sticky">
+<input type="hidden" name="language" value="$formLanguage">
+
 <p>
 <input type="submit" name="preview"  value="Preview" /> 
 <input type="submit" name="WWsubmit" value="Submit answer"/> 
