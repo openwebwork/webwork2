@@ -237,7 +237,7 @@ if ($UNIT_TESTS_ON) {
 ###########################################################################
 	
 	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login");
+	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login"); # usually level 2
 	
 # Update the credentials -- in particular the session_key may have changed.
  	$self->{session_key} = $authen->{session_key};
@@ -249,9 +249,9 @@ if ($UNIT_TESTS_ON) {
  		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
  	} 
  # Is there a way to transmit a number as well as a message?
- # Could be useful for nandling errors.
+ # Could be useful for handling errors.
  	die "Could not authenticate user $user_id with key $session_key " unless $self->{authenOK};
- 	die "User $user_id does not have professor privileges in this course $courseName " unless $self->{authzOK};
+ 	die "User $user_id does not have sufficient privileges in this course $courseName " unless $self->{authzOK};
  	return $self;
 }
 
