@@ -163,7 +163,7 @@ sub answerTemplate {
 
 	push @tableRows,CGI::Tr(
 			CGI::th("#"),
-			CGI::th("Answer"),  # student original answer
+			CGI::th($self->maketext("Answer")),  # student original answer
 			($self->showAttemptPreviews)? CGI::th($self->maketext("Preview")):'',
 			($self->showAttemptResults)?  CGI::th($self->maketext("Result")):'',
 			($self->showCorrectAnswers)?  CGI::th($self->maketext("Correct Answer")):'',
