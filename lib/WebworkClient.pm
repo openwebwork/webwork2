@@ -599,12 +599,10 @@ sub formatRenderedProblem {
         # Can be added to the request as a parameter.  Adds a prefix to the 
         # identifier used by the sticky format.  
 	my $problemIdentifierPrefix = $self->{inputs_ref}->{problemIdentifierPrefix} //'';
-        my $problemResult    =  $rh_result->{problem_result}//'';
-        my $problemState     =  $rh_result->{problem_state}//'';
-    my $showSummary          = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
-	my $formLanguage      = $self->{inputs_ref}->{language};
-	# warn "\n  formLanguage $formLanguage";
-	# warn "inputs_ref = ", join(" ", %{ $self->{inputs_ref} } );
+    my $problemResult    =  $rh_result->{problem_result}//'';
+    my $problemState     =  $rh_result->{problem_state}//'';
+    my $showSummary      = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
+	my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
 
 	my $scoreSummary     =  '';
 
@@ -621,6 +619,7 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
 	showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
 	maketext               => WeBWorK::Localize::getLoc($formLanguage//'en'),
+	summary                => ($self->{problem_result}->{summary} )//'', # can be set by problem grader
 );
 
 my $answerTemplate = $tbl->answerTemplate;
@@ -709,15 +708,16 @@ $problemHeadText
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="standard">
 	       <input type="hidden" name="language" value="$formLanguage">
+	       <input type="hidden" name="showSummary" value="$showSummary">
 	
 		   <p>
 		      <input type="submit" name="preview"  value="Preview" /> 
 			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
 		      <input type="submit" name="WWgrade" value="Show correct answer"/>
 		   </p>
-	       
 	     </form>
 <HR>
+
 <h3> Perl warning section </h3>
 $warnings
 <h3> PG Warning section </h3>
@@ -795,12 +795,12 @@ $scoreSummary
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
 	       <input type="hidden" name="language" value="$formLanguage">
+	       <input type="hidden" name="showSummary" value="$showSummary">
 		   <p>
 		      <input type="submit" name="preview"  value="Preview" /> 
 			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
 		      <input type="submit" name="WWgrade" value="Show correct answer"/>
 		   </p>
-
 	       </form>
 </div>
 </div></div>
@@ -856,14 +856,22 @@ $problemHeadText
 <body>
 <div class="container-fluid">
 <div class="row-fluid">
-<div class="span12 problem">			
+<div class="span12 problem">	
+<hr/>		
 $answerTemplate
+<hr/>
 <form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
 <div class="problem-content">
 $problemText
 </div>
+<p>
 $scoreSummary
+</p>
+
+<p>
 $localStorageMessages
+</p>
+
 <input type="hidden" name="answersSubmitted" value="1"> 
 <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 <input type="hidden" name="problemSource" value="$encodedSource"> 
@@ -879,6 +887,7 @@ $localStorageMessages
 <input type="hidden" name="session_key" value="$session_key">
 <input type="hidden" name="outputformat" value="sticky">
 <input type="hidden" name="language" value="$formLanguage">
+<input type="hidden" name="showSummary" value="$showSummary">
 
 <p>
 <input type="submit" name="preview"  value="Preview" /> 
