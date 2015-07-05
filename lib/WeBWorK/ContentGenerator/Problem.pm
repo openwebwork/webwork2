@@ -1960,13 +1960,14 @@ sub output_summary{
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
-
+	my $set = $self->{set};
 	my $authz = $r->authz;
 	my $user = $r->param('user');
+	my $effectiveUser = $r->param('effectiveUser');
 	
     # if $showMeAnother{Count} is somehow not an integer, make it one
     $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
-	
+
         # attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
@@ -2041,8 +2042,40 @@ sub output_summary{
         # find a new version of the problem
 		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem;
                        close this tab, and return to the original problem.")),CGI::br();
-    }
+    } elsif ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
+	my $hasChildren = 0;
+	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
+	@problemIDs = sort { $a <=> $b } @problemIDs;
 
+	# get some data 
+	my @problemSeqs;
+	my $index;
+	# this sets of an array of the sequence assoicated to the 
+	#problem_id
+	for (my $i=0; $i<=$#problemIDs; $i++) {
+	    $index = $i if ($problemIDs[$i] == $problem->problem_id);
+	    my @seq = jitar_id_to_seq($problemIDs[$i]);
+	    push @problemSeqs, \@seq;
+	}
+	
+	my $next_id = $index+1;
+	my @seq = @{$problemSeqs[$index]};
+	
+	# check to see if the problem has children
+	while ($next_id <= $#problemIDs && scalar(@{$problemSeqs[$index]}) < scalar(@{$problemSeqs[$next_id]})) {
+	    $hasChildren = 1;
+	    $next_id++;
+	}	
+	
+	# if it has children and conditions are right, print a message
+	if ( $hasChildren 
+	     && (($problem->att_to_open_children != -1 && $problem->num_incorrect >= $problem->att_to_open_children) ||
+		    ($problem->max_attempts != -1 && 
+		     $problem->num_incorrect >= $problem->max_attempts))) {
+	    print CGI::div({class=>'showMeAnotherBox'},$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.'));
+	}
+    }		
+	    
 
     if (!$previewAnswers) {    # only color answers if not previewing
         if ($checkAnswers or $showPartialCorrectAnswers) { # color answers when partialCorrectAnswers is set

@@ -528,7 +528,8 @@ sub problemListRow($$$$$) {
 
 	my $statusForParent = "";
 	if ($isJitarSet && $problem->counts_parent_grade && $problemLevel != 0 ) {
-	    $statusForParent =  eval{ wwround(0, jitar_problem_adjusted_status($problem,$db) * 100).'%'};
+	    $statusForParent =  eval{ wwRound(0, jitar_problem_adjusted_status($problem,$db) * 100).'%'};
+
 	}
 
 	my $graderLink = "";

@@ -610,7 +610,7 @@ div.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* r
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #bf5454; background-color: inherit; } /* red */
 div.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
-div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px} /* bright gold border and harvest gold background*/
+div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px; margin-bottom: 5px} /* bright gold border and harvest gold background*/
 label.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red */
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 label.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
@@ -1088,11 +1088,11 @@ div.problem_sets_options {
 }
 
 .psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f055';
+    content: '\f054';
 }
 
 .psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f056';
+    content: '\f078';
 }
 
 

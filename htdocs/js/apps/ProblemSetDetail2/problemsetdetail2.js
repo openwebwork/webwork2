@@ -23,6 +23,48 @@ $(function() {
 	
     });
     
+    //Problem Set Detail 2  (the page doesn't render properly without some sort
+    // of css to format the divs. This does that.)
+    // This adds soem bootstrap elements to the page to format it
+    $('.problem_detail_row').addClass('well span11')
+	.wrap('<div class="row-fluid" />')
+	.after('<div class="span1" />');
+
+    $('.pdr_block_1').addClass('span2');
+    $('.pdr_block_2').addClass('span3');
+    $('.pdr_block_3').addClass('span7');
+    
+    $('#psd_toolbar').addClass('btn-group');
+    
+    $('.psd_view').addClass('btn btn-mini')
+	.html('<i class="icon-eye-open" />')
+	.tooltip();
+    $('.psd_edit').addClass('btn btn-mini')
+	.html('<i class="icon-pencil" />')
+	.tooltip();
+    $('.pdr_render').addClass('btn btn-mini')
+	.html('<i class="icon-picture" />')
+	.tooltip();
+
+    $('.pdr_grader').addClass('btn btn-mini')
+	.html('<i class="icon-edit">')
+	.tooltip();
+
+    if (!$('#psd_list').hasClass('disable_renumber')) {
+	$('.pdr_handle').each(function () {
+	    var iconclass = "icon-resize-vertical";
+	    if ($(this).attr('is-jitar') == 1) {
+		iconclass = "icon-move";
+	    }
+	    $(this).append($('<i/>').addClass(iconclass)
+			   .tooltip({title:$(this).attr('data-move-text'),
+				     container:this})
+			  );
+	});
+    } else {
+	$('.pdr_handle').css('margin-right','5px');
+    }
+
     if ($('#psd_list').hasClass('disable_renumber')) {
 	$('#psd_list').nestedSortable({ disabled:true});
     }
@@ -30,8 +72,24 @@ $(function() {
     // The actual expand collapse icon is controlled by css
     $('.pdr_collapse').on('click', function() {
 	$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
-    })
+	$(this).tooltip('destroy');
+	if ($(this).closest('li').hasClass('mjs-nestedSortable-collapsed')) {
+	    $(this).tooltip({title:$(this).attr('data-expand-text'),
+			     container:this});
+	} else {
+	    $(this).tooltip({title:$(this).attr('data-collapse-text'),
+			     container:this});
+	}
 
+    })
+	.each(function() {
+	    $(this).tooltip({title:$(this).attr('data-expand-text'),
+			      container: this});
+	})
+	    .click(function (event) {
+	    });
+    
+    
     // This is for the render buttons
     $('.pdr_render').click(function(event) {
 	event.preventDefault();
@@ -57,18 +115,32 @@ $(function() {
 	event.preventDefault();
 	$('.psr_render_area').html('');
     });
-
+ 
     // This is for collapsing and expanding the tree
     $('#psd_expand_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');
-	$('i.icon-plus-sign').removeClass('icon-plus-sign').addClass('icon-minus-sign');
-    });
+	$('i.icon-plus-sign').removeClass('icon-plus-sign')
+	    .addClass('icon-minus-sign');
 
+	$('.pdr_collapse').each(function () {
+	    $(this).tooltip('destroy');
+	    $(this).tooltip({title:$(this).attr('data-collapse-text'),
+			     container:this});
+	});
+    });
+    
     $('#psd_collapse_all').addClass('btn').click(function (event) {
 	event.preventDefault();
 	$('li.psd_list_row').addClass('mjs-nestedSortable-collapsed').removeClass('mjs-nestedSortable-expanded');
-	$('i.icon-minus-sign').addClass('icon-plus-sign').removeClass('icon-minus-sign');
+	$('i.icon-minus-sign').addClass('icon-plus-sign')
+	    .removeClass('icon-minus-sign');
+
+	$('.pdr_collapse').each(function () {
+	    $(this).tooltip('destroy');
+	    $(this).tooltip({title:$(this).attr('data-expand-text'),
+			     container:this});
+	});
     });
 
 
@@ -107,8 +179,15 @@ $(function() {
 	recurse_on_heirarchy(heirarchy,array);
 	
 	$('.pdr_handle').each(function () {
+	    var iconclass = "icon-resize-vertical";
+	    if ($(this).attr('is-jitar') == 1) {
+		iconclass = "icon-move";
+	    }
 	    $(this).html($(this).html().slice(0,-1));
-	    $(this).append('<i class="icon-resize-vertical" />');
+	    $(this).append($('<i/>').addClass(iconclass)
+			   .tooltip({title:$(this).attr('data-move-text'),
+				    container:this})
+			   );
 	});
 	disable_fields();
 
@@ -138,10 +217,13 @@ $(function() {
 		    }
 		    
 		}
+
 	    }
 	    if (!has_children) {
 		$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').addClass('hidden');	
 	    }
+
+		    
 	});
     }
 

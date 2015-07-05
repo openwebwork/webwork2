@@ -2420,12 +2420,14 @@ sub body {
 		    $problemNumber = join('.',@seq);
 		    $lastProblemNumber = pop @seq;
 		    $parentID = seq_to_jitar_id(@seq) if @seq;
-                    $collapseButton = CGI::span({class=>"pdr_collapse"},"");
+                    $collapseButton = CGI::span({class=>"pdr_collapse",
+						"data-expand-text"=>$r->maketext("Expand"),
+						"data-collapse-text"=>$r->maketext("Collapse")},"");
 		}
 	
 		my $pdr_block_1 =  CGI::div({class=>"pdr_block_1"},
 			CGI::start_table({border => 0, cellpadding => 1}) .
-			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID"}, $problemNumber).$collapseButton.
+			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, $problemNumber).$collapseButton.
 					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$lastProblemNumber}).
 					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .	      
              	        CGI::Tr({}, CGI::td({}, 
@@ -2434,7 +2436,7 @@ sub body {
 					    ($showLinks ? CGI::a({class=>"psd_view", href => $viewProblemLink, target=>"WW_View",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Open in New Window")}, $r->maketext("View")) : "") .
 					    $gradingLink )). 
 			  ($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
-			  ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
+			  ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", id => "problem.".$problemID.".mark_correct", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
 				CGI::end_table()));
 		my $pdr_block_2 = CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()));
 
@@ -2523,6 +2525,7 @@ sub body {
 	}
 	print CGI::br(),CGI::br(),
 	CGI::input({type=>"submit", name=>"submit_changes", id=>"submit_changes_2", value=>$r->maketext("Save Changes")}),
+	CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")}),
 	$r->maketext("(Any unsaved changes will be lost.)");
 	
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
