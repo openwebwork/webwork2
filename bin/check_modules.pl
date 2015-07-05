@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 my @applicationsList = qw(
+        curl
 	mkdir
 	mv
 	mysql
