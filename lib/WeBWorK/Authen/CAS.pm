@@ -68,7 +68,7 @@ sub get_credentials {
 			  $self->{session_key});
 			$self->{error} = "Invalid session key";
 			$r->param('key' => undef);
-                       return $self->get_credentials();
+			return $self->get_credentials();
 		}
 		return 1;
 		#debug("falling back to superclass get_credentials");
