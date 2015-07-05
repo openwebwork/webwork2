@@ -82,6 +82,7 @@ package WebworkClient;
 #use Crypt::SSLeay;  # needed for https
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
+use WeBWorK::Utils qw( wwRound);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
 
@@ -197,7 +198,11 @@ sub xmlrpcCall {
 	  unless (ref($result) and $result->fault) {
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
-	  	} 
+		}
+	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
+		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
+	  	}
+
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
 		return $result->result();  # would it be better to return the entire $result?
@@ -488,6 +493,7 @@ sub formatRenderedProblem {
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}
+	my $problemHeadText = $rh_result->{header_text}//'';
 	my $rh_answers        = $rh_result->{answers}//{};
 	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
 	my $encodedSource     = $self->{encodedSource}//'';
@@ -545,7 +551,12 @@ sub formatRenderedProblem {
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
-	
+        # Can be added to the request as a parameter.  Adds a prefix to the 
+        # identifier used by the sticky format.  
+	my $problemIdentifierPrefix = $self->{inputs_ref}->{problemIdentifierPrefix} //'';
+        my $problemResult    =  $rh_result->{problem_result}//'';
+        my $problemState     =  $rh_result->{problem_state}//'';
+	my $scoreSummary     =  '';
 
 my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	$rh_answers,
@@ -569,8 +580,22 @@ $tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 #warn "answersSubmitted ", $tbl->answersSubmitted;
 # render equation images
 
+if ($submitMode && $problemResult) {
+    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+    if ($problemResult->{msg}) {
+         $scoreSummary .= CGI::p($problemResult->{msg});
+    }
 
-	
+    $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+    $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+}
+
+# This stuff is put here because eventually we will add locale support so the 
+# text will have to be done server side. 
+my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
+$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
+$localStorageMessages .= CGI::end_div();	
+
 	###########################
 	# Define problem templates
 	###########################
@@ -585,6 +610,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
@@ -603,7 +629,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-
+$problemHeadText
 
 <base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
@@ -651,7 +677,7 @@ ENDPROBLEMTEMPLATE
 
 $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 
-
+<!DOCTYPE html>
 <html>
 <head>
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
@@ -659,6 +685,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
@@ -677,16 +704,22 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-
+$problemHeadText
 
 <base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
 </head>
 <body>
-			
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span12 problem">			
 		    $answerTemplate
 		    <form action="$FORM_ACTION_URL" method="post">
+<div class="problem-content">
 			$problemText
+</div>
+$scoreSummary
+
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
@@ -707,6 +740,86 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 		   </p>
 
 	       </form>
+</div>
+</div></div>
+</body>
+</html>
+
+ENDPROBLEMTEMPLATE
+
+$self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
+
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+
+<!-- CSS Loads -->
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
+<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
+<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+
+<!-- JS Loads -->
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
+<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jquery.json.min.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
+<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
+<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
+<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
+<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
+<script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+$problemHeadText
+
+<base href="$XML_URL">
+<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: sticky seed: $problemSeed</title>
+</head>
+<body>
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span12 problem">			
+$answerTemplate
+<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
+<div class="problem-content">
+$problemText
+</div>
+$scoreSummary
+$localStorageMessages
+<input type="hidden" name="answersSubmitted" value="1"> 
+<input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
+<input type="hidden" name="problemSource" value="$encodedSource"> 
+<input type="hidden" name="problemSeed" value="$problemSeed"> 
+<input type="hidden" name="pathToProblemFile" value="$fileName">
+<input type="hidden" name="courseName" value="$courseID">
+<input type="hidden" name="courseID" value="$courseID">
+<input type="hidden" name="userID" value="$userID">
+<input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
+<input type="hidden" name="password" value="$password">
+<input type="hidden" name="passwd" value="$password">
+<input type="hidden" name="displayMode" value="$displayMode">
+<input type="hidden" name="session_key" value="$session_key">
+<input type="hidden" name="outputformat" value="sticky">
+<p>
+<input type="submit" name="preview"  value="Preview" /> 
+<input type="submit" name="WWsubmit" value="Submit answer"/> 
+<input type="submit" name="WWgrade" value="Show correct answer"/>
+</p>
+</form>
+</div>
+</div>
+</div>
+<!-- Activate local storage js -->
+<script type="text/javascript">WWLocalStorage();</script>
 </body>
 </html>
 
