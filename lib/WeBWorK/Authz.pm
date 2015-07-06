@@ -390,7 +390,7 @@ sub checkSet {
 		     $set->version_id eq $verNum ) {
 			# then we can just use this set and skip the rest
 
-		} elsif ( $setName eq 'Undefined_Set' and 
+		} elsif ( $setName =~ /^\d*Undefined_Set$/ and 
 			  $self->hasPermissions($userName, "access_instructor_tools") ) {
 				# this is the case of previewing a problem
 				#    from a 'try it' link
@@ -417,7 +417,7 @@ sub checkSet {
 		} else {
 			if ( $db->existsUserSet($effectiveUserName,$setName) ) {
 				$set = $db->getMergedSet($effectiveUserName,$setName);
-			} elsif ( $setName eq 'Undefined_Set' and 
+			} elsif ( $setName =~ /^\d*Undefined_Set$/ and 
 				$self->hasPermissions($userName, "access_instructor_tools") ) {
 				# this is the weird case of the library
 				#   browser, when we don't actually have
