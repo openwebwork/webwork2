@@ -129,7 +129,7 @@ function lib_update(who, what) {
     return $.ajax({type:'post',
 		   url: basicWebserviceURL,
 		   data: mydefaultRequestObject,
-		   timeout: 5000, //milliseconds
+		   timeout: 10000, //milliseconds
 		   success: function (data) {
 		       if (data.match(/WeBWorK error/)) {
 		       	   console.log(data)
@@ -151,8 +151,7 @@ function lib_update(who, what) {
 		       return true;
 		   },
 		  error: function (data) {
-		      console.log(data);
-		      alert(data.statusText);
+		      alert(basicWebserviceURL+': '+data.statusText);
 		  },
 		  });
       
@@ -170,7 +169,7 @@ function lib_update(who, what) {
     return $.ajax({type:'post',
 		   url: basicWebserviceURL,
 		   data: mydefaultRequestObject,
-		   timeout: 5000, //milliseconds
+		   timeout: 10000, //milliseconds
 		   success: function (data) {
 		       if (data.match(/WeBWorK error/)) {
 		       	   console.log(data)
@@ -189,8 +188,7 @@ function lib_update(who, what) {
 		       return true;
 		   },
 		  error: function (data) {
-		      console.log(data);
-		      alert(data.statusText);
+		      alert(basicWebserviceURL+': '+data.statusText);
 		  },
 		  });
 }
@@ -267,11 +265,10 @@ function addemcallback(wsURL, ro, probarray, count) {
       return $.ajax({type:'post',
 		     url: wsURL,
 		     data: ro2,
-		     timeout: 5000, //milliseconds
+		     timeout: 10000, //milliseconds
 		     success: addemcallback(wsURL, ro2, probarray, count+1),
 		     error: function (data) {
-			 console.log(data);
-			 alert(data.statusText);
+			 alert(wsURL+': '+data.statusText);
 		     },
 		    });
       
@@ -291,7 +288,7 @@ function markinset() {
     return $.ajax({type:'post',
 		   url: basicWebserviceURL,
 		   data: ro,
-		   timeout: 5000, //milliseconds
+		   timeout: 10000, //milliseconds
 		   success: function (data) {
 		       if (data.match(/WeBWorK error/)) {
 			   console.log(data)
@@ -321,8 +318,7 @@ function markinset() {
 		       }
 		   },
 		   error: function (data) {
-		       console.log(data);
-		       alert(data.statusText);
+		       alert(basicWebserviceURL+': '+data.statusText);
 		   },
 		  });
 }
@@ -429,7 +425,7 @@ function randomize(filepath, el) {
   $.ajax({type:'post',
 	  url: basicWebserviceURL,
 	  data: ro,
-	  timeout: 5000, //milliseconds
+	  timeout: 10000, //milliseconds
 	  success: function (data) {
 	      if (data.match(/WeBWorK error/)) {
 		  console.log(data)
@@ -455,8 +451,7 @@ function randomize(filepath, el) {
 	      }
  	  },
 	  error: function (data) {
-	      alert(data.statusText);
-	      console.log(data);
+	      alert(basicWebserviceURL+': '+data.statusText);
 	  },
 	 });
     
