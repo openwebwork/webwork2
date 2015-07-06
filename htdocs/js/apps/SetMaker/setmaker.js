@@ -132,11 +132,7 @@ function lib_update(who, what) {
 		   timeout: 10000, //milliseconds
 		   success: function (data) {
 		       if (data.match(/WeBWorK error/)) {
-		       	   console.log(data)
-			   var error = data.match(/(Errors:[\s\S]*End Errors)/);
-			   if (error) {
-			       alert(error[1]);
-			   }
+			   reportWWerror(data);		   
 		       }
 
 		       var response = $.parseJSON(data);
@@ -172,11 +168,7 @@ function lib_update(who, what) {
 		   timeout: 10000, //milliseconds
 		   success: function (data) {
 		       if (data.match(/WeBWorK error/)) {
-		       	   console.log(data)
-			   var error = data.match(/(Errors:[\s\S]*End Errors)/);
-			   if (error) {
-			       alert(error[1]);
-			   }
+		       	   reportWWerror(data);
 		       }
 
 		       var response = $.parseJSON(data);
@@ -237,11 +229,7 @@ function addemcallback(wsURL, ro, probarray, count) {
   if(probarray.length==0) {
     return function(data) {
 	if (data.match(/WeBWorK error/)) {
-	    console.log(data)
-	    var error = data.match(/(Errors:[\s\S]*End Errors)/);
-	    if (error) {
-		alert(error[1]);
-	    }
+	    reportWWerror(data);
 	}
 	
 	var phrase = count+" problem";
@@ -291,11 +279,7 @@ function markinset() {
 		   timeout: 10000, //milliseconds
 		   success: function (data) {
 		       if (data.match(/WeBWorK error/)) {
-			   console.log(data)
-			   var error = data.match(/(Errors:[\s\S]*End Errors)/);
-			   if (error) {
-			       alert(error[1]);
-			   }
+			   reportWWerror(data);
 		       }
 		       
 		       var response = $.parseJSON(data);
@@ -428,11 +412,7 @@ function randomize(filepath, el) {
 	  timeout: 10000, //milliseconds
 	  success: function (data) {
 	      if (data.match(/WeBWorK error/)) {
-		  console.log(data)
-		  var error = data.match(/(Errors:[\s\S]*End Errors)/);
-		  if (error) {
-		      alert(error[1]);
-		  }
+		  reportWWerror(data);
 	      }
 	      var response = data;
 	      $('#'+el).html(data);
@@ -489,4 +469,12 @@ function showpglist() {
   }
   alert(s);
   return true;
+}
+
+function reportWWerror(data) {
+    
+    console.log(data);
+    $('<div/>',{class : 'WWerror', title : 'WeBWorK Error'})
+	.html(data)
+	.dialog({width:'70%'});
 }
