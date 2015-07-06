@@ -428,7 +428,6 @@ sub renderProblem {
 #       num_incorrect
 #   it doesn't seem that $effectiveUser, $set or $key is used in the subroutine
 #   except that it is passed on to defineProblemEnvironment
-
 	my $pg;
 	$pg = WebworkWebservice::RenderProblem->new(
 		$ce,

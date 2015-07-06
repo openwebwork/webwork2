@@ -28,7 +28,7 @@ use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile);
-use PGUtil qw(not_null);
+use PGUtil qw(not_null pretty_print);
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
@@ -501,8 +501,26 @@ sub content {
    ###########################
    	my $self = shift;
 	
-	#for handling errors...i'm to lazy to make it work right now
-	if($self->{output}->{problem_out}){
+
+	if ((ref($self->{output}) =~ /XMLRPC/ && $self->{output}->fault) || 
+	    (ref($self->{output}->{problem_out}) =~ /XMLRPC/ && 
+		 $self->{output}->{problem_out}->fault)) {
+
+	    my $result = $self->{output}->{problem_out} ? 
+		$self->{output}->{problem_out} : $self->{output};
+
+	    my $err_string = 'Error message for '.
+		join( ' ',
+		      "command:",
+		      $self->r->param('xml_command'),
+			  "\nfaultcode:",
+		      $result->faultcode, 
+		      "\nfaultstring:",
+		      $result->faultstring, "\nEnd error message\n\n"
+		  );
+	    
+	    die($err_string);
+	}elsif($self->{output}->{problem_out}){
 		print $self->{output}->{problem_out}->{text};
 	} else {
 		print '{"server_response":"'.$self->{output}->{text}.'",';
