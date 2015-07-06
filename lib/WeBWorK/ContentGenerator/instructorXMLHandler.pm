@@ -28,7 +28,7 @@ use base qw(WeBWorK::ContentGenerator);
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile);
-use PGUtil qw(not_null pretty_print);
+use PGUtil qw(not_null);
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 

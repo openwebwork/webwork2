@@ -483,7 +483,6 @@ sub Edit {
 	my $r = $self->r;
 	my $userID = $r->param('user');
 	my $ce = $r->ce;
-	my $db = $r->db;
 	my $authz = $r->authz;
 
 	# if its a restricted file, dont allow the web editor to edit it unless
