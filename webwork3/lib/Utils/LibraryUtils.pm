@@ -34,6 +34,7 @@ sub render {
 	for my $key (@anskeys){
 		$renderParams->{formFields}->{$key} = params->{$key};
 	}
+    $renderParams->{formFields}->{user} = session->{user};
     $renderParams->{formFields}->{effectiveUser} = params->{effectiveUser} || session->{user};
     
 	# remove any pretty garbage around the problem
