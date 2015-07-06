@@ -126,18 +126,36 @@ function lib_update(who, what) {
   if(who == 'count') {
     mydefaultRequestObject.command = 'countDBListings';
     // console.log(mydefaultRequestObject);
-    return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
-      var response = $.parseJSON(data);
-      // console.log(response);
-      var arr = response.result_data;
-      arr = arr[0];
-      var line = "There are "+ arr +" matching WeBWorK problems"
-      if(arr == "1") {
-        line = "There is 1 matching WeBWorK problem"
-      }
-      $('#library_count_line').html(line);
-      return true;
-    });
+    return $.ajax({type:'post',
+		   url: basicWebserviceURL,
+		   data: mydefaultRequestObject,
+		   timeout: 5000, //milliseconds
+		   success: function (data) {
+		       if (data.match(/WeBWorK error/)) {
+		       	   console.log(data)
+			   var error = data.match(/(Errors:[\s\S]*End Errors)/);
+			   if (error) {
+			       alert(error[1]);
+			   }
+		       }
+
+		       var response = $.parseJSON(data);
+		       // console.log(response);
+		       var arr = response.result_data;
+		       arr = arr[0];
+		       var line = "There are "+ arr +" matching WeBWorK problems"
+		       if(arr == "1") {
+			   line = "There is 1 matching WeBWorK problem"
+		       }
+		       $('#library_count_line').html(line);
+		       return true;
+		   },
+		  error: function (data) {
+		      console.log(data);
+		      alert(data.statusText);
+		  },
+		  });
+      
   }
   var subcommand = "getAllDBchapters";
   if(what == 'clear') {
@@ -149,15 +167,32 @@ function lib_update(who, what) {
   if(who=='sections') { subcommand = "getSectionListings";}
   mydefaultRequestObject.command = subcommand;
   // console.log(mydefaultRequestObject);
-  return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
-      var response = $.parseJSON(data);
-      // console.log(response);
-      var arr = response.result_data;
-      arr.splice(0,0,all);
-      setselect('library_'+who, arr);
-      lib_update(child[who], 'clear');
-    });
-  return true;
+    return $.ajax({type:'post',
+		   url: basicWebserviceURL,
+		   data: mydefaultRequestObject,
+		   timeout: 5000, //milliseconds
+		   success: function (data) {
+		       if (data.match(/WeBWorK error/)) {
+		       	   console.log(data)
+			   var error = data.match(/(Errors:[\s\S]*End Errors)/);
+			   if (error) {
+			       alert(error[1]);
+			   }
+		       }
+
+		       var response = $.parseJSON(data);
+		       // console.log(response);
+		       var arr = response.result_data;
+		       arr.splice(0,0,all);
+		       setselect('library_'+who, arr);
+		       lib_update(child[who], 'clear');
+		       return true;
+		   },
+		  error: function (data) {
+		      console.log(data);
+		      alert(data.statusText);
+		  },
+		  });
 }
 
 function setselect(selname, newarray) {
@@ -203,25 +238,43 @@ function addme(path, who) {
 function addemcallback(wsURL, ro, probarray, count) {
   if(probarray.length==0) {
     return function(data) {
-      var phrase = count+" problem";
-      if(count!=1) { phrase += "s";}
-     // alert("Added "+phrase+" to "+ro.set);
-      markinset();
+	if (data.match(/WeBWorK error/)) {
+	    console.log(data)
+	    var error = data.match(/(Errors:[\s\S]*End Errors)/);
+	    if (error) {
+		alert(error[1]);
+	    }
+	}
+	
+	var phrase = count+" problem";
+	if(count!=1) { phrase += "s";}
+	// alert("Added "+phrase+" to "+ro.set);
+	markinset();
 
-	  var prbs = "problems";
-	  if(ro.total == 1) { 
-		prbs = "problem";
-	  }
-	  goodmsg("Added "+ro.total+" "+prbs+" to set "+ro.set_id);
+	var prbs = "problems";
+	if(ro.total == 1) { 
+	    prbs = "problem";
+	}
+	goodmsg("Added "+ro.total+" "+prbs+" to set "+ro.set_id);
 
-      return true;
+	return true;
     };
   }
   // Need to clone the object so the recursion works
   var ro2 = jQuery.extend(true, {}, ro);
   ro2.problemPath=probarray.shift();
   return function (data) {
-    return $.post(wsURL, ro2, addemcallback(wsURL, ro2, probarray, count+1));
+      return $.ajax({type:'post',
+		     url: wsURL,
+		     data: ro2,
+		     timeout: 5000, //milliseconds
+		     success: addemcallback(wsURL, ro2, probarray, count+1),
+		     error: function (data) {
+			 console.log(data);
+			 alert(data.statusText);
+		     },
+		    });
+      
   };
 }
 
@@ -235,26 +288,43 @@ function markinset() {
   var shownprobs = $('[name^="filetrial"]'); // shownprobs.value
   ro.set_id = target;
   ro.command = 'true';
-  return $.post(basicWebserviceURL, ro, function (data) {
-    var response = $.parseJSON(data);
-    // console.log(response);
-    var arr = response.result_data;
-    var pathhash = {};
-    for(var i=0; i<arr.length; i++) {
-	  arr[i] = arr[i].path;
-      arr[i] = arr[i].replace(/^\//,'');
-      pathhash[arr[i]] = 1;
-    }
-    for(var i=0; i< shownprobs.length; i++) {
-      var num= shownprobs[i].name;
-      num = num.replace("filetrial","");
-      if(pathhash[shownprobs[i].value] ==1) {
-        $('#inset'+num).html('<i><b>(in target set)</b></i>');
-      } else {
-        $('#inset'+num).html('<i><b></b></i>');
-      }
-    }
-  });
+    return $.ajax({type:'post',
+		   url: basicWebserviceURL,
+		   data: ro,
+		   timeout: 5000, //milliseconds
+		   success: function (data) {
+		       if (data.match(/WeBWorK error/)) {
+			   console.log(data)
+			   var error = data.match(/(Errors:[\s\S]*End Errors)/);
+			   if (error) {
+			       alert(error[1]);
+			   }
+		       }
+		       
+		       var response = $.parseJSON(data);
+		       // console.log(response);
+		       var arr = response.result_data;
+		       var pathhash = {};
+		       for(var i=0; i<arr.length; i++) {
+			   arr[i] = arr[i].path;
+			   arr[i] = arr[i].replace(/^\//,'');
+			   pathhash[arr[i]] = 1;
+		       }
+		       for(var i=0; i< shownprobs.length; i++) {
+			   var num= shownprobs[i].name;
+			   num = num.replace("filetrial","");
+			   if(pathhash[shownprobs[i].value] ==1) {
+			       $('#inset'+num).html('<i><b>(in target set)</b></i>');
+			   } else {
+			       $('#inset'+num).html('<i><b></b></i>');
+			   }
+		       }
+		   },
+		   error: function (data) {
+		       console.log(data);
+		       alert(data.statusText);
+		   },
+		  });
 }
 
 function delrow(num) { 
@@ -356,25 +426,41 @@ function randomize(filepath, el) {
     ro.displayMode = displayMode;
   }
   ro.noprepostambles = 1;
-  $.post(basicWebserviceURL, ro, function (data) {
-    var response = data;
-    $('#'+el).html(data);
-    // run typesetter depending on the displaymode
-    if(displayMode=='MathJax')
-      MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
-    if(displayMode=='jsMath')
-      jsMath.ProcessBeforeShowing(el);
-
-    if(displayMode=='asciimath') {
-      //processNode(el);
-      translate();
-    }
-    if(displayMode=='LaTeXMathML') {
-      AMprocessNode(document.getElementsByTagName("body")[0], false);
-    }
-    //console.log(data);
-  });
-  return false;
+  $.ajax({type:'post',
+	  url: basicWebserviceURL,
+	  data: ro,
+	  timeout: 5000, //milliseconds
+	  success: function (data) {
+	      if (data.match(/WeBWorK error/)) {
+		  console.log(data)
+		  var error = data.match(/(Errors:[\s\S]*End Errors)/);
+		  if (error) {
+		      alert(error[1]);
+		  }
+	      }
+	      var response = data;
+	      $('#'+el).html(data);
+	      // run typesetter depending on the displaymode
+	      if(displayMode=='MathJax')
+		  MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
+	      if(displayMode=='jsMath')
+		  jsMath.ProcessBeforeShowing(el);
+	      
+	      if(displayMode=='asciimath') {
+		  //processNode(el);
+		  translate();
+	      }
+	      if(displayMode=='LaTeXMathML') {
+		  AMprocessNode(document.getElementsByTagName("body")[0], false);
+	      }
+ 	  },
+	  error: function (data) {
+	      alert(data.statusText);
+	      console.log(data);
+	  },
+	 });
+    
+    return false;
 }
 
 function togglemlt(cnt,noshowclass) {
