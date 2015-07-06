@@ -1236,7 +1236,9 @@ sub saveEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r           = $self->r;
 	my $db          = $r->db;
-	
+	my $editorUser = $r->param('user');
+	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;	
+
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID); # checked
@@ -1252,7 +1254,10 @@ sub saveEdit_handler {
 		
 		foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
 			my $param = "permission.${userID}.${field}";
-			if (defined $tableParams->{$param}->[0]) {
+			if (defined $tableParams->{$param}->[0] &&
+			    $tableParams->{$param}->[0] <= $editorUserPermission) {
+			    warn($tableParams->{$param}->[0]);
+			    warn($editorUserPermission);
 				$PermissionLevel->$field($tableParams->{$param}->[0]);
 			}
 		}
@@ -1507,7 +1512,10 @@ sub exportUsersToCSV {
 sub fieldEditHTML {
 	my ($self, $fieldName, $value, $properties) = @_;
 	my $r = $self->r;
-	my $ce = $self->r->ce;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $editorUser = $r->param('user');
+	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;
 	my $size = $properties->{size};
 	my $type = $properties->{type};
 	my $access = $properties->{access};
@@ -1597,7 +1605,7 @@ sub fieldEditHTML {
 		my %roles = %{$ce->{userRoles}};
 		foreach my $role (sort {$roles{$a}<=>$roles{$b}} keys(%roles) ) {
 			my $val = $roles{$role};
-
+			next unless $val <= $editorUserPermission;
 			push(@values, $val);
 			$labels{$val} = $role;
 			$default = $val if ( $value eq $role );
