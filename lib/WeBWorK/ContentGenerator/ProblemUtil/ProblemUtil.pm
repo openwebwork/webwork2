@@ -249,7 +249,7 @@ sub process_editorLink{
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
-		($set->set_id eq 'Undefined_Set');
+		($set->set_id =~ m/^\d*Undefined_Set$/);
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);

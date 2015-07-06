@@ -74,11 +74,12 @@ Given a database, make a temporary problem set for that database.
 
 sub fake_set { 
 	my $db = shift; 
+	my $setname = shift || int(rand(1000000)).fakeSetName;
  
 	my $set = $db->newGlobalSet(); 
 	$set = global2user($db->{set_user}->{record}, $set); 
 	$set->psvn(123); 
-	$set->set_id(fakeSetName); 
+	$set->set_id($setname); 
 	$set->open_date(time());
 	$set->due_date(time());
 	$set->answer_date(time());
@@ -131,7 +132,9 @@ sub fake_problem {
 	#debug("In fake_problem");
 
 	$problem = global2user($db->{problem_user}->{record}, $problem); 
-	$problem->set_id(fakeSetName); 
+	my $myfakesetname = fakeSetName;
+	$myfakesetname = $options{fake_set_name} if defined($options{fake_set_name});
+	$problem->set_id($myfakesetname); 
 	$problem->value(""); 
 	$problem->max_attempts("-1"); 
 	$problem->showMeAnother("-1"); 
@@ -274,8 +277,9 @@ sub renderProblems {
 		return map { {body_text=>''} } @problem_list;
 	}
 	
+	my $randSetName = int(rand(1000000)).fakeSetName;
 	my $user = $args{user} || fake_user($db);
-	my $set = $args{'this_set'} || fake_set($db);
+	my $set = $args{'this_set'} || fake_set($db, $randSetName);
 	my $problem_seed = $args{'problem_seed'} || $r->param('problem_seed') || 0;
 	my $showHints = $args{showHints} || 0;
 	my $showSolutions = $args{showSolutions} || 0;
@@ -286,7 +290,7 @@ sub renderProblems {
 	# remove any pretty garbage around the problem
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
-	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed);
+	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed, 'fake_set_name'=> $randSetName);
 	$problem->{value} = -1;
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	

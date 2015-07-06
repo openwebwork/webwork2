@@ -997,8 +997,9 @@ sub make_data_row {
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
 		if not defined $displayMode or $displayMode eq "None";
 	my $module = ( $isGatewaySet ) ? "GatewayQuiz" : "Problem";
+	my $randsetname = int(rand(100000)).'Undefined_Set';
 	my %pathArgs = ( courseID =>$urlpath->arg("courseID"),
-			setID=>"Undefined_Set" );
+			setID=>$randsetname );
 	$pathArgs{problemID} = "1" if ( ! $isGatewaySet );
 
 	my $try_link = CGI::a({href=>$self->systemLink(

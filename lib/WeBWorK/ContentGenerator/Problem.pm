@@ -503,7 +503,7 @@ sub pre_header_initialize {
 	die($self->{invalidSet}) if $self->{invalidSet};
 
 	$self->{isOpen} = $authz->hasPermissions($userName, "view_unopened_sets") || 
-	    ($setName eq "Undefined_Set" || 
+	    ($setName =~ /^\d*Undefined_Set$/ || 
 	     (time >= $set->open_date && !(
 		  $ce->{options}{enableConditionalRelease} && 
 		  is_restricted($db, $set, $effectiveUserName))));
@@ -1080,7 +1080,7 @@ sub nav {
 		push @links, $r->maketext("Previous Problem"), "", $r->maketext("navPrevGrey");
 	}
 
-	if (defined($setID) && $setID ne 'Undefined_Set') {
+	if (defined($setID) && $setID !~ m/^\d*Undefined_Set$/) {
 		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("navProbList");
 	} else {
 		push @links, $r->maketext("Problem List"), "", $r->maketext("navProbListGrey");
@@ -1245,7 +1245,7 @@ sub output_editorLink{
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
-		($set->set_id eq 'Undefined_Set');
+		($set->set_id =~ m/^\d*Undefined_Set$/);
 	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor1}) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
@@ -1801,7 +1801,7 @@ sub output_achievement_message{
 	
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
-	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
+	    && $submitAnswers && $problem->set_id !~ m/^\d*Undefined_Set$/) {
 	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
 	    print $achievementMessage;
 	}
