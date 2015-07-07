@@ -394,7 +394,7 @@ function randomize(filepath, el) {
   var templatedir = $('#hidden_templatedir').val();
   ro.problemSeed = seed;
   ro.problemPath = templatedir + '/' + filepath;
-  ro.set = ro.problemPath;
+  ro.set = 'Undefined_Set';
   var showhint = 0;
   if($("input[name='showHints']").is(':checked')) { showhint = 1;}
   var showsoln = 0;
