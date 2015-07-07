@@ -168,9 +168,9 @@ sub setCookie {
 		$hostname =~ s/https?:\/\///;
         
 		if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
-			cookie "WeBWorKCourseAuthen." . session->{course} => $cookieValue, domain=>$hostname;
+			cookie "WeBWorK.CourseAuthen." . session->{course} => $cookieValue, domain=>$hostname;
 		} else {
-			cookie "WeBWorKCourseAuthen." . session->{course} => $cookieValue;
+			cookie "WeBWorK.CourseAuthen." . session->{course} => $cookieValue;
 		}
 
 

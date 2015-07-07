@@ -311,7 +311,7 @@ get '/courses/:course_id/manager' =>  sub {
 	my $userID = "";
 	my $sessKey = "";
 	my $ts = "";
-	my $cookieValue = cookie "WeBWorKCourseAuthen." . params->{course_id};
+	my $cookieValue = cookie "WeBWorK.CourseAuthen." . params->{course_id};
 
 	# case 1) 
 	($userID,$sessKey,$ts) = split(/\t/,$cookieValue) if defined($cookieValue);

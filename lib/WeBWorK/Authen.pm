@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.63 2012/06/06 22:03:15 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -70,6 +70,8 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 
 #use vars qw($GENERIC_ERROR_MESSAGE);
 our $GENERIC_ERROR_MESSAGE = "";  # define in new
+
+my $cookie_prefix = "WeBWorK.CourseAuthen";
 
 ## WeBWorK-tr end modification 
 #####################
@@ -825,11 +827,11 @@ sub fetchCookie {
      			$jar = $@->jar; # table of successfully parsed cookies
   		};
 		if ($jar) {
-			$cookie = uri_unescape($jar->get("WeBWorKCourseAuthen.$courseID"));
+			$cookie = uri_unescape($jar->get("$cookie_prefix.$courseID"));
 		};
 	} else {
 		my %cookies = WeBWorK::Cookie->fetch();
-		$cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
+		$cookie = $cookies{"$cookie_prefix.$courseID"};
 		if ($cookie) {
 			debug("found a cookie for this course: '", $cookie->as_string, "'");
 			$cookie = $cookie->value;
@@ -865,7 +867,7 @@ sub sendCookie {
  	my $timestamp = time();
 	
 	my $cookie = WeBWorK::Cookie->new($r,
-		-name    => "WeBWorKCourseAuthen.$courseID",
+		-name    => "$cookie_prefix.$courseID",
  		-value   => "$userID\t$key\t$timestamp",
  		-path    => "/",
  		# This is now changed so that both webwork2 and webwork3 can use the same cookie.
@@ -895,7 +897,7 @@ sub killCookie {
 	
 	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
 	my $cookie = WeBWorK::Cookie->new($r,
-		-name => "WeBWorKCourseAuthen.$courseID",
+		-name => "$cookie_prefix.$courseID",
 		-value => "\t",
 		-expires => $expires,
 		# change the following to "/" to have better compatibility between ww2 and ww3

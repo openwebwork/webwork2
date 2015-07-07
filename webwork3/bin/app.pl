@@ -2,6 +2,8 @@
 use Dancer;
 use Dancer::Plugin::Database;
 
+BEGIN {$ENV{MOD_PERL_API_VERSION}=2}
+
 # link to WeBWorK code libraries
 use lib config->{webwork_dir}.'/lib';
 use lib config->{pg_dir}.'/lib';
@@ -90,9 +92,9 @@ post '/courses/:course_id/logout' => sub {
 	$hostname =~ s/https?:\/\///;
 
 	if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
-		cookie "WeBWorKCourseAuthen." . params->{course_id} => "", domain=>$hostname, expires => "-1 hour";
+		cookie "WeBWorK.CourseAuthen." . params->{course_id} => "", domain=>$hostname, expires => "-1 hour";
 	} else {
-		cookie "WeBWorKCourseAuthen." . params->{course_id} => "", expires => "-1 hour";
+		cookie "WeBWorK.CourseAuthen." . params->{course_id} => "", expires => "-1 hour";
 	}
 
 	return {logged_in=>0};
