@@ -14,7 +14,7 @@ use File::Slurp qw/write_file/;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use Utils::LibraryUtils qw/render/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
-use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem/;
+use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem renumber_problems/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
@@ -132,13 +132,13 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     debug 'in put /courses/:course_id/sets/:set_id';
     
-    debug to_dumper(params->{problems});
-
     checkPermissions(10,session->{user});
 
     send_error("The set name: " . param('set_id'). " does not exist.",404)
         if (! vars->{db}->existsGlobalSet(params->{set_id})); 
 
+
+    
     ####
     #
     # set all the parameters sent from the client as new properties.
@@ -171,24 +171,31 @@ put '/courses/:course_id/sets/:set_id' => sub {
 
     # handle the global problems. 
 
+    
+    
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
     if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
         reorderProblems(params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
+        debug "adding problems";
         addGlobalProblems(params->{set_id},params->{problems});
+        addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
     } else { # problems have been deleted.  
-        deleteProblems(params->{set_id},params->{problems});
+        debug "deleting problems";
+        deleteProblems(vars->{db},params->{set_id},params->{problems});
+        # renumber the problems  
+        renumber_problems(vars->{db},params->{set_id},params->{assigned_users});
     }
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
-    
     for my $prob (@globalProblems) {
         $prob->{_id} = $prob->{set_id} . ":" . $prob->{problem_id};  # this helps backbone on the client side
     }
 
-    addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
-
+    
+    
+    
     my $setFromDB = vars->{db}->getGlobalSet(params->{set_id});
 
     my $returnSet = convertObjectToHash($setFromDB,\@boolean_set_props);

@@ -24,14 +24,14 @@ var ProblemSet = Backbone.Model.extend({
         versions_per_interval: 0,
         version_time_limit: 0,
         version_creation_time: 0,
-        problem_randorder: 0,
+        problem_randorder: false,
         version_last_attempt_time: 0,
         problems_per_page: 0,
         hide_score: "N",
         hide_score_by_problem: "N",
         hide_work: "N",
         hide_hint: false,
-        time_limit_cap: "0",
+        time_limit_cap: false,
         restrict_ip: "No",
         relax_restrict_ip: "No",
         restricted_login_proctor: "No",
@@ -59,23 +59,25 @@ var ProblemSet = Backbone.Model.extend({
         var pbs = (opts && opts.problems) ? opts.problems : [];
         this.problems = new ProblemList(pbs);
         this.attributes.problems = this.problems;
-        this.saveProblems = [];   // holds added problems temporarily if the problems haven't been loaded. 
         this.problems.on("add",function(_m){
             console.log("The following was added");
             console.log(_m);
         }).on("remove",function(_m){
             console.log("The following was removed");
             console.log(_m);
+        })
+        this.on("sync",function(_m){
+            console.log("i'm synching"); 
         });
-        console.log("initialize called for problem set " + this.get("set_id"));
     },
     parse: function (response) {
+        console.log("in parse");
         if (response.problems){
             this.problems.set(response.problems);
             this.attributes.problems = this.problems;
-            console.log(response.problems);
         }
         response = util.parseAsIntegers(response,this.integerFields);
+        console.log(this.problems);
         return _.omit(response, 'problems');
     },
     url: function () {
