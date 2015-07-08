@@ -17,6 +17,8 @@ our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProb
 ## This should only be in one spot.        
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
 
+our @problem_props = qw/set_id problem_id source_file value max_attempts showMeAnother showMeAnotherCount flags/;
+
 sub getGlobalSet {
     my ($setName) = @_;
     my $set = vars->{db}->getGlobalSet($setName);
@@ -39,32 +41,91 @@ sub getGlobalSet {
 # This reorders the problems
 
 sub reorderProblems {
+    my ($db,$setID,$new_problems,$assigned_users) = @_; 
 
-	my @oldProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
+    debug "in reorderProblems";
+	my @problems_from_db = $db->getAllGlobalProblems($setID);
+    
+    my $user_prob_db = {};   # this is the user information from the database
+            
+    for my $user_id (@$assigned_users){
+        $user_prob_db->{$user_id} = [$db->getAllUserProblems($user_id,$setID)];
+    }
+            
 
-    for my $p (@{params->{problems}}){
-        my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
+    for my $i (0..(scalar(@problems_from_db)-1)){
+        debug problemEqual($problems_from_db[$i],$new_problems->[$i]);
+        if (! problemEqual($problems_from_db[$i],$new_problems->[$i])){
+        
+            my $problem = first { $_->{problem_id} == $problems_from_db[$i]->{problem_id} } @{$new_problems};
+            
+            debug $problems_from_db[$i]->{problem_id};
+            debug $problem->{problem_id};
+        
+            $db->deleteGlobalProblem($setID,$problems_from_db[$i]->{problem_id});
+            my $new_problem = vars->{db}->newGlobalProblem();
+            $new_problem->{set_id}=$setID;
+            for my $prop (@problem_props){
+                #debug "$prop: " . $problem->{$prop} if defined($problem->{$prop});
+                $new_problem->{$prop} = $problem->{$prop};
+            }
+            $db->addGlobalProblem($new_problem);
 
-        if (vars->{db}->existsGlobalProblem(params->{set_id},$p->{problem_id})){
-            $problem->problem_id($p->{problem_id});                 
-            vars->{db}->putGlobalProblem($problem);
-        } else {
-            # delete the problem with the old problem_id and create a new one
-            vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
-            $problem->problem_id($p->{problem_id});
-            vars->{db}->addGlobalProblem($problem);
-
-            for my $user (@{params->{assigned_users}}){
-                my $userProblem = vars->{db}->newUserProblem;
-                $userProblem->set_id(params->{set_id});
-                $userProblem->user_id($user);
-                $userProblem->problem_id($p->{problem_id});
-                vars->{db}->addUserProblem($userProblem);
+            for my $user_id (@$assigned_users){
+                my $userprob = first {$_->{problem_id} == $problems_from_db[$i]->{problem_id} } @{$user_prob_db->{$user_id}};
+                $userprob->{problem_id} = $new_problem->{problem_id};
+                $db->addUserProblem($userprob);
             }
         }
     }
 
-    return vars->{db}->getAllGlobalProblems(params->{set_id});
+    return $db->getAllGlobalProblems($setID);
+
+
+#    for my $p (@{params->{problems}}){
+#        my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
+#
+#        if (vars->{db}->existsGlobalProblem(params->{set_id},$p->{problem_id})){
+#            $problem->problem_id($p->{problem_id});                 
+#            vars->{db}->putGlobalProblem($problem);
+#        } else {
+#            # delete the problem with the old problem_id and create a new one
+#            vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
+#            my $problem = vars->{db}->newGlobalProblem();
+#            $problem->{set_id}=$setID;
+#            for $prop (@problem_props){
+#                $problem->{$prop} = $new_problems[$i]->{$prop};
+#            }
+#            $db->addGlobalProblem($problem);
+#
+#
+#            ## this may discard all of the other info about the user problem
+#            for my $user_id (@$assigned_users){
+#                $db->addUserProblem(createNewUserProblem($user_id,$setID,$problem->{problem_id}));
+#            }
+#        }
+#    }
+#
+#    return $db->getAllGlobalProblems($setID);
+}
+
+###
+#
+#  tests for two problems being equal
+#
+###
+
+sub problemEqual {
+    my ($prob1,$prob2) = @_;
+    for my $prop (@problem_props){
+        if(defined($prob1->{$prop}) && defined($prob2->{$prop}) &&  $prob1->{$prop} ne $prob2->{$prop}){
+             return "";
+         }
+    }
+    
+    return 1;
+
+
 }
 
 ### 
@@ -162,11 +223,7 @@ sub deleteProblems {
     my @new_ids = map { $_->{problem_id} } @$problems;
     my @ids_to_delete = array_minus(@old_ids,@new_ids);
     
-    debug to_dumper(\@old_ids);
-    debug to_dumper(\@new_ids);
-    debug to_dumper(\@ids_to_delete);
-    
-	for my $id (@ids_to_delete){
+    for my $id (@ids_to_delete){
         $db->deleteGlobalProblem($setID,$id);
     }
 
@@ -362,40 +419,51 @@ sub renumber_problems {
     my $val;
     my @sortme;
     my $j =1;
+    
+    debug "in renumber_problems";
 	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
 		$newProblemNumbers{$j} = $jj;
 		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
         $j++;
 	}
     
-    debug \%newProblemNumbers;
+    
     
     my @probs = $db->getAllGlobalProblems($setID);
+    my @prob_ids = ();
     my %userprobs = ();
-    my $userproblems = [];
     $j=1;
     for my $prob (@probs) {
+        push(@prob_ids, $prob->{problem_id});
         $prob->{problem_id} = $j++;
     }
     
     for my $user_id (@{$assigned_users}){
         $j=1;
-        debug $user_id;
-        my $userproblems = \{$db->getAllUserProblems($user_id,$setID)};
+        my $userproblems = [$db->getAllUserProblems($user_id,$setID)];
         for my $prob (@$userproblems) {
             $prob->{problem_id} = $j++;
         }
-        $userprobs{$user_id} = @$userproblems;
+        $userprobs{$user_id} = $userproblems;
     }
     
-#    my $problems = {};
-#    $j = 1;
-#    for my $k (keys %newProblemNumbers){   
-#        $problems->{$k} = $probs[$k-1];
-#        $j++;
-#    }
-#    
-    debug dump $userprobs{'profa'};
+    ## delete all old problems;
+    
+    for my $prob_id (@prob_ids){
+        $db->deleteGlobalProblem($setID,$prob_id);
+    }
+    
+    ## add in all of the global and user problems:
+    for my $prob (@probs) {
+        $db->addGlobalProblem($prob);
+    }
+    
+    for my $user_id (@{$assigned_users}){
+        for my $user_problem (@{$userprobs{$user_id}}){
+            $db->addUserProblem($user_problem);   
+        }
+    }
+    
     return;
     
     
@@ -508,7 +576,6 @@ sub renumber_problems {
 	}
     
     @probs = map {$_->{problem_id} } $db->getAllGlobalProblems($setID);
-    debug to_dumper(\@probs);
 
 }
 

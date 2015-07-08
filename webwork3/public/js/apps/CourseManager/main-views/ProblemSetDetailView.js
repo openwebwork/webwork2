@@ -415,7 +415,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.problemSetView.setProblemSet(_set);
             if(this.problemSetView.problemSet){
                 this.problemSetView.problemSet.on("problem-deleted",function(p){
-                    self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
+                    if(self.parent.sidebar){
+                        self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
+                    }
                 })    
             }
             return this;

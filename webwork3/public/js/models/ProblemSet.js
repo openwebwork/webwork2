@@ -59,25 +59,13 @@ var ProblemSet = Backbone.Model.extend({
         var pbs = (opts && opts.problems) ? opts.problems : [];
         this.problems = new ProblemList(pbs);
         this.attributes.problems = this.problems;
-        this.problems.on("add",function(_m){
-            console.log("The following was added");
-            console.log(_m);
-        }).on("remove",function(_m){
-            console.log("The following was removed");
-            console.log(_m);
-        })
-        this.on("sync",function(_m){
-            console.log("i'm synching"); 
-        });
     },
     parse: function (response) {
-        console.log("in parse");
         if (response.problems){
-            this.problems.set(response.problems);
+            this.problems.reset(response.problems);
             this.attributes.problems = this.problems;
         }
         response = util.parseAsIntegers(response,this.integerFields);
-        console.log(this.problems);
         return _.omit(response, 'problems');
     },
     url: function () {

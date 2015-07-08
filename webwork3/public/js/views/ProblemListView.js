@@ -193,10 +193,14 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 return;
             }
             this.problems.problemSet.changingAttributes = {"problems_reordered":""};
-            this.$(".problem").each(function (i) { 
-                self.problems.findWhere({source_file: $(this).data("path")})
-                        .set({problem_id: i+1}, {silent: true});  // set the new order of the problems.  
-            });   
+            
+            var oldProblems = this.problems.map(function(p) { return _.clone(p.attributes); });
+            this.$(".problem").each(function (i) {
+                var id = $(this).data("id").split(":")[1];
+                var prob = _(oldProblems).find(function(p) {return p.problem_id == id; });
+                self.problems.at(i).set(_.omit(prob,"problem_id"),{silent: true});
+                $(this).data("id",self.problems.problemSet.get("set_id")+":"+self.problems.at(i).get("problem_id"));
+            });
             this.problems.problemSet.save();
         },
         undoDelete: function(){

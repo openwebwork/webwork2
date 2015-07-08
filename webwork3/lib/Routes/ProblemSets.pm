@@ -176,15 +176,12 @@ put '/courses/:course_id/sets/:set_id' => sub {
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
     if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
-        reorderProblems(params->{assigned_users});
+        reorderProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
-        debug "adding problems";
         addGlobalProblems(params->{set_id},params->{problems});
         addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
     } else { # problems have been deleted.  
-        debug "deleting problems";
         deleteProblems(vars->{db},params->{set_id},params->{problems});
-        # renumber the problems  
         renumber_problems(vars->{db},params->{set_id},params->{assigned_users});
     }
 

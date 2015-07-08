@@ -323,7 +323,6 @@ var ProblemSetsManager = MainView.extend({
     }, // setMessages
     changeProblemValueEvent: function (prob,_set){    // not sure this is actually working.
         var attr = _(prob.changed).keys()[0]; 
-        console.log(attr);
         _set.changingAttributes={
                 "value_changed": {  attribute: attr, 
                                     oldValue: prob._previousAttributes[attr], 
