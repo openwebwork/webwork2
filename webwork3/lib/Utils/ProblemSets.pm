@@ -6,8 +6,11 @@ use base qw(Exporter);
 use Dancer ':syntax';
 use Data::Dump qw/dump/;
 use List::Util qw(first);
+use List::MoreUtils qw/indexes/;
+use Data::Compare; 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog/;
+use Utils::Convert qw/convertObjectToHash/;
 use Array::Utils qw(array_minus);
 
 our @EXPORT    = ();
@@ -16,8 +19,10 @@ our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProb
         
 ## This should only be in one spot.        
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
-
 our @problem_props = qw/set_id problem_id source_file value max_attempts showMeAnother showMeAnotherCount flags/;
+our @user_problem_props = qw/user_id set_id problem_id source_file value max_attempts showMeAnother 
+                showMeAnotherCount flags problem_seed status attempted last_answer num_correct num_incorrect 
+                sub_status flags/;
 
 sub getGlobalSet {
     my ($setName) = @_;
@@ -42,71 +47,82 @@ sub getGlobalSet {
 
 sub reorderProblems {
     my ($db,$setID,$new_problems,$assigned_users) = @_; 
-
-    debug "in reorderProblems";
+    
+    my @extra_fields = ("problem_id","set_id","user_id");
+    
 	my @problems_from_db = $db->getAllGlobalProblems($setID);
+    
+    my @p = map { {file=>$_->{source_file}, id=>$_->{problem_id} } } @problems_from_db;
+    debug @p;
+    my @q = map { {file=>$_->{source_file}, id=>$_->{problem_id} } } @$new_problems;
+    debug @q;
     
     my $user_prob_db = {};   # this is the user information from the database
             
     for my $user_id (@$assigned_users){
         $user_prob_db->{$user_id} = [$db->getAllUserProblems($user_id,$setID)];
     }
+    
+    my $id_swap = {};  # this builds a hash of how the problems have switched around.  
             
 
     for my $i (0..(scalar(@problems_from_db)-1)){
+        debug $problems_from_db[$i]->{source_file};
         debug problemEqual($problems_from_db[$i],$new_problems->[$i]);
         if (! problemEqual($problems_from_db[$i],$new_problems->[$i])){
         
-            my $problem = first { $_->{problem_id} == $problems_from_db[$i]->{problem_id} } @{$new_problems};
+            my $problem = first { $_->{problem_id} == $problems_from_db[$i]->{problem_id} } @$new_problems;
             
-            debug $problems_from_db[$i]->{problem_id};
-            debug $problem->{problem_id};
-        
+            my @indexes = indexes { Compare(convertObjectToHash($problems_from_db[$i]),$_,
+                    {ignore_hash_keys => [qw(problem_id _id data problem_seed)]}) == 1 }
+                @$new_problems; 
+                
+            my @prob_ids = map { $new_problems->[$_]->{problem_id}} @indexes;
+            debug @prob_ids;
+            my @values = values($id_swap);
+            debug @values;
+            my @bob = array_minus(@prob_ids,@values);
+            debug @bob;
+            debug $bob[0];
+            
+            my $other = first { $_->{problem_id} == $bob[0] } @$new_problems; 
+            
+            $id_swap->{$problem->{problem_id}} = $other->{problem_id};
             $db->deleteGlobalProblem($setID,$problems_from_db[$i]->{problem_id});
             my $new_problem = vars->{db}->newGlobalProblem();
             $new_problem->{set_id}=$setID;
             for my $prop (@problem_props){
-                #debug "$prop: " . $problem->{$prop} if defined($problem->{$prop});
                 $new_problem->{$prop} = $problem->{$prop};
             }
             $db->addGlobalProblem($new_problem);
-
-            for my $user_id (@$assigned_users){
-                my $userprob = first {$_->{problem_id} == $problems_from_db[$i]->{problem_id} } @{$user_prob_db->{$user_id}};
-                $userprob->{problem_id} = $new_problem->{problem_id};
-                $db->addUserProblem($userprob);
-            }
+        } else {
+            $id_swap->{$problems_from_db[$i]->{problem_id}} = $problems_from_db[$i]->{problem_id};
         }
+        
+        debug $id_swap; 
     }
 
+    # Next, rebuild the user_problems. 
+    
+    debug $id_swap;
+    
+    for my $user_id (@$assigned_users){
+        for my $prob_id (keys($id_swap)) {
+        
+            
+        
+            my $userprob = first {$_->{problem_id} == $prob_id } @{$user_prob_db->{$user_id}};
+            my $newUserProblem = createNewUserProblem($user_id,$setID,$id_swap->{$prob_id});
+            for my $prop (array_minus(@user_problem_props, @extra_fields)) {
+                $newUserProblem->{$prop} = $userprob->{$prop};
+            }
+            #debug $newUserProblem;
+            $db->addUserProblem($newUserProblem) unless $db->existsUserProblem($user_id,$setID,$id_swap->{$prob_id});
+        }
+    }
+    
     return $db->getAllGlobalProblems($setID);
 
-
-#    for my $p (@{params->{problems}}){
-#        my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
-#
-#        if (vars->{db}->existsGlobalProblem(params->{set_id},$p->{problem_id})){
-#            $problem->problem_id($p->{problem_id});                 
-#            vars->{db}->putGlobalProblem($problem);
-#        } else {
-#            # delete the problem with the old problem_id and create a new one
-#            vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
-#            my $problem = vars->{db}->newGlobalProblem();
-#            $problem->{set_id}=$setID;
-#            for $prop (@problem_props){
-#                $problem->{$prop} = $new_problems[$i]->{$prop};
-#            }
-#            $db->addGlobalProblem($problem);
-#
-#
-#            ## this may discard all of the other info about the user problem
-#            for my $user_id (@$assigned_users){
-#                $db->addUserProblem(createNewUserProblem($user_id,$setID,$problem->{problem_id}));
-#            }
-#        }
-#    }
-#
-#    return $db->getAllGlobalProblems($setID);
 }
 
 ###
