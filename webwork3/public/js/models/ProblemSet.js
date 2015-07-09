@@ -93,7 +93,9 @@ var ProblemSet = Backbone.Model.extend({
     addProblem: function (prob) {  
         var self = this; 
         var lastProblem = this.get("problems").last();
-        var attrs = _.extend({},prob.attributes,{ problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1});
+        var attrs = _.omit(_.extend({},prob.attributes,
+                                    { problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1})
+                           ,"_id"); // remove the _id so backbone thinks the problem is new.
         this.get("problems").add(new Problem(attrs));
         this.trigger("change:problems",this); // 
         //this.save();

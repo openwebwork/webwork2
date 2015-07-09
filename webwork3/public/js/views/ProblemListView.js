@@ -206,13 +206,11 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         undoDelete: function(){
             if (this.undoStack.length>0){
                 var prob = this.undoStack.pop();
-                if(this.problems.findWhere({problem_id: prob.get("problem_id")})){
-                    prob.set("problem_id",parseInt(this.problems.last().get("problem_id"))+1);
-                }
-                this.problems.add(prob);
-                this.updatePaginator();
+                this.problemSet.addProblem(prob);
+                //var prob_id = this.problems.last() ? parseInt(this.problems.last().get("problem_id"))+1 : 1;
+                //this.problems.add(new Problem(prob_attrs));
                 this.gotoPage(this.currentPage);
-                this.problemSet.trigger("change:problems",this.problemSet);
+                //this.problemSet.trigger("change:problems",this.problemSet);
             }
         },
         setProblemSet: function(_set) {
