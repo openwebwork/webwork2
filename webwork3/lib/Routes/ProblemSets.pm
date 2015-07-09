@@ -14,7 +14,7 @@ use File::Slurp qw/write_file/;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use Utils::LibraryUtils qw/render/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
-use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem renumber_problems/;
+use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem renumber_problems updateProblems/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
@@ -175,14 +175,16 @@ put '/courses/:course_id/sets/:set_id' => sub {
     
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
-    if(scalar(@problemsFromDB) == scalar(@{params->{problems}})){  # then perhaps the problems need to be reordered.
+    if(params->{_reorder}){  # reorder the problems
         reorderProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
         addGlobalProblems(params->{set_id},params->{problems});
         addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
-    } else { # problems have been deleted.  
+    } elsif(scalar(@problemsFromDB) > scalar(@{params->{problems}})) { # problems have been deleted.  
         deleteProblems(vars->{db},params->{set_id},params->{problems});
         renumber_problems(vars->{db},params->{set_id},params->{assigned_users});
+    } else { # problem may have been updated
+        updateProblems(vars->{db},params->{set_id},params->{problems});
     }
 
     my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});

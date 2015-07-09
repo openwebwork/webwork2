@@ -15,7 +15,7 @@ use Array::Utils qw(array_minus);
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
-        createNewUserProblem getGlobalSet record_results renumber_problems);
+        createNewUserProblem getGlobalSet record_results renumber_problems updateProblems);
         
 ## This should only be in one spot.        
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
@@ -101,8 +101,6 @@ sub reorderProblems {
     for my $user_id (@$assigned_users){
         for my $prob_id (keys($id_swap)) {
         
-            
-        
             my $userprob = first {$_->{problem_id} == $prob_id } @{$user_prob_db->{$user_id}};
             my $newUserProblem = createNewUserProblem($user_id,$setID,$id_swap->{$prob_id});
             for my $prop (array_minus(@user_problem_props, @extra_fields)) {
@@ -133,6 +131,23 @@ sub problemEqual {
     return 1;
 
 
+}
+
+####
+#
+#  This takes the problems in the array ref $problems and updates the global problems for course $setID
+#
+###
+
+sub updateProblems {
+    my ($db,$setID,$problems) = @_;
+    for my $prob_to_update (@$problems){
+        my $prob = $db->getGlobalProblem($setID,$prob_to_update->{problem_id});
+        for my $attr (@problem_props){
+            $prob->{$attr} = $prob_to_update->{$attr} if $prob_to_update->{$attr};
+        }
+        $db->putGlobalProblem($prob);
+    }
 }
 
 ### 
