@@ -503,21 +503,17 @@ var AssignUsersView = Backbone.View.extend({
     var CustomizeUserAssignView = TabView.extend({
         tabName: "Student Overrides",
         initialize: function(options){
-            _.bindAll(this,"render","saveChanges","buildCollection","setProblemSet");
+            _.bindAll(this,"render","saveChanges","buildCollection","setProblemSet","update");
             var self = this;
             // this.model is a clone of the parent ProblemSet.  It is used to save properties for multiple students.
 
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             _.extend(this,_(options).pick("users","settings","eventDispatcher"));
             TabView.prototype.initialize.apply(this,[options]);
-            this.tabState.on({
-                "change:filter_string": function(){
+            this.tabState.on("change:filter_string", function(){
                     self.userSetTable.set(self.tabState.pick("filter_string")).updateTable();
                     self.update();
-                },
-                "change:show_section change:show_recitation change:show_time": function(){
-                    self.update();}
-                });
+            }).on("change:show_section change:show_recitation change:show_time", this.update);
         },
         render: function () {
             var self = this;
