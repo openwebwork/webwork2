@@ -51,8 +51,12 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                 });
 
             this.model.on('change:value change:max_attempts', function () {
-                self.problem_set_view.model.trigger("change:problems",self.problem_set_view.model,self.model);})
-            this.invBindings = util.invBindings(this.bindings);
+                var isValid = self.model.isValid(_(self.model.changed).keys());
+                console.log(isValid);
+                if(isValid){
+                    self.problem_set_view.model.trigger("change:problems",self.problem_set_view.model,self.model);
+                } });
+           this.invBindings = util.invBindings(this.bindings);
         },
 
         render:function () {
@@ -97,7 +101,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                         view.$(self.invBindings[attr]).popover("hide").popover("destroy");
                     },
                     invalid: function(view,attr,error){
-                        view.$(self.invBindings[attr]).popover({title: "Error", content: error}).popover("show");
+                        view.$(self.invBindings[attr]).popover({title: "Error", content: error,container: view.$el}).popover("show");
                     }
                 });
                 
