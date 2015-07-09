@@ -85,7 +85,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
 
                 this.el.id = this.model.cid; // why do we need this? 
                 this.$el.attr('data-path', this.model.get('source_file'));
-                this.$el.attr('data-id', this.model.get('_id'));
+                this.$el.attr('data-id', this.model.get('set_id')+":"+this.model.get("problem_id"));
                 this.$el.attr('data-source', this.state.get("type"));
                 if (this.state.get("displayMode")==="MathJax"){
                     MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.el]);
