@@ -11,7 +11,7 @@ function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemS
 var ProblemSetsManager = MainView.extend({
     initialize: function (options) {
         MainView.prototype.initialize.call(this,options);
-        _.bindAll(this, 'render','addProblemSet','clearFilterText','deleteSets','update','syncProblemEvent');  // include all functions that need the this object
+        _.bindAll(this, 'render','addProblemSet','clearFilterText','deleteSets','update');  // include all functions that need the this object
         var self = this;
 
         this.state.on({
@@ -230,11 +230,8 @@ var ProblemSetsManager = MainView.extend({
         this.problemSets.on({
             add: function (_set){
                 _set.save();
-                _set.problems.on({
-                    "change:value": function(prob){ self.changeProblemValueEvent(prob,_set)},
-                    add: function(prob){ self.addProblemEvent(prob,_set)},
-                    sync: function(prob){ self.syncProblemEvent(prob,_set)},
-                });
+                _set.problems.on("change:value change:max_attempts", function(prob){ self.changeProblemValueEvent(prob,_set)})
+                    .on("add",function(prob){ self.addProblemEvent(prob,_set)});
                 _set._network={add: ""};
             },
             remove: function(_set){
@@ -247,8 +244,9 @@ var ProblemSetsManager = MainView.extend({
                     self.update();
                 }});
             },
-            "change:problems": function(_set){
+            "change:problems": function(_set,_problem){
                 _set.save();
+                self.changeProblemValueEvent(_set,_problem)
             },
             "set_date_error": function(_opts, model){
                 self.eventDispatcher.trigger("add-message",{type: "danger",
@@ -260,7 +258,8 @@ var ProblemSetsManager = MainView.extend({
                 })
             },
             change: function(_set){
-                _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
+                _set.changingAttributes= (_(_set.changed).chain().keys().contains("reorder"))
+                    ? _set.changed: _.pick(_set._previousAttributes,_.keys(_set.changed));
             },
             sync: function(_set){
                 _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
@@ -275,10 +274,11 @@ var ProblemSetsManager = MainView.extend({
                                 short: self.messageTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
                                 text: self.messageTemplate({type:"problem_added_details",opts:{setname: _set.get("set_id")}})});
                             break;
-                        case "problems_reordered": 
+                        case "_reorder": 
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
                                 text: self.messageTemplate({type:"problems_reordered_details",opts:{setname: _set.get("set_id")}})});
+                            _set.changingAttributes = _(_set.changingAttributes).omit("_reorder");
                             break;
                         case "problem_deleted": 
                             self.eventDispatcher.trigger("add-message",{type: "success", 
@@ -290,7 +290,13 @@ var ProblemSetsManager = MainView.extend({
                                 short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
                                 text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
                             break;
-                        
+                       case "problem_changed": 
+                            self.eventDispatcher.trigger("add-message",{type: "success", 
+                                short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
+                                text: self.messageTemplate({type: "problems_values_details", 
+                                    opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
+                            _set.changingAttributes = _(_set.changingAttributes).omit("problem_changed");
+                            break;
                         default:
                             var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
                                          : _set.changingAttributes[key];
@@ -315,38 +321,20 @@ var ProblemSetsManager = MainView.extend({
                 /* This sets the events for the problems (of type ProblemList) in each problem Set */
 
         this.problemSets.each(function(_set) {
-            _set.problems.on({
-                add: function(prob){ self.addProblemEvent(prob,_set)},
-                sync: function(prob){ self.syncProblemEvent(prob,_set)},
-            }).on("change:problem change:max_attempts", function(prob){ self.changeProblemValueEvent(prob,_set)})
+            _set.get("problems").on("add", function(prob){ self.addProblemEvent(prob,_set)});
         });
     }, // setMessages
-    changeProblemValueEvent: function (prob,_set){    // not sure this is actually working.
+    changeProblemValueEvent: function (_set,prob){   
         var attr = _(prob.changed).keys()[0]; 
         _set.changingAttributes={
-                "value_changed": {  attribute: attr, 
+                "problem_changed": {  attribute: attr, 
                                     oldValue: prob._previousAttributes[attr], 
                                     newValue: prob.get(attr), 
-                                    name: _set.get("set_id"), 
                                     problem_id: prob.get("problem_id")}};
             
     },
     addProblemEvent: function(prob,_set){
         _set.changingAttributes={"problem_added": ""};
-    },
-    syncProblemEvent: function(prob,_set){
-        var self = this;
-        _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
-            switch(key){
-                case "value_changed": 
-                    self.eventDispatcher.trigger("add-message",{type: "success", 
-                        short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
-                        text: self.messageTemplate({type: "problems_values_details", 
-                            opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
-                    break;
-                
-            }
-        });
     }
 });
 

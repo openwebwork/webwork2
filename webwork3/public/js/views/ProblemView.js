@@ -51,8 +51,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                 });
 
             this.model.on('change:value change:max_attempts', function () {
-                self.model.save();
-            });
+                self.problem_set_view.model.trigger("change:problems",self.problem_set_view.model,self.model);})
             this.invBindings = util.invBindings(this.bindings);
         },
 
@@ -136,7 +135,10 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             "click .seed-button": "toggleSeed",
             "click .path-button": function () {this.state.set("show_path",!this.state.get("show_path"))},
             "click .tags-button": function () {this.state.set("show_tags",!this.state.get("show_tags"))},
-            "click .mark-correct-btn": "markCorrect"
+            "click .mark-correct-btn": "markCorrect",
+            "keyup .prob-value,.max-attempts": function (evt){
+                if(evt.keyCode == 13){ $(evt.target).blur() }   
+            }
         },
         bindings: {
             ".prob-value": {observe: "value", events: ['blur']},

@@ -192,8 +192,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             if(typeof(self.problems.problemSet) == "undefined"){
                 return;
             }
-            this.problems.problemSet.changingAttributes = {"problems_reordered":""};
-            
             var oldProblems = this.problems.map(function(p) { return _.clone(p.attributes); });
             this.$(".problem").each(function (i) {
                 var id = $(this).data("id").split(":")[1];
@@ -201,16 +199,13 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 self.problems.at(i).set(_.omit(prob,"problem_id"),{silent: true});
                 $(this).data("id",self.problems.problemSet.get("set_id")+":"+self.problems.at(i).get("problem_id"));
             });
-            this.problems.problemSet.save();
+            this.problems.problemSet.save({_reorder: true});
         },
         undoDelete: function(){
             if (this.undoStack.length>0){
                 var prob = this.undoStack.pop();
                 this.problemSet.addProblem(prob);
-                //var prob_id = this.problems.last() ? parseInt(this.problems.last().get("problem_id"))+1 : 1;
-                //this.problems.add(new Problem(prob_attrs));
                 this.gotoPage(this.currentPage);
-                //this.problemSet.trigger("change:problems",this.problemSet);
             }
         },
         setProblemSet: function(_set) {
