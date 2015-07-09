@@ -64,6 +64,8 @@ var ProblemSet = Backbone.Model.extend({
         if (response.problems){
             this.problems.reset(response.problems);
             this.attributes.problems = this.problems;
+            // somehow the problems inside a problemListView are losing the collection attribute. 
+            
         }
         response = util.parseAsIntegers(response,this.integerFields);
         return _.omit(response, 'problems');

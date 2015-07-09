@@ -202,7 +202,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             this.$el.addClass("hidden");
         },
         removeProblem: function(){
-            this.model.collection.remove(this.model);
+            this.problem_set_view.model.problems.remove(this.model);
             this.remove();  // remove the view
         }, 
         set: function(opts){
