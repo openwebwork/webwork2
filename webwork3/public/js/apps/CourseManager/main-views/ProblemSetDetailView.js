@@ -572,6 +572,7 @@ var AssignUsersView = Backbone.View.extend({
                 });
         },
         setProblemSet: function(_set) {
+            var self = this;
             this.problemSet = _set;  // this is the globalSet
             if(_set){
                 this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
@@ -580,7 +581,13 @@ var AssignUsersView = Backbone.View.extend({
                     , function(model){ model.save();
                 });
             }
-
+            if(this.problemSet){
+                this.problemSet.on("change:assigned_users",function(_m){
+                    console.log("here");
+                    self.collection = new Backbone.Collection(); // reset the collection so data is refetched.
+                });
+            }
+            
             // make a new collection that merges the UserSetListOfUsers and the userList 
             this.collection = new Backbone.Collection();
             return this;
