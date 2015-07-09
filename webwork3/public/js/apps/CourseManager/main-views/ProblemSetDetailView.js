@@ -524,19 +524,16 @@ var AssignUsersView = Backbone.View.extend({
             this.$el.html($("#loading-usersets-template").html());
             if (this.collection.size()>0){
                 this.$el.html($("#customize-assignment-template").html());
-                (this.userSetTable = new CollectionTableView({columnInfo: this.cols, collection: this.collection, 
-                        paginator: {showPaginator: false}, tablename: ".users-table", page_size: -1,
-                        row_id_field: "user_id", table_classes: "table table-bordered table-condensed"})).render();
+                (this.userSetTable = new CollectionTableView({columnInfo: this.cols, 
+                                            collection: this.collection, 
+                                            paginator: {showPaginator: false}, 
+                                            tablename: ".users-table", page_size: -1,
+                                            row_id_field: "user_id", 
+                                            table_classes: "table table-bordered table-condensed"})).render();
                 this.userSetTable.set(this.tabState.pick("selected_rows"))
-                    .on({
-                        "selected-row-changed": function(rowIDs){
+                    .on("selected-row-changed", function(rowIDs){
                             self.tabState.set({selected_rows: rowIDs});
-                            }, 
-                        "table-sorted table-changed": function (){
-                            self.update();
-                            }
-                        })
-                    .updateTable();
+                    }).on("table-sorted table-changed",this.update).updateTable();
                 this.$el.append(this.userSetTable.el);
                 this.update();
                 this.stickit();
@@ -577,13 +574,14 @@ var AssignUsersView = Backbone.View.extend({
             if(_set){
                 this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
                 this.userSetList = new UserSetList([],{problemSet: this.model,type: "users"});
-                this.userSetList.on("change:due_date change:answer_date change:reduced_scoring_date change:open_date"
-                    , function(model){ model.save();
+                this.userSetList.on("change:due_date change:answer_date change:reduced_scoring_date "
+                                    + "change:open_date", function(model){ 
+                            model.adjustDates(); 
+                            model.save();
                 });
             }
             if(this.problemSet){
                 this.problemSet.on("change:assigned_users",function(_m){
-                    console.log("here");
                     self.collection = new Backbone.Collection(); // reset the collection so data is refetched.
                 });
             }
