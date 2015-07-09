@@ -294,7 +294,12 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             if(typeof(this.model)==="undefined") return;
             this.calendarProblemSets.reset(this.problemSets.where({set_id: this.model.get("set_id")}));
             var assignmentDateList = util.buildAssignmentDates(this.calendarProblemSets);
-            this.calendar.set({assignmentDates: assignmentDateList,first_day: this.tabState.get("first_day")})
+            var first_day = this.tabState.get("first_day");
+            if(! moment(this.tabState.get("first_day")).isValid()){
+                var open_date = moment.unix(this.model.get("open_date"))
+                first_day = open_date.subtract(open_date.day(),"days");
+            }
+            this.calendar.set({assignmentDates: assignmentDateList,first_day: first_day})
                 .setElement(this.$(".calendar-cell")).render();
             this.problemSets.on("change",function(m){
                 self.calendarProblemSets.findWhere({set_id: m.get("set_id")}).set(m.changed);

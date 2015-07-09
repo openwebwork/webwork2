@@ -52,7 +52,6 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
 
             this.model.on('change:value change:max_attempts', function () {
                 var isValid = self.model.isValid(_(self.model.changed).keys());
-                console.log(isValid);
                 if(isValid){
                     self.problem_set_view.model.trigger("change:problems",self.problem_set_view.model,self.model);
                 } });
