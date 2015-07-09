@@ -4,8 +4,9 @@
   */
 
 
-define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView','config','apps/util'], 
-    function(Backbone, _, moment,MainView, CalendarView,config,util) {
+define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView',
+        'models/AssignmentDate','models/AssignmentDateList','config','apps/util'], 
+    function(Backbone, _, moment,MainView, CalendarView,AssignmentDate,AssignmentDateList,config,util) {
 	
     var AssignmentCalendar = CalendarView.extend({
         template: this.$("#calendar-date-bar").html(),
@@ -37,9 +38,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     _(_set._network).chain().keys().each(function(key){ 
                         switch(key){
                             case "add":
-                                //self.eventDispatcher.trigger("add-message",{type: "success", 
-                                //    short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
-                                //    text: self.messageTemplate({type: "set_added_details",opts:{setname: _set.get("set_id")}})});
                                 self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
                                     date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
                                 self.assignmentDates.add(new AssignmentDate({type: "due", problemSet: _set,
@@ -48,7 +46,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                                     date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
                                 self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
                                     date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}));
-                                self.problemSetTable.set({filter_string: self.state.get("filter_string")}).updateTable();
                                 delete _set._network;
                                 break;    
                         }

@@ -160,7 +160,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 $('span.time-span').children('br').attr("hidden",true)    
             }).on("change:show_calendar",function(){
                self.showCalendar(self.tabState.get("show_calendar"));
-            });
+            })
              // this sets up a problem set list containing only the current ProblemSet and builds a calendar.
             this.calendarProblemSets = new ProblemSetList([],{dateSettings: util.pluckDateSettings(this.settings)});
             this.calendar = new AssignmentCalendar({users: this.users,settings: this.settings,
@@ -173,9 +173,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             if(this.model){
                 this.$el.html($("#set-properties-tab-template").html());
                 this.showTime(this.tabState.get("show_time"));
-                this.showHideReducedScoringDate();
                 this.showCalendar(this.tabState.get("show_calendar"));
                 this.showHideGateway();
+                this.showHideReducedScoringDate();
                 this.stickit();
                 // gets rid of the line break for showing the time in this view. 
                 $('span.time-span').children('br').attr("hidden",true)    
@@ -257,7 +257,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         showHideReducedScoringDate: function(){
             util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
-                                remove_class: "hidden", els: this.$(".reduced-scoring-date").closest("tr")});
+                                remove_class: "hidden", 
+                                els: this.$(".reduced-scoring-date,.reduced-scoring").closest("tr")});
             if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
                     this.model.get("enable_reduced_scoring")) { // show reduced credit field
                 this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");

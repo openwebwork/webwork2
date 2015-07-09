@@ -101,7 +101,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         if(! this.currentSidebar){
             var otherSidebars = this.mainViewList.getOtherSidebars(this.currentView.info.id);
             if(otherSidebars[0]){ 
-                this.changeSidebar([0]);
+                this.changeSidebar(otherSidebars[0]);
             } else {
                 this.changeSidebar("help",{is_open: true});
             }
