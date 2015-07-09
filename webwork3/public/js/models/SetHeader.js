@@ -9,9 +9,10 @@ define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
 var SetHeader = Backbone.Model.extend({
     defaults: {
         set_id : "",
-        url: "",
         set_header_html: "",
         hardcopy_header_html: "",
+        set_header: "",
+        hardcopy_header: "",
         set_header_content: "",
         hardcopy_header_content: ""
     },

@@ -1196,20 +1196,30 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     }
     
     my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
-    my $setHeaderURL = $globalSet->{set_header};
-    my $hardcopyHeaderURL = $globalSet->{hardcopy_header};
     my $templateDir = vars->{ce}->{courseDirs}->{templates};
-    my $setHeaderFile = path(dirname($templateDir),'templates',$setHeaderURL);
-    my $hardcopyHeaderFile = path(dirname($templateDir),'templates',$hardcopyHeaderURL);
+    
+    my $setHeader = $globalSet->{set_header};
+    my $setHeaderFile = ($setHeader eq 'defaultHeader')? 
+                        vars->{ce}->{webworkFiles}->{screenSnippets}->{setHeader}: 
+                        path(dirname($templateDir),'templates',$setHeader); 
+    
+    my $hardcopyHeader = $globalSet->{hardcopy_header};
+    my $hardcopyHeaderFile = ($hardcopyHeader eq 'defaultHeader')? 
+                        vars->{ce}->{webworkFiles}->{hardcopySnippets}->{setHeader}: 
+                        path(dirname($templateDir),'templates',$hardcopyHeader); 
     my $headerContent = params->{set_header_content}; 
+    
+    debug $headerContent; 
     my $hardcopyHeaderContent = params->{hardcopy_header_content};
+
     if(request->is_put()){
         write_file($setHeaderFile,params->{set_header_content});
         write_file($hardcopyHeaderFile,params->{hardcopy_header_content});
-    } else {
-        $headerContent = read_file_content($setHeaderFile);
-        $hardcopyHeaderContent = read_file_content($hardcopyHeaderFile);
     }
+    
+    $headerContent = read_file_content($setHeaderFile);
+    $hardcopyHeaderContent = read_file_content($hardcopyHeaderFile);
+    
     
     my $renderParams = {
         displayMode => param('displayMode') || vars->{ce}->{pg}{options}{displayMode},
@@ -1225,11 +1235,11 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     $renderParams->{problem}->{source_file} = $setHeaderFile;
     my $ren = render($renderParams);
     my $setHeaderHTML = $ren->{text};
-    $renderParams->{problem}->{source_file} = $hardcopyHeaderURL;
+    $renderParams->{problem}->{source_file} = $hardcopyHeaderFile;
     $ren = render($renderParams);
     my $hardcopyHeaderHTML = $ren->{text};
     
-    return {_id=>params->{set_id},set_header=>$setHeaderURL,hardcopy_header=>$hardcopyHeaderURL,
+    return {_id=>params->{set_id},set_header=>$setHeader,hardcopy_header=>$hardcopyHeader,
             set_header_content=>$headerContent, hardcopy_header_content=>$hardcopyHeaderContent,
             set_header_html=>$setHeaderHTML, hardcopy_header_html=>$hardcopyHeaderHTML
         };

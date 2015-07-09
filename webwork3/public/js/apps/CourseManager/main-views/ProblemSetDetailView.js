@@ -323,6 +323,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             } else {
                 $.get(config.urlPrefix +  "courses/" + config.courseSettings.course_id + "/headers", function( data ) {
                     self.headerFiles = _(data).map(function(f){ return {label: f, value: f};});
+                    self.headerFiles.unshift({label: "Select a Header File...", value: "defaultHeader"});
                     self.render();
                 });
                 
@@ -330,27 +331,57 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.setHeader.on("change", function(model){
                     model.save(model.changed,{success: function () { self.showSetHeaders();}});
                     self.showSetHeaders();
+                }).on("change:set_header_content", function(){
+                    self.editing = "setheader";   
+                }).on("change:hardcopy_header_content",function(){
+                    self.editing = "hardcopyheader";   
+                }).on("sync",function(){
+                    switch(self.editing){
+                        case "setheader":
+                            $("#view-header-button").parent().button("toggle"); break;
+                        case "hardcopyheader":
+                            $("#view-hardcopy-button").parent().button("toggle"); break;
+                    }
+                    self.editing = "";
                 }).fetch({success: function (){
                     self.render();
                 }});
             }
         },
         showSetHeaders: function (){
+            var output = "";
+            this.$("#hardcopy-header,#set-header").parent().removeClass("has-error");
             switch($(".view-options input:checked").attr("id")){
                 case "view-header-button": 
-                    this.$(".header-output").addClass("rounded-border").html(this.setHeader.get("set_header_html"));    
+                    output = this.setHeader.get("set_header_html");
+                    this.$(".header-output").addClass("rounded-border");
                     break;   
                 case "view-hardcopy-button": 
-                    this.$(".header-output").addClass("rounded-border").html(this.setHeader.get("hardcopy_header_html"));    
+                    output = this.setHeader.get("hardcopy_header_html");
+                    this.$(".header-output").addClass("rounded-border");
                     break; 
                 case "edit-header-button":
-                    this.$(".header-output").html($("#edit-header-template").html());
+                    if(this.setHeader.get("set_header") == "defaultHeader") {
+                        // I18N
+                        output = "Please select a header file to edit"; 
+                        this.$("#set-header").parent().addClass("has-error");
+                    } else {
+                        output = $("#edit-header-template").html()
+                    }
+                    
                     break;
                 case "edit-hardcopy-button":
-                    this.$(".header-output").html($("#edit-hardcopy-template").html());
+                    if(this.setHeader.get("hardcopy_header") == "defaultHeader") {
+                        // I18N
+                        output = "Please select a header file to edit"; 
+                        this.$("#hardcopy-header").parent().addClass("has-error");
+                    } else {
+                        output = $("#edit-hardcopy-template").html()
+                    }
+                    
                     break;
-
             }
+            this.$(".header-output").html(output);
             this.stickit(this.setHeader,this.headerBindings);
         },
         events: {
