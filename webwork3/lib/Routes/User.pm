@@ -9,7 +9,7 @@ package Routes::User;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Routes::Authentication qw/checkPermissions/;
 use WeBWorK::GeneralUtils qw/cryptPassword/;
 use Data::Dumper;
@@ -43,7 +43,6 @@ get '/courses/:course/users' => sub {
 		
     }
     
-    debug \@allUsers;
     return convertArrayOfObjectsToHash(\@allUsers);
 };
 
@@ -93,8 +92,6 @@ post '/courses/:course_id/users/:user_id' => sub {
 	$permission->{user_id} = params->{user_id};
 	$permission->{permission} = params->{permission};	
 
-	debug $permission;
-
 	vars->{db}->addUser($user);
 	vars->{db}->addPassword($password);
 	vars->{db}->addPermissionLevel($permission);
@@ -119,8 +116,10 @@ put '/courses/:course_id/users/:user_id' => sub {
 
 	# update the standard user properties
 	
+    my %allparams = params;
+    my $setFromClient = convertBooleans(\%allparams,\@boolean_user_props);
 	for my $key (@user_props) {
-        $user->{$key} = params->{$key} if (defined(params->{$key}));
+        $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
     }
     
 	vars->{db}->putUser($user);
