@@ -32,7 +32,7 @@ use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
 use File::Copy;
-use File::Spec;
+use File::Spec::Functions qw(canonpath);
 use Time::Zone;
 use MIME::Base64;
 use Errno;
@@ -350,11 +350,11 @@ sub path_is_subdir($$;$) {
 		}
 	}
 	
-	$path = File::Spec->canonpath($path);
+	$path = canonpath($path);
 	$path .= "/" unless $path =~ m|/$|;
 	return 0 if $path =~ m#(^\.\.$|^\.\./|/\.\./|/\.\.$)#;
 	
-	$dir = File::Spec->canonpath($dir);
+	$dir = canonpath($dir);
 	$dir .= "/" unless $dir =~ m|/$|;
 	return 0 unless $path =~ m|^$dir|;
 	
