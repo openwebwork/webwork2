@@ -106,11 +106,24 @@ var util = {
             .object().pick("pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"
                                 ,"pg{ansEvalDefaults}{reducedScoringPeriod}").value();
     },
+
+    getInverseBindings: function(bindings){
+        return _.object(_(_(bindings).values()).map(function(v) { 
+            return _(v).isObject() ? v.observe : v ;}),_(bindings).keys()) 
+    },
+
         // this parses the fields in obj as integers.
     parseAsIntegers: function(obj,fields){
         var values = _(obj).chain().pick(fields).values().map(function(d) {return d?parseInt(d):d;}).value();
         _.extend(obj,_.object(fields,values));
         return obj;
+    },
+    changeClass:function(opts){
+        if(opts.state){
+            opts.els.removeClass(opts.remove_class).addClass(opts.add_class)
+        } else {
+            opts.els.addClass(opts.remove_class).removeClass(opts.add_class)
+        }
     }
 }
 

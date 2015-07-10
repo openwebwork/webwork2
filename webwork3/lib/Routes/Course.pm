@@ -398,7 +398,6 @@ get '/courses/:course_id/manager' =>  sub {
 		setCookie();	
 	}
 	
-	
 	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
 		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),
 		main_views=>to_json($config),pagename=>"Course Manager"},

@@ -438,6 +438,9 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 my $clsep = '<<<';
 my $clinner = '__';
 my @cllist = ();
+# Record full taxonomy for tagging menus (does not include cross-lists)
+my $tagtaxo = [];
+my ($chaplist, $seclist) = ([],[]);
 
 my $canopenfile = 0;
 if(open(IN, "$libraryRoot/Taxonomy2")) {
@@ -477,17 +480,28 @@ if($canopenfile) {
 		# instead they go in a list of crosslists to deal with after
 		# the full taxonomy is read in
 		if($count == 0) { #DBsubject
-			$taxo->{$line} = {} if $oktag;
 			$cursub = $line;
+			if($oktag) {
+				$taxo->{$line} = {};
+				($chaplist, $seclist) = ([],[]);
+				push @{$tagtaxo}, {name=>$line, subfields=>$chaplist};
+			}
 			$subj = safe_get_id($tables{dbsubject}, 'DBsubject_id',
 				qq(WHERE name = ?), [$line], 1, "", $line);
 		} elsif($count == 1) { #DBchapter
-			$taxo->{$cursub}->{$line} = {} if $oktag;
+			if($oktag) {
+				$taxo->{$cursub}->{$line} = {};
+				$seclist=[];
+				push @{$chaplist}, {name=>$line, subfields=>$seclist};
+			}
 			$curchap = $line;
 			$chap = safe_get_id($tables{dbchapter}, 'DBchapter_id',
 				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], 1, "", $line, $subj);
 		} else { #DBsection
-			$taxo->{$cursub}->{$curchap}->{$line} = [] if $oktag;
+			if($oktag) {
+				$taxo->{$cursub}->{$curchap}->{$line} = [];
+				push @{$seclist}, {name=>$line};
+			}
 			$sect = safe_get_id($tables{dbsection}, 'DBsection_id',
 				qq(WHERE name = ? and DBchapter_id = ?), [$line, $chap], 1, "", $line, $chap);
 		}
@@ -495,6 +509,14 @@ if($canopenfile) {
 	close(IN);
 }
 #### End of taxonomy/taxonomy2
+
+#### Save the official taxonomy in json format
+my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
+open(OUTF, ">$file") or die "Cannot open $file";
+print OUTF to_json($tagtaxo,{pretty=>1}) or die "Cannot write to $file";
+close(OUTF);
+print "Saved taxonomy to $file.\n";
 
 #### Now deal with cross-listed sections
 for my $clinfo (@cllist) {

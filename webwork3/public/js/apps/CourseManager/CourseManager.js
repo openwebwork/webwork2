@@ -87,7 +87,7 @@ var CourseManager = WebPage.extend({
         // put all of the dates in the problem sets in a better data structure for calendar rendering.
         this.buildAssignmentDates();
         this.setMainViewList(new MainViewList({settings: this.settings, users: this.users, 
-                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher}));
+                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher, parent: this}));
         
 
         // set up some of the main views with additional information.
@@ -97,6 +97,7 @@ var CourseManager = WebPage.extend({
             .on("calendar-change",self.updateCalendar);
 
         this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
+        this.mainViewList.getView("userSettings").set({user_id: this.session.user});
         this.mainViewList.getSidebar("allMessages").set({messages: this.messagePane.messages});
         this.mainViewList.getSidebar("help").parent = this;
         

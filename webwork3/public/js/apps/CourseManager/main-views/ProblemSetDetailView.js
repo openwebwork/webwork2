@@ -442,11 +442,11 @@ var AssignUsersView = Backbone.View.extend({
             return this;
         },
         update: function () {
-            config.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
-            config.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
-            config.changeClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+            util.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
+            util.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
+            util.changeClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
                 els: this.$(".reduced-scoring-date,.reduced-scoring-header"), remove_class: "hidden"});
-            config.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
+            util.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
                 els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")})
             this.userSetTable.refreshTable();
             this.stickit();
