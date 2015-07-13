@@ -181,6 +181,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 $('span.time-span').children('br').attr("hidden",true)    
                 this.model.on("change:assignment_type",this.showHideGateway);
             }   
+            util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
+            util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
+
             return this;
         },
         events: {
@@ -228,10 +231,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             },
             ".version-time-limit": "version_time_limit",
             ".time-limit-cap": "time_limit_cap",
-            /*{observe: "time_limit_cap", 
-                                onGet: function (val){return val==1?true:false;},
-                                onSet: function (val){return val?1:0;},
-            },*/
             ".attempts-per-version": "attempts_per_version",
             ".time-interval": "time_interval",
             ".version-per-interval": "version_per_interval",
@@ -286,8 +285,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         showCalendar: function(_show){
             var self = this;
             this.tabState.set("show_calendar",_show);
-            util.changeClass({state: _show, remove_class: "", add_class: "hidden",els: this.$(".hideable")});
-            util.changeClass({state: _show, remove_class: "hidden", add_class: "",els: this.$(".calendar-row")});
             // change the button text
             this.$(".show-calendar-toggle").button(_show?"hide":"reset");
             if(! _show) return;
@@ -305,6 +302,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 self.calendarProblemSets.findWhere({set_id: m.get("set_id")}).set(m.changed);
                 self.calendar.render();
             });
+            util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
+            util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
+
         },
         getDefaultState: function () { return {set_id: "", show_time: false, show_calendar: false, first_day: ""};}
 
