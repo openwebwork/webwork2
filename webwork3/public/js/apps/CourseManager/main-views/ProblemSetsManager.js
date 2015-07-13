@@ -246,7 +246,6 @@ var ProblemSetsManager = MainView.extend({
             },
             "change:problems": function(_set,_problem){
                 _set.save();
-                self.changeProblemValueEvent(_set,_problem)
             },
             "set_date_error": function(_opts, model){
                 self.eventDispatcher.trigger("add-message",{type: "danger",
@@ -321,7 +320,8 @@ var ProblemSetsManager = MainView.extend({
                 /* This sets the events for the problems (of type ProblemList) in each problem Set */
 
         this.problemSets.each(function(_set) {
-            _set.get("problems").on("add", function(prob){ self.addProblemEvent(prob,_set)});
+            _set.get("problems").on("add", function(prob){ self.addProblemEvent(prob,_set)})
+                .on("change:value change:max_attempts",function(prob){ self.changeProblemValueEvent(_set,prob);});
         });
     }, // setMessages
     changeProblemValueEvent: function (_set,prob){   

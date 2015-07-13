@@ -208,6 +208,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
         },
         removeProblem: function(){
             this.problem_set_view.model.problems.remove(this.model);
+            this.problem_set_view.model.trigger("change:problems",this.problem_set_view.model,this.model);
             this.remove();  // remove the view
         }, 
         set: function(opts){

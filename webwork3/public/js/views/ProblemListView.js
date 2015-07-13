@@ -228,8 +228,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             var self = this; 
             this.problemSet.changingAttributes = 
                 {"problem_deleted": {setname: this.problemSet.get("set_id"), problem_id: problem.get("problem_id")}};
-            this.problemSet.trigger("change:problems",this.problemSet);
-            this.problemSet.trigger("problem-deleted",problem);
             this.undoStack.push(problem);
             this.gotoPage(this.currentPage);
             this.$(".undo-delete-button").removeAttr("disabled");

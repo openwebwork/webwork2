@@ -287,6 +287,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.tabState.set("show_calendar",_show);
             // change the button text
             this.$(".show-calendar-toggle").button(_show?"hide":"reset");
+            util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
+            util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
+
             if(! _show) return;
             if(typeof(this.model)==="undefined") return;
             this.calendarProblemSets.reset(this.problemSets.where({set_id: this.model.get("set_id")}));
@@ -302,9 +305,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 self.calendarProblemSets.findWhere({set_id: m.get("set_id")}).set(m.changed);
                 self.calendar.render();
             });
-            util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
-            util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
-
+            
         },
         getDefaultState: function () { return {set_id: "", show_time: false, show_calendar: false, first_day: ""};}
 
