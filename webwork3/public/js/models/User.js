@@ -14,7 +14,10 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
             section: "",
             recitation: "",
             comment: "",
-            logged_in: false
+            logged_in: false,
+            displayMode: "",
+            showOldAnswers: false,
+            useMathView: false
         },
         validation: { 
             user_id: "checkLogin",
@@ -52,6 +55,17 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
             if(users.findWhere({user_id: this.get("user_id")})){
                 return "The user with login " + this.get("user_id") + " already exists in this course.";
             }
+        },
+        // this is separate from the user fields so information is not saved. 
+        savePassword: function(passwords,options){
+            $.ajax({
+                url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") 
+                        + "/password",
+                type: "POST",
+                data: passwords,
+                success: options.success,
+                error: options.error
+            })
         }
     });
     return User;

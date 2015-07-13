@@ -82,6 +82,9 @@ package WebworkClient;
 #use Crypt::SSLeay;  # needed for https
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
+use WeBWorK::Utils qw( wwRound);
+use WeBWorK::Utils::AttemptsTable;
+use WeBWorK::CourseEnvironment;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -89,6 +92,33 @@ use constant  REQUEST_URI      => 'mod_xmlrpc';
 
 our $UNIT_TESTS_ON             = 0;
 
+##################
+# static variables
+
+# create seed_ce
+# then create imgGen
+our $seed_ce = WeBWorK::CourseEnvironment->new( 
+				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY, 
+				 courseName         =>      '',
+				 webworkURL         =>      '',
+				 pg_dir             =>      "$WeBWorK::Constants::WEBWORK_DIRECTORY/../pg",
+				 });
+	warn "Unable to find environment for WebworkClient: " unless ref($seed_ce);
+
+our %imagesModeOptions = %{$seed_ce->{pg}->{displayModeOptions}->{images}};
+our $site_url = $seed_ce->{server_root_url};	
+our $imgGen = WeBWorK::PG::ImageGenerator->new(
+		tempDir         => $seed_ce->{webworkDirs}->{tmp},
+		latex	        => $seed_ce->{externalPrograms}->{latex},
+		dvipng          => $seed_ce->{externalPrograms}->{dvipng},
+		useCache        => 1,
+		cacheDir        => $seed_ce->{webworkDirs}->{equationCache},
+		cacheURL        => $site_url . $seed_ce->{webworkURLs}->{equationCache},
+		cacheDB         => $seed_ce->{webworkFiles}->{equationCacheDB},
+		dvipng_align    => $imagesModeOptions{dvipng_align},
+		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
+	);
+#####################
 # error formatting
 sub format_hash_ref {
 	my $hash = shift;
@@ -169,6 +199,9 @@ sub xmlrpcCall {
 	  
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
+		}
+	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
+	  		$result->result()->{header_text} = decode_base64($result->result()->{header_text});
 	  	}
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
@@ -419,9 +452,9 @@ sub environment {
 };
 
 sub formatAnswerRow {
-	my $self = shift;
-	my $rh_answer = shift;
-	my $problemNumber = shift;
+	my $self          = shift;
+	my $rh_answer     = shift;
+	my $answerNumber  = shift;
 	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
 	my $correctAnswer = $rh_answer->{correct_ans}||'';
 	my $ans_message   = $rh_answer->{ans_message}||'';
@@ -429,7 +462,7 @@ sub formatAnswerRow {
 	my $row = qq{
 		<tr>
 		    <td>
-				Prob: $problemNumber
+				Prob: $answerNumber
 			</td>
 			<td>
 				$answerString
@@ -471,7 +504,9 @@ sub formatRenderedProblem {
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}
-	my $rh_answers        = $rh_result->{answers};
+	my $problemHeadText = $rh_result->{header_text}//'';
+	my $rh_answers        = $rh_result->{answers}//{};
+	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
 	my $encodedSource     = $self->{encodedSource}//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
@@ -510,32 +545,68 @@ sub formatRenderedProblem {
     $internal_debug_messages = join("<br/>\n", @{ $internal_debug_messages  } );
     
     my $fileName = $self->{input}->{envir}->{fileName} || "";
-	# collect answers
-	#####################################################
-	# determine whether any answers were submitted
-	# and create answer template if they have been
-	my $answerssubmitted =""; 
-	my $answerTemplate    = q{<hr>ANSWERS <table border="3" align="center">};
-	my $problemNumber     = 1;
-    foreach my $key (sort  keys %{$rh_answers}) {
-        $answerssubmitted .= $rh_answers->{$key}->{original_student_ans};
-    	$answerTemplate  .= $self->formatAnswerRow($rh_answers->{$key}, $problemNumber++);
-    }
-	$answerTemplate      .= q{</table> <hr>};
-    $answerTemplate = "" unless $answerssubmitted;
+
+
     #################################################
 
 
 	$self->{outputformats}={};
-	my $XML_URL      	 = $self->url;
+	my $XML_URL      	 =  $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
 	my $password         =  $self->{password};
+	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
 	my $session_key      =  $rh_result->{session_key}//'';
-	
-	
-	
+	my $displayMode      =  $self->{displayMode};
+	my $previewMode      =  defined($self->{inputs_ref}->{preview});
+	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
+	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
+        # Can be added to the request as a parameter.  Adds a prefix to the 
+        # identifier used by the sticky format.  
+	my $problemIdentifierPrefix = $self->{inputs_ref}->{problemIdentifierPrefix} //'';
+        my $problemResult    =  $rh_result->{problem_result}//'';
+        my $problemState     =  $rh_result->{problem_state}//'';
+	my $scoreSummary     =  '';
+
+my $tbl = WeBWorK::Utils::AttemptsTable->new(
+	$rh_answers,
+	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
+	answerOrder            => $answerOrder//[],
+	displayMode            => $self->{displayMode},
+	imgGen                 => $imgGen,
+	ce                     => '',	#used only to build the imgGen
+	showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
+	showAttemptResults     => ($submitMode or $showCorrectMode),
+	showCorrectAnswers     => ($showCorrectMode),
+	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
+);
+
+my $answerTemplate = $tbl->answerTemplate;
+my $color_input_blanks_script = $tbl->color_answer_blanks;
+$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+
+# warn "imgGen is ", $tbl->imgGen;
+#warn "answerOrder ", $tbl->answerOrder;
+#warn "answersSubmitted ", $tbl->answersSubmitted;
+# render equation images
+
+if ($submitMode && $problemResult) {
+    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+    if ($problemResult->{msg}) {
+         $scoreSummary .= CGI::p($problemResult->{msg});
+    }
+
+    $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+    $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+}
+
+# This stuff is put here because eventually we will add locale support so the 
+# text will have to be done server side. 
+my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
+$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
+$localStorageMessages .= CGI::end_div();	
+
 	###########################
 	# Define problem templates
 	###########################
@@ -545,54 +616,12 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 
 
 <html>
-<head>
-<base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
-</head>
-<body>
-
-<h2> WeBWorK Editor using host: $XML_URL,  format: standard</h2>
-		    $answerTemplate
-		    <form action="$FORM_ACTION_URL" method="post">
-			$problemText
-	       <input type="hidden" name="answersSubmitted" value="1"> 
-		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="1234"> 
-	       <input type="hidden" name="pathToProblemFile" value="$fileName">
-	       <input type="hidden" name=courseName value="$courseID">
-	       <input type="hidden" name=courseID value="$courseID">
-	       <input type="hidden" name="userID" value="$userID">
-	       <input type="hidden" name="password" value="$password">
-	       <input type="hidden" name="passwd" value="$password">
-	       <input type="hidden" name="session_key" value="$session_key">
-	       <p><input type="submit" name="submit" value="submit answers"></p>
-	     </form>
-<HR>
-<h3> Perl warning section </h3>
-$warnings
-<h3> PG Warning section </h3>
-$PG_warning_messages;
-<h3> Debug message section </h3>
-$debug_messages
-<h3> internal errors </h3>
-$internal_debug_messages
-
-</body>
-</html>
-
-ENDPROBLEMTEMPLATE
-
-$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
-
-
-<html>
-<head>
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+<head><link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
@@ -611,31 +640,197 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-
+$problemHeadText
 
 <base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple</title>
+<title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
 </head>
 <body>
-			
-<h2> WeBWorK Editor using host: $XML_URL,  format: simple</h2>
+
+<h2> WeBWorK Editor using host: $XML_URL,  format: standard</h2>
 		    $answerTemplate
+		    $color_input_blanks_script
 		    <form action="$FORM_ACTION_URL" method="post">
 			$problemText
 	       <input type="hidden" name="answersSubmitted" value="1"> 
-	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
+		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="1234"> 
+	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
 	       <input type="hidden" name="password" value="$password">
 	       <input type="hidden" name="passwd" value="$password">
+	       <input type="hidden" name="displayMode" value="$displayMode">
+	       <input type="hidden" name="session_key" value="$session_key">
+		   <p>
+		      <input type="submit" name="preview"  value="Preview" /> 
+			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
+		      <input type="submit" name="WWgrade" value="Show correct answer"/>
+		   </p>
+	       
+	     </form>
+<HR>
+<h3> Perl warning section </h3>
+$warnings
+<h3> PG Warning section </h3>
+$PG_warning_messages;
+<h3> Debug message section </h3>
+$debug_messages
+<h3> internal errors </h3>
+$internal_debug_messages
+
+</body>
+</html>
+
+ENDPROBLEMTEMPLATE
+
+$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
+
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+
+<!-- CSS Loads -->
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
+<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
+<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+
+<!-- JS Loads -->
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
+<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
+<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
+<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
+<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
+<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+$problemHeadText
+
+<base href="$XML_URL">
+<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
+</head>
+<body>
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span12 problem">			
+		    $answerTemplate
+		    <form action="$FORM_ACTION_URL" method="post">
+<div class="problem-content">
+			$problemText
+</div>
+$scoreSummary
+
+	       <input type="hidden" name="answersSubmitted" value="1"> 
+	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
+	       <input type="hidden" name="problemSource" value="$encodedSource"> 
+	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
+	       <input type="hidden" name="pathToProblemFile" value="$fileName">
+	       <input type="hidden" name=courseName value="$courseID">
+	       <input type="hidden" name=courseID value="$courseID">
+	       <input type="hidden" name="userID" value="$userID">
+	       <input type="hidden" name="password" value="$password">
+	       <input type="hidden" name="passwd" value="$password">
+	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
-	       <p><input type="submit" name="submit" value="submit answers"></p>
-	     </form>
+		   <p>
+		      <input type="submit" name="preview"  value="Preview" /> 
+			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
+		      <input type="submit" name="WWgrade" value="Show correct answer"/>
+		   </p>
+
+	       </form>
+</div>
+</div></div>
+</body>
+</html>
+
+ENDPROBLEMTEMPLATE
+
+$self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
+
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+
+<!-- CSS Loads -->
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
+<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
+<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+
+<!-- JS Loads -->
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
+<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jquery.json.min.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
+<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
+<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
+<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
+<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
+<script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" type="text/javascript"></script>
+<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+$problemHeadText
+
+<base href="$XML_URL">
+<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: sticky seed: $problemSeed</title>
+</head>
+<body>
+<div class="container-fluid">
+<div class="row-fluid">
+<div class="span12 problem">			
+$answerTemplate
+<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
+<div class="problem-content">
+$problemText
+</div>
+$scoreSummary
+$localStorageMessages
+<input type="hidden" name="answersSubmitted" value="1"> 
+<input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
+<input type="hidden" name="problemSource" value="$encodedSource"> 
+<input type="hidden" name="problemSeed" value="$problemSeed"> 
+<input type="hidden" name="pathToProblemFile" value="$fileName">
+<input type="hidden" name="courseName" value="$courseID">
+<input type="hidden" name="courseID" value="$courseID">
+<input type="hidden" name="userID" value="$userID">
+<input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
+<input type="hidden" name="password" value="$password">
+<input type="hidden" name="passwd" value="$password">
+<input type="hidden" name="displayMode" value="$displayMode">
+<input type="hidden" name="session_key" value="$session_key">
+<input type="hidden" name="outputformat" value="sticky">
+<p>
+<input type="submit" name="preview"  value="Preview" /> 
+<input type="submit" name="WWsubmit" value="Submit answer"/> 
+<input type="submit" name="WWgrade" value="Show correct answer"/>
+</p>
+</form>
+</div>
+</div>
+</div>
+<!-- Activate local storage js -->
+<script type="text/javascript">WWLocalStorage();</script>
 </body>
 </html>
 

@@ -184,7 +184,7 @@ $Directory{"$webwork3_htdocs_dir"} = {
 
  # WEBWORK SOAP CONFIGURATION
  <Location /webwork2_rpc>
-         PerlHandler Apache2::SOAP
+         PerlHandler Apache::SOAP
          SetHandler perl-script
          PerlSetVar dispatch_to "WebworkSOAP"
          PerlSetVar options "compress_threshold => 10000"
@@ -227,22 +227,22 @@ PerlModule WebworkWebservice
 
 ########## WebworkWebservice SOAP handler ##########
 
-#PerlModule WebworkWebservice
-#
-#<Location /mod_soap>
-#	SetHandler perl-script
-#	PerlHandler Apache::SOAP
-#	PerlSetVar dispatch_to "WebworkXMLRPC" 
-#	PerlSetVar options "compress_threshold => 10000"
-#	Order Allow,Deny
-#	Allow from All
-#</Location>
+PerlModule WebworkWebservice
+
+<Location /mod_soap>
+	SetHandler perl-script
+	PerlHandler Apache::SOAP
+	PerlSetVar dispatch_to "WebworkXMLRPC" 
+	PerlSetVar options "compress_threshold => 10000"
+	Order Allow,Deny
+	Allow from All
+</Location>
 
 ####################################################################
-# WebworkSOAP  "bridge2" handler 
+# WebworkSOAP  "bridge2" handler (Moodle/WeBWorK Question bridge)
 ####################################################################
 
-# Include /opt/webwork/wwqs/conf/problemserver.apache-config
+#Include /Volumes/WW_test/opt/webwork/ww_opaque_server/conf/opaqueserver.apache-config
 
 ####################################################################
 # Expires Module configuration

@@ -9,12 +9,14 @@ package Routes::User;
 use strict;
 use warnings;
 use Dancer ':syntax';
-use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Routes::Authentication qw/checkPermissions/;
 use WeBWorK::GeneralUtils qw/cryptPassword/;
 use Data::Dumper;
 
-our @user_props = qw/first_name last_name student_id user_id email_address permission status section recitation comment/;
+our @user_props = qw/first_name last_name student_id user_id email_address permission status 
+                    section recitation comment displayMode showOldAnswers useMathView/;
+our @boolean_user_props = qw/showOldAnswers useMathView/;
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 
@@ -40,6 +42,7 @@ get '/courses/:course/users' => sub {
 		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
 		
     }
+    
     return convertArrayOfObjectsToHash(\@allUsers);
 };
 
@@ -89,8 +92,6 @@ post '/courses/:course_id/users/:user_id' => sub {
 	$permission->{user_id} = params->{user_id};
 	$permission->{permission} = params->{permission};	
 
-	debug $permission;
-
 	vars->{db}->addUser($user);
 	vars->{db}->addPassword($password);
 	vars->{db}->addPermissionLevel($permission);
@@ -115,19 +116,14 @@ put '/courses/:course_id/users/:user_id' => sub {
 
 	# update the standard user properties
 	
+    my %allparams = params;
+    my $setFromClient = convertBooleans(\%allparams,\@boolean_user_props);
 	for my $key (@user_props) {
-        $user->{$key} = params->{$key} if (defined(params->{$key}));
+        $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
     }
+    
 	vars->{db}->putUser($user);
 	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
-
-    # update the password
-
-    my $password;
-    if (defined(params->{new_password})){ #update existing user
-    	my $password->{password} = cryptPassword(params->{new_password});
-    	vars->{db}->putPassword($password);
-    }
 
     my $permission = vars->{db}->getPermissionLevel(params->{user_id});
 	
@@ -136,12 +132,15 @@ put '/courses/:course_id/users/:user_id' => sub {
 		vars->{db}->putPermissionLevel($permission);
 	}
 
-	my $u =convertObjectToHash($user);
-	$u->{_id} = $u->{user_id}; 
+	my $u =convertObjectToHash($user, \@boolean_user_props);
+    
+    $u->{_id} = $u->{user_id}; 
 
 	return $u;
 
 };
+
+
 ###
 #
 #  create a new user user_id in course *course_id*
@@ -191,6 +190,28 @@ get '/courses/:course_id/users/loginstatus' => sub {
 	return \@status;
 
 };
+
+# set a new password for user :user_id in course :course_id
+
+post '/courses/:course_id/users/:user_id/password' => sub {
+	#
+	# if the user is not a professor, check that the current password is correct.
+	#
+    
+	if(session->{permission} < 10 and session->{user} ne params->{user_id}){
+		send_error("You don't have the permission to change another password");
+	}
+
+	my $password = vars->{db}->getPassword(params->{user_id});
+	if(crypt(params->{old_password}, $password->password) eq $password->password){
+    	$password->{password} = cryptPassword(params->{new_password});
+    	vars->{db}->putPassword($password);
+        return {message => "password changed", success => 1}
+	} else {
+        return {message => "orig password not correct", success => 0}
+	}
+};
+
 
 ####
 #

@@ -73,6 +73,12 @@
 
 <div class="row-fluid">
 
+<!-- Run masthead class js because it gets rendered early -->
+<script type="text/javascript">
+  // Changes links in masthead
+  $('#loginstatus a').addClass('btn btn-small');
+  $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>'); 
+</script>
 
   <div id="content" class="span12">
 		

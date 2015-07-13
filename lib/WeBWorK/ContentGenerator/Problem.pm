@@ -365,9 +365,6 @@ sub attemptResults {
 	
 #	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
 	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
-#   FIXME  -- I left the old code in in case we have to back out.
-#	my $summary = "On this attempt, you answered $numCorrect out of "
-#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 	my $summary = ""; 
 	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
 		if (scalar @answerNames == 1) {  #default messages
@@ -1802,8 +1799,6 @@ sub output_achievement_message{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	
-	
-
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
 	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
@@ -1831,8 +1826,6 @@ sub output_tag_info{
 		my $templatedir = $r->ce->{courseDirs}->{templates};
 		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
 		$sourceFilePath =~ s/'/\\'/g;
-		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
@@ -2010,9 +2003,13 @@ sub output_JS{
 	# This is for knowls
         # Javascript and style for knowls
         print qq{
-           <script type="textx/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
+           <script type="text/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
            <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
 
+	# This is for tagging menus (if allowed)
+	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
+	}
 
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();

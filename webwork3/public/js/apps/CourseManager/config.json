@@ -9,6 +9,14 @@
 		"id": "calendar"
 	},
 	{
+		"name": "User Settings",
+		"path": "views/UserSettingsView",
+        "icon": "fa fa-user fa-lg",
+		"default_sidebar": "",
+		"other_sidebars": [],
+		"id": "userSettings"
+	},
+	{
 		"name": "Problem Set Details",
 		"path": "main-views/ProblemSetDetailView",
 		"icon": "fa fa-info-circle fa-lg",
@@ -59,7 +67,7 @@
 	{
 		"name": "Settings",
 		"path": "main-views/SettingsView",
-		"icon": "fa fa-gear fa-lg",
+		"icon": "fa fa-gears fa-lg",
 		"default_sidebar": "",
 		"other_sidebars": [],
 		"id": "settings"

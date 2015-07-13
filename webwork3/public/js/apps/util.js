@@ -105,6 +105,12 @@ var util = {
             .object().pick("pg{timeAssignDue}","pg{assignOpenPriorToDue}","pg{answersOpenAfterDueDate}"
                                 ,"pg{ansEvalDefaults}{reducedScoringPeriod}").value();
     },
+
+    getInverseBindings: function(bindings){
+        return _.object(_(_(bindings).values()).map(function(v) { 
+            return _(v).isObject() ? v.observe : v ;}),_(bindings).keys()) 
+    },
+
         // this parses the fields in obj as integers.
     parseAsIntegers: function(obj,fields){
         var values = _(obj).chain().pick(fields).values().map(function(d) {return d?parseInt(d):d;}).value();

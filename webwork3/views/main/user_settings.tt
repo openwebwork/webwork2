@@ -1,0 +1,50 @@
+<script type="text/template" id="user-settings-template">
+ <table class="table">
+<tbody>
+<tr><td class="header">User Name</td><td id="user-id"></td><td class="error-cell"></td></tr>
+<tr><td class="header">Email</td><td><input type="text" id="email" class="form-control"></td>
+  <td class="error-cell"></td></tr>
+<tr><td class="header">Password</td>
+  <td><button class="btn btn-default" id="change-password-button" data-hide-text="Hide Password">Change Password</button></td>
+  <td class="error-cell"></td></tr>
+<tr class="password-row hidden"><td>Old Password</td>
+    <td><input type="password" id="old-password" class="form-control"></td>
+  <td class="error-cell"></td></tr>
+<tr class="password-row hidden"><td>New Password</td>
+    <td><input type="password" id="new-password" class="form-control"></td>
+  <td class="error-cell"></td></tr>
+<tr class="password-row hidden">
+  <td>Confirm New Password</td><td><input type="password" id="confirm-password" class="form-control"></td>
+  <td class="error-cell"></td></tr>
+<tr class="password-row hidden"><td></td>
+    <td><button id="submit-password-button" class="btn btn-primary">Submit New Password</button></td>
+    <td class="error-cell"></td></tr>
+<tr><td class="header">Display Equations Using</td>
+<td class="col-md-2"><select id="display-option" class="form-control input-medium"></select></td><td class="error-cell"></td></tr>
+<tr><td class="header">Show Saved Answers?</td>
+<td><input type="checkbox" id='save-old-answers'></td></tr>
+<tr><td class="header">Show Equation Editor?</td>
+<td><input type="checkbox" id='equation-editor'></td></tr>
+
+<tr><td class="col-md-6">WeBWorK3 saves your history as you navigate the different views/pages.  You may need to reset this if odd behavior occurs. </td><td><button id="reset-history-button" class="btn btn-default">Reset History</button></td></tr>
+</tbody>
+</table>
+</script>
+
+<script type="text/template" id="user-settings-help-template">
+	<p>You can change the email and password here.  In addition, WeBWorK stores your history in a file stored on your
+	computer.  You can clear this by clicking the "Clear History" button. </p>
+</script>
+
+<script type="text/template" id="user-settings-messages-template">
+<%
+var messages = {
+    password_saved: function(opt){return "The password for user " + opt.user_id + "  has been updated.";},
+    not_equal_pass: function () { return "The new password and confirmed passwords are not equal.";},
+    wrong_pass: function () { return "Your original password is not correct.";},
+    short_pass: function () { return "The new password should not be less than 6 characters";}
+}
+print(messages[type](typeof(opts)=="undefined"?{}:opts))
+%>
+
+</script>
