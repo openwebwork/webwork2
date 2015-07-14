@@ -907,7 +907,7 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 #
 # get '/courses/:course_id/status/usersets'
 #
-# This returns the status of each problem sets in the course course_id.  If the userProblems match 
+# This returns the status of each problem set in the course course_id.  If the userProblems match 
 # the global problems then a 1 is returned for the problem_status for each set or a 0 if not. 
 #
 # This is mainly used for troubleshooting where there are inconsistencies in the problem set databases
@@ -931,16 +931,16 @@ get '/courses/:course_id/status/usersets' => sub {
         my @setOkay = ();
 
         my @userNames = vars->{db}->listSetUsers($set->{set_id});
-        my @userSets = map { {user_id=>$_}} @userNames; 
-
+        my @userSets = map { {user_id=>$_}} @userNames;
+        
         for my $userSet (@userSets){
             my @userProblems = vars->{db}->listUserProblems($userSet->{user_id},$set->{set_id});
             $userSet->{problems} = \@userProblems; 
-            push(@setOkay,(@userProblems ~~ @problems &&  @problems ~~ @userProblems)?1:0);
+            push(@setOkay,(join("|",@userProblems) eq join("|",@problems))?1:0);
         }
 
-        #$set->{userSets} = \@userSets;
-        $set->{problem_status} = (0 ~~ @setOkay)?0:1;
+        my @okays = grep { $_ == 0 } @setOkay;
+        $set->{problem_status} = scalar(@setOkay)==0?0:1;
         $set->{problem_length} = scalar(@problems);
 
     }
