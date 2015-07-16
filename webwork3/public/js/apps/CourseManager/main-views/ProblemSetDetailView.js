@@ -553,6 +553,7 @@ var AssignUsersView = Backbone.View.extend({
             // this.model is a clone of the parent ProblemSet.  It is used to save properties for multiple students.
 
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
+            
             _.extend(this,_(options).pick("users","settings","eventDispatcher"));
             TabView.prototype.initialize.apply(this,[options]);
             this.tabState.on("change:filter_string", function(){
@@ -574,14 +575,17 @@ var AssignUsersView = Backbone.View.extend({
                                             paginator: {showPaginator: false}, 
                                             tablename: ".users-table", page_size: -1,
                                             row_id_field: "user_id", 
-                                            table_classes: "table table-bordered table-condensed"})).render();
+                                            table_classes: "table table-bordered table-condensed"}));
+                // The following is needed to make sure that the reduced-scoring date shows up in the student overrides table. 
+                this.userSetTable.collection.each(function(model) { model.show_reduced_scoring = true;}); 
+                this.userSetTable.render();
                 this.userSetTable.set(this.tabState.pick("selected_rows"))
                     .on("selected-row-changed", function(rowIDs){
                             self.tabState.set({selected_rows: rowIDs});
                     }).on("table-sorted table-changed",this.update).updateTable();
+                
                 this.$el.append(this.userSetTable.el);
                 this.update();
-                this.stickit();
                 this.stickit(this.tabState,{
                     ".filter-text": "filter_string",
                     ".show-section": "show_section",
@@ -617,7 +621,9 @@ var AssignUsersView = Backbone.View.extend({
             var self = this;
             this.problemSet = _set;  // this is the globalSet
             if(_set){
-                this.model = new ProblemSet(_set.attributes);  // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
+                // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet
+                this.model = new ProblemSet(_set.attributes);  
+                this.model.show_reduced_scoring = true; 
                 this.userSetList = new UserSetList([],{problemSet: this.model,type: "users"});
                 this.userSetList.on("change:due_date change:answer_date change:reduced_scoring_date "
                                     + "change:open_date", function(model){ 
@@ -638,26 +644,38 @@ var AssignUsersView = Backbone.View.extend({
         buildCollection: function(){ // since the collection needs to contain a mixture of userSet and user properties, we merge them. 
             var self = this;
             this.collection.reset(this.userSetList.models);
+            //this.collection is a collection of models based on user sets.  The following will also pick information
+            // from the users that is useful for this view. 
             this.collection.each(function(model){
-                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation","first_name","last_name"));
+                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation","first_name","last_name"));  
             });
             this.collection.on({change: function(model){
                 self.userSetList.findWhere({user_id: model.get("user_id")})
-                    .set(model.pick("open_date","due_date","answer_date","enable_reduced_scoring")).save();
+                    .set(model.pick("open_date","due_date","answer_date","reduced_scoring_date")).save();
             }});
             this.setMessages();
 
             return this;
         },
         update: function () {
+            if(typeof(this.problemSet) === "undefined"){
+                return;
+            }
+            
             util.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
             util.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
-            util.changeClass({state: this.problemSet.get("enable_reduced_scoring") && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+            util.changeClass({state: this.problemSet.get("enable_reduced_scoring") 
+                              && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
                 els: this.$(".reduced-scoring-date,.reduced-scoring-header"), remove_class: "hidden"});
             util.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
                 els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")})
-            this.userSetTable.refreshTable();
-            this.stickit();
+            if(this.userSetTable && this.model){
+                this.userSetTable.refreshTable();
+                this.stickit();
+            } else {
+                this.render();
+                return; 
+            }
             // color the changed dates blue
             _([".open-date",".due-date",".reduced-scoring-date",".answer-date"]).each(function(date){
                 var val = $("#customize-problem-set-controls " + date + " .wwdate").val()
@@ -686,8 +704,8 @@ var AssignUsersView = Backbone.View.extend({
                         editable: false, datatype: "integer", use_contenteditable: false},
                 {name: "Section", key: "section", classname: "section", editable: false, datatype: "string"},
                 {name: "Recitation", key: "recitation", classname: "recitation", editable: false,datatype: "string"},
-                {name: "Enable Reduced Scoring", key: "enable_reduced_scoring", classname: "enable-reduced-scoring",
-                    editable: false, datatype: "boolean", show_column: false}
+                {name: "Enab RS", key: "enable_reduced_scoring", classname: "enable_reduced_scoring", editable: false, 
+                        datatype: "boolean", show_column: false}
                 ];
                 
         },
