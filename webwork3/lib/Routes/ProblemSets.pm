@@ -736,6 +736,7 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
     for my $problem (@problems){
         my @lastAnswers = decodeAnswers($problem->{last_answer});
         $problem->{last_answer} = \@lastAnswers;
+        $problem->{_id} = params->{set_id} . ":" . params->{user_id} . ":" . $problem->{problem_id};
     }
 
     return convertArrayOfObjectsToHash(\@problems);
@@ -1058,6 +1059,15 @@ put '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => su
     vars->{db}->putUserProblem($problem);
     return convertObjectToHash(vars->{db}->getMergedProblem(params->{user_id},params->{set_id}
                                 ,params->{problem_id}));
+};
+
+### redirect to the above put if the parameters are out of order:
+
+put '/courses/:course_id/sets/:set_id/users/:user_id/problems/:problem_id' => sub {
+    redirect '/courses/' . params->{course_id} . '/users/' . params->{user_id} .'/sets/' . params->{set_id} .
+            '/problems/ ' . params->{problem_id}; 
+
+
 };
 
 ###
