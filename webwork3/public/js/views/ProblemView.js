@@ -141,11 +141,22 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             "click .mark-correct-btn": "markCorrect",
             "keyup .prob-value,.max-attempts": function (evt){
                 if(evt.keyCode == 13){ $(evt.target).blur() }   
+            }, 
+            "blur .max-attempts": function(evt){
+                if($(evt.target).val()==-1){
+                    //I18N
+                    $(evt.target).val("unlimited");   
+                }
             }
         },
         bindings: {
             ".prob-value": {observe: "value", events: ['blur']},
-            ".max-attempts": {observe: "max_attempts", events: ['blur']},
+            ".max-attempts": {observe: "max_attempts", events: ['blur'] , onSet: function(val) {
+                    return (val=="unlimited")?-1:val;
+                }, onGet: function(val){
+                    return (val==-1)?"unlimited":val;
+                }
+            },
             ".mlt-tag": "morelt",
             ".level-tag": "level",
             ".keyword-tag": "keyword",

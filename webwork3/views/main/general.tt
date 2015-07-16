@@ -101,7 +101,7 @@
         <%}%>
       <%if(showMaxAttempts){%>
       <label class="control-label">Max Attempts: 
-        <input type="text" class="max-attempts input-small"></label>  
+        <input type="text" class="max-attempts" style="width: 60px"></label>  
       <%}%>
     </div>
   <%}%>
