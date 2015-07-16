@@ -12,7 +12,6 @@ use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Routes::Authentication qw/checkPermissions/;
 use WeBWorK::GeneralUtils qw/cryptPassword/;
-use Data::Dumper;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status 
                     section recitation comment displayMode showOldAnswers useMathView/;

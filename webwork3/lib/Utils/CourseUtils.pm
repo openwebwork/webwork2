@@ -7,7 +7,6 @@ use Dancer ':syntax';
 #use Dancer::Plugin::Database;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::ProblemSets qw/getGlobalSet/;
-use Data::Dumper;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(getCourseSettings getAllSets getAllUsers);
 

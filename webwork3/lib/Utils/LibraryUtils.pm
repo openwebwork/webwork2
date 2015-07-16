@@ -6,7 +6,6 @@ use base qw(Exporter);
 use Path::Class qw/file dir/;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
-use Data::Dumper;
 use WeBWorK::GeneralUtils qw(readDirectory);
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
@@ -459,8 +458,6 @@ sub getProblemTags {
 
 # 	my ($top,$base,$dir,$probLib) = @_;
 
-# 	debug "top: $top  base: $base dir:  $dir probLib: $probLib \n";
-# 	debug Dumper($probLib);
 # 	my @lis = readDirectory("$base/$dir");
 # 	return () if grep /^=library-ignore$/, @lis;
 # 	return () if !$top && grep /^=library-no-combine$/, @lis;
@@ -471,8 +468,6 @@ sub getProblemTags {
 
 # 	my @dirs = grep {!$ignoredir{$_} and -d "$base/$dir/$_"} @lis;
 # 	if ($top == 1) {@dirs = grep {!$problib->{$_}} @dirs}
-
-# 	debug Dumper(@dirs);
 
 # 	foreach my $subdir (@dirs) {push(@pgs, get_library_pgs(0,"$base/$dir",$subdir,$probLib))}
 

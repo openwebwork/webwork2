@@ -75,7 +75,7 @@ sub reorderProblems {
             ## these are the problem_ids in $new_problems from the @indexes
             my @prob_ids = map { $new_problems->[$_]->{problem_id}} @indexes;
             
-            my @values = values($id_swap);
+            my @values = values(%$id_swap);
             
             ## this finds the index if there are multiple problems that matched
             ## which occurs with the same problem source.  
@@ -99,7 +99,7 @@ sub reorderProblems {
     # Next, rebuild the user_problems. 
     
     for my $user_id (@$assigned_users){
-        for my $prob_id (keys($id_swap)) {
+        for my $prob_id (keys(%$id_swap)) {
         
             my $userprob = first {$_->{problem_id} == $prob_id } @{$user_prob_db->{$user_id}};
             my $newUserProblem = createNewUserProblem($user_id,$setID,$id_swap->{$prob_id});

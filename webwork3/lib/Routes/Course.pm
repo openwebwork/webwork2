@@ -17,7 +17,7 @@ use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
 # use Utils::CourseUtils qw/getCourseSettings/;
 use Routes::Authentication qw/buildSession checkPermissions setCookie/;
-use Data::Dumper;
+
 
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
