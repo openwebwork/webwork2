@@ -11,7 +11,6 @@ use warnings;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use WeBWorK::Constants;
-use Data::Dumper;
 
 use base qw(Exporter);
 our @EXPORT    = ();

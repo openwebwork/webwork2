@@ -4,13 +4,15 @@ use Dancer::Plugin::Database;
 
 BEGIN {$ENV{MOD_PERL_API_VERSION}=2}
 
-use WeBWorK::CourseEnvironment;
-use WeBWorK::DB;
-use WeBWorK::Authen;
-
 # link to WeBWorK code libraries
 use lib config->{webwork_dir}.'/lib';
 use lib config->{pg_dir}.'/lib';
+
+
+use WeBWorK::CourseEnvironment;
+use WeBWorK::DB;
+use WeBWorK3::Authen;
+
 
 
 
@@ -56,7 +58,7 @@ post '/handshake' => sub {
 
 post '/courses/:course_id/login' => sub {
 
-	my $authen = new WeBWorK::Authen(vars->{ce});
+	my $authen = new WeBWorK3::Authen(vars->{ce});
 	$authen->set_params({
 			user => params->{user},
 			password => params->{password},
