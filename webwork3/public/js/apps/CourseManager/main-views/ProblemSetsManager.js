@@ -257,8 +257,7 @@ var ProblemSetsManager = MainView.extend({
                 })
             },
             change: function(_set){
-                _set.changingAttributes= (_(_set.changed).chain().keys().contains("reorder"))
-                    ? _set.changed: _.pick(_set._previousAttributes,_.keys(_set.changed));
+                _set.changingAttributes= _(_set.previousAttributes()).pick(_(_set.changed).keys());
             },
             sync: function(_set){
                 _(_set.changingAttributes||{}).chain().keys().each(function(key){ 

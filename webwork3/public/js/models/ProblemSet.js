@@ -18,7 +18,7 @@ var ProblemSet = Backbone.Model.extend({
         reduced_scoring_date: "",
         visible: false,
         enable_reduced_scoring: false,
-        assignment_type: "",
+        assignment_type: "default",
         attempts_per_version: -1,
         time_interval: 0,
         versions_per_interval: 0,

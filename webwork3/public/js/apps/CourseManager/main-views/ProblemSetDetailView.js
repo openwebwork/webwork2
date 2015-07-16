@@ -95,6 +95,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.state.set("set_id",setName);
         	this.problemSet = this.problemSets.findWhere({set_id: setName});
             _(this.views).chain().keys().each(function(view){
+                self.views[view].unstickit();
                 self.views[view].setProblemSet(self.problemSet);
             });
             this.views.problemsView.currentPage = 0; // make sure that the problems start on a new page. 
