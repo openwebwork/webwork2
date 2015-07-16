@@ -156,7 +156,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.model = this.problemSets.findWhere({set_id: this.tabState.get("set_id")});
             this.tabState.on("change:show_time",function (val){
                 self.showTime(self.tabState.get("show_time"));
-                self.stickit();
+                if(self.model){
+                    self.stickit();
+                }
                 // gets rid of the line break for showing the time in this view. 
                 $('span.time-span').children('br').attr("hidden",true)    
             }).on("change:show_calendar",function(){
@@ -176,14 +178,15 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.showTime(this.tabState.get("show_time"));
                 this.showCalendar(this.tabState.get("show_calendar"));
                 this.showHideGateway();
+                util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
+                util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
+
                 this.showHideReducedScoringDate();
                 this.stickit();
                 // gets rid of the line break for showing the time in this view. 
                 $('span.time-span').children('br').attr("hidden",true)    
                 this.model.on("change:assignment_type",this.showHideGateway);
             }   
-            util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
-            util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
 
             return this;
         },
@@ -223,7 +226,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             ".num-problems": { observe: "problems", onGet:function(value,options) {
                 return value.length;  
             }},
-            ".set-type": {observe: "assignment_type", selectOptions: { 
+            "#set-type": {observe: "assignment_type", selectOptions: { 
                 collection: [{label: "Homework", value: "default"},
                              {label: "Gateway/Quiz",value: "gateway"}]}},
             ".users-assigned": {
@@ -256,13 +259,19 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                                      els: this.$(".gateway-row"),remove_class: "hidden"});
         },
         showHideReducedScoringDate: function(){
+            if(typeof(this.model)==="undefined"){ return;}
             util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
                                 remove_class: "hidden", 
                                 els: this.$(".reduced-scoring-date,.reduced-scoring").closest("tr")});
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
-                    this.model.get("enable_reduced_scoring")) { // show reduced credit field
-                this.$(".reduced-scoring-date").closest("tr").removeClass("hidden");
+            util.changeClass({ state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
+                    this.model.get("enable_reduced_scoring"), els: this.$(".reduced-scoring-date").closest("tr"), 
+                              remove_class: "hidden"});
+            if(this.tabState.get("show_calendar")){
+                util.changeClass({state: true, els: this.$(".reduced-scoring-date").closest("tr"), 
+                              add_class: "hidden"});
+            }
 
+            if(this.model.get("enable_reduced_scoring")){
                 // fill in a reduced_scoring_date if the field is empty or 0. 
                 // I think this should go into the ProblemSet model upon either parsing or creation. 
                 if(this.model.get("reduced_scoring_date")=="" || this.model.get("reduced_scoring_date")==0){
@@ -270,9 +279,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                         .subtract(this.settings.getSettingValue("pg{ansEvalDefaults}{reducedScoringPeriod}"),"minutes");
                     this.model.set({reduced_scoring_date: rcDate.unix()});
                 }
-            } else {
-                this.$(".reduced-scoring-date").closest("tr").addClass("hidden");
-            }
+            } 
         },
         showTime: function(_show){
             this.tabState.set("show_time",_show);
@@ -290,7 +297,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.$(".show-calendar-toggle").button(_show?"hide":"reset");
             util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
             util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
-
+            this.showHideReducedScoringDate();
             if(! _show) return;
             if(typeof(this.model)==="undefined") return;
             this.calendarProblemSets.reset(this.problemSets.where({set_id: this.model.get("set_id")}));
