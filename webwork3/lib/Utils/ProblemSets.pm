@@ -37,7 +37,7 @@ our @user_problem_props = qw/user_id set_id problem_id source_file value max_att
 our @EXPORT    = ();
 our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
         createNewUserProblem getGlobalSet record_results renumber_problems updateProblems shiftTime 
-        unshiftTime putGlobalSet putUserSet 
+        unshiftTime putGlobalSet putUserSet getUserSet
         @time_props @set_props @user_set_props @problem_props @boolean_set_props);
         
 sub getGlobalSet {
@@ -85,6 +85,25 @@ sub putGlobalSet {
 
 ###
 #
+#  The gets a userSet (mergedSet) with given $user_id and $set_id
+#
+###
+
+sub getUserSet{
+    my ($db,$ce,$user_id,$set_id) = @_;
+    
+    my $mergedSet = $db->getMergedSet($user_id,$set_id);
+     
+     for my $prop (@time_props){
+        $mergedSet->{$prop} = timeFromUTC($mergedSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
+     }
+
+    return convertObjectToHash($mergedSet,\@boolean_set_props);
+
+}
+
+###
+#
 #  This puts/updates the user set with properties in the hash ref $set
 #
 ###
@@ -94,14 +113,14 @@ sub putUserSet {
     my ($db,$ce,$set) = @_;
 
     # get the global problem set to determine if the value has changed
-    my $globalSet = vars->{db}->getGlobalSet(params->{set_id});
-    my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
+    my $globalSet = $db->getGlobalSet($set->{set_id});
+    my $userSet = $db->getUserSet($set->{user_id},$set->{set_id});
     
     convertBooleans($set,\@boolean_set_props);
     for my $key (@user_set_props) {
         my $globalValue = $globalSet->{$key} || "";
         # check to see if the value differs from the global value.  If so, set it else delete it. 
-        $userSet->{$key} = params->{$key} if defined(params->{$key});
+        $userSet->{$key} = $set->{$key} if defined($set->{$key});
         delete $userSet->{$key} if $globalValue eq $userSet->{$key} && $key ne "set_id";
 
     }
@@ -110,14 +129,16 @@ sub putUserSet {
     }
     
     $db->putUserSet($userSet);
+    
+    return getUserSet($db,$ce,$set->{user_id},$set->{set_id});
 
-     my $mergedSet = $db->getMergedSet(params->{user_id},params->{set_id});
-     
-     for my $prop (@time_props){
-        $mergedSet->{$prop} = timeFromUTC($userSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
-    }
-
-    return convertObjectToHash($mergedSet,\@boolean_set_props);
+#     my $mergedSet = $db->getMergedSet($set->{user_id},$set->{set_id});
+#     
+#     for my $prop (@time_props){
+#        $mergedSet->{$prop} = timeFromUTC($userSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
+#     }
+#
+#    return convertObjectToHash($mergedSet,\@boolean_set_props);
 }
 
 ###

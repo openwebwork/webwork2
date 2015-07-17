@@ -15,7 +15,7 @@ use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use Utils::LibraryUtils qw/render/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem 
-                            renumber_problems updateProblems getGlobalSet putGlobalSet putUserSet
+                            renumber_problems updateProblems getGlobalSet putGlobalSet putUserSet getUserSet
                             @time_props @set_props @boolean_set_props @user_set_props @problem_props/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Utils::GeneralUtils qw/timeToUTC timeFromUTC/;
@@ -43,16 +43,6 @@ get '/courses/:course_id/sets' => sub {
     my @globalSetNames = vars->{db}->listGlobalSets;
     my @allGlobalSets = map { getGlobalSet(vars->{db},vars->{ce},$_)} @globalSetNames; 
     
-# my @globalSets = vars->{db}->getGlobalSets(@globalSetNames);
-#    for my $set_id (@globalSetNames){
-#        
-#        my @globalProblems = vars->{db}->getAllGlobalProblems($set->{set_id});
-#        $set->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
-#        my @userNames = vars->{db}->listSetUsers($set->{set_id});
-#        $set->{assigned_users} = \@userNames;
-#        $set->{_id} = $set->{set_id};
-#    }
-    
     return convertArrayOfObjectsToHash(\@allGlobalSets,\@boolean_set_props);
 };
 
@@ -70,16 +60,7 @@ get '/courses/:course_id/sets/:set_id' => sub {
 
     my $globalSet = getGlobalSet(vars->{db},vars->{ce},params->{set_id});
 
-#    my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
-#    my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
-#    my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
-#
-#    my $setResults = convertObjectToHash($globalSet,\@boolean_set_props);
-#
-#    $setResults->{assigned_users} = \@userNamesFromDB;
-#    $setResults->{problems} = convertArrayOfObjectsToHash(\@problemsFromDB);
-
-    return convertObjectToHash($globalSet);
+    return convertObjectToHash($globalSet,\@boolean_set_props);
 };
 
 ####
@@ -199,7 +180,7 @@ del '/courses/:course_id/sets/:set_id' => sub {
 
 ##
 #
-#  Get a list of all user_id's assigned to set *set_id* in course *course_id* 
+#  Get an array of user sets for all users in course :course_id for set :set_id
 #
 #  return:  array of properties.
 ##
@@ -211,18 +192,9 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
    
     my @userIDs = vars->{db}->listSetUsers(params->{set_id});
 
-    my @sets = ();
-
-    foreach my $user_id (@userIDs){
-        my $userSet = convertObjectToHash(vars->{db}->getMergedSet($user_id,params->{set_id}),\@boolean_set_props);
-        for my $prop (@time_props) {
-            $userSet->{$prop} = timeToUTC($userSet->{$prop},vars->{ce}->{siteDefaults}{timezone});
-        }
-        $userSet->{_id} = $user_id;
-        push(@sets,$userSet);
-    }
-
-    return \@sets;
+    my @sets = map { getUserSet(vars->{db},vars->{ce},$_,params->{set_id});} @userIDs; 
+    
+    return \@sets; 
 };
 
 
@@ -309,7 +281,7 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 #
 #  permission > Student
 #
-#  The users are assigned by setting the users_assigned parameter to a comma delimited list of user_id's.
+#  The users are assigned by setting the users_assigned parameter an array ref of user_id's.
 #
 #####
 
@@ -459,26 +431,6 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 
     my %allparams = request->params; 
     return putUserSet(vars->{db},vars->{ce},\%allparams);
-
-    my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
-    send_error("The user " . params->{user_id} . " has not been assigned problem set " . params->{set_id} . ".")
-        unless $userSet;
-
-    # get the global problem set to determine if the value has changed
-    my $globalSet = vars->{db}->getGlobalSet(params->{set_id});
-
-    for my $key (@user_set_props) {
-        my $globalValue = $globalSet->{$key} || "";
-        # check to see if the value differs from the global value.  If so, set it else delete it. 
-        $userSet->{$key} = params->{$key} if defined(params->{$key});
-        delete $userSet->{$key} if $globalValue eq $userSet->{$key} && $key ne "set_id";
-
-    }
-    vars->{db}->putUserSet($userSet);
-
-    my $mergedSet = vars->{db}->getMergedSet(params->{user_id},params->{set_id});
-
-    return convertObjectToHash($mergedSet,\@boolean_set_props);
 };
 
 
@@ -549,9 +501,9 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
     
     checkPermissions(10,session->{user});
 
-    my @userSetNames = vars->{db}->listUserSets(param('user_id'));
-    my @userSets = vars->{db}->getMergedSets(map { [params->{user_id}, $_]} @userSetNames);
-    
+    my @setIDs = vars->{db}->listUserSets(param('user_id'));
+    my @userSets = map { getUserSet(vars->{db},vars->{ce},params->{user_id},$_) } @setIDs; 
+        
     return convertArrayOfObjectsToHash(\@userSets);
 };
 
@@ -619,12 +571,10 @@ get '/courses/:course_id/sets/:set_id/users/all/problems' => sub {
     send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404)
         unless vars->{db}->existsGlobalSet(params->{set_id});
 
-    my @allUsers = vars->{db}->listSetUsers(params->{set_id});
-    my @userSets = ();
-    for my $userID (@allUsers){
-        my $userSet = convertObjectToHash(vars->{db}->getMergedSet($userID,params->{set_id}));
-
-        my @problems = vars->{db}->getAllMergedUserProblems($userID,params->{set_id});
+    my @allUserIDs = vars->{db}->listSetUsers(params->{set_id});
+    my @userSets = map { 
+        my $userSet = getUserSet(vars->{db},vars->{ce},$_,params->{set_id});
+        my @problems = vars->{db}->getAllMergedUserProblems($_,params->{set_id});
         my @userProblems = ();
         for my $problem (@problems){
             my @lastAnswers = decodeAnswers($problem->{last_answer});
@@ -633,8 +583,7 @@ get '/courses/:course_id/sets/:set_id/users/all/problems' => sub {
             push(@userProblems,$prob);
         }
         $userSet->{problems} = \@userProblems;
-        push(@userSets,$userSet);
-    }
+    } @allUserIDs; 
 
     return \@userSets;
 };
@@ -657,8 +606,7 @@ get '/courses/:course_id/users/:user_id/sets/all/problems' => sub {
     my @userSetNames = vars->{db}->listUserSets(params->{user_id});
     my @userSets = ();
     for my $setID (@userSetNames){
-         my $userSet = convertObjectToHash(vars->{db}->getMergedSet(params->{user_id},$setID));
-
+         my $userSet = getUserSet(vars->{db},vars->{ce}, params->{user_id},$setID);
         my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},$setID);
         my @userProblems = ();
         for my $problem (@problems){
@@ -1193,6 +1141,11 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     $headerContent = read_file_content($setHeaderFile);
     $hardcopyHeaderContent = read_file_content($hardcopyHeaderFile);
     
+    my $mergedSet = $db->getMergedSet(session->{user},params->{set_id});
+     
+     for my $prop (@time_props){
+        $mergedSet->{$prop} = timeFromUTC($mergedSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
+     }
     
     my $renderParams = {
         displayMode => param('displayMode') || vars->{ce}->{pg}{options}{displayMode},
@@ -1201,7 +1154,7 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
         showSolutions=>0,
         showAnswers=>0,
         user=>vars->{db}->getUser(session->{user}),
-        set=>vars->{db}->getMergedSet(session->{user},params->{set_id}),
+        set=>$mergedSet,
         problem=>fake_problem(vars->{db}) };
     
 	# check to see if the problem_path is defined
