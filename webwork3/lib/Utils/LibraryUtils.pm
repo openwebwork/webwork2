@@ -7,6 +7,7 @@ use Path::Class qw/file dir/;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use WeBWorK::GeneralUtils qw(readDirectory);
+use WeBWorK3::PG::Local
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
 our @answerFields = qw/preview_latex_string done original_student_ans preview_text_string ans_message 
@@ -49,7 +50,7 @@ sub render {
 	};
     
     
-	my $pg = new WeBWorK::PG(
+	my $pg = new WeBWorK3::PG::Local(
 		vars->{ce},
 		$renderParams->{user},
 		params->{session_key},

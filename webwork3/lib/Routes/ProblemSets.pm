@@ -1173,7 +1173,7 @@ get '/courses/:course_id/pgeditor' => sub {
 
 get '/courses/:course_id/headers' => sub {
 
-    #checkPermissions(10,session->{user});
+    checkPermissions(10,session->{user});
 
     my $templateDir = vars->{ce}->{courseDirs}->{templates};
     my $include = qr/header.*\.pg$/i;
@@ -1220,7 +1220,6 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
                         path(dirname($templateDir),'templates',$hardcopyHeader); 
     my $headerContent = params->{set_header_content}; 
     
-    debug $headerContent; 
     my $hardcopyHeaderContent = params->{hardcopy_header_content};
 
     if(request->is_put()){
