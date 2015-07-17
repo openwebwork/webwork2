@@ -426,9 +426,9 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default => "0",
 		labels    => {
-				"-1" => "max att.",
+				"-1" => "max",
 		},
-                help_text => "The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max attempts\" is specified here then child problems will only be available after a student runs out of attempts.",
+                help_text => "The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max\" is specified here then child problems will only be available after a student runs out of attempts.",
 	},
 	counts_parent_grade  => {
 		name      => "Counts for Parent",
