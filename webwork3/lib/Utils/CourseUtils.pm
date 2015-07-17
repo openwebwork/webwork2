@@ -18,7 +18,7 @@ our @EXPORT_OK = qw(getCourseSettings getAllSets getAllUsers);
 sub getAllSets {
 
 	my @setNames = vars->{db}->listGlobalSets;
-  	my @sets = map { getGlobalSet($_) } @setNames;
+  	my @sets = map { getGlobalSet(vars->{db},vars->{ce},$_) } @setNames;
 	return \@sets;
 }
 

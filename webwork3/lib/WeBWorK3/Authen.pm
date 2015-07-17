@@ -20,7 +20,7 @@ use base qw (WeBWorK::Authen);
 use strict;
 use warnings;
 
-use WeBWorK::GeneralUtils qw/writeCourseLog runtime_use/;
+use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 
 #
 #################################################################################

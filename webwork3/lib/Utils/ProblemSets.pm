@@ -4,32 +4,51 @@
 package Utils::ProblemSets;
 use base qw(Exporter);
 use Dancer ':syntax';
-use Data::Dump qw/dump/;
 use List::Util qw(first);
 use List::MoreUtils qw/indexes/;
 use Data::Compare; 
-use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog/;
-use Utils::Convert qw/convertObjectToHash/;
+use Utils::GeneralUtils qw/timeToUTC timeFromUTC/;
 use Array::Utils qw(array_minus);
 
-our @EXPORT    = ();
-our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
-        createNewUserProblem getGlobalSet record_results renumber_problems updateProblems);
-        
-## This should only be in one spot.        
+our @time_props = qw/due_date reduced_scoring_date open_date answer_date/;
+
+our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible 
+                            enable_reduced_scoring assignment_type description attempts_per_version time_interval 
+                            versions_per_interval version_time_limit version_creation_time version_last_attempt_time 
+                            problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip 
+                            relax_restrict_ip restricted_login_proctor hide_hint/;
+                            
+our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date 
+                            answer_date visible enable_reduced_scoring assignment_type description restricted_release 
+                            restricted_status attempts_per_version time_interval versions_per_interval version_time_limit 
+                            version_creation_time problem_randorder version_last_attempt_time problems_per_page 
+                            hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip 
+                            restricted_login_proctor hide_hint/;
+our @problem_props = qw/problem_id flags value max_attempts status source_file/;
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
-our @problem_props = qw/set_id problem_id source_file value max_attempts showMeAnother showMeAnotherCount flags/;
+
 our @user_problem_props = qw/user_id set_id problem_id source_file value max_attempts showMeAnother 
                 showMeAnotherCount flags problem_seed status attempted last_answer num_correct num_incorrect 
                 sub_status flags/;
 
+
+our @EXPORT    = ();
+our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
+        createNewUserProblem getGlobalSet record_results renumber_problems updateProblems shiftTime 
+        unshiftTime putGlobalSet putUserSet 
+        @time_props @set_props @user_set_props @problem_props @boolean_set_props);
+        
 sub getGlobalSet {
-    my ($setName) = @_;
-    my $set = vars->{db}->getGlobalSet($setName);
+    my ($db,$ce,$setName) = @_;
+    my $set = $db->getGlobalSet($setName);
     my $problemSet = convertObjectToHash($set,\@boolean_set_props);
-    my @users = vars->{db}->listSetUsers($setName);
-    my @problems = vars->{db}->getAllGlobalProblems($setName);
+    for my $prop (@time_props) {
+        $problemSet->{$prop} = timeFromUTC($problemSet->{$prop},$ce->{siteDefaults}{timezone});
+    }
+    my @users = $db->listSetUsers($setName);
+    my @problems = $db->getAllGlobalProblems($setName);
     for my $problem (@problems){
         $problem->{_id} = $problem->{set_id} . ":" . $problem->{problem_id};  # this helps backbone on the client side
     }
@@ -39,6 +58,66 @@ sub getGlobalSet {
     $problemSet->{_id} = $setName; # this is needed so that backbone works with the server. 
 
     return $problemSet;
+}
+
+
+###
+#
+#  This puts/updates the global set with properties in the hash ref $set
+#
+###
+
+sub putGlobalSet {
+    my ($db,$ce,$set) = @_;
+    
+    my $set_from_db = $db->getGlobalSet($set->{set_id});
+    convertBooleans($set,\@boolean_set_props);
+    for my $key (@set_props){
+        $set_from_db->{$key} = $set->{$key} if defined($set->{key});
+    }
+    
+    for my $prop (@time_props){
+        $set_from_db->{$prop} = timeToUTC($set_from_db->{$prop},$ce->{siteDefaults}{timezone});
+    }
+    
+    return  $db->putGlobalSet($set_from_db);
+}
+
+###
+#
+#  This puts/updates the user set with properties in the hash ref $set
+#
+###
+
+
+sub putUserSet {
+    my ($db,$ce,$set) = @_;
+
+    # get the global problem set to determine if the value has changed
+    my $globalSet = vars->{db}->getGlobalSet(params->{set_id});
+    my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
+    
+    convertBooleans($set,\@boolean_set_props);
+    for my $key (@user_set_props) {
+        my $globalValue = $globalSet->{$key} || "";
+        # check to see if the value differs from the global value.  If so, set it else delete it. 
+        $userSet->{$key} = params->{$key} if defined(params->{$key});
+        delete $userSet->{$key} if $globalValue eq $userSet->{$key} && $key ne "set_id";
+
+    }
+    for my $prop (@time_props){
+        $userSet->{$prop} = timeToUTC($userSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($userSet->{$prop});
+    }
+    
+    $db->putUserSet($userSet);
+
+     my $mergedSet = $db->getMergedSet(params->{user_id},params->{set_id});
+     
+     for my $prop (@time_props){
+        $mergedSet->{$prop} = timeFromUTC($userSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
+    }
+
+    return convertObjectToHash($mergedSet,\@boolean_set_props);
 }
 
 ###
@@ -490,5 +569,6 @@ sub renumber_problems {
     
     return;
 }
+
 
 1;

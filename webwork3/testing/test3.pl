@@ -1,14 +1,31 @@
 #!/local/bin/perl
 
-my $string = "/Library/subjects/Calculus - single variable/chapters/Applications of differentiation/sections/Increasing/decreasing functions and local extrema/problems";
-my $re = m/\/Library\/subjects\/(.+)\/chapters\/(.+)\/sections\/(.+)\/problems/;
+use DateTime; 
+use DateTime::TimeZone;
+use feature qw/say/;
+use Data::Dump;
 
-my $re2 = m/\/Library\/subjects/;
-my $string2 = "/Library/subjects";
+use Utils::GeneralUtils qw/timeToUTC/;
 
-if ($string =~ $re) {
-	print "yeah!";
+#my $dt = DateTime->new(year=>2015,month=>7,day=>17,hour=>9,minute=>45,second=>0,time_zone=>"America/New_York");
 
-} else {
-	print "nae!";
-}
+my $dt = DateTime->now; 
+$dt->time_zone("UTC");
+#my $start_time = 1430020140;
+
+my $time = timeToUTC($dt->epoch,"America/New_York");
+
+#my $new_time = DateTime->from_epoch(epoch=>$start_time,time_zone=>"America/New_York");
+#
+#say $new_time->mdy("/") . " " . $new_time->hms;
+#
+##dd($new_time);
+#
+#say $otime = DateTime->from_epoch(epoch=>$start_time);
+#say $otime->mdy("/") . " " . $otime->hms;
+#say $new_time->epoch;
+
+
+my $utc = DateTime::TimeZone->new( name => "UTC");
+dd $utc;
+

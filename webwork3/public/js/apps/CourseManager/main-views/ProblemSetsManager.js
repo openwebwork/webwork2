@@ -46,7 +46,6 @@ var ProblemSetsManager = MainView.extend({
             "table-changed": function(){  // I18N
                 self.$(".num-sets").html(self.problemSetTable.getRowCount() + " of " + self.problemSets.length 
                                          + " sets shown.");
-                self.update();
             }
         });
         
@@ -107,7 +106,7 @@ var ProblemSetsManager = MainView.extend({
     update: function (){
         util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"), remove_class: "hidden",
                 els: this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")})
-        this.problemSetTable.refreshTable();
+        this.problemSetTable.updateTable();
         return this;
     },
     bindings: { 

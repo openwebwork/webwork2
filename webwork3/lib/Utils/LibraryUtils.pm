@@ -6,7 +6,7 @@ use base qw(Exporter);
 use Path::Class qw/file dir/;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
-use WeBWorK::GeneralUtils qw(readDirectory);
+use WeBWorK::Utils qw(readDirectory);
 use WeBWorK3::PG::Local
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);

@@ -172,11 +172,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             // hide this for sets in which the reduced_scoring date should not be shown. 
             if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring") 
                     && ! model.show_reduced_scoring){ 
-                console.log(model);
-                console.log(model.show_reduced_scoring);
-                console.log(model.get("enable_reduced_scoring"));
-                console.log(options.observe);
-                console.log("here");
                 $el.html("");
             } else {
                 var tmpl = _.template($("#edit-date-time-template").html());

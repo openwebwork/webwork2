@@ -41,7 +41,7 @@ use WeBWorK::Constants;
 use Dancer;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
-use WeBWorK::GeneralUtils qw(readFile writeTimingLogEntry);
+use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 use WeBWorK::Debug;
 
 sub new_helper {
@@ -257,7 +257,7 @@ sub new_helper {
 			head_text  => "", 
 			post_header_text => "",
 			body_text  => <<EOF,
-WeBWorK::GeneralUtils::readFile($sourceFilePath) says: 
+WeBWorK::Utils::readFile($sourceFilePath) says: 
 $@
 EOF
 			answers    => {},

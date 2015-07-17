@@ -14,8 +14,12 @@ use File::Slurp qw/write_file/;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use Utils::LibraryUtils qw/render/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
-use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem renumber_problems updateProblems/;
+use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem 
+                            renumber_problems updateProblems getGlobalSet putGlobalSet putUserSet
+                            @time_props @set_props @boolean_set_props @user_set_props @problem_props/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
+use Utils::GeneralUtils qw/timeToUTC timeFromUTC/;
+
 use Array::Utils qw(array_minus); 
 use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
 use Utils::CourseUtils qw/getCourseSettings/;
@@ -23,10 +27,8 @@ use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;
 use List::Util qw/first max/;
 
-our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time version_last_attempt_time problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
-our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring assignment_type description restricted_release restricted_status attempts_per_version time_interval versions_per_interval version_time_limit version_creation_time problem_randorder version_last_attempt_time problems_per_page hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip restricted_login_proctor hide_hint/;
-our @problem_props = qw/problem_id flags value max_attempts status source_file/;
-our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
+
+
 
 ###
 #  return all problem sets (as objects) for course *course_id* 
@@ -38,20 +40,20 @@ our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_
 get '/courses/:course_id/sets' => sub {
 
     checkPermissions(10,session->{user});
-
-
     my @globalSetNames = vars->{db}->listGlobalSets;
-    my @globalSets = vars->{db}->getGlobalSets(@globalSetNames);
-
-    for my $set (@globalSets){
-        my @globalProblems = vars->{db}->getAllGlobalProblems($set->{set_id});
-        $set->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
-        my @userNames = vars->{db}->listSetUsers($set->{set_id});
-        $set->{assigned_users} = \@userNames;
-        $set->{_id} = $set->{set_id};
-    }
+    my @allGlobalSets = map { getGlobalSet(vars->{db},vars->{ce},$_)} @globalSetNames; 
     
-    return convertArrayOfObjectsToHash(\@globalSets,\@boolean_set_props);
+# my @globalSets = vars->{db}->getGlobalSets(@globalSetNames);
+#    for my $set_id (@globalSetNames){
+#        
+#        my @globalProblems = vars->{db}->getAllGlobalProblems($set->{set_id});
+#        $set->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
+#        my @userNames = vars->{db}->listSetUsers($set->{set_id});
+#        $set->{assigned_users} = \@userNames;
+#        $set->{_id} = $set->{set_id};
+#    }
+    
+    return convertArrayOfObjectsToHash(\@allGlobalSets,\@boolean_set_props);
 };
 
 
@@ -66,20 +68,22 @@ get '/courses/:course_id/sets/:set_id' => sub {
 
     checkPermissions(10,session->{user});
 
-    my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
-    my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
-    my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
+    my $globalSet = getGlobalSet(vars->{db},vars->{ce},params->{set_id});
 
-    my $setResults = convertObjectToHash($globalSet,\@boolean_set_props);
+#    my $globalSet = vars->{db}->getGlobalSet(param('set_id'));
+#    my @userNamesFromDB = vars->{db}->listSetUsers(params->{set_id});
+#    my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
+#
+#    my $setResults = convertObjectToHash($globalSet,\@boolean_set_props);
+#
+#    $setResults->{assigned_users} = \@userNamesFromDB;
+#    $setResults->{problems} = convertArrayOfObjectsToHash(\@problemsFromDB);
 
-    $setResults->{assigned_users} = \@userNamesFromDB;
-    $setResults->{problems} = convertArrayOfObjectsToHash(\@problemsFromDB);
-
-    return $setResults;
+    return convertObjectToHash($globalSet);
 };
 
 ####
-#  create a new problem set *set_id* for course *course_id*
+#  create a new problem set or update an existing problem set *set_id* for course *course_id*
 #
 #  any property can be set by assigning that property a value
 #
@@ -88,69 +92,34 @@ get '/courses/:course_id/sets/:set_id' => sub {
 #  permission > Student
 ##
 
-post '/courses/:course_id/sets/:set_id' => sub {
-    checkPermissions(10,session->{user});
-
-  # call validator directly instead
-
-    if (params->{set_id} !~ /^[\w\_.-]+$/) {
-        send_error("The set name must only contain A-Za-z0-9_-.",403);
-    } 
-
-    send_error("The set name: " . param('set_id'). " already exists.",404) if (vars->{db}->existsGlobalSet(param('set_id')));
-
-    my $set = vars->{db}->newGlobalSet();
-    for my $key (@set_props) {
-        $set->{$key} = params->{$key} if defined(params->{$key});
-    }
-
-    vars->{db}->addGlobalSet($set);
-
-    for my $user(@{params->{assigned_users}}){
-        addUserSet($user,params->{set_id});
-    }
-
-    addGlobalProblems(params->{set_id},params->{problems});
-    addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
-
-    my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
-
-    my $returnSet = convertObjectToHash($set,\@boolean_set_props);
 
 
-    $returnSet->{assigned_users} = params->{assigned_users};
-    $returnSet->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
-    $returnSet->{_id} = params->{set_id};
+any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
-    return $returnSet;
-
-
-};
-
-put '/courses/:course_id/sets/:set_id' => sub {
-
-    debug 'in put /courses/:course_id/sets/:set_id';
+    debug 'in put or post /courses/:course_id/sets/:set_id';
     
     checkPermissions(10,session->{user});
 
-    send_error("The set name: " . param('set_id'). " does not exist.",404)
-        if (! vars->{db}->existsGlobalSet(params->{set_id})); 
-
-
     
-    ####
-    #
-    # set all the parameters sent from the client as new properties.
-    #
-    ##
+
+    # set all of the new parameters sent from the client
     my %allparams = params;
-    my $set =  vars->{db}->getGlobalSet(params->{set_id}); 
-    my $setFromClient = convertBooleans(\%allparams,\@boolean_set_props);
-    for my $key (@set_props){
-        $set->{$key} = $setFromClient->{$key};
-    }
-    my $result = vars->{db}->putGlobalSet($set);
+    if(request->is_post()){
+        if (params->{set_id} !~ /^[\w\_.-]+$/) {
+            send_error("The set name must only contain A-Za-z0-9_-.",403);
+        } 
 
+        send_error("The set name: " . param('set_id'). " already exists.",404) if (vars->{db}->existsGlobalSet(param('set_id')));
+        my $set = vars->{db}->newGlobalSet();
+        $set->{set_id} = params->{set_id};
+        vars->{db}->addGlobalSet($set);
+    } else {
+        send_error("The set name: " . param('set_id'). " does not exist.",404)
+        if (! vars->{db}->existsGlobalSet(params->{set_id})); 
+    }
+        
+    putGlobalSet(vars->{db},vars->{ce},\%allparams);
+    
     ##
     #
     #  Take care of the assigned users
@@ -169,8 +138,6 @@ put '/courses/:course_id/sets/:set_id' => sub {
     }
 
     # handle the global problems. 
-
-    
     
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -191,19 +158,9 @@ put '/courses/:course_id/sets/:set_id' => sub {
         $prob->{_id} = $prob->{set_id} . ":" . $prob->{problem_id};  # this helps backbone on the client side
     }
 
-    
-    
-    
-    my $setFromDB = vars->{db}->getGlobalSet(params->{set_id});
+    my $returnSet = getGlobalSet(vars->{db},vars->{ce},params->{set_id});
 
-    my $returnSet = convertObjectToHash($setFromDB,\@boolean_set_props);
-
-
-    $returnSet->{assigned_users} = params->{assigned_users};
-    $returnSet->{problems} = convertArrayOfObjectsToHash(\@globalProblems);
-    $returnSet->{_id} = params->{set_id};
-
-    return $returnSet;
+    return convertObjectToHash($returnSet);
 
 };
 
@@ -258,6 +215,9 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
 
     foreach my $user_id (@userIDs){
         my $userSet = convertObjectToHash(vars->{db}->getMergedSet($user_id,params->{set_id}),\@boolean_set_props);
+        for my $prop (@time_props) {
+            $userSet->{$prop} = timeToUTC($userSet->{$prop},vars->{ce}->{siteDefaults}{timezone});
+        }
         $userSet->{_id} = $user_id;
         push(@sets,$userSet);
     }
@@ -496,6 +456,9 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
             unless vars->{db}->getUser(params->{user_id});
 
     # check to see if the user has already been assigned and skip the addition if exists already.
+
+    my %allparams = request->params; 
+    return putUserSet(vars->{db},vars->{ce},\%allparams);
 
     my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
     send_error("The user " . params->{user_id} . " has not been assigned problem set " . params->{set_id} . ".")
