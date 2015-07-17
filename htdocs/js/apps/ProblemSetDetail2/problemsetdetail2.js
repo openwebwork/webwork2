@@ -311,32 +311,48 @@ function render(id) {
     ro.processAnswers = 0;
     var displayMode = $('#problem_displaymode').val();
     ro.displayMode = displayMode;
-    $.post(basicWebserviceURL, ro, function (data) {
-	var response = data;
-	// Give nicer file not found error
-	if (/No such file or directory at/i.test(response) ||
-	    /Can\'t read file/i.test(response)) {
- 	    response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('No Such File or Directory!');
-	}
-	if (/"server_response":"","result_data":""/i.test(response)) {
-	    response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('There was an error rendering this problem!');
-	}
-
-	$('#psr_render_area_'+id).html(response);
-	// run typesetter depending on the displaymode
-	if(displayMode=='MathJax')
-	    MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
-	if(displayMode=='jsMath')
-	    jsMath.ProcessBeforeShowing(el);
-	
-	if(displayMode=='asciimath') {
-	    //processNode(el);
-	    translate();
-	}
-	if(displayMode=='LaTeXMathML') {
-	    AMprocessNode(document.getElementsByTagName("body")[0], false);
-	}
-	//console.log(data);
-    });
+  $.ajax({type:'post',
+	  url: basicWebserviceURL,
+	  data: ro,
+	  timeout: 10000, //milliseconds
+	  success: function (data) {
+	      if (data.match(/WeBWorK error/)) {
+		  console.log(data)
+		  var error = data.match(/(Errors:[\s\S]*End Errors)/);
+		  if (error) {
+		      alert(error[1]);
+		  }
+	      }
+	      var response = data;
+	      // Give nicer file not found error
+	      if (/No such file or directory at/i.test(response) ||
+		  /Can\'t read file/i.test(response)) {
+ 		  response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('No Such File or Directory!');
+	      }
+	      if (/"server_response":"","result_data":""/i.test(response)) {
+		  response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('There was an error rendering this problem!');
+	      }
+	      
+	      $('#psr_render_area_'+id).html(response);
+	      // run typesetter depending on the displaymode
+	      if(displayMode=='MathJax')
+		  MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+	      if(displayMode=='jsMath')
+		  jsMath.ProcessBeforeShowing(el);
+	      
+	      if(displayMode=='asciimath') {
+		  //processNode(el);
+		  translate();
+	      }
+	      if(displayMode=='LaTeXMathML') {
+		  AMprocessNode(document.getElementsByTagName("body")[0], false);
+	      }
+	      //console.log(data);
+ 	  },
+	  error: function (data) {
+	      alert(basicWebserviceURL+': '+data.statusText);
+	  },
+	 });
+    
     return false;
 }
