@@ -1141,10 +1141,10 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     $headerContent = read_file_content($setHeaderFile);
     $hardcopyHeaderContent = read_file_content($hardcopyHeaderFile);
     
-    my $mergedSet = $db->getMergedSet(session->{user},params->{set_id});
+    my $mergedSet = vars->{db}->getMergedSet(session->{user},params->{set_id});
      
      for my $prop (@time_props){
-        $mergedSet->{$prop} = timeFromUTC($mergedSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
+        $mergedSet->{$prop} = timeFromUTC($mergedSet->{$prop},vars->{ce}->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
      }
     
     my $renderParams = {

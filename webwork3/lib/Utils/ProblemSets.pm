@@ -97,6 +97,7 @@ sub getUserSet{
      for my $prop (@time_props){
         $mergedSet->{$prop} = timeFromUTC($mergedSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
      }
+     $mergedSet->{_id} = $mergedSet->{set_id} . ":" . $mergedSet->{user_id};
 
     return convertObjectToHash($mergedSet,\@boolean_set_props);
 

@@ -647,7 +647,8 @@ var AssignUsersView = Backbone.View.extend({
             //this.collection is a collection of models based on user sets.  The following will also pick information
             // from the users that is useful for this view. 
             this.collection.each(function(model){
-                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation","first_name","last_name"));  
+                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation","first_name","last_name")
+                            ,{silent: true});  
             });
             this.collection.on({change: function(model){
                 self.userSetList.findWhere({user_id: model.get("user_id")})
