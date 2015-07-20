@@ -231,7 +231,7 @@ if ($UNIT_TESTS_ON) {
 	};
 	
 	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
+	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login");
 	
 # Update the credentials -- in particular the session_key may have changed.
  	$self->{session_key} = $authen->{session_key};

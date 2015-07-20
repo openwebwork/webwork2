@@ -191,14 +191,18 @@ sub renderProblem {
 
 ###########################################
 # Determine the method for accessing data   ???? what was this
+# these are not used -- but something like this was probably
+# meant to determine whether the problem source was being supplied
+# directly (as a kind of HERE document) or whether only the path to 
+# the problem source was being supplied
 ###########################################
-	my $problem_source_access    =   $rh->{problem_source_access};
+	# my $problem_source_access    =   $rh->{problem_source_access};
 	# One of
 	#	source_from_course_set_problem
 	#   source_from_source_file_path
 	#   source_from_request
 	
-	my $data_access              =   $rh->{data_access};
+	# my $data_access              =   $rh->{data_access};
 	# One of 
 	#   data_from_course
 	#   data_from_request
@@ -375,7 +379,7 @@ sub renderProblem {
 ##################################################
 	my $translationOptions = {
 		displayMode     => $rh->{envir}->{displayMode},
-		showHints	    => $rh->{envir}->{showHints},
+		showHints	=> $rh->{envir}->{showHints},
 		showSolutions   => $rh->{envir}->{showSolutions},
  		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
  		processAnswers  => 1,
@@ -385,6 +389,7 @@ sub renderProblem {
         # if reference is not defined then the path is obtained 
         # from the problem object.
         permissionLevel => $rh->{envir}->{permissionLevel} || 0,
+	effectivePermissionLevel => $rh->{envir}->{effectivePermissionlevel} || $rh->{envir}->{permissionLevel} || 0,
 	};
 	
 	my $formFields = $rh->{envir}->{inputs_ref};
@@ -478,7 +483,7 @@ sub renderProblem {
 		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
 	
-	$out2->{answers} = xml_filter($out2->{answers}); # check this -- it might not be working correctly
+	$out2 = xml_filter($out2); # check this -- it might not be working correctly
 	##################
 	close(DEBUGCODE) if $debugXmlCode;
 	###################
