@@ -1,35 +1,48 @@
 #!/usr/bin/env perl
 
 package WeBWorK3;
-use Dancer;
+use Dancer ':syntax';
 use Dancer::Plugin::Database;
+use Data::Dump qw/dd/; 
 
 # link to WeBWorK code libraries
-use lib config->{webwork_dir}.'/lib';
-use lib config->{pg_dir}.'/lib';
+#use lib config->{webwork_dir}.'/lib';
+#use lib config->{pg_dir}.'/lib';
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK3::Authen;
+#
+### note: Routes::Authenication must be passed first
+#use Routes::Authentication qw/buildSession setCourseEnvironment setCookie/; 
+use Path::Class;
+use File::Find::Rule;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use Utils::LibraryUtils qw/list_pg_files searchLibrary getProblemTags render/;
+use Utils::ProblemSets qw/record_results/;
+use WeBWorK::DB::Utils qw(global2user);
+use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
+use WeBWorK::PG::Local;
+use WeBWorK::Constants;
 
-## note: Routes::Authenication must be passed first
-use Routes::Authentication qw/buildSession setCourseEnvironment setCookie/; 
-use Routes::Course;
-use Routes::Library;
-use Routes::ProblemSets;
-use Routes::User;
-use Routes::Settings;
-use Routes::PastAnswers;
+load 'Routes/Authentication.pm';
+load 'Routes/Course.pm';
+load 'Routes/Library.pm';
+#load 'Routes/ProblemSets.pm';
+#load 'Routes/User.pm';
+#load 'Routes/Settings.pm';
+#load 'Routes/PastAnswers.pm';
 
 set serializer => 'JSON';
 
+
 #hook 'before' => sub {
-
-    # for my $key (keys(%{request->params})){
-    # 	my $value = defined(params->{$key}) ? params->{$key} : ''; 
-    # 	debug($key . " : " . $value);
-    # } 
-
+#
+#     for my $key (keys(%{request->params})){
+#     	my $value = defined(params->{$key}) ? params->{$key} : ''; 
+#     	debug($key . " : " . to_dumper($value));
+#     } 
+#
 #};
 
 ## right now, this is to help handshaking between the original webservice and dancer.  
@@ -55,6 +68,7 @@ post '/handshake' => sub {
 post '/courses/:course_id/login' => sub {
 
 	my $authen = new WeBWorK3::Authen(vars->{ce});
+    
 	$authen->set_params({
 			user => params->{user},
 			password => params->{password},
@@ -62,6 +76,7 @@ post '/courses/:course_id/login' => sub {
 		});
 
 	my $result = $authen->verify();
+    
 
 	if($result){
 		my $key = $authen->create_session(params->{user});
@@ -147,3 +162,5 @@ sub checkCourse {
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 
 }
+
+1;

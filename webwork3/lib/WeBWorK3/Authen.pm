@@ -360,6 +360,12 @@ sub check_session {
 	return (1, $keyMatches, $timestampValid);
 }
 
+sub maybe_kill_cookie {
+	my $self = shift;
+	#$self->killCookie(@_);
+}
+
+
 #
 #
 #################################################################################

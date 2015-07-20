@@ -4,12 +4,10 @@
 #
 ##
 
-package Routes::Authentication;
+#package Routes::Authentication;
 
 use strict;
 use warnings;
-use Dancer ':syntax';
-use Dancer::Plugin::Database;
 use WeBWorK::Constants;
 
 use base qw(Exporter);

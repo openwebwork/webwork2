@@ -4,24 +4,22 @@
 #
 ##
 
-package Routes::Course;
+#package Routes::Course;
 
-use strict;
-use warnings;
-use Dancer ':syntax';
-use Dancer::Plugin::Ajax; 
+#use strict;
+#use warnings;
+##use Dancer ':syntax';
+##use Dancer::Plugin::Ajax; 
 use Dancer::FileUtils qw /read_file_content path/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
-# use Utils::CourseUtils qw/getCourseSettings/;
-use Routes::Authentication qw/buildSession checkPermissions setCookie/;
+use Routes::Authentication qw/buildSession checkPermissions setCookie setCourseEnvironment/;
 
 
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
-
 
 ###
 #
@@ -33,6 +31,12 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
  
 
 get '/courses' => sub {
+
+    debug 'in GET /courses/';
+
+    setCourseEnvironment("");
+    
+    #debug to_dumper(vars->{ce});
 
 	my @courses = listCourses(vars->{ce});
 
@@ -120,8 +124,10 @@ post '/courses/:new_course_id' => sub {
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
 	 	webwork_dir         => vars->{ce}->{webwork_dir},
-		courseName => params->{course_id},
+		courseName => params->{new_course_id},
 	});
+    
+    debug to_dumper($ce2);
 
 
 	# return an error if the course already exists

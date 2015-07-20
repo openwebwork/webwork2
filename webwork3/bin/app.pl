@@ -156,4 +156,4 @@ use WeBWorK3;
 #}
 
 
-Dancer->dance;
+dance;
