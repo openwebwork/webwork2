@@ -3,7 +3,7 @@ $db->addUser($db->newUser(user_id=>"admin", first_name=>"Prof", last_name=>"Admi
 
 $db->addPassword($db->newPassword(user_id=>"admin", password=>crypt("admin", "dc")));
 
-$db->addPermissionLevel($db->newPermissionLevel(user_id=>"admin", permission=>"10"));
+$db->addPermissionLevel($db->newPermissionLevel(user_id=>"admin", permission=>"20"));
 
 
 exit;
