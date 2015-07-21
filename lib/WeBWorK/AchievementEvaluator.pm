@@ -53,6 +53,11 @@ sub checkForAchievements {
     my $isGatewaySet = ( $set->assignment_type =~ /gateway/ ) ? 1 : 0;
     my $isJitarSet = ( $set->assignment_type eq 'jitar' ) ? 1 : 0;
 
+    # If its a gateway set get the current version
+    if ($isGatewaySet) {
+	$set = $db->getSetVersion($user_id, $set_id, $options{setVersion});
+    } 
+    
     # If no global data then initialize
     if (not $globalUserAchievement) {
 	$globalUserAchievement = $db->newGlobalUserAchievement();
