@@ -26,7 +26,6 @@ sub convertObjectToHash {
 
     $boolean_props = [] unless defined($boolean_props);
 
-
     for my $key (keys %{$obj}){
         if(grep(/^$key$/,@{$boolean_props})){            
             $s->{$key} = $obj->{$key} ? JSON::true : JSON::false;    
@@ -43,12 +42,17 @@ sub convertObjectToHash {
 
 sub convertBooleans {
     my ($obj,$boolean_props) = @_;
-
-    for my $key (@{$boolean_props}){
-            $obj->{$key} = $obj->{$key} ? 1: 0;
+    
+    my $s = {}; 
+    
+    for my $key (keys %{$obj}){
+        if(grep(/^$key$/,@{$boolean_props})){            
+            $s->{$key} = $obj->{$key} ?1: 0;
+        } else {
+            $s->{$key} = $obj->{$key};
+        }
     }
-
-    return $obj;
+    return $s;
 }
 
 

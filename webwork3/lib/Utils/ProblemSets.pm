@@ -74,15 +74,15 @@ sub putGlobalSet {
     
     my $set_from_db = $db->getGlobalSet($set->{set_id});
     convertBooleans($set,\@boolean_set_props);
+    
     for my $key (@set_props){
-        $set_from_db->{$key} = $set->{$key} if defined($set->{key});
+        $set_from_db->{$key} = $set->{$key} if defined($set->{$key});
     }
     
     for my $prop (@time_props){
         $set_from_db->{$prop} = timeToUTC($set_from_db->{$prop},$ce->{siteDefaults}{timezone})
                 if ($set_from_db->{$prop} =~ /^d+$/);
     }
-    
     return  $db->putGlobalSet($set_from_db);
 }
 

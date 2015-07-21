@@ -11,8 +11,8 @@ set serializer => 'JSON';
 
 
 # link to WeBWorK code libraries
-#use lib config->{webwork_dir}.'/lib';
-#use lib config->{pg_dir}.'/lib';
+use lib config->{webwork_dir}.'/lib';
+use lib config->{pg_dir}.'/lib';
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
@@ -65,7 +65,7 @@ load 'Routes/PastAnswers.pm';
 
 
 
-
+#
 #hook 'before' => sub {
 #
 #     for my $key (keys(%{request->params})){

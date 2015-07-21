@@ -28,7 +28,7 @@ route_exists [POST => '/courses/'. $new_course_name ], "POST /webwork3/courses/"
 $resp = dancer_response(GET=>'/courses/'. $new_course_name, {headers=>HTTP::Headers->new( 'X-Requested-With' => 'XMLHttpRequest')});
 $obj = from_json $resp->{content};
 
-my $course_exists = $obj->{message} eq "Course exists."; 
+my $course_exists = ($obj->{message} ||"") eq "Course exists."; 
 
 if($course_exists) {
     is($obj->{message}, "Course exists.", "The course " .$new_course_name . " exists."); 
