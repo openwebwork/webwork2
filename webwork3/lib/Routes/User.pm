@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
-use Routes::Authentication qw/checkPermissions/;
+use Utils::Authentication qw/checkPermissions/;
 use WeBWorK::Utils qw/cryptPassword/;
 
 our @user_props = qw/first_name last_name student_id user_id email_address permission status 

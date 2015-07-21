@@ -19,8 +19,12 @@ package WeBWorK3::Authen;
 use base qw (WeBWorK::Authen);
 use strict;
 use warnings;
+use Carp::Always;
+use Dancer ':syntax';
 
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;
+
+our $GENERIC_ERROR_MESSAGE = "";  # define in new
 
 #
 #################################################################################
@@ -119,7 +123,7 @@ sub new {
 	};
 	# weaken $self -> {r};
 	#initialize
-	# $GENERIC_ERROR_MESSAGE = $r->maketext("Invalid user ID or password.");
+	$GENERIC_ERROR_MESSAGE = "Invalid user ID or password.";
 	bless $self, $class;
 	return $self;
 }
@@ -178,6 +182,8 @@ sub checkPassword {
 sub verify {
 
 	my $self = shift;
+    
+
 
 	if (! ($self-> request_has_data_for_this_verification_module)) {
 		return ( $self -> call_next_authen_method());
@@ -189,6 +195,8 @@ sub verify {
 	
 	$self->{was_verified} = $result ? 1 : 0;
 	
+    
+    
 	if ($self->can("site_fixup")) {
 		$self->site_fixup;
 	}
@@ -227,12 +235,12 @@ sub do_verify {
 	my $self = shift;
 	my $ce = $self->{ce};
 	my $db = $self->{db};
-	
+    
 	return 0 unless $db;
 	
 	return 0 unless $self->get_credentials;
 
-
+    
 #	return 0 unless $self->check_user;
 	
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
@@ -241,7 +249,84 @@ sub do_verify {
 	} else {
 		return $self->verify_normal_user;
 	}
+    
 }
+
+sub verify_practice_user {
+	my $self = shift;
+	my $ce = $self->{ce};
+	
+	my $user_id = $self->{user_id};
+	my $session_key = $self->{session_key};
+	
+	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
+	#debug("sessionExists='". $sessionExists.  "' keyMatches='". $keyMatches.  "' timestampValid='". $timestampValid. "'");
+	
+	if ($sessionExists) {
+		if ($keyMatches) {
+			if ($timestampValid) {
+				return 1;
+			} else {
+				$self->{session_key} = $self->create_session($user_id);
+				$self->{initial_login} = 1;
+				return 1;
+			}
+		} else {
+			if ($timestampValid) {
+				my $debugPracticeUser = $ce->{debugPracticeUser};
+				if (defined $debugPracticeUser and $user_id eq $debugPracticeUser) {
+					$self->{session_key} = $self->create_session($user_id);
+					$self->{initial_login} = 1;
+					return 1;
+				} else {
+					$self->{log_error} = "guest account in use";
+					$self->{error} = "That guest account is in use.";
+					return 0;
+				}
+			} else {
+				$self->{session_key} = $self->create_session($user_id);
+				$self->{initial_login} = 1;
+				return 1;
+			}
+		}
+	} else {
+		$self->{session_key} = $self->create_session($user_id);
+		$self->{initial_login} = 1;
+		return 1;
+	}
+}
+
+sub verify_normal_user {
+	my $self = shift;
+	
+	my $user_id = $self->{user_id};
+	my $session_key = $self->{session_key};
+	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
+	#debug("sessionExists='". $sessionExists. "' keyMatches='".$keyMatches. "' timestampValid='". $timestampValid. "'");
+	
+	if ($sessionExists and $keyMatches and $timestampValid) {
+		return 1;
+	} else {
+		my $auth_result = $self->authenticate;
+		
+		if ($auth_result > 0) {
+			$self->{session_key} = $self->create_session($user_id);
+			$self->{initial_login} = 1;
+			return 1;
+		} elsif ($auth_result == 0) {
+			$self->{log_error} = "authentication failed";
+			$self->{error} = $GENERIC_ERROR_MESSAGE;
+			return 0;
+		} else { # ($auth_result < 0) => required data was not present
+			if ($keyMatches and not $timestampValid) {
+				$self->{log_error} = "inactivity timeout";
+				$self->{error} .= "Your session has timed out due to inactivity. Please log in again.";
+			}
+			return 0;
+		}
+	}
+}
+
 #
 ### pass all of the parameters as a reference to a has
 #
@@ -342,8 +427,8 @@ sub check_session {
 	my ($self, $userID, $possibleKey, $updateTimestamp) = @_;
 	my $ce = $self->{ce};
 	my $db = $self->{db};
-
 	my $Key = $db->getKey($userID); # checked
+
 	return 0 unless defined $Key;
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
 	

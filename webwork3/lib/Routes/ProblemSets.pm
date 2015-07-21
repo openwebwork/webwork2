@@ -21,7 +21,7 @@ use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Utils::GeneralUtils qw/timeToUTC timeFromUTC/;
 
 use Array::Utils qw(array_minus); 
-use Routes::Authentication qw/checkPermissions setCourseEnvironment/;
+use Utils::Authentication qw/checkPermissions setCourseEnvironment/;
 use Utils::CourseUtils qw/getCourseSettings/;
 use Dancer::Plugin::Database;
 use Dancer::Plugin::Ajax;

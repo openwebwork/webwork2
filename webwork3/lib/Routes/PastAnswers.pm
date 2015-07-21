@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use Dancer ':syntax';
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Routes::Authentication qw/checkPermissions/;
+use Utils::Authentication qw/checkPermissions/;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 

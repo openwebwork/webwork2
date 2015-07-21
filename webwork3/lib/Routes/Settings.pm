@@ -11,7 +11,7 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 use strict;
 use warnings;
 use Utils::CourseUtils qw/getCourseSettings/;
-use Routes::Authentication qw/checkPermissions/;
+use Utils::Authentication qw/checkPermissions/;
 use Dancer ':syntax';
 
 ####

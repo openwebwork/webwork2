@@ -7,7 +7,7 @@ use Path::Class qw/file dir/;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use WeBWorK::Utils qw(readDirectory);
-use WeBWorK3::PG::Local
+use WeBWorK3::PG::Local;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
 our @answerFields = qw/preview_latex_string done original_student_ans preview_text_string ans_message 
@@ -25,7 +25,7 @@ my %ignoredir = (
 ###
 
 sub render {
-	my $renderParams = shift;
+	my ($ce,$renderParams) = @_;
 	my @anskeys = split(";",params->{answer_fields} || ""); 
 	
 	$renderParams->{formFields}= {};
@@ -36,8 +36,8 @@ sub render {
     $renderParams->{formFields}->{effectiveUser} = params->{effectiveUser} || session->{user};
     
 	# remove any pretty garbage around the problem
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 
 
 	my $translationOptions = {
@@ -51,7 +51,7 @@ sub render {
     
     
 	my $pg = new WeBWorK3::PG::Local(
-		vars->{ce},
+		$ce,
 		$renderParams->{user},
 		params->{session_key},
 		$renderParams->{set},
@@ -523,3 +523,5 @@ sub munge_pg_file_path {
 	# set.def file.
 	return($pg_path);
 }
+
+1;

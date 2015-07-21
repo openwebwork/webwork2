@@ -3,9 +3,10 @@
 
 package Utils::ProblemSets;
 use base qw(Exporter);
-use Dancer ':syntax';
+
 use List::Util qw(first);
 use List::MoreUtils qw/indexes/;
+use Dancer ':syntax';
 use Data::Compare; 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog/;
@@ -45,7 +46,8 @@ sub getGlobalSet {
     my $set = $db->getGlobalSet($setName);
     my $problemSet = convertObjectToHash($set,\@boolean_set_props);
     for my $prop (@time_props) {
-        $problemSet->{$prop} = timeFromUTC($problemSet->{$prop},$ce->{siteDefaults}{timezone});
+        $problemSet->{$prop} = timeFromUTC($problemSet->{$prop},$ce->{siteDefaults}{timezone}) 
+                    if ($problemSet->{$prop} =~ /^d+$/);
     }
     my @users = $db->listSetUsers($setName);
     my @problems = $db->getAllGlobalProblems($setName);
@@ -77,7 +79,8 @@ sub putGlobalSet {
     }
     
     for my $prop (@time_props){
-        $set_from_db->{$prop} = timeToUTC($set_from_db->{$prop},$ce->{siteDefaults}{timezone});
+        $set_from_db->{$prop} = timeToUTC($set_from_db->{$prop},$ce->{siteDefaults}{timezone})
+                if ($set_from_db->{$prop} =~ /^d+$/);
     }
     
     return  $db->putGlobalSet($set_from_db);
@@ -285,12 +288,11 @@ sub createNewUserProblem {
 sub addGlobalProblems {
 	my ($setID,$problems)=@_;
 
-    debug "in addGlobalProblems";
 
 	my @oldProblems = vars->{db}->getAllGlobalProblems($setID);
 	for my $p (@{$problems}){
         if(! vars->{db}->existsGlobalProblem($setID,$p->{problem_id})){
-            debug "making a new problem with id: " . $p->{problem_id};
+
         	my $prob = vars->{db}->newGlobalProblem();
             
         	$prob->{problem_id} = $p->{problem_id};
@@ -545,7 +547,6 @@ sub renumber_problems {
     my @sortme;
     my $j =1;
     
-    debug "in renumber_problems";
 	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
 		$newProblemNumbers{$j} = $jj;
 		$maxProblemNumber = $jj if $jj > $maxProblemNumber;

@@ -38,7 +38,7 @@ the WeBWorK::PG module for information about the API.
 use strict;
 use warnings;
 use WeBWorK::Constants;
-use Dancer;
+#use Dancer;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
@@ -61,7 +61,7 @@ sub new_helper {
 	) = @_;
 
 	
-	debug("in local.pm");
+
 	
 	# write timing log entry
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new",

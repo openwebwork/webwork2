@@ -4,6 +4,11 @@ package WeBWorK3;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use Data::Dump qw/dd/; 
+use Path::Class;
+use File::Find::Rule;
+
+set serializer => 'JSON';
+
 
 # link to WeBWorK code libraries
 #use lib config->{webwork_dir}.'/lib';
@@ -14,26 +19,51 @@ use WeBWorK::DB;
 use WeBWorK3::Authen;
 #
 ### note: Routes::Authenication must be passed first
-#use Routes::Authentication qw/buildSession setCourseEnvironment setCookie/; 
-use Path::Class;
-use File::Find::Rule;
+use Utils::Authentication qw/buildSession setCourseEnvironment setCookie/; 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::LibraryUtils qw/list_pg_files searchLibrary getProblemTags render/;
+use Utils::LibraryUtils qw//;
 use Utils::ProblemSets qw/record_results/;
 use WeBWorK::DB::Utils qw(global2user);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use WeBWorK::PG::Local;
 use WeBWorK::Constants;
 
-load 'Routes/Authentication.pm';
+our $PERMISSION_ERROR = "You don't have the necessary permissions.";
+
+## the following routes is matched for any URL starting with /courses. It is used to load the 
+#  CourseEnvironment
+#
+#  Note: for this to match before others, make sure this package is loaded before others.
+#
+
+
+
+any ['get','put','post','delete'] => '/courses/*/**' => sub {
+
+	my ($courseID) = splat;
+	setCourseEnvironment($courseID);
+	pass;
+};
+
+any ['get','post'] => '/renderer/courses/*/**' => sub {
+	my ($courseID) = splat;
+	setCourseEnvironment($courseID);
+	pass;
+};
+
+
+
 load 'Routes/Course.pm';
 load 'Routes/Library.pm';
-#load 'Routes/ProblemSets.pm';
-#load 'Routes/User.pm';
-#load 'Routes/Settings.pm';
-#load 'Routes/PastAnswers.pm';
+load 'Routes/ProblemSets.pm';
+load 'Routes/User.pm';
+load 'Routes/Settings.pm';
+load 'Routes/PastAnswers.pm';
 
-set serializer => 'JSON';
+
+
+
+
 
 
 #hook 'before' => sub {
@@ -45,25 +75,6 @@ set serializer => 'JSON';
 #
 #};
 
-## right now, this is to help handshaking between the original webservice and dancer.  
-## it does nothing except sets the session using the hook 'before' above. 
-
-post '/handshake' => sub {
-
-
-	debug "in /handshake";
-
-	setCourseEnvironment(params->{course_id});
-
-	debug session; 
-	buildSession();
-	if (! session 'logged_in'){
-		send_error('You are no longer logged in.  You may need to reauthenticate.',419);
-	}
-
-	return {msg => "If you get this message the handshaking between Dancer and WW2 worked."};
-};
-
 
 post '/courses/:course_id/login' => sub {
 
@@ -74,10 +85,8 @@ post '/courses/:course_id/login' => sub {
 			password => params->{password},
 			key => params->{session_key}
 		});
-
+        
 	my $result = $authen->verify();
-    
-
 	if($result){
 		my $key = $authen->create_session(params->{user});
 		
@@ -114,6 +123,8 @@ post '/courses/:course_id/logout' => sub {
 
 	return {logged_in=>0};
 };
+
+
 
 
 get '/app-info' => sub {
@@ -162,5 +173,3 @@ sub checkCourse {
 	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
 
 }
-
-1;

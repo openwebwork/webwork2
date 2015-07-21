@@ -39,7 +39,7 @@ sub convertObjectToHash {
 }
 
 
-### I (pstaab) don't think this is necessary.  I think dancer takes care of it through constants true and false
+## convert from the JSON::true or JSON::false to 1/0.  
 
 sub convertBooleans {
     my ($obj,$boolean_props) = @_;
