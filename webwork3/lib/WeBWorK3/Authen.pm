@@ -19,7 +19,7 @@ package WeBWorK3::Authen;
 use base qw (WeBWorK::Authen);
 use strict;
 use warnings;
-use Carp::Always;
+#use Carp::Always;
 use Dancer ':syntax';
 
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;

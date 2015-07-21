@@ -47,7 +47,7 @@ sub getGlobalSet {
     my $problemSet = convertObjectToHash($set,\@boolean_set_props);
     for my $prop (@time_props) {
         $problemSet->{$prop} = timeFromUTC($problemSet->{$prop},$ce->{siteDefaults}{timezone}) 
-                    if ($problemSet->{$prop} =~ /^d+$/);
+                    if (('' .$problemSet->{$prop}) =~ /^\d+$/);
     }
     my @users = $db->listSetUsers($setName);
     my @problems = $db->getAllGlobalProblems($setName);
@@ -71,7 +71,7 @@ sub getGlobalSet {
 
 sub putGlobalSet {
     my ($db,$ce,$set) = @_;
-    
+        
     my $set_from_db = $db->getGlobalSet($set->{set_id});
     convertBooleans($set,\@boolean_set_props);
     
@@ -81,7 +81,7 @@ sub putGlobalSet {
     
     for my $prop (@time_props){
         $set_from_db->{$prop} = timeToUTC($set_from_db->{$prop},$ce->{siteDefaults}{timezone})
-                if ($set_from_db->{$prop} =~ /^d+$/);
+                if (('' .$set_from_db->{$prop}) =~ /^\d+$/);
     }
     return  $db->putGlobalSet($set_from_db);
 }

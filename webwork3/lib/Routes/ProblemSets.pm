@@ -79,6 +79,8 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
     debug 'in put or post /courses/:course_id/sets/:set_id';
     
+    debug vars->{ce}->{siteDefaults}{locale};
+    
     checkPermissions(10,session->{user});
 
     
