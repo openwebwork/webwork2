@@ -2,6 +2,7 @@
 #
 use strict;
 use warnings;
+use version;
 
 my @applicationsList = qw(
         curl
@@ -41,7 +42,7 @@ my @modulesList = qw(
 	Benchmark
 	Carp
 	CGI
-	Class:Accessor
+	Class::Accessor
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dumper
@@ -109,9 +110,12 @@ my @modulesList = qw(
 	YAML
 );
 
+my %moduleVersion = (
+    'LWP::Protocol::https' => 6.06
+);
+
 # modules used by disabled code
 #	RQP::Render (RQP)
-#	SOAP::Lite (PG::Remote)
 
 #main
 
@@ -166,6 +170,8 @@ sub check_modules {
 	print "\@INC=";
 	print join ("\n", map("     $_", @inc)), "\n\n";
 	
+	no strict 'refs';
+	
 	foreach my $module (@modulesList)  {
 		eval "use $module";
 		if ($@) {
@@ -177,6 +183,10 @@ sub check_modules {
 			} else {
 				print "** $module found, but failed to load: $@";
 			}
+		} elsif (defined($moduleVersion{$module}) &&
+			 version->parse(${$module.'::VERSION'}) < 
+			 version->parse($moduleVersion{$module})) {
+		    print "** $module found, but not version $moduleVersion{$module} or better\n";		    
 		} else {
 			print "   $module found and loaded\n";
 		}
