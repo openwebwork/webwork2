@@ -50,9 +50,19 @@ sub pre_header_initialize {
 	my $key = $r->param('key');
 	my $editMode = $r->param("editMode");
 
+	# We want to run the existing pre_header_initialize with
+	# the database seed to get a pure copy of the original problem
+	# to test against.
+
+	my $problemSeed = $r->param("problemSeed");
+	$r->param("problemSeed",'');
+	
 	# Run existsing initialization
 	$self->SUPER::pre_header_initialize();
-	
+
+	# this has to be set back because of CGI and sticky params. 
+	$r->param("problemSeed",$problemSeed);
+
 	my $user = $self->{user};
 	my $effectiveUser = $self->{effectiveUser};
 	my $set = $self->{set};
@@ -75,6 +85,7 @@ sub pre_header_initialize {
 	#       Count:         the number of times the student has clicked SMA (or clicked refresh on the page)
 	#       Preview:       has the preview button been clicked while SMA is active?
 	#       DisplayChange: has a display change been made while SMA is active?
+
 	my %SMAoptions = map {$_ => 1} @{$ce->{pg}->{options}->{showMeAnother}};
 	my %showMeAnother = (
 	    active       => (!($checkAnswers or $previewAnswers) and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1)),
@@ -96,31 +107,6 @@ sub pre_header_initialize {
 	# if $showMeAnother{Count} is somehow not an integer, make it one
 	$showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
 	
-	if($showMeAnother{CheckAnswers}){
-	    # check the new seed against the old seed - provided that 
-	    # they are not the same, and that showMeAnother is enabled, together with 
-	    # checkAnswers enabled then the student is entitled to check answers to a new version
-	    # of the problem
-	    #
-	    # this is essentially the first part of an integrity check to make sure that the user
-	    # hasn't simply put &showMeAnotherCheckAnswers=1 into the URL
-	    my $newProblemSeed = $r->param("problemSeed");
-	    my $oldProblemSeed = $problem->{problem_seed};
-	    
-	    if (defined $newProblemSeed) {
-	    	$problem->problem_seed($newProblemSeed);
-	    }
-	    
-	    # showMeAnother{CheckAnswers} is only appropriate if a problemSeed is passed
-	    # and if showMeAnother is enabled and if the problemSeed is not the original problemSeed
-	    $showMeAnother{CheckAnswers} = (defined($r->param("problemSeed"))) ?                          
-		($r->param("showMeAnotherCheckAnswers")                    
-		 and $ce->{pg}->{options}->{enableShowMeAnother}            
-		 and (($newProblemSeed != $oldProblemSeed) or ($authz->hasPermissions($userName, "modify_problem_sets"))) 
-		 and ($showMeAnother{options}->{checkAnswers})):0;      
-	}
-	
-	
 	# store the showMeAnother hash for the check to see if the button can be used
 	# (this hash is updated and re-stored after the can, must, will hashes)
 	$self->{showMeAnother} = \%showMeAnother;
@@ -140,28 +126,29 @@ sub pre_header_initialize {
 
 	my $can = $self->{can};
 	$can->{showMeAnother} = $self->can_showMeAnother(@args, $submitAnswers);
+
+	# store text of original problem for later comparison with text from problem with new seed
+	my $showMeAnotherOriginalPG = WeBWorK::PG->new(
+	    $ce,
+	    $effectiveUser,
+	    $key,
+	    $set,
+	    $problem,
+	    $set->psvn, # FIXME: this field should be removed
+	    $formFields,
+	    { # translation options
+		displayMode     => 'plainText',
+		showHints       => 0,
+		showSolutions   => 0,
+		refreshMath2img => 0,
+		processAnswers  => 0,
+		permissionLevel => $db->getPermissionLevel($userName)->permission,
+		effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+	    },
+	    );
 	
 	# if showMeAnother is active, then output a new problem in a new tab with a new seed
 	if ($showMeAnother{active} and $can->{showMeAnother}) {
-	    # store text of original problem for later comparison with text from problem with new seed
-	    my $showMeAnotherOriginalPG = WeBWorK::PG->new(
-                $ce,
-                $effectiveUser,
-                $key,
-                $set,
-                $problem,
-                $set->psvn, # FIXME: this field should be removed
-                $formFields,
-                { # translation options
-                        displayMode     => $displayMode,
-                        showHints       => 0,
-                        showSolutions   => 0,
-                        refreshMath2img => 0,
-                        processAnswers  => 0,
-                        permissionLevel => $db->getPermissionLevel($userName)->permission,
-                        effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-                },
-		);
 	    
 	    # change the problem seed
 	    my $oldProblemSeed = $problem->{problem_seed};
@@ -180,7 +167,7 @@ sub pre_header_initialize {
                     $set->psvn, # FIXME: this field should be removed
                     $formFields,
                     { # translation options
-			displayMode     => $displayMode,
+			displayMode     => 'plainText',
 			showHints       => 0,
 			showSolutions   => 0,
 			refreshMath2img => 0,
@@ -217,6 +204,42 @@ sub pre_header_initialize {
 		}
 	    }
 	    
+	} elsif (($showMeAnother{CheckAnswers} or $showMeAnother{Preview}) &&
+		 defined($problemSeed) && 
+		 $problemSeed != $problem->problem_seed) {
+	    $showMeAnother{IsPossible} = 1;
+	    $problem->problem_seed($problemSeed);
+	    #### One last check to see if students  have hard coded in a key
+	    #### which matches the original problem
+	    my $showMeAnotherNewPG = WeBWorK::PG->new(
+		$ce,
+		$effectiveUser,
+		$key,
+		$set,
+		$problem,
+		$set->psvn, # FIXME: this field should be removed
+		$formFields,
+		{ # translation options
+		    displayMode     => 'plainText',
+		    showHints       => 0,
+		    showSolutions   => 0,
+		    refreshMath2img => 0,
+		    processAnswers  => 0,
+		    permissionLevel => $db->getPermissionLevel($userName)->permission,
+		    effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+		},
+		);
+	
+	    if ($showMeAnotherNewPG->{body_text} eq $showMeAnotherOriginalPG->{body_text})	{
+		$showMeAnother{IsPossible} = 0;
+		$showMeAnother{CheckAnswers} = 0;
+		$showMeAnother{Preview} = 0;
+	    }
+  			    
+	} else {
+	    $showMeAnother{IsPossible} = 0;
+	    $showMeAnother{CheckAnswers} = 0;
+	    $showMeAnother{Preview} = 0;
 	}
 	
 	# if showMeAnother is active, then disable all other options
@@ -249,6 +272,9 @@ sub pre_header_initialize {
 	foreach (keys %$must) {
 		$will->{$_} = $can->{$_} && ($want->{$_} || $must->{$_});
 	}
+
+
+
 	
 	##### translation #####
 
@@ -322,7 +348,7 @@ sub output_problem_body{
 
 	$self->SUPER::output_problem_body()
 		#ignore body if SMA was pushed and no new problem will be shown;
-		unless ($showMeAnother{active} and (!$will{showMeAnother} or !$showMeAnother{IsPossible}));
+		if ($will{showMeAnother} and $showMeAnother{IsPossible});
 	return "";
 }
 
@@ -337,7 +363,7 @@ sub output_checkboxes{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
 	#skip check boxes if SMA was pushed and no new problem will be shown
-	if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible})) 
+	if ($showMeAnother{IsPossible} and $will{showMeAnother}) 
 	{
 	    $self->SUPER::output_checkboxes();
 	    
@@ -355,7 +381,7 @@ sub output_submit_buttons{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
 	# skip buttons if SMA button has been pushed but there is no new problem shown
-	if ($will{showMeAnother} and $showMeAnother{IsPossible}){
+	if ($showMeAnother{IsPossible} and $will{showMeAnother}){
 	    $self->SUPER::output_submit_buttons();
 	}
 	    
@@ -372,7 +398,7 @@ sub output_score_summary{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
 	# skip score summary if SMA has been pushed but there is no new problem to show
-	if (!$showMeAnother{active} or ($will{showMeAnother} and $showMeAnother{IsPossible}))
+	if ($showMeAnother{IsPossible} and $will{showMeAnother})
 	{
 	    
 	    $self->SUPER::output_score_summary();
@@ -418,8 +444,7 @@ sub output_summary{
                                                                  will not be recorded, and you should remember to return to your original 
                                                                  problem once you are done here.")),CGI::br();
         }
-	} elsif ( (($showMeAnother{active} and $showMeAnother{IsPossible}) or $showMeAnother{DisplayChange}) 
-		  and $can{showMeAnother}){
+	} elsif ( $showMeAnother{IsPossible} and $will{showMeAnother}){
 	    # the feedback varies a little bit if Check Answers is available or not
 	    my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ?
 		"You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
@@ -447,28 +472,28 @@ sub output_summary{
 	    } elsif ($showMeAnother{Count}<$showMeAnother{TriesNeeded}) {
 		print CGI::div({class=>'ResultsAlert'},$r->maketext("You must attempt this problem [quant,_1,time,times] before Show Me Another is available.",$showMeAnother{TriesNeeded})),CGI::br();
 	    }
-	} elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
+	} elsif ($can{showMeAnother} && !$showMeAnother{IsPossible}){
 	    # print this if showMeAnother has been clicked, but it is not possible to
 	    # find a new version of the problem
 	    print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem;
                        close this tab, and return to the original problem.")),CGI::br();
 	}
 
-	$self->SUPER::output_summary();
+	if ($showMeAnother{IsPossible} and $will{showMeAnother}) {
+	    $self->SUPER::output_summary();
+	}
 
 	return "";
 }
 
-
-# output_hidden_info subroutine
 
 # outputs the hidden fields required for the form
 
 sub output_hidden_info {
     my $self = shift;
     my %showMeAnother = %{ $self->{showMeAnother} };
-    my $problemSeed = $self->{problem}->{problem_seed};
-
+    my $problemSeed = $self->{problem}->problem_seed;
+    
     # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
     # it needs to send the seed from showMeAnother back to the screen
     if($showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}){

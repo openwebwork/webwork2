@@ -604,10 +604,10 @@ sub pre_header_initialize {
 		# if the problem does not have a source file or no source file has been passed in 
 		# then this is really an invalid problem (probably from a bad URL)
 		$self->{invalidProblem} = not (defined $sourceFilePath or $problem->source_file);
-		
+
         # if the caller is asking to override the problem seed, do so
 		my $problemSeed = $r->param("problemSeed");
-		if (defined $problemSeed) {
+		if (defined $problemSeed && $problemSeed =~ /^[+-]?\d+$/) {
 			$problem->problem_seed($problemSeed);
         }	
 
