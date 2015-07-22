@@ -108,7 +108,7 @@ $(setTimeout("runtimer()",500));
 // Clear out the achievement model if there is one
 $(function() {    
 $(window).load(function() { $('#achievementModal').modal('show');
-			    setTimeout(function(){$('#achievementModal').modal('hide');},5000);
+			    setTimeout(function(){$('#achievementModal').modal('hide');},8000);
 			  });
 })
 

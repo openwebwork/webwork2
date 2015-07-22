@@ -6,7 +6,7 @@ use warnings;
 
 use Storable qw(nfreeze thaw);
 
-#have to add any new items to this list, furthermore
+# have to add any new items to this list, furthermore
 # the elements of this list have to match the class name/id of the
 # item classes defined below. 
 use constant ITEMS => [qw(
@@ -23,6 +23,9 @@ Surprise
 SuperExtendDueDate
 HalfCreditSet
 FullCreditSet
+ResetIncorrectAttemptsGW
+ExtendDueDateGW
+RessurectGW
 )];
 
 =head2 NAME
@@ -89,7 +92,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -103,8 +107,8 @@ sub print_form {
     }
 
     return join("",
-	CGI::p("Choose the set which you would like to ressurect."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Choose the set which you would like to ressurect.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"res_set_id", name=>"res_set_id"})));
 }
 
@@ -180,7 +184,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -193,8 +198,8 @@ sub print_form {
     }
 
     return join("",
-	CGI::p("Choose the set whose due date you would like to extend."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Choose the set whose due date you would like to extend.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
 }
 
@@ -222,7 +227,7 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
-    #add time to the due date and answer datae and remove item from inventory
+    #add time to the due date and answer date and remove item from inventory
     $set->due_date($set->due_date()+86400);
     $set->answer_date($set->answer_date()+86400);
 
@@ -261,7 +266,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -274,8 +280,8 @@ sub print_form {
     }
 
     return join("",
-	CGI::p("Choose the set whose due date you would like to extend."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Choose the set whose due date you would like to extend.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
 }
 
@@ -303,7 +309,7 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
-    #add time to the due date and answer datae and remove item from inventory
+    #add time to the due date and answer date and remove item from inventory
     $set->due_date($set->due_date()+172800);
     $set->answer_date($set->answer_date()+172800);
 
@@ -360,8 +366,8 @@ sub print_form {
     }
 
     return join("",
-	CGI::p("Choose the set which you would like to enable partial credit for."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Choose the set which you would like to enable partial credit for.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"red_set_id", name=>"red_set_id"})));
 }
 
@@ -451,8 +457,8 @@ sub print_form {
     }
 
     return join("",
-	CGI::p("Choose the set which you would like to be worth twice as much."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Choose the set which you would like to be worth twice as much.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"dub_set_id", name=>"dub_set_id"})));
 }
 
@@ -524,7 +530,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -560,11 +567,11 @@ sub print_form {
     $problem_id_script .= "\$('\#ria_problem_id option').slice(0,max).show();";
 
     return join("",
-	CGI::p("Please choose the set name and problem number of the question which should have its incorrect attempt count reset."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Please choose the set name and problem number of the question which should have its incorrect attempt count reset.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"ria_set_id", name=>"ria_set_id",onchange=>$problem_id_script})),
 	" ",
-	CGI::label("Problem Number ",
+	CGI::label($r->maketext("Problem Number "),
 	CGI::popup_menu({values=>\@problemIDs,name=>"ria_problem_id",id=>"ria_problem_id",attributes=>\%attributes})));
 
 }
@@ -634,7 +641,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -670,11 +678,11 @@ sub print_form {
     $problem_id_script .= "\$('\#dbp_problem_id option').slice(0,max).show();";
 
     return join("",
-	CGI::p("Please choose the set name and problem number of the question which should have its weight doubled."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Please choose the set name and problem number of the question which should have its weight doubled.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"dbp_set_id", name=>"dbp_set_id",onchange=>$problem_id_script})),
 	" ",
-	CGI::label("Problem Number ",
+	CGI::label($r->maketext("Problem Number "),
 	CGI::popup_menu({values=>\@problemIDs,name=>"dbp_problem_id",id=>"dbp_problem_id",attributes=>\%attributes})));
 
 }
@@ -746,7 +754,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -782,11 +791,11 @@ sub print_form {
     $problem_id_script .= "\$('\#hcp_problem_id option').slice(0,max).show();";
 
     return join("",
-	CGI::p("Please choose the set name and problem number of the question which should be given half credit."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Please choose the set name and problem number of the question which should be given half credit.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"hcp_set_id", name=>"hcp_set_id",onchange=>$problem_id_script})),
 	" ",
-	CGI::label("Problem Number ",
+	CGI::label($r->maketext("Problem Number "),
 	CGI::popup_menu({values=>\@problemIDs,name=>"hcp_problem_id",id=>"hcp_problem_id",attributes=>\%attributes})));
 
 }
@@ -861,7 +870,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -873,8 +883,8 @@ sub print_form {
     
     #print form with sets 
     return join("",
-		CGI::p("Choose the set which you would like to ressurect."),
-		CGI::label("Set Name ",
+		CGI::p($r->maketext("Choose the set which you would like to ressurect.")),
+		CGI::label($r->maketext("Set Name "),
 		CGI::popup_menu({values=>\@openSets,id=>"hcs_set_id", name=>"hcs_set_id"})));
 }
 
@@ -950,7 +960,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -985,11 +996,11 @@ sub print_form {
     $problem_id_script .= "\$('\#fcp_problem_id option').slice(0,max).show();";
 
     return join("",
-	CGI::p("Please choose the set name and problem number of the question which should be given full credit."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Please choose the set name and problem number of the question which should be given full credit.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"fcp_set_id", name=>"fcp_set_id",onchange=>$problem_id_script})),
 	" ",
-	CGI::label("Problem Number ",
+	CGI::label($r->maketext("Problem Number "),
 	CGI::popup_menu({values=>\@problemIDs,name=>"fcp_problem_id",id=>"fcp_problem_id",attributes=>\%attributes})));
 
 }
@@ -1060,7 +1071,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -1072,8 +1084,8 @@ sub print_form {
     
     #print form with sets 
     return join("",
-		CGI::p("Choose the set which you would like to ressurect."),
-		CGI::label("Set Name ",
+		CGI::p($r->maketext("Choose the set which you would like to ressurect.")),
+		CGI::label($r->maketext("Set Name "),
 		CGI::popup_menu({values=>\@openSets,id=>"fcs_set_id", name=>"fcs_set_id"})));
 }
 
@@ -1144,7 +1156,8 @@ sub print_form {
     my $self = shift;
     my $sets = shift;
     my $setProblemCount = shift;
-
+    my $r = shift;
+    
     my @openSets;
     my @openSetCount;
     my $maxProblems=0;
@@ -1181,13 +1194,13 @@ sub print_form {
     $problem_id_script .= "\$('\#tran_problem_id2 option').slice(0,max).show();";
 
     return join("",
-	CGI::p("Please choose the set, the problem you would like to copy, and the problem you would like to copy it to."),
-	CGI::label("Set Name ",
+	CGI::p($r->maketext("Please choose the set, the problem you would like to copy, and the problem you would like to copy it to.")),
+	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"tran_set_id", name=>"tran_set_id",onchange=>$problem_id_script})),
 	" ",
-	CGI::label(" Copy this Problem ",
+	CGI::label($r->maketext(" Copy this Problem "),
 	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id",id=>"tran_problem_id",attributes=>\%attributes})),
-	CGI::label(" To this Problem ",
+	CGI::label($r->maketext(" To this Problem "),
 	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id2",id=>"tran_problem_id2",attributes=>\%attributes}))
 
 
@@ -1275,7 +1288,7 @@ sub print_form {
 
     my $sourceFilePath = $r->{ce}->{courseDirs}->{achievements}.'/surprise_message.txt';
 
-    open MESSAGE, $sourceFilePath or return CGI::p("I couldn't find the file [ACHEVDIR]/surprise_message.txt!");
+    open MESSAGE, $sourceFilePath or return CGI::p($r->maketext("I couldn't find the file [ACHEVDIR]/surprise_message.txt!"));
 
     my @message = <MESSAGE>;
 
@@ -1294,5 +1307,305 @@ sub use_item {
 
     return;
 }
+
+#Item to reset number of incorrect attempts on a Gateway
+package WeBWorK::AchievementItems::ResetIncorrectAttemptsGW;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "ResetIncorrectAttemptsGW",
+	name => "Oil of Cleansing",
+	description => "Resets the number of incorrect attempts on a gateway exam.",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+    my $r = shift;
+    my $db = $r->db;
+
+    my $userName = $r->param('user');
+    my $effectiveUserName = defined($r->param('effectiveUser') ) ? $r->param('effectiveUser') : $userName;
+    my @setIDs = $db->listUserSets($effectiveUserName);
+    my @userSetIDs = map {[$effectiveUserName, $_]} @setIDs;
+    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
+    my @sets;
+	    
+    # we going to have to find the gateways for these achievements. 
+    foreach my $set (@unfilteredsets) {
+	if ($set->assignment_type() =~ /gateway/  &&
+	    $set->set_id !~ /,v\d+$/) {
+	    push @sets, $set;
+	}
+    }	    
+
+    # now we need to find out which gateways have an open version
+    my %openGateways;
+
+    foreach my $set (@sets) {
+	my @versionIDs = $db->listSetVersions($effectiveUserName,$set->set_id);
+	my @setVersionIDs = map {[$effectiveUserName,$set->set_id,$_]} @versionIDs;
+	my @versionedSets = $db->getSetVersions(@setVersionIDs);
+
+	foreach my $versionedSet (@versionedSets) {
+	    if (between($versionedSet->open_date, $versionedSet->due_date)) {
+		$openGateways{$versionedSet->set_id.',v'.$versionedSet->version_id} = $r->maketext("[_1] (test [_2])",$versionedSet->set_id,$versionedSet->version_id);
+	    }
+	}
+
+    }
+
+    #print open gateways in a drop down. 
+    
+    return join("",
+	CGI::p($r->maketext("Please choose the gateway test which should have its incorrect attempt count reset.")),
+	CGI::label($r->maketext("Gateway Name "),
+        CGI::popup_menu({values=>[keys %openGateways],labels=>\%openGateways,id=>"riagw_gw_id", name=>"riagw_gw_id"})));
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    #validate data
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('riagw_gw_id');
+    return "You need to input a Gateway Name" unless
+	(defined $setID);
+
+    my $versionID = ( $setID =~ /,v(\d+)$/ ) ? $1 : 0;
+    $setID =~ s/,v\d+$//;
+
+    return "Couldn't access set $setID" unless $versionID;
+    
+    my @problemIDs = $db->listProblemVersions($userName, $setID, $versionID);
+
+    my @versionedProblemIDs = map {[$userName,$setID,$versionID,$_]} @problemIDs;
+
+    my @versionedProblems = $db->getProblemVersions(@versionedProblemIDs);
+        
+    return "There was an error accessing that set." unless @versionedProblems;
+
+    foreach my $problem (@versionedProblems) {
+	$problem->num_incorrect(0);
+	$problem->num_correct(0);
+	$db->putProblemVersion($problem);
+    }
+	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+    
+    return;
+}
+
+#Item to extend the due date on a gateway 
+package WeBWorK::AchievementItems::ExtendDueDateGW;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "ExtendDueDateGW",
+	name => "Amulate of Extension",
+	description => "Extends the due date of a gatway by 24 hours. (Time limits on individual tests still apply.)",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+    my $r = shift;
+    my $db = $r->db;
+
+    my $userName = $r->param('user');
+    my $effectiveUserName = defined($r->param('effectiveUser') ) ? $r->param('effectiveUser') : $userName;
+    my @setIDs = $db->listUserSets($effectiveUserName);
+    my @userSetIDs = map {[$effectiveUserName, $_]} @setIDs;
+    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
+    my @sets;
+	    
+    # we going to have to find the gateways for these achievements.
+    # we don't want the versioned gateways though.  
+    foreach my $set (@unfilteredsets) {
+	if ($set->assignment_type() =~ /gateway/ &&
+	    $set->set_id !~ /,v\d+$/) {
+	    push @sets, $set;
+	}
+    }	    
+
+    # now we need to find out which gateways are open
+    my @openGateways;
+
+    foreach my $set (@sets) {
+	if (between($set->open_date, $set->due_date)) {
+	    push @openGateways, $set->set_id;
+	}
+    }
+    
+    #print open gateways in a drop down. 
+    
+    return join("",
+		CGI::p($r->maketext("Extend the due date for which Gateway?")),
+		CGI::label($r->maketext("Gateway Name "),
+		   CGI::popup_menu({values=>\@openGateways,id=>"eddgw_gw_id", name=>"eddgw_gw_id"})));
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    #validate data
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('eddgw_gw_id');
+    return "You need to input a Gateway Name" unless
+	(defined $setID);
+
+    my $set = $db->getMergedSet($userName,$setID);
+    return "Couldn't find that set!" unless
+	($set);
+
+    #add time to the due date and answer date and remove item from inventory
+    $set->due_date($set->due_date()+86400);
+    $set->answer_date($set->answer_date()+86400);
+
+    $db->putUserSet($set);
+	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+    
+    return;
+}
+
+#Item to extend the due date on a gateway 
+package WeBWorK::AchievementItems::RessurectGW;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "RessurectGW",
+	name => "Necromancers Charm",
+	description => "Reopens any gateway for an additional 24 hours. (Time limits on individual tests still apply.)",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+    my $r = shift;
+    my $db = $r->db;
+
+    my $userName = $r->param('user');
+    my $effectiveUserName = defined($r->param('effectiveUser') ) ? $r->param('effectiveUser') : $userName;
+    my @setIDs = $db->listUserSets($effectiveUserName);
+    my @userSetIDs = map {[$effectiveUserName, $_]} @setIDs;
+    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
+    my @sets;
+	    
+    # we going to have to find the gateways for these achievements. 
+    foreach my $set (@unfilteredsets) {
+	if ($set->assignment_type() =~ /gateway/ &&
+	    $set->set_id !~ /,v\d+$/) {
+	    push @sets, $set->set_id;
+	}
+    }	    
+
+    #print gateways in a drop down. 
+    
+    return join("",
+		CGI::p($r->maketext("Ressurect which Gateway?")),
+		CGI::label($r->maketext("Gateway Name "),
+		   CGI::popup_menu({values=>\@sets,id=>"resgw_gw_id", name=>"resgw_gw_id"})));
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    #validate data
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('resgw_gw_id');
+    return "You need to input a Gateway Name" unless
+	(defined $setID);
+
+    my $set = $db->getMergedSet($userName,$setID);
+    return "Couldn't find that set!" unless
+	($set);
+
+    #add time to the due date and answer date and remove item from inventory
+    $set->due_date(time()+86400);
+    $set->answer_date(time()+86400);
+
+    $db->putUserSet($set);
+	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+    
+    return;
+}
+
 
 1;
