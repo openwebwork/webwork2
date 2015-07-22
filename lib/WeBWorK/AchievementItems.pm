@@ -1433,7 +1433,7 @@ sub new {
 
     my $self = {
 	id => "ExtendDueDateGW",
-	name => "Amulate of Extension",
+	name => "Amulet of Extension",
 	description => "Extends the due date of a gatway by 24 hours. (Time limits on individual tests still apply.)",
 	%options,
     };
