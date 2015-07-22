@@ -1372,7 +1372,7 @@ sub print_form {
     return join("",
 	CGI::p($r->maketext("Please choose the gateway test which should have its incorrect attempt count reset.")),
 	CGI::label($r->maketext("Gateway Name "),
-        CGI::popup_menu({values=>[keys %openGateways],labels=>\%openGateways,id=>"riagw_gw_id", name=>"riagw_gw_id"})));
+        CGI::popup_menu({values=>[sort keys %openGateways],labels=>\%openGateways,id=>"riagw_gw_id", name=>"riagw_gw_id"})));
 }
 
 sub use_item {
