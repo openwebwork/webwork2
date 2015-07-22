@@ -1139,12 +1139,31 @@ sub output_checkboxes{
     my $showHintCheckbox      = $ce->{pg}->{options}->{show_hint_checkbox};
     my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
-    my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
+	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 
+	if ($can{showCorrectAnswers}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showCorrectAnswers_id",
+			-label_text => $r->maketext("Show correct answer column"),
+			-input_attr => $will{showCorrectAnswers} ?
+			{
+				-name    => "showCorrectAnswers",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showCorrectAnswers",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	
 	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
 	if ($can{showHints} ) {
 	  # warn "can showHints is ", $can{showHints};
-	  if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
+	    if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
 		print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
@@ -1689,9 +1708,7 @@ sub output_email_instructor{
 
 sub output_hidden_info {
     my $self = shift;
-    my $problemSeed = $self->{problem}->{problem_seed};
 
-    # hidden field for clicking Preview Answers and Check Answers from a Show Me Another screen
     return "";
 }
 
