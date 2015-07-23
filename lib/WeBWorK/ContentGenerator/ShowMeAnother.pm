@@ -327,6 +327,15 @@ sub pre_header_initialize {
 	$self->{pg} = $pg;
 }
 
+sub title {
+	my ($self) = @_;
+	my $r = $self->r;
+	# using the url arguments won't break if the set/problem are invalid
+	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+	my $problemID = $self->r->urlpath->arg("problemID");
+
+	return $r->maketext("[_1]: Problem [_2] Show Me Another",$setID, $problemID);
+}
 
 sub nav {
 	my ($self, $args) = @_;
