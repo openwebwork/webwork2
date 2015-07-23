@@ -38,6 +38,7 @@ var ProblemSet = Backbone.Model.extend({
         assigned_users: [],
         problems: null,
         description: "",
+        pg_password: "",
     },
     validation: {
        open_date: "checkDates",
@@ -59,6 +60,10 @@ var ProblemSet = Backbone.Model.extend({
         var pbs = (opts && opts.problems) ? opts.problems : [];
         this.problems = new ProblemList(pbs);
         this.attributes.problems = this.problems;
+        var self = this;
+        this.on("change:version_time_limit",function(){
+            console.log(self.changed);
+        });
     },
     parse: function (response) {
         if (response.problems){

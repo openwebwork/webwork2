@@ -140,6 +140,7 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
     }
 
     my $returnSet = getGlobalSet(vars->{db},vars->{ce},params->{set_id});
+    $returnSet->{pg_password} = $allparams{pg_password} if defined($allparams{pg_password});
 
     return convertObjectToHash($returnSet);
 

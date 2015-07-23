@@ -160,7 +160,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                     self.stickit();
                 }
                 // gets rid of the line break for showing the time in this view. 
-                $('span.time-span').children('br').attr("hidden",true)    
+                self.$('span.time-span').children('br').attr("hidden",true)    
             }).on("change:show_calendar",function(){
                self.showCalendar(self.tabState.get("show_calendar"));
             })
@@ -212,6 +212,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             if(this.model){
                 this.model.on("change:enable_reduced_scoring",this.render);
             }
+            this.model.on("sync",function(){  // pstaab: can we integrate this into the stickit handler code in config.js ? 
+                // gets rid of the line break for showing the time in this view. 
+                self.$('span.time-span').children('br').attr("hidden",true);
+            });
             return this;
         },
         bindings: {
@@ -228,7 +232,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             }},
             "#set-type": {observe: "assignment_type", selectOptions: { 
                 collection: [{label: "Homework", value: "default"},
-                             {label: "Gateway/Quiz",value: "gateway"}]}},
+                             {label: "Gateway/Quiz",value: "gateway"},
+                             {label: "Proctored Gateway/Quiz", value: "proctored_gateway"}]}},
             ".users-assigned": {
                 observe: "assigned_users",
                 onGet: function(value, options){ return value.length + "/" +this.users.size();}
@@ -240,6 +245,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             ".version-per-interval": "version_per_interval",
             ".problem-random-order": "problem-randorder",
             ".problems-per-page": "problems_per_page",
+            ".pg-password": "pg_password",
             // I18N
             ".hide-score": {observe: ["hide_score","hide_score_by_problem"], selectOptions: {
                 collection: [{label: "Yes", value: "N:"},{label: "No", value: "Y:N"},
@@ -255,8 +261,11 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                                 {label: "Only After Set Answer Date", value: "BeforeAnswerDate"}]}}
         },
         showHideGateway: function () {
-             util.changeClass({state: this.model.get("assignment_type")=="gateway",
+            var type = this.model.get("assignment_type");
+            util.changeClass({state: type =="gateway" || type == "proctored_gateway",
                                      els: this.$(".gateway-row"),remove_class: "hidden"});
+            util.changeClass({state: type=="gateway" || type == "default",
+                                     els: this.$(".pg-row"),add_class:"hidden"});                  
         },
         showHideReducedScoringDate: function(){
             if(typeof(this.model)==="undefined"){ return;}

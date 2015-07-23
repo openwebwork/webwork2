@@ -325,7 +325,12 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         events: ["blur"],
         
     });
-
+    
+    Backbone.Stickit.addHandler({
+        selector: ".integer-input",
+        onSet: function(value) {
+            return parseInt(value);
+        }}); 
 
     return config;
 });

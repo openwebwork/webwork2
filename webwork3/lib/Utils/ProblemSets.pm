@@ -9,7 +9,7 @@ use List::MoreUtils qw/indexes/;
 use Dancer ':syntax';
 use Data::Compare; 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
-use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog/;
+use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog cryptPassword/;
 use Array::Utils qw(array_minus);
 
 our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible 
@@ -71,6 +71,35 @@ sub putGlobalSet {
     
     for my $key (@set_props){
         $set_from_db->{$key} = $set->{$key} if defined($set->{$key});
+    }
+    
+    ## if the set is a proctored gateway
+    
+    if($set->{assignment_type} eq 'proctored_gateway'){
+        my $proctor_id = "set_id:".$set->{set_id};
+        if($set->{pg_password} ne '******') { 
+            my $dbPass = $db->getPassword($proctor_id);
+            debug $dbPass;
+            $dbPass->password(cryptPassword($set->{pg_password}));
+            $db->putPassword($dbPass);
+            $set->{pg_password}='******';
+        }
+        ## if the proctor doesn't exist as a user in the db, create it. 
+        if(! $db->existsUser($proctor_id)){
+            my $proctor = $db->newUser();
+            $proctor->user_id($proctor_id);
+            $proctor->last_name("Proctor");
+			$proctor->first_name("Login");
+			$proctor->student_id("loginproctor");
+			$proctor->status($ce->status_name_to_abbrevs('Proctor'));
+            debug $proctor;
+			my $procPerm = $db->newPermissionLevel;
+            $procPerm->user_id($proctor_id);
+			$procPerm->permission($ce->{userRoles}->{login_proctor});
+            $db->addUser($proctor);
+            $set_from_db->restricted_login_proctor('Yes');
+        }
+            
     }
     
     return  $db->putGlobalSet($set_from_db);

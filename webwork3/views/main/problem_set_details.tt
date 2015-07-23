@@ -185,10 +185,16 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <tr><td class="header">Number of Problems in Set</td><td class="num-problems"></td></tr>
 <tr><td class="header">Users Assigned</td><td class="users-assigned"></td>
 <td><button class="assign-all-users btn btn-default">Assign to All Users</td></tr>
+<tr class="gateway-row pg-row"><td class="header" style="color: darkblue; font-style:italic">
+        Proctored Gateway/Quiz parameters</td><td></td></tr>
+<tr class="gateway-row pg-row"><td colspan="2">
+Proctored tests require proctor authorization to start and to grade. Provide a password to have a single password for all students to start a proctored test.</td></tr>
+<tr class="gateway-row pg-row"><td class="header">Password (Leave blank for regular proctoring)</td>
+<td><input type="text" class="pg-password input-blur"></td></tr>
 <tr class="gateway-row"><td class="header" style="color: darkblue; font-style:italic">
         Gateway/Quiz parameters</td><td></td></tr>
 <tr class="gateway-row"><td class="header">Test Time Limit (min; 0=Due Date)</td>
-        <td><input type="text" class="version-time-limit input-blur"></td></tr>
+        <td><input type="text" class="version-time-limit input-blur integer-input"></td></tr>
 <tr class="gateway-row"><td class="header">Cap Test Time at Set Due Date?</td>
         <td><input type="checkbox" class="time-limit-cap"></td></tr>
 <tr class="gateway-row"><td class="header">Number of Graded Submissions per Test (0=infty)</td>
