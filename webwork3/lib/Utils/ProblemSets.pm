@@ -10,10 +10,7 @@ use Dancer ':syntax';
 use Data::Compare; 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog/;
-use Utils::GeneralUtils qw/timeToUTC timeFromUTC/;
 use Array::Utils qw(array_minus);
-
-our @time_props = qw/due_date reduced_scoring_date open_date answer_date/;
 
 our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible 
                             enable_reduced_scoring assignment_type description attempts_per_version time_interval 
@@ -45,10 +42,7 @@ sub getGlobalSet {
     my ($db,$ce,$setName) = @_;
     my $set = $db->getGlobalSet($setName);
     my $problemSet = convertObjectToHash($set,\@boolean_set_props);
-    for my $prop (@time_props) {
-        $problemSet->{$prop} = timeFromUTC($problemSet->{$prop},$ce->{siteDefaults}{timezone}) 
-                    if (('' .$problemSet->{$prop}) =~ /^\d+$/);
-    }
+
     my @users = $db->listSetUsers($setName);
     my @problems = $db->getAllGlobalProblems($setName);
     for my $problem (@problems){
@@ -79,10 +73,6 @@ sub putGlobalSet {
         $set_from_db->{$key} = $set->{$key} if defined($set->{$key});
     }
     
-    for my $prop (@time_props){
-        $set_from_db->{$prop} = timeToUTC($set_from_db->{$prop},$ce->{siteDefaults}{timezone})
-                if (('' .$set_from_db->{$prop}) =~ /^\d+$/);
-    }
     return  $db->putGlobalSet($set_from_db);
 }
 
@@ -96,11 +86,7 @@ sub getUserSet{
     my ($db,$ce,$user_id,$set_id) = @_;
     
     my $mergedSet = $db->getMergedSet($user_id,$set_id);
-     
-     for my $prop (@time_props){
-        $mergedSet->{$prop} = timeFromUTC($mergedSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
-     }
-     $mergedSet->{_id} = $mergedSet->{set_id} . ":" . $mergedSet->{user_id};
+    $mergedSet->{_id} = $mergedSet->{set_id} . ":" . $mergedSet->{user_id};
 
     return convertObjectToHash($mergedSet,\@boolean_set_props);
 
@@ -128,21 +114,9 @@ sub putUserSet {
         delete $userSet->{$key} if $globalValue eq $userSet->{$key} && $key ne "set_id";
 
     }
-    for my $prop (@time_props){
-        $userSet->{$prop} = timeToUTC($userSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($userSet->{$prop});
-    }
-    
     $db->putUserSet($userSet);
     
     return getUserSet($db,$ce,$set->{user_id},$set->{set_id});
-
-#     my $mergedSet = $db->getMergedSet($set->{user_id},$set->{set_id});
-#     
-#     for my $prop (@time_props){
-#        $mergedSet->{$prop} = timeFromUTC($userSet->{$prop},$ce->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
-#     }
-#
-#    return convertObjectToHash($mergedSet,\@boolean_set_props);
 }
 
 ###

@@ -18,8 +18,6 @@ use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserPr
                             renumber_problems updateProblems getGlobalSet putGlobalSet putUserSet getUserSet
                             @time_props @set_props @boolean_set_props @user_set_props @problem_props/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
-use Utils::GeneralUtils qw/timeToUTC timeFromUTC/;
-
 use Array::Utils qw(array_minus); 
 use Utils::Authentication qw/checkPermissions setCourseEnvironment/;
 use Utils::CourseUtils qw/getCourseSettings/;
@@ -1145,10 +1143,6 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     
     my $mergedSet = vars->{db}->getMergedSet(session->{user},params->{set_id});
      
-     for my $prop (@time_props){
-        $mergedSet->{$prop} = timeFromUTC($mergedSet->{$prop},vars->{ce}->{siteDefaults}{timezone}) if defined($mergedSet->{$prop});
-     }
-    
     my $renderParams = {
         displayMode => param('displayMode') || vars->{ce}->{pg}{options}{displayMode},
         problemSeed => defined(params->{problemSeed}) ? params->{problemSeed} : 1,
