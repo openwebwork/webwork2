@@ -2042,7 +2042,10 @@ sub output_summary{
         # find a new version of the problem
 		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem;
                        close this tab, and return to the original problem.")),CGI::br();
-    } elsif ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
+    } 
+
+
+	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;
 	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
 	@problemIDs = sort { $a <=> $b } @problemIDs;
