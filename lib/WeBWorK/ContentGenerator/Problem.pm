@@ -1748,7 +1748,7 @@ sub output_score_summary{
 	    # to finish this problem (and maybe its children) to proceed
 	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
 		if ($hasChildren) {
-		    print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its subproblems.',join('.',@{$problemSeqs[$next_id]}));
+		    print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its graded subproblems.',join('.',@{$problemSeqs[$next_id]}));
 		} else {
 		    print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 		}
