@@ -110,6 +110,17 @@ sub render {
 		debug_messages              => \@pgdebug_messages,
 		internal_debug_messages     => \@internal_debug_messages,
 	};
+    
+    if($problem_hash->{errors}){
+        my $text = qq|<div><em>An error occurred while processing this problem.</em>  
+                    Click <a href="#" onclick='\$(this).parent().find(".bg-danger").removeClass("hidden"); return false'>here</a>
+                    to show details of the error. <p class='bg-danger hidden'>|;
+        $text .= $problem_hash->{errors} . "</p></div>";
+        
+        $problem_hash->{text} = $text;
+    }
+    
+    debug to_dumper($problem_hash);
 
 	return $problem_hash;
 
