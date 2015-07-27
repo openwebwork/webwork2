@@ -18,7 +18,8 @@ use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserPr
                             renumber_problems updateProblems getGlobalSet putGlobalSet putUserSet getUserSet
                             @time_props @set_props @boolean_set_props @user_set_props @problem_props/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
-use Array::Utils qw(array_minus); 
+use Array::Utils qw/array_minus/;
+use List::MoreUtils qw/first_value/;
 use Utils::Authentication qw/checkPermissions setCourseEnvironment/;
 use Utils::CourseUtils qw/getCourseSettings/;
 use Dancer::Plugin::Database;
@@ -85,6 +86,10 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
     # set all of the new parameters sent from the client
     my %allparams = params;
+    
+    my $problems_from_client = params->{problems}; 
+    debug $problems_from_client; 
+    
     if(request->is_post()){
         if (params->{set_id} !~ /^[\w\_.-]+$/) {
             send_error("The set name must only contain A-Za-z0-9_-.",403);
@@ -134,12 +139,17 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
         updateProblems(vars->{db},params->{set_id},params->{problems});
     }
 
-    my @globalProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
-    for my $prob (@globalProblems) {
-        $prob->{_id} = $prob->{set_id} . ":" . $prob->{problem_id};  # this helps backbone on the client side
-    }
-
     my $returnSet = getGlobalSet(vars->{db},vars->{ce},params->{set_id});
+    
+    for my $set (@{$returnSet->{problems}}){
+        ## return the rendered data that was sent from the client. 
+        my $set_from_client = first_value { $set->{source_file} eq $_->{source_file} && 
+                                    $set->{problem_id} eq $_->{problem_id} } @$problems_from_client;
+        debug $set_from_client; 
+        $set->{data} = $set_from_client->{data} if defined($set_from_client);
+        $set->{problem_seed} = $set_from_client->{problem_seed} if defined($set_from_client->{problem_seed}); 
+    }
+    
     $returnSet->{pg_password} = $allparams{pg_password} if defined($allparams{pg_password});
 
     return convertObjectToHash($returnSet);

@@ -159,10 +159,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         _(this.currentView.sidebarEvents).chain().keys().each(function(event){
             self.currentView.listenTo(self.currentSidebar,event,self.currentView.sidebarEvents[event]);
         });
+        
 
         this.currentSidebar.mainView = this.currentView;
-
-
 
         // set up the possible options and render the sidebar
 

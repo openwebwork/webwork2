@@ -39,6 +39,7 @@ var ProblemSet = Backbone.Model.extend({
         problems: null,
         description: "",
         pg_password: "",
+        showMeAnotherCount: 0,
     },
     validation: {
        open_date: "checkDates",
@@ -63,10 +64,8 @@ var ProblemSet = Backbone.Model.extend({
     },
     parse: function (response) {
         if (response.problems){
-            this.problems.reset(response.problems);
+            var p = this.problems.set(response.problems);
             this.attributes.problems = this.problems;
-            // somehow the problems inside a problemListView are losing the collection attribute. 
-            
         }
         response = util.parseAsIntegers(response,this.integerFields);
         return _.omit(response, 'problems');
@@ -94,9 +93,9 @@ var ProblemSet = Backbone.Model.extend({
     addProblem: function (prob) {  
         var self = this; 
         var lastProblem = this.get("problems").last();
-        var attrs = _.omit(_.extend({},prob.attributes,
-                                    { problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1})
-                           ,"_id"); // remove the _id so backbone thinks the problem is new.
+        var attrs = _.extend({},prob.attributes,
+                                    { problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1});
+        attrs._id = this.get("set_id") + ":" + attrs.problem_id; 
         this.get("problems").add(new Problem(attrs));
         this.trigger("change:problems",this,prob); // 
     },

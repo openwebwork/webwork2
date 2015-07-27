@@ -65,7 +65,7 @@ sub getGlobalSet {
 
 sub putGlobalSet {
     my ($db,$ce,$set) = @_;
-        
+    
     my $set_from_db = $db->getGlobalSet($set->{set_id});
     convertBooleans($set,\@boolean_set_props);
     
@@ -102,7 +102,7 @@ sub putGlobalSet {
             
     }
     
-    return  $db->putGlobalSet($set_from_db);
+    return $db->putGlobalSet($set_from_db);
 }
 
 ###

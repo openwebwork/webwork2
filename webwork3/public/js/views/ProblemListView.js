@@ -21,11 +21,10 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
 
         initialize: function(options){
             var self = this;
-            _.bindAll(this,"render","deleteProblem","undoDelete","reorder","addProblemView");  
+            _.bindAll(this,"render","reorder","addProblemView");  
             _(this).extend(_(options).pick("settings","problemSet","messageTemplate"));
             this.problems = options.problems ? options.problems : new ProblemList();
             this.problemSet = options.problemSet; 
-            this.undoStack = []; // this is where problems are placed upon delete, so the delete can be undone.  
             this.pageSize = 10; // this should be a parameter.
             this.pageRange = _.range(this.pageSize);
             this.currentPage = 0;
@@ -36,7 +35,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         set: function(opts){
             if(opts.problems){
                 this.problems = opts.problems; 
-                this.problems.off("remove").on("remove",this.deleteProblem);
                 if(opts.problemSet){
                     this.problemSet = opts.problemSet;
                     this.problems.problemSet = opts.problemSet;
@@ -196,17 +194,10 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             this.$(".problem").each(function (i) {
                 var id = $(this).data("id").split(":")[1];
                 var prob = _(oldProblems).find(function(p) {return p.problem_id == id; });
-                self.problems.at(i).set(_.omit(prob,"problem_id"),{silent: true});
+                self.problems.at(i).set({problem_id: (i+1),_id: self.model.get("set_id") + ":" + (i+1)},{silent: true}); 
                 $(this).data("id",self.problems.problemSet.get("set_id")+":"+self.problems.at(i).get("problem_id"));
             });
             this.problems.problemSet.save({_reorder: true});
-        },
-        undoDelete: function(){
-            if (this.undoStack.length>0){
-                var prob = this.undoStack.pop();
-                this.problemSet.addProblem(prob);
-                this.gotoPage(this.currentPage);
-            }
         },
         setProblemSet: function(_set) {
             this.model = _set; 
@@ -217,23 +208,14 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         },
         addProblemView: function (prob){
             if(this.pageRange.length < this.pageSize){
-                var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
+                var probView = new ProblemView({model: prob, problem_set_view: this.problem_set_view,
+                                                type: this.type, viewAttrs: this.viewAttrs});
                 this.$(".prob-list").append(probView.el);
                 probView.render();
-                console.log(this.pageRange);
                 this.pageRange.push(_(this.pageRange).last() +1);
             } 
             this.updateNumProblems();
         },
-        // this is called when the problem has been removed from the problemList
-        deleteProblem: function (problem){
-            var self = this; 
-            this.problemSet.changingAttributes = 
-                {"problem_deleted": {setname: this.problemSet.get("set_id"), problem_id: problem.get("problem_id")}};
-            this.undoStack.push(problem);
-            this.gotoPage(this.currentPage);
-            this.$(".undo-delete-button").removeAttr("disabled");
-        }
     });
 	return ProblemListView;
 });

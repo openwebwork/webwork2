@@ -16,13 +16,23 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
                 self.trigger("add-prob-from-group", self.state.get("problem_group"));
                 self.state.set("problem_group",null);
             }
-        })
+        });
 
         _.extend(this,Backbone.Events);
     },
     render: function(){
         this.$el.html($("#problem-list-options-template").html());
         this.stickit(this.state,this.bindings);
+        this.stopListening();
+        var problems = this.mainView.views.problemsView.problemSetView.deletedProblems; 
+        this.listenTo(problems,"add", function(){
+            this.$(".undo-delete-button").removeAttr("disabled");
+        }).listenTo(this.mainView.views.problemsView.problemSetView.deletedProblems,"remove", function() {
+            if(problems.length == 0 ){
+                 this.$(".undo-delete-button").attr("disabled","disabled");
+            }
+        }); 
+
         return this;
     }, 
     bindings: {".problem-display-option": {observe: "display_option", selectOptions: {

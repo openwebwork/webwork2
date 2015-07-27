@@ -14,12 +14,18 @@ define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
             max_attempts: -1,
             set_id: "",
             flags: "",
-            problem_seed: 1
+            problem_seed: 1,
+            showMeAnotherCount: 0,
+            showMeAnother: -1
         },
+        integerFields: ["problem_id","value","max_attempts","problem_seed","showMeAnotherCount"],
         validation: {
              // need to put the validation message in a template
             value: {pattern: /^[1-9]\d*$/, msg: "The value must be a positive whole number." },
             max_attempts: {pattern: /^(-1|\d*)$/, msg: "The value must be a whole number or -1 for unlimited attempts." }
+        },
+        parse: function(response){
+              return util.parseAsIntegers(response,this.integerFields);
         },
         idAttribute: "_id",
         url: function () {

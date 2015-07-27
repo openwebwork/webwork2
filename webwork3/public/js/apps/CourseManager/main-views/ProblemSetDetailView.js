@@ -81,10 +81,6 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             "undo-problem-delete": function(){
                 this.views.problemsView.problemSetView.undoDelete();
                 this.views.problemsView.problemSetView.updateNumProblems()
-                if(this.views.problemsView.problemSetView.undoStack.length==0 && 
-                    this.sidebar instanceof ProblemListOptionsSidebar){
-                        this.sidebar.$(".undo-delete-button").attr("disabled","disabled");
-                }
             },
             "add-prob-from-group": function(group_name) {
                 this.problemSet.addProblem(new Problem({source_file: "group:" + group_name}));
@@ -470,19 +466,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             });
         },
         setProblemSet: function(_set){
-            var self = this;
             this.problemSetView.setProblemSet(_set);
-            if(this.problemSetView.problemSet){
-                this.problemSetView.problemSet.on("problem-deleted",function(p){
-                    if(self.parent.sidebar){
-                        self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
-                    }
-                }).problems.on("add",function(_prob){
-                   self.problemSetView.addProblemView(_prob);
-                });
-            }
             return this;
         },
+        // set a parameter. 
         set: function(options){
             this.problemSetView.set(_.extend({},options,this.tabState.pick("show_path","show_tags")));
             return this;
@@ -491,7 +478,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.problemSetView.changeDisplayMode(evt);
         },
         getDefaultState: function () {
-            return {set_id: "", library_path: "", page_num: 0, rendered: false, page_size: 10, show_path: false, show_tags: false};
+            return {set_id: "", library_path: "", page_num: 0, rendered: false, page_size: 10, 
+                    show_path: false, show_tags: false};
         },
 
     });

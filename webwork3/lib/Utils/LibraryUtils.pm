@@ -119,8 +119,6 @@ sub render {
         
         $problem_hash->{text} = $text;
     }
-    
-    debug to_dumper($problem_hash);
 
 	return $problem_hash;
 
