@@ -216,12 +216,14 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             return this;
         },
         addProblemView: function (prob){
-            var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
-            this.$("#prob-list").append(probView.el);
-            probView.render();
-            this.trigger("update-num-problems",
-                {number_shown: this.$(".prob-list li").length, total: this.problems.size()});
-
+            if(this.pageRange.length < this.pageSize){
+                var probView = new ProblemView({model: prob, type: this.type, viewAttrs: this.viewAttrs});
+                this.$(".prob-list").append(probView.el);
+                probView.render();
+                console.log(this.pageRange);
+                this.pageRange.push(_(this.pageRange).last() +1);
+            } 
+            this.updateNumProblems();
         },
         // this is called when the problem has been removed from the problemList
         deleteProblem: function (problem){

@@ -157,6 +157,9 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
   <div class="form-group">
   <button class="btn btn-default undo-delete-button" disabled>Undo Problem Delete</button>
   </div>
+  <div class="form-group">
+  <select class="btn btn-default form-control" id="add-prob-group"></select>
+  </div>
 
 
 

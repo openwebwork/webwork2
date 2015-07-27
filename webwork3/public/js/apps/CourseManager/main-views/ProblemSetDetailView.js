@@ -11,9 +11,10 @@
 define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView',
         'views/ProblemSetView', 'models/ProblemList','views/CollectionTableView','models/ProblemSet',
         'models/UserSetList','sidebars/ProblemListOptionsSidebar','views/AssignmentCalendar',
-        'models/ProblemSetList','models/SetHeader','apps/util','config','moment','bootstrap'], 
+        'models/ProblemSetList','models/SetHeader','models/Problem',
+        'apps/util','config','moment','bootstrap'], 
     function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList,ProblemListOptionsSidebar, AssignmentCalendar,ProblemSetList,SetHeader,util,config,moment){
+        UserSetList,ProblemListOptionsSidebar, AssignmentCalendar,ProblemSetList,SetHeader,Problem,util,config,moment){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
@@ -84,6 +85,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                     this.sidebar instanceof ProblemListOptionsSidebar){
                         this.sidebar.$(".undo-delete-button").attr("disabled","disabled");
                 }
+            },
+            "add-prob-from-group": function(group_name) {
+                this.problemSet.addProblem(new Problem({source_file: "group:" + group_name}));
             }
         },
         getDefaultState: function () {
@@ -473,7 +477,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                     if(self.parent.sidebar){
                         self.parent.sidebar.$(".undo-delete-button").removeAttr("disabled");
                     }
-                })    
+                }).problems.on("add",function(_prob){
+                   self.problemSetView.addProblemView(_prob);
+                });
             }
             return this;
         },

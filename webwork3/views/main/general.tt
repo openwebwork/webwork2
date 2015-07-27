@@ -161,8 +161,6 @@
 </table>
 </div>
 <div><%=data%></div>
-<!--<div class="filename"><%=source_file%></div>    
-<iframe class="data" style="width:100%" seamless="seamless"><%= data %></iframe>-->
 </script>
 
 <script type="text/template" id="problem-loading-template">

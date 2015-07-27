@@ -60,8 +60,9 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
 
         render:function () {
             var self = this;
+            var group_name; 
             if(this.model.get('data') || this.state.get("displayMode")=="None"){
-            
+                
                 if(this.state.get("displayMode")=="None"){
                     this.model.attributes.data="";
                 }
@@ -114,6 +115,11 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                 } else {
                     this.model.trigger("rendered",this);
                     this.state.set("rendered",true);
+                }
+            } else if(group_name = this.model.get("source_file").match(/group:([\w._]+)$/)){
+                if(! this.state.get("rendered")){
+                    this.model.set("data","This problem is selected from the group: " + group_name[1]);
+                    this.render();
                 }
             } else {
                 this.state.set("rendered",false);
