@@ -394,9 +394,8 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 	setCourseEnvironment(params->{course_id});
 
 	my $renderParams = {};
-	
-	
-    $renderParams->{displayMode} = param('displayMode') || vars->{ce}->{pg}{options}{displayMode};
+    	
+    $renderParams->{displayMode} = params->{displayMode} || vars->{ce}->{pg}{options}{displayMode};
 	$renderParams->{problemSeed} = defined(params->{problemSeed}) ? params->{problemSeed} : 1; 
 	$renderParams->{showHints} = 0;
 	$renderParams->{showSolutions} = 0;
@@ -423,7 +422,7 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 		$renderParams->{problem}->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
 	} 
 
-	return render($renderParams);
+	return render(vars->{ce},$renderParams);
 
 };
 
