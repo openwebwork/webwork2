@@ -61,6 +61,11 @@ function(Backbone, ProblemListView,UserProblemList,ProblemList) {
             this.problemSet.problems.each(function(_prob,i){
                 _prob.set({problem_id: (i+1),_id: self.model.get("set_id") + ":" + (i+1)},{silent: true});   
             });
+            var index = _(this.problemViews).findIndex(function(pv){ 
+                return pv.model.get("problem_id") == problem.get("problem_id")});
+            var viewToRemove = this.problemViews.splice(index,1);
+            viewToRemove[0].remove();
+            
         },
         undoDelete: function(){
             if (this.deletedProblems.length>0){
@@ -83,7 +88,29 @@ function(Backbone, ProblemListView,UserProblemList,ProblemList) {
 
             ProblemListView.prototype.setProblemSet.call(this,_set);
             return this;
-        }
+        },
+        reorder: function (event,ui) {
+            var self = this;
+            if(typeof(this.problemSet) == "undefined"){
+                return;
+            }
+            var oldProblems = this.problemSet.problems.map(function(p) { return _.clone(p.attributes); });
+            //var newProblems = []; 
+            this.$(".problem").each(function (i) {
+                var id = $(this).data("id").split(":")[1];
+                var prob = _(oldProblems).find(function(p) {return p.problem_id == id; });
+                var attrs = _.extend({},prob,{problem_id: (i+1),_id: self.model.get("set_id") + ":" + (i+1),
+                                             _old_problem_id: id});
+                self.problemSet.problems.at(i).set(attrs,{silent: true});
+                //newProblems.push(attrs); 
+                $(this).data("id",self.problemSet.get("set_id")+":"+(i+1));
+            });
+            this.problemViews = _(this.problemViews).sortBy(function(pv) {return parseInt(pv.model.get("problem_id"));});
+
+            this.problemSet.problems.each(function(p) { console.log(p.get("problem_id") + " : " + p.get("source_file"));}); 
+            this.problemSet.save({_reorder: true});
+            this.problemSet.unset("_reorder");
+        },
     });
 
     return ProblemSetView;

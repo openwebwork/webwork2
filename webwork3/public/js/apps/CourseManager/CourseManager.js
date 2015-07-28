@@ -102,12 +102,7 @@ var CourseManager = WebPage.extend({
         
         // not sure why this is needed.
         //config.timezone = this.settings.find(function(v) { return v.get("var")==="timezone"}).get("value");
-    
-        // this will automatically save (sync) any change made to a problem set.
-        this.problemSets.on("change",function(_set){
-            _set.save();
-        })        
-            
+                
         this.navigationBar.on({
             "stop-acting": this.stopActing,
         });

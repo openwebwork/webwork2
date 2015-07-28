@@ -39,7 +39,6 @@ var ProblemSet = Backbone.Model.extend({
         problems: null,
         description: "",
         pg_password: "",
-        showMeAnotherCount: 0,
     },
     validation: {
        open_date: "checkDates",
@@ -57,16 +56,15 @@ var ProblemSet = Backbone.Model.extend({
     initialize: function (opts,dateSettings) {
         _.bindAll(this,"addProblem");
         this.dateSettings = dateSettings;
-        _(this.attributes).extend(_(util.parseAsIntegers(opts,this.integerFields)).pick(this.integerFields));
-        var pbs = (opts && opts.problems) ? opts.problems : [];
-        this.problems = new ProblemList(pbs);
-        this.attributes.problems = this.problems;
+        this.problems = new ProblemList();
+        opts = this.parse(opts); 
     },
     parse: function (response) {
         if (response.problems){
-            var p = this.problems.set(response.problems);
+            this.problems.set(response.problems,{silent: true});
             this.attributes.problems = this.problems;
         }
+        response.assignment_type = response.assignment_type || "default"; 
         response = util.parseAsIntegers(response,this.integerFields);
         return _.omit(response, 'problems');
     },
@@ -97,7 +95,23 @@ var ProblemSet = Backbone.Model.extend({
                                     { problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1});
         attrs._id = this.get("set_id") + ":" + attrs.problem_id; 
         this.get("problems").add(new Problem(attrs));
-        this.trigger("change:problems",this,prob); // 
+        this.set("_add_problem",true);
+        this.save();
+        this.unset("_add_problem",{silent: true});
+        console.log("in addProblem");
+    },
+    // delete the problem _prob and if successfull remove the view _view
+    deleteProblem: function(_prob,_view){
+        var self = this; 
+        this.get("problems").remove(_prob); 
+        this.set("_delete_problem_id",_prob.get("problem_id"));
+        this.save();
+        /*this.save(this.attributes,{success: function(model,response,options){
+            if(_view){
+                _view.remove();
+            }
+        }});*/
+        this.unset("_delete_problem_id",{silent: true});
     },
     setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
         var currentDate = moment.unix(this.get(attr))

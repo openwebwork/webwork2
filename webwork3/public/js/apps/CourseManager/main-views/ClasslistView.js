@@ -299,7 +299,8 @@ var ClasslistView = MainView.extend({
         		stickit_options: {events: ['blur']}},
         	{name: "Permission", key: "permission", classname: "permission", datatype: "string",
                 search_value: function(model){
-                    return _(config.permissions).findWhere({value: ""+model.get("permission")}).label;  // the ""+ is needed to stringify the permission level
+                    var obj = _(config.permissions).findWhere({value: ""+model.get("permission")});
+                    return obj.label || "";  // the ""+ is needed to stringify the permission level
                 },
         		stickit_options: { selectOptions: { collection: config.permissions }}
         }];

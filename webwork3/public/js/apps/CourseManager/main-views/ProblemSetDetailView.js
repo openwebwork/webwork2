@@ -169,7 +169,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.calendar = new AssignmentCalendar({users: this.users,settings: this.settings,
                                                 problemSets: this.calendarProblemSets});
             this.calendar.on("calendar-change",function() {
-                self.tabState.set({first_day: self.calendar.state.get("first_day")});  
+                self.tabState.set({first_day: self.calendar.state.get("first_day")}); 
+                self.showHideReducedScoringDate();
             })
         },
         render: function(){
@@ -215,6 +216,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.model.on("sync",function(){  // pstaab: can we integrate this into the stickit handler code in config.js ? 
                 // gets rid of the line break for showing the time in this view. 
                 self.$('span.time-span').children('br').attr("hidden",true);
+                _.delay(self.showHideReducedScoringDate,100); // hack to get reduced scoring to be hidden. 
             });
             return this;
         },
@@ -278,6 +280,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             if(this.tabState.get("show_calendar")){
                 util.changeClass({state: true, els: this.$(".reduced-scoring-date").closest("tr"), 
                               add_class: "hidden"});
+                util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}") &&  
+                    this.model.get("enable_reduced_scoring"), els: this.$(".assign-reduced-scoring"),
+                                  remove_class: "hidden"});
             }
 
             if(this.model.get("enable_reduced_scoring")){
@@ -650,8 +655,8 @@ var AssignUsersView = Backbone.View.extend({
             //this.collection is a collection of models based on user sets.  The following will also pick information
             // from the users that is useful for this view. 
             this.collection.each(function(model){
-                model.set(self.users.findWhere({user_id: model.get("user_id")}).pick("section","recitation","first_name","last_name")
-                            ,{silent: true});  
+                model.set(self.users.findWhere({user_id: model.get("user_id")})
+                          .pick("section","recitation","first_name","last_name"),{silent: true});  
             });
             this.collection.on({change: function(model){
                 self.userSetList.findWhere({user_id: model.get("user_id")})

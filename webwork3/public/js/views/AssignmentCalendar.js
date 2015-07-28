@@ -138,7 +138,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                     } else if ($(ui.draggable).hasClass("assign-reduced-scoring")){
                         self.setDate($(ui.draggable).data("setname"),$(this).data("date"),"reduced_scoring_date");
                     }
-
+                    self.trigger("calendar-change");
                 }
             });
 

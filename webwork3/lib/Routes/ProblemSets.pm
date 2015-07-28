@@ -77,18 +77,12 @@ get '/courses/:course_id/sets/:set_id' => sub {
 any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
     debug 'in put or post /courses/:course_id/sets/:set_id';
-    
-    debug vars->{ce}->{siteDefaults}{locale};
-    
     checkPermissions(10,session->{user});
-
-    
 
     # set all of the new parameters sent from the client
     my %allparams = params;
     
     my $problems_from_client = params->{problems}; 
-    debug $problems_from_client; 
     
     if(request->is_post()){
         if (params->{set_id} !~ /^[\w\_.-]+$/) {
@@ -128,13 +122,14 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
     my @problemsFromDB = vars->{db}->getAllGlobalProblems(params->{set_id});
 
     if(params->{_reorder}){  # reorder the problems
+        debug "the problems are being reordered";
         reorderProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
         addGlobalProblems(params->{set_id},params->{problems});
         addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
-    } elsif(scalar(@problemsFromDB) > scalar(@{params->{problems}})) { # problems have been deleted.  
-        deleteProblems(vars->{db},params->{set_id},params->{problems});
-        renumber_problems(vars->{db},params->{set_id},params->{assigned_users});
+    } elsif(params->{_delete_problem_id}) { # problems have been deleted.  
+        deleteProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users},
+                params->{_delete_problem_id});
     } else { # problem may have been updated
         updateProblems(vars->{db},params->{set_id},params->{problems});
     }
@@ -145,7 +140,6 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
         ## return the rendered data that was sent from the client. 
         my $set_from_client = first_value { $set->{source_file} eq $_->{source_file} && 
                                     $set->{problem_id} eq $_->{problem_id} } @$problems_from_client;
-        debug $set_from_client; 
         $set->{data} = $set_from_client->{data} if defined($set_from_client);
         $set->{problem_seed} = $set_from_client->{problem_seed} if defined($set_from_client->{problem_seed}); 
     }

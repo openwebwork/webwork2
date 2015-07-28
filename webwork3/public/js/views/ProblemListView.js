@@ -21,7 +21,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
 
         initialize: function(options){
             var self = this;
-            _.bindAll(this,"render","reorder","addProblemView");  
+            _.bindAll(this,"render","addProblemView");  
             _(this).extend(_(options).pick("settings","problemSet","messageTemplate"));
             this.problems = options.problems ? options.problems : new ProblemList();
             this.problemSet = options.problemSet; 
@@ -184,20 +184,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         /* when the "new" button is clicked open up the simple editor. */
         openSimpleEditor: function(){  
             console.log("opening the simple editor."); 
-        },
-        reorder: function (event,ui) {
-            var self = this;
-            if(typeof(self.problems.problemSet) == "undefined"){
-                return;
-            }
-            var oldProblems = this.problems.map(function(p) { return _.clone(p.attributes); });
-            this.$(".problem").each(function (i) {
-                var id = $(this).data("id").split(":")[1];
-                var prob = _(oldProblems).find(function(p) {return p.problem_id == id; });
-                self.problems.at(i).set({problem_id: (i+1),_id: self.model.get("set_id") + ":" + (i+1)},{silent: true}); 
-                $(this).data("id",self.problems.problemSet.get("set_id")+":"+self.problems.at(i).get("problem_id"));
-            });
-            this.problems.problemSet.save({_reorder: true});
         },
         setProblemSet: function(_set) {
             this.model = _set; 

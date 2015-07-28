@@ -69,7 +69,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
                 var newDate = moment(time,"hh:mmA");             
                 theDate.hours(newDate.hours()).minutes(newDate.minutes());
-                evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
+                evt.data.model.set(evt.data.options.observe,theDate.unix()); 
                 evt.data.$el.popover("destroy");
                 evt.data.$el.removeAttr("style");
             } else {
@@ -77,7 +77,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 var errorMessage = config.messageTemplate({type: "time_error"})
                 evt.data.$el.popover({title: "Error", content: errorMessage, placement: "left"}).popover("show");
             }
-            
+            console.log(theDate);
         },
         sortIcons: {
             "string1": "fa fa-sort-alpha-asc",
@@ -186,7 +186,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             timeIcon.parent().delegate(".save-time-button","click",{$el:$el.closest(".edit-datetime"),
                              model: model, options: options},
                 function (evt) {
-                    timeIcon.popover("hide");
                     config.setTime(evt,$(this).siblings(".wwtime").val());
             });
             timeIcon.parent().delegate(".cancel-time-button","click",{},function(){timeIcon.popover("hide");});

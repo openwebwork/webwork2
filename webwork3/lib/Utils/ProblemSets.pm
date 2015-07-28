@@ -5,12 +5,12 @@ package Utils::ProblemSets;
 use base qw(Exporter);
 
 use List::Util qw(first);
-use List::MoreUtils qw/indexes/;
+use List::MoreUtils qw/first_index indexes/;
 use Dancer ':syntax';
 use Data::Compare; 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog cryptPassword/;
-use Array::Utils qw(array_minus);
+use Array::Utils qw/array_minus/;
 
 our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible 
                             enable_reduced_scoring assignment_type description attempts_per_version time_interval 
@@ -49,6 +49,15 @@ sub getGlobalSet {
         $problem->{_id} = $problem->{set_id} . ":" . $problem->{problem_id};  # this helps backbone on the client side
     }
 
+    my $proctor_id = "set_id:".$set->{set_id};
+    if($db->existsUser($proctor_id)){
+        if($db->getPassword($proctor_id)){
+            $problemSet->{pg_password}='******';
+        }
+    }
+        
+        
+    
     $problemSet->{assigned_users} = \@users;
     $problemSet->{problems} = convertArrayOfObjectsToHash(\@problems);
     $problemSet->{_id} = $setName; # this is needed so that backbone works with the server. 
@@ -77,13 +86,6 @@ sub putGlobalSet {
     
     if($set->{assignment_type} eq 'proctored_gateway'){
         my $proctor_id = "set_id:".$set->{set_id};
-        if($set->{pg_password} ne '******') { 
-            my $dbPass = $db->getPassword($proctor_id);
-            debug $dbPass;
-            $dbPass->password(cryptPassword($set->{pg_password}));
-            $db->putPassword($dbPass);
-            $set->{pg_password}='******';
-        }
         ## if the proctor doesn't exist as a user in the db, create it. 
         if(! $db->existsUser($proctor_id)){
             my $proctor = $db->newUser();
@@ -92,12 +94,23 @@ sub putGlobalSet {
 			$proctor->first_name("Login");
 			$proctor->student_id("loginproctor");
 			$proctor->status($ce->status_name_to_abbrevs('Proctor'));
-            debug $proctor;
 			my $procPerm = $db->newPermissionLevel;
             $procPerm->user_id($proctor_id);
 			$procPerm->permission($ce->{userRoles}->{login_proctor});
             $db->addUser($proctor);
             $set_from_db->restricted_login_proctor('Yes');
+        }
+
+        if($set->{pg_password} ne '******') { 
+            my $dbPass = $db->getPassword($proctor_id);
+            if(! defined($dbPass)){
+                $dbPass = $db->newPassword($proctor_id);
+                $dbPass->user_id($proctor_id);
+            }
+            my $clearPassword = $set->{pg_password};
+            $dbPass->password(cryptPassword($set->{pg_password}));
+            $db->putPassword($dbPass);
+            $set->{pg_password}=($clearPassword eq '')? '' : '******';
         }
             
     }
@@ -148,11 +161,53 @@ sub putUserSet {
     return getUserSet($db,$ce,$set->{user_id},$set->{set_id});
 }
 
+sub reorderProblems {
+    my ($db,$setID,$new_problems,$assigned_users) = @_; 
+    
+    
+    for my $i (0..(scalar(@$new_problems)-1)){
+        
+        my $prob; 
+        if($db->existsGlobalProblem($setID,$new_problems->[$i]->{problem_id})){
+            $prob = $db->getGlobalProblem($setID,$new_problems->[$i]->{problem_id});
+        } else {
+            $prob = $db->newGlobalProblem();##$setID,$new_problems->[$i]->{problem_id});
+            $prob->{set_id} = $setID;
+            $prob->{problem_id} = $new_problems->[$i]->{problem_id};
+        }
+        
+        for my $key (@problem_props){
+            $prob->{$key} = $new_problems->[$i]->{$key};
+        }
+        if($db->existsGlobalProblem($setID,$new_problems->[$i]->{problem_id})){
+            $db->putGlobalProblem($prob);
+        } else {
+            $db->addGlobalProblem($prob);
+        }
+    }
+    
+    ## update the user problems
+    
+    for my $user_id (@$assigned_users){
+        my $user_probs = [$db->getAllUserProblems($user_id,$setID)];
+        for my $i (0..(scalar(@$new_problems)-1)){
+            my $user_prob = first {$_->{problem_id} eq $new_problems->[$i]->{_old_problem_id} } @$user_probs;
+            
+            ## need to make a new User Problem.  Reusing the old one results in a problem. 
+            my $newUserProblem = createNewUserProblem($user_id,$setID,$new_problems->[$i]->{problem_id});
+            for my $prop (@user_problem_props) {
+                $newUserProblem->{$prop} = $user_prob->{$prop};
+            }
+            $db->putUserProblem($newUserProblem);
+        }
+    }
+}
+
 ###
 #
-# This reorders the problems
+# This reorders the problems  pstaab:  Don't this this is needed anymore.  
 
-sub reorderProblems {
+sub reorderProblems2 {
     my ($db,$setID,$new_problems,$assigned_users) = @_; 
     
     my @extra_fields = ("problem_id","set_id","user_id");
@@ -345,17 +400,66 @@ sub addUserProblems {
 ##
 
 sub deleteProblems {
-	my ($db,$setID,$problems)=@_;
-
-	my @old_ids = map { $_->{problem_id} } $db->getAllGlobalProblems($setID);
-    my @new_ids = map { $_->{problem_id} } @$problems;
-    my @ids_to_delete = array_minus(@old_ids,@new_ids);
+	my ($db,$setID,$problems,$assigned_users,$problem_id_to_delete)=@_;
     
-    for my $id (@ids_to_delete){
-        $db->deleteGlobalProblem($setID,$id);
-    }
+    debug "in delete Problems"; 
+    $db->deleteGlobalProblem($setID,$problem_id_to_delete);
+    
+    renumber_problems($db,$setID,$assigned_users);
 
     return $db->getAllGlobalProblems($setID);
+}
+
+###
+#
+# The following renumbers problems.  If they come in as 2,4,9,11,13 they leave as 1,2,3,4,5
+#
+#  pstaab: It appears that there is a lot of overlap between this and reorder_problems at the top 
+#  of this file.  They should be combined or clarified how. 
+###
+
+sub renumber_problems {
+    my ($db,$setID,$assigned_users) = @_;
+    
+    my @probs = $db->getAllGlobalProblems($setID);
+    
+    debug to_dumper(\@probs);
+    
+    my @prob_ids = ();
+    my %userprobs = ();
+    my $j=1;
+    for my $prob (@probs) {
+        push(@prob_ids, $prob->{problem_id});
+        $prob->{problem_id} = $j++;
+    }
+    
+    for my $user_id (@{$assigned_users}){
+        $j=1;
+        my $userproblems = [$db->getAllUserProblems($user_id,$setID)];
+        for my $prob (@$userproblems) {
+            $prob->{problem_id} = $j++;
+        }
+        $userprobs{$user_id} = $userproblems;
+    }
+    
+    ## delete all old problems;
+    
+    for my $prob_id (@prob_ids){
+        $db->deleteGlobalProblem($setID,$prob_id);
+    }
+    
+    ## add in all of the global and user problems:
+    for my $prob (@probs) {
+        $db->addGlobalProblem($prob);
+    }
+    
+    for my $user_id (@{$assigned_users}){
+        for my $user_problem (@{$userprobs{$user_id}}){
+            $db->addUserProblem($user_problem);   
+        }
+    }
+    
+    return;
 }
 
 
@@ -533,68 +637,7 @@ sub record_results {
     return $scoreRecordedMessage;
 }
 
-###
-#
-# The following renumbers problems.  If they come in as 2,4,9,11,13 they leave as 1,2,3,4,5
-#
-#  pstaab: It appears that there is a lot of overlap between this and reorder_problems at the top 
-#  of this file.  They should be combined or clarified how. 
-###
 
-sub renumber_problems {
-    my ($db,$setID,$assigned_users) = @_;
-    my %newProblemNumbers = ();
-	my $maxProblemNumber = -1;
-    my $force = 1;
-    my $val;
-    my @sortme;
-    my $j =1;
-    
-	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
-		$newProblemNumbers{$j} = $jj;
-		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
-        $j++;
-	}
-    
-    
-    
-    my @probs = $db->getAllGlobalProblems($setID);
-    my @prob_ids = ();
-    my %userprobs = ();
-    $j=1;
-    for my $prob (@probs) {
-        push(@prob_ids, $prob->{problem_id});
-        $prob->{problem_id} = $j++;
-    }
-    
-    for my $user_id (@{$assigned_users}){
-        $j=1;
-        my $userproblems = [$db->getAllUserProblems($user_id,$setID)];
-        for my $prob (@$userproblems) {
-            $prob->{problem_id} = $j++;
-        }
-        $userprobs{$user_id} = $userproblems;
-    }
-    
-    ## delete all old problems;
-    
-    for my $prob_id (@prob_ids){
-        $db->deleteGlobalProblem($setID,$prob_id);
-    }
-    
-    ## add in all of the global and user problems:
-    for my $prob (@probs) {
-        $db->addGlobalProblem($prob);
-    }
-    
-    for my $user_id (@{$assigned_users}){
-        for my $user_problem (@{$userprobs{$user_id}}){
-            $db->addUserProblem($user_problem);   
-        }
-    }
-    
-    return;
-}
 
 
 1;

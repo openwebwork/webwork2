@@ -53,7 +53,7 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             this.delegateEvents(this.events);
             return this;   
         },
-        events: { "click": function (){console.log("hi");},
+        events: { 
             "click .previous-week": "viewPreviousWeek",
             "click .next-week": "viewNextWeek",
             "click .view-week": "showWeekView",
@@ -63,10 +63,12 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         viewPreviousWeek: function (){
             this.state.set("first_day",moment(this.state.get("first_day")).subtract(7,"days").format("YYYY-MM-DD"));
             this.render();
+            this.trigger("calendar-change");
         },
         viewNextWeek: function() {
             this.state.set("first_day",moment(this.state.get("first_day")).add(7,"days").format("YYYY-MM-DD"));
             this.render();
+            this.trigger("calendar-change");
         },
         showWeekView: function () {
             this.state.set("num_of_weeks",2);

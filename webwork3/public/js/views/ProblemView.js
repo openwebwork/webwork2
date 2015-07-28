@@ -224,9 +224,8 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             this.$el.addClass("hidden");
         },
         removeProblem: function(){
-            this.problem_set_view.model.problems.remove(this.model);
-            this.problem_set_view.model.trigger("change:problems",this.problem_set_view.model,this.model);
-            this.remove();  // remove the view
+            this.problem_set_view.model.deleteProblem(this.model,this); 
+            
         }, 
         set: function(opts){
             this.state.set(_(opts).pick("show_path","show_tags","tags_loaded"))
