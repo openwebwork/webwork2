@@ -30,11 +30,11 @@ use IO::File;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw();
-#	list_set_versions
-#);
 
-use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language );
+use constant BASIC => qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level Language Static MO Status );
 use constant NUMBERED => qw( TitleText AuthorText EditionText Section Problem );
+
+# KEYWORDS and RESOURCES are treated specially since each takes a list of values
 
 my $basics = join('|', BASIC);
 my $numbered = join('|', NUMBERED);
@@ -44,6 +44,7 @@ sub istagline {
   my $line = shift;
   return 1 if($line =~ /$re/);
   return 1 if($line =~ /#\s*\bKEYWORDS?\s*\(\s*'?(.*?)'?\s*\)/);
+  return 1 if($line =~ /#\s*\bRESOURCES?\s*\(\s*'?(.*?)'?\s*\)/);
   return 1 if($line =~ /#\s*\b($numbered)\d+\s*\(\s*'?(.*?)'?\s*\)/);
   return 0;
 }
@@ -130,6 +131,20 @@ sub settag {
   }
 }
 
+# Similar, but add a resource to the list
+sub addresource {
+  my $self = shift;
+  my $resc = shift;
+
+  if(not defined($self->{resources})) {
+    $self->{resources} = [$resc];
+  } else {
+    unless(grep(/^$resc$/, @{$self->{resources}} )) {
+      push @{$self->{resources}}, $resc;
+    }
+  }
+}
+
 sub printtextinfo {
   my $textref = shift;
   print "{";
@@ -203,6 +218,7 @@ sub new {
     $self->{$tagname} = '';
   }
   $self->{keywords} = [];
+  $self->{resources} = [];
   #$self->{Language} = 'eng'; # Default to English
 
 
@@ -213,6 +229,15 @@ sub new {
         my @keyword = keywordcleaner($1);
 		@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
         $self->{keywords} = [@keyword];
+        $lasttag = $lineno;
+        last SWITCH;
+      }
+      if (/#\s*\bRESOURCES\((.*)\)/i) {
+        my @resc = keywordcleaner($1); # splits on comma
+		s/["'\s]*$//g for (@resc);
+		s/^["'\s]*//g for (@resc);
+		@resc = grep { not /^\s*'?\s*'?\s*$/ } @resc;
+        $self->{resources} = [@resc];
         $lasttag = $lineno;
         last SWITCH;
       }
@@ -333,7 +358,7 @@ sub copyin {
 #    }
 #  }
   # Just copy in all basic tags
-  for my $j (qw( DBsubject DBchapter DBsection Date Institution Author MLT MLTleader Level )) {
+  for my $j (qw( DBsubject DBchapter DBsection MLT MLTleader Level )) {
     $self->settag($j, $ob->{$j}) if(defined($ob->{$j}));
   }
   # Now copy in keywords
@@ -371,6 +396,13 @@ sub dumptags {
     }
   }
   print $fh "## KEYWORDS(".join(',', @{$self->{keywords}}).")\n" if(scalar(@{$self->{keywords}}));
+  my @resc;
+  if(scalar(@{$self->{resources}})) {
+	@resc = @{$self->{resources}};
+	s/^/'/g for (@resc);
+	s/$/'/g for (@resc);
+    print $fh "## RESOURCES(".join(',', @resc).")\n";
+  }
 }
 
 # Write the file

@@ -28,6 +28,7 @@ use warnings;
 use WeBWorK::Debug;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 use WeBWorK::PG::IO;
+use WeBWorK::CGI;
 
 use constant {             # constants describing the comparison of two hashes.
            ONLY_IN_A=>0, 

@@ -27,6 +27,8 @@ use warnings;
 use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
+use WeBWorK::DB qw(validateKeyfieldValue);
+
 use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
@@ -42,6 +44,8 @@ use Scalar::Util qw(weaken);
 =head1 VIRTUAL HEIRARCHY
 
 PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
+
+Note:  Only database keyfield values can be used as path parameters.  
 
  root                                /
  
@@ -253,7 +257,7 @@ our %pathTypes = (
 		match   => qr|^proctored_quiz_mode/([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => 'proctored_quiz_mode/$setID/',
-		display => 'WeBWorK::ContentGenerator::GatewayQuiz',
+		display => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
 	},
 	proctored_gateway_proctor_login => {
 		name    => 'Proctored Gateway Quiz $setID Proctor Login',
@@ -310,7 +314,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Logout',
 	},
 	options => {
-		name    => 'Password/Email',
+		name    => 'User Settings',
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^options/|,
@@ -363,7 +367,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_user_list => {
-		name    => 'Classlist Editor',
+		name    => 'Old Classlist Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users/|,
@@ -372,7 +376,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList',
 	},
 	instructor_user_list2 => {
-		name    => 'Classlist Editor2',
+		name    => 'Classlist Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users2/|,
@@ -382,7 +386,7 @@ our %pathTypes = (
 	},
 	instructor_user_detail => {
 		name    => 'Sets assigned to $userID',
-		parent  => 'instructor_user_list',
+		parent  => 'instructor_user_list2',
 		kids    => [ qw/instructor_sets_assigned_to_user/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/userID/ ],
@@ -402,7 +406,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_set_list => {
-		name    => 'Hmwk Sets Editor',
+		name    => 'Old Hmwk Sets Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets/|,
@@ -411,7 +415,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList',
 	},
 	instructor_set_list2 => {
-		name    => 'Hmwk Sets Editor2',
+		name    => 'Hmwk Sets Editor',
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets2/|,
@@ -421,7 +425,7 @@ our %pathTypes = (
 	},
 	instructor_set_detail => {
 		name    => 'Set Detail for set $setID',
-		parent  => 'instructor_set_list',
+		parent  => 'instructor_set_list2',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
@@ -1243,6 +1247,10 @@ sub visitPathTypeNode($$$$) {
 			for (my $i = 0; $i < $max; $i++) {
 				my $name = $capture_names[$i];
 				my $value = $capture_values[$i];
+
+				# check to see if the url path parameter is a valid keyfield for the DB.
+				WeBWorK::DB::validateKeyfieldValue($name,$value,1);
+
 				if ($i > $nexpected) {
 					warn "captured an unexpected argument: $value -- ignoring it.";
 					next;

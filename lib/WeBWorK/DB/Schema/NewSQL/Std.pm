@@ -146,12 +146,12 @@ sub _create_table_stmt {
 		foreach my $component (@keyfields[$start .. $#keyfields]) {
 			my $sql_field_name = $self->sql_field_name($component);
 			my $sql_field_type = $self->field_data->{$component}{type};
-			my $length_specifier = $sql_field_type =~ /(text|blob)/i ? "(255)" : "";
+			my $length_specifier = $sql_field_type =~ /(text|blob)/i ? "(100)" : "";
 			if ($start == 0 and $length_specifier and $sql_field_type !~ /tiny/i) {
 				warn "warning: UNIQUE KEY component $sql_field_name is a $sql_field_type, which can"
-					. " hold values longer than 255 characters. However, the maximum key prefix"
-					. " length for text/blob fields is 255. Therefore, uniqueness must occur within"
-					. " the first 255 characters of this field.";
+					. " hold values longer than 100 characters. However, in order to support utf8"
+					. " we limit the key prefix for text/blob fields to 100. Therefore, uniqueness"
+					.  "must occur within the first 100 characters of this field.";
 			}
 			push @index_components, "`$sql_field_name`$length_specifier";
 		}
@@ -815,15 +815,19 @@ our %MYSQL_ERROR_CODES = (
 # another RDBMS.
 sub handle_error {
 	my ($errmsg, $handle, $returned) = @_;
-	
 	if (exists $MYSQL_ERROR_CODES{$handle->err}) {
 		$MYSQL_ERROR_CODES{$handle->err}->throw;
 	} else {
-	    my $error = $errmsg."\n".join("\n",caller(1),caller(2),caller(3));
-	    #$error =~ s|\n|<br/>|;
-		die $error ;
+
+	    if ($errmsg =~ /Unknown column/) {
+		warn("It looks like the database is missing a column.  You may need to upgrade your course tables.  If this is the admin course then you will need to upgrade the admin tables using the upgrade_admin_db.pl script.");
+	    }
+	    
+	    die $errmsg ;
 	}
 }
 
+sub DESTROY {
+}
 1;
 

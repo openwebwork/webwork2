@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile sortByName path_is_subdir is_restricted);
+use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted wwRound);
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
@@ -214,28 +214,29 @@ sub body {
 		? CGI::u($r->maketext("Status"))
 		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, $r->maketext("Status"));
 # print the start of the form
-
-    print CGI::start_form(-name=>"problem-sets-form", -id=>"problem-sets-form", -method=>"POST",-action=>$actionURL),
-          $self->hidden_authen_fields;
-    
+	if ($authz->hasPermissions($user, "view_multiple_sets")) { 
+	    print CGI::start_form(-name=>"problem-sets-form", -id=>"problem-sets-form", -method=>"POST",-action=>$actionURL),
+	    $self->hidden_authen_fields;
+	}
+	
 # and send the start of the table
 # UPDATE - ghe3
 # This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
-	print CGI::start_table({ -class=>"problem_set_table"});
-	print CGI::caption(CGI::a({class=>"table-summary", href=>"#", "data-toggle"=>"popover", "data-content"=>"This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the radio buttons or checkboxes next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.", "data-original-title"=>"Homework Sets", "data-placement"=>"bottom"}, $r->maketext("Homework Sets")));
+	print CGI::start_table({ -class=>"problem_set_table", -summary=>$r->maketext("This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the linkx next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.")});
+	print CGI::caption($r->maketext("Homework Sets"));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
-		    CGI::th(),
+		    CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	} else {
 	    print CGI::Tr(
-		    CGI::th(),
-		    CGI::th({-scope=>"col"},$nameHeader),
-		    CGI::th({-scope=>"col"},$r->maketext("Test Score")),
-		    CGI::th({-scope=>"col"},$r->maketext("Test Date")),
-		    CGI::th({-scope=>"col"},$statusHeader),
+		CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
+		CGI::th({-scope=>"col"},$nameHeader),
+		CGI::th({-scope=>"col"},$r->maketext("Test Score")),
+		CGI::th({-scope=>"col"},$r->maketext("Test Date")),
+		CGI::th({-scope=>"col"},$statusHeader),
 	        );
 	}
 
@@ -285,11 +286,14 @@ sub body {
 
 	# UPDATE - ghe3
 	# Added reset button to form.
-	print CGI::start_div({-class=>"problem_set_options"});
-	print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear", -input_attr=>{ -value=>$r->maketext("Clear")}).CGI::end_p();
-	print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"hardcopy",-input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}).CGI::end_p();
-	print CGI::end_div();
-	print CGI::endform();
+
+	if ($authz->hasPermissions($user, "view_multiple_sets")) {
+	    print CGI::start_div({-class=>"problem_set_options"});
+	    print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear", -input_attr=>{ -value=>$r->maketext("Clear")}).CGI::end_p();
+	    print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"hardcopy",-input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}).CGI::end_p();
+	    print CGI::end_div();
+	    print CGI::end_form();
+	}
 	
 	## feedback form url
 	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",  $r, courseID => $courseName);
@@ -310,7 +314,7 @@ sub body {
 	#	CGI::p({-align=>"left"},
 	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
 	#	),
-	#	CGI::endform(),"\n";
+	#	CGI::end_form(),"\n";
 	
 	print $self->feedbackMacro(
 		module => __PACKAGE__,
@@ -336,6 +340,7 @@ sub setListRow {
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $user = $r->param("user");
+	my $effectiveUser = $r->param("effectiveUser") || $user;
 	my $urlpath = $r->urlpath;
 	my $globalSet = $db->getGlobalSet($set->set_id);
 	$gwtype = 0 if ( ! defined( $gwtype ) );
@@ -343,7 +348,7 @@ sub setListRow {
 	
 	my $name = $set->set_id;
 	my @restricted = $ce->{options}{enableConditionalRelease} ?  
-	    is_restricted($db, $set, $name, $user) : ();
+	    is_restricted($db, $set, $effectiveUser) : ();
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");
@@ -360,15 +365,11 @@ sub setListRow {
 				      courseID => $courseName, setID => $urlname);
 	} else {
 
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProctoredGatewayQuiz", $r, 
 				      courseID => $courseName, setID => $urlname);
 	}
 
-	my $interactiveURL = $self->systemLink($problemSetPage,
-	                                       params=>{  displayMode => $self->{displayMode}, 
-													  showOldAnswers => $self->{will}->{showOldAnswers}
-										   }
-	);
+	my $interactiveURL = $self->systemLink($problemSetPage);
 
   # check to see if this is a template gateway assignment
 	$gwtype = 2 if ( defined( $set->assignment_type() ) && 
@@ -386,14 +387,13 @@ sub setListRow {
 		if ( $gwtype == 1 );
 
   # the conditional here should be redundant.  ah well.
-	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
-	    ( defined( $set->assignment_type() ) && 
-	      $set->assignment_type() eq 'proctored_gateway' );
+#	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
+#	    ( defined( $set->assignment_type() ) && 
+#	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
 	$display_name =~ s/_/ /g;
 # this is the link to the homework assignment, it has tooltip with the hw description 
 	my $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, "$display_name");
-	
 	my $control = "";
 	
 	my $setIsOpen = 0;
@@ -418,7 +418,7 @@ sub setListRow {
 
 			# reset the link to give the test number
 			my $vnum = $set->version_id;
-			$interactive = CGI::a({-href=>$interactiveURL},
+			$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
 					      $r->maketext("[_1] (test [_2])", $display_name, $vnum));
 		} else {
 			my $t = time();
@@ -428,8 +428,9 @@ sub setListRow {
 					# reset the link
 					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 				} else {
-					$control = "";
-										$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()}, $r->maketext("Take [_1] test", $display_name));
+				    $interactive = $r->maketext("Take [_1] test", $display_name);
+				    $control = "";
+		
 				}
 			} elsif ( $t < $set->open_date() && @restricted ) {
 				my $restriction = ($set->restricted_status)*100;
@@ -443,11 +444,11 @@ sub setListRow {
 		}
 				if ( $preOpenSets ) {
 					# reset the link
-					$interactive = CGI::a({-href=>$interactiveURL},
+					$interactive = CGI::a({href=>$interactiveURL,class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()},
 							      $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $display_name);
+					$interactive = $r->maketext("Take [_1] test", $display_name);
 				}
 			} elsif ( $t < $set->due_date() && !@restricted ) {
 				$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
@@ -455,7 +456,7 @@ sub setListRow {
 				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 			} elsif ( $t < $set->due_date() && @restricted) {
 				my $restriction = ($set->restricted_status)*100;
-				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
+				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 		if(@restricted > 1) {
 		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
 		  foreach(0..$#restricted) {
@@ -466,11 +467,11 @@ sub setListRow {
 		}
 				if ( $preOpenSets ) {
 					# reset the link
-					$interactive = CGI::a({-href=>$interactiveURL},
+					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
 							      $r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
-					$interactive = $r->maketext("[_1] test", $display_name);
+					$interactive = $r->maketext("Take [_1] test", $display_name);
 				}
 			} else {
 				$status = $r->maketext("Closed");
@@ -517,6 +518,7 @@ sub setListRow {
 		my $restriction = ($set->restricted_status)*100;
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
+
 		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 
 		if(@restricted > 1) {
@@ -554,18 +556,21 @@ sub setListRow {
 				-name=>"selected_sets",
 				-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
 					  });
+		    # make sure interactive is the label for control
+		    $interactive = CGI::label({"for"=>$name . ($gwtype ? ",v" . $set->version_id : '')},$interactive);
+
 		} else {
 		    $control = '';
 		}
 	} else {
-		if ( $gwtype < 2 ) {
+		if ( $gwtype < 2 && after($set->open_date) && 
+		    (!@restricted || after($set->due_date))) {
 			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
-			$control = CGI::input({
-			    -type=>"radio",
-			    -id=>$n,
-			    -name=>"selected_sets",
-			    -value=>$n
-					      });
+			my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, courseID => $courseName, setID => $urlname);
+			
+			my $link = $self->systemLink($hardcopyPage,
+	                            params=>{selected_sets=>$n});
+			$control = CGI::a({class=>"hardcopy-link", href=>$link},CGI::span({class=>"icon icon-download", title=>$r->maketext("Download [_1]",$set->set_id), 'data-alt'=>$r->maketext("Download [_1]",$set->set_id)}));
 		} else {
 		    $control = '';
 		}
@@ -607,6 +612,7 @@ sub setListRow {
 					}
 					$possible += $pval;
 				}
+				$score = wwRound(2,$score);
 				$score = "$score/$possible";
 			} else {
 				$score = "n/a";
@@ -615,6 +621,7 @@ sub setListRow {
 			$startTime = '&nbsp;';
 			$score = $startTime;
 		}
+
 		return CGI::Tr(CGI::td([
 		                     $control,
 				     $interactive,

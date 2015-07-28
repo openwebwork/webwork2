@@ -28,6 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
 use constant DATE_FIELDS => {   open_date    => " Open: ",
@@ -35,7 +36,7 @@ use constant DATE_FIELDS => {   open_date    => " Open: ",
 	                            due_date     => " Due&nbsp;: ",
 	                            answer_date  => " Ans&nbsp;: "
 };
-use constant DATE_FIELDS_ORDER =>[qw(open_date due_date reduced_scoring_date answer_date )];
+use constant DATE_FIELDS_ORDER =>[qw(open_date reduced_scoring_date due_date answer_date )];
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -53,7 +54,8 @@ sub initialize {
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
 	
 	# first check to see if a save form has been submitted
-	return '' unless $r->param('save_button');
+	return '' unless ($r->param('save_button') ||
+			  $r->param('assignAll'));
 	
 	# As it stands we need to check each set to see if it is still assigned 
 	# the forms are not currently set up to simply transmit changes
@@ -65,7 +67,10 @@ sub initialize {
 	
 	my @assignedSets = ();
 	foreach my $setID (@setIDs) {
-		push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
+	    # add sets to the assigned list if the parameter is checked or the
+	    # assign all button is pushed.  (already assigned sets will be
+	    # skipped later) 
+	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
 	# note: assignedSets are those sets that are assigned in the submitted form
@@ -337,6 +342,19 @@ sub body {
 	}
 	
 	########################################
+	# Assigned sets form
+	########################################
+
+	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
+	print $self->hidden_authen_fields();
+
+	print CGI::div(
+	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User"),
+			 onClick => "\$('input[name*=\"assignment\"]').attr('checked',1);"
+			})), , CGI::br();
+
+
+	########################################
 	# Print warning
 	########################################
 	print CGI::div({-class=>'ResultsWithError'},
@@ -351,12 +369,7 @@ sub body {
 		      reassign the set, the student will receive a new version of each problem.
 		      Make sure this is what you want to do before unchecking sets."
 	);
-	########################################
-	# Assigned sets form
-	########################################
 
-	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail'}),"\n";
-	print $self->hidden_authen_fields();
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
 	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
@@ -425,7 +438,7 @@ sub body {
 		                                editForUser   => $editForUserID,
 		});
 
-		my $setName = ( $setVersion ) ? "test $setVersion" : $setID;
+		my $setName = ( $setVersion ) ? "$setID (test $setVersion)" : $setID;
 
 		print CGI::Tr(
 			CGI::td({ -align => "center" }, [
@@ -495,7 +508,8 @@ sub checkDates {
 	my $error        = 0;
 	foreach my $field (@{DATE_FIELDS_ORDER()}) {  # check that override dates can be parsed and are not blank
 		$dates{$field} = $setRecord->$field;
-		if (defined  $r->param("set.$setID.$field.override") ){
+		if (defined  $r->param("set.$setID.$field.override") && 
+		    $r->param("set.$setID.$field") ne 'None Specified'){
 			eval{ $numerical_date = $self->parseDateTime($r->param("set.$setID.$field"))};
 			unless( $@  ) {
 					$dates{$field}=$numerical_date;
@@ -509,12 +523,13 @@ sub checkDates {
 	}
 	return {%dates,error=>1} if $error;    # no point in going on if the dates can't be parsed.
 	
-	my ($open_date, $due_date, $reduced_scoring_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
+	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
 
     unless ($answer_date && $due_date && $open_date) {
     	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, 
     	 due date |$due_date|, open_date |$open_date|");
 	}
+
 	if ($answer_date < $due_date || $answer_date < $open_date) {		
 		$self->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
 		$error = 1;
@@ -562,7 +577,7 @@ sub DBFieldTable {
 	    $recordID, $fieldsRef, $rh_fieldLabels) = @_;
 	
 	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
-	
+
 	# modify record name if we're dealing with versioned sets
 	my $isVersioned = 0;
 	if ( $recordType eq "set" && defined($MergedRecord) &&
@@ -596,10 +611,12 @@ sub DBFieldTable {
 				}) : "",
 				defined $UserRecord ? 
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
-					              -value => $userValue ? $self->formatDateTime($userValue) : "", 
+						      -id =>"$recordType.$recordID.${field}_id",
+						      -type=> "text",
+					              -value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "None Specified", 
 					              -size => 25})
 					) : "",
-				$self->formatDateTime($globalValue),				
+				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),				
 			]
 			
 	}
@@ -608,8 +625,48 @@ sub DBFieldTable {
 	foreach my $row (@results) {
 		push @table, CGI::Tr(CGI::td({-align => "center"}, $row));
 	}
+
+	# set up date picker scripts.  We have to spoof the set name if its
+	# a versioned set.  
+	my $script = '';
+	if ($ce->{options}->{useDateTimePicker}) {
+	    $GlobalRecord->set_id($recordID) if $isVersioned;
+	    print CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $GlobalRecord).CGI::end_script();
+	}
+
+	return (CGI::start_table({class => 'UserDetail-date-table', border=> 0}), @table, CGI::end_table(), $script);
+}
+
+#Tells template to output stylesheet and js for Jquery-UI
+sub output_jquery_ui{
+	return "";
+}
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	# print javaScript for dateTimePicker	
+	# jquery ui printed seperately
+
+	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> 
+	.ui-datepicker{font-size:85%} 
+	.auto-changed{background-color: #ffffcc} 
+	.changed {background-color: #ffffcc}
+        </style>!,"\n";
 	
-	return (CGI::start_table({border => 0}), @table, CGI::end_table());
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
+
+	return "";
+
 }
 
 1;

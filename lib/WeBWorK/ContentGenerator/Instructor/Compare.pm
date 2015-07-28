@@ -86,7 +86,7 @@ sub body {
 																displayMode => 'images');
 
 	##########	Extract information computed in pre_header_initialize
-	print CGI::startform({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
+	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 		$self->hidden_authen_fields;
 	print CGI::p('File 1: ', CGI::textfield(-name=>"path1",
 																					-default=>"$path1",
@@ -98,7 +98,7 @@ sub body {
 													 -value=>"Show Files"));
 	print CGI::p(CGI::submit(-name=>"clear",
 													 -value=>"Clear"));
-	print CGI::endform(), "\n";
+	print CGI::end_form(), "\n";
 
 	for $j (@rendered) {
 		print '<hr size="5" color="blue" />';

@@ -217,7 +217,7 @@ a {
 }
 a:hover,
 a:focus {
-  color: #0088cc;
+  color: #1A67EA;
   text-decoration: underline;
 }
 .img-rounded {
@@ -1910,19 +1910,18 @@ input[type="button"].btn-block {
 .btn-info {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-  background-color: #49afcd;
-  background-image: -moz-linear-gradient(top, #5bc0de, #2f96b4);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5bc0de), to(#2f96b4));
-  background-image: -webkit-linear-gradient(top, #5bc0de, #2f96b4);
-  background-image: -o-linear-gradient(top, #5bc0de, #2f96b4);
-  background-image: linear-gradient(to bottom, #5bc0de, #2f96b4);
+  background-color: #0b5de9;
+  background-image: -moz-linear-gradient(top, #0157e8, #1a67ea);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0157e8), to(#1a67ea));
+  background-image: -webkit-linear-gradient(top, #0157e8, #1a67ea);
+  background-image: -o-linear-gradient(top, #0157e8, #1a67ea);
+  background-image: linear-gradient(to bottom, #0157e8, #1a67ea);
   background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de', endColorstr='#ff2f96b4', GradientType=0);
-  border-color: #2f96b4 #2f96b4 #1f6377;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0157e8', endColorstr='#ff1a67ea', GradientType=0);
+  border-color: #1a67ea #1a67ea #0f48a8;
   border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
-  *background-color: #2f96b4;
+  *background-color: #1a67ea;
   /* Darken IE7 buttons by default so they stand out more given they won't have borders */
-
   filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
 }
 .btn-info:hover,
@@ -1932,12 +1931,12 @@ input[type="button"].btn-block {
 .btn-info.disabled,
 .btn-info[disabled] {
   color: #ffffff;
-  background-color: #2f96b4;
-  *background-color: #2a85a0;
+  background-color: #1a67ea;
+  *background-color: #145cd7;
 }
 .btn-info:active,
 .btn-info.active {
-  background-color: #24748c \9;
+  background-color: #1252bf \9;
 }
 .btn-inverse {
   color: #ffffff;
@@ -2721,7 +2720,7 @@ input[type="submit"].btn.btn-mini {
   font-size: 11px;
   font-weight: bold;
   line-height: 20px;
-  color: #999999;
+  color: #717171;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
 }
@@ -3568,10 +3567,10 @@ input[type="submit"].btn.btn-mini {
 }
 .breadcrumb > li > .divider {
   padding: 0 5px;
-  color: #ccc;
+  color: #707070;
 }
 .breadcrumb > .active {
-  color: #999999;
+  color: #707070;
 }
 .pagination {
   margin: 20px 0;

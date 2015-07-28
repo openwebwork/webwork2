@@ -13,8 +13,6 @@
 my $newLevelThreshold = '';
 
 #Code
-#Note:  The mysterious package item will print out the message contained in templates/achievements/surprise_message.txt
-#  This can be used to give students access to webpages with certificates/gifts/whatever.
 
 if ($achievementPoints >= $nextLevelPoints) {
     #set new threshold and return 1 

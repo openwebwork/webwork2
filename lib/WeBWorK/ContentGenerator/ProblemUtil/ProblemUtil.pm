@@ -583,7 +583,7 @@ sub output_main_form{
 
 			
 	# end of main form
-	print CGI::endform();
+	print CGI::end_form();
 }
 
 # output_footer subroutine
@@ -623,7 +623,7 @@ sub output_footer{
 			CGI::p( {-align=>"left"},
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 			), "\n",
-			CGI::endform();
+			CGI::end_form();
 	}
 	
 	

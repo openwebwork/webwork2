@@ -44,9 +44,13 @@ use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 #use WeBWorK::Utils::RestrictedMailer;
 use WeBWorK::Utils::DelayedMailer;
 
-use mod_perl;
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+BEGIN{
+ 	unless (exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2) {
+		require "mod_perl.pm";  # used only for mod_perl1  should we continue to support this?
+	}
 
+	use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+}
 # Problem processing will time out after this number of seconds.
 use constant TIMEOUT => $WeBWorK::PG::Local::TIMEOUT || 10;
 
@@ -138,7 +142,8 @@ sub new_helper {
 	# prepare an imagegenerator object (if we're in "images" mode)
 	############################################################################
 	my $image_generator;
-	if ($translationOptions->{displayMode} eq "images") {
+	my $site_prefix = ( $translationOptions->{use_site_prefix} )//'';
+	if ($translationOptions->{displayMode} eq "images" || $translationOptions->{displayMode} eq "opaque_image") {
 		my %imagesModeOptions = %{$ce->{pg}{displayModeOptions}{images}};
 		$image_generator = WeBWorK::PG::ImageGenerator->new(
 			tempDir         => $ce->{webworkDirs}->{tmp}, # global temp dir
@@ -146,7 +151,7 @@ sub new_helper {
 			dvipng          => $ce->{externalPrograms}->{dvipng},
 			useCache        => 1,
 			cacheDir        => $ce->{webworkDirs}{equationCache},
-			cacheURL        => $ce->{webworkURLs}{equationCache},
+			cacheURL        => $site_prefix . $ce->{webworkURLs}{equationCache},
 			cacheDB         => $ce->{webworkFiles}{equationCacheDB},
 			useMarkers      => ($imagesModeOptions{dvipng_align} && $imagesModeOptions{dvipng_align} eq 'mysql'),
 			dvipng_align    => $imagesModeOptions{dvipng_align},
