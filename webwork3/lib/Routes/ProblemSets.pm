@@ -1160,10 +1160,10 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     
 	# check to see if the problem_path is defined
     $renderParams->{problem}->{source_file} = $setHeaderFile;
-    my $ren = render($renderParams);
+    my $ren = render(vars->{ce},$renderParams);
     my $setHeaderHTML = $ren->{text};
     $renderParams->{problem}->{source_file} = $hardcopyHeaderFile;
-    $ren = render($renderParams);
+    $ren = render(vars->{ce},$renderParams);
     my $hardcopyHeaderHTML = $ren->{text};
     
     return {_id=>params->{set_id},set_header=>$setHeader,hardcopy_header=>$hardcopyHeader,
