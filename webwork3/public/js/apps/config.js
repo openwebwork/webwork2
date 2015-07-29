@@ -167,15 +167,15 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
 
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime',
-        update: function($el, val, model, options){
-           
+        initialize: function($el, model, options){
+            
             // hide this for sets in which the reduced_scoring date should not be shown. 
             if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring") 
                     && ! model.show_reduced_scoring){ 
                 $el.html("");
             } else {
                 var tmpl = _.template($("#edit-date-time-template").html());
-                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));        
+                $el.html(tmpl({date: moment.unix(model.get(options.observe)).format("MM/DD/YYYY")}));        
             }
             
             var tmpl = _.template($("#time-popover-template").html());

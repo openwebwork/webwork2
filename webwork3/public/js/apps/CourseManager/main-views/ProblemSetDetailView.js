@@ -124,10 +124,11 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 _userSetList.on(
                 {
                     change: function(_userSet){
+                        console.log(_userSet.changed);
                         _userSet.changingAttributes=_.pick(_userSet._previousAttributes,_.keys(_userSet.changed));
                         _userSet.save();
                     },
-                    sync: function(_userSet){  // note: this was just copied from HomeworkManager.js  perhaps a common place for this
+                    sync: function(_userSet){  // note: this was just copied from ProblemSetsManager.js  perhaps a common place for this
                         _(_userSet.changingAttributes||{}).chain().keys().each(function(key){
                             var _old = key.match(/date$/)
                                         ? moment.unix(_userSet.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
@@ -137,8 +138,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                                         : _userSet.get(key);
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"set_saved",opts:{setname:_userSet.get("set_id")}}),
-                                text: self.messageTemplate({type:"set_saved_details",opts:{setname:_userSet.get("set_id"),key: key,
-                                    oldValue: _old, newValue: _new}})});
+                                text: self.messageTemplate({type:"set_saved_details",
+                                                            opts:{setname:_userSet.get("set_id"),key: key,
+                                                            oldValue: _old, newValue: _new}})});
                         });
                     }
                 }); //  _userSetList.on 
@@ -737,6 +739,7 @@ var AssignUsersView = Backbone.View.extend({
                                         {type:"set_saved",opts:{set_id:_set.get("set_id"), user_id: _set.get("user_id")}}),
                                     text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),
                                         key: key, user_id: _set.get("user_id"),oldValue: _old, newValue: _new}})});
+                                _set.changingAttributes = _(_set.changingAttributes).omit(key);
                             }
                         });
                 }
