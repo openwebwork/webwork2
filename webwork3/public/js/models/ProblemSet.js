@@ -91,27 +91,21 @@ var ProblemSet = Backbone.Model.extend({
     addProblem: function (prob) {  
         var self = this; 
         var lastProblem = this.get("problems").last();
-        var attrs = _.extend({},prob.attributes,
+        //var prob = new Problem();
+        var attrs = _.extend({},prob.attributes, 
                                     { problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1});
-        attrs._id = this.get("set_id") + ":" + attrs.problem_id; 
-        this.get("problems").add(new Problem(attrs));
+        this.get("problems").add(_(attrs).omit("_id"));;
         this.set("_add_problem",true);
         this.save();
         this.unset("_add_problem",{silent: true});
-        console.log("in addProblem");
     },
     // delete the problem _prob and if successfull remove the view _view
     deleteProblem: function(_prob,_view){
         var self = this; 
-        this.get("problems").remove(_prob); 
         this.set("_delete_problem_id",_prob.get("problem_id"));
         this.save();
-        /*this.save(this.attributes,{success: function(model,response,options){
-            if(_view){
-                _view.remove();
-            }
-        }});*/
         this.unset("_delete_problem_id",{silent: true});
+        this.get("problems").remove(_prob); 
     },
     setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
         var currentDate = moment.unix(this.get(attr))

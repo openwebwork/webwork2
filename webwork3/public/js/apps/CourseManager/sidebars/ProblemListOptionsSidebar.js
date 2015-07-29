@@ -25,6 +25,9 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
         this.stickit(this.state,this.bindings);
         this.stopListening();
         var problems = this.mainView.views.problemsView.problemSetView.deletedProblems; 
+        if(problems.length >0) {
+            this.$(".undo-delete-button").removeAttr("disabled");
+        }
         this.listenTo(problems,"add", function(){
             this.$(".undo-delete-button").removeAttr("disabled");
         }).listenTo(this.mainView.views.problemsView.problemSetView.deletedProblems,"remove", function() {

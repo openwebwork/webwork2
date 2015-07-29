@@ -196,8 +196,11 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             if(this.pageRange.length < this.pageSize){
                 var probView = new ProblemView({model: prob, problem_set_view: this.problem_set_view,
                                                 type: this.type, viewAttrs: this.viewAttrs});
+                var numViews = this.problemViews.length; 
+                probView.render().$el.data("id",this.model.get("set_id")+":"+(numViews+1));
+                probView.model.set("_id", this.model.get("set_id")+":"+(numViews+1));
                 this.$(".prob-list").append(probView.el);
-                probView.render();
+                this.problemViews.push(probView);                
                 this.pageRange.push(_(this.pageRange).last() +1);
             } 
             this.updateNumProblems();

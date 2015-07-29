@@ -1,14 +1,14 @@
-define(['backbone', 'views/ProblemListView','models/UserProblemList','models/ProblemList'], 
-function(Backbone, ProblemListView,UserProblemList,ProblemList) {
+define(['backbone', 'views/ProblemListView', 'models/UserProblemList', 'models/ProblemList'],
+function (Backbone, ProblemListView, UserProblemList, ProblemList) {
     var ProblemSetView = ProblemListView.extend({
         viewName: "Problems",
         initialize: function (options) {
             this.viewAttrs = {reorderable: true, showPoints: true, showAddTool: false, showMaxAttempts: true,
-                              showEditTool: false, problem_seed: 1, showRefreshTool: true, 
-                              showViewTool: false, showHideTool: false, deletable: true, 
+                              showEditTool: false, problem_seed: 1, showRefreshTool: true,
+                              showViewTool: false, showHideTool: false, deletable: true,
                               draggable: false, show_undo: true, markCorrect: true};
             _(this).extend(_(options).pick("problemSet","eventDispatcher"));
-            _(this).bindAll("reorder");
+            _(this).bindAll("reorder","deleteProblem");
             options.type = "problem_set";
             ProblemListView.prototype.initialize.apply(this,[options]);
             
@@ -52,41 +52,36 @@ function(Backbone, ProblemListView,UserProblemList,ProblemList) {
 
             }});
         },
-        // this is called when the problem has been removed from the problemList
-        deleteProblem: function (problem){
+        // this removes the problem _prob from the problemSet. 
+        deleteProblem: function (_prob){
             var self = this; 
             this.problemSet.changingAttributes = 
                 {"problem_deleted": {setname: this.problemSet.get("set_id"), 
-                                     problem_id: problem.get("problem_id")}};
-            this.deletedProblems.push(problem);
-            this.problemSet.problems.each(function(_prob,i){
-                _prob.set({problem_id: (i+1),_id: self.model.get("set_id") + ":" + (i+1)},{silent: true});   
-            });
+                                     problem_id: _prob.get("problem_id")}};
+            this.deletedProblems.push(_(_prob.attributes).omit("_id"));
+                        
             var index = _(this.problemViews).findIndex(function(pv){ 
-                return pv.model.get("problem_id") == problem.get("problem_id")});
+                return pv.model.get("problem_id") == _prob.get("problem_id")});
             var viewToRemove = this.problemViews.splice(index,1);
+            this.problemSet.deleteProblem(_prob);
             viewToRemove[0].remove();
-            
+            _(this.problemViews).each(function(pv,i){
+                    pv.model.set({problem_id: (i+1), _id: self.problemSet.get("set_id")+":"+(i+1)});
+                    pv.$el.data("id",self.problemSet.get("set_id")+":"+(i+1));
+                });
         },
         undoDelete: function(){
             if (this.deletedProblems.length>0){
                 this.problemSet.addProblem(this.deletedProblems.pop());
-                //this.gotoPage(this.currentPage);
             }
         },
         setProblemSet: function(_set){
             var self = this; 
             this.problemSet = _set; 
             this.problemSet.problems.on("add",function(_prob){
-                //console.log("problem added to set " + self.problemSet.get("set_id"));
-                self.addProblemView(_prob);
-                //console.log(_prob.attributes);
-            }).on("remove",function(_prob){
-                //console.log("problem removed from set " + self.problemSet.get("set_id"));
-                self.deleteProblem(_prob);
-                //console.log(_prob.attributes);
+                self.addProblemView(_prob);  
             });
-
+            
             ProblemListView.prototype.setProblemSet.call(this,_set);
             return this;
         },
@@ -96,19 +91,23 @@ function(Backbone, ProblemListView,UserProblemList,ProblemList) {
                 return;
             }
             var oldProblems = this.problemSet.problems.map(function(p) { return _.clone(p.attributes); });
-            //var newProblems = []; 
+            var newProblemViews = []; 
+            
             this.$(".problem").each(function (i) {
-                var id = $(this).data("id").split(":")[1];
+                // this determines which model the ith one is.  
+                var id = $(this).data("id").split(":")[1];  // id is the ith problem_id in the reshuffled list. 
                 var prob = _(oldProblems).find(function(p) {return p.problem_id == id; });
-                var attrs = _.extend({},prob,{problem_id: (i+1),_id: self.model.get("set_id") + ":" + (i+1),
+                var attrs = _.extend({},prob,{problem_id: (i+1),
+                                              _id: self.model.get("set_id") + ":" + (i+1),
                                              _old_problem_id: id});
-                self.problemSet.problems.at(i).set(attrs,{silent: true});
-                //newProblems.push(attrs); 
-                $(this).data("id",self.problemSet.get("set_id")+":"+(i+1));
-            });
-            this.problemViews = _(this.problemViews).sortBy(function(pv) {return parseInt(pv.model.get("problem_id"));});
+                newProblemViews[i] = self.problemViews[id-1]; 
+                newProblemViews[i].model.set(attrs,{silent: true});
+                newProblemViews[i].$el.data("id",self.problemSet.get("set_id")+":"+(i+1));
+            }); 
+            this.problemViews = newProblemViews;  
+            
+            this.problemSet.problems.reset(_(this.problemViews).map(function(pv) { return pv.model.attributes;}));
 
-            this.problemSet.problems.each(function(p) { console.log(p.get("problem_id") + " : " + p.get("source_file"));}); 
             this.problemSet.save({_reorder: true});
             this.problemSet.unset("_reorder");
         },
