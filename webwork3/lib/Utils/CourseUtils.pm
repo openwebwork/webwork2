@@ -3,7 +3,7 @@
 
 package Utils::CourseUtils;
 use base qw(Exporter);
-#use Dancer ':syntax';
+use Dancer ':syntax';
 #use Dancer::Plugin::Database;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use Utils::ProblemSets qw/getGlobalSet/;
@@ -23,7 +23,7 @@ sub getAllSets {
 	return \@sets;
 }
 
-# get all users for the course
+# get all users (except login proctors) for the course
 
 sub getAllUsers {
     my ($db,$ce) = @_; 
@@ -56,15 +56,18 @@ sub getAllUsers {
 			$s->{$key} = $u->{$key}
 		}
         
-        my $showOldAnswers = ($u->{showOldAnswers}  eq '') ? $ce{pg}{options}{showOldAnswers}: $u->{showOldAnswers};
+        my $showOldAnswers = ($u->{showOldAnswers}  eq '') ? $ce->{pg}{options}{showOldAnswers}: $u->{showOldAnswers};
         $s->{showOldAnswers} = $showOldAnswers ? JSON::true : JSON::false;
         
-        my $useMathView = ($u->{useMathView} eq '')? $ce{pg}{options}{useMathView} : $u->{useMathView};
+        my $useMathView = ($u->{useMathView} eq '')? $ce->{pg}{options}{useMathView} : $u->{useMathView};
         $s->{useMathView} = $useMathView ? JSON::true : JSON::false;
         
         $s->{_id} = $s->{user_id};
 
-		push(@allUsers,$s);
+        if(! ($s->{user_id} =~ /^set_id:/)){  # filter out login proctors. 
+            push(@allUsers,$s);
+        }
+        
     }
     
     return \@allUsers;

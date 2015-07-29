@@ -25,17 +25,10 @@ var ClasslistView = MainView.extend({
         })
 
         this.tableSetup();
-        
-        // exclude login proctors
-        var usersToView = new UserList(this.users.filter(function(_user) {
-            return parseInt(_user.get("permission")) != 2;
-        }));
-                                    
-	    
             
         this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
     					"remove": this.removeUser});
-	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: usersToView, row_id_field: "user_id",
+	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, row_id_field: "user_id",
                             paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
 
 	    this.userTable.on({
@@ -331,7 +324,9 @@ var ClasslistView = MainView.extend({
                 success: function(data){
                 	_(data).each(function(st){
                 		var user = self.users.findWhere({user_id: st.user_id});
-                		user.set("logged_in",st.logged_in);
+                        if(user){
+                            user.set("logged_in",st.logged_in);
+                        }
                 	})
                 }});
 
