@@ -167,7 +167,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
 
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime',
-        initialize: function($el, model, options){
+        update: function($el, val,model, options){
             
             // hide this for sets in which the reduced_scoring date should not be shown. 
             if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring") 

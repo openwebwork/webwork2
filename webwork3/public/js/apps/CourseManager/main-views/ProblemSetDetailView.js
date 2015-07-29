@@ -141,6 +141,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                                 text: self.messageTemplate({type:"set_saved_details",
                                                             opts:{setname:_userSet.get("set_id"),key: key,
                                                             oldValue: _old, newValue: _new}})});
+                            _set.changingAttributes = _(_set.changingAttributes).omit(key);
                         });
                     }
                 }); //  _userSetList.on 
