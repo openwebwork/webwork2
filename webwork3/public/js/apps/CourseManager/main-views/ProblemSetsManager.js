@@ -301,6 +301,7 @@ var ProblemSetsManager = MainView.extend({
                             self.eventDispatcher.trigger("add-message",{type: "success",
                                 short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
                                 text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
+                            _set.changingAttributes = _(_set.changingAttributes).omit(key);
                             break;
                        case "problem_changed": 
                             self.eventDispatcher.trigger("add-message",{type: "success", 

@@ -111,7 +111,7 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
     my @usersToDelete = array_minus(@userNamesFromDB,@{params->{assigned_users}});
 
     for my $user(@usersToAdd){
-        addUserSet($user,params->{set_id});
+        addUserSet(vars->{db},$user,params->{set_id});
     }
     for my $user (@usersToDelete){
         vars->{db}->deleteUserSet($user,params->{set_id});
@@ -126,7 +126,7 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
         reorderProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
         addGlobalProblems(params->{set_id},params->{problems});
-        addUserProblems(params->{set_id},params->{problems},params->{assigned_users});
+        addUserProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } elsif(params->{_delete_problem_id}) { # problems have been deleted.  
         deleteProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users},
                 params->{_delete_problem_id});
@@ -882,8 +882,6 @@ post '/courses/:course_id/fix/usersets' => sub {
     checkPermissions(10,session->{user});
 
     my $p = vars->{db}->getUserProblem("profa","HW5.2",6);
-    debug $p;
-    debug defined($p->{problem_seed});
 
     my @setNames = vars->{db}->listGlobalSets;
     my @sets = map { {set_id=>$_} } @setNames; 

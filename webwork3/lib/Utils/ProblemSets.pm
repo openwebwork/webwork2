@@ -7,7 +7,6 @@ use base qw(Exporter);
 use List::Util qw(first);
 use List::MoreUtils qw/first_index indexes/;
 use Dancer ':syntax';
-use Data::Compare; 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog cryptPassword/;
 use Array::Utils qw/array_minus/;
@@ -191,6 +190,7 @@ sub reorderProblems {
     for my $user_id (@$assigned_users){
         my $user_probs = [$db->getAllUserProblems($user_id,$setID)];
         for my $i (0..(scalar(@$new_problems)-1)){
+        
             my $user_prob = first {$_->{problem_id} eq $new_problems->[$i]->{_old_problem_id} } @$user_probs;
             
             ## need to make a new User Problem.  Reusing the old one results in a problem. 
@@ -203,97 +203,6 @@ sub reorderProblems {
     }
 }
 
-###
-#
-# This reorders the problems  pstaab:  Don't this this is needed anymore.  
-
-sub reorderProblems2 {
-    my ($db,$setID,$new_problems,$assigned_users) = @_; 
-    
-    my @extra_fields = ("problem_id","set_id","user_id");
-    
-	my @problems_from_db = $db->getAllGlobalProblems($setID);
-    
-    
-    my $user_prob_db = {};   # this is the user information from the database
-            
-    for my $user_id (@$assigned_users){
-        $user_prob_db->{$user_id} = [$db->getAllUserProblems($user_id,$setID)];
-    }
-    
-    my $id_swap = {};  # this builds a hash of how the problems have switched around.  
-            
-
-    for my $i (0..(scalar(@problems_from_db)-1)){
-        if (! problemEqual($problems_from_db[$i],$new_problems->[$i])){
-        
-            ## this is the in $new_problems that matches the current problem ($problems_from_db[$i] )
-            my $problem = first { $_->{problem_id} == $problems_from_db[$i]->{problem_id} } @$new_problems;
-            
-            ## gets the indexes of the problems in $new_problems identical to the current problem
-            my @indexes = indexes { Compare(convertObjectToHash($problems_from_db[$i]),$_,
-                    {ignore_hash_keys => [qw(problem_id _id data problem_seed)]}) == 1 }
-                @$new_problems;   
-            ## these are the problem_ids in $new_problems from the @indexes
-            my @prob_ids = map { $new_problems->[$_]->{problem_id}} @indexes;
-            
-            my @values = values(%$id_swap);
-            
-            ## this finds the index if there are multiple problems that matched
-            ## which occurs with the same problem source.  
-            my @ind = array_minus(@prob_ids,@values);
-            
-            my $other = first { $_->{problem_id} == $ind[0] } @$new_problems; 
-            
-            $id_swap->{$problem->{problem_id}} = $other->{problem_id};
-            $db->deleteGlobalProblem($setID,$problems_from_db[$i]->{problem_id});
-            my $new_problem = vars->{db}->newGlobalProblem();
-            $new_problem->{set_id}=$setID;
-            for my $prop (@problem_props){
-                $new_problem->{$prop} = $problem->{$prop};
-            }
-            $db->addGlobalProblem($new_problem);
-        } else {
-            $id_swap->{$problems_from_db[$i]->{problem_id}} = $problems_from_db[$i]->{problem_id};
-        }
-    }
-
-    # Next, rebuild the user_problems. 
-    
-    for my $user_id (@$assigned_users){
-        for my $prob_id (keys(%$id_swap)) {
-        
-            my $userprob = first {$_->{problem_id} == $prob_id } @{$user_prob_db->{$user_id}};
-            my $newUserProblem = createNewUserProblem($user_id,$setID,$id_swap->{$prob_id});
-            for my $prop (array_minus(@user_problem_props, @extra_fields)) {
-                $newUserProblem->{$prop} = $userprob->{$prop};
-            }
-            $db->addUserProblem($newUserProblem) unless $db->existsUserProblem($user_id,$setID,$id_swap->{$prob_id});
-        }
-    }
-    
-    return $db->getAllGlobalProblems($setID);
-
-}
-
-###
-#
-#  tests for two problems being equal
-#
-###
-
-sub problemEqual {
-    my ($prob1,$prob2) = @_;
-    for my $prop (@problem_props){
-        if(defined($prob1->{$prop}) && defined($prob2->{$prop}) &&  $prob1->{$prop} ne $prob2->{$prop}){
-             return "";
-         }
-    }
-    
-    return 1;
-
-
-}
 
 ####
 #
@@ -379,11 +288,11 @@ sub addGlobalProblems {
 #####
 
 sub addUserProblems {
-    my ($setID, $problems,$users) = @_;
-
+    my ($db,$setID, $problems,$users) = @_;
+    
     for my $p (@{$problems}){
         for my $userID (@{$users}){
-            vars->{db}->addUserProblem(createNewUserProblem($userID,$setID,$p->{problem_id}))
+            $db->addUserProblem(createNewUserProblem($userID,$setID,$p->{problem_id}))
                 unless vars->{db}->existsUserProblem($userID,$setID,$p->{problem_id});
         }
     }
@@ -402,7 +311,6 @@ sub addUserProblems {
 sub deleteProblems {
 	my ($db,$setID,$problems,$assigned_users,$problem_id_to_delete)=@_;
     
-    debug "in delete Problems"; 
     $db->deleteGlobalProblem($setID,$problem_id_to_delete);
     
     renumber_problems($db,$setID,$assigned_users);
@@ -422,8 +330,6 @@ sub renumber_problems {
     my ($db,$setID,$assigned_users) = @_;
     
     my @probs = $db->getAllGlobalProblems($setID);
-    
-    debug to_dumper(\@probs);
     
     my @prob_ids = ();
     my %userprobs = ();
@@ -470,13 +376,19 @@ sub renumber_problems {
 ###
 
 sub addUserSet {
-    my ($user_id,$set_id) = @_;
-	my $userSet = vars->{db}->newUserSet;
+    my ($db,$user_id,$set_id) = @_;
+    
+	my $userSet = $db->newUserSet;
     $userSet->set_id($set_id);
     $userSet->user_id($user_id);
-    my $result =  vars->{db}->addUserSet($userSet);
-
-    return $result;
+    
+    $db->addUserSet($userSet);
+    
+    ## create the user problems now
+    my @users = ("$user_id");
+    my @globalProblems = $db->getAllGlobalProblems($set_id);
+    addUserProblems($db,$set_id,\@globalProblems,\@users);
+    
 }
 
 

@@ -8,6 +8,7 @@ function(Backbone, ProblemListView,UserProblemList,ProblemList) {
                               showViewTool: false, showHideTool: false, deletable: true, 
                               draggable: false, show_undo: true, markCorrect: true};
             _(this).extend(_(options).pick("problemSet","eventDispatcher"));
+            _(this).bindAll("reorder");
             options.type = "problem_set";
             ProblemListView.prototype.initialize.apply(this,[options]);
             
