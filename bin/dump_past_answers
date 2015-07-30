@@ -166,7 +166,7 @@ foreach my $courseID (@courses) {
 	    }
 	    
 	    my $setID = $set->set_id;
-	    my $sSetID = sha256_hex($domainname.$courseID.$userID.$setID);
+	    my $sSetID = sha256_hex($domainname.$courseID.$setID);
 	    
 	    # get set specific info
 	    $row[3] = $sSetID;
