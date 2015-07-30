@@ -75,18 +75,19 @@ use WeBWorK::PG;
 use mod_perl2;
 use Text::CSV;
 use Digest::SHA qw(sha256_hex);
-use Sys::Hostname;
+use Net::Domain;
 
 # Deal with options
 my $output_file;
 my $zip_result = 1;
 my $upload_result = 1;
+
+my $domainname = Net::Domain::domainname;
     
 # define and open the output file. 
 if (!$output_file) {
     my $time = time();
-    my $hostname = hostname;
-    $output_file = "$hostname-$time.csv";
+    $output_file = "$domainname-$time.csv";
 }
 
 my $OUT;
@@ -134,7 +135,7 @@ foreach my $courseID (@courses) {
     
     my $templateDir = $ce->{courseDirs}->{templates};
     
-    my $sCourseID = sha256_hex($courseID.salt());
+    my $sCourseID = sha256_hex($domainname.$courseID);
     
     $row[1] = $sCourseID;
     
@@ -144,7 +145,7 @@ foreach my $courseID (@courses) {
     # go through users
     foreach my $user (@users) {
 	my $userID = $user->user_id;
-	my $sUserID = sha256_hex($userID.salt());
+	my $sUserID = sha256_hex($domainname.$courseID.$userID);
 	
 	# get user specific info
 	$row[2] = $sUserID;
@@ -165,7 +166,7 @@ foreach my $courseID (@courses) {
 	    }
 	    
 	    my $setID = $set->set_id;
-	    my $sSetID = sha256_hex($setID.salt());
+	    my $sSetID = sha256_hex($domainname.$courseID.$userID.$setID);
 	    
 	    # get set specific info
 	    $row[3] = $sSetID;
@@ -190,7 +191,7 @@ foreach my $courseID (@courses) {
 	    # go through each problem
 	    foreach my $problem (@problems) {
 		my $problemID = $problem->problem_id;
-		my $sProblemID = sha256_hex($problemID.salt());
+		my $sProblemID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID);
 
 		# print problem specific info
 		$row[4] = $sProblemID;
@@ -224,7 +225,7 @@ foreach my $courseID (@courses) {
 		    #reset the row length because it can change;
 		    @row = splice(@row,0,28);
 		    my $answerID = $answer->answer_id;
-		    my $sAnswerID = sha256_hex($answerID.salt());
+		    my $sAnswerID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID.$answerID);
 		    $attempt_number++;
 
 		    # if the source file changed redo that info
@@ -300,14 +301,6 @@ if ($upload_result) {
     print "Uploading file\n";
     
     `echo "put $output_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -P 57281 wwdata\@52.27.200.59`;
-}
-
-sub salt() {
-    my $salt = '';
-    for (my $i=0; $i<16; $i++) {
-	$salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
-    }
-    return $salt;
 }
 
 1;
