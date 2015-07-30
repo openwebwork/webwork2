@@ -75,47 +75,27 @@ use WeBWorK::PG;
 use mod_perl2;
 use Text::CSV;
 use Digest::SHA qw(sha256_hex);
+use Sys::Hostname;
 
 # Deal with options
 my $output_file;
-my $zip_result = 0;
-
-while (@ARGV) {
-    $_ = shift;
-    if (/-h|--help/) {
-	print <<EOL;
-	dump_past_answers -z -f output_file.csv
-	    
-	    -f, --file output_file.csv
-	    The name of the csv file to create
-	    
-	    -z, --zip
-	    Whether or not to gzip the resulting file. 
-	    
-EOL
-	    exit 0;
-    } elsif (/-z|--zip/) {
-	$zip_result=1;
-    } elsif (/-f|--file/) {
-	$output_file = shift;
-    } else {
-	warn("Unknown option (ignored): $_");
-    }
-}
+my $zip_result = 1;
+my $upload_result = 1;
     
 # define and open the output file. 
 if (!$output_file) {
-    my @date = localtime();
-    my $mon = $date[4]+1;
-    my $year = $date[5]+1900;
-    $output_file = "past-answers-$mon-$date[3]-$year.csv";
+    my $time = time();
+    my $hostname = hostname;
+    $output_file = "$hostname-$time.csv";
 }
 
 my $OUT;
 open($OUT,">$output_file") || die("Couldn't open file $output_file");
 
+print "Dumping answer data to $output_file\n";
+
 # set up various variables and utilities that we will need
-my ($ce, $db, @wheres, @lines);
+my ($ce, $db, @wheres);
 my $max_answer_blanks = 0;
 my $csv = new Text::CSV->new ( { binary => 1 } ) 
     or die "Cannot use CSV: ".Text::CSV->error_diag ();
@@ -149,6 +129,8 @@ foreach my $courseID (@courses) {
 	warn("Unable to load up database for $courseID");
 	next;
     }
+
+    print "Dumping $courseID\n";
     
     my $templateDir = $ce->{courseDirs}->{templates};
     
@@ -294,63 +276,30 @@ foreach my $courseID (@courses) {
 			$row[30+2*$i] = $scores[$i];
 		    }
 
-		    #form the csv string
-		    $csv->combine(@row) || warn("Couldn't form CSV line");
-		    push @lines, $csv->string();
+		    #form the csv string and print
+		    $csv->print($OUT,\@row) || warn "Couldn't print row";
 		}
 	    }
 	}
     }
 }
 
-
-
-$row[0] = 'Answer ID hash';
-$row[1] = 'Course ID hash';
-$row[2] = 'Student ID hash';
-$row[3] = 'Set ID hash';
-$row[4] = 'Problem ID hash';
-$row[5] = 'Permission Level';
-$row[6] = 'Final Status';
-$row[7] = 'Set Type';
-$row[8] = 'Open Date';
-$row[9] = 'Due Date';
-$row[10] = 'Answer Date';
-$row[11] = 'Final Set Grade';
-$row[12] = 'Problem Path';
-$row[13] = 'Problem Value';
-$row[14] = 'Problem Max Attempts';
-$row[15] = 'Problem Seed';
-$row[16] = 'Attempted';
-$row[17] = 'Final Incorrect Attempts';
-$row[18] = 'Final Correct Attepts';
-$row[19] = 'Final Status';
-$row[20] = 'OPL Subject';
-$row[21] = 'OPL Chapter';
-$row[22] = 'OPL Section';
-$row[23] = 'OPL Keywords';
-$row[24] = 'Answer Timestamp';
-$row[25] = 'Attempt Number';
-$row[26] = 'Raw Status of Attempt';
-$row[27] = 'Status of Attempt';
-$row[28] = 'Number of Answer Blanks';
-
-for (my $i = 1; $i <= $max_answer_blanks; $i++) {
-    $row[27+2*$i] = "Answer $i Value";
-    $row[28+2*$i] = "Answer $i Status";
-}
-
-#Actually print the file
-$csv->print($OUT,\@row) || die("Couldn't Print Headers");
-
-foreach my $line (@lines) {
-    print $OUT $line;
-}
+print "Done dumping data\n";
 
 close($OUT) or die("Couldn't close $output_file");
 
 if ($zip_result) {
+    print "Zipping file\n";
+    
     `gzip $output_file`;
+
+    $output_file = $output_file.".gz";
+}
+
+if ($upload_result) {
+    print "Uploading file\n";
+    
+    `echo "put $output_file" | sftp -P 57281 wwdata\@52.27.200.59`;
 }
 
 sub salt() {
