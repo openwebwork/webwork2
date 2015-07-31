@@ -9,7 +9,7 @@
 #use strict;
 #use warnings;
 #use Dancer ':syntax';
-#use Dancer::Plugin::Database;
+use Dancer::Plugin::Database;
 use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
