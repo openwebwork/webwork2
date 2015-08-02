@@ -23,7 +23,9 @@ var ClasslistView = MainView.extend({
             self.state.set("man_user_modal_open",false);
             self.render(); // for some reason the checkboxes don't stay checked. 
         })
+        this.addStudentFileView.on("modal-closed",this.render);
 
+        
         this.tableSetup();
             
         this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
@@ -520,9 +522,7 @@ var AddStudentFileView = ModalView.extend({
                 //var str = util.CSVToHTMLTable(content,headers);
                 //var arr = util.CSVToHTMLTable(content,headers);
                 var arr = $.csv.toArrays(content);
-                
-                console.log(arr);
-                
+                                
                 var tmpl = _.template($("#imported-from-file-table").html());
                 $("#studentTable").html(tmpl({array: arr, headers: headers}));
 
@@ -657,7 +657,7 @@ var AddStudentFileView = ModalView.extend({
             this.$("input.selRow:checked").map(function(i,v) { return $(v).closest("tr").children(".column" + colNumber);}).each(function(i,cell){
                 var value = $(cell).html().trim(),
                     errorMessage = self.model.preValidate(changedProperty,value);
-                if ((errorMessage !== "") && (errorMessage !== false)) {
+                if (!_.isEmpty(errorMessage)) {
                     self.$(".error-pane").removeClass("hidden")
                     self.$(".error-pane-text").html("Error for the " + headerName + " with value " +  value + ":  " + errorMessage)
                     self.$(".error-pane").show("slow");
