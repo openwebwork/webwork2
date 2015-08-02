@@ -56,11 +56,15 @@ var ProblemSet = Backbone.Model.extend({
     initialize: function (opts,dateSettings) {
         _.bindAll(this,"addProblem");
         this.dateSettings = dateSettings;
-        this.problems = new ProblemList();
-        opts = this.parse(opts); 
+        opts.problems = opts.problems || [];
+        //this.problems = new ProblemList();
+        opts = this.parse(opts);
     },
     parse: function (response) {
         if (response.problems){
+            if (typeof(this.problems)=="undefined"){
+                this.problems = new ProblemList();   
+            }
             this.problems.set(response.problems,{silent: true});
             this.attributes.problems = this.problems;
         }
