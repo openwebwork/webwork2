@@ -23,7 +23,7 @@ Surprise
 SuperExtendDueDate
 HalfCreditSet
 FullCreditSet
-ResetIncorrectAttemptsGW
+AddNewTestGW
 ExtendDueDateGW
 RessurectGW
 )];
@@ -1309,7 +1309,7 @@ sub use_item {
 }
 
 #Item to reset number of incorrect attempts on a Gateway
-package WeBWorK::AchievementItems::ResetIncorrectAttemptsGW;
+package WeBWorK::AchievementItems::AddNewTestGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
 use WeBWorK::Utils qw(sortByName before after between);
@@ -1319,122 +1319,9 @@ sub new {
     my %options = @_;
 
     my $self = {
-	id => "ResetIncorrectAttemptsGW",
+	id => "AddNewTestGW",
 	name => "Oil of Cleansing",
-	description => "Resets the number of incorrect attempts on a gateway exam.",
-	%options,
-    };
-    
-    bless($self, $class);
-    return $self;
-}
-    
-sub print_form {
-    my $self = shift;
-    my $sets = shift;
-    my $setProblemCount = shift;
-    my $r = shift;
-    my $db = $r->db;
-
-    my $userName = $r->param('user');
-    my $effectiveUserName = defined($r->param('effectiveUser') ) ? $r->param('effectiveUser') : $userName;
-    my @setIDs = $db->listUserSets($effectiveUserName);
-    my @userSetIDs = map {[$effectiveUserName, $_]} @setIDs;
-    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
-    my @sets;
-	    
-    # we going to have to find the gateways for these achievements. 
-    foreach my $set (@unfilteredsets) {
-	if ($set->assignment_type() =~ /gateway/  &&
-	    $set->set_id !~ /,v\d+$/) {
-	    push @sets, $set;
-	}
-    }	    
-
-    # now we need to find out which gateways have an open version
-    my %openGateways;
-
-    foreach my $set (@sets) {
-	my @versionIDs = $db->listSetVersions($effectiveUserName,$set->set_id);
-	my @setVersionIDs = map {[$effectiveUserName,$set->set_id,$_]} @versionIDs;
-	my @versionedSets = $db->getSetVersions(@setVersionIDs);
-
-	foreach my $versionedSet (@versionedSets) {
-	    if (between($versionedSet->open_date, $versionedSet->due_date)) {
-		$openGateways{$versionedSet->set_id.',v'.$versionedSet->version_id} = $r->maketext("[_1] (test [_2])",$versionedSet->set_id,$versionedSet->version_id);
-	    }
-	}
-
-    }
-
-    #print open gateways in a drop down. 
-    
-    return join("",
-	CGI::p($r->maketext("Please choose the gateway test which should have its incorrect attempt count reset.")),
-	CGI::label($r->maketext("Gateway Name "),
-        CGI::popup_menu({values=>[sort keys %openGateways],labels=>\%openGateways,id=>"riagw_gw_id", name=>"riagw_gw_id"})));
-}
-
-sub use_item {
-    my $self = shift;
-    my $userName = shift;
-    my $r = shift;
-    my $db = $r->db;
-    my $ce = $r->ce;
-
-    #validate data
-    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
-    return "No achievement data?!?!?!" 
-	unless ($globalUserAchievement->frozen_hash);
-    my $globalData = thaw($globalUserAchievement->frozen_hash);
-
-    return "You are $self->{id} trying to use an item you don't have" unless
-	($globalData->{$self->{id}});
-
-    my $setID = $r->param('riagw_gw_id');
-    return "You need to input a Gateway Name" unless
-	(defined $setID);
-
-    my $versionID = ( $setID =~ /,v(\d+)$/ ) ? $1 : 0;
-    $setID =~ s/,v\d+$//;
-
-    return "Couldn't access set $setID" unless $versionID;
-    
-    my @problemIDs = $db->listProblemVersions($userName, $setID, $versionID);
-
-    my @versionedProblemIDs = map {[$userName,$setID,$versionID,$_]} @problemIDs;
-
-    my @versionedProblems = $db->getProblemVersions(@versionedProblemIDs);
-        
-    return "There was an error accessing that set." unless @versionedProblems;
-
-    foreach my $problem (@versionedProblems) {
-	$problem->num_incorrect(0);
-	$problem->num_correct(0);
-	$db->putProblemVersion($problem);
-    }
-	
-    $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
-    $db->putGlobalUserAchievement($globalUserAchievement);
-    
-    return;
-}
-
-#Item to extend the due date on a gateway 
-package WeBWorK::AchievementItems::ExtendDueDateGW;
-our @ISA = qw(WeBWorK::AchievementItems);
-use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
-
-sub new {
-    my $class = shift;
-    my %options = @_;
-
-    my $self = {
-	id => "ExtendDueDateGW",
-	name => "Amulet of Extension",
-	description => "Extends the due date of a gatway by 24 hours. (Time limits on individual tests still apply.)",
+	description => "Allows you to create a fresh version of an assessment. This means you can retry an assessment that you’ve already submitted and the system will record the best score. Note: The assessment must still be open for this to work; i.e., it cannot be done after the assessment is due, nor does it extend the due date.",
 	%options,
     };
     
@@ -1460,7 +1347,110 @@ sub print_form {
     # we don't want the versioned gateways though.  
     foreach my $set (@unfilteredsets) {
 	if ($set->assignment_type() =~ /gateway/ &&
-	    $set->set_id !~ /,v\d+$/) {
+	    $set->set_id !~ /,v\d+$/ &&
+	    $set->set_id !~ /Practice/) {
+	    push @sets, $set;
+	}
+    }	    
+
+    # now we need to find out which gateways are open
+    my @openGateways;
+
+    foreach my $set (@sets) {
+	if (between($set->open_date, $set->due_date)) {
+	    push @openGateways, $set->set_id;
+	}
+    }
+    
+    #print open gateways in a drop down. 
+    
+    return join("",
+		CGI::p($r->maketext("Add a new test for which Gateway?")),
+		CGI::label($r->maketext("Gateway Name "),
+		   CGI::popup_menu({values=>\@openGateways,id=>"adtgw_gw_id", name=>"adtgw_gw_id"})));
+}
+
+sub use_item {
+    my $self = shift;
+    my $userName = shift;
+    my $r = shift;
+    my $db = $r->db;
+    my $ce = $r->ce;
+
+    #validate data
+    my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
+    return "No achievement data?!?!?!" 
+	unless ($globalUserAchievement->frozen_hash);
+    my $globalData = thaw($globalUserAchievement->frozen_hash);
+
+    return "You are $self->{id} trying to use an item you don't have" unless
+	($globalData->{$self->{id}});
+
+    my $setID = $r->param('adtgw_gw_id');
+    return "You need to input a Gateway Name" unless
+	(defined $setID);
+
+    my $set = $db->getMergedSet($userName,$setID);
+    return "Couldn't find that set!" unless
+	($set);
+    
+    #add time to the due date and answer date and remove item from inventory
+    
+    $set->versions_per_interval($set->versions_per_interval()+1)
+	unless ($set->versions_per_interval() == 0);
+
+    $db->putUserSet($set);
+	
+    $globalData->{$self->{id}} = 0;
+    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $db->putGlobalUserAchievement($globalUserAchievement);
+
+    
+    
+    return;
+}
+
+#Item to extend the due date on a gateway 
+package WeBWorK::AchievementItems::ExtendDueDateGW;
+our @ISA = qw(WeBWorK::AchievementItems);
+use Storable qw(nfreeze thaw);
+use WeBWorK::Utils qw(sortByName before after between);
+
+sub new {
+    my $class = shift;
+    my %options = @_;
+
+    my $self = {
+	id => "ExtendDueDateGW",
+	name => "Amulet of Extension",
+	description => "Extends the due date of an assessment by 24 hours. Note: The assessment must still be open for this to work (i.e., it cannot be used after an assessment is due), and you cannot have submitted the assessment yet.",
+	%options,
+    };
+    
+    bless($self, $class);
+    return $self;
+}
+    
+sub print_form {
+    my $self = shift;
+    my $sets = shift;
+    my $setProblemCount = shift;
+    my $r = shift;
+    my $db = $r->db;
+
+    my $userName = $r->param('user');
+    my $effectiveUserName = defined($r->param('effectiveUser') ) ? $r->param('effectiveUser') : $userName;
+    my @setIDs = $db->listUserSets($effectiveUserName);
+    my @userSetIDs = map {[$effectiveUserName, $_]} @setIDs;
+    my @unfilteredsets = $db->getMergedSets(@userSetIDs);
+    my @sets;
+	    
+    # we going to have to find the gateways for these achievements.
+    # we don't want the versioned gateways though.  
+    foreach my $set (@unfilteredsets) {
+	if ($set->assignment_type() =~ /gateway/ &&
+	    $set->set_id !~ /,v\d+$/ &&
+	    $set->set_id !~ /Practice/) {
 	    push @sets, $set;
 	}
     }	    
@@ -1506,12 +1496,24 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
-    #add time to the due date and answer date and remove item from inventory
+    #add time to the due date and answer date
     $set->due_date($set->due_date()+86400);
     $set->answer_date($set->answer_date()+86400);
 
     $db->putUserSet($set);
-	
+
+    #add time to the due date and answer date of verious verisons
+    my @versions = $db->listSetVersions($userName,$setID);
+
+    foreach my $version (@versions) {
+
+	$set = $db->getSetVersion($userName,$setID,$version);
+	$set->due_date($set->due_date()+86400);
+	$set->answer_date($set->answer_date()+86400);
+	$db->putSetVersion($set);
+
+    }
+    
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
@@ -1532,7 +1534,7 @@ sub new {
     my $self = {
 	id => "RessurectGW",
 	name => "Necromancers Charm",
-	description => "Reopens any gateway for an additional 24 hours. (Time limits on individual tests still apply.)",
+	description => "Reopens any assessment for an additional 24 hours. This allows you to take an assessment even if the due date has past. Note: You cannot use the Necromancers Charm on an assessment that you’ve already started (or submitted) unless you also use the Oil of Cleansing at the same time. But, if you missed a due date during the semester, this item will help you.",
 	%options,
     };
     
@@ -1557,7 +1559,8 @@ sub print_form {
     # we going to have to find the gateways for these achievements. 
     foreach my $set (@unfilteredsets) {
 	if ($set->assignment_type() =~ /gateway/ &&
-	    $set->set_id !~ /,v\d+$/) {
+	    $set->set_id !~ /,v\d+$/ &&
+	    $set->set_id !~ /Practice/) {
 	    push @sets, $set->set_id;
 	}
     }	    
