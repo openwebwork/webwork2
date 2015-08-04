@@ -9,8 +9,8 @@
 */
 
 define(['backbone', 'underscore','models/ProblemSetList','models/ProblemSet','config','views/Sidebar',
-           'views/AssignmentCalendar', 'views/ModalView','main-views/LibraryBrowser'], 
-function(Backbone, _,ProblemSetList,ProblemSet,config,Sidebar,AssignmentCalendar,ModalView,LibraryBrowser){
+           'main-views/CourseCalendar', 'views/ModalView','main-views/LibraryBrowser'], 
+function(Backbone, _,ProblemSetList,ProblemSet,config,Sidebar,CourseCalendar,ModalView,LibraryBrowser){
 	
     var ProblemSetListView = Sidebar.extend({
 
@@ -50,7 +50,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config,Sidebar,AssignmentCalendar
             var self = this;
 
             // The following allows a problem set (on the sidebar to be dragged onto the Calendar)
-            if(this.mainView instanceof AssignmentCalendar){
+            if(this.mainView instanceof CourseCalendar){
                 this.$(".sidebar-problem-set").draggable({ 
                     disabled: false,  
                     revert: true, 
