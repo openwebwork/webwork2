@@ -65,9 +65,21 @@ use strict;
 BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 	   unless($ENV{WEBWORK_ROOT});}
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+
+BEGIN{ 
+    my $ce = new WeBWorK::CourseEnvironment({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+					 });
+    
+    my $pg_dir = $ce->{pg_dir};
+    eval "use lib '$pg_dir/lib'"; 
+    die $@ if $@;
+}
+
+
 use WeBWorK::DB;
 use WeBWorK::Utils::CourseIntegrityCheck;
-use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 use WeBWorK::Utils::Tags;
 use WeBWorK::PG;
@@ -96,19 +108,15 @@ open($OUT,">$output_file") || die("Couldn't open file $output_file");
 print "Dumping answer data to $output_file\n";
 
 # set up various variables and utilities that we will need
-my ($ce, $db, @wheres);
+my ($db, @wheres);
 my $max_answer_blanks = 0;
 my $csv = new Text::CSV->new ( { binary => 1 } ) 
     or die "Cannot use CSV: ".Text::CSV->error_diag ();
 $csv->eol("\n");
 
-$ce = new WeBWorK::CourseEnvironment({
+my $ce = new WeBWorK::CourseEnvironment({
     webwork_dir => $ENV{WEBWORK_ROOT},
-				     });
-
-my $pg_dir = $ce->{pg_dir};
-eval "use lib '$pg_dir/lib'"; 
-die $@ if $@;
+					});
 
 my @courses = listCourses($ce);
 my %permissionLabels = reverse %{$ce->{userRoles}};
