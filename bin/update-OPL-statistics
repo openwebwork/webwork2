@@ -71,9 +71,8 @@ CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   `num_correct` int(11) DEFAULT NULL,
   `num_incorrect` int(11) DEFAULT NULL,
   UNIQUE KEY `unique_key_idx` (`course_id`(100),`user_id`(100),`set_id`(100),`problem_id`),
-  KEY `source_file_idx` (`source_file`(255))
+  KEY `source_file_idx` (`source_file`(255)))
   CHARACTER SET ascii
-)
 EOS
 
 $dbh->do(<<EOS);
