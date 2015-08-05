@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   `num_correct` int(11) DEFAULT NULL,
   `num_incorrect` int(11) DEFAULT NULL,
   UNIQUE KEY `unique_key_idx` (`course_id`(100),`user_id`(100),`set_id`(100),`problem_id`),
-  KEY `source_file_idx` (`source_file`(100))
+  KEY `source_file_idx` (`source_file`(255))
+  CHARACTER SET ascii
 )
 EOS
 
@@ -114,20 +115,20 @@ REPLACE INTO OPL_problem_user
   num_incorrect)
 SELECT
   '$courseID' AS `course_id`,
-  ${courseID}_problem_user.user_id,
-  ${courseID}_problem.set_id,
-  ${courseID}_problem.problem_id,
-  REPLACE(${courseID}_problem.source_file,'local/Library/','Library/'),
-  ${courseID}_problem_user.status,
-  ${courseID}_problem_user.attempted,
-  ${courseID}_problem_user.num_correct,
-  ${courseID}_problem_user.num_incorrect
-FROM ${courseID}_problem_user
-  JOIN ${courseID}_problem
-  ON ${courseID}_problem_user.set_id = ${courseID}_problem.set_id
-  AND ${courseID}_problem_user.problem_id = ${courseID}_problem.problem_id
-WHERE ${courseID}_problem.source_file LIKE 'Library/%'
-  OR ${courseID}_problem.source_file LIKE 'local/Library/%';
+  `${courseID}_problem_user`.user_id,
+  `${courseID}_problem`.set_id,
+  `${courseID}_problem`.problem_id,
+  REPLACE(`${courseID}_problem`.source_file,'local/Library/','Library/'),
+  `${courseID}_problem_user`.status,
+  `${courseID}_problem_user`.attempted,
+  `${courseID}_problem_user`.num_correct,
+  `${courseID}_problem_user`.num_incorrect
+FROM `${courseID}_problem_user`
+  JOIN `${courseID}_problem`
+  ON `${courseID}_problem_user`.set_id = `${courseID}_problem`.set_id
+  AND `${courseID}_problem_user`.problem_id = `${courseID}_problem`.problem_id
+WHERE `${courseID}_problem`.source_file LIKE 'Library/%'
+  OR `${courseID}_problem`.source_file LIKE 'local/Library/%';
 EOS
 
   }
