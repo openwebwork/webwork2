@@ -41,7 +41,7 @@ sub new {
 	$ce->{problemLibrary_db}->{passwd},
 	    {
 		PrintError => 0,
-		RaiseError => 1,
+		RaiseError => 0,
 	    },
 	);
     my $selectstm = $dbh->prepare("SELECT * FROM OPL_local_statistics WHERE source_file = ?");
@@ -59,12 +59,16 @@ sub getLocalStats {
     my $source_file = shift;
 
     my $selectstm = $self->{selectstm};
-    
-    $selectstm->execute($source_file) 
-	or die $selectstm->errstr;
+
+    unless ($selectstm->execute($source_file)) {
+      if ($selectstm->errstr =~ /Table .* doesn't exist/) {
+	warn "Couldn't find the OPL local statistics table.  Are you sure you have run update-OPL-statistics?"
+      }
+      die $selectstm->errstr;
+    }
 
     my $result = $selectstm->fetchrow_arrayref();
-    
+
     if ($result) {
 	return {source_file => $source_file,
 		students_attempted => $$result[1],

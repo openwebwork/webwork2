@@ -143,10 +143,11 @@ INSERT INTO OPL_local_statistics
   average_status)
 SELECT
   source_file,
-  SUM(attempted),
-  AVG(IF(attempted,num_correct+num_incorrect,NULL)),
-  AVG(IF(attempted,status,NULL))
+  COUNT(*),
+  AVG(num_correct+num_incorrect),
+  AVG(status)
 FROM OPL_problem_user
+WHERE attempted=1
 GROUP BY source_file
 EOS
 
