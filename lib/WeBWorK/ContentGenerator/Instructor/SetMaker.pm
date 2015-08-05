@@ -1066,7 +1066,7 @@ sub make_data_row {
 					   $r->maketext('Students Attempted: ').
 					   $stats->{students_attempted}.','.
 					   $r->maketext(' Average Attempts: ').
-				       $stats->{average_attempts}.','.
+					   wwRound(2,$stats->{average_attempts}).','.
 					   $r->maketext(' Average Status: ').
 					   wwRound(0,100*$stats->{average_status}).'%');
 	    }
