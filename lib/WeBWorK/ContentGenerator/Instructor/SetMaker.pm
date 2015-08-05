@@ -32,9 +32,10 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
+use WeBWorK::Utils::LibraryStats;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -1056,24 +1057,41 @@ sub make_data_row {
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
+	# get statistics to display
+	my $problem_stats = '';
+	if ($self->{library_stats_handler}) {
+	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
+	    if ($stats->{students_attempted}) {
+		$problem_stats = CGI::span({style=>"float:right; text-align:right;", class=>"problem-local-stats"},
+					   $r->maketext('Students Attempted: ').
+					   $stats->{students_attempted}.','.
+					   $r->maketext(' Average Attempts: ').
+				       $stats->{average_attempts}.','.
+					   $r->maketext(' Average Status: ').
+					   wwRound(0,100*$stats->{average_status}).'%');
+	    }
+	}
+	
 	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
-		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
+		CGI::div({-style=>"overflow:auto; background-color: #FFFFFF; margin: 0px auto"},
 		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
 		      -value=>"Add",
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
-				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
+			 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
 			CGI::span({-style=>"float:right ; text-align: right"}, 
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
 				-title=>"Hide this problem",
 				-style=>"cursor: pointer",
-				-onClick=>"return delrow($cnt)"}, "X"),
-			)), 
+				   -onClick=>"return delrow($cnt)"}, "X")),
+			 $problem_stats,
+
+			  ), 
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
@@ -1531,6 +1549,14 @@ sub pre_header_initialize {
 			$total_probs++;
 		}
 	}
+
+
+	my $library_stats_handler = '';
+	
+	if ($ce->{problemLibrary}{showLibraryStats}) {
+	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
+	}
+	
 	############# Now store data in self for retreival by body
 	$self->{first_shown} = $first_shown;
 	$self->{last_shown} = $last_shown;
@@ -1542,6 +1568,7 @@ sub pre_header_initialize {
 	$self->{pg_files} = \@pg_files;
 	$self->{all_db_sets} = \@all_db_sets;
 	$self->{library_basic} = $library_basic;
+	$self->{library_stats_handler} = $library_stats_handler; 
 }
 
 
