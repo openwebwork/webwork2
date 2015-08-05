@@ -144,7 +144,7 @@ INSERT INTO OPL_local_statistics
 SELECT
   source_file,
   SUM(attempted),
-  AVG(IF(attempted,num_correct+num_incorrect,NULL),
+  AVG(IF(attempted,num_correct+num_incorrect,NULL)),
   AVG(IF(attempted,status,NULL))
 FROM OPL_problem_user
 GROUP BY source_file
