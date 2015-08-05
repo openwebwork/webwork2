@@ -25,34 +25,34 @@
 # 2 - Student ID hash
 # 3 - Set ID hash
 # 4 - Problem ID hash
+# 5 - Timestamp
 # User Info
-# 5 - Permission Level
-# 6 - Final Status
+# 6 - Permission Level
+# 7 - Final Status
 # Set Info
-# 7 - Set type
-# 8 - Open Date (unix time)
-# 9 - Due Date (unix time)
-# 10 - Answer Date (unix time)
-# 11 - Final Set Grade (percentage)
+# 8 - Set type
+# 9 - Open Date (unix time)
+# 10 - Due Date (unix time)
+# 11 - Answer Date (unix time)
+# 12 - Final Set Grade (percentage)
 # Problem Info
-# 12 - Problem Path
-# 13 - Problem Value
-# 14 - Problem Max Attempts
-# 15 - Problem Seed
-# 16 - Attempted
-# 17 - Final Incorrect Attempts
-# 18 - Final Correct Attempts
-# 19 - Final Status
+# 13 - Problem Path
+# 14 - Problem Value
+# 15 - Problem Max Attempts
+# 16 - Problem Seed
+# 17 - Attempted
+# 18 - Final Incorrect Attempts
+# 19 - Final Correct Attempts
+# 20 - Final Status
 # OPL Info 
-# 20 - Subject
-# 21 - Chapter
-# 22 - Section
-# 23 - Keywords
+# 21 - Subject
+# 22 - Chapter
+# 23 - Section
+# 24 - Keywords
 # Answer Info
-# 24 - Answer timestamp (unix time)
-# 25 - Attempt Number
-# 26 - Raw status of attempt (percentage of correct blanks)
-# 27 - Status of attempt (post computed may be blank)
+# 25 - Answer timestamp (unix time)
+# 26 - Attempt Number
+# 27 - Raw status of attempt (percentage of correct blanks)
 # 28 - Number of Answer Blanks
 # 29/30 etc... - The following columns will come in pairs.  The first will be 
 #                the text of the answer contained in the answer blank
@@ -83,10 +83,10 @@ my $zip_result = 1;
 my $upload_result = 1;
 
 my $domainname = Net::Domain::domainname;
+my $time = time();
     
 # define and open the output file. 
 if (!$output_file) {
-    my $time = time();
     $output_file = "$domainname-$time.csv";
 }
 
@@ -138,6 +138,7 @@ foreach my $courseID (@courses) {
     my $sCourseID = sha256_hex($domainname.$courseID);
     
     $row[1] = $sCourseID;
+    $row[5] = $time;
     
     my @userIDs = $db->listUsers();
     my @users = $db->getUsers(@userIDs);
@@ -150,8 +151,8 @@ foreach my $courseID (@courses) {
 	# get user specific info
 	$row[2] = $sUserID;
 	my $permissionLevel = $db->getPermissionLevel($userID);
-	$row[5] = $permissionLabels{$permissionLevel->permission};
-	$row[6] = $ce->status_abbrev_to_name($user->{status});
+	$row[6] = $permissionLabels{$permissionLevel->permission};
+	$row[7] = $ce->status_abbrev_to_name($user->{status});
 	
 	my @setIDs = $db->listUserSets($userID);
 	@wheres = map {[$userID,$_]} @setIDs;
@@ -159,7 +160,7 @@ foreach my $courseID (@courses) {
 	
 	# go through sets
 	foreach my $set (@sets) {
-	    # skip gateways unless its a particular version
+	    # skip gateways
 	    if ($set->assignment_type =~ /gateway/ &&
 		$set->set_id !~ /,v\d+$/) {
 		next;
@@ -170,10 +171,10 @@ foreach my $courseID (@courses) {
 	    
 	    # get set specific info
 	    $row[3] = $sSetID;
-	    $row[7] = $set->assignment_type;
-	    $row[8] = $set->open_date;
-	    $row[9] = $set->due_date;
-	    $row[10] = $set->answer_date;
+	    $row[8] = $set->assignment_type;
+	    $row[9] = $set->open_date;
+	    $row[10] = $set->due_date;
+	    $row[11] = $set->answer_date;
 	    
 	    my @problemIDs = $db->listUserProblems($userID,$setID);
 	    @wheres = map {[$userID, $setID, $_]} @problemIDs;
@@ -186,7 +187,7 @@ foreach my $courseID (@courses) {
 		$total += $problem->value();
 		$correct += $problem->value*$problem->status;
 	    }
-	    $row[11] = $total ? $correct/$total:0;
+	    $row[12] = $total ? $correct/$total:0;
 	    
 	    # go through each problem
 	    foreach my $problem (@problems) {
@@ -195,23 +196,23 @@ foreach my $courseID (@courses) {
 
 		# print problem specific info
 		$row[4] = $sProblemID;
-		$row[12] = $problem->source_file;
-		$row[13] = $problem->value;
-		$row[14] = $problem->max_attempts;
-		$row[15] = $problem->problem_seed;
-		$row[16] = $problem->attempted;
-		$row[17] = $problem->num_incorrect;
-		$row[18] = $problem->num_correct;
-		$row[19] = $problem->status;
+		$row[13] = $problem->source_file;
+		$row[14] = $problem->value;
+		$row[15] = $problem->max_attempts;
+		$row[16] = $problem->problem_seed;
+		$row[17] = $problem->attempted;
+		$row[18] = $problem->num_incorrect;
+		$row[19] = $problem->num_correct;
+		$row[20] = $problem->status;
 		
 		# get OPL data
 		my $file = $templateDir.'/'.$problem->source_file();
 		if (-e $file) {
 		    my $tags = WeBWorK::Utils::Tags->new($file);
-		    $row[20] = $tags->{DBsubject};
-		    $row[21] = $tags->{DBchapter};
-		    $row[22] = $tags->{DBsection};
-		    $row[23] = defined($tags->{keywords}) ? 
+		    $row[21] = $tags->{DBsubject};
+		    $row[22] = $tags->{DBchapter};
+		    $row[23] = $tags->{DBsection};
+		    $row[24] = defined($tags->{keywords}) ? 
 			join(',',@{$tags->{keywords}}) : '';
 		}
 
@@ -229,23 +230,23 @@ foreach my $courseID (@courses) {
 		    $attempt_number++;
 
 		    # if the source file changed redo that info
-		    if ($row[12] != $answer->source_file) {
-			$row[12] = $answer->source_file;
+		    if ($row[13] != $answer->source_file) {
+			$row[13] = $answer->source_file;
 			$file = $templateDir.'/'.$answer->source_file();
 			if (-e $file) {
 			    my $tags = WeBWorK::Utils::Tags->new($file);
-			    $row[20] = $tags->{DBsubject};
-			    $row[21] = $tags->{DBchapter};
-			    $row[22] = $tags->{DBsection};
-			    $row[23] = defined($tags->{keywords}) ? 
+			    $row[21] = $tags->{DBsubject};
+			    $row[22] = $tags->{DBchapter};
+			    $row[23] = $tags->{DBsection};
+			    $row[24] = defined($tags->{keywords}) ? 
 				join(',',@{$tags->{keywords}}) : '';
 			}
 		    }
 		    
 		    # input answer specific info
 		    $row[0] = $sAnswerID;
-		    $row[24] = $answer->timestamp;
-		    $row[25] = $attempt_number;
+		    $row[25] = $answer->timestamp;
+		    $row[26] = $attempt_number;
 		    
 		    my @scores = split('',$answer->scores,-1);
 		    my @answers = split("\t",$answer->answer_string,-1);
@@ -266,7 +267,7 @@ foreach my $courseID (@courses) {
 			$score += $_;
 		    }
 		    
-		    $row[26] = $num_blanks ? $score/$num_blanks : 0;
+		    $row[27] = $num_blanks ? $score/$num_blanks : 0;
 		    
 		    # we leave the computed status blank for now. 
 		    
