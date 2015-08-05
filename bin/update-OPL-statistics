@@ -145,7 +145,7 @@ SELECT
   source_file,
   SUM(attempted),
   AVG(num_correct+num_incorrect),
-  AVG(status)
+  AVG(IF(attempted,status,NULL))
 FROM OPL_problem_user
 GROUP BY source_file
 EOS
