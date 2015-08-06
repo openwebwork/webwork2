@@ -891,26 +891,18 @@ sub pre_header_initialize {
 		my $thisAttempt = ($submitAnswers) ? 1 : 0;
 		my $attempts_used = $problem->num_correct + $problem->num_incorrect + $thisAttempt;
 		if ($problem->{prCount} =~ /^\s*$/) {
-			#warn "Need to update prCount, which is now: |".$problem->{prCount}."|";
 			$problem->{prCount} = sprintf("%d",$attempts_used/$rerandomizePeriod) - 1;
-			#warn "Updated prCount, it is now: |".$problem->{prCount}."|";
 		}
-		#warn "prCount is ".$problem->{prCount};
-		#warn "Attempts used is ".$attempts_used;
-		#warn "request New Seed is ".$requestNewSeed;
 		$requestNewSeed = 0 if ( 
 			($attempts_used % $rerandomizePeriod) or 
 			( sprintf("%d",$attempts_used/$rerandomizePeriod) <= $problem->{prCount} ) or
 			after($set->due_date)
 			);
-		#warn "Now request New Seed is ".$requestNewSeed;
 		if ($requestNewSeed){
 			# obtain new random seed to hopefully change the problem
 			my $newSeed = ($problem->{problem_seed} + $attempts_used) % 10000; 
-			# $problem->num_incorrect($problem->num_incorrect + 1);
 			$problem->{problem_seed} = $newSeed; 
 			$problem->{prCount} = sprintf("%d",$attempts_used/$rerandomizePeriod);
-			#warn "Now prCount is ".$problem->{prCount};
 			$db->putUserProblem($problem);
 		} 
 	}
@@ -956,13 +948,9 @@ sub pre_header_initialize {
 	debug("end pg processing");
 	
 	if ($prEnabled){	
-		# warn "Used attempts: $attempts_used";
 		my $thisAttempt = ($submitAnswers) ? 1 : 0;
 		my $attempts_used = $problem->num_correct + $problem->num_incorrect + $thisAttempt;
 		my $rerandomize_step = 0;
-		#warn "rerandomize step before check is: $rerandomize_step";
-		#warn "attempts used is: $attempts_used";
-		#warn "rerandomize period is: $rerandomizePeriod";
 
 		$rerandomize_step = 1 if ( 
 		  ($attempts_used > 0) && 
@@ -970,7 +958,6 @@ sub pre_header_initialize {
 		  (sprintf("%d",$attempts_used/$rerandomizePeriod) > $problem->{prCount}) 
 		  );
 		$rerandomize_step = 0 if ( after($set->due_date) );
-		#warn "Rerandomize step after check is: $rerandomize_step";
 		# disable the "submit" button and enable "generate new version" button
 		# and stop any further processing of options so that we
 		# take over the problem processing until the next attempt

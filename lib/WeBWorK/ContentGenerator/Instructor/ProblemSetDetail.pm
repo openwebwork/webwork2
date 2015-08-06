@@ -506,7 +506,7 @@ sub FieldTable {
                 # skip the Show Me Another value if SMA is not enabled
 	        next if ( $field eq 'showMeAnother' &&
                           !$ce->{pg}->{options}->{enableShowMeAnother} );
-                # skip the periodic re-randomization is not enabled
+                # skip the periodic re-randomization if it is not enabled
 	        next if ( $field eq 'prEnable' &&
                           !$ce->{pg}->{options}->{enablePeriodicRandomization} );
 
