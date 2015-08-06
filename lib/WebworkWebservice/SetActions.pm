@@ -660,12 +660,19 @@ sub addProblem {
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
 	
+	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
+
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
 
 	my $maxAttempts = $params->{maxAttempts} || $max_attempts_default;
 	my $showMeAnother = $params->{showMeAnother} || $showMeAnother_default;
 	my $problemID = $params->{problemID};
+
+	my $prPeriod = $prPeriod_default;
+	if (defined($params->{prPeriod})){
+		$prPeriod = $params->{prPeriod};
+	}
 
 	unless ($problemID) {
 		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
@@ -679,6 +686,8 @@ sub addProblem {
 	$problemRecord->max_attempts($maxAttempts);
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
+	$problemRecord->prPeriod($prPeriod);
+	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
 	my @results; 

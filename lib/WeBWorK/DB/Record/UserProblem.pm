@@ -38,6 +38,10 @@ BEGIN {
 		max_attempts  => { type=>"INT" },
 		showMeAnother  => { type=>"INT" },
 		showMeAnotherCount  => { type=>"INT" },
+		# periodic randomization period
+		prPeriod => {type => "INT"},
+		# periodic randomization version count
+		prCount => {type => "INT"},
 		problem_seed  => { type=>"INT" },
 		status        => { type=>"FLOAT" },
 		attempted     => { type=>"INT" },

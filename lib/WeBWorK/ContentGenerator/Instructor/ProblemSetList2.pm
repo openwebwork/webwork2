@@ -1779,6 +1779,7 @@ sub importSetsFromDef {
 			  problemID => $freeProblemID++,
 			  value => $rh_problem->{value},
 			  maxAttempts => $rh_problem->{max_attempts},
+			  prPeriod => $rh_problem->{prPeriod},
 			  showMeAnother => $rh_problem->{showMeAnother});
 		}
 
@@ -1817,6 +1818,7 @@ sub readSetDef {
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
 	my $showMeAnother = $self->{ce}->{problemDefaults}->{showMeAnother};
+	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
 
 	my $setName = '';
 	
@@ -1835,7 +1837,7 @@ sub readSetDef {
 
 	}
 
-	my ($line, $name, $value, $attemptLimit, $continueFlag);
+	my ($line, $name, $value, $attemptLimit, $prPeriod, $continueFlag);
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
 	my $description = '';
@@ -2014,14 +2016,18 @@ sub readSetDef {
 			$value =~ s/[^\d\.]*//g;
 			unless ($value =~ /\d+/) {$value = $value_default;}
 			$attemptLimit = "" unless defined($attemptLimit);
+			($attemptLimit,$prPeriod) = split(':',$attemptLimit,2);
 			$attemptLimit =~ s/[^\d-]*//g;
 			unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
+			$prPeriod = $prPeriod_default unless defined ($prPeriod);
+			unless ($prPeriod =~ /\d+/) { $prPeriod = $prPeriod_default; }
 			$continueFlag = "0" unless( defined($continueFlag) && @problemData );  
 			# can't put continuation flag onto the first problem
 			push(@problemData, {source_file    => $name,
 			                    value          =>  $value,
 			                    max_attempts   =>, $attemptLimit,
 			                    showMeAnother  =>, $showMeAnother,
+					    prPeriod	   => $prPeriod,
 			                    continuation   => $continueFlag 
 			                    });
 		}
@@ -2109,12 +2115,16 @@ SET:	foreach my $set (keys %filenames) {
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
 			my $showMeAnother  = $problemRecord->showMeAnother();
+			my $prPeriod 	  = $problemRecord->prPeriod();
 			
 			# backslash-escape commas in fields
 			$source_file =~ s/([,\\])/\\$1/g;
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
+			$prPeriod =~ s/([,\\])/\\$1/g;
+			# attach prPeriod to max_attempts if it is a non-default value
+			$max_attempts=$max_attempts.':'.$prPeriod if ( ($prPeriod ne "") and ($prPeriod> -1));
 
             # only include showMeAnother if it has been enabled in the course configuration
             if($ce->{pg}->{options}{enableShowMeAnother}){
