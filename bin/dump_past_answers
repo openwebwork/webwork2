@@ -153,8 +153,12 @@ foreach my $courseID (@courses) {
 
     # go through users
     foreach my $user (@users) {
-	my $userID = $user->user_id;
-	my $sUserID = sha256_hex($domainname.$courseID.$userID);
+      my $userID = $user->user_id;
+
+        #skip proctor users 
+        next if $user->user_id =~ /^set_id:/;
+      
+	my $sUserID = sha256_hex($domainname.$courseID.$userID.$user->student_id.$ce->{database_password});
 	
 	# get user specific info
 	$row[2] = $sUserID;
@@ -175,7 +179,7 @@ foreach my $courseID (@courses) {
 	    }
 	    
 	    my $setID = $set->set_id;
-	    my $sSetID = sha256_hex($domainname.$courseID.$setID);
+	    my $sSetID = sha256_hex($domainname.$courseID.$setID.$ce->{database_password});
 	    
 	    # get set specific info
 	    $row[3] = $sSetID;
@@ -200,7 +204,7 @@ foreach my $courseID (@courses) {
 	    # go through each problem
 	    foreach my $problem (@problems) {
 		my $problemID = $problem->problem_id;
-		my $sProblemID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID);
+		my $sProblemID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID.$user->student_id.$ce->{database_password});
 
 		# print problem specific info
 		$row[4] = $sProblemID;
@@ -234,7 +238,7 @@ foreach my $courseID (@courses) {
 		    #reset the row length because it can change;
 		    @row = splice(@row,0,28);
 		    my $answerID = $answer->answer_id;
-		    my $sAnswerID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID.$answerID);
+		    my $sAnswerID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID.$answerID.$user->student_id.$ce->{database_password});
 		    $attempt_number++;
 
 		    # if the source file changed redo that info
