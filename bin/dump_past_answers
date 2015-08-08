@@ -102,6 +102,24 @@ if (!$output_file) {
     $output_file = "$domainname-$time.csv";
 }
 
+my $salt; 
+my $SALTFILE;
+my $saltfilename = $ENV{WEBWORK_ROOT}.'/.dump_past_answers_salt';
+
+if (-e $saltfilename) {
+  open($SALTFILE, "<$saltfilename") || die ("Couldn't open salt file.");
+  $salt = <$SALTFILE>;
+} else {
+  $salt = '';
+  for (my $i=0; $i<32; $i++) {
+    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
+  }
+
+  open($SALTFILE, ">$saltfilename") || die ("Couldn't open salt file.");
+  print $SALTFILE $salt;
+  close $SALTFILE;
+}
+
 my $OUT;
 open($OUT,">$output_file") || die("Couldn't open file $output_file");
 
@@ -143,8 +161,8 @@ foreach my $courseID (@courses) {
     
     my $templateDir = $ce->{courseDirs}->{templates};
     
-    my $sCourseID = sha256_hex($domainname.$courseID);
-    
+    my $sCourseID = sha256_hex($salt.$domainname.$courseID);
+
     $row[1] = $sCourseID;
     $row[5] = $time;
     
@@ -158,7 +176,7 @@ foreach my $courseID (@courses) {
         #skip proctor users 
         next if $user->user_id =~ /^set_id:/;
       
-	my $sUserID = sha256_hex($domainname.$courseID.$userID.$user->student_id.$ce->{database_password});
+	my $sUserID = sha256_hex($salt.$domainname.$courseID.$userID);
 	
 	# get user specific info
 	$row[2] = $sUserID;
@@ -179,7 +197,7 @@ foreach my $courseID (@courses) {
 	    }
 	    
 	    my $setID = $set->set_id;
-	    my $sSetID = sha256_hex($domainname.$courseID.$setID.$ce->{database_password});
+	    my $sSetID = sha256_hex($salt.$domainname.$courseID.$setID);
 	    
 	    # get set specific info
 	    $row[3] = $sSetID;
@@ -204,7 +222,7 @@ foreach my $courseID (@courses) {
 	    # go through each problem
 	    foreach my $problem (@problems) {
 		my $problemID = $problem->problem_id;
-		my $sProblemID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID.$user->student_id.$ce->{database_password});
+		my $sProblemID = sha256_hex($salt.$domainname.$courseID.$userID.$setID.$problemID);
 
 		# print problem specific info
 		$row[4] = $sProblemID;
@@ -238,7 +256,7 @@ foreach my $courseID (@courses) {
 		    #reset the row length because it can change;
 		    @row = splice(@row,0,28);
 		    my $answerID = $answer->answer_id;
-		    my $sAnswerID = sha256_hex($domainname.$courseID.$userID.$setID.$problemID.$answerID.$user->student_id.$ce->{database_password});
+		    my $sAnswerID = sha256_hex($salt.$domainname.$courseID.$userID.$setID.$problemID.$answerID);
 		    $attempt_number++;
 
 		    # if the source file changed redo that info
