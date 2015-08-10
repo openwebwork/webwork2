@@ -93,10 +93,13 @@ sub putGlobalSet {
 			$proctor->first_name("Login");
 			$proctor->student_id("loginproctor");
 			$proctor->status($ce->status_name_to_abbrevs('Proctor'));
+            $db->addUser($proctor);
+            
+            ## add a permission level to the database. 
 			my $procPerm = $db->newPermissionLevel;
             $procPerm->user_id($proctor_id);
 			$procPerm->permission($ce->{userRoles}->{login_proctor});
-            $db->addUser($proctor);
+            $db->addPermissionLevel($procPerm);
             $set_from_db->restricted_login_proctor('Yes');
         }
 
