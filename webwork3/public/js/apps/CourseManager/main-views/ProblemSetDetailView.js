@@ -354,7 +354,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             } else {
                 $.get(config.urlPrefix +  "courses/" + config.courseSettings.course_id + "/headers", function( data ) {
                     self.headerFiles = _(data).map(function(f){ return {label: f, value: f};});
-                    self.headerFiles.unshift({label: "Select a Header File...", value: "defaultHeader"});
+                    self.headerFiles.unshift({label: "Use Default Header File", value: "defaultHeader"});  // I18N
                     self.render();
                 });
                 

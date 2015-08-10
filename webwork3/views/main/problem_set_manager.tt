@@ -129,7 +129,9 @@ var messages = {
                                 opt.oldValue + " to " + opt.newValue + "."},
     empty_selected_sets_error: function () { return "You must select at least one set.";},
     problem_updated: function(opt) { return "Problem # " + opt.problem_id + " for set " + opt.set_id +
-                                        " and user " + opt.user_id + " has been updated.";}
+                                        " and user " + opt.user_id + " has been updated.";},
+    problem_deleted_warning: function () { return "This set has been opened.  It is not advised to delete a " +
+                                                "problem that has been open. Click OK to continue deleting this problem or Cancel.";}
 }
 print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>

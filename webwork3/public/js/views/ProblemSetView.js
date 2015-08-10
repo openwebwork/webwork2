@@ -1,5 +1,5 @@
-define(['backbone', 'views/ProblemListView', 'models/UserProblemList', 'models/ProblemList'],
-function (Backbone, ProblemListView, UserProblemList, ProblemList) {
+define(['backbone', 'views/ProblemListView', 'models/UserProblemList', 'models/ProblemList','moment'],
+function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
     var ProblemSetView = ProblemListView.extend({
         viewName: "Problems",
         initialize: function (options) {
@@ -16,6 +16,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList) {
             this.deletedProblems = new ProblemList(); 
 
             this.set({problem_set_view: this});
+            console.log(moment);
         },
         render: function () {
           ProblemListView.prototype.render.apply(this);  
@@ -55,6 +56,14 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList) {
         // this removes the problem _prob from the problemSet. 
         deleteProblem: function (_prob){
             var self = this; 
+            if(moment.unix(this.problemSet.get("open_date")).isBefore(new moment())){
+                var conf = confirm(this.messageTemplate({type: "problem_deleted_warning"}));
+                
+                if(! conf){
+                    return;
+                }
+            }
+            
             this.problemSet.changingAttributes = 
                 {"problem_deleted": {setname: this.problemSet.get("set_id"), 
                                      problem_id: _prob.get("problem_id")}};

@@ -316,7 +316,7 @@ sub deleteProblems {
     
     $db->deleteGlobalProblem($setID,$problem_id_to_delete);
     
-    renumber_problems($db,$setID,$assigned_users);
+    # renumber_problems($db,$setID,$assigned_users);
 
     return $db->getAllGlobalProblems($setID);
 }
