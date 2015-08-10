@@ -298,9 +298,9 @@ The results will be dispayed below.  To search for section 2 type "section:2" or
     <label class="btn btn-primary">
       <input type="radio" name="options" id="edit-header-button" autocomplete="off">Edit Set Header
     </label>
-    <label class="btn btn-primary">
+    <!--<label class="btn btn-primary">
       <input type="radio" name="options" id="view-hardcopy-button" autocomplete="off">View Hardcopy Header
-    </label>
+    </label> -->
     <label class="btn btn-primary">
       <input type="radio" name="options" id="edit-hardcopy-button" autocomplete="off">Edit HardCopy Header
     </label>
