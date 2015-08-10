@@ -28,7 +28,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList) {
 
         markAllCorrect: function(_prob_id){
             var self = this;
-            var prob = this.problemSet.problems.findWhere({problem_id: _prob_id});
+            var prob = this.problemSet.problems.findWhere({problem_id: parseInt(_prob_id)});
             this.problemsToUpdate = _(this.problemSet.get("assigned_users")).map(function(_user_id){
                 var upl = new UserProblemList([],{user_id: _user_id, 
                                             set_id: self.problemSet.get("set_id")});
@@ -38,7 +38,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList) {
         },
         markProblemCorrect(_prob_list,_prob_id){
             var self = this;
-            var prob = _prob_list.findWhere({problem_id: _prob_id});
+            var prob = _prob_list.findWhere({problem_id: parseInt(_prob_id)});
             //var prob = _(_prob_list.models).find(function(prob) {return prob.get("problem_id")==_prob_id;})
             prob.set({status: 1}).save(prob.attributes,{success: function () {
                 var msg = {type: "problem_updated",
