@@ -75,7 +75,7 @@ sub putGlobalSet {
     my ($db,$ce,$set) = @_;
     
     my $set_from_db = $db->getGlobalSet($set->{set_id});
-    convertBooleans($set,\@boolean_set_props);
+    $set = convertBooleans($set,\@boolean_set_props);
     
     for my $key (@set_props){
         $set_from_db->{$key} = $set->{$key} if defined($set->{$key});
