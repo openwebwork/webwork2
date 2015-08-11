@@ -50,7 +50,7 @@ var ProblemSet = Backbone.Model.extend({
         }
     },
     integerFields: ["open_date","reduced_scoring_date","due_date","answer_date",
-                    "problem_randorder","attempts_per_version","version_creation_time","version_time_limit",
+                    "attempts_per_version","version_creation_time","version_time_limit",
                     "problems_per_page","versions_per_interval","version_last_attempt_time","time_interval"],
     idAttribute: "_id",
     initialize: function (opts,dateSettings) {

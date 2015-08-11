@@ -248,7 +248,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             ".attempts-per-version": "attempts_per_version",
             ".time-interval": "time_interval",
             ".version-per-interval": "version_per_interval",
-            ".problem-random-order": "problem-randorder",
+            ".problem-random-order": "problem_randorder",
             ".problems-per-page": "problems_per_page",
             ".pg-password": "pg_password",
             // I18N
@@ -565,6 +565,12 @@ var AssignUsersView = Backbone.View.extend({
 
             this.model = options.problemSet ? new ProblemSet(options.problemSet.attributes): null;
             
+            if(options.problemSet){
+                options.problemSet.on("change",function(_model){
+                    self.model.set(_model.changed); 
+                });
+            }
+            
             _.extend(this,_(options).pick("users","settings","eventDispatcher"));
             TabView.prototype.initialize.apply(this,[options]);
             this.tabState.on("change:filter_string", function(){
@@ -645,6 +651,8 @@ var AssignUsersView = Backbone.View.extend({
             if(this.problemSet){
                 this.problemSet.on("change:assigned_users",function(_m){
                     self.collection = new Backbone.Collection(); // reset the collection so data is refetched.
+                }).on("change",function(_model){
+                    self.model.set(_model.changed); 
                 });
             }
             

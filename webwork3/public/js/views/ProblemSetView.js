@@ -16,7 +16,6 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
             this.deletedProblems = new ProblemList(); 
 
             this.set({problem_set_view: this});
-            console.log(moment);
         },
         render: function () {
           ProblemListView.prototype.render.apply(this);  
