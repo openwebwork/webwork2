@@ -341,3 +341,8 @@ print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>
 
 </script>
+
+<script type="text/template" id="assign-type-not-supported">
+<div class="alert alert-info col-md-4 col-md-offset-4" style="margin-top: 25px"  role="alert"> This Assignment type is not supported. 
+</div>
+</script>

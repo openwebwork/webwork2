@@ -178,6 +178,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         render: function(){
             if(this.model){
+                if(this.model.get("assignment_type") == "jitar"){
+                    this.$el.html($("#assign-type-not-supported").html());
+                    return;
+                }
                 this.$el.html($("#set-properties-tab-template").html());
                 this.showTime(this.tabState.get("show_time"));
                 this.showCalendar(this.tabState.get("show_calendar"));
@@ -347,6 +351,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         render: function(){
             var self = this; 
             var tmpl = _.template($("#set-headers-template").html());
+            if(this.model && this.model.get("assignment_type") == "jitar"){
+                    this.$el.html($("#assign-type-not-supported").html());
+                    return;
+            }
             this.$el.html(tmpl(this.tabState.attributes));  
             if(this.headerFiles && this.setHeader){
                 this.showSetHeaders();
@@ -464,6 +472,11 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         render: function (){
             var self = this;
+            if(this.problemSetView.problemSet && this.problemSetView.problemSet.get("assignment_type") == "jitar"){
+                    this.$el.html($("#assign-type-not-supported").html());
+                    return;
+                }
+            
             this.problemSetView.setElement(this.$el);
             this.problemSetView.render();
             // disable the ability to drag problems when the set is open. 
@@ -499,6 +512,10 @@ var AssignUsersView = Backbone.View.extend({
             TabView.prototype.initialize.apply(this,[options]);
         },
         render: function() {
+            if(this.problemSet && this.problemSet.get("assignment_type") == "jitar"){
+                    this.$el.html($("#assign-type-not-supported").html());
+                    return;
+            }
             this.$el.html($("#assign-users-template").html());
             this.update();
             return this;
@@ -582,6 +599,10 @@ var AssignUsersView = Backbone.View.extend({
             var self = this;
             if(! this.model){
                 return;
+            }
+            if(this.problemSet && this.problemSet.get("assignment_type") == "jitar"){
+                    this.$el.html($("#assign-type-not-supported").html());
+                    return;
             }
             this.tableSetup();
             this.$el.html($("#loading-usersets-template").html());
