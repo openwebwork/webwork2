@@ -112,11 +112,12 @@ var ProblemSetsManager = MainView.extend({
         return this;
     },
     update: function (){
+        this.problemSetTable.updateTable();
         util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"), 
                             remove_class: "hidden",
                             els: this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date," +
                                             "th.enable-reduced-scoring,th.reduced-scoring-date")})
-        this.problemSetTable.updateTable();
+        
         return this;
     },
     bindings: { 
