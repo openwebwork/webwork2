@@ -1,4 +1,62 @@
+// Object for toggling the sidebar
+var ToggleNavigation = function () {
+    var threshold = 768
+    var windowwidth = $(window).width();
+    var navigation_element = $('#site-navigation');
+    
+    var hideSidebar = function () {
+	$('#site-navigation').remove();
+	$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');	
+	$('#content').removeClass('span10').addClass('span11');
+    }
+
+    var showSidebar = function () {
+	$('#body-row').prepend(navigation_element);
+	$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');
+	$('#content').addClass('span10').removeClass('span11');	
+    }
+
+    var toggleSidebar = function () {
+	if ($('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+	    hideSidebar();
+	} else {
+	    showSidebar();
+	}
+    }
+        
+    // if no fish eye then collapse site-navigation 
+    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').remove();
+	$('#content').removeClass('span10').addClass('span11');
+	$('#toggle-sidebar').addClass('hidden');
+	$('#breadcrumb-navigation').width('100%');
+    } else {
+	// otherwise enable site-navigation toggling
+	if (windowwidth < threshold) {
+	    hideSidebar();
+	}
+	    
+	$('#toggle-sidebar').click(function (event) {
+	    event.preventDefault();
+	    toggleSidebar();
+	});
+	
+	
+	$(window).resize(function(){
+	    windowwidth = $(window).width();
+	    if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+		hideSidebar();
+	    } else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
+		showSidebar();
+	    }
+	}); 
+    }
+}
+
 $(function(){
+    // Initialize navigation menu toggling
+    ToggleNavigation();
+    
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
@@ -19,63 +77,18 @@ $(function(){
 
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
-    
-    // Make grey_buttons disabled buttons
-    $('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <span class='icon icon-pencil' data-alt='edit'></span>")); });
     $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
 
     // Sets login form input to bigger size
-    $('#login_form input').addClass('input-large');
-    
-    // Changes links in masthead
-    $('#loginstatus a').addClass('btn btn-small');
-    $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>');
+    $('#login_form input').addClass('input-large');    
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
-
-    // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
-	event.preventDefault();
-	var toggleIcon = $('#toggle-sidebar-icon');
-	$('#site-navigation').toggleClass('hidden');
-	toggleIcon.toggleClass('icon-chevron-left')
-	    .toggleClass('icon-chevron-right');
-	$('#site-navigation').toggleClass('span2');
-	$('#content').toggleClass('span10').toggleClass('span11');
-	if (toggleIcon.next('.sr-only-glyphicon').html() == 'close sidebar') {
-	    toggleIcon.next('.sr-only-glyphicon').html('open sidebar');
-	} else {
-	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
-	}
-	   
-    });
-
-    if($(window).width() < 650) {
-	$('#toggle-sidebar').click();
-    }
-
-    // if no fish eye then collapse site-navigation 
-    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
-	$('#site-navigation').removeClass('span2');
-	$('#content').removeClass('span10').addClass('span11');
-	$('#toggle-sidebar').addClass('hidden');
-    }
-
-    // Makes the fisheye stuff bootstrap nav
-    $('#site-navigation ul').addClass('nav nav-list');
-    $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
-    $('#site-navigation a.active').parent().addClass('active');
-    $('#site-navigation strong.active').parent().addClass('active');
-    $('#site-navigation li').find('br').remove();
-
-    // Display options formatting
-    $('.facebookbox input:submit').addClass('btn-small');
-
+    
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
     $('.body:has(.problem_set_table)').addClass('problem_set_body');
@@ -107,6 +120,22 @@ $(function(){
 	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',content:data});	
 	} 
 	    
+    });
+
+    // sets up problems to rescale the image accoring to attr height width
+    // and not native height width.  
+    var rescaleImage = function (index,element) {
+	if ($(element).attr('height') != $(element).get(0).naturalHeight || 
+	$(element).attr('width') != $(element).get(0).naturalWidth) {
+	    $(element).height($(element).width()*$(element).attr('height')
+			   /$(element).attr('width'));
+	}
+    }
+    
+    $('.problem-content img').each(rescaleImage);
+
+    $(window).resize(function () {
+	$('.problem-content img').each(rescaleImage);
     });
     
     // Grades formatting
@@ -166,7 +195,6 @@ $(function(){
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');
     $('#editor div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
-    $('#editor label[class="radio"]').after('<br/>');
 
     //Achievement Editor
     $('#achievement-list').addClass('form-inline user-list-form');
@@ -179,7 +207,7 @@ $(function(){
     //email page
     $('#send-mail-form').addClass('form-inline');
     $('#send-mail-form .btn').addClass('btn-small').removeClass('btn-primary');
-    $('#send-mail-form input[value="Send Email"]').addClass('btn-primary');
+    $('#send-mail-form #sendEmail_id').addClass('btn-primary');
 
     //Score sets
     $('#scoring-form').addClass('form-inline');

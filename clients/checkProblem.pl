@@ -34,48 +34,68 @@ Rembember to configure the local output file and display command !!!!!!!!
 use strict;
 use warnings;
 
-
-
-##################################################
-#  configuration section for client
-##################################################
-
-# Use address to WeBWorK code library where WebworkClient.pm is located.
-use lib '/opt/webwork/webwork2/lib';
-#use Crypt::SSLeay;  # needed for https
+# Find webwork2 library
+BEGIN {
+        die "WEBWORK_ROOT not found in environment. \n
+             WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
+             It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
+                unless exists $ENV{WEBWORK_ROOT};
+	# Unused variable, but define it twice to avoid an error message.
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
+}
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use Crypt::SSLeay;  # needed for https
 use WebworkClient;
-
+use MIME::Base64 qw( encode_base64 decode_base64);
 
 #############################################
 # Configure
 #############################################
 
- ############################################################
-# configure the local output file and display command !!!!!!!!
- ############################################################
- 
-use constant LOG_FILE => '/opt/webwork/libraries/t/bad_problems.txt';
 
-use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
+ # verbose output when UNIT_TESTS_ON =1;
+ our $UNIT_TESTS_ON             = 0;
 
- # Path to a temporary file for storing the output of renderProblem.pl
-# use constant  TEMPOUTPUTFILE   => '/Users/gage/Desktop/renderProblemOutput.html'; 
- 
  # Command line for displaying the temporary file in a browser.
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
  # use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
    use constant DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
 
- 
- my $use_site;
+
+
+my $use_site;
+# select a rendering site  
  #$use_site = 'test_webwork';    # select a rendering site 
  #$use_site = 'local';           # select a rendering site 
- $use_site = 'hosted2';  # select a rendering site 
- 
- 
+ $use_site = 'hosted2';        # select a rendering site 
+
+# credentials file location -- search for one of these files 
+my $credential_path;
+my @path_list = ('.ww_credentials', "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials");
+# Place a credential file containing the following information at one of the locations above.
+# 	%credentials = (
+# 			userID          => "my login name for the webwork course",
+# 			password        => "my password ",
+# 			courseID        => "the name of the webwork course",
+# 	);
+
+
+ ############################################################
+ # End configure
+ ############################################################
+
+ # Path to a temporary file for storing the output of renderProblem.pl
+use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/bad_problems.txt";
+
+use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
+
+die "You must first create an output file at ".LOG_FILE()." with permissions 777 " unless
+-w LOG_FILE();
+
  ############################################################
  
-# To configure the target webwork server
+# To configure a new target webwork server
 # two URLs are required
 # 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
 #    points to the Webservice.pm and Webservice/RenderProblem modules
@@ -112,21 +132,19 @@ use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
 #     result. A different name can be used but the course must exist on the server.
 
 
-our $UNIT_TESTS_ON             = 1;
-
 our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE, %credentials);
 if ($use_site eq 'local') {
 	# the rest can work!!
-	$XML_URL      =  'http://localhost:80';
+	$XML_URL          =  'http://localhost:80';
 	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
-	$XML_PASSWORD     =  'xmlwebwork';
+	$XML_PASSWORD     =  'xmlwebwork';    #matches password in renderViaXMLRPC.pm
 	$XML_COURSE       =  'daemon_course';
 } elsif ($use_site eq 'hosted2') {  
 	
-	$XML_URL      =  'https://hosted2.webwork.rochester.edu';
+	$XML_URL          =  'https://hosted2.webwork.rochester.edu';
 	$FORM_ACTION_URL  =  'https://hosted2.webwork.rochester.edu/webwork2/html2xml';
  	$XML_PASSWORD     = 'xmlwebwork';
- 	$XML_COURSE       = 'gage_course';
+ 	$XML_COURSE       = 'daemon_course';
 	
 } elsif ($use_site eq 'test_webwork') {
 
@@ -142,14 +160,11 @@ if ($use_site eq 'local') {
 ##################################################
 
 
-
 ####################################################
 # get credentials
 ####################################################
 
 
-my $credential_path;
-my @path_list = ('.ww_credentials', '/Users/gage/.ww_credentials', '/Users/gage/ww_session_credentials');
 foreach my $path (@path_list) {
 	if (-r "$path" ) {
 		$credential_path = $path;
@@ -171,7 +186,7 @@ EOF
 }
 
 eval{require $credential_path};
-if ($@  or not defined %credentials) {
+if ($@  or not  %credentials) {
 
 print STDERR <<EOF;
 
@@ -201,8 +216,17 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 ##################################################
 
 
-# filter mode  main code
+our $source;
+our $rh_result;
 
+our $filePath = '';
+
+our $output;
+our $return_string;
+
+
+# set fileName path to path for current file (this is a best guess -- may not always be correct)
+my $fileName = $ARGV[0]; # should this be ARGV[0]?
 
 ############################################
 # Build client
@@ -211,50 +235,43 @@ our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
 	displayMode            => DISPLAYMODE(),
-	site_password          =>  $credentials{site_password},
+	site_password          =>  $XML_PASSWORD//'',
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
-	session_key            =>  $credentials{session_key},
+	session_key            =>  $credentials{session_key}//'',
 );
  
  
  my $input = { 
-		userID      	=> $credentials{userID}||'',
-		session_key	 	=> $credentials{session_key}||'',
-		courseID   		=> $credentials{courseID}||'',
-		courseName   	=> $credentials{courseID}||'',
-		password     	=> $credentials{password}||'',	
-		site_password   => $credentials{site_password}||'',
+		userID      	=> $credentials{userID}//'',
+		session_key	 	=> $credentials{session_key}//'',
+		courseID   		=> $credentials{courseID}//'',
+		courseName   	=> $credentials{courseID}//'',
+		password     	=> $credentials{password}//'',	
+		site_password   => $XML_PASSWORD//'',
+		envir           => $xmlrpc_client->environment(),
+		                 
  };
 
 
-our $source = '';
-our $filePath = '';
-our $rh_result;
-# {
-# 	local($/);
-# 	$source   = <>; #slurp standard input
-# 	#print $source;  # return input to BBedit
-#  $xmlrpc_client->encodeSource($source);
-# }
-our $output;
-our $return_string;
-
 if (@ARGV) {
 	local(*FH);
+	
 	open(FH, ">>".LOG_FILE()) || die "Can't open log file ". LOG_FILE();
+
 	{
 		local($/);
 		$filePath = $ARGV[0];
 		$source   = <>; #slurp standard input
-		#print $source;  # return input to BBedit
-	}	
+		# print FH $source;  # return input to BBedit
+	}
     $xmlrpc_client->encodeSource($source);
-    
     
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
 	        $output = $xmlrpc_client->{output};
-		if (defined($output->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
+	    if (not defined $output) {  #FIXME make sure this is the right error message if site is unavailable
+	    	$return_string = "Could not connect to rendering site";
+	    } elsif (defined($output->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
 			$return_string = "0\t $filePath has errors\n";
 		} elsif (defined($output->{errors}) and $output->{errors} ){
 			$return_string = "0\t $filePath has syntax errors\n";
@@ -265,9 +282,9 @@ if (@ARGV) {
 				$return_string .= (pop @debug_messages ) ||'' ; #avoid error if array was empty
 				if (@debug_messages) {
 					$return_string .= join(" ", @debug_messages);
-		} else {
-					$return_string = "";
-		}
+				} else {
+							$return_string = "";
+				}
 			}
 			if (defined($output->{flags}->{WARNING_messages}) ) {
 				my @warning_messages = @{$output->{flags}->{WARNING_messages}};
@@ -275,10 +292,10 @@ if (@ARGV) {
 					$@=undef;
 				if (@warning_messages) {
 					$return_string .= join(" ", @warning_messages);
-	} else {
+				} else {
 					$return_string = "";
 				}
-	}
+			}
 			$return_string = "0\t ".$return_string."\n" if $return_string;   # add a 0 if there was an warning or debug message.
 		}
 		unless ($return_string) {
@@ -297,8 +314,6 @@ if (@ARGV) {
 	print STDERR "Output is sent to the log file: ",LOG_FILE();
 	
 }
-
-
 
 
 1;

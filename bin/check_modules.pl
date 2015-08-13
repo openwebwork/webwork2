@@ -40,6 +40,7 @@ my @modulesList = qw(
 	Benchmark
 	Carp
 	CGI
+	Class:Accessor
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dumper
@@ -73,6 +74,7 @@ my @modulesList = qw(
 	JSON
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
+        LWP::Protocol::https
 	Mail::Sender
 	MIME::Base64
 	Net::IP

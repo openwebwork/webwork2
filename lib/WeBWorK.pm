@@ -54,7 +54,7 @@ use WeBWorK::URLPath;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # Apache2 needs upload class
@@ -64,6 +64,8 @@ BEGIN {
 		Apache2::Upload->import();
 		require Apache2::RequestUtil;
 		Apache2::RequestUtil->import();
+	} else {
+		require "mod_perl.pm"; # should we still support apache mod_perl1?
 	}
 }
 

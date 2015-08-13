@@ -161,6 +161,13 @@ sub can_checkAnswers {
 	my $authz = $self->r->authz;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
 	
+	# if we can record answers then we dont need to be able to check them
+	# unless we have that specific permission. 
+	if ($self->can_recordAnswers($User,$EffectiveUser,$Set,$Problem,$submitAnswers) 
+	    && !$authz->hasPermissions($User->user_id, "can_check_and_submit_answers")) {
+	    return 0;
+	}
+	
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
@@ -358,9 +365,6 @@ sub attemptResults {
 	
 #	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
 	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
-#   FIXME  -- I left the old code in in case we have to back out.
-#	my $summary = "On this attempt, you answered $numCorrect out of "
-#		. scalar @answerNames . " $numIncorrectNoun correct, for a score of $scorePercent.";
 	my $summary = ""; 
 	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
 		if (scalar @answerNames == 1) {  #default messages
@@ -981,15 +985,12 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-	print qq{
-		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-	};
-        # Javascript and style for knowls
-        print qq{
-           <script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
+
+	# Keys dont really work well anymore.  So I'm removing this for now GG
+#	print qq{
+#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
+#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
+#	};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1559,28 +1560,30 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-	#HACK FIXME
-	print q{
-		<script> 
-			var new_keyboard = new Keys([
-			{value: 'sqrt()',
-			 display: '$ \\\\sqrt{} $',
-			 behavior: 
-			 	function(input){
-            		input.selectionStart -= 1;
-            		input.selectionEnd -= 1;
-            		//this.focus();
-        		}
+
+	# Removed with keys script.  
+	# print q{
+	# 	<script> 
+	# 		var new_keyboard = new Keys([
+	# 		{value: 'sqrt()',
+	# 		 display: '$ \\\\sqrt{} $',
+	# 		 behavior: 
+	# 		 	function(input){
+        #     		input.selectionStart -= 1;
+        #     		input.selectionEnd -= 1;
+        #     		//this.focus();
+        # 		}
 			 
-			},
-			'^','=',			
-			'(',')','+','-','*','/',
-			'1','2','3','4','5','6','7','8','9','0',
-			'{','}','_'],
-			{debug:false}  ); 
-			new_keyboard.build();
-		</script>
-	};
+	# 		},
+	# 		'^','=',			
+	# 		'(',')','+','-','*','/',
+	# 		'1','2','3','4','5','6','7','8','9','0',
+	# 		'{','}','_'],
+	# 		{debug:false}  ); 
+	# 		new_keyboard.build();
+	# 	</script>
+	# };
+
 	return "";
 }
 
@@ -1698,13 +1701,13 @@ sub output_summary{
 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);	    
 	    print $results;
 	    
-	} elsif ($checkAnswers) {
-        if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
-            # if the student is checking answers to a new problem, give them a reminder that they are doing so
-            print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
+	} elsif ($will{checkAnswers}) {
+	    if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
+		# if the student is checking answers to a new problem, give them a reminder that they are doing so
+		print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
                                                                      will not be recorded, and you should remember to return to your original 
                                                                      problem once you are done here.")),CGI::br();
-        }
+	    }
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
@@ -1796,8 +1799,6 @@ sub output_achievement_message{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	
-	
-
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
 	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
@@ -1825,8 +1826,6 @@ sub output_tag_info{
 		my $templatedir = $r->ce->{courseDirs}->{templates};
 		my $sourceFilePath = $templatedir .'/'. $self->{problem}->{source_file};
 		$sourceFilePath =~ s/'/\\'/g;
-		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript"}), "mytw = new tag_widget('tagger','$sourceFilePath')",CGI::end_script();
 	}
 	return "";
@@ -1976,23 +1975,21 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 	
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
 	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 	
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/color.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 	
 	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/Base64.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 	
 	# This is for MathView.  
 	if ($self->{will}->{useMathView}) {
 	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
 		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
-		
-		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();
@@ -2003,9 +2000,39 @@ sub output_JS{
 	    }
 	}
 	
+	# This is for knowls
+        # Javascript and style for knowls
+        print qq{
+           <script type="text/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
+           <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+
+	# This is for tagging menus (if allowed)
+	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
+	}
+
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
 
+	return "";
+}
+
+sub output_CSS {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+        # Javascript and style for knowls
+        print qq{
+           <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+
+	#style for mathview
+	if ($self->{will}->{useMathView}) {
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	}
+	
 	return "";
 }
 

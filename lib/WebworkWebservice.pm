@@ -43,7 +43,7 @@ BEGIN {
 ###############################################################################
 
 	$WebworkWebservice::SITE_PASSWORD      = 'xmluser';     # default password
-	$WebworkWebservice::COURSENAME    = 'the-course-should-be-determined-at-run-time';       # default course
+	$WebworkWebservice::COURSENAME         = 'the-course-should-be-determined-at-run-time';       # default course
 	
 	
 
@@ -227,11 +227,11 @@ if ($UNIT_TESTS_ON) {
 				->faultcode('404')
 				->faultstring('Course not found.')
 		}
-		die "Unknown exception when trying to verify authentication.";
+		die "Unknown exception when trying to verify authentication. $@";
 	};
 	
 	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
+	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login");
 	
 # Update the credentials -- in particular the session_key may have changed.
  	$self->{session_key} = $authen->{session_key};

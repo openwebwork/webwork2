@@ -266,7 +266,7 @@ function delrow(num) {
   var loop = 1;
   var mymltM = $('#mlt'+num);
   var mymltMtext = 'L'; // so extra stuff is not deleted
- if(mymltM) {
+  if(mymltM) {
     mymltMtext = mymltM.text();
   }
   $('#pgrow'+num).remove(); 
@@ -289,7 +289,8 @@ function delrow(num) {
       $('#mlt-table'+num).attr('id','mlt-table'+new_num);
       var onclickfunction = mymltM.attr('onclick').replace(num,new_num);
       mymltM.attr('id','mlt'+new_num).attr('onclick', onclickfunction);
-      mymltM.insertAfter('#inset'+new_num);
+	  var insetel = $('#inset'+new_num);
+      insetel.next().after(mymltM).after(" ");
       var classstr = $('#pgrow'+new_num).attr('class')
 	  .replace('MLT'+mymlt,'NS'+new_num);
       $('#pgrow'+new_num).attr('class',classstr);
@@ -313,10 +314,10 @@ function delrow(num) {
 
 function findAPLindex(path) {
   var j=0;
-  while ($('[name="all_past_list'+ j +'"]').val() != path && (j<100)) {
+  while ($('[name="all_past_list'+ j +'"]').val() != path && (j<1000)) {
     j++;
   }
-  if(j==100) { alert("Cannot find "+path);}
+  if(j==1000) { alert("Cannot find "+path);}
   return j;
 }
 
