@@ -444,6 +444,7 @@ input {
 }
 
 input[type="text"],
+input[type="password"],
 textarea,
 select {
     max-width:95%;

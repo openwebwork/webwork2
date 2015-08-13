@@ -7,13 +7,13 @@ var ToggleNavigation = function () {
     var hideSidebar = function () {
 	$('#site-navigation').remove();
 	$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');	
-	$('#content').removeClass('span10').addClass('span12');
+	$('#content').removeClass('span10').addClass('span11');
     }
 
     var showSidebar = function () {
 	$('#body-row').prepend(navigation_element);
 	$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');
-	$('#content').addClass('span10').removeClass('span12');	
+	$('#content').addClass('span10').removeClass('span11');	
     }
 
     var toggleSidebar = function () {
@@ -27,7 +27,7 @@ var ToggleNavigation = function () {
     // if no fish eye then collapse site-navigation 
     if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
 	$('#site-navigation').remove();
-	$('#content').removeClass('span10').addClass('span12');
+	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
 	$('#breadcrumb-navigation').width('100%');
     } else {
