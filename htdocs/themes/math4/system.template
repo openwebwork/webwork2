@@ -123,9 +123,8 @@ var tabberOptions = {manualStartup:true};
 	  <!--#options-->
 	  </div>
 	<!--#endif-->
-</div>
 
-<!-- Run site-navigation js because it gets loaded early -->
+	<!-- Run site-navigation js because it gets loaded early -->
 <script type="text/javascript">
   // Makes the fisheye stuff bootstrap nav
   $('#site-navigation ul').addClass('nav nav-list');
@@ -141,6 +140,7 @@ var tabberOptions = {manualStartup:true};
   
 </script>
 
+</div>
 
 <!-- Main Content Area -->
 <div id="content" class="span10" >
