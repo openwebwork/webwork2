@@ -103,7 +103,7 @@ var tabberOptions = {manualStartup:true};
   $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>'); 
 </script>
 
-<div class="row-fluid">
+<div id="body-row" class="row-fluid">
 
 <!-- Navigation -->
 <div id="site-navigation" class="span2" role="navigation" aria-label="main navigation">
