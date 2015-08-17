@@ -17,7 +17,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
         showHideTool (boolean): whether the hide button (X) should be shown to hide the problem
         deletable (boolean): is the problem deletable from the list its in.       
         draggable (boolean): can the problem be dragged and show the drag arrow (for library problems)
-        displayMode (boolean): the PG display mode for the problem (images, MathJax, none)
+        displayMode (string): the PG display mode for the problem (images, MathJax, none)
 
 
         "tags_loaded", "tags_shown", "path_shown",
@@ -50,11 +50,14 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                     self.showPath(self.state.get("show_path"));
                 });
 
-            this.model.on('change:value change:max_attempts', function () {
+            this.model.on('change:value change:max_attempts change:source_file', function () {
                 var isValid = self.model.isValid(_(self.model.changed).keys());
                 if(isValid){
                     self.problem_set_view.model.trigger("change:problems",self.problem_set_view.model,self.model);
-                } });
+            }}).on('change:source_file', function(){
+                self.model.set("data",""); 
+                self.render();
+            }); 
            this.invBindings = util.invBindings(this.bindings);
         },
 
@@ -174,7 +177,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             ".DBsubject-tag": "subject",
             ".DBchapter-tag": "chapter",
             ".DBsection-tag": "section",
-            ".problem-path": "source_file",
+            ".problem-path": {observe: "source_file", events: ["blur"]},
             ".seed": "problem_seed"
         },
         reloadWithRandomSeed: function (){

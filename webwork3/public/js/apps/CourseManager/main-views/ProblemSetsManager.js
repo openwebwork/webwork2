@@ -240,7 +240,7 @@ var ProblemSetsManager = MainView.extend({
         this.problemSets.on({
             add: function (_set){
                 _set.save();
-                _set.problems.on("change:value change:max_attempts", function(prob){
+                _set.problems.on("change:value change:max_attempts change:source_file", function(prob){
                                 self.changeProblemValueEvent(prob,_set)})
                 _set._network={add: ""};
             },
@@ -340,7 +340,7 @@ var ProblemSetsManager = MainView.extend({
 
         this.problemSets.each(function(_set) {
             _set.get("problems")
-                .on("change:value change:max_attempts",function(prob){ self.changeProblemValueEvent(_set,prob);});
+                .on("change:value change:max_attempts change:source_file",function(prob){ self.changeProblemValueEvent(_set,prob);});
         });
     }, // setMessages
     changeProblemValueEvent: function (_set,prob){   
