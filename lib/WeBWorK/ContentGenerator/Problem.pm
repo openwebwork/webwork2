@@ -2194,7 +2194,7 @@ sub output_past_answer_button{
 	
 	my $problemNumber = $problem->problem_id;
 	my $setRecord = $r->db->getGlobalSet($problem->set_id);
-	if ( $setRecord->assignment_type eq 'jitar' ) {
+	if ( defined($setRecord) && $setRecord->assignment_type eq 'jitar' ) {
 	    $problemNumber = join('.',jitar_id_to_seq($problemNumber));
 	}
 
