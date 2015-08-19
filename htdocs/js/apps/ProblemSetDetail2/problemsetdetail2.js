@@ -11,7 +11,7 @@ $(function() {
 	placeholder: 'pdr_placeholder',
 	tolerance: 'intersect',
 	toleranceElement: '> div',
-	items: 'li',
+	items: 'li.psd_list_row',
 	opacity: '.1',
 	forcePlaceholderSize: true,
  	scrollSpeed: 40,
