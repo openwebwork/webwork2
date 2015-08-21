@@ -15,13 +15,13 @@
 
 
 ###########################
-# Utils::LibrarySTats
+# Utils::LibraryGlobalStats
 #
-# This is an interface for getting statistics about library problems
+# This is an interface for getting global statistics about library problems
 # for display 
 ###########################
 
-package WeBWorK::Utils::LibraryStats;
+package WeBWorK::Utils::LibraryGlobalStats;
 
 use base qw(Exporter);
 use strict;
@@ -44,7 +44,7 @@ sub new {
 		RaiseError => 0,
 	    },
 	);
-    my $selectstm = $dbh->prepare("SELECT * FROM OPL_local_statistics WHERE source_file = ?");
+    my $selectstm = $dbh->prepare("SELECT * FROM OPL_global_statistics WHERE source_file = ?");
     
     my $self = { dbh => $dbh,
 		 selectstm => $selectstm,
@@ -54,7 +54,7 @@ sub new {
     return $self;
 }
 
-sub getLocalStats {
+sub getGlobalStats {
     my $self = shift;
     my $source_file = shift;
 
@@ -62,7 +62,7 @@ sub getLocalStats {
 
     unless ($selectstm->execute($source_file)) {
       if ($selectstm->errstr =~ /Table .* doesn't exist/) {
-	warn "Couldn't find the OPL local statistics table.  Are you sure you have run update-OPL-statistics?"
+	warn "Couldn't find the OPL global statistics table.  Check that this table exists."
       }
       die $selectstm->errstr;
     }
