@@ -62,7 +62,7 @@ var ProblemSetsManager = MainView.extend({
             return "change:" + key}).value().join(" ");
         
         this.problemSets.on(changeableFields,function(_set){
-            _set.save();
+            _set.save(_set.changed);
         }); 
         
         this.problemSets.on({

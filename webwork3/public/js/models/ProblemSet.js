@@ -57,8 +57,7 @@ var ProblemSet = Backbone.Model.extend({
         _.bindAll(this,"addProblem");
         this.dateSettings = dateSettings;
         opts.problems = opts.problems || [];
-        //this.problems = new ProblemList();
-        opts = this.parse(opts);
+        this.set(this.parse(opts),{silent: true}); 
     },
     parse: function (response) {
         if (response.problems){
@@ -171,12 +170,15 @@ var ProblemSet = Backbone.Model.extend({
         }
         var prevAttr = _.object([[_(this.changed).keys()[0],moment.unix(this._previousAttributes[_(this.changed).keys()[0]])]])
 
+        
+        var prevDates = _(util.parseAsIntegers(this._previousAttributes,this.integerFields))
+                                             .pick("answer_date","due_date","reduced_scoring_date","open_date");
         // convert all of the dates to Moment objects. 
-        var prevDates = _(this._previousAttributes).pick("answer_date","due_date","reduced_scoring_date","open_date")
-        var dates1 = _(prevDates).chain()
-                .pairs().map(function(date){ return [date[0],moment.unix(date[1])];}).object().value();
+        // dates1 is the moment objects of the previous dates
+        // dates2 is the moment objects of the new dates. 
+        var dates1 = _(prevDates).mapObject(function(val,key) { return moment.unix(val);});
         var dates2 = _(this.pick("answer_date","due_date","reduced_scoring_date","open_date")).chain()
-                .pairs().map(function(date){ return [date[0],moment.unix(date[1])];}).object().value();
+                        .mapObject(function(val,key) { return moment.unix(val);}).value();
 
         var mins_a_d = dates1.answer_date.diff(dates1.due_date,'minutes');
         var mins_d_r = dates1.due_date.diff(dates1.reduced_scoring_date,'minutes');
@@ -226,10 +228,13 @@ var ProblemSet = Backbone.Model.extend({
                 dates2.answer_date = moment(dates2.due_date).add(mins_a_d,"minutes");
             }
         }
-
-        // convert the moments back to unix time
-        var newUnixDates = _(dates2).chain().pairs().map(function(date) { 
-                return [date[0],date[1].unix()]}).object().value();
+        
+        var changedKeys = _(dates1).chain().keys().filter(function(key) 
+                                                {return !dates1[key].isSame(dates2[key]);}).value();
+        // get the unix dates of the dates that have changed.  
+        var newUnixDates =  _(dates2).chain().pick(changedKeys)
+                                .mapObject(function(val,key) { return val.unix();}).value();
+        
         this.set(newUnixDates);
     }
 
