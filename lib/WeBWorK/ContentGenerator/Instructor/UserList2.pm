@@ -1256,8 +1256,6 @@ sub saveEdit_handler {
 			my $param = "permission.${userID}.${field}";
 			if (defined $tableParams->{$param}->[0] &&
 			    $tableParams->{$param}->[0] <= $editorUserPermission) {
-			    warn($tableParams->{$param}->[0]);
-			    warn($editorUserPermission);
 				$PermissionLevel->$field($tableParams->{$param}->[0]);
 			}
 		}
