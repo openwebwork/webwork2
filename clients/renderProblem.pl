@@ -161,6 +161,9 @@ if ($use_site eq 'local') {
 	$XML_PASSWORD     = 'xmlwebwork';
 	$XML_COURSE       = 'daemon_course';
 
+} else {
+
+    warn "please choose a webwork site for rendering"
 }
 
 ##################################################
@@ -228,14 +231,19 @@ our $source;
 our $rh_result;
 
 # set fileName path to path for current file (this is a best guess -- may not always be correct)
-my $fileName = $ARGV[0]; 
+
+my $fileName;
+if (defined $ENV{BB_DOC_NAME} ) {
+	$fileName = $ENV{BB_DOC_NAME};
+} else {
+	$fileName = $ARGV[0]
+}
 
 # filter mode  main code
 die "Unable to read file $fileName " unless -r $fileName;
 eval {
 	local($/);
 	$source   = <>; #slurp standard input
-	#print $source;  # return input to BBedit
 };
 die "Something is wrong with the contents of $fileName" if $@;
 
@@ -245,6 +253,8 @@ $fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
 # webwork-open-problem-library/OpenProblemLibrary
 print "fileName changed to $fileName\n" if $UNIT_TESTS_ON;
 #print "source $source\n" if $UNIT_TESTS_ON;
+print $source  if $ENV{BB_DOC_NAME};  # return input to BBedit
+
 ############################################
 # Build client
 ############################################
