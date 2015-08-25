@@ -40,11 +40,9 @@ BEGIN {
              WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
              It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
                 unless exists $ENV{WEBWORK_ROOT};
-	# Unused variable, but define it twice to avoid an error message.
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT}
 }
-use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use Crypt::SSLeay;  # needed for https
 use WebworkClient;
 use MIME::Base64 qw( encode_base64 decode_base64);
@@ -67,8 +65,8 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 my $use_site;
 # select a rendering site  
  #$use_site = 'test_webwork';    # select a rendering site 
- #$use_site = 'local';           # select a rendering site 
- $use_site = 'hosted2';        # select a rendering site 
+ $use_site = 'local';           # select a rendering site 
+ #$use_site = 'hosted2';        # select a rendering site 
 
 # credentials file location -- search for one of these files 
 my $credential_path;
@@ -153,6 +151,9 @@ if ($use_site eq 'local') {
 	$XML_PASSWORD     = 'xmlwebwork';
 	$XML_COURSE       = 'daemon_course';
 
+} else {
+
+    warn "please choose a webwork site for rendering"
 }
 
 ##################################################
@@ -220,14 +221,19 @@ our $source;
 our $rh_result;
 
 # set fileName path to path for current file (this is a best guess -- may not always be correct)
-my $fileName = $ARGV[0]; # should this be ARGV[0]?
+my $fileName;
+if (defined $ENV{BB_DOC_NAME} ) {
+	$fileName = $ENV{BB_DOC_NAME};
+} else {
+	$fileName = $ARGV[0]
+}
 
 # filter mode  main code
 
 {
 	local($/);
 	$source   = <>; #slurp standard input
-	#print $source;  # return input to BBedit
+	print $source  if $ENV{BB_DOC_NAME};  # return input to BBedit
 }
 ############################################
 # Build client

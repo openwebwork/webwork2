@@ -80,12 +80,16 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 package WebworkClient;
 
 #use Crypt::SSLeay;  # needed for https
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/../pg/lib";
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Utils qw( wwRound);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Localize;
+use HTML::Entities;
+use WeBWorK::PG::ImageGenerator;
+
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -558,10 +562,9 @@ sub formatRenderedProblem {
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
 	my $password         =  $self->{password};
-	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
+	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//314159;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
-	
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});

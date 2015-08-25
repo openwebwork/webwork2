@@ -152,6 +152,8 @@ sub new {
 	my $globalEnvironmentFile;
 	if (-r "$seedVars{webwork_dir}/conf/defaults.config") {
 		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/defaults.config";
+	} else {
+		die "Cannot read configuration file at $seedVars{webwork_dir}/conf/defaults.config\n"; 
 	}
 	
 	# read and evaluate the global environment file
