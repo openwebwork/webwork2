@@ -266,7 +266,7 @@ sub defineProblemEnvir {
 	
 	# Other things...
 	$envir{QUIZ_PREFIX}              = $translationOptions->{QUIZ_PREFIX}//''; # used by quizzes
-	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{translationOptions}->{grader};
+	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
 	$envir{PRINT_FILE_NAMES_FOR}     = $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
 
         #  ADDED: __files__
