@@ -31,6 +31,8 @@ my $ce = new WeBWorK::CourseEnvironment({
 
 my ($dbi,$dbtype,$db,$host) = split(':',$ce->{database_dsn});
 
+$host = 'localhost' unless $host;
+
 my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
 
