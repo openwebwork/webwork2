@@ -40,7 +40,7 @@ my $output_file = "$domainname-$time-opl.sql";
 
 print "Dumping local OPL statistics\n";
 
-`mysqldump -h $host -u $dbuser -p$dbpass $db OPL_local_statistics > $output_file`;
+`mysqldump --host=$host --user=$dbuser --password=$dbpass $db OPL_local_statistics > $output_file`;
 
 print "Zipping file\n";
 `gzip $output_file`;

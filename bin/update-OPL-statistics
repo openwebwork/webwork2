@@ -161,4 +161,21 @@ EOS
 
 $dbh->commit();
 
+# check to see if the global statistics file exists and if it does, upload it.
+
+my $global_sql_file = $ce->{problemLibrary}{root}.'/OPL_global_statistics.sql';
+
+if (-e $global_sql_file) {
+
+  my ($dbi,$dbtype,$db,$host) = split(':',$ce->{database_dsn});
+
+  $dbh->do(<<EOS);
+DROP TABLE IF EXISTS OPL_global_statistics;
+EOS
+  $dbh->commit();
+
+  `mysql -h $host -u $dbuser -p$dbpass $db < $global_sql_file`;
+
+}
+
 1;
