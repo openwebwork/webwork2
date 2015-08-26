@@ -15,13 +15,13 @@
 
 
 ###########################
-# Utils::LibraryGlobalStats
+# Utils::LibraryLocalStats
 #
-# This is an interface for getting global statistics about library problems
+# This is an interface for getting local statistics about library problems
 # for display 
 ###########################
 
-package WeBWorK::Utils::LibraryGlobalStats;
+package WeBWorK::Utils::LibraryStats;
 
 use base qw(Exporter);
 use strict;
@@ -44,25 +44,29 @@ sub new {
 		RaiseError => 0,
 	    },
 	);
-    my $selectstm = $dbh->prepare("SELECT * FROM OPL_global_statistics WHERE source_file = ?");
+
+    my $localselectstm = $dbh->prepare("SELECT * FROM OPL_local_statistics WHERE source_file = ?");
+
+    my $globalselectstm = $dbh->prepare("SELECT * FROM OPL_global_statistics WHERE source_file = ?");
     
     my $self = { dbh => $dbh,
-		 selectstm => $selectstm,
+		 localselectstm => $localselectstm,
+		 globalselectstm => $globalselectstm,
     };
 
     bless($self,$class);
     return $self;
 }
 
-sub getGlobalStats {
+sub getLocalStats {
     my $self = shift;
     my $source_file = shift;
 
-    my $selectstm = $self->{selectstm};
+    my $selectstm = $self->{localselectstm};
 
     unless ($selectstm->execute($source_file)) {
       if ($selectstm->errstr =~ /Table .* doesn't exist/) {
-	warn "Couldn't find the OPL global statistics table.  Check that this table exists."
+	warn "Couldn't find the OPL local statistics table.  Are you sure you have run update-OPL-statistics?"
       }
       die $selectstm->errstr;
     }
@@ -79,5 +83,31 @@ sub getGlobalStats {
 	return {source_file => $source_file};
     }
 }
-    
+
+sub getGlobalStats {
+    my $self = shift;
+    my $source_file = shift;
+
+    my $selectstm = $self->{globalselectstm};
+
+    unless ($selectstm->execute($source_file)) {
+      if ($selectstm->errstr =~ /Table .* doesn't exist/) {
+	warn "Couldn't find the OPL global statistics table.  Are you sure you have run update-OPL-statistics?"
+      }
+      die $selectstm->errstr;
+    }
+
+    my $result = $selectstm->fetchrow_arrayref();
+
+    if ($result) {
+	return {source_file => $source_file,
+		students_attempted => $$result[1],
+		average_attempts => $$result[2],
+		average_status => $$result[3],
+	};
+    } else {
+	return {source_file => $source_file};
+    }
+}
+
 1;

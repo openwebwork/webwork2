@@ -35,8 +35,7 @@ use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName wwRound);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
-use WeBWorK::Utils::LibraryGlobalStats;
-use WeBWorK::Utils::LibraryLocalStats;
+use WeBWorK::Utils::LibraryStats;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -951,6 +950,7 @@ sub make_top_row {
 sub make_data_row {
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $r->{ce};
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
@@ -1061,8 +1061,8 @@ sub make_data_row {
 	# get statistics to display
 	
 	my $global_problem_stats = '';
-	if ($self->{library_global_stats_handler}) {
-	    my $stats = $self->{library_global_stats_handler}->getGlobalStats($sourceFileName);
+	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
+	    my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
 	    if ($stats->{students_attempted}) {
 		$global_problem_stats =    $self->helpMacro("Global_Usage_Data",$r->maketext('GLOBAL Usage')).': '.
 					   $stats->{students_attempted}.', '.
@@ -1075,8 +1075,8 @@ sub make_data_row {
 	
 		
 	my $local_problem_stats = '';
-	if ($self->{library_local_stats_handler}) {
-	    my $stats = $self->{library_local_stats_handler}->getLocalStats($sourceFileName);
+	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
+	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
 	    if ($stats->{students_attempted}) {
 		$local_problem_stats =     $self->helpMacro("Local_Usage_Data",$r->maketext('LOCAL Usage')).': '.
 					   $stats->{students_attempted}.', '.
@@ -1573,18 +1573,13 @@ sub pre_header_initialize {
 	}
 
 
-	my $library_global_stats_handler = '';
+        my $library_stats_handler = '';
 	
-	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
-	    $library_global_stats_handler = WeBWorK::Utils::LibraryGlobalStats->new($ce);
+	if ($ce->{problemLibrary}{showLibraryGlobalStats} &&
+	   $ce->{problemLibrary}{showLibraryLocalStats} ) {
+	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
 	}
 
-        my $library_local_stats_handler = '';
-	
-	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
-	    $library_local_stats_handler = WeBWorK::Utils::LibraryLocalStats->new($ce);
-	}
-	
 	############# Now store data in self for retreival by body
 	$self->{first_shown} = $first_shown;
 	$self->{last_shown} = $last_shown;
@@ -1596,8 +1591,7 @@ sub pre_header_initialize {
 	$self->{pg_files} = \@pg_files;
 	$self->{all_db_sets} = \@all_db_sets;
 	$self->{library_basic} = $library_basic;
-	$self->{library_global_stats_handler} = $library_global_stats_handler; 
-        $self->{library_local_stats_handler} = $library_local_stats_handler; 
+	$self->{library_stats_handler} = $library_stats_handler; 
 }
 
 
