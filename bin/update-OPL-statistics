@@ -39,6 +39,8 @@ use DBI;
 use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK::Utils::CourseManagement qw/listCourses/;
 
+my $time = time();
+
 # get course environment and open up database
 my $ce = new WeBWorK::CourseEnvironment({
     webwork_dir => $ENV{WEBWORK_ROOT},
@@ -64,13 +66,14 @@ CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   `course_id` tinyblob NOT NULL,
   `user_id` tinyblob NOT NULL,
   `set_id` tinyblob NOT NULL,
+  `due_date` int(11) NOT NULL, 
   `problem_id` int(11) NOT NULL,
   `source_file` text,
   `status` float DEFAULT NULL,
   `attempted` int(11) DEFAULT NULL,
   `num_correct` int(11) DEFAULT NULL,
   `num_incorrect` int(11) DEFAULT NULL,
-  UNIQUE KEY `unique_key_idx` (`course_id`(100),`user_id`(100),`set_id`(100),`problem_id`),
+  UNIQUE KEY `unique_key_idx` (`course_id`(100),`user_id`(100),`set_id`(100),`due_date`,`problem_id`),
   KEY `source_file_idx` (`source_file`(255)))
   CHARACTER SET ascii
 EOS
@@ -102,10 +105,11 @@ foreach my $courseID (@courses) {
     # we strip of the local in front of the source file
     # (assuming that these are mostly the same as their library counterparts
     $dbh->do(<<EOS);
-REPLACE INTO OPL_problem_user 
+INSERT IGNORE INTO OPL_problem_user 
   (course_id,
   user_id,
   set_id,
+  due_date,
   problem_id,
   source_file,
   status, 
@@ -116,6 +120,7 @@ SELECT
   '$courseID' AS `course_id`,
   `${courseID}_problem_user`.user_id,
   `${courseID}_problem`.set_id,
+  `${courseID}_set`.due_date,
   `${courseID}_problem`.problem_id,
   REPLACE(`${courseID}_problem`.source_file,'local/Library/','Library/'),
   `${courseID}_problem_user`.status,
@@ -126,8 +131,11 @@ FROM `${courseID}_problem_user`
   JOIN `${courseID}_problem`
   ON `${courseID}_problem_user`.set_id = `${courseID}_problem`.set_id
   AND `${courseID}_problem_user`.problem_id = `${courseID}_problem`.problem_id
-WHERE `${courseID}_problem`.source_file LIKE 'Library/%'
-  OR `${courseID}_problem`.source_file LIKE 'local/Library/%';
+  JOIN `${courseID}_set`
+  ON `${courseID}_problem_user`.set_id = `${courseID}_set`.set_id
+WHERE (`${courseID}_problem`.source_file LIKE 'Library/%'
+  OR `${courseID}_problem`.source_file LIKE 'local/Library/%')
+  AND `${courseID}_set`.due_date < $time;
 EOS
 
   }
@@ -136,8 +144,8 @@ $dbh->commit();
 
 # compile desired statistics from opl problem user table.  
 $dbh->do(<<EOS);
-INSERT INTO OPL_local_statistics 
-  (source_file, 
+INSERT INTO OPL_local_statistics
+  (source_file,
   students_attempted,
   average_attempts,
   average_status)
