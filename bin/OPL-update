@@ -962,7 +962,7 @@ build_library_textbook_tree($ce,$dbh);
 
 $dbh->disconnect;
 
-if ($ce->{problemLibrary}{showLibraryStats}) {
+if ($ce->{problemLibrary}{showLibraryLocalStats}) {
   print "\nUpdating Library Statistics.\n";
   do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
 }

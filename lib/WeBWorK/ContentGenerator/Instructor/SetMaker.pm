@@ -35,7 +35,8 @@ use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName wwRound);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
-use WeBWorK::Utils::LibraryStats;
+use WeBWorK::Utils::LibraryGlobalStats;
+use WeBWorK::Utils::LibraryLocalStats;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -1058,20 +1059,41 @@ sub make_data_row {
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
 	# get statistics to display
-	my $problem_stats = '';
-	if ($self->{library_stats_handler}) {
-	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
+	
+	my $global_problem_stats = '';
+	if ($self->{library_global_stats_handler}) {
+	    my $stats = $self->{library_global_stats_handler}->getGlobalStats($sourceFileName);
 	    if ($stats->{students_attempted}) {
-		$problem_stats = CGI::span({style=>"float:right; text-align:right;", class=>"problem-local-stats"},
-					   $r->maketext('Students Attempted: ').
-					   $stats->{students_attempted}.','.
-					   $r->maketext(' Average Attempts: ').
-					   wwRound(2,$stats->{average_attempts}).','.
-					   $r->maketext(' Average Status: ').
-					   wwRound(0,100*$stats->{average_status}).'%');
+		$global_problem_stats =    $self->helpMacro("Global_Usage_Data",$r->maketext('GLOBAL Usage')).': '.
+					   $stats->{students_attempted}.', '.
+                                           $self->helpMacro("Global_Average_Attempts_Data",$r->maketext('Attempts')).': '.
+					   wwRound(2,$stats->{average_attempts}).', '.
+                                           $self->helpMacro("Global_Average_Status_Data",$r->maketext('Status')).': '.
+					   wwRound(0,100*$stats->{average_status}).'% ;  ';
 	    }
 	}
 	
+		
+	my $local_problem_stats = '';
+	if ($self->{library_local_stats_handler}) {
+	    my $stats = $self->{library_local_stats_handler}->getLocalStats($sourceFileName);
+	    if ($stats->{students_attempted}) {
+		$local_problem_stats =     $self->helpMacro("Local_Usage_Data",$r->maketext('LOCAL Usage')).': '.
+					   $stats->{students_attempted}.', '.
+                                           $self->helpMacro("Local_Average_Attempts_Data",$r->maketext('Attempts')).': '.
+					   wwRound(2,$stats->{average_attempts}).', '.
+                                           $self->helpMacro("Local_Average_Status_Data",$r->maketext('Status')).': '.
+					   wwRound(0,100*$stats->{average_status}).'% ';
+	    }
+	}
+
+        my $problem_stats = '';
+        if ($global_problem_stats or $local_problem_stats) {
+                $problem_stats = CGI::span({style=>"float:right; text-align:right;", class=>"problem-stats"},
+                                    $global_problem_stats . $local_problem_stats );
+        }
+
+
 	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
@@ -1089,7 +1111,7 @@ sub make_data_row {
 				-title=>"Hide this problem",
 				-style=>"cursor: pointer",
 				   -onClick=>"return delrow($cnt)"}, "X")),
-			 $problem_stats,
+                         $problem_stats,
 
 			  ), 
 		#CGI::br(),
@@ -1551,10 +1573,16 @@ sub pre_header_initialize {
 	}
 
 
-	my $library_stats_handler = '';
+	my $library_global_stats_handler = '';
 	
-	if ($ce->{problemLibrary}{showLibraryStats}) {
-	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
+	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
+	    $library_global_stats_handler = WeBWorK::Utils::LibraryGlobalStats->new($ce);
+	}
+
+        my $library_local_stats_handler = '';
+	
+	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
+	    $library_local_stats_handler = WeBWorK::Utils::LibraryLocalStats->new($ce);
 	}
 	
 	############# Now store data in self for retreival by body
@@ -1568,7 +1596,8 @@ sub pre_header_initialize {
 	$self->{pg_files} = \@pg_files;
 	$self->{all_db_sets} = \@all_db_sets;
 	$self->{library_basic} = $library_basic;
-	$self->{library_stats_handler} = $library_stats_handler; 
+	$self->{library_global_stats_handler} = $library_global_stats_handler; 
+        $self->{library_local_stats_handler} = $library_local_stats_handler; 
 }
 
 
