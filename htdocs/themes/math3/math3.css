@@ -649,6 +649,10 @@ table.attemptResults th {
 }
 
 /* override above settings in tables used to display ans_array results */
+.ans_array_open, .ans_array_close {
+  font-size: 67%
+}
+
 table.attemptResults td td,
 table.attemptResults td th,
 table.ArrayLayout td {
