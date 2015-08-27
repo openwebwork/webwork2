@@ -1651,7 +1651,11 @@ sub recordEditHTML {
 	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
 
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0, alt=>"Link to Edit Page for ".$User->user_id}));
+        my $imageLink = '';
+
+	if ($authz->hasPermissions($user, "modify_student_data")) {
+	  $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0, alt=>"Link to Edit Page for ".$User->user_id}));
+	}
 	
 	my @tableCells;
 	
