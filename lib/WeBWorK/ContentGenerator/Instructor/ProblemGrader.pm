@@ -337,7 +337,7 @@ sub body {
 		
 						    }), " ",
 				      CGI::popup_menu(-name=>"$userID.score",
-						      -class=>"span1",
+						      -class=> "score-selector",
 						      -values => [sort {$b <=> $a} keys %dropDown],
 						      -default => $score,
 				                      -labels => \%dropDown)
