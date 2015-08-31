@@ -83,7 +83,7 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_users_assigned_to_set    /$courseID/instructor/sets/$setID/users/
  
  instructor_set_list2                 /$courseID/instructor/sets2/
- instructor_set_detail2               /$courseID/instructor/sets2/$setID/ #not created yet
+ instructor_set_detail2               /$courseID/instructor/sets2/$setID/
  instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
 
 
@@ -417,7 +417,7 @@ our %pathTypes = (
 	instructor_set_list2 => {
 		name    => 'Hmwk Sets Editor',
 		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_detail/ ],
+		kids    => [ qw/instructor_set_detail2/ ],
 		match   => qr|^sets2/|,
 		capture => [ qw// ],
 		produce => 'sets2/',
@@ -425,13 +425,24 @@ our %pathTypes = (
 	},
 	instructor_set_detail => {
 		name    => 'Set Detail for set $setID',
-		parent  => 'instructor_set_list2',
+		parent  => 'instructor_set_list',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',
 	},
+
+	instructor_set_detail2 => {
+		name    => 'Set Detail 2 for set $setID',
+		parent  => 'instructor_set_list2',
+		kids    => [ qw/instructor_users_assigned_to_set/ ],
+		match   => qr|^([^/]+)/|,
+		capture => [ qw/setID/ ],
+		produce => '$setID/',
+		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetDetail2',
+	},
+
 	instructor_users_assigned_to_set => {
 		name    => 'Users Assigned to Set $setID',
 		parent  => 'instructor_set_detail',

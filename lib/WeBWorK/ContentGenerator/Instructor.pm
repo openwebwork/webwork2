@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use File::Find;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::Debug;
-use WeBWorK::Utils;
+use WeBWorK::Utils qw(jitar_id_to_seq seq_to_jitar_id);
 
 =head1 METHODS
 
@@ -521,6 +521,8 @@ sub addProblemToSet {
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
+	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};	
+	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};	
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
 	
@@ -540,9 +542,21 @@ sub addProblemToSet {
 	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
 	my $showMeAnother = $args{showMeAnother} || $showMeAnother_default;
 	my $problemID = $args{problemID};
+	my $countsParentGrade = $args{countsParentGrade} || $counts_parent_grade_default;
+	my $attToOpenChildren = $args{attToOpenChildren} || $att_to_open_children_default;
 
 	unless ($problemID) {
+
+	    my $set = $db->getGlobalSet($setName);
+	    # for jitar sets the new problem id is the one that
+	    # makes it a new top level problem 
+	    if ($set && $set->assignment_type eq 'jitar') {
+		my @problemIDs = $db->listGlobalProblems($setName);
+		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+		$problemID = seq_to_jitar_id($seq[0]+1);
+	    } else {
 		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
+	    }
 	}
 
 	my $problemRecord = $db->newGlobalProblem;
@@ -551,6 +565,8 @@ sub addProblemToSet {
 	$problemRecord->source_file($sourceFile);
 	$problemRecord->value($value);
 	$problemRecord->max_attempts($maxAttempts);
+	$problemRecord->att_to_open_children($attToOpenChildren);
+	$problemRecord->counts_parent_grade($countsParentGrade);
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$db->addGlobalProblem($problemRecord);

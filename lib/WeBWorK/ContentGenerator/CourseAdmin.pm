@@ -1531,7 +1531,7 @@ sub archive_course_form {
 		@courseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
 	}
 	
-	print CGI::h2("archive Course");
+	print CGI::h2("Archive Course");
 	
 	print CGI::p(
 		'Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK
@@ -1637,7 +1637,7 @@ sub archive_course_confirm {
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
-	print CGI::h2("archive Course");
+	print CGI::h2("Archive Course");
 	
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	
