@@ -2081,7 +2081,7 @@ sub save_as_handler {
 
 	if ($saveMode eq 'new_independent_problem' ) {
 		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
-			courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
+			courseID => $courseName, setID => 'Undefined_Set', problemID => 1
 		);
 		$new_file_type = 'source_path_for_problem_file';
 	} elsif ($saveMode eq 'rename') {

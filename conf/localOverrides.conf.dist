@@ -361,20 +361,6 @@ $problemDefaults{showMeAnother} = -1;
 #  $session_management_via = "key";
 
 ################################################################################
-# Achievement Facebook Integration
-################################################################################
-
-#  Note:  This feature is out of date and no longer works with facebooks api
-
-## Because of the way facebook works, in order to use facebook integration
-## with webwork, you will need to create a facebook "app" specific to the 
-## domain name of the server you are running.  Once you have created the app
-## you can enable facebook integration by setting the variables below
-
-#$allowFacebooking = 1;
-#$facebookAppId = your_app_id_here;
-
-################################################################################
 # Searching for set.def files to import 
 ################################################################################
 ## Uncomment below so that when the homework sets editor searches for set def

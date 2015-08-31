@@ -369,6 +369,7 @@ sub build_library_textbook_tree {
 		$textbook->{chapters}=\@chapters;
 	}
 
+	print "\n";
 
 	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 	my $file = "$webwork_htdocs/DATA/textbook-tree.json";
