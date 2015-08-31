@@ -762,15 +762,15 @@ sub jitar_send_warning_email {
 	headers => $headers,
 				   });
     unless (ref $mailer) {
-	debug( "Failed to create a mailer to send a JITAR alert message: $Mail::Sender::Error");
-	return "";
+      $r->log_error( "Failed to create a mailer to send a JITAR alert message: $Mail::Sender::Error");
+      return "";
     }
     
     unless (ref $mailer->Open()) {
-	debug("Failed to open the mailer to send a JITAR alert message: $Mail::Sender::Error");
-	return "";
+      $r->log_error("Failed to open the mailer to send a JITAR alert message: $Mail::Sender::Error");
+      return "";
     }
-    
+
     my $MAIL = $mailer->GetHandle();
     
     my $full_name = $user->full_name;
@@ -804,7 +804,7 @@ EOM
     if (ref $result) {
 	debug("Successfully sent JITAR alert message");
     } else {
-	debug("Failed to send JITAR alert message ($result): $Mail::Sender::Error");
+      $r->log_error("Failed to send JITAR alert message ($result): $Mail::Sender::Error");
     }
     
     return "";
