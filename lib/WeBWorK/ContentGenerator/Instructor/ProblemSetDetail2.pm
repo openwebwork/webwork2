@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -14,7 +15,7 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::ContentGenerator::Instructor::ProblemSetDetail;
+package WeBWorK::ContentGenerator::Instructor::ProblemSetDetail2;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
@@ -28,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(readDirectory list2hash sortByName listFilesRecursive max cryptPassword);
+use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -39,8 +40,8 @@ use WeBWorK::Utils::DatePickerScripts;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring  restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint restrict_prob_progression email_instructor)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother att_to_open_children counts_parent_grade)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
@@ -49,6 +50,8 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts s
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
+use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
+
 
 # we exclude the gateway set fields from the set field order, because they
 #     are only displayed for sets that are gateways.  this results in a bit of
@@ -60,6 +63,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 use constant SET_FIELD_ORDER => [qw(open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
+use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instructor)];
 
 # this constant is massive hash of information corresponding to each db field.
 # override indicates for how many students at a time a field can be overridden
@@ -173,8 +177,8 @@ use constant FIELD_PROPERTIES => {
 		labels    => {
 				#0 => "None Specified",
 				"" => "None Specified",
-
 		},
+                help_text => "This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field."
 	},
 	restricted_status => {
 		name      => "Score required for release",
@@ -221,10 +225,11 @@ use constant FIELD_PROPERTIES => {
 		name      => "Assignment type",
 		type      => "choose",
 		override  => "all",
-		choices   => [qw( default gateway proctored_gateway)],
+		choices   => [qw( default gateway proctored_gateway jitar)],
 		labels    => {	default => "homework",
 				gateway => "gateway/quiz",
 				proctored_gateway => "proctored gateway/quiz",
+				jitar => "just-in-time"
 		},
 	},
 	version_time_limit => {
@@ -232,7 +237,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "4",
 		override  => "any",
-		default   => "0",
+		default => "0",
 #		labels    => {	"" => 0 },  # I'm not sure this is quite right
 		convertby => 60,
 	},
@@ -248,7 +253,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "3",
 		override  => "any",
-		default   => "0",
+		default => "0",
 #		labels    => {	"" => 1 },
 	},
 	time_interval => {
@@ -256,7 +261,7 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
                 size      => "5",
 		override  => "any",
-		default   => "0",
+		default => "0",
 #		labels    => {	"" => 0 },
 		convertby => 60,
 	},
@@ -299,6 +304,27 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
 	},
+
+	restrict_prob_progression => {
+		name      => "Restrict Problem Progression",
+		type      => "choose",
+		choices   => [ qw(0 1) ],
+		override  => "all",
+                default   => "0",
+		labels    => { '1' => "Yes", '0' => "No", },
+                help_text => "If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary",
+	},
+
+	email_instructor  => {
+		name      => "Email Instructor On Failed Attempt",
+		type      => "choose",
+		choices   => [ qw(0 1) ],
+		override  => "any",
+                default   => "0",
+		labels    => { '1' => "Yes", '0' => "No"},
+                help_text => "If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%",
+	},
+
 	# in addition to the set fields above, there are a number of things
 	#    that are set but aren't in this table:
 	#    any set proctor information (which is in the user tables), and
@@ -331,14 +357,15 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
         showMeAnother => {
-                name => "Show me another",
-                type => "edit",
-                size => "6",
-		override  => "any",
-                default=>"-1",
-		labels    => {
-				"-1" => "Never",
-		},
+                 name => "Show me another",
+                 type => "edit",
+                 size => "6",
+                 override  => "any",
+                 default=>"-1",
+                 labels    => {
+                      "-1" => "Never",
+                 },
+                 help_text => "When a student has more attempts than is specified here they will be able to view another version of this problem.  The new version is guaranteed to be different or the feature will fail gracefully.  Depending on the course configuration students will be able to attempt this new version as many times as they want or see a worked out solution, if one exists."
         },
 	problem_seed => {
 		name      => "Seed",
@@ -385,13 +412,35 @@ use constant FIELD_PROPERTIES => {
 	hide_hint => {
 		name      => "Hide Hints from Students",
 		type      => "choose",
-		override  => "any",
+		override  => "all",
 		choices   => [qw( 0 1 )],
 		labels    => {
 				1 => "Yes",
 				0 => "No",
 		},
 	},
+	att_to_open_children  => {
+		name      => "Att. to Open Children",
+		type      => "edit",
+		size      => 6,
+		override  => "any",
+                default => "0",
+		labels    => {
+				"-1" => "max",
+		},
+                help_text => "The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max\" is specified here then child problems will only be available after a student runs out of attempts.",
+	},
+	counts_parent_grade  => {
+		name      => "Counts for Parent",
+		type      => "choose",
+		choices   => [ qw(0 1) ],
+		override  => "any",
+                default   => "0",
+		labels    => { '1' => "Yes", '0' => "No", },
+                help_text => "If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled.",
+	},
+
+
 	
 };
 
@@ -406,20 +455,24 @@ use constant FIELD_PROPERTIES_GWQUIZ => {
 # if only the setID is included, it creates a table of set information
 # if the problemID is included, it creates a table of problem information
 sub FieldTable {
-	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $isGWset) = @_;
+	my ($self, $userID, $setID, $problemID, $globalRecord, $userRecord, $setType) = @_;
 
 	my $r = $self->r;	
 	my $ce = $r->ce;
 	my @editForUser = $r->param('editForUser');
 	my $forUsers    = scalar(@editForUser);
 	my $forOneUser  = $forUsers == 1;
-
+	my $isGWset = 0;
 	my @fieldOrder;
 
-	# needed for gateway output
-	my $gwFields = '';
+	# needed for gateway/jitar output
+	my $extraFields = '';
 	# $isGWset will come in undef if we don't need to worry about it
 	$isGWset = 0 if ( ! defined( $isGWset ) );
+	if (defined $setType && $setType =~ /gateway/) {
+	    $isGWset = 1;
+	}
+
 	# are we editing a set version?
 	my $setVersion = (defined($userRecord) && $userRecord->can("version_id")) ? 1 : 0;
 
@@ -434,14 +487,19 @@ sub FieldTable {
 
 
 	if (defined $problemID) {
-		@fieldOrder = ($isGWset) ? @{ GATEWAY_PROBLEM_FIELD_ORDER() } :
-			@{ PROBLEM_FIELD_ORDER() };
+	 
+	    if ($setType eq 'jitar') {
+		@fieldOrder = @{ JITAR_PROBLEM_FIELD_ORDER() };
+	    } elsif ($setType =~ /gateway/) {
+		@fieldOrder = @{ GATEWAY_PROBLEM_FIELD_ORDER() };
+	    } else {
+		@fieldOrder = @{ PROBLEM_FIELD_ORDER() };
+	    }
 	} else {
 		@fieldOrder = @{ SET_FIELD_ORDER() };
 
-		($gwFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
+		($extraFields, $ipFields, $numLocations, $procFields) = $self->extraSetFields($userID, $setID, $globalRecord, $userRecord, $forUsers);
 	}
-
 
        	my $output = CGI::start_table({border => 0, cellpadding => 1});
 	if ($forUsers) {
@@ -456,10 +514,10 @@ sub FieldTable {
 		
 		
 		if($isGWset && defined( FIELD_PROPERTIES_GWQUIZ->{$field} )){
-			%properties = %{ FIELD_PROPERTIES_GWQUIZ->{$field} };
+		    %properties = %{ FIELD_PROPERTIES_GWQUIZ->{$field} };
 		}
 		else{
-			%properties = %{ FIELD_PROPERTIES()->{$field} };
+		    %properties = %{ FIELD_PROPERTIES()->{$field} };
 		}
 
 		#Don't show fields if that option isn't enabled.  
@@ -492,9 +550,9 @@ sub FieldTable {
 		next if ( $field eq 'problem_seed'  &&
 			  ( $isGWset && $forUsers && ! $setVersion ) );
 
-                # skip the Show Me Another value if SMA is not enabled
-	        next if ( $field eq 'showMeAnother' &&
-                          !$ce->{pg}->{options}->{enableShowMeAnother} );
+		# skip the Show Me Another value if SMA is not enabled
+		next if ( $field eq 'showMeAnother' &&
+			  !$ce->{pg}->{options}->{enableShowMeAnother} );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
@@ -507,7 +565,7 @@ sub FieldTable {
 		}
 					      
 		if ( $field eq 'assignment_type' ) {
-			$output .= "$procFields\n$gwFields\n";
+		    $output .= "$procFields\n$extraFields\n";
 		}
 	} 
 
@@ -550,11 +608,12 @@ sub FieldHTML {
 	
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	my %labels = %{ $properties{labels} };
+
 	return "" if $properties{type} eq "hidden";
 	return "" if $properties{override} eq "one" && not $forOneUser;
 	return "" if $properties{override} eq "none" && not $forOneUser;
 	return "" if $properties{override} eq "all" && $forUsers;
-			
+	
 	my $edit = ($properties{type} eq "edit") && ($properties{override} ne "none");
 	my $choose = ($properties{type} eq "choose") && ($properties{override} ne "none");
 	
@@ -621,13 +680,13 @@ sub FieldHTML {
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
 	if ($edit) {
-		$inputType = CGI::input({
+		$inputType = CGI::font({class=>"visible"}, CGI::input({
 		                type => "text",
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
-					});
+		}));
 
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
@@ -651,7 +710,7 @@ sub FieldHTML {
 		foreach my $l (keys %labels){
 			$labels{$l} = $r->maketext($labels{$l});
 		}
-			
+
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
@@ -672,7 +731,9 @@ sub FieldHTML {
 				value => $field,
 				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
 		}) : "",
-		$r->maketext($properties{name}),
+		$r->maketext($properties{name}).
+		($properties{help_text} ? "&nbsp;".CGI::a({class=>'help-popup',href=>'#',
+						  'data-content'=>$properties{help_text},'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);
@@ -685,14 +746,14 @@ sub extraSetFields {
 	my $db = $self->r->{db};
 	my $r = $self->r;
 
-	my ($gwFields, $ipFields, $ipDefaults, $numLocations, $ipOverride,
+	my ($extraFields, $ipFields, $ipDefaults, $numLocations, $ipOverride,
 	    $procFields) = ( '', '', '', 0, '', '' );
 
 	# if we're dealing with a gateway, set up a table of gateway fields
 	my $nF = 0;  # this is the number of columns in the set field table
 	if ( $globalRecord->assignment_type() =~ /gateway/ ) {
 		my $gwhdr = "\n<!-- begin gwoutput table -->\n";
-
+		my $gwFields = '';
 		foreach my $gwfield ( @{ GATEWAY_SET_FIELD_ORDER() } ) {
 
 			# don't show template gateway fields when editing
@@ -716,7 +777,28 @@ sub extraSetFields {
 		$gwhdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
 					     CGI::em($r->maketext("Gateway parameters"))))
 		    if ( $nF );
-		$gwFields = "$gwhdr$gwFields\n" .
+		$extraFields = "$gwhdr$gwFields\n" .
+		    "<!-- end gwoutput table -->\n";
+		
+	} elsif ( $globalRecord->assignment_type() eq 'jitar') {
+		my $jthdr = "\n<!-- begin jtoutput table -->\n";
+		my $jtFields = '';
+		foreach my $jtfield ( @{ JITAR_SET_FIELD_ORDER() } ) {
+			my @fieldData = 
+			    ($self->FieldHTML($userID, $setID, undef, 
+					      $globalRecord, $userRecord, 
+					      $jtfield));
+			if ( @fieldData && defined($fieldData[1]) and 
+			     $fieldData[1] ne '' ) {
+				$nF = @fieldData if ( @fieldData > $nF );
+				$jtFields .= CGI::Tr({}, 
+					CGI::td({}, [@fieldData]));
+		    	}
+		}
+		$jthdr .= CGI::Tr({},CGI::td({colspan=>$nF}, 
+					     CGI::em($r->maketext("Just-In-Time parameters"))))
+		    if ( $nF );
+		$extraFields = "$jthdr$jtFields\n" .
 			"<!-- end gwoutput table -->\n";
 	}
 
@@ -784,7 +866,7 @@ sub extraSetFields {
 			);
 		}
 	}
-	return($gwFields, $ipFields, $numLocations, $procFields);
+	return($extraFields, $ipFields, $numLocations, $procFields);
 }
 
 sub proctoredFieldHTML {
@@ -814,13 +896,34 @@ sub proctoredFieldHTML {
 		  '' ) );
 }
 
-# creates a popup menu of all possible problem numbers (for possible rearranging)
-sub problem_number_popup {
-	my $num = shift;
-	my $total = shift;
-	return (CGI::popup_menu(-name => "problem_num_$num",
-				-values => [1..$total],
-				-default => $num));
+# used to print nested lists for jitar sets
+# this is a recursive function which is used to print the tree structure
+# that jitar sets can have using nested unordered lists
+sub print_nested_list {
+    my $nestedHash = shift;
+    my $id = shift;
+    
+    # this hash contains information about the problem at this node, which
+    # we print and then delete
+    if (defined $nestedHash->{'row'}) {
+	print CGI::start_li({class=>"psd_list_row",id=>"psd_list_".$nestedHash->{'id'}});
+	print  $nestedHash->{'row'};
+	delete $nestedHash->{'row'};
+	delete $nestedHash->{'id'}
+    }
+    
+    # any remaining keys are references to child nodes which need to be
+    # printed in a sub list.  
+    my @keys = keys %$nestedHash;
+    if (@keys) {
+	print CGI::start_ol();
+	foreach my $id (sort {$a <=> $b} @keys) {
+	    print_nested_list($nestedHash->{$id});
+	}
+	print CGI::end_ol();
+    }
+
+    print CGI::end_li();
 }
 
 # handles rearrangement necessary after changes to problem ordering
@@ -829,118 +932,86 @@ sub handle_problem_numbers {
 	my $r = $self->r;
 	my $newProblemNumbersref = shift;
 	my %newProblemNumbers = %$newProblemNumbersref;
-	my $maxNum = shift;
 	my $db = shift;
 	my $setID = shift;
-	my $force = shift || 0;
+	my $force = 0;
+	my $maxDepth = 0;
 	my @sortme=();
 	my ($j, $val);
+	my @prob_ids; 
 
-	# keys are current problem numbers, values are target problem numbers
+	# check to see that everything has a number and if anything was renumbered.  
 	foreach $j (keys %newProblemNumbers) {
-		# we don't want to act unless all problems have been assigned a new problem number, so if any have not, return
-		return "" if (not defined $newProblemNumbers{"$j"});
-		# if the problem has been given a new number, we reduce the "score" of the problem by the original number of the problem
-		# when multiple problems are assigned the same number, this results in the last one ending up first -- FIXME?
-		if ($newProblemNumbers{"$j"} != $j) {
-			# force always gets set if reordering is done, so don't expect to be able to delete a problem,
-			# reorder some other problems, and end up with a hole -- FIXME
-			$force = 1;
-			$val = 1000 * $newProblemNumbers{$j} - $j;
-		} else {
-			$val = 1000 * $newProblemNumbers{$j};
-		}
-		# store a mapping between current problem number and score (based on currnet and new problem number)
-		push @sortme, [$j, $val];
-		# replace new problem numbers in hash with the (global) problems themselves
-		$newProblemNumbers{$j} = $db->getGlobalProblem($setID, $j);
-		die $r->maketext("global [_1] for set [_2] not found.", $j, $setID) unless $newProblemNumbers{$j};
+		return "" if (not defined $newProblemNumbers{$j});
+		$force = 1 if $newProblemNumbers{$j} != $j; 
 	}
 
-	# we don't have to do anything if we're not getting rid of holes
+	# we dont do anything unless a problem has been reordered or we were asked to
 	return "" unless $force;
 
-	# sort the curr. prob. num./score pairs by score
-	@sortme = sort {$a->[1] <=> $b->[1]} @sortme;
-	# now, for global and each user with this set, loop through problem list
-	#   get all of the problem records
-	# assign new problem numbers
-	# loop - if number is new, put the problem record
-	# print "Sorted to get ". join(', ', map {$_->[0] } @sortme) ."<p>\n";
-
-
-	# Now, three stages.  First global values
-
-	for ($j = 0; $j < scalar @sortme; $j++) {
-		if($sortme[$j][0] == $j + 1) {
-			# if the jth problem (according to the new ordering) is in the right place (problem IDs are numbered from 1, hence $j+1)
-			# do nothing
-		} elsif (not defined $newProblemNumbers{$j + 1}) {
-			# otherwise, if there's a hole for it, add it there
-			$newProblemNumbers{$sortme[$j][0]}->problem_id($j + 1);
-			$db->addGlobalProblem($newProblemNumbers{$sortme[$j][0]});
-		} else {
-			# otherwise, overwrite the data for the problem that's already there with the jth problem's data (with a changed problemID)
-			$newProblemNumbers{$sortme[$j][0]}->problem_id($j + 1);
-			$db->putGlobalProblem($newProblemNumbers{$sortme[$j][0]});
-		}
-	}
-
+	# get problems and store them in a hash.  
+        # We do this all at once because its not always clear 
+	# what is overwriting what and when.  
+	# We try to keep things sane by only getting and storing things
+	# which have actually been reordered
+	my %problemHash;
 	my @setUsers = $db->listSetUsers($setID);
-	my (@problist, $user);
+	my %userProblemHash;
 
-	foreach $user (@setUsers) {
-		# grab a copy of each UserProblem for this user. @problist can be sparse (if problems were deleted)
-		for $j (keys %newProblemNumbers) {
-			$problist[$j] = $db->getUserProblem($user, $setID, $j);
+
+	foreach $j (keys %newProblemNumbers) {
+	    next if $newProblemNumbers{$j} == $j;
+
+	    $problemHash{$j} = $db->getGlobalProblem($setID, $j);
+	    die $r->maketext("global [_1] for set [_2] not found.", $j, $setID) unless $problemHash{$j};
+	    foreach my $user (@setUsers) {
+		$userProblemHash{$user}{$j} = $db->getUserProblem($user,$setID, $j);
+		warn $r->maketext("UserProblem missing for user=[_1] set=[_2] problem=[_3]. This may indicate database corruption.", $user, $setID, $j)."\n" 
+		    unless $userProblemHash{$user}{$j};
+	    }
+	}
+	
+	# now go through and move problems around 		
+	# because of the way the reordering works with the draggable
+	# js handler we cant have any conflicts or holes
+	foreach $j (keys %newProblemNumbers) {
+	    next if ($newProblemNumbers{$j} == $j);
+			 
+	    $problemHash{$j}->problem_id($newProblemNumbers{$j});
+	    if ($db->existsGlobalProblem($setID, $newProblemNumbers{$j})) {
+		$db->putGlobalProblem($problemHash{$j});
+	    } else {
+		$db->addGlobalProblem($problemHash{$j});
+	    }
+	    
+	    # now deal with the user sets	
+		
+	    foreach my $user (@setUsers) {
+	
+		$userProblemHash{$user}{$j}->problem_id($newProblemNumbers{$j});
+		if ($db->existsUserProblem($user, $setID, $newProblemNumbers{$j})) {
+		    $db->putUserProblem($userProblemHash{$user}{$j});
+		} else {
+		    $db->addUserProblem($userProblemHash{$user}{$j});
 		}
-		for($j = 0; $j < scalar @sortme; $j++) { 
-			if ($sortme[$j][0] == $j + 1) {
-				# same as above -- the jth problem is in the right place, so don't worry about it
-				# do nothing
-			} elsif ($problist[$sortme[$j][0]]) {
-				# we've made sure the user's problem actually exists HERE, since we want to be able to fail gracefullly if it doesn't
-				# the problem with the original conditional below is that %newProblemNumbers maps oldids => global problem record
-				# we need to check if the target USER PROBLEM exists, which is what @problist knows
-				#if (not defined $newProblemNumbers{$j + 1}) {
-				if (not defined $problist[$j+1]) {
-					# same as above -- there's a hole for that problem to go into, so add it in its new place
-					$problist[$sortme[$j][0]]->problem_id($j + 1); 
-					$db->addUserProblem($problist[$sortme[$j][0]]); 
-				} else { 
-					# same as above -- there's a problem already there, so overwrite its data with the data from the jth problem
-					$problist[$sortme[$j][0]]->problem_id($j + 1); 
-					$db->putUserProblem($problist[$sortme[$j][0]]); 
-				} 
-			} else {
-				warn $r->maketext("UserProblem missing for user=[_1] set=[_2] problem=[_3]. This may indicate database corruption.", $user, $setID, $sortme[$j][0])."\n";
-				# when a problem doesn't exist in the target slot, a new problem gets added there, but the original problem
-				# never gets overwritten (because there wan't a problem it would have to get exchanged with)
-				# i think this can get pretty complex. consider 1=>2, 2=>3, 3=>4, 4=>1 where problem 1 doesn't exist for some user:
-				# @sortme[$j][0] will contain: 4, 1, 2, 3
-				# - problem 1 will get **added** with the data from problem 4 (because problem 1 doesn't exist for this user)
-				# - problem 2 will get overwritten with the data from problem 1
-				# - problem 3 will get overwritten with the data from problem 2
-				# - nothing will happend to problem 4, since problem 1 doesn't exit
-				# so the solution is to delete problem 4 altogether!
-				# here's the fix:
-				
-				# the data from problem $j+1 was/will be moved to another problem slot,
-				# but there's no problem $sortme[$j][0] to replace it. thus, we delete it now.
-				$db->deleteUserProblem($user, $setID, $j+1);
-			}
-		} 
+
+	    }
+
+	    # now we need to delete "orphan" problems that were not overwritten by something else
+	    my $delete = 1;
+	    foreach my $k (keys %newProblemNumbers) {
+		$delete = 0 if ($j == $newProblemNumbers{$k});
+	    }
+	    
+	    if ($delete) {
+		$db->deleteGlobalProblem($setID, $j);
+	    }
+
 	}
 
-	# any problems with IDs above $maxNum get deleted -- presumably their data has been copied into problems with lower IDs
-	foreach ($j = scalar @sortme; $j < $maxNum; $j++) {
-		if (defined $newProblemNumbers{$j + 1}) {
-			$db->deleteGlobalProblem($setID, $j+1);
-		}
-	}
-
+	
 	# return a string form of the old problem IDs in the new order (not used by caller, incidentally)
-	return join(', ', map {$_->[0]} @sortme);
+	return join(', ', values %newProblemNumbers);
 }
 
 
@@ -1033,11 +1104,16 @@ sub initialize {
 		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
 		    $setRecord->enable_reduced_scoring;
-
+		
 		if ($enable_reduced_scoring && 
 		    $reduced_scoring_date 
 		    && ($reduced_scoring_date > $due_date 
 			|| $reduced_scoring_date < $open_date)) {
+		    $self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
+		    $error = $r->param('submit_changes');
+		}
+
+		if ($reduced_scoring_date && ($reduced_scoring_date > $due_date || $reduced_scoring_date < $open_date)) {
 			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
 			$error = $r->param('submit_changes');
 		}
@@ -1068,7 +1144,8 @@ sub initialize {
 	if (defined $r->param('submit_changes') && !$error) {
 
 		#my $setRecord = $db->getGlobalSet($setID); # already fetched above --sam
-
+	        my $oldAssignmentType = $setRecord->assignment_type(); 
+		
 		#####################################################################
 		# Save general set information (including headers)
 		#####################################################################
@@ -1559,8 +1636,109 @@ sub initialize {
 		#    for users)
 		foreach my $problemID ($r->param('deleteProblem')) {
 			$db->deleteGlobalProblem($setID, $problemID);
+
+			# if its a jitar set we have to delete all of the child problems
+			if ($setRecord->assignment_type eq 'jitar') {
+			    my @ids = $db->listGlobalProblems($setID);
+			    my @problemSeq = jitar_id_to_seq($problemID);
+			  ID: foreach my $id (@ids) {
+			      my @seq = jitar_id_to_seq($id);
+			      #check and see if this is a child
+			      next unless $#seq > $#problemSeq;
+			      for (my $i = 0; $i<=$#problemSeq; $i++) {
+				  next ID unless $seq[$i] == $problemSeq[$i];
+			      }
+			      $db->deleteGlobalProblem($setID,$id);
+			  }
+			    
+			}
 		}
 		
+		# Change problem_ids from regular style to jitar style if appropraite.  (not
+		# applicable when editing for users)
+		# this is a very long operaiton because we are shuffling the whole database around
+		if ($oldAssignmentType ne $setRecord->assignment_type() &&(
+		    $oldAssignmentType eq 'jitar' ||
+		    $setRecord->assignment_type eq 'jitar')) {
+
+		    my %newProblemNumbers;
+		    my @ids = $db->listGlobalProblems($setID);
+		    my $i = 1;    
+		    foreach my $id (@ids) {
+		
+			if ($setRecord->assignment_type eq 'jitar') {
+			    $newProblemNumbers{$id} = seq_to_jitar_id(($id));
+			} else {
+			    $newProblemNumbers{$id} = $i;
+			    $i++;
+			}
+		    }
+
+		    #we dont want to confuse the script by changing the problem
+		    #ids out from under it so remove the params
+		    foreach my $id (@ids) {
+			$r->param("prob_num_".$id,"");
+		    }
+
+		    handle_problem_numbers($self,\%newProblemNumbers, $db, $setID);
+		    
+		}
+		
+		##################################################################
+		# reorder problems
+		##################################################################
+
+		my %newProblemNumbers = ();
+		my $consecutive = $r->param('force_renumber') || 0;
+		my $prevNum = 0;
+		my @prevSeq = (0);
+
+
+		for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
+
+		    if ($setRecord->assignment_type eq 'jitar') {
+			my @idSeq;
+			my $id = $jj;
+			
+			next unless $r->param('prob_num_'.$id);
+			
+			unshift @idSeq, $r->param('prob_num_'.$id);
+			while (defined $r->param('prob_parent_id_'.$id)) {
+			    $id = $r->param('prob_parent_id_'.$id);
+			    unshift @idSeq, $r->param('prob_num_'.$id);
+			}
+
+			if ($consecutive) {
+			    # we dont really care about the content of idSeq
+			    # in this case, just the length
+			    my $depth = $#idSeq;
+			    
+			    if ($depth <= $#prevSeq) {
+				@prevSeq = @prevSeq[ 0 .. $depth ];
+				$prevSeq[$#prevSeq]++;
+			    } else {
+				$prevSeq[$#prevSeq+1] = 1;
+			    }
+			    
+			    $newProblemNumbers{$jj} = seq_to_jitar_id(@prevSeq);
+			    
+			} else {
+			    $newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
+			}
+			
+		    } else {
+			if ($consecutive) {
+			    $prevNum++;
+			    $newProblemNumbers{$jj} = $prevNum;
+			} else {
+			    $newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
+			} 
+		    }
+		}
+		
+		handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+		
+
 		#####################################################################
 		# Add blank problem if needed
 		#####################################################################
@@ -1569,9 +1747,21 @@ sub initialize {
 		    my $newBlankProblems = (defined($r->param("add_n_problems")) ) ? $r->param("add_n_problems") :1;
 		    $newBlankProblems = int($newBlankProblems);
 		    my $MAX_NEW_PROBLEMS = 20;
+		    my @ids = $self->r->db->listGlobalProblems($setID);
+
+		    if ($setRecord->assignment_type eq 'jitar') {
+			for (my $i=0; $i <= $#ids; $i++) {
+			    my @seq = jitar_id_to_seq($ids[$i]);
+			    $ids[$i] = $seq[0];
+			    #this strips off the depth 0 problem numbers if its a jitar set
+			}
+		    }
+
+		    my $targetProblemNumber = WeBWorK::Utils::max(@ids);
+
 		    if ($newBlankProblems >=1 and $newBlankProblems <= $MAX_NEW_PROBLEMS ) {
 				foreach my $newProb (1..$newBlankProblems) {
-						my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setID));
+						$targetProblemNumber++;
 						##################################################
 						# make local copy of the blankProblem
 						##################################################
@@ -1590,8 +1780,12 @@ sub initialize {
 						my $problemRecord  = $self->addProblemToSet(
 								   setName        => $setID,
 								   sourceFile     => $new_file_path, 
-								   problemID      => $targetProblemNumber, #added to end of set
+								   problemID      => 
+						    $setRecord->assignment_type eq 'jitar' ? 
+						    seq_to_jitar_id(($targetProblemNumber)) : 
+						    $targetProblemNumber, #added to end of set
 						);
+
 						$self->assignProblemToAllSetUsers($problemRecord);
 						$self->addgoodmessage($r->maketext("Added [_1] to [_2] as problem [_3]", $new_file_path, $setID, $targetProblemNumber)) ;
 				}
@@ -1779,7 +1973,7 @@ sub body {
 
 	# a useful gateway variable
 	my $isGatewaySet = ( $setRecord->assignment_type =~ /gateway/ ) ? 1 : 0;
-	my $isJitarSet = ($setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+	my $isJitarSet = ( $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
 
 	# DBFIXME no need to get ID lists -- counts would be fine
 	my $userCount        = $db->listUsers();
@@ -1791,8 +1985,7 @@ sub body {
 	
 	my $editUsersAssignedToSetURL = $self->systemLink(
 	      $urlpath->newFromModule(
-                "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet", $r,
-                  courseID => $courseID, setID => $setID));
+                "WeBWorK::ContentGenerator::Instructor::UsersAssignedToSet", $r, courseID => $courseID, setID => $setID),params=>{pageVersion=> "instructor_set_detail2"});
 	my $editSetsAssignedToUserURL = $self->systemLink(
 	      $urlpath->newFromModule(
                 "WeBWorK::ContentGenerator::Instructor::UserDetail",$r,
@@ -1808,12 +2001,6 @@ sub body {
 
 	$userCountMessage = $r->maketext("The set [_1] is assigned to [_2].", $setID, $userCountMessage);
 	$setCountMessage  = $r->maketext("The user [_1] has been assigned [_2].", $editForUser[0], $setCountMessage) if $forOneUser;
-
-
-	if ($isJitarSet) {
-	    print CGI::p(CGI::div({class=>"ResultsWithError"}, $r->maketext("You cannot use this version of Set Detail to edit just-in-time type sets.  You must use Set Detail 2.")));
-	    return '';
-	}
 
 	if ($forUsers) {
 	    ##############################################
@@ -1850,7 +2037,6 @@ sub body {
 			CGI::br() . CGI::em($r->maketext("To edit a specific student version of this set, edit (all of) her/his assigned sets.")) : "";
 		my $vermsg = ( $editingSetVersion ) ? ", $editingSetVersion" : "";
 
-
 		print CGI::table({border=>2,cellpadding=>10}, 
 		    CGI::Tr({},
 				CGI::td([
@@ -1871,25 +2057,13 @@ sub body {
 			)
 		);
 	}
-	
-	# handle renumbering of problems if necessary
+
 	print CGI::a({name=>"problems"}, "");
-
-	my %newProblemNumbers = ();
-	my $maxProblemNumber = -1;
-	for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
-		$newProblemNumbers{$jj} = $r->param('problem_num_' . $jj);
-		$maxProblemNumber = $jj if $jj > $maxProblemNumber;
-	}
-
-	my $forceRenumber = $r->param('force_renumber') || 0;
-	handle_problem_numbers($self,\%newProblemNumbers, $maxProblemNumber, $db, $setID, $forceRenumber) unless defined $r->param('undo_changes');
-
+	
 	my %properties = %{ FIELD_PROPERTIES() };
 
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 	my @active_modes = grep { exists $display_modes{$_} } @{$r->ce->{pg}->{displayModes}};
-	push @active_modes, $r->maketext('None');
 	my $default_header_mode = $r->param('header.displaymode') || $r->maketext('None');
 	my $default_problem_mode = $r->param('problem.displaymode') || $r->maketext('None');
 
@@ -1915,12 +2089,14 @@ sub body {
 	} else {
 		print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")));
 	}
-	
+
 	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes"), ($isJitarSet ? ('disabled',1) : ())});
-	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form"), ($isJitarSet ? ('disabled',1) : ())});
+	print CGI::input({type=>"hidden", id=>"hidden_course_id", name=>"courseID", value=>$courseID});
+	print CGI::input({type=>"hidden", id=>"hidden_set_id", name=>"setID", value=>$setID});
+	print CGI::input({type=>"submit", id=>"submit_changes_1", name=>"submit_changes", value=>$r->maketext("Save Changes")});
+	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
 
 	# spacing
 	print CGI::p();
@@ -1976,13 +2152,21 @@ sub body {
 	####################################################################
 	# Display Field for putting in a set description
 	####################################################################
-	print CGI::h5($r->maketext("Set Description"));
-	print CGI::textarea({name=>"set.$setID.description",
-			     id=>"set.$setID.description",
-			     value=>$setRecord->description(),
-			     rows=>5,
-			     cols=>62,});
-
+	print CGI::h4($r->maketext("Set Description"));
+	if ($forOneUser) {
+	    print CGI::hidden({type=>'text',
+			      name=>"set.$setID.description",
+			      id=>"set.$setID.description",
+			      value=>$setRecord->description(),
+			     });
+	    print $setRecord->description ? $setRecord->description : $r->maketext("No Description");
+	} else {
+	    print CGI::textarea({name=>"set.$setID.description",
+				 id=>"set.$setID.description",
+				 value=>$setRecord->description(),
+				 rows=>5,
+				 cols=>62,});
+	}
 	print CGI::end_p();
 	
 	#####################################################################
@@ -1997,14 +2181,9 @@ sub body {
 		print CGI::start_table({border=>1, cellpadding=>4});
 		print CGI::Tr({}, CGI::th({}, [
 			$r->maketext("Headers"),
-#			$r->maketext("Data"),
-			$r->maketext("Display Mode:") . 
-			CGI::popup_menu(-name => "header.displaymode", -values => \@active_modes, -default => $default_header_mode) . '&nbsp;'. 
-			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
-		]));
+			$r->maketext("Data"),
+					  ]));
 
-		my %header_html;
-		
 		my %error;
 		my $this_set = $db->getMergedSet($userToShow, $setID);
 		my $guaranteed_set = $this_set;
@@ -2025,17 +2204,7 @@ sub body {
 
 			$error{$headerType} = $self->checkFile($headerFile,$headerType);
 
-			unless ($error{$headerType}) {	    
-				my @temp = renderProblems(
-					r=> $r, 
-					user => $db->getUser($userToShow),
-					displayMode=> $default_header_mode,
-					problem_number=> 0,
-					this_set => $this_set,
-					problem_list => [$headerFile],
-				);
-				$header_html{$headerType} = $temp[0];	
-			}
+			
 		}
 		
 		foreach my $headerType (@headers) {
@@ -2061,8 +2230,7 @@ sub body {
 			print CGI::Tr({}, CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) . 
 					CGI::Tr({}, CGI::td({}, $r->maketext($properties{$headerType}->{name}))) . 
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $editHeaderLink, target=>"WW_Editor"}, $r->maketext("Edit it")))) .
-					CGI::Tr({}, CGI::td({}, CGI::a({href => $viewHeaderLink, target=>"WW_View"}, $r->maketext("View it")))) .
+					CGI::Tr({}, CGI::td({}, CGI::a({class=>"psd_edit", href => $editHeaderLink, target=>"WW_Editor", 'data-toggle'=>"tooltip", 'data-original-title'=>$r->maketext("Edit Header"), 'data-placement'=>"top"}, $r->maketext("Edit")).CGI::a({class=>"psd_view", href => $viewHeaderLink, target=>"WW_View",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Open in New Window")}, $r->maketext("View")))) .
 				CGI::end_table(),
 
 				comboBox({
@@ -2072,12 +2240,8 @@ sub body {
 					multiple => 0,
 					values => ["defaultHeader", @headerFileList],
 					labels => { "defaultHeader" => $r->maketext("Use Default Header File") },
-				}) .
-				($error{$headerType} ? 
-					CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error{$headerType}) 
-					: CGI::div({class=> "RenderSolo"}, $header_html{$headerType}->{body_text})
-				),
-			]));
+				})
+						  ]));
 		}
 		
 		print CGI::end_table();
@@ -2093,7 +2257,7 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-	my @problemIDList = sort { $a <=> $b } $db->listGlobalProblems($setID);
+	my @problemIDList = $db->listGlobalProblems($setID);
 	
 	# DBFIXME use iterators instead of getting all at once
 	
@@ -2118,191 +2282,257 @@ sub body {
 	}
 	
 	if (scalar @problemIDList) {
+	    # create rows for problems.  This is done using divs instead of tables
+	    # the spacing and formatting is done via bootstrap.  Bootstrap classes are added
+	    # in the problemsetdetail2.js file
 
-		print CGI::start_table({border=>1, cellpadding=>4});
-		print CGI::Tr({}, CGI::th({}, [
-			$r->maketext("Problems"),
-			$r->maketext("Data"),
-			$r->maketext("Display Mode:") . 
-			CGI::popup_menu(-name => "problem.displaymode", -values => \@active_modes, -default => $default_problem_mode) . '&nbsp;'. 
-			CGI::input({type => "submit", name => "refresh", value => $r->maketext("Refresh Display")}),
-		]));
+	    print CGI::h2($r->maketext("Problems"));
+	    print CGI::div(CGI::div({id=>"psd_toolbar"}, ($forOneUser ? '' : CGI::a({href=>"#", id=>"psd_renumber"}, $r->maketext("Renumber Problems"))).
+		CGI::a({href=>"#", id=>"psd_render_all"},
+		       $r->maketext("Render All")).
+		CGI::a({href=>"#", id=>"psd_hide_all"},
+		       $r->maketext("Hide All")).
+		($isJitarSet ? CGI::a({href=>"#", id=>"psd_expand_all"},
+		       $r->maketext("Expand All")) : '').
+		($isJitarSet ? CGI::a({href=>"#", id=>"psd_collapse_all"},
+		       $r->maketext("Collapse All")) : '')).
+		       CGI::span($r->maketext("Display Mode:")) . 
+			      CGI::popup_menu(-name => "problem.displaymode",
+					      -id => "problem_displaymode",
+					      -values => \@active_modes, -default => $default_problem_mode));
 		
-		my %shownYet;
-		my $repeatFile;
 
-		foreach my $problemID (@problemIDList) {
+
+	    print CGI::start_div({id=>"problemset_detail_list"});
+	    
+	    my %shownYet;
+	    my $repeatFile;
+	    my @problemRow;
+
+	    foreach my $problemID (@problemIDList) {
 		
-			my $problemRecord;
-			if ($forOneUser) {
-				#$problemRecord = $db->getMergedProblem($editForUser[0], $setID, $problemID);
-				$problemRecord = $MergedProblems{$problemID}; # already fetched above --sam
-			} else {
-				#$problemRecord = $db->getGlobalProblem($setID, $problemID);
-				$problemRecord = $GlobalProblems{$problemID}; # already fetched above --sam
-			}
+		my $problemRecord;
+		if ($forOneUser) {
+		    #$problemRecord = $db->getMergedProblem($editForUser[0], $setID, $problemID);
+		    $problemRecord = $MergedProblems{$problemID}; # already fetched above --sam
+		} else {
+		    #$problemRecord = $db->getGlobalProblem($setID, $problemID);
+		    $problemRecord = $GlobalProblems{$problemID}; # already fetched above --sam
+		}
+		
+		#$self->addgoodmessage("");
+		#$self->addbadmessage($problemRecord->toString());
+		
+		# when we're editing a set version, we want to be sure to
+		#    use the merged problem in the edit, because we could
+		#    be using problem groups (for which the problem is generated
+		#    and then stored in the problem version)
+		my $problemToShow = ( $editingSetVersion ) ?
+		    $MergedProblems{$problemID} : $UserProblems{$problemID};
+		
+		my ( $editProblemPage, $editProblemLink, $viewProblemPage,
+		     $viewProblemLink );
+		if ( $isGatewaySet ) {
+		    $editProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+		    $viewProblemPage =
+			$urlpath->new(type =>'gateway_quiz',
+				      args => { courseID => $courseID,
+						setID => "Undefined_Set",
+						problemID => "1" } );
+		    
+		    my $seed = $problemToShow ? $problemToShow->problem_seed : "";
+		    my $file = $problemToShow ? $problemToShow->source_file : 
+			$GlobalProblems{$problemID}->source_file;
+		    
+		    $viewProblemLink =
+			$self->systemLink( $viewProblemPage,
+					   params => { effectiveUser =>
+							   ($forOneUser ? $editForUser[0] : $userID),
+							   problemSeed => $seed,
+							   sourceFilePath => $file });
+		} else {
+		    $editProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+		    # FIXME: should we have an "act as" type link here when editing for multiple users?		
+		    $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
+		    $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
+		}
+		
+		
+		my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
+		$problemFile =~ s|^/||;
+		$problemFile =~ s|\.\.||g;
+		# warn of repeat problems
+		if (defined $shownYet{$problemFile}) {
+		    my $prettyID = $shownYet{$problemFile};
+		    $prettyID = join('.',jitar_id_to_seq($prettyID)) if
+			$isJitarSet;
+		    $repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $prettyID);
+		} else {
+		    $shownYet{$problemFile} = $problemID;
+		    $repeatFile = "";
+		}
+		
+		my $error = $self->checkFile($problemFile, undef);
+		my $this_set = $db->getMergedSet($userToShow, $setID);
 
-			#$self->addgoodmessage("");
-			#$self->addbadmessage($problemRecord->toString());
-
-			# when we're editing a set version, we want to be sure to
-			#    use the merged problem in the edit, because we could
-			#    be using problem groups (for which the problem is generated
-			#    and then stored in the problem version)
-			my $problemToShow = ( $editingSetVersion ) ?
-				$MergedProblems{$problemID} : $UserProblems{$problemID};
-
-			my ( $editProblemPage, $editProblemLink, $viewProblemPage,
-			     $viewProblemLink );
-			if ( $isGatewaySet ) {
-				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
-				$viewProblemPage =
-					$urlpath->new(type =>'gateway_quiz',
-						      args => { courseID => $courseID,
-								setID => "Undefined_Set",
-								problemID => "1" } );
-
-				my $seed = $problemToShow ? $problemToShow->problem_seed : "";
-				my $file = $problemToShow ? $problemToShow->source_file : 
-					$GlobalProblems{$problemID}->source_file;
-
-				$viewProblemLink =
-					$self->systemLink( $viewProblemPage,
-						params => { effectiveUser =>
-							    ($forOneUser ? $editForUser[0] : $userID),
-							    problemSeed => $seed,
-							    sourceFilePath => $file });
-			} else {
-				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
-			# FIXME: should we have an "act as" type link here when editing for multiple users?		
-				$viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-				$viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
-			}
-
-	
-			my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
-            $problemFile =~ s|^/||;
-            $problemFile =~ s|\.\.||g;
-			# warn of repeat problems
-			if (defined $shownYet{$problemFile}) {
-				$repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $shownYet{$problemFile});
-			} else {
-				$shownYet{$problemFile} = $problemID;
-				$repeatFile = "";
-			}
-			
-			my $error = $self->checkFile($problemFile, undef);
-			my $this_set = $db->getMergedSet($userToShow, $setID);
-			my @problem_html;
-			unless ($error) {
-				@problem_html = renderProblems(
-					r=> $r, 
+		my @problem_html;
+		if (!$error && $r->param('auto_render')) {
+		    @problem_html = renderProblems(
+			r=> $r, 
 					user => $db->getUser($userToShow),
-					displayMode=> $default_problem_mode,
-					problem_number=> $problemID,
-					this_set => $this_set,
-					problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
-					problem_list => [$problemFile],     #  [$problemRecord->source_file],
-				);
-			}
-			# we want to show the "Try It" and "Edit It" links if there's a 
-			#    well defined problem to view; this is when we're editing a 
-			#    homework set, or if we're editing a gateway set version, or 
-			#    if we're editing a gateway set and the problem is not a 
-			#    group problem		
-			# we also want "grade problem" links for problems which
-			# have essay questions.  
-	
-			my $showLinks = ( ! $isGatewaySet || 
-					  ( $editingSetVersion || $problemFile !~ /^group/ ));
-			
-			my $gradingLink = "";
-			if ($showLinks) {
-			    
-			    if ($problemRecord->flags =~ /essay/) {
-				my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-				$gradingLink = CGI::Tr({}, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem")));
-			    }
-			    
-			}
-		
-			
-			print CGI::Tr({}, CGI::td({}, [
-				CGI::start_table({border => 0, cellpadding => 1}) .
-				CGI::Tr({}, CGI::td({}, problem_number_popup($problemID, $maxProblemNumber))) .
-					CGI::Tr({}, CGI::td({}, 
-							    $showLinks ? CGI::a({href => $editProblemLink, target=>"WW_Editor"}, $r->maketext("Edit it")) : "" )) .
-					CGI::Tr({}, CGI::td({}, 
-							    $showLinks ? CGI::a({href => $viewProblemLink, target=>"WW_View"}, $r->maketext("Try it") . ($forOneUser ? " (as $editForUser[0])" : "")) : "" )) .
-						      $gradingLink . 
-					($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
-#					CGI::Tr({}, CGI::td({}, "Delete&nbsp;it?" . CGI::input({type => "checkbox", name => "deleteProblem", value => $problemID}))) .
-					($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
-				CGI::end_table(),
-				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $isGatewaySet),
-# A comprehensive list of problems is just TOO big to be handled well
-#				comboBox({
-#					name => "set.$setID.$problemID",
-#					request => $r,
-#					default => $problemRecord->{problem_id},
-#					multiple => 0,
-#					values => \@problemFileList,
-#				}) .
-				
-				join ("\n", $self->FieldHTML(
-					$userToShow,
-					$setID,
-					$problemID,
-					$GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
-					$problemToShow, # pass previously fetched user record to FieldHTML --sam
-					"source_file"
-				)) .
-			        	CGI::br() . 
-					($error ? 
-						CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error) 
-						: CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
-					) .
-					($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : ''),
-			]));
+			displayMode=> $default_problem_mode,
+			problem_number=> $problemID,
+			this_set => $this_set,
+			problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
+			problem_list => [$problemFile],     #  [$problemRecord->source_file],
+			);
 		}
 
-          
-# print final lines
-		print CGI::end_table();
-		print CGI::checkbox({
-				  label=> $r->maketext("Force problems to be numbered consecutively from one (always done when reordering problems)"),
-				  name=>"force_renumber", value=>"1"});
-		print CGI::p($r->maketext("Any time problem numbers are intentionally changed, the problems will always be renumbered consecutively, starting from one.  When deleting problems, gaps will be left in the numbering unless the box above is checked."));
-        print CGI::p($r->maketext("It is before the open date.  You probably want to renumber the problems if you are deleting some from the middle.")) if ($setRecord->open_date>time());
-		print CGI::p($r->maketext("When changing problem numbers, we will move the problem to be [_1] the chosen number.",CGI::em($r->maketext("before"))));
+		# we want to show the "Try It" and "Edit It" links if there's a 
+		#    well defined problem to view; this is when we're editing a 
+		#    homework set, or if we're editing a gateway set version, or 
+		#    if we're editing a gateway set and the problem is not a 
+		#    group problem		
+		# we also want "grade problem" links for problems which
+		# have essay questions.  
+		
+		my $showLinks = ( ! $isGatewaySet || 
+				  ( $editingSetVersion || $problemFile !~ /^group/ ));
+		
+		my $gradingLink = "";
+		if ($showLinks) {
+		    
+		    if ($problemRecord->flags =~ /essay/) {
+			my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+			$gradingLink = CGI::a({class=>"pdr_grader", href => $self->systemLink($gradeProblemPage),'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Grade Problem")}, $r->maketext("Grade"));
+		    }
+		    
+		}
+		
+		my $problemNumber = $problemID;
+		my $lastProblemNumber = $problemID;
+		my $parentID = '';
+                my $collapseButton = '';
+		if ($isJitarSet) {
+		    my @seq = jitar_id_to_seq($problemNumber);
+		    $problemNumber = join('.',@seq);
+		    $lastProblemNumber = pop @seq;
+		    $parentID = seq_to_jitar_id(@seq) if @seq;
+                    $collapseButton = CGI::span({class=>"pdr_collapse",
+						"data-expand-text"=>$r->maketext("Expand"),
+						"data-collapse-text"=>$r->maketext("Collapse")},"");
+		}
+	
+		my $pdr_block_1 =  CGI::div({class=>"pdr_block_1"},
+			CGI::start_table({border => 0, cellpadding => 1}) .
+			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, $problemNumber).$collapseButton.
+					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$lastProblemNumber}).
+					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .	      
+             	        CGI::Tr({}, CGI::td({}, 
+					    CGI::a({href=>"#", class=>"pdr_render", id=>"pdr_render_$problemID",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Render Problem")}, $r->maketext('Render')).
+					    ($showLinks ? CGI::a({class=>"psd_edit", href => $editProblemLink, target=>"WW_Editor",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Edit Problem")}, $r->maketext("Edit")) : "")  . 
+					    ($showLinks ? CGI::a({class=>"psd_view", href => $viewProblemLink, target=>"WW_View",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Open in New Window")}, $r->maketext("View")) : "") .
+					    $gradingLink )). 
+			  ($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
+			  ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", id => "problem.".$problemID.".mark_correct", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
+				CGI::end_table()));
+		my $pdr_block_2 = CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()));
 
+		my @source_file_string = $self->FieldHTML(
+						     $userToShow,
+						     $setID,
+						     $problemID,
+						     $GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
+						     $problemToShow, # pass previously fetched user record to FieldHTML --sam
+						     "source_file"
+		    );
+
+		$source_file_string[3] = CGI::br().CGI::input({type=>'hidden',id=>"problem_".$problemID."_default_source_file",value=>$GlobalProblems{$problemID}->source_file()}).$source_file_string[3];
+
+		my $pdr_block_3 = CGI::div({class=>"pdr_block_3"}, 
+					   join ('',@source_file_string) .
+					   CGI::br() .
+					   ($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : '') .
+					   CGI::div({class=> "psr_render_area", id=>"psr_render_area_$problemID"}, ($error ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error) :  $problem_html[0]->{body_text})
+					   ));
+		
+		push @problemRow, CGI::div({class=>"problem_detail_row"}, 
+					   $pdr_block_1.
+					   $pdr_block_2.
+					   $pdr_block_3 );
+	    }
+	    
+	    
+	    # If a jitar set then print nested lists, otherwise print an unordered list. 
+	    if ($isJitarSet) {
+		my $nestedIDHash = {};
+
+		for (my $i=0; $i<=$#problemIDList; $i++) {
+		    my @id_seq = jitar_id_to_seq($problemIDList[$i]);
+
+		    my $hashref = $nestedIDHash;
+		    foreach my $num (@id_seq) {
+			$hashref->{$num} = {} unless defined $hashref->{$num};
+			$hashref = $hashref->{$num};
+		    }
+		    $hashref->{'row'} = $problemRow[$i];
+		    $hashref->{'id'} = $problemIDList[$i];
+		}
+
+		# now use recursion to print the nested lists
+		print CGI::start_ol({id=>"psd_list", $forUsers ? ('class','disable_renumber') : ()});
+
+		foreach my $id (sort {$a <=> $b} keys %$nestedIDHash) {
+		    print_nested_list($nestedIDHash->{$id});
+		}
+		print CGI::end_ol();
+
+	    } else {
+		print CGI::start_ol({id=>"psd_list", $forUsers ? ('class','disable_renumber') : () });
+		for (my $i=0; $i<=$#problemIDList; $i++) {
+		    print CGI::li({class=>"psd_list_row mjs-nestedSortable-no-nesting", id=>"psd_list_".$problemIDList[$i]} , $problemRow[$i]);
+		}
+		print CGI::end_ol();
+	    }
+
+# print final lines
+	    print CGI::checkbox({
+		label=> $r->maketext("Automatically render problems on page load"),
+		id=>"auto_render", name=>"auto_render", value=>"1", checked=>$r->param('auto_render') ? 1 : ''});
+	    
+	    print CGI::br();
+	    
+		print CGI::checkbox({
+				  label=> $r->maketext("Force problems to be numbered consecutively from one"),
+				  name=>"force_renumber", value=>"1"});
+	    print CGI::br();
 	} else {
-		print CGI::p(CGI::b($r->maketext("This set doesn't contain any problems yet.")));
+	    print CGI::p(CGI::b($r->maketext("This set doesn't contain any problems yet.")));
 	}
 	# always allow one to add a new problem, unless we're editing a set version
 	if ( ! $editingSetVersion ) {
-		print 	CGI::checkbox({ label=> $r->maketext("Add"),
+	    print 	CGI::checkbox({ label=> $r->maketext("Add "),
 					name=>"add_blank_problem", value=>"1"}
-			),CGI::input({
-					name=>"add_n_problems",
-					size=>2,
-					type=>'text',
-					value=>1 },
-					$r->maketext("blank problem template(s) to end of homework set")
-			);
+		),CGI::input({
+		    name=>"add_n_problems",
+		    size=>2,
+		    type=>'text',
+		    value=>1 },
+			     CGI::label($r->maketext("blank problem template(s) to end of homework set"))
+		    );
 	}
 	print CGI::br(),CGI::br(),
-		CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes"), ($isJitarSet ? ('disabled',1) : ())}),
-		CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only"), ($isJitarSet ? ('disabled',1) : ())}),
-			$r->maketext("(Any unsaved changes will be lost.)");
-
+	CGI::input({type=>"submit", name=>"submit_changes", id=>"submit_changes_2", value=>$r->maketext("Save Changes")}),
+	CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")}),
+	$r->maketext("(Any unsaved changes will be lost.)");
+	
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
-    #my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
+	#my $editNewProblemLink = $self->systemLink($editNewProblemPage, params => { make_local_copy => 1, file_type => 'blank_problem'  });
     # This next feature isn't fully supported and is causing problems.  Remove for now.  #FIXME
 	#print CGI::p( CGI::a({href=>$editNewProblemLink},'Edit'). ' a new blank problem');
-
+	
 	print CGI::end_form();
 	
 	return "";
@@ -2330,12 +2560,20 @@ sub output_JS {
 	.auto-changed{background-color: #ffffcc} 
 	.changed {background-color: #ffffcc}
     </style>!,"\n";
-    
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-    	
+  print "\n";
+	# The Base64.js file, which handles base64 encoding and decoding
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
+	print qq{
+           <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+           <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+	print "\n";
+    	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.nestedSortable.js"}), CGI::end_script();
+    	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
+
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
