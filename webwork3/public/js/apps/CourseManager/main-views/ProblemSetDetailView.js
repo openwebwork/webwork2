@@ -92,11 +92,17 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         changeProblemSet: function (setName)
         {
             var self = this;
+            if(_.isUndefined(setName) || setName == ""){
+                this.views.propertiesView.setProblemSet();
+                return;
+            }
             this.state.set("set_id",setName);
         	this.problemSet = this.problemSets.findWhere({set_id: setName});
             _(this.views).chain().keys().each(function(view){
                 self.views[view].unstickit();
-                self.views[view].setProblemSet(self.problemSet);
+                if(! _.isUndefined(self.problemSet)){
+                    self.views[view].setProblemSet(self.problemSet);
+                }
             });
             this.views.problemsView.currentPage = 0; // make sure that the problems start on a new page. 
             this.loadProblems();
@@ -105,6 +111,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         loadProblems: function () {
             var self = this;
+            if(_.isUndefined(this.problemSet)){
+                return;
+            }
             if(this.problemSet.get("problems")){ // have the problems been fetched yet? 
                 this.views.problemsView.set({problems: this.problemSet.get("problems"),
                     problemSet: this.problemSet});
@@ -194,7 +203,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 // gets rid of the line break for showing the time in this view. 
                 $('span.time-span').children('br').attr("hidden",true)    
                 this.model.on("change:assignment_type",this.showHideGateway);
-            }   
+            } else {
+                this.$el.html("");   
+            }
 
             return this;
         },
@@ -214,6 +225,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.model.set({assigned_users: this.users.pluck("user_id")});
         },
         setProblemSet: function(_set) {
+            if(_.isUndefined(_set)){
+                this.model = undefined;
+                return;
+            }
             var self = this; 
             this.model = _set;
             this.tabState.set("set_id",this.model.get("set_id"));
@@ -670,7 +685,7 @@ var AssignUsersView = Backbone.View.extend({
                 });
             }
             if(this.problemSet){
-                this.problemSet.on("change:assigned_users",function(_m){
+                this.problemSet.on("change",function(_m){
                     self.collection = new Backbone.Collection(); // reset the collection so data is refetched.
                 }).on("change",function(_model){
                     self.model.set(_model.changed); 
