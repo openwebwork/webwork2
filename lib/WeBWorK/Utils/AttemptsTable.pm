@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-use 5.012;
+use 5.010;
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
