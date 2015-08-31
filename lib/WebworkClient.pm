@@ -194,15 +194,15 @@ sub xmlrpcCall {
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
-	  	
+
 	  unless (ref($result) and $result->fault) {
-	  
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
 		}
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
-	  		$result->result()->{header_text} = decode_base64($result->result()->{header_text});
+		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
 	  	}
+
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
 		return $result->result();  # would it be better to return the entire $result?
@@ -216,6 +216,7 @@ sub xmlrpcCall {
 			  "\n<br/>faultstring:",
 			  $result->faultstring, "\n<br/>End error message<br/>\n"
 		  );
+
 		  print STDERR $err_string;
 		  $self->{output}= $result->result();
 		  $self->{error_string}= $err_string;
@@ -326,43 +327,31 @@ sub setInputTable_for_listLib {
 }
 sub setInputTable {
 	my $self = shift;
+	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
+	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir});
+ 	die "Can't create seed course environment for webwork in $webwork_dir" unless ref($seed_ce);
+
+	my @modules_to_evaluate;
+	my @extra_packages_to_load;
+	my @modules = @{ $seed_ce->{pg}->{modules} };
+
+	foreach my $module_packages_ref (@modules) {
+		my ($module, @extra_packages) = @$module_packages_ref;
+		# the first item is the main package
+		push @modules_to_evaluate, $module;
+		# the remaining items are "extra" packages
+		push @extra_packages_to_load, @extra_packages;
+	}
+
 	my $out = {
 		pw          =>   $self->{site_password},
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
 		course                  => $self->{course},
-		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
-		                                ExprWithImplicitExpand AnswerEvaluator
-		                                AnswerEvaluatorMaker 
-		)],
+		extra_packages_to_load  => [@extra_packages_to_load],
 		mode                    => $self->{displayMode},
-		modules_to_evaluate     => [ qw( 
-Exporter
-DynaLoader								
-GD
-WWPlot
-Fun
-Circle
-Label								
-PGrandom
-Units
-Hermite
-List								
-Match
-Multiple
-Select							
-AlgParser
-AnswerHash							
-Fraction
-VectorField							
-Complex1
-Complex							
-MatrixReal1 Matrix							
-Distributions
-Regression
-
-		)], 
+		modules_to_evaluate     => [@modules_to_evaluate],
 		envir                   => $self->environment(),
 		problem_state           => {
 		
@@ -490,7 +479,7 @@ sub formatRenderedLibraries {
 		$result .= "$key";
 		$result .= $rh_result{$key};
 	}
-    return $result;
+	return $result;
 }
 
 sub formatRenderedProblem {

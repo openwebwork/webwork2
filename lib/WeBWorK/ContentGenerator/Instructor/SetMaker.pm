@@ -267,20 +267,28 @@ sub read_set_def {
 	my @pg_files = ();
 	my ($line, $got_to_pgs, $name, @rest) = ("", 0, "");
 	if ( open (SETFILENAME, "$filePath") )    {
-		while($line = <SETFILENAME>) {
-			chomp($line);
-			$line =~ s|(#.*)||; # don't read past comments
-			if($got_to_pgs) {
-				unless ($line =~ /\S/) {next;} # skip blank lines
-				($name,@rest) = split (/\s*,\s*/,$line);
-				$name =~ s/\s*//g;
-				push @pg_files, $name;
-			} else {
-				$got_to_pgs = 1 if ($line =~ /problemList\s*=/);
-			}
+	    while($line = <SETFILENAME>) {
+		chomp($line);
+		$line =~ s|(#.*)||; # don't read past comments
+		if($got_to_pgs == 1) {
+		    unless ($line =~ /\S/) {next;} # skip blank lines
+		    ($name,@rest) = split (/\s*,\s*/,$line);
+		    $name =~ s/\s*//g;
+		    push @pg_files, $name;
+		} elsif ($got_to_pgs == 2) {
+		    # skip lines which dont identify source files
+		    unless ($line =~ /source_file\s*=\s*(\S+)/) {
+			next;
+		    }
+		    # otherwise we got the name from the regexp
+		    push @pg_files, $1;
+		} else {
+		    $got_to_pgs = 1 if ($line =~ /problemList\s*=/);
+		    $got_to_pgs = 2 if ($line =~ /problemListV2/);
 		}
+	    }
 	} else {
-		$self->addbadmessage("Cannot open $filePath");
+	    $self->addbadmessage("Cannot open $filePath");
 	}
 	# This is where we would potentially munge the pg file paths
 	# One possibility
@@ -316,14 +324,13 @@ sub add_selected {
 	my @selected = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
 	# DBFIXME count would work just as well
-	$freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	my $addedcount=0;
 
 	for $selected (@selected) {
 		if($selected->[1] & ADDED) {
 			$file = $selected->[0];
 			my $problemRecord = $self->addProblemToSet(setName => $setName,
-				sourceFile => $file, problemID => $freeProblemID);
+				sourceFile => $file);
 			$freeProblemID++;
 			$self->assignProblemToAllSetUsers($problemRecord);
 			$selected->[1] |= SUCCESS;
@@ -1211,7 +1218,7 @@ sub pre_header_initialize {
 			$self->{error} = 1;
 			$self->addbadmessage('You need to select a "Target Set" before you can edit it.');
 		} else {
-			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail2',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
 			my $url = $self->systemLink($page);
 			$self->reply_with_redirect($url);
 		}
@@ -1624,8 +1631,6 @@ sub body {
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
-                #CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>encode_base64($ce->{courseDirs}->{templates})}),
-                CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>$ce->{courseDirs}->{templates}}),
 			'<div align="center">',
 	CGI::start_table({class=>"library-browser-table"});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 

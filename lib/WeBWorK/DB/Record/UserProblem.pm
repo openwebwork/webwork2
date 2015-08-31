@@ -44,6 +44,8 @@ BEGIN {
 		last_answer   => { type=>"TEXT" },
 		num_correct   => { type=>"INT" },
 		num_incorrect => { type=>"INT" },
+		att_to_open_children => { type=>"INT" },
+	        counts_parent_grade => { type=>"INT" },
 		sub_status    => { type=>"FLOAT" },    # A subsidiary status used to implement the reduced scoring period
 	        #a field for flags which need to be set 
 	        flags => { type=>"TEXT" },
