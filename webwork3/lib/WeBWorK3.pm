@@ -9,6 +9,10 @@ use File::Find::Rule;
 
 set serializer => 'JSON';
 
+BEGIN{
+  $ENV{WEBWORK_ROOT} = config->{webwork_dir};
+}
+
 
 # link to WeBWorK code libraries
 use lib config->{webwork_dir}.'/lib';

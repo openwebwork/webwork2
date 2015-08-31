@@ -38,8 +38,10 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                      ],
     
 
-        permissions : [{value: "-5", label: "guest"},{value: "0", label: "student"},{value: "2", label: "login proctor"}, 
-                        {value: "3", label: "T.A."},{value: "10", label: "professor"}, {value: "20", label: "administrator"}],
+        permissions : [{value: "-5", label: "guest"},{value: "0", label: "student"},{value: "2", label: "login proctor"},
+                       {value: "3", label: "grade proctor"},{value: "5", label: "T.A."},
+                       {value: "10", label: "professor"}, {value: "20", label: "administrator"},
+                       {value: "99999999", label: "nobody"}],
 
         enrollment_statuses: [
                     {value: "A", label: "Audit", abbrs: ["A","a","audit"]},

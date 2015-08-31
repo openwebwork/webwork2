@@ -50,7 +50,6 @@ define(['backbone'],function(Backbone){
 		originalEvents: {},
 		events : function() {
             var evts = _.isFunction(this.additionalEvents)? this.additionalEvents.call(this) : this.additionalEvents; 
-            console.log(evts);
 	      	return _.extend({},this.originalEvents,evts);
 	    },
 	    getDefaultState: function () {

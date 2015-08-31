@@ -54,7 +54,6 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             return this;   
         },
         events: function () {
-            console.log(this.$(".previous-week"));
           return this.calendarChangeEvents;  
         },
         calendarChangeEvents: { 
