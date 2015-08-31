@@ -14,7 +14,12 @@ var CourseCalendar = MainView.extend({
         });
     },
     render: function(){
-        this.$el.html(this.calendar.render().el);
+        this.calendar.setElement(this.$el).render(); 
+        // set up the calendar to scroll correctly
+        var navbarHeight = $(".navbar-fixed-top").outerHeight(true);
+        var footerHeight = $(".navbar-fixed-bottom").outerHeight(true);
+        var buttonRow = $(".calendar-button-row").outerHeight(true); 
+        this.$(".calendar-container").height($(window).height()-navbarHeight - buttonRow-footerHeight);
     },
     getDefaultState: function () {
         var firstOfMonth = moment(this.date||moment()).date(1)
@@ -31,6 +36,11 @@ var CourseCalendar = MainView.extend({
     set: function(options) {
         this.calendar.set(options);
         return this;
+    },
+    events: function(){
+        if(this.calendar){
+            return this.calendar.events();   
+        }
     }
 
     

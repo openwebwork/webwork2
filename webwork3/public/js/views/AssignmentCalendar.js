@@ -55,7 +55,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     	},
     	render: function (){
     		CalendarView.prototype.render.apply(this);
-            
+            MainView.prototype.render.apply(this);
             
             // remove any popups that exist already.  
             this.$(".show-set-popup-info").popover("destroy")
@@ -64,17 +64,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
     		this.$(".assign").popover({html: true});
 
 
-            // set up the calendar to scroll correctly
-            var navbarHeight = $(".navbar-fixed-top").outerHeight(true);
-            var footerHeight = $(".navbar-fixed-bottom").outerHeight(true);
-            var buttonRow = $(".calendar-button-row").outerHeight(true); 
-            this.$(".calendar-container").height($(window).height()-navbarHeight - buttonRow-footerHeight);
             $('.show-date-types input, .show-date-types label').click(function(e) {
                 e.stopPropagation();
             });
 
 
-            MainView.prototype.render.apply(this);
+            
 
             // hides any popover clicked outside.
             $('body').on('click', function (e) {
@@ -98,6 +93,9 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             ".show-due-date": "due_date",
             ".show-reduced-scoring-date": "reduced_scoring_date",
             ".show-answer-date": "answer_date"
+        },
+        additionalEvents: function() {
+            return CalendarView.prototype.events.call(this);   
         },
     	renderDay: function (day){
     		var self = this;

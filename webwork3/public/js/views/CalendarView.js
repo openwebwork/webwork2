@@ -49,11 +49,15 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
                 calendarTable.append(_week.render().el);
             });                        
             this.$(".month-name").text(moment(this.firstDay).format("MMMM YYYY"));
-            this.$el.append(calendarTable.el);
-            this.delegateEvents(this.events);
+            //this.$el.append(calendarTable.el);
+            //this.delegateEvents(this.events());
             return this;   
         },
-        events: { 
+        events: function () {
+            console.log(this.$(".previous-week"));
+          return this.calendarChangeEvents;  
+        },
+        calendarChangeEvents: { 
             "click .previous-week": "viewPreviousWeek",
             "click .next-week": "viewNextWeek",
             "click .view-week": "showWeekView",
