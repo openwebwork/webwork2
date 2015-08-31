@@ -16,6 +16,7 @@ use Utils::LibraryUtils qw/render/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem 
                             renumber_problems updateProblems getGlobalSet putGlobalSet putUserSet getUserSet
+                            putUserProblem
                             @time_props @set_props @boolean_set_props @user_set_props @problem_props/;
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Array::Utils qw/array_minus/;
@@ -954,6 +955,12 @@ get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => su
 
 };
 
+###
+#
+#  update the problem :problem_id for user :user_id for set :set_id in course :course_id
+#
+### 
+
 put '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => sub {
     checkPermissions(10,session->{user});
     send_error("The problem set with name: " . params->{set_id} . " does not exist.",404) 
@@ -970,7 +977,8 @@ put '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => su
         $problem->{$key} = params->{$key}
     }
     
-    vars->{db}->putUserProblem($problem);
+    putUserProblem(vars->{db}, $problem);
+    
     return convertObjectToHash(vars->{db}->getMergedProblem(params->{user_id},params->{set_id}
                                 ,params->{problem_id}));
 };

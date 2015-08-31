@@ -34,7 +34,7 @@ our @user_problem_props = qw/user_id set_id problem_id source_file value max_att
 our @EXPORT    = ();
 our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
         createNewUserProblem getGlobalSet record_results renumber_problems updateProblems shiftTime 
-        unshiftTime putGlobalSet putUserSet getUserSet
+        unshiftTime putGlobalSet putUserSet getUserSet putUserProblem
         @time_props @set_props @user_set_props @problem_props @boolean_set_props);
         
 sub getGlobalSet {
@@ -127,7 +127,7 @@ sub putGlobalSet {
 ###
 
 sub getUserSet{
-    my ($db,$ce,$user_id,$set_id) = @_;
+    my ($db,$user_id,$set_id) = @_;
     
     my $mergedSet = $db->getMergedSet($user_id,$set_id);
     $mergedSet->{_id} = $mergedSet->{set_id} . ":" . $mergedSet->{user_id};
@@ -138,19 +138,20 @@ sub getUserSet{
 
 ###
 #
-#  This puts/updates the user set with properties in the hash ref $set
+#  This puts/updates the user set with properties in the hash ref $set  Update only the values that
+# differ from the global set properties
 #
 ###
 
 
 sub putUserSet {
-    my ($db,$ce,$set) = @_;
+    my ($db,$set) = @_;
 
     # get the global problem set to determine if the value has changed
     my $globalSet = $db->getGlobalSet($set->{set_id});
     my $userSet = $db->getUserSet($set->{user_id},$set->{set_id});
     
-    convertBooleans($set,\@boolean_set_props);
+    $set = convertBooleans($set,\@boolean_set_props);
     for my $key (@user_set_props) {
         my $globalValue = $globalSet->{$key} || "";
         # check to see if the value differs from the global value.  If so, set it else delete it. 
@@ -160,8 +161,35 @@ sub putUserSet {
     }
     $db->putUserSet($userSet);
     
-    return getUserSet($db,$ce,$set->{user_id},$set->{set_id});
+    return getUserSet($db,$set->{user_id},$set->{set_id});
 }
+
+####
+#
+#  This puts/updates the problem properties for the given problem. Only properties that differ from the global problem 
+# are updated. 
+#
+####
+
+sub putUserProblem {
+    my ($db,$problem) = @_;
+    
+    # get the global problem to determine if the value has changed
+    my $globalProblem = $db->getGlobalProblem($problem->{set_id},$problem->{problem_id});
+    my $userProblem = $db->getUserProblem($problem->{user_id},$problem->{set_id},$problem->{problem_id});
+    
+    for my $key (@user_problem_props){
+        my $globalValue = $globalProblem->{$key} || "";
+        $userProblem->{$key} = $problem->{$key} if defined($problem->{$key});
+        delete $userProblem->{$key} if $globalValue eq $userProblem->{$key} 
+                                        && $key ne "problem_id" && $key ne "set_id" && $key ne 'user_id';
+    }
+    
+    $db->putUserProblem($userProblem);
+    return $userProblem;
+}
+
+
 
 sub reorderProblems {
     my ($db,$setID,$new_problems,$assigned_users) = @_; 
