@@ -1482,7 +1482,7 @@ sub output_score_summary{
 
 	# score summary
 	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect 
-	        unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
+	  unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	my $problem_status    = $problem->status || 0;
@@ -1492,12 +1492,12 @@ sub output_score_summary{
 	my $setClosed = 0;
 	my $setClosedMessage;
 	if (before($set->open_date) or after($set->due_date)) {
-		$setClosed = 1;
-		if (before($set->open_date)) {
-			$setClosedMessage = $r->maketext("This homework set is not yet open.");
-		} elsif (after($set->due_date)) {
-			$setClosedMessage = $r->maketext("This homework set is closed.");
-		}
+	  $setClosed = 1;
+	  if (before($set->open_date)) {
+	    $setClosedMessage = $r->maketext("This homework set is not yet open.");
+	  } elsif (after($set->due_date)) {
+	    $setClosedMessage = $r->maketext("This homework set is closed.");
+	  }
 	}
 	#if (before($set->open_date) or after($set->due_date)) {
 	#	$setClosed = 1;
@@ -1510,110 +1510,108 @@ sub output_score_summary{
 	#}
 	print CGI::start_p();
 	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
-		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
-		print join("",
-			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
-			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
-			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
-			$problem->attempted
-		
-		? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
-				: "",
-			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
-		);
+	  my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
+	  print join("",
+		     $submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
+		     $r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
+		     $submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
+		     $problem->attempted
+		     
+		     ? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
+		     : "",
+		     $setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
+		    );
 	}else {
-		print $pg->{state}->{state_summary_msg};
+	  print $pg->{state}->{state_summary_msg};
 	}
-
+	
 	#print jitar specific informaton for students. (and notify instructor 
 	# if necessary
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
-	    my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
-	    @problemIDs = sort { $a <=> $b } @problemIDs;
-
-	    # get some data 
-	    my @problemSeqs;
-	    my $index;
-	    # this sets of an array of the sequence assoicated to the 
-	    #problem_id
-	    for (my $i=0; $i<=$#problemIDs; $i++) {
-		$index = $i if ($problemIDs[$i] == $problem->problem_id);
-		my @seq = jitar_id_to_seq($problemIDs[$i]);
-		push @problemSeqs, \@seq;
+	  my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
+	  @problemIDs = sort { $a <=> $b } @problemIDs;
+	  
+	  # get some data 
+	  my @problemSeqs;
+	  my $index;
+	  # this sets of an array of the sequence assoicated to the 
+	  #problem_id
+	  for (my $i=0; $i<=$#problemIDs; $i++) {
+	    $index = $i if ($problemIDs[$i] == $problem->problem_id);
+	    my @seq = jitar_id_to_seq($problemIDs[$i]);
+	    push @problemSeqs, \@seq;
+	  }
+	  
+	  my $next_id = $index+1;
+	  my @seq = @{$problemSeqs[$index]};
+	  my @children_counts_indexs;
+	  my $hasChildren = 0;
+	  
+	  # this does several things.  It finds the index of the next problem
+	  # at the same level as the current one.  It checks to see if there
+	  # are any children, and it finds which of those children count
+	  # toward the grade of this problem.  
+	  
+	  while ($next_id <= $#problemIDs && scalar(@{$problemSeqs[$index]}) < scalar(@{$problemSeqs[$next_id]})) {
+	    
+	    my $childProblem = $db->getMergedProblem($effectiveUser,$set->set_id, $problemIDs[$next_id]);
+	    $hasChildren = 1;
+	    push @children_counts_indexs, $next_id if scalar(@{$problemSeqs[$index]}) + 1 == scalar(@{$problemSeqs[$next_id]}) && $childProblem->counts_parent_grade;
+	    $next_id++;
+	  }	
+	  
+	  # print information if this problem has open children and if the grade
+	  # for this problem can be replaced by the grades of its children
+	  if ( $hasChildren 
+	       && (($problem->att_to_open_children != -1 && $problem->num_incorrect >= $problem->att_to_open_children) ||
+		   ($problem->max_attempts != -1 && 
+		    $problem->num_incorrect >= $problem->max_attempts))) {
+	    print CGI::br().$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.');
+	    
+	    if (scalar(@children_counts_indexs) == 1) {
+	      print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the score of problem [_1].', join('.', @{$problemSeqs[$children_counts_indexs[0]]}));
+	    } elsif (scalar(@children_counts_indexs) > 1) {
+	      print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
 	    }
-
-	    my $next_id = $index+1;
-	    my @seq = @{$problemSeqs[$index]};
-	    my @children_counts_indexs;
-	    my $hasChildren = 0;
-
-	    # this does several things.  It finds the index of the next problem
-	    # at the same level as the current one.  It checks to see if there
-	    # are any children, and it finds which of those children count
-	    # toward the grade of this problem.  
-
-	    while ($next_id <= $#problemIDs && scalar(@{$problemSeqs[$index]}) < scalar(@{$problemSeqs[$next_id]})) {
-
-		my $childProblem = $db->getMergedProblem($effectiveUser,$set->set_id, $problemIDs[$next_id]);
-		$hasChildren = 1;
-		push @children_counts_indexs, $next_id if scalar(@{$problemSeqs[$index]}) + 1 == scalar(@{$problemSeqs[$next_id]}) && $childProblem->counts_parent_grade;
-		$next_id++;
-	    }	
-
-	    # print information if this problem has open children and if the grade
-	    # for this problem can be replaced by the grades of its children
-	    if ( $hasChildren 
-		&& (($problem->att_to_open_children != -1 && $problem->num_incorrect >= $problem->att_to_open_children) ||
-		    ($problem->max_attempts != -1 && 
-		     $problem->num_incorrect >= $problem->max_attempts))) {
-		print CGI::br().$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.');
-
-		if (scalar(@children_counts_indexs) == 1) {
-		    print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the score of problem [_1].', join('.', @{$problemSeqs[$children_counts_indexs[0]]}));
-		} elsif (scalar(@children_counts_indexs) > 1) {
-		    print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
-		}
-		
-
+	    
+	  }
+	  
+	  
+	  # print information if this set has restricted progression and if you need
+	  # to finish this problem (and maybe its children) to proceed
+	  if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
+	    if ($hasChildren) {
+	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its graded subproblems.',join('.',@{$problemSeqs[$next_id]}));
+	    } else {
+	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 	    }
-
-	    # print information if this set has restricted progression and if you need
-	    # to finish this problem (and maybe its children) to proceed
-	    if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
-		if ($hasChildren) {
-		    print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its graded subproblems.',join('.',@{$problemSeqs[$next_id]}));
-		} else {
-		    print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
-		}
+	  }
+	  # print information if this problem counts towards the grade of its parent, 
+	  # if it doesn't (and its not a top level problem) then its grade doesnt matter. 
+	  if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
+	    pop @seq;
+	    print CGI::br().$r->maketext('The score for this problem can count towards score of problem [_1].',join('.',@seq));
+	  } elsif (scalar(@seq)!=1) {
+	    pop @seq;
+	    print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
+	  }
+	  
+	  # if the instructor has set this up, email the instructor a warning message if 
+	  # the student has run out of attempts on a top level problem and all of its children
+	  # and didn't get 100%
+	  if ($submitAnswers && $set->email_instructor) {
+	    my $parentProb = $db->getMergedProblem($effectiveUser,$set->set_id,seq_to_jitar_id($seq[0]));
+	    warn("Couldn't find problem $seq[0] from set ".$set->set_id." in the database") unless $parentProb;
+	    
+	    #email instructor with a message if the student didnt finish
+	    if (jitar_problem_finished($parentProb,$db) &&
+		jitar_problem_adjusted_status($parentProb,$db) != 1) {
+	      WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::jitar_send_warning_email($self,$parentProb);
 	    }
-	    # print information if this problem counts towards the grade of its parent, 
-	    # if it doesn't (and its not a top level problem) then its grade doesnt matter. 
-	    if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
-		pop @seq;
-		print CGI::br().$r->maketext('The score for this problem can count towards score of problem [_1].',join('.',@seq));
-	    } elsif (scalar(@seq)!=1) {
-		pop @seq;
-		print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
-	    }
-
-	    # if the instructor has set this up, email the instructor a warning message if 
-	    # the student has run out of attempts on a top level problem and all of its children
-	    # and didn't get 100%
-	    if ($submitAnswers && $set->email_instructor) {
-		my $parentProb = $db->getMergedProblem($effectiveUser,$set->set_id,seq_to_jitar_id($seq[0]));
-		warn("Couldn't find problem $seq[0] from set ".$set->set_id." in the database") unless $parentProb;
-
-		#email instructor with a message if the student didnt finish
-		if (jitar_problem_finished($parentProb,$db) &&
-		    jitar_problem_adjusted_status($parentProb,$db) != 1) {
-		     WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::jitar_send_warning_email($self,$parentProb);
-		}
-		
-	    }   
+	    
+	  }   
 	}
 	print CGI::end_p();
-    }
-
 	return "";
 }
 
@@ -1673,29 +1671,6 @@ sub output_misc{
 		   		-name   => 'problemSeed',
 		   		-value  =>  $r->param("problemSeed")
 	))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-
-	# Removed with keys script.  
-	# print q{
-	# 	<script> 
-	# 		var new_keyboard = new Keys([
-	# 		{value: 'sqrt()',
-	# 		 display: '$ \\\\sqrt{} $',
-	# 		 behavior: 
-	# 		 	function(input){
-        #     		input.selectionStart -= 1;
-        #     		input.selectionEnd -= 1;
-        #     		//this.focus();
-        # 		}
-			 
-	# 		},
-	# 		'^','=',			
-	# 		'(',')','+','-','*','/',
-	# 		'1','2','3','4','5','6','7','8','9','0',
-	# 		'{','}','_'],
-	# 		{debug:false}  ); 
-	# 		new_keyboard.build();
-	# 	</script>
-	# };
 
 	return "";
 }
@@ -1798,10 +1773,6 @@ sub output_summary{
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 	
-
-	# if $showMeAnother{Count} is somehow not an integer, make it one
-	$showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
-
         # attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
@@ -1824,56 +1795,14 @@ sub output_summary{
 	    # show attempt results (correctness)
 	    # show attempt previews
 	} elsif ($previewAnswers) {
-
-	  # if the student is previewing answers to a new problem, give them a reminder that they are doing so
-        if($showMeAnother{Preview} and $can{showMeAnother}){
-          print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently previewing answers to a different version of your problem - these 
-                                                                 will not be recorded, and you should remember to return to your original 
-                                                                 problem once you are done here.")),CGI::br();
-        }
-		# print this if user previewed answers
+	  # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
-			# show attempt answers
-			# don't show correct answers
-			# don't show attempt results (correctness)
-			# show attempt previews
-    } elsif ( (($showMeAnother{active} and $showMeAnother{IsPossible}) or $showMeAnother{DisplayChange}) 
-                    and $can{showMeAnother}){
-        # the feedback varies a little bit if Check Answers is available or not
-        my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ?
-                       "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
-        my $solutionShown;
-		# if showMeAnother has been clicked and a new version has been found,
-        # give some details of what the student is seeing
-        if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
-            # check to see if a solution exists for this problem, and vary the feedback accordingly
-            if($pg->{flags}->{solutionExists}){
-                $solutionShown = ($showMeAnother{options}->{showSolutions}) ? ", complete with solution" : "";
-            } else {
-                my $viewCorrect = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers})) ?
-                      ", but you can still view the correct answer":"";
-                $solutionShown = ($showMeAnother{options}->{showSolutions}) ?
-                      ". There is no walk-through solution available for this problem$viewCorrect" : "";
-            }
-         }
-		 print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
-		 print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
-     } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
-        if($showMeAnother{Count}>=$showMeAnother{MaxReps}){
-            my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem.
-                                                                         [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
-        } elsif ($showMeAnother{Count}<$showMeAnother{TriesNeeded}) {
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You must attempt this problem [quant,_1,time,times] before Show Me Another is available.",$showMeAnother{TriesNeeded})),CGI::br();
-        }
-     } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
-		# print this if showMeAnother has been clicked, but it is not possible to
-        # find a new version of the problem
-		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem;
-                       close this tab, and return to the original problem.")),CGI::br();
-    } 
-
-
+	    # show attempt answers
+	    # don't show correct answers
+	    # don't show attempt results (correctness)
+	    # show attempt previews
+	  }
+	
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;
 	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
@@ -1882,7 +1811,7 @@ sub output_summary{
 	# get some data 
 	my @problemSeqs;
 	my $index;
-	# this sets of an array of the sequence assoicated to the 
+	# this sets of an array of the sequence associated to the 
 	#problem_id
 	for (my $i=0; $i<=$#problemIDs; $i++) {
 	    $index = $i if ($problemIDs[$i] == $problem->problem_id);
