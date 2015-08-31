@@ -3,7 +3,7 @@ $db->putUser($db->newUser(user_id=>"admin", first_name=>"Prof", last_name=>"Admi
 
 $db->putPassword($db->newPassword(user_id=>"admin", password=>crypt("admin", "dc")));
 
-$db->putPermissionLevel($db->newPermissionLevel(user_id=>"admin", permission=>"10"));
+$db->putPermissionLevel($db->newPermissionLevel(user_id=>"admin", permission=>"20"));
 
 
 print "data changed for user admin\n" ;
