@@ -708,7 +708,7 @@ sub jitar_send_warning_email {
         # send to all users with permission to score_sets an email address
 	# DBFIXME iterator?
 	foreach my $rcptName ($db->listUsers()) {
-		if ($rcptName !~ /set:/ && $authz->hasPermissions($rcptName, "score_sets")) {
+		if ($authz->hasPermissions($rcptName, "score_sets")) {
 			my $rcpt = $db->getUser($rcptName); # checked
 			next if $ce->{feedback_by_section} and defined $user
 			    and defined $rcpt->section and defined $user->section
