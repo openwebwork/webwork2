@@ -525,7 +525,7 @@ sub addProblemToSet {
 	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};	
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
-	
+	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
 
 	die "addProblemToSet called without specifying the set name." if $args{setName} eq "";
 	my $setName = $args{setName};
@@ -541,6 +541,10 @@ sub addProblemToSet {
 
 	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
 	my $showMeAnother = $args{showMeAnother} || $showMeAnother_default;
+	my $prPeriod = $prPeriod_default;
+	if (defined($args{prPeriod})){
+		$prPeriod = $args{prPeriod};
+	}
 	my $problemID = $args{problemID};
 	my $countsParentGrade = $args{countsParentGrade} || $counts_parent_grade_default;
 	my $attToOpenChildren = $args{attToOpenChildren} || $att_to_open_children_default;
@@ -569,6 +573,8 @@ sub addProblemToSet {
 	$problemRecord->counts_parent_grade($countsParentGrade);
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
+	$problemRecord->prPeriod($prPeriod);
+	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
 	return $problemRecord;
