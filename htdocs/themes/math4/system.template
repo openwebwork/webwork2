@@ -106,7 +106,7 @@ var tabberOptions = {manualStartup:true};
 <div id="body-row" class="row-fluid">
 
 <!-- Navigation -->
-<div id="site-navigation" class="span2" role="navigation" aria-label="main navigation">
+<div id="site-navigation" class="span2 hidden" role="navigation" aria-label="main navigation">
   <!--#if can="links"-->
         <div id="site-links">
 	  <!--#links-->
@@ -138,6 +138,8 @@ var tabberOptions = {manualStartup:true};
 
   // Display options formatting
   $('.facebookbox input:submit').addClass('btn-small');
+
+  $('#site-navigation').removeClass('hidden');
   
 </script>
 

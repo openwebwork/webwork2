@@ -351,8 +351,10 @@ sub initialize {
 	
 	$self->{editMode} = $r->param("editMode") || 0;
 	
+
 	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify homework sets.")))
-		if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+	  if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+
 	
 	$self->{exportMode} = $r->param("exportMode") || 0;
 
@@ -432,6 +434,15 @@ sub body {
 	
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify homework sets.")))
+	  if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify set definition files.")))
+		if $self->{exportMode} and not $authz->hasPermissions($user, "modify_set_def_files");
+	
+
+
 	
 	# This table can be consulted when display-ready forms of field names are needed.
 	my %prettyFieldNames = map { $_ => $_ } 
@@ -2480,7 +2491,11 @@ sub recordEditHTML {
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail2', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list2', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
+        my $imageLink = '';
+
+	if ($authz->hasPermissions($user, "modify_problem_sets")) {
+	  $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
+	}
 	
 	my @tableCells;
 	my %fakeRecord;
