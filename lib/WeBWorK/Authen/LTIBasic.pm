@@ -235,13 +235,7 @@ sub get_credentials {
 		}
 
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
-		if (!defined($self->{user_id})
-		    or (defined($self -> {email})  
-			and $ce -> {get_username_from_email})) {
-		    $self->{user_id} = $self -> {email};
 
-		}
-		
 		if (!defined($self->{user_id})
 			or (defined($self -> {email})  
 				and defined($ce -> {preferred_source_of_username})
