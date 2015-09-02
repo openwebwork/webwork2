@@ -85,7 +85,8 @@ $preferred_source_of_username = "lis_person_sourcedid";
 # if you enable this flag and have $preferred_source_of_username set to
 # lis_person_contact_email_primary, then webwork will strip off the address 
 # portion of the email and just use the username. 
-$strip_address_from_email = 1;
+
+# $strip_address_from_email = 1;
 
 ################################################################################
 # LTI Basic Authentication Parameters 
