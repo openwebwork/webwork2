@@ -569,10 +569,10 @@ sub add_course_form {
 		),
 	);
 	
-	print CGI::p("To add the WeBWorK administrators to the new course (as instructors) check the box below.");
+	print CGI::p("To add the WeBWorK administrators to the new course (as administrators) check the box below.");
 	my @checked = ($add_admin_users) ?(checked=>1): ();  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
 	print CGI::p({},CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, "Add WeBWorK administrators to new course"));
-	
+
 	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only 
 	numbers, letters, hyphens, periods (dots), commas,and underscores.\n");
 	
@@ -784,18 +784,22 @@ sub do_add_course {
 	
 	# copy users from current (admin) course if desired
 	if ($add_admin_users ne "") {
-		foreach my $userID ($db->listUsers) {
-			if ($userID eq $add_initial_userID) {
-				$self->addbadmessage( "User '$userID' will not be copied from admin course as it is the initial instructor.");
-				next;
-			}
-			my $User            = $db->getUser($userID);
-			my $Password        = $db->getPassword($userID);
-			my $PermissionLevel = $db->getPermissionLevel($userID);
-			push @users, [ $User, $Password, $PermissionLevel ] 
-			       if $authz->hasPermissions($userID,"create_and_delete_courses");  
-			       #only transfer the "instructors" in the admin course classlist.
+
+	    foreach my $userID ($db->listUsers) {
+		if ($userID eq $add_initial_userID) {
+		    $self->addbadmessage( "User '$userID' will not be copied from admin course as it is the initial instructor.");
+		    next;
 		}
+		my $PermissionLevel = $db->newPermissionLevel();
+		$PermissionLevel->user_id($userID);
+		$PermissionLevel->permission($ce->{userRoles}->{admin});
+		my $User            = $db->getUser($userID);
+		my $Password        = $db->getPassword($userID);
+		
+		push @users, [ $User, $Password, $PermissionLevel ] 
+		    if $authz->hasPermissions($userID,"create_and_delete_courses");  
+		#only transfer the "instructors" in the admin course classlist.
+	    }
 	}
 	
 	# add initial instructor if desired
@@ -1527,7 +1531,7 @@ sub archive_course_form {
 		@courseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
 	}
 	
-	print CGI::h2("archive Course");
+	print CGI::h2("Archive Course");
 	
 	print CGI::p(
 		'Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK
@@ -1633,7 +1637,7 @@ sub archive_course_confirm {
 	#my $authz = $r->authz;
 	#my $urlpath = $r->urlpath;
 	
-	print CGI::h2("archive Course");
+	print CGI::h2("Archive Course");
 	
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	

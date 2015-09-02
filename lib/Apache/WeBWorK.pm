@@ -287,8 +287,8 @@ Formats a list of warning strings as list items for HTML output.
 
 sub htmlWarningsList(@) {
 	my (@warnings) = @_;
+
 	foreach my $warning (@warnings) {
-		$warning = $warning;
 		$warning = "<li><code>$warning</code></li>";
 	}
 	return join "\n", @warnings;
