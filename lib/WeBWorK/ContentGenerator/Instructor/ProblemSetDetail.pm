@@ -40,12 +40,12 @@ use WeBWorK::Utils::DatePickerScripts;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother prPeriod)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
@@ -340,6 +340,17 @@ use constant FIELD_PROPERTIES => {
 				"-1" => "Never",
 		},
         },
+	prPeriod => {
+		name => "Rerandomize after",
+		type => "edit",
+		size => "6",
+		override => "any",
+		default=>"-1",
+		labels => {
+			"-1" => "Default",
+			"0" => "Never",
+		},
+	},
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -495,6 +506,10 @@ sub FieldTable {
                 # skip the Show Me Another value if SMA is not enabled
 	        next if ( $field eq 'showMeAnother' &&
                           !$ce->{pg}->{options}->{enableShowMeAnother} );
+
+		# skip the periodic re-randomization field if it is not enabled
+		next if ( $field eq 'prEnable' &&
+			!$ce->{pg}->{options}->{enablePeriodicRandomization} );
 
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";

@@ -1838,7 +1838,8 @@ sub readSetDef {
 	my $counts_parent_grade_default = 
 	    $self->{ce}->{problemDefaults}->{counts_parent_grade};
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
-
+	my $prPeriod_default=$self->{ce}->{problemDefaults}->{prPeriod};
+	
 	my $setName = '';
 	
 	my $r = $self->r;
@@ -1866,9 +1867,12 @@ sub readSetDef {
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $restrictLoc, $emailInstructor, $restrictProbProgression, $countsParentGrade, $attToOpenChildren, $problemID, $showMeAnother, $listType
+	     $problemsPerPage, $restrictLoc, 
+	     $emailInstructor, $restrictProbProgression, 
+	     $countsParentGrade, $attToOpenChildren, 
+	     $problemID, $showMeAnother, $prPeriod, $listType
 	     ) = 
-		 ('')x8;  # initialize these to ''
+		 ('')x16;  # initialize these to ''
 	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
 # additional fields currently used only by gateways; later, the world?
 	my ( $hideScore, $hideWork, ) = ( 'N', 'N' );
@@ -2059,9 +2063,11 @@ sub readSetDef {
 			# can't put continuation flag onto the first problem
 			push(@problemData, {source_file    => $name,
 			                    value          =>  $weight,
-			                    max_attempts   =>, $attemptLimit,
-			                    showMeAnother   =>, $showMeAnother,
-			                    continuation   => $continueFlag 
+			                    max_attempts   => $attemptLimit,
+			                    showMeAnother   => $showMeAnother,
+			                    # use default since it's not going to be in the file
+			                    prPeriod		=> $prPeriod_default, 
+			                    continuation   => $continueFlag,
 			     });
 		    }
 		} else {
@@ -2095,6 +2101,8 @@ sub readSetDef {
 			    $attemptLimit = ( $value ) ? $value : $max_attempts_default;
 			} elsif ( $item eq 'showMeAnother' ) {
 			    $showMeAnother = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'prPeriod' ) {
+			    $prPeriod = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'restrictProbProgression' ) {
 			    $restrictProbProgression = ( $value ) ? $value : 'No';
 			} elsif ( $item eq 'problem_id' ) {
@@ -2122,6 +2130,9 @@ sub readSetDef {
 			    unless ($showMeAnother =~ /-?\d+/) {$showMeAnother = $showMeAnother_default;}		
 			    $showMeAnother =~ s/[^-?\d-]*//g;
 
+			    unless ($prPeriod =~ /-?\d+/) {$prPeriod = $prPeriod_default;}
+			    $prPeriod =~ s/[^-?\d-]*//g;
+
 			    unless ($attToOpenChildren =~ /\d+/) {$attToOpenChildren = $att_to_open_children_default;}		
 			    $attToOpenChildren =~ s/[^\d-]*//g;
 					
@@ -2138,10 +2149,11 @@ sub readSetDef {
 			    push(@problemData, {source_file    => $name,
 						problemID      => $problemID, 
 						value          =>  $weight,
-						max_attempts   =>, $attemptLimit,
-						showMeAnother  =>, $showMeAnother,
+						max_attempts   => $attemptLimit,
+						showMeAnother  => $showMeAnother,
+						prPeriod		=> $prPeriod,
 						attToOpenChildren => $attToOpenChildren,
-						countsParentGrade => $countsParentGrade
+						countsParentGrade => $countsParentGrade,
 				 });
 			    
 			    
@@ -2249,6 +2261,7 @@ SET:	foreach my $set (keys %filenames) {
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
 			my $showMeAnother  = $problemRecord->showMeAnother();
+			my $prPeriod		= $problemRecord->prPeriod();
 			my $countsParentGrade = $problemRecord->counts_parent_grade();
 			my $attToOpenChildren = $problemRecord->att_to_open_children();
 
@@ -2257,6 +2270,7 @@ SET:	foreach my $set (keys %filenames) {
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
+			$prPeriod =~ s/([,\\])/\\$1/g;
 
 			# This is the new way of saving problem information
 			# the labelled list makes it easier to add variables and 
@@ -2266,6 +2280,7 @@ SET:	foreach my $set (keys %filenames) {
 			$problemList     .= "value = $value\n";
 			$problemList     .= "max_attempts = $max_attempts\n";
 			$problemList     .= "showMeAnother = $showMeAnother\n";
+			$problemList     .= "prPeriod = $prPeriod\n";
 			$problemList     .= "problem_id = $problem_id\n";
 			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
 			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
