@@ -43,7 +43,7 @@ BEGIN {
 ###############################################################################
 
 	$WebworkWebservice::SITE_PASSWORD      = 'xmluser';     # default password
-	$WebworkWebservice::COURSENAME    = 'the-course-should-be-determined-at-run-time';       # default course
+	$WebworkWebservice::COURSENAME         = 'the-course-should-be-determined-at-run-time';       # default course
 	
 	
 
@@ -158,7 +158,7 @@ sub initiate_session {
 	my $password     = $rh_input ->{password};
 	my $ce           = $class->create_course_environment($courseName);
 	my $db           = new WeBWorK::DB($ce->{dbLayout});
-	
+
 	my $language= $ce->{language} || "en";
 	my $language_handle = WeBWorK::Localize::getLoc($language) ;
 
@@ -227,11 +227,11 @@ if ($UNIT_TESTS_ON) {
 				->faultcode('404')
 				->faultstring('Course not found.')
 		}
-		die "Unknown exception when trying to verify authentication.";
+		die "Unknown exception when trying to verify authentication. $@";
 	};
 	
 	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($user_id, "access_instructor_tools");
+	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login");
 	
 # Update the credentials -- in particular the session_key may have changed.
  	$self->{session_key} = $authen->{session_key};
@@ -322,6 +322,7 @@ sub do {   # process and return result
            # $result->{output}->{foo} is defined for foo = courseID userID and session_key
 	my $self = shift;
 	my $result = shift;
+	
     $result->{session_key}  = $self->{session_key};
     $result->{userID}       = $self->{user_id};
     $result->{courseID}     = $self->{courseName};
@@ -462,6 +463,7 @@ sub renderProblem {
     my $class = shift;
     my $in = shift;
     my $self = $class->initiate_session($in);
+
     return $self->do( WebworkWebservice::RenderProblem::renderProblem($self,$in) ); 
 }
 

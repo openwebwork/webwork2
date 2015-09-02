@@ -1688,7 +1688,9 @@ sub save_as_form {  # calls the save_as_handler
 	
 	my $shortFilePath =  $editFilePath;
 	$shortFilePath   =~ s|^$templatesDir/||;
-	$shortFilePath   =  'local/'.$shortFilePath unless( $shortFilePath =~m|^local/|);  # suggest that modifications be saved to the "local" subdirectory
+	$shortFilePath   =  'local/'.$shortFilePath
+	  unless( $shortFilePath =~m|^local/| ||
+		  $shortFilePath =~m|^set$setID|);  # suggest that modifications be saved to the "local" subdirectory
 	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
    
 
@@ -1889,7 +1891,7 @@ sub save_as_handler {
 
 	if ($saveMode eq 'new_independent_problem' ) {
 		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",$r,
-			courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
+			courseID => $courseName, setID => 'Undefined_Set', problemID => 1
 		);
 		$new_file_type = 'source_path_for_problem_file';
 	} elsif ($saveMode eq 'rename') {

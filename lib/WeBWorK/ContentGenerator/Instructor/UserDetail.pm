@@ -70,7 +70,7 @@ sub initialize {
 	    # add sets to the assigned list if the parameter is checked or the
 	    # assign all button is pushed.  (already assigned sets will be
 	    # skipped later) 
-	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment")) || $r->param("assignAll");
+	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
 	# note: assignedSets are those sets that are assigned in the submitted form
@@ -230,7 +230,7 @@ sub body {
  	my $setCount = $db->countUserSets($editForUserID);
 # 	my $userCountMessage =  CGI::a({href=>$editSetsAssignedToUserURL}, $setCount . " sets.");
 # 	$userCountMessage = "The user " . CGI::b($userName . " ($editForUserID)") . " has been assigned " . $userCountMessage;
-	my $basicInfoPage = $urlpath->new(type =>'instructor_user_list',
+	my $basicInfoPage = $urlpath->new(type =>'instructor_user_list2',
 					args =>{
 						courseID => $courseID,
 	                }
@@ -349,7 +349,9 @@ sub body {
 	print $self->hidden_authen_fields();
 
 	print CGI::div(
-	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User")})), CGI::br();
+	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User"),
+			 onClick => "\$('input[name*=\"assignment\"]').attr('checked',1);"
+			})), , CGI::br();
 
 
 	########################################
@@ -425,7 +427,7 @@ sub body {
 			$UserSetVersionRecords{$setID}->[$setVersion-1];
 		my $MergedSetRecord = (! $setVersion) ?  $MergedSetRecords{$setID} :
 			$UserSetMergedVersionRecords{$setID}->[$setVersion-1];
-		my $setListPage = $urlpath->new(type =>'instructor_set_detail',
+		my $setListPage = $urlpath->new(type =>'instructor_set_detail2',
 					args =>{
 						courseID => $courseID,
 						setID    => $fullSetID

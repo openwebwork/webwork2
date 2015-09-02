@@ -61,7 +61,7 @@ $mail{feedbackRecipients}    = [
 # systems.  If your course list page in the admin course is very slow
 # consider disabling this option.  
 
-$enableGitUpgradeNotifier = 1;
+$enableGitUpgradeNotifier = 0;
 
 $gitWeBWorKRemoteName = "origin";
 $gitWeBWorKBranchName = "master";
@@ -273,10 +273,13 @@ $problemDefaults{showMeAnother} = -1;
  %showeditors = (
 # 	classlisteditor1   => 1,
  	classlisteditor2   => 1,
-# 	
+
 # 	homeworkseteditor1 => 1,
  	homeworkseteditor2 => 1,
-# 	
+
+#       problemsetdetail1 => 1,
+        problemsetdetail2 => 1,
+
 # 	librarybrowsernojs    => 1,
  	librarybrowser1    => 1,
 # 	librarybrowser2    => 1,
@@ -347,28 +350,25 @@ $problemDefaults{showMeAnother} = -1;
 # Session Management
 ################################################################################
 
-## For session management using session_cookies, uncomment the following line,
-## which will override the setting  $session_management_via = "key"
-## in defaults.config.
-## 
 ## For a discussion of session_management_via session_cookies or the
 ## Key database, see the   Session Managment section
 ## of defaults.config.dist
 
-#$session_management_via = "session_cookie";
+## For session management using the key databasse table, uncomment the following line,
+## which will override the setting  $session_management_via = "session_cookie"
+## set in defaults.config.
+
+#  $session_management_via = "key";
 
 ################################################################################
-# Achievement Facebook Integration
+# Searching for set.def files to import 
 ################################################################################
+## Uncomment below so that when the homework sets editor searches for set def
+## files, it searches beyond templates; it can search deeper subfolders of 
+## templates, and optionally also descend into Library
 
-#  Note:  This feature is out of date and no longer works with facebooks api
+#$options{setDefSearchDepth}=4;
+#$options{useOPLdefFiles}=1;
 
-## Because of the way facebook works, in order to use facebook integration
-## with webwork, you will need to create a facebook "app" specific to the 
-## domain name of the server you are running.  Once you have created the app
-## you can enable facebook integration by setting the variables below
-
-#$allowFacebooking = 1;
-#$facebookAppId = your_app_id_here;
 
 1; #final line of the file to reassure perl that it was read properly.

@@ -187,7 +187,7 @@ sub htmlMessage($$$@) {
 	$warnings = htmlEscape($warnings);
 	$exception = htmlEscape($exception);
 	
-	my @warnings = defined $warnings ? split m|&lt;br /&gt;|, $warnings : ();  #fragile
+	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
 	
@@ -287,8 +287,8 @@ Formats a list of warning strings as list items for HTML output.
 
 sub htmlWarningsList(@) {
 	my (@warnings) = @_;
+
 	foreach my $warning (@warnings) {
-		$warning = htmlEscape($warning);
 		$warning = "<li><code>$warning</code></li>";
 	}
 	return join "\n", @warnings;

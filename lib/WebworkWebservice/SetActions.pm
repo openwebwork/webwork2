@@ -13,7 +13,7 @@
 package WebworkWebservice::SetActions;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
-use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime);
+use WeBWorK::Utils qw(readDirectory max sortByName formatDateTime jitar_id_to_seq seq_to_jitar_id);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 
 use strict;
@@ -295,9 +295,13 @@ sub createNewSet{
 			$newSetRecord->open_date($params->{open_date});
 			$newSetRecord->due_date($params->{due_date});
 			$newSetRecord->answer_date($params->{answer_date});
+			$newSetRecord->reduced_scoring_date($params->{reduced_scoring_date});
 			$newSetRecord->visible($params->{visible});
 			$newSetRecord->enable_reduced_scoring($params->{enable_reduced_scoring});
 			$newSetRecord->assignment_type($params->{assignment_type});
+			$newSetRecord->description($params->{description});
+			$newSetRecord->restricted_release($params->{restricted_release});
+			$newSetRecord->restricted_status($params->{restricted_status});
 			$newSetRecord->attempts_per_version($params->{attempts_per_version});
 			$newSetRecord->time_interval($params->{time_interval});
 			$newSetRecord->versions_per_interval($params->{versions_per_interval});
@@ -312,7 +316,9 @@ sub createNewSet{
 			$newSetRecord->time_limit_cap($params->{time_limit_cap});
 			$newSetRecord->restrict_ip($params->{restrict_ip});
 			$newSetRecord->relax_restrict_ip($params->{relax_restrict_ip});
-			$newSetRecord->restricted_login_proctor($params->{restricted_login_proctor});
+			$newSetRecord->hide_hint($params->{hide_hint});
+			$newSetRecord->restrict_prob_progression($params->{restrict_prob_progression});
+			$newSetRecord->email_instructor($params->{email_instructor});
 			
 			$db->addGlobalSet($newSetRecord);
 			if ($@) {
@@ -653,10 +659,24 @@ sub addProblem {
 	$file =~ s|^$topdir/*||;
 	
 	# DBFIXME count would work just as well
-	my $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
+	my $freeProblemID;
+	my $set = $db->getGlobalSet($setName);
+	warn "record not found for global set $setName" unless $set;
+
+	# for jitar sets the next problem id is the next top level problem
+	if ($set->assignment_type eq 'jitar') {
+	  my @problemIDs = $db->listGlobalProblems($setName);
+	  my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+	  $freeProblemID = seq_to_jitar_id($seq[0]+1);
+	} else {
+	    $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
+	}
+
 	my $value_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
+	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};	
+	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};	
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
 	
@@ -666,9 +686,12 @@ sub addProblem {
 	my $maxAttempts = $params->{maxAttempts} || $max_attempts_default;
 	my $showMeAnother = $params->{showMeAnother} || $showMeAnother_default;
 	my $problemID = $params->{problemID};
+	my $countsParentGrade = $params->{counts_parent_grade} || $counts_parent_grade_default;
+	my $attToOpenChildren = $params->{att_to_open_children} || $att_to_open_children_default;
+
 
 	unless ($problemID) {
-		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
+		$problemID = $freeProblemID;
 	}
 
 	my $problemRecord = $db->newGlobalProblem;
@@ -679,6 +702,8 @@ sub addProblem {
 	$problemRecord->max_attempts($maxAttempts);
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
+	$problemRecord->{att_to_open_children} = $attToOpenChildren;
+	$problemRecord->{counts_parent_grade} = $countsParentGrade;	
 	$db->addGlobalProblem($problemRecord);
 
 	my @results; 
