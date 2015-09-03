@@ -10,13 +10,13 @@
 # Authentication method, uncomment the remaining lines, and fill in the
 # appropriate authentication module.
 
+$debug_lti_parameters = 0; # set this to 1 to have LTI calling parameters printed to HTML page for debugging
+
+
+###################
 $authen{user_module} = [ 
-	{
-		"*" => "WeBWorK::Authen::LTIBasic", 
-	},
-#	{
-#		"*" => "WeBWorK::Authen::Basic_TheLastOption",
-#	}
+	{  "*" => "WeBWorK::Authen::LTIBasic", },           #preferred authorization method
+	{  "*" => "WeBWorK::Authen::Basic_TheLastOption",}  #fallback authorization method
 ];
 
 #If the preferred module is an external authentication
@@ -85,8 +85,7 @@ $preferred_source_of_username = "lis_person_sourcedid";
 # if you enable this flag and have $preferred_source_of_username set to
 # lis_person_contact_email_primary, then webwork will strip off the address 
 # portion of the email and just use the username. 
-
-# $strip_address_from_email = 1;
+$strip_address_from_email = 1;
 
 ################################################################################
 # LTI Basic Authentication Parameters 
