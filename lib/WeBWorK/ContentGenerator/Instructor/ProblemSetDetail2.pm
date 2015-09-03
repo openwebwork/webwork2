@@ -566,7 +566,7 @@ sub FieldTable {
 			  !$ce->{pg}->{options}->{enableShowMeAnother} );
 
 		# skip the periodic re-randomization field if it is not enabled
-		next if ( $field eq 'prEnable' &&
+		next if ( $field eq 'prPeriod' &&
 			!$ce->{pg}->{options}->{enablePeriodicRandomization} );
 
 		unless ($properties{type} eq "hidden") {
@@ -662,8 +662,8 @@ sub FieldHTML {
 	}
 
 	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
-	$globalValue = (defined($globalValue)) ? ($labels{$globalValue || ""} || $globalValue) : "";
-	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : $blankfield;
+	$globalValue = (defined($globalValue)) ? ($labels{$globalValue // ""} || $globalValue) : ""; # this allows for a label if value is 0
+	$userValue = (defined($userValue)) ? ($labels{$userValue // ""} || $userValue) : $blankfield; # this allows for a label if value is 0
 
 	if ($field =~ /_date/) {
 		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P') if defined $globalValue && $globalValue ne $labels{""};
