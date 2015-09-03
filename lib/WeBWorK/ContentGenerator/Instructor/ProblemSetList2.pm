@@ -1794,6 +1794,7 @@ sub importSetsFromDef {
 			  value => $rh_problem->{value},
 			  maxAttempts => $rh_problem->{max_attempts},
 			  showMeAnother => $rh_problem->{showMeAnother},
+			  prPeriod => $rh_problem->{prPeriod},
 			  attToOpenChildren => $rh_problem->{attToOpenChildren},
 			    countsParentGrade => $rh_problem->{countsParentGrade}
 			    );
