@@ -417,14 +417,16 @@ sub authenticate
 	#debug("Nonce = |" . $self-> {oauth_nonce} . "|");
 	my $nonce = WeBWorK::Authen::LTIBasic::Nonce -> new($r, $self -> {oauth_nonce}, $self -> {oauth_timestamp}); 
 	if (!($nonce -> ok ) )
-		{
-		#croak ($r->maketext("Bad Nonce for user " . $self->{user_id} . ": Nonce = " . $self -> {oauth_nonce} . ", Nonce_timestamp = " . $self -> {oauth_timestamp} .  ", at time " . time()));
-		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
-		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
-				. ":  Something was wrong with your Nonce LTI parameters.  "
-				. "If this recurs, please speak with your instructor");
-		return 0;
-		}
+	  {
+	    if ($ce->{debug_lti_parameters}) {
+	      warn ($r->maketext("Bad Nonce for user " . $self->{user_id} . ": Nonce = " . $self -> {oauth_nonce} . ", Nonce_timestamp = " . $self -> {oauth_timestamp} .  ", at time " . time()));
+	    }
+	    #debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
+	    $self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
+					     . ":  Something was wrong with your Nonce LTI parameters.  "
+					     . "If this recurs, please speak with your instructor");
+	    return 0;
+	  }
 	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
 	my %request_hash;
 	my @keys = keys %{$r-> {paramcache}};
