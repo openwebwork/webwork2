@@ -255,20 +255,6 @@ sub get_credentials {
 		# or if the user_id is still undefined try to set the user_id to full the email address
 		
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
-# 		if (!defined($self->{user_id})
-# 		    or defined($self -> {email}) and $ce -> {get_username_from_email} )  {
-# 		    $self->{user_id} = $self -> {email};
-# 
-# 		}
-		
-		#############
-		# if preferred_source_of_username eq "lis_person_contact_email_primary"
-		# then replace the user_id with the full email address. 
-		
-		# or if the user_id is still undefined try to set the user_id to full the email address
-		
-		# if strip_address_from_email ==1  strip off the part of the address after @
-		#############
 		if (!defined($self->{user_id})
 			or (defined($self -> {email})  
 				and defined($ce -> {preferred_source_of_username})
