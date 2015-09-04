@@ -194,7 +194,7 @@ sub get_credentials {
 		foreach my $key (@parameter_names) {
 			$parameter_report .= "$key => ".$r->param($key). "\n";
 		}
-		warn ("received parameters\n", $parameter_report);
+		warn ("===== parameters received =======\n", $parameter_report);
 	}
 	###
 	
@@ -255,6 +255,20 @@ sub get_credentials {
 		# or if the user_id is still undefined try to set the user_id to full the email address
 		
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
+# 		if (!defined($self->{user_id})
+# 		    or defined($self -> {email}) and $ce -> {get_username_from_email} )  {
+# 		    $self->{user_id} = $self -> {email};
+# 
+# 		}
+		
+		#############
+		# if preferred_source_of_username eq "lis_person_contact_email_primary"
+		# then replace the user_id with the full email address. 
+		
+		# or if the user_id is still undefined try to set the user_id to full the email address
+		
+		# if strip_address_from_email ==1  strip off the part of the address after @
+		#############
 		if (!defined($self->{user_id})
 			or (defined($self -> {email})  
 				and defined($ce -> {preferred_source_of_username})
@@ -417,16 +431,14 @@ sub authenticate
 	#debug("Nonce = |" . $self-> {oauth_nonce} . "|");
 	my $nonce = WeBWorK::Authen::LTIBasic::Nonce -> new($r, $self -> {oauth_nonce}, $self -> {oauth_timestamp}); 
 	if (!($nonce -> ok ) )
-	  {
-	    if ($ce->{debug_lti_parameters}) {
-	      warn ($r->maketext("Bad Nonce for user " . $self->{user_id} . ": Nonce = " . $self -> {oauth_nonce} . ", Nonce_timestamp = " . $self -> {oauth_timestamp} .  ", at time " . time()));
-	    }
-	    #debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
-	    $self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
-					     . ":  Something was wrong with your Nonce LTI parameters.  "
-					     . "If this recurs, please speak with your instructor");
-	    return 0;
-	  }
+		{
+		#croak ($r->maketext("Bad Nonce for user " . $self->{user_id} . ": Nonce = " . $self -> {oauth_nonce} . ", Nonce_timestamp = " . $self -> {oauth_timestamp} .  ", at time " . time()));
+		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
+		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
+				. ":  Something was wrong with your Nonce LTI parameters.  "
+				. "If this recurs, please speak with your instructor");
+		return 0;
+		}
 	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
 	my %request_hash;
 	my @keys = keys %{$r-> {paramcache}};
@@ -528,23 +540,23 @@ sub authenticate
 			# The code works for the U. of Rochester Blackboard
 			##################################################################
 		
-			my $LTI_section = $r->param("context_label");   #  for example: MTH208.2014FALL.54648
-			my ($course_number, $semester, $CRN) = split(/\./, $LTI_section);
-			if ($self->{section} eq "unknown" and $CRN ) {
-			    $self->{section}= $CRN//"unknown"; # update unknown sections from CRN if possible
-			}
-			if ( $ce->{debug_lti_parameters} ) {
-			    warn "LTI context_label is $LTI_section";
-				warn "course number $course_number\n";
-				warn "semester $semester\n";
-				warn "CRN $CRN\n";
-				warn "section $self->{section}";
-			}
-					
+# 			my $LTI_section = $r->param("context_label");   #  for example: MTH208.2014FALL.54648
+# 			my ($course_number, $semester, $CRN) = split(/\./, $LTI_section);
+# 			if ($self->{section} eq "unknown" and $CRN ) {
+# 			    $self->{section}= $CRN//"unknown"; # update unknown sections from CRN if possible
+# 			}
+# 			if ( $ce->{debug_lti_parameters} ) {
+# 			    warn "LTI context_label is $LTI_section";
+# 				warn "course number $course_number\n";
+# 				warn "semester $semester\n";
+# 				warn "CRN $CRN\n";
+# 				warn "section $self->{section}";
+# 			}
+			########### end determine section name	
 			if (! $db -> existsUser($userID) )
 				{ # New User. Create User record 
-				warn "New user: $userID -- LTI_webwork_permisson_level to be set to $LTI_webwork_permissionLevel. 
-				      Only new users with permission levels less than 'ta' can be created." if ( $ce->{debug_lti_parameters} );
+				warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel. 
+				      Only new users with permission levels less than or equal to 'ta = 5' can be created." if ( $ce->{debug_lti_parameters} );
 				if ($LTI_webwork_permissionLevel > $ce ->{userRoles} -> {"ta"}) {
 				    $self->{log_error}.= "userID: $userID -- ". $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE;
 					croak $r->maketext("userID: $userID -- ". $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
@@ -744,7 +756,7 @@ sub authenticate
 					warn "Setting permission level for $userID to $LTI_webwork_permissionLevel" if ( $ce->{debug_lti_parameters} );
 				}
 				warn "Existing user: $userID updated.\n  LTIpermission level is $LTI_webwork_permissionLevel.
-				      level is $permissionLevel -> permission.\n". 
+				      webwork level is ". $permissionLevel -> permission. ".\n". 
 				      "User section is |".$user->{section}. "|\n recitation is |".$user->{recitation}."|\n" if ( $ce->{debug_lti_parameters} );
 			}
 			$self -> {initial_login} = 1;
