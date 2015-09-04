@@ -54,7 +54,7 @@ my $webwork_dir = "/opt/webwork/webwork2";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
-
+$ENV{WEBWORK_SERVER_ADMIN}= $ENV{SERVER_ADMIN};
 
 #################################################################
 # The following code reads defauls.config and extracts the remaining configuration

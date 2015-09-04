@@ -192,7 +192,7 @@ sub htmlMessage($$$@) {
 	my $backtrace = htmlBacktrace(@backtrace);
 	
 	my $admin = ($ENV{SERVER_ADMIN}
-		? " (<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
+		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
 		: "");
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = htmlEscape( $r->method  );

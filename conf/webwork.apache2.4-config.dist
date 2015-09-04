@@ -54,7 +54,7 @@ my $webwork_dir = "/opt/webwork/webwork2";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
-
+$ENV{WEBWORK_SERVER_ADMIN}= $ENV{SERVER_ADMIN};
 
 #################################################################
 # The following code reads defauls.config and extracts the remaining configuration
@@ -154,7 +154,7 @@ if ($webwork_url eq "") {
 
  # WEBWORK SOAP CONFIGURATION
  <Location /webwork2_rpc>
-         PerlHandler Apache2::SOAP
+         PerlHandler Apache::SOAP
          SetHandler perl-script
          PerlSetVar dispatch_to "WebworkSOAP"
          PerlSetVar options "compress_threshold => 10000"
@@ -205,10 +205,10 @@ PerlModule WebworkWebservice
 #</Location>
 
 ####################################################################
-# WebworkSOAP  "bridge2" handler 
+# WebworkSOAP  "bridge2" handler (Moodle/WeBWorK Question bridge)
 ####################################################################
 
-# Include /opt/webwork/wwqs/conf/problemserver.apache-config
+#Include /Volumes/WW_test/opt/webwork/ww_opaque_server/conf/opaqueserver.apache-config
 
 ####################################################################
 # Expires Module configuration
