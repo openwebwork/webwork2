@@ -837,7 +837,7 @@ sub mail_message_to_recipients {
 			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 			#warn "message is ok";
 			my $mailer = eval{ Mail::Sender->new({
-					tls_allowed => $ce->{tls_allowed}//0,
+					tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
 					from      => $ce->{mail}{smtpSender},
 					fake_from => $from,
 					to        => $ur->email_address,
@@ -893,7 +893,7 @@ sub email_notification {
 	my $mailing_errors = "";
 	# open MAIL handle
 	my $mailer = Mail::Sender->new({
-		tls_allowed => 0,
+		tls_allowed => $self->r->ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
 		from => $self->{defaultFrom},
 		to   => $self->{defaultFrom},
 		smtp    => $self->{smtpServer},
