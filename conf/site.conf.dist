@@ -200,6 +200,15 @@ $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 $mail{smtpTimeout}           = 30;
 
 
+# TLS is a method for providing secure connections to the smtp server.
+# https://en.wikipedia.org/wiki/Transport_Layer_Security
+# At some sites coordinating the certificates properly is tricky
+# Set this value to 0 to avoid checking certificates.
+# Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
+
+$tls_allowed = 1;  
+
+
 ################################################################################
 # Problem library options
 ################################################################################
