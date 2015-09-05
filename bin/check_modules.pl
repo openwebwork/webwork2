@@ -40,7 +40,7 @@ my @modulesList = qw(
 	Benchmark
 	Carp
 	CGI
-	Class:Accessor
+	Class::Accessor
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dumper

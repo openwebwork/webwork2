@@ -51,6 +51,14 @@ $(function(){
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <span class='icon icon-pencil' data-alt='edit'></span>")); });
     $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
 
+    // Turn summaries and help boxes into popovers
+    $('a.table-summary').popover().click(function (event) {
+	event.preventDefault();
+    });
+    $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
+	event.preventDefault();
+    }).html('<i class="icon-question-sign"/>');
+
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');    
     
@@ -62,6 +70,9 @@ $(function(){
     if($(window).width() < 650) {
 	$('#toggle-sidebar').click();
     }
+
+    //Problem page
+    $('.currentProblem').addClass('active');
 
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
@@ -103,6 +114,7 @@ $(function(){
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small');
     $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
+    $('#problem-grader-form .score-selector').addClass('input-min');
 
     //CourseConfiguration
     $('#config-form').addClass('form-inline');
@@ -176,7 +188,7 @@ $(function(){
     $('table.stats-table').addClass('table table-bordered');
     $('#sp-gateway-form').addClass('well');
 
-    //Library browser 1 tweaks
+    //Library browser tweaks
     $('#mainform ').addClass('form-inline');
     $('#mainform input:button').addClass('btn btn-primary');
     $('#mainform input[type="submit"]').removeClass('btn-primary');
@@ -187,6 +199,9 @@ $(function(){
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
     $('#mainform select[name=local_sets]').addClass('input').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
+
+    //Library browser nojs tweaks
+    $('.library-browser-table-nojs label.checkbox').css('display','inline-block');
 
     //Change tabber tabs to twitter tabs
     if ($('div.tabber').length > 0) {tabberAutomatic({});}
@@ -205,6 +220,7 @@ $(function(){
      //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
+
 
     // the datepicker uses addOnLoadEvent, so if this function isn't defined,
     // we dont have to worry about the datepicker.
