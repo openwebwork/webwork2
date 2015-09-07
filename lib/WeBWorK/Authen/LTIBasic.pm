@@ -415,6 +415,12 @@ sub authenticate
 {
 	my $self = shift;
 	my ($r, $user ) = map {$self -> {$_};} ('r', 'user_id');
+	
+	# See comment in get_credentials()
+	if ($r->{xmlrpc}) {
+		#debug("falling back to superclass authenticate (xmlrpc call)");
+		return $self->SUPER::authenticate(@_);
+	}
 
 	#debug("LTIBasic::authenticate called for user |$user|");
 	#debug "ref(r) = |". ref($r) . "|";
