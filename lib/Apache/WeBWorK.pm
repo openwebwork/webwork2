@@ -191,7 +191,7 @@ sub htmlMessage($$$@) {
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
 	
-	my $admin = ($ENV{SERVER_ADMIN}
+	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
 		: "");
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
@@ -207,7 +207,7 @@ sub htmlMessage($$$@) {
 <div style="text-align:left">
  <h2>WeBWorK error</h2>
  <p>An error occured while processing your request. For help, please send mail
- to this site's webmaster$admin, including all of the following information as
+ to this site's webmaster $admin, including all of the following information as
  well as what what you were doing when the error occured.</p>
  <p>$time</p>
  <h3>Warning messages</h3>
