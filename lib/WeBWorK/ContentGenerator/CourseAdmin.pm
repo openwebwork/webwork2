@@ -1368,12 +1368,14 @@ sub do_rename_course {
 	my $rename_newCourseID            = $r->param("rename_newCourseID")     || "";
 	my $rename_newCourseTitle         = $r->param("rename_newCourseTitle")     || "";
 	my $rename_newCourseInstitution   = $r->param("rename_newCourseInstitution")     || "";
+	my $title_checkbox                = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
+	my $institution_checkbox          = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
 	
 	# define new courseTitle and new courseInstitution
-	my $optional_arguments = {
-								courseTitle       => $rename_newCourseTitle,
-								courseInstitution => $rename_newCourseInstitution,
-							};
+	my %optional_arguments = {};
+	$optional_arguments{courseTitle}       = $rename_newCourseTitle if $title_checkbox;
+	$optional_arguments{courseInstitution} = $rename_newCourseInstitution if $institution_checkbox;
+
 	my $ce2 = new WeBWorK::CourseEnvironment({
 		%WeBWorK::SeedCE,
 		courseName => $rename_oldCourseID,
@@ -1385,8 +1387,6 @@ sub do_rename_course {
 	# below this line, we would grab values from getopt and put them in this hash
 	# but for now the hash can remain empty
 	my %dbOptions;
-		warn "store new title and institution in database ", 
-	      join(" ", $rename_newCourseID,  %$optional_arguments);
 
 	eval {
 		renameCourse(
@@ -1394,7 +1394,7 @@ sub do_rename_course {
 			ce            => $ce2,
 			dbOptions     => \%dbOptions,
 			newCourseID   => $rename_newCourseID,
-			%$optional_arguments,
+			%optional_arguments,
 		);
 	};
 	if ($@) {
@@ -1405,6 +1405,9 @@ sub do_rename_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
+			($title_checkbox) ? CGI::div("The title of the course $rename_newCourseID is now $rename_newCourseTitle"):'', 
+			($institution_checkbox) ? CGI::div("The institution associated with the course $rename_newCourseID is now $rename_newCourseInstitution"):'', 
+
 			CGI::p("Successfully renamed the course $rename_oldCourseID to $rename_newCourseID"),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
