@@ -190,7 +190,14 @@ sub htmlMessage($$$@) {
 	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
+
+	# $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf
+	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
+	# if an explicit email address has not been set.
 	
+	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
+	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined. 
+
 	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
 		: "");

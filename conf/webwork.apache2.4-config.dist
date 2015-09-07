@@ -79,7 +79,14 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/we
 my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
 my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/courses
 
-
+my $webwork_server_admin_email = $ce->{webwork_server_admin_email};
+if ($webwork_server_admin_email) {
+	$webwork_server_admin_email = $ce->{webwork_server_admin_email};
+	warn "set email from site.conf";
+} else {
+	$webwork_server_admin_email= $ENV{SERVER_ADMIN};
+}
+$ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
