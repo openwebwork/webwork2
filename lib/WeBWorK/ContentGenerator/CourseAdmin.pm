@@ -1371,18 +1371,31 @@ sub do_rename_course {
 	my $title_checkbox                = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
 	my $institution_checkbox          = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
 	
-	# define new courseTitle and new courseInstitution
-	my %optional_arguments = {};
-	$optional_arguments{courseTitle}       = $rename_newCourseTitle if $title_checkbox;
-	$optional_arguments{courseInstitution} = $rename_newCourseInstitution if $institution_checkbox;
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
 		%WeBWorK::SeedCE,
 		courseName => $rename_oldCourseID,
 	});
-	
+
 	my $dbLayoutName = $ce->{dbLayoutName};
+
+	# define new courseTitle and new courseInstitution
+	my %optional_arguments = ();
+	my ($title_message, $institution_message);
+	if ($title_checkbox) {
+		$optional_arguments{courseTitle}       = $rename_newCourseTitle;
+		$title_message = qq!CGI::div("The title of the course $rename_newCourseID is now $rename_newCourseTitle")!, 
 	
+	} else {
+		
+	}
+	if ($institution_checkbox) {
+		$optional_arguments{courseInstitution} = $rename_newCourseInstitution;
+		$institution_message = qq!CGI::div("The institution associated with the course $rename_newCourseID is now $rename_newCourseInstitution")!, 
+
+	}
+
+		
 	# this is kinda left over from when we had 'gdbm' and 'sql' database layouts
 	# below this line, we would grab values from getopt and put them in this hash
 	# but for now the hash can remain empty
@@ -1405,9 +1418,8 @@ sub do_rename_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
-			($title_checkbox) ? CGI::div("The title of the course $rename_newCourseID is now $rename_newCourseTitle"):'', 
-			($institution_checkbox) ? CGI::div("The institution associated with the course $rename_newCourseID is now $rename_newCourseInstitution"):'', 
-
+			$title_message,
+			$institution_message,
 			CGI::p("Successfully renamed the course $rename_oldCourseID to $rename_newCourseID"),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
