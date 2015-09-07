@@ -44,6 +44,7 @@ our @EXPORT_OK = qw(
 	listArchivedCourses
 	addCourse
 	renameCourse
+	retitleCourse
 	deleteCourse
 	archiveCourse
 	unarchiveCourse

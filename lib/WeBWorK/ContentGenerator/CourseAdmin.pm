@@ -34,7 +34,7 @@ use IO::File;
 use URI::Escape;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces);
-use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse deleteCourse listCourses archiveCourse 
+use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse 
                                         listArchivedCourses unarchiveCourse initNonNativeTables);
 use WeBWorK::Utils::CourseIntegrityCheck;
 #use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
@@ -1301,13 +1301,15 @@ sub do_retitle_course {
 #   There is no new course, but there are new titles and institutions
 	my $rename_newCourseTitle         = $r->param("rename_newCourseTitle")     || "";
 	my $rename_newCourseInstitution   = $r->param("rename_newCourseInstitution")     || "";
+	my $title_checkbox                = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
+	my $institution_checkbox          = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
 	
 #	$rename_newCourseID = $rename_oldCourseID ;  #since they are the same FIXME
 	# define new courseTitle and new courseInstitution
-	my $optional_arguments = {
-							newCourseTitle       => $rename_newCourseTitle,
-							newCourseInstitution => $rename_newCourseInstitution,
-						};
+	my %optional_arguments = {};
+	$optional_arguments{courseTitle}       = $rename_newCourseTitle if $title_checkbox;
+	$optional_arguments{courseInstitution} = $rename_newCourseInstitution if $institution_checkbox;
+
 	my $ce2;
 	my %dbOptions =();
 	eval {
@@ -1318,13 +1320,13 @@ sub do_retitle_course {
 	};
 	warn "failed to create environment in do_retitle_course $@" if $@;
 	warn "store new title and institution in database ", 
-	      join(" ", "arguments", $rename_oldCourseID,  %$optional_arguments);
+	      join(" ", "arguments", $rename_oldCourseID,  %optional_arguments);
 	eval {
-		reTitleCourse(
+		retitleCourse(
 			courseID      => $rename_oldCourseID,
 			ce            => $ce2,
 			dbOptions     => \%dbOptions,
-			%$optional_arguments,
+			%optional_arguments,
 		);
 	};
 	if ($@) {
@@ -1336,10 +1338,8 @@ sub do_retitle_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::div("The title of the course $rename_oldCourseID 
-			        is now $rename_newCourseTitle"), 
-			CGI::div("The institution associated with the course $rename_oldCourseID 
-			        is now $rename_newCourseInstitution"), 
+			($title_checkbox) ? CGI::div("The title of the course $rename_oldCourseID is now $rename_newCourseTitle"):'', 
+			($institution_checkbox) ? CGI::div("The institution associated with the course $rename_oldCourseID is now $rename_newCourseInstitution"):'', 
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tRetitled",
