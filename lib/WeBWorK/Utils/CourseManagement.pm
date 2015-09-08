@@ -497,11 +497,9 @@ sub renameCourse {
 		my $newDB = new WeBWorK::DB($newCE->{dbLayouts}{$dbLayoutName});
 		eval {
 			if (exists( $options{courseTitle}) and $options{courseTitle}) {
-			    warn "new title |$options{courseTitle}|";
 				$newDB->setSettingValue('courseTitle',$options{courseTitle});
 			}
 			if (exists( $options{courseInstitution}) and $options{courseInstitution}) {
-			    warn "new institution |$options{courseInstitution}|";
 				$newDB->setSettingValue('courseInstitution',$options{courseInstitution});
 			}
 		};  warn "Problems from resetting course title and institution = $@" if $@;
@@ -539,17 +537,15 @@ sub retitleCourse {
 	my $courseID = $options{courseID};
 	my $ce       = $options{ce};
 	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
-	warn "running retitleCourse -- nothing done yet";	
+
 	# get the database layout out of the options hash
 	my $dbLayoutName = $ce->{dbLayoutName};
 	my $db = new WeBWorK::DB($ce->{dbLayouts}{$dbLayoutName});
 		eval {
 			if (exists( $options{courseTitle}) and $options{courseTitle}) {
-			    warn "new title |$options{courseTitle}|";
 				$db->setSettingValue('courseTitle',$options{courseTitle});
 			}
 			if (exists( $options{courseInstitution}) and $options{courseInstitution}) {
-			    warn "new institution |$options{courseInstitution}|";
 				$db->setSettingValue('courseInstitution',$options{courseInstitution});
 			}
 		};  warn "Problems from resetting course title and institution = $@" if $@;
