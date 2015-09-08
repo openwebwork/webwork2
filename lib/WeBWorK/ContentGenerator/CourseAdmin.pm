@@ -37,6 +37,7 @@ use WeBWorK::Utils qw(cryptPassword writeLog listFilesRecursive trim_spaces);
 use WeBWorK::Utils::CourseManagement qw(addCourse renameCourse retitleCourse deleteCourse listCourses archiveCourse 
                                         listArchivedCourses unarchiveCourse initNonNativeTables);
 use WeBWorK::Utils::CourseIntegrityCheck;
+use WeBWorK::DB;
 #use WeBWorK::Utils::DBImportExport qw(dbExport dbImport);
 # needed for location management
 use Net::IP;
@@ -1035,14 +1036,11 @@ sub rename_course_confirm {
 
 	my $rename_oldCourseID           = $r->param("rename_oldCourseID")     || "";
 	my $rename_newCourseID           = $r->param("rename_newCourseID")     || "";
-#	my $rename_newCourseID_checked   = $r->param("rename_newCourseID_checked")     || "";
 	my $rename_newCourseID_checkbox     = $r->param("rename_newCourseID_checkbox")  || "";    ;
 
 	my $rename_newCourseTitle           = $r->param("rename_newCourseTitle")     || "";
-#	my $rename_newCourseTitle_checked   = $r->param("rename_newCourseTitle_checked")     || "";
 	my $rename_newCourseTitle_checkbox  = $r->param("rename_newCourseTitle_checkbox")    || ""; ;
  	my $rename_newCourseInstitution           = $r->param("rename_newCourseInstitution")     || "";
-#	my $rename_newCourseInstitution_checked   = $r->param("rename_newCourseInstitution_checked")     || "";
 	my $rename_newCourseInstitution_checkbox     = $r->param("rename_newCourseInstitution_checkbox") || ""   ;
 
 
@@ -1053,12 +1051,20 @@ sub rename_course_confirm {
 ######################################################
 ## Create strings confirming title and institution change
 ######################################################
+	# connect to database to get old title and institution
+	my $dbLayoutName = $ce->{dbLayoutName};
+	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
+	my $oldDB =new WeBWorK::DB($ce2->{dbLayouts}->{$dbLayoutName});
+	my $rename_oldCourseTitle = $oldDB->getSettingValue('courseTitle');
+	my $rename_oldCourseInstitution = $oldDB->getSettingValue('courseInstitution');
+	
 	my ($change_course_title_str, $change_course_institution_str)=("");
 	if ( $rename_newCourseTitle_checkbox) {
-		$change_course_title_str ="Change title to $rename_newCourseTitle";
+		$change_course_title_str ="Change title from $rename_oldCourseTitle to $rename_newCourseTitle";
 	}
 	if ( $rename_newCourseInstitution_checkbox) {
-		$change_course_institution_str="Change course institution to $rename_newCourseInstitution";
+		$change_course_institution_str="Change course institution from 
+		    $rename_oldCourseInstitution to $rename_newCourseInstitution";
 	}
 
 #############################################################################
@@ -1071,7 +1077,13 @@ sub rename_course_confirm {
 		print $self->hidden_fields(qw/rename_oldCourseID rename_newCourseID
 		  rename_newCourseTitle rename_newCourseInstitution
 		  rename_newCourseID_checkbox rename_newCourseInstitution_checkbox
-		  rename_newCourseTitle_checkbox/);
+		  rename_newCourseTitle_checkbox /);
+		print CGI::hidden(-name=>"rename_oldCourseTitle", 
+					  -default=>$rename_oldCourseTitle, 
+		              -id=>"hidden_rename_oldCourseTitle");
+		print CGI::hidden(-name=>"rename_oldCourseInstitution", 
+		              -default=>$rename_oldCourseInstitution, 
+		              -id=>"hidden_rename_oldCourseInstitution");
 
 		print CGI::div({style=>"text-align: left"},
 			    CGI::hr(),			    
@@ -1206,7 +1218,15 @@ sub rename_course_confirm {
 		print $self->hidden_fields(qw/rename_oldCourseID rename_newCourseID
 		  rename_newCourseTitle rename_newCourseInstitution
 		  rename_newCourseID_checkbox rename_newCourseInstitution_checkbox
-		  rename_newCourseTitle_checkbox/);
+		  rename_newCourseTitle_checkbox /);
+		print CGI::hidden(-name=>"rename_oldCourseTitle", 
+					  -default=>$rename_oldCourseTitle, 
+		              -id=>"hidden_rename_oldCourseTitle");
+		print CGI::hidden(-name=>"rename_oldCourseInstitution", 
+		              -default=>$rename_oldCourseInstitution, 
+		              -id=>"hidden_rename_oldCourseInstitution");
+
+
 			# grab some values we'll need
             # fail if the source course does not exist
 
@@ -1241,20 +1261,14 @@ sub rename_course_validate {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	#my $db = $r->db;
-	#my $authz = $r->authz;
-	#my $urlpath = $r->urlpath;
 	
 	my $rename_oldCourseID              = $r->param("rename_oldCourseID")     || "";
 	my $rename_newCourseID              = $r->param("rename_newCourseID")     || "";
-#	my $rename_newCourseID_checked      = $r->param("rename_newCourseID_checked")     || "";
 	my $rename_newCourseID_checkbox     = $r->param("rename_newCourseID_checkbox")   || "";  ;
 
 	my $rename_newCourseTitle           = $r->param("rename_newCourseTitle")     || "";
-#	my $rename_newCourseTitle_checked   = $r->param("rename_newCourseTitle_checked")     || "";
 	my $rename_newCourseTitle_checkbox  = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
  	my $rename_newCourseInstitution           = $r->param("rename_newCourseInstitution")     || "";
-#	my $rename_newCourseInstitution_checked   = $r->param("rename_newCourseInstitution_checked")     || "";
 	my $rename_newCourseInstitution_checkbox     = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
 	
 	my @errors;
@@ -1280,10 +1294,7 @@ sub rename_course_validate {
 	if ($rename_newCourseInstitution eq "" and $rename_newCourseInstitution_checkbox eq 'on')  {
 		push @errors, "You must specify a new institution for the course.";
 	}
-# 	my $ce2 = new WeBWorK::CourseEnvironment({
-# 		%WeBWorK::SeedCE,
-# 		courseName => $rename_oldCourseID,
-# 	});
+
 	
 	return @errors;
 }
@@ -1301,12 +1312,14 @@ sub do_retitle_course {
 #   There is no new course, but there are new titles and institutions
 	my $rename_newCourseTitle         = $r->param("rename_newCourseTitle")     || "";
 	my $rename_newCourseInstitution   = $r->param("rename_newCourseInstitution")     || "";
+	my $rename_oldCourseTitle         = $r->param("rename_oldCourseTitle")     || "";
+	my $rename_oldCourseInstitution   = $r->param("rename_oldCourseInstitution")     || "";
 	my $title_checkbox                = $r->param("rename_newCourseTitle_checkbox")  || ""   ;
 	my $institution_checkbox          = $r->param("rename_newCourseInstitution_checkbox")  || ""  ;
 	
 #	$rename_newCourseID = $rename_oldCourseID ;  #since they are the same FIXME
 	# define new courseTitle and new courseInstitution
-	my %optional_arguments = {};
+	my %optional_arguments = ();
 	$optional_arguments{courseTitle}       = $rename_newCourseTitle if $title_checkbox;
 	$optional_arguments{courseInstitution} = $rename_newCourseInstitution if $institution_checkbox;
 
@@ -1319,9 +1332,8 @@ sub do_retitle_course {
 		});
 	};
 	warn "failed to create environment in do_retitle_course $@" if $@;
-	warn "store new title and institution in database ", 
-	      join(" ", "arguments", $rename_oldCourseID,  %optional_arguments);
-	eval {
+
+	eval {  
 		retitleCourse(
 			courseID      => $rename_oldCourseID,
 			ce            => $ce2,
@@ -1338,14 +1350,21 @@ sub do_retitle_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
-			($title_checkbox) ? CGI::div("The title of the course $rename_oldCourseID is now $rename_newCourseTitle"):'', 
-			($institution_checkbox) ? CGI::div("The institution associated with the course $rename_oldCourseID is now $rename_newCourseInstitution"):'', 
+			($title_checkbox) ? CGI::div("The title of the course $rename_oldCourseID 
+			has been changed from $rename_oldCourseTitle to $rename_newCourseTitle")
+			:'', 
+			($institution_checkbox) ? CGI::div("The institution associated with 
+			the course $rename_oldCourseID has been changed from 
+			$rename_oldCourseInstitution to  $rename_newCourseInstitution")
+			:'', 
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tRetitled",
 	    	"",
 	    	"",
-	    	"$rename_oldCourseID title and institution changed to $rename_newCourseTitle and $rename_newCourseInstitution",
+	    	"$rename_oldCourseID title and institution changed 
+	    	 from $rename_oldCourseTitle to $rename_newCourseTitle 
+	    	 and from $rename_oldCourseInstitution to $rename_newCourseInstitution",
 	    ));		
 		my $oldCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $rename_oldCourseID);
@@ -1384,14 +1403,14 @@ sub do_rename_course {
 	my ($title_message, $institution_message);
 	if ($title_checkbox) {
 		$optional_arguments{courseTitle}       = $rename_newCourseTitle;
-		$title_message = qq!CGI::div("The title of the course $rename_newCourseID is now $rename_newCourseTitle")!, 
+		$title_message = qq!The title of the course $rename_newCourseID is now $rename_newCourseTitle!, 
 	
 	} else {
 		
 	}
 	if ($institution_checkbox) {
 		$optional_arguments{courseInstitution} = $rename_newCourseInstitution;
-		$institution_message = qq!CGI::div("The institution associated with the course $rename_newCourseID is now $rename_newCourseInstitution")!, 
+		$institution_message = qq!The institution associated with the course $rename_newCourseID is now $rename_newCourseInstitution!, 
 
 	}
 
@@ -1418,8 +1437,8 @@ sub do_rename_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
-			$title_message,
-			$institution_message,
+			CGI::p($title_message),
+			CGI::p($institution_message),
 			CGI::p("Successfully renamed the course $rename_oldCourseID to $rename_newCourseID"),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
