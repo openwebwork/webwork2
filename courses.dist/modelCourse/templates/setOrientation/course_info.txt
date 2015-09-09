@@ -3,9 +3,13 @@
 <p align="justify">
 
 If you haven't already done so, you should change your password to
-something other than your student ID.  To do this, click on the
-Password/Email link in the list at the far left, and follow the
-directions on that page.
+something other than your student ID or whatever your instructor
+used as your initial password.  To do this, click on the
+User Settings link under MAIN MENU in the list at the far left, 
+and follow the directions on that page. Note you can collapse and
+uncollapse the MAIN MENU by clicking on the boxed angle bracket just 
+above the boldface course name so if you don't see the MAIN MENU click 
+on the boxed angle bracket to make MAIN MENU reappear.
 
 <p align="justify">
 
@@ -14,9 +18,4 @@ in the white area at the left.  This will take you to the the first
 homework assignment, which will help you to learn how to use WeBWorK
 effectively.
 
-<p align="justify">
 
-If you wish to get a printed copy of one of your assignments, you can
-do so from this page by pressing the "Download Hardcopy" button.  You
-will be taken to a page where you can select what information to
-include in the set, and which set to download.
