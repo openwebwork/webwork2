@@ -36,7 +36,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
 
             }); 
         },
-        markProblemCorrect(_prob_list,_prob_id){
+        markProblemCorrect: function(_prob_list,_prob_id){
             var self = this;
             var prob = _prob_list.findWhere({problem_id: parseInt(_prob_id)});
             //var prob = _(_prob_list.models).find(function(prob) {return prob.get("problem_id")==_prob_id;})
