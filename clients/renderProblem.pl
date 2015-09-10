@@ -41,10 +41,18 @@ BEGIN {
              It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
                 unless exists $ENV{WEBWORK_ROOT};
 	# Unused variable, but define it twice to avoid an error message.
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT};
+	$WeBWorK::Constants::PG_DIRECTORY      = "$ENV{WEBWORK_ROOT}/../pg/";
+	unless (-r $WeBWorK::Constants::WEBWORK_DIRECTORY ) {
+		die "Cannot read webwork root directory at $WeBWorK::Constants::WEBWORK_DIRECTORY";
+	}
+	unless (-r $WeBWorK::Constants::PG_DIRECTORY ) {
+		die "Cannot read webwork pg directory at $WeBWorK::Constants::PG_DIRECTORY";
+	}
 }
-use lib "$ENV{WEBWORK_ROOT}/lib";
+
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
+use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use Crypt::SSLeay;  # needed for https
 use WebworkClient;
 use MIME::Base64 qw( encode_base64 decode_base64);

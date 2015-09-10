@@ -79,12 +79,14 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 
 package WebworkClient;
 
-#use Crypt::SSLeay;  # needed for https
+use Crypt::SSLeay;  # needed for https
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Utils qw( wwRound);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
+use WeBWorK::PG::ImageGenerator;
+use HTML::Entities;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -97,13 +99,23 @@ our $UNIT_TESTS_ON             = 0;
 
 # create seed_ce
 # then create imgGen
-our $seed_ce = WeBWorK::CourseEnvironment->new( 
+our $seed_ce;
+
+eval {
+	$seed_ce = WeBWorK::CourseEnvironment->new( 
 				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY, 
 				 courseName         =>      '',
 				 webworkURL         =>      '',
 				 pg_dir             =>      "$WeBWorK::Constants::WEBWORK_DIRECTORY/../pg",
 				 });
-	warn "Unable to find environment for WebworkClient: " unless ref($seed_ce);
+};
+	if ($@ or not ref($seed_ce)){
+		warn "Unable to find environment for WebworkClient: 
+			 webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY
+			 pg_dir = /Volumes/WW_test/local/opt/webwork/pg" 
+	}
+
+
 
 our %imagesModeOptions = %{$seed_ce->{pg}->{displayModeOptions}->{images}};
 our $site_url = $seed_ce->{server_root_url};	
@@ -268,7 +280,7 @@ sub jsXmlrpcCall {
   
 sub encodeSource {
 	my $self = shift;
-	my $source = shift;
+	my $source = shift||'';
 	$self->{encodedSource} =encode_base64($source);
 }
 sub url {
@@ -545,7 +557,7 @@ sub formatRenderedProblem {
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
 	my $password         =  $self->{password};
-	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
+	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//'';
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
