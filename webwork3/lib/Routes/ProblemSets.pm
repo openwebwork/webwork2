@@ -198,7 +198,7 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
    
     my @userIDs = vars->{db}->listSetUsers(params->{set_id});
 
-    my @sets = map { getUserSet(vars->{db},vars->{ce},$_,params->{set_id});} @userIDs; 
+    my @sets = map { getUserSet(vars->{db},$_,params->{set_id});} @userIDs; 
     
     return \@sets; 
 };
