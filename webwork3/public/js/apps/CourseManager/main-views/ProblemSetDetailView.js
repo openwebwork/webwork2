@@ -359,8 +359,8 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         tabName: "Set Headers",
         initialize: function(opts){
             TabView.prototype.initialize.apply(this,[opts]);
-            this.headerFiles = null;
-            this.setHeader = null;
+            this.headerFiles = void 0;
+            this.setHeader = void 0;
             
         },
         render: function(){
@@ -368,19 +368,20 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             var tmpl = _.template($("#set-headers-template").html());
             if(this.model && this.model.get("assignment_type") == "jitar"){
                     this.$el.html($("#assign-type-not-supported").html());
-                    return;
+                    return this;
             }
             this.$el.html(tmpl(this.tabState.attributes));  
             if(this.headerFiles && this.setHeader){
                 this.showSetHeaders();
                 this.stickit();
-            } else {
+            } else if (_.isUndefined(this.headerFiles)){
                 $.get(config.urlPrefix +  "courses/" + config.courseSettings.course_id + "/headers", function( data ) {
                     self.headerFiles = _(data).map(function(f){ return {label: f, value: f};});
                     self.headerFiles.unshift({label: "Use Default Header File", value: "defaultHeader"});  // I18N
                     self.render();
                 });
-                
+            } else if(_.isUndefined(this.setHeader)) {
+
                 this.setHeader = new SetHeader({set_id: this.model.get("set_id")});
                 this.setHeader.on("change", function(model){
                     model.save(model.changed,{success: function () { self.showSetHeaders();}});
@@ -400,6 +401,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 }).fetch({success: function (){
                     self.render();
                 }});
+                
             }
         },
         showSetHeaders: function (){

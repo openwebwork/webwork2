@@ -1132,21 +1132,36 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     my $templateDir = vars->{ce}->{courseDirs}->{templates};
     
     my $setHeader = $globalSet->{set_header};
-    my $setHeaderFile = ($setHeader eq 'defaultHeader')? 
-                        vars->{ce}->{webworkFiles}->{screenSnippets}->{setHeader}: 
-                        path(dirname($templateDir),'templates',$setHeader); 
+    my $setHeaderFile; 
+    if($setHeader eq 'defaultHeader' || ! defined($setHeader) || $setHeader eq ''){
+        $setHeader = 'defaultHeader';
+        $setHeaderFile = vars->{ce}->{webworkFiles}->{screenSnippets}->{setHeader};
+    } else {
+        $setHeaderFile = path(dirname($templateDir),'templates',$setHeader); 
+    }
     
+    debug $setHeaderFile;
+        
     my $hardcopyHeader = $globalSet->{hardcopy_header};
-    my $hardcopyHeaderFile = ($hardcopyHeader eq 'defaultHeader')? 
-                        vars->{ce}->{webworkFiles}->{hardcopySnippets}->{setHeader}: 
-                        path(dirname($templateDir),'templates',$hardcopyHeader); 
+    my $hardcopyHeaderFile; 
+    if(! defined($hardcopyHeader) || $hardcopyHeader eq ''){
+        $hardcopyHeader = 'defaultHeader'; 
+        $hardcopyHeaderFile = vars->{ce}->{webworkFiles}->{hardcopySnippets}->{setHeader};
+    } else {
+        $hardcopyHeaderFile = path(dirname($templateDir),'templates',$hardcopyHeader); 
+    }
+
     my $headerContent = params->{set_header_content}; 
-    
     my $hardcopyHeaderContent = params->{hardcopy_header_content};
 
     if(request->is_put()){
-        write_file($setHeaderFile,params->{set_header_content});
-        write_file($hardcopyHeaderFile,params->{hardcopy_header_content});
+        # first determine if the header files are global or local
+        if($setHeader ne 'defaultHeader'){
+            write_file($setHeaderFile,params->{set_header_content});
+        }
+        if($hardcopyHeader ne 'defaultHeader'){
+            write_file($hardcopyHeaderFile,params->{hardcopy_header_content});
+        }
     }
     
     $headerContent = read_file_content($setHeaderFile);
@@ -1163,9 +1178,12 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
         user=>vars->{db}->getUser(session->{user}),
         set=>$mergedSet,
         problem=>fake_problem(vars->{db}) };
+        
+    
     
 	# check to see if the problem_path is defined
     $renderParams->{problem}->{source_file} = $setHeaderFile;
+    
     my $ren = render(vars->{ce},$renderParams);
     my $setHeaderHTML = $ren->{text};
     $renderParams->{problem}->{source_file} = $hardcopyHeaderFile;

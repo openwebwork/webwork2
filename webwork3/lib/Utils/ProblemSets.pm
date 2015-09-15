@@ -130,6 +130,7 @@ sub getUserSet{
     my ($db,$user_id,$set_id) = @_;
     
     my $mergedSet = $db->getMergedSet($user_id,$set_id);
+    
     $mergedSet->{_id} = $mergedSet->{set_id} . ":" . $mergedSet->{user_id};
 
     return convertObjectToHash($mergedSet,\@boolean_set_props);
