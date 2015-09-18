@@ -143,7 +143,7 @@
   <table class="table table-condensed table-bordered"><tbody>
 <tr class="hidden path-row"><td>Problem Path:</td><td colspan="3">
 <input type="text" class="problem-path form-control"></td>
-<td>Seed:</td><td class="seed"><%if(problem_seed){ print(problem_seed);} %></td></tr>
+<td>Seed:</td><td class="seed"></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
 <tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
 <td>Level:</td><td class="level-tag"></td></tr>

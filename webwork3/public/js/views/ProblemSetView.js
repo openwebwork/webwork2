@@ -15,7 +15,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
             // this is where problems are placed upon delete, so the delete can be undone. 
             this.deletedProblems = new ProblemList(); 
 
-            this.set({problem_set_view: this});
+            this.set({problem_set_view: this, page_size: -1});
         },
         render: function () {
           ProblemListView.prototype.render.apply(this);  
@@ -73,10 +73,10 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
             var viewToRemove = this.problemViews.splice(index,1);
             this.problemSet.deleteProblem(_prob);
             viewToRemove[0].remove();
-            _(this.problemViews).each(function(pv,i){
+            /*_(this.problemViews).each(function(pv,i){
                     pv.model.set({problem_id: (i+1), _id: self.problemSet.get("set_id")+":"+(i+1)});
                     pv.$el.data("id",self.problemSet.get("set_id")+":"+(i+1));
-                });
+                }); */
         },
         undoDelete: function(){
             if (this.deletedProblems.length>0){
@@ -108,7 +108,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                 var attrs = _.extend({},prob,{problem_id: (i+1),
                                               _id: self.model.get("set_id") + ":" + (i+1),
                                              _old_problem_id: id});
-                newProblemViews[i] = self.problemViews[id-1]; 
+                newProblemViews[i] = _(self.problemViews).find(function(pv) { return pv.model.get("problem_id")==id});
                 newProblemViews[i].model.set(attrs,{silent: true});
                 newProblemViews[i].$el.data("id",self.problemSet.get("set_id")+":"+(i+1));
             }); 

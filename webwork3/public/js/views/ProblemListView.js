@@ -25,8 +25,8 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             _(this).extend(_(options).pick("settings","problemSet","messageTemplate"));
             this.problems = options.problems ? options.problems : new ProblemList();
             this.problemSet = options.problemSet; 
-            this.pageSize = 10; // this should be a parameter.
-            this.pageRange = _.range(this.pageSize);
+            this.page_size = 10; // this should be a parameter.
+            this.pageRange = _.range(this.page_size);
             this.currentPage = 0;
             this.show_tags = false;
             this.show_path = false; 
@@ -40,18 +40,19 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                     this.problems.problemSet = opts.problemSet;
                 }
             }
-            _(this).extend(_(opts).pick("problem_set_view"));
-            if(opts.current_page){
-                this.currentPage = opts.current_page || 0;
+            _(this).extend(_(opts).pick("problem_set_view","show_path","show_tags","page_size"));
+            if(_.isUndefined(this.currentPage)){
+                this.currentPage = 0;
             }
-            if(opts.show_path|| opts.show_tags){
-                _(this).extend(_(opts).pick("show_path","show_tags"))
-            }
+
             this.viewAttrs.type = opts.type || "set";
             this.viewAttrs.displayMode = this.settings.getSettingValue("pg{options}{displayMode}");
-            // start with showing 10 (pageSize) problems
-            this.maxProblemIndex = (this.problems.length > this.pageSize)?
-                    this.pageSize : this.problems.length;
+            // start with showing 10 (page_size) problems
+            this.maxProblemIndex = (this.problems.length > this.page_size)?
+                    this.page_size : this.problems.length;
+            if(this.page_size <0) {
+                this.maxProblemIndex = this.problems.length;
+            }
             this.pageRange = _.range(this.maxProblemIndex);
             this.problemViews = [];
             return this;
@@ -124,7 +125,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         updatePaginator: function() {
             // render the paginator
 
-            this.maxPages = Math.ceil(this.problems.length / this.pageSize);
+            this.maxPages = Math.ceil(this.problems.length / this.page_size);
             var start =0,
                 stop = this.maxPages;
             if(this.maxPages>8){
@@ -171,9 +172,9 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
         lastPage: function() {this.gotoPage(this.maxPages-1);},
         gotoPage: function(arg){
             this.currentPage = /^\d+$/.test(arg) ? parseInt(arg,10) : parseInt($(arg.target).text(),10)-1;
-            this.pageRange = _.range(this.currentPage*this.pageSize,
-                (this.currentPage+1)*this.pageSize>this.problems.size()? this.problems.size():(this.currentPage+1)*this.pageSize);
-            
+            this.pageRange = this.page_size >0 ? _.range(this.currentPage*this.page_size,
+                (this.currentPage+1)*this.page_size>this.problems.size()? this.problems.size():(this.currentPage+1)*this.page_size)
+                    : _.range(this.problems.length);
             this.updatePaginator();       
             this.renderProblems();
             this.$(".problem-paginator button").removeClass("current-page");
@@ -193,7 +194,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             return this;
         },
         addProblemView: function (prob){
-            if(this.pageRange.length < this.pageSize){
+            if(this.pageRange.length < this.page_size){
                 var probView = new ProblemView({model: prob, problem_set_view: this.problem_set_view,
                                                 type: this.type, viewAttrs: this.viewAttrs});
                 var numViews = this.problemViews.length; 
