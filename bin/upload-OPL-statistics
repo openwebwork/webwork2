@@ -25,6 +25,7 @@ use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 
 use Net::Domain;
+use String::ShellQuote;
 
 my $ce = new WeBWorK::CourseEnvironment({
 					 webwork_dir => $ENV{WEBWORK_ROOT},});
@@ -41,6 +42,10 @@ my $time = time();
 my $output_file = "$domainname-$time-opl.sql";
 
 print "Dumping local OPL statistics\n";
+
+$dbuser = shell_quote($dbuser);
+$dbpass = shell_quote($dbpass);
+$db = shell_quote($db);
 
 `mysqldump --host=$host --user=$dbuser --password=$dbpass $db OPL_local_statistics > $output_file`;
 
