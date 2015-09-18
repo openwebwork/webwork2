@@ -50,7 +50,7 @@ function readfromtaxo(who, valarray) {
 	}
   }
   if(failed) {
-    alert('Provided value is not in my taxonomy.');
+    alert('Provided value "' + valarray[0] + '" is not in my subject taxonomy. ' );
 	return([]);
   }
   if(who == 'chapters') {
@@ -65,7 +65,7 @@ function readfromtaxo(who, valarray) {
 	}
   }
   if(failed) {
-    alert('Provided value is not in my taxonomy.');
+    alert('Provided value "'+ valarray[1] + '" is not in my chapter taxonomy. ' );
 	return([]);
   }
   if(who == 'sections') {

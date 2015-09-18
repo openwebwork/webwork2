@@ -29,7 +29,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::Utils qw(wwRound);
+use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status wwRound);
 #use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
@@ -751,6 +751,20 @@ sub displaySets {
 	my $problem_header = '';
 	# DBFIXME sort in database
 	my @list_problems = sort {$a<=> $b } $db->listGlobalProblems($setName );
+
+	# for a jitar set we only get the top level problems
+	if($GlobalSet->assignment_type eq 'jitar') {
+	    my @topLevelProblems; 
+	    
+	    foreach my $id (@list_problems) {
+		my @seq = jitar_id_to_seq($id);
+		push @topLevelProblems, $seq[0] if ($#seq == 0);
+	    }
+	    
+	    @list_problems = @topLevelProblems;
+	}	    
+
+
 	$problem_header = '<pre>'.join("", map {&threeSpaceFill($_)}  @list_problems  ).'</pre>';
 
 # changes for gateways/versioned sets here.  in this case we allow instructors
@@ -1042,11 +1056,18 @@ sub grade_set {
 		}
 		
 		
+	# for jitar sets we only use the top level problems
+	if ($set->assignment_type && $set->assignment_type eq 'jitar') {
+	    my @topLevelProblems;
+	    foreach my $problem (@problemRecords) {
+		my @seq = jitar_id_to_seq($problem->problem_id);
+		push @topLevelProblems, $problem if ($#seq == 0);
+	    }
+	    
+	    @problemRecords = @topLevelProblems;
+	}
 		
-		
-		
-		
-		debug("End collecting problems for set $setName");
+	debug("End collecting problems for set $setName");
 
 	####################
 	# Resort records
@@ -1088,12 +1109,17 @@ sub grade_set {
 				next;
 			}
 			
-		    $status           = $problemRecord->status || 0;
+			$status           = $problemRecord->status || 0;
+
+			if ($set->assignment_type eq 'jitar') {
+			    $status = jitar_problem_adjusted_status($problemRecord,$db);
+			}
+
 			my $attempted     = $problemRecord->attempted;
 			my $num_correct   = $problemRecord->num_correct || 0;
 			my $num_incorrect = $problemRecord->num_incorrect   || 0;
 			$num_of_attempts  = $num_correct + $num_incorrect;
-			
+	
 #######################################################
 			# This is a fail safe mechanism that makes sure that
 			# the problem is marked as attempted if the status has

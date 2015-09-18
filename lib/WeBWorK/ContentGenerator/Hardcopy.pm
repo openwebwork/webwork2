@@ -39,7 +39,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers is_restricted after/;
+use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -988,10 +988,9 @@ sub write_set_tex {
 		@problemIDs = @newOrder;
 	}
 		    
-	
 	# write set header
 	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header); # 0 => pg file specified directly
-	
+       
 	# write each problem
 	# for versioned problem sets (gateway tests) we like to include 
 	#   problem numbers
@@ -1181,7 +1180,18 @@ sub write_problem_tex {
 
 	print $FH "{\\bf Problem $versioned.}\n" 
 		if ( $versioned && $MergedProblem->problem_id != 0 );
-	print $FH $pg->{body_text};
+
+	my $body_text = $pg->{body_text};
+
+	# Use the pretty problem number if its a jitar problem
+	if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
+	    my $id = $MergedProblem->problem_id;
+	    my $prettyID = join('.',jitar_id_to_seq($id));
+	    
+	    $body_text =~ s/$id/$prettyID/;
+	}
+
+	print $FH $body_text;
 
 	my @ans_entry_order = defined($pg->{flags}->{ANSWER_ENTRY_ORDER}) ? @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} : ( );
 
