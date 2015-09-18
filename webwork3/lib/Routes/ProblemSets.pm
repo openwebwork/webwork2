@@ -436,7 +436,7 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
     # check to see if the user has already been assigned and skip the addition if exists already.
 
     my %allparams = request->params; 
-    return putUserSet(vars->{db},vars->{ce},\%allparams);
+    return putUserSet(vars->{db},\%allparams);
 };
 
 
