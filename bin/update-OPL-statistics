@@ -88,7 +88,7 @@ CREATE TABLE `OPL_local_statistics` (
   `students_attempted` int(11) DEFAULT NULL,
   `average_attempts` float DEFAULT NULL,
   `average_status` float DEFAULT NULL,
-  PRIMARY KEY (`source_file`(100))
+  PRIMARY KEY (`source_file`(255))
 )
 EOS
 
