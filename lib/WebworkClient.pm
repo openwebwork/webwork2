@@ -549,6 +549,7 @@ sub formatRenderedProblem {
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
+	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
         # Can be added to the request as a parameter.  Adds a prefix to the 
@@ -565,10 +566,10 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	displayMode            => $self->{displayMode},
 	imgGen                 => $imgGen,
 	ce                     => '',	#used only to build the imgGen
-	showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
-	showAttemptResults     => ($submitMode or $showCorrectMode),
+	showAttemptPreviews    => ($previewMode or $checkMode or $submitMode or $showCorrectMode),
+	showAttemptResults     => ($checkMode or $submitMode or $showCorrectMode),
 	showCorrectAnswers     => ($showCorrectMode),
-	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
+	showMessages           => ($previewMode or $checkMode or $submitMode or $showCorrectMode),
 );
 
 my $answerTemplate = $tbl->answerTemplate;
@@ -581,7 +582,7 @@ $tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 # render equation images
 
 if ($submitMode && $problemResult) {
-    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%.');
     if ($problemResult->{msg}) {
          $scoreSummary .= CGI::p($problemResult->{msg});
     }
@@ -589,6 +590,13 @@ if ($submitMode && $problemResult) {
     $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
     $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
 }
+
+if ($checkMode && $problemResult) {
+    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%.');
+    $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+    $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+}
+
 
 # This stuff is put here because eventually we will add locale support so the 
 # text will have to be done server side. 
@@ -736,9 +744,8 @@ $scoreSummary
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
 		   <p>
-		      <input type="submit" name="preview"  value="Preview" /> 
-			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWgrade" value="Show correct answer"/>
+                      <input type="submit" name="WWcheck" value="Check answer(s)"/> 
+		      <input type="submit" name="WWgrade" value="Show correct answer(s)"/>
 		   </p>
 
 	       </form>
