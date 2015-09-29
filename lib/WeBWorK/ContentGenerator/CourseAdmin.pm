@@ -1055,8 +1055,8 @@ sub rename_course_confirm {
 	my $dbLayoutName = $ce->{dbLayoutName};
 	my $db = new WeBWorK::DB($ce->{dbLayouts}->{$dbLayoutName});
 	my $oldDB =new WeBWorK::DB($ce2->{dbLayouts}->{$dbLayoutName});
-	my $rename_oldCourseTitle = $oldDB->getSettingValue('courseTitle');
-	my $rename_oldCourseInstitution = $oldDB->getSettingValue('courseInstitution');
+	my $rename_oldCourseTitle = $oldDB->getSettingValue('courseTitle')//'""';
+	my $rename_oldCourseInstitution = $oldDB->getSettingValue('courseInstitution')//'""';
 	
 	my ($change_course_title_str, $change_course_institution_str)=("");
 	if ( $rename_newCourseTitle_checkbox) {
@@ -1087,9 +1087,9 @@ sub rename_course_confirm {
 
 		print CGI::div({style=>"text-align: left"},
 			    CGI::hr(),			    
-			    CGI::h4("Make these changes in  course $rename_oldCourseID"),
-			    CGI::div($change_course_title_str),
-			    CGI::div($change_course_institution_str),
+			    CGI::h4("Make these changes in  course: $rename_oldCourseID"),
+			    CGI::p($change_course_title_str),
+			    CGI::p($change_course_institution_str),
 				CGI::submit(-name=>"decline_retitle_course", -value=>"Don't make changes"),
 				"&nbsp;",
 				CGI::submit(-name=>"confirm_retitle_course", -value=>"Make changes") ,
@@ -1294,7 +1294,10 @@ sub rename_course_validate {
 	if ($rename_newCourseInstitution eq "" and $rename_newCourseInstitution_checkbox eq 'on')  {
 		push @errors, "You must specify a new institution for the course.";
 	}
-
+	unless ($rename_newCourseID or $rename_newCourseID_checkbox or $rename_newCourseTitle_checkbox ) {
+		push @errors, "No changes specified.  You must mark the 
+		checkbox of the item(s) to be changed and enter the change data.";
+	}
 	
 	return @errors;
 }
