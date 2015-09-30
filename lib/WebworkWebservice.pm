@@ -150,6 +150,9 @@ sub initiate_session {
 	
 	my $rh_input     = $args[0];
 	# print STDERR "input from the form is ", format_hash_ref($rh_input), "\n";
+###########################################################################
+# identify course 
+###########################################################################
 	
 	# obtain input from the hidden fields on the HTML page
 	my $user_id      = $rh_input ->{userID};
@@ -229,6 +232,9 @@ if ($UNIT_TESTS_ON) {
 		}
 		die "Unknown exception when trying to verify authentication. $@";
 	};
+###########################################################################
+# security check -- check that the user is in fact at least a proctor in the course
+###########################################################################
 	
 	$self->{authenOK}  = $authenOK;
 	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login");
@@ -250,13 +256,6 @@ if ($UNIT_TESTS_ON) {
 }
 
 
-
-
-
-###########################################################################
-# identify course 
-###########################################################################
-
 sub create_course_environment {
 	my $self = shift;
 	my $courseName = shift;
@@ -268,9 +267,6 @@ sub create_course_environment {
 	return ($ce);
 }
 
-###########################################################################
-# security check -- check that the user is in fact a professor in the course
-###########################################################################
 sub ce {
 	my $self = shift;
 	$self->{ce};
@@ -328,6 +324,14 @@ sub do {   # process and return result
     $result->{courseID}     = $self->{courseName};
 	return($result);
 }
+
+
+
+
+
+
+
+
 #  respond to xmlrpc requests
 #  Add routines for handling errors if the authentication fails or if the authorization is not appropriate.
 
@@ -706,12 +710,12 @@ sub updateSetting {
 	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
 }
 
-sub renderProblem2 {
-	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in);
-	return $self->do(WebworkWebservice::RenderProblem::renderProblem2($self,$in));	
-}
+# sub renderProblem2 {
+# 	my $class = shift;
+# 	my $in = shift;
+# 	my $self = $class->initiate_session($in);
+# 	return $self->do(WebworkWebservice::RenderProblem::renderProblem2($self,$in));	
+# }
 
 
 
@@ -757,25 +761,25 @@ package WWd;
 
 ############utilities
 
-sub echo { 
-    return "WWd package ".join("|",("begin ", WebworkWebservice::pretty_print_rh(\@_), " end") );
-}
-
-sub listLib {
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-    my $in = shift;
-  	return( Webwork::listLib($in) );
-}
-sub renderProblem {
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-    my $in = shift;
-  	return( Filter::filterObject( Webwork::renderProblem($in) ) );
-}
-sub readFile {
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-    my $in = shift;
-  	return( Webwork::readFile($in) );
-}
+# sub echo { 
+#     return "WWd package ".join("|",("begin ", WebworkWebservice::pretty_print_rh(\@_), " end") );
+# }
+# 
+# sub listLib {
+#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+#     my $in = shift;
+#   	return( Webwork::listLib($in) );
+# }
+# sub renderProblem {
+#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+#     my $in = shift;
+#   	return( Filter::filterObject( Webwork::renderProblem($in) ) );
+# }
+# sub readFile {
+#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+#     my $in = shift;
+#   	return( Webwork::readFile($in) );
+# }
 # sub hello {
 # 	shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 # 	print "Receiving request for hello world\n";
