@@ -41,10 +41,18 @@ BEGIN {
              It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
                 unless exists $ENV{WEBWORK_ROOT};
 	# Unused variable, but define it twice to avoid an error message.
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = '';
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT};
+	$WeBWorK::Constants::PG_DIRECTORY      = "$ENV{WEBWORK_ROOT}/../pg/";
+	unless (-r $WeBWorK::Constants::WEBWORK_DIRECTORY ) {
+		die "Cannot read webwork root directory at $WeBWorK::Constants::WEBWORK_DIRECTORY";
+	}
+	unless (-r $WeBWorK::Constants::PG_DIRECTORY ) {
+		die "Cannot read webwork pg directory at $WeBWorK::Constants::PG_DIRECTORY";
+	}
 }
-use lib "$ENV{WEBWORK_ROOT}/lib";
+
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
+use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use Crypt::SSLeay;  # needed for https
 use WebworkClient;
 use MIME::Base64 qw( encode_base64 decode_base64);
@@ -72,7 +80,7 @@ my $use_site;
 
 # credentials file location -- search for one of these files 
 my $credential_path;
-my @path_list = ('.ww_credentials', "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials");
+my @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials',);
 # Place a credential file containing the following information at one of the locations above.
 # 	%credentials = (
 # 			userID          => "my login name for the webwork course",
@@ -236,21 +244,21 @@ our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
 	displayMode            => DISPLAYMODE(),
-	site_password          =>  $credentials{site_password},
+	site_password          =>  $XML_PASSWORD//'',
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
-	session_key            =>  $credentials{session_key},
+	session_key            =>  $credentials{session_key}//'',
 );
  
  $xmlrpc_client->encodeSource($source);
  
  my $input = { 
-		userID      	=> $credentials{userID}||'',
-		session_key	 	=> $credentials{session_key}||'',
-		courseID   		=> $credentials{courseID}||'',
-		courseName   	=> $credentials{courseID}||'',
-		password     	=> $credentials{password}||'',	
-		site_password   => $credentials{site_password}||'',
+		userID      	=> $credentials{userID}//'',
+		session_key	 	=> $credentials{session_key}//'',
+		courseID   		=> $credentials{courseID}//'',
+		courseName   	=> $credentials{courseID}//'',
+		password     	=> $credentials{password}//'',	
+		site_password   => $XML_PASSWORD//'',
 		envir           => $xmlrpc_client->environment(),
 		                 
  };
@@ -265,7 +273,7 @@ our $result;
 if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
     print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
     $output = "1\n";
-	$output = pretty_print( $result );
+	$output = pretty_print_rh( $result );
 } else {
     $output = "0\n";
     print "\n\n ERRORS in renderProblem \n\n";
@@ -313,7 +321,7 @@ system(DISPLAY_COMMAND().TEMPOUTPUTFILE());
 # end input/output section
 ##################################################
 
-sub pretty_print { 
+sub pretty_print_rh { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 	my $rh = shift;
 	my $indent = shift || 0;
@@ -331,7 +339,7 @@ sub pretty_print {
 	    $out .= "{\n";
 	    $indent++;
  		foreach my $key (sort keys %{$rh})  {
- 			$out .= "  "x$indent."$key => " . pretty_print( $rh->{$key}, $indent ) . "\n";
+ 			$out .= "  "x$indent."$key => " . pretty_print_rh( $rh->{$key}, $indent ) . "\n";
  		}
  		$indent--;
  		$out .= "\n"."  "x$indent."}\n";
@@ -339,7 +347,7 @@ sub pretty_print {
  	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
  	    $out .= " ( ";
  		foreach my $elem ( @{$rh} )  {
- 		 	$out .= pretty_print($elem, $indent);
+ 		 	$out .= pretty_print_rh($elem, $indent);
  		
  		}
  		$out .=  " ) \n";
