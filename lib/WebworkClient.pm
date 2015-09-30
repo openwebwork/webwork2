@@ -617,15 +617,16 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 
 
 <html>
-<head><link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
-
+<head>
+<base href="$XML_URL">
+<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+<link href="$XML_URL/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="$XML_URL/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
+<link rel="stylesheet" type="text/css" href="$XML_URL/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="$XML_URL/webwork2_files/themes/math4/math4.css"/>
+<link href="$XML_URL/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
 
 <!-- JS Loads -->
 <script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
@@ -644,12 +645,12 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
+
+<title>$XML_URL WeBWorK Editor using host: $XML_URL, course: $courseID format: standard</title>
 </head>
 <body>
 
-<h2> WeBWorK Editor using host: $XML_URL,  format: standard</h2>
+<h2> WeBWorK Editor using host: $XML_URL, course: $courseID format: standard</h2>
 		    $answerTemplate
 		    $color_input_blanks_script
 		    <form action="$FORM_ACTION_URL" method="post">
@@ -682,6 +683,9 @@ $PG_warning_messages;
 $debug_messages
 <h3> internal errors </h3>
 $internal_debug_messages
+<div id="footer">
+WeBWorK &copy 1996-2016 | host: $XML_URL | course: $courseID | format: standard | theme: math4
+</div>
 
 </body>
 </html>
@@ -693,6 +697,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <!DOCTYPE html>
 <html>
 <head>
+<base href="$XML_URL">
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 
 <!-- CSS Loads -->
@@ -720,7 +725,6 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
 </head>
 <body>
@@ -756,6 +760,12 @@ $scoreSummary
 	       </form>
 </div>
 </div></div>
+
+<div id="footer">
+WeBWorK &copy 1996-2016 | host: $XML_URL | course: $courseID | format: simple | theme: math4
+</div>
+
+
 </body>
 </html>
 
@@ -766,6 +776,7 @@ $self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
 <!DOCTYPE html>
 <html>
 <head>
+<base href="$XML_URL">
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 
 <!-- CSS Loads -->
@@ -796,7 +807,6 @@ $self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<base href="$XML_URL">
 <title>$XML_URL WeBWorK Editor using host: $XML_URL, format: sticky seed: $problemSeed</title>
 </head>
 <body>
@@ -833,6 +843,9 @@ $localStorageMessages
 </div>
 </div>
 </div>
+<div id="footer">
+WeBWorK &copy 1996-2016 | host: $XML_URL | course: $courseID | format: sticky | theme: math4
+</div>
 <!-- Activate local storage js -->
 <script type="text/javascript">WWLocalStorage();</script>
 </body>
@@ -846,11 +859,11 @@ qq{
 	<html>
 	<head>
 	<base href="$XML_URL">
-	<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: debug</title>
+	<title>$XML_URL WeBWorK Editor using host: $XML_URL, course: $courseID format: debug</title>
 	</head>
 	<body>
 			
-	<h2> WeBWorK Editor using host: $XML_URL,  format: debug</h2>
+	<h2> WeBWorK Editor using host: $XML_URL,  course: $courseID format: debug</h2>
 }.  pretty_print($self) . 
 qq{		   
 </body>
