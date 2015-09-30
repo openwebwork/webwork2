@@ -153,8 +153,12 @@ sub renderProblem {
 	warn "Unable to create course $courseName. Error: $@" if $@;
 	# my $user = $rh->{user};
 	# 	$user    = 'practice1' unless defined $user and $user =~/\S/;
-
-	my $user = $self->{user_id};
+	my $user;
+	if (defined $self->{user_id}) {
+		$user = $self->{user_id};
+	} else {
+		warn "RenderProblem.pm:  user_id is not defined userID is = ", $self->{userID};
+	}
 	
 ###########################################
 # Authenticate this request -- done by initiate  in WebworkWebservice 
@@ -218,6 +222,7 @@ sub renderProblem {
 		print STDERR "RenderProblem.pm:  user = $user\n";
 		print STDERR "RenderProblem.pm:  courseName = $courseName\n";
 		print STDERR "RenderProblem.pm:  effectiveUserName = $effectiveUserName\n";
+		print STDERR "environment fileName", $rh->{envir}->{fileName},"\n";
 	}
 	
 	#################################################################
@@ -350,7 +355,11 @@ sub renderProblem {
   		$problem_source =~ tr /\r/\n/;
 		$r_problem_source =\$problem_source;
 		# warn "source included in request";
-		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
+		if (defined $rh->{envir}->{fileName} and not $rh->{envir}->{fileName}=~/WebworkClient.pm/)  {
+			$problemRecord->source_file($rh->{envir}->{fileName});
+		} else {
+			$problemRecord->source_file($rh->{sourceFilePath});
+		} 
   	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =~/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
   	    warn "reading source from ", $rh->{sourceFilePath} if $UNIT_TESTS_ON;
@@ -386,7 +395,8 @@ sub renderProblem {
         # if reference is not defined then the path is obtained 
         # from the problem object.
         permissionLevel => $rh->{envir}->{permissionLevel} || 0,
-	effectivePermissionLevel => $rh->{envir}->{effectivePermissionlevel} || $rh->{envir}->{permissionLevel} || 0,
+		effectivePermissionLevel => $rh->{envir}->{effectivePermissionlevel} 
+		                            || $rh->{envir}->{permissionLevel} || 0,
 	};
 	
 	my $formFields = $rh->{envir}->{inputs_ref};
