@@ -277,7 +277,7 @@ if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
 } else {
     $output = "0\n";
     print "\n\n ERRORS in renderProblem \n\n";
-	$output = $xmlrpc_client->{output};  # error report
+	$output = $xmlrpc_client->return_object;  # error report
 }
 
 local(*FH);

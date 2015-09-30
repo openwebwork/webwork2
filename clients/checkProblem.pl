@@ -279,7 +279,7 @@ if (@ARGV) {
     $xmlrpc_client->encodeSource($source);
     
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
-	        $output = $xmlrpc_client->{output};
+	        $output = $xmlrpc_client->return_object;
 	    if (not defined $output) {  #FIXME make sure this is the right error message if site is unavailable
 	    	$return_string = "Could not connect to rendering site";
 	    } elsif (defined($output->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {

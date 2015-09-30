@@ -315,7 +315,7 @@ sub do {   # process and return result
            # make sure that credentials are returned
            # for every call
            # $result -> xmlrpcCall(command, in);
-           # $result->{output}->{foo} is defined for foo = courseID userID and session_key
+           # $result->return_object->{foo} is defined for foo = courseID userID and session_key
 	my $self = shift;
 	my $result = shift;
 	
@@ -324,11 +324,6 @@ sub do {   # process and return result
     $result->{courseID}     = $self->{courseName};
 	return($result);
 }
-
-
-
-
-
 
 
 
@@ -710,12 +705,6 @@ sub updateSetting {
 	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
 }
 
-# sub renderProblem2 {
-# 	my $class = shift;
-# 	my $in = shift;
-# 	my $self = $class->initiate_session($in);
-# 	return $self->do(WebworkWebservice::RenderProblem::renderProblem2($self,$in));	
-# }
 
 
 

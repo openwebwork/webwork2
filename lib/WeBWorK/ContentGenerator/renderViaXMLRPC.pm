@@ -149,7 +149,7 @@ sub pre_header_initialize {
     #######################
     my $xmlrpc_client = new WebworkClient;
 
-	$xmlrpc_client->{encodedSource}   = $r->param('problemSource') ; # this source has already been encoded
+	$xmlrpc_client -> encoded_source($r->param('problemSource')) ; # this source has already been encoded
 	$xmlrpc_client->url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
 	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
@@ -168,14 +168,14 @@ sub pre_header_initialize {
 	##############################
 	# xmlrpc_client calls webservice to have problem rendered
 	#
-	# and stores the resulting HTML output in $self->{output}
+	# and stores the resulting HTML output in $self->return_object
 	# from which it will eventually be returned to the browser
 	#
 	##############################
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $xmlrpc_client->{inputs_ref}) )    {
-			$self->{output} = $xmlrpc_client->formatRenderedProblem;
+			$self->{output} = $xmlrpc_client->formatRenderedProblem ;
 	} else {
-		$self->{output} = $xmlrpc_client->{output};  # error report
+		$self->{output}= $xmlrpc_client->return_object;  # error report
 	}
 	
 	################################
