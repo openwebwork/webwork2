@@ -75,8 +75,8 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 my $use_site;
 # select a rendering site  
  #$use_site = 'test_webwork';    # select a rendering site 
- #$use_site = 'local';           # select a rendering site 
- $use_site = 'hosted2';        # select a rendering site 
+ $use_site = 'local';           # select a rendering site 
+ #$use_site = 'hosted2';        # select a rendering site 
 
 # credentials file location -- search for one of these files 
 my $credential_path;
@@ -228,18 +228,28 @@ our $source;
 our $rh_result;
 
 # set fileName path to path for current file (this is a best guess -- may not always be correct)
-my $fileName = $ARGV[0]; # should this be ARGV[0]?
+my $fileName = $ARGV[0]; 
 
 # filter mode  main code
-
-{
+die "Unable to read file $fileName " unless -r $fileName;
+eval {
 	local($/);
 	$source   = <>; #slurp standard input
 	#print $source;  # return input to BBedit
-}
+};
+die "Something is wrong with the contents of $fileName" if $@;
+
+# adjust fileName so that it is relative to the rendering course directory
+#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
+$fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
+# webwork-open-problem-library/OpenProblemLibrary
+print "fileName changed to $fileName\n" if $UNIT_TESTS_ON;
+#print "source $source\n" if $UNIT_TESTS_ON;
 ############################################
 # Build client
 ############################################
+
+
 our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
@@ -248,9 +258,11 @@ our $xmlrpc_client = new WebworkClient (
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
 	session_key            =>  $credentials{session_key}//'',
+	sourceFilePath         =>  $fileName,
 );
  
  $xmlrpc_client->encodeSource($source);
+ print "\nencoded source is\n", $xmlrpc_client->encoded_source, "\n" if $UNIT_TESTS_ON;
  
  my $input = { 
 		userID      	=> $credentials{userID}//'',
@@ -260,25 +272,32 @@ our $xmlrpc_client = new WebworkClient (
 		password     	=> $credentials{password}//'',	
 		site_password   => $XML_PASSWORD//'',
 		envir           => $xmlrpc_client->environment(),
-		                 
  };
+		$input->{envir}->{fileName} = $fileName;
+		$input->{envir}->{sourceFilePath} = $fileName;
+		                 
 
 
 #$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
+$fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
+# webwork-open-problem-library/OpenProblemLibrary
+print "fileName changed to $fileName\n";
 $input->{envir}->{fileName} = $fileName;
-
+$input->{envir}->{sourceFilePath} = $fileName;
+$xmlrpc_client->{sourceFilePath}  = $fileName;
 #xmlrpcCall('renderProblem');
 our $output;
 our $result;
+print "input is $input" if $UNIT_TESTS_ON;
 if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
     print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
-	$output = $xmlrpc_client->formatRenderedProblem;
 	###HACK fixme
     print pretty_print_rh($result) if $UNIT_TESTS_ON;
+    $output = $xmlrpc_client->formatRenderedProblem;
 
 } else {
     print "\n\n ERRORS in renderProblem \n\n";
-	$output = $xmlrpc_client->{output};  # error report
+	$output = $xmlrpc_client->return_object;  # error report
 }
 
 local(*FH);
