@@ -142,13 +142,14 @@ sub new {
     my $invocant = shift;
     my $class = ref $invocant || $invocant;
 	my $self = {
-		output   		=> '',
+		return_object   => {},
+		request_object  => {},
 		error_string    => '',
 		encodedSource 	=> '',
 		url             => '',
 		password        => '',
 		site_password   => '',
-		course          => '',
+		courseID        => '',
 		displayMode     => '',
 		inputs_ref      => {		 AnSwEr0001 => '',
 				 					 AnSwEr0002 => '',
@@ -178,7 +179,7 @@ sub xmlrpcCall {
 	$command   = 'listLibraries' unless defined $command;
 	  my $input2 = $self->setInputTable();
 	  $input = {%$input2, %$input};
-	
+	$self->request_object($input);   # store the request object for later
 	my $requestResult; 
 	my $transporter = TRANSPORT_METHOD->new;
 
@@ -191,10 +192,11 @@ sub xmlrpcCall {
 	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
 	# turn of verification of the ssl cert 
 	$transporter->transport->ssl_opts(verify_hostname=>0,
-	    SSL_verify_mode => 'SSL_VERIFY_NONE');
+	    							SSL_verify_mode => 'SSL_VERIFY_NONE'
+	);
 			
     if ($UNIT_TESTS_ON) {
-        print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->{url},"\n";
+        print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->url,"\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %$input),"\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
@@ -216,8 +218,10 @@ sub xmlrpcCall {
 	  	}
 
 		#print  pretty_print($result->result()),"\n";  #$result->result()
-		$self->{output}= $result->result();
-		return $result->result();  # would it be better to return the entire $result?
+		# print "\n store result ", ref($result), " ",keys %{$result->result()};
+		$self->return_object($result->result());
+		# print "\n retrieve result ",  keys %{$self->return_object};
+		return $self->return_object; # $result->result();  # would it be better to return the entire $result?
 	  } else {
 		my $err_string = 'Error message for '.
 		  join( ' ',
@@ -230,8 +234,8 @@ sub xmlrpcCall {
 		  );
 
 		  print STDERR $err_string;
-		  $self->{output}= $result->result();
-		  $self->{error_string}= $err_string;
+		  $self->return_object($result->result());
+		  $self->error_string($err_string);
 		  return $result;
 	  }
 }
@@ -267,13 +271,14 @@ sub jsXmlrpcCall {
 	  	my $rh_result = $result->result();
 	  	print "\n success \n";
 	    print pretty_print($rh_result->{'ra_out'});
-		$self->{output} = $rh_result; #$self->formatRenderedProblem($rh_result);
+		$self->return_object( $rh_result ); #$self->formatRenderedProblem($rh_result);
 		return 1; # success
 
 	  } else {
-		$self->{output} = 'Error from server: '. join( ",\n ",
+		$self->return_object( 'Error from server: '. join( ",\n ",
 		  $result->faultcode,
-		  $result->faultstring);
+		  $result->faultstring)
+		);
 		return 0; #failure
 	  }
 }
@@ -282,6 +287,30 @@ sub encodeSource {
 	my $self = shift;
 	my $source = shift||'';
 	$self->{encodedSource} =encode_base64($source);
+}
+sub encoded_source {
+	my $self = shift;
+	my $source = shift;
+	$self->{encodedSource} =$source if defined $source and $source =~/\S/; # source is non-empty
+	$self->{encodedSource};
+}
+sub request_object {   # in or input
+	my $self = shift;
+	my $object = shift;
+	$self->{request_object} =$object if defined $object and ref($object); # source is non-empty
+	$self->{request_object};
+}
+sub return_object {   # out
+	my $self = shift;
+	my $object = shift;
+	$self->{return_object} =$object if defined $object and ref($object); # source is non-empty
+	$self->{return_object};
+}
+sub error_string {   # out
+	my $self = shift;
+	my $string = shift;
+	$self->{error_string} =$string if defined $string and $string =~/\S/; # source is non-empty
+	$self->{error_string};
 }
 sub url {
 	my $self = shift;
@@ -329,7 +358,7 @@ sub pretty_print {    # provides html output -- NOT a method
 sub setInputTable_for_listLib {
 	my $self = shift;
 	my $out = {
-		pw          =>   $self->{password},
+#		pw          =>   $self->{password},
 		set         =>   'set0',
 		library_name =>  'Library',
 		command      =>  'all',
@@ -356,7 +385,7 @@ sub setInputTable {
 	}
 
 	my $out = {
-		pw          =>   $self->{site_password},
+#		pw          =>   $self->{site_password},  # seems to be deprecated
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
@@ -371,7 +400,7 @@ sub setInputTable {
 			num_of_incorrect_ans => 4,
 			recorded_score       => 1.0,
 		},
-		source                   => $self->{encodedSource},  #base64 encoded
+		source                   => $self->encoded_source,  #base64 encoded
 		
 		
 		
@@ -452,40 +481,40 @@ sub environment {
 	$envir;
 };
 
-sub formatAnswerRow {
-	my $self          = shift;
-	my $rh_answer     = shift;
-	my $answerNumber  = shift;
-	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
-	my $correctAnswer = $rh_answer->{correct_ans}||'';
-	my $ans_message   = $rh_answer->{ans_message}||'';
-	my $score         = ($rh_answer->{score}) ? 'Correct' : 'Incorrect';
-	my $row = qq{
-		<tr>
-		    <td>
-				Prob: $answerNumber
-			</td>
-			<td>
-				$answerString
-			</td>
-			<td>
-			    $score
-			</td>
-			<td>
-				Correct answer is $correctAnswer
-			</td>
-			<td>
-				<i>$ans_message</i>
-			</td>
-		</tr>\n
-	};
-	$row;
-}
+# sub formatAnswerRow {   #moved to attemptsTable object
+# 	my $self          = shift;
+# 	my $rh_answer     = shift;
+# 	my $answerNumber  = shift;
+# 	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
+# 	my $correctAnswer = $rh_answer->{correct_ans}||'';
+# 	my $ans_message   = $rh_answer->{ans_message}||'';
+# 	my $score         = ($rh_answer->{score}) ? 'Correct' : 'Incorrect';
+# 	my $row = qq{
+# 		<tr>
+# 		    <td>
+# 				Prob: $answerNumber
+# 			</td>
+# 			<td>
+# 				$answerString
+# 			</td>
+# 			<td>
+# 			    $score
+# 			</td>
+# 			<td>
+# 				Correct answer is $correctAnswer
+# 			</td>
+# 			<td>
+# 				<i>$ans_message</i>
+# 			</td>
+# 		</tr>\n
+# 	};
+# 	$row;
+# }
 	
 sub formatRenderedLibraries {
 	my $self 			  = shift;
-	#my @rh_result         = @{$self->{output}};  # wrap problem in formats
-	my %rh_result         = %{$self->{output}};
+	#my @rh_result         = @{$self->return_object};  # wrap problem in formats
+	my %rh_result         = %{$self->return_object};
 	my $result = "";
 	foreach my $key (sort  keys %rh_result) {
 		$result .= "$key";
@@ -496,19 +525,20 @@ sub formatRenderedLibraries {
 
 sub formatRenderedProblem {
 	my $self 			  = shift;
-	my $rh_result         = $self->{output}|| {};  # wrap problem in formats
-	my $problemText       = "No output from rendered Problem";
+	my $rh_result         = $self->return_object() || {};  # wrap problem in formats
+	my $problemText       = "No output from rendered Problem" unless $rh_result ;
+	#print "formatRenderedProblem text $rh_result = ",%$rh_result,"\n";
 	if (ref($rh_result) and $rh_result->{text} ) {
 		$problemText       =  $rh_result->{text};
 	} else {
-		$problemText       = "Unable to decode problem text\n".
+		$problemText       .= "Unable to decode problem text\n".
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}
 	my $problemHeadText = $rh_result->{header_text}//'';
 	my $rh_answers        = $rh_result->{answers}//{};
 	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
-	my $encodedSource     = $self->{encodedSource}//'';
+	my $encodedSource     = $self->encoded_source//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
 	#################################################
