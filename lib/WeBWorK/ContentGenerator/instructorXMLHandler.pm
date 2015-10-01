@@ -172,13 +172,16 @@ sub pre_header_initialize {
 	$xmlrpc_client->{form_action_url}= $FORM_ACTION_URL;
 	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
 	$xmlrpc_client->{user}          = 'xmluser';
-	$xmlrpc_client->{password}      = $XML_PASSWORD;
-	$xmlrpc_client->{course}        = $r->param('courseID');
+#	$xmlrpc_client->{password}      = $XML_PASSWORD;
+	$xmlrpc_client->{site_password} = $XML_PASSWORD;
+#	$xmlrpc_client->{course}        = $r->param('courseID');
+	$xmlrpc_client->{courseID}      = $r->param('courseID');
+
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 
 	my $input = {#can I just use $->param? it looks like a hash
 
-		    pw                      => $r->param('pw') ||undef,
+#		    pw                      => $r->param('pw') ||undef,
 		    session_key             => $r->param("session_key") ||undef,
 		    userID                  => $r->param("user") ||undef,
 		    library_name            => $r->param("library_name") ||undef,
@@ -290,16 +293,16 @@ sub pre_header_initialize {
 	##############################
 	# xmlrpc_client calls webservice with the requested command
 	#
-	# and stores the resulting XML output in $self->{output}
+	# and stores the resulting XML output in $self->{return_object}
 	# from which it will eventually be returned to the browser
 	#
 	##############################
 	#if ( $xmlrpc_client->jsXmlrpcCall($r->param("xml_command"), $input) ) {
 	#	print "tried to render a problem";
-		#$self->{output} = $xmlrpc_client->formatRenderedProblem;#not sure what to do here just yet.
+		#$self->{output} = ($xmlrpc_client->formatRenderedProblem); #not sure what to do here just yet.
 	#} else {
-	#	$self->{output} = $xmlrpc_client->{output};  # error report
-	#	print $xmlrpc_client->{output};
+	#	$self->{output} = ($xmlrpc_client->return_object);  # error report
+	#	print $xmlrpc_client->return_object;
 	#}
 	if($r->param('xml_command') eq "addProblem" || $r->param('xml_command') eq "deleteProblem"){
 		$input->{path} = $r->param('problemPath');
@@ -312,9 +315,8 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$self->{output}->{problem_out} = $xmlrpc_client->xmlrpcCall('renderProblem', $input);
-		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
+		my @params = join(" ", $r->param() ); # this is necessary to provide a list environment for $r->param
 		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
-		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$self->{output} = $xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
 	}
@@ -324,8 +326,8 @@ sub pre_header_initialize {
 
 sub standard_input {
 	my $out = {
-		pw            			=>   '',   # not needed
-		password      			=>   '',   # not needed
+#		pw            			=>   '',   # not needed
+		password      			=>   '',   # not needed  use site_password??
 		session_key             =>   '',
 		userID          		=>   '',   # not needed
 		set               		=>   '',
@@ -407,12 +409,12 @@ sub content {
    	my $self = shift;
 	
 
-	if ((ref($self->{output}) =~ /XMLRPC/ && $self->{output}->fault) || 
-	    (ref($self->{output}->{problem_out}) =~ /XMLRPC/ && 
-		 $self->{output}->{problem_out}->fault)) {
+	if ((ref($self->return_object) =~ /XMLRPC/ && $self->return_object->fault) || 
+	    (ref($self->return_object->{problem_out}) =~ /XMLRPC/ && 
+		 $self->return_object->{problem_out}->fault)) {
 
-	    my $result = $self->{output}->{problem_out} ? 
-		$self->{output}->{problem_out} : $self->{output};
+	    my $result = $self->return_object->{problem_out} ? 
+		$self->return_object->{problem_out} : $self->return_object;
 
 	    my $err_string = 'Error message for '.
 		join( ' ',
@@ -425,22 +427,22 @@ sub content {
 		  );
 	    
 	    die($err_string);
-	}elsif($self->{output}->{problem_out}){
-		print $self->{output}->{problem_out}->{text};
+	}elsif($self->return_object->{problem_out}){
+		print $self->return_object->{problem_out}->{text};
 	} else {
-		print '{"server_response":"'.$self->{output}->{text}.'",';
-		if($self->{output}->{ra_out}){
-			# print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
-			if (ref($self->{output}->{ra_out})) {
-				print '"result_data": ' . to_json($self->{output}->{ra_out}) .'}';
+		print '{"server_response":"'.$self->return_object->{text}.'",';
+		if($self->return_object->{ra_out}){
+			# print '"result_data":'.pretty_print_json($self->return_object->{ra_out}).'}';
+			if (ref($self->return_object->{ra_out})) {
+				print '"result_data": ' . to_json($self->return_object->{ra_out}) .'}';
 			} else {
-				print '"result_data": "' . $self->{output}->{ra_out} . '"}';
+				print '"result_data": "' . $self->return_object->{ra_out} . '"}';
 			}
 		} else {
 			print '"result_data":""}';
 		}
 	}
-	#print "".pretty_print_json($self->{output}->{ra_out});
+	#print "".pretty_print_json($self->return_object->{ra_out});
 }
 
 
