@@ -44,6 +44,7 @@ our @EXPORT_OK = qw(
 	listArchivedCourses
 	addCourse
 	renameCourse
+	retitleCourse
 	deleteCourse
 	archiveCourse
 	unarchiveCourse
@@ -340,6 +341,9 @@ sub addCourse {
 %options may also contain:
 
  skipDBRename => $skipDBRename,
+ courseTitle => $courseTitle
+ courseInstitution => $courseInstitution
+
 
 Rename the course named $courseID to $newCourseID.
 
@@ -486,12 +490,70 @@ sub renameCourse {
 	
 	unless ($skipDBRename) {
 		my $oldDB = new WeBWorK::DB($oldCE->{dbLayouts}{$dbLayoutName});
+		
 		my $rename_db_result = $oldDB->rename_tables($newCE->{dbLayouts}{$dbLayoutName});
 		die "$oldCourseID: course database renaming failed.\n" unless $rename_db_result;
+		#update title and institution
+		my $newDB = new WeBWorK::DB($newCE->{dbLayouts}{$dbLayoutName});
+		eval {
+			if (exists( $options{courseTitle}) and $options{courseTitle}) {
+				$newDB->setSettingValue('courseTitle',$options{courseTitle});
+			}
+			if (exists( $options{courseInstitution}) and $options{courseInstitution}) {
+				$newDB->setSettingValue('courseInstitution',$options{courseInstitution});
+			}
+		};  warn "Problems from resetting course title and institution = $@" if $@;
 	}
 }
 
 ################################################################################
+=item retitleCourse
+
+	Simply changes the title and institution of the course. 
+
+Options must contain:
+
+ courseID => $courseID,
+ ce => $ce,
+ dbOptions => $dbOptions,
+ 
+ 
+Options may contain
+ newCourseTitle => $courseTitle,
+ newCourseInstitution => $courseInstitution,
+
+
+=cut 
+
+sub retitleCourse {
+	my %options = @_;
+	# renameCourseHelper needs:
+	#    $courseID ($oldCourseID)
+	#    $ce ($oldCE)
+	#    $dbLayoutName ($ce->{dbLayoutName})
+	#    %options ($dbOptions)
+	#    courseTitle
+	#    courseInstitution
+	my $courseID = $options{courseID};
+	my $ce       = $options{ce};
+	my %dbOptions = defined $options{dbOptions} ? %{ $options{dbOptions} } : ();
+
+	# get the database layout out of the options hash
+	my $dbLayoutName = $ce->{dbLayoutName};
+	my $db = new WeBWorK::DB($ce->{dbLayouts}{$dbLayoutName});
+		eval {
+			if (exists( $options{courseTitle}) and $options{courseTitle}) {
+				$db->setSettingValue('courseTitle',$options{courseTitle});
+			}
+			if (exists( $options{courseInstitution}) and $options{courseInstitution}) {
+				$db->setSettingValue('courseInstitution',$options{courseInstitution});
+			}
+		};  warn "Problems from resetting course title and institution = $@" if $@;
+
+	
+
+
+}
 
 =item deleteCourse(%options)
 
