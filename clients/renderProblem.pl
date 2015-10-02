@@ -231,6 +231,12 @@ our $source;
 our $rh_result;
 
 # set fileName path to path for current file (this is a best guess -- may not always be correct)
+my $fileName;
+if (defined $ENV{BB_DOC_NAME} ) {
+	$fileName = $ENV{BB_DOC_NAME};
+} else {
+	$fileName = $ARGV[0]
+}
 
 my $fileName;
 if (defined $ENV{BB_DOC_NAME} ) {
@@ -244,6 +250,7 @@ die "Unable to read file $fileName " unless -r $fileName;
 eval {
 	local($/);
 	$source   = <>; #slurp standard input
+
 };
 die "Something is wrong with the contents of $fileName" if $@;
 

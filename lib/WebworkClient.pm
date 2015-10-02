@@ -80,8 +80,8 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 package WebworkClient;
 
 use Crypt::SSLeay;  # needed for https
-# use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/../pg/lib";
-
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
+use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Utils qw( wwRound);
@@ -100,7 +100,6 @@ use constant  REQUEST_URI      => 'mod_xmlrpc';
 
 our $UNIT_TESTS_ON             = 0;
 
-##################
 # static variables
 
 # create seed_ce
