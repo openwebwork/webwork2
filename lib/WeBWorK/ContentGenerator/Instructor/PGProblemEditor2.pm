@@ -1820,7 +1820,7 @@ sub save_as_form {  # calls the save_as_handler
 	$shortFilePath   =~ s|^$templatesDir/||;
 	$shortFilePath   =  'local/'.$shortFilePath
 	  unless( $shortFilePath =~m|^local/| ||
-		  $shortFilePath =~m|^set$setID|);  # suggest that modifications be saved to the "local" subdirectory
+		  (defined $setID and $shortFilePath =~m|^set$setID|));  # suggest that modifications be saved to the "local" subdirectory
 	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
    
 
