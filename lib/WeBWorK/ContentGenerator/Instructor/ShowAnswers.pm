@@ -335,26 +335,13 @@ sub body {
 			    my $answerstring;
 			    if ($answer eq '') {		    
 				$answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
-			    } elsif (!$renderAnswers) {
+			      } elsif (!$renderAnswers) {
 				$answerstring = PGcore::encode_pg_and_html($answer);
-			    } elsif ($answerType eq 'Value (Formula)') {
-				# We need to escape some gateway strings which 
-				# might appear here
-				$answerstring = PGcore::encode_pg_and_html($answer);
-				if ($answerstring =~ /\[(submit|preview|newPage)\]/) {
-				    if ($answerstring !~ /No answer entered/) {
-					$answerstring =~ s/\[(submit|preview|newPage)\](.*)/\[$1\] `$2`/; 
-				    } 
-				} else {
-				    $answer = PGcore::encode_pg_and_html($answer);
-				    $answerstring = "`$answer`";
-				}
-				$td->{class} = 'formula';
-			    } elsif ($answerType eq 'essay') {
+			      } elsif ($answerType eq 'essay') {
 				$answerstring = PGcore::encode_pg_and_html($answer);
 				$td->{class} = 'essay';
 			    } else {
-				$answerstring = PGcore::encode_pg_and_html($answer);
+			      $answerstring = PGcore::encode_pg_and_html($answer);
 			    }
 			    
 			    push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
