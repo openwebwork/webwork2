@@ -1723,7 +1723,7 @@ sub output_score_summary{
 		$attempts_before_rr = 0 if ( (defined $will{requestNewSeed}) and $will{requestNewSeed});
 		$prMessage =
 			$r->maketext(
-				" You have [quant,_1,attempt,attempts] left before new version will be requested",
+				" You have [quant,_1,attempt,attempts] left before new version will be requested.",
 				$attempts_before_rr)
 			if ($attempts_before_rr > 0);
 		$prMessage =
