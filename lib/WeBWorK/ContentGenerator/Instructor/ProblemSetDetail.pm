@@ -337,7 +337,8 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default=>"-1",
 		labels    => {
-				"-1" => "Never",
+			      "-1" => "Never",
+			      "-2" => "Default",
 		},
         },
 	prPeriod => {
