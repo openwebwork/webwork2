@@ -209,8 +209,8 @@ sub can_showMeAnother {
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
     if (after($Set->open_date)) {
-        # if $showMeAnother{TriesNeeded} is somehow not an integer, make it one, using the default value from course config
-        $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
+        # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
+        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} = -2);
 
 	    # if SMA is just not permitted for the problem, don't show it
 	    return 0 unless ($showMeAnother{TriesNeeded} > -1);
@@ -1508,8 +1508,9 @@ sub output_submit_buttons{
             # if showMeAnother is available for the course, and for the current problem (but not yet
             # because the student hasn't tried enough times) then gray it out; otherwise display nothing
 
-            # if $showMeAnother is somehow not an integer, make it one, using the default from the course configuration
-            $showMeAnother{TriesNeeded} = $ce->{problemDefaults}->{showMeAnother} unless ($showMeAnother{TriesNeeded} =~ /^[+-]?\d+$/);
+	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
+	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} = -2);
+	  
             if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
                 my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
                 print CGI::span({class=>"gray_button set-id-tooltip",

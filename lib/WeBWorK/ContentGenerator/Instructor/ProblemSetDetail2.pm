@@ -50,7 +50,7 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts s
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
-use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
+use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
 
 
 # we exclude the gateway set fields from the set field order, because they
@@ -363,9 +363,10 @@ use constant FIELD_PROPERTIES => {
                  override  => "any",
                  default=>"-1",
                  labels    => {
-                      "-1" => "Never",
+			       "-1" => "Never",
+			       "-2" => "Default",
                  },
-                 help_text => "When a student has more attempts than is specified here they will be able to view another version of this problem.  The new version is guaranteed to be different or the feature will fail gracefully.  Depending on the course configuration students will be able to attempt this new version as many times as they want or see a worked out solution, if one exists."
+                 help_text => "When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used."
         },
 	prPeriod => {
 		name => "Rerandomize after",
