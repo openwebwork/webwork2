@@ -108,7 +108,7 @@ sub pre_header_initialize {
 	$showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
 
 	# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
-        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} = -2);
+        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 	
 	# store the showMeAnother hash for the check to see if the button can be used
 	# (this hash is updated and re-stored after the can, must, will hashes)

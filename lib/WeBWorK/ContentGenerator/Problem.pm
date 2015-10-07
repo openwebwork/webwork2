@@ -210,7 +210,7 @@ sub can_showMeAnother {
 
     if (after($Set->open_date)) {
         # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
-        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} = -2);
+        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 
 	    # if SMA is just not permitted for the problem, don't show it
 	    return 0 unless ($showMeAnother{TriesNeeded} > -1);
@@ -1509,7 +1509,7 @@ sub output_submit_buttons{
             # because the student hasn't tried enough times) then gray it out; otherwise display nothing
 
 	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
-	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} = -2);
+	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 	  
             if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
                 my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
