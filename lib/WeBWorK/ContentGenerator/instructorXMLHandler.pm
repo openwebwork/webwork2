@@ -351,6 +351,7 @@ sub standard_input {
 	$out;
 }
 
+
 sub pretty_print_json { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 	my $rh = shift;
@@ -405,8 +406,26 @@ sub content {
    ###########################
    	my $self = shift;
 	
-	#for handling errors...i'm to lazy to make it work right now
-	if($self->{output}->{problem_out}){
+
+	if ((ref($self->{output}) =~ /XMLRPC/ && $self->{output}->fault) || 
+	    (ref($self->{output}->{problem_out}) =~ /XMLRPC/ && 
+		 $self->{output}->{problem_out}->fault)) {
+
+	    my $result = $self->{output}->{problem_out} ? 
+		$self->{output}->{problem_out} : $self->{output};
+
+	    my $err_string = 'Error message for '.
+		join( ' ',
+		      "command:",
+		      $self->r->param('xml_command'),
+			  "\nfaultcode:",
+		      $result->faultcode, 
+		      "\nfaultstring:",
+		      $result->faultstring, "\nEnd error message\n\n"
+		  );
+	    
+	    die($err_string);
+	}elsif($self->{output}->{problem_out}){
 		print $self->{output}->{problem_out}->{text};
 	} else {
 		print '{"server_response":"'.$self->{output}->{text}.'",';

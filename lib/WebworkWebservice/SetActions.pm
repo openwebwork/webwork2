@@ -680,6 +680,8 @@ sub addProblem {
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
 	
+	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
+	
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
 
@@ -689,6 +691,10 @@ sub addProblem {
 	my $countsParentGrade = $params->{counts_parent_grade} || $counts_parent_grade_default;
 	my $attToOpenChildren = $params->{att_to_open_children} || $att_to_open_children_default;
 
+	my $prPeriod = $prPeriod_default;
+	if (defined($params->{prPeriod})){
+		$prPeriod = $params->{prPeriod};
+	}
 
 	unless ($problemID) {
 		$problemID = $freeProblemID;
@@ -703,7 +709,9 @@ sub addProblem {
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$problemRecord->{att_to_open_children} = $attToOpenChildren;
-	$problemRecord->{counts_parent_grade} = $countsParentGrade;	
+	$problemRecord->{counts_parent_grade} = $countsParentGrade;
+	$problemRecord->prPeriod($prPeriod);
+	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
 	my @results; 
