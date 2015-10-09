@@ -754,13 +754,14 @@ sub jitar_send_warning_email {
     
     # bring up a mailer
     my $mailer = Mail::Sender->new({
-	from => $ce->{mail}{smtpSender},
-	fake_from => $sender,
-	to => join(",", @recipients),
-	smtp    => $ce->{mail}->{smtpServer},
-	subject => $subject,
-	headers => $headers,
-				   });
+		from => $ce->{mail}{smtpSender},
+		tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
+		fake_from => $sender,
+		to => join(",", @recipients),
+		smtp    => $ce->{mail}->{smtpServer},
+		subject => $subject,
+		headers => $headers,
+	});
     unless (ref $mailer) {
       $r->log_error( "Failed to create a mailer to send a JITAR alert message: $Mail::Sender::Error");
       return "";

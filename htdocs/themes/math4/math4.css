@@ -554,10 +554,13 @@ input {
 	height: auto;
 }
 
-input[type="text"],
-textarea,
-select {
-    max-width:95%;
+@media (max-width:979px) {
+    input[type="text"],
+    input[type="password"],
+    textarea,
+    select {
+	max-width:95%;
+    }
 }
 
 .barrier {

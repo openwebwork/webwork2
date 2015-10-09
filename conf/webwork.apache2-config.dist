@@ -53,7 +53,6 @@ $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
 
-
 #################################################################
 # The following code reads defauls.config and extracts the remaining configuration
 # variables. There is no need to modify it.
@@ -77,7 +76,13 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/we
 my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
 my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/courses
 
-
+my $webwork_server_admin_email = $ce->{webwork_server_admin_email};
+if ($webwork_server_admin_email) {
+	$webwork_server_admin_email = $ce->{webwork_server_admin_email};
+	warn "set email from site.conf";
+} else {
+	$webwork_server_admin_email= $ENV{SERVER_ADMIN};
+}
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
@@ -145,7 +150,6 @@ if ($webwork_url eq "") {
 	$Location{$webwork_courses_url} = { SetHandler => "none" };
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
-
 
 ##########################################################################
 # WeBWork 3
@@ -227,16 +231,15 @@ PerlModule WebworkWebservice
 
 ########## WebworkWebservice SOAP handler ##########
 
-PerlModule WebworkWebservice
-
-<Location /mod_soap>
-	SetHandler perl-script
-	PerlHandler Apache::SOAP
-	PerlSetVar dispatch_to "WebworkXMLRPC" 
-	PerlSetVar options "compress_threshold => 10000"
-	Order Allow,Deny
-	Allow from All
-</Location>
+#PerlModule WebworkWebservice
+#
+#<Location /mod_soap>
+#	SetHandler perl-script
+#	PerlHandler Apache::SOAP
+#	PerlSetVar dispatch_to "WebworkXMLRPC" 
+#	PerlSetVar options "compress_threshold => 10000"
+#       Require all granted
+#</Location>
 
 ####################################################################
 # WebworkSOAP  "bridge2" handler (Moodle/WeBWorK Question bridge)

@@ -43,28 +43,28 @@ ways to find and correct errors in your entries.
 $PAR
 
 Start by examining the features of this page.  The panels at the
-left and top help you to navigate to the different pages available in
-WeBWorK.
+left (the ${LQ}MAIN MENU${RQ}) and top help you to navigate to the different 
+pages available in WeBWorK.  Note you can collapse and
+uncollapse the ${LQ}MAIN MENU${RQ} by clicking on the boxed angle bracket just above the boldface course name so if you don't see the MAIN MENU click 
+on the boxed angle bracket to make MAIN MENU reappear.
+
 $PAR
-On the left, in the ${LQ}Main Menu${RQ} panel, you have already 
+On the left, in the ${LQ}MAIN MENU${RQ} panel, you have already 
 seen the ${LQ}Homework Sets${RQ} page,
-which lists all the homework assignments (with due dates, etc.) that have
+which lists all the homework assignments that have
 been assigned to you.  Links allow you to go to any assignment
 you want to work on.  
 $PAR
-The ${LQ}Password/Email${RQ} page lets you change your password or
-email address.  The ${LQ}Grades${RQ} page 
+The ${LQ}User Settings${RQ} page lets you change your password,
+email address and display options. Display Options gives you control 
+over how you want math equations displayed.  For example with 
+${LQ}MathJax${RQ} you can control the size of equations, have access to accessibility options, etc.  The ${LQ}Grades${RQ} page 
 shows your scores on the various assignments (but there is nothing
 much to show at this point).
 $PAR
 
 Links to your homework assignments are also listed in the ${LQ}Sets${RQ} 
 panel so you can quickly switch to another assignment.
-$PAR
-
-The ${LQ}Display Options${RQ} panel gives you control over how you want
-math equations displayed.  For example with ${LQ}MathJax${RQ} you can 
-control the size of equations, have access to accessibility options, etc.
 $PAR
 
 \{
@@ -81,7 +81,8 @@ The data in the panel at the top of the page tells you where you
 are in WeBWorK's hierarchy of pages, but you can ignore that for the
 most part.  There is an additional logout button at the far right,
 however, that you will need to use when you are done using $WW (don't
-press it yet).
+press it yet).  Also to the left is the boxed angle bracket that
+collapses and uncollapses the ${LQ}MAIN MENU${RQ}.
 $PAR
 
 \{
@@ -98,10 +99,16 @@ the problems, your score is zero, but after you work on some of them,
 the number of attempts and the score will reflect the work you have
 done.
 $PAR
-Near the top is a link that allows you to download a pdf ${LQ}hardcopy${RQ}
+Near the bottom is a link that allows you to download a pdf ${LQ}hardcopy${RQ}
 version of your 
 whole assignment which you can print out.  This allows you to work on 
 the assignment without having to be connected to $WW.
+$PAR
+Also near the bottom of this and every $WW page there is an 
+${LQ}Email instructor${RQ} link that you can use to send email to your instructor.  That email, in addition to what ever you write, will 
+contain information on whatever page you are on so, e.g. if you are 
+working on a problem, your instructor will know what problem it is.
+
 $PAR
 Each problem number is a link to that problem in the homework set.
 You can click on one to get to any specific problem.  To begin the
@@ -110,6 +117,7 @@ done working, be sure to dismiss your connection to the server by
 clicking on ${LQ}Log Out${RQ}, so that no one else can gain access to
 your account.
 $PAR
+
 
 END_TEXT
 

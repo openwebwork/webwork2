@@ -2035,27 +2035,27 @@ sub save_as_handler {
 			}
 		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
 
-		            my $set = $self->r->db->getGlobalSet($setName);
+		    my $set = $self->r->db->getGlobalSet($setName);
 			    
 			    
-			    # for jitar sets new problems are put as top level
-			    # problems at the end		
-			    if ($set->assignment_type eq 'jitar') {
+			# for jitar sets new problems are put as top level
+			# problems at the end		
+			if ($set->assignment_type eq 'jitar') {
 				my @problemIDs = $self->r->db->listGlobalProblems($setName);
 				@problemIDs = sort @problemIDs;
 				my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 				$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
-			    } else {
+			} else {
 				$targetProblemNumber =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
-			    }
+			}
 			    
-			    my $problemRecord  = $self->addProblemToSet(
+			my $problemRecord  = $self->addProblemToSet(
 				setName        => $setName,
 				sourceFile     => $new_file_name, 
 				problemID      => $targetProblemNumber, #added to end of set
 			);
-			    $self->assignProblemToAllSetUsers($problemRecord);
-			    $self->addgoodmessage("Added $new_file_name to ". $setName. " as problem ".($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber)) ;
+			$self->assignProblemToAllSetUsers($problemRecord);
+			$self->addgoodmessage("Added $new_file_name to ". $setName. " as problem ".($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber)) ;
 		} elsif ($saveMode eq 'new_independent_problem') {
 		#################################################
 		# Don't modify source file path in problem -- just report 
@@ -2081,7 +2081,7 @@ sub save_as_handler {
 
 	if ($saveMode eq 'new_independent_problem' ) {
 		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
-			courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
+			courseID => $courseName, setID => 'Undefined_Set', problemID => 1
 		);
 		$new_file_type = 'source_path_for_problem_file';
 	} elsif ($saveMode eq 'rename') {
@@ -2090,6 +2090,7 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
+		my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
 	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
 			courseID => $courseName, setID => $setName, problemID => $targetProblemNumber
 		);
