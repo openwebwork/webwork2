@@ -63,7 +63,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 
 
  # verbose output when UNIT_TESTS_ON =1;
- our $UNIT_TESTS_ON             = 1;
+ our $UNIT_TESTS_ON             = 0;
 
  # Command line for displaying the temporary file in a browser.
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
@@ -282,11 +282,7 @@ our $xmlrpc_client = new WebworkClient (
 		                 
 our($output, $return_string, $result);    
 
-$fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
 # webwork-open-problem-library/OpenProblemLibrary
-print "fileName changed to $fileName\n";
-$input->{envir}->{fileName} = $fileName;
-$input->{envir}->{sourceFilePath} = $fileName;
 $xmlrpc_client->{sourceFilePath}  = $fileName;
 
 print "input is $input" if $UNIT_TESTS_ON;
