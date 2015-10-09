@@ -155,6 +155,7 @@ sub new {
 		password        => '',
 		site_password   => '',
 		courseID        => '',
+		userID          => '',
 		displayMode     => '',
 		inputs_ref      => {		 AnSwEr0001 => '',
 				 					 AnSwEr0002 => '',
@@ -184,7 +185,9 @@ sub xmlrpcCall {
 	$command   = 'listLibraries' unless defined $command;
 	  my $input2 = $self->setInputTable();
 	  $input = {%$input2, %$input};
+	  
 	$self->request_object($input);   # store the request object for later
+	
 	my $requestResult; 
 	my $transporter = TRANSPORT_METHOD->new;
 

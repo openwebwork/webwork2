@@ -1,6 +1,4 @@
-#!/Volumes/WW_test/opt/local/bin/perl   -w           
-#FIXME  change the above line back to the one below for most unix installations
-# !/usr/bin/perl -w
+#!/usr/bin/perl -w
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
@@ -59,14 +57,13 @@ use Crypt::SSLeay;  # needed for https
 use WebworkClient;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
-
 #############################################
 # Configure
 #############################################
 
 
  # verbose output when UNIT_TESTS_ON =1;
- our $UNIT_TESTS_ON             = 0;
+ our $UNIT_TESTS_ON             = 1;
 
  # Command line for displaying the temporary file in a browser.
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
@@ -83,7 +80,7 @@ my $use_site;
 
 # credentials file location -- search for one of these files 
 my $credential_path;
-my @path_list = ('.ww_credentials', "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials");
+my @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials',);
 # Place a credential file containing the following information at one of the locations above.
 # 	%credentials = (
 # 			userID          => "my login name for the webwork course",
@@ -164,6 +161,9 @@ if ($use_site eq 'local') {
 	$XML_PASSWORD     = 'xmlwebwork';
 	$XML_COURSE       = 'daemon_course';
 
+} else {
+
+    warn "please choose a webwork site for rendering"
 }
 
 ##################################################
@@ -230,18 +230,31 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 our $source;
 our $rh_result;
 
-our $filePath = '';
-
-our $output;
-our $return_string;
-
-
 # set fileName path to path for current file (this is a best guess -- may not always be correct)
 my $fileName = $ARGV[0]; # should this be ARGV[0]?
+
+# filter mode  main code
+die "Unable to read file $fileName " unless -r $fileName;
+eval {
+	local($/);
+	$source   = <>; #slurp standard input
+
+};
+die "Something is wrong with the contents of $fileName" if $@;
+
+# adjust fileName so that it is relative to the rendering course directory
+#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
+$fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
+# webwork-open-problem-library/OpenProblemLibrary
+print "fileName changed to $fileName\n" if $UNIT_TESTS_ON;
+#print "source $source\n" if $UNIT_TESTS_ON;
+print $source  if $ENV{BB_DOC_NAME};  # return input to BBedit
 
 ############################################
 # Build client
 ############################################
+
+
 our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
@@ -250,8 +263,10 @@ our $xmlrpc_client = new WebworkClient (
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
 	session_key            =>  $credentials{session_key}//'',
+	sourceFilePath         =>  $fileName,
 );
  
+ $xmlrpc_client->encodeSource($source);
  
  my $input = { 
 		userID      	=> $credentials{userID}//'',
@@ -261,34 +276,39 @@ our $xmlrpc_client = new WebworkClient (
 		password     	=> $credentials{password}//'',	
 		site_password   => $XML_PASSWORD//'',
 		envir           => $xmlrpc_client->environment(),
-		                 
  };
+		$input->{envir}->{fileName} = $fileName;
+		$input->{envir}->{sourceFilePath} = $fileName;
+		                 
+our($output, $return_string, $result);    
 
+$fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
+# webwork-open-problem-library/OpenProblemLibrary
+print "fileName changed to $fileName\n";
+$input->{envir}->{fileName} = $fileName;
+$input->{envir}->{sourceFilePath} = $fileName;
+$xmlrpc_client->{sourceFilePath}  = $fileName;
 
-if (@ARGV) {
+print "input is $input" if $UNIT_TESTS_ON;
+
+if ($fileName) {
 	local(*FH);
 	
 	open(FH, ">>".LOG_FILE()) || die "Can't open log file ". LOG_FILE();
 
-	{
-		local($/);
-		$filePath = $ARGV[0];
-		$source   = <>; #slurp standard input
-		# print FH $source;  # return input to BBedit
-	}
-    $xmlrpc_client->encodeSource($source);
-    
-	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
-	        $output = $xmlrpc_client->return_object;
-	    if (not defined $output) {  #FIXME make sure this is the right error message if site is unavailable
-	    	$return_string = "Could not connect to rendering site";
-	    } elsif (defined($output->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
-			$return_string = "0\t $filePath has errors\n";
-		} elsif (defined($output->{errors}) and $output->{errors} ){
-			$return_string = "0\t $filePath has syntax errors\n";
+	if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
+	        print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
+	        #print pretty_print_rh($result) if $UNIT_TESTS_ON;
+			#$output = $xmlrpc_client->{output};
+	    if (not defined $result) {  #FIXME make sure this is the right error message if site is unavailable
+	    	$return_string = "Could not connect to rendering site $XML_URL\n";
+	    } elsif (defined($result->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
+			$return_string = "0\t $fileName has errors\n";
+		} elsif (defined($result->{errors}) and $output->{errors} ){
+			$return_string = "0\t $fileName has syntax errors\n";
 		} else {
 			# 
-			if (defined($output->{flags}->{DEBUG_messages}) ) {
+			if (defined($result->{flags}->{DEBUG_messages}) ) {
 				my @debug_messages = @{$output->{flags}->{DEBUG_messages}};
 				$return_string .= (pop @debug_messages ) ||'' ; #avoid error if array was empty
 				if (@debug_messages) {
@@ -297,7 +317,10 @@ if (@ARGV) {
 							$return_string = "";
 				}
 			}
-			if (defined($output->{flags}->{WARNING_messages}) ) {
+			if (defined($result->{errors}) ) {
+				$return_string= $result->{errors};
+			}
+			if (defined($result->{flags}->{WARNING_messages}) ) {
 				my @warning_messages = @{$output->{flags}->{WARNING_messages}};
 				$return_string .= (pop @warning_messages)||''; #avoid error if array was empty
 					$@=undef;
@@ -310,20 +333,64 @@ if (@ARGV) {
 			$return_string = "0\t ".$return_string."\n" if $return_string;   # add a 0 if there was an warning or debug message.
 		}
 		unless ($return_string) {
-			$return_string = "1\t $filePath is ok\n";
+			$return_string = "1\t $fileName is ok\n";
+		} else {
+			$return_string = "0\t $fileName has errors\n";
 		}
 	} else {
 		
-		$return_string = "0\t $filePath has undetermined errors -- could not be read perhaps?\n";
+		$return_string = "0\t $fileName has undetermined errors -- could not be read perhaps?\n";
 	}
 	print FH $return_string;
 	close(FH);
 } else {
-    print "0 $filePath  something went wrong -- could not render file\n";
+    print "0 $fileName  something went wrong -- could not render file\n";
 	print STDERR "Useage: ./checkProblem.pl    [file_name]\n";
 	print STDERR "For example: ./checkProblem.pl    input.txt\n";
 	print STDERR "Output is sent to the log file: ",LOG_FILE();
 	
+}
+
+
+sub pretty_print_rh { 
+    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+	my $rh = shift;
+	my $indent = shift || 0;
+	my $out = "";
+	my $type = ref($rh);
+
+	if (defined($type) and $type) {
+		$out .= " type = $type; ";
+	} elsif (! defined($rh )) {
+		$out .= " type = UNDEFINED; ";
+	}
+	return $out." " unless defined($rh);
+	
+	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
+	    $out .= "{\n";
+	    $indent++;
+ 		foreach my $key (sort keys %{$rh})  {
+ 			$out .= "  "x$indent."$key => " . pretty_print_rh( $rh->{$key}, $indent ) . "\n";
+ 		}
+ 		$indent--;
+ 		$out .= "\n"."  "x$indent."}\n";
+
+ 	} elsif (ref($rh)  =~  /ARRAY/ or "$rh" =~/ARRAY/) {
+ 	    $out .= " ( ";
+ 		foreach my $elem ( @{$rh} )  {
+ 		 	$out .= pretty_print_rh($elem, $indent);
+ 		
+ 		}
+ 		$out .=  " ) \n";
+	} elsif ( ref($rh) =~ /SCALAR/ ) {
+		$out .= "scalar reference ". ${$rh};
+	} elsif ( ref($rh) =~/Base64/ ) {
+		$out .= "base64 reference " .$$rh;
+	} else {
+		$out .=  $rh;
+	}
+	
+	return $out." ";
 }
 
 

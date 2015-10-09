@@ -63,7 +63,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 
 
  # verbose output when UNIT_TESTS_ON =1;
- our $UNIT_TESTS_ON             = 0;
+ our $UNIT_TESTS_ON             = 1;
 
  # Command line for displaying the temporary file in a browser.
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
@@ -75,8 +75,8 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 my $use_site;
 # select a rendering site  
  #$use_site = 'test_webwork';    # select a rendering site 
- $use_site = 'local';           # select a rendering site 
- #$use_site = 'hosted2';        # select a rendering site 
+ #$use_site = 'local';           # select a rendering site 
+ $use_site = 'hosted2';        # select a rendering site 
 
 # credentials file location -- search for one of these files 
 my $credential_path;
@@ -238,13 +238,6 @@ if (defined $ENV{BB_DOC_NAME} ) {
 	$fileName = $ARGV[0]
 }
 
-my $fileName;
-if (defined $ENV{BB_DOC_NAME} ) {
-	$fileName = $ENV{BB_DOC_NAME};
-} else {
-	$fileName = $ARGV[0]
-}
-
 # filter mode  main code
 die "Unable to read file $fileName " unless -r $fileName;
 eval {
@@ -279,7 +272,6 @@ our $xmlrpc_client = new WebworkClient (
 );
  
  $xmlrpc_client->encodeSource($source);
- print "\nencoded source is\n", $xmlrpc_client->encoded_source, "\n" if $UNIT_TESTS_ON;
  
  my $input = { 
 		userID      	=> $credentials{userID}//'',
@@ -294,17 +286,17 @@ our $xmlrpc_client = new WebworkClient (
 		$input->{envir}->{sourceFilePath} = $fileName;
 		                 
 
+our $output;
+our $result;
 
-#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
 $fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
 # webwork-open-problem-library/OpenProblemLibrary
 print "fileName changed to $fileName\n";
+
 $input->{envir}->{fileName} = $fileName;
 $input->{envir}->{sourceFilePath} = $fileName;
 $xmlrpc_client->{sourceFilePath}  = $fileName;
 #xmlrpcCall('renderProblem');
-our $output;
-our $result;
 print "input is $input" if $UNIT_TESTS_ON;
 if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
     print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
