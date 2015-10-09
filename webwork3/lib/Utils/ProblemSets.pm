@@ -3,23 +3,60 @@
 
 package Utils::ProblemSets;
 use base qw(Exporter);
-use Dancer ':syntax';
-use Data::Dumper;
+
 use List::Util qw(first);
-use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
+use List::MoreUtils qw/first_index indexes/;
+use Dancer ':syntax';
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
+use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog cryptPassword/;
+use Array::Utils qw/array_minus/;
+
+our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible 
+                            enable_reduced_scoring assignment_type description attempts_per_version time_interval 
+                            versions_per_interval version_time_limit version_creation_time version_last_attempt_time 
+                            problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip 
+                            relax_restrict_ip restricted_login_proctor hide_hint/;
+                            
+our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date 
+                            answer_date visible enable_reduced_scoring assignment_type description restricted_release 
+                            restricted_status attempts_per_version time_interval versions_per_interval version_time_limit 
+                            version_creation_time problem_randorder version_last_attempt_time problems_per_page 
+                            hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip 
+                            restricted_login_proctor hide_hint/;
+our @problem_props = qw/problem_id flags value max_attempts status source_file/;
+our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
+
+our @user_problem_props = qw/user_id set_id problem_id source_file value max_attempts showMeAnother 
+                showMeAnotherCount flags problem_seed status attempted last_answer num_correct num_incorrect 
+                sub_status flags/;
+
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet 
-        createNewUserProblem getGlobalSet record_results);
-our @boolean_set_props = qw/visible enable_reduced_scoring/;
-
+        createNewUserProblem getGlobalSet record_results renumber_problems updateProblems shiftTime 
+        unshiftTime putGlobalSet putUserSet getUserSet putUserProblem
+        @time_props @set_props @user_set_props @problem_props @boolean_set_props);
+        
 sub getGlobalSet {
-    my ($setName) = @_;
-    my $set = vars->{db}->getGlobalSet($setName);
+    my ($db,$ce,$setName) = @_;
+    my $set = $db->getGlobalSet($setName);
     my $problemSet = convertObjectToHash($set,\@boolean_set_props);
-    my @users = vars->{db}->listSetUsers($setName);
-    my @problems = vars->{db}->getAllGlobalProblems($setName);
 
+    my @users = $db->listSetUsers($setName);
+    my @problems = $db->getAllGlobalProblems($setName);
+    for my $problem (@problems){
+        $problem->{_id} = $problem->{set_id} . ":" . $problem->{problem_id};  # this helps backbone on the client side
+    }
+
+    my $proctor_id = "set_id:".$set->{set_id};
+    if($db->existsUser($proctor_id)){
+        if($db->getPassword($proctor_id)){
+            $problemSet->{pg_password}='******';
+        }
+    }
+        
+        
+    
     $problemSet->{assigned_users} = \@users;
     $problemSet->{problems} = convertArrayOfObjectsToHash(\@problems);
     $problemSet->{_id} = $setName; # this is needed so that backbone works with the server. 
@@ -27,43 +64,193 @@ sub getGlobalSet {
     return $problemSet;
 }
 
+
 ###
 #
-# This reorders the problems
+#  This puts/updates the global set with properties in the hash ref $set
+#
+###
+
+sub putGlobalSet {
+    my ($db,$ce,$set) = @_;
+    
+    my $set_from_db = $db->getGlobalSet($set->{set_id});
+    $set = convertBooleans($set,\@boolean_set_props);
+    
+    for my $key (@set_props){
+        $set_from_db->{$key} = $set->{$key} if defined($set->{$key});
+    }
+    
+    ## if the set is a proctored gateway
+    
+    if($set->{assignment_type} eq 'proctored_gateway'){
+        my $proctor_id = "set_id:".$set->{set_id};
+        ## if the proctor doesn't exist as a user in the db, create it. 
+        if(! $db->existsUser($proctor_id)){
+            my $proctor = $db->newUser();
+            $proctor->user_id($proctor_id);
+            $proctor->last_name("Proctor");
+			$proctor->first_name("Login");
+			$proctor->student_id("loginproctor");
+			$proctor->status($ce->status_name_to_abbrevs('Proctor'));
+            $db->addUser($proctor);
+            
+            ## add a permission level to the database. 
+			my $procPerm = $db->newPermissionLevel;
+            $procPerm->user_id($proctor_id);
+			$procPerm->permission($ce->{userRoles}->{login_proctor});
+            $db->addPermissionLevel($procPerm);
+            $set_from_db->restricted_login_proctor('Yes');
+        }
+
+        if($set->{pg_password} ne '******') { 
+            my $dbPass = $db->getPassword($proctor_id);
+            if(! defined($dbPass)){
+                $dbPass = $db->newPassword($proctor_id);
+                $dbPass->user_id($proctor_id);
+            }
+            my $clearPassword = $set->{pg_password};
+            $dbPass->password(cryptPassword($set->{pg_password}));
+            $db->putPassword($dbPass);
+            $set->{pg_password}=($clearPassword eq '')? '' : '******';
+        }
+            
+    }
+    
+    return $db->putGlobalSet($set_from_db);
+}
+
+###
+#
+#  The gets a userSet (mergedSet) with given $user_id and $set_id
+#
+###
+
+sub getUserSet{
+    my ($db,$user_id,$set_id) = @_;
+    
+    my $mergedSet = $db->getMergedSet($user_id,$set_id);
+    
+    $mergedSet->{_id} = $mergedSet->{set_id} . ":" . $mergedSet->{user_id};
+
+    return convertObjectToHash($mergedSet,\@boolean_set_props);
+
+}
+
+###
+#
+#  This puts/updates the user set with properties in the hash ref $set  Update only the values that
+# differ from the global set properties
+#
+###
+
+
+sub putUserSet {
+    my ($db,$set) = @_;
+
+    # get the global problem set to determine if the value has changed
+    my $globalSet = $db->getGlobalSet($set->{set_id});
+    my $userSet = $db->getUserSet($set->{user_id},$set->{set_id});
+    
+    $set = convertBooleans($set,\@boolean_set_props);
+    for my $key (@user_set_props) {
+        my $globalValue = $globalSet->{$key} || "";
+        # check to see if the value differs from the global value.  If so, set it else delete it. 
+        $userSet->{$key} = $set->{$key} if defined($set->{$key});
+        delete $userSet->{$key} if $globalValue eq $userSet->{$key} && $key ne "set_id";
+
+    }
+    $db->putUserSet($userSet);
+    
+    return getUserSet($db,$set->{user_id},$set->{set_id});
+}
+
+####
+#
+#  This puts/updates the problem properties for the given problem. Only properties that differ from the global problem 
+# are updated. 
+#
+####
+
+sub putUserProblem {
+    my ($db,$problem) = @_;
+    
+    # get the global problem to determine if the value has changed
+    my $globalProblem = $db->getGlobalProblem($problem->{set_id},$problem->{problem_id});
+    my $userProblem = $db->getUserProblem($problem->{user_id},$problem->{set_id},$problem->{problem_id});
+    
+    for my $key (@user_problem_props){
+        my $globalValue = $globalProblem->{$key} || "";
+        $userProblem->{$key} = $problem->{$key} if defined($problem->{$key});
+        delete $userProblem->{$key} if $globalValue eq $userProblem->{$key} 
+                                        && $key ne "problem_id" && $key ne "set_id" && $key ne 'user_id';
+    }
+    
+    $db->putUserProblem($userProblem);
+    return $userProblem;
+}
+
+
 
 sub reorderProblems {
-
-	my @oldProblems = vars->{db}->getAllGlobalProblems(params->{set_id});
-
-    for my $p (@{params->{problems}}){
-        my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
-
-        if (vars->{db}->existsGlobalProblem(params->{set_id},$p->{problem_id})){
-            $problem->problem_id($p->{problem_id});                 
-            vars->{db}->putGlobalProblem($problem);
+    my ($db,$setID,$new_problems,$assigned_users) = @_; 
+    
+    
+    for my $i (0..(scalar(@$new_problems)-1)){
+        
+        my $prob; 
+        if($db->existsGlobalProblem($setID,$new_problems->[$i]->{problem_id})){
+            $prob = $db->getGlobalProblem($setID,$new_problems->[$i]->{problem_id});
         } else {
-            # delete the problem with the old problem_id and create a new one
-            vars->{db}->deleteGlobalProblem(params->{set_id},$problem->{problem_id});
-            $problem->problem_id($p->{problem_id});
-            vars->{db}->addGlobalProblem($problem);
-
-            for my $user (@{params->{assigned_users}}){
-                my $userProblem = vars->{db}->newUserProblem;
-                $userProblem->set_id(params->{set_id});
-                $userProblem->user_id($user);
-                $userProblem->problem_id($p->{problem_id});
-                debug $userProblem;
-                vars->{db}->addUserProblem($userProblem);
-            }
+            $prob = $db->newGlobalProblem();##$setID,$new_problems->[$i]->{problem_id});
+            $prob->{set_id} = $setID;
+            $prob->{problem_id} = $new_problems->[$i]->{problem_id};
+        }
+        
+        for my $key (@problem_props){
+            $prob->{$key} = $new_problems->[$i]->{$key};
+        }
+        if($db->existsGlobalProblem($setID,$new_problems->[$i]->{problem_id})){
+            $db->putGlobalProblem($prob);
+        } else {
+            $db->addGlobalProblem($prob);
         }
     }
+    
+    ## update the user problems
+    
+    for my $user_id (@$assigned_users){
+        my $user_probs = [$db->getAllUserProblems($user_id,$setID)];
+        for my $i (0..(scalar(@$new_problems)-1)){
+        
+            my $user_prob = first {$_->{problem_id} eq $new_problems->[$i]->{_old_problem_id} } @$user_probs;
+            
+            ## need to make a new User Problem.  Reusing the old one results in a problem. 
+            my $newUserProblem = createNewUserProblem($user_id,$setID,$new_problems->[$i]->{problem_id});
+            for my $prop (@user_problem_props) {
+                $newUserProblem->{$prop} = $user_prob->{$prop};
+            }
+            $db->putUserProblem($newUserProblem);
+        }
+    }
+}
 
-    ## take care of the userProblems now
 
+####
+#
+#  This takes the problems in the array ref $problems and updates the global problems for course $setID
+#
+###
 
-
-
-    return vars->{db}->getAllGlobalProblems(params->{set_id});
+sub updateProblems {
+    my ($db,$setID,$problems) = @_;
+    for my $prob_to_update (@$problems){
+        my $prob = $db->getGlobalProblem($setID,$prob_to_update->{problem_id});
+        for my $attr (@problem_props){
+            $prob->{$attr} = $prob_to_update->{$attr} if $prob_to_update->{$attr};
+        }
+        $db->putGlobalProblem($prob);
+    }
 }
 
 ### 
@@ -100,23 +287,23 @@ sub createNewUserProblem {
 sub addGlobalProblems {
 	my ($setID,$problems)=@_;
 
-    debug "in addGlobalProblems";
 
 	my @oldProblems = vars->{db}->getAllGlobalProblems($setID);
 	for my $p (@{$problems}){
-        my $problem = first { $_->{source_file} eq $p->{source_file} } @oldProblems;
-
-        debug $problem;
         if(! vars->{db}->existsGlobalProblem($setID,$p->{problem_id})){
+
         	my $prob = vars->{db}->newGlobalProblem();
+            
         	$prob->{problem_id} = $p->{problem_id};
         	$prob->{source_file} = $p->{source_file};
             $prob->{value} = $p->{value};
             $prob->{max_attempts} = $p->{max_attempts};
         	$prob->{set_id} = $setID;
-        	vars->{db}->addGlobalProblem($prob) unless vars->{db}->existsGlobalProblem($setID,$prob->{problem_id})
+            $prob->{_id} = $prob->{set_id} . ":" . $prob->{problem_id};  # this helps backbone on the client side 
+            vars->{db}->addGlobalProblem($prob) unless vars->{db}->existsGlobalProblem($setID,$prob->{problem_id});
         }
-	}
+    }
+    
 
     return vars->{db}->getAllGlobalProblems($setID);
 }
@@ -133,11 +320,11 @@ sub addGlobalProblems {
 #####
 
 sub addUserProblems {
-    my ($setID, $problems,$users) = @_;
-
+    my ($db,$setID, $problems,$users) = @_;
+    
     for my $p (@{$problems}){
         for my $userID (@{$users}){
-            vars->{db}->addUserProblem(createNewUserProblem($userID,$setID,$p->{problem_id}))
+            $db->addUserProblem(createNewUserProblem($userID,$setID,$p->{problem_id}))
                 unless vars->{db}->existsUserProblem($userID,$setID,$p->{problem_id});
         }
     }
@@ -149,23 +336,68 @@ sub addUserProblems {
 # This deletes a problem.  The variable $problems is a reference to an array of problems and 
 # the subroutine checks if any of the given problems are not in the database
 #
+#  Note:  the calls to $db->deleteGlobalProblem also deletes any user problem associated with it. 
+#
 ##
 
-###  @oldProblems  = [1,2,3,4,5];
-### $problems = [1,2,4,5];
-
 sub deleteProblems {
-	my ($setID,$problems)=@_;
+	my ($db,$setID,$problems,$assigned_users,$problem_id_to_delete)=@_;
+    
+    $db->deleteGlobalProblem($setID,$problem_id_to_delete);
+    
+    # renumber_problems($db,$setID,$assigned_users);
 
-	my @oldProblems = vars->{db}->getAllGlobalProblems($setID);
-	for my $p (@oldProblems){
-        my $problem = first { $_->{problem_id} eq $p->{problem_id} } @{$problems};
-        if(! defined($problem)){
-        	vars->{db}->deleteGlobalProblem($setID,$p->{problem_id});
+    return $db->getAllGlobalProblems($setID);
+}
+
+###
+#
+# The following renumbers problems.  If they come in as 2,4,9,11,13 they leave as 1,2,3,4,5
+#
+#  pstaab: It appears that there is a lot of overlap between this and reorder_problems at the top 
+#  of this file.  They should be combined or clarified how. 
+###
+
+sub renumber_problems {
+    my ($db,$setID,$assigned_users) = @_;
+    
+    my @probs = $db->getAllGlobalProblems($setID);
+    
+    my @prob_ids = ();
+    my %userprobs = ();
+    my $j=1;
+    for my $prob (@probs) {
+        push(@prob_ids, $prob->{problem_id});
+        $prob->{problem_id} = $j++;
+    }
+    
+    for my $user_id (@{$assigned_users}){
+        $j=1;
+        my $userproblems = [$db->getAllUserProblems($user_id,$setID)];
+        for my $prob (@$userproblems) {
+            $prob->{problem_id} = $j++;
+        }
+        $userprobs{$user_id} = $userproblems;
+    }
+    
+    ## delete all old problems;
+    
+    for my $prob_id (@prob_ids){
+        $db->deleteGlobalProblem($setID,$prob_id);
+    }
+    
+    ## add in all of the global and user problems:
+    for my $prob (@probs) {
+        $db->addGlobalProblem($prob);
+    }
+    
+    for my $user_id (@{$assigned_users}){
+        for my $user_problem (@{$userprobs{$user_id}}){
+            $db->addUserProblem($user_problem);   
         }
     }
-
-    return vars->{db}->getAllGlobalProblems($setID);
+    
+    return;
 }
 
 
@@ -176,13 +408,19 @@ sub deleteProblems {
 ###
 
 sub addUserSet {
-    my ($user_id,$set_id) = @_;
-	my $userSet = vars->{db}->newUserSet;
+    my ($db,$user_id,$set_id) = @_;
+    
+	my $userSet = $db->newUserSet;
     $userSet->set_id($set_id);
     $userSet->user_id($user_id);
-    my $result =  vars->{db}->addUserSet($userSet);
-
-    return $result;
+    
+    $db->addUserSet($userSet);
+    
+    ## create the user problems now
+    my @users = ("$user_id");
+    my @globalProblems = $db->getAllGlobalProblems($set_id);
+    addUserProblems($db,$set_id,\@globalProblems,\@users);
+    
 }
 
 
@@ -326,7 +564,6 @@ sub record_results {
                 $pureProblem->num_incorrect
             );
 
-            debug "here!";
         } else {
             if (before($renderParams->{set}->{open_date}) or after($renderParams->{set}->{due_date})) {
                 $scoreRecordedMessage = "Your score was not recorded because this homework set is closed.";
@@ -344,3 +581,7 @@ sub record_results {
     return $scoreRecordedMessage;
 }
 
+
+
+
+1;

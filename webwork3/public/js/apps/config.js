@@ -38,8 +38,10 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                      ],
     
 
-        permissions : [{value: "-5", label: "guest"},{value: "0", label: "student"},{value: "2", label: "login proctor"}, 
-                        {value: "3", label: "T.A."},{value: "10", label: "professor"}, {value: "20", label: "administrator"}],
+        permissions : [{value: "-5", label: "guest"},{value: "0", label: "student"},{value: "2", label: "login proctor"},
+                       {value: "3", label: "grade proctor"},{value: "5", label: "T.A."},
+                       {value: "10", label: "professor"}, {value: "20", label: "administrator"},
+                       {value: "99999999", label: "nobody"}],
 
         enrollment_statuses: [
                     {value: "A", label: "Audit", abbrs: ["A","a","audit"]},
@@ -69,7 +71,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
                 var newDate = moment(time,"hh:mmA");             
                 theDate.hours(newDate.hours()).minutes(newDate.minutes());
-                evt.data.model.set(evt.data.options.observe,""+theDate.unix()); 
+                evt.data.model.set(evt.data.options.observe,theDate.unix()); 
                 evt.data.$el.popover("destroy");
                 evt.data.$el.removeAttr("style");
             } else {
@@ -77,7 +79,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 var errorMessage = config.messageTemplate({type: "time_error"})
                 evt.data.$el.popover({title: "Error", content: errorMessage, placement: "left"}).popover("show");
             }
-            
+            console.log(theDate);
         },
         sortIcons: {
             "string1": "fa fa-sort-alpha-asc",
@@ -167,14 +169,15 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
 
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime',
-        update: function($el, val, model, options){
+        update: function($el, val,model, options){
+            
             // hide this for sets in which the reduced_scoring date should not be shown. 
             if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring") 
-                    && ! model.show_reduced_scoring){
+                    && ! model.show_reduced_scoring){ 
                 $el.html("");
             } else {
                 var tmpl = _.template($("#edit-date-time-template").html());
-                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));        
+                $el.html(tmpl({date: moment.unix(model.get(options.observe)).format("MM/DD/YYYY")}));        
             }
             
             var tmpl = _.template($("#time-popover-template").html());
@@ -185,7 +188,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             timeIcon.parent().delegate(".save-time-button","click",{$el:$el.closest(".edit-datetime"),
                              model: model, options: options},
                 function (evt) {
-                    timeIcon.popover("hide");
                     config.setTime(evt,$(this).siblings(".wwtime").val());
             });
             timeIcon.parent().delegate(".cancel-time-button","click",{},function(){timeIcon.popover("hide");});
@@ -318,7 +320,18 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             return val==="yes";
         }
     })
-
+    
+    Backbone.Stickit.addHandler({
+        selector: ".input-blur",
+        events: ["blur"],
+        
+    });
+    
+    Backbone.Stickit.addHandler({
+        selector: ".integer-input",
+        onSet: function(value) {
+            return parseInt(value);
+        }}); 
 
     return config;
 });

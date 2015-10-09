@@ -4,8 +4,8 @@ define(['backbone', 'underscore','config'],
   var ChangePasswordView = Backbone.View.extend({
       tagName: "div",
       className: "passwordDialog",
-      initialize: function() {
-         _.bindAll(this,"render");  return this;
+      initialize: function(options) {
+         _.bindAll(this,"render");
          this.users = options.users;
       },
        render: function ()

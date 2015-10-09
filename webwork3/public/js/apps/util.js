@@ -4,9 +4,8 @@
  * 
  */
              
-define(['underscore','config'], function(_,config){
-var util = {   
-    
+define(['underscore','config','models/AssignmentDateList','models/AssignmentDate','moment'], function(_,config,AssignmentDateList,AssignmentDate,moment){
+var util = {             
     // as of 2015-01-02, this function is no longer used in lieu of a library.  To delete after some testing. 
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
@@ -118,13 +117,36 @@ var util = {
         _.extend(obj,_.object(fields,values));
         return obj;
     },
+    // this returns the object for a Backbone.Stickit bindings object.  This is useful for error reporting.
+    invBindings: function(bindings){
+        var keys = _(bindings).keys()
+        var vals = _(bindings).chain().values().map(function(x) { return _.isObject(x)? x.observe : x;}).value();
+        return _.object(vals,keys);
+    },
+    // This travels through all of the assignments and determines the days that assignment dates fall
+    buildAssignmentDates: function (problemSets) {
+        var assignmentDateList = new AssignmentDateList();
+        problemSets.each(function(_set){
+            assignmentDateList.add(new AssignmentDate({type: "open", problemSet: _set,
+                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+            assignmentDateList.add(new AssignmentDate({type: "due", problemSet: _set,
+                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+            assignmentDateList.add(new AssignmentDate({type: "answer", problemSet: _set,
+                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+            if(parseInt(_set.get("reduced_scoring_date"))>0) {
+                assignmentDateList.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
+                    date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}) );
+            }
+        });
+        return assignmentDateList;
+    },
     changeClass:function(opts){
         if(opts.state){
             opts.els.removeClass(opts.remove_class).addClass(opts.add_class)
         } else {
             opts.els.addClass(opts.remove_class).removeClass(opts.add_class)
         }
-    }
+    },
 }
 
 

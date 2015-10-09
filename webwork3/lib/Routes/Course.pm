@@ -4,24 +4,22 @@
 #
 ##
 
-package Routes::Course;
+#package Routes::Course;
 
-use strict;
-use warnings;
-use Dancer ':syntax';
-use Dancer::Plugin::Ajax; 
+#use strict;
+#use warnings;
+#use Dancer ':syntax';
+##use Dancer::Plugin::Ajax; 
 use Dancer::FileUtils qw /read_file_content path/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
-# use Utils::CourseUtils qw/getCourseSettings/;
-use Routes::Authentication qw/buildSession checkPermissions setCookie/;
-use Data::Dumper;
+use Utils::Authentication qw/buildSession checkPermissions setCookie setCourseEnvironment/;
+
 
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
-
 
 ###
 #
@@ -34,6 +32,9 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 get '/courses' => sub {
 
+    #debug 'in GET /courses/';
+
+    setCourseEnvironment("");
 	my @courses = listCourses(vars->{ce});
 
 	return \@courses;
@@ -57,12 +58,15 @@ get '/courses/:course_id' => sub {
 
 	# template 'course_home.tt', {course_id=>params->{course_id}};
 	if(request->is_ajax){
-			
+
+        setCourseEnvironment(params->{course_id});
 
 		my $ce2 = new WeBWorK::CourseEnvironment({
 		 	webwork_dir         => vars->{ce}->{webwork_dir},
 			courseName => params->{course_id},
 		});
+        
+        
 
 		my $coursePath = vars->{ce}->{webworkDirs}->{courses} . "/" . params->{course_id};
 
@@ -75,14 +79,12 @@ get '/courses/:course_id' => sub {
 	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
 	    if (params->{checkCourseTables}){
 			($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
-		}
+            return { coursePath => $coursePath, tables_ok => $tables_ok, dbStatus => $dbStatus,
+                        message => "Course exists."};
+		} else {
+            return {course_id => params->{course_id}, message=> "Course exists."};
+        }
 		
-		return {
-			coursePath => $coursePath,
-			tables_ok => $tables_ok,
-			dbStatus => $dbStatus
-
-		};
 	} else {
 
 		my $session = {};
@@ -111,19 +113,23 @@ get '/courses/:course_id' => sub {
 
 post '/courses/:new_course_id' => sub {
 
-    checkPermissions(15,session->{user});
-
+    setCourseEnvironment("admin");  # this will make sure that the user is associated with the admin course. 
+    checkPermissions(10,session->{user});  ## maybe this should be at 15?  But is admin=15? 
+    
+    
+    
     my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
 	my $courseDir = "$coursesDir/" . params->{new_course_id};
 
 	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
-	 	webwork_dir         => vars->{ce}->{webwork_dir},
-		courseName => params->{course_id},
+	 	webwork_dir => vars->{ce}->{webwork_dir},
+		courseName => params->{new_course_id},
 	});
-
-
+    
+    
+    
 	# return an error if the course already exists
 
 	if (-e $courseDir) {
@@ -135,23 +141,12 @@ post '/courses/:new_course_id' => sub {
 	my $dbLayoutName = $ce2->{dbLayoutName};
 	my $db2 = new WeBWorK::DB($ce2->{dbLayouts}->{$dbLayoutName});
 
-	# for my $table (keys %$db2)
-	# {
-	# 	my $tableName = $db2->{$table};
-	# 	my $database_table_exists = ($db2->{$table}->tableExists) ? 1:0;
-	# 	debug "$table : $database_table_exists \n";
-	# } 
-
-	## what's a good way to tell if the database already exists?
-
 	my $userTableExists = ($db2->{user}->tableExists) ? 1: 0;
 
 	if ($userTableExists){
 	  	return {error=>"The databases for " . params->{new_course_id} . " already exists"};
 	}
 	
-
-
 
 	# fail if the course ID contains invalid characters
 
@@ -186,6 +181,7 @@ post '/courses/:new_course_id' => sub {
 		user_id    => params->{new_userID},
 		permission => "10",
 	);
+    
 	push @users, [ $User, $Password, $PermissionLevel ];
 
 	my %courseOptions = ( dbLayoutName => "sql_single" );
@@ -194,9 +190,9 @@ post '/courses/:new_course_id' => sub {
 					dbOptions=> params->{db_options}, users=>\@users};
 
 
-	my $addCourse = addCourse(%{$options});
+	addCourse(%{$options});
 
-	return $addCourse;
+	return {courseID => params->{new_course_id}, message => "Course created successfully."};
 
 };
 
@@ -206,20 +202,16 @@ post '/courses/:new_course_id' => sub {
 
 put '/courses/:course_id' => sub {
 
-	checkPermissions(15,session->{user});
+setCourseEnvironment("admin");
+	checkPermissions(10,session->{user});
 
 	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
 
-	my $ce2 = new WeBWorK::CourseEnvironment({
-		webwork_url         => vars->{ce}->{webwork_url},
-	 	webwork_dir         => vars->{ce}->{webwork_dir},
-	 	pg_dir              => vars->{ce}->{pg_dir},
-	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
-	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
-	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
-	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
-		courseName => params->{new_course_id},
+    my $ce2 = new WeBWorK::CourseEnvironment({
+	 	webwork_dir => vars->{ce}->{webwork_dir},
+		courseName => params->{course_id},
 	});
+
 
 	my %courseOptions = ( dbLayoutName => "sql_single" );
 
@@ -239,32 +231,25 @@ put '/courses/:course_id' => sub {
 
 del '/courses/:course_id' => sub {
 
-	checkPermissions(15,session->{user});
-
- #    my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
-	# my $courseDir = "$coursesDir/" . params->{course_id};
+	setCourseEnvironment("admin");
+	checkPermissions(10,session->{user});
 
 	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
 
-	my $ce2 = new WeBWorK::CourseEnvironment({
-		webwork_url         => vars->{ce}->{webwork_url},
-	 	webwork_dir         => vars->{ce}->{webwork_dir},
-	 	pg_dir              => vars->{ce}->{pg_dir},
-	 	webwork_htdocs_url  => vars->{ce}->{webwork_htdocs_url},
-	 	webwork_htdocs_dir  => vars->{ce}->{webwork_htdocs_dir},
-	 	webwork_courses_url => vars->{ce}->{webwork_courses_url},
-	 	webwork_courses_dir => vars->{ce}->{webwork_courses_dir},
+    my $ce2 = new WeBWorK::CourseEnvironment({
+	 	webwork_dir => vars->{ce}->{webwork_dir},
 		courseName => params->{course_id},
 	});
+
 
 	my %courseOptions = ( dbLayoutName => "sql_single" );
 
 	my $options = { courseID => params->{course_id}, ce=>$ce2, courseOptions=>\%courseOptions,
 					dbOptions=> params->{db_options}};
 
-	my $delCourse = deleteCourse(%{$options});
+	deleteCourse(%{$options});
 
-	return $delCourse;
+	return {course_id => params->{course_id}, message => "Course deleted."}; 
 
 };
 
@@ -285,6 +270,7 @@ post '/courses/:course_id/session' => sub {
  
 
 get '/courses/:course_id/manager' =>  sub {
+
 
 	# read the course manager configuration file to set up the main and side panes
 
@@ -381,9 +367,9 @@ get '/courses/:course_id/manager' =>  sub {
 
 		buildSession($userID,$sessKey);
 		if(session 'logged_in'){
-			$settings = getCourseSettings();
-			$sets = getAllSets();
-			$users = getAllUsers();
+			$settings = getCourseSettings(vars->{ce});
+			$sets = getAllSets(vars->{db},vars->{ce});
+			$users = getAllUsers(vars->{db},vars->{ce});
 		} else {
 			session->destroy();
 		}

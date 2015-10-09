@@ -52,7 +52,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id,icon: _view.info.icon}));
         });
 
-        // this ensures that the rerender call on resizing the window only occurs once every 500 ms.  
+        // this ensures that the rerender call on resizing the window only occurs once every 250 ms.  
 
         var renderMainPane = _.debounce(function(evt){ 
             self.currentView.render();
@@ -101,7 +101,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         if(! this.currentSidebar){
             var otherSidebars = this.mainViewList.getOtherSidebars(this.currentView.info.id);
             if(otherSidebars[0]){ 
-                this.changeSidebar([0]);
+                this.changeSidebar(otherSidebars[0]);
             } else {
                 this.changeSidebar("help",{is_open: true});
             }
@@ -159,10 +159,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         _(this.currentView.sidebarEvents).chain().keys().each(function(event){
             self.currentView.listenTo(self.currentSidebar,event,self.currentView.sidebarEvents[event]);
         });
+        
 
         this.currentSidebar.mainView = this.currentView;
-
-
 
         // set up the possible options and render the sidebar
 

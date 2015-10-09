@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.28 2009/10/17 15:50:33 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -14,8 +14,8 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::PG::Local;
-use base qw(WeBWorK::PG);
+package WeBWorK3::PG::Local;
+use base qw(WeBWorK::PG::Local);
 
 =head1 NAME
 
@@ -38,40 +38,11 @@ the WeBWorK::PG module for information about the API.
 use strict;
 use warnings;
 use WeBWorK::Constants;
-use Dancer;
+#use Dancer;
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
-use WeBWorK::GeneralUtils qw(readFile writeTimingLogEntry);
+use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 use WeBWorK::Debug;
-
-
-# Problem processing will time out after this number of seconds.
-use constant TIMEOUT => $WeBWorK::PG::Local::TIMEOUT || 10;
-
-BEGIN {
-	# This safe compartment is used to read the large macro files such as
-	# PG.pl, PGbasicmacros.pl and PGanswermacros and cache the results so that
-	# future calls have preloaded versions of these large files. This saves a
-	# significant amount of time.
-	$WeBWorK::PG::Local::safeCache = new WWSafe;
-}
-
-sub alarm_handler {
-	my $msg = "Timeout after processing this problem for ". TIMEOUT. " seconds. Check for infinite loops in problem source.\n";
-	warn $msg;
-	CORE::die $msg;
-}
-
-sub new {
-	my $invocant = shift;
-	local $SIG{ALRM} = \&alarm_handler;
-	alarm TIMEOUT;
-	my $result = eval { $invocant->new_helper(@_) };
-	alarm 0;
-	die $@ if $@;
-	return $result;
-}
-
 
 sub new_helper {
 	my $invocant = shift;
@@ -90,7 +61,7 @@ sub new_helper {
 	) = @_;
 
 	
-	debug("in local.pm");
+
 	
 	# write timing log entry
 # 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
@@ -286,7 +257,7 @@ sub new_helper {
 			head_text  => "", 
 			post_header_text => "",
 			body_text  => <<EOF,
-WeBWorK::GeneralUtils::readFile($sourceFilePath) says: 
+WeBWorK::Utils::readFile($sourceFilePath) says: 
 $@
 EOF
 			answers    => {},

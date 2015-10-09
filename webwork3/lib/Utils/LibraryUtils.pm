@@ -6,10 +6,12 @@ use base qw(Exporter);
 use Path::Class qw/file dir/;
 use Dancer ':syntax';
 use Dancer::Plugin::Database;
-use Data::Dumper;
-use WeBWorK::GeneralUtils qw(readDirectory);
+use WeBWorK::Utils qw(readDirectory);
+use WeBWorK3::PG::Local;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
+our @answerFields = qw/preview_latex_string done original_student_ans preview_text_string ans_message 
+						student_ans error_flag score correct_ans ans_label error_message _filter_name type ans_name/;
 
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
@@ -23,11 +25,7 @@ my %ignoredir = (
 ###
 
 sub render {
-
-	debug "in general render sub";
-
-	my $renderParams = shift;
-
+	my ($ce,$renderParams) = @_;
 	my @anskeys = split(";",params->{answer_fields} || ""); 
 	
 	$renderParams->{formFields}= {};
@@ -38,21 +36,22 @@ sub render {
     $renderParams->{formFields}->{effectiveUser} = params->{effectiveUser} || session->{user};
     
 	# remove any pretty garbage around the problem
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
-	local vars->{ce}->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 
 
 	my $translationOptions = {
 		displayMode     => $renderParams->{displayMode},
 		showHints       => $renderParams->{showHints},
 		showSolutions   => $renderParams->{showSolutions},
+		showAnswers		=> $renderParams->{showAnswers},
 		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
 		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
 	};
     
     
-	my $pg = new WeBWorK::PG(
-		vars->{ce},
+	my $pg = new WeBWorK3::PG::Local(
+		$ce,
 		$renderParams->{user},
 		params->{session_key},
 		$renderParams->{set},
@@ -75,14 +74,16 @@ sub render {
 
     # extract the important parts of the answer, but don't send the correct_ans if not requested. 
 
-    for my $key (@anskeys){
-    	for my $field (qw(preview_latex_string done original_student_ans preview_text_string ans_message student_ans error_flag score correct_ans ans_label error_message _filter_name type ans_name)) {
+    for my $key (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
+    	$answers->{$key} = {};
+    	for my $field (@answerFields) {
     		if ($field ne 'correct_ans' || $renderParams->{showAnswers}){
 	    		$answers->{$key}->{$field} = $pg->{answers}->{$key}->{$field};
 	    	}
+
 	    }
     }
-    
+
     my $flags = {};
 
     ## skip the CODE reference which appears in the PROBLEM_GRADER_TO_USE.  I don't think this is useful for 
@@ -109,6 +110,15 @@ sub render {
 		debug_messages              => \@pgdebug_messages,
 		internal_debug_messages     => \@internal_debug_messages,
 	};
+    
+    if($problem_hash->{errors}){
+        my $text = qq|<div><em>An error occurred while processing this problem.</em>  
+                    Click <a href="#" onclick='\$(this).parent().find(".bg-danger").removeClass("hidden"); return false'>here</a>
+                    to show details of the error. <p class='bg-danger hidden'>|;
+        $text .= $problem_hash->{errors} . "</p></div>";
+        
+        $problem_hash->{text} = $text;
+    }
 
 	return $problem_hash;
 
@@ -458,8 +468,6 @@ sub getProblemTags {
 
 # 	my ($top,$base,$dir,$probLib) = @_;
 
-# 	debug "top: $top  base: $base dir:  $dir probLib: $probLib \n";
-# 	debug Dumper($probLib);
 # 	my @lis = readDirectory("$base/$dir");
 # 	return () if grep /^=library-ignore$/, @lis;
 # 	return () if !$top && grep /^=library-no-combine$/, @lis;
@@ -470,8 +478,6 @@ sub getProblemTags {
 
 # 	my @dirs = grep {!$ignoredir{$_} and -d "$base/$dir/$_"} @lis;
 # 	if ($top == 1) {@dirs = grep {!$problib->{$_}} @dirs}
-
-# 	debug Dumper(@dirs);
 
 # 	foreach my $subdir (@dirs) {push(@pgs, get_library_pgs(0,"$base/$dir",$subdir,$probLib))}
 
@@ -526,3 +532,5 @@ sub munge_pg_file_path {
 	# set.def file.
 	return($pg_path);
 }
+
+1;

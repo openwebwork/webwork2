@@ -11,7 +11,9 @@ a#view-header i {margin-left:1ex;}
 
 #page-header h2 {font-size: 24px; line-height: 28px; margin: 0px; display: inline-block;}
 
+/* check mark for problem lists */
 
+.mark-correct-btn { color: darkgreen }
 
 .help-hidden {display: none;}
 
@@ -76,7 +78,7 @@ label.checklist {display: inline; margin-left: 8px;}
 
 /* #probSetList {margin:0;padding:0px; height:100%; overflow-y: auto;} */
 /*.prob-set-container {overflow-y: scroll; width: 100%;}*/
-.prob-value {width: 20px;}
+.prob-value, .max-attempts {width: 30px;}
 
 .loading {background-color: orange;}
 
@@ -100,6 +102,27 @@ border-radius: 5px;}
 .sortable-placeholder {
 	border: 1px dashed black; background: lightgray;
 }
+
+/* Problem Set Deatils styles */
+
+.border-around-table {
+    border: 1px lightgray solid;
+    border-radius: 4px;
+    padding: 4px;
+    margin-bottom: 10px;
+}
+
+#customize-problem-set-controls {
+    margin-bottom: 4px   
+}
+
+.rounded-border {
+  border: 1px lightgray solid;
+  border-radius: 4px;
+  margin-top: 10px;
+  padding: 5px;
+}
+
 
 /* Classlist Manager styles */
 
@@ -142,7 +165,9 @@ table#sTable select {width: 125px;}
 #users_table th { background: #E5E5E5; text-align: left; font-size: 90%; padding: 5px;}
 #users_table td {font-size: 90%;}
 
-label {font-weight: bold; display: inline; margin-right: 20px;}
+/*  This needs to be changed. 
+
+label {font-weight: bold; display: inline; margin-right: 20px;}  */
 #mainActionMenu {width: 200px;}
 #testButton {margin-left: 25px; margin-right: 25px;}
 #selectalldiv {display: inline; margin-left: 25px; margin-right: 25px;}

@@ -6,11 +6,16 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
         this.problemSets = options.problemSets; 
         this.settings = options.settings;
         this.state.set({display_option: this.settings.getSettingValue("pg{options}{displayMode}"),
-            show_path: false, show_tags: false},{silent: true})
+            show_path: false, show_tags: false, problem_group: null},{silent: true})
         .on("change:show_path",function(){
             self.trigger("show-hide-path",self.state.get("show_path"))
         }).on("change:show_tags",function(){
             self.trigger("show-hide-tags",self.state.get("show_tags"));
+        }).on("change:problem_group", function(){
+            if(self.state.get("problem_group")){
+                self.trigger("add-prob-from-group", self.state.get("problem_group"));
+                self.state.set("problem_group",null);
+            }
         });
 
         _.extend(this,Backbone.Events);
@@ -18,11 +23,24 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
     render: function(){
         this.$el.html($("#problem-list-options-template").html());
         this.stickit(this.state,this.bindings);
+        this.stopListening();
+        var problems = this.mainView.views.problemsView.problemSetView.deletedProblems; 
+        if(problems.length >0) {
+            this.$(".undo-delete-button").removeAttr("disabled");
+        }
+        this.listenTo(problems,"add", function(){
+            this.$(".undo-delete-button").removeAttr("disabled");
+        }).listenTo(this.mainView.views.problemsView.problemSetView.deletedProblems,"remove", function() {
+            if(problems.length == 0 ){
+                 this.$(".undo-delete-button").attr("disabled","disabled");
+            }
+        }); 
+
         return this;
     }, 
     bindings: {".problem-display-option": {observe: "display_option", selectOptions: {
             collection: function () {
-                var modes = this.settings.getSettingValue("pg{displayModes}").slice();
+                var modes = this.settings.getSettingValue("pg{displayModes}").slice(); // make a copy of the pg{displayModes}
                 modes.push("None");
                 return modes;
             }
@@ -32,8 +50,12 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
         }},
         ".show-hide-path-button": {observe: "show_path", update: function($el, val, model, options){
             $el.text(val?"Hide Path":"Show Path");
+        }},
+        "select#add-prob-group": {observe: "problem_group", selectOptions: {
+            collection: function (){
+                return this.problemSets.map(function(_set) { return _set.get("set_id");});
+            }, defaultOption: {label: "Add a Problem From a Group", value: null}
         }}
-
     },
     events: {
         "click .undo-delete-button": function(){

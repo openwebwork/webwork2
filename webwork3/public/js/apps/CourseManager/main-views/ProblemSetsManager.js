@@ -11,7 +11,7 @@ function(Backbone, _,MainView,CollectionTableView,config,util,ModalView,ProblemS
 var ProblemSetsManager = MainView.extend({
     initialize: function (options) {
         MainView.prototype.initialize.call(this,options);
-        _.bindAll(this, 'render','addProblemSet','clearFilterText','deleteSets','update','syncProblemEvent');  // include all functions that need the this object
+        _.bindAll(this, 'render','addProblemSet','clearFilterText','deleteSets','update');  // include all functions that need the this object
         var self = this;
 
         this.state.on({
@@ -46,7 +46,6 @@ var ProblemSetsManager = MainView.extend({
             "table-changed": function(){  // I18N
                 self.$(".num-sets").html(self.problemSetTable.getRowCount() + " of " + self.problemSets.length 
                                          + " sets shown.");
-                self.update();
             }
         });
         
@@ -58,11 +57,19 @@ var ProblemSetsManager = MainView.extend({
             self.render(); // for some reason the checkboxes don't stay checked. 
         })
 
+        // builds the "change:set_id ... " 
+        var changeableFields = _(this.problemSets.at(0).defaults).chain().keys().map(function(key){ 
+            return "change:" + key}).value().join(" ");
+        
+        this.problemSets.on(changeableFields,function(_set){
+            _set.save(_set.changed);
+        }); 
+        
         this.problemSets.on({
             "add": this.update,
             "remove": this.update,
             "change:enable_reduced_scoring":this.update
-        });
+        })
         this.setMessages();
     },
     events: {
@@ -105,9 +112,12 @@ var ProblemSetsManager = MainView.extend({
         return this;
     },
     update: function (){
-        util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"), remove_class: "hidden",
-                els: this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date,th.enable-reduced-scoring,th.reduced-scoring-date")})
-        this.problemSetTable.refreshTable();
+        this.problemSetTable.updateTable();
+        util.changeClass({state: this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"), 
+                            remove_class: "hidden",
+                            els: this.$("td:has(input.enable-reduced-scoring),td.reduced-scoring-date," +
+                                            "th.enable-reduced-scoring,th.reduced-scoring-date")})
+        
         return this;
     },
     bindings: { 
@@ -230,11 +240,8 @@ var ProblemSetsManager = MainView.extend({
         this.problemSets.on({
             add: function (_set){
                 _set.save();
-                _set.problems.on({
-                    "change:value": function(prob){ self.changeProblemValueEvent(prob,_set)},
-                    add: function(prob){ self.addProblemEvent(prob,_set)},
-                    sync: function(prob){ self.syncProblemEvent(prob,_set)},
-                });
+                _set.problems.on("change:value change:max_attempts change:source_file", function(prob){
+                                self.changeProblemValueEvent(prob,_set)})
                 _set._network={add: ""};
             },
             remove: function(_set){
@@ -243,25 +250,9 @@ var ProblemSetsManager = MainView.extend({
                         short: self.messageTemplate({type:"set_removed",opts:{setname: _set.get("set_id")}}),
                         text: self.messageTemplate({type: "set_removed_details",opts:{setname: _set.get("set_id")}})});
                            
-                   // update the assignmentDates to delete the proper assignments
-
-                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
                     self.problemSetTable.updateTable();
                     self.update();
                 }});
-            },
-            "change:due_date change:open_date change:answer_date change:reduced_scoring_date": function(_set){
-                _set.adjustDates();
-                self.assignmentDates.chain().filter(function(assign) { 
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");})
-                    .each(function(assign){
-                        assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type").replace("-","_")+"_date"))
-                            .format("YYYY-MM-DD"));
-                    });
-            },
-            "change:problems": function(_set){
-                _set.save();
             },
             "set_date_error": function(_opts, model){
                 self.eventDispatcher.trigger("add-message",{type: "danger",
@@ -273,7 +264,9 @@ var ProblemSetsManager = MainView.extend({
                 })
             },
             change: function(_set){
-                _set.changingAttributes=_.pick(_set._previousAttributes,_.keys(_set.changed));
+                var keys = _(_set.changed).keys();
+                _set.changingAttributes= _(keys).intersection(["_delete_problem_id","_reorder","_add_problem"]).length>0 ?
+                    _set.changed : _(_set.previousAttributes()).pick(keys);
             },
             sync: function(_set){
                 _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
@@ -283,90 +276,81 @@ var ProblemSetsManager = MainView.extend({
                                 short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
                                 text: attr.msg});
                             break;
-                        case "problem_added": 
+                        case "_add_problem": 
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type:"problem_added_details",opts:{setname: _set.get("set_id")}})});
+                                text: self.messageTemplate({type:"problem_added_details",
+                                                            opts:{setname: _set.get("set_id")}})});
+                            _set.changingAttributes = _(_set.changingAttributes).omit("_add_problem");
                             break;
-                        case "problems_reordered": 
+                        case "_reorder": 
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type:"problems_reordered_details",opts:{setname: _set.get("set_id")}})});
+                                text: self.messageTemplate({type:"problems_reordered_details",
+                                                            opts:{setname: _set.get("set_id")}})});
+                            _set.changingAttributes = _(_set.changingAttributes).omit("_reorder");
                             break;
-                        case "problem_deleted": 
+                        case "_delete_problem_id": 
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type: "problem_deleted_details", opts: _set.changingAttributes[key]})});
+                                text: self.messageTemplate({type: "problem_deleted_details", 
+                                                    opts: {setname: _set.get("set_id"),
+                                                           problem_id: _set.changingAttributes["_delete_problem_id"]}})});
+                            _set.changingAttributes = _(_set.changingAttributes).omit("_delete_problem_id");
                             break;
                         case "assigned_users":
                             self.eventDispatcher.trigger("add-message",{type: "success",
                                 short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}), 
                                 text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})}); 
+                            _set.changingAttributes = _(_set.changingAttributes).omit(key);
                             break;
-                        
+                       case "problem_changed": 
+                            self.eventDispatcher.trigger("add-message",{type: "success", 
+                                short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
+                                text: self.messageTemplate({type: "problems_values_details", 
+                                    opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
+                            _set.changingAttributes = _(_set.changingAttributes).omit("problem_changed");
+                            break;
                         default:
                             var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
                                          : _set.changingAttributes[key];
                             var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
-                                text: self.messageTemplate({type:"set_saved_details",opts:{setname:_set.get("set_id"),key: key,
-                                    oldValue: _old, newValue: _new}})});
+                                text: self.messageTemplate({type:"set_saved_details",
+                                                            opts:{setname:_set.get("set_id"),
+                                                                    key: key,
+                                                                    oldValue: _old, 
+                                                                    newValue: _new}})});
+                               _set.changingAttributes = _(_set.changingAttributes).omit(key);
                     } // switch 
-                }); // .each
+                }); 
+                
                 _(_set._network).chain().keys().each(function(key){ 
                     switch(key){
                         case "add":
                             self.eventDispatcher.trigger("add-message",{type: "success", 
                                 short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
                                 text: self.messageTemplate({type: "set_added_details",opts:{setname: _set.get("set_id")}})});
-                            self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
-                                date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
-                            self.assignmentDates.add(new AssignmentDate({type: "due", problemSet: _set,
-                                date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
-                            self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
-                                date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-                            self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
-                                date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}));
-                            self.problemSetTable.set({filter_string: self.state.get("filter_string")}).updateTable();
-                            delete _set._network;
-                            break;    
-                    }
-                });
+                    }});
             } // sync
         }); // this.problemSets.on
 
                 /* This sets the events for the problems (of type ProblemList) in each problem Set */
 
         this.problemSets.each(function(_set) {
-            _set.problems.on({
-                "change:value": function(prob){ self.changeProblemValueEvent(prob,_set)},
-                add: function(prob){ self.addProblemEvent(prob,_set)},
-                sync: function(prob){ self.syncProblemEvent(prob,_set)},
-            });
+            _set.get("problems")
+                .on("change:value change:max_attempts change:source_file",function(prob){ self.changeProblemValueEvent(_set,prob);});
         });
     }, // setMessages
-    changeProblemValueEvent: function (prob,_set){    // not sure this is actually working.
-        _set.changingAttributes={"value_changed": {oldValue: prob._previousAttributes.value, 
-            newValue: prob.get("value"), name: _set.get("set_id"), problem_id: prob.get("problem_id")}};
+    changeProblemValueEvent: function (_set,prob){   
+        var attr = _(prob.changed).keys()[0]; 
+        _set.changingAttributes={
+                "problem_changed": {  attribute: attr, 
+                                    oldValue: prob._previousAttributes[attr], 
+                                    newValue: prob.get(attr), 
+                                    problem_id: prob.get("problem_id")}};
             
-    },
-    addProblemEvent: function(prob,_set){
-        _set.changingAttributes={"problem_added": ""};
-    },
-    syncProblemEvent: function(prob,_set){
-        var self = this;
-        _(_set.changingAttributes||{}).chain().keys().each(function(key){ 
-            switch(key){
-                case "value_changed": 
-                    self.eventDispatcher.trigger("add-message",{type: "success", 
-                        short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
-                        text: self.messageTemplate({type: "problems_values_details", 
-                            opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
-                    break;
-                
-            }
-        });
     }
 });
 

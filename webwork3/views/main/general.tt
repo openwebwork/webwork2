@@ -93,17 +93,23 @@
   <%if(draggable){%>
     <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
   <%}%>
-  <%if(showPoints){%>
-  <div class="col-md-3 form-">
+  <%if(showPoints || showMaxAttempts){%>
+  <div class="col-md-4 form-horizontal">
+      <%if(showPoints){%>
       <label class="control-label">Value: 
         <input type="text" class="prob-value input-small"></label>
+        <%}%>
+      <%if(showMaxAttempts){%>
+      <label class="control-label">Max Attempts: 
+        <input type="text" class="max-attempts" style="width: 60px"></label>  
+      <%}%>
     </div>
   <%}%>
 
   <div class="col-md-4 btn-group btn-group-sm">
   <%if(showAddTool){%><a class="btn btn-default add-problem" href="#" title="add to target set">
     <i class="fa fa-plus"></i></a><%}%>
-  <%if(showEditTool){%><a class="btn btn-default" target="WW_editor" href="#" title="edit">
+  <%if(showEditTool){%><a onclick="return false;" class="btn btn-default" target="WW_editor" href="#" title="edit">
       <i class="fa fa-pencil"></i></a><%}%>
     <%if(showRefreshTool){%>
       <a onclick="return false;" href="#"  class="btn btn-default refresh-problem" title="randomize">
@@ -119,8 +125,13 @@
       <a href="#" onclick="return false;" class="remove-problem btn btn-default" title="delete problem">
         <i class="fa fa-trash-o"></i></a>
     <%}%>
-  <a href="#" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
-  <a href="#" class="btn btn-default path-button" title="show/hide path"><i class="fa fa-file"></i></a>
+    <%if(markCorrect){ %>
+      <a href="#" onclick="return false;" class="mark-correct-btn btn btn-default" title="Mark this problem correct for all assigned users.">
+        <i class="fa fa-check"></i></a>
+    <%}%>
+    
+  <a href="#" onclick="return false;" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
+  <a href="#" onclick="return false;" class="btn btn-default path-button" title="show/hide path"><i class="fa fa-file"></i></a>
   </div>
 
   <div class="col-md-2 btn-group btn-group-sm">
@@ -130,9 +141,9 @@
   </div>
   <div class="problem-tags">
   <table class="table table-condensed table-bordered"><tbody>
-<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3" class="problem-path">
-<%if(source_file){ print(source_file);} %></td>
-<td>Seed:</td><td class="seed"><%if(problem_seed){ print(problem_seed);} %></td></tr>
+<tr class="hidden path-row"><td>Problem Path:</td><td colspan="3">
+<input type="text" class="problem-path form-control"></td>
+<td>Seed:</td><td class="seed"></td></tr>
 <tr class="loading-row hidden"><td colcol-md-="3">Loading Tags...<i class="fa fa-spinner fa-spin"></i></td></tr>
 <tr class="tag-row hidden"><td>Keyword:</td><td colspan="3" class="keyword-tag"></td>
 <td>Level:</td><td class="level-tag"></td></tr>
@@ -150,8 +161,6 @@
 </table>
 </div>
 <div><%=data%></div>
-<!--<div class="filename"><%=source_file%></div>    
-<iframe class="data" style="width:100%" seamless="seamless"><%= data %></iframe>-->
 </script>
 
 <script type="text/template" id="problem-loading-template">

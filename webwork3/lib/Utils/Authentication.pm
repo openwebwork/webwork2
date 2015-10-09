@@ -1,41 +1,14 @@
-### Library routes
-##
-#  These are the routes for all library functions in the RESTful webservice
-#
-##
-
-package Routes::Authentication;
-
-use strict;
-use warnings;
-use Dancer ':syntax';
-use Dancer::Plugin::Database;
-use WeBWorK::Constants;
-use Data::Dumper;
-
+package Utils::Authentication;
 use base qw(Exporter);
+
 our @EXPORT    = ();
-our @EXPORT_OK = qw(checkPermissions setCourseEnvironment buildSession setCookie);
+our @EXPORT_OK = qw(setCourseEnvironment buildSession checkPermissions setCookie);
+
+use Dancer ':syntax';
+
+
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
-## the following routes is matched for any URL starting with /courses. It is used to load the 
-#  CourseEnvironment
-#
-#  Note: for this to match before others, make sure this package is loaded before others.
-#
-
-any ['get','put','post','delete'] => '/courses/*/**' => sub {
-
-	my ($courseID) = splat;
-	setCourseEnvironment($courseID);
-	pass;
-};
-
-any ['get','post'] => '/renderer/courses/*/**' => sub {
-	my ($courseID) = splat;
-	setCourseEnvironment($courseID);
-	pass;
-};
 
 sub setCourseEnvironment {
 
@@ -56,12 +29,11 @@ sub setCourseEnvironment {
 }
 
 sub buildSession {
-
 	my ($userID,$sessKey) = @_;
 	if(! vars->{db}){ 
 		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
 	}
-
+    
 	## need to check that the session hasn't expired. 
 
     if (!defined(session 'user')) {
@@ -71,7 +43,7 @@ sub buildSession {
     		send_error("The user is not defined. You may need to authenticate again",401);	
     	}
 	}
-
+    
 	my $key = vars->{db}->getKey(session 'user');
 	my $timeLastLoggedIn = 0; 
 
@@ -157,6 +129,7 @@ sub create_session {
 }
 
 
+
 ###
 #
 # This sets the cookie in the WW2 style to allow for seamless transfer back and forth. 
@@ -175,3 +148,6 @@ sub setCookie {
 
 
 }
+
+
+1;

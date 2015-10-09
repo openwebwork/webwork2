@@ -3,8 +3,10 @@ define(['backbone', 'views/ProblemListView','config'],
     	var LibraryProblemsView = ProblemListView.extend({
     		initialize: function (options) {
                 _(this).bindAll("highlightCommonProblems");
-	            this.viewAttrs = {reorderable: false, showPoints: false, showAddTool: true, showEditTool: true, problem_seed: 1,
-                    showRefreshTool: true, showViewTool: true, showHideTool: true, deletable: false, draggable: true};
+	            this.viewAttrs = {
+                    reorderable: false, showPoints: false, showAddTool: true, showEditTool: true, 
+                    problem_seed: 1, showMaxAttempts: false, showRefreshTool: true, showViewTool: true, 
+                    showHideTool: true, deletable: false, draggable: true, markCorrect: false};
                 _.extend(this,_(options).pick("problemSets","libraryView","settings","type"));
                 ProblemListView.prototype.initialize.apply(this,[options]); 
     		},
@@ -30,7 +32,7 @@ define(['backbone', 'views/ProblemListView','config'],
                                 pv.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
                             } else {
                                 pv.model.once("rendered", function(v) {
-                                    v.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
+                                    pv.highlight(_(pathsInCommon).contains(pathsInLibrary[i]));
                                 });
                             }
                         });

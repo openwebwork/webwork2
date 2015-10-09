@@ -2,7 +2,8 @@ define(['backbone'],function(Backbone){
 	var MainView = Backbone.View.extend({
 		initialize: function(options){
 			var self = this;
-			_(this).extend(_(options).pick("settings","users","problemSets","eventDispatcher","info","parent"));
+            _(this).bindAll("setState");
+			_(this).extend(_(options).pick("settings","users","problemSets","eventDispatcher","info"));
 			this.state = new Backbone.Model({});
 			this.state.on("change",function(){
 				self.eventDispatcher.trigger("save-state");
@@ -39,7 +40,7 @@ define(['backbone'],function(Backbone){
 		// the follow can be overridden if the state is not stored in a Backbone Model called this.state.
         setState: function (_state) {
             if(_state){
-                this.state.set(_state,{silent: true});
+                this.state.set(_state);
             }
             return this;
         },
@@ -48,7 +49,8 @@ define(['backbone'],function(Backbone){
 		additionalEvents: {},
 		originalEvents: {},
 		events : function() {
-	      	return _.extend({},this.originalEvents,this.additionalEvents);
+            var evts = _.isFunction(this.additionalEvents)? this.additionalEvents.call(this) : this.additionalEvents; 
+	      	return _.extend({},this.originalEvents,evts);
 	    },
 	    getDefaultState: function () {
 	    	console.error("getDefaultState() for " + this.info.name + " needs to be overridden");

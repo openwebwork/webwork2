@@ -4,7 +4,6 @@
 package Utils::Convert;
 use base qw(Exporter);
 use JSON;
-use Data::Dumper;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(convertObjectToHash convertArrayOfObjectsToHash convertBooleans);
 
@@ -27,9 +26,8 @@ sub convertObjectToHash {
 
     $boolean_props = [] unless defined($boolean_props);
 
-
     for my $key (keys %{$obj}){
-        if(grep(/^$key$/,@{$boolean_props})){
+        if(grep(/^$key$/,@{$boolean_props})){            
             $s->{$key} = $obj->{$key} ? JSON::true : JSON::false;    
         } else {
             $s->{$key} = $obj->{$key};
@@ -40,16 +38,21 @@ sub convertObjectToHash {
 }
 
 
-### I (pstaab) don't think this is necessary.  I think dancer takes care of it through constants true and false
+## convert from the JSON::true or JSON::false to 1/0.  
 
 sub convertBooleans {
     my ($obj,$boolean_props) = @_;
-
-    for my $key (@{$boolean_props}){
-            $obj->{$key} = $obj->{$key} ? 1: 0;
+    
+    my $s = {}; 
+    
+    for my $key (keys %{$obj}){
+        if(grep(/^$key$/,@{$boolean_props})){            
+            $s->{$key} = $obj->{$key} ?1: 0;
+        } else {
+            $s->{$key} = $obj->{$key};
+        }
     }
-
-    return $obj;
+    return $s;
 }
 
 

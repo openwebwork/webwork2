@@ -70,12 +70,13 @@ define(['backbone','underscore','views/MainView'],
 		},
 		setState: function(_state){
 			var self = this;
-			MainView.prototype.setState.apply(this,[_state]);
+			
 			if(_state){
 				_(_state.tab_states).chain().keys().each(function(st){
-					self.views[st].tabState.set(_state.tab_states[st],{silent: true});
+                    self.views[st].tabState.set(_state.tab_states[st]);
 				});
 			}
+            MainView.prototype.setState.apply(this,[_state]);
 			return this;
 		},
 	    getDefaultState: function () {

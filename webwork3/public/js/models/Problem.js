@@ -1,4 +1,4 @@
-define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
+define(['backbone', 'underscore', 'config', 'apps/util'], function(Backbone, _, config,util){
     /**
      *
      * This defines a single webwork Problem (Global Problem)
@@ -14,9 +14,20 @@ define(['backbone', 'underscore', 'config'], function(Backbone, _, config){
             max_attempts: -1,
             set_id: "",
             flags: "",
-            problem_seed: 1
+            problem_seed: 1,
+            showMeAnotherCount: 0,
+            showMeAnother: -1
         },
-        idAttribute: "source_file",
+        integerFields: ["problem_id","value","max_attempts","problem_seed","showMeAnotherCount"],
+        validation: {
+             // need to put the validation message in a template
+            value: {pattern: /^[1-9]\d*$/, msg: "The value must be a positive whole number." },
+            max_attempts: {pattern: /^(-1|\d*)$/, msg: "The value must be a whole number or -1 for unlimited attempts." }
+        },
+        parse: function(response){
+              return util.parseAsIntegers(response,this.integerFields);
+        },
+        idAttribute: "_id",
         url: function () {
             // need to determine if this is a problem in a problem set or a problem from a library browser
             if(typeof(this.collection.problemSet)!=="undefined") { // the problem comes from a problem set
