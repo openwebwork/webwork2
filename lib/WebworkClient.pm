@@ -20,14 +20,48 @@
 
 webwork2/clients/WebworkClient.pm
 
+
+Rembember to configure the local output file and display command !!!!!!!!
+
+
+=head1 SYNPOSIS
+
+ 
+	$graph = new WWPlot(400,400); # creates a graph 400 pixels by 400 pixels
+	$graph->fn($fun1, $fun2);     # installs functions $fun1 and $fun2 in $graph
+	$image_binary = $graph->draw();  # creates the gif/png image of the functions installed in the graph
+
+=head1 DESCRIPTION
+
 This script will take a file and send it to a WeBWorK daemon webservice
 to have it rendered.  The result is split into the basic HTML rendering
 and evaluation of answers and then passed to a browser for printing.
 
 The formatting allows the browser presentation to be interactive with the 
-daemon running the script webwork2/lib/renderViaXMLRPC.pm
+daemon running the script webwork2/lib/renderViaXMLRPC.pm  
+and with instructorXMLRPChandler.
 
-Rembember to configure the local output file and display command !!!!!!!!
+
+=head2 new
+
+	$graph = WebworkClient->new;
+
+
+=head2 Methods and properties
+
+=over 4
+
+=item xmin, xmax, ymin, ymax
+
+These determine the world co-ordinates of the graph. The constructions
+
+	$new_xmin = $graph->xmin($new_xmin);
+and
+	$current_xmin = $graph->xmin();
+
+set and read the values.
+
+=item fn, lb, stamps
 
 =cut
 
@@ -175,18 +209,26 @@ our $result;
 #    this code is identical between renderProblem.pl and renderViaXMLRPC.pm
 ##################################################
 
+=h2 xmlrpcCall
+
+
+
+=cut
+
+
+
 
 
 sub xmlrpcCall {
 	my $self = shift;
 	my $command = shift;
 	my $input   = shift||{};
-
+	my $requestObject;
 	$command   = 'listLibraries' unless defined $command;
-	  my $input2 = $self->setInputTable();
-	  $input = {%$input2, %$input};
+	  my $default_inputs = $self->default_inputs();
+	  $requestObject = {%$default_inputs, %$input};  #input values can override default inputs
 	  
-	$self->request_object($input);   # store the request object for later
+	$self->request_object($requestObject);   # store the request object for later
 	
 	my $requestResult; 
 	my $transporter = TRANSPORT_METHOD->new;
@@ -198,7 +240,7 @@ sub xmlrpcCall {
 		-> proxy(($self->url).'/'.REQUEST_URI);
 	};
 	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
-	# turn of verification of the ssl cert 
+	# turn off verification of the ssl cert 
 	$transporter->transport->ssl_opts(verify_hostname=>0,
 	    							SSL_verify_mode => 'SSL_VERIFY_NONE'
 	);
@@ -246,7 +288,7 @@ sub xmlrpcCall {
 		  $self->return_object($result->result());
 		  $self->error_string($err_string);
 		  $self->fault(1); # set fault flag to true
-		  return $result;
+		  return $self;  
 	  }
 }
 
@@ -381,7 +423,7 @@ sub setInputTable_for_listLib {
 
 	$out;
 }
-sub setInputTable {
+sub default_inputs {
 	my $self = shift;
 	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
 	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir});
