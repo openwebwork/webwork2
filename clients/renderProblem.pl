@@ -292,7 +292,7 @@ our $result;
 # webwork-open-problem-library/OpenProblemLibrary
 
 $xmlrpc_client->{sourceFilePath}  = $fileName;
-#xmlrpcCall('renderProblem');
+
 print "input is $input" if $UNIT_TESTS_ON;
 if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
     print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
