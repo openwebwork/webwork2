@@ -214,6 +214,7 @@ sub xmlrpcCall {
 	  # use eval to catch errors
 	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
+	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
 
@@ -225,12 +226,11 @@ sub xmlrpcCall {
 		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
 	  	}
 
-		#print  pretty_print($result->result()),"\n";  #$result->result()
-		# print "\n store result ", ref($result), " ",keys %{$result->result()};
 		$self->return_object($result->result());
 		# print "\n retrieve result ",  keys %{$self->return_object};
-		#return $self->return_object; # $result->result();  # would it be better to return the entire $result?
-		return $result;   # (this is more consistent)
+		return $self->return_object; # $result->result();  
+		# would it be better to return the entire $result?
+		# probably not, there is no hash directly available from the $result object. 
 	  } else {
 		my $err_string = 'Error message for '.
 		  join( ' ',
