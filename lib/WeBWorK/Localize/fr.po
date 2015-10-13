@@ -100,7 +100,7 @@ msgstr "Le mot de passe de l'utilisateur %1 a été modifié."
 #. ($setID, $problemID)
 #: ContentGenerator/Problem.pm:884
 msgid "%1: Problem %2"
-msgstr "%1: Problème %2."
+msgstr "%1: Problème %2"
 
 #
 #. ($numBlanks)
@@ -174,7 +174,7 @@ msgstr "Tous les devoirs %1 à tous les étudiants"
 #. ($verb)
 #: ContentGenerator/Instructor/ProblemSetList.pm:1049
 msgid "All visible sets %1 all students"
-msgstr "Tous les devoirs visibles %1 à tous les étudiants"
+msgstr "Tous les devoirs visibles %1 pour tous les étudiants"
 
 #
 # vérifier le contexte: Je vois "answers due" et "answer available", mais pas answer date
@@ -455,7 +455,7 @@ msgstr "Modifier quels devoirs?"
 msgid "Email Address"
 msgstr "Adresse courriel"
 
-#
+# avant : Envoyer un courriel à l'enseignant
 #: ContentGenerator.pm:1526 ContentGenerator.pm:1549 ContentGenerator.pm:1572
 msgid "Email instructor"
 msgstr "Envoyer un courriel à l'enseignant"
@@ -1399,8 +1399,8 @@ msgstr "Il reste %negquant(%1,un nombre illimité d'essais,essai,essais)."
 #
 #. ($attempts)
 #: ContentGenerator/Problem.pm:1191
-msgid "You have attempted this problem %quant(%1,time,times)."
-msgstr "Vous avez essayé ce problème à %quant(%1,reprise,reprises)."
+msgid "You have attempted this problem %quant(%1,time,times,0 time)."
+msgstr "Vous avez essayé ce problème à %quant(%1,reprise,reprises,0 reprise)."
 
 #
 #: ContentGenerator/Logout.pm:119
@@ -2211,7 +2211,7 @@ msgstr "Sommaire Wiki de MathObjects"
 
 #
 msgid "Your score was recorded."
-msgstr "Votre résultat a été enregistré"
+msgstr "Votre résultat a été enregistré."
 
 #
 msgid "You must specify an file name in order to save a new file."
@@ -2609,7 +2609,7 @@ msgstr "Ce chemin |%1| ne décrit pas un fichier temporaire modifiable"
 
 #
 msgid "visible to"
-msgstr "visible à"
+msgstr "visible pour"
 
 # avant: msgstr "visible"
 #
@@ -2754,7 +2754,7 @@ msgstr "Imprimer dans un fichier"
 
 #
 msgid "This set is visible to students."
-msgstr "Ce devoir est visible auprès des étudiants."
+msgstr "Ce devoir est visible pour les étudiants."
 
 # avant: msgstr "Les étudiants voient ce devoir."
 #
@@ -2847,7 +2847,7 @@ msgstr "Réponses disponibles"
 
 #
 msgid "Visible to Students"
-msgstr "Visible aux étudiants"
+msgstr "Visible pour les étudiants"
 
 #
 msgid "Assignment type"
@@ -3363,7 +3363,7 @@ msgid "student"
 msgstr "étudiant"
 
 msgid "You are not authorized to access instructor tools"
-msgstr "Vous n'êtes pas autorisé à accéder aux outils pour l'enseignant"
+msgstr "Vous n'êtes pas autorisé à accéder aux outils pour l'enseignant."
 
 msgid "record for user %1 not found"
 msgstr "Enregistrement pour l'utilisateur %1 introuvable"
@@ -3517,7 +3517,7 @@ msgid "sets checked below"
 msgstr "Devoirs vérifiés ci-dessous"
 
 msgid "sets visible to students"
-msgstr "devoirs visible pour les étudiants"
+msgstr "devoirs visibles pour les étudiants"
 
 msgid "sets hidden from students"
 msgstr "devoirs cachés aux étudiants"
@@ -3826,7 +3826,7 @@ msgid ""
 "instructor."
 msgstr ""
 "Seul ce niveau de permission, et ceux supérieurs, peuvent voir le bouton "
-"pour l'envoi de courriel à l'enseignant"
+"pour l'envoi de courriel à l'enseignant."
 
 # avant: "En agissant comme un étudiant, ce niveau de permission, et ceux supérieurs, peuvent soumettre des réponses pour cet élève."
 msgid ""
@@ -4058,7 +4058,7 @@ msgid ""
 "sign</ul>"
 msgstr ""
 "Lorsque les élèves cliquent sur le bouton <em>Envoyer un courriel à "
-"l'enseignant </ em> pour envoyer vos commentaires, WeBWorK remplit la ligne "
+"l'enseignant</ em> pour envoyer vos commentaires, WeBWorK remplit la ligne "
 "du sujet. Ici vous pouvez définir la ligne du sujet. Dans ce document, vous "
 "pouvez avoir plusieurs bits d'information remplis avec les séquences "
 "suivantes.<p><ul><li> %c = ID du cours<li> %u = ID de l'utilisateur<li> %s = "

@@ -1246,7 +1246,7 @@ sub output_score_summary{
 		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
 		print CGI::p(join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
-			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), CGI::br(),
+			$r->maketext("You have attempted this problem [quant,_1,time,times,0 time].",$attempts), CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",sprintf("%.0f%%", $pg->{result}->{score} * 100)) . CGI::br():'',
 			$problem->attempted
 				? $r->maketext("Your overall recorded score is [_1]. [_2]",$lastScore,$notCountedMessage) . CGI::br()
