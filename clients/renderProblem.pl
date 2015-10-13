@@ -99,7 +99,7 @@ my @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentia
  # Path to a temporary file for storing the output of renderProblem.pl
  use constant  TEMPOUTPUTFILE   => "$ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html"; 
  
-use constant DISPLAYMODE   => 'images'; #  jsMath  is another possibilities.
+use constant DISPLAYMODE   => 'MathJax'; 
 
 die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissions 777 " unless
 -w TEMPOUTPUTFILE();
@@ -148,7 +148,18 @@ our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE, %credentials);
 ####################################################
 # get credentials
 ####################################################
-
+my $credentials_string = <<EOF;
+The credentials file should contain this:
+	%credentials = (
+			userID              => "my login name for the webwork course",
+			course_password     => "my password ",
+			courseID            => "the name of the webwork course",
+            XML_URL	            => "url of rendering site",
+            XML_PASSWORD        => "site password", # preliminary access to site
+            FORM_ACTION_URL     =>  'http://localhost:80/webwork2/html2xml', #action url for form
+	);
+1;
+EOF
 
 foreach my $path (@path_list) {
 	if (-r "$path" ) {
@@ -162,16 +173,7 @@ if  ( $credential_path ) {
 } else {
 	die <<EOF;
 Can't find path for credentials. Looked in @path_list.
-Place a credential file containing the following information at one of the locations above.
-	%credentials = (
-			userID              => "my login name for the webwork course",
-			course_password     => "my password ",
-			courseID            => "the name of the webwork course",
-            XML_URL	            => "url of rendering site",
-            XML_PASSWORD        => "site password", # preliminary access to site
-            FORM_ACTION_URL     =>  'http://localhost:80/webwork2/html2xml', #action url for form
-	);
-1;
+$credentials_string
 ---------------------------------------------------------
 EOF
 }  
@@ -179,20 +181,8 @@ EOF
 eval{require $credential_path};
 if ($@  or not  %credentials) {
 
-print STDERR <<EOF;
-
-The credentials file should contain this:
-	%credentials = (
-			userID              => "my login name for the webwork course",
-			course_password     => "my password ",
-			courseID            => "the name of the webwork course",
-            XML_URL	            => "url of rendering site",
-            XML_PASSWORD        => "site password", # preliminary access to site
-            FORM_ACTION_URL     =>  'http://localhost:80/webwork2/html2xml', #action url for form
-	);
-1;
-EOF
-die;
+	print STDERR $credentials_string;
+	die;
 }
 
 ###############################
@@ -232,16 +222,6 @@ if ($use_site eq 'local') {
 ##################################################
 
 
-
-
-our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
-
-
-##################################################
-# end configuration section
-##################################################
-
-
 ##################################################
 # input/output section
 ##################################################
@@ -259,13 +239,13 @@ if (defined $ENV{BB_DOC_NAME} ) {
 }
 
 # filter mode  main code
-die "Unable to read file $fileName " unless -r $fileName;
+die "Unable to read file $fileName \n" unless -r $fileName;
 eval {
 	local($/);
 	$source   = <>; #slurp standard input
 
 };
-die "Something is wrong with the contents of $fileName" if $@;
+die "Something is wrong with the contents of $fileName\n" if $@;
 
 # adjust fileName so that it is relative to the rendering course directory
 #$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
@@ -273,7 +253,7 @@ $fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
 # webwork-open-problem-library/OpenProblemLibrary
 print "fileName changed to $fileName\n" if $UNIT_TESTS_ON;
 #print "source $source\n" if $UNIT_TESTS_ON;
-print $source  if $ENV{BB_DOC_NAME};  # return input to BBedit
+print $source  if $ENV{BB_DOC_NAME} or $UNIT_TESTS_ON;  # return input to BBedit
 
 ############################################
 # Build client
@@ -302,24 +282,18 @@ our $xmlrpc_client = new WebworkClient (
 		site_password   		=> $XML_PASSWORD//'',
 		envir           		=> $xmlrpc_client->environment(),
  };
-		$input->{envir}->{fileName} = $fileName;
-		$input->{envir}->{sourceFilePath} = $fileName;
+$input->{envir}->{fileName} = $fileName;
+$input->{envir}->{sourceFilePath} = $fileName;
 		                 
+our($output, $return_string, $result);    
 
-our $output;
-our $result;
-
-# webwork-open-problem-library/OpenProblemLibrary
 
 $xmlrpc_client->{sourceFilePath}  = $fileName;
-
-print "input is $input" if $UNIT_TESTS_ON;
+print "file name is $fileName\n";
 if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
     print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
-	###HACK fixme
     print pretty_print_rh($result) if $UNIT_TESTS_ON;
     $output = $xmlrpc_client->formatRenderedProblem;
-
 } else {
     print "\n\n ERRORS in renderProblem \n\n";
 	$output = $xmlrpc_client->return_object;  # error report
