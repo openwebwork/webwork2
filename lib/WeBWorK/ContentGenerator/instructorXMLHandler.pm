@@ -301,8 +301,8 @@ sub pre_header_initialize {
 	#	print "tried to render a problem";
 		#$self->{output} = ($xmlrpc_client->formatRenderedProblem); #not sure what to do here just yet.
 	#} else {
-	#	$self->{output} = ($xmlrpc_client->return_object);  # error report
-	#	print $xmlrpc_client->return_object;
+	#	$self->{output} = $xmlrpc_client->{output};  # error report
+	#	print $xmlrpc_client->{output};
 	#}
 	if($r->param('xml_command') eq "addProblem" || $r->param('xml_command') eq "deleteProblem"){
 		$input->{path} = $r->param('problemPath');
@@ -315,8 +315,9 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$self->{output}->{problem_out} = $xmlrpc_client->xmlrpcCall('renderProblem', $input);
-		my @params = join(" ", $r->param() ); # this is necessary to provide a list environment for $r->param
+		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
 		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
+		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$self->{output} = $xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
 	}
@@ -409,12 +410,12 @@ sub content {
    	my $self = shift;
 	
 
-	if ((ref($self->return_object) =~ /XMLRPC/ && $self->return_object->fault) || 
-	    (ref($self->return_object->{problem_out}) =~ /XMLRPC/ && 
-		 $self->return_object->{problem_out}->fault)) {
+	if ((ref($self->{output}) =~ /XMLRPC/ && $self->{output}->fault) || 
+	    (ref($self->{output}->{problem_out}) =~ /XMLRPC/ && 
+		 $self->{output}->{problem_out}->fault)) {
 
-	    my $result = $self->return_object->{problem_out} ? 
-		$self->return_object->{problem_out} : $self->return_object;
+	    my $result = $self->{output}->{problem_out} ? 
+		$self->{output}->{problem_out} : $self->{output};
 
 	    my $err_string = 'Error message for '.
 		join( ' ',
@@ -427,22 +428,22 @@ sub content {
 		  );
 	    
 	    die($err_string);
-	}elsif($self->return_object->{problem_out}){
-		print $self->return_object->{problem_out}->{text};
+	}elsif($self->{output}->{problem_out}){
+		print $self->{output}->{problem_out}->{text};
 	} else {
-		print '{"server_response":"'.$self->return_object->{text}.'",';
-		if($self->return_object->{ra_out}){
-			# print '"result_data":'.pretty_print_json($self->return_object->{ra_out}).'}';
-			if (ref($self->return_object->{ra_out})) {
-				print '"result_data": ' . to_json($self->return_object->{ra_out}) .'}';
+		print '{"server_response":"'.$self->{output}->{text}.'",';
+		if($self->{output}->{ra_out}){
+			# print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
+			if (ref($self->{output}->{ra_out})) {
+				print '"result_data": ' . to_json($self->{output}->{ra_out}) .'}';
 			} else {
-				print '"result_data": "' . $self->return_object->{ra_out} . '"}';
+				print '"result_data": "' . $self->{output}->{ra_out} . '"}';
 			}
 		} else {
 			print '"result_data":""}';
 		}
 	}
-	#print "".pretty_print_json($self->return_object->{ra_out});
+	#print "".pretty_print_json($self->{output}->{ra_out});
 }
 
 
