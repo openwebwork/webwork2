@@ -538,7 +538,7 @@ sub formatRenderedProblem {
 	if (ref($rh_result) and $rh_result->{text} ) {
 		$problemText       =  $rh_result->{text};
 	} else {
-		$problemText       .= "Unable to decode problem text\n".
+		$problemText       .= "Unable to decode problem text<br/>\n".
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}

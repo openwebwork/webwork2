@@ -231,7 +231,7 @@ if ($UNIT_TESTS_ON) {
 				->faultcode('404')
 				->faultstring('Course not found.')
 		}
-		die "Unknown exception when trying to verify authentication. $@";
+		die "Webservice.pm: Error when trying to authenticate. $@\n";
 	};
 ###########################################################################
 # security check -- check that the user is in fact at least a proctor in the course
