@@ -280,13 +280,13 @@ our $xmlrpc_client = new WebworkClient (
 		courseName   			=> $credentials{courseID}//'',
 		course_password     	=> $credentials{course_password}//'',	
 		site_password   		=> $XML_PASSWORD//'',
-		envir           		=> $xmlrpc_client->environment(),
+		envir           		=> $xmlrpc_client->environment(
+		                               fileName       => $fileName,
+		                               sourceFilePath => $fileName
+		                            ),
  };
-$input->{envir}->{fileName} = $fileName;
-$input->{envir}->{sourceFilePath} = $fileName;
 		                 
 our($output, $return_string, $result);    
-
 
 $xmlrpc_client->{sourceFilePath}  = $fileName;
 print "file name is $fileName\n";
