@@ -25,12 +25,17 @@ Rembember to configure the local output file and display command !!!!!!!!
 
 
 =head1 SYNPOSIS
-
- 
-	$graph = new WWPlot(400,400); # creates a graph 400 pixels by 400 pixels
-	$graph->fn($fun1, $fun2);     # installs functions $fun1 and $fun2 in $graph
-	$image_binary = $graph->draw();  # creates the gif/png image of the functions installed in the graph
-
+	our $xmlrpc_client = new WebworkClient (
+		url                    => $XML_URL,
+		form_action_url        => $FORM_ACTION_URL,
+		displayMode            => DISPLAYMODE(),
+		site_password          =>  $XML_PASSWORD//'',
+		courseID               =>  $credentials{courseID},
+		userID                 =>  $credentials{userID},
+		session_key            =>  $credentials{session_key}//'',
+		sourceFilePath         =>  $fileName,
+	);
+	
 =head1 DESCRIPTION
 
 This script will take a file and send it to a WeBWorK daemon webservice
@@ -41,27 +46,6 @@ The formatting allows the browser presentation to be interactive with the
 daemon running the script webwork2/lib/renderViaXMLRPC.pm  
 and with instructorXMLRPChandler.
 
-
-=head2 new
-
-	$graph = WebworkClient->new;
-
-
-=head2 Methods and properties
-
-=over 4
-
-=item xmin, xmax, ymin, ymax
-
-These determine the world co-ordinates of the graph. The constructions
-
-	$new_xmin = $graph->xmin($new_xmin);
-and
-	$current_xmin = $graph->xmin();
-
-set and read the values.
-
-=item fn, lb, stamps
 
 =cut
 
@@ -168,7 +152,7 @@ our $imgGen = WeBWorK::PG::ImageGenerator->new(
 		cacheDB         => $seed_ce->{webworkFiles}->{equationCacheDB},
 		dvipng_align    => $imagesModeOptions{dvipng_align},
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-	);
+);
 #####################
 # error formatting
 sub format_hash_ref {
@@ -209,8 +193,50 @@ our $result;
 #    this code is identical between renderProblem.pl and renderViaXMLRPC.pm
 ##################################################
 
-=h2 xmlrpcCall
+=head2 xmlrpcCall
 
+
+	
+    $xmlrpc_client->encodeSource($source);
+    $xmlrpc_client->{sourceFilePath}  = $fileName;
+    
+ my $input = { 
+		userID      			=> $credentials{userID}//'',
+		session_key	 			=> $credentials{session_key}//'',
+		courseID   				=> $credentials{courseID}//'',
+		courseName   			=> $credentials{courseID}//'',
+		course_password     	=> $credentials{course_password}//'',	
+		site_password   		=> $XML_PASSWORD//'',
+		envir           		=> $xmlrpc_client->environment(
+		                               fileName       => $fileName,
+		                               sourceFilePath => $fileName
+		                            ),
+ };    		                 
+    our($output, $return_string, $result);    
+    
+
+    if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
+        $output = $xmlrpc_client->formatRenderedProblem;
+    } else {
+    	$output = $xmlrpc_client->return_object;  # error report
+    }
+
+	Keys in $result or in  $xmlrpc_client->return_object for the command "renderProblem"
+	 session_key
+	 flags
+	 errors
+	 internal_debug_messages
+	 WARNINGS
+	 problem_state
+	 debug_messages
+	 userID
+	 compute_time
+	 warning_messages
+	 courseID
+	 text
+	 problem_result
+	 header_text
+	 answers
 
 
 =cut
@@ -530,7 +556,7 @@ sub environment {
 		
 		showHints => 1,               # extra options -- usually passed from the input form
 		showSolutions => 1,
-		
+		@_,
 	};
 	$envir;
 };
