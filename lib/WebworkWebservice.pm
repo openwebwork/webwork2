@@ -229,7 +229,7 @@ if ($UNIT_TESTS_ON) {
 			# was asked to authenticate into a non-existent course
 			die SOAP::Fault
 				->faultcode('404')
-				->faultstring('Course not found.')
+				->faultstring("Course |$courseName| not found.")
 		}
 		die "Webservice.pm: Error when trying to authenticate. $@\n";
 	};
