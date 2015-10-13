@@ -145,13 +145,13 @@ eval {
 				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY, 
 				 courseName         =>      '',
 				 webworkURL         =>      '',
-				 pg_dir             =>      "$WeBWorK::Constants::WEBWORK_DIRECTORY/../pg",
+				 pg_dir             =>      $WeBWorK::Constants::PG_DIRECTORY,
 				 });
 };
 	if ($@ or not ref($seed_ce)){
 		warn "Unable to find environment for WebworkClient: 
-			 webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY
-			 pg_dir = /Volumes/WW_test/local/opt/webwork/pg" 
+			 webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY 
+			 pg_dir      => $WeBWorK::Constants::PG_DIRECTORY";
 	}
 
 
