@@ -458,7 +458,7 @@ msgstr "Adresse courriel"
 # avant : Envoyer un courriel à l'enseignant
 #: ContentGenerator.pm:1526 ContentGenerator.pm:1549 ContentGenerator.pm:1572
 msgid "Email instructor"
-msgstr "Contacter le professeur"
+msgstr "Envoyer un courriel à l'enseignant"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1120
@@ -1344,7 +1344,7 @@ msgstr "Oui"
 #: ContentGenerator/Instructor/ProblemSetList.pm:418
 #: ContentGenerator/Instructor/UserList.pm:262
 msgid "You are not authorized to access the instructor tools."
-msgstr "Vous n'êtes pas autorisé à accéder aux outils du professeur."
+msgstr "Vous n'êtes pas autorisé à accéder aux outils pour l'enseignant."
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:339
@@ -1468,7 +1468,7 @@ msgid "_ANSWER_LOG_DESCRIPTION"
 msgstr ""
 "Ceci est l'affichage des réponses précédentes. Les étudiants ne peuvent voir "
 "leurs réponses, et ils ne seront pas en mesure de voir lesquelles sont "
-"correctes. Les professeurs peuvent voir toutes les réponses des utilisateurs "
+"correctes. Les enseignants peuvent voir toutes les réponses des utilisateurs "
 "en utilisant le formulaire ci-dessous et les réponses seront colorées en "
 "fonction de l'exactitude. You can use *, ? or | as wildcards in the user "
 "field or set field and you can use number ranges in the problem field."
@@ -2077,7 +2077,7 @@ msgstr "Les modifications dans ce fichier n'ont pas été sauvegardées."
 
 #
 msgid "Instructor Tools"
-msgstr "Outils du professeur"
+msgstr "Outils pour l'enseignant"
 
 #
 msgid "Score"
@@ -2781,7 +2781,7 @@ msgstr ""
 # avant: msgstr "Options. Les bonnes réponses et les solutions ne sont disponibles qu'après la date de remise."
 #
 msgid "E-mail Instructor"
-msgstr "Contacter le professeur"
+msgstr "Envoyer un courriel à l'enseignant"
 
 #
 msgid "Send E-mail"
@@ -2805,7 +2805,7 @@ msgid ""
 "or an error in a problem you are attempting. Along with your message, "
 "additional information about the state of the system will be included."
 msgstr ""
-"Utiliser ce formulaire pour signaler à votre professeur un problème avec le "
+"Utiliser ce formulaire pour signaler à l'enseignant un problème avec le "
 "système WeBWorK ou une erreur dans un problème d'un devoir. Des informations "
 "additionnelles sur l'état du système utilisé accompagneront votre message."
 
@@ -3157,7 +3157,7 @@ msgid "No record for user %1."
 msgstr "Aucun enregistrement pour l'utilisateur %1"
 
 msgid "You are not authorized to access the Instructor tools."
-msgstr "Vous n'êtes pas autorisé à accéder aux outils du professeur."
+msgstr "Vous n'êtes pas autorisé à accéder aux outils pour l'enseignant."
 
 msgid "Versions of a set can only be edited for one user at a time."
 msgstr ""
@@ -3363,7 +3363,7 @@ msgid "student"
 msgstr "étudiant"
 
 msgid "You are not authorized to access instructor tools"
-msgstr "Vous n'êtes pas autorisé à accéder aux outils du professeur."
+msgstr "Vous n'êtes pas autorisé à accéder aux outils pour l'enseignant."
 
 msgid "record for user %1 not found"
 msgstr "Enregistrement pour l'utilisateur %1 introuvable"
@@ -3638,7 +3638,7 @@ msgid "Allowed to <em>act as</em> another user"
 msgstr "Autorisé à <em> agir comme </ em> un autre utilisateur"
 
 msgid "Can e-mail instructor"
-msgstr "Peut envoyer un courriel au professeur"
+msgstr "Peut envoyer un courriel à l'enseignant"
 
 msgid "Can submit answers for a student"
 msgstr "Peut soumettre les réponses pour un étudiant"
@@ -3826,7 +3826,7 @@ msgid ""
 "instructor."
 msgstr ""
 "Seul ce niveau de permission, et ceux supérieurs, peuvent voir le bouton "
-"pour l'envoi de courriel au professeur."
+"pour l'envoi de courriel à l'enseignant."
 
 # avant: "En agissant comme un étudiant, ce niveau de permission, et ceux supérieurs, peuvent soumettre des réponses pour cet élève."
 msgid ""
@@ -4057,13 +4057,13 @@ msgid ""
 "= problem ID<li> %x = section<li> %r = recitation<li> %% = literal percent "
 "sign</ul>"
 msgstr ""
-"Lorsque les élèves cliquent sur le bouton <em>Contacter le professeur</ em> "
-"pour envoyer vos commentaires, WeBWorK remplit la ligne du sujet. Ici vous "
-"pouvez définir la ligne du sujet. Dans ce document, vous pouvez avoir "
-"plusieurs bits d'information remplis avec les séquences suivantes."
-"<p><ul><li> %c = ID du cours<li> %u = ID de l'utilisateur<li> %s = ID du "
-"devoir<li> %p = ID du problème<li> %x = groupe<li> %r = recitation<li> %% = "
-"signe pourcent</ul>"
+"Lorsque les élèves cliquent sur le bouton <em>Envoyer un courriel à "
+"l'enseignant</ em> pour envoyer vos commentaires, WeBWorK remplit la ligne "
+"du sujet. Ici vous pouvez définir la ligne du sujet. Dans ce document, vous "
+"pouvez avoir plusieurs bits d'information remplis avec les séquences "
+"suivantes.<p><ul><li> %c = ID du cours<li> %u = ID de l'utilisateur<li> %s = "
+"ID du devoir<li> %p = ID du problème<li> %x = groupe<li> %r = recitation<li> "
+"%% = signe pourcent</ul>"
 
 msgid ""
 "List of e-mail addresses to which e-mail can be sent by a problem. "
@@ -4084,8 +4084,8 @@ msgid ""
 msgstr ""
 "Les utilisateurs avec ce niveau de permission ou supérieur recevront "
 "automatiquement les commentaires des étudiants (généré quand ils utilisent "
-"le bouton \"Contacter le professeur\" sur n'importe quelle page de "
-"problème). Par ailleurs, le message de réponse est envoyé aux adresses ci-"
+"le bouton \"Envoyer un courriel à l'enseignant\" sur n'importe quelle page "
+"de problème). Par ailleurs, le message de réponse est envoyé aux adresses ci-"
 "dessous. Pour envoyer SEULEMENT aux adresses énumérées ci-après, régler le "
 "niveau de permission à \"nobody\"."
 
