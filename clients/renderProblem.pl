@@ -76,16 +76,19 @@ my $use_site;
 # select a rendering site  
  #$use_site = 'test_webwork';    # select a rendering site 
  #$use_site = 'local';           # select a rendering site 
- $use_site = 'hosted2';        # select a rendering site 
-
+ #$use_site = 'hosted2';        # select a rendering site 
+ $use_site ="credentials";
 # credentials file location -- search for one of these files 
 my $credential_path;
 my @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials',);
 # Place a credential file containing the following information at one of the locations above.
 # 	%credentials = (
-# 			userID          => "my login name for the webwork course",
-# 			password        => "my password ",
-# 			courseID        => "the name of the webwork course",
+# 			userID                 => "my login name for the webwork course",
+# 			course_password        => "my password ",
+# 			courseID               => "the name of the webwork course",
+#           XML_URL	               => "url of rendering site
+#           XML_PASSWORD          => "site password" # preliminary access to site
+#           $FORM_ACTION_URL      =  'http://localhost:80/webwork2/html2xml'; #action url for form
 # 	);
 
 
@@ -109,7 +112,7 @@ die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissio
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice
 #
-# 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
+# 2. $FORM_ACTION_URL      http://test.webwork.maa.org/webwork2/html2xml
 #    points to the renderViaXMLRPC.pm module.
 #
 #     This url is placed as form action url when the rendered HTML from the original
@@ -141,11 +144,65 @@ die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissio
 
 
 our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE, %credentials);
+
+####################################################
+# get credentials
+####################################################
+
+
+foreach my $path (@path_list) {
+	if (-r "$path" ) {
+		$credential_path = $path;
+		last;
+	}
+}
+if  ( $credential_path ) { 
+
+	print "Credentials taken from file $credential_path\n" if $UNIT_TESTS_ON;
+} else {
+	die <<EOF;
+Can't find path for credentials. Looked in @path_list.
+Place a credential file containing the following information at one of the locations above.
+	%credentials = (
+			userID              => "my login name for the webwork course",
+			course_password     => "my password ",
+			courseID            => "the name of the webwork course",
+            XML_URL	            => "url of rendering site",
+            XML_PASSWORD        => "site password", # preliminary access to site
+            FORM_ACTION_URL     =>  'http://localhost:80/webwork2/html2xml', #action url for form
+	);
+1;
+---------------------------------------------------------
+EOF
+}  
+
+eval{require $credential_path};
+if ($@  or not  %credentials) {
+
+print STDERR <<EOF;
+
+The credentials file should contain this:
+	%credentials = (
+			userID              => "my login name for the webwork course",
+			course_password     => "my password ",
+			courseID            => "the name of the webwork course",
+            XML_URL	            => "url of rendering site",
+            XML_PASSWORD        => "site password", # preliminary access to site
+            FORM_ACTION_URL     =>  'http://localhost:80/webwork2/html2xml', #action url for form
+	);
+1;
+EOF
+die;
+}
+
+###############################
+# configure
+###############################
 if ($use_site eq 'local') {
 	# the rest can work!!
 	$XML_URL          =  'http://localhost:80';
 	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
-	$XML_PASSWORD     =  'xmlwebwork';    #matches password in renderViaXMLRPC.pm
+	$XML_PASSWORD     =  'xmlwebwork';    #matches site_password in renderViaXMLRPC.pm
 	$XML_COURSE       =  'daemon_course';
 } elsif ($use_site eq 'hosted2') {  
 	
@@ -162,55 +219,18 @@ if ($use_site eq 'local') {
 	$XML_COURSE       = 'daemon_course';
 
 } else {
-
-    warn "please choose a webwork site for rendering"
+    print "Obtain all data from credentials file: $credential_path\n" if $UNIT_TESTS_ON;
+	$XML_URL 			= $credentials{site_url};
+	$FORM_ACTION_URL  	= $credentials{form_action_url};
+	$XML_PASSWORD     	= $credentials{site_password};
+	$XML_COURSE       	= $credentials{courseID};
+	
 }
 
 ##################################################
 #  END configuration section for client
 ##################################################
 
-
-####################################################
-# get credentials
-####################################################
-
-
-foreach my $path (@path_list) {
-	if (-r "$path" ) {
-		$credential_path = $path;
-		last;
-	}
-}
-unless ( $credential_path ) {
-	die <<EOF;
-Can't find path for credentials. Looked in @path_list.
-Place a credential file containing the following information at one of the locations above.
-%credentials = (
-        userID          => "my login name for the webwork course",
-        password        => "my password ",
-        courseID        => "the name of the webwork course",
-);
-1;
----------------------------------------------------------
-EOF
-}
-
-eval{require $credential_path};
-if ($@  or not  %credentials) {
-
-print STDERR <<EOF;
-
-The credentials file should contain this:
-%credentials = (
-        userID          => "my login name for the webwork course",
-        password        => "my password ",
-        courseID        => "the name of the webwork course",
-);
-1;
-EOF
-die;
-}
 
 
 
@@ -274,13 +294,13 @@ our $xmlrpc_client = new WebworkClient (
  $xmlrpc_client->encodeSource($source);
  
  my $input = { 
-		userID      	=> $credentials{userID}//'',
-		session_key	 	=> $credentials{session_key}//'',
-		courseID   		=> $credentials{courseID}//'',
-		courseName   	=> $credentials{courseID}//'',
-		password     	=> $credentials{password}//'',	
-		site_password   => $XML_PASSWORD//'',
-		envir           => $xmlrpc_client->environment(),
+		userID      			=> $credentials{userID}//'',
+		session_key	 			=> $credentials{session_key}//'',
+		courseID   				=> $credentials{courseID}//'',
+		courseName   			=> $credentials{courseID}//'',
+		course_password     	=> $credentials{course_password}//'',	
+		site_password   		=> $XML_PASSWORD//'',
+		envir           		=> $xmlrpc_client->environment(),
  };
 		$input->{envir}->{fileName} = $fileName;
 		$input->{envir}->{sourceFilePath} = $fileName;

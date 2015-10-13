@@ -152,7 +152,7 @@ sub new {
 		error_string    => '',
 		encodedSource 	=> '',
 		url             => '',
-		password        => '',
+		course_password        => '',
 		site_password   => '',
 		courseID        => '',
 		userID          => '',
@@ -229,7 +229,8 @@ sub xmlrpcCall {
 		# print "\n store result ", ref($result), " ",keys %{$result->result()};
 		$self->return_object($result->result());
 		# print "\n retrieve result ",  keys %{$self->return_object};
-		return $self->return_object; # $result->result();  # would it be better to return the entire $result?
+		#return $self->return_object; # $result->result();  # would it be better to return the entire $result?
+		return $result;   # (this is more consistent)
 	  } else {
 		my $err_string = 'Error message for '.
 		  join( ' ',
@@ -366,7 +367,6 @@ sub pretty_print {    # provides html output -- NOT a method
 sub setInputTable_for_listLib {
 	my $self = shift;
 	my $out = {
-#		pw          =>   $self->{password},
 		set         =>   'set0',
 		library_name =>  'Library',
 		command      =>  'all',
@@ -393,7 +393,6 @@ sub setInputTable {
 	}
 
 	my $out = {
-#		pw          =>   $self->{site_password},  # seems to be deprecated
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
@@ -595,7 +594,7 @@ sub formatRenderedProblem {
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
-	my $password         =  $self->{password};
+	my $course_password         =  $self->{course_password};
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//314159;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
@@ -708,8 +707,7 @@ $problemHeadText
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
-	       <input type="hidden" name="password" value="$password">
-	       <input type="hidden" name="passwd" value="$password">
+	       <input type="hidden" name="course_password" value="$course_password">
 	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="standard">
@@ -795,8 +793,7 @@ $scoreSummary
 	       <input type="hidden" name=courseName value="$courseID">
 	       <input type="hidden" name=courseID value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
-	       <input type="hidden" name="password" value="$password">
-	       <input type="hidden" name="passwd" value="$password">
+	       <input type="hidden" name="course_password" value="$course_password">
 	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple">
@@ -887,8 +884,7 @@ $localStorageMessages
 <input type="hidden" name="courseID" value="$courseID">
 <input type="hidden" name="userID" value="$userID">
 <input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
-<input type="hidden" name="password" value="$password">
-<input type="hidden" name="passwd" value="$password">
+<input type="hidden" name="course_password" value="$course_password">
 <input type="hidden" name="displayMode" value="$displayMode">
 <input type="hidden" name="session_key" value="$session_key">
 <input type="hidden" name="outputformat" value="sticky">

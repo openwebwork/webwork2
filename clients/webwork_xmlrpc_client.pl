@@ -54,7 +54,7 @@ Can't find path for credentials. Looked in @path_list.
 Place a credential file containing the following information at one of the locations above.
 %credentials = (
         userID          => "my login name for the webwork course",
-        password        => "my password ",
+        course_password        => "my course_password ",
         courseID        => "the name of the webwork course",
 );
 1;
@@ -70,7 +70,7 @@ print STDERR <<EOF;
 The credentials file should contain this:
 %credentials = (
         userID          => "my login name for the webwork course",
-        password        => "my password ",
+        course_password        => "my course_password ",
         courseID        => "the name of the webwork course",
 );
 1;
@@ -123,12 +123,12 @@ if (@ARGV) {
 					 $source = `cat $ARGV[1]`;
 					 $xmlrpc_client->encodeSource($source);
 					 my $input = { 
-							userID      	=> $credentials{userID}||'',
-							session_key	 	=> $credentials{session_key}||'',
-							courseID   		=> $credentials{courseID}||'',
-							courseName   	=> $credentials{courseID}||'',
-							password     	=> $credentials{password}||'',	
-							site_password   => $credentials{site_password}||'',
+							userID      			=> $credentials{userID}||'',
+							session_key	 			=> $credentials{session_key}||'',
+							courseID   				=> $credentials{courseID}||'',
+							courseName   			=> $credentials{courseID}||'',
+							course_password     	=> $credentials{course_password}||'',	
+							site_password   		=> $credentials{site_password}||'',
 					 };
 					 #print STDERR "input is ", %$input,"\n";
 					 $result = $xmlrpc_client->xmlrpcCall($command, $input);
@@ -145,7 +145,7 @@ if (@ARGV) {
 					userID      	=> $credentials{userID}||'',
 					session_key	 	=> $credentials{session_key}||'',
 					courseID   	=> $credentials{courseID}||'',
-					password     	=> $credentials{password}||'',	
+					course_password     	=> $credentials{course_password}||'',	
 					site_password   => $credentials{site_password}||'',
 			 };
 			# print STDERR "ww_xmlrpc_client: input for listLibraries command is ", %$input,"\n";
@@ -167,7 +167,7 @@ if (@ARGV) {
     							 	
     	} when ('listSets')      {
 	 		$input = {		site_password    =>   'xmluser',
-							password    	 =>   $credentials{password},
+							course_password    	 =>  $credentials{course_password},
         					userID        	 =>   $credentials{userID},
         					courseID    	 =>   $credentials{courseID},
         			 };
@@ -208,11 +208,11 @@ sub listLib {
 	my $result;
 	given($ARGS[1]) { 
 		when ("all") { 
-			$input = {					site_password    =>   'xmluser',
-										password    	 =>   $credentials{password},
-        								userID        	 =>   $credentials{userID},
-        								courseID    	 =>   $credentials{courseID},
-        								command     	 =>   'all',
+			$input = {					site_password    	 =>   'xmluser',
+										course_password    	 =>   $credentials{course_password},
+        								userID        	 	 =>   $credentials{userID},
+        								courseID    	 	 =>   $credentials{courseID},
+        								command     	 	 =>   'all',
         						};
         	$result = $xmlrpc_client->xmlrpcCall("listLib", $input);
         } 
@@ -221,7 +221,7 @@ sub listLib {
             my $path = $options{-path} || '';
             my $maxdepth = defined($options{-depth}) ? $options{-depth}: 10000;
         	$input = {					site_password    =>   'xmluser',
-										password    	 =>   $credentials{password},
+										course_password    	 =>   $credentials{course_password},
         								userID        	 =>   $credentials{userID},
         								courseID    	 =>   $credentials{courseID},
         								command     	 =>   'dirOnly',
@@ -234,12 +234,12 @@ sub listLib {
 			if ($ARGS[2]  ) { 
 				my %options = @ARGS[2..$#ARGS];
             	my $path    = $options{-path} || ''; 
-				$input = {		site_password    =>   'xmluser',
-								password    	 =>   $credentials{password},
-								userID        	 =>   $credentials{userID},
-								courseID    	 =>   $credentials{courseID},
-								command     	 =>   'files',
-								dirPath          =>   $path,
+				$input = {		site_password    		=>   'xmluser',
+								course_password    	 	=>   $credentials{course_password},
+								userID        	 		=>   $credentials{userID},
+								courseID    	 		=>   $credentials{courseID},
+								command     	 		=>   'files',
+								dirPath          		=>   $path,
 							};
 				$result = $xmlrpc_client->xmlrpcCall("listLib", $input);
 			} else {
@@ -346,20 +346,20 @@ sub pretty_print_json {
 
 sub standard_input {
 	$out = {
-		site_password           =>   'xmluser',
-		password      			=>   $credentials{password},
-		userID          		=>   $credentials{userID},
-		set               		=>   'set0',
-		library_name 			=>  'Library',
-		command      			=>  'all',
-		answer_form_submitted   => 1,
-		courseID                 => $credentials{courseID},,
-		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
+		site_password           		=>   'xmluser',
+		course_password      			=>   $credentials{course_password},
+		userID          				=>   $credentials{userID},
+		set               				=>   'set0',
+		library_name 					=>  'Library',
+		command      					=>  'all',
+		answer_form_submitted   		=> 1,
+		courseID                 		=> $credentials{courseID},,
+		extra_packages_to_load  		=> [qw( AlgParserWithImplicitExpand Expr
 		                                ExprWithImplicitExpand AnswerEvaluator
 		                                AnswerEvaluatorMaker 
 		)],
-		mode                    => DISPLAYMODE(),
-		modules_to_evaluate     => [ qw( 
+		mode                    		=> DISPLAYMODE(),
+		modules_to_evaluate     		=> [ qw( 
 Exporter
 DynaLoader								
 GD

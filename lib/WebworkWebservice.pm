@@ -158,7 +158,7 @@ sub initiate_session {
 	my $user_id      = $rh_input ->{userID};
 	my $session_key	 = $rh_input ->{session_key};
 	my $courseName   = $rh_input ->{courseID};
-	my $password     = $rh_input ->{password};
+	my $course_password     = $rh_input ->{course_password};
 	my $ce           = $class->create_course_environment($courseName);
 	my $db           = new WeBWorK::DB($ce->{dbLayout});
 
@@ -170,6 +170,7 @@ sub initiate_session {
     
 if ($UNIT_TESTS_ON) {
 	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
@@ -179,7 +180,7 @@ if ($UNIT_TESTS_ON) {
 	my $self = {
 		courseName	=>  $courseName,
 		user_id		=>  $user_id,
-		password    =>  $password,
+		password    =>  $course_password,
 		session_key =>  $session_key,
 		ce          =>  $ce,
 		db          =>  $db,

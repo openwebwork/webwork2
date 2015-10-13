@@ -253,13 +253,13 @@ our $xmlrpc_client = new WebworkClient (
  $xmlrpc_client->encodeSource($source);
  
  my $input = { 
-		userID      	=> $credentials{userID}//'',
-		session_key	 	=> $credentials{session_key}//'',
-		courseID   		=> $credentials{courseID}//'',
-		courseName   	=> $credentials{courseID}//'',
-		password     	=> $credentials{password}//'',	
-		site_password   => $XML_PASSWORD//'',
-		envir           => $xmlrpc_client->environment(),
+		userID      			=> $credentials{userID}//'',
+		session_key	 			=> $credentials{session_key}//'',
+		courseID   				=> $credentials{courseID}//'',
+		courseName   			=> $credentials{courseID}//'',
+		course_password     	=> $credentials{password}//'',	
+		site_password   		=> $XML_PASSWORD//'',
+		envir           		=> $xmlrpc_client->environment(),
 		                 
  };
 
