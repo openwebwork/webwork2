@@ -255,7 +255,7 @@ sub xmlrpcCall {
 	  local( $result);
 	  # use eval to catch errors
 	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
-	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
+	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $requestObject) };
 	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
@@ -423,6 +423,7 @@ sub setInputTable_for_listLib {
 
 	$out;
 }
+
 sub default_inputs {
 	my $self = shift;
 	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
@@ -456,10 +457,7 @@ sub default_inputs {
 			num_of_incorrect_ans => 4,
 			recorded_score       => 1.0,
 		},
-		source                   => $self->encoded_source,  #base64 encoded
-		
-		
-		
+		source                   => $self->encoded_source,  #base64 encoded		
 	};
 
 	$out;
