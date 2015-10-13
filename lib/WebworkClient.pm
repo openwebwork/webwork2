@@ -245,6 +245,7 @@ sub xmlrpcCall {
 		  print STDERR $err_string;
 		  $self->return_object($result->result());
 		  $self->error_string($err_string);
+		  $self->fault(1); # set fault flag to true
 		  return $result;
 	  }
 }
@@ -315,11 +316,17 @@ sub return_object {   # out
 	$self->{return_object} =$object if defined $object and ref($object); # source is non-empty
 	$self->{return_object};
 }
-sub error_string {   # out
+sub error_string {   
 	my $self = shift;
 	my $string = shift;
 	$self->{error_string} =$string if defined $string and $string =~/\S/; # source is non-empty
 	$self->{error_string};
+}
+sub fault {   
+	my $self = shift;
+	my $fault_flag = shift;
+	$self->{fault_flag} =$fault_flag if defined $fault_flag and $fault_flag =~/\S/; # source is non-empty
+	$self->{fault_flag};
 }
 sub url {
 	my $self = shift;
