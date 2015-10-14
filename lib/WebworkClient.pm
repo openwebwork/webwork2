@@ -684,332 +684,58 @@ sub formatRenderedProblem {
 
 	my $scoreSummary     =  '';
 
-my $tbl = WeBWorK::Utils::AttemptsTable->new(
-	$rh_answers,
-	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
-	answerOrder            => $answerOrder//[],
-	displayMode            => $self->{displayMode},
-	imgGen                 => $imgGen,
-	ce                     => '',	#used only to build the imgGen
-	showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
-	showAttemptResults     => ($submitMode or $showCorrectMode),
-	showCorrectAnswers     => ($showCorrectMode),
-	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
-	showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
-	maketext               => WeBWorK::Localize::getLoc($formLanguage//'en'),
-	summary                => ($self->{problem_result}->{summary} )//'', # can be set by problem grader
-);
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$rh_answers,
+		answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
+		answerOrder            => $answerOrder//[],
+		displayMode            => $self->{displayMode},
+		imgGen                 => $imgGen,
+		ce                     => '',	#used only to build the imgGen
+		showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
+		showAttemptResults     => ($submitMode or $showCorrectMode),
+		showCorrectAnswers     => ($showCorrectMode),
+		showMessages           => ($previewMode or $submitMode or $showCorrectMode),
+		showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
+		maketext               => WeBWorK::Localize::getLoc($formLanguage//'en'),
+		summary                => ($self->{problem_result}->{summary} )//'', # can be set by problem grader
+	);
 
-my $answerTemplate = $tbl->answerTemplate;
-my $color_input_blanks_script = $tbl->color_answer_blanks;
-$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	my $answerTemplate = $tbl->answerTemplate;
+	my $color_input_blanks_script = $tbl->color_answer_blanks;
+	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
-# warn "imgGen is ", $tbl->imgGen;
-#warn "answerOrder ", $tbl->answerOrder;
-#warn "answersSubmitted ", $tbl->answersSubmitted;
-# render equation images
+	# warn "imgGen is ", $tbl->imgGen;
+	#warn "answerOrder ", $tbl->answerOrder;
+	#warn "answersSubmitted ", $tbl->answersSubmitted;
+	# render equation images
 
-if ($submitMode && $problemResult) {
-    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
-    if ($problemResult->{msg}) {
-         $scoreSummary .= CGI::p($problemResult->{msg});
-    }
+	if ($submitMode && $problemResult) {
+		$scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+		if ($problemResult->{msg}) {
+			 $scoreSummary .= CGI::p($problemResult->{msg});
+		}
 
-    $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
-    $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+		$scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+		$scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+	}
+
+	# This stuff is put here because eventually we will add locale support so the 
+	# text will have to be done server side. 
+	my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
+	$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
+	$localStorageMessages .= CGI::end_div();
+		
+	my $pretty_print_self    = pretty_print($self);
+######################################################
+# Return interpolated problem template
+######################################################
+
+	my $format_name = $self->{inputs_ref}->{outputformat}//'sticky';
+	# find the appropriate template in WebworkClient folder
+	my $template = do("WebworkClient/${format_name}_format.pl");
+	die "Unknown format name $format_name" unless $template;
+	# interpolate values into template
+	$template =~ s/(\$\w+)/$1/gee;  
+	return $template;
 }
-
-# This stuff is put here because eventually we will add locale support so the 
-# text will have to be done server side. 
-my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
-$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
-$localStorageMessages .= CGI::end_div();	
-
-	###########################
-	# Define problem templates
-	###########################
-	#FIXME -- this can be improved to use substitution trick 
-	# that way only the chosen problemTemplate will be interpolated
-$self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
-
-
-<html>
-<head>
-<base href="$XML_URL">
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="$XML_URL/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="$XML_URL/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
-<link rel="stylesheet" type="text/css" href="$XML_URL/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="$XML_URL/webwork2_files/themes/math4/math4.css"/>
-<link href="$XML_URL/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-
-<!-- JS Loads -->
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
-<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
-<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
-<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-$problemHeadText
-
-
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, course: $courseID format: standard</title>
-</head>
-<body>
-
-<h2> WeBWorK Editor using host: $XML_URL, course: $courseID format: standard</h2>
-		    $answerTemplate
-		    $color_input_blanks_script
-		    <form action="$FORM_ACTION_URL" method="post">
-			$problemText
-	       <input type="hidden" name="answersSubmitted" value="1"> 
-		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
-	       <input type="hidden" name="pathToProblemFile" value="$fileName">
-	       <input type="hidden" name=courseName value="$courseID">
-	       <input type="hidden" name=courseID value="$courseID">
-	       <input type="hidden" name="userID" value="$userID">
-	       <input type="hidden" name="course_password" value="$course_password">
-	       <input type="hidden" name="displayMode" value="$displayMode">
-	       <input type="hidden" name="session_key" value="$session_key">
-	       <input type="hidden" name="outputformat" value="standard">
-	       <input type="hidden" name="language" value="$formLanguage">
-	       <input type="hidden" name="showSummary" value="$showSummary">
-	
-		   <p>
-		      <input type="submit" name="preview"  value="Preview" /> 
-			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWgrade" value="Show correct answer"/>
-		   </p>
-	     </form>
-<HR>
-
-<h3> Perl warning section </h3>
-$warnings
-<h3> PG Warning section </h3>
-$PG_warning_messages;
-<h3> Debug message section </h3>
-$debug_messages
-<h3> internal errors </h3>
-$internal_debug_messages
-<div id="footer">
-WeBWorK &copy 1996-2016 | host: $XML_URL | course: $courseID | format: standard | theme: math4
-</div>
-
-</body>
-</html>
-
-ENDPROBLEMTEMPLATE
-
-$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
-
-<!DOCTYPE html>
-<html>
-<head>
-<base href="$XML_URL">
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
-
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-
-<!-- JS Loads -->
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
-<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
-<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
-<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-$problemHeadText
-
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
-</head>
-<body>
-<div class="container-fluid">
-<div class="row-fluid">
-<div class="span12 problem">			
-		    $answerTemplate
-		    <form action="$FORM_ACTION_URL" method="post">
-<div class="problem-content">
-			$problemText
-</div>
-$scoreSummary
-
-	       <input type="hidden" name="answersSubmitted" value="1"> 
-	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
-	       <input type="hidden" name="pathToProblemFile" value="$fileName">
-	       <input type="hidden" name=courseName value="$courseID">
-	       <input type="hidden" name=courseID value="$courseID">
-	       <input type="hidden" name="userID" value="$userID">
-	       <input type="hidden" name="course_password" value="$course_password">
-	       <input type="hidden" name="displayMode" value="$displayMode">
-	       <input type="hidden" name="session_key" value="$session_key">
-	       <input type="hidden" name="outputformat" value="simple">
-	       <input type="hidden" name="language" value="$formLanguage">
-	       <input type="hidden" name="showSummary" value="$showSummary">
-		   <p>
-		      <input type="submit" name="preview"  value="Preview" /> 
-			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWgrade" value="Show correct answer"/>
-		   </p>
-	       </form>
-</div>
-</div></div>
-
-<div id="footer">
-WeBWorK &copy 1996-2016 | host: $XML_URL | course: $courseID | format: simple | theme: math4
-</div>
-
-
-</body>
-</html>
-
-ENDPROBLEMTEMPLATE
-
-$self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
-
-<!DOCTYPE html>
-<html>
-<head>
-<base href="$XML_URL">
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
-
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-
-<!-- JS Loads -->
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
-<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jquery.json.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
-<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
-<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
-<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-$problemHeadText
-
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: sticky seed: $problemSeed</title>
-</head>
-<body>
-<div class="container-fluid">
-<div class="row-fluid">
-<div class="span12 problem">	
-<hr/>		
-$answerTemplate
-<hr/>
-<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
-<div class="problem-content">
-$problemText
-</div>
-<p>
-$scoreSummary
-</p>
-
-<p>
-$localStorageMessages
-</p>
-
-<input type="hidden" name="answersSubmitted" value="1"> 
-<input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-<input type="hidden" name="problemSource" value="$encodedSource"> 
-<input type="hidden" name="problemSeed" value="$problemSeed"> 
-<input type="hidden" name="pathToProblemFile" value="$fileName">
-<input type="hidden" name="courseName" value="$courseID">
-<input type="hidden" name="courseID" value="$courseID">
-<input type="hidden" name="userID" value="$userID">
-<input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
-<input type="hidden" name="course_password" value="$course_password">
-<input type="hidden" name="displayMode" value="$displayMode">
-<input type="hidden" name="session_key" value="$session_key">
-<input type="hidden" name="outputformat" value="sticky">
-<input type="hidden" name="language" value="$formLanguage">
-<input type="hidden" name="showSummary" value="$showSummary">
-
-<p>
-<input type="submit" name="preview"  value="Preview" /> 
-<input type="submit" name="WWsubmit" value="Submit answer"/> 
-<input type="submit" name="WWgrade" value="Show correct answer"/>
-</p>
-</form>
-</div>
-</div>
-</div>
-<div id="footer">
-WeBWorK &copy 1996-2016 | host: $XML_URL | course: $courseID | format: sticky | theme: math4
-</div>
-<!-- Activate local storage js -->
-<script type="text/javascript">WWLocalStorage();</script>
-</body>
-</html>
-
-ENDPROBLEMTEMPLATE
-
-$self->{outputformats}->{debug}= 
-qq{
-
-	<html>
-	<head>
-	<base href="$XML_URL">
-	<title>$XML_URL WeBWorK Editor using host: $XML_URL, course: $courseID format: debug</title>
-	</head>
-	<body>
-			
-	<h2> WeBWorK Editor using host: $XML_URL,  course: $courseID format: debug</h2>
-}.  pretty_print($self) . 
-qq{		   
-</body>
-</html>
-};
-
-
-#  choose problem template
-	$self->{outputformat}= $self->{inputs_ref}->{outputformat}//'standard';
-    if (defined($self->{outputformats}->{$self->{outputformat}}) ) {
-    	return $self->{outputformats}->{$self->{outputformat}};
-    } else {
-    	return $self->{outputformats}->{standard};
-    }
-}
-
-
-
 1;
