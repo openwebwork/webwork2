@@ -106,42 +106,50 @@ die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissio
 
  ############################################################
  
-# To configure a new target webwork server
-# two URLs are required
-# 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
-#    points to the Webservice.pm and Webservice/RenderProblem modules
-#    Is used by the client to send the original XML request to the webservice
-#
-# 2. $FORM_ACTION_URL      http://test.webwork.maa.org/webwork2/html2xml
-#    points to the renderViaXMLRPC.pm module.
-#
-#     This url is placed as form action url when the rendered HTML from the original
-#     request is returned to the client from Webservice/RenderProblem. The client
-#     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and 
-#     pipes it through a local browser.
-#
-#     The browser uses this url to resubmit the problem (with answers) via the standard
-#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.  
-#
-#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser 
-#     and the webservice.  It interprets the HTML form sent by the browser, 
-#     rewrites the form data in XML format, submits it to the WebworkWebservice.pm 
-#     which processes it and sends the the resulting HTML back to renderViaXMLRPC.pm
-#     which in turn passes it back to the browser.
-# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form 
-#     submitted directly by the browser.  
-#     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
-#     and returns the result to the browser. 
-#     The The client renderProblem.pl script is no longer involved.
-# 4.  Summary: renderProblem.pl is only involved in the first round trip
-#     of the submitted problem.  After that the communication is  between the browser and
-#     renderViaXMLRPC using HTML forms and between renderViaXMLRPC and the WebworkWebservice.pm
-#     module using XML_RPC.
-# 5.  The XML_PASSWORD is defined on the site.  In future versions a more secure password method
-#     may be implemented.  This is sufficient to keep out robots.
-# 6.  The course "daemon_course" must be a course that has been created on the server or an error will
-#     result. A different name can be used but the course must exist on the server.
+=head2  URLs
+ 
+    # To configure a new target webwork server
+    # two URLs are required
+    # 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
+    #    points to the Webservice.pm and Webservice/RenderProblem modules
+    #    Is used by the client to send the original XML request to the webservice
+    #
+    # 2. $FORM_ACTION_URL      http://test.webwork.maa.org/webwork2/html2xml
+    #    points to the renderViaXMLRPC.pm module.
+    #
+    #     This url is placed as form action url when the rendered HTML from the original
+    #     request is returned to the client from Webservice/RenderProblem. The client
+    #     reorganizes the XML it receives into an HTML page (with a WeBWorK form) and 
+    #     pipes it through a local browser.
+    #
+    #     The browser uses this url to resubmit the problem (with answers) via the standard
+    #     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.  
+    #
+    #     This renderViaXMLRPC.pm handler acts as an intermediary between the browser 
+    #     and the webservice.  It interprets the HTML form sent by the browser, 
+    #     rewrites the form data in XML format, submits it to the WebworkWebservice.pm 
+    #     which processes it and sends the the resulting HTML back to renderViaXMLRPC.pm
+    #     which in turn passes it back to the browser.
+    # 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form 
+    #     submitted directly by the browser.  
+    #     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
+    #     and returns the result to the browser. 
+    #     The The client renderProblem.pl script is no longer involved.
+    # 4.  Summary: renderProblem.pl is only involved in the first round trip
+    #     of the submitted problem.  After that the communication is  between the browser and
+    #     renderViaXMLRPC using HTML forms and between renderViaXMLRPC and the WebworkWebservice.pm
+    #     module using XML_RPC.
+    # 5.  The XML_PASSWORD is defined on the site.  In future versions a more secure password method
+    #     may be implemented.  This is sufficient to keep out robots.
+    # 6.  The course "daemon_course" must be a course that has been created on the server or an error will
+    #     result. A different name can be used but the course must exist on the server.
+    # 7.  More secure authentication is achieved using courseID, userID and course_password.  
+    #     The course_password must be the password for userID in the course courseID and that
+    #     user must have sufficient permissions in the course.
+    #     The permission level is set in the WebworkWebservice code. 
+          
 
+=cut
 
 our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE, %credentials);
 
@@ -231,12 +239,8 @@ our $source;
 our $rh_result;
 
 # set fileName path to path for current file (this is a best guess -- may not always be correct)
-my $fileName;
-if (defined $ENV{BB_DOC_NAME} ) {
-	$fileName = $ENV{BB_DOC_NAME};
-} else {
-	$fileName = $ARGV[0]
-}
+
+my $fileName = $ARGV[0];
 
 # filter mode  main code
 die "Unable to read file $fileName \n" unless -r $fileName;
@@ -253,7 +257,7 @@ $fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
 # webwork-open-problem-library/OpenProblemLibrary
 print "fileName changed to $fileName\n" if $UNIT_TESTS_ON;
 #print "source $source\n" if $UNIT_TESTS_ON;
-print $source  if $ENV{BB_DOC_NAME} or $UNIT_TESTS_ON;  # return input to BBedit
+print $source  if  $UNIT_TESTS_ON;  # return input to BBedit
 
 ############################################
 # Build client
@@ -289,7 +293,7 @@ our $xmlrpc_client = new WebworkClient (
 our($output, $return_string, $result);    
 
 $xmlrpc_client->{sourceFilePath}  = $fileName;
-print "file name is $fileName\n";
+
 if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
     print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
     print pretty_print_rh($result) if $UNIT_TESTS_ON;
