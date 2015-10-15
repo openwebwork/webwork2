@@ -62,47 +62,52 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 #############################################
 
 
- # verbose output when UNIT_TESTS_ON =1;
+### verbose output when UNIT_TESTS_ON =1;
  our $UNIT_TESTS_ON             = 0;
 
- # Command line for displaying the temporary file in a browser.
+### Command line for displaying the temporary file in a browser.
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
   use constant  DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
  #use constant DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
+ 
+### Path to a temporary file for storing the output of renderProblem.pl
+ use constant  TEMPOUTPUTFILE   => "$ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html"; 
+ die "You must first create an output file at ".TEMPOUTPUTFILE().
+     " with permissions 777 " unless -w TEMPOUTPUTFILE();
+
+### set display mode
+use constant DISPLAYMODE   => 'MathJax'; 
 
 
-
-my $use_site;
-# select a rendering site  
+### select a rendering site
+my $use_site;  
  #$use_site = 'test_webwork';    # select a rendering site 
  #$use_site = 'local';           # select a rendering site 
  #$use_site = 'hosted2';        # select a rendering site 
  $use_site ="credentials";
+ 
 # credentials file location -- search for one of these files 
 my $credential_path;
 my @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials',);
-# Place a credential file containing the following information at one of the locations above.
-# 	%credentials = (
-# 			userID                 => "my login name for the webwork course",
-# 			course_password        => "my password ",
-# 			courseID               => "the name of the webwork course",
-#           XML_URL	               => "url of rendering site
-#           XML_PASSWORD          => "site password" # preliminary access to site
-#           $FORM_ACTION_URL      =  'http://localhost:80/webwork2/html2xml'; #action url for form
-# 	);
 
+=head2 credentials file
+    
+    # Place a credential file containing the following information at one of the locations above.
+    # 	%credentials = (
+    # 			userID                 => "my login name for the webwork course",
+    # 			course_password        => "my password ",
+    # 			courseID               => "the name of the webwork course",
+    #           XML_URL	               => "url of rendering site
+    #           XML_PASSWORD          => "site password" # preliminary access to site
+    #           $FORM_ACTION_URL      =  'http://localhost:80/webwork2/html2xml'; #action url for form
+    # 	);
+
+=cut
 
  ############################################################
  # End configure
  ############################################################
 
- # Path to a temporary file for storing the output of renderProblem.pl
- use constant  TEMPOUTPUTFILE   => "$ENV{WEBWORK_ROOT}/DATA/renderProblemOutput.html"; 
- 
-use constant DISPLAYMODE   => 'MathJax'; 
-
-die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissions 777 " unless
--w TEMPOUTPUTFILE();
 
  ############################################################
  
@@ -151,7 +156,6 @@ die "You must first create an output file at ".TEMPOUTPUTFILE()." with permissio
 
 =cut
 
-our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE, %credentials);
 
 ####################################################
 # get credentials
@@ -176,7 +180,6 @@ foreach my $path (@path_list) {
 	}
 }
 if  ( $credential_path ) { 
-
 	print "Credentials taken from file $credential_path\n" if $UNIT_TESTS_ON;
 } else {
 	die <<EOF;
@@ -186,16 +189,22 @@ $credentials_string
 EOF
 }  
 
+our %credentials;
 eval{require $credential_path};
 if ($@  or not  %credentials) {
-
+	foreach my $key (qw(userID courseID course_password XML_URL XML_PASSWORD FORM_ACTION_URL)) {
+		print STDERR "$key is missing from ".
+		             "\%credentials at $credential_path\n" unless $credentials{$key};
+	}
 	print STDERR $credentials_string;
 	die;
 }
 
 ###############################
-# configure
+# configure table
 ###############################
+our ( $XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
+
 if ($use_site eq 'local') {
 	# the rest can work!!
 	$XML_URL          =  'http://localhost:80';
@@ -226,17 +235,16 @@ if ($use_site eq 'local') {
 }
 
 ##################################################
-#  END configuration section for client
+#  END gathering credentials for client
 ##################################################
 
 
 ##################################################
-# input/output section
+# input section
 ##################################################
 
 
 our $source;
-our $rh_result;
 
 # set fileName path to path for current file (this is a best guess -- may not always be correct)
 
@@ -251,13 +259,12 @@ eval {
 };
 die "Something is wrong with the contents of $fileName\n" if $@;
 
-# adjust fileName so that it is relative to the rendering course directory
-#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
-$fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
-# webwork-open-problem-library/OpenProblemLibrary
-print "fileName changed to $fileName\n" if $UNIT_TESTS_ON;
-#print "source $source\n" if $UNIT_TESTS_ON;
-print $source  if  $UNIT_TESTS_ON;  # return input to BBedit
+### adjust fileName so that it is relative to the rendering course directory
+	#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
+	$fileName =~ s|^.*?/webwork-open-problem-library/OpenProblemLibrary|Library|;
+	print "fileName changed to $fileName\n" if $UNIT_TESTS_ON;
+	#print "source $source\n" if $UNIT_TESTS_ON;
+	print $source  if  $UNIT_TESTS_ON;  # return input to BBedit
 
 ############################################
 # Build client
@@ -290,9 +297,14 @@ our $xmlrpc_client = new WebworkClient (
 		                            ),
  };
 		                 
-our($output, $return_string, $result);    
 
 $xmlrpc_client->{sourceFilePath}  = $fileName;
+
+############################################
+# Call server via xmlrpc_client
+# Format the returned values
+############################################
+our($output, $return_string, $result);    
 
 if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
     print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
@@ -303,6 +315,10 @@ if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
 	$output = $xmlrpc_client->return_object;  # error report
 }
 
+##################################################
+# print the output and display
+##################################################
+
 local(*FH);
 open(FH, '>'.TEMPOUTPUTFILE) or die "Can't open file ".TEMPOUTPUTFILE()." for writing";
 print FH $output;
@@ -310,38 +326,11 @@ close(FH);
 
 system(DISPLAY_COMMAND().TEMPOUTPUTFILE());
 
-##################################################
-# end input/output section
 
 
-################################################################################
-# Storage utilities section
-################################################################################
-# 
-# sub write_session_credentials {
-# 	my $credentials = shift;
-# 	my %credentials = %$credentials;
-# 	my $string = "\$session_credentials = {session_key => $credentials{session_key},
-# 	                                       userID      => $credentials{userID},
-# 	                                       courseID    => $credentials{courseID},
-# 	              };\n";
-# 	local(*FH);
-# 	open(FH, '>'.CREDENTIALFILE) or die "Can't open file ".CREDENTIALFILE()." for writing";
-# 	print FH $string;
-# 	close(FH);
-# }
-# 
-# sub read_session_credentials {
-# 	local(*FH);
-# 	open(FH, '<'.CREDENTIALFILE) or die "Can't open file ".CREDENTIALFILE()." for reading";
-# 	local ($|);
-# 	my $string = <FH>;   # slurp the contents
-# 	my $session_credentials = eval( $string);
-# 	close(FH);
-# 	return $session_credentials;
-# }
+
 ##################################################
-# end input/output section
+# utilities
 ##################################################
 
 sub pretty_print_rh { 
