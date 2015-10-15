@@ -331,7 +331,7 @@ if ($zip_result) {
 if ($upload_result) {
     print "Uploading file\n";
     
-    `echo "put $output_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oPort=57281 wwdata\@52.27.200.59`;
+    `echo "put $output_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oPort=57281 wwdata\@52.88.32.79`;
 }
 
 1;
