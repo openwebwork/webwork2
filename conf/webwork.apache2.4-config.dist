@@ -99,6 +99,8 @@ print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_
 
 # link to PG code libraries
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
+$WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
+$ENV{PG_ROOT} = $pg_dir;
 
 require Apache::WeBWorK; # force compilation of pretty much everything
 
