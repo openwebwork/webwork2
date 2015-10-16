@@ -34,7 +34,10 @@ Rembember to configure the local output file and display command !!!!!!!!
 use strict;
 use warnings;
 
-# Find webwork2 library
+
+#######################################################
+# Find the webwork2 root directory
+#######################################################
 BEGIN {
         die "WEBWORK_ROOT not found in environment. \n
              WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
@@ -55,6 +58,7 @@ use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use Crypt::SSLeay;  # needed for https
 use WebworkClient;
+use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 
 #############################################
@@ -242,6 +246,8 @@ if ($use_site eq 'local') {
 ##################################################
 # input section
 ##################################################
+# store the time before we invoke the content generator
+my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
 
 
 our $source;
@@ -257,7 +263,6 @@ eval {
 	$source   = <>; #slurp standard input
 };
 die "Something is wrong with the contents of $fileName\n" if $@;
-#say "source is $source";
 
 ### adjust fileName so that it is relative to the rendering course directory
 	#$fileName =~ s|/opt/webwork/libraries/NationalProblemLibrary|Library|;
@@ -358,6 +363,15 @@ our($output, $return_string, $result);
 	print STDERR "Output is sent to the log file: ",LOG_FILE();
 	
 }
+
+##################################################
+# log elapsed time
+##################################################
+my $scriptName = 'checkProblem';
+my $cg_end = time;
+my $cg_duration = $cg_end - $cg_start;
+WebworkClient::writeRenderLogEntry("", "{script:$scriptName; file:$fileName; ". sprintf("duration:%.3f sec;", $cg_duration)." url: $XML_URL; }",'');
+
 
 ##################################################
 # utilities

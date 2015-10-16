@@ -738,4 +738,25 @@ sub formatRenderedProblem {
 	$template =~ s/(\$\w+)/$1/gee;  
 	return $template;
 }
+
+
+######################################################
+# Utilities
+######################################################
+
+### Write log
+# $ce - a WeBWork::CourseEnvironment object
+# $function - fully qualified function name
+# $details - any information, do not use the characters '[' or ']'
+# $beginEnd - the string "begin", "intermediate", or "end"
+# use the intermediate step begun or completed for INTERMEDIATE
+# use an empty string for $details when calling for END
+# Information printed in format:
+# [formatted date & time ] processID unixTime BeginEnd $function  $details
+sub writeRenderLogEntry($$$) {
+	my ($function, $details, $beginEnd) = @_;
+	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
+	WeBWorK::Utils::writeLog($seed_ce, "render_timing", "$$ ".time." $beginEnd $function [$details]");
+}
+
 1;
