@@ -667,7 +667,7 @@ sub formatRenderedProblem {
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
-	my $course_password         =  $self->{course_password};
+	my $course_password  =  $self->{course_password};
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//314159;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
@@ -725,7 +725,7 @@ sub formatRenderedProblem {
 	$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
 	$localStorageMessages .= CGI::end_div();
 		
-	my $pretty_print_self    = pretty_print($self);
+	my $pretty_print_self  = pretty_print($self);
 ######################################################
 # Return interpolated problem template
 ######################################################
