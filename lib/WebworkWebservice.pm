@@ -150,12 +150,15 @@ sub initiate_session {
 	
 	my $rh_input     = $args[0];
 	# print STDERR "input from the form is ", format_hash_ref($rh_input), "\n";
+###########################################################################
+# identify course 
+###########################################################################
 	
 	# obtain input from the hidden fields on the HTML page
 	my $user_id      = $rh_input ->{userID};
 	my $session_key	 = $rh_input ->{session_key};
 	my $courseName   = $rh_input ->{courseID};
-	my $password     = $rh_input ->{password};
+	my $course_password     = $rh_input ->{course_password};
 	my $ce           = $class->create_course_environment($courseName);
 	my $db           = new WeBWorK::DB($ce->{dbLayout});
 
@@ -167,6 +170,7 @@ sub initiate_session {
     
 if ($UNIT_TESTS_ON) {
 	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
+	print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
@@ -176,7 +180,7 @@ if ($UNIT_TESTS_ON) {
 	my $self = {
 		courseName	=>  $courseName,
 		user_id		=>  $user_id,
-		password    =>  $password,
+		password    =>  $course_password,
 		session_key =>  $session_key,
 		ce          =>  $ce,
 		db          =>  $db,
@@ -225,13 +229,16 @@ if ($UNIT_TESTS_ON) {
 			# was asked to authenticate into a non-existent course
 			die SOAP::Fault
 				->faultcode('404')
-				->faultstring('Course not found.')
+				->faultstring("Course |$courseName| not found.")
 		}
-		die "Unknown exception when trying to verify authentication. $@";
+		die "Webservice.pm: Error when trying to authenticate. $@\n";
 	};
+###########################################################################
+# security check -- check that the user is in fact at least a proctor in the course
+###########################################################################
 	
 	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login");
+	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login"); # usually level 2
 	
 # Update the credentials -- in particular the session_key may have changed.
  	$self->{session_key} = $authen->{session_key};
@@ -243,19 +250,12 @@ if ($UNIT_TESTS_ON) {
  		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
  	} 
  # Is there a way to transmit a number as well as a message?
- # Could be useful for nandling errors.
+ # Could be useful for handling errors.
  	die "Could not authenticate user $user_id with key $session_key " unless $self->{authenOK};
- 	die "User $user_id does not have professor privileges in this course $courseName " unless $self->{authzOK};
+ 	die "User $user_id does not have sufficient privileges in this course $courseName " unless $self->{authzOK};
  	return $self;
 }
 
-
-
-
-
-###########################################################################
-# identify course 
-###########################################################################
 
 sub create_course_environment {
 	my $self = shift;
@@ -268,9 +268,6 @@ sub create_course_environment {
 	return ($ce);
 }
 
-###########################################################################
-# security check -- check that the user is in fact a professor in the course
-###########################################################################
 sub ce {
 	my $self = shift;
 	$self->{ce};
@@ -319,7 +316,7 @@ sub do {   # process and return result
            # make sure that credentials are returned
            # for every call
            # $result -> xmlrpcCall(command, in);
-           # $result->{output}->{foo} is defined for foo = courseID userID and session_key
+           # $result->return_object->{foo} is defined for foo = courseID userID and session_key
 	my $self = shift;
 	my $result = shift;
 	
@@ -328,6 +325,9 @@ sub do {   # process and return result
     $result->{courseID}     = $self->{courseName};
 	return($result);
 }
+
+
+
 #  respond to xmlrpc requests
 #  Add routines for handling errors if the authentication fails or if the authorization is not appropriate.
 
@@ -706,12 +706,6 @@ sub updateSetting {
 	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
 }
 
-sub renderProblem2 {
-	my $class = shift;
-	my $in = shift;
-	my $self = $class->initiate_session($in);
-	return $self->do(WebworkWebservice::RenderProblem::renderProblem2($self,$in));	
-}
 
 
 
@@ -757,25 +751,25 @@ package WWd;
 
 ############utilities
 
-sub echo { 
-    return "WWd package ".join("|",("begin ", WebworkWebservice::pretty_print_rh(\@_), " end") );
-}
-
-sub listLib {
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-    my $in = shift;
-  	return( Webwork::listLib($in) );
-}
-sub renderProblem {
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-    my $in = shift;
-  	return( Filter::filterObject( Webwork::renderProblem($in) ) );
-}
-sub readFile {
-    shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-    my $in = shift;
-  	return( Webwork::readFile($in) );
-}
+# sub echo { 
+#     return "WWd package ".join("|",("begin ", WebworkWebservice::pretty_print_rh(\@_), " end") );
+# }
+# 
+# sub listLib {
+#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+#     my $in = shift;
+#   	return( Webwork::listLib($in) );
+# }
+# sub renderProblem {
+#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+#     my $in = shift;
+#   	return( Filter::filterObject( Webwork::renderProblem($in) ) );
+# }
+# sub readFile {
+#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
+#     my $in = shift;
+#   	return( Webwork::readFile($in) );
+# }
 # sub hello {
 # 	shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 # 	print "Receiving request for hello world\n";

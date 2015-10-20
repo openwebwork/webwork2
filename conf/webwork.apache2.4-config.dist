@@ -54,7 +54,6 @@ my $webwork_dir = "/opt/webwork/webwork2";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
-$ENV{WEBWORK_SERVER_ADMIN}= $ENV{SERVER_ADMIN};
 
 #################################################################
 # The following code reads defauls.config and extracts the remaining configuration
@@ -79,10 +78,9 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/we
 my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
 my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/courses
 
-my $webwork_server_admin_email = $ce->{webwork_server_admin_email};
+my $webwork_server_admin_email;
 if ($webwork_server_admin_email) {
 	$webwork_server_admin_email = $ce->{webwork_server_admin_email};
-	warn "set email from site.conf";
 } else {
 	$webwork_server_admin_email= $ENV{SERVER_ADMIN};
 }
@@ -101,6 +99,8 @@ print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_
 
 # link to PG code libraries
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
+$WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
+$ENV{PG_ROOT} = $pg_dir;
 
 require Apache::WeBWorK; # force compilation of pretty much everything
 

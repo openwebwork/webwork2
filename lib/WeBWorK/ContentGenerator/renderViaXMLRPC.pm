@@ -117,7 +117,7 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 
 
-	$XML_URL             =  "$server_root_url/mod_xmlrpc";
+	$XML_URL             =  "$server_root_url";  #"$server_root_url/mod_xmlrpc";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
 use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
@@ -149,12 +149,12 @@ sub pre_header_initialize {
     #######################
     my $xmlrpc_client = new WebworkClient;
 
-	$xmlrpc_client->{encodedSource}   = $r->param('problemSource') ; # this source has already been encoded
+	$xmlrpc_client -> encoded_source($r->param('problemSource')) ; # this source has already been encoded
 	$xmlrpc_client->url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
 	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
-	$xmlrpc_client->{password}        = $inputs_ref{password};
+	$xmlrpc_client->{course_password}        = $inputs_ref{course_password};
 	$xmlrpc_client->{site_password}   = $XML_PASSWORD;
 	$xmlrpc_client->{session_key}     = $inputs_ref{session_key};
 	$xmlrpc_client->{courseID}        = $inputs_ref{courseID};
@@ -168,14 +168,14 @@ sub pre_header_initialize {
 	##############################
 	# xmlrpc_client calls webservice to have problem rendered
 	#
-	# and stores the resulting HTML output in $self->{output}
+	# and stores the resulting HTML output in $self->return_object
 	# from which it will eventually be returned to the browser
 	#
 	##############################
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $xmlrpc_client->{inputs_ref}) )    {
-			$self->{output} = $xmlrpc_client->formatRenderedProblem;
+			$self->{output} = $xmlrpc_client->formatRenderedProblem ;
 	} else {
-		$self->{output} = $xmlrpc_client->{output};  # error report
+		$self->{output}= $xmlrpc_client->return_object;  # error report
 	}
 	
 	################################
