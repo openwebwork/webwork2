@@ -9,6 +9,8 @@ BEGIN {
 }
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::PG::ImageGenerator;
+use WeBWorK::Localize;
+
 use HTML::Entities;
 my $answers = {
 	AnSwEr0001	=>	{
@@ -36,7 +38,7 @@ my $answers = {
 		showUnionReduceWarnings	=>	 1,
 		student_ans	=>	 "",
 		studentsMustReduceUnions	=>	 1,
-		type	=>	 "essay", #"Value (Formula)",
+		type	=>	 "Value (Formula)",
 		upToConstant	=>	 0,
 	},
 	AnSwEr0002	=>	 {
@@ -175,17 +177,19 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	$answers,
 	answersSubmitted       => 1,
 	answerOrder            => $answerOrder,
-	displayMode            => 'images',
-	imgGen                 => $imgGen,	
+	displayMode            => 'MathJax',
 	showAttemptPreviews    => 1,
 	showAttemptResults     => 1,
 	showCorrectAnswers     => 1,
 	showMessages           => 1,
+	showSummary            => 1,
+	imgGen                 => $imgGen,	
+	maketext               => WeBWorK::Localize::getLoc("en"),
 );
 print "answers ", $tbl->answers,"\n";
 print "answersSubmitted ", $tbl->answersSubmitted,"\n";
 print "displayMode ", $tbl->displayMode,"\n";
-print "imgGen ", $tbl->imgGen,"\n";
+print "imgGen ", ($tbl->imgGen)//'undefined',"\n";
 print "answerOrder ", $tbl->answerOrder,"\n";
 print "correct_ids ", $tbl->correct_ids//'',"\n";
 print "incorrect_ids ", $tbl->incorrect_ids//'',"\n";
