@@ -70,11 +70,11 @@ $PAR
 
 $ITEM
 To see how $WW is interpreting what you type, enter your answer and
-then click the ${LQ}Preview Answers$RQ button, which is next to the
+then click the ${LQ}Preview My Answers$RQ button, which is next to the
 ${LQ}Submit Answers$RQ button below.  $WW will show you what it thinks
 you entered (the preview appears in your answer area at the top of the
-page). Previewing your answer does not submit it for credit; that only
-happens when you press the ${LQ}Submit Answers$RQ button.
+page). Previewing your answer does not count as an attempt on the problem and does not submit it for credit; that only
+happens when you press the ${LQ}Submit Answers$RQ button. 
 $ITEMSEP
 
 $ITEM 
@@ -109,7 +109,7 @@ Start with the template \{student "[x${CARET}()]/[()*()]"\}.
 Start by putting in an appropriate template. This means that you 
 should begin by looking at the function and thinking about how many 
 pieces are used to construct it and how those pieces are related.
-Once you have entered your answer, try using the ${LQ}Preview$RQ button
+Once you have entered your answer, try using the ${LQ}Preview My Answers$RQ button
 to see how $WW is interpreting your answer.
 \{EndExample\}
 \{ExampleRule\}

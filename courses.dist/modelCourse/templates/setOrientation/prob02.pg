@@ -22,10 +22,12 @@ press one of these buttons.
 $PAR
 
 The ${LQ}Submit Answers$RQ button causes $WW to check your answers and
-report your score for the problem.  You can continue to work on a
+report your score for the problem.  Usually you can continue to work on a
 problem until you get it right, so don't be afraid to submit your
 answer even if you have only finished parts of the problem or are
-not sure of the correctness of your answer.  If the due date is
+not sure of the correctness of your answer.  Sometimes (e.g. for 
+multiple choice or true/false type questions) your instructor
+may limit the number of attempts allowed on a problem. At the bottom of the page you will see how many attempts you have remaining. If the due date is
 passed and the answers are available, you can click the ${LQ}Show
 Correct Answers$RQ button before pressing ${LQ}Submit$RQ.
 If you do, the correct answer(s) will be displayed in the answer area
@@ -34,45 +36,29 @@ $PAR
 
 If you have typed in a complicated answer, or are being told your
 answer is incorrect when you think it's right, you may want to use the
-${LQ}Preview Answer$RQ button.  This will ask $WW to display at the
+${LQ}Preview My Answers$RQ button.  This will ask $WW to display at the
 top of the page its interpretation of what you have entered.  This
 can be used to help spot errors in your typing, and verify that $WW
-understands your answer the way you intend it to.  (This is discussed
+understands your answer the way you intend it to. And it does not count as an attempt on the problem. (This is discussed
 further in a later problem.)
 $PAR
 
-At the bottom of the red panel at the left is a box that allows you to
+The ${LQ}User Settings$RQ link under the ${LQ}MAIN MENU$RQ at the left has a ${LQ}Change Display Options$RQ section that allows you to
 change how the problem is displayed.  The equations within the problem
-can be represented in three different ways:
+can be represented in two different ways:
 
 \{BeginParList("UL")\}
 
 $ITEM
-${LQ}images${RQ} mode is the default choice (what $WW uses unless you tell 
-it otherwise). It produces the accurate mathematical notation,
+${LQ}images${RQ} mode produces accurate mathematical notation,
 with the disadvantages of being slightly slower, and not printing well
 if you want to print out a single problem.
 $ITEMSEP
 
 $ITEM
-${LQ}formatted-text${RQ} mode produces results quickly, but more
-complicated mathematics may be difficult to read in this
-mode.  For example, some fractions and integrals are not easy to read
-in formatted-text mode.
-$ITEMSEP
-
-$ITEM
-${LQ}jsMath${RQ} mode uses a JavaScript program and Cascading Style
-Sheets (CSS) to display the mathematics.  This produces good results,
-and is particularly nice if you need to change the size of the fonts
-in your browser or wish to print out a single problem.  For best
-results, however, you should download and install some fonts that
-jsMath uses; there is a link to the fonts on the jsMath control panel,
-which you can activate using the small jsMath button that will appear
-at the lower right of the screen when you activate this mode.  The
-first problem you view using jsMath may take a little longer to
-appear, as the JavaScript program is being loaded into your browser,
-but things should run faster after that.
+${LQ}MathJax${RQ} mode is the default choice (what $WW uses unless you tell 
+it otherwise). It uses Cascading Style
+Sheets (CSS) with web fonts or SVG, instead of bitmap images or Flash, so equations scale with surrounding text at all zoom levels.  MathJax is compatible with screenreaders & provides zoom for everyone.
 
 \{EndParList("UL")\}
 $PAR
@@ -81,13 +67,12 @@ Choose whichever mode is most comfortable for you.  You can always
 select a different mode if a particular problem needs it.  Here is a
 sample of some simple mathematics, \(x^2 + 3\), and a more complicated
 expression, \(\frac{x(1-x)}{2x + 1}\).  Try changing the display mode
-by clicking the ${LQ}formatted-text$RQ or ${LQ}jsMath${RQ} radio
-button and then pressing the ${LQ}Apply Options${RQ} button to cause
-the page to be reformatted.  Then change the display mode to back to
-${LQ}images$RQ mode for the rest of the homework set.
+by clicking the ${LQ}User Settings$RQ link, selecting the  ${LQ}images${RQ} radio
+button, pressing the ${LQ}Change User Settings${RQ} button and then displaying problem 2 again.  Then change the display mode to back to
+${LQ}MathJax$RQ mode for the rest of the homework set.
 $PAR
 
-The ${LQ}Show saved answers${RQ} checkbox tells whether you
+The ${LQ}Show saved answers${RQ} checkboxes tell whether you
 want $WW to fill in the answer blanks with your previous answers or
 not.  (If you like, you can test this out on the next problem, since
 there are no answer blanks in this one.)

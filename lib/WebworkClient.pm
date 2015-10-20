@@ -195,15 +195,15 @@ sub xmlrpcCall {
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
-	  	
+
 	  unless (ref($result) and $result->fault) {
-	  
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
 		}
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
-	  		$result->result()->{header_text} = decode_base64($result->result()->{header_text});
+		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
 	  	}
+
 		#print  pretty_print($result->result()),"\n";  #$result->result()
 		$self->{output}= $result->result();
 		return $result->result();  # would it be better to return the entire $result?
@@ -217,6 +217,7 @@ sub xmlrpcCall {
 			  "\n<br/>faultstring:",
 			  $result->faultstring, "\n<br/>End error message<br/>\n"
 		  );
+
 		  print STDERR $err_string;
 		  $self->{output}= $result->result();
 		  $self->{error_string}= $err_string;
@@ -327,43 +328,31 @@ sub setInputTable_for_listLib {
 }
 sub setInputTable {
 	my $self = shift;
+	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
+	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir});
+ 	die "Can't create seed course environment for webwork in $webwork_dir" unless ref($seed_ce);
+
+	my @modules_to_evaluate;
+	my @extra_packages_to_load;
+	my @modules = @{ $seed_ce->{pg}->{modules} };
+
+	foreach my $module_packages_ref (@modules) {
+		my ($module, @extra_packages) = @$module_packages_ref;
+		# the first item is the main package
+		push @modules_to_evaluate, $module;
+		# the remaining items are "extra" packages
+		push @extra_packages_to_load, @extra_packages;
+	}
+
 	my $out = {
 		pw          =>   $self->{site_password},
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
 		course                  => $self->{course},
-		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
-		                                ExprWithImplicitExpand AnswerEvaluator
-		                                AnswerEvaluatorMaker 
-		)],
+		extra_packages_to_load  => [@extra_packages_to_load],
 		mode                    => $self->{displayMode},
-		modules_to_evaluate     => [ qw( 
-Exporter
-DynaLoader								
-GD
-WWPlot
-Fun
-Circle
-Label								
-PGrandom
-Units
-Hermite
-List								
-Match
-Multiple
-Select							
-AlgParser
-AnswerHash							
-Fraction
-VectorField							
-Complex1
-Complex							
-MatrixReal1 Matrix							
-Distributions
-Regression
-
-		)], 
+		modules_to_evaluate     => [@modules_to_evaluate],
 		envir                   => $self->environment(),
 		problem_state           => {
 		
@@ -491,7 +480,7 @@ sub formatRenderedLibraries {
 		$result .= "$key";
 		$result .= $rh_result{$key};
 	}
-    return $result;
+	return $result;
 }
 
 sub formatRenderedProblem {
@@ -563,6 +552,7 @@ sub formatRenderedProblem {
 	my $displayMode      =  $self->{displayMode};
 	
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
+	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
         # Can be added to the request as a parameter.  Adds a prefix to the 
@@ -582,8 +572,8 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	displayMode            => $self->{displayMode},
 	imgGen                 => $imgGen,
 	ce                     => '',	#used only to build the imgGen
-	showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
-	showAttemptResults     => ($submitMode or $showCorrectMode),
+	showAttemptPreviews    => ($previewMode or $checkMode or $submitMode or $showCorrectMode),
+	showAttemptResults     => ($checkMode or $submitMode or $showCorrectMode),
 	showCorrectAnswers     => ($showCorrectMode),
 	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
 	showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
@@ -601,7 +591,7 @@ $tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 # render equation images
 
 if ($submitMode && $problemResult) {
-    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%.');
     if ($problemResult->{msg}) {
          $scoreSummary .= CGI::p($problemResult->{msg});
     }
@@ -609,6 +599,13 @@ if ($submitMode && $problemResult) {
     $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
     $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
 }
+
+if ($checkMode && $problemResult) {
+    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%.');
+    $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+    $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+}
+
 
 # This stuff is put here because eventually we will add locale support so the 
 # text will have to be done server side. 
@@ -649,6 +646,7 @@ $self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
 <base href="$XML_URL">
@@ -728,6 +726,7 @@ $self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
 <base href="$XML_URL">
@@ -760,9 +759,8 @@ $scoreSummary
 	       <input type="hidden" name="language" value="$formLanguage">
 	       <input type="hidden" name="showSummary" value="$showSummary">
 		   <p>
-		      <input type="submit" name="preview"  value="Preview" /> 
-			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWgrade" value="Show correct answer"/>
+                      <input type="submit" name="WWcheck" value="Check answer(s)"/> 
+		      <input type="submit" name="WWgrade" value="Show correct answer(s)"/>
 		   </p>
 	       </form>
 </div>
@@ -804,6 +802,7 @@ $self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
 <script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" type="text/javascript"></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
 <base href="$XML_URL">

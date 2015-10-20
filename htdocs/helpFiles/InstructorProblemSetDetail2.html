@@ -1,0 +1,110 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+	
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/htdocs/helpFiles/InstructorProblemSetDetail.html,v 1.4 2006/07/18 16:33:12 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<head>
+<title>Set Detail 2 Help Page</title>
+</head>
+
+<body>
+
+<h2>Set Detail 2 Help Page</h2>
+
+<!--
+<h3> Quick Links </h3>
+
+<ul>
+   <li> I do <i>foo</i> and nothing seems to happen! </li>
+   <li> My problems are in random order </li>
+   <li> My nose is leaking. </li>
+   <li> How does this work? </li>
+</ul>
+-->
+<h3> "Modes" </h3>
+
+<p>The <strong>Set Detail</strong> page can be viewed in one of two distinct modes:
+	<ul>
+		<li> All students </li>
+		<li> One specific student </li>
+	</ul>
+
+This should be quite clear at the top of the page.  
+
+<h3> Contents </h3>
+
+<ul type="1">
+	<li> <a href="#form">Form buttons</a>
+	<li> <a href="#general">General Information</a>
+	<li> <a href="#headers">Headers</a>
+	<li> <a href="#problems">Problems</a>
+</ul>
+
+
+
+
+<h4> <a name="form">Form buttons</a> </h4>
+<dl>
+	<dt> Save Changes </dt>
+		<dd>Occurs twice on the page, at the top and the bottom.  <br>Any and all changes made to any
+		part of the set will be saved with one important exception: When editing the set for one
+		or more students, you can choose to override the default value (defined for the set in 
+		general) by clicking on the checkbox and providing a value (or possibly leaving a blank).
+		If you do <strong>NOT</strong> check the checkbox, the override value will be discarded.
+		<p><small>Example:</small>
+		<br><input type="checkbox"> Weight <input value=2 size=5> 1
+		<br><input type="checkbox" checked> Weight <input value=2 size=5> 1
+		<br><small>The first value of 2 will be discarded because the checkbox is not checked.</small>
+		</dd>
+	<dt> Reset Form </dt>
+		<dd>Discards any and all changes, reloading the page by re-reading the database information
+		for this set.  Also, resets the display modes.<p></dd>
+	<dt> Display Mode </dt>
+		<dd>You can maintain a different display mode for the problems if you want.
+	<dt>Add blank problem template</dt>
+		<dd> Adds a new, essentially blank, problem to the homework set when the homework set is saved.  
+		You can modify this to create your own problem, by clicking on the "Edit it" link and 
+		saving the "blankProblem.pg" to some new file, e.g. "myNewProblem.pg".
+</dl>
+
+<h4> <a name="general">General Information</a> </h4>
+<dl>
+<dt>Reordering Problems</dt>
+<dd>
+You can reorder problems by clicking on the arrow icon and dragging the problem.  You will see a box showing you where the problem will be placed.  When problems are reordered any holes in the numbering will be filled in. </dd>
+
+<dt>Deleting Problems</dt>
+<dd> You can delete problems by clicking the "Delete it?" check box and saving.  If the set is already active it is recommended that you instead use the "Mark Correct?" problem to mark a particular problem correct for all students.</dd>
+
+<dt>Viewing Problems</dt>
+<dd>
+You can view a problem by clicking the render icon underneath the problem number.  The Display Mode used to render the problem is chosen using the drop down menu.  You can render all problems using the Render All button. Hide All will hide all of the problems.  
+</dd>
+
+<dt>Problem Paths</dt>
+<dd>
+All of the paths for problem files are relative to the templates directory
+of the current course.  You can access this directory "directly" using the File Manager
+page.
+</dd>
+
+</dl>
+</body>
+</html>

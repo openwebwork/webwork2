@@ -285,7 +285,6 @@ sub searchLib {    #API for searching the NPL database
 	if($rh->{library_levels}) {
 		$self->{level} = [split(//, $rh->{library_levels})];
 	}
-	
 	'getDBTextbooks' eq $subcommand && do {
 		$self->{library_subjects} = $rh->{library_subjects};
 		$self->{library_chapters} = $rh->{library_chapters};
