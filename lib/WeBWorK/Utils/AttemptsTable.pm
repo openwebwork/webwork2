@@ -57,7 +57,8 @@ sub new {
 		answersSubmitted    => $options{answersSubmitted}//0,
 		summary             => $options{summary}//'', # summary provided by problem grader
 	    displayMode 		=> $options{displayMode} || "MathJax",
-	    #showAttemptAnswers =>  # answers are always shown         # show student answer as entered and simplified 
+	    showAnswerNumbers    => $options{showAnswerNumbers}//1,
+	    showAttemptAnswers =>  $options{showAttemptAnswers}//1,    # show student answer as entered and simplified 
 	                                                               #  (e.g numerical formulas are calculated to produce numbers)
 	    showAttemptPreviews => $options{showAttemptPreviews}//1,   # show preview of student answer
 	    showAttemptResults 	=> $options{showAttemptResults}//1,    # show whether student answer is correct
@@ -70,8 +71,10 @@ sub new {
 	bless $self, $class;
 	# create read only accessors/mutators
 	$self->mk_ro_accessors(qw(answers answerOrder answersSubmitted displayMode imgGen maketext));
-	$self->mk_ro_accessors(qw(showAttemptPreviews showAttemptResults showCorrectAnswers showSummary));
-	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages summary));
+	$self->mk_ro_accessors(qw(showAnswerNumbers showAttemptAnswers 
+	                          showAttemptPreviews showAttemptResults 
+	                          showCorrectAnswers showSummary));
+	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages  summary));
 	# sanity check and initialize imgGenerator.
 	_init($self, %options);
 	return $self;
@@ -88,7 +91,11 @@ sub _init {
 	my @reallyShowMessages =  grep { $self->answers->{$_}->{ans_message} } @{$self->answerOrder};
 	$self->showMessages( $self->showMessages && !!@reallyShowMessages );  
 	                               #           (!! forces boolean scalar environment on list)
-	
+	# only used internally -- don't need accessors.
+	$self->{numCorrect}=0;
+	$self->{numBlanks}=0;
+	$self->{numEssay}=0;
+
 	if ( $self->displayMode eq 'images') {
 		if ( blessed( $options{imgGen} ) ) {
 			$self->{imgGen} = $options{imgGen};
@@ -123,26 +130,52 @@ sub maketext {
 sub formatAnswerRow {
 	my $self          = shift;
 	my $rh_answer     = shift;
+	my $ans_id        = shift;
 	my $answerNumber  = shift;
-	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
-	my $answerPreview = $self->previewAnswer($rh_answer)||'&nbsp;';
-	my $correctAnswer = $self->previewCorrectAnswer($rh_answer)||'&nbsp;';
+	my $answerString         = $rh_answer->{original_student_ans}||'&nbsp;';
+	my $answerPreview        = $self->previewAnswer($rh_answer)||'&nbsp;';
+	my $correctAnswer        = $rh_answer->{correct_ans}//'';
+	my $correctAnswerPreview = $self->previewCorrectAnswer($rh_answer)||'&nbsp;';
 	
 	my $answerMessage   = $rh_answer->{ans_message}||'';
+	$answerMessage =~ s/\n/<BR>/g;
+	my $answerScore      = $rh_answer->{score}//0;
+	$self->{numCorrect}  += $answerScore >=1;
+	$self->{numEssay}    += ($rh_answer->{type}//'') eq 'essay';
+	$self->{numBlanks}++ unless $answerString =~/\S/ || $answerScore >= 1; 
+	
 	my $feedbackMessageClass = ($answerMessage eq "") ? "" : $self->maketext("FeedbackMessage");
 	
-	my $score         = (($rh_answer->{type}//'') eq 'essay') ?
-						CGI::td({class => "UngradedResults"},$self->maketext("Not graded")): 
-						  ($rh_answer->{score}) ? 
-							CGI::td({class => "ResultsWithoutError"},$self->maketext("Correct")) :
-							CGI::td({class => "ResultsWithError"},$self->maketext("Incorrect"));
-	
+	my (@correct_ids, @incorrect_ids);
+	my $resultString;
+	my $resultStringClass;
+	if ($answerScore >= 1) {
+		$resultString = CGI::span({class=>"ResultsWithoutError"}, $self->maketext("correct"));
+		$resultStringClass = "ResultsWithoutError";  
+		# push @correct_ids,   $name if $answerScore == 1;
+	} elsif (($rh_answer->{type}//'') eq 'essay') {
+		$resultString =  $self->maketext("Ungraded"); 
+		# $self->{essayFlag} = 1;
+	} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
+		# push @incorrect_ids, $name if $answerScore < 1;
+		$resultStringClass = "ResultsWithError";
+		$resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $self->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
+	} else {
+		$resultString =  $self->maketext("[_1]% correct", int($answerScore*100));
+		#push @incorrect_ids, $ans_id if $answerScore < 1;
+	}
+	my $attemptResults = CGI::td({class=>$resultStringClass},
+	               CGI::a({href=>"javascript:document.getElementById(\"$ans_id\").focus()"},
+	               $self->nbsp($resultString)));
+
 	my $row = join('',
-			  CGI::td({},$answerNumber) ,
-			  CGI::td({},$answerString) ,   # student original answer
-			  ($self->showAttemptPreviews)?  CGI::td({},$answerPreview):"" ,
-			  ($self->showAttemptResults)?  $score :"" ,
-			  ($self->showCorrectAnswers)?  CGI::td({},$correctAnswer):"" ,
+			  ($self->showAnswerNumbers) ? CGI::td({},$answerNumber):'',
+			  ($self->showAttemptAnswers) ? CGI::td({},$self->nbsp($answerString)):'' ,   # student original answer
+			  ($self->showAttemptPreviews)?  $self->formatToolTip($answerString, $answerPreview):"" ,
+			  ($self->showAttemptResults)?   CGI::td({class=>$resultStringClass},
+	               				CGI::a({href=>"javascript:document.getElementById(\"$ans_id\").focus()"},
+	               						$self->nbsp($resultString))) :'' ,
+			  ($self->showCorrectAnswers)?  $self->formatToolTip($correctAnswer,$correctAnswerPreview):"" ,
 			  ($self->showMessages)?        CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)):"",
 			  "\n"
 			  );
@@ -162,8 +195,8 @@ sub answerTemplate {
 	my @incorrect_ids;
 
 	push @tableRows,CGI::Tr(
-			CGI::th("#"),
-			CGI::th($self->maketext("Entered")),  # student original answer
+			($self->showAnswerNumbers) ? CGI::th("#"):'',
+			($self->showAttemptAnswers)? CGI::th($self->maketext("Entered")):'',  # student original answer
 			($self->showAttemptPreviews)? CGI::th($self->maketext("Answer Preview")):'',
 			($self->showAttemptResults)?  CGI::th($self->maketext("Result")):'',
 			($self->showCorrectAnswers)?  CGI::th($self->maketext("Correct Answer")):'',
@@ -172,9 +205,10 @@ sub answerTemplate {
 
 	my $answerNumber     = 1;
     foreach my $ans_id (@{ $self->answerOrder() }) {  
-    	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $answerNumber++));
+    	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
     	push @correct_ids,   $ans_id if $rh_answers->{$ans_id}->{score} >= 1;
     	push @incorrect_ids,   $ans_id if $rh_answers->{$ans_id}->{score} < 1;
+    	$self->{essayFlag} = 1;
     }
 	my $answerTemplate = CGI::h3($self->maketext("Results for this submission")) .
     	CGI::table({class=>"attemptResults"},@tableRows);
@@ -239,9 +273,9 @@ sub previewCorrectAnswer {
 sub createSummary {
 	my $self = shift;
 	my $summary = ""; 
-	my $numCorrect = 0;
-	my $numBlanks  =0;
-	my $numEssay = 0;
+	my $numCorrect = $self->{numCorrect};
+	my $numBlanks  = $self->{numBlanks};
+	my $numEssay   = $self->{numEssay};
 	my $fully = '';    #FIXME -- find out what this is used for in maketext.
 	unless (defined($self->summary) and $self->summary =~ /\S/) {
 		my @answerNames = @{$self->answerOrder()};
@@ -249,7 +283,7 @@ sub createSummary {
 				if ($numCorrect == scalar @answerNames) {
 					$summary .= CGI::div({class=>"ResultsWithoutError"},$self->maketext("The answer above is correct."));
 				} elsif ($self->{essayFlag}) {
-				    $summary .= CGI::div($self->maketext("The answer will be graded later.", $fully));
+				    $summary .= CGI::div($self->maketext("The some answers will be graded later.", $fully));
 				 } else {
 					 $summary .= CGI::div({class=>"ResultsWithError"},$self->maketext("The answer above is NOT [_1]correct.", $fully));
 				 }
@@ -298,6 +332,17 @@ sub nbsp {
 	my ($self, $str) = @_;
 	return (defined $str && $str =~/\S/) ? $str : "&nbsp;";
 }
+
+sub formatToolTip {  # note that formatToolTip output includes CGI::td wrapper
+	my $self = shift;
+	my $answer = shift;
+	my $formattedAnswer = shift;
+	return CGI::td({onmouseover=>qq!Tip('$answer',SHADOW, true, 
+		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
+		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+		                    $self->nbsp($formattedAnswer));
+}
+
 
 
 
