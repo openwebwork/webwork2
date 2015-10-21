@@ -34,7 +34,7 @@ use Scalar::Util 'blessed';
 use CGI;
 
 # has answers     => (is => 'ro');
-# has displayMode =>(is =>'ro');
+# has displayMode => (is =>'ro');
 # has imgGen      => (is =>'ro');
 
 # Object contains hash of answer results
@@ -42,7 +42,7 @@ use CGI;
 # Object contains or creates Image generator
 # object returns table
 # object returns color map for answer blanks
-# javaScript for handling the color map????
+# object returns javaScript for handling the color map
 
 
 sub new {
@@ -68,10 +68,10 @@ sub new {
 	    imgGen              => undef,                              # created in _init method
 	};
 	bless $self, $class;
-	# create accessors/mutators
+	# create read only accessors/mutators
 	$self->mk_ro_accessors(qw(answers answerOrder answersSubmitted displayMode imgGen maketext));
-	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages));
 	$self->mk_ro_accessors(qw(showAttemptPreviews showAttemptResults showCorrectAnswers showSummary));
+	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages summary));
 	# sanity check and initialize imgGenerator.
 	_init($self, %options);
 	return $self;
@@ -163,8 +163,8 @@ sub answerTemplate {
 
 	push @tableRows,CGI::Tr(
 			CGI::th("#"),
-			CGI::th($self->maketext("Answer")),  # student original answer
-			($self->showAttemptPreviews)? CGI::th($self->maketext("Preview")):'',
+			CGI::th($self->maketext("Entered")),  # student original answer
+			($self->showAttemptPreviews)? CGI::th($self->maketext("Answer Preview")):'',
 			($self->showAttemptResults)?  CGI::th($self->maketext("Result")):'',
 			($self->showCorrectAnswers)?  CGI::th($self->maketext("Correct Answer")):'',
 			($self->showMessages)?        CGI::th($self->maketext("Message")):'',
@@ -178,6 +178,7 @@ sub answerTemplate {
     }
 	my $answerTemplate = CGI::h3($self->maketext("Results for this submission")) .
     	CGI::table({class=>"attemptResults"},@tableRows);
+    ### "results for this submission" is better than "attempt results" for a headline
     $answerTemplate .= ($self->showSummary)? $self->createSummary() : '';
     $answerTemplate = "" unless $self->answersSubmitted; # only print if there is at least one non-blank answer
     $self->correct_ids(\@correct_ids);
@@ -242,7 +243,7 @@ sub createSummary {
 	my $numBlanks  =0;
 	my $numEssay = 0;
 	my $fully = '';    #FIXME -- find out what this is used for in maketext.
-	unless (defined($self->{summary}) and $self->{summary} =~ /\S/) {
+	unless (defined($self->summary) and $self->summary =~ /\S/) {
 		my @answerNames = @{$self->answerOrder()};
 		if (scalar @answerNames == 1) {  #default messages
 				if ($numCorrect == scalar @answerNames) {
@@ -266,12 +267,12 @@ sub createSummary {
 				 }
 		}
 	} else {
-		$summary = $self->{summary};   # summary has been defined by grader
+		$summary = $self->summary;   # summary has been defined by grader
 	}
-
 	$summary = CGI::div({role=>"alert", class=>"attemptResultsSummary"},
 			  $summary);
-	return $summary;
+	$self->summary($summary);
+	return $summary;   # return formatted version of summary in class "attemptResultsSummary" div
 }
 ################################################
 
