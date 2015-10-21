@@ -1,9 +1,9 @@
 #!/Volumes/WW_test/opt/local/bin/perl -w
-use 5.012;
+use 5.010;
 
 # Test AttemptsTable.pm
 BEGIN {
-	require "../../standaloneProblemRenderer/grab_course_environment.pl";
+	require "./grab_course_environment.pl";
 	eval "use lib '$WebworkBase::RootPGDir/lib'"; die $@ if $@;
 	eval "use lib '$WebworkBase::RootWebwork2Dir/lib'"; die $@ if $@;
 }
@@ -12,6 +12,8 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Localize;
 
 use HTML::Entities;
+
+# create fake DATA
 my $answers = {
 	AnSwEr0001	=>	{
 		_filter_name	=>	 "dereference_array_ans",
@@ -148,6 +150,7 @@ my $answers = {
 		upToConstant	=>	 0,
 	}
 };
+
 my $ce = $WebworkBase::ce;
 my $answerOrder = [sort keys %{ $answers }];
 my $site_url = "http://localhost";
@@ -186,19 +189,21 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	imgGen                 => $imgGen,	
 	maketext               => WeBWorK::Localize::getLoc("en"),
 );
-print "answers ", $tbl->answers,"\n";
-print "answersSubmitted ", $tbl->answersSubmitted,"\n";
-print "displayMode ", $tbl->displayMode,"\n";
-print "imgGen ", ($tbl->imgGen)//'undefined',"\n";
-print "answerOrder ", $tbl->answerOrder,"\n";
-print "correct_ids ", $tbl->correct_ids//'',"\n";
-print "incorrect_ids ", $tbl->incorrect_ids//'',"\n";
+@dataString=();
+push @dataString, "answers ", $tbl->answers,"<br/>\n";
+push @dataString, "answersSubmitted ", $tbl->answersSubmitted,"<br/>\n";
+push @dataString, "displayMode ", $tbl->displayMode,"<br/>\n";
+push @dataString, "imgGen ", ($tbl->imgGen)//'undefined',"<br/>\n";
+push @dataString, "answerOrder ", $tbl->answerOrder,"<br/>\n";
+push @dataString, "correct_ids ", $tbl->correct_ids//'',"<br/>\n";
+push @dataString, "incorrect_ids ", $tbl->incorrect_ids//'',"<br/>\n";
 
-print "showAttemptPreviews ", $tbl->showAttemptPreviews,"\n";
-print "showAttemptResults ", $tbl->showAttemptResults,"\n";
-print "showCorrectAnswers ", $tbl->showCorrectAnswers,"\n";
-print "showMessages ", $tbl->showMessages,"\n";
-print "\n\n\n";
+push @dataString, "showAttemptPreviews ", $tbl->showAttemptPreviews,"<br/>\n";
+push @dataString, "showAttemptResults ", $tbl->showAttemptResults,"<br/>\n";
+push @dataString, "showCorrectAnswers ", $tbl->showCorrectAnswers,"<br/>\n";
+push @dataString, "showMessages ", $tbl->showMessages,"<br/>\n";
+push @dataString, "<br/>\n<br/>\n<br/>\n";
+$dataString = join('',@dataString);
 # 
 # 
 # print "processed strings ", join(" ", @{$tbl->imgGen->{strings}}), "\n\n";
@@ -247,6 +252,11 @@ $answerTemplate
 <input type="text" name="AnSwEr0002" id = "AnSwEr0002" size=40 value="16 right answer"><br/>
 <input type="text" name="AnSwEr0004" id = "AnSwEr0004" size=40 value="wrong answer">
 </p>
+<h4>DATA</h4>
+<p>
+$dataString
+</p>
+
 </body>
 </html>
 EOF
