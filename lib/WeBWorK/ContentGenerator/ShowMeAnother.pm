@@ -56,7 +56,7 @@ sub pre_header_initialize {
 
 	my $problemSeed = $r->param("problemSeed");
 	$r->param("problemSeed",'');
-	
+
 	# Run existsing initialization
 	$self->SUPER::pre_header_initialize();
 
@@ -247,11 +247,10 @@ sub pre_header_initialize {
 	
 	# if showMeAnother is active, then disable all other options
 	if ( ( $showMeAnother{active} or $showMeAnother{CheckAnswers} or $showMeAnother{Preview}) and $can->{showMeAnother} ) {
-	    $can->{showOldAnswers} = 0;
 	    $can->{recordAnswers}  = 0;
 	    $can->{checkAnswers}   = 0; # turned on if showMeAnother conditions met below
 	    $can->{getSubmitButton}= 0;
-	    
+
             # only show solution if showMeAnother has been clicked (or refreshed)
             # less than the maximum amount allowed specified in Course Configuration, 
             # and also make sure that showMeAnother is possible
@@ -330,6 +329,14 @@ sub pre_header_initialize {
 	$self->{pg} = $pg;
 }
 
+# We disable showOldAnswers because old answers are answers to the original
+# question and not to this question. 
+
+sub can_showOldAnswers {
+
+        return 0;
+}
+
 sub title {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -406,15 +413,8 @@ sub output_submit_buttons{
 
 sub output_score_summary{
 	my $self = shift;
-	my %will = %{ $self->{will} };
-	my %showMeAnother = %{ $self->{showMeAnother} };
 
-	# skip score summary if SMA has been pushed but there is no new problem to show
-	if ($showMeAnother{IsPossible} and $will{showMeAnother})
-	{
-	    
-	    $self->SUPER::output_score_summary();
-	}
+	# skip score summary
 	
 	return "";
 }
