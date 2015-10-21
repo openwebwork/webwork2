@@ -115,6 +115,8 @@ sub new {
 	
 	my $safe = WWSafe->new;
 	
+	# to avoid error messages make sure that courseName is defined
+	$seedVars{courseName} = $seedVars{courseName}//"foobar_course";
 	# seed course environment with initial values
 	while (my ($var, $val) = each %seedVars) {
 		$val = "" if not defined $val;
