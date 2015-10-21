@@ -2397,7 +2397,7 @@ sub body {
 		if (!$error && $r->param('auto_render')) {
 		    @problem_html = renderProblems(
 			r=> $r, 
-					user => $db->getUser($userToShow),
+			user => $db->getUser($userToShow),
 			displayMode=> $default_problem_mode,
 			problem_number=> $problemID,
 			this_set => $this_set,
