@@ -349,7 +349,7 @@ sub jsXmlrpcCall {
 	  	my $rh_result = $result->result();
 	  	print "\n success \n";
 	    print pretty_print($rh_result->{'ra_out'});
-		$self->return_object( $rh_result ); #$self->formatRenderedProblem($rh_result);
+		$self->return_object( $rh_result ); 
 		return 1; # success
 
 	  } else {
