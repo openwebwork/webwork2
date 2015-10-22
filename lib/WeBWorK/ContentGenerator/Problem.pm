@@ -1954,56 +1954,14 @@ sub output_summary{
 	    # show attempt results (correctness)
 	    # show attempt previews
 	} elsif ($previewAnswers) {
-        # if the student is previewing answers to a new problem, give them a reminder that they are doing so
-        if($showMeAnother{Preview} and $can{showMeAnother}){
-          print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently previewing answers to a different version of your problem - these 
-                                                                 will not be recorded, and you should remember to return to your original 
-                                                                 problem once you are done here.")),CGI::br();
-        }
-		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),
-		    $self->attemptResults($pg, 1, 0, 0, 0, 1);
-			# show attempt answers
-			# don't show correct answers
-			# don't show attempt results (correctness)
-			# don't show summary
-			# show attempt previews
-    } elsif ( (($showMeAnother{active} and $showMeAnother{IsPossible}) or $showMeAnother{DisplayChange}) 
-                    and $can{showMeAnother}){
-        # the feedback varies a little bit if Check Answers is available or not
-        my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ?
-                       "You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
-        my $solutionShown;
-		# if showMeAnother has been clicked and a new version has been found,
-        # give some details of what the student is seeing
-        if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
-            # check to see if a solution exists for this problem, and vary the feedback accordingly
-            if($pg->{flags}->{solutionExists}){
-                $solutionShown = ($showMeAnother{options}->{showSolutions}) ? ", complete with solution" : "";
-            } else {
-                my $viewCorrect = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers})) ?
-                      ", but you can still view the correct answer":"";
-                $solutionShown = ($showMeAnother{options}->{showSolutions}) ?
-                      ". There is no walk-through solution available for this problem$viewCorrect" : "";
-            }
-         }
-		 print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
-		 print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
-     } elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
-        if($showMeAnother{Count}>=$showMeAnother{MaxReps}){
-            my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem.
-                                                                         [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
-        } elsif ($showMeAnother{Count}<$showMeAnother{TriesNeeded}) {
-		    print CGI::div({class=>'ResultsAlert'},$r->maketext("You must attempt this problem [quant,_1,time,times] before Show Me Another is available.",$showMeAnother{TriesNeeded})),CGI::br();
-        }
-     } elsif ($showMeAnother{active} and $can{showMeAnother} and !$showMeAnother{IsPossible}){
-		# print this if showMeAnother has been clicked, but it is not possible to
-        # find a new version of the problem
-		print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem;
-                       close this tab, and return to the original problem.")),CGI::br();
-    } 
-
+	  # print this if user previewed answers
+	    print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+	    # show attempt answers
+	    # don't show correct answers
+	    # don't show attempt results (correctness)
+	    # show attempt previews
+	  }
+	
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;
 	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
