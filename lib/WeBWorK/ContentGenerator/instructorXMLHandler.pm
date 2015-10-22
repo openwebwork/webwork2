@@ -172,13 +172,16 @@ sub pre_header_initialize {
 	$xmlrpc_client->{form_action_url}= $FORM_ACTION_URL;
 	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
 	$xmlrpc_client->{user}          = 'xmluser';
-	$xmlrpc_client->{password}      = $XML_PASSWORD;
-	$xmlrpc_client->{course}        = $r->param('courseID');
+#	$xmlrpc_client->{password}      = $XML_PASSWORD;
+	$xmlrpc_client->{site_password} = $XML_PASSWORD;
+#	$xmlrpc_client->{course}        = $r->param('courseID');
+	$xmlrpc_client->{courseID}      = $r->param('courseID');
+
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 
 	my $input = {#can I just use $->param? it looks like a hash
 
-		    pw                      => $r->param('pw') ||undef,
+#		    pw                      => $r->param('pw') ||undef,
 		    session_key             => $r->param("session_key") ||undef,
 		    userID                  => $r->param("user") ||undef,
 		    library_name            => $r->param("library_name") ||undef,
@@ -290,13 +293,13 @@ sub pre_header_initialize {
 	##############################
 	# xmlrpc_client calls webservice with the requested command
 	#
-	# and stores the resulting XML output in $self->{output}
+	# and stores the resulting XML output in $self->{return_object}
 	# from which it will eventually be returned to the browser
 	#
 	##############################
 	#if ( $xmlrpc_client->jsXmlrpcCall($r->param("xml_command"), $input) ) {
 	#	print "tried to render a problem";
-		#$self->{output} = $xmlrpc_client->formatRenderedProblem;#not sure what to do here just yet.
+		#$self->{output} = ($xmlrpc_client->formatRenderedProblem); #not sure what to do here just yet.
 	#} else {
 	#	$self->{output} = $xmlrpc_client->{output};  # error report
 	#	print $xmlrpc_client->{output};
@@ -311,12 +314,14 @@ sub pre_header_initialize {
 	        $problemPath = $1;    # get everything in the path after templates
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
-		$self->{output}->{problem_out} = $xmlrpc_client->xmlrpcCall('renderProblem', $input);
+		$xmlrpc_client->xmlrpcCall('renderProblem', $input);
+		$self->{output} = $xmlrpc_client;
 		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
 		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
 		#$self->{output}->{text} = "Rendered problem";
 	} else {	
-		$self->{output} = $xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
+		$xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
+		$self->{output} = $xmlrpc_client
 	}
 	################################
  }
@@ -324,8 +329,8 @@ sub pre_header_initialize {
 
 sub standard_input {
 	my $out = {
-		pw            			=>   '',   # not needed
-		password      			=>   '',   # not needed
+#		pw            			=>   '',   # not needed
+		password      			=>   '',   # not needed  use site_password??
 		session_key             =>   '',
 		userID          		=>   '',   # not needed
 		set               		=>   '',
@@ -405,36 +410,26 @@ sub content {
    # Return content of rendered problem to the browser that requested it
    ###########################
    	my $self = shift;
-	
-
-	if ((ref($self->{output}) =~ /XMLRPC/ && $self->{output}->fault) || 
-	    (ref($self->{output}->{problem_out}) =~ /XMLRPC/ && 
-		 $self->{output}->{problem_out}->fault)) {
-
-	    my $result = $self->{output}->{problem_out} ? 
-		$self->{output}->{problem_out} : $self->{output};
-
-	    my $err_string = 'Error message for '.
-		join( ' ',
-		      "command:",
-		      $self->r->param('xml_command'),
-			  "\nfaultcode:",
-		      $result->faultcode, 
-		      "\nfaultstring:",
-		      $result->faultstring, "\nEnd error message\n\n"
-		  );
-	    
-	    die($err_string);
-	}elsif($self->{output}->{problem_out}){
-		print $self->{output}->{problem_out}->{text};
+	my $xmlrpc_client;
+	if ( ref($self->{output})=~/WebworkClient/) {
+		$xmlrpc_client = $self->{output};
 	} else {
-		print '{"server_response":"'.$self->{output}->{text}.'",';
-		if($self->{output}->{ra_out}){
-			# print '"result_data":'.pretty_print_json($self->{output}->{ra_out}).'}';
-			if (ref($self->{output}->{ra_out})) {
-				print '"result_data": ' . to_json($self->{output}->{ra_out}) .'}';
+		Croak("No content was returned by the xmlrpc call");
+	}
+
+	if ( ($xmlrpc_client->fault) ) {
+	    my $err_string = $xmlrpc_client->error_string;	    
+	    die($err_string);
+	}elsif($xmlrpc_client->return_object){
+		print $xmlrpc_client->return_object->{text};
+	} else {  #returned something other than a rendered problem.
+		print '{"server_response":"'.$xmlrpc_client->return_object->{text}.'",';
+		if($xmlrpc_client->return_object->{ra_out}){
+			# print '"result_data":'.pretty_print_json($xmlrpc->return_object->{ra_out}).'}';
+			if (ref($xmlrpc_client->return_object->{ra_out})) {
+				print '"result_data": ' . to_json($xmlrpc_client->return_object->{ra_out}) .'}';
 			} else {
-				print '"result_data": "' . $self->{output}->{ra_out} . '"}';
+				print '"result_data": "' . $xmlrpc_client->return_object->{ra_out} . '"}';
 			}
 		} else {
 			print '"result_data":""}';

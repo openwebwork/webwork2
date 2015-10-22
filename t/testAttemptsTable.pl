@@ -205,6 +205,7 @@ push @dataString, "showCorrectAnswers ", $tbl->showCorrectAnswers,"<br/>\n";
 push @dataString, "showMessages ", $tbl->showMessages,"<br/>\n";
 push @dataString, "<br/>\n<br/>\n<br/>\n";
 $dataString = join('',@dataString);
+
 # 
 # 
 # print "processed strings ", join(" ", @{$tbl->imgGen->{strings}}), "\n\n";
