@@ -42,7 +42,7 @@ our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PASSWORD     = $WebworkWebservice::PASSWORD;
 our $ce           = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $COURSENAME});
 
-our $UNIT_TESTS_ON =1;
+our $UNIT_TESTS_ON =0;
 
 sub listLocalSets{
   debug("in listLocalSets");
@@ -828,3 +828,4 @@ sub read_set_def {
 	return(@pg_files);
 }
 
+1;
