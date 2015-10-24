@@ -1,5 +1,5 @@
 # ASimpleCombinedHeaderFile.pg
-# This header file can be used for both the screen and hardcopy output
+# Ce fichier en-tête peut être utilisé pour l'interface web ou pour la copie papier du devoir
 
 
 DOCUMENT();
@@ -7,14 +7,15 @@ DOCUMENT();
 loadMacros(
 	"PG.pl",
 	"PGbasicmacros.pl",
-	"PGcourse.pl",
+
 );
 
 TEXT($BEGIN_ONE_COLUMN);
 
 ####################################################
 #
-# The item below printed out only when a hardcopy is made.
+# La section ci-dessous apparaîtra seulement lorsqu'une copie papier 
+# du devoir sera créée.
 #
 ####################################################
 
@@ -25,60 +26,54 @@ TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
 \noindent {\large \bf $studentName}
 \hfill
 {\large \bf {\{protect_underbar($courseName)\}}}
-% Uncomment the line below if this course has sections. Note that this is a comment in TeX mode since this is only processed by LaTeX
+% Décommenter la ligne ci-dessous s'il existe plusieurs groupes dans ce cours. Notez que ceci est un commentaire en LaTeX car cette section est compilée seulement par LaTeX
 %   {\large \bf { Section: \{protect_underbar($sectionName)\} } }
 \par
-\noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  due $formatedDueDate}}
+\noindent{\large \bf {Devoir\{protect_underbar($setNumber)\} doit être remis le  $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}h$DueDateMinute}}
 \par\noindent \bigskip
-% Uncomment and edit the line below if this course has a web page. Note that this is a comment in TeX mode.
-%See the course web page for information http://yoururl/yourcourse
+Un résumé des commandes et notations que WeBWorK reconnaît est disponible à cette adresse : http://mathema-tic.ca/wp-content/uploads/2015/10/Didacticiel_WebWorK.pdf.
 
 EOT
 
 ####################################################
 #
-# End of hardcopy only output.
+# Fin de la section copie papier
 #
 ####################################################
 
 
 ####################################################
 #
-# The items below are printed out only when set is displayed on screen
+# La section ci-dessous apparaît sur la page principale du devoir,
+# dans l'interface web de WeBWorK
 # 
 ####################################################
 TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 
-$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
+$BBOLD Ce devoir WeBWorK \{ protect_underbar($setNumber) \} doit être remis le $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}h$DueDateMinute. $EBOLD
 $PAR
-Here's the list of 
-\{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"functions and symbols") \}
- which WeBWorK understands.
+Un résumé des commandes et notations que WeBWorK reconnaît est $BBOLD\{ htmlLink(qq!http://mathema-tic.ca/wp-content/uploads/2015/10/Didacticiel_WebWorK.pdf!,"disponible ici") \}$EBOLD.
 $BR
+
 EOT
 
-####################################################
-# Uncomment and edit the lines below if this course has a web page. Note that this is comment in Perl mode. 
-# IMPORTANT: Make sure the EOT at the bottom is at the beginning of a line with no spaces preceeding it.
-#TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
-#See the course web page for information \{ htmlLink(qq!http://yoururl/yourcourse!,"your course name") \}
-#EOT
-####################################################
 
 ####################################################
 #
-# End of screen only output.
+# Fin de la section interface web
 #
 ####################################################
 
 ####################################################
 #
-# Anything between the BEGIN_TEXT AND END_TEXT lines
-# will be printed in both screen and hardcopy output
+# Toutes les lignes entre les balises BEGIN_TEXT et END_TEXT 
+# apparaîtront autant sur la copie papier que sur l'interface web.
 #
 ####################################################
 
 BEGIN_TEXT
+
+
 
 END_TEXT
 
