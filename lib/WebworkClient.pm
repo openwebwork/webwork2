@@ -119,6 +119,7 @@ use constant  REQUEST_URI      => 'mod_xmlrpc';
 
 our $UNIT_TESTS_ON             = 0;
 
+##################
 # static variables
 
 # create seed_ce
@@ -684,24 +685,6 @@ sub formatRenderedProblem {
     my $problemState     =  $rh_result->{problem_state}//'';
     my $showSummary      = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
 	my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
-
-	my $scoreSummary     =  '';
-
-my $tbl = WeBWorK::Utils::AttemptsTable->new(
-	$rh_answers,
-	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
-	answerOrder            => $answerOrder//[],
-	displayMode            => $self->{displayMode},
-	imgGen                 => $imgGen,
-	ce                     => '',	#used only to build the imgGen
-	showAttemptPreviews    => ($previewMode or $checkMode or $submitMode or $showCorrectMode),
-	showAttemptResults     => ($checkMode or $submitMode or $showCorrectMode),
-	showCorrectAnswers     => ($showCorrectMode),
-	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
-	showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
-	maketext               => WeBWorK::Localize::getLoc($formLanguage//'en'),
-	summary                => ($self->{problem_result}->{summary} )//'', # can be set by problem grader
-);
 
 	my $scoreSummary     =  '';
 
