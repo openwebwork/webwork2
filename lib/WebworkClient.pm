@@ -87,7 +87,7 @@ use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
 use constant  REQUEST_URI      => 'mod_xmlrpc';
 
-our $UNIT_TESTS_ON             = 0;
+our $UNIT_TESTS_ON             = 1;
 
 # error formatting
 sub format_hash_ref {
