@@ -34,11 +34,7 @@ use constant {
 our %SeedCE;
 %WebworkSOAP::SeedCE = %WeBWorK::SeedCE;
 
-<<<<<<< Updated upstream
-#$WebworkSOAP::SeedCE{soap_authen_key} = "123456789123456789"; 
-=======
 $WebworkSOAP::SeedCE{soap_authen_key} = "0KqZ5CpFSZlvlSswjz";
->>>>>>> Stashed changes
 #$WebworkSOAP::SeedCE{webwork_dir} = $ENV{WEBWORK_ROOT}|| warn "\$ENV{WEBWORK_ROOT} is undefined -- check your httpd configuration. Error caught ";
 
 
