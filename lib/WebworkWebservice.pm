@@ -5,7 +5,7 @@
 use JSON;
 use WebworkSOAP;
 use WebworkSOAP::WSDL;
-
+use WeBWorK::FakeRequest;
 
 BEGIN {
     $main::VERSION = "2.4.9";
@@ -55,7 +55,7 @@ use warnings;
 use WeBWorK::Localize;
 
 
-our  $UNIT_TESTS_ON    = 0;
+our  $UNIT_TESTS_ON    = 1;
 
 # error formatting
 
@@ -149,25 +149,24 @@ sub initiate_session {
     ###############################
 	
 	my $rh_input     = $args[0];
-	# print STDERR "input from the form is ", format_hash_ref($rh_input), "\n";
 ###########################################################################
 # identify course 
 ###########################################################################
 	
 	# obtain input from the hidden fields on the HTML page
-	my $user_id      = $rh_input ->{userID};
-	my $session_key	 = $rh_input ->{session_key};
-	my $courseName   = $rh_input ->{courseID};
-	my $course_password     = $rh_input ->{course_password};
-	my $ce           = $class->create_course_environment($courseName);
-	my $db           = new WeBWorK::DB($ce->{dbLayout});
-
-	my $language= $ce->{language} || "en";
-	my $language_handle = WeBWorK::Localize::getLoc($language) ;
-
-	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
-    runtime_use $user_authen_module;
-    
+# 	my $user_id      = $rh_input ->{userID};
+# 	my $session_key	 = $rh_input ->{session_key};
+# 	my $courseName   = $rh_input ->{courseID};
+# 	my $course_password     = $rh_input ->{course_password};
+# 	my $ce           = $class->create_course_environment($courseName);
+# 	my $db           = new WeBWorK::DB($ce->{dbLayout});
+# 
+# 	my $language= $ce->{language} || "en";
+# 	my $language_handle = WeBWorK::Localize::getLoc($language) ;
+# 
+# 	 my $user_authen_module = WeBWorK::Authen::class($ce, "xmlrpc_module");
+#     runtime_use $user_authen_module;
+#     
 if ($UNIT_TESTS_ON) {
 	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
@@ -177,33 +176,46 @@ if ($UNIT_TESTS_ON) {
 }    
 
 #   This structure needs to mimic the structure expected by Authen
-	my $self = {
-		courseName	=>  $courseName,
-		user_id		=>  $user_id,
-		password    =>  $course_password,
-		session_key =>  $session_key,
-		ce          =>  $ce,
-		db          =>  $db,
-		language_handle => $language_handle,
-		xmlrpc		=>  1,		# Set a flag for Authen modules
-	};	
-	$self = bless $self, $class;
+
+# 	$self = bless $self, $class;
 	# need to bless self before it can be used as an argument for the authentication module
 	# The authentication module is expecting a WeBWorK::Request object
 	# But its only actual requirement is that the method maketext() is defined.
 	
-	my $authen = $user_authen_module->new($self);
-	my $authz  =  WeBWorK::Authz->new($self);
+#	my $authen = $user_authen_module->new($self);
+#    my $fake_r = FakeRequest->new($rh_input);
+# 	my $authen = $user_authen_module->new($fake_r);
+# 	my $authz  =  WeBWorK::Authz->new($fake_r);
+# 	$fake_r->authen($authen);    # this could be done internally to the "new" subroutine
+# 	$fake_r->authz($authz);      # this makes it more explicit.  Is that a good idea? 
+	   
+# 	$self->{authen}             = $authen;
+# 	$self->{authz}              = $authz;
+
+# create fake version of Apache::Request object
+my $fake_r = WeBWorK::FakeRequest->new($rh_input, 'xmlrpc_module'); # need to specify authentication module
+# fake_r is an object with enough data and methods to call authen and authz
+my $authen = $fake_r->authen;
+my $authz  = $fake_r->authz;
+
+# Create WebworkXMLRPC object
 	
-	$self->{authen}             = $authen;
-	$self->{authz}              = $authz;
-	
-	 
+	my $self = {
+		courseName	=>  $rh_input ->{courseID},
+		user_id		=>  $rh_input ->{userID},
+		password    =>  $rh_input ->{course_password},  #should this be course_password?
+		session_key =>  $rh_input ->{session_key},
+		ce			=>  $fake_r->ce,
+		db          =>  $fake_r->db,
+	};	
+	$self = bless $self, $class;
 	if ($UNIT_TESTS_ON) {
  	   print STDERR  "WebworkWebservice.pm ".__LINE__." initiate data:\n  "; 
  	   print STDERR  "class type is ", $class, "\n";
  	   print STDERR  "Self has type ", ref($self), "\n";
  	   print STDERR   "self has data: \n", format_hash_ref($self), "\n";
+ 	   print STDERR   "authen has type ", ref($authen), "\n";
+ 	   print STDERR   "authz  has type ", ref($authz), "\n";
 	}
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
@@ -216,13 +228,17 @@ if ($UNIT_TESTS_ON) {
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
 	my $authenOK;
+	my $courseName 	= $rh_input->{courseID};
+	my $user_id     = $rh_input->{user_id};
+	my $session_key = $rh_input->{session_key};
 	eval {
 		no warnings 'redefine';
-		local *WeBWorK::Authen::get_credentials   = \&WebworkXMLRPC::get_credentials;
-		local *WeBWorK::Authen::maybe_send_cookie = \&WebworkXMLRPC::noop;
-		local *WeBWorK::Authen::maybe_kill_cookie = \&WebworkXMLRPC::noop;
-		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
-		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
+# 		local *WeBWorK::Authen::get_credentials   = \&WebworkXMLRPC::get_credentials;
+# 		local *WeBWorK::Authen::maybe_send_cookie = \&WebworkXMLRPC::noop;
+# 		local *WeBWorK::Authen::maybe_kill_cookie = \&WebworkXMLRPC::noop;
+# 		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
+# 		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
+		warn "authen is $authen ", ref($authen);
 		$authenOK = $authen->verify;
 	} or do {
 		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
@@ -238,21 +254,23 @@ if ($UNIT_TESTS_ON) {
 ###########################################################################
 	
 	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($user_id, "proctor_quiz_login"); # usually level 2
+	$self->{authzOK}   = $authz->hasPermissions($self->{user_id}, "proctor_quiz_login"); # usually level 2
 	
 # Update the credentials -- in particular the session_key may have changed.
  	$self->{session_key} = $authen->{session_key};
 
  	if ($UNIT_TESTS_ON) {
- 		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
-     	print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n"; 
- 		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
- 		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
- 	} 
+  		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
+      	print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n"; 
+  		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
+  		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
+  	} 
  # Is there a way to transmit a number as well as a message?
  # Could be useful for handling errors.
- 	die "Could not authenticate user $user_id with key $session_key " unless $self->{authenOK};
- 	die "User $user_id does not have sufficient privileges in this course $courseName " unless $self->{authzOK};
+ 	debug("initialize webworkXMLRPC object in: ", format_hash_ref($rh_input),"\n") if $UNIT_TESTS_ON;
+ 	debug("fake_r :", format_hash_ref($fake_r),"\n") if $UNIT_TESTS_ON;
+ 	die "Could not authenticate user $user_id with key $session_key"  unless $self->{authenOK};
+ 	die "User $user_id does not have sufficient privileges in this course $courseName" unless $self->{authzOK};
  	return $self;
 }
 
@@ -270,6 +288,7 @@ sub create_course_environment {
 
 sub ce {
 	my $self = shift;
+	debug("use ce") if $UNIT_TESTS_ON;
 	$self->{ce};
 }
 sub db {
@@ -279,35 +298,39 @@ sub db {
 sub param {    # imitate get behavior of the request object params method
 	my $self =shift;
 	my $param = shift;
-	$self->{$param};
+	debug("use param $param") if $UNIT_TESTS_ON;
+	$self->{fake_r}->{$param};
 }
 sub authz {
 	my $self = shift;
-	$self->{authz};
+	debug("use authz ")  if $UNIT_TESTS_ON;
+	$self->{fake_r}->{authz};
 }
 sub maketext {
 	my $self = shift;
 	#$self->{language_handle}->maketext(@_);
-	&{ $self->{language_handle} }(@_);
+	debug("use maketext")  if $UNIT_TESTS_ON;
+	&{ $self->{fake_r}->{language_handle} }(@_);
 }
 
 
-sub get_credentials {
-		my $self = shift;
-		# self is an Authen object it contains an object r which is the WebworkXMLRPC object
-		# confusing isn't it?
-		$self->{user_id}     = $self->{r}->{user_id};
-		$self->{session_key} = $self->{r}->{session_key};
-		$self->{password}    = $self->{r}->{password}; #"the-pass-word-can-be-provided-via-a-pop-up--call-back";
-		$self->{login_type}  = "normal";
-		$self->{credential_source} = "params";
-		return 1;
-}
+# sub get_credentials {
+# 		my $self = shift;
+# 		warn "get_credentials called in WWwebservice";
+# 		# self is an Authen object it contains an object r which is the WebworkXMLRPC object
+# 		# confusing isn't it?
+# 		$self->{user_id}     = $self->{r}->{user_id};
+# 		$self->{session_key} = $self->{r}->{session_key};
+# 		$self->{password}    = $self->{r}->{password}; #"the-pass-word-can-be-provided-via-a-pop-up--call-back";
+# 		$self->{login_type}  = "normal";
+# 		$self->{credential_source} = "params";
+# 		return 1;
+# }
 
 sub noop {
 
 }
-sub check_authorization {
+sub check_authorization {   # not needed?
 		
 
 
@@ -323,13 +346,15 @@ sub do {   # process and return result
     $result->{session_key}  = $self->{session_key};
     $result->{userID}       = $self->{user_id};
     $result->{courseID}     = $self->{courseName};
+    debug("output is ", format_hash_ref($result), "\n" ) if $UNIT_TESTS_ON;
 	return($result);
 }
 
 
-
+#  Main section
 #  respond to xmlrpc requests
-#  Add routines for handling errors if the authentication fails or if the authorization is not appropriate.
+#  Add routines for handling errors if the authentication fails 
+#  or if the authorization is not appropriate.
 
 sub searchLib {
     my $class = shift;
@@ -741,104 +766,69 @@ sub pretty_print_rh {
 }
 
 
-package WWd;
-
-#use lib '/home/gage/webwork/xmlrpc/daemon';
-#use WebworkXMLRPC;
-
-
-
-
-############utilities
-
-# sub echo { 
-#     return "WWd package ".join("|",("begin ", WebworkWebservice::pretty_print_rh(\@_), " end") );
+# 
+# package Filter;
+# # I believe that this used to handle the processing of xmlrpc message
+# # possibly replaced by SOAP?
+# 
+# sub is_hash_ref {
+# 	my $in =shift;
+# 	my $save_SIG_die_trap = $SIG{__DIE__};
+#     $SIG{__DIE__} = sub {CORE::die(@_) };
+# 	my $out = eval{  %{   $in  }  };
+# 	$out = ($@ eq '') ? 1 : 0;
+# 	$@='';
+# 	$SIG{__DIE__} = $save_SIG_die_trap;
+# 	$out;
+# }
+# sub is_array_ref {
+# 	my $in =shift;
+# 	my $save_SIG_die_trap = $SIG{__DIE__};
+#     $SIG{__DIE__} = sub {CORE::die(@_) };
+# 	my $out = eval{  @{   $in  }  };
+# 	$out = ($@ eq '') ? 1 : 0;
+# 	$@='';
+# 	$SIG{__DIE__} = $save_SIG_die_trap;
+# 	$out;
+# }
+# sub filterObject {
+# 
+#     my $is_hash = 0;
+#     my $is_array =0;
+# 	my $obj = shift;
+# 	#print "Enter filterObject ", ref($obj), "\n";
+# 	my $type = ref($obj);
+# 	unless ($type) {
+# 		#print "leave filterObject with nothing\n";
+# 		return($obj);
+# 	}
+# 
+# 
+# 	if ( is_hash_ref($obj)  ) {
+# 	    #print "enter hash ", %{$obj},"\n";
+# 	    my %obj_container= %{$obj};
+# 		foreach my $key (keys %obj_container) {
+# 			$obj_container{$key} = filterObject( $obj_container{$key} );
+# 			#print $key, "  ",  ref($obj_container{$key}),"   ", $obj_container{$key}, "\n";
+# 		}
+# 		#print "leave filterObject with HASH\n";
+# 		return( bless(\%obj_container,'HASH'));
+# 	};
+# 
+# 
+# 
+# 	if ( is_array_ref($obj)  ) {
+# 		#print "enter array ( ", @{$obj}," )\n";
+# 		my @obj_container= @{$obj};
+# 		foreach my $i (0..$#obj_container) {
+# 			$obj_container[$i] = filterObject( $obj_container[$i] );
+# 			#print "\[$i\]  ",  ref($obj_container[$i]),"   ", $obj_container[$i], "\n";
+# 		}
+# 		#print "leave filterObject with ARRAY\n";
+# 		return( bless(\@obj_container,'ARRAY'));
+# 	};
+#     
 # }
 # 
-# sub listLib {
-#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-#     my $in = shift;
-#   	return( Webwork::listLib($in) );
-# }
-# sub renderProblem {
-#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-#     my $in = shift;
-#   	return( Filter::filterObject( Webwork::renderProblem($in) ) );
-# }
-# sub readFile {
-#     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-#     my $in = shift;
-#   	return( Webwork::readFile($in) );
-# }
-# sub hello {
-# 	shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
-# 	print "Receiving request for hello world\n";
-# 	return "Hello world?";
-# }
-
-
-
-package Filter;
-
-
-sub is_hash_ref {
-	my $in =shift;
-	my $save_SIG_die_trap = $SIG{__DIE__};
-    $SIG{__DIE__} = sub {CORE::die(@_) };
-	my $out = eval{  %{   $in  }  };
-	$out = ($@ eq '') ? 1 : 0;
-	$@='';
-	$SIG{__DIE__} = $save_SIG_die_trap;
-	$out;
-}
-sub is_array_ref {
-	my $in =shift;
-	my $save_SIG_die_trap = $SIG{__DIE__};
-    $SIG{__DIE__} = sub {CORE::die(@_) };
-	my $out = eval{  @{   $in  }  };
-	$out = ($@ eq '') ? 1 : 0;
-	$@='';
-	$SIG{__DIE__} = $save_SIG_die_trap;
-	$out;
-}
-sub filterObject {
-
-    my $is_hash = 0;
-    my $is_array =0;
-	my $obj = shift;
-	#print "Enter filterObject ", ref($obj), "\n";
-	my $type = ref($obj);
-	unless ($type) {
-		#print "leave filterObject with nothing\n";
-		return($obj);
-	}
-
-
-	if ( is_hash_ref($obj)  ) {
-	    #print "enter hash ", %{$obj},"\n";
-	    my %obj_container= %{$obj};
-		foreach my $key (keys %obj_container) {
-			$obj_container{$key} = filterObject( $obj_container{$key} );
-			#print $key, "  ",  ref($obj_container{$key}),"   ", $obj_container{$key}, "\n";
-		}
-		#print "leave filterObject with HASH\n";
-		return( bless(\%obj_container,'HASH'));
-	};
-
-
-
-	if ( is_array_ref($obj)  ) {
-		#print "enter array ( ", @{$obj}," )\n";
-		my @obj_container= @{$obj};
-		foreach my $i (0..$#obj_container) {
-			$obj_container[$i] = filterObject( $obj_container[$i] );
-			#print "\[$i\]  ",  ref($obj_container[$i]),"   ", $obj_container[$i], "\n";
-		}
-		#print "leave filterObject with ARRAY\n";
-		return( bless(\@obj_container,'ARRAY'));
-	};
-    
-}
-
 
 1;
