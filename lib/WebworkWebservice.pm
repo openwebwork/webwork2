@@ -55,7 +55,7 @@ use warnings;
 use WeBWorK::Localize;
 
 
-our  $UNIT_TESTS_ON    = 1;
+our  $UNIT_TESTS_ON    = 0;
 
 # error formatting
 
@@ -139,7 +139,7 @@ sub format_hash_ref {
 #  authentication and authorization
 ###########################################################################
 
-sub initiate_session {
+sub initiate_session {    # close to being a "new" subroutine
 	my ($invocant, @args) = @_;
 	my $class = ref $invocant || $invocant;
 	######### trace commands ######
@@ -152,21 +152,7 @@ sub initiate_session {
 ###########################################################################
 # identify course 
 ###########################################################################
-	
-	# obtain input from the hidden fields on the HTML page
-# 	my $user_id      = $rh_input ->{userID};
-# 	my $session_key	 = $rh_input ->{session_key};
-# 	my $courseName   = $rh_input ->{courseID};
-# 	my $course_password     = $rh_input ->{course_password};
-# 	my $ce           = $class->create_course_environment($courseName);
-# 	my $db           = new WeBWorK::DB($ce->{dbLayout});
-# 
-# 	my $language= $ce->{language} || "en";
-# 	my $language_handle = WeBWorK::Localize::getLoc($language) ;
-# 
-# 	 my $user_authen_module = WeBWorK::Authen::class($ce, "xmlrpc_module");
-#     runtime_use $user_authen_module;
-#     
+ 
 if ($UNIT_TESTS_ON) {
 	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
 	print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
@@ -175,26 +161,14 @@ if ($UNIT_TESTS_ON) {
 	print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
 }    
 
-#   This structure needs to mimic the structure expected by Authen
-
-# 	$self = bless $self, $class;
-	# need to bless self before it can be used as an argument for the authentication module
-	# The authentication module is expecting a WeBWorK::Request object
-	# But its only actual requirement is that the method maketext() is defined.
-	
-#	my $authen = $user_authen_module->new($self);
-#    my $fake_r = FakeRequest->new($rh_input);
-# 	my $authen = $user_authen_module->new($fake_r);
-# 	my $authz  =  WeBWorK::Authz->new($fake_r);
-# 	$fake_r->authen($authen);    # this could be done internally to the "new" subroutine
-# 	$fake_r->authz($authz);      # this makes it more explicit.  Is that a good idea? 
-	   
-# 	$self->{authen}             = $authen;
-# 	$self->{authz}              = $authz;
 
 # create fake version of Apache::Request object
+# This abstracts some of the work that used to be done by the webworkXMLRPC object
+# It also allows WeBWorK::FakeRequest to inherit cleanly from WeBWorK::Request
+# The $fake_r value returned actually contains subroutines that the WebworkWebservice packages
+# need to operate.  It may be possible to pass $fake_r instead of $self in those routines.
+ 
 my $fake_r = WeBWorK::FakeRequest->new($rh_input, 'xmlrpc_module'); # need to specify authentication module
-# fake_r is an object with enough data and methods to call authen and authz
 my $authen = $fake_r->authen;
 my $authz  = $fake_r->authz;
 
@@ -205,8 +179,9 @@ my $authz  = $fake_r->authz;
 		user_id		=>  $rh_input ->{userID},
 		password    =>  $rh_input ->{course_password},  #should this be course_password?
 		session_key =>  $rh_input ->{session_key},
-		ce			=>  $fake_r->ce,
-		db          =>  $fake_r->db,
+#		ce			=>  $fake_r->ce,
+#		db          =>  $fake_r->db,
+		fake_r      =>  $fake_r,
 	};	
 	$self = bless $self, $class;
 	if ($UNIT_TESTS_ON) {
@@ -274,67 +249,12 @@ my $authz  = $fake_r->authz;
  	return $self;
 }
 
-
-sub create_course_environment {
+sub r {
 	my $self = shift;
-	my $courseName = shift;
-	my $ce = WeBWorK::CourseEnvironment->new( 
-				{webwork_dir		=>		$WebworkWebservice::WW_DIRECTORY, 
-				 courseName         =>      $courseName
-				 });
-	#warn "Unable to find environment for course: |$courseName|" unless ref($ce);
-	return ($ce);
-}
-
-sub ce {
-	my $self = shift;
-	debug("use ce") if $UNIT_TESTS_ON;
-	$self->{ce};
-}
-sub db {
-	my $self = shift;
-	$self->{db};
-}
-sub param {    # imitate get behavior of the request object params method
-	my $self =shift;
-	my $param = shift;
-	debug("use param $param") if $UNIT_TESTS_ON;
-	$self->{fake_r}->{$param};
-}
-sub authz {
-	my $self = shift;
-	debug("use authz ")  if $UNIT_TESTS_ON;
-	$self->{fake_r}->{authz};
-}
-sub maketext {
-	my $self = shift;
-	#$self->{language_handle}->maketext(@_);
-	debug("use maketext")  if $UNIT_TESTS_ON;
-	&{ $self->{fake_r}->{language_handle} }(@_);
+	return $self->{fake_r};
 }
 
 
-# sub get_credentials {
-# 		my $self = shift;
-# 		warn "get_credentials called in WWwebservice";
-# 		# self is an Authen object it contains an object r which is the WebworkXMLRPC object
-# 		# confusing isn't it?
-# 		$self->{user_id}     = $self->{r}->{user_id};
-# 		$self->{session_key} = $self->{r}->{session_key};
-# 		$self->{password}    = $self->{r}->{password}; #"the-pass-word-can-be-provided-via-a-pop-up--call-back";
-# 		$self->{login_type}  = "normal";
-# 		$self->{credential_source} = "params";
-# 		return 1;
-# }
-
-sub noop {
-
-}
-sub check_authorization {   # not needed?
-		
-
-
-}
 sub do {   # process and return result
            # make sure that credentials are returned
            # for every call
@@ -732,6 +652,57 @@ sub updateSetting {
 }
 
 
+
+
+
+=head2 Utility methods and pass through methods for FakeRequest
+
+=cut
+
+sub ce {
+	my $self = shift;
+	debug("use ce") if $UNIT_TESTS_ON;
+	$self->{fake_r}->{ce};
+}
+sub db {
+	my $self = shift;
+	$self->{fake_r}->{db};
+}
+sub param {    # imitate get behavior of the request object params method
+	my $self =shift;
+	my $param = shift;
+	my $out = $self->{fake_r}->param($param);
+	debug("use param $param => $out") if $UNIT_TESTS_ON;
+	$out;
+}
+sub authz {
+	my $self = shift;
+	debug("use authz ")  if $UNIT_TESTS_ON;
+	$self->{fake_r}->{authz};
+}
+sub authen {
+	my $self = shift;
+	debug("use authen ")  if $UNIT_TESTS_ON;
+	$self->{fake_r}->{authen};
+}
+sub maketext {
+	my $self = shift;
+	#$self->{language_handle}->maketext(@_);
+	debug("use maketext")  if $UNIT_TESTS_ON;
+	&{ $self->{fake_r}->{language_handle} }(@_);
+}
+
+# sub create_course_environment {
+# 	my $self = shift;
+# 	my $courseName = shift;
+# 	my $ce = WeBWorK::CourseEnvironment->new( 
+# 				{webwork_dir		=>		$WebworkWebservice::WW_DIRECTORY, 
+# 				 courseName         =>      $courseName
+# 				 });
+# 	#warn "Unable to find environment for course: |$courseName|" unless ref($ce);
+# 	return ($ce);
+# }
+###############################
 
 
 
