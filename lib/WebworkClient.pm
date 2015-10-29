@@ -18,10 +18,7 @@
 
 =head1 NAME
 
-webwork2/clients/WebworkClient.pm
-
-
-Rembember to configure the local output file and display command !!!!!!!!
+WebworkClient.pm
 
 
 =head1 SYNPOSIS
@@ -35,17 +32,28 @@ Rembember to configure the local output file and display command !!!!!!!!
 		session_key            =>  $credentials{session_key}//'',
 		sourceFilePath         =>  $fileName,
 	);
-	
+
+Remember to configure the local output file and display command !!!!!!!!
+
+
+
 =head1 DESCRIPTION
 
 This script will take a file and send it to a WeBWorK daemon webservice
-to have it rendered.  The result is split into the basic HTML rendering
+to have it rendered.  
+
+The result returned is split into the basic HTML rendering
 and evaluation of answers and then passed to a browser for printing.
 
 The formatting allows the browser presentation to be interactive with the 
 daemon running the script webwork2/lib/renderViaXMLRPC.pm  
 and with instructorXMLRPChandler.
 
+See WebworkWebservice.pm  for related modules which operate on the server side
+
+	WebworkXMLRPC (contained in WebworkWebservice.pm)
+	renderViaXMLRPC
+	instructorXMLRPChandler
 
 =cut
 
