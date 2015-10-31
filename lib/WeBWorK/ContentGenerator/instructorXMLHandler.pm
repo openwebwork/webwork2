@@ -315,6 +315,7 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$xmlrpc_client->xmlrpcCall('renderProblem', $input);
+		$xmlrpc_client->{renderProblem} = 1; #flag to indicate the renderProblem command was executed.
 		$self->{output} = $xmlrpc_client;
 		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
 		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
@@ -323,7 +324,6 @@ sub pre_header_initialize {
 		$xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
 		$self->{output} = $xmlrpc_client
 	}
-	################################
  }
  
 
@@ -416,13 +416,16 @@ sub content {
 	} else {
 		Croak("No content was returned by the xmlrpc call");
 	}
-
-	if ( ($xmlrpc_client->fault) ) {
+	if ( ($xmlrpc_client->fault) ) {  # error -- print error string
 	    my $err_string = $xmlrpc_client->error_string;	    
 	    die($err_string);
-	}elsif($xmlrpc_client->return_object->{problem_out}){
-		print $xmlrpc_client->return_object->{problem_out}->{text};
+	} elsif($xmlrpc_client->{renderProblem}){ # rendered problem 
+	         # print only the text field (not the ra_out field)
+	         # and print the text directly without formatting.
+		print $xmlrpc_client->return_object->{text};
 	} else {  #returned something other than a rendered problem.
+	    	  # in this case format a json string and print it. 
+	    	  # the contents of "{text}" needs to be labeled server response;
 		print '{"server_response":"'.$xmlrpc_client->return_object->{text}.'",';
 		if($xmlrpc_client->return_object->{ra_out}){
 			# print '"result_data":'.pretty_print_json($xmlrpc->return_object->{ra_out}).'}';
