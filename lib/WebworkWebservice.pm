@@ -296,7 +296,7 @@ my $authz  = $fake_r->authz;
 			# was asked to authenticate into a non-existent course
 			die SOAP::Fault
 				->faultcode('404')
-				->faultstring("Course |$courseName| not found.")
+				->faultstring("WebworkWebservice: Course |$courseName| not found.")
 		}
 		die "Webservice.pm: Error when trying to authenticate. $@\n";
 	};

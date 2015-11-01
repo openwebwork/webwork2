@@ -40,7 +40,7 @@ $problemHeadText
 			$problemText
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-	       <input type="hidden" name="problemSource" value="$encodedSource"> 
+	       <input type="hidden" name="problemSource" value="$encoded_source"> 
 	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
