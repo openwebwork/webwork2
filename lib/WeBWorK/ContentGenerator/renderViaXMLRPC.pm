@@ -35,6 +35,7 @@ use base qw(WeBWorK::ContentGenerator);
 use strict;
 use warnings;
 use WebworkClient;
+use WeBWorK::Debug;
 
 
 =head1 Description
@@ -141,28 +142,32 @@ sub pre_header_initialize {
 		$inputs_ref{$key} = $r->param("$key");
 	}
 	my $user_id      = $inputs_ref{userID};
-	my $session_key	 = $inputs_ref{session_key};
 	my $courseName   = $inputs_ref{courseID};
-
+	my $displayMode  = $inputs_ref{displayMode};
+	my $problemSeed  = $inputs_ref{problemSeed};
+	unless ( $user_id && $courseName && $displayMode && $problemSeed) {
+		debug( "\n\n\nMissing essential data in web dataform: 
+		      userID: |$user_id|, courseID: |$courseName|,	
+		      displayMode: |$displayMode|, problemSeed: |$problemSeed|");
+		
+	}
     #######################
     #  setup xmlrpc client
     #######################
     my $xmlrpc_client = new WebworkClient;
 
-	$xmlrpc_client -> encoded_source($r->param('problemSource')) ; # this source has already been encoded
-	$xmlrpc_client->url($XML_URL);
+	$xmlrpc_client ->encoded_source($r->param('problemSource')) ; # this source has already been encoded
+	$xmlrpc_client-> url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
-	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
+#	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
-	$xmlrpc_client->{course_password}        = $inputs_ref{course_password};
+	$xmlrpc_client->{course_password} = $inputs_ref{course_password};
 	$xmlrpc_client->{site_password}   = $XML_PASSWORD;
 	$xmlrpc_client->{session_key}     = $inputs_ref{session_key};
 	$xmlrpc_client->{courseID}        = $inputs_ref{courseID};
 	$xmlrpc_client->{outputformat}    = $inputs_ref{outputformat};
 	$xmlrpc_client->{sourceFilePath}  = $inputs_ref{sourceFilePath};
-	
-
-	$xmlrpc_client->{inputs_ref} = \%inputs_ref;
+	$xmlrpc_client->{inputs_ref} = \%inputs_ref;  # contains form data
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 	
 	##############################

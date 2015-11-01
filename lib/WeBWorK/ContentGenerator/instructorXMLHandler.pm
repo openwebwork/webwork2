@@ -170,7 +170,7 @@ sub pre_header_initialize {
 
 	$xmlrpc_client->url($XML_URL);
 	$xmlrpc_client->{form_action_url}= $FORM_ACTION_URL;
-	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
+#	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
 	$xmlrpc_client->{user}          = 'xmluser';
 #	$xmlrpc_client->{password}      = $XML_PASSWORD;
 	$xmlrpc_client->{site_password} = $XML_PASSWORD;
@@ -184,6 +184,7 @@ sub pre_header_initialize {
 #		    pw                      => $r->param('pw') ||undef,
 		    session_key             => $r->param("session_key") ||undef,
 		    userID                  => $r->param("user") ||undef,
+		    courseID                => $r->param('courseID'),
 		    library_name            => $r->param("library_name") ||undef,
 		    user        	        => $r->param("user") ||undef,
 		    set                     => $r->param("set") ||undef,
@@ -261,7 +262,6 @@ sub pre_header_initialize {
 		    processAnswers => defined($r->param('processAnswers')) ? $r->param('processAnswers') : 1,
 	};
 
-	$input->{envir}->{probNum} = $r->param("probNum") ||undef;
 
 
 	if ($UNIT_TESTS_ON) {
@@ -279,16 +279,25 @@ sub pre_header_initialize {
 
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
-	# Fix the environment display mode and set id
-	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
-        # Set the permission level
-        $input->{envir}->{permissionLevel} = $r->{ce}->{userRoles}->{$r->param('permissionLevel')} // 0,	
 
+	# Fix the environment display mode and problemSeed
 	# Set environment variables for hints/solutions
-	$input->{envir}->{showHints} = $r->param('showHints') if($r->param('showHints'));
-	$input->{envir}->{showSolutions} = $r->param('showSolutions') if($r->param('showSolutions'));
+	# Set the permission level and probNum
+	$input->{envir}->{
+		%{ $input->{envir}},		
+		showHints 		=> ($r->param('showHints')) ? $r->param('showHints'):0,
+		showSolutions 	=> ($r->param('showSolutions')) ? $r->param('showSolutions'):0,
+		probNum  		=> $r->param("probNum") ||undef, 
+		permissionLevel => $r->{ce}->{userRoles}->{$r->param('permissionLevel')} // 0,
+ 	};
+ 	$input->{envir}->{inputs_ref} ={
+ 		%{ $input->{envir}->{inputs_ref}},
+		displayMode => $r->param("displayMode") || 0,
+		problemSeed => $r->param("problemSeed") || 0,
+	};
+
+
 	
-	$input->{courseID} = $r->param('courseID');
 
 	##############################
 	# xmlrpc_client calls webservice with the requested command
@@ -338,12 +347,13 @@ sub standard_input {
 		command      			=>  'all',
 		answer_form_submitted   =>   1,
 		mode                    => 'images',
-		envir                   => {displayMode=>DISPLAYMODE,
+		envir                   => { 
+		                inputs_ref => {displayMode => DISPLAYMODE},
 					    problemValue => -1, 
 					    fileName => ''},
 		problem_state           => {
 		
-			num_of_correct_ans  => 200, # we are picking phoney values so
+			num_of_correct_ans  => 200, # we are picking phoney values so that solutions are available
 			num_of_incorrect_ans => 400,
 			recorded_score       => 1.0,
 		},
