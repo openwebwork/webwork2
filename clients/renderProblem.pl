@@ -81,6 +81,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
+use constant PROBLEMSEED   => '32145'; 
 
 
 ### select a rendering site
@@ -279,7 +280,7 @@ die "Something is wrong with the contents of $fileName\n" if $@;
 our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
-	displayMode            => DISPLAYMODE(),
+#	displayMode            => DISPLAYMODE(),
 	site_password          =>  $XML_PASSWORD//'',
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
@@ -301,8 +302,10 @@ our $xmlrpc_client = new WebworkClient (
 		                               sourceFilePath => $fileName
 		                            ),
  };
-		                 
-
+$input->{envir}->{inputs_ref} = { displayMode => DISPLAYMODE(),	
+                                  problemSeed => PROBLEMSEED(),	  
+};               
+								  
 $xmlrpc_client->{sourceFilePath}  = $fileName;
 
 ############################################
