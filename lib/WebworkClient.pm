@@ -25,7 +25,6 @@ WebworkClient.pm
 	our $xmlrpc_client = new WebworkClient (
 		url                    => $XML_URL,
 		form_action_url        => $FORM_ACTION_URL,
-		displayMode            => DISPLAYMODE(),
 		site_password          =>  $XML_PASSWORD//'',
 		courseID               =>  $credentials{courseID},
 		userID                 =>  $credentials{userID},
@@ -178,16 +177,16 @@ sub new {
 		return_object   => {},
 		request_object  => {},
 		error_string    => '',
-		encodedSource 	=> '',
+		encoded_source 	=> '',
 		url             => '',
 		course_password        => '',
 		site_password   => '',
 		courseID        => '',
 		userID          => '',
-		displayMode     => '',
 		inputs_ref      => {		 AnSwEr0001 => '',
 				 					 AnSwEr0002 => '',
 				 					 AnSwEr0003 => '',
+				 					 displayMode     => 'no displayMode defined',
 		},
 		@_,               # options and overloads
 	};
@@ -284,32 +283,19 @@ sub xmlrpcCall {
     if ($UNIT_TESTS_ON) {
         print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->url,"\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
-    	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %$input),"\n";
+    	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %{$self->request_object}),"\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
     }
  		
 	  local( $result);
 	  # use eval to catch errors
 	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
-	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $requestObject) };
+	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
 	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
 
-	  unless (ref($result) and $result->fault) {
-	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
-	  		$result->result()->{text} = decode_base64($result->result()->{text});
-		}
-	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
-		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
-	  	}
-
-		$self->return_object($result->result());
-		# print "\n retrieve result ",  keys %{$self->return_object};
-		return $self->return_object; # $result->result();  
-		# would it be better to return the entire $result?
-		# probably not, there is no hash directly available from the $result object. 
-	  } else {
+	  if ( ( not ref($result) ) or $result->fault) { # report errors
 		my $err_string = 'Error message for '.
 		  join( ' ',
 			  "command:",
@@ -325,8 +311,27 @@ sub xmlrpcCall {
 		  $self->error_string($err_string);
 		  $self->fault(1); # set fault flag to true
 		  return $self;  
-	  }
+	  } else {
+	  	  if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
+	  		$result->result()->{text} = decode_base64($result->result()->{text});
+		}
+	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
+		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
+	  	}
+
+		$self->return_object($result->result());
+		# print "\n retrieve result ",  keys %{$self->return_object};
+		return $self->return_object; # $result->result();  
+		# would it be better to return the entire $result?
+		# probably not, there is no hash directly available from the $result object. 
+	  } 
+
 }
+
+
+=head2 jsXmlrpcCall
+
+=cut
 
 sub jsXmlrpcCall {
 	my $self = shift;
@@ -370,17 +375,34 @@ sub jsXmlrpcCall {
 		return 0; #failure
 	  }
 }
-  
+
+=head2 encodeSource 
+
+
+=cut 
 sub encodeSource {
 	my $self = shift;
 	my $source = shift||'';
-	$self->{encodedSource} =encode_base64($source);
+	$self->{encoded_source} =encode_base64($source);
 }
+
+=head2  Accessor methods
+	
+	encoded_source
+	request_object
+	return_object
+	error_string
+	fault
+	url
+	form_data
+	
+=cut 
+
 sub encoded_source {
 	my $self = shift;
 	my $source = shift;
-	$self->{encodedSource} =$source if defined $source and $source =~/\S/; # source is non-empty
-	$self->{encodedSource};
+	$self->{encoded_source} =$source if defined $source and $source =~/\S/; # source is non-empty
+	$self->{encoded_source};
 }
 sub request_object {   # in or input
 	my $self = shift;
@@ -412,43 +434,17 @@ sub url {
 	$self->{url} = $new_url if defined($new_url) and $new_url =~ /\S/;
 	$self->{url};
 }
-sub pretty_print {    # provides html output -- NOT a method
-    my $r_input = shift;
-    my $level = shift;
-    $level = 4 unless defined($level);
-    $level--;
-    return '' unless $level > 0;  # only print three levels of hashes (safety feature)
-    my $out = '';
-    if ( not ref($r_input) ) {
-    	$out = $r_input if defined $r_input;    # not a reference
-    	$out =~ s/</&lt;/g  ;  # protect for HTML output
-    } elsif ("$r_input" =~/hash/i) {  # this will pick up objects whose '$self' is hash and so works better than ref($r_iput).
-	    local($^W) = 0;
-	    
-		$out .= "$r_input " ."<TABLE border = \"2\" cellpadding = \"3\" BGCOLOR = \"#FFFFFF\">";
-		
-		
-		foreach my $key ( sort ( keys %$r_input )) {
-			$out .= "<tr><TD> $key</TD><TD>=&gt;</td><td>&nbsp;".pretty_print($r_input->{$key}) . "</td></tr>";
-		}
-		$out .="</table>";
-	} elsif (ref($r_input) eq 'ARRAY' ) {
-		my @array = @$r_input;
-		$out .= "( " ;
-		while (@array) {
-			$out .= pretty_print(shift @array, $level) . " , ";
-		}
-		$out .= " )";
-	} elsif (ref($r_input) eq 'CODE') {
-		$out = "$r_input";
-	} else {
-		$out = $r_input;
-		$out =~ s/</&lt;/g; # protect for HTML output
-	}
-	
-	return $out." ";
+
+sub form_data {
+	my $self = shift;
+	my $form_data = shift;
+	$self->{inputs_ref} = $form_data if defined($form_data) and $form_data =~ /\S/;
+	$self->{inputs_ref};
 }
 
+=head2 initiate default values
+
+=cut
 sub setInputTable_for_listLib {
 	my $self = shift;
 	my $out = {
@@ -485,6 +481,7 @@ sub default_inputs {
 		course                  => $self->{course},
 		extra_packages_to_load  => [@extra_packages_to_load],
 		mode                    => $self->{displayMode},
+		displayMode             => $self->{displayMode},
 		modules_to_evaluate     => [@modules_to_evaluate],
 		envir                   => $self->environment(),
 		problem_state           => {
@@ -499,6 +496,10 @@ sub default_inputs {
 	$out;
 }
 
+=item environment
+
+=cut
+
 sub environment {
 	my $self = shift;
 	my $envir = {
@@ -512,7 +513,7 @@ sub environment {
 		classDirectory=> 'Not defined',
 		courseName=>'Not defined',
 		courseScriptsDirectory=>'not defined',
-		displayMode=>$self->{displayMode},
+		displayMode=>$self->{inputs_ref}->{displayMode}//"no display mode defined i WebworkClient-> environment",
 		dueDate=> '4014438528',
 		effectivePermissionLevel => 10,
 		externalGif2EpsPath=>'not defined',
@@ -545,11 +546,10 @@ sub environment {
 		permissionLevel =>10,
 		PRINT_FILE_NAMES_FOR => [ 'gage'],
 		probFileName => 'WebworkClient.pm:: define probFileName in environment',
-		problemSeed  => 1234,
+		problemSeed  => $self->{inputs_ref}->{problemSeed}//3333,
 		problemValue =>1,
 		probNum => 13,
 		psvn => 54321,
-		psvn=> 54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
 		sectionName => 'Gage',
@@ -563,7 +563,6 @@ sub environment {
 		templateDirectory=>'not defined',
 		tempURL=>'not defined',
 		webworkDocsURL => 'not defined',
-		
 		showHints => 1,               # extra options -- usually passed from the input form
 		showSolutions => 1,
 		@_,
@@ -571,35 +570,9 @@ sub environment {
 	$envir;
 };
 
-# sub formatAnswerRow {   #moved to attemptsTable object
-# 	my $self          = shift;
-# 	my $rh_answer     = shift;
-# 	my $answerNumber  = shift;
-# 	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
-# 	my $correctAnswer = $rh_answer->{correct_ans}||'';
-# 	my $ans_message   = $rh_answer->{ans_message}||'';
-# 	my $score         = ($rh_answer->{score}) ? 'Correct' : 'Incorrect';
-# 	my $row = qq{
-# 		<tr>
-# 		    <td>
-# 				Prob: $answerNumber
-# 			</td>
-# 			<td>
-# 				$answerString
-# 			</td>
-# 			<td>
-# 			    $score
-# 			</td>
-# 			<td>
-# 				Correct answer is $correctAnswer
-# 			</td>
-# 			<td>
-# 				<i>$ans_message</i>
-# 			</td>
-# 		</tr>\n
-# 	};
-# 	$row;
-# }
+=item formatRenderedLibraries
+
+=cut
 	
 sub formatRenderedLibraries {
 	my $self 			  = shift;
@@ -612,6 +585,10 @@ sub formatRenderedLibraries {
 	}
 	return $result;
 }
+
+=item formatRenderedProblem
+
+=cut
 
 sub formatRenderedProblem {
 	my $self 			  = shift;
@@ -628,7 +605,7 @@ sub formatRenderedProblem {
 	my $problemHeadText = $rh_result->{header_text}//'';
 	my $rh_answers        = $rh_result->{answers}//{};
 	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
-	my $encodedSource     = $self->encoded_source//'';
+	my $encoded_source     = $self->encoded_source//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
 	
@@ -678,9 +655,9 @@ sub formatRenderedProblem {
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
 	my $course_password  =  $self->{course_password};
-	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//314159;
+	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//4444;
 	my $session_key      =  $rh_result->{session_key}//'';
-	my $displayMode      =  $self->{displayMode};
+	my $displayMode      =  $self->{inputs_ref}->{displayMode};
 	
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
 	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck});
@@ -700,7 +677,7 @@ sub formatRenderedProblem {
 		$rh_answers,
 		answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
 		answerOrder            => $answerOrder//[],
-		displayMode            => $self->{displayMode},
+		displayMode            => $self->{inputs_ref}->{displayMode},
 		imgGen                 => $imgGen,
 		ce                     => '',	#used only to build the imgGen
 		showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
@@ -754,12 +731,20 @@ sub formatRenderedProblem {
 	return $template;
 }
 
+=back
 
+=cut
 ######################################################
 # Utilities
 ######################################################
 
-### Write log
+
+=head2 Utility functions:
+
+=over 4 
+
+=item writeRenderLogEntry()
+
 # $ce - a WeBWork::CourseEnvironment object
 # $function - fully qualified function name
 # $details - any information, do not use the characters '[' or ']'
@@ -768,10 +753,58 @@ sub formatRenderedProblem {
 # use an empty string for $details when calling for END
 # Information printed in format:
 # [formatted date & time ] processID unixTime BeginEnd $function  $details
+
+=cut 
+
 sub writeRenderLogEntry($$$) {
 	my ($function, $details, $beginEnd) = @_;
 	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
 	WeBWorK::Utils::writeLog($seed_ce, "render_timing", "$$ ".time." $beginEnd $function [$details]");
 }
 
+=item pretty_print_self
+
+=cut
+
+
+sub pretty_print {    # provides html output -- NOT a method
+    my $r_input = shift;
+    my $level = shift;
+    $level = 4 unless defined($level);
+    $level--;
+    return '' unless $level > 0;  # only print three levels of hashes (safety feature)
+    my $out = '';
+    if ( not ref($r_input) ) {
+    	$out = $r_input if defined $r_input;    # not a reference
+    	$out =~ s/</&lt;/g  ;  # protect for HTML output
+    } elsif ("$r_input" =~/hash/i) {  # this will pick up objects whose '$self' is hash and so works better than ref($r_iput).
+	    local($^W) = 0;
+	    
+		$out .= "$r_input " ."<TABLE border = \"2\" cellpadding = \"3\" BGCOLOR = \"#FFFFFF\">";
+		
+		
+		foreach my $key ( sort ( keys %$r_input )) {
+			$out .= "<tr><TD> $key</TD><TD>=&gt;</td><td>&nbsp;".pretty_print($r_input->{$key}) . "</td></tr>";
+		}
+		$out .="</table>";
+	} elsif (ref($r_input) eq 'ARRAY' ) {
+		my @array = @$r_input;
+		$out .= "( " ;
+		while (@array) {
+			$out .= pretty_print(shift @array, $level) . " , ";
+		}
+		$out .= " )";
+	} elsif (ref($r_input) eq 'CODE') {
+		$out = "$r_input";
+	} else {
+		$out = $r_input;
+		$out =~ s/</&lt;/g; # protect for HTML output
+	}
+	
+	return $out." ";
+}
+
+=back
+
+=cut
 1;
