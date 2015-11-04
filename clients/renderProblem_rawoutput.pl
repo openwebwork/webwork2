@@ -286,6 +286,7 @@ our $xmlrpc_client = new WebworkClient (
 	userID                 =>  $credentials{userID},
 	session_key            =>  $credentials{session_key}//'',
 	sourceFilePath         =>  $fileName,
+	inputs_ref             =>  {displayMode => DISPLAYMODE(), problemSeed => PROBLEMSEED(),},
 );
  
  $xmlrpc_client->encodeSource($source);
@@ -362,7 +363,7 @@ sub pretty_print_rh {
 	}
 	return $out." " unless defined($rh);
 	
-	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
+	if ( ref($rh) =~/HASH/  ) {
 	    $out .= "{\n";
 	    $indent++;
  		foreach my $key (sort keys %{$rh})  {

@@ -286,6 +286,7 @@ our $xmlrpc_client = new WebworkClient (
 	userID                 =>  $credentials{userID},
 	session_key            =>  $credentials{session_key}//'',
 	sourceFilePath         =>  $fileName,
+	inputs_ref             =>  {displayMode => DISPLAYMODE(), problemSeed => PROBLEMSEED(),},
 );
  
  $xmlrpc_client->encodeSource($source);
