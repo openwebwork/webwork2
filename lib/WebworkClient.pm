@@ -170,7 +170,7 @@ sub format_hash_ref {
 	return join(" ", map {$_="--" unless defined($_);$_ } %$hash),"\n";
 }
 
-sub new {
+sub new {   #WebworkClient constructor
     my $invocant = shift;
     my $class = ref $invocant || $invocant;
 	my $self = {
@@ -179,7 +179,7 @@ sub new {
 		error_string    => '',
 		encoded_source 	=> '',
 		url             => '',
-		course_password        => '',
+		course_password => '',
 		site_password   => '',
 		courseID        => '',
 		userID          => '',
@@ -513,7 +513,7 @@ sub environment {
 		classDirectory=> 'Not defined',
 		courseName=>'Not defined',
 		courseScriptsDirectory=>'not defined',
-		displayMode=>$self->{inputs_ref}->{displayMode}//"no display mode defined i WebworkClient-> environment",
+		displayMode=>$self->{inputs_ref}->{displayMode}//"no display mode defined in WebworkClient-> environment",
 		dueDate=> '4014438528',
 		effectivePermissionLevel => 10,
 		externalGif2EpsPath=>'not defined',
@@ -722,7 +722,7 @@ sub formatRenderedProblem {
 # Return interpolated problem template
 ######################################################
 
-	my $format_name = $self->{inputs_ref}->{outputformat}//'sticky';
+	my $format_name = $self->{inputs_ref}->{outputformat}//'standard';
 	# find the appropriate template in WebworkClient folder
 	my $template = do("WebworkClient/${format_name}_format.pl");
 	die "Unknown format name $format_name" unless $template;

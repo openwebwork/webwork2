@@ -34,7 +34,7 @@ $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT} unless defined($WeBW
 
 # If true, WeBWorK::Debug will print debugging output.
 #
-$WeBWorK::Debug::Enabled = 0;
+$WeBWorK::Debug::Enabled = 1;
 
 # If non-empty, debugging output will be sent to the file named rather than STDERR.
 #
@@ -46,7 +46,7 @@ $WeBWorK::Debug::Logfile = $WeBWorK::Constants::WEBWORK_DIRECTORY . "/logs/debug
 # For example, this pattern prevents the dispatch() function from logging:
 #     $WeBWorK::Debug::DenySubroutineOutput = qr/^WeBWorK::dispatch$/;
 #
-$WeBWorK::Debug::DenySubroutineOutput = undef;
+$WeBWorK::Debug::DenySubroutineOutput = qr/RenderProblem|dispatch|Authen|URLPath/;
 
 # If defined, allow only subroutines matching the following regular expression
 # to log.
