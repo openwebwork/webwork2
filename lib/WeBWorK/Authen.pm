@@ -324,7 +324,7 @@ sub get_credentials {
 		my @GuestUsers = $db->getUsers(@guestUserIDs);
 		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
 		my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
-		
+
 		foreach my $userID (List::Util::shuffle(@allowedGestUserIDs)) {
 			if (not $self->unexpired_session_exists($userID)) {
 				my $newKey = $self->create_session($userID);
@@ -340,7 +340,7 @@ sub get_credentials {
 		}
 		
 		$self->{log_error} = "no guest logins are available";
-		$self->{error} = "No guest logins are available. Please try again in a few minutes.";
+		$self->{error} = $r->maketext("No guest logins are available. Please try again in a few minutes.");
 		return 0;
 	}
 	

@@ -37,7 +37,7 @@
 
 ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
 
-
+PerlChildInitHandler "sub { srand }"
 
 PerlModule mod_perl2
 
