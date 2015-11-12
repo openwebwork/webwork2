@@ -283,8 +283,8 @@ sub pre_header_initialize {
 	# Fix the environment display mode and problemSeed
 	# Set environment variables for hints/solutions
 	# Set the permission level and probNum
-	$input->{envir}->{
-		%{ $input->{envir}},		
+	$input->{envir} = {
+		%{$input->{envir}},		
 		showHints 		=> ($r->param('showHints')) ? $r->param('showHints'):0,
 		showSolutions 	=> ($r->param('showSolutions')) ? $r->param('showSolutions'):0,
 		probNum  		=> $r->param("probNum") ||undef, 

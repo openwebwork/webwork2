@@ -140,11 +140,12 @@ sub process_and_log_answer{
 			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
 			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
 			# however we need to store them.  Fortunately they are still in the input form.
-			my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}};
+			warn "pg flags ", join (" ", keys %{$pg->{flags}});
+			my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}//[]};
 			$answersToStore{$_} = $self->{formFields}->{$_} foreach  (@extra_answer_names);
 			
 			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
-			my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}, @extra_answer_names);
+			my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]}, @extra_answer_names);
 			my $answerString = encodeAnswers(%answersToStore,
 							 @answer_order);
 			

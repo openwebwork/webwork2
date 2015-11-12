@@ -673,6 +673,7 @@ sub formatRenderedProblem {
 
 	my $scoreSummary     =  '';
 
+
 	my $tbl = WeBWorK::Utils::AttemptsTable->new(
 		$rh_answers,
 		answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
