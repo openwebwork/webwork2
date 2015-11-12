@@ -49,14 +49,69 @@ $db = shell_quote($db);
 
 `mysqldump --host=$host --user=$dbuser --password=$dbpass $db OPL_local_statistics > $output_file`;
 
-print "Zipping file\n";
-`gzip $output_file`;
+print "Database File Created\n";
 
-$output_file = $output_file.".gz";
+my $desc_file = "$domainname-$time-desc.txt";
+
+open(my $fh, ">", $desc_file)
+  or die "Couldn't open file for saving description.";
+
+print "\nWe would appreciate it if you could provide \nsome basic information to help us \nkeep track of the data we receive.\n\n";
+
+print $fh "File:\n$output_file\n";
+
+print "What university is this data for?\n";
+
+print $fh "University:\n";
+my $input = <STDIN>;
+print $fh $input;
+
+print "What department is this data for?\n";
+
+print $fh "Department:\n";
+$input = <STDIN>;
+print $fh $input;
+
+print "What is your name?\n";
+
+print $fh "Name:\n";
+$input = <STDIN>;
+print $fh $input;
+
+print "What is your email address?\n";
+
+print $fh "Email:\n";
+$input = <STDIN>;
+print $fh $input;
+
+print "Approximately what years does this data span?\n";
+
+print $fh "Years:\n";
+$input = <STDIN>;
+print $fh $input;
+
+print "Approximately how many classes are included?\n";
+
+print $fh "Number of Classes:\n";
+$input = <STDIN>;
+print $fh $input;
+
+print "Anything else?\n";
+
+print $fh "Other:\n";
+$input = <STDIN>;
+print $fh $input;
+
+close($fh);
+
+my $tar_file = "$domainname-$time-data.tar.gz";
+
+print "Zipping files\n";
+`tar -czf $tar_file $output_file $desc_file`;
 
 print "Uploading file\n";
     
-`echo "put $output_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oPort=57281 wwdata\@52.27.200.59`;
+`echo "put $tar_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oPort=57281 wwdata\@52.27.200.59`;
 
 
 1;
