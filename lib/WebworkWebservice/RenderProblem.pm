@@ -466,7 +466,7 @@ sub renderProblem {
 
     my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
     if (ref ($pg->{pgcore}) ) {
-    	$internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
+    	$internal_debug_messages   = $pg->{pgcore}->get_internal_debug_messages;
     	$pgwarning_messages        = $pg ->{pgcore}->get_warning_messages();
     	$pgdebug_messages          = $pg ->{pgcore}->get_debug_messages();
     } else {
@@ -481,6 +481,7 @@ sub renderProblem {
 		WARNINGS	   				=> encode_base64( 
 		                                 "WARNINGS\n".$warning_messages."\n<br/>More<br/>\n".$pg->{warnings} 
 		                               ),
+		PG_ANSWERS_HASH             => $pg->{pgcore}->{PG_ANSWERS_HASH},
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},
 		flags						=> $pg->{flags},
