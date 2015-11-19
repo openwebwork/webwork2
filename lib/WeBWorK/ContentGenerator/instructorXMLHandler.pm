@@ -279,16 +279,15 @@ sub pre_header_initialize {
 
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
-
 	# Fix the environment display mode and problemSeed
 	# Set environment variables for hints/solutions
 	# Set the permission level and probNum
 	$input->{envir} = {
-		%{$input->{envir}},		
+		%{$input->{envir}},		# this may have undefined entries
 		showHints 		=> ($r->param('showHints')) ? $r->param('showHints'):0,
 		showSolutions 	=> ($r->param('showSolutions')) ? $r->param('showSolutions'):0,
 		probNum  		=> $r->param("probNum") ||undef, 
-		permissionLevel => $r->{ce}->{userRoles}->{$r->param('permissionLevel')} // 0,
+		permissionLevel => ($r->{ce}->{userRoles}->{$r->param('permissionLevel')//0})// 0,
  	};
  	$input->{envir}->{inputs_ref} ={
  		%{ $input->{envir}->{inputs_ref}},
@@ -348,7 +347,7 @@ sub standard_input {
 		answer_form_submitted   =>   1,
 		mode                    => 'images',
 		envir                   => { 
-		                inputs_ref => {displayMode => DISPLAYMODE},
+		                inputs_ref => {displayMode => DISPLAYMODE()},
 					    problemValue => -1, 
 					    fileName => ''},
 		problem_state           => {

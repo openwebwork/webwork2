@@ -287,7 +287,7 @@ sub process_pg_file {
 				}
 			} else {
 				warn "responding to a ".$ans_obj->{type}. " question with several ans_blanks\n";
-				$correct_answers{$ans_id}=$ans_obj->{correct_ans}//($ans_obj->{correct_value});
+				$correct_answers{$ans_id}=($ans_obj->{correct_ans})//($ans_obj->{correct_value})//'';
 			}
 		}
 		#FIXME  hack to get rid of html protection of < and > for vectors
