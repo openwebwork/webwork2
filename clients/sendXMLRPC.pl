@@ -61,6 +61,7 @@ use WebworkClient;
 use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
+use File::Find;
 #######################################################
 #############################################
 # Configure
@@ -68,8 +69,7 @@ use Getopt::Long qw[:config no_ignore_case bundling];
 
 ### verbose output when UNIT_TESTS_ON =1;
  our $UNIT_TESTS_ON             = 0;
- our $ALL_CORRECT               = '';
- 
+  
  ### Command line for displaying the temporary file in a browser.
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
@@ -102,8 +102,10 @@ my $record_ok2 = '';
 my $verbose = '';
 my $credentials_path;
 my $format = 'standard';
-my $print_ans_hash;
+my $print_answer_hash;
 my $print_answer_group;
+my $print_pg_hash;
+my $print_help_message;
 
 GetOptions(
 	'a' => \$display_ans_output1,
@@ -112,13 +114,15 @@ GetOptions(
 	'B' => \$display_html_output2,
 	'h' => \$display_hash_output1,
 	'H' => \$display_hash_output2,
-#	'c' => \$record_ok1, # record_problem_ok1 needs to be written
+	'c' => \$record_ok1, # record_problem_ok1 needs to be written
 	'C' => \$record_ok2,
 	'v' => \$verbose,
-	'anshash' => \$print_ans_hash,
-	'ansgrp'  => \$print_answer_group,
-	'f=s' => \$format,
+	'pg' 			=> \$print_pg_hash,
+	'anshash' 		=> \$print_answer_hash,
+	'ansgrp'  		=> \$print_answer_group,
+	'f=s' 			=> \$format,
 	'credentials=s' => \$credentials_path,
+	'help'          => \$print_help_message,
 );
 ####################################################
 # get credentials
@@ -172,12 +176,13 @@ if ($@  or not  %credentials) {
 if ($verbose) {
 	foreach (keys %credentials){print "$_ =>$credentials{$_} \n";} 
 }
+
 ##################################################
 #  END gathering credentials for client
 ##################################################
 
 ############################################
-# Build client and default input
+# Build  default input
 ############################################
  
 my $default_input = { 
@@ -203,19 +208,44 @@ my $default_form_data = {
 
 our @file_paths = @ARGV;
 
-foreach my $file_path (@file_paths) {
+if ( -d $ARGV[0] ) { # given a directory we walk the directory tree
+	find(\&wanted, @ARGV);
+} else {    # evaluate all of the files
+	foreach my $file_path (@file_paths) {
+		next unless $file_path =~ /\.pg$/;
+		next if $file_path =~ /\-text\.pg$/;
+		next if $file_path =~ /header/i;
+		process_pg_file($file_path);
+	}
+}
+sub wanted {
+	return '' unless $File::Find::name =~ /\.pg$/;
+	return '' if $File::Find::name =~ /\-text\.pg$/;
+	return '' if $File::Find::name =~ /header/i;
+	process_pg_file($File::Find::name) if -f $File::Find::name;
+}
+
+sub process_pg_file {
+	my $file_path = shift;
+	my $NO_ERRORS = "";
+	my $ALL_CORRECT = "";
 	my $problemSeed1 = 1112;
-	my $problemSeed2 = 2222;
 	my $form_data1 = { %$default_form_data,
 					  problemSeed => $problemSeed1};
 
-	my ($error_flag, $xmlrpc_client) = 
+	my ($error_flag, $xmlrpc_client, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
 	# extract and display result
 		#print "display $file_path\n";
 		display_html_output($file_path, $xmlrpc_client->formatRenderedProblem) if $display_html_output1;
 		display_hash_output($file_path, $xmlrpc_client->return_object) if $display_hash_output1;
 		display_ans_output($file_path, $xmlrpc_client->return_object) if $display_ans_output1;
+		$NO_ERRORS = record_problem_ok1($error_flag, $xmlrpc_client, $file_path) if $record_ok1;      
+		
+	#################################################################
+	# Extract correct answers
+	#################################################################
+
 	my %correct_answers = (); 
 	foreach my $ans_id (keys %{$xmlrpc_client->return_object->{answers}} ) {
 		my $ans_obj = $xmlrpc_client->return_object->{answers}->{$ans_id};
@@ -238,26 +268,33 @@ foreach my $file_path (@file_paths) {
 		} elsif (1==@response_order and $ans_id eq $response_order[0] ) { 
 		    # only one response -- not MultiAnswer singleResponse
 		    # most answers are of this type
-			$correct_answers{$ans_id}=$ans_obj->{correct_value};
+		    # should we use correct answer or correct value?  -- this seems to vary
+		    #warn "just one answer blank for this answer evaluator";
+			$correct_answers{$ans_id}=($ans_obj->{correct_ans})//($ans_obj->{correct_value});
 		} else { # more than one response 
 			if ($ans_obj->{type} =~ /Matrix/) {  
 			    #FIXME -- another outrageous hackkkk but it works
 				#print "responding to matrix answer with several ans_blanks\n";
 				#print "responses", join(" ", %{$answergroup->{response}->{responses}}),"\n";
 				#print "correct answer ", $ans_obj->{correct_value}, "\n";
-				my $ans_str = $ans_obj->{correct_value};
+				my $ans_str = ($ans_obj->{correct_ans})//($ans_obj->{correct_value});
 				$ans_str =~ s/\[//g;
 				$ans_str =~ s/\]//g;
 				my @ans_array = split(/\s*,\s*/, $ans_str);
 				foreach my $response_id (@response_order) {
 					$correct_answers{$response_id} = shift @ans_array;
-					print "\t\t $response_id => $correct_answers{$response_id}\n";
+					#warn "\t\t $response_id => $correct_answers{$response_id}";
 				}
 			} else {
-				print "responding to a ".$ans_obj->{type}. " question with several ans_blanks\n";
-				$correct_answers{$ans_id}=$ans_obj->{correct_value};
+				warn "responding to a ".$ans_obj->{type}. " question with several ans_blanks\n";
+				$correct_answers{$ans_id}=$ans_obj->{correct_ans}//($ans_obj->{correct_value});
 			}
 		}
+		#FIXME  hack to get rid of html protection of < and > for vectors
+		$correct_answers{$ans_id}=~s/&gt;/>/g;
+		$correct_answers{$ans_id}=~s/&lt;/</g;
+
+
 #        print "answer group", pretty_print_rh($answergroup), "\n";
 #        	foreach my $response_id (@{$answergroup->{response}->{response_order}}) {
 #        		$correct_answers{$response_id} = 
@@ -273,43 +310,85 @@ foreach my $file_path (@file_paths) {
 				};
 	#print "form data: ", pretty_print_rh($form_data2),"\n";	
 	#print "display $file_path\n";
-	($error_flag, $xmlrpc_client)=();
-	($error_flag, $xmlrpc_client) = 
-	process_problem($file_path, $default_input, $form_data2);
+	($error_flag, $xmlrpc_client, $error_string)=();
+	($error_flag, $xmlrpc_client, $error_string) = 
+			process_problem($file_path, $default_input, $form_data2);
 	display_html_output($file_path, $xmlrpc_client->formatRenderedProblem) if $display_html_output2;
 	display_hash_output($file_path, $xmlrpc_client->return_object) if $display_hash_output2;
 	display_ans_output($file_path, $xmlrpc_client->return_object) if $display_ans_output2;
-	record_problem_ok2($error_flag, $xmlrpc_client, $file_path) if $record_ok2;      
-	# display_inputs(%correct_answers); 
+	$ALL_CORRECT = record_problem_ok2($error_flag, $xmlrpc_client, $file_path) if $record_ok2;      
+	display_inputs(%correct_answers) if $verbose;  # choice of correct answers submitted 
 	# should this information on what answers are being submitted have an option switch?
-}
-print "DONE $ALL_CORRECT\n";
 
+	print "DONE -- $NO_ERRORS -- $ALL_CORRECT\n";
+}
 sub display_inputs {
 	my %correct_answers = @_;
 	foreach my $key (sort keys %correct_answers) {
 		print "$key => $correct_answers{$key}\n";
 	}
 }
+
+sub record_problem_ok1 {
+	my $error_flag = shift//'';
+	my $xmlrpc_client = shift;
+	my $file_path = shift;
+	my $return_string = shift;
+	my $result = $xmlrpc_client->return_object;
+	if (defined($result->{flags}->{DEBUG_messages}) ) {
+		my @debug_messages = @{$result->{flags}->{DEBUG_messages}};
+		$return_string .= (pop @debug_messages ) ||'' ; #avoid error if array was empty
+		if (@debug_messages) {
+			$return_string .= join(" ", @debug_messages);
+		} else {
+					$return_string = "";
+		}
+	}
+	if (defined($result->{errors}) ) {
+		$return_string= $result->{errors};
+	}
+	if (defined($result->{flags}->{WARNING_messages}) ) {
+		my @warning_messages = @{$result->{flags}->{WARNING_messages}};
+		$return_string .= (pop @warning_messages)||''; #avoid error if array was empty
+			$@=undef;
+		if (@warning_messages) {
+			$return_string .= join(" ", @warning_messages);
+		} else {
+			$return_string = "";
+		}
+	}
+	my $SHORT_RETURN_STRING = ($return_string)?"has errors":"ok";
+	unless ($return_string) {
+		$return_string = "1\t $file_path is ok\n";
+	} else {
+		$return_string = "0\t $file_path has errors\n";
+	}
+	 
+	local(*FH);
+	open(FH, '>>',LOG_FILE()) or die "Can't open file ".LOG_FILE()." for writing";
+	print FH $return_string;
+	close(FH);
+	return $SHORT_RETURN_STRING;
+}
 sub record_problem_ok2 {
 	my $error_flag = shift//'';
 	my $xmlrpc_client = shift;
 	my $file_path = shift;
 	my %scores = ();
-	$ALL_CORRECT='';
+	my $ALL_CORRECT= 0;
 	my $all_correct = ($error_flag)?0:1;
 		foreach my $ans (keys %{$xmlrpc_client->return_object->{answers}} ) {
 			$scores{$ans} = 
 			      $xmlrpc_client->return_object->{answers}->{$ans}->{score};
 			$all_correct =$all_correct && $scores{$ans};
-			$ALL_CORRECT = ($all_correct == 1)?'ok':'not ok'
 		}
+	$ALL_CORRECT = ($all_correct == 1)?'All answers correct':'Some answers are incorrect';
 	local(*FH);
 	open(FH, '>>',LOG_FILE()) or die "Can't open file ".LOG_FILE()." for writing";
 	print FH "$all_correct Answers for $file_path are all correct = $all_correct; errors: $error_flag\n";
 	close(FH);
+	return $ALL_CORRECT;
 }
-
 sub process_problem {
 	my $file_path = shift;
 	my $input    = shift;
@@ -334,7 +413,11 @@ sub process_problem {
 	
 	### update client
 	$xmlrpc_client->encodeSource($source);
+	$form_data->{showAnsGroupInfo} 		= $print_answer_group;
+	$form_data->{showAnsHashInfo}       = $print_answer_hash;
+	$form_data->{showPGInfo}	        = $print_pg_hash;
 	$xmlrpc_client->form_data( $form_data	);
+	
 	### update inputs
 	my $updated_input = {%$input, 
 					  envir => $xmlrpc_client->environment(
@@ -342,7 +425,6 @@ sub process_problem {
 							   sourceFilePath => $adj_file_path,
 							   problemSeed    => $problemSeed,),
 	};
-	
 	
 	##################################################
 	# input section
@@ -354,16 +436,23 @@ sub process_problem {
 	############################################
 	# Call server via xmlrpc_client
 	############################################
-	our($output, $return_string, $result, $error_flag, $error_string);    
+	our($output, $return_string, $result, $error_flag, $error_string);
+	$error_flag=0; $error_string='';    
 	$result = $xmlrpc_client->xmlrpcCall('renderProblem', $updated_input);
 	unless ( $xmlrpc_client->fault  )    {
 		print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
 		print pretty_print_rh($result) if $UNIT_TESTS_ON;
+	    if (not defined $result) {  #FIXME make sure this is the right error message if site is unavailable
+	    	$error_string = "0\t Could not connect to rendering site ". $xmlrpc_client->{url}."\n";
+	    } elsif (defined($result->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
+			$error_string = "0\t $file_path has errors\n";
+		} elsif (defined($result->{errors}) and $output->{errors} ){
+			$error_string = "0\t $file_path has syntax errors\n";
+		}
 		$error_flag=1 if $result->{errors};
 	} else {
-		print "\n\n ERRORS in renderProblem \n\n";
 		$error_flag=1;
-		$error_string = $xmlrpc_client->return_object;  # error report
+		$error_string = $xmlrpc_client->return_object;  # error report		
 	}	
 	##################################################
 	# log elapsed time
@@ -372,7 +461,7 @@ sub process_problem {
 	my $cg_end = time;
 	my $cg_duration = $cg_end - $cg_start;
 	WebworkClient::writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
-	return $error_flag, $xmlrpc_client;
+	return $error_flag, $xmlrpc_client, $error_string;
 }
 
 ##################################################
@@ -380,7 +469,7 @@ sub process_problem {
 #FIXME -- possibly refactor these two into display_output()??
 ##################################################
 
-sub	display_html_output {  #display the problem on the screen
+sub	display_html_output {  #display the problem in a browser
 	my $file_path = shift;
 	my $output_text = shift;
 	$file_path =~s|/$||;   # remove final /
@@ -395,10 +484,10 @@ sub	display_html_output {  #display the problem on the screen
 
 	system(HTML_DISPLAY_COMMAND().$output_file);
 	sleep 1;   #wait 1 seconds
-	#unlink($output_file);
+	unlink($output_file);
 }
 
-sub display_hash_output {   # display the entire hash output
+sub display_hash_output {   # print the entire hash output to the command line
 	my $file_path = shift;
 	my $output_text = shift;	
 	$file_path =~s|/$||;   # remove final /
@@ -417,7 +506,7 @@ sub display_hash_output {   # display the entire hash output
 	#unlink($output_file);
 }
 
-sub display_ans_output {  # display the collection of answer hashes
+sub display_ans_output {  # print the collection of answer hashes to the command line
 	my $file_path = shift;
 	my $return_object = shift;	
 	$file_path =~s|/$||;   # remove final /
