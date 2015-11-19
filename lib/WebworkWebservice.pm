@@ -292,13 +292,23 @@ my $authz  = $fake_r->authz;
 		warn "authen is $authen ", ref($authen);
 		$authenOK = $authen->verify;
 	} or do {
+		my $e;
 		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
 			# was asked to authenticate into a non-existent course
 			die SOAP::Fault
 				->faultcode('404')
 				->faultstring("WebworkWebservice: Course |$courseName| not found.")
 		}
-		die "Webservice.pm: Error when trying to authenticate. $@\n";
+		# this next bit is a Hack to catch errors when the session key has timed out
+		# and an error message which is approximately 
+		# "invoked with WeBWorK::FakeRequest object with no `r' key"
+		if ($e = Exception::Class->caught() and $e =~/object\s+with\s+no\s+.r.\s+key/ ) {
+			# was asked to authenticate into a non-existent course
+			die SOAP::Fault
+				->faultcode('404')
+				->faultstring("WebworkWebservice: Can't authenticate -- session may have timed out.")
+		}
+		die "Webservice.pm: Error when trying to authenticate. $e\n";
 	};
 ###########################################################################
 # security check -- check that the user is in fact at least a proctor in the course
