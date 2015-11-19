@@ -1,15 +1,19 @@
 #!/Volumes/WW_test/opt/local/bin/perl -w
-use 5.012;
+use 5.010;
 
 # Test AttemptsTable.pm
 BEGIN {
-	require "../../standaloneProblemRenderer/grab_course_environment.pl";
+	require "./grab_course_environment.pl";
 	eval "use lib '$WebworkBase::RootPGDir/lib'"; die $@ if $@;
 	eval "use lib '$WebworkBase::RootWebwork2Dir/lib'"; die $@ if $@;
 }
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::PG::ImageGenerator;
+use WeBWorK::Localize;
+
 use HTML::Entities;
+
+# create fake DATA
 my $answers = {
 	AnSwEr0001	=>	{
 		_filter_name	=>	 "dereference_array_ans",
@@ -36,7 +40,7 @@ my $answers = {
 		showUnionReduceWarnings	=>	 1,
 		student_ans	=>	 "",
 		studentsMustReduceUnions	=>	 1,
-		type	=>	 "essay", #"Value (Formula)",
+		type	=>	 "Value (Formula)",
 		upToConstant	=>	 0,
 	},
 	AnSwEr0002	=>	 {
@@ -146,6 +150,7 @@ my $answers = {
 		upToConstant	=>	 0,
 	}
 };
+
 my $ce = $WebworkBase::ce;
 my $answerOrder = [sort keys %{ $answers }];
 my $site_url = "http://localhost";
@@ -175,26 +180,31 @@ my $tbl = WeBWorK::Utils::AttemptsTable->new(
 	$answers,
 	answersSubmitted       => 1,
 	answerOrder            => $answerOrder,
-	displayMode            => 'images',
-	imgGen                 => $imgGen,	
+	displayMode            => 'MathJax',
 	showAttemptPreviews    => 1,
 	showAttemptResults     => 1,
 	showCorrectAnswers     => 1,
 	showMessages           => 1,
+	showSummary            => 1,
+	imgGen                 => $imgGen,	
+	ce                     => undef, # need this if no imgGen,
+	maketext               => WeBWorK::Localize::getLoc("en"),
 );
-print "answers ", $tbl->answers,"\n";
-print "answersSubmitted ", $tbl->answersSubmitted,"\n";
-print "displayMode ", $tbl->displayMode,"\n";
-print "imgGen ", $tbl->imgGen,"\n";
-print "answerOrder ", $tbl->answerOrder,"\n";
-print "correct_ids ", $tbl->correct_ids//'',"\n";
-print "incorrect_ids ", $tbl->incorrect_ids//'',"\n";
+@dataString=();
+push @dataString, "answers ", $tbl->answers,"<br/>\n";
+push @dataString, "answersSubmitted ", $tbl->answersSubmitted,"<br/>\n";
+push @dataString, "displayMode ", $tbl->displayMode,"<br/>\n";
+push @dataString, "imgGen ", ($tbl->imgGen)//'undefined',"<br/>\n";
+push @dataString, "answerOrder ", join(" ", @{$tbl->answerOrder}),"<br/>\n";
+push @dataString, "correct_ids ", $tbl->correct_ids//'',"<br/>\n";
+push @dataString, "incorrect_ids ", $tbl->incorrect_ids//'',"<br/>\n";
 
-print "showAttemptPreviews ", $tbl->showAttemptPreviews,"\n";
-print "showAttemptResults ", $tbl->showAttemptResults,"\n";
-print "showCorrectAnswers ", $tbl->showCorrectAnswers,"\n";
-print "showMessages ", $tbl->showMessages,"\n";
-print "\n\n\n";
+push @dataString, "showAttemptPreviews ", $tbl->showAttemptPreviews,"<br/>\n";
+push @dataString, "showAttemptResults ", $tbl->showAttemptResults,"<br/>\n";
+push @dataString, "showCorrectAnswers ", $tbl->showCorrectAnswers,"<br/>\n";
+push @dataString, "showMessages ", $tbl->showMessages,"<br/>\n";
+push @dataString, "<br/>\n<br/>\n<br/>\n";
+$dataString = join('',@dataString);
 # 
 # 
 # print "processed strings ", join(" ", @{$tbl->imgGen->{strings}}), "\n\n";
@@ -235,14 +245,42 @@ print <<EOF
 	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
 	<script src="https://hosted2.webwork.rochester.edu/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
 	$color_input_blanks_script
+	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/js/vendor/jquery/jquery.js"></script>
+	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/js/jquery-ui-1.9.0.js"></script>
+	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
+	<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
+
+	<script  type="text/javascript"
+		$(function(){
+			$("table.attemptResults td[onmouseover*='Tip']").each(function () {
+			var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
+			if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
+			//on the presentation of a matrix  and then causes errors throughout the rest of the script
+			$(this).attr('onmouseover','');
+			if (data) {
+				$(this).wrapInner('<div class="results-popover" />');
+
+				var popdiv = $('div', this);
+				popdiv.popover({placement:'bottom', html:'true', trigger:'click',content:data});	
+			} 
+		
+			});
+		}
+    </script>
 	<meta name="generator" content="BBEdit 11.1" />
 </head>
 <body>
+<script src="https://hosted2.webwork.rochester.edu/webwork2_files/js/legacy/vendor/wz_tooltip.js" type="text/javascript"></script>
 $answerTemplate
 <p>
 <input type="text" name="AnSwEr0002" id = "AnSwEr0002" size=40 value="16 right answer"><br/>
 <input type="text" name="AnSwEr0004" id = "AnSwEr0004" size=40 value="wrong answer">
 </p>
+<h4>DATA</h4>
+<p>
+$dataString
+</p>
+
 </body>
 </html>
 EOF
