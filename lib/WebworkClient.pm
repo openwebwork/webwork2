@@ -592,8 +592,9 @@ sub formatRenderedLibraries {
 
 sub formatRenderedProblem {
 	my $self 			  = shift;
+	my $problemText       ='';
 	my $rh_result         = $self->return_object() || {};  # wrap problem in formats
-	my $problemText       = "No output from rendered Problem" unless $rh_result ;
+	$problemText       = "No output from rendered Problem" unless $rh_result ;
 	#print "formatRenderedProblem text $rh_result = ",%$rh_result,"\n";
 	if (ref($rh_result) and $rh_result->{text} ) {
 		$problemText       =  $rh_result->{text};
