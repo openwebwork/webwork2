@@ -115,6 +115,33 @@ sub can_showCorrectAnswers {
 		;
 }
 
+sub can_showAnsGroupInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+#FIXME -- may want to adjust this
+	return
+		$authz->hasPermissions($User->user_id, "show_answer_group_info_checkbox")
+		;
+}
+
+sub can_showAnsHashInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+#FIXME -- may want to adjust this
+	return
+		$authz->hasPermissions($User->user_id, "show_answer_hash_info_checkbox")
+		;
+}
+
+sub can_showPGInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+#FIXME -- may want to adjust this
+	return
+		$authz->hasPermissions($User->user_id, "show_pg_info_checkbox")
+		;
+}
+
 sub can_showHints {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
@@ -770,6 +797,9 @@ sub pre_header_initialize {
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
 		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
+		showAnsGroupInfo     => $r->param('showAnsGroupInfo') || $ce->{pg}->{options}->{showAnsGroupInfo},
+		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
+		showPGInfo         => $r->param('showPGInfo') || $ce->{pg}->{options}->{showPGInfo},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
@@ -784,6 +814,9 @@ sub pre_header_initialize {
 	my %must = (
 		showOldAnswers     => 0,
 		showCorrectAnswers => 0,
+		showAnsGroupInfo     => 0,
+		showAnsHashInfo    => 0,
+		showPGInfo		   => 0,
 		showHints          => 0,
 		showSolutions      => 0,
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
@@ -799,6 +832,10 @@ sub pre_header_initialize {
 	my %can = (
 		showOldAnswers           => $self->can_showOldAnswers(@args),
 		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
+		showAnsGroupInfo         => $self->can_showAnsGroupInfo(@args),
+		showAnsHashInfo          => $self->can_showAnsHashInfo(@args),
+		showPGInfo           	 => $self->can_showPGInfo(@args),
+
 		showHints                => $self->can_showHints(@args),
 		showSolutions            => $self->can_showSolutions(@args),
 		recordAnswers            => $self->can_recordAnswers(@args, 0),
@@ -1449,12 +1486,16 @@ sub output_checkboxes{
     my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
-
+	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
+	    $can{showHints} or $can{showSolutions} or 
+	    $can{showAnsHashInfo} or $can{showPGInfo}) {
+		print "Show: &nbsp;&nbsp;";
+	}
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
 			-id		 => "showCorrectAnswers_id",
-			-label_text => $r->maketext("Show correct answer column"),
+			-label_text => $r->maketext("CorrectAnswers"),
 			-input_attr => $will{showCorrectAnswers} ?
 			{
 				-name    => "showCorrectAnswers",
@@ -1468,12 +1509,65 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
-	
+	if ($can{showAnsGroupInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showAnsGroupInfo_id",
+			-label_text => $r->maketext("AnswerGroupInfo"),
+			-input_attr => $will{showAnsGroupInfo} ?
+			{
+				-name    => "showAnsGroupInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showAnsGroupInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	if ($can{showAnsHashInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showAnsHashInfo_id",
+			-label_text => $r->maketext("AnswerHashInfo"),
+			-input_attr => $will{showAnsHashInfo} ?
+			{
+				-name    => "showAnsHashInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showAnsHashInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	if ($can{showPGInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showPGInfo_id",
+			-label_text => $r->maketext("PGInfo"),
+			-input_attr => $will{showPGInfo} ?
+			{
+				-name    => "showPGInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showPGInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
 	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
 	if ($can{showHints} ) {
 	  # warn "can showHints is ", $can{showHints};
-	    if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
-		print WeBWorK::CGI_labeled_input(
+		if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
+			print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
 				-label_text => $r->maketext("Show Hints"),
@@ -1488,11 +1582,11 @@ sub output_checkboxes{
 					-name    => "showHints",
 					-value   => 1,
 				}
-		),"&nbsp;";
-	  } else {
-	  	print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
-	  
-	  }
+			),"&nbsp;";
+		} else {
+			print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
+
+		}
 	}
 	
 	if ($can{showSolutions} ) {
@@ -1518,7 +1612,9 @@ sub output_checkboxes{
 	  }
 	}
 	
-	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
+	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
+	    $can{showHints} or $can{showSolutions} or 
+	    $can{showAnsHashInfo} or $can{showPGInfo}) {
 		print CGI::br();
 	}
        
