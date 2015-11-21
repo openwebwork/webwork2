@@ -113,7 +113,16 @@ sub can_showCorrectAnswers {
 		$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")
 		;
 }
-
+sub can_showResourceInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+	
+	return
+		after($Set->answer_date)
+			||
+		$authz->hasPermissions($User->user_id, "show_resource_info")
+		;
+}
 sub can_showHints {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
@@ -131,6 +140,7 @@ sub can_showSolutions {
 		$authz->hasPermissions($User->user_id, "show_solutions_before_answer_date")
 		;
 }
+
 
 sub can_recordAnswers {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
@@ -705,6 +715,7 @@ sub pre_header_initialize {
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
 		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
+		showResourceInfo => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
@@ -719,6 +730,7 @@ sub pre_header_initialize {
 	my %must = (
 		showOldAnswers     => 0,
 		showCorrectAnswers => 0,
+		showResourceInfo   => 0,
 		showHints          => 0,
 		showSolutions      => 0,
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
@@ -734,13 +746,14 @@ sub pre_header_initialize {
 	my %can = (
 		showOldAnswers           => $self->can_showOldAnswers(@args),
 		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
+		showResourceInfo         => $self->can_showResourceInfo(@args),
 		showHints                => $self->can_showHints(@args),
 		showSolutions            => $self->can_showSolutions(@args),
 		recordAnswers            => $self->can_recordAnswers(@args, 0),
 		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
 		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
 		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-	        useMathView              => $self->can_useMathView(@args)
+	    useMathView              => $self->can_useMathView(@args)
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -805,6 +818,7 @@ sub pre_header_initialize {
 		{ # translation options
 			displayMode     => $displayMode,
 			showHints       => $will{showHints},
+			showResourceInfo => $will{showResourceInfo},
 			showSolutions   => $will{showSolutions},
 			refreshMath2img => $will{showHints} || $will{showSolutions},
 			processAnswers  => 1,
@@ -1403,7 +1417,24 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
-	
+	if ($can{showResourceInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showResourceInfo_id",
+			-label_text => $r->maketext("Show Auxiliary Resources"),
+			-input_attr => $will{showResourceInfo} ?
+			{
+				-name    => "showResourceInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showResourceInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
 	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
 	if ($can{showHints} ) {
 	  # warn "can showHints is ", $can{showHints};
@@ -1453,7 +1484,7 @@ sub output_checkboxes{
 	  }
 	}
 	
-	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
+	if ($can{showCorrectAnswers} or $can{showResourceInfo} or $can{showHints} or $can{showSolutions}) {
 		print CGI::br();
 	}
        
@@ -1807,6 +1838,7 @@ sub output_comments{
 			$formFields,
 			{ # translation options
 			    displayMode     => $displayMode,
+			    showResourceInfo => 0,
 			    showHints       => 0,
 			    showSolutions   => 0,
 			    refreshMath2img => 1,
