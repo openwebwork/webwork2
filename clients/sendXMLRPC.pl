@@ -62,6 +62,7 @@ use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
 use File::Find;
+use Cwd 'abs_path';
 #######################################################
 #############################################
 # Configure
@@ -206,16 +207,20 @@ my $default_form_data = {
 #  MAIN SECTION gather and process problem template files
 ##################################################
 
-our @file_paths = @ARGV;
-
-if ( -d $ARGV[0] ) { # given the full path to a directory we walk the directory tree
-	find(\&wanted, @ARGV);
-} else {    # evaluate all of the files
-	foreach my $file_path (@file_paths) {
+our @files_and_directories = @ARGV;
+# print "files ", join("|", @files_and_directories), "\n";
+foreach my $item (@files_and_directories) {
+	if (-d $item) {
+		my $dir = abs_path($item);
+		find(\&wanted, ($dir));
+	} elsif (-f $item) {
+		my $file_path = abs_path($item);
 		next unless $file_path =~ /\.pg$/;
 		next if $file_path =~ /\-text\.pg$/;
 		next if $file_path =~ /header/i;
 		process_pg_file($file_path);
+	} else {
+		print "$item cannot be found or read\n";
 	}
 }
 sub wanted {
@@ -258,7 +263,7 @@ sub process_pg_file {
 		if ($ans_obj->{type} eq 'MultiAnswer') { 
 		    # singleResponse multianswer type
 		    # an outrageous hack
-			print "handling MultiAnswer singleResponse type\n";
+			print "handling MultiAnswer singleResponse type\n" if $verbose;
 			my $ans_str1 = $ans_obj->{correct_ans};
 			my @ans_array1 = split(/\s*;\s*/, $ans_str1);
 			$correct_answers{$ans_id} = shift @ans_array1;
@@ -323,7 +328,7 @@ sub process_pg_file {
 	display_inputs(%correct_answers) if $verbose;  # choice of correct answers submitted 
 	# should this information on what answers are being submitted have an option switch?
 
-	print "DONE -- $NO_ERRORS -- $ALL_CORRECT\n";
+	print "DONE -- $NO_ERRORS -- $ALL_CORRECT\n"if $verbose;
 }
 sub display_inputs {
 	my %correct_answers = @_;
