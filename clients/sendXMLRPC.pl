@@ -208,7 +208,7 @@ my $default_form_data = {
 
 our @file_paths = @ARGV;
 
-if ( -d $ARGV[0] ) { # given a directory we walk the directory tree
+if ( -d $ARGV[0] ) { # given the full path to a directory we walk the directory tree
 	find(\&wanted, @ARGV);
 } else {    # evaluate all of the files
 	foreach my $file_path (@file_paths) {
@@ -222,7 +222,10 @@ sub wanted {
 	return '' unless $File::Find::name =~ /\.pg$/;
 	return '' if $File::Find::name =~ /\-text\.pg$/;
 	return '' if $File::Find::name =~ /header/i;
-	process_pg_file($File::Find::name) if -f $File::Find::name;
+	eval{
+		process_pg_file($File::Find::name) if -f $File::Find::name;
+	};
+	warn "Error in processing $File::Find::name: $@" if $@;
 }
 
 sub process_pg_file {

@@ -260,8 +260,8 @@ sub xmlrpcCall {
 	my $input   = shift||{};
 	my $requestObject;
 	$command   = 'listLibraries' unless defined $command;
-	  my $default_inputs = $self->default_inputs();
-	  $requestObject = {%$default_inputs, %$input};  #input values can override default inputs
+	my $default_inputs = $self->default_inputs();
+	$requestObject = {%$default_inputs, %$input};  #input values can override default inputs
 	  
 	$self->request_object($requestObject);   # store the request object for later
 	
@@ -294,9 +294,17 @@ sub xmlrpcCall {
 	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
-
-	  if ( ( not ref($result) ) or $result->fault) { # report errors
-		my $err_string = 'Error message for '.
+	  
+	  
+	  if (not ref($result) ) {
+	  	my $error_string = "xmlrpcCall to $command returned no result for ". 
+	  	     ($self->{sourceFilePath}//'')."\n";
+	  	print STDERR $error_string;
+	  	$self->error_string($error_string);
+	  	$self->fault(1);
+	  	return $self;
+	  } elsif ( $result->fault  ) { # report errors
+		my $error_string = 'Error message for '.
 		  join( ' ',
 			  "command:",
 			  $command,
@@ -306,9 +314,9 @@ sub xmlrpcCall {
 			  $result->faultstring, "\n<br/>End error message<br/>\n"
 		  );
 
-		  print STDERR $err_string;
+		  print STDERR $error_string;
 		  $self->return_object($result->result());
-		  $self->error_string($err_string);
+		  $self->error_string($error_string);
 		  $self->fault(1); # set fault flag to true
 		  return $self;  
 	  } else {
