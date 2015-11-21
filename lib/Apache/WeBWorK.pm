@@ -187,12 +187,19 @@ sub htmlMessage($$$@) {
 	$warnings = htmlEscape($warnings);
 	$exception = htmlEscape($exception);
 	
-	my @warnings = defined $warnings ? split m|&lt;br /&gt;|, $warnings : ();  #fragile
+	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
+
+	# $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf
+	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
+	# if an explicit email address has not been set.
 	
-	my $admin = ($ENV{SERVER_ADMIN}
-		? " (<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
+	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
+	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined. 
+
+	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
+		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
 		: "");
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = htmlEscape( $r->method  );
@@ -207,7 +214,7 @@ sub htmlMessage($$$@) {
 <div style="text-align:left">
  <h2>WeBWorK error</h2>
  <p>An error occured while processing your request. For help, please send mail
- to this site's webmaster$admin, including all of the following information as
+ to this site's webmaster $admin, including all of the following information as
  well as what what you were doing when the error occured.</p>
  <p>$time</p>
  <h3>Warning messages</h3>
@@ -287,8 +294,8 @@ Formats a list of warning strings as list items for HTML output.
 
 sub htmlWarningsList(@) {
 	my (@warnings) = @_;
+
 	foreach my $warning (@warnings) {
-		$warning = htmlEscape($warning);
 		$warning = "<li><code>$warning</code></li>";
 	}
 	return join "\n", @warnings;

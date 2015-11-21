@@ -180,6 +180,8 @@ if($libraryVersion eq '2.5') {
 	morelt_id int(127) DEFAULT 0 NOT NULL,
 	level int(15),
 	language varchar(15),
+	static TINYINT,
+	MO TINYINT,
 	PRIMARY KEY (pgfile_id)
 '],
 [$tables{keyword}, '
@@ -436,6 +438,9 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 my $clsep = '<<<';
 my $clinner = '__';
 my @cllist = ();
+# Record full taxonomy for tagging menus (does not include cross-lists)
+my $tagtaxo = [];
+my ($chaplist, $seclist) = ([],[]);
 
 my $canopenfile = 0;
 if(open(IN, "$libraryRoot/Taxonomy2")) {
@@ -475,17 +480,28 @@ if($canopenfile) {
 		# instead they go in a list of crosslists to deal with after
 		# the full taxonomy is read in
 		if($count == 0) { #DBsubject
-			$taxo->{$line} = {} if $oktag;
 			$cursub = $line;
+			if($oktag) {
+				$taxo->{$line} = {};
+				($chaplist, $seclist) = ([],[]);
+				push @{$tagtaxo}, {name=>$line, subfields=>$chaplist};
+			}
 			$subj = safe_get_id($tables{dbsubject}, 'DBsubject_id',
 				qq(WHERE name = ?), [$line], 1, "", $line);
 		} elsif($count == 1) { #DBchapter
-			$taxo->{$cursub}->{$line} = {} if $oktag;
+			if($oktag) {
+				$taxo->{$cursub}->{$line} = {};
+				$seclist=[];
+				push @{$chaplist}, {name=>$line, subfields=>$seclist};
+			}
 			$curchap = $line;
 			$chap = safe_get_id($tables{dbchapter}, 'DBchapter_id',
 				qq(WHERE name = ? and DBsubject_id = ?), [$line, $subj], 1, "", $line, $subj);
 		} else { #DBsection
-			$taxo->{$cursub}->{$curchap}->{$line} = [] if $oktag;
+			if($oktag) {
+				$taxo->{$cursub}->{$curchap}->{$line} = [];
+				push @{$seclist}, {name=>$line};
+			}
 			$sect = safe_get_id($tables{dbsection}, 'DBsection_id',
 				qq(WHERE name = ? and DBchapter_id = ?), [$line, $chap], 1, "", $line, $chap);
 		}
@@ -493,6 +509,14 @@ if($canopenfile) {
 	close(IN);
 }
 #### End of taxonomy/taxonomy2
+
+#### Save the official taxonomy in json format
+my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
+my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
+open(OUTF, ">$file") or die "Cannot open $file";
+print OUTF to_json($tagtaxo,{pretty=>1}) or die "Cannot write to $file";
+close(OUTF);
+print "Saved taxonomy to $file.\n";
 
 #### Now deal with cross-listed sections
 for my $clinfo (@cllist) {
@@ -644,7 +668,7 @@ sub pgfiles {
 			my $path_id = safe_get_id($tables{path}, 'path_id',
 				qq(WHERE path = ?), [$pgpath], 1, "", $pgpath, "", "");
 
-			# pgfile table -- set 2 defaults first
+			# pgfile table -- set 4 defaults first
 
 			## TODO this is where we have to deal with crosslists, and pgfileid
 			##      will be an array of id's
@@ -653,12 +677,14 @@ sub pgfiles {
 			my $level = $tags->{Level} || 0;
 			# Default language is English
 			my $lang = $tags->{Language} || "en";
+			my $mathobj = $tags->{MO} || 0;
+			my $static = $tags->{Static} || 0;
 
 			my @pgfile_ids = ();
 
 			for my $DBsection_id (@DBsection_ids) {
 				my $pgfile_id = safe_get_id($tables{pgfile}, 'pgfile_id',
-					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? ), [$pgfile, $path_id, $DBsection_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, 0, $level, $lang);
+					qq(WHERE filename = ? AND path_id = ? AND DBsection_id = ? ), [$pgfile, $path_id, $DBsection_id], 1, "", $DBsection_id, $author_id, $tags->{Institution}, $path_id, $pgfile, 0, $level, $lang, $static, $mathobj);
 				push @pgfile_ids, $pgfile_id;
 			}
 #if (scalar(@pgfile_ids)>1) {

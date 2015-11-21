@@ -628,7 +628,7 @@ sub getTableParams {
 	
 	my %tableParams;
 	foreach my $param ($r->param) {
-		next unless $param =~ m/^(?:set)\./;
+		next unless $param =~ m/^(?:.*set)\./;
 		$tableParams{$param} = [ $r->param($param) ];
 	}
 	return %tableParams;
@@ -1758,7 +1758,7 @@ sub readSetDef {
 
 	my $setName = '';
 
-	if ($fileName =~ m|^set([.\w-]+)\.def$|) {
+	if ($fileName =~ m|^.*set([.\w-]+)\.def$|) {
 		$setName = $1;
 	} else {
 		$self->addbadmessage( 
@@ -1798,7 +1798,7 @@ sub readSetDef {
 			$line =~ s|(#.*)||;                              ## don't read past comments
 			unless ($line =~ /\S/) {next;}                   ## skip blank lines
 			$line =~ s|\s*$||;                               ## trim trailing spaces
-			$line =~ m|^\s*(\w+)\s*=\s*(.*)|;
+			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
 			
 			######################
 			# sanity check entries
@@ -1848,6 +1848,8 @@ sub readSetDef {
 				$relaxRestrictIP = ( $value ) ? $value : 'No';
 			} elsif ($item eq 'problemList') {
 				last;
+			} elsif ($item eq 'problemListV2') {
+			    die $self->r->maketext("Newer problem set def files must be imported using Hmwk Sets Editor2");
 			} else {
 				warn "readSetDef error, can't read the line: ||$line||";
 			}

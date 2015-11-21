@@ -203,14 +203,26 @@ sub body {
 		
 		# get info about remote user (stolen from &WeBWorK::Authen::write_log_entry)
 		my ($remote_host, $remote_port);
-
-		# If its apache 2.4 then it has to also mod perl 2.0 or better
+		
 		my $APACHE24 = 0;
-		if (MP2 && Apache2::ServerUtil::get_server_banner() =~ 
-		  m:^Apache/(\d\.\d+\.\d+):) {
-		    $APACHE24 = version->parse($1) >= version->parse('2.4.00');
+		# If its apache 2.4 then it has to also mod perl 2.0 or better
+		if (MP2) {
+		    my $version;
+		    
+		    # check to see if the version is manually defined
+		    if (defined($ce->{server_apache_version}) &&
+			$ce->{server_apache_version}) {
+			$version = $ce->{server_apache_version};
+			# otherwise try and get it from the banner
+		    } elsif (Apache2::ServerUtil::get_server_banner() =~ 
+			   m:^Apache/(\d\.\d+):) {
+			$version = $1;
+		    }
+		    
+		    if ($version) {
+			$APACHE24 = version->parse($version) >= version->parse('2.4');
+		    }
 		}
-
 		# If its apache 2.4 then the API has changed
 		if ($APACHE24) {
 		    $remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
@@ -238,6 +250,7 @@ sub body {
 		
 		# bring up a mailer
 		my $mailer = Mail::Sender->new({
+			tls_allowed => $ce->{tls_allowed}//1, # default for Mail::Sender is allow tls
 			from => $ce->{mail}{smtpSender},
 			fake_from => $sender,
 			to => join(",", @recipients),

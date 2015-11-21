@@ -23,7 +23,7 @@ $PAR
 At the upper left are the navigation buttons that allow you to move
 from problem to problem.  The ${LQ}Next$RQ and ${LQ}Previous$RQ
 buttons, naturally, send you to the next and previous problems.  The
-${LQ}Prob. List$RQ button takes you back to the opening
+${LQ}Problem List$RQ button takes you back to the opening
 page for the homework set (the one that lists all the problems and
 gives the instructions for the homework set).
 $PAR
@@ -31,8 +31,7 @@ $PAR
 The area below the navigation buttons is where $WW tells you about
 your score for the current problem.  When you have submitted your
 answers, this is where you will be given information about what
-answers you got right and wrong.  (It will be shown on a grey
-backgound to help make it stand out; you will see this later.) This
+answers you got right and wrong.  This
 area also shows you how many points a problem is worth.
 $PAR
 
@@ -49,19 +48,9 @@ information also may appear there, such as a message indicating that
 the due date is passed, or that answers are available.
 $PAR
 
-In the red panel at the left, instead of the list of homework sets, you
+In the panel at the left, instead of the list of homework sets, you
 now have a list of the problems within this assignment.  You can go to
-any problem just by clicking on it.  The checkboxes at the bottom of
-the panel are discussed in the next problem.
-$PAR
-
-In the center of the top red panel is an indication of how much time
-you have left to work on the problems for this set.  Note that this is
-computed at the moment you downloaded the problem page; if you use the
-${LQ}Back$RQ and ${LQ}Forward$RQ buttons on your browser, this does
-not reload the page, so the times will not be updated.  Reload the
-page using your browser's Reload or Refresh buttons to get the current
-time.
+any problem just by clicking on it. There is also a progress bar which gives you a visual indication of your progress on the set and, following each problem number, an icon indicating if the problem has been answered corrrectly or still needs to be worked on to get full credit.
 $PAR
 
 The buttons at the bottom of the screen, including the ${LQ}Submit

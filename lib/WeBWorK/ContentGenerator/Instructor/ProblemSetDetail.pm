@@ -39,13 +39,13 @@ use WeBWorK::Utils::DatePickerScripts;
 # 	but they are functionally and semantically different
 
 # these constants determine which fields belong to what type of record
-use constant SET_FIELDS => [qw(set_header hardcopy_header open_date due_date answer_date visible description enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother)];
+use constant SET_FIELDS => [qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother prPeriod)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
@@ -57,7 +57,7 @@ use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attemp
 # FIXME: in the long run, we may want to let hide_score and hide_work be
 # FIXME: set for non-gateway assignments.  right now (11/30/06) they are
 # FIXME: only used for gateways
-use constant SET_FIELD_ORDER => [qw(open_date due_date answer_date visible enable_reduced_scoring reduced_scoring_date restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
+use constant SET_FIELD_ORDER => [qw(open_date reduced_scoring_date due_date answer_date visible enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip hide_hint assignment_type)];
 # use constant GATEWAY_SET_FIELD_ORDER => [qw(attempts_per_version version_time_limit time_interval versions_per_interval problem_randorder problems_per_page hide_score hide_work)];
 use constant GATEWAY_SET_FIELD_ORDER => [qw(version_time_limit time_limit_cap attempts_per_version time_interval versions_per_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work)];
 
@@ -108,7 +108,7 @@ use constant FIELD_PROPERTIES => {
 	open_date => {
 		name      => "Opens",
 		type      => "edit",
-		size      => "30",
+		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -118,7 +118,7 @@ use constant FIELD_PROPERTIES => {
 	due_date => {
 		name      => "Answers Due",
 		type      => "edit",
-		size      => "30",
+		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -128,7 +128,7 @@ use constant FIELD_PROPERTIES => {
 	answer_date => {
 		name      => "Answers Available",
 		type      => "edit",
-		size      => "30",
+		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -158,7 +158,7 @@ use constant FIELD_PROPERTIES => {
 	reduced_scoring_date => {
 		name      => "Reduced Scoring Date",
 		type      => "edit",
-		size      => "30",
+		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
@@ -221,7 +221,7 @@ use constant FIELD_PROPERTIES => {
 		name      => "Assignment type",
 		type      => "choose",
 		override  => "all",
-		choices   => [qw( default gateway proctored_gateway )],
+		choices   => [qw( default gateway proctored_gateway)],
 		labels    => {	default => "homework",
 				gateway => "gateway/quiz",
 				proctored_gateway => "proctored gateway/quiz",
@@ -337,9 +337,21 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default=>"-1",
 		labels    => {
-				"-1" => "Never",
+			      "-1" => "Never",
+			      "-2" => "Default",
 		},
         },
+	prPeriod => {
+		name => "Rerandomize after",
+		type => "edit",
+		size => "6",
+		override => "any",
+		default=>"-1",
+		labels => {
+			"-1" => "Default",
+			"0" => "Never",
+		},
+	},
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -496,6 +508,10 @@ sub FieldTable {
 	        next if ( $field eq 'showMeAnother' &&
                           !$ce->{pg}->{options}->{enableShowMeAnother} );
 
+		# skip the periodic re-randomization field if it is not enabled
+		next if ( $field eq 'prPeriod' &&
+			!$ce->{pg}->{options}->{enablePeriodicRandomization} );
+
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
 		}
@@ -588,13 +604,13 @@ sub FieldHTML {
 	}
 
 	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
-	$globalValue = (defined($globalValue)) ? ($labels{$globalValue || ""} || $globalValue) : "";
-	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : $blankfield;
+	$globalValue = (defined($globalValue)) ? ($labels{$globalValue // ""} || $globalValue) : ""; # this allows for a label if value is 0
+	$userValue = (defined($userValue)) ? ($labels{$userValue // ""} || $userValue) : $blankfield; # this allows for a label if value is 0
 
 	if ($field =~ /_date/) {
-		$globalValue = $self->formatDateTime($globalValue) if defined $globalValue && $globalValue ne $labels{""};
+		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P') if defined $globalValue && $globalValue ne $labels{""};
 		# this is still fragile, but the check for blank (as opposed to 0) $userValue seems to prevent errors when no user has been assigned.
-		$userValue = $self->formatDateTime($userValue) if defined $userValue && $userValue =~/\S/ && $userValue ne $labels{""};
+		$userValue = $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') if defined $userValue && $userValue =~/\S/ && $userValue ne $labels{""};
 	}
 
 	if ( defined($properties{convertby}) && $properties{convertby} ) {
@@ -1779,7 +1795,8 @@ sub body {
 
 	# a useful gateway variable
 	my $isGatewaySet = ( $setRecord->assignment_type =~ /gateway/ ) ? 1 : 0;
-	
+	my $isJitarSet = ($setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+
 	# DBFIXME no need to get ID lists -- counts would be fine
 	my $userCount        = $db->listUsers();
 	my $setCount         = $db->listGlobalSets(); # if $forOneUser;
@@ -1807,6 +1824,12 @@ sub body {
 
 	$userCountMessage = $r->maketext("The set [_1] is assigned to [_2].", $setID, $userCountMessage);
 	$setCountMessage  = $r->maketext("The user [_1] has been assigned [_2].", $editForUser[0], $setCountMessage) if $forOneUser;
+
+
+	if ($isJitarSet) {
+	    print CGI::p(CGI::div({class=>"ResultsWithError"}, $r->maketext("You cannot use this version of Set Detail to edit just-in-time type sets.  You must use Set Detail 2.")));
+	    return '';
+	}
 
 	if ($forUsers) {
 	    ##############################################
@@ -1842,6 +1865,7 @@ sub body {
 		my $gwmsg = ( $isGatewaySet && ! $editingSetVersion ) ?
 			CGI::br() . CGI::em($r->maketext("To edit a specific student version of this set, edit (all of) her/his assigned sets.")) : "";
 		my $vermsg = ( $editingSetVersion ) ? ", $editingSetVersion" : "";
+
 
 		print CGI::table({border=>2,cellpadding=>10}, 
 		    CGI::Tr({},
@@ -1907,12 +1931,12 @@ sub body {
 	} else {
 		print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the set for ALL students.")));
 	}
-
+	
 	print CGI::start_form({id=>"problem_set_form", name=>"problem_set_form", method=>"POST", action=>$setDetailURL});
 	print $self->hiddenEditForUserFields(@editForUser);
 	print $self->hidden_authen_fields;
-	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")});
-	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
+	print CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes"), ($isJitarSet ? ('disabled',1) : ())});
+	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form"), ($isJitarSet ? ('disabled',1) : ())});
 
 	# spacing
 	print CGI::p();
@@ -2286,8 +2310,8 @@ sub body {
 			);
 	}
 	print CGI::br(),CGI::br(),
-		CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes")}),
-		CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only")}),
+		CGI::input({type=>"submit", name=>"submit_changes", value=>$r->maketext("Save Changes"), ($isJitarSet ? ('disabled',1) : ())}),
+		CGI::input({type=>"submit", name=>"handle_numbers", value=>$r->maketext("Reorder problems only"), ($isJitarSet ? ('disabled',1) : ())}),
 			$r->maketext("(Any unsaved changes will be lost.)");
 
 	#my $editNewProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID =>'new_problem'    });
@@ -2323,10 +2347,10 @@ sub output_JS {
 	.changed {background-color: #ffffcc}
     </style>!,"\n";
     
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-
     	
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";

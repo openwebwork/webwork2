@@ -39,7 +39,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers is_restricted after/;
+use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -507,20 +507,55 @@ sub display_form {
 		print CGI::hidden("selected_sets",   $selected_set_id ),
 		      CGI::hidden( "selected_users", $selected_user_id);
 
-		my $mergedSet = $db->getMergedSet($selected_user_id,
-						  $selected_set_id);
-
+ 		my $mergedSet;
+ 		if ( $selected_set_id =~ /(.*),v(\d+)$/ ) {
+ 		    # showing answers is more complicated for gateway tests
+ 		    my $the_set_id = $1;
+ 		    my $the_set_version = $2;
+ 		    $mergedSet = $db->getMergedSetVersion( $selected_user_id,
+ 							   $the_set_id,
+ 							   $the_set_version );
+ 		    my $mergedProblem = $db->getMergedProblemVersion(
+ 			$selected_user_id, $the_set_id, $the_set_version, 1 );
+ 
+ 		    # then the parameters we need to know to determine
+ 		    #    if correct answers may be shown are
+ 		    my $maxAttempts = $mergedSet->attempts_per_version() || 0;
+ 		    my $attemptsUsed = $mergedProblem->num_correct + $mergedProblem->num_incorrect || 0;
+ 
+ 		    $canShowCorrectAnswers = $perm_view_answers ||
+ 			( defined($mergedSet) && defined($mergedProblem) &&
+ 			  ( ( after($mergedSet->answer_date) ||
+ 			       ( ( $attemptsUsed >= $maxAttempts &&
+                                   $maxAttempts != 0 ) ||
+                                 after($mergedSet->due_date +
+                                       ($mergedSet->answer_date -
+                                        $mergedSet->due_date)) )
+ 			    ) &&
+ 			    ( ( $mergedSet->hide_score eq 'N' &&
+ 				$mergedSet->hide_score_by_problem ne 'Y' ) ||
+ 			      ( $mergedSet->hide_score eq 'BeforeAnswerDate' &&
+ 				after($mergedSet->answer_date) ) 
+ 			    ) 
+ 			  ) 
+ 			);
+ 			    
+ 		} else {
+ 		    $mergedSet = $db->getMergedSet($selected_user_id,
+ 						   $selected_set_id);
+ 
+ 		    $canShowCorrectAnswers = $perm_view_answers ||
+ 			(defined($mergedSet) && after($mergedSet->answer_date));
+ 		}
 	        # make display for versioned sets a bit nicer
 		$selected_set_id =~ s/,v(\d+)$/ (test $1)/;
 	
 		# FIXME!	
 		print CGI::p($r->maketext("Download hardcopy of set [_1] for [_2]?", $selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name));
 		
-		$canShowCorrectAnswers = $perm_view_answers ||
-		    (defined($mergedSet) && after($mergedSet->answer_date));
-
-		$canShowSolutions = $perm_view_answers ||
-		    (defined($mergedSet) && after($mergedSet->answer_date));
+ 		$canShowSolutions = $canShowCorrectAnswers;
+ 		# $canShowSolutions = $perm_view_answers ||
+ 		#     (defined($mergedSet) && after($mergedSet->answer_date));
 
 	
 	}
@@ -988,10 +1023,9 @@ sub write_set_tex {
 		@problemIDs = @newOrder;
 	}
 		    
-	
 	# write set header
 	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header); # 0 => pg file specified directly
-	
+       
 	# write each problem
 	# for versioned problem sets (gateway tests) we like to include 
 	#   problem numbers
@@ -1181,7 +1215,18 @@ sub write_problem_tex {
 
 	print $FH "{\\bf Problem $versioned.}\n" 
 		if ( $versioned && $MergedProblem->problem_id != 0 );
-	print $FH $pg->{body_text};
+
+	my $body_text = $pg->{body_text};
+
+	# Use the pretty problem number if its a jitar problem
+	if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
+	    my $id = $MergedProblem->problem_id;
+	    my $prettyID = join('.',jitar_id_to_seq($id));
+	    
+	    $body_text =~ s/$id/$prettyID/;
+	}
+
+	print $FH $body_text;
 
 	my @ans_entry_order = defined($pg->{flags}->{ANSWER_ENTRY_ORDER}) ? @{$pg->{flags}->{ANSWER_ENTRY_ORDER}} : ( );
 
