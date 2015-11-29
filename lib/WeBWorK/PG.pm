@@ -218,6 +218,10 @@ sub defineProblemEnvir {
 	$envir{classDirectory}         = undef;
     $envir{macrosPath}             = $ce->{pg}->{directories}{macrosPath};
     $envir{appletPath}             = $ce->{pg}->{directories}{appletPath};
+    $envir{macrosPath}             = $ce->{pg}->{directories}{macrosPath};
+    $envir{htmlPath}               = $ce->{pg}->{directories}{htmlPath};
+    $envir{imagesPath}             = $ce->{pg}->{directories}{imagesPath};
+    $envir{pdfPath}                = $ce->{pg}->{directories}{pdfPath};
     $envir{pgDirectories}          = $ce->{pg}->{directories};
 	$envir{webworkHtmlDirectory}   = $ce->{webworkDirs}->{htdocs}."/";
 	$envir{webworkHtmlURL}         = $ce->{webworkURLs}->{htdocs}."/";
@@ -335,7 +339,7 @@ __END__
 	 $psvn,
 	 $formFields  # in &WeBWorK::Form::Vars format
 	 { # translation options
-		 displayMode     => "images", # (plainText|formattedText|images)
+		 displayMode     => "images", # (plainText|formattedText|images|MathJax)
 		 showHints       => 1,        # (0|1)
 		 showSolutions   => 0,        # (0|1)
 		 refreshMath2img => 0,        # (0|1)
@@ -420,7 +424,7 @@ a reference to a hash containing the following data:
 
 =item displayMode 
 
-one of "plainText", "formattedText", or "images"
+one of "plainText", "formattedText", "MathJax" or "images"
 
 =item showHints
 
