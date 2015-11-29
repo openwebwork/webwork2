@@ -20,15 +20,140 @@
 
 webwork2/clients/sendXMLRPC.pl
 
-This script will take a file and send it to a WeBWorK daemon webservice
-to have it rendered.  The result is split into the basic HTML rendering
-and evaluation of answers and then passed to a browser for printing.
+=head1 DESCRIPTION
 
-The formatting allows the browser presentation to be interactive with the 
-daemon running the script webwork2/lib/renderViaXMLRPC.pm
+This script will take a list of files or directories
+and send it to a WeBWorK daemon webservice
+to have it rendered.  For directories each .pg file under that 
+directory is rendered. 
 
-Rembember to configure the local output file and display command !!!!!!!!
+The results can be displayed in a browser (use -b or -B switches) as was
+done with renderProblem.pl, on the command line (Use -h or -H switches) as
+was done with renderProblem_rawoutput.pl or summary information about whether the 
+problem was correctly rendered can be sent to a log file (use -c or C switches).
 
+The capital letter switches, -B, -H, and -C render the question twice.  The first
+time returns an answer hash which contains the correct answers. The question is
+then resubmitted to the renderer with the correct answers filled in and displayed.  
+
+IMPORTANT: Remember to configure the local output file and display command near the 
+top of this script. !!!!!!!!
+
+IMPORTANT: Create a valid credentials file.
+
+=cut
+
+=head1    SYNOPSIS
+
+	sendXMLRPC -vcCbB input.pg 
+
+=head1   DETAILS
+
+=head2 credentials file
+    
+    These locations are searched, in order,  for the credentials file.
+    ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials')
+    
+    Place a credential file containing the following information at one of the locations above 
+    or create a file with this information and specify it with the --credentials option.
+    
+    	%credentials = (
+    			userID                 => "my login name for the webwork course",
+    			course_password        => "my password ",
+    			courseID               => "the name of the webwork course",
+              XML_URL	               => "url of rendering site
+              XML_PASSWORD          => "site password" # preliminary access to site
+              $FORM_ACTION_URL      =  'http://localhost:80/webwork2/html2xml'; #action url for form
+    	);
+
+=cut
+
+=head2 Options
+
+=over 4
+
+=item  -a  
+
+	Displays the answer hashes returned by the question on the command line.
+
+=item  -A  
+
+	Same as -a but renders the question with the correct answers submitted.
+
+=item  -b  
+
+	Display the rendered question in a browser (specified by the DISPLAY_HTML_COMMAND variable).
+
+=item  -B  
+
+	Same as -b but renders the question with the correct answers submitted.
+
+=item  -h  
+
+	Prints to the command line the entire object returned by 
+    the webwork_client xmlrpc request.
+    This includes the answer information displayed by -a and -A and much more.
+
+=item  -H  
+
+	Same as -h but renders the question with the correct answers submitted
+
+=item	-c 
+
+	"check" -- Record success or failure of rendering the question to a log file. 
+
+=item	-C 
+
+	Same as -c but the question is rendered with the correct answers submitted. 
+    This succeeds only if the correct answers, as determined from the answer hash, all succeed.
+
+=item	 f=s 
+
+	Specify the format used by the browser in displaying the question. 
+         Choices for s are
+         standard
+         sticky
+         debug 
+         simple
+         
+
+=item	-v 
+
+	Verbose output. Used mostly for debugging. 
+    In particular it displays explicitly the correct answers 
+    which are (will be)  submitted to the question.
+
+=item   
+
+	The single letter options can be "bundled" e.g.  -vcCbB
+
+=item	--pg 
+
+	Triggers the printing of the all of the variables available to the PG question. 
+    The table appears within the question content. Use in conjunction with -b or -B.
+
+=item		--anshash 
+
+	Prints the answer hash for each answer in the PG_debug output which appears below
+    the question content. Use in conjunction with -b or -B. 
+    Similar to -a or -A but the output appears in the browser and 
+    not on the command line. 
+
+=item	--ansgrp  	
+
+	Prints the PGanswergroup for each answer evaluator. The information appears in 
+    the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
+    This contains more information than printing the answer hash. (perhaps too much). 
+
+=item	--credentials=s
+
+ 	Specifies a file s where the  credential information can be found.
+
+=item	--help
+
+       Prints help information. 
+
+=back
 =cut
 
 use strict;
@@ -65,22 +190,23 @@ use File::Find;
 use Cwd 'abs_path';
 #######################################################
 #############################################
-# Configure
+# Configure according to local machine
 #############################################
 
 ### verbose output when UNIT_TESTS_ON =1;
  our $UNIT_TESTS_ON             = 0;
   
  ### Command line for displaying the temporary file in a browser.
- #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile above
-use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' ";
+ #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile 
+use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
 use constant  HASH_DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
  
 ### Path to a temporary file for storing the output of renderProblem.pl
  use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
  die "You must make the directory ".TEMPOUTPUTDIR().
      " writeable " unless -w TEMPOUTPUTDIR();
-### Path to a temporary file for storing the output of renderProblem.pl
+     
+### Path to a temporary file for storing the output of sendXMLRPC.pl
 use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/bad_problems.txt";
 die "You must first create an output file at ".LOG_FILE().
      " with permissions 777 " unless -w LOG_FILE();
@@ -125,6 +251,10 @@ GetOptions(
 	'credentials=s' => \$credentials_path,
 	'help'          => \$print_help_message,
 );
+
+
+print_help_message() if $print_help_message;
+
 ####################################################
 # get credentials
 ####################################################
@@ -556,20 +686,6 @@ sub get_source {
 	return $file_path, $source;
 }
 
-=head2 credentials file
-    
-    # Place a credential file containing the following information at one of the locations above.
-    # 	%credentials = (
-    # 			userID                 => "my login name for the webwork course",
-    # 			course_password        => "my password ",
-    # 			courseID               => "the name of the webwork course",
-    #           XML_URL	               => "url of rendering site
-    #           XML_PASSWORD          => "site password" # preliminary access to site
-    #           $FORM_ACTION_URL      =  'http://localhost:80/webwork2/html2xml'; #action url for form
-    # 	);
-
-=cut
-
 
 
 
@@ -618,5 +734,119 @@ sub pretty_print_rh {
 	return $out." ";
 }
 
+
+sub print_help_message {
+print <<'EOT';
+NAME
+    webwork2/clients/sendXMLRPC.pl
+
+DESCRIPTION
+    This script will take a list of files or directories and send it to a
+    WeBWorK daemon webservice to have it rendered. For directories each .pg
+    file under that directory is rendered.
+
+    The results can be displayed in a browser (use -b or -B switches) as was
+    done with renderProblem.pl, on the command line (Use -h or -H switches)
+    as was done with renderProblem_rawoutput.pl or summary information about
+    whether the problem was correctly rendered can be sent to a log file
+    (use -c or C switches).
+
+    The capital letter switches, -B, -H, and -C render the question twice.
+    The first time returns an answer hash which contains the correct
+    answers. The question is then resubmitted to the renderer with the
+    correct answers filled in and displayed.
+
+    IMPORTANT: Remember to configure the local output file and display
+    command near the top of this script. !!!!!!!!
+
+    IMPORTANT: Create a valid credentials file.
+
+SYNOPSIS
+            sendXMLRPC -vcCbB input.pg
+
+DETAILS
+  credentials file
+        These locations are searched, in order,  for the credentials file.
+        ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials')
+    
+        Place a credential file containing the following information at one of the locations above 
+        or create a file with this information and specify it with the --credentials option.
+    
+            %credentials = (
+                            userID                 => "my login name for the webwork course",
+                            course_password        => "my password ",
+                            courseID               => "the name of the webwork course",
+                  XML_URL                  => "url of rendering site
+                  XML_PASSWORD          => "site password" # preliminary access to site
+                  $FORM_ACTION_URL      =  'http://localhost:80/webwork2/html2xml'; #action url for form
+            );
+
+  Options
+    -a
+                Displays the answer hashes returned by the question on the command line.
+
+    -A
+                Same as -a but renders the question with the correct answers submitted.
+
+    -b
+                Display the rendered question in a browser (specified by the DISPLAY_HTML_COMMAND variable).
+
+    -B
+                Same as -b but renders the question with the correct answers submitted.
+
+    -h
+                Prints to the command line the entire object returned by 
+                   the webwork_client xmlrpc request.
+                   This includes the answer information displayed by -a and -A and much more.
+
+    -H
+                Same as -h but renders the question with the correct answers submitted
+
+    -c
+                "check" -- Record success or failure of rendering the question to a log file.
+
+    -C
+                Same as -c but the question is rendered with the correct answers submitted. 
+                 This succeeds only if the correct answers, as determined from the answer hash, all succeed.
+
+    f=s
+                Specify the format used by the browser in displaying the question. 
+                 Choices for s are
+                 standard
+                 sticky
+                 debug 
+                 simple
+
+    -v
+                Verbose output. Used mostly for debugging. 
+                 In particular it displays explicitly the correct answers which are (will be)  submitted to the question.
+
+
+                The single letter options can be "bundled" e.g.  -vcCbB
+
+    --pg
+                Triggers the printing of the all of the variables available to the PG question. 
+                The table appears within the question content. Use in conjunction with -b or -B.
+
+    --anshash
+                Prints the answer hash for each answer in the PG_debug output which appears below
+                the question content. Use in conjunction with -b or -B. 
+                Similar to -a or -A but the output appears in the browser and 
+                not on the command line.
+
+    --ansgrp
+                Prints the PGanswergroup for each answer evaluator. The information appears in 
+                the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
+                This contains more information than printing the answer hash. (perhaps too much).
+
+    --credentials=s
+                Specifies a file s where the  credential information can be found.
+
+    --help
+               Prints help information.
+
+
+EOT
+}
 
 1;
