@@ -1326,6 +1326,11 @@ sub output_checkboxes{
 				-name    => "showResourceInfo",
 				-value   => 1,
 			}
+						:
+			{
+				-name    => "showResourceInfo",
+				-value   => 1,
+			}
 		),"&nbsp;";
 	}
 
