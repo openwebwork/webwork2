@@ -177,14 +177,43 @@ $courseFiles{problibs}    = {
 # The complete list of permissions is available in defaults.config.  If you want
 # to change the lowest role which has that permission, use the following syntax:
 
+# This code would give the permission to login to any user with permission
+# level guest or higher.
 #  $permissionLevels{login} = "guest";
 
-# The above code would give the permission to login to any user with permission
-# level guest or higher.
 
-$permissionLevels{dont_log_past_answers} = undef;
+
+# controls logging of the responses to a question
+# in the past answer data base
+# and in the myCourse/logs/answer_log file.
+# Activities of users with this permission enabled are not entered
+# in these logs.  This might be used when collecting student data
+# to avoid contaminating the data with TA and instructor activities.
+# The professor setting means that  professor's answers are not logged or 
+# saved in the past answer database.
+
+#$permissionLevels{dont_log_past_answers} = "ta";
+
+# controls if professors are allowed to actually submit answers when acting as a student.
+# by default professors are not allowed to submit student answers, only check them. 
+
 #$permissionLevels{record_set_version_answers_when_acting_as_student} = "professor";
 #$permissionLevels{record_answers_when_acting_as_student} = "professor";
+
+# controls if the Tagging features are displayed.  This is maily used by library editors
+#$permissionLevels{modify_tags} = "professor";
+
+# controls if students are allowed to change their password/email address.  By default they
+# are allowed to. 
+
+#$permissionLevels{change_password} = undef;
+#$permissionLevels{change_email_address} = "professor";
+
+# controls if students are allowed to view past answers or not.  By default they are allowed to
+
+#$permissionLevels{view_answers} = "ta";
+
+
 
 ################################################################################
 # PG subsystem options
