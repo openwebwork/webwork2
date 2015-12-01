@@ -100,31 +100,29 @@ function WWDatePicker(name,reduced) {
 	    dueDate.setDate(dueDate.getDate()+dueDateOffset);
 	    due_rule.datetimepicker('setDate',dueDate);
 	    due_rule.addClass('changed');
+	} else if (reduced && openDate && openDate > reduced_rule.datetimepicker('getDate')) {
+	    var reducedDate = new Date(openDate);
+	    reduced_rule.datetimepicker('setDate',reducedDate);
+	    reduced_rule.addClass('changed');
 	} else if (openDate && openDate > due_rule.datetimepicker('getDate')) {
 	    dueDate = new Date(openDate);
 	    due_rule.datetimepicker('setDate',dueDate);
 	    due_rule.addClass('changed');
 	}
-
+	
 	if (reduced) {
 	    var reducedDate = reduced_rule.datetimepicker('getDate');
-	    if (openDate && reduced_rule.val() == '') {
-		reducedDate = new Date(openDate);
-		reduced_rule.datetimepicker('setDate',reducedDate);
-		reduced_rule.addClass('changed');
-	    }
-
-	    if (openDate && openDate > reducedDate) {
-		reducedDate = new Date(openDate);
-		reduced_rule.datetimepicker('setDate',reducedDate);
-		reduced_rule.addClass('changed');
-	    }
 	    
-	    if (dueDate && dueDate < reducedDate) {
+	    if (dueDate && reduced_rule.val() == '') {
 		reducedDate = new Date(dueDate);
 		reduced_rule.datetimepicker('setDate',reducedDate);
 		reduced_rule.addClass('changed');
+	    } else if (reducedDate && reducedDate > due_rule.datetimepicker('getDate'))  {
+		dueDate = new Date(reducedDate);
+		due_rule.datetimepicker('setDate',dueDate);
+		due_rule.addClass('changed');
 	    }
+	    
 	}
 	
 	if (dueDate && answer_rule.val() =='') {
