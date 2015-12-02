@@ -2144,6 +2144,14 @@ sub readSetDef {
 						countsParentGrade => $countsParentGrade
 				 });
 			    
+			    # reset the various values
+			    $name = '';
+			    $problemID = '';
+			    $weight = '';
+			    $attemptLimit = '';
+			    $showMeAnother = '';
+			    $attToOpenChildren = '';
+			    $countsParentGrade = '';
 			    
 			} else {
 			    warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
