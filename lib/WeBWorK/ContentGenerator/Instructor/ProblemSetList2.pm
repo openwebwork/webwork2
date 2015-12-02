@@ -2001,7 +2001,11 @@ sub readSetDef {
 			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScore)."\n");
 			$hideScore = 'N';
 		}
-
+		if ( $hideWork ne 'N' && $hideWork ne 'Y' && 
+		     $hideWork ne 'BeforeAnswerDate' ) {
+			warn($r->maketext("The value [_1] for the hideWork option is not valid; it will be replaced with 'N'.", $hideWork)."\n");
+			$hideWork = 'N';
+		}
 		if ( $timeCap ne '0' && $timeCap ne '1' ) {
 			warn($r->maketext("The value [_1] for the capTimeLimit option is not valid; it will be replaced with '0'.", $timeCap)."\n");
 			$timeCap = '0';
