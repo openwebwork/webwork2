@@ -7,13 +7,13 @@ enableReducedScoring = N
 paperHeaderFile   = set0/paperHeaderFile0.pg
 screenHeaderFile  = set0/screenHeaderFile0.pg
 description       = 
-restrictProbProgression = 
-emailInstructor   = 
+restrictProbProgression = 0
+emailInstructor   = 0
 
 problemListV2 
 problem_start
 source_file = set0/prob1.pg
-value = 0
+value = 1
 max_attempts = -1
 showMeAnother = -1
 problem_id = 1
@@ -22,7 +22,7 @@ att_to_open_children = 1
 problem_end
 problem_start
 source_file = set0/prob1a.pg
-value = 0
+value = 1
 max_attempts = -1
 showMeAnother = -1
 problem_id = 2
@@ -31,7 +31,7 @@ att_to_open_children = 1
 problem_end
 problem_start
 source_file = set0/prob1b.pg
-value = 0
+value = 1
 max_attempts = -1
 showMeAnother = -1
 problem_id = 3
@@ -40,7 +40,7 @@ att_to_open_children = 1
 problem_end
 problem_start
 source_file = set0/prob2.pg
-value = 0
+value = 1
 max_attempts = -1
 showMeAnother = -1
 problem_id = 4
@@ -49,7 +49,7 @@ att_to_open_children = 1
 problem_end
 problem_start
 source_file = set0/prob3.pg
-value = 0
+value = 1
 max_attempts = -1
 showMeAnother = -1
 problem_id = 5
@@ -58,7 +58,7 @@ att_to_open_children = 1
 problem_end
 problem_start
 source_file = set0/prob4/prob4.pg
-value = 0
+value = 1
 max_attempts = -1
 showMeAnother = -1
 problem_id = 6
@@ -67,7 +67,7 @@ att_to_open_children = 1
 problem_end
 problem_start
 source_file = set0/prob5.pg
-value = 0
+value = 1
 max_attempts = -1
 showMeAnother = -1
 problem_id = 7

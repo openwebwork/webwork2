@@ -7,8 +7,8 @@ enableReducedScoring = N
 paperHeaderFile   = setMAAtutorial/MAAtutorialSetHeader.pg
 screenHeaderFile  = setMAAtutorial/MAAtutorialSetHeader.pg
 description       = 
-restrictProbProgression = 
-emailInstructor   = 
+restrictProbProgression = 0
+emailInstructor   = 0
 
 problemListV2 
 problem_start

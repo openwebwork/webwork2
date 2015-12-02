@@ -7,8 +7,8 @@ enableReducedScoring = N
 paperHeaderFile   = setDemo/paperHeaderFile1.pg
 screenHeaderFile  = setDemo/screenHeaderFile1.pg
 description       = 
-restrictProbProgression = 
-emailInstructor   = 
+restrictProbProgression = 0
+emailInstructor   = 0
 
 problemListV2 
 problem_start
