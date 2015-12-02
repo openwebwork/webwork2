@@ -12,137 +12,137 @@ emailInstructor   = 0
 
 problemListV2 
 problem_start
+problem_id = 1
 source_file = setOrientation/prob01.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 1
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 2
 source_file = setOrientation/prob02.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 2
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 3
 source_file = setOrientation/prob03.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 3
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 4
 source_file = setOrientation/prob04.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 4
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 5
 source_file = setOrientation/prob05/prob05.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 5
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 6
 source_file = setOrientation/prob06.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 6
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 7
 source_file = setOrientation/prob07.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 7
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 8
 source_file = setOrientation/prob08.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 8
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 9
 source_file = setOrientation/prob09.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 9
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 10
 source_file = setOrientation/prob10.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 10
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 11
 source_file = setOrientation/prob11.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 11
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 12
 source_file = setOrientation/prob12.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 12
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 13
 source_file = setOrientation/prob13.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 13
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 14
 source_file = setOrientation/prob14/prob14.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 14
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 15
 source_file = setOrientation/prob15.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 15
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end

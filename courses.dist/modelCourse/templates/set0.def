@@ -12,65 +12,65 @@ emailInstructor   = 0
 
 problemListV2 
 problem_start
+problem_id = 1
 source_file = set0/prob1.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 1
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 2
 source_file = set0/prob1a.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 2
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 3
 source_file = set0/prob1b.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 3
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 4
 source_file = set0/prob2.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 4
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 5
 source_file = set0/prob3.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 5
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 6
 source_file = set0/prob4/prob4.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 6
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 7
 source_file = set0/prob5.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 7
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end

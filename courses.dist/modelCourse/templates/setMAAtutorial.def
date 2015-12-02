@@ -12,155 +12,155 @@ emailInstructor   = 0
 
 problemListV2 
 problem_start
+problem_id = 1
 source_file = setMAAtutorial/hello.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 1
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 2
 source_file = setMAAtutorial/standardexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 2
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 3
 source_file = setMAAtutorial/simplemultiplechoiceexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 3
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 4
 source_file = setMAAtutorial/multiplechoiceexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 4
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 5
 source_file = setMAAtutorial/matchinglistexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 5
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 6
 source_file = setMAAtutorial/truefalseexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 6
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 7
 source_file = setMAAtutorial/popuplistexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 7
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 8
 source_file = setMAAtutorial/ontheflygraphicsexample1.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 8
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 9
 source_file = setMAAtutorial/ontheflygraphicsexample2.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 9
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 10
 source_file = setMAAtutorial/staticgraphicsexample/staticgraphicsexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 10
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 11
 source_file = setMAAtutorial/hermitegraphexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 11
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 12
 source_file = setMAAtutorial/htmllinksexample/htmllinksexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 12
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 13
 source_file = setMAAtutorial/javascriptexample1.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 13
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 14
 source_file = setMAAtutorial/javascriptexample2.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 14
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 15
 source_file = setMAAtutorial/vectorfieldexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 15
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 16
 source_file = setMAAtutorial/conditionalquestionexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 16
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
 problem_start
+problem_id = 17
 source_file = setMAAtutorial/javaappletexample.pg
 value = 1
 max_attempts = -1
 showMeAnother = -1
-problem_id = 17
 counts_parent_grade = 0
 att_to_open_children = 1 
 problem_end
