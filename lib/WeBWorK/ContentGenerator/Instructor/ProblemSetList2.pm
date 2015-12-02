@@ -2300,11 +2300,11 @@ SET:	foreach my $set (keys %filenames) {
 			# the labelled list makes it easier to add variables and 
 			# easier to tell when they are missing
 			$problemList     .= "problem_start\n";
+			$problemList     .= "problem_id = $problem_id\n";
 			$problemList     .= "source_file = $source_file\n";
 			$problemList     .= "value = $value\n";
 			$problemList     .= "max_attempts = $max_attempts\n";
 			$problemList     .= "showMeAnother = $showMeAnother\n";
-			$problemList     .= "problem_id = $problem_id\n";
 			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
 			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
 			$problemList     .= "problem_end\n"
