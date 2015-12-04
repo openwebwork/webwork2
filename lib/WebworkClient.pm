@@ -85,6 +85,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Utils qw( wwRound);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
+use IO::Socket::SSL;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -179,7 +180,7 @@ sub xmlrpcCall {
 	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
 	# turn of verification of the ssl cert 
 	$transporter->transport->ssl_opts(verify_hostname=>0,
-	    SSL_verify_mode => 'SSL_VERIFY_NONE');
+	    SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE);
 			
     if ($UNIT_TESTS_ON) {
         print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->{url},"\n";
