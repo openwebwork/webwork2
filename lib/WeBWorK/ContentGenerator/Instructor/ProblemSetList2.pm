@@ -1844,8 +1844,8 @@ sub readSetDef {
 	
 	my $r = $self->r;
 
-	if ($fileName =~ m|^.*set([.\w-]+)\.def$|) {
-		$setName = $1;
+	if ($fileName =~ m|^(.*/)?set([.\w-]+)\.def$|) {
+		$setName = $2;
 	} else {
 		$self->addbadmessage( 
 		    qq{The setDefinition file name must begin with   <CODE>set</CODE>},
