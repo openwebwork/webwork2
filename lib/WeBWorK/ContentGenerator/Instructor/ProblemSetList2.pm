@@ -1965,7 +1965,7 @@ sub readSetDef {
 		# validate reduced credit date
 		$reducedScoringDate = $self->parseDateTime($reducedScoringDate) if ($reducedScoringDate);
 
-		if ($reducedScoringDate && ($reducedScoringDate <= $time1 || $reducedScoringDate => $time2)) {
+		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
 		    warn $r->maketext("The reduced credit date should be between the open date [_1] and due date [_2]", $openDate, $dueDate);
 		} elsif (!$reducedScoringDate) {
 		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
