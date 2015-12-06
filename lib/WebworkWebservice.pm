@@ -266,6 +266,10 @@ my $authz  = $fake_r->authz;
  	   print STDERR   "authen has type ", ref($authen), "\n";
  	   print STDERR   "authz  has type ", ref($authz), "\n";
 	}
+	
+	die "Please use 'course_password' instead of 'password' as the key for submitting
+	passwords to this webservice\n" 
+	  if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
 #   FIXME:  can/should we change this????
@@ -273,7 +277,7 @@ my $authz  = $fake_r->authz;
 #   We are borrowing tricks from the AuthenWeBWorK.pm module
 #
 # 	
-
+	
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
 	my $authenOK;
