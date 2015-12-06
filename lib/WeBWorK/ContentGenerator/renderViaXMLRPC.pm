@@ -135,12 +135,8 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
- 
- 	my %inputs_ref;
-	my @keys = $r->mutable_param;  # $r->param;
-	foreach my $key ( @keys ) {
-		$inputs_ref{$key} = $r->param("$key");
-	}
+	# Note: Vars helps handle things like checkbox 'packed' data;
+	my %inputs_ref =  WeBWorK::Form->new_from_paramable($r)->Vars ;
 	my $user_id      = $inputs_ref{userID};
 	my $courseName   = $inputs_ref{courseID};
 	my $displayMode  = $inputs_ref{displayMode};

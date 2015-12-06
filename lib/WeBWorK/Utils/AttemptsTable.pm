@@ -319,8 +319,8 @@ sub answerTemplate {
 	my $answerNumber     = 1;
     foreach my $ans_id (@{ $self->answerOrder() }) {  
     	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
-    	push @correct_ids,   $ans_id if $rh_answers->{$ans_id}->{score} >= 1;
-    	push @incorrect_ids,   $ans_id if $rh_answers->{$ans_id}->{score} < 1;
+    	push @correct_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) >= 1;
+    	push @incorrect_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) < 1;
     	$self->{essayFlag} = 1;
     }
 	my $answerTemplate = CGI::h3($self->maketext("Results for this submission")) .
