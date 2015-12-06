@@ -255,8 +255,6 @@ my $authz  = $fake_r->authz;
 		user_id		=>  $rh_input ->{userID},
 		password    =>  $rh_input ->{course_password},  #should this be course_password?
 		session_key =>  $rh_input ->{session_key},
-#		ce			=>  $fake_r->ce,
-#		db          =>  $fake_r->db,
 		fake_r      =>  $fake_r,
 	};	
 	$self = bless $self, $class;
@@ -995,20 +993,6 @@ sub format_hash_ref {
 	}
 	$out_str;
 }
-
-
-# sub create_course_environment {
-# 	my $self = shift;
-# 	my $courseName = shift;
-# 	my $ce = WeBWorK::CourseEnvironment->new( 
-# 				{webwork_dir		=>		$WebworkWebservice::WW_DIRECTORY, 
-# 				 courseName         =>      $courseName
-# 				 });
-# 	#warn "Unable to find environment for course: |$courseName|" unless ref($ce);
-# 	return ($ce);
-# }
-###############################
-
 
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
