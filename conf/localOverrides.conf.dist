@@ -288,29 +288,19 @@ $pg{options}{periodicRandomizationPeriod} = 5;
 # Temporary hack for displaying the different versions of the editors
 ################################################################################
 # These configurations can be placed in course.conf file to tune the behavior for individual courses
-# The items below can be used to override the settings in defaults.config
-# One can also use $showeditors{classlisteditor1}=0; to override
-# These will disappear (or at least decrease in number) once the final editor verisons
-# are determined. 
- %showeditors = (
-# 	classlisteditor1   => 1,
- 	classlisteditor2   => 1,
 
-# 	homeworkseteditor1 => 1,
- 	homeworkseteditor2 => 1,
+# These will enable the versions of the problem set detail page and library browser page
+# that do not use the xmlrpc pathway
 
-#       problemsetdetail1 => 1,
-        problemsetdetail2 => 1,
+#$showeditors{problemsetdetail1} = 1;
+#$showeditors{librarybrowsernojs} = 1;
 
-# 	librarybrowsernojs    => 1,
- 	librarybrowser1    => 1,
-# 	librarybrowser2    => 1,
-#	librarybrowser3    => 1,
-# 	
-#	pgproblemeditor1   => 1,
-	pgproblemeditor2   => 1,
-# 	pgproblemeditor3   => 1,
-);
+# This will enable the slightly fancier PG problem editor 3
+
+#$showeditors{pgproblemeditor3} = 1;
+
+# This will turn off ww3 
+#$showeditors{ww3} = 0;
 
 ################################################################################
 # Directory for temporary files
