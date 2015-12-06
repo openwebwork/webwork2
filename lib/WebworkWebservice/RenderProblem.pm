@@ -113,8 +113,8 @@ sub renderProblem {
  # sanity check   
 	my $user_id      = $self->{user_id};
 	my $courseName   = $self->{courseName};
-	my $displayMode  = $rh->{envir}->{inputs_ref}->{displayMode};
-	my $problemSeed  = $rh->{envir}->{inputs_ref}->{problemSeed};
+	my $displayMode  = $rh->{envir}->{displayMode};
+	my $problemSeed  = $rh->{envir}->{problemSeed};
 	debug(WebworkWebservice::pretty_print_rh($rh));
 
 	unless ( $user_id && $courseName && $displayMode && defined($problemSeed)) {
@@ -395,7 +395,7 @@ sub renderProblem {
 ##################################################
 	#debug( "envir->displayMode", WebworkWebservice::pretty_print_rh($rh->{envir}));
 	my $translationOptions = {
-		displayMode     => $rh->{envir}->{inputs_ref}->{displayMode}//"display mode not defined at RenderProblem.pm 388",
+		displayMode     => $rh->{envir}->{displayMode}//"display mode not defined at RenderProblem.pm 388",
 		showHints	    => $rh->{envir}->{showHints},
 		showSolutions   => $rh->{envir}->{showSolutions},
  		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
