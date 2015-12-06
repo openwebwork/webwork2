@@ -385,11 +385,13 @@ sub process_pg_file {
 	#################################################################
 
 	my %correct_answers = (); 
+	my $some_correct_answers_not_specified = 0;
 	foreach my $ans_id (keys %{$xmlrpc_client->return_object->{answers}} ) {
 		my $ans_obj = $xmlrpc_client->return_object->{answers}->{$ans_id};
 		my $answergroup = $xmlrpc_client->return_object->{PG_ANSWERS_HASH}->{$ans_id};
 		my @response_order = @{$answergroup->{response}->{response_order}};
 		#print scalar(@response_order), " first response $response_order[0] $ans_id\n";
+		$ans_obj->{type} = $ans_obj->{type}//'';
 		if ($ans_obj->{type} eq 'MultiAnswer') { 
 		    # singleResponse multianswer type
 		    # an outrageous hack
@@ -403,6 +405,13 @@ sub process_pg_file {
 				$correct_answers{$response_id} = shift @ans_array1;
 				#print "\t\t $response_id => $correct_answers{$response_id}\n";
 			}
+		} elsif ($ans_obj->{type} =~ /checkbox/i) { #type is probably checkbox_cmp 
+			my $ans_str = $ans_obj->{correct_ans};  #an unseparated answer string
+			$ans_str =~ s/^\s*//;
+			$ans_str =~ s/\s*$//;     #trim white space off ends (probably unnecessary)
+			my @temp = split("",$ans_str); #split into array of characters
+			my $new_ans_str = join("\0", @temp);   # join them in "packed" form separated with nulls
+			$correct_answers{$ans_id}=$new_ans_str;
 		} elsif (1==@response_order and $ans_id eq $response_order[0] ) { 
 		    # only one response -- not MultiAnswer singleResponse
 		    # most answers are of this type
@@ -424,37 +433,32 @@ sub process_pg_file {
 					#warn "\t\t $response_id => $correct_answers{$response_id}";
 				}
 			} else {
-				warn "responding to a ".$ans_obj->{type}. " question with several ans_blanks\n";
+				warn "responding to an answer evaluator of type |".$ans_obj->{type}. "|  with ".scalar(@response_order)." ans_blanks: ", join(" ",@response_order),"\n";
 				$correct_answers{$ans_id}=($ans_obj->{correct_ans})//($ans_obj->{correct_value})//'';
 			}
 		}
 		#FIXME  hack to get rid of html protection of < and > for vectors
 		$correct_answers{$ans_id}=~s/&gt;/>/g;
 		$correct_answers{$ans_id}=~s/&lt;/</g;
+		$correct_answers{$ans_id}=~ s|<br\s*/>||g;  # some answers have breaks in them for clarity
+		if ($correct_answers{$ans_id} eq "No correct answer specified" ) {
+			warn "this question has an answer blank with no correct answer specified";
+			$some_correct_answers_not_specified ++;
+		}
 
-
-#        print "answer group", pretty_print_rh($answergroup), "\n";
-#        	foreach my $response_id (@{$answergroup->{response}->{response_order}}) {
-#        		$correct_answers{$response_id} = 
-#         	       $answergroup->{response}->{responses}->{$response_id}; 
-#         }
-# Could also try to push $answergroup->response_obj->{responses} which is a hash
-		#print "---$ans $correct_answers{$ans}\n";
-	}
+	} #end loop collecting correct answers. 
 	# adjust input and reinitialize form_data
 	my $form_data2 = { %$default_form_data,
 				   problemSeed => $problemSeed1,
 				   %correct_answers
 				};
-	#print "form data: ", pretty_print_rh($form_data2),"\n";	
-	#print "display $file_path\n";
 	($error_flag, $xmlrpc_client, $error_string)=();
 	($error_flag, $xmlrpc_client, $error_string) = 
 			process_problem($file_path, $default_input, $form_data2);
 	display_html_output($file_path, $xmlrpc_client->formatRenderedProblem) if $display_html_output2;
 	display_hash_output($file_path, $xmlrpc_client->return_object) if $display_hash_output2;
 	display_ans_output($file_path, $xmlrpc_client->return_object) if $display_ans_output2;
-	$ALL_CORRECT = record_problem_ok2($error_flag, $xmlrpc_client, $file_path) if $record_ok2;      
+	$ALL_CORRECT = record_problem_ok2($error_flag, $xmlrpc_client, $file_path, $some_correct_answers_not_specified) if $record_ok2;      
 	display_inputs(%correct_answers) if $verbose;  # choice of correct answers submitted 
 	# should this information on what answers are being submitted have an option switch?
 
@@ -512,6 +516,7 @@ sub record_problem_ok2 {
 	my $error_flag = shift//'';
 	my $xmlrpc_client = shift;
 	my $file_path = shift;
+	my $some_correct_answers_not_specified = shift;
 	my %scores = ();
 	my $ALL_CORRECT= 0;
 	my $all_correct = ($error_flag)?0:1;
@@ -520,6 +525,7 @@ sub record_problem_ok2 {
 			      $xmlrpc_client->return_object->{answers}->{$ans}->{score};
 			$all_correct =$all_correct && $scores{$ans};
 		}
+	$all_correct = "2" if $some_correct_answers_not_specified;
 	$ALL_CORRECT = ($all_correct == 1)?'All answers correct':'Some answers are incorrect';
 	local(*FH);
 	open(FH, '>>',LOG_FILE()) or die "Can't open file ".LOG_FILE()." for writing";

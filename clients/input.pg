@@ -8,6 +8,7 @@ loadMacros(
 "PGbasicmacros.pl",
 "PGchoicemacros.pl",
 "PGanswermacros.pl",
+"PGinfo.pl",
 "PGauxiliaryFunctions.pl"
 );
 
