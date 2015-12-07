@@ -893,14 +893,14 @@ sub siblings {
 	    } else {
 	      # incorrect
 	      if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
-		$total_incorrect++;
-		$status_symbol = " &#x2717;"; # cross
+			$total_incorrect++;
+			$status_symbol = " &#x2717;"; # cross
 	      } else {
-		# in progress
-		if($problemRecord->attempted>0){
-		  $total_inprogress++;
-		  $status_symbol = " &hellip;"; # horizontal ellipsis
-		}
+			# in progress
+			if($problemRecord->attempted>0){
+			  $total_inprogress++;
+			  $status_symbol = " &hellip;"; # horizontal ellipsis
+			}
 	      }
 	    }
 	  }
