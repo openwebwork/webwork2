@@ -146,8 +146,6 @@ sub can_showResourceInfo {
 	my $authz = $self->r->authz;
 	
 	return
-		after($Set->answer_date)
-			||
 		$authz->hasPermissions($User->user_id, "show_resource_info")
 		;
 }
@@ -586,7 +584,7 @@ sub pre_header_initialize {
 		showAnsGroupInfo     => $r->param('showAnsGroupInfo') || $ce->{pg}->{options}->{showAnsGroupInfo},
 		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
 		showPGInfo         => $r->param('showPGInfo') || $ce->{pg}->{options}->{showPGInfo},
-		showResourceInfo => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
+		showResourceInfo   => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
@@ -1277,7 +1275,7 @@ sub output_checkboxes{
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
 	    $can{showHints} or $can{showSolutions} or 
-	    $can{showAnsHashInfo} or $can{showPGInfo}) {
+	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
 		print "Show: &nbsp;&nbsp;";
 	}
 	if ($can{showCorrectAnswers}) {
@@ -1324,9 +1322,10 @@ sub output_checkboxes{
 			-input_attr => $will{showResourceInfo} ?
 			{
 				-name    => "showResourceInfo",
+				-checked => "checked",
 				-value   => 1,
 			}
-						:
+			:
 			{
 				-name    => "showResourceInfo",
 				-value   => 1,
@@ -1352,6 +1351,7 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
+	
 	if ($can{showPGInfo}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
