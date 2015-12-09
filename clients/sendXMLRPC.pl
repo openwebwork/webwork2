@@ -126,6 +126,12 @@ IMPORTANT: Create a valid credentials file.
 =item   
 
 	The single letter options can be "bundled" e.g.  -vcCbB
+	
+=item  --list   pg_list
+	Read and process a list of .pg files contained in the file C<pg_list>.  C<pg_list>
+	consists of a sequence of lines each of which contains the full path to a pg
+	file that should be processed. (For example this might be the output from an
+	earlier run of sendXMLRPC using the -c flag. )
 
 =item	--pg 
 
@@ -187,6 +193,7 @@ use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
 use File::Find;
+use FileHandle;
 use Cwd 'abs_path';
 #######################################################
 #############################################
@@ -233,7 +240,7 @@ my $print_answer_hash;
 my $print_answer_group;
 my $print_pg_hash;
 my $print_help_message;
-
+my $read_list_from_this_file;
 GetOptions(
 	'a' => \$display_ans_output1,
 	'A' => \$display_ans_output2,
@@ -244,6 +251,7 @@ GetOptions(
 	'c' => \$record_ok1, # record_problem_ok1 needs to be written
 	'C' => \$record_ok2,
 	'v' => \$verbose,
+	'list=s' =>\$read_list_from_this_file,   # read file containing list of full file paths
 	'pg' 			=> \$print_pg_hash,
 	'anshash' 		=> \$print_answer_hash,
 	'ansgrp'  		=> \$print_answer_group,
@@ -339,18 +347,39 @@ my $default_form_data = {
 
 our @files_and_directories = @ARGV;
 # print "files ", join("|", @files_and_directories), "\n";
-foreach my $item (@files_and_directories) {
-	if (-d $item) {
-		my $dir = abs_path($item);
-		find(\&wanted, ($dir));
-	} elsif (-f $item) {
+if ($read_list_from_this_file) {
+	my $FH = FileHandle->new(" < $read_list_from_this_file");
+	while (<$FH>) {
+		my $item = $_;
+		chomp($item);
 		my $file_path = abs_path($item);
+		unless (defined $file_path and -f $file_path) {
+			warn "skipping $item\n" unless defined $file_path;
+			warn "skipping $file_path\n" if defined $file_path;
+			next;
+		}
+		next if $file_path =~ /^\s*#/;   # comment lines
 		next unless $file_path =~ /\.pg$/;
 		next if $file_path =~ /\-text\.pg$/;
 		next if $file_path =~ /header/i;
 		process_pg_file($file_path);
-	} else {
-		print "$item cannot be found or read\n";
+	}
+	FileHandle::close($FH);
+
+} else { 
+	foreach my $item (@files_and_directories) {
+		if (-d $item) {  # if the item is a directory traverse the tree
+			my $dir = abs_path($item);
+			find(\&wanted, ($dir));
+		} elsif (-f $item) { # if the item is a file process it.
+			my $file_path = abs_path($item);
+			next unless $file_path =~ /\.pg$/;
+			next if $file_path =~ /\-text\.pg$/;
+			next if $file_path =~ /header/i;
+			process_pg_file($file_path);
+		} else {
+			print "$item cannot be found or read\n";
+		}
 	}
 }
 sub wanted {
