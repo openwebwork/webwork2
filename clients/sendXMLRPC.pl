@@ -61,9 +61,14 @@ IMPORTANT: Create a valid credentials file.
     			userID                 => "my login name for the webwork course",
     			course_password        => "my password ",
     			courseID               => "the name of the webwork course",
-              XML_URL	               => "url of rendering site
-              XML_PASSWORD          => "site password" # preliminary access to site
-              $FORM_ACTION_URL      =  'http://localhost:80/webwork2/html2xml'; #action url for form
+                site_url	           => "url of rendering site
+                site_password          => "site password" # preliminary access to site
+              form_action_url          =>  'http://localhost:80/webwork2/html2xml'; #action url for form
+              WWdisplayMode            =>  'MathJax', # optional 
+                                          # --  'MathJax' and 'images' are the possible values           
+              HTMLdisplayCommand       =>  "open -a 'Google Chrome' "  # optional
+                                                      # for Mac: have Chrome read html output file
+                                                      # modify this for other platforms or browsers  
     	);
 
 =cut
@@ -209,7 +214,7 @@ use Cwd 'abs_path';
  #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile 
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
 use constant  HASH_DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
- 
+
 ### Path to a temporary file for storing the output of renderProblem.pl
  use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
  die "You must make the directory ".TEMPOUTPUTDIR().
@@ -279,9 +284,14 @@ The credentials file should contain this:
 			userID              => "my login name for the webwork course",
 			course_password     => "my password ",
 			courseID            => "the name of the webwork course",
-            XML_URL	            => "url of rendering site",
-            XML_PASSWORD        => "site password", # preliminary access to site
-            FORM_ACTION_URL     =>  'http://localhost:80/webwork2/html2xml', #action url for form
+            site_url	        => "url of rendering site",
+            site_password       => "site password", # preliminary access to site
+            form_action_url     =>  'http://localhost:80/webwork2/html2xml', #action url for form
+            WWdisplayMode       =>  'MathJax', # optional 
+                                               # --  'MathJax' and 'images' are the possible values
+            HTMLdisplayCommand  =>  "open -a 'Google Chrome' "  # optional
+                                                      # for Mac: have Chrome read html output file
+                                                      # modify this for other platforms or browsers
 	);
 1;
 EOF
@@ -318,6 +328,9 @@ if ($verbose) {
 	foreach (keys %credentials){print "$_ =>$credentials{$_} \n";} 
 }
 
+#allow credentials to overrride the default displayMode and the browser display
+our $HTML_DISPLAY_COMMAND = $credentials{HTMLdisplayCommand}//HTML_DISPLAY_COMMAND();
+our $DISPLAYMODE          = $credentials{WWdisplayMode}//DISPLAYMODE();
 ##################################################
 #  END gathering credentials for client
 ##################################################
@@ -335,7 +348,7 @@ my $default_input = {
  };
 
 my $default_form_data = { 
-		displayMode				=> DISPLAYMODE(),
+		displayMode				=> $DISPLAYMODE,
 		outputformat 			=> $format,
 };
 
@@ -663,7 +676,7 @@ sub	display_html_output {  #display the problem in a browser
 	print FH $output_text;
 	close(FH);
 
-	system(HTML_DISPLAY_COMMAND().$output_file);
+	system($HTML_DISPLAY_COMMAND." ".$output_file);
 	sleep 1;   #wait 1 seconds
 	unlink($output_file);
 }
