@@ -670,9 +670,11 @@ sub formatRenderedProblem {
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
 	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
-	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
-        # Can be added to the request as a parameter.  Adds a prefix to the 
-        # identifier used by the sticky format.  
+	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWcorrectAns});
+        # problemIdentifierPrefix can be added to the request as a parameter.  
+        # It adds a prefix to the 
+        # identifier used by the  format so that several different problems
+        # can appear on the same page.   
 	my $problemIdentifierPrefix = $self->{inputs_ref}->{problemIdentifierPrefix} //'';
     my $problemResult    =  $rh_result->{problem_result}//'';
     my $problemState     =  $rh_result->{problem_state}//'';

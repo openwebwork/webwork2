@@ -74,7 +74,7 @@ $localStorageMessages
 <p>
 <input type="submit" name="preview"  value="Preview" /> 
 <input type="submit" name="WWsubmit" value="Submit answer"/> 
-<input type="submit" name="WWgrade" value="Show correct answer"/>
+<input type="submit" name="WWcorrectAns" value="Show correct answer"/>
 </p>
 </form>
 </div>

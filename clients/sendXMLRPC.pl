@@ -86,7 +86,9 @@ IMPORTANT: Create a valid credentials file.
 
 =item  -B  
 
-	Same as -b but renders the question with the correct answers submitted.
+	Same as -b but renders the question with the correct answers submitted. 
+	The evaluation of the answer submitted is displayed as well as the correct
+	answer. 
 
 =item  -h  
 
@@ -409,6 +411,10 @@ sub process_pg_file {
 		display_ans_output($file_path, $xmlrpc_client->return_object) if $display_ans_output1;
 		$NO_ERRORS = record_problem_ok1($error_flag, $xmlrpc_client, $file_path) if $record_ok1;      
 		
+		unless ($display_html_output2 or $display_hash_output2 or $display_ans_output2 or $record_ok2) {
+			print "DONE -- $NO_ERRORS -- \n"if $verbose;
+			return;
+		}
 	#################################################################
 	# Extract correct answers
 	#################################################################
@@ -459,7 +465,6 @@ sub process_pg_file {
 				my @ans_array = split(/\s*,\s*/, $ans_str);
 				foreach my $response_id (@response_order) {
 					$correct_answers{$response_id} = shift @ans_array;
-					#warn "\t\t $response_id => $correct_answers{$response_id}";
 				}
 			} else {
 				warn "responding to an answer evaluator of type |".$ans_obj->{type}. "|  with ".scalar(@response_order)." ans_blanks: ", join(" ",@response_order),"\n";
@@ -479,6 +484,9 @@ sub process_pg_file {
 	# adjust input and reinitialize form_data
 	my $form_data2 = { %$default_form_data,
 				   problemSeed => $problemSeed1,
+				   answersSubmitted => 1,
+				   WWsubmit         => 1, # grade answers
+				   WWcorrectAns          => 1, # show correct answers
 				   %correct_answers
 				};
 	($error_flag, $xmlrpc_client, $error_string)=();
