@@ -257,24 +257,6 @@ $problemDefaults{max_attempts} = -1;
 # setting this to -1 disables the showMeAnother button
 $problemDefaults{showMeAnother} = -1;   
 
-# The default prPeriod value (re-randomization period) to use for the newly created problem.
-# It is suggested to use the value of -1, which means that the course-wide setting would be used
-# Setting this to -1 defaults to the use of course-wide settings (suggested)
-# Setting this to 0 disables periodic randomization regardless of the course-wide setting
-# Setting this to a positive value will override the course-wide setting
-$problemDefaults{prPeriod} = -1;
-
-
-################################################################################
-# Periodic re-randomization
-################################################################################
-# switch to enable periodic re-randomization
-$pg{options}{enablePeriodicRandomization} = 0;
-# course-wide default period for re-randomization, should be an integer
-# the value of 0 disables re-randomization
-$pg{options}{periodicRandomizationPeriod} = 5;
-
-
 ################################################################################
 # "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 ################################################################################
