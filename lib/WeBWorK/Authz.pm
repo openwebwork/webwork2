@@ -65,6 +65,7 @@ use WeBWorK::Utils qw(before after between);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
 use Scalar::Util qw(weaken);
+use version;
 
 ################################################################################
 
@@ -503,6 +504,7 @@ sub invalidIPAddress {
 
 	my $r = $self->{r};
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $urlPath = $r->urlpath;
 #	my $setName = $urlPath->arg("setID");  # not always defined
 	my $setName = $set->set_id;
@@ -513,7 +515,32 @@ sub invalidIPAddress {
 			$set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
 		     $self->hasPermissions($userName,'view_ip_restricted_sets'));
 
-	my $clientIP = new Net::IP($r->connection->remote_ip);
+	my $APACHE24 = 0;
+	my $version;
+
+	# check to see if the version is manually defined
+	if (defined($ce->{server_apache_version}) &&
+	    $ce->{server_apache_version}) {
+	  $version = $ce->{server_apache_version};
+	  # otherwise try and get it from the banner
+	} elsif (Apache2::ServerUtil::get_server_banner() =~ 
+		 m:^Apache/(\d\.\d+):) {
+	  $version = $1;
+	}
+
+	if ($version) {
+	  $APACHE24 = version->parse($version) >= version->parse('2.4');
+	}
+
+	# If its apache 2.4 then the API has changed
+	my $clientIP;
+	
+	if ($APACHE24) {
+	  $clientIP = new Net::IP($r->useragent_ip);
+	} else { 	
+	  $clientIP = new Net::IP($r->connection->remote_ip);
+	}
+
 	# make sure that we're using the non-versioned set name
 	$setName =~ s/,v\d+$//;
 

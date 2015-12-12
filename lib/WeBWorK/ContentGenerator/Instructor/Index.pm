@@ -373,7 +373,7 @@ sub body {
 		),
 		CGI::Tr({class=>"ButtonRow"}, [
 			CGI::td([
-				CGI::submit(-name=>"sets_assigned_to_user", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all sets for one <b>user</b>(set dates, scores)"),
+				CGI::submit(-name=>"sets_assigned_to_user", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all set dates for one <b>user</b>"),
 				CGI::submit(-name=>"users_assigned_to_set", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all users for one <b>set</b>"),
 			]),
 			CGI::td([

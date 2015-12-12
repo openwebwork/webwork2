@@ -1,23 +1,149 @@
-setNumber=Orientation
-openDate = 6/26/04 at 11:30am
-dueDate = 4/4/15 at 12:20pm
-answerDate = 4/5/15 at 12:00pm
-paperHeaderFile = setOrientation/setHeader.pg
-screenHeaderFile = setOrientation/setHeader.pg
+assignmentType      = default
+openDate          = 06/26/2004 at 11:30am EDT
+reducedScoringDate = 04/04/2015 at 12:20pm EDT
+dueDate           = 04/04/2015 at 12:20pm EDT
+answerDate        = 04/05/2015 at 12:00pm EDT
+enableReducedScoring = N
+paperHeaderFile   = setOrientation/setHeader.pg
+screenHeaderFile  = setOrientation/setHeader.pg
+description       = 
+restrictProbProgression = 0
+emailInstructor   = 0
 
-problemList =
-setOrientation/prob01.pg, 1
-setOrientation/prob02.pg, 1
-setOrientation/prob03.pg, 1
-setOrientation/prob04.pg, 1
-setOrientation/prob05/prob05.pg, 1
-setOrientation/prob06.pg, 1
-setOrientation/prob07.pg, 1
-setOrientation/prob08.pg, 1
-setOrientation/prob09.pg, 1
-setOrientation/prob10.pg, 1
-setOrientation/prob11.pg, 1
-setOrientation/prob12.pg, 1
-setOrientation/prob13.pg, 1
-setOrientation/prob14/prob14.pg, 1
-setOrientation/prob15.pg, 1
+problemListV2 
+problem_start
+problem_id = 1
+source_file = setOrientation/prob01.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 2
+source_file = setOrientation/prob02.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 3
+source_file = setOrientation/prob03.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 4
+source_file = setOrientation/prob04.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 5
+source_file = setOrientation/prob05/prob05.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 6
+source_file = setOrientation/prob06.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 7
+source_file = setOrientation/prob07.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 8
+source_file = setOrientation/prob08.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 9
+source_file = setOrientation/prob09.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 10
+source_file = setOrientation/prob10.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 11
+source_file = setOrientation/prob11.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 12
+source_file = setOrientation/prob12.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 13
+source_file = setOrientation/prob13.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 14
+source_file = setOrientation/prob14/prob14.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 15
+source_file = setOrientation/prob15.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+

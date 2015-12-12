@@ -515,7 +515,7 @@ sub pre_header_initialize {
 	# now we check the reasons why it might be closed
 	unless ($self->{isOpen}) {
 	    # its closed if the set is restricted
-	    $isClosed = $ce->{options}{enableConditionalRelease} && is_restricted($db, $set, $set->set_id, $effectiveUserName);
+	    $isClosed = $ce->{options}{enableConditionalRelease} && is_restricted($db, $set, $effectiveUserName);
 	    # or if its a jitar set and the problem is hidden or closed
 	    $isClosed = $isClosed || ($set->assignment_type() eq 'jitar' &&
 				      is_jitar_problem_hidden($db,$effectiveUserName,$set->set_id,$problemNumber));
