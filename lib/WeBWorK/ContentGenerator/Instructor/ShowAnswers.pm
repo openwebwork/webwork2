@@ -189,7 +189,7 @@ sub body {
 		my @problemNumbers;
 
 		my $setRecord = $db->getGlobalSet($setName);
-		my $isJitarSet = ( $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+		my $isJitarSet = ($setRecord && $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
 
 		# search for matching problems
 		my @allProblems = $db->listUserProblems($studentUser, $setName);
