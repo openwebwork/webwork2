@@ -288,6 +288,9 @@ sub pre_header_initialize {
 		showSolutions 	=> ($r->param('showSolutions')) ? $r->param('showSolutions'):0,
 		probNum  		=> $r->param("probNum") ||undef, 
 		permissionLevel => ($r->{ce}->{userRoles}->{$r->param('permissionLevel')//0})// 0,
+		displayMode     => $r->param("displayMode") || undef,
+		problemSeed	    => $r->param("problemSeed") || 0,
+		
  	};
  	$input->{envir}->{inputs_ref} ={
  		%{ $input->{envir}->{inputs_ref}},
@@ -338,7 +341,7 @@ sub pre_header_initialize {
 sub standard_input {
 	my $out = {
 #		pw            			=>   '',   # not needed
-		password      			=>   '',   # not needed  use site_password??
+		course_password         =>   '',   # not needed  use site_password??
 		session_key             =>   '',
 		userID          		=>   '',   # not needed
 		set               		=>   '',
