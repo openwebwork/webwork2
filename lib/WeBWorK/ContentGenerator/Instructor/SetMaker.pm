@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -1582,7 +1582,7 @@ sub pre_header_initialize {
 
         my $library_stats_handler = '';
 	
-	if ($ce->{problemLibrary}{showLibraryGlobalStats} &&
+	if ($ce->{problemLibrary}{showLibraryGlobalStats} ||
 	   $ce->{problemLibrary}{showLibraryLocalStats} ) {
 	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
 	}
