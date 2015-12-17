@@ -1260,7 +1260,11 @@ sub write_problem_tex {
 		
 		foreach my $ansName (@ans_entry_order) {
 			my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};
-			$correctTeX .= "\\item\\begin{verbatim}$correctAnswer\\end{verbatim}\n";
+			if ($correctAnswer =~ m/^\s*\\\(/) {
+				$correctTeX .= "\\item $correctAnswer\n";
+			} else {
+				$correctTeX .= "\\item\\begin{verbatim}$correctAnswer\\end{verbatim}\n";
+			}
 			# FIXME: What about vectors (where TeX will complain about < and > outside of math mode)?
 		}
 		
