@@ -18,6 +18,7 @@ var basicRequestObject = {
 var taxo=[];  // Global variable to hold it
 var loadtaxo = $.ajax({
   dataType: "json",
+  async: false,
   url: "/webwork2_files/DATA/tagging-taxonomy.json", 
   success: function(data) {
     taxo = data;
