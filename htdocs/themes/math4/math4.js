@@ -118,7 +118,8 @@ $(function(){
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
     $('.answerComments').addClass('well');
-
+    $('#SMA_button').addClass('btn btn-primary');
+    
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
 	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
 	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 

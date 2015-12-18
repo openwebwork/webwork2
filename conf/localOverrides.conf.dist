@@ -264,6 +264,24 @@ $problemDefaults{max_attempts} = -1;
 # setting this to -1 disables the showMeAnother button
 $problemDefaults{showMeAnother} = -1;   
 
+# The default prPeriod value (re-randomization period) to use for the newly created problem.
+# It is suggested to use the value of -1, which means that the course-wide setting would be used
+# Setting this to -1 defaults to the use of course-wide settings (suggested)
+# Setting this to 0 disables periodic randomization regardless of the course-wide setting
+# Setting this to a positive value will override the course-wide setting
+$problemDefaults{prPeriod} = -1;
+
+
+################################################################################
+# Periodic re-randomization
+################################################################################
+# switch to enable periodic re-randomization
+$pg{options}{enablePeriodicRandomization} = 0;
+# course-wide default period for re-randomization, should be an integer
+# the value of 0 disables re-randomization
+$pg{options}{periodicRandomizationPeriod} = 5;
+
+
 ################################################################################
 # "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 ################################################################################
@@ -277,29 +295,19 @@ $problemDefaults{showMeAnother} = -1;
 # Temporary hack for displaying the different versions of the editors
 ################################################################################
 # These configurations can be placed in course.conf file to tune the behavior for individual courses
-# The items below can be used to override the settings in defaults.config
-# One can also use $showeditors{classlisteditor1}=0; to override
-# These will disappear (or at least decrease in number) once the final editor verisons
-# are determined. 
- %showeditors = (
-# 	classlisteditor1   => 1,
- 	classlisteditor2   => 1,
 
-# 	homeworkseteditor1 => 1,
- 	homeworkseteditor2 => 1,
+# These will enable the versions of the problem set detail page and library browser page
+# that do not use the xmlrpc pathway
 
-#       problemsetdetail1 => 1,
-        problemsetdetail2 => 1,
+#$showeditors{problemsetdetail1} = 1;
+#$showeditors{librarybrowsernojs} = 1;
 
-# 	librarybrowsernojs    => 1,
- 	librarybrowser1    => 1,
-# 	librarybrowser2    => 1,
-#	librarybrowser3    => 1,
-# 	
-#	pgproblemeditor1   => 1,
-	pgproblemeditor2   => 1,
-# 	pgproblemeditor3   => 1,
-);
+# This will enable the slightly fancier PG problem editor 3
+
+#$showeditors{pgproblemeditor3} = 1;
+
+# This will turn off ww3 
+#$showeditors{ww3} = 0;
 
 ################################################################################
 # Directory for temporary files
