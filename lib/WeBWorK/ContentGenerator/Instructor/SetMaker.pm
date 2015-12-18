@@ -1438,6 +1438,7 @@ sub pre_header_initialize {
 				
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
+				$newSetRecord->assignment_type('default');
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
