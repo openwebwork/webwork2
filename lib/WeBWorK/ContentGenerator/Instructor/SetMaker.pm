@@ -1025,7 +1025,7 @@ sub make_data_row {
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "&nbsp;";
+	my $inSet = ($self->{isInSet}{$sourceFileName})?" (in target set)" : "&nbsp;";
 	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
@@ -1076,7 +1076,7 @@ sub make_data_row {
                                            $self->helpMacro("Global_Average_Attempts_Data",$r->maketext('Attempts')).': '.
 					   wwRound(2,$stats->{average_attempts}).', '.
                                            $self->helpMacro("Global_Average_Status_Data",$r->maketext('Status')).': '.
-					   wwRound(0,100*$stats->{average_status}).'% ;  ';
+					   wwRound(0,100*$stats->{average_status}).'%;&nbsp;';
 	    }
 	}
 	
@@ -1090,7 +1090,7 @@ sub make_data_row {
                                            $self->helpMacro("Local_Average_Attempts_Data",$r->maketext('Attempts')).': '.
 					   wwRound(2,$stats->{average_attempts}).', '.
                                            $self->helpMacro("Local_Average_Status_Data",$r->maketext('Status')).': '.
-					   wwRound(0,100*$stats->{average_status}).'% ';
+					   wwRound(0,100*$stats->{average_status}).'%&nbsp;';
 	    }
 	}
 
