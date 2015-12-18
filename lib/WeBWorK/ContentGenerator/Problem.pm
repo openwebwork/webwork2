@@ -1898,39 +1898,25 @@ sub output_comments{
 		    my $comment = $userPastAnswer->comment_string;
 		    $comment = CGI::escapeHTML($comment);
 		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		    my $user = $db->getUser($eUserID);
+		    print CGI::start_div({id=>"answerComment", class=>"answerComments"});
+		    print CGI::b("Instructor Comment:"),  CGI::br();
+		    print $comment;
+		    print <<EOS;
+	<script type="text/javascript">
+	    MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
+		var AM = MathJax.InputJax.AsciiMath.AM;
+		for (var i=0; i< AM.symbols.length; i++) {
+		    if (AM.symbols[i].input == '**') {
+			AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
+		    }
+		}
+					     });
+	MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
+	
+	MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'answerComment']);
+	</script>
+EOS
 
-		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"MathObjects.pl\");\n BEGIN_TEXT\n";
-		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
-		    my $pg = WeBWorK::PG->new(
-			$ce,
-			$user,
-			$key,
-			$set,
-			$problem,
-			$set->psvn, # FIXME: this field should be removed
-			$formFields,
-			{ # translation options
-			    displayMode     => $displayMode,
-			    showHints       => 0,
-			    showSolutions   => 0,
-			    refreshMath2img => 1,
-			    processAnswers  => 0,
-			    permissionLevel => 0,
-			    effectivePermissionLevel => 0,
-			    r_source => \$source,
-			},
-			);
-		    
-		    
-		    my $htmlout = $pg->{body_text};
-		    
-		    print CGI::div({class=>"answerComments"},
-		    CGI::b("Instructor Comment:"),
-		    CGI::br(),
-		    $htmlout);
 		}
 	}
 
