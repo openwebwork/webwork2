@@ -215,7 +215,6 @@ sub body {
 	    foreach my $set (@unfilteredsets) {
 		if ($set->assignment_type() eq 'default') {
 		    push @sets, $set;
-		    warn("Insert ".$set->set_id);
 		}
 	    }	    
 
