@@ -454,7 +454,7 @@ our %pathTypes = (
 	},
 
         instructor_problem_grader => {
-		name    => 'Manual Grader for Set $setID Problem $problemID',
+		name    => 'Manual Grader',
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^grader/([^/]+)/([^/]+)/|,
