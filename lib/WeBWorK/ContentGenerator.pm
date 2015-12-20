@@ -1730,7 +1730,7 @@ sub hidden_fields {
 	foreach my $param (@fields) {
 	    my @values = $r->param($param);
 	    foreach my $value (@values) {
-		next unless $value;
+		next unless defined($value);
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
 	    }

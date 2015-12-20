@@ -386,17 +386,21 @@ sub body {
 	    print CGI::caption($r->maketext("Problems"));
 	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.  If a problem does count towards its parent grade, then that score is listed in the column to the right.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
 	    
-	    print CGI::Tr({},
-			  
-			  CGI::th($r->maketext("Name")),
+	    my $thRow = [ CGI::th($r->maketext("Name")),
 			  CGI::th($r->maketext("Attempts")),
 			  CGI::th($r->maketext("Remaining")),
 			  CGI::th($r->maketext("Worth")),
 			  CGI::th($isJitarSet ? $r->maketext("Adjusted Status").$AdjustedStatusPopover :
-				  $r->maketext("Status")),
-			  $isJitarSet  ? CGI::th($r->maketext("Credit For Parent")) : CGI::th(""),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : ''
-		);
+				  $r->maketext("Status")) ];
+	    if ($isJitarSet) {
+		push @$thRow, CGI::th($r->maketext("Credit For Parent"));
+	    }
+
+	    if ($canScoreProblems) {
+		push @$thRow, CGI::th($r->maketext("Grader"));
+	    }
+
+	    print CGI::Tr({}, @$thRow);
 		
 	    @problemNumbers = sort { $a <=> $b } @problemNumbers;
 
@@ -540,18 +544,22 @@ sub problemListRow($$$$$) {
 	    $graderLink = CGI::td('');
 	}
 
-	return CGI::Tr({},
-#		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
-#		CGI::td({-nowrap=>1, -align=>"center"},
-		CGI::td($interactive),
-		CGI::td([
-				$attempts,
-				$remaining,
-				$value,
-				$status, 
-		                $statusForParent,
-		       $graderLink ? $graderLink : ''
-			]));
+	my $problemRow = [CGI::td($interactive),
+			  CGI::td([
+			      $attempts,
+			      $remaining,
+			      $value,
+			      $status])];
+	if ($isJitarSet) {
+	    push @$problemRow, CGI::td($statusForParent);
+	}
+
+	if ($canScoreProblems) {
+	    push @$problemRow, $graderLink;
+	}
+	    
+	
+	return CGI::Tr({}, @$problemRow);
 }
 
 1;
