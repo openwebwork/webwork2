@@ -184,7 +184,9 @@ DROP TABLE IF EXISTS OPL_global_statistics;
 EOS
   $dbh->commit();
 
-  `mysql -h $host -u $dbuser -p$dbpass $db < $global_sql_file`;
+  my $mysql_command = $ce->{externalPrograms}->{mysql};  
+  
+  `$mysql_command -h $host -u $dbuser -p$dbpass $db < $global_sql_file`;
 
 }
 
