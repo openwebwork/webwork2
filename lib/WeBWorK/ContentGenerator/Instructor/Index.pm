@@ -110,7 +110,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_sets" and do {
 		if ($nsets == 1) {
-			$module = "${ipfx}::ProblemSetDetail";
+			$module = "${ipfx}::ProblemSetDetail2";
 			$args{setID} = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
@@ -227,7 +227,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_set_for_users" and do {
 		if ($nusers >= 1 and $nsets == 1) {
-			$module = "${ipfx}::ProblemSetDetail";
+			$module = "${ipfx}::ProblemSetDetail2";
 			$args{setID} = $firstSetID;
 			$params{editForUser} = \@selectedUserIDs;
 		} else {
@@ -373,7 +373,7 @@ sub body {
 		),
 		CGI::Tr({class=>"ButtonRow"}, [
 			CGI::td([
-				CGI::submit(-name=>"sets_assigned_to_user", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all sets for one <b>user</b>(set dates, scores)"),
+				CGI::submit(-name=>"sets_assigned_to_user", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all set dates for one <b>user</b>"),
 				CGI::submit(-name=>"users_assigned_to_set", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all users for one <b>set</b>"),
 			]),
 			CGI::td([

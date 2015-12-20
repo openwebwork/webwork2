@@ -37,7 +37,7 @@
 
 ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
 
-
+PerlChildInitHandler "sub { srand }"
 
 PerlModule mod_perl2
 
@@ -54,7 +54,6 @@ my $webwork_dir = "/opt/webwork/webwork2";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
-
 
 #################################################################
 # The following code reads defauls.config and extracts the remaining configuration
@@ -79,7 +78,13 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/we
 my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
 my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/courses
 
-
+my $webwork_server_admin_email = $ce->{webwork_server_admin_email};
+if ($webwork_server_admin_email) {
+	$webwork_server_admin_email = $ce->{webwork_server_admin_email};
+	warn "set email from site.conf";
+} else {
+	$webwork_server_admin_email= $ENV{SERVER_ADMIN};
+}
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
@@ -152,16 +157,6 @@ if ($webwork_url eq "") {
 </Perl>
 
 ####################################################################
-# The RESTful webservice is to be running on port 3000 and this allows 
-# proper connection to it. 
-####################################################################
-
-
-#ProxyPass /webwork3 http://localhost:3000
-#ProxyPassReverse /webwork3 http://localhost:3000
-
-
-####################################################################
 # WebworkSOAP handlers (for integration with moodle)
 ####################################################################
  PerlModule WebworkSOAP
@@ -211,16 +206,15 @@ PerlModule WebworkWebservice
 
 ########## WebworkWebservice SOAP handler ##########
 
-PerlModule WebworkWebservice
-
-<Location /mod_soap>
-	SetHandler perl-script
-	PerlHandler Apache::SOAP
-	PerlSetVar dispatch_to "WebworkXMLRPC" 
-	PerlSetVar options "compress_threshold => 10000"
-	Order Allow,Deny
-	Allow from All
-</Location>
+#PerlModule WebworkWebservice
+#
+#<Location /mod_soap>
+#	SetHandler perl-script
+#	PerlHandler Apache::SOAP
+#	PerlSetVar dispatch_to "WebworkXMLRPC" 
+#	PerlSetVar options "compress_threshold => 10000"
+#       Require all granted
+#</Location>
 
 ####################################################################
 # WebworkSOAP  "bridge2" handler (Moodle/WeBWorK Question bridge)

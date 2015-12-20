@@ -1,0 +1,337 @@
+#!/usr/bin/perl
+
+##############################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/bin/wwdb,v 1.13 2006/01/25 23:13:45 sh002i Exp $
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
+# Artistic License for more details.
+##############################################################################
+
+# This script dumps the course information from all unarchived courses into
+# a single csv file.  The csv file has the following columns. 
+#
+# ID Info
+# 0 - Answer ID hash
+# 1 - Course ID hash
+# 2 - Student ID hash
+# 3 - Set ID hash
+# 4 - Problem ID hash
+# 5 - Timestamp
+# User Info
+# 6 - Permission Level
+# 7 - Final Status
+# Set Info
+# 8 - Set type
+# 9 - Open Date (unix time)
+# 10 - Due Date (unix time)
+# 11 - Answer Date (unix time)
+# 12 - Final Set Grade (percentage)
+# Problem Info
+# 13 - Problem Path
+# 14 - Problem Value
+# 15 - Problem Max Attempts
+# 16 - Problem Seed
+# 17 - Attempted
+# 18 - Final Incorrect Attempts
+# 19 - Final Correct Attempts
+# 20 - Final Status
+# OPL Info 
+# 21 - Subject
+# 22 - Chapter
+# 23 - Section
+# 24 - Keywords
+# Answer Info
+# 25 - Answer timestamp (unix time)
+# 26 - Attempt Number
+# 27 - Raw status of attempt (percentage of correct blanks)
+# 28 - Number of Answer Blanks
+# 29/30 etc... - The following columns will come in pairs.  The first will be 
+#                the text of the answer contained in the answer blank
+#                and the second will be the binary 0/1 status of the answer
+#                blank.  There will be as many pairs as answer blanks. 
+
+
+use strict; 
+
+BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
+	   unless($ENV{WEBWORK_ROOT});}
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+
+BEGIN{ 
+    my $ce = new WeBWorK::CourseEnvironment({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+					 });
+    
+    my $pg_dir = $ce->{pg_dir};
+    eval "use lib '$pg_dir/lib'"; 
+    die $@ if $@;
+}
+
+
+use WeBWorK::DB;
+use WeBWorK::Utils::CourseIntegrityCheck;
+use WeBWorK::Utils::CourseManagement qw/listCourses/;
+use WeBWorK::Utils::Tags;
+use WeBWorK::PG;
+
+use mod_perl2;
+use Text::CSV;
+use Digest::SHA qw(sha256_hex);
+use Net::Domain;
+
+# Deal with options
+my $output_file;
+my $zip_result = 1;
+my $upload_result = 1;
+
+my $domainname = Net::Domain::domainname;
+my $time = time();
+    
+# define and open the output file. 
+if (!$output_file) {
+    $output_file = "$domainname-$time.csv";
+}
+
+my $salt; 
+my $SALTFILE;
+my $saltfilename = $ENV{WEBWORK_ROOT}.'/.dump_past_answers_salt';
+
+if (-e $saltfilename) {
+  open($SALTFILE, "<$saltfilename") || die ("Couldn't open salt file.");
+  $salt = <$SALTFILE>;
+} else {
+  $salt = '';
+  for (my $i=0; $i<32; $i++) {
+    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
+  }
+
+  open($SALTFILE, ">$saltfilename") || die ("Couldn't open salt file.");
+  print $SALTFILE $salt;
+  close $SALTFILE;
+}
+
+my $OUT;
+open($OUT,">$output_file") || die("Couldn't open file $output_file");
+
+print "Dumping answer data to $output_file\n";
+
+# set up various variables and utilities that we will need
+my ($db, @wheres);
+my $max_answer_blanks = 0;
+my $csv = new Text::CSV->new ( { binary => 1 } ) 
+    or die "Cannot use CSV: ".Text::CSV->error_diag ();
+$csv->eol("\n");
+
+my $ce = new WeBWorK::CourseEnvironment({
+    webwork_dir => $ENV{WEBWORK_ROOT},
+					});
+
+my @courses = listCourses($ce);
+my %permissionLabels = reverse %{$ce->{userRoles}};
+
+# this is our row array and is the main structure
+my @row;
+
+# go through courses
+foreach my $courseID (@courses) {
+    next if $courseID eq 'admin' || $courseID eq 'modelCourse';
+
+    $ce = new WeBWorK::CourseEnvironment({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+	courseName => $courseID,
+					 });
+    $db = new WeBWorK::DB($ce->{dbLayout});
+
+    unless (defined($ce) && defined($db)) {
+	warn("Unable to load up database for $courseID");
+	next;
+    }
+
+    print "Dumping $courseID\n";
+    
+    my $templateDir = $ce->{courseDirs}->{templates};
+    
+    my $sCourseID = sha256_hex($salt.$domainname.$courseID);
+
+    $row[1] = $sCourseID;
+    $row[5] = $time;
+    
+    my @userIDs = $db->listUsers();
+    my @users = $db->getUsers(@userIDs);
+
+    # go through users
+    foreach my $user (@users) {
+      my $userID = $user->user_id;
+
+        #skip proctor users 
+        next if $user->user_id =~ /^set_id:/;
+      
+	my $sUserID = sha256_hex($salt.$domainname.$courseID.$userID);
+	
+	# get user specific info
+	$row[2] = $sUserID;
+	my $permissionLevel = $db->getPermissionLevel($userID);
+	$row[6] = $permissionLabels{$permissionLevel->permission};
+	$row[7] = $ce->status_abbrev_to_name($user->{status});
+	
+	my @setIDs = $db->listUserSets($userID);
+	@wheres = map {[$userID,$_]} @setIDs;
+	my @sets = $db->getMergedSets(@wheres);
+	
+	# go through sets
+	foreach my $set (@sets) {
+	    # skip gateways
+	    if ($set->assignment_type =~ /gateway/ &&
+		$set->set_id !~ /,v\d+$/) {
+		next;
+	    }
+	    
+	    my $setID = $set->set_id;
+	    my $sSetID = sha256_hex($salt.$domainname.$courseID.$setID);
+	    
+	    # get set specific info
+	    $row[3] = $sSetID;
+	    $row[8] = $set->assignment_type;
+	    $row[9] = $set->open_date;
+	    $row[10] = $set->due_date;
+	    $row[11] = $set->answer_date;
+	    
+	    my @problemIDs = $db->listUserProblems($userID,$setID);
+	    @wheres = map {[$userID, $setID, $_]} @problemIDs;
+	    my @problems = $db->getMergedProblems(@wheres);
+	    
+	    # compute set score
+	    my $total = 0;
+	    my $correct = 0;
+	    foreach my $problem (@problems) {
+		$total += $problem->value();
+		$correct += $problem->value*$problem->status;
+	    }
+	    $row[12] = $total ? $correct/$total:0;
+	    
+	    # go through each problem
+	    foreach my $problem (@problems) {
+		my $problemID = $problem->problem_id;
+		my $sProblemID = sha256_hex($salt.$domainname.$courseID.$userID.$setID.$problemID);
+
+		# print problem specific info
+		$row[4] = $sProblemID;
+		$row[13] = $problem->source_file;
+		$row[14] = $problem->value;
+		$row[15] = $problem->max_attempts;
+		$row[16] = $problem->problem_seed;
+		$row[17] = $problem->attempted;
+		$row[18] = $problem->num_incorrect;
+		$row[19] = $problem->num_correct;
+		$row[20] = $problem->status;
+		
+		# get OPL data
+		my $file = $templateDir.'/'.$problem->source_file();
+		if (-e $file) {
+		    my $tags = WeBWorK::Utils::Tags->new($file);
+		    $row[21] = $tags->{DBsubject};
+		    $row[22] = $tags->{DBchapter};
+		    $row[23] = $tags->{DBsection};
+		    $row[24] = defined($tags->{keywords}) ? 
+			join(',',@{$tags->{keywords}}) : '';
+		}
+
+		my @answerIDs = $db->listProblemPastAnswers($courseID,$userID,
+							    $setID,$problemID);
+		my @answers = $db->getPastAnswers(\@answerIDs);
+		
+		# go through attempts
+		my $attempt_number = 0;
+		foreach my $answer (@answers) {
+		    #reset the row length because it can change;
+		    @row = splice(@row,0,28);
+		    my $answerID = $answer->answer_id;
+		    my $sAnswerID = sha256_hex($salt.$domainname.$courseID.$userID.$setID.$problemID.$answerID);
+		    $attempt_number++;
+
+		    # if the source file changed redo that info
+		    if ($row[13] != $answer->source_file) {
+			$row[13] = $answer->source_file;
+			$file = $templateDir.'/'.$answer->source_file();
+			if (-e $file) {
+			    my $tags = WeBWorK::Utils::Tags->new($file);
+			    $row[21] = $tags->{DBsubject};
+			    $row[22] = $tags->{DBchapter};
+			    $row[23] = $tags->{DBsection};
+			    $row[24] = defined($tags->{keywords}) ? 
+				join(',',@{$tags->{keywords}}) : '';
+			}
+		    }
+		    
+		    # input answer specific info
+		    $row[0] = $sAnswerID;
+		    $row[25] = $answer->timestamp;
+		    $row[26] = $attempt_number;
+		    
+		    my @scores = split('',$answer->scores,-1);
+		    my @answers = split("\t",$answer->answer_string,-1);
+
+		    # if the number of scores isn't the same as the number of
+		    # answers we should skip
+		    if ($#scores != $#answers) {
+			next;
+		    }
+		    my $num_blanks = scalar(@scores);
+		    
+		    $max_answer_blanks = $num_blanks 
+			if ($num_blanks > $max_answer_blanks);
+
+		    # compute the raw status
+		    my $score = 0;
+		    foreach (@scores) {
+			$score += $_;
+		    }
+		    
+		    $row[27] = $num_blanks ? $score/$num_blanks : 0;
+		    
+		    # we leave the computed status blank for now. 
+		    
+		    $row[28] = $num_blanks;
+		    
+		    for (my $i=0; $i<$num_blanks; $i++) {
+			$row[29+2*$i] = $answers[$i];
+			$row[30+2*$i] = $scores[$i];
+		    }
+
+		    #form the csv string and print
+		    $csv->print($OUT,\@row) || warn "Couldn't print row";
+		}
+	    }
+	}
+    }
+}
+
+print "Done dumping data\n";
+
+close($OUT) or die("Couldn't close $output_file");
+
+if ($zip_result) {
+    print "Zipping file\n";
+    
+    `gzip $output_file`;
+
+    $output_file = $output_file.".gz";
+}
+
+if ($upload_result) {
+    print "Uploading file\n";
+    
+    `echo "put $output_file" | sftp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -oPort=57281 wwdata\@52.88.32.79`;
+}
+
+1;
