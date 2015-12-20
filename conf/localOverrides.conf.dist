@@ -127,6 +127,13 @@ $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-libra
 $contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
 $problemLibrary{version}    = "2.5";  
 
+# These flags control if statistics on opl problems are shown in the library
+# browser.  If you want to include local statistics you will need to
+# run webwork2/bin/update-OPL-statistics on a regular basis.  
+$problemLibrary{showLibraryLocalStats} = 1;
+# This flag controls whether global statistics will be displayed
+$problemLibrary{showLibraryGlobalStats} = 1;
+
 # Additional library buttons can be added to the Library Browser (SetMaker.pm)
 # by adding the libraries you want to the following line.  For each key=>value
 # in the list, if a directory (or link to a directory) with name 'key' appears

@@ -53,6 +53,7 @@ my @modulesList = qw(
 	DBD::mysql
 	DBI
 	Digest::MD5
+        Digest::SHA
 	Email::Address
 	Errno
 	Exception::Class
