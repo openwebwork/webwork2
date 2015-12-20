@@ -384,16 +384,16 @@ sub body {
 		# This table now contains a summary, a caption, and scope variables for the columns.
 	    print CGI::start_table({-class=>"problem_set_table problem_table", -summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")});
 	    print CGI::caption($r->maketext("Problems"));
-	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.  If a problem does count towards its parent grade, then that score is listed in the column to the right.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
+	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
 	    
 	    my $thRow = [ CGI::th($r->maketext("Name")),
 			  CGI::th($r->maketext("Attempts")),
 			  CGI::th($r->maketext("Remaining")),
 			  CGI::th($r->maketext("Worth")),
-			  CGI::th($isJitarSet ? $r->maketext("Adjusted Status").$AdjustedStatusPopover :
-				  $r->maketext("Status")) ];
+			  CGI::th($r->maketext("Status")) ];
 	    if ($isJitarSet) {
-		push @$thRow, CGI::th($r->maketext("Credit For Parent"));
+	      push @$thRow, CGI::th($r->maketext("Adjusted Status").$AdjustedStatusPopover);
+	      push @$thRow, CGI::th($r->maketext("Counts for Parent"));
 	    }
 
 	    if ($canScoreProblems) {
@@ -510,29 +510,28 @@ sub problemListRow($$$$$) {
 	$value = '' if ($isJitarSet && $problemLevel != 0 
 			&& !$problem->counts_parent_grade);
 
-	# we only show the (adjusted status) for the top level JITAR problems
-	# since they are the only grades that count.  We have a seperate 
-	# column for child problems whose grades count toward the parent
 	my $rawStatus = 0;
+	$rawStatus = $problem->status;
+
+	my $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
+	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
+	# FIXME  -- this may not cover all cases.
+
 	if ($isJitarSet && $problemLevel == 0) {
-	    $rawStatus = jitar_problem_adjusted_status($problem, $db);
+
 	} else {
 	    $rawStatus = $problem->status;
 	}
 
-	my $status = '';
+	my $adjustedStatus = '';
 	if (!$isJitarSet || $problemLevel == 0) {
-
-	    $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
-	    $status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
-	    # FIXME  -- this may not cover all cases.
-	    
-#	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
+	  $adjustedStatus = jitar_problem_adjusted_status($problem, $db);
+	  $adjustedStatus = eval{wwRound(0, $adjustedStatus*100).'%'};
 	}
 
-	my $statusForParent = "";
-	if ($isJitarSet && $problem->counts_parent_grade && $problemLevel != 0 ) {
-	    $statusForParent =  eval{ wwRound(0, jitar_problem_adjusted_status($problem,$db) * 100).'%'};
+	my $countsForParent = "";
+	if ($isJitarSet && $problemLevel != 0 ) {
+	  $countsForParent = $problem->counts_parent_grade() ? $r->maketext('Yes') : $r->maketext('No');
 
 	}
 
@@ -551,7 +550,8 @@ sub problemListRow($$$$$) {
 			      $value,
 			      $status])];
 	if ($isJitarSet) {
-	    push @$problemRow, CGI::td($statusForParent);
+	  push @$problemRow, CGI::td($adjustedStatus);
+	  push @$problemRow, CGI::td($countsForParent);
 	}
 
 	if ($canScoreProblems) {
