@@ -517,12 +517,6 @@ sub problemListRow($$$$$) {
 	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
 	# FIXME  -- this may not cover all cases.
 
-	if ($isJitarSet && $problemLevel == 0) {
-
-	} else {
-	    $rawStatus = $problem->status;
-	}
-
 	my $adjustedStatus = '';
 	if (!$isJitarSet || $problemLevel == 0) {
 	  $adjustedStatus = jitar_problem_adjusted_status($problem, $db);
