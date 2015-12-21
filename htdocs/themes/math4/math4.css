@@ -369,9 +369,8 @@ table.classlist-table .tbody {
     margin-top: 0px;
 }
 
-.problem_set_table {
-    display:block;
-    overflow:auto;
+.problem_set_table td, .problem_set_table th {
+    padding: 8px 3px 8px 3px;
 }
 
 .problem_set_table td a {
