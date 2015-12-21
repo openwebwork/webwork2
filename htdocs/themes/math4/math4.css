@@ -369,6 +369,11 @@ table.classlist-table .tbody {
     margin-top: 0px;
 }
 
+.problem_set_table {
+    display:block;
+    overflow:auto;
+}
+
 .problem_set_table td a {
     font-weight:bold;
     font-size:13px;
