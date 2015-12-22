@@ -1,4 +1,4 @@
-#!/usr/bin/perl -d
+#!/usr/bin/perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -17,36 +17,41 @@
 
 =head1 NAME
 
-wwdb - command-line interface to the WeBWorK libraries.
+wwsh - command-line interface to the WeBWorK libraries.
 
 =cut
+
+use strict;
+use warnings;
 
 
 
 BEGIN {
-	DB::parse_options("NonStop=1");
-	unless ($ENV{WEBWORK_ROOT}) {
-		die "WEBWORK_ROOT not found in environment.\n";
-	}
+	die "WEBWORK_ROOT not found in environment.\n"
+		unless exists $ENV{WEBWORK_ROOT};
 }
+
+our $ce;
+our $db;
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use Data::Dumper;
 
-our $ce;
-our $db;
-
 my $courseID = shift @ARGV;
-unless ($courseID) {
-	die "usage: $0 courseID\n";
+my $scriptFile   = shift @ARGV;
+
+unless ($courseID and $scriptFile) {
+	die "usage: $0 courseID  scriptFile\n";
 }
 
 $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName => $courseID,
 });
+
+
 $db = WeBWorK::DB->new($ce->{dbLayout});
 
 print <<'EOF';
@@ -54,6 +59,15 @@ wwsh - The WeBWorK Shell
 Available objects: $ce (WeBWorK::CourseEnvironment)
                    $db (WeBWorK::DB)
 Available modules: Data::Dumper
-EOF
 
-DB::parse_options("NonStop=0");
+EOF
+print "courseID: $courseID and scriptFile:  $scriptFile\n--------------------------------\n";
+do "$scriptFile";
+if ($@) {
+	print "errors ", $@,"\n" ;
+} else {
+	print "--------------------------------\ndone\n";
+}
+
+
+ 

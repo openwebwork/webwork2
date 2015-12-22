@@ -40,7 +40,8 @@ $(document).ready(function() {
 
 	/* define the button and place it */
 	var button = $('<a>', {href : '#', class : 'btn codeshard-btn', style : 'margin-right : .5ex'})
-	    .html('<span class="icon icon-th" data-alt="Equation Editor"></span>')
+	    .append($('<span/>',{class:"icon icon-th", 'data-alt':"Equation Editor"})
+		    .append($('<div/>',{class : 'sr-only-glyphicon'}).html('equation editor')));
 	$(input).parent().append(button);
 
 	/* generate the mathviewer */
@@ -121,7 +122,7 @@ function MathViewer(field,button,container,userOptions) {
     if (this.options.decoratedTextBoxAsInput) {
 	this.inputTextBox = $(field);
     } else {
-	this.inputTextBox = $('<input>',{type : 'text', class : 'mv-input', size:'40'});
+	this.inputTextBox = $('<input>',{type : 'text', class : 'mv-input', size:'32'});
     }
 
     MathJax.Hub.Config({
@@ -305,10 +306,11 @@ function MathViewer(field,button,container,userOptions) {
 	    var className = 'opImg' + catCount + i;
 	    /* creates a li for each operator/button in the category */
 	    thisTabList.append($('<li>', {class : 'mvspan3'})
-			       .append($('<a>', {href : '#', class : 'mvthumbnail text-center'})
+			       .append($('<a>', {href : '#', class : 'mvthumbnail', style : 'text-align: center'})
 				       .click(function (event) {
 					   event.preventDefault(); })
 				       .append(value.text)
+				       .append($('<div/>',{class : 'sr-only-glyphicon'}).html(value.tooltip))
 				       .tooltip({trigger : 'hover',
 						 delay : {show :500, hide:100},
 						 title : value.tooltip

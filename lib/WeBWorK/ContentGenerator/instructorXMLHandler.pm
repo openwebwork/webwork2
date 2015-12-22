@@ -175,7 +175,7 @@ sub pre_header_initialize {
 	$xmlrpc_client->{password}      = $XML_PASSWORD;
 	$xmlrpc_client->{course}        = $r->param('courseID');
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
-	
+
 	my $input = {#can I just use $->param? it looks like a hash
 
 		    pw                      => $r->param('pw') ||undef,
@@ -197,6 +197,7 @@ sub pre_header_initialize {
 		    library_chapters	    => $r->param("library_chapters") ||undef,
 		    library_sections	    => $r->param("library_sections") ||undef,
 		    library_levels		    => $r->param("library_levels") ||undef,
+		    library_status		    => $r->param("library_status") ||undef,
 		    library_textbook	    => $r->param("library_textbook") ||undef,
 		    library_keywords	    => $r->param("library_keywords") ||undef,
 		    library_textchapter     => $r->param("library_textchapter") ||undef,
@@ -254,7 +255,12 @@ sub pre_header_initialize {
             overrides				=> $r->param('overrides') || undef,
 			showHints				=> $r->param('showHints') || 0,
 			showSolutions			=> $r->param('showSolutions') || 0,
+		    processAnswers => defined($r->param('processAnswers')) ? $r->param('processAnswers') : 1,
 	};
+
+	$input->{envir}->{probNum} = $r->param("probNum") ||undef;
+
+
 	if ($UNIT_TESTS_ON) {
 		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
 		   format_hash_ref($input);
@@ -262,30 +268,23 @@ sub pre_header_initialize {
 	my $source = "";
 	#print $r->param('problemPath');
 	my $problemPath = $r->param('problemPath');
-	if (defined($problemPath) and $problemPath and -r $problemPath ) {
-    	eval { $source = WeBWorK::Utils::readFile($problemPath) };
-    	#print "SOURCE\n".$source;
-    	$input->{source} = encode_base64($source);
-	}
-	
+	if (defined($problemPath) and $problemPath) {
+            $input->{path} = $problemPath;
+	} elsif ($r->param('problemSource')) {
+            $input->{source} = $r->param('problemSource');
+        }
+
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
-	# Fix the environment display mode
+	# Fix the environment display mode and set id
 	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
+        # Set the permission level
+        $input->{envir}->{permissionLevel} = $r->{ce}->{userRoles}->{$r->param('permissionLevel')} // 0,	
+
 	# Set environment variables for hints/solutions
 	$input->{envir}->{showHints} = $r->param('showHints') if($r->param('showHints'));
 	$input->{envir}->{showSolutions} = $r->param('showSolutions') if($r->param('showSolutions'));
 	
-	## getting an error below (pstaab on 6/10/2013)  I don't this this is used anymore.  
-
-
-	##########################################
-	# FIXME hack to get fileName or filePath   param("set") contains the path
-	# my $problemPath = $input->{set};   # FIXME should rename this ????
-	# $problemPath =~ m|templates/(.*)|;
-	# $problemPath = $1;    # get everything in the path after templates
-	# $input->{envir}->{fileName}= $problemPath;
-	##################################################
 	$input->{courseID} = $r->param('courseID');
 
 	##############################
@@ -333,38 +332,10 @@ sub standard_input {
 		library_name 			=>  'Library',
 		command      			=>  'all',
 		answer_form_submitted   =>   1,
-		extra_packages_to_load  => [qw( AlgParserWithImplicitExpand Expr
-		                                ExprWithImplicitExpand AnswerEvaluator
-		                                AnswerEvaluatorMaker 
-		)],
 		mode                    => 'images',
-		modules_to_evaluate     => [ qw( 
-Exporter
-DynaLoader								
-GD
-WWPlot
-Fun
-Circle
-Label								
-PGrandom
-Units
-Hermite
-List								
-Match
-Multiple
-Select							
-AlgParser
-AnswerHash							
-Fraction
-VectorField							
-Complex1
-Complex							
-MatrixReal1 Matrix							
-Distributions
-Regression
-
-		)], 
-		envir                   => environment(),
+		envir                   => {displayMode=>DISPLAYMODE,
+					    problemValue => -1, 
+					    fileName => ''},
 		problem_state           => {
 		
 			num_of_correct_ans  => 200, # we are picking phoney values so
@@ -380,71 +351,6 @@ Regression
 	$out;
 }
 
-sub environment {
-	my $envir = {
-		answerDate  => '4014438528',
-		CAPA_Graphics_URL=>'http://webwork-db.math.rochester.edu/capa_graphics/',
-		CAPA_GraphicsDirectory =>'/ww/webwork/CAPA/CAPA_Graphics/',
-		CAPA_MCTools=>'/ww/webwork/CAPA/CAPA_MCTools/',
-		CAPA_Tools=>'/ww/webwork/CAPA/CAPA_Tools/',
-		cgiDirectory=>'Not defined',
-		cgiURL => 'Not defined',
-		classDirectory=> 'Not defined',
-		courseName=>'Not defined',
-		courseScriptsDirectory=>'/ww/webwork/system/courseScripts/',
-		displayMode=>DISPLAYMODE,
-		dueDate=> '4014438528',
-		externalGif2EpsPath=>'not defined',
-		externalPng2EpsPath=>'not defined',
-		fileName=>'the XMLHandler environment->{fileName} should be set',
-		formattedAnswerDate=>'6/19/00',
-		formattedDueDate=>'6/19/00',
-		formattedOpenDate=>'6/19/00',
-		functAbsTolDefault=> 0.0000001,
-		functLLimitDefault=>0,
-		functMaxConstantOfIntegration=> 1000000000000.0,
-		functNumOfPoints=> 5,
-		functRelPercentTolDefault=> 0.000001,
-		functULimitDefault=>1,
-		functVarDefault=> 'x',
-		functZeroLevelDefault=> 0.000001,
-		functZeroLevelTolDefault=>0.000001,
-		htmlDirectory =>'/ww/webwork/courses/gage_course/html/',
-		htmlURL =>'http://webwork-db.math.rochester.edu/gage_course/',
-		inputs_ref => {
-				 AnSwEr1 => '',
-				 AnSwEr2 => '',
-				 AnSwEr3 => '',
-		},
-		macroDirectory=>'/ww/webwork/courses/gage_course/templates/macros/',
-		numAbsTolDefault=>0.0000001,
-		numFormatDefault=>'%0.13g',
-		numOfAttempts=> 0,
-		numRelPercentTolDefault => 0.0001,
-		numZeroLevelDefault =>0.000001,
-		numZeroLevelTolDefault =>0.000001,
-		openDate=> '3014438528',
-		PRINT_FILE_NAMES_FOR => [ ],
-		probFileName => 'probFileName should not be used --use fileName instead',
-		problemSeed  => 1234,
-		problemValue => -1,
-		probNum => 13,
-		psvn => 54321,
-		questionNumber => 1,
-		scriptDirectory => 'Not defined',
-		sectionName => 'Gage',
-		sectionNumber => 1,
-		sessionKey=> 'Not defined',
-		setNumber =>'MAAtutorial',
-		studentLogin =>'gage',
-		studentName => 'Mike Gage',
-		tempDirectory => '/ww/htdocs/tmp/gage_course/',
-		templateDirectory=>'/ww/webwork/courses/gage_course/templates/',
-		tempURL=>'http://webwork-db.math.rochester.edu/tmp/gage_course/',
-		webworkDocsURL => 'http://webwork.math.rochester.edu/webwork_gage_system_html',
-	};
-	$envir;
-};
 
 sub pretty_print_json { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
@@ -500,8 +406,26 @@ sub content {
    ###########################
    	my $self = shift;
 	
-	#for handling errors...i'm to lazy to make it work right now
-	if($self->{output}->{problem_out}){
+
+	if ((ref($self->{output}) =~ /XMLRPC/ && $self->{output}->fault) || 
+	    (ref($self->{output}->{problem_out}) =~ /XMLRPC/ && 
+		 $self->{output}->{problem_out}->fault)) {
+
+	    my $result = $self->{output}->{problem_out} ? 
+		$self->{output}->{problem_out} : $self->{output};
+
+	    my $err_string = 'Error message for '.
+		join( ' ',
+		      "command:",
+		      $self->r->param('xml_command'),
+			  "\nfaultcode:",
+		      $result->faultcode, 
+		      "\nfaultstring:",
+		      $result->faultstring, "\nEnd error message\n\n"
+		  );
+	    
+	    die($err_string);
+	}elsif($self->{output}->{problem_out}){
 		print $self->{output}->{problem_out}->{text};
 	} else {
 		print '{"server_response":"'.$self->{output}->{text}.'",';

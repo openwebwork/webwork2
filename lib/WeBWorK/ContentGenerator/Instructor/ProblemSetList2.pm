@@ -1,3 +1,4 @@
+
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -83,7 +84,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName jitar_id_to_seq seq_to_jitar_id);
 
 use WeBWorK::Utils::DatePickerScripts;
 
@@ -96,8 +97,8 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date due_date answer_date) ];
-use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date due_date answer_date) ];
+use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
+use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id problems users) ];
 
 # permissions needed to perform a given action
@@ -152,17 +153,22 @@ use constant  FIELD_PROPERTIES => {
 	},
 	open_date => {
 		type => "text",
-		size => 26,
+		size => 22,
+		access => "readwrite",
+	},
+        reduced_scoring_date => {
+		type => "text",
+		size => 22,
 		access => "readwrite",
 	},
 	due_date => {
 		type => "text",
-		size => 26,
+		size => 22,
 		access => "readwrite",
 	},
 	answer_date => {
 		type => "text",
-		size => 26,
+		size => 22,
 		access => "readwrite",
 	},
 	visible => {
@@ -345,8 +351,10 @@ sub initialize {
 	
 	$self->{editMode} = $r->param("editMode") || 0;
 	
+
 	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify homework sets.")))
-		if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+	  if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+
 	
 	$self->{exportMode} = $r->param("exportMode") || 0;
 
@@ -426,6 +434,15 @@ sub body {
 	
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify homework sets.")))
+	  if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+
+	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify set definition files.")))
+		if $self->{exportMode} and not $authz->hasPermissions($user, "modify_set_def_files");
+	
+
+
 	
 	# This table can be consulted when display-ready forms of field names are needed.
 	my %prettyFieldNames = map { $_ => $_ } 
@@ -439,6 +456,7 @@ sub body {
 		set_header
 		hardcopy_header
 		open_date
+                reduced_scoring_date
 		due_date
 		answer_date
 		visible
@@ -451,13 +469,11 @@ sub body {
 		$r->maketext("Edit Set Data"), 
 		$r->maketext("Set Header"), 
 		$r->maketext("Hardcopy Header"), 
-		$r->maketext("Open Date"), 
+		$r->maketext("Open Date"),
+	        $r->maketext("Reduced Scoring Date"),
 		$r->maketext("Due Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
-	    # Reduced Scoring Enabled made the column wider than it needed
-	    # to be...
-	    #   $r->maketext("Reduced Scoring Enabled"), 
 	        $r->maketext("Reduced Scoring"), 
 		$r->maketext("Hide Hints") 
 	);
@@ -635,7 +651,7 @@ sub getTableParams {
 	
 	my %tableParams;
 	foreach my $param ($r->param) {
-		next unless $param =~ m/^(?:set)\./;
+		next unless $param =~ m/^(?:.*set)\./;
 		$tableParams{$param} = [ $r->param($param) ];
 	}
 	return %tableParams;
@@ -939,93 +955,6 @@ sub publish_handler {
 	return $result
 	
 }
-sub enable_reduced_scoring_form {
-	my ($self, $onChange, %actionParams) = @_;
-	my $r = $self->r;
-
-	return join ("",
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"reduced_scoring_filter_select",
-			-label_text=>$r->maketext("Choose which sets to be affected").": ",
-			-input_attr=>{
-				-name => "action.enable_reduced_scoring.scope",
-				-values => [ qw(none all selected) ],
-				-default => $actionParams{"action.enable_reduced_scoring.scope"}->[0] || "selected",
-				-labels => {
-					none => $r->maketext("no sets"),
-					all => $r->maketext("all sets"),
-#					visible => "visible sets",
-					selected => $r->maketext("selected sets"),
-				},
-				-onchange => $onChange,
-			}
-		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"reduced_scoring_enable_disable_select",
-			-label_text=>$r->maketext("Enable/Disable reduced scoring for selected sets").": ",
-			-input_attr=>{
-				-name => "action.enable_reduced_scoring.value",
-				-values => [ 0, 1 ],
-				-default => $actionParams{"action.enable_reduced_scoring.value"}->[0] || "0",
-				-labels => {
-					0 => $r->maketext("Disable"),
-					1 => $r->maketext("Enable"),
-				},
-				-onchange => $onChange,
-			}
-		),
-	);
-}
-
-sub enable_reduced_scoring_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-
-	my $result = "";
-	
-	my $scope = $actionParams->{"action.enable_reduced_scoring.scope"}->[0];
-	my $value = $actionParams->{"action.enable_reduced_scoring.value"}->[0];
-
-	my $verb = $value ? $r->maketext("enabled") : $r->maketext("disabled");
-	
-	my @setIDs;
-	
-	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
-		@setIDs = ();
-		$result =  CGI::div({class=>"ResultsWithError"}, $r->maketext("No change made to any set"));
-	} elsif ($scope eq "all") {
-		@setIDs = @{ $self->{allSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for all sets", $verb));
-	} elsif ($scope eq "visible") {
-		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for visable sets", $verb));
-	} elsif ($scope eq "selected") {
-		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("Reduced Scoring [_1] for selected sets", $verb));
-	}
-	
-	# can we use UPDATE here, instead of fetch/change/store?
-	my @sets = $db->getGlobalSets(@setIDs);
-	
-	foreach my $set (@sets) {
-	    next unless $set;
-	    $set->enable_reduced_scoring("$value");
-	    if ($value  && !$set->reduced_scoring_date) {
-		$set->reduced_scoring_date($set->due_date -
-					  60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
-	    }
-	    $db->putGlobalSet($set);
-	}
-	
-	return $result
-	
-}
 
 sub score_form {
 	my ($self, $onChange, %actionParams) = @_;
@@ -1222,6 +1151,7 @@ sub create_handler {
 		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
+		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
 		return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: no set selected for duplication!")) unless $oldSetID =~ /\S/;
@@ -1276,9 +1206,6 @@ sub import_form {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	my $ce = $r->ce;
-	my $date = $self->formatDateTime(time);
-	$date =~ /\ ([A-Z]+)$/;	
-	my $display_tz = $1;        	
 
 	# this will make the popup menu alternate between a single selection and a multiple selection menu
 	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
@@ -1297,7 +1224,6 @@ sub import_form {
   buttonText: "<i class='icon-calendar'></i>",
   ampm: true,
   timeFormat: 'hh:mmtt',
-  timeSuffix: ' $display_tz',
   separator: ' at ',
   constrainInput: false, 
  });
@@ -1603,21 +1529,18 @@ sub saveEdit_handler {
 		}
 		
 		# check that the reduced scoring date is in the right place
-		# if not do something to try and fix it
-		if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-		    if ($Set->reduced_scoring_date > $Set->due_date ||
-			$Set->open_date > $Set->reduced_scoring_date) {
-
-			$Set->reduced_scoring_date($Set->due_date -
-						   60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
-
-			# we do a second check here to make sure we didnt go before the open date
-			if ($Set->open_date > $Set->reduced_scoring_date) {
-			    $Set->reduced_scoring_date($Set->open_date);
-			}
-		    }
-		}
+		my $enable_reduced_scoring = 
+		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
+		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    $r->param("set.$setID.enable_reduced_scoring") : 
+		    $Set->enable_reduced_scoring;
 		
+		if ($enable_reduced_scoring && 
+		    $Set->reduced_scoring_date
+		    && ($Set->reduced_scoring_date > $Set->due_date 
+			|| $Set->reduced_scoring_date < $Set->open_date)) {
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Reduced scoring date must come between the open date and due date in set [_1]", $setID));
+		}
 		
 		$db->putGlobalSet($Set);
 	}
@@ -1781,7 +1704,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1812,8 +1735,11 @@ sub importSetsFromDef {
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
-		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
+		$newSetRecord->reduced_scoring_date($reducedScoringDate);
+		$newSetRecord->enable_reduced_scoring($enableReducedScoring);
 		$newSetRecord->description($description);
+		$newSetRecord->email_instructor($emailInstructor);
+		$newSetRecord->restrict_prob_progression($restrictProbProgression);
 
 	# gateway/version data.  these should are all initialized to ''
         #   by readSetDef, so for non-gateway/versioned sets they'll just 
@@ -1866,10 +1792,13 @@ sub importSetsFromDef {
 			$self->addProblemToSet(
 			  setName => $setName,
 			  sourceFile => $rh_problem->{source_file},
-			  problemID => $freeProblemID++,
+			  problemID => $rh_problem->{problemID} ? $rh_problem->{problemID} : $freeProblemID++,
 			  value => $rh_problem->{value},
 			  maxAttempts => $rh_problem->{max_attempts},
-			  showMeAnother => $rh_problem->{showMeAnother});
+			  showMeAnother => $rh_problem->{showMeAnother},
+			  attToOpenChildren => $rh_problem->{attToOpenChildren},
+			    countsParentGrade => $rh_problem->{countsParentGrade}
+			    );
 		}
 
 
@@ -1904,16 +1833,20 @@ sub readSetDef {
 	my ($self, $fileName) = @_;
 	my $templateDir   = $self->{ce}->{courseDirs}->{templates};
 	my $filePath      = "$templateDir/$fileName";
-	my $value_default = $self->{ce}->{problemDefaults}->{value};
+	my $weight_default = $self->{ce}->{problemDefaults}->{value};
 	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};
-	my $showMeAnother = $self->{ce}->{problemDefaults}->{showMeAnother};
+	my $att_to_open_children_default = 
+	    $self->{ce}->{problemDefaults}->{att_to_open_children};
+	my $counts_parent_grade_default = 
+	    $self->{ce}->{problemDefaults}->{counts_parent_grade};
+	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
 
 	my $setName = '';
 	
 	my $r = $self->r;
 
-	if ($fileName =~ m|^set([.\w-]+)\.def$|) {
-		$setName = $1;
+	if ($fileName =~ m|^(.*/)?set([.\w-]+)\.def$|) {
+		$setName = $2;
 	} else {
 		$self->addbadmessage( 
 		    qq{The setDefinition file name must begin with   <CODE>set</CODE>},
@@ -1925,19 +1858,19 @@ sub readSetDef {
 
 	}
 
-	my ($line, $name, $value, $attemptLimit, $continueFlag);
+	my ($line, $name, $weight, $attemptLimit, $continueFlag);
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
 	my $description = '';
-	my ($dueDate, $openDate, $answerDate);
+	my ($dueDate, $openDate, $reducedScoringDate, $answerDate);
 	my @problemData;	
 
 # added fields for gateway test/versioned set definitions:
-	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
+	my ( $assignmentType, $attemptsPerVersion, $timeInterval, $enableReducedScoring, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $restrictLoc,
+	     $problemsPerPage, $restrictLoc, $emailInstructor, $restrictProbProgression, $countsParentGrade, $attToOpenChildren, $problemID, $showMeAnother, $listType
 	     ) = 
-		 ('')x8;  # initialize these to ''
+		 ('')x16;  # initialize these to ''
 	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
 # additional fields currently used only by gateways; later, the world?
 	my ( $hideScore, $hideWork, ) = ( 'N', 'N' );
@@ -1953,7 +1886,7 @@ sub readSetDef {
 			$line =~ s|(#.*)||;                              ## don't read past comments
 			unless ($line =~ /\S/) {next;}                   ## skip blank lines
 			$line =~ s|\s*$||;                               ## trim trailing spaces
-			$line =~ m|^\s*(\w+)\s*=\s*(.*)|;
+			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
 			
 			######################
 			# sanity check entries
@@ -1974,7 +1907,11 @@ sub readSetDef {
 			} elsif ($item eq 'openDate') {
 				$openDate = $value;
 			} elsif ($item eq 'answerDate') {
-				$answerDate = $value;
+			        $answerDate = $value;
+			} elsif ($item eq 'enableReducedScoring') {
+			        $enableReducedScoring = $value;
+			} elsif ($item eq 'reducedScoringDate') {
+				$reducedScoringDate = $value;
 			} elsif ($item eq 'assignmentType') {
 				$assignmentType = $value;
 			} elsif ($item eq 'attemptsPerVersion') {
@@ -2001,10 +1938,16 @@ sub readSetDef {
 				$restrictLoc = ( $value ) ? $value : '';
 			} elsif ( $item eq 'relaxRestrictIP' ) {
 			    $relaxRestrictIP = ( $value ) ? $value : 'No';
+			} elsif ( $item eq 'emailInstructor' ) {
+			    $emailInstructor = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'restrictProbProgression' ) {
+			    $restrictProbProgression = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'description' ) {
 			    $value =~ s/<n>/\n/g;
 			    $description = $value;
-			} elsif ($item eq 'problemList') {
+			} elsif ($item eq 'problemList' ||
+			    $item eq 'problemListV2') {
+			    $listType = $item;
 				last;
 			} else {
 				warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
@@ -2020,6 +1963,26 @@ sub readSetDef {
 			warn $r->maketext("The open date: [_1], due date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
 		}
 
+		# validate reduced credit date
+		$reducedScoringDate = $self->parseDateTime($reducedScoringDate) if ($reducedScoringDate);
+
+		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
+		    warn $r->maketext("The reduced credit date should be between the open date [_1] and due date [_2]", $openDate, $dueDate);
+		} elsif (!$reducedScoringDate) {
+		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
+		}
+
+		if ($enableReducedScoring ne '' && $enableReducedScoring eq 'Y') {
+		    $enableReducedScoring = 1;
+		} elsif ($enableReducedScoring ne '' && $enableReducedScoring eq 'N') {
+		    $enableReducedScoring = 0;
+		} elsif ($enableReducedScoring ne '') {
+		    warn($r->maketext("The value [_1] for enableReducedScoring is not valid; it willb e replaced with 'N'.",$enableReducedScoring)."\n");
+		    $enableReducedScoring = 0;
+		} else {
+		    $enableReducedScoring = DEFAULT_ENABLED_REDUCED_SCORING_STATE;
+		}
+	       
 		# Check header file names
 		$paperHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
 		$screenHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
@@ -2067,54 +2030,163 @@ sub readSetDef {
 		#####################################################################
 		# Read and check list of problems for the set
 		#####################################################################
-		while(<SETFILENAME>) {
+
+
+		# NOTE:  There are now two versions of problemList, the first is an unlabeled
+		# list which may or may not contain a showMeAnother variable.  This is supported
+		# but the unlabeled list is hard to work with.  The new version prints a 
+		# labeled list of values similar to how its done for the set variables
+
+		if ($listType eq 'problemList') {
+
+		    
+		    while(<SETFILENAME>) {
 			chomp($line=$_);
 			$line =~ s/(#.*)//;                             ## don't read past comments
 			unless ($line =~ /\S/) {next;}                  ## skip blank lines
-	
+			
 			# commas are valid in filenames, so we have to handle commas
 			# using backslash escaping, so \X will be replaced with X
 			my @line = ();
 			my $curr = '';
 			for (my $i = 0; $i < length $line; $i++) {
-				my $c = substr($line,$i,1);
-				if ($c eq '\\') {
-					$curr .= substr($line,++$i,1);
+			    my $c = substr($line,$i,1);
+			    if ($c eq '\\') {
+				$curr .= substr($line,++$i,1);
 			    } elsif ($c eq ',') {
-					push @line, $curr;
-					$curr = '';
-				} else {
-					$curr .= $c;
-				}
+				push @line, $curr;
+				$curr = '';
+			    } else {
+				$curr .= $c;
+			    }
 			}
 			## anything left?
 			push(@line, $curr) if ( $curr );
 			
-            # read the line and only look for $showMeAnother if it has the correct number of entries
-            if(scalar(@line)==4){
-			    ($name, $value, $attemptLimit, $showMeAnother, $continueFlag) = @line;
-            } else {
-			    ($name, $value, $attemptLimit, $continueFlag) = @line;
-            }
+			# read the line and only look for $showMeAnother if it has the correct number of entries
+			# otherwise the default value will be used
+			if(scalar(@line)==4){
+			    ($name, $weight, $attemptLimit, $showMeAnother, $continueFlag) = @line;
+			} else {
+			    ($name, $weight, $attemptLimit, $continueFlag) = @line;
+			}
+			
 			#####################
 			#  clean up problem values
 			###########################
 			$name =~ s/\s*//g;
-			$value = "" unless defined($value);
-			$value =~ s/[^\d\.]*//g;
-			unless ($value =~ /\d+/) {$value = $value_default;}
+			$weight = "" unless defined($weight);
+			$weight =~ s/[^\d\.]*//g;
+			unless ($weight =~ /\d+/) {$weight = $weight_default;}
 			$attemptLimit = "" unless defined($attemptLimit);
 			$attemptLimit =~ s/[^\d-]*//g;
 			unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
 			$continueFlag = "0" unless( defined($continueFlag) && @problemData );  
 			# can't put continuation flag onto the first problem
 			push(@problemData, {source_file    => $name,
-			                    value          =>  $value,
+			                    value          =>  $weight,
 			                    max_attempts   =>, $attemptLimit,
-			                    showMeAnother  =>, $showMeAnother,
+			                    showMeAnother   =>, $showMeAnother,
 			                    continuation   => $continueFlag 
-			                    });
+			     });
+		    }
+		} else {
+		    
+		    # This is the new version, it looks for pairs of entries
+		    # of the form field name = value
+		    while (<SETFILENAME>) {
+		
+			chomp($line = $_);
+			$line =~ s|(#.*)||;                              ## don't read past comments
+			unless ($line =~ /\S/) {next;}                   ## skip blank lines
+			$line =~ s|\s*$||;                               ## trim trailing spaces
+			$line =~ m|^\s*(\w+)\s*=?\s*(.*)|;
+
+			######################
+			# sanity check entries
+			######################
+			my $item = $1;
+			$item    = '' unless defined $item;
+			my $value = $2;
+			$value    = '' unless defined $value;
+			
+			if ($item eq 'problem_start') {
+			    next;
+			} elsif ($item eq 'source_file') {
+			    warn($r->maketext('No source_file for problem in .def file')) unless $value;
+			    $name = $value;
+			} elsif ($item eq 'value' ) { 
+			    $weight = ( $value ) ? $value : $weight_default;
+			} elsif ( $item eq 'max_attempts' ) {
+			    $attemptLimit = ( $value ) ? $value : $max_attempts_default;
+			} elsif ( $item eq 'showMeAnother' ) {
+			    $showMeAnother = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'restrictProbProgression' ) {
+			    $restrictProbProgression = ( $value ) ? $value : 'No';
+			} elsif ( $item eq 'problem_id' ) {
+			    $problemID = ( $value ) ? $value : '';
+			} elsif ( $item eq 'counts_parent_grade' ) {
+			    $countsParentGrade = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'att_to_open_children' ) {
+			    $attToOpenChildren = ( $value ) ? $value : 0;
+			} elsif ($item eq 'problem_end') {
+				 
+			    #####################
+			    #  clean up problem values
+			    ###########################
+			    $name =~ s/\s*//g;
+			    $weight = "" unless defined($weight);
+			    $weight =~ s/[^\d\.]*//g;
+			    unless ($weight =~ /\d+/) {$weight = $weight_default;}
+			    $attemptLimit = "" unless defined($attemptLimit);
+			    $attemptLimit =~ s/[^\d-]*//g;
+			    unless ($attemptLimit =~ /\d+/) {$attemptLimit = $max_attempts_default;}
+
+			    unless ($countsParentGrade =~ /(0|1)/) {$countsParentGrade = $counts_parent_grade_default;}	    
+			    $countsParentGrade =~ s/[^\d-]*//g;
+
+			    unless ($showMeAnother =~ /-?\d+/) {$showMeAnother = $showMeAnother_default;}		
+			    $showMeAnother =~ s/[^-?\d-]*//g;
+
+			    unless ($attToOpenChildren =~ /\d+/) {$attToOpenChildren = $att_to_open_children_default;}		
+			    $attToOpenChildren =~ s/[^\d-]*//g;
+					
+			    if ($assignmentType eq 'jitar') {
+				unless ($problemID =~ /[\d\.]+/) {$problemID = '';}
+				$problemID =~ s/[^\d\.-]*//g;
+				$problemID = seq_to_jitar_id(split(/\./,$problemID));
+			    } else {
+				unless ($problemID =~ /\d+/) {$problemID = '';}
+				$problemID =~ s/[^\d-]*//g;
+			    }
+
+			    # can't put continuation flag onto the first problem
+			    push(@problemData, {source_file    => $name,
+						problemID      => $problemID, 
+						value          =>  $weight,
+						max_attempts   =>, $attemptLimit,
+						showMeAnother  =>, $showMeAnother,
+						attToOpenChildren => $attToOpenChildren,
+						countsParentGrade => $countsParentGrade
+				 });
+			    
+			    # reset the various values
+			    $name = '';
+			    $problemID = '';
+			    $weight = '';
+			    $attemptLimit = '';
+			    $showMeAnother = '';
+			    $attToOpenChildren = '';
+			    $countsParentGrade = '';
+			    
+			} else {
+			    warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
+			}
+		    }
+		    
+		    
 		}
+		
 		close(SETFILENAME);
 		($setName,
 		 $paperHeaderFile,
@@ -2123,7 +2195,10 @@ sub readSetDef {
 		 $time2,
 		 $time3,
 		 \@problemData,
-		 $assignmentType, $attemptsPerVersion, $timeInterval, 
+		 $assignmentType,
+		 $enableReducedScoring,
+		 $reducedScoringDate,
+		 $attemptsPerVersion, $timeInterval, 
 		 $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
 		 $problemsPerPage, 
 		 $hideScore,
@@ -2132,7 +2207,9 @@ sub readSetDef {
 		 $restrictIP,
 		 $restrictLoc,
 		 $relaxRestrictIP,
-		 $description
+		 $description,
+		 $emailInstructor,
+		 $restrictProbProgression
 		);
 	} else {
 		warn $r->maketext("Can't open file [_1]", $filePath)."\n";
@@ -2177,13 +2254,19 @@ SET:	foreach my $set (keys %filenames) {
 		my $openDate     = $self->formatDateTime($setRecord->open_date);
 		my $dueDate      = $self->formatDateTime($setRecord->due_date);
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
+		my $reducedScoringDate =  $self->formatDateTime($setRecord->reduced_scoring_date);
 		my $description = $setRecord->description;
 		if ($description) {
-		    $description =~ s/\n/<n>/g;
+		    $description =~ s/\r?\n/<n>/g;
 		}
-		
+
+		my $assignmentType = $setRecord->assignment_type;
+		my $enableReducedScoring = $setRecord->enable_reduced_scoring ? 'Y' : 'N';
 		my $setHeader    = $setRecord->set_header;
 		my $paperHeader  = $setRecord->hardcopy_header;
+		my $emailInstructor = $setRecord->email_instructor;
+		my $restrictProbProgression = $setRecord->restrict_prob_progression;
+
 		my @problemList = $db->listGlobalProblems($set);
 
 		my $problemList  = '';
@@ -2195,27 +2278,41 @@ SET:	foreach my $set (keys %filenames) {
 				$reason{$set} = $r->maketext("No record found for problem [_1].", $prob);
 				next SET;
 			}
+			my $problem_id    = $problemRecord->problem_id();
+
+			if ($setRecord->assignment_type eq 'jitar') {
+			    $problem_id = join('.',jitar_id_to_seq($problem_id));
+			}
+
 			my $source_file   = $problemRecord->source_file();
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
 			my $showMeAnother  = $problemRecord->showMeAnother();
-			
+			my $countsParentGrade = $problemRecord->counts_parent_grade();
+			my $attToOpenChildren = $problemRecord->att_to_open_children();
+
 			# backslash-escape commas in fields
 			$source_file =~ s/([,\\])/\\$1/g;
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
 
-            # only include showMeAnother if it has been enabled in the course configuration
-            if($ce->{pg}->{options}{enableShowMeAnother}){
-			    $problemList     .= "$source_file, $value, $max_attempts, $showMeAnother \n";
-            } else {
-			    $problemList     .= "$source_file, $value, $max_attempts \n";
-            }
+			# This is the new way of saving problem information
+			# the labelled list makes it easier to add variables and 
+			# easier to tell when they are missing
+			$problemList     .= "problem_start\n";
+			$problemList     .= "problem_id = $problem_id\n";
+			$problemList     .= "source_file = $source_file\n";
+			$problemList     .= "value = $value\n";
+			$problemList     .= "max_attempts = $max_attempts\n";
+			$problemList     .= "showMeAnother = $showMeAnother\n";
+			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
+			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
+			$problemList     .= "problem_end\n"
+			
 		}
 
 		# gateway fields
-		my $assignmentType = $setRecord->assignment_type;
 		my $gwFields = '';
 		if ( $assignmentType =~ /gateway/ ) {
 		    my $attemptsPerV = $setRecord->attempts_per_version;
@@ -2229,7 +2326,6 @@ SET:	foreach my $set (keys %filenames) {
 		    my $timeCap      = $setRecord->time_limit_cap;
 		    $gwFields =<<EOG;
 
-assignmentType      = $assignmentType
 attemptsPerVersion  = $attemptsPerV
 timeInterval        = $timeInterval
 versionsPerInterval = $vPerInterval
@@ -2257,14 +2353,19 @@ EOG
 		}
 
 		my $fileContents = <<EOF;
-
+assignmentType      = $assignmentType
 openDate          = $openDate
+reducedScoringDate = $reducedScoringDate
 dueDate           = $dueDate
 answerDate        = $answerDate
+enableReducedScoring = $enableReducedScoring
 paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields
 description       = $description
-${restrictFields}problemList       = 
+restrictProbProgression = $restrictProbProgression
+emailInstructor   = $emailInstructor
+${restrictFields}
+problemListV2 
 $problemList
 EOF
 
@@ -2428,10 +2529,14 @@ sub recordEditHTML {
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $prettySetID = $Set->set_id;
 	$prettySetID =~ s/_/ /g;
-	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail2', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list2', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
+        my $imageLink = '';
+
+	if ($authz->hasPermissions($user, "modify_problem_sets")) {
+	  $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
+	}
 	
 	my @tableCells;
 	my %fakeRecord;
@@ -2509,7 +2614,7 @@ sub recordEditHTML {
 	
 	# Remove the enable reduced scoring box if that feature isnt enabled
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-	    @fieldsToShow = grep {$_ ne 'enable_reduced_scoring'} @fieldsToShow;
+	    @fieldsToShow = grep {!/enable_reduced_scoring|reduced_scoring_date/} @fieldsToShow;
 	}
 
 	# make a hash out of this so we can test membership easily
@@ -2523,7 +2628,9 @@ sub recordEditHTML {
 		#print $field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
-		$fieldValue = $self->formatDateTime($fieldValue) if $field =~ /_date/;
+		
+		$fieldValue = $self->formatDateTime($fieldValue,'','%m/%d/%Y at %I:%M%P') if $field =~ /_date/;
+		
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
@@ -2576,7 +2683,7 @@ sub printTableHTML {
 	
 	# Remove the enable reduced scoring box if that feature isnt enabled
 	if (!$ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-	    @realFieldNames = grep {$_ ne 'enable_reduced_scoring'} @realFieldNames;
+	    @realFieldNames = grep {!/enable_reduced_scoring|reduced_scoring_date/} @realFieldNames;
 	}
 
 	
@@ -2676,12 +2783,13 @@ sub output_JS{
 	# print javaScript for dateTimePicker	
 	# jquery ui printed seperately
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
 
 	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";

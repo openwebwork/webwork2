@@ -1236,7 +1236,9 @@ sub saveEdit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r           = $self->r;
 	my $db          = $r->db;
-	
+	my $editorUser = $r->param('user');
+	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;	
+
 	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
 	foreach my $userID (@visibleUserIDs) {
 		my $User = $db->getUser($userID); # checked
@@ -1252,7 +1254,8 @@ sub saveEdit_handler {
 		
 		foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
 			my $param = "permission.${userID}.${field}";
-			if (defined $tableParams->{$param}->[0]) {
+			if (defined $tableParams->{$param}->[0] &&
+			    $tableParams->{$param}->[0] <= $editorUserPermission) {
 				$PermissionLevel->$field($tableParams->{$param}->[0]);
 			}
 		}
@@ -1507,7 +1510,10 @@ sub exportUsersToCSV {
 sub fieldEditHTML {
 	my ($self, $fieldName, $value, $properties) = @_;
 	my $r = $self->r;
-	my $ce = $self->r->ce;
+	my $ce = $r->ce;
+	my $db = $r->db;
+	my $editorUser = $r->param('user');
+	my $editorUserPermission = $db->getPermissionLevel($editorUser)->permission;
 	my $size = $properties->{size};
 	my $type = $properties->{type};
 	my $access = $properties->{access};
@@ -1597,7 +1603,7 @@ sub fieldEditHTML {
 		my %roles = %{$ce->{userRoles}};
 		foreach my $role (sort {$roles{$a}<=>$roles{$b}} keys(%roles) ) {
 			my $val = $roles{$role};
-
+			next unless $val <= $editorUserPermission;
 			push(@values, $val);
 			$labels{$val} = $role;
 			$default = $val if ( $value eq $role );
@@ -1651,7 +1657,11 @@ sub recordEditHTML {
 	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
 
 	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0, alt=>"Link to Edit Page for ".$User->user_id}));
+        my $imageLink = '';
+
+	if ($authz->hasPermissions($user, "modify_student_data")) {
+	  $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0, alt=>"Link to Edit Page for ".$User->user_id}));
+	}
 	
 	my @tableCells;
 	
@@ -1913,8 +1923,8 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/classlist_handlers.js"}), CGI::end_script();
 	return "";

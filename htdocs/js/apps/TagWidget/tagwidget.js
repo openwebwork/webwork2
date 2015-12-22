@@ -13,6 +13,67 @@ var basicRequestObject = {
     "command":"searchLib"
 };
 
+// Get the taxonomy
+
+var taxo=[];  // Global variable to hold it
+var loadtaxo = $.ajax({
+  dataType: "json",
+  url: "/webwork2_files/DATA/tagging-taxonomy.json", 
+  success: function(data) {
+    taxo = data;
+  },
+  error: function() {
+    alert("Failed to load OPL taxonomy from server.");
+  }
+});
+
+// If needed, wait until asynchronous load is done
+function fetch_taxo() {
+  if(taxo.length>0) {
+    return(taxo);
+  } else {
+    loadtaxo.done(fetch_taxo());
+  }
+}
+
+function readfromtaxo(who, valarray) {
+  var mytaxo = fetch_taxo();
+  if(who == 'subjects') {
+	return(mytaxo.map(function(z) {return(z['name']);} ));
+  }
+  var failed = true;
+  for(var i=0; i<mytaxo.length; i++) {
+    if(mytaxo[i]['name'] == valarray[0]) {
+	  mytaxo = mytaxo[i]['subfields'];
+	  failed=false;
+	  break;
+	}
+  }
+  if(failed) {
+    alert('Provided value "' + valarray[0] + '" is not in my subject taxonomy. ' );
+	return([]);
+  }
+  if(who == 'chapters') {
+	return(mytaxo.map(function(z) {return(z['name']);} ));
+  }
+  failed = true;
+  for(var i=0; i<mytaxo.length; i++) {
+    if(mytaxo[i]['name'] == valarray[1]) {
+	  mytaxo = mytaxo[i]['subfields'];
+	  failed=false;
+	  break;
+	}
+  }
+  if(failed) {
+    alert('Provided value "'+ valarray[1] + '" is not in my chapter taxonomy. ' );
+	return([]);
+  }
+  if(who == 'sections') {
+	return(mytaxo.map(function(z) {return(z['name']);} ));
+  }
+  return([]); // Should not get here
+}
+
 function init_webservice(command) {
   var myUser = $('#hidden_user').val();
   var myCourseID = $('#hidden_courseID').val();
@@ -57,6 +118,18 @@ function tag_widget(id, path) {
   for (var j=1; j<7; j++) {
     levels.append('<option value="'+j+'">'+j+'</option>');
   }
+  // Only show the status menu if we are looking at something in Pending
+  var shortpath = path.replace(/^.*templates\//,'');
+  if(/^Pending\//.test(shortpath)) {
+  
+    $el.append('<select id="'+id+'stat"></select>');
+    var stat = $('#'+id+'stat');
+    stat.append('<option value="A">Accept</option>');
+    stat.append('<option value="0">Review</option>');
+    stat.append('<option value="R">Reject</option>');
+    stat.append('<option value="F">Further review</option>');
+    stat.append('<option value="N">Needs resource</option>');
+  }
   subj.change(function() {tag_widget_clear_message(id);tag_widget_update('chapters', 'get', id, nodata);});
   chap.change(function() {tag_widget_clear_message(id);tag_widget_update('sections', 'get', id, nodata);});
   sect.change(function() {tag_widget_clear_message(id);});
@@ -95,6 +168,7 @@ tag_widget_savetags = function(id, path) {
   var chap = $('#'+id+'chapters').find(':selected').text();
   var sect = $('#'+id+'sections').find(':selected').text();
   var level = $('#'+id+'level').find(':selected').text();
+  var stat = $('#'+id+'stat').find(':selected').val();
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
@@ -103,6 +177,7 @@ tag_widget_savetags = function(id, path) {
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
   mydefaultRequestObject.library_levels = level;
+  mydefaultRequestObject.library_status = stat;
   mydefaultRequestObject.command = path;
   // console.log(mydefaultRequestObject);
   return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
@@ -119,7 +194,7 @@ tag_widget_clear_message = function(id) {
 
 tag_widget_update = function(who, what, where, values) {
   // where is the start of the id's for the parts
-  var child = { subjects : 'chapters', chapters : 'sections', sections : 'level', level : 'count'};
+  var child = { subjects : 'chapters', chapters : 'sections', sections : 'level', level : 'stat', stat : 'count'};
 
 // console.log({"who": who, "what": what, "where":where, "values": values});
   var all = 'All ' + capFirstLetter(who);
@@ -135,6 +210,7 @@ tag_widget_update = function(who, what, where, values) {
      $('#'+where+'chapters').remove();
      $('#'+where+'sections').remove();
      $('#'+where+'level').remove();
+     $('#'+where+'stat').remove();
      $('#'+where+'Save').remove();
      $('#'+where+'result').text(' Problem file is a pointer to another file');
      return false;
@@ -148,6 +224,7 @@ tag_widget_update = function(who, what, where, values) {
   var chap = $('#'+where+'chapters').find(':selected').text();
   var sect = $('#'+where+'sections').find(':selected').text();
   var level = $('#'+where+'level').find(':selected').text();
+  var stat = $('#'+where+'stat').find(':selected').val();
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
@@ -157,13 +234,17 @@ tag_widget_update = function(who, what, where, values) {
   if(values.DBchapter) { chap = values.DBchapter;}
   if(values.DBsection) { sect = values.DBsection;}
   if(values.Level) { level = values.Level;}
+  if(values.Status) { stat = values.Status;} else { stat = "0" }
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
   var subcommand = "getAllDBsubjects";
   if(who == 'level') {
-    setselectbyid(where+who, ['Level',1,2,3,4,5,6]);
     $('#'+where+who).val(level); 
+    return tag_widget_update('stat','get',where,values);
+  }
+  if(who == 'stat') {
+    $('#'+where+who).val(stat); 
     return true;
   }
   if(what == 'clear') {
@@ -177,25 +258,23 @@ tag_widget_update = function(who, what, where, values) {
   mydefaultRequestObject.command = subcommand;
   // console.log("Setting menu "+where+who);
   // console.log(mydefaultRequestObject);
-  return $.post(basicWebserviceURL, mydefaultRequestObject, function (data) {
-      var response = $.parseJSON(data);
-      //console.log(response);
-      var arr = response.result_data;
-      arr.splice(0,0,all);
-      setselectbyid(where+who, arr);
-      if(values.DBsubject && who=='subjects') { 
-        $('#'+where+who).val(values.DBsubject); 
-      }
-      if(values.DBchapter && who=='chapters') { 
-        $('#'+where+who).val(values.DBchapter);
-      }
-      if(values.DBsection && who=='sections') { 
-        $('#'+where+who).val(values.DBsection);
-      }
-      tag_widget_update(child[who], 'get',where, values);
-    });
+  var arr = readfromtaxo(who, [subj, chap, sect]);
+  arr.splice(0,0,all);
+  setselectbyid(where+who, arr);
+  if(values.DBsubject && who=='subjects') { 
+	$('#'+where+who).val(values.DBsubject); 
+  }
+  if(values.DBchapter && who=='chapters') { 
+	$('#'+where+who).val(values.DBchapter);
+  }
+  if(values.DBsection && who=='sections') { 
+	$('#'+where+who).val(values.DBsection);
+  }
+  tag_widget_update(child[who], 'get',where, values);
   return true;
 }
+
+
 
 // Two utility functions
 function setselectbyid(id, newarray) {

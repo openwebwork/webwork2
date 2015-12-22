@@ -197,6 +197,25 @@ sub munge_pg_file_path {
 	return($pg_path);
 }
 
+## Problems straight from the OPL database come with MO and static
+## tag information.  This is for other times, like next/prev page.
+
+sub getDBextras {
+	my $r = shift;
+	my $sourceFileName = shift;
+
+	if($sourceFileName =~ /^Library/) {
+		return @{WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName)};
+	}
+
+	my $filePath = $r->ce->{courseDirs}{templates}."/$sourceFileName";
+	my $tag_obj = WeBWorK::Utils::Tags->new($filePath);
+	my $isMO = $tag_obj->{MO} || 0;
+	my $isstatic = $tag_obj->{Static} || 0;
+
+	return ($isMO, $isstatic);
+}
+
 ## With MLT, problems come in groups, so we need to find next/prev
 ## problems.  Return index, or -1 if there are no more.
 sub next_prob_group {
@@ -248,20 +267,28 @@ sub read_set_def {
 	my @pg_files = ();
 	my ($line, $got_to_pgs, $name, @rest) = ("", 0, "");
 	if ( open (SETFILENAME, "$filePath") )    {
-		while($line = <SETFILENAME>) {
-			chomp($line);
-			$line =~ s|(#.*)||; # don't read past comments
-			if($got_to_pgs) {
-				unless ($line =~ /\S/) {next;} # skip blank lines
-				($name,@rest) = split (/\s*,\s*/,$line);
-				$name =~ s/\s*//g;
-				push @pg_files, $name;
-			} else {
-				$got_to_pgs = 1 if ($line =~ /problemList\s*=/);
-			}
+	    while($line = <SETFILENAME>) {
+		chomp($line);
+		$line =~ s|(#.*)||; # don't read past comments
+		if($got_to_pgs == 1) {
+		    unless ($line =~ /\S/) {next;} # skip blank lines
+		    ($name,@rest) = split (/\s*,\s*/,$line);
+		    $name =~ s/\s*//g;
+		    push @pg_files, $name;
+		} elsif ($got_to_pgs == 2) {
+		    # skip lines which dont identify source files
+		    unless ($line =~ /source_file\s*=\s*(\S+)/) {
+			next;
+		    }
+		    # otherwise we got the name from the regexp
+		    push @pg_files, $1;
+		} else {
+		    $got_to_pgs = 1 if ($line =~ /problemList\s*=/);
+		    $got_to_pgs = 2 if ($line =~ /problemListV2/);
 		}
+	    }
 	} else {
-		$self->addbadmessage("Cannot open $filePath");
+	    $self->addbadmessage("Cannot open $filePath");
 	}
 	# This is where we would potentially munge the pg file paths
 	# One possibility
@@ -297,14 +324,13 @@ sub add_selected {
 	my @selected = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
 	# DBFIXME count would work just as well
-	$freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	my $addedcount=0;
 
 	for $selected (@selected) {
 		if($selected->[1] & ADDED) {
 			$file = $selected->[0];
 			my $problemRecord = $self->addProblemToSet(setName => $setName,
-				sourceFile => $file, problemID => $freeProblemID);
+				sourceFile => $file);
 			$freeProblemID++;
 			$self->assignProblemToAllSetUsers($problemRecord);
 			$selected->[1] |= SUCCESS;
@@ -933,6 +959,11 @@ sub make_data_row {
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
+	my $isstatic = $sourceFileData->{static};
+	my $isMO = $sourceFileData->{MO};
+	if (not defined $isMO) {
+		($isMO, $isstatic) = getDBextras($r, $sourceFileName);
+	}
 	my $cnt = shift;
 	my $mltnumleft = shift;
 
@@ -1022,13 +1053,15 @@ sub make_data_row {
 		my $sourceFilePath = $templatedir .'/'. $sourceFileName;
 		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/tagwidget.js"}). CGI::end_script();
+		#$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}). CGI::end_script();
 		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
 	}
 
 	my $level =0;
 
-	my $rerand = '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random" ></i></span>';
+	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random"></i></span>';
+	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
+	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
 	print $mltstart;
 	# Print the cell
@@ -1040,8 +1073,8 @@ sub make_data_row {
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
-			CGI::span({-style=>"float:right ; text-align: right"}, 
-		        $inSet, $mlt, $rerand,
+			CGI::span({-style=>"float:right ; text-align: right ; margin-right:.8em;"}, 
+				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
 				-title=>"Hide this problem",
@@ -1185,7 +1218,7 @@ sub pre_header_initialize {
 			$self->{error} = 1;
 			$self->addbadmessage('You need to select a "Target Set" before you can edit it.');
 		} else {
-			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
+			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail2',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
 			my $url = $self->systemLink($page);
 			$self->reply_with_redirect($url);
 		}
@@ -1375,8 +1408,10 @@ sub pre_header_initialize {
 			$r->param('local_sets',$newSetName);  ## use of two parameter param
 			debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
-			if (defined($newSetRecord)) {
-	            $self->addbadmessage("The set name $newSetName is already in use.  
+			if (! $newSetName) {
+			    $self->addbadmessage("You did not specify a new set name.  ");
+			} elsif (defined($newSetRecord)) {
+			    $self->addbadmessage("The set name $newSetName is already in use.  
 	            Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
 				# DBFIXME use $db->newGlobalSet
@@ -1403,6 +1438,7 @@ sub pre_header_initialize {
 				
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
+				$newSetRecord->assignment_type('default');
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
@@ -1524,37 +1560,6 @@ sub title {
 	return $self->r->maketext("Library Browser");
 }
 
-sub head {
-  my ($self) = @_;
-  my $ce = $self->r->ce;
-  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-
-    print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
-
-  print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/vendor/bootstrap/js/bootstrap.min.js"></script>!;
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
-  print "\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/legacy/Base64.js"}), CGI::end_script();
-  print "\n";
-	print qq{
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
-  print "\n";
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
-  print "\n";
-  print qq!<script src="$webwork_htdocs_url/js/legacy/setmaker.js"></script>!;
-  print "\n";
-  return '';
-}
-
-
 sub body {
 	my ($self) = @_;
 
@@ -1629,8 +1634,6 @@ sub body {
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
-                #CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>encode_base64($ce->{courseDirs}->{templates})}),
-                CGI::hidden({id=>'hidden_templatedir',name=>'templatedir',default=>$ce->{courseDirs}->{templates}}),
 			'<div align="center">',
 	CGI::start_table({class=>"library-browser-table"});
 	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
@@ -1684,6 +1687,58 @@ sub body {
 
 	return "";	
 }
+
+sub output_JS {
+  my ($self) = @_;
+  my $ce = $self->r->ce;
+  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+
+  print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
+  print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
+  print "\n";
+  print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
+  print "\n";
+  print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
+  print "\n";
+  if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
+  }
+  return '';
+
+}
+
+
+
+sub output_CSS {
+  my ($self) = @_;
+  my $ce = $self->r->ce;
+  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+
+    #print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
+
+  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+
+  print qq{
+           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+
+  return '';
+
+}
+
+sub output_jquery_ui {
+
+    return '';
+
+}
+
+
 
 =head1 AUTHOR
 

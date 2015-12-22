@@ -124,6 +124,7 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 #$problemLibrary{version}     = "2";
 # uncomment these lines below and comment out the line above if using OPL instead of NPL
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
+$contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
 $problemLibrary{version}    = "2.5";  
 
 # Additional library buttons can be added to the Library Browser (SetMaker.pm)
@@ -260,32 +261,28 @@ $problemDefaults{showMeAnother} = -1;
 # "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 ################################################################################
 
-# $pg{specialPGEnvironmentVars}{DragMath} = 0;
+ $pg{specialPGEnvironmentVars}{DragMath} = 0;
+ #$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
+ #$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
+ # The link Contrib in the course templates directory should point to ../webwork-open-problem-library/Contrib 
 
 ################################################################################
 # Temporary hack for displaying the different versions of the editors
 ################################################################################
 # These configurations can be placed in course.conf file to tune the behavior for individual courses
-# The items below can be used to override the settings in defaults.config
-# One can also use $showeditors{classlisteditor1}=0; to override
-# These will disappear (or at least decrease in number) once the final editor verisons
-# are determined. 
- %showeditors = (
-# 	classlisteditor1   => 1,
- 	classlisteditor2   => 1,
-# 	
-# 	homeworkseteditor1 => 1,
- 	homeworkseteditor2 => 1,
-# 	
-# 	librarybrowsernojs    => 1,
- 	librarybrowser1    => 1,
-# 	librarybrowser2    => 1,
-#	librarybrowser3    => 1,
-# 	
-#	pgproblemeditor1   => 1,
-	pgproblemeditor2   => 1,
-# 	pgproblemeditor3   => 1,
-);
+
+# These will enable the versions of the problem set detail page and library browser page
+# that do not use the xmlrpc pathway
+
+#$showeditors{problemsetdetail1} = 1;
+#$showeditors{librarybrowsernojs} = 1;
+
+# This will enable the slightly fancier PG problem editor 3
+
+#$showeditors{pgproblemeditor3} = 1;
+
+# This will turn off ww3 
+#$showeditors{ww3} = 0;
 
 ################################################################################
 # Directory for temporary files
@@ -347,28 +344,25 @@ $problemDefaults{showMeAnother} = -1;
 # Session Management
 ################################################################################
 
-## For session management using session_cookies, uncomment the following line,
-## which will override the setting  $session_management_via = "key"
-## in defaults.config.
-## 
 ## For a discussion of session_management_via session_cookies or the
 ## Key database, see the   Session Managment section
 ## of defaults.config.dist
 
-#$session_management_via = "session_cookie";
+## For session management using the key databasse table, uncomment the following line,
+## which will override the setting  $session_management_via = "session_cookie"
+## set in defaults.config.
+
+#  $session_management_via = "key";
 
 ################################################################################
-# Achievement Facebook Integration
+# Searching for set.def files to import 
 ################################################################################
+## Uncomment below so that when the homework sets editor searches for set def
+## files, it searches beyond templates; it can search deeper subfolders of 
+## templates, and optionally also descend into Library
 
-#  Note:  This feature is out of date and no longer works with facebooks api
+#$options{setDefSearchDepth}=4; #search down 4 levels
+#$options{useOPLdefFiles}=1;
 
-## Because of the way facebook works, in order to use facebook integration
-## with webwork, you will need to create a facebook "app" specific to the 
-## domain name of the server you are running.  Once you have created the app
-## you can enable facebook integration by setting the variables below
-
-#$allowFacebooking = 1;
-#$facebookAppId = your_app_id_here;
 
 1; #final line of the file to reassure perl that it was read properly.

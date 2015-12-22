@@ -59,6 +59,7 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
+use WeBWorK::Utils qw(jitar_id_to_seq);
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -603,10 +604,13 @@ sub links {
 	$prettySetID =~ s/_/ /g if defined $prettySetID;
 	$prettyAchievementID =~ s/_/ /g if defined $prettyAchievementID;
 	
+	my $prettyProblemID = $problemID;
+
 	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
 	if ($authen->was_verified) {
 		# DBFIXME testing for existence by keyfields -- don't need fetch record
 		if (defined $setID and $db->getUserSet($eUserID, $setID)) {
+
 			if (defined $problemID and $db->getUserProblem($eUserID, $setID, $problemID)) {
 				# both set and poblem exist -- do nothing
 			} else {
@@ -716,6 +720,9 @@ sub links {
 				#    assignment, we have to get the set record.
 				my ($globalSetID) = ( $setID =~ /(.+?)(,v\d+)?$/ );
 				my $setRecord = $db->getGlobalSet( $globalSetID );
+			    if ($setRecord->assignment_type eq 'jitar'  && defined $problemID) {
+				$prettyProblemID = join('.',jitar_id_to_seq($problemID));
+			    }
 				if ( $setRecord->assignment_type !~ /gateway/ ) {
 					print &$makelink("${pfx}ProblemSet", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				} elsif ($setID =~ /,v(\d)+$/) {
@@ -727,7 +734,7 @@ sub links {
 				    print CGI::start_li();
 					print CGI::start_ul();
 					print CGI::start_li(); # $problemID
-					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $problemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);					
+					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);					
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
 				    print CGI::end_li();
@@ -737,10 +744,8 @@ sub links {
 			}
 
 			
-			if ($authz->hasPermissions($userID, "change_password") or $authz->hasPermissions($userID, "change_email_address")) {
 				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-			}
-			
+					
 			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			
 			if ($ce->{achievementsEnabled}) {
@@ -774,24 +779,43 @@ sub links {
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 				    print CGI::start_li();
 				    print CGI::start_ul();
+				    if ($ce->{showeditors}->{problemsetdetail1}) {
 					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail", text=>"-$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
-					
+				    }
+
+				    if ($ce->{showeditors}->{problemsetdetail2}) {
+					print CGI::start_li(); # $setID (2)
+					print &$makelink("${pfx}ProblemSetDetail2", text=>"--$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+                     		        print CGI::end_li();
+				    }
+
 					if (defined $problemID) {
 					    print CGI::start_li();
 					    print CGI::start_ul();
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
 					    
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$problemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
+					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+						if $ce->{showeditors}->{simplepgeditor};;
 					    print CGI::end_ul();
 					    print CGI::end_li();
-					}					
+					}
+					if (defined $problemID) {
+					    print CGI::start_li();
+						print CGI::start_ul();
+						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+							if $ce->{showeditors}->{simplepgeditor};;
+						print CGI::end_ul();
+					    print CGI::end_li();
+					}
+					
 					print CGI::end_ul();
 				    print CGI::end_li();
 				}
@@ -1020,7 +1044,19 @@ sub path {
 	
 	my $urlpath = $r->urlpath;
 	do {
-		unshift @path, $urlpath->name, $r->location . $urlpath->path;
+	    my $name = $urlpath->name;
+	    # If its a problemid for a jitar set (something which requires
+	    # a fair bit of checking, we need to print out the pretty id
+	    if (defined($urlpath->module) && $urlpath->module eq 'WeBWorK::ContentGenerator::Problem') {
+ 		if ($urlpath->parent->name) {
+ 		    my $set = $r->db->getGlobalSet($urlpath->parent->name);
+ 		    if ($set && $set->assignment_type eq 'jitar') {
+ 			$name = join('.',jitar_id_to_seq($name));
+ 		    }
+ 		}
+	    }
+	    
+	    unshift @path, $name, $r->location . $urlpath->path;
 	} while ($urlpath = $urlpath->parent);
 	
 	$path[$#path] = ""; # we don't want the last path element to be a link
@@ -1690,16 +1726,14 @@ sub hidden_fields {
 	
 	my $html = "";
 	foreach my $param (@fields) {
-# 		my @values = $r->param($param);
-# 		$html .= CGI::hidden($param, @values);  #MEG
-# 		 warn "$param ", join(" ", @values) if @values >1; #this should never happen!!!
-
-	    my $value  = $r->param($param);
-
+	    my @values = $r->param($param);
+	    foreach my $value (@values) {
+		next unless defined($value);
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
-
+	    }
 	}
+
 	return $html;
 }
 
@@ -2092,11 +2126,28 @@ sub warningOutput($$) {
 	my $r = $self->{r};
 	print "Entering ContentGenerator::warningOutput subroutine</br>" if $TRACE_WARNINGS;
 	my @warnings = split m/\n+/, $warnings;
+
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+	
 	foreach my $warning (@warnings) {
 	    # This used to be commented out because it interfered with warnings
 	    # from PG.  But now PG has a seperate warning channel thats not
-	    # encoded.  
-	    $warning = HTML::Entities::encode_entities($warning);  
+	    # encoded.  Since these warnings have html they
+	    # look better scrubbed
+
+	    #$warning = HTML::Entities::encode_entities($warning);  
+	    $warning = $scrubber->scrub($warning);
+
 	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);

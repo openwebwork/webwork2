@@ -28,7 +28,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile wwRound);
+use WeBWorK::Utils qw(readFile seq_to_jitar_id jitar_id_to_seq jitar_problem_adjusted_status wwRound);
 
 our @userInfoColumnHeadings = ("STUDENT ID", "login ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
 our @userInfoFields = ("student_id", "user_id","last_name", "first_name", "section", "recitation");
@@ -291,6 +291,21 @@ sub scoreSet {
 	my @sortedUserIDs = @$sortedUserIDsRef; # user IDs sorted by student ID
 	
 	my @problemIDs = $db->listGlobalProblems($setID);
+	
+	my $isJitarSet = $setRecord->assignment_type eq 'jitar';
+
+	# for jitar sets we only want the top level ids
+	if ($isJitarSet) {
+	    my @topLevelIDs;
+	    
+	    foreach my $id (@problemIDs) {
+		my @seq = jitar_id_to_seq($id);
+		push @topLevelIDs, seq_to_jitar_id($seq[0]) if ($#seq == 0);
+	    }
+
+	    @problemIDs = @topLevelIDs;
+	}
+
 
 	# determine what information will be returned
 	if ($format eq 'normal') {
@@ -385,13 +400,14 @@ sub scoreSet {
   # get each user's problems.  For gateway (versioned) sets, we get the 
   # user's best version and return that
 	if ( ! defined( $setRecord->assignment_type() ) ||
-	     $setRecord->assignment_type() !~ /gateway/ ) {
+	     ($setRecord->assignment_type() !~ /gateway/ &&
+	      $setRecord->assignment_type() ne 'jitar')) {
 		foreach my $userID (@sortedUserIDs) {
 			my %CurrUserProblems = map { $_->problem_id => $_ }
 				$db->getAllMergedUserProblems($userID, $setID);
 			$UserProblems{$userID} = \%CurrUserProblems;
 		}
-	} else {  # versioned sets; get the problems for the best version 
+	} elsif ($setRecord->assignment_type() =~ /gateway/) {  # versioned sets; get the problems for the best version 
 
 		foreach my $userID (@sortedUserIDs) {
 			my $CurrUserProblems = {};
@@ -425,12 +441,23 @@ sub scoreSet {
 			}
 			$UserProblems{$userID} = { %{$CurrUserProblems} };
 		}
+	} else {
+	    # for jitar sets @problemIDs will only be the top level ids, 
+	    # so we cant use getAllMergeduserProblems
+	    foreach my $userID (@sortedUserIDs) {
+		my @where = map {[$userID, $setID, $_]} @problemIDs;
+		my %CurrUserProblems = map { $_->problem_id => $_ }
+		 $db->getMergedProblems(@where);
+		$UserProblems{$userID} = \%CurrUserProblems;
+	    }
+
 	}
+
 	debug("done pre-fetching user problems for set $setID");
 	
 	# Write the problem data
 	my $dueDateString = $self->formatDateTime($setRecord->due_date);
-	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
+	my ($dueDate, $dueTime) = $dueDateString =~ /^(.*) at (.*)$/;
 	my $valueTotal = 0;
 	my %userStatusTotals = ();
 	my %userSuccessIndex = ();
@@ -444,9 +471,13 @@ sub scoreSet {
 		
 		my $column = 5 + $problem * $columnsPerProblem;
 		if ($scoringItems->{header}) {
+		        my $prettyProblemID = $globalProblem->problem_id;
+		        if ($isJitarSet) {
+			  $prettyProblemID = join('.',jitar_id_to_seq($prettyProblemID));
+			}
 			$scoringData[0][$column] = "";
 			$scoringData[1][$column] = $setRecord->set_id;
-			$scoringData[2][$column] = $globalProblem->problem_id;
+			$scoringData[2][$column] = $prettyProblemID;
 			$scoringData[3][$column] = $dueDate;
 			$scoringData[4][$column] = $dueTime;
 			$scoringData[5][$column] = $globalProblem->value;
@@ -455,7 +486,7 @@ sub scoreSet {
 				for (my $row = 0; $row < 6; $row++) {
 					for (my $col = $column+1; $col <= $column + 2; $col++) {
 						if ($row == 2) {
-							$scoringData[$row][$col] = $globalProblem->problem_id;
+							$scoringData[$row][$col] = $prettyProblemID;
 						} else {
 							$scoringData[$row][$col] = "";
 						}
@@ -481,6 +512,11 @@ sub scoreSet {
 			}
 			$userStatusTotals{$user} = 0 unless exists $userStatusTotals{$user};
 			my $user_problem_status          = ($userProblem->status =~/^[\d\.]+$/) ? $userProblem->status : 0; # ensure it's numeric
+			# the grade is the adjusted status if its a jitar set 
+			# and this is an actual problem
+			if ($isJitarSet && $userProblem->problem_id) {
+			    $user_problem_status = jitar_problem_adjusted_status($userProblem, $db);
+			}
 			$userStatusTotals{$user}        += $user_problem_status * $userProblem->value;	
 			if ($scoringItems->{successIndex})   {
 				$numberOfAttempts{$user}  = 0 unless defined($numberOfAttempts{$user});

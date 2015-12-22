@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted wwRound between after);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -326,6 +326,8 @@ sub body {
 				CGI::p($self->{invalidSet}));
 	}
 	
+	my $isJitarSet = ($set->assignment_type eq 'jitar');
+
 	#my $hardcopyURL =
 	#	$ce->{webworkURLs}->{root} . "/"
 	#	. $ce->{courseName} . "/"
@@ -353,7 +355,7 @@ sub body {
 			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_2",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		}
 	}
-	
+
 	# DBFIXME use iterator
 	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 
@@ -367,6 +369,7 @@ sub body {
 
 	    foreach my $problemID (@problemNumbers) {
 		my $problem = $db->getGlobalProblem($setName,$problemID);
+
 		if ($problem->flags =~ /essay/)  {
 		    $canScoreProblems = 1;
 		    $gradeableProblems[$problemID] = 1;
@@ -379,22 +382,32 @@ sub body {
 	if (@problemNumbers) {
 		# UPDATE - ghe3
 		# This table now contains a summary, a caption, and scope variables for the columns.
-	    print CGI::start_table({-class=>"problem_set_table", -summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")});
+	    print CGI::start_table({-class=>"problem_set_table problem_table", -summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")});
 	    print CGI::caption($r->maketext("Problems"));
-	    print CGI::Tr({},
-			      
-			CGI::th($r->maketext("Name")),
-			CGI::th($r->maketext("Attempts")),
-			CGI::th($r->maketext("Remaining")),
-			CGI::th($r->maketext("Worth")),
-			CGI::th($r->maketext("Status")),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : ''
-		);
+	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
+	    
+	    my $thRow = [ CGI::th($r->maketext("Name")),
+			  CGI::th($r->maketext("Attempts")),
+			  CGI::th($r->maketext("Remaining")),
+			  CGI::th($r->maketext("Worth")),
+			  CGI::th($r->maketext("Status")) ];
+	    if ($isJitarSet) {
+	      push @$thRow, CGI::th($r->maketext("Adjusted Status").$AdjustedStatusPopover);
+	      push @$thRow, CGI::th($r->maketext("Counts for Parent"));
+	    }
+
+	    if ($canScoreProblems) {
+		push @$thRow, CGI::th($r->maketext("Grader"));
+	    }
+
+	    print CGI::Tr({}, @$thRow);
 		
-		foreach my $problemNumber (sort { $a <=> $b } @problemNumbers) {
+	    @problemNumbers = sort { $a <=> $b } @problemNumbers;
+
+		foreach my $problemNumber (@problemNumbers) {
 			my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
 			die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
-			print $self->problemListRow($set, $problem, $canScoreProblems);
+			print $self->problemListRow($set, $problem, $db, $canScoreProblems, $isJitarSet);
 		}
 		
 		print CGI::end_table();
@@ -442,33 +455,80 @@ sub body {
 	return "";
 }
 
-sub problemListRow($$$) {
-	my ($self, $set, $problem, $canScoreProblems) = @_;
+sub problemListRow($$$$$) {
+	my ($self, $set, $problem, $db, $canScoreProblems, $isJitarSet) = @_;
 	my $r = $self->r;
+	my $ce = $r->ce;
+	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $set->set_id;
 	my $problemID = $problem->problem_id;
+	my $problemNumber = $problemID;
 	
+	my $jitarRestriction = 0;
+	my $problemLevel = 0;
+
+	if ($isJitarSet) {
+	    my @seq = jitar_id_to_seq($problemID);
+	    $problemLevel = $#seq;
+	    $problemNumber = join('.',@seq);
+	}
+
+	# if the problem is closed we dont even print it
+	if ($isJitarSet && !$authz->hasPermissions($problem->user_id, "view_unopened_sets") && is_jitar_problem_hidden($db, $problem->user_id, $setID, $problemID)) {
+	    return '';
+	}
+
 	my $interactiveURL = $self->systemLink(
 		$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, 
-			courseID => $courseID, setID => $setID, problemID => $problemID
-	    ));
+			courseID => $courseID, setID => $setID, problemID => $problemID ));
+
+	my $linkClasses = '';
+	my $interactive;
 	
-	my $interactive = CGI::a({-href=>$interactiveURL}, $r->maketext("Problem [_1]",$problemID));
+	if ($problemLevel != 0) {
+	    $linkClasses = "nested-problem-$problemLevel";
+	}
+	
+	# if the problem is trestricted we show that it exists but its greyed out
+	if ($isJitarSet && !$authz->hasPermissions($problem->user_id, "view_unopened_sets") && is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID)) {
+	    $interactive = CGI::span({class=>$linkClasses." disabled-problem"}, $r->maketext("Problem [_1]",$problemNumber));
+	} else {
+	    $interactive = CGI::a({-href=>$interactiveURL,-class=>$linkClasses}, $r->maketext("Problem [_1]",$problemNumber));
+	    
+	}
+	
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	my $remaining = (($problem->max_attempts||-1) < 0) #a blank yields 'infinite' because it evaluates as false with out giving warnings about comparing non-numbers
 		? $r->maketext("unlimited")
 		: $problem->max_attempts - $attempts;
-	my $rawStatus = $problem->status || 0;
-	my $status;
-	$status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
+
+	my $value = $problem->value;
+
+	$value = '' if ($isJitarSet && $problemLevel != 0 
+			&& !$problem->counts_parent_grade);
+
+	my $rawStatus = 0;
+	$rawStatus = $problem->status;
+
+	my $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
 	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
-	                                  # FIXME  -- this may not cover all cases.
-	
-#	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
-	
+	# FIXME  -- this may not cover all cases.
+
+	my $adjustedStatus = '';
+	if (!$isJitarSet || $problemLevel == 0) {
+	  $adjustedStatus = jitar_problem_adjusted_status($problem, $db);
+	  $adjustedStatus = eval{wwRound(0, $adjustedStatus*100).'%'};
+	}
+
+	my $countsForParent = "";
+	if ($isJitarSet && $problemLevel != 0 ) {
+	  $countsForParent = $problem->counts_parent_grade() ? $r->maketext('Yes') : $r->maketext('No');
+
+	}
+
 	my $graderLink = "";
 	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
 	    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
@@ -477,18 +537,23 @@ sub problemListRow($$$) {
 	    $graderLink = CGI::td('');
 	}
 
-	return CGI::Tr({},
-#		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
-#		CGI::td({-nowrap=>1, -align=>"center"},
-		       CGI::td($interactive),
-		       CGI::td([
-			   $attempts,
-			   $remaining,
-			   $problem->value,
-			   $status, 
-			       ]),
-		       $graderLink ? $graderLink : ''
-	    );
+	my $problemRow = [CGI::td($interactive),
+			  CGI::td([
+			      $attempts,
+			      $remaining,
+			      $value,
+			      $status])];
+	if ($isJitarSet) {
+	  push @$problemRow, CGI::td($adjustedStatus);
+	  push @$problemRow, CGI::td($countsForParent);
+	}
+
+	if ($canScoreProblems) {
+	    push @$problemRow, $graderLink;
+	}
+	    
+	
+	return CGI::Tr({}, @$problemRow);
 }
 
 1;

@@ -83,8 +83,7 @@ legend {
 #masthead {
 	background-color: #038;
 	margin: 0;
-	padding: 0;
-	padding: 5px;
+	padding: 5px 0px 5px 0px;
 }
 
 .webwork_logo {
@@ -118,7 +117,8 @@ legend {
 }
 
 #loginstatus {
-    	padding-top:.5ex;
+        padding-top:.5ex;
+        padding-right: .5em;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
@@ -153,6 +153,11 @@ ul.nav li a:hover {
 	background: #e1e1e1;	
 }
 
+/* for the side navigation 'fisheye' list of problems */
+li.currentProblem{
+	background: #e1e1e1;	
+}
+
 #site-links h2 {
     margin-top:0;
     margin-bottom:0;
@@ -166,6 +171,52 @@ ul.nav li a:hover {
 #site-navigation .info-box ul {
         overflow: hidden;
 }
+
+/* Progress Bar */
+div.progress-bar {
+   height: 20px;
+   max-width: 100%;
+   border: 1px solid #B6B6B4;
+   background-color: #DDDDDD;
+   border-radius: 5px;
+   margin-bottom: 10px;
+   position: relative;
+}
+
+div.correct-progress {
+   height: 20px;
+   background-color: #8F8; /*same colour used as 'correct' */
+   border: 2px solid #00FF00; 
+   border-radius: 4px;
+   display: inline-block;
+   float:left;
+   box-sizing:border-box;
+   text-align:center;
+}
+
+div.incorrect-progress {
+   height: 20px;
+   background-color: #FF9494; /* same colour used as 'incorrect' */
+   border: 2px solid #FF0000;
+   border-radius: 4px;
+   display: inline-block;
+   box-sizing:border-box;
+}
+
+div.inprogress-progress {
+   height: 20px;
+   background-color: #FFFF00; /* yellow */
+   border: 2px solid #FBB117; /* beer border*/
+   border-radius: 4px;
+   display: inline-block;
+   box-sizing:border-box;
+}
+
+div.unattempted-progress {
+   height: 20px;
+   display: inline-block;
+   box-sizing:border-box;
+ }
 
 #breadcrumb-row {
     margin-top:1ex;
@@ -318,9 +369,68 @@ table.classlist-table .tbody {
     margin-top: 0px;
 }
 
+.problem_set_table td, .problem_set_table th {
+    padding: 8px 3px 8px 3px;
+}
+
 .problem_set_table td a {
     font-weight:bold;
     font-size:13px;
+}
+
+.problem_table td {
+    white-space: nowrap;
+}
+
+
+/* these are for indenting problems on jitar sets */
+.problem_set_table .nested-problem-1 {
+    margin-left: 10px;
+}
+
+.problem_set_table .nested-problem-2 {
+    margin-left: 20px;
+}
+
+.problem_set_table .nested-problem-3 {
+    margin-left: 30px;
+}
+
+.problem_set_table .nested-problem-4 {
+    margin-left: 40px;
+}
+
+.problem_set_table .nested-problem-5 {
+    margin-left: 50px;
+}
+
+.problem_set_table .nested-problem-6 {
+    margin-left: 60px;
+}
+
+/* these are for indenting problems on jitar sets */
+.problem-list .nested-problem-1 {
+    padding-left: 20px;
+}
+
+.problem-list .nested-problem-2 {
+    padding-left: 23px;
+}
+
+.problem-list .nested-problem-3 {
+    padding-left: 26px;
+}
+
+.problem-list .nested-problem-4 {
+    padding-left: 29px;
+}
+
+.problem-list .nested-problem-5 {
+    padding-left: 32px;
+}
+
+.problem-list .nested-problem-6 {
+    padding-left: 35px;
 }
 
 .problem_set_table .hardcopy-link {
@@ -400,6 +510,11 @@ table.classlist-table .tbody {
 	border-bottom: 1px solid #ccc;
 }
 
+.library-browser-table-nojs td {
+    padding-right: 0.2em;
+    padding-left: 0.2em;
+}
+
 /* Footer */
 #footer {
 	clear: both;
@@ -443,10 +558,13 @@ input {
 	height: auto;
 }
 
-input[type="text"],
-textarea,
-select {
-    max-width:95%;
+@media (max-width:979px) {
+    input[type="text"],
+    input[type="password"],
+    textarea,
+    select {
+	max-width:95%;
+    }
 }
 
 .barrier {
@@ -499,7 +617,7 @@ div.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* r
 div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 div.ResultsWithError { color: #bf5454; background-color: inherit; } /* red */
 div.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
-div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px} /* bright gold border and harvest gold background*/
+div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px; margin-bottom: 5px} /* bright gold border and harvest gold background*/
 label.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red */
 label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
 label.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
@@ -868,10 +986,10 @@ table caption{
 	margin-top: 10%;
 	margin-left: 10%;
 	margin-right: 10%;
-}*/
+}
 
 #editor{
-	width: 585px;
+	width: 750px;
 }
 
 #editor .pg_editor_input_span{
@@ -942,6 +1060,74 @@ div.problem_sets_options {
     color: #000000;
 }
 
+/* ProblemSetDetail2 css */
+#psd_list {
+    padding-left: 0px;
+}
+
+#psd_list li {
+    list-style-type: none;
+}
+
+.pdr_placeholder {
+    height: 100px;
+    width: 90%;
+    border-style: dashed;
+    border-width: 1px;	
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.pdr_handle {    
+    cursor: move;
+    margin-right:2px;
+    font-size:large;
+}
+
+.pdr_collapse {
+    cursor: pointer;
+    width: 10px;
+    font-size:large;
+    display: none;
+    font-family: FontAwesome;
+}
+
+.psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
+    content: '\f054';
+}
+
+.psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
+    content: '\f078';
+}
+
+
+#psd_toolbar {
+    margin-right:10px;
+}
+
+#psd_toolbar a.btn {
+    margin-left:0px;
+    margin-right:0px;
+}
+
+#psd_list li.mjs-nestedSortable-collapsed > ol {
+    display: none;
+    }
+
+#psd_list li.mjs-nestedSortable-branch .pdr_collapse {
+    display: inline-block;
+    }
+
+#psd_list li.mjs-nestedSortable-leaf .pdr_collapse {
+    display: none;
+}
+
+.psr_render_area {
+    margin-top: 10px;
+    overflow: hidden;
+}
 
 .ScrollingRecordList > input[type='submit'] {
     margin-top: 1ex;

@@ -699,6 +699,7 @@ sub sendEmail {
 	
 	
 	my $mailer = Mail::Sender->new({
+				tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
 				from      => $smtpServer,
 				fake_from => "pstaab\@fitchburgstate.edu",
 				to        => "pstaab\@fitchburgstate.edu",

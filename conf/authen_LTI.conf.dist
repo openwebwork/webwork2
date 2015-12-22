@@ -10,13 +10,16 @@
 # Authentication method, uncomment the remaining lines, and fill in the
 # appropriate authentication module.
 
+$debug_lti_parameters = 0; # set this to 1 to have LTI calling parameters printed to HTML page for debugging
+
+# edit these variables as necessary: $preferred_source_of_username, $strip_address_from_email
+# and  $LTIBasicConsumerSecret
+# The others can be left with default values during the initial configuration.
+
+###################
 $authen{user_module} = [ 
-	{
-		"*" => "WeBWorK::Authen::LTIBasic", 
-	},
-#	{
-#		"*" => "WeBWorK::Authen::Basic_TheLastOption",
-#	}
+	{  "*" => "WeBWorK::Authen::LTIBasic", },           #preferred authorization method
+	{  "*" => "WeBWorK::Authen::Basic_TheLastOption",}  #fallback authorization method
 ];
 
 #If the preferred module is an external authentication
@@ -78,21 +81,29 @@ $authen{user_module} = [
 # lis_person_sourceid, one must nevertheless use
 # the correct spelling here, i.e. "lis_person_sourcedid".
 
-$preferred_source_of_username = "lis_person_sourcedid";
-#$preferred_source_of_username = "lis_person_contact_email_primary";
+#$preferred_source_of_username = "lis_person_sourcedid";
+$preferred_source_of_username = "lis_person_contact_email_primary";
 
+# Some LMS systems, Blackboard in particular, do not send lis_person_sourcedid
+# if you enable this flag and have $preferred_source_of_username set to
+# lis_person_contact_email_primary, then webwork will strip off the address 
+# portion of the email and just use the username. 
+$strip_address_from_email = 1;
 
 ################################################################################
-# LTI Basic Authentication Parameters to be put into a site's course.conf file
+# LTI Basic Authentication Parameters 
 ################################################################################
 
-#The following paramters should be put into site's course.conf file.
+# This "shared secret" is entered in the LMS request form and needs to be match the entry here. 
+# you should choose your own secret word for security.
+$LTIBasicConsumerSecret = "WeBWorK_LTI";  
+# The LMS will have a different shared secret for each LTI tool that it communicates with. 
 
-#$LTIBasicToThisSiteURL = "URL to site", e.g.,
-#$LTIBasicToThisSiteURL = "https://localserver/webwork2/DemoCourse";
-#$LTIBasicConsumerSecret = "Consumer Secret - shared with the Course Management Site, e.g.";
-#$LTIBasicConsumerSecret = "webworkLTIB";
-
+# This allows you to override the URL that Oauth will use to validate the 
+# authentication.  This is important if you have some sort of setup (e.g. load
+# distributing) where the path in the LMS does not match the path that ends up 
+# in the webwork page 
+#$LTIBasicToThisSiteURL = "";
 
 ################################################################################
 # LTI Basic Authentication Parameters
@@ -126,19 +137,19 @@ $NonceLifeTime=10; # in seconds
 ## Learning Management System.
 
 %LMSrolesToWeBWorKroles = (
-	"AI/TA" => "ta",
-	"assistant" => "empowered_AI",
-	"instructor" => "professor",
-	"librarian" => "guest",
-	"librarian+" => "empoweredAI",
-	"observer" => "guest",
+    "AI/TA" => "ta",
+    "assistant" => "empowered_AI",
+    "instructor" => "professor",
+    "librarian" => "guest",
+    "librarian+" => "empoweredAI",
+    "observer" => "guest",
     "student" => "student",
-	"visitor" => "guest",
-	"Instructor" => "professor",
+    "visitor" => "guest",
+    "Instructor" => "professor",
     "Student" => "student",
     "Learner" => "student",
-	"Teaching Assistant" => "ta",
-);
+    "Teaching Assistant" => "ta",
+    );
 
 ################################################################################
 # Local routine to analyze the context_id forwarded to LTIBasic

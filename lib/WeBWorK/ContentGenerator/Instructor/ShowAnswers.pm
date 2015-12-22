@@ -1,4 +1,3 @@
-
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
@@ -28,8 +27,8 @@ use strict;
 use warnings;
 #use CGI;
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(sortByName ); 
-use HTML::Entities;
+use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id); 
+use PGcore;
 
 sub initialize {
 	my $self       = shift;
@@ -107,7 +106,7 @@ sub body {
 	    
 	    print CGI::p(),CGI::hr();
 	    
-	    print CGI::start_form({-target=>'information',-id=>'past-answer-form'},"POST", $showAnswersURL),
+	    print CGI::start_form({-target=>'WW_Info',-id=>'past-answer-form'},"POST", $showAnswersURL),
 	    $self->hidden_authen_fields;
 	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
 	    " &nbsp;".CGI::label($r->maketext('User:')." &nbsp;",
@@ -134,6 +133,9 @@ sub body {
 	    unless defined($studentUserRegExp)  && defined($setNameRegExp) 
 	    && defined($problemNumberRegExp);
 
+	# a flag to indicate if there were any matches
+	my $foundMatches = 0;
+
 	#our student name, set name and problem name might actually have wildcards
 	# so go through all of the possible things and trying to figure out which 
 	# we should display
@@ -144,7 +146,6 @@ sub body {
 	$studentUserRegExp = generateRegExp($studentUserRegExp);
 	$setNameRegExp = generateRegExp($setNameRegExp);
 	my @numberRanges = split(/,/,$problemNumberRegExp);
-	
 
 	# search for matching students
 	my @allUsers = $db->listUsers();
@@ -187,34 +188,71 @@ sub body {
 	
 		my @problemNumbers;
 
+		my $setRecord = $db->getGlobalSet($setName);
+		my $isJitarSet = ($setRecord && $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+
 		# search for matching problems
 		my @allProblems = $db->listUserProblems($studentUser, $setName);
 		next unless @allProblems;
 		foreach my $problem (@allProblems) {
 
 		    foreach my $numberRange (@numberRanges) {
+	
 			if ($numberRange =~ /-/) {
 			    (my $low, my $high) = split(/-/,$numberRange);
+			    
+			    # if its a jitar set we need to turn the number into a jitar id
+			    if ($isJitarSet) {
+				$low = seq_to_jitar_id(split(/\./,$low));
+				$high = seq_to_jitar_id(split(/\./,$high));
+				# if its not then we ignore problem numbers that look like jitar numbers
+			    } elsif ($low =~ /\./ || $high =~ /\./) {
+				next;
+			    }
+
 			    if ($low <= $problem && $problem <= $high) {
 				push (@problemNumbers, $problem);
 			    }
-			    # in this case the number is a singlton
-			} elsif ($numberRange eq '*' || $numberRange == $problem) {
+
+			} elsif ($numberRange eq '*') {
 			    push (@problemNumbers, $problem);
+			    # in this case its a singleton
+			} else {
+			    # if its a jitar set we need to turn the number into a jitar id
+			    my $number = $numberRange;
+
+			    if ($isJitarSet) {
+				$number = seq_to_jitar_id(split(/\./,$number));
+				# if its not then we ignore problem numbers that look like jitar numbers
+			    } elsif ($number =~ /\./) {
+				next;
+			    }
+			    
+			    if ($number == $problem) {
+				push (@problemNumbers, $problem);
+			    }
 			}
 		    }
 		}
 		
-		return CGI::span({class=>'ResultsWithError'}, $r->maketext('No problems matched the problem range.'))
-		    unless @problemNumbers;
+		next unless @problemNumbers;
 		
 		foreach my $problemNumber (@problemNumbers) {
+
+		    $foundMatches = 1 unless $foundMatches;
 		    
 		    my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
 		    
 		    print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
-		    print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $problemNumber));
-		    print $r->maketext("No entries for [_1], set [_2], problem [_3]", $studentUser, $setName, $problemNumber) unless @pastAnswerIDs;
+
+		    my $prettyProblemNumber = $problemNumber;
+
+		    if ($isJitarSet) {
+			$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
+		    }
+
+		    print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $prettyProblemNumber));
+		    print $r->maketext("No entries for [_1], set [_2], problem [_3]", $studentUser, $setName, $prettyProblemNumber) unless @pastAnswerIDs;
 		    
 		    # changed this to use the db for the past answers.  
 		    
@@ -297,32 +335,20 @@ sub body {
 			    my $answerstring;
 			    if ($answer eq '') {		    
 				$answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
-			    } elsif (!$renderAnswers) {
-				$answerstring = HTML::Entities::encode_entities($answer);
-			    } elsif ($answerType eq 'Value (Formula)') {
-				# We need to escape some gateway strings which 
-				# might appear here
-				$answerstring = HTML::Entities::encode_entities($answer);
-				if ($answerstring =~ /\[(submit|preview|newPage)\]/) {
-				    if ($answerstring !~ /No answer entered/) {
-					$answerstring =~ s/\[(submit|preview|newPage)\](.*)/\[$1\] `$2`/; 
-				    } 
-				} else {
-				    $answerstring = "`$answer`";
-				}
-				$td->{class} = 'formula';
-			    } elsif ($answerType eq 'essay') {
-				$answerstring = HTML::Entities::encode_entities($answer);
+			      } elsif (!$renderAnswers) {
+				$answerstring = PGcore::encode_pg_and_html($answer);
+			      } elsif ($answerType eq 'essay') {
+				$answerstring = PGcore::encode_pg_and_html($answer);
 				$td->{class} = 'essay';
 			    } else {
-				$answerstring = HTML::Entities::encode_entities($answer);
+			      $answerstring = PGcore::encode_pg_and_html($answer);
 			    }
 			    
 			    push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
 			}
 			
 			if ($pastAnswer->comment_string) {
-			    push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".HTML::Entities::encode_entities($pastAnswer->comment_string)));
+			    push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".PGcore::encode_pg_and_html($pastAnswer->comment_string)));
 			}
 			
 			print CGI::Tr($rowOptions,@row);
@@ -354,6 +380,8 @@ sub body {
 EOS
 	}
 	
+	print $r->maketext('No problems matched the given parameters.') unless $foundMatches;
+
 	return "";
 }
 
@@ -382,8 +410,8 @@ sub output_JS {
 
     my $site_url = $ce->{webworkURLs}->{htdocs};
     
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/show_hide.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
+    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
 
     return "";
 }

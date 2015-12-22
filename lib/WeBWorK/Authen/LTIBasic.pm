@@ -184,6 +184,23 @@ sub get_credentials {
 	my $ce = $r -> {ce};
 	
 	#debug("LTIBasic::get_credentials has been called\n");
+	
+	## debug code MEG
+	if ( $ce->{debug_lti_parameters} ) {
+		my $rh_headers = $r->headers_in;  #request headers
+	
+		my @parameter_names = $r->param;       # form parameter names
+		my $parameter_report = '';
+		foreach my $key (@parameter_names) {
+			$parameter_report .= "$key => ".$r->param($key). "\n";
+		}
+		warn ("===== parameters received =======\n", $parameter_report);
+	}
+	###
+	
+	
+	
+	
 	#disable password login
 	$self->{external_auth} = 1;
 
@@ -233,17 +250,45 @@ sub get_credentials {
 		} else {
 			undef($self ->{user_id});
 		}
+		###############
+		# if get_username_from_email == 1 then replace user_id with the full email address if possible 
+		# or if the user_id is still undefined try to set the user_id to full the email address
 		
-
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
+# 		if (!defined($self->{user_id})
+# 		    or defined($self -> {email}) and $ce -> {get_username_from_email} )  {
+# 		    $self->{user_id} = $self -> {email};
+# 
+# 		}
+		
+		#############
+		# if preferred_source_of_username eq "lis_person_contact_email_primary"
+		# then replace the user_id with the full email address. 
+		
+		# or if the user_id is still undefined try to set the user_id to full the email address
+		
+		# if strip_address_from_email ==1  strip off the part of the address after @
+		#############
 		if (!defined($self->{user_id})
 			or (defined($self -> {email})  
 				and defined($ce -> {preferred_source_of_username})
 				and $ce -> {preferred_source_of_username} eq "lis_person_contact_email_primary")) {
 			$self->{user_id} = $self -> {email};
+			$self->{user_id} =~ s/@.*$// if
+			    $ce->{strip_address_from_email};
 		}
+		# MEG debug code
+		if ( $ce->{debug_lti_parameters} ) {
+			warn "=========== summary ============";
+			warn "User id is |$self->{user_id}|\n";
+			warn "User mail address is |$self->{email}|\n";
+			warn "strip_address_from_email is |", $ce->{strip_address_from_email}//0,"|\n";
+			warn "preferred_source_of_username is |", $ce -> {preferred_source_of_username}//'undefined',"|\n";
+			warn "================================\n";
+		 }
 		if (!defined($self->{user_id})) {
-			croak "LTIBasic cannot find a username";
+			croak "LTIBasic was unable to create a username from the user_id or from the mail address.
+			       Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
 		}
 		if (defined $ce -> {analyze_context_id}) {
 			$ce -> {analyze_context_id} ($self) ;
@@ -277,7 +322,7 @@ sub check_user {
 	}
 
 	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
-		$self->{log_error} = "no user id specified";
+		$self->{log_error} .= "no user id specified";
 		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE);
 		return 0;
 	}
@@ -301,7 +346,7 @@ sub check_user {
 
 	unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
 		$self->{log_error} .= "LOGIN FAILED $user_id - course access denied";
-		$self->{error} = $r->maktext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
+		$self->{error} = $r->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
 		return 0;
 	}
 	
@@ -370,6 +415,12 @@ sub authenticate
 {
 	my $self = shift;
 	my ($r, $user ) = map {$self -> {$_};} ('r', 'user_id');
+	
+	# See comment in get_credentials()
+	if ($r->{xmlrpc}) {
+		#debug("falling back to superclass authenticate (xmlrpc call)");
+		return $self->SUPER::authenticate(@_);
+	}
 
 	#debug("LTIBasic::authenticate called for user |$user|");
 	#debug "ref(r) = |". ref($r) . "|";
@@ -402,12 +453,26 @@ sub authenticate
 		#debug("$key -> |" . $requestHash -> {$key} . "|");
 	}	
 	my $requestHash = \%request_hash;
+	my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
+	$path = $ce->{LTIBasicToThisSiteURL} ? 
+	    $ce->{LTIBasicToThisSiteURL} : $path;
+	
+	my $altpath = $path;
+	$altpath =~ s/\/$//;
 
-	my $request;
+	my ($request, $altrequest);
 	eval 
 		{ 
 		$request = Net::OAuth -> request("request token") -> from_hash($requestHash,
-        		request_url => $ce -> {LTIBasicToThisSiteURL},
+			request_url => $path,
+									       
+        		request_method => "POST",                                    
+        		consumer_secret => $ce -> {LTIBasicConsumerSecret},
+        	);
+
+		$altrequest = Net::OAuth -> request("request token") -> from_hash($requestHash,
+			request_url => $altpath,
+									       
         		request_method => "POST",                                    
         		consumer_secret => $ce -> {LTIBasicConsumerSecret},
         	);
@@ -425,22 +490,37 @@ sub authenticate
 		}
 	else
 		{
-		if (! $request -> verify) 
+		if (! $request -> verify && ! $altrequest -> verify) 
 			{
 			#debug("LTIBasic::authenticate request-> verify failed");
 			#debug("<h2> OAuth verification Failed</h2> "; print_keys($r));
 			$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
 			$self -> {error} .= $r->maketext("Your LTI OAuth verification failed.  "
 				. "If this recurs, please speak with your instructor");
-			$self -> {log_error} = "OAuth verification failed.  Check the Consumer Secret.";
+			$self -> {log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
 			return 0;
 			}
 		else
 			{
 			#debug("<h2> OAuth verification SUCCEEDED !! </h2>");
+			############################################################
+			# Determine the roles defined for this user by the LTI request
+			# and assign a permission level on that basis.
+			############################################################
 			my $userID = $self->{user_id};
 			my $LTIrolesString = $r -> param("roles");
 			my @LTIroles = split /,/, $LTIrolesString;
+
+			#remove the urn string if its present
+			s/^urn:lti:.*:ims\/lis\/// for @LTIroles;
+			if ( $ce->{debug_lti_parameters} ) {
+				warn "The adjusted LTI roles defined for this user are: \n--",
+				       join("\n--", @LTIroles), "\n",
+				       "Any initial ^urn:lti:.*:ims/lis/ segments have been stripped off.\n",
+				       "The user will be assigned the highest role defined for them\n",
+				       "========================\n"		
+			}
+			
 			my $nr = scalar(@LTIroles);
 			if (! defined($ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[0]}})) {
 				croak("Cannot find a WeBWorK role that corresponds to the LMS role of "
@@ -456,11 +536,36 @@ sub authenticate
 						$LTI_webwork_permissionLevel = $ce -> {userRoles} -> {$wwRole};
 					}	
 				}
-			}		
+			}
+			####### End defining roles and $LTI_webwork_permissionLevel#######
+			
+			##################################################################
+			# Determine the section name provided by lti
+			# This may vary widely from LTI provider to LTI provider
+			# If custom_section item is provided by the LTI then nothing needs to be done
+			# The code works for the U. of Rochester Blackboard
+			##################################################################
+		
+# 			my $LTI_section = $r->param("context_label");   #  for example: MTH208.2014FALL.54648
+# 			my ($course_number, $semester, $CRN) = split(/\./, $LTI_section);
+# 			if ($self->{section} eq "unknown" and $CRN ) {
+# 			    $self->{section}= $CRN//"unknown"; # update unknown sections from CRN if possible
+# 			}
+# 			if ( $ce->{debug_lti_parameters} ) {
+# 			    warn "LTI context_label is $LTI_section";
+# 				warn "course number $course_number\n";
+# 				warn "semester $semester\n";
+# 				warn "CRN $CRN\n";
+# 				warn "section $self->{section}";
+# 			}
+			########### end determine section name	
 			if (! $db -> existsUser($userID) )
 				{ # New User. Create User record 
+				warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel. 
+				      Only new users with permission levels less than or equal to 'ta = 5' can be created." if ( $ce->{debug_lti_parameters} );
 				if ($LTI_webwork_permissionLevel > $ce ->{userRoles} -> {"ta"}) {
-					croak $r->maketext($GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
+				    $self->{log_error}.= "userID: $userID -- ". $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE;
+					croak $r->maketext("userID: $userID -- ". $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
 				}
 				my $newUser = $db -> newUser();
 					$newUser -> user_id($userID);
@@ -644,14 +749,21 @@ sub authenticate
 				  # Assign permission level
 ######## Changed due to Instructor roles passed from Sakai/Oncourse to LTIBasic ######
 #				if (!defined($permissionLevel -> permission) or $permissionLevel -> permission != $LTI_webwork_permissionLevel)
+
+# you seldom fine a defined user without a permissionLevel assigned
+# I don'think the following if statement is ever run. 
 				if (!defined($permissionLevel -> permission) )
 #################################################################
 					{
 					$permissionLevel -> permission($LTI_webwork_permissionLevel);
-					$db -> putPermissionLevel($permissionLevel);
+					$db -> putPermissionLevel($permissionLevel);  # store in database
 					$self->{PermissionLevel} = $permissionLevel;  #cache the revised Permission Level Record.
-					$self->write_log_entry("Permission level for user $userID changed to $LTI_webwork_permissionLevel via LTIBasic login");
+					$self->write_log_entry("\n\n\nPermission level for user $userID set to $LTI_webwork_permissionLevel via LTIBasic login");
+					warn "Setting permission level for $userID to $LTI_webwork_permissionLevel" if ( $ce->{debug_lti_parameters} );
 				}
+				warn "Existing user: $userID updated.\n  LTIpermission level is $LTI_webwork_permissionLevel.
+				      webwork level is ". $permissionLevel -> permission. ".\n". 
+				      "User section is |".$user->{section}. "|\n recitation is |".$user->{recitation}."|\n" if ( $ce->{debug_lti_parameters} );
 			}
 			$self -> {initial_login} = 1;
 			}

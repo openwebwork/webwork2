@@ -1,4 +1,4 @@
-################################################################################
+ ###############################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm,v 1.59 2007/08/13 22:59:55 sh002i Exp $
@@ -110,7 +110,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_sets" and do {
 		if ($nsets == 1) {
-			$module = "${ipfx}::ProblemSetDetail";
+			$module = "${ipfx}::ProblemSetDetail2";
 			$args{setID} = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
@@ -227,7 +227,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_set_for_users" and do {
 		if ($nusers >= 1 and $nsets == 1) {
-			$module = "${ipfx}::ProblemSetDetail";
+			$module = "${ipfx}::ProblemSetDetail2";
 			$args{setID} = $firstSetID;
 			$params{editForUser} = \@selectedUserIDs;
 		} else {
@@ -299,10 +299,8 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
-	print CGI::p({},"Use the interface below to quickly access commonly-used
-	instructor tools, or select a tool from the list to the left.", CGI::br(),
-	"Select user(s) and/or set(s) below and click the action button
-	of your choice.");
+	print CGI::p({},$r->maketext("Use the interface below to quickly access commonly-used instructor tools, or select a tool from the list to the left."), CGI::br(),
+	$r->maketext("Select user(s) and/or set(s) below and click the action button of your choice."));
 	
 	# DBFIXME shouldn't need to use list of IDs, use iterator for results, marks edits in WHERE clause
 	# the grep here prevents set-level proctors from being displayed here
@@ -366,8 +364,8 @@ sub body {
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
-			CGI::th("Users"),
-			CGI::th("Sets"),
+			CGI::th($r->maketext("Users")),
+			CGI::th($r->maketext("Sets")),
 		),
 		CGI::Tr({},
 			CGI::td({style=>"width:50%"}, $scrolling_user_list),
@@ -375,29 +373,29 @@ sub body {
 		),
 		CGI::Tr({class=>"ButtonRow"}, [
 			CGI::td([
-				CGI::submit(-name=>"sets_assigned_to_user", -label=>"View/edit")." all sets for one <b>user</b>(set dates, scores)",
-				CGI::submit(-name=>"users_assigned_to_set", -label=>"View/edit")." all users for one <b>set</b>",
+				CGI::submit(-name=>"sets_assigned_to_user", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all set dates for one <b>user</b>"),
+				CGI::submit(-name=>"users_assigned_to_set", -label=>$r->maketext("View/Edit"))." ".$r->maketext("all users for one <b>set</b>"),
 			]),
 			CGI::td([
-				CGI::submit(-name=>"edit_users", -label=>"Edit"). " class list data for selected <b>users</b>",
-				CGI::submit(-name=>"edit_sets", -label=>"Edit"). " one <b>set</b>" . "&nbsp; &nbsp; ".
-				"or &nbsp; ".CGI::submit(-name=>"prob_lib",-label=>"add problems")." to one <b>set</b>",
+				CGI::submit(-name=>"edit_users", -label=>$r->maketext("Edit")). " ".$r->maketext("class list data for selected <b>users</b>"),
+				CGI::submit(-name=>"edit_sets", -label=>$r->maketext("Edit")). " ".$r->maketext("one <b>set</b>") . "&nbsp; &nbsp; ".
+				$r->maketext("or")." ".CGI::submit(-name=>"prob_lib",-label=>$r->maketext("add problems"))." ".$r->maketext("to one <b>set</b>"),
 			]),
 			CGI::td([
-				CGI::submit(-name=>"user_stats", -label=>"Statistics")." or ".
-				CGI::submit(-name=>"user_progress", -label=>"progress")." for one <b>user</b>",
-				CGI::submit(-name=>"set_stats", -label=>"Statistics")." or ".
-				CGI::submit(-name=>"set_progress", -label=>"progress")." for one <b>set</b>",
+				CGI::submit(-name=>"user_stats", -label=>$r->maketext("Statistics"))." ".$r->maketext("or")." ".
+				CGI::submit(-name=>"user_progress", -label=>$r->maketext("progress"))." ".$r->maketext("for one <b>user</b>"),
+				CGI::submit(-name=>"set_stats", -label=>$r->maketext("Statistics"))." ".$r->maketext("or")." ".
+				CGI::submit(-name=>"set_progress", -label=>$r->maketext("progress"))." ".$r->maketext("for one <b>set</b>"),
 			]),
 			CGI::td([
-				CGI::submit(-name=>"user_options", -label=>"Change password")." for one <b>user</b>",
-				CGI::submit(-name=>"score_sets", -label=>"Score"). " selected <b>sets</b>",
+				CGI::submit(-name=>"user_options", -label=>$r->maketext("Change Password"))." ".$r->maketext("for one <b>user</b>"),
+				CGI::submit(-name=>"score_sets", -label=>$r->maketext("Score"))." ".$r->maketext("selected <b>sets</b>"),
 			]),
 			CGI::td([
-				CGI::submit(-name=>"add_users", -label=>"Add")." new users",
-				CGI::submit(-name=>"create_set", -label=>"Create"). " new set: ".
+				CGI::submit(-name=>"add_users", -label=>$r->maketext("Add"))." ".$r->maketext("new users"),
+				CGI::submit(-name=>"create_set", -label=>$r->maketext("Create")). " ".$r->maketext("new set:")." ".
 				   CGI::textfield(-name=>"new_set_name", 
-					   -default=>"Name for new set here",
+					   -default=>$r->maketext("Name for new set here"),
 					   -override=>1, -size=>20),
 				]),
 		]),
@@ -406,12 +404,13 @@ sub body {
 				CGI::table({-border=>0, align=>"center"},
 					CGI::Tr({-align=>"left"}, [
 						CGI::td({-height=>2}),
-						CGI::td(CGI::submit(-name=>"assign_users", -label=>"Assign")." selected <b>users</b> to selected <b>sets</b>"),
-						CGI::td(CGI::submit(-name=>"act_as_user", -label=>"Act as")." one <b>user</b> (on one <b>set</b>)"),
-						CGI::td(CGI::submit(-name=>"edit_set_for_users", -label=>"Edit"). " one <b>set</b> for  <b>users</b>"),
- 						CGI::td(CGI::submit(-name=>"email_users", -label=>"Email"). " your students"),
+						CGI::td(CGI::submit(-name=>"assign_users", -label=>$r->maketext("Assign"))." ".$r->maketext("selected <b>users</b> to selected <b>sets</b>")),
+						CGI::td(CGI::submit(-name=>"act_as_user", -label=>$r->maketext("Act as"))." ".$r->maketext("one <b>user</b> (on one <b>set</b>)")),
+						CGI::td(CGI::submit(-name=>"edit_set_for_users", -label=>$r->maketext("Edit")). " ".$r->maketext("one <b>set</b> for  <b>users</b>")),
+						CGI::td({-height=>4}),
+						CGI::td(CGI::submit(-name=>"email_users", -label=>"Email"). " ".$r->maketext("your students")),
 						($authz->hasPermissions($user, "manage_course_files")
-							? CGI::td(CGI::submit(-name=>"transfer_files", -label=>"Transfer"). " course files")
+							? CGI::td(CGI::submit(-name=>"transfer_files", -label=>$r->maketext("Transfer")). " ".$r->maketext("course files"))
 							: ()
 						),
 					])

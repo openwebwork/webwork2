@@ -31,7 +31,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir);
+use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id);
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
@@ -409,6 +409,13 @@ sub path {
 	my $setName = $r->urlpath->arg("setID") || '';
 	my $problemNumber = $r->urlpath->arg("problemID") || '';
 
+	if ($setName) {
+	    my $set = $r->db->getGlobalSet($setName);
+	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
+		$problemNumber = join('.',jitar_id_to_seq($problemNumber));
+	    }
+	}
+
 	# we need to build a path to the problem being edited by hand, since it is not the same as the urlpath
 	# For this page the bread crum path leads back to the problem being edited, not to the Instructor tool.
 	my @path = ( 'WeBWork', $r->location,
@@ -437,7 +444,14 @@ sub title {
 	return "Course Information for course $courseName" if ($file_type eq 'course_info');
 	return "Options Information" if ($file_type eq 'options_info');
 
-	return 'Problem ' . $r->{urlpath}->name;
+	if ($setID) {
+	    my $set = $r->db->getGlobalSet($setID);
+	    if ($set && $set->assignment_type eq 'jitar') {
+		$problemNumber = join('.',jitar_id_to_seq($problemNumber));
+	    }
+	}
+
+	return 'Problem ' . $problemNumber;
 }
 
 sub body {
@@ -582,16 +596,21 @@ sub body {
 
 	my $protected_file = not -w $inputFilePath;
 
+	my $prettyProblemNumber = $problemNumber;
+	my $set = $self->r->db->getGlobalSet($setName);
+	$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber)) 
+		     if ($set && $set->assignment_type eq 'jitar');
+
 	my $file_type = $self->{file_type};
 	my %titles = (
-		problem         => CGI::b("set $fullSetName/problem $problemNumber"),
+		problem         => CGI::b("set $fullSetName/problem $prettyProblemNumber"),
 		blank_problem   => "blank problem",
 		set_header      => "header file",
 		hardcopy_header => "hardcopy header file",
 		course_info     => "course information",
 		options_info    => "options information",
 		''              => 'Unknown file type',
-		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $problemNumber"),
+		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $prettyProblemNumber"),
 	);
 	my $header = CGI::i("Editing $titles{$file_type} in file '".$self->shortPath($inputFilePath)."'");
 	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
@@ -1485,6 +1504,7 @@ sub add_problem_form {
 sub add_problem_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r=$self->r;
+	my $db=$r->db;
 	#$self->addgoodmessage("add_problem_handler called");
 	my $courseName      =  $self->{courseID};
 	my $setName         =  $self->{setID};
@@ -1503,7 +1523,20 @@ sub add_problem_handler {
 
 	my $viewURL ='';
 	if ($targetFileType eq 'problem') {
-		my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($targetSetName));
+	    my $targetProblemNumber;
+	    
+	    my $set = $db->getGlobalSet($targetSetName);
+	    
+	    # for jitar sets new problems are put as top level
+	    # problems at the end
+	    if ($set->assignment_type eq 'jitar') {
+		my @problemIDs = $db->listGlobalProblems($targetSetName);
+		@problemIDs = sort { $a <=> $b } @problemIDs;
+		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+		$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
+	    } else {
+		$targetProblemNumber = 1+ WeBWorK::Utils::max( $db->listGlobalProblems($targetSetName));
+	    }
 		
 		#################################################
 		# Update problem record
@@ -1514,7 +1547,7 @@ sub add_problem_handler {
 							   problemID      => $targetProblemNumber, #added to end of set
 		);
 		$self->assignProblemToAllSetUsers($problemRecord);
-		$self->addgoodmessage("Added $sourceFilePath to ". $targetSetName. " as problem $targetProblemNumber") ;
+		$self->addgoodmessage("Added $sourceFilePath to ". $targetSetName. " as problem ".($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber)) ;
 		$self->{file_type}   = 'problem'; # change file type to problem -- if it's not already that
 
 		#################################################
@@ -1801,7 +1834,9 @@ sub save_as_form {  # calls the save_as_handler
 	
 	my $shortFilePath =  $editFilePath;
 	$shortFilePath   =~ s|^$templatesDir/||;
-	$shortFilePath   =  'local/'.$shortFilePath unless( $shortFilePath =~m|^local/|);  # suggest that modifications be saved to the "local" subdirectory
+	$shortFilePath   =  'local/'.$shortFilePath
+	  unless( $shortFilePath =~m|^local/| ||
+		  $shortFilePath =~m|^set$setID|);  # suggest that modifications be saved to the "local" subdirectory
 	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
    
 
@@ -1820,7 +1855,15 @@ sub save_as_form {  # calls the save_as_handler
 
     my $can_add_problem_to_set = not_blank($setID)  && $setID ne 'Undefined_Set' && $self->{file_type} ne 'blank_problem';
     # don't addor replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
-    
+
+	my $prettyProbNum = $probNum;
+    	if ($setID) {
+	    my $set = $self->r->db->getGlobalSet($setID);
+	    
+	    $prettyProbNum = join('.',jitar_id_to_seq($probNum)) 
+		if ($self->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
+	}
+
     my $replace_problem_in_set  = ($can_add_problem_to_set)?
 			 # CGI::input({
     			 # -type      => 'radio',
@@ -1828,7 +1871,7 @@ sub save_as_form {  # calls the save_as_handler
     			 # -value     => "rename",
     			 # -label     => '',
 			 # },"and replace ".CGI::b("set $fullSetID$probNum").',') 
-			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>'action_save_as_saveMode_rename_id', -label_text=>"Replace current problem: ".CGI::strong("$fullSetID/$probNum"), -input_attr=>{
+			 WeBWorK::CGI_labeled_input(-type=>'radio', -id=>'action_save_as_saveMode_rename_id', -label_text=>"Replace current problem: ".CGI::strong("$fullSetID/$prettyProbNum"), -input_attr=>{
 			 	name      => "action.save_as.saveMode",
     		 	value     => "rename",
     		 	checked    =>1,
@@ -1889,6 +1932,7 @@ sub save_as_handler {
 	my $displayMode     =  $self->{displayMode};
 	my $problemSeed     =  $self->{problemSeed};
 	my $effectiveUserName = $self->r->param('effectiveUser');
+	my $targetProblemNumber;
 	
 	my $do_not_save = 0;
 	my $saveMode       = $actionParams->{'action.save_as.saveMode'}->[0] || 'no_save_mode_selected';
@@ -1976,22 +2020,42 @@ sub save_as_handler {
 				my $result = ( $fullSetName =~ /,v(\d+)$/ ) ?
 					$self->r->db->putProblemVersion($problemRecord) :
 					$self->r->db->putGlobalProblem($problemRecord);
+				my $prettyProblemNumber = $problemNumber;
+				my $set = $self->r->db->getGlobalSet($setName);
+				$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber))
+							    if ($set && $set->assignment_type eq 'jitar');
+
+
 				if  ( $result  ) {
-					$self->addgoodmessage("The source file for 'set $fullSetName / problem $problemNumber' has been changed from ".
+					$self->addgoodmessage("The source file for 'set $fullSetName / problem $prettyProblemNumber' has been changed from ".
 					$self->shortPath($sourceFilePath)." to '".$self->shortPath($outputFilePath)."'.") ;
 				} else {
-					$self->addbadmessage("Unable to change the source file path for set $fullSetName, problem $problemNumber. Unknown error.");
+					$self->addbadmessage("Unable to change the source file path for set $fullSetName, problem $prettyProblemNumber. Unknown error.");
 				}
 			}
 		} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-			my $targetProblemNumber   =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
+
+		    my $set = $self->r->db->getGlobalSet($setName);
+			    
+			    
+			# for jitar sets new problems are put as top level
+			# problems at the end		
+			if ($set->assignment_type eq 'jitar') {
+				my @problemIDs = $self->r->db->listGlobalProblems($setName);
+				@problemIDs = sort @problemIDs;
+				my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+				$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
+			} else {
+				$targetProblemNumber =  1+ WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
+			}
+			    
 			my $problemRecord  = $self->addProblemToSet(
-					   setName        => $setName,
-					   sourceFile     => $new_file_name, 
-					   problemID      => $targetProblemNumber, #added to end of set
+				setName        => $setName,
+				sourceFile     => $new_file_name, 
+				problemID      => $targetProblemNumber, #added to end of set
 			);
 			$self->assignProblemToAllSetUsers($problemRecord);
-			$self->addgoodmessage("Added $new_file_name to ". $setName. " as problem $targetProblemNumber") ;
+			$self->addgoodmessage("Added $new_file_name to ". $setName. " as problem ".($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber)) ;
 		} elsif ($saveMode eq 'new_independent_problem') {
 		#################################################
 		# Don't modify source file path in problem -- just report 
@@ -2017,7 +2081,7 @@ sub save_as_handler {
 
 	if ($saveMode eq 'new_independent_problem' ) {
 		$problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
-			courseID => $courseName, setID => 'Undefined_Set', problemID => 'Undefined_Set'
+			courseID => $courseName, setID => 'Undefined_Set', problemID => 1
 		);
 		$new_file_type = 'source_path_for_problem_file';
 	} elsif ($saveMode eq 'rename') {
@@ -2026,7 +2090,7 @@ sub save_as_handler {
 		);
 		$new_file_type = $file_type;
 	} elsif ($saveMode eq 'add_to_set_as_new_problem') {
-	    my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
+		my $targetProblemNumber   =  WeBWorK::Utils::max( $self->r->db->listGlobalProblems($setName));
 	    $problemPage = $self->r->urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3",$r,
 			courseID => $courseName, setID => $setName, problemID => $targetProblemNumber
 		);
@@ -2088,7 +2152,7 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 #	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/jquery.js"}), CGI::end_script();
 #	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
 

@@ -59,6 +59,17 @@ $server_userID     = 'www-data';
 $server_groupID    = 'wwdata';
 
 
+#  Uncomment out the following line to set your apache version number manually.
+#  WeBWorK will automatically get the apache version directly from the server
+#  banner.  If you remove the version from the server banner you will have to
+#  set it directly here
+
+#$server_apache_version = ''; # e.g. '2.22.1'
+
+# Set this to override the default admin email set by apache.  
+$webwork_server_admin_email ='';
+
+
 ################################################################################
 # Paths to external programs 
 ################################################################################
@@ -100,7 +111,8 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 # url checker
 ####################################################
 
-$externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -mHEAD "; # or "/usr/local/bin/w3c -head "
+# set timeout time (-t 40 sec) to be less than timeout for problem (usually 60 seconds)
+$externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -t 40 -mHEAD "; # or "/usr/local/bin/w3c -head "
 $externalPrograms{curlCommand}  = "/usr/bin/curl";
 
 ####################################################
@@ -191,6 +203,15 @@ $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 
 # Seconds to wait before timing out when connecting to the SMTP server.
 $mail{smtpTimeout}           = 30;
+
+
+# TLS is a method for providing secure connections to the smtp server.
+# https://en.wikipedia.org/wiki/Transport_Layer_Security
+# At some sites coordinating the certificates properly is tricky
+# Set this value to 0 to avoid checking certificates.
+# Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
+
+$tls_allowed = 1;  
 
 
 ################################################################################

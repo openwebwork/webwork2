@@ -1,10 +1,68 @@
+// Object for toggling the sidebar
+var ToggleNavigation = function () {
+    var threshold = 768
+    var windowwidth = $(window).width();
+    var navigation_element = $('#site-navigation');
+    
+    var hideSidebar = function () {
+	$('#site-navigation').remove();
+	$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');	
+	$('#content').removeClass('span10').addClass('span11');
+    }
+
+    var showSidebar = function () {
+	$('#body-row').prepend(navigation_element);
+	$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');
+	$('#content').addClass('span10').removeClass('span11');	
+    }
+
+    var toggleSidebar = function () {
+	if ($('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+	    hideSidebar();
+	} else {
+	    showSidebar();
+	}
+    }
+        
+    // if no fish eye then collapse site-navigation 
+    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
+	$('#site-navigation').remove();
+	$('#content').removeClass('span10').addClass('span11');
+	$('#toggle-sidebar').addClass('hidden');
+	$('#breadcrumb-navigation').width('100%');
+    } else {
+	// otherwise enable site-navigation toggling
+	if (windowwidth < threshold) {
+	    hideSidebar();
+	}
+	    
+	$('#toggle-sidebar').click(function (event) {
+	    event.preventDefault();
+	    toggleSidebar();
+	});
+	
+	
+	$(window).resize(function(){
+	    windowwidth = $(window).width();
+	    if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+		hideSidebar();
+	    } else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
+		showSidebar();
+	    }
+	}); 
+    }
+}
+
 $(function(){
+    // Initialize navigation menu toggling
+    ToggleNavigation();
+    
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
     // Fix bug with skip to main content link in chrome
     $('#stmc-link').click(function() {
-	$('#content').attr('tabIndex', -1).focus();
+	$('#page-title').attr('tabIndex', -1).focus();
     });
 
     // Turn submit inputs into buttons
@@ -19,62 +77,28 @@ $(function(){
 
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
-    
-    // Make grey_buttons disabled buttons
-    $('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <span class='icon icon-pencil' data-alt='edit'></span>")); });
     $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
 
+    // Turn summaries and help boxes into popovers
+    $('a.table-summary').popover().click(function (event) {
+	event.preventDefault();
+    });
+    $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
+	event.preventDefault();
+    }).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
+
     // Sets login form input to bigger size
-    $('#login_form input').addClass('input-large');
-    
-    // Changes links in masthead
-    $('#loginstatus a').addClass('btn btn-small');
-    $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>');
+    $('#login_form input').addClass('input-large');    
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
 
-    // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').removeClass('btn-primary').click(function (event) {
-	event.preventDefault();
-	var toggleIcon = $('#toggle-sidebar-icon');
-	$('#site-navigation').toggleClass('hidden');
-	toggleIcon.toggleClass('icon-chevron-left')
-	    .toggleClass('icon-chevron-right');
-	$('#site-navigation').toggleClass('span2');
-	$('#content').toggleClass('span10').toggleClass('span11');
-	if (toggleIcon.next('.sr-only-glyphicon').html() == 'close sidebar') {
-	    toggleIcon.next('.sr-only-glyphicon').html('open sidebar');
-	} else {
-	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
-	}
-	   
-    });
-
-    if($(window).width() < 650) {
-	$('#toggle-sidebar').click();
-    }
-
-    // if no fish eye then collapse site-navigation 
-    if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
-	$('#site-navigation').removeClass('span2');
-	$('#content').removeClass('span10').addClass('span11');
-	$('#toggle-sidebar').addClass('hidden');
-    }
-
-    // Makes the fisheye stuff bootstrap nav
-    $('#site-navigation ul').addClass('nav nav-list');
-    $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
-    $('#site-navigation a.active').parent().addClass('active');
-    $('#site-navigation strong.active').parent().addClass('active');
-    $('#site-navigation li').find('br').remove();
-
-    // Display options formatting
-    $('.facebookbox input:submit').addClass('btn-small');
+    //Problem page
+    $('.currentProblem').addClass('active');
 
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
@@ -108,6 +132,22 @@ $(function(){
 	} 
 	    
     });
+
+    // sets up problems to rescale the image accoring to attr height width
+    // and not native height width.  
+    var rescaleImage = function (index,element) {
+	if ($(element).attr('height') != $(element).get(0).naturalHeight || 
+	$(element).attr('width') != $(element).get(0).naturalWidth) {
+	    $(element).height($(element).width()*$(element).attr('height')
+			   /$(element).attr('width'));
+	}
+    }
+    
+    $('.problem-content img').each(rescaleImage);
+
+    $(window).resize(function () {
+	$('.problem-content img').each(rescaleImage);
+    });
     
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
@@ -116,6 +156,7 @@ $(function(){
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small');
     $('#problem-grader-form td').find('p:last').removeClass('essay-answer graded-answer');
+    $('#problem-grader-form .score-selector').addClass('input-min');
 
     //CourseConfiguration
     $('#config-form').addClass('form-inline');
@@ -166,7 +207,6 @@ $(function(){
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');
     $('#editor div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
-    $('#editor label[class="radio"]').after('<br/>');
 
     //Achievement Editor
     $('#achievement-list').addClass('form-inline user-list-form');
@@ -179,7 +219,7 @@ $(function(){
     //email page
     $('#send-mail-form').addClass('form-inline');
     $('#send-mail-form .btn').addClass('btn-small').removeClass('btn-primary');
-    $('#send-mail-form input[value="Send Email"]').addClass('btn-primary');
+    $('#send-mail-form #sendEmail_id').addClass('btn-primary');
 
     //Score sets
     $('#scoring-form').addClass('form-inline');
@@ -190,7 +230,7 @@ $(function(){
     $('table.stats-table').addClass('table table-bordered');
     $('#sp-gateway-form').addClass('well');
 
-    //Library browser 1 tweaks
+    //Library browser tweaks
     $('#mainform ').addClass('form-inline');
     $('#mainform input:button').addClass('btn btn-primary');
     $('#mainform input[type="submit"]').removeClass('btn-primary');
@@ -201,6 +241,9 @@ $(function(){
     $('#mainform select[name=mydisplayMode]').addClass('input-small').removeClass('input-xxlarge');
     $('#mainform select[name=local_sets]').addClass('input').removeClass('input-xxlarge');
     $('#mainform select[name=max_shown]').addClass('input-small').removeClass('input-xxlarge');
+
+    //Library browser nojs tweaks
+    $('.library-browser-table-nojs label.checkbox').css('display','inline-block');
 
     //Change tabber tabs to twitter tabs
     if ($('div.tabber').length > 0) {tabberAutomatic({});}
@@ -219,6 +262,7 @@ $(function(){
      //GatewayQuiz
     $('.gwPrintMe a').addClass('btn btn-info');
     $('.gwPreview a').addClass('btn');
+
 
     // the datepicker uses addOnLoadEvent, so if this function isn't defined,
     // we dont have to worry about the datepicker.

@@ -54,7 +54,8 @@ sub initialize {
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
 	
 	# first check to see if a save form has been submitted
-	return '' unless $r->param('save_button');
+	return '' unless ($r->param('save_button') ||
+			  $r->param('assignAll'));
 	
 	# As it stands we need to check each set to see if it is still assigned 
 	# the forms are not currently set up to simply transmit changes
@@ -66,7 +67,10 @@ sub initialize {
 	
 	my @assignedSets = ();
 	foreach my $setID (@setIDs) {
-		push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
+	    # add sets to the assigned list if the parameter is checked or the
+	    # assign all button is pushed.  (already assigned sets will be
+	    # skipped later) 
+	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
 	# note: assignedSets are those sets that are assigned in the submitted form
@@ -226,7 +230,7 @@ sub body {
  	my $setCount = $db->countUserSets($editForUserID);
 # 	my $userCountMessage =  CGI::a({href=>$editSetsAssignedToUserURL}, $setCount . " sets.");
 # 	$userCountMessage = "The user " . CGI::b($userName . " ($editForUserID)") . " has been assigned " . $userCountMessage;
-	my $basicInfoPage = $urlpath->new(type =>'instructor_user_list',
+	my $basicInfoPage = $urlpath->new(type =>'instructor_user_list2',
 					args =>{
 						courseID => $courseID,
 	                }
@@ -338,6 +342,19 @@ sub body {
 	}
 	
 	########################################
+	# Assigned sets form
+	########################################
+
+	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
+	print $self->hidden_authen_fields();
+
+	print CGI::div(
+	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User"),
+			 onClick => "\$('input[name*=\"assignment\"]').attr('checked',1);"
+			})), , CGI::br();
+
+
+	########################################
 	# Print warning
 	########################################
 	print CGI::div({-class=>'ResultsWithError'},
@@ -352,12 +369,7 @@ sub body {
 		      reassign the set, the student will receive a new version of each problem.
 		      Make sure this is what you want to do before unchecking sets."
 	);
-	########################################
-	# Assigned sets form
-	########################################
 
-	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
-	print $self->hidden_authen_fields();
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
 	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
@@ -415,7 +427,7 @@ sub body {
 			$UserSetVersionRecords{$setID}->[$setVersion-1];
 		my $MergedSetRecord = (! $setVersion) ?  $MergedSetRecords{$setID} :
 			$UserSetMergedVersionRecords{$setID}->[$setVersion-1];
-		my $setListPage = $urlpath->new(type =>'instructor_set_detail',
+		my $setListPage = $urlpath->new(type =>'instructor_set_detail2',
 					args =>{
 						courseID => $courseID,
 						setID    => $fullSetID
@@ -496,7 +508,8 @@ sub checkDates {
 	my $error        = 0;
 	foreach my $field (@{DATE_FIELDS_ORDER()}) {  # check that override dates can be parsed and are not blank
 		$dates{$field} = $setRecord->$field;
-		if (defined  $r->param("set.$setID.$field.override") ){
+		if (defined  $r->param("set.$setID.$field.override") && 
+		    $r->param("set.$setID.$field") ne 'None Specified'){
 			eval{ $numerical_date = $self->parseDateTime($r->param("set.$setID.$field"))};
 			unless( $@  ) {
 					$dates{$field}=$numerical_date;
@@ -586,12 +599,16 @@ sub DBFieldTable {
 		my $globalValue = $GlobalRecord->$field;
 		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
 		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
+
+		my $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
+       
 		push @results, 
 			[$rh_fieldLabels->{$field},
 			 defined $UserRecord ? 
 				CGI::checkbox({
 					type => "checkbox",
 					name => "$recordType.$recordID.$field.override",
+					id => "$recordType.$recordID.$field.override_id",
 					label => "",
 					value => $field,
 					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || ($isVersioned && $field ne 'reduced_scoring_date')) ? 1 : 0
@@ -600,10 +617,11 @@ sub DBFieldTable {
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
 						      -id =>"$recordType.$recordID.${field}_id",
 						      -type=> "text",
-					              -value => $userValue ? $self->formatDateTime($userValue) : "", 
+					              -value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "None Specified",
+						      -onchange => $onChange,
 					              -size => 25})
 					) : "",
-				$self->formatDateTime($globalValue),				
+				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),				
 			]
 			
 	}
@@ -638,8 +656,19 @@ sub output_JS{
 	# print javaScript for dateTimePicker	
 	# jquery ui printed seperately
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/addOnLoadEvent.js"}), CGI::end_script();
+	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
+
+	print q!<style> 
+	.ui-datepicker{font-size:85%} 
+	.auto-changed{background-color: #ffffcc} 
+	.changed {background-color: #ffffcc}
+        </style>!,"\n";
+	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 
 	return "";
 

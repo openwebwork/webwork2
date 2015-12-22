@@ -25,31 +25,24 @@
 -->
 
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+
+<!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
-
-<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->"></script>
 <!--#if can="output_jquery_ui"-->
 	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
-	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
 <!--#endif-->
-
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-
 <!--#if can="output_achievement_CSS"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
 <!--#endif-->
-
 <!--#if can="output_tabber_CSS"-->
-<script type="text/javascript">
-var tabberOptions = {manualStartup:true};
-</script>
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
-
+<!--#if can="output_CSS"-->
+	<!--#output_CSS-->
+<!--#endif-->
 <!--#if exists="math4-coloring.css"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
 <!--#endif-->
@@ -57,10 +50,21 @@ var tabberOptions = {manualStartup:true};
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
 <!--#endif-->
 
+<!-- JS Loads -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->"></script>
+<!--#if can="output_jquery_ui"-->
+	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+<!--#endif-->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<!--#if can="output_tabber_CSS"-->
+<script type="text/javascript">
+var tabberOptions = {manualStartup:true};
+</script>
+<!--#endif-->
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
 <!--#if exists="math4-overrides.js"-->
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
@@ -68,12 +72,11 @@ var tabberOptions = {manualStartup:true};
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 
-
 <!--#head-->
 </head>
 
 <body>
-<a href="#content" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
+<a href="#page-title" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->
@@ -93,10 +96,17 @@ var tabberOptions = {manualStartup:true};
 	</div>
 </div>
 
-<div class="row-fluid">
+<!-- Run masthead class js because it gets rendered early -->
+<script type="text/javascript">
+  // Changes links in masthead
+  $('#loginstatus a').addClass('btn btn-small');
+  $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>'); 
+</script>
+
+<div id="body-row" class="row-fluid">
 
 <!-- Navigation -->
-<div id="site-navigation" class="span2" role="navigation" aria-label="main navigation">
+<div id="site-navigation" class="span2 hidden" role="navigation" aria-label="main navigation">
   <!--#if can="links"-->
         <div id="site-links">
 	  <!--#links-->
@@ -115,6 +125,25 @@ var tabberOptions = {manualStartup:true};
 	<!--#endif-->
 </div>
 
+<!-- Run site-navigation js because it gets loaded early -->
+<script type="text/javascript">
+  // Makes the fisheye stuff bootstrap nav
+  $('#site-navigation ul').addClass('nav nav-list');
+  $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
+  $('#site-navigation a.active').parent().addClass('active');
+  $('#site-navigation strong.active').parent().addClass('active');
+  $('#site-navigation li').find('br').remove();
+  
+  $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
+
+  // Display options formatting
+  $('.facebookbox input:submit').addClass('btn-small');
+
+  $('#site-navigation').removeClass('hidden');
+  
+</script>
+
+
 <!-- Main Content Area -->
 <div id="content" class="span10" >
 	<!-- Breadcrumb -->
@@ -129,11 +158,15 @@ var tabberOptions = {manualStartup:true};
 	      </ul>
 	    </div>
 	</div></div>
+	<!-- Run breadcrumb js since it gets loaded early -->
+	<script type="text/javascript"> 
+	  $('#toggle-sidebar').removeClass('btn-primary')
+	</script>
 	
 	<!-- Page Title -->
 	<!--#if can="title"-->
 	<div class="row-fluid"><div class="span12">
-		<h1 class='page-title'><!--#title --></h1>
+		<h1 id='page-title' class='page-title'><!--#title --></h1>
 	</div></div>
 	<!--#endif-->
 

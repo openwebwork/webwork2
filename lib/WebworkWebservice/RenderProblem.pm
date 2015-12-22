@@ -16,18 +16,12 @@
 # Artistic License for more details.
 ################################################################################
 
-
-
 package WebworkWebservice::RenderProblem;
 use WebworkWebservice;
 use base qw(WebworkWebservice); 
 
-my $debugXmlCode=1;  # turns on the filter for debugging XMLRPC and SOAP code
+my $debugXmlCode=0;  # turns on the filter for debugging XMLRPC and SOAP code
 local(*DEBUGCODE);
-
-
-
-
 
 use strict;
 use sigtrap;
@@ -59,9 +53,7 @@ our $PORT         = $WebworkWebservice::HOST_PORT;
 our $HOSTURL      = "$PROTOCOL://$HOST_NAME:$PORT"; 
 
 
-
-
-our $UNIT_TESTS_ON =1;
+our $UNIT_TESTS_ON =0;
 # 
 # #our $ce           = $WebworkWebservice::SeedCE;
 # # create a local course environment for some course
@@ -191,14 +183,18 @@ sub renderProblem {
 
 ###########################################
 # Determine the method for accessing data   ???? what was this
+# these are not used -- but something like this was probably
+# meant to determine whether the problem source was being supplied
+# directly (as a kind of HERE document) or whether only the path to 
+# the problem source was being supplied
 ###########################################
-	my $problem_source_access    =   $rh->{problem_source_access};
+	# my $problem_source_access    =   $rh->{problem_source_access};
 	# One of
 	#	source_from_course_set_problem
 	#   source_from_source_file_path
 	#   source_from_request
 	
-	my $data_access              =   $rh->{data_access};
+	# my $data_access              =   $rh->{data_access};
 	# One of 
 	#   data_from_course
 	#   data_from_request
@@ -260,7 +256,9 @@ sub renderProblem {
 # data in the environment if necessary
 ###########################################
 	# determine the set name and the set problem number
-	my $setName       =  (defined($rh->{envir}->{setNumber}) )    ? $rh->{envir}->{setNumber}    : '';
+	my $setName       =  (defined($rh->{set_id}) ) ? $rh->{set_id} : 
+	    (defined($rh->{envir}->{setNumber}) ? $rh->{envir}->{setNumber}  : '');
+	
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
 	$problemSeed = $rh->{problemSeed} || $problemSeed;
@@ -336,11 +334,12 @@ sub renderProblem {
 		$problemRecord->last_answer($lastAnswer);
 	}
 	# initialize problem source
+	# handle alias "path";
 	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};
 	if ($UNIT_TESTS_ON){
 			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
 			print STDERR "RenderProblem.pm: source file is ", $rh->{sourceFilePath},"\n";
-			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source});
+			print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source}) and $rh->{source};
 	}	
 
 
@@ -354,12 +353,12 @@ sub renderProblem {
 		$problemRecord->source_file($rh->{envir}->{fileName}) if defined $rh->{envir}->{fileName};
   	} elsif (defined($rh->{sourceFilePath}) and $rh->{sourceFilePath} =~/\S/)  {
   	    $problemRecord->source_file($rh->{sourceFilePath});
-  	    warn "reading source from ", $rh->{sourceFilePath};
+  	    warn "reading source from ", $rh->{sourceFilePath} if $UNIT_TESTS_ON;
   	    $problem_source = WeBWorK::PG::IO::read_whole_file($ce->{courseDirs}->{templates}.'/'.$rh->{sourceFilePath});
   	    #warn "source is ", $problem_source;
   	    $r_problem_source = \$problem_source;
-  	}
-	$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
+		$problemRecord->source_file('RenderProblemFooBar') unless defined($problemRecord->source_file);
+	}
 	if ($UNIT_TESTS_ON){
 			print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
 			print STDERR "RenderProblem.pm: source file is ", $problemRecord->source_file,"\n";
@@ -372,18 +371,22 @@ sub renderProblem {
 ##################################################
 # Other initializations
 ##################################################
+	my $displayMode = $rh->{displayMode} ? $rh->{displayMode} : 
+	    $rh->{envir}->{displayMode};
+
 	my $translationOptions = {
 		displayMode     => $rh->{envir}->{displayMode},
-		showHints	    => $rh->{envir}->{showHints},
+		showHints	=> $rh->{envir}->{showHints},
 		showSolutions   => $rh->{envir}->{showSolutions},
  		refreshMath2img => $rh->{envir}->{showHints} || $rh->{envir}->{showSolutions},
- 		processAnswers  => 1,
+ 		processAnswers  => defined($rh->{processAnswers}) ? $rh->{processAnswers} : 1,
  		catchWarnings   => 1,
         # methods for supplying the source, 
         r_source        => $r_problem_source, # reference to a source file string.
         # if reference is not defined then the path is obtained 
         # from the problem object.
         permissionLevel => $rh->{envir}->{permissionLevel} || 0,
+	effectivePermissionLevel => $rh->{envir}->{effectivePermissionlevel} || $rh->{envir}->{permissionLevel} || 0,
 	};
 	
 	my $formFields = $rh->{envir}->{inputs_ref};
@@ -422,8 +425,8 @@ sub renderProblem {
 #       num_incorrect
 #   it doesn't seem that $effectiveUser, $set or $key is used in the subroutine
 #   except that it is passed on to defineProblemEnvironment
-
 	my $pg;
+
 	$pg = WebworkWebservice::RenderProblem->new(
 		$ce,
 		$effectiveUser,
@@ -439,7 +442,7 @@ sub renderProblem {
 #         }
 		
 	);
-  
+
     my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
     if (ref ($pg->{pgcore}) ) {
     	$internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
@@ -476,8 +479,7 @@ sub renderProblem {
 		open (DEBUGCODE, ">>$xmlDebugLog") || die "Can't open debug log $xmlDebugLog";
 		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
-	
-	$out2->{answers} = xml_filter($out2->{answers}); # check this -- it might not be working correctly
+	$out2 = xml_filter($out2); # check this -- it might not be working correctly
 	##################
 	close(DEBUGCODE) if $debugXmlCode;
 	###################
