@@ -340,7 +340,16 @@ sub attemptResults {
 ################################################################################
 # Template escape implementations
 ################################################################################
-
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $templateName = $r->param('templateName')//'system';
+	unless ($templateName =~/^system$|^gateway$|^simple$/ ) {
+		$templateName = 'system';
+	}
+	$self->{templateName}= $templateName;
+	$templateName;
+}
 sub content {
   my $self = shift;
   my $result = $self->SUPER::content(@_);
@@ -2072,7 +2081,9 @@ sub output_email_instructor{
 
 sub output_hidden_info {
     my $self = shift;
-
+	print CGI::hidden({name => "templateName", 
+	            id=>"templateName_id", value => $self->{templateName}}
+	       );
     return "";
 }
 
