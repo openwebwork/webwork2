@@ -83,8 +83,7 @@ legend {
 #masthead {
 	background-color: #038;
 	margin: 0;
-	padding: 0;
-	padding: 5px;
+	padding: 5px 0px 5px 0px;
 }
 
 .webwork_logo {
@@ -118,7 +117,8 @@ legend {
 }
 
 #loginstatus {
-    	padding-top:.5ex;
+        padding-top:.5ex;
+        padding-right: .5em;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
