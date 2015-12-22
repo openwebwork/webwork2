@@ -457,7 +457,7 @@ sub scoreSet {
 	
 	# Write the problem data
 	my $dueDateString = $self->formatDateTime($setRecord->due_date);
-	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
+	my ($dueDate, $dueTime) = $dueDateString =~ /^(.*) at (.*)$/;
 	my $valueTotal = 0;
 	my %userStatusTotals = ();
 	my %userSuccessIndex = ();
@@ -471,9 +471,13 @@ sub scoreSet {
 		
 		my $column = 5 + $problem * $columnsPerProblem;
 		if ($scoringItems->{header}) {
+		        my $prettyProblemID = $globalProblem->problem_id;
+		        if ($isJitarSet) {
+			  $prettyProblemID = join('.',jitar_id_to_seq($prettyProblemID));
+			}
 			$scoringData[0][$column] = "";
 			$scoringData[1][$column] = $setRecord->set_id;
-			$scoringData[2][$column] = $globalProblem->problem_id;
+			$scoringData[2][$column] = $prettyProblemID;
 			$scoringData[3][$column] = $dueDate;
 			$scoringData[4][$column] = $dueTime;
 			$scoringData[5][$column] = $globalProblem->value;
@@ -482,7 +486,7 @@ sub scoreSet {
 				for (my $row = 0; $row < 6; $row++) {
 					for (my $col = $column+1; $col <= $column + 2; $col++) {
 						if ($row == 2) {
-							$scoringData[$row][$col] = $globalProblem->problem_id;
+							$scoringData[$row][$col] = $prettyProblemID;
 						} else {
 							$scoringData[$row][$col] = "";
 						}

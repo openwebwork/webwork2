@@ -1547,7 +1547,7 @@ sub add_problem_handler {
 							   problemID      => $targetProblemNumber, #added to end of set
 		);
 		$self->assignProblemToAllSetUsers($problemRecord);
-		$self->addgoodmessage("Added $sourceFilePath to ". $targetSetName. " as problem "..($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber)) ;
+		$self->addgoodmessage("Added $sourceFilePath to ". $targetSetName. " as problem ".($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)) : $targetProblemNumber)) ;
 		$self->{file_type}   = 'problem'; # change file type to problem -- if it's not already that
 
 		#################################################
