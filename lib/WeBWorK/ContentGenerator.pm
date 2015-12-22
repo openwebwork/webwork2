@@ -744,10 +744,8 @@ sub links {
 			}
 
 			
-			if ($authz->hasPermissions($userID, "change_password") or $authz->hasPermissions($userID, "change_email_address")) {
 				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-			}
-			
+					
 			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			
 			if ($ce->{achievementsEnabled}) {
