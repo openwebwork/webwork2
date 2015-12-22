@@ -1073,7 +1073,7 @@ sub make_data_row {
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
-			CGI::span({-style=>"float:right ; text-align: right"}, 
+			CGI::span({-style=>"float:right ; text-align: right ; margin-right:.8em;"}, 
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
