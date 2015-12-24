@@ -539,11 +539,11 @@ sub addProblemToSet {
 	my $value = $value_default;
 	if (defined($args{value})){$value = $args{value};}  # 0 is a valid value for $args{value}  
 
-	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
-	my $showMeAnother = $args{showMeAnother} || $showMeAnother_default;
+	my $maxAttempts = $args{maxAttempts} // $max_attempts_default;
+	my $showMeAnother = $args{showMeAnother} // $showMeAnother_default;
 	my $problemID = $args{problemID};
-	my $countsParentGrade = $args{countsParentGrade} || $counts_parent_grade_default;
-	my $attToOpenChildren = $args{attToOpenChildren} || $att_to_open_children_default;
+	my $countsParentGrade = $args{countsParentGrade} // $counts_parent_grade_default;
+	my $attToOpenChildren = $args{attToOpenChildren} // $att_to_open_children_default;
 
 	unless ($problemID) {
 
