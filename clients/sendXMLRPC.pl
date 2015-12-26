@@ -129,7 +129,10 @@ IMPORTANT: Create a valid credentials file.
 	Verbose output. Used mostly for debugging. 
     In particular it displays explicitly the correct answers 
     which are (will be)  submitted to the question.
-
+    
+=item   -e
+	Open the source file in an editor. 
+	
 =item   
 
 	The single letter options can be "bundled" e.g.  -vcCbB
@@ -202,9 +205,9 @@ use Getopt::Long qw[:config no_ignore_case bundling];
 use File::Find;
 use FileHandle;
 use Cwd 'abs_path';
-#######################################################
+
 #############################################
-# Configure according to local machine
+# Configure displays for local operating system
 #############################################
 
 ### verbose output when UNIT_TESTS_ON =1;
@@ -219,7 +222,8 @@ use constant  HASH_DISPLAY_COMMAND => " less ";   # display tempoutputfile with 
  use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
  die "You must make the directory ".TEMPOUTPUTDIR().
      " writeable " unless -w TEMPOUTPUTDIR();
-     
+ use constant TEMPOUTPUTFILE  => TEMPOUTPUTDIR()."temporary_output.html";
+    
 ### Path to a temporary file for storing the output of sendXMLRPC.pl
 use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/bad_problems.txt";
 die "You must first create an output file at ".LOG_FILE().
@@ -227,11 +231,16 @@ die "You must first create an output file at ".LOG_FILE().
 
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
+use constant PROBLEMSEED   => '987654321'; 
 
+############################################################
+# End configure
+############################################################
+ 
+############################################################
+# Read command line options
+############################################################
 
- ############################################################
- # End configure
- ############################################################
 my $display_ans_output1 = '';
 my $display_hash_output1 = '';
 my $display_html_output1 = '';
@@ -243,6 +252,7 @@ my $record_ok2 = '';
 my $verbose = '';
 my $credentials_path;
 my $format = 'standard';
+my $edit_source_file = '';
 my $print_answer_hash;
 my $print_answer_group;
 my $print_pg_hash;
@@ -258,6 +268,7 @@ GetOptions(
 	'c' => \$record_ok1, # record_problem_ok1 needs to be written
 	'C' => \$record_ok2,
 	'v' => \$verbose,
+	'e' => \$edit_source_file, 
 	'list=s' =>\$read_list_from_this_file,   # read file containing list of full file paths
 	'pg' 			=> \$print_pg_hash,
 	'anshash' 		=> \$print_answer_hash,
@@ -336,7 +347,7 @@ our $DISPLAYMODE          = $credentials{WWdisplayMode}//DISPLAYMODE();
 ##################################################
 
 ############################################
-# Build  default input
+# Build  client defaults
 ############################################
  
 my $default_input = { 
@@ -362,7 +373,8 @@ my $default_form_data = {
 
 our @files_and_directories = @ARGV;
 # print "files ", join("|", @files_and_directories), "\n";
-if ($read_list_from_this_file) {
+if ($read_list_from_this_file) { 
+    # read a datafile containing list of files to be processed
 	my $FH = FileHandle->new(" < $read_list_from_this_file");
 	while (<$FH>) {
 		my $item = $_;
@@ -407,6 +419,11 @@ sub wanted {
 	warn "Error in processing $File::Find::name: $@" if $@;
 }
 
+
+#######################################################################
+# Process the pg file
+#######################################################################
+
 sub process_pg_file {
 	my $file_path = shift;
 	my $NO_ERRORS = "";
@@ -419,6 +436,7 @@ sub process_pg_file {
 	    process_problem($file_path, $default_input, $form_data1);
 	# extract and display result
 		#print "display $file_path\n";
+		edit_source_file($file_path) if $edit_source_file;
 		display_html_output($file_path, $xmlrpc_client->formatRenderedProblem) if $display_html_output1;
 		display_hash_output($file_path, $xmlrpc_client->return_object) if $display_hash_output1;
 		display_ans_output($file_path, $xmlrpc_client->return_object) if $display_ans_output1;
@@ -514,13 +532,22 @@ sub process_pg_file {
 
 	print "DONE -- $NO_ERRORS -- $ALL_CORRECT\n"if $verbose;
 }
+
+#######################################################################
+# Auxiliary subroutines
+#######################################################################
+
+
 sub display_inputs {
 	my %correct_answers = @_;
 	foreach my $key (sort keys %correct_answers) {
 		print "$key => $correct_answers{$key}\n";
 	}
 }
-
+sub edit_source_file {
+	my $file_path = shift;
+	system("bbedit $file_path");
+}
 sub record_problem_ok1 {
 	my $error_flag = shift//'';
 	my $xmlrpc_client = shift;
@@ -743,8 +770,6 @@ sub get_source {
 }
 
 
-
-
 ##################################################
 # utilities
 ##################################################
@@ -877,6 +902,8 @@ DETAILS
                 Verbose output. Used mostly for debugging. 
                  In particular it displays explicitly the correct answers which are (will be)  submitted to the question.
 
+    -e
+				Open the source file in an editor. 
 
                 The single letter options can be "bundled" e.g.  -vcCbB
 
