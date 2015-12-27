@@ -208,10 +208,10 @@ sub body {
 
 # now set the headers for the table
 	my $nameHeader = $sort eq "name"
-		? CGI::u($r->maketext("Name"))
+		? CGI::span($r->maketext("Name"))
 		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"name"})}, $r->maketext("Name"));
 	my $statusHeader = $sort eq "status"
-		? CGI::u($r->maketext("Status"))
+		? CGI::span($r->maketext("Status"))
 		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, $r->maketext("Status"));
 # print the start of the form
 	if ($authz->hasPermissions($user, "view_multiple_sets")) { 

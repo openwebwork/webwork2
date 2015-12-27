@@ -1111,7 +1111,7 @@ sub make_data_row {
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
 			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 			 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
-			CGI::span({-style=>"float:right ; text-align: right"}, 
+			CGI::span({-style=>"float:right ; text-align: right ; margin-right:.8em;"}, 
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
@@ -1448,8 +1448,10 @@ sub pre_header_initialize {
 			$r->param('local_sets',$newSetName);  ## use of two parameter param
 			debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
-			if (defined($newSetRecord)) {
-	            $self->addbadmessage("The set name $newSetName is already in use.  
+			if (! $newSetName) {
+			    $self->addbadmessage("You did not specify a new set name.  ");
+			} elsif (defined($newSetRecord)) {
+			    $self->addbadmessage("The set name $newSetName is already in use.  
 	            Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
 				# DBFIXME use $db->newGlobalSet
@@ -1476,6 +1478,7 @@ sub pre_header_initialize {
 				
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
+				$newSetRecord->assignment_type('default');
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");

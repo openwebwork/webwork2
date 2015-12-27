@@ -76,7 +76,7 @@ var tabberOptions = {manualStartup:true};
 </head>
 
 <body>
-<a href="#content" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
+<a href="#page-title" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
 <!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
 	<!--#output_wztooltip_JS-->
 <!--#endif-->
@@ -166,7 +166,7 @@ var tabberOptions = {manualStartup:true};
 	<!-- Page Title -->
 	<!--#if can="title"-->
 	<div class="row-fluid"><div class="span12">
-		<h1 class='page-title'><!--#title --></h1>
+		<h1 id='page-title' class='page-title'><!--#title --></h1>
 	</div></div>
 	<!--#endif-->
 
