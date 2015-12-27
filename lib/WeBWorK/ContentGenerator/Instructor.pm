@@ -546,9 +546,10 @@ sub addProblemToSet {
 	if (defined($args{prPeriod})){
 		$prPeriod = $args{prPeriod};
 	}
+
 	my $problemID = $args{problemID};
-	my $countsParentGrade = $args{countsParentGrade} || $counts_parent_grade_default;
-	my $attToOpenChildren = $args{attToOpenChildren} || $att_to_open_children_default;
+	my $countsParentGrade = $args{countsParentGrade} // $counts_parent_grade_default;
+	my $attToOpenChildren = $args{attToOpenChildren} // $att_to_open_children_default;
 
 	unless ($problemID) {
 
