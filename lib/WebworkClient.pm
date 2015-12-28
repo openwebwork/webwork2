@@ -288,7 +288,7 @@ sub xmlrpcCall {
  		
 	  local( $result);
 	  # use eval to catch errors
-	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
+	  print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %{$self->request_object}),"\n";
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
 	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;

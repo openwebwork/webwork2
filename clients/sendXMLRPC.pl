@@ -197,14 +197,18 @@ BEGIN {
 
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
+#use Carp;
 use Crypt::SSLeay;  # needed for https
-use WebworkClient;
 use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
 use File::Find;
 use FileHandle;
 use Cwd 'abs_path';
+use WebworkClient;
+
+use 5.10.0;
+#$Carp::Verbose = 1;
 
 #############################################
 # Configure displays for local operating system
@@ -361,6 +365,7 @@ my $default_input = {
 my $default_form_data = { 
 		displayMode				=> $DISPLAYMODE,
 		outputformat 			=> $format,
+#		problemSeed             => PROBLEMSEED(),
 };
 
 ##################################################
@@ -370,6 +375,7 @@ my $default_form_data = {
 ##################################################
 #  MAIN SECTION gather and process problem template files
 ##################################################
+my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
 
 our @files_and_directories = @ARGV;
 # print "files ", join("|", @files_and_directories), "\n";
@@ -420,10 +426,14 @@ sub wanted {
 }
 
 
+
+##########################################################
+#  Subroutines
+##########################################################
+
 #######################################################################
 # Process the pg file
 #######################################################################
-
 sub process_pg_file {
 	my $file_path = shift;
 	my $NO_ERRORS = "";
@@ -610,6 +620,7 @@ sub record_problem_ok2 {
 	close(FH);
 	return $ALL_CORRECT;
 }
+
 sub process_problem {
 	my $file_path = shift;
 	my $input    = shift;
@@ -675,13 +686,14 @@ sub process_problem {
 		$error_flag=1;
 		$error_string = $xmlrpc_client->return_object;  # error report		
 	}	
+
 	##################################################
 	# log elapsed time
 	##################################################
 	my $scriptName = 'sendXMLRPC';
 	my $cg_end = time;
 	my $cg_duration = $cg_end - $cg_start;
-	WebworkClient::writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
+	writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
 	return $error_flag, $xmlrpc_client, $error_string;
 }
 
@@ -745,6 +757,24 @@ sub display_ans_output {  # print the collection of answer hashes to the command
 	sleep 1; #wait 1 seconds
 	unlink($output_file);
 }
+
+
+####################################################################################
+# Write logs -- to replace subroutine from WebworkClient
+####################################################################################
+
+sub writeRenderLogEntry($$$) {
+	my ($function, $details, $beginEnd) = @_;
+	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
+#	WeBWorK::Utils::writeLog(, "render_timing", "$$ ".time." $beginEnd $function [$details]");
+}
+
+
+####################################################################################
+# format output  to replace subroutine from WebworkClient
+####################################################################################
+
+# to be written
 
 ##################################################
 # Get problem template source and adjust file_path name
