@@ -34,7 +34,7 @@ use HTML::Entities;
 use Date::Format;
 use WeBWorK;
 
-#use mod_perl;
+use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # load correct modules

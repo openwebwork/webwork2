@@ -477,6 +477,7 @@ sub renderProblem {
 		text 						=> encode_base64( $pg->{body_text}  ),
 		header_text 				=> encode_base64( $pg->{head_text} ),
 		answers 					=> $pg->{answers},
+		
 		errors         				=> $pg->{errors},
 		WARNINGS	   				=> encode_base64( 
 		                                 "WARNINGS\n".$warning_messages."\n<br/>More<br/>\n".$pg->{warnings} 
@@ -489,7 +490,9 @@ sub renderProblem {
 		debug_messages              => $pgdebug_messages,
 		internal_debug_messages     => $internal_debug_messages,
 	};
-	
+	#print STDERR "\n pg answers ", join(" ",  %{$out2->{answers}} ) ;
+	#print STDERR "\n pg answers hash ", join(" ",  %{$out2->{PG_ANSWERS_HASH}} ) ;
+    $out2;
 	# Filter out bad reference types
 	###################
 	# DEBUGGING CODE

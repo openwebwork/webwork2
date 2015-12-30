@@ -172,7 +172,7 @@ Make a temporary user for the given database.
 sub fake_user {
 	my ($db) = @_;
 	return $db->newUser(
-		user_id => fakeUserName,
+		user_id => 'fakeUserName',
 		first_name=>'',
 		last_name=>'',
 		email_address=>'',

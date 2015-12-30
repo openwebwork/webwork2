@@ -116,8 +116,8 @@ sub pretty_print_rh {
 
 	if (defined($type) and $type) {
 		$out .= " type = $type; ";
-	} elsif ($rh == undef) {
-		$out .= " type = scalar; ";
+	} else {
+		$out .= " type is not undefined; ";
 	}
 	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
 	    $out .= "{\n";
