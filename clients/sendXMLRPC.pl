@@ -475,10 +475,11 @@ sub process_pg_file {
 	my $some_correct_answers_not_specified = 0;
 	foreach my $ans_id (keys %{$formatter->return_object->{answers}} ) {
 		my $ans_obj = $formatter->return_object->{answers}->{$ans_id};
+		# the answergrps are in PG_ANSWERS_HASH
 		my $answergroup = $formatter->return_object->{PG_ANSWERS_HASH}->{$ans_id};
 		my @response_order = @{$answergroup->{response}->{response_order}};
 		#print scalar(@response_order), " first response $response_order[0] $ans_id\n";
-		$ans_obj->{type} = $ans_obj->{type}//'';
+		$ans_obj->{type} = $ans_obj->{type}//'';  #make sure it's defined.
 		if ($ans_obj->{type} eq 'MultiAnswer') { 
 		    # singleResponse multianswer type
 		    # an outrageous hack
@@ -542,12 +543,16 @@ sub process_pg_file {
 				   %correct_answers
 				};
 	($error_flag, $formatter, $error_string)=();
+	my $pg_start = time; # this is Time::HiRes's time, which gives floating point values
 	($error_flag, $formatter, $error_string) = 
 			process_problem($file_path, $default_input, $form_data2);
+	my $pg_stop = time;
+	my $pg_duration = $pg_stop-$pg_start;
+
 	display_html_output($file_path, $formatter) if $display_html_output2;
 	display_hash_output($file_path, $formatter) if $display_hash_output2;
 	display_ans_output($file_path, $formatter) if $display_ans_output2;
-	$ALL_CORRECT = record_problem_ok2($error_flag, $formatter, $file_path, $some_correct_answers_not_specified) if $record_ok2;      
+	$ALL_CORRECT = record_problem_ok2($error_flag, $formatter, $file_path, $some_correct_answers_not_specified, $pg_duration) if $record_ok2;      
 	display_inputs(%correct_answers) if $verbose;  # choice of correct answers submitted 
 	# should this information on what answers are being submitted have an option switch?
 
@@ -733,10 +738,11 @@ sub display_ans_output {  # print the collection of answer hashes to the command
 
 sub record_problem_ok1 {
 	my $error_flag = shift//'';
-	my $xmlrpc_client = shift;
-	my $return_object = $xmlrpc_client->return_object;
+	my $xmlrpc_client = shift;  # for formatting
 	my $file_path = shift;
-	my $return_string = shift;
+	my $return_string = '';
+	my $return_object = $xmlrpc_client->return_object;
+
 	my $result = $return_object;
 	if (defined($result->{flags}->{DEBUG_messages}) ) {
 		my @debug_messages = @{$result->{flags}->{DEBUG_messages}};
@@ -776,9 +782,10 @@ sub record_problem_ok1 {
 sub record_problem_ok2 {
 	my $error_flag = shift//'';
 	my $xmlrpc_client = shift;
-	my $return_object = $xmlrpc_client->return_object;
 	my $file_path = shift;
 	my $some_correct_answers_not_specified = shift;
+	my $pg_duration = shift;  #processing time
+	my $return_object = $xmlrpc_client->return_object;
 	my %scores = ();
 	my $ALL_CORRECT= 0;
 	my $all_correct = ($error_flag)?0:1;
@@ -791,7 +798,7 @@ sub record_problem_ok2 {
 	$ALL_CORRECT = ($all_correct == 1)?'All answers correct':'Some answers are incorrect';
 	local(*FH);
 	open(FH, '>>',LOG_FILE()) or die "Can't open file ".LOG_FILE()." for writing";
-	print FH "$all_correct Answers for $file_path are all correct = $all_correct; errors: $error_flag\n";
+	print FH "$all_correct Answers for $file_path are all correct = $all_correct; errors: $error_flag sendxmlrpc_time: $pg_duration\n";
 	close(FH);
 	return $ALL_CORRECT;
 }
@@ -828,7 +835,7 @@ sub edit_source_file {
 sub writeRenderLogEntry($$$) {
 	my ($function, $details, $beginEnd) = @_;
 	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
-#	WeBWorK::Utils::writeLog(, "render_timing", "$$ ".time." $beginEnd $function [$details]");
+	#WeBWorK::Utils::writeLog( "render_timing", "$$ ".time." $beginEnd $function [$details]");
 }
 
 
