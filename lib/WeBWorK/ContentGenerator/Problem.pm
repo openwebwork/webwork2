@@ -280,7 +280,7 @@ sub attemptResults {
 		$answers,
 		answersSubmitted       => 1,
 		answerOrder            => $pg->{flags}->{ANSWER_ENTRY_ORDER},
-		displayMode            => 'MathJax',
+		displayMode            => $self->{displayMode},
 		showAnswerNumbers      => 0,
 		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
 		showAttemptPreviews    => $showAttemptPreview,
