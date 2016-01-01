@@ -580,7 +580,7 @@ sub pre_header_initialize {
 	# now we check the reasons why it might be closed
 	unless ($self->{isOpen}) {
 	    # its closed if the set is restricted
-	    $isClosed = $ce->{options}{enableConditionalRelease} && is_restricted($db, $set, $set->set_id, $effectiveUserName);
+	    $isClosed = $ce->{options}{enableConditionalRelease} && is_restricted($db, $set, $effectiveUserName);
 	    # or if its a jitar set and the problem is hidden or closed
 	    $isClosed = $isClosed || ($set->assignment_type() eq 'jitar' &&
 				      is_jitar_problem_hidden($db,$effectiveUserName,$set->set_id,$problemNumber));
@@ -1722,16 +1722,18 @@ sub output_score_summary{
 	    } elsif (scalar(@children_counts_indexs) > 1) {
 	      print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
 	    }
-	    
 	  }
 	  
 	  
 	  # print information if this set has restricted progression and if you need
 	  # to finish this problem (and maybe its children) to proceed
-	  if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
+	  if ($set->restrict_prob_progression() &&
+	      $next_id <= $#problemIDs && 
+	      is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
 	    if ($hasChildren) {
 	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its graded subproblems.',join('.',@{$problemSeqs[$next_id]}));
-	    } else {
+	  } elsif (scalar(@seq) == 1 ||
+			   $problem->counts_parent_grade()) {
 	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 	    }
 	  }
@@ -1856,39 +1858,25 @@ sub output_comments{
 		    my $comment = $userPastAnswer->comment_string;
 		    $comment = CGI::escapeHTML($comment);
 		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		    my $user = $db->getUser($eUserID);
+		    print CGI::start_div({id=>"answerComment", class=>"answerComments"});
+		    print CGI::b("Instructor Comment:"),  CGI::br();
+		    print $comment;
+		    print <<EOS;
+	<script type="text/javascript">
+	    MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
+		var AM = MathJax.InputJax.AsciiMath.AM;
+		for (var i=0; i< AM.symbols.length; i++) {
+		    if (AM.symbols[i].input == '**') {
+			AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
+		    }
+		}
+					     });
+	MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
+	
+	MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'answerComment']);
+	</script>
+EOS
 
-		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"MathObjects.pl\");\n BEGIN_TEXT\n";
-		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
-		    my $pg = WeBWorK::PG->new(
-			$ce,
-			$user,
-			$key,
-			$set,
-			$problem,
-			$set->psvn, # FIXME: this field should be removed
-			$formFields,
-			{ # translation options
-			    displayMode     => $displayMode,
-			    showHints       => 0,
-			    showSolutions   => 0,
-			    refreshMath2img => 1,
-			    processAnswers  => 0,
-			    permissionLevel => 0,
-			    effectivePermissionLevel => 0,
-			    r_source => \$source,
-			},
-			);
-		    
-		    
-		    my $htmlout = $pg->{body_text};
-		    
-		    print CGI::div({class=>"answerComments"},
-		    CGI::b("Instructor Comment:"),
-		    CGI::br(),
-		    $htmlout);
 		}
 	}
 

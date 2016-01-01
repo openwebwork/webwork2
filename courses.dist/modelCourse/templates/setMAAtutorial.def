@@ -1,23 +1,167 @@
-openDate = 1/10/97 at 6:00am
-dueDate = 1/1/05 at 2:00am
-answerDate = 1/1/05 at 2:00am
-paperHeaderFile = setMAAtutorial/MAAtutorialSetHeader.pg
-screenHeaderFile = setMAAtutorial/MAAtutorialSetHeader.pg
-problemList =
-setMAAtutorial/hello.pg,   1
-setMAAtutorial/standardexample.pg,   1
-setMAAtutorial/simplemultiplechoiceexample.pg,  1
-setMAAtutorial/multiplechoiceexample.pg,   1
-setMAAtutorial/matchinglistexample.pg,   1
-setMAAtutorial/truefalseexample.pg,    1
-setMAAtutorial/popuplistexample.pg,    1
-setMAAtutorial/ontheflygraphicsexample1.pg,    1
-setMAAtutorial/ontheflygraphicsexample2.pg,    1
-setMAAtutorial/staticgraphicsexample/staticgraphicsexample.pg,      1
-setMAAtutorial/hermitegraphexample.pg,         1
-setMAAtutorial/htmllinksexample/htmllinksexample.pg,           1
-setMAAtutorial/javascriptexample1.pg,    1
-setMAAtutorial/javascriptexample2.pg,    1
-setMAAtutorial/vectorfieldexample.pg,			1
-setMAAtutorial/conditionalquestionexample.pg,   1
-setMAAtutorial/javaappletexample.pg,    1
+assignmentType      = default
+openDate          = 01/10/1997 at 06:00am EST
+reducedScoringDate = 01/01/2005 at 02:00am EST
+dueDate           = 01/01/2005 at 02:00am EST
+answerDate        = 01/01/2005 at 02:00am EST
+enableReducedScoring = N
+paperHeaderFile   = setMAAtutorial/MAAtutorialSetHeader.pg
+screenHeaderFile  = setMAAtutorial/MAAtutorialSetHeader.pg
+description       = 
+restrictProbProgression = 0
+emailInstructor   = 0
+
+problemListV2 
+problem_start
+problem_id = 1
+source_file = setMAAtutorial/hello.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 2
+source_file = setMAAtutorial/standardexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 3
+source_file = setMAAtutorial/simplemultiplechoiceexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 4
+source_file = setMAAtutorial/multiplechoiceexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 5
+source_file = setMAAtutorial/matchinglistexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 6
+source_file = setMAAtutorial/truefalseexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 7
+source_file = setMAAtutorial/popuplistexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 8
+source_file = setMAAtutorial/ontheflygraphicsexample1.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 9
+source_file = setMAAtutorial/ontheflygraphicsexample2.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 10
+source_file = setMAAtutorial/staticgraphicsexample/staticgraphicsexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 11
+source_file = setMAAtutorial/hermitegraphexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 12
+source_file = setMAAtutorial/htmllinksexample/htmllinksexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 13
+source_file = setMAAtutorial/javascriptexample1.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 14
+source_file = setMAAtutorial/javascriptexample2.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 15
+source_file = setMAAtutorial/vectorfieldexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 16
+source_file = setMAAtutorial/conditionalquestionexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 17
+source_file = setMAAtutorial/javaappletexample.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+

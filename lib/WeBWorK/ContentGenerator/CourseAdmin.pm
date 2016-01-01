@@ -1012,7 +1012,7 @@ sub rename_course_form {
 		CGI::Tr({},
 			CGI::td( CGI::checkbox(
 				{name=>"rename_newCourseInstitution_checkbox", 
-				 label=>'Change institution to:', 
+				 label=>'Change Institution to:', 
 				 checked=>$rename_newCourseInstitution_checkbox,
 				 value=>'on'
 				 }) ),
@@ -1294,7 +1294,7 @@ sub rename_course_validate {
 	if ($rename_newCourseInstitution eq "" and $rename_newCourseInstitution_checkbox eq 'on')  {
 		push @errors, "You must specify a new institution for the course.";
 	}
-	unless ($rename_newCourseID or $rename_newCourseID_checkbox or $rename_newCourseTitle_checkbox ) {
+	unless ($rename_newCourseID or $rename_newCourseID_checkbox or $rename_newCourseTitle_checkbox or $rename_newCourseInstitution_checkbox) {
 		push @errors, "No changes specified.  You must mark the 
 		checkbox of the item(s) to be changed and enter the change data.";
 	}

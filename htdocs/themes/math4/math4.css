@@ -83,8 +83,7 @@ legend {
 #masthead {
 	background-color: #038;
 	margin: 0;
-	padding: 0;
-	padding: 5px;
+	padding: 5px 0px 5px 0px;
 }
 
 .webwork_logo {
@@ -118,7 +117,8 @@ legend {
 }
 
 #loginstatus {
-    	padding-top:.5ex;
+        padding-top:.5ex;
+        padding-right: .5em;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
@@ -367,6 +367,10 @@ table.classlist-table .tbody {
 /* Homework Sets */
 .problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
     margin-top: 0px;
+}
+
+.problem_set_table td, .problem_set_table th {
+    padding: 8px 3px 8px 3px;
 }
 
 .problem_set_table td a {
@@ -985,7 +989,7 @@ table caption{
 }
 
 #editor{
-	width: 585px;
+	width: 750px;
 }
 
 #editor .pg_editor_input_span{
