@@ -687,23 +687,6 @@ sub formatRenderedProblem {
 
 	my $scoreSummary     =  '';
 
-my $tbl = WeBWorK::Utils::AttemptsTable->new(
-	$rh_answers,
-	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
-	answerOrder            => $answerOrder//[],
-	displayMode            => $self->{displayMode},
-	imgGen                 => $imgGen,
-	ce                     => '',	#used only to build the imgGen
-	showAttemptPreviews    => ($previewMode or $checkMode or $submitMode or $showCorrectMode),
-	showAttemptResults     => ($checkMode or $submitMode or $showCorrectMode),
-	showCorrectAnswers     => ($showCorrectMode),
-	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
-	showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
-	maketext               => WeBWorK::Localize::getLoc($formLanguage//'en'),
-	summary                => ($self->{problem_result}->{summary} )//'', # can be set by problem grader
-);
-
-	my $scoreSummary     =  '';
 
 	my $tbl = WeBWorK::Utils::AttemptsTable->new(
 		$rh_answers,
