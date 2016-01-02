@@ -119,6 +119,7 @@ use constant  REQUEST_URI      => 'mod_xmlrpc';
 
 our $UNIT_TESTS_ON             = 0;
 
+##################
 # static variables
 
 # create seed_ce
@@ -685,7 +686,6 @@ sub formatRenderedProblem {
 	my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
 
 	my $scoreSummary     =  '';
-
 
 	my $tbl = WeBWorK::Utils::AttemptsTable->new(
 		$rh_answers,

@@ -330,7 +330,7 @@ sub pre_header_initialize {
 sub standard_input {
 	my $out = {
 #		pw            			=>   '',   # not needed
-		password      			=>   '',   # not needed  use site_password??
+		course_password      			=>   '',   # not needed  use site_password??
 		session_key             =>   '',
 		userID          		=>   '',   # not needed
 		set               		=>   '',
@@ -420,8 +420,8 @@ sub content {
 	if ( ($xmlrpc_client->fault) ) {
 	    my $err_string = $xmlrpc_client->error_string;	    
 	    die($err_string);
-	}elsif($xmlrpc_client->return_object){
-		print $xmlrpc_client->return_object->{text};
+	}elsif($xmlrpc_client->return_object->{problem_out}){
+		print $xmlrpc_client->return_object->{problem_out}->{text};
 	} else {  #returned something other than a rendered problem.
 		print '{"server_response":"'.$xmlrpc_client->return_object->{text}.'",';
 		if($xmlrpc_client->return_object->{ra_out}){

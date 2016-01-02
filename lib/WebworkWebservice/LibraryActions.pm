@@ -160,7 +160,7 @@ sub listLib {
 		warn "double slash in library_name ", $rh->{library_name};
 		$rh->{library_name} =~ s|^/||;
 	}
-	my $dirPath = $self->{ce}->{courseDirs}{templates}."/".$rh->{library_name};	
+	my $dirPath = $self->ce->{courseDirs}{templates}."/".$rh->{library_name};	
 	my $maxdepth= $rh->{maxdepth};
 	my $dirPath2 = $dirPath . ( ($rh->{dirPath}) ?  '/'.$rh->{dirPath}  : '' ) ;
 
@@ -276,11 +276,10 @@ sub listLib {
 }
 
 sub searchLib {    #API for searching the NPL database
-
 	my $self = shift;
 	my $rh = shift;
 	my $out = {};
-	my $ce = $self->{ce};
+	my $ce = $self->ce;
 	my $subcommand = $rh->{command};
 	if($rh->{library_levels}) {
 		$self->{level} = [split(//, $rh->{library_levels})];

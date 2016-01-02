@@ -21,6 +21,7 @@ use DBI;
 use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Utils::Tags;
 use File::Basename;
+use WeBWorK::Debug;
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
