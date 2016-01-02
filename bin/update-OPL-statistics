@@ -101,7 +101,18 @@ $dbh->commit();
 
 # for each course get the data from the user problem table into the
 # opl user problem table.
+
+print "Importing statistics for ".scalar(@courses)." courses.\n";
+
+my $counter = 0;
+
 foreach my $courseID (@courses) {
+    $counter++;
+    print sprintf("%*d",4,$counter);
+    if ($counter % 10 == 0) {
+	print "\n";
+    }
+
     next if $courseID eq 'admin' || $courseID eq 'modelCourse';
 
     # we extract the identifying information of the problem,
@@ -143,7 +154,9 @@ WHERE (`${courseID}_problem`.source_file LIKE 'Library/%'
   AND `${courseID}_set`.due_date < $time;
 EOS
 
-  }
+}
+
+print "\n\n";
 
 $dbh->commit();
 
