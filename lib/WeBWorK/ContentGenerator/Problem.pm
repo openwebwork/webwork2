@@ -290,7 +290,7 @@ sub attemptResults {
 		showSummary            => $showSummary,
 		imgGen                 => $imgGen, # not needed if ce is present ,
 		ce                     => '',	   # not needed if $imgGen is present
-		maketext               => WeBWorK::Localize::getLoc("en"),
+		maketext               => WeBWorK::Localize::getLoc($ce->{language}),
 	);
 	# render equation images
 	my $answerTemplate = $tbl->answerTemplate; 
