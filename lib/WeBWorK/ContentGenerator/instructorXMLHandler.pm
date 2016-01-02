@@ -315,12 +315,14 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$xmlrpc_client->xmlrpcCall('renderProblem', $input);
+		$self->{xml_command} = 'renderProblem';
 		$self->{output} = $xmlrpc_client;
 		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
 		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
 		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
+		$self->{xml_command} = $r->param("xml_command");
 		$self->{output} = $xmlrpc_client
 	}
 	################################
@@ -420,8 +422,16 @@ sub content {
 	if ( ($xmlrpc_client->fault) ) {
 	    my $err_string = $xmlrpc_client->error_string;	    
 	    die($err_string);
-	}elsif($xmlrpc_client->return_object->{problem_out}){
-		print $xmlrpc_client->return_object->{problem_out}->{text};
+	} elsif($self->{xml_command} eq 'renderProblem'){
+		# FIXME hack
+		# we need to regularize the way that text is returned.
+		# it behaves differently when re-randomization in the library takes place
+		# then during the initial rendering. 
+		if ($xmlrpc_client->return_object->{problem_out}->{text}) {
+			print $xmlrpc_client->return_object->{problem_out}->{text};
+		} else {
+			print $xmlrpc_client->return_object->{text}; 
+		}
 	} else {  #returned something other than a rendered problem.
 		print '{"server_response":"'.$xmlrpc_client->return_object->{text}.'",';
 		if($xmlrpc_client->return_object->{ra_out}){
