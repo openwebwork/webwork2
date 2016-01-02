@@ -294,7 +294,7 @@ my $authz  = $fake_r->authz;
 # 		local *WeBWorK::Authen::maybe_kill_cookie = \&WebworkXMLRPC::noop;
 # 		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
 # 		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
-		warn "authen is $authen ", ref($authen);
+		#warn "authen is $authen ", ref($authen);
 		$authenOK = $authen->verify;
 	} or do {
 		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
