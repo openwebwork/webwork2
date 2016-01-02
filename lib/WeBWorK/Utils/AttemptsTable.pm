@@ -173,9 +173,7 @@ sub formatAnswerRow {
 			  ($self->showAnswerNumbers) ? CGI::td({},$answerNumber):'',
 			  ($self->showAttemptAnswers) ? CGI::td({},$self->nbsp($answerString)):'' ,   # student original answer
 			  ($self->showAttemptPreviews)?  $self->formatToolTip($answerString, $answerPreview):"" ,
-			  ($self->showAttemptResults)?   CGI::td({class=>$resultStringClass},
-	               				CGI::a({href=>"javascript:document.getElementById(\"$ans_id\").focus()"},
-	               						$self->nbsp($resultString))) :'' ,
+			  ($self->showAttemptResults)?   $attemptResults : '' ,
 			  ($self->showCorrectAnswers)?  $self->formatToolTip($correctAnswer,$correctAnswerPreview):"" ,
 			  ($self->showMessages)?        CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)):"",
 			  "\n"
