@@ -80,14 +80,13 @@ my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/co
 
 my $webwork_server_admin_email = $ce->{webwork_server_admin_email};
 if ($webwork_server_admin_email) {
-	$webwork_server_admin_email = $ce->{webwork_server_admin_email};
 	print "webwork.apache2-config: webwork_server_admin_email for reporting bugs has been set to $webwork_server_admin_email in site.conf\n";
 } else {
 	$webwork_server_admin_email= $ENV{SERVER_ADMIN};
 }
 $ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
 $WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
-$ENV{PG_DIRECTORY} = $pg_dir;
+$ENV{PG_ROOT} = $pg_dir;
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
@@ -101,8 +100,6 @@ print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_
 
 # link to PG code libraries
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
-$WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
-$ENV{PG_ROOT} = $pg_dir;
 
 
 require Apache::WeBWorK; # force compilation of pretty much everything
