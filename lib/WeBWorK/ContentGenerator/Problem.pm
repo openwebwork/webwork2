@@ -43,6 +43,7 @@ use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
+use WeBWorK::Utils::AttemptsTable;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -245,34 +246,20 @@ sub can_showMeAnother {
 
 # Note: the substance of attemptResults is lifted into GatewayQuiz.pm,
 # with some changes to the output format
-
 sub attemptResults {
 	my $self = shift;
 	my $r = $self->r;
 	my $pg = shift;
-	my $showAttemptAnswers = shift;
+	my $showAttemptAnswers = shift//0;
 	my $showCorrectAnswers = shift;
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
-	my $showAttemptPreview = shift || 0;
-	
+	my $showAttemptPreview = shift // 1;
 	my $ce = $self->r->ce;
-	
-	# for color coding the responses.
-	my @correct_ids = ();
-	my @incorrect_ids = ();
-
-
-	my $problemResult = $pg->{result}; # the overall result of the problem
-	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	
-	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
-	
-	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
 	
 	# to make grabbing these options easier, we'll pull them out now...
 	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
-	
+
 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
 		tempDir         => $ce->{webworkDirs}->{tmp},
 		latex	        => $ce->{externalPrograms}->{latex},
@@ -284,182 +271,264 @@ sub attemptResults {
 		dvipng_align    => $imagesModeOptions{dvipng_align},
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
-	
+
+	my $answers = $pg->{answers};
 	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
 
-	my $header;
-	#$header .= CGI::th("Part");
-	if ($showEvaluatedAnswers) {
-		$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered"))  : "";
-	}	
-	$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview"))  : "";
-	$header .= $showAttemptResults ? CGI::th($r->maketext("Result"))   : "";
-	$header .= $showMessages       ? CGI::th($r->maketext("Messages")) : "";
-	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct Answer"))  : "";
-
-	my $fully = '';
-	my @tableRows = ( $header );
-	my $numCorrect = 0;
-	my $numBlanks  =0;
-	my $numEssay = 0;
-	my $tthPreambleCache;
-	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name}//'';
-		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
-		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
-		                    	: "");
-
-		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
-		my $correctAnswer = $answerResult->{correct_ans}//'';
-		my $answerScore   = $answerResult->{score}//0;
-		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
-
-		$answerMessage =~ s/\n/<BR>/g;
-		$numCorrect += $answerScore >= 1;
-		$numEssay += ($answerResult->{type}//'') eq 'essay';
-		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
-
-		my $resultString;
-		my $resultStringClass;
-		if ($answerScore >= 1) {
-		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
-		    $resultStringClass = "ResultsWithoutError";  
-		    push @correct_ids,   $name if $answerScore == 1;
-		} elsif (($answerResult->{type}//'') eq 'essay') {
-		    $resultString =  $r->maketext("Ungraded"); 
-		    $self->{essayFlag} = 1;
-		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
-		    push @incorrect_ids, $name if $answerScore < 1;
-		    $resultStringClass = "ResultsWithError";
-		    $resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $r->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
-		} else {
-		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		    push @incorrect_ids, $name if $answerScore < 1;
-		}
-		
-		# need to capture auxiliary answers as well and identify their ids.
-		my $row;
-		#$row .= CGI::td($name);
-		if ($showEvaluatedAnswers) {
-		  $row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
-		}
-		$row .= $showAttemptPreview ? CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true, 
-		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
-		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
-		                    $self->nbsp($preview))       : "";
-		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},CGI::a({href=>"javascript:document.getElementById(\"$name\").focus()"},$self->nbsp($resultString)))  : "";
-
-		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
-		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
-		$row .= $showCorrectAnswers ? CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true, 
-		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
-		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
-		                  $self->nbsp($correctAnswerPreview)) : "";
-
-		push @tableRows, $row;
-	}
-	
+# Create AttemptsTable object	
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$answers,
+		answersSubmitted       => 1,
+		answerOrder            => $pg->{flags}->{ANSWER_ENTRY_ORDER},
+		displayMode            => $self->{displayMode},
+		showAnswerNumbers      => 0,
+		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
+		showAttemptPreviews    => $showAttemptPreview,
+		showAttemptResults     => $showAttemptResults,
+		showCorrectAnswers     => $showCorrectAnswers,
+		showMessages           => $showAttemptAnswers, # internally checks for messages
+		showSummary            => $showSummary,
+		imgGen                 => $imgGen, # not needed if ce is present ,
+		ce                     => '',	   # not needed if $imgGen is present
+		maketext               => WeBWorK::Localize::getLoc($ce->{language}),
+	);
 	# render equation images
-	$imgGen->render(refresh => 1);
-	
-#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
-	my $summary = ""; 
-	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
-		if (scalar @answerNames == 1) {  #default messages
-				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
-				} elsif ($self->{essayFlag}) {
-				    $summary .= CGI::div($r->maketext("The answer will be graded later.", $fully));
-				 } else {
-					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
-				 }
-		} else {
-				if ($numCorrect + $numEssay == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
-				 } 
-				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
-				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
-					$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
-				 }
-				 if ($numBlanks > $numEssay) {
-					my $s = ($numBlanks>1)?'':'s';
-					$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
-				 }
-		}
-	} else {
-		$summary = $problemResult->{summary};   # summary has been defined by grader
-	}
+	my $answerTemplate = $tbl->answerTemplate; 
+	   # answerTemplate collects all the formulas to be displayed in the attempts table  
+	   # answerTemplate also collects the correct_ids and incorrect_ids
+	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	    # after all of the formulas have been collected the render command creates png's for them
+	    # refresh=>1 insures that we never reuse old images -- since the answers change frequently
+	$self->{correct_ids}   = $tbl->correct_ids;
+	$self->{incorrect_ids} = $tbl->incorrect_ids;
+	return $answerTemplate;
 
-	$summary = CGI::div({role=>"alert", class=>"attemptResultsSummary"},
-			  $summary);
-
-	$self->{correct_ids}   = [@correct_ids];
-	$self->{incorrect_ids} = [@incorrect_ids];
-
-	return
-    CGI::h3($r->maketext("Attempt Results")) .
-    CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) .
-    ($showSummary ? $summary : '&nbsp;');
 }
-
-
-# Note: previewAnswer is lifted into GatewayQuiz.pm
-
-
-sub previewAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->r->ce;
-	my $effectiveUser = $self->{effectiveUser};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $displayMode   = $self->{displayMode};
-	
-	# note: right now, we have to do things completely differently when we are
-	# rendering math from INSIDE the translator and from OUTSIDE the translator.
-	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out dvipng/etc.
-	
-	my $tex = $answerResult->{preview_latex_string};
-	
-	return "" unless defined $tex and $tex ne "";
-	
-	if ($displayMode eq "plainText") {
-		return $tex;
-	} elsif (($answerResult->{type}//'') eq 'essay') {
-	    return $tex;
-	} elsif ($displayMode eq "images") {
-		$imgGen->add($tex);
-	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	}
-}
-sub previewCorrectAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->r->ce;
-	my $effectiveUser = $self->{effectiveUser};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $displayMode   = $self->{displayMode};
-	
-	# note: right now, we have to do things completely differently when we are
-	# rendering math from INSIDE the translator and from OUTSIDE the translator.
-	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out dvipng/etc.
-	
-	my $tex = $answerResult->{correct_ans_latex_string};
-	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
-	# return "" unless defined $tex and $tex ne "";
-	
-	if ($displayMode eq "plainText") {
-		return $tex;
-	} elsif ($displayMode eq "images") {
-		$imgGen->add($tex);
-	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	}
-}
+# sub NOTattemptResults {
+# 	my $self = shift;
+# 	my $r = $self->r;
+# 	my $pg = shift;
+# 	my $showAttemptAnswers = shift;
+# 	my $showCorrectAnswers = shift;
+# 	my $showAttemptResults = $showAttemptAnswers && shift;
+# 	my $showSummary = shift;
+# 	my $showAttemptPreview = shift || 0;
+# 	
+# 	my $ce = $self->r->ce;
+# 	
+# 	# for color coding the responses.
+# 	my @correct_ids = ();
+# 	my @incorrect_ids = ();
+# 
+# 
+# 	my $problemResult = $pg->{result}; # the overall result of the problem
+# 	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
+# 	
+# 	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
+# 	
+# 	# I think this was to insure that the preview was always recalculated.
+# 	# It doesn't appear to have been used.
+# 	#my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
+# 	
+# 	# to make grabbing these options easier, we'll pull them out now...
+# 	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
+# 	
+# 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
+# 		tempDir         => $ce->{webworkDirs}->{tmp},
+# 		latex	        => $ce->{externalPrograms}->{latex},
+# 		dvipng          => $ce->{externalPrograms}->{dvipng},
+# 		useCache        => 1,
+# 		cacheDir        => $ce->{webworkDirs}->{equationCache},
+# 		cacheURL        => $ce->{webworkURLs}->{equationCache},
+# 		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
+# 		dvipng_align    => $imagesModeOptions{dvipng_align},
+# 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
+# 	);
+# 	
+# 	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
+# 
+# 	my $header;
+# 	#$header .= CGI::th("Part");
+# 	if ($showEvaluatedAnswers) {
+# 		$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered"))  : "";
+# 	}	
+# 	$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview"))  : "";
+# 	$header .= $showAttemptResults ? CGI::th($r->maketext("Result"))   : "";
+# 	$header .= $showMessages       ? CGI::th($r->maketext("Messages")) : "";
+# 	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct Answer"))  : "";
+# 
+# 	my $fully = '';
+# 	my @tableRows = ( $header );
+# 	my $numCorrect = 0;
+# 	my $numBlanks  =0;
+# 	my $numEssay = 0;
+# 	foreach my $name (@answerNames) {
+# 		my $answerResult  = $pg->{answers}->{$name}//'';
+# 		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
+# 		my $preview       = ($showAttemptPreview
+# 		                    	? $self->previewAnswer($answerResult, $imgGen)
+# 		                    	: "");
+# 
+# 		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen)//'';
+# 		my $correctAnswer = $answerResult->{correct_ans}//'';
+# 		my $answerScore   = $answerResult->{score}//0;
+# 		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
+# 
+# 		$answerMessage =~ s/\n/<BR>/g;
+# 		$numCorrect += $answerScore >= 1;
+# 		$numEssay += ($answerResult->{type}//'') eq 'essay';
+# 		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
+# 
+# 		my $resultString;
+# 		my $resultStringClass;
+# 		if ($answerScore >= 1) {
+# 		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
+# 		    $resultStringClass = "ResultsWithoutError";  
+# 		    push @correct_ids,   $name if $answerScore == 1;
+# 		} elsif (($answerResult->{type}//'') eq 'essay') {
+# 		    $resultString =  $r->maketext("Ungraded"); 
+# 		    $self->{essayFlag} = 1;
+# 		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
+# 		    push @incorrect_ids, $name if $answerScore < 1;
+# 		    $resultStringClass = "ResultsWithError";
+# 		    $resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $r->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
+# 		} else {
+# 		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
+# 		    push @incorrect_ids, $name if $answerScore < 1;
+# 		}
+# 		
+# 		# need to capture auxiliary answers as well and identify their ids.
+# 		my $row;
+# 		#$row .= CGI::td($name);
+# 		if ($showEvaluatedAnswers) {
+# 		  $row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
+# 		}
+# 		$row .= $showAttemptPreview ? $self->formatToolTip($studentAnswer, $preview):'';
+# # 		CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true, 
+# # 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
+# # 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+# # 		                    $self->nbsp($preview))       : "";
+# 		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},CGI::a({href=>"javascript:document.getElementById(\"$name\").focus()"},$self->nbsp($resultString)))  : "";
+# 
+# 		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
+# 		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
+# 		$row .= $showCorrectAnswers ? $self->formatToolTip($correctAnswer, $correctAnswerPreview):'';
+# # 		CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true, 
+# # 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
+# # 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+# # 		                  $self->nbsp($correctAnswerPreview)) : "";
+# 
+# 		push @tableRows, $row;
+# 	}
+# 	
+# 	# render equation images
+# 	$imgGen->render(refresh => 1);
+# 	
+# #	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
+# 	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
+# 	my $summary = ""; 
+# 	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
+# 		if (scalar @answerNames == 1) {  #default messages
+# 				if ($numCorrect == scalar @answerNames) {
+# 					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
+# 				} elsif ($self->{essayFlag}) {
+# 				    $summary .= CGI::div($r->maketext("The answer will be graded later.", $fully));
+# 				 } else {
+# 					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
+# 				 }
+# 		} else {
+# 				if ($numCorrect + $numEssay == scalar @answerNames) {
+# 					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
+# 				 } 
+# 				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
+# 				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
+# 					$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
+# 				 }
+# 				 if ($numBlanks > $numEssay) {
+# 					my $s = ($numBlanks>1)?'':'s';
+# 					$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
+# 				 }
+# 		}
+# 	} else {
+# 		$summary = $problemResult->{summary};   # summary has been defined by grader
+# 	}
+# 
+# 	$summary = CGI::div({role=>"alert", class=>"attemptResultsSummary"},
+# 			  $summary);
+# 
+# 	$self->{correct_ids}   = [@correct_ids];
+# 	$self->{incorrect_ids} = [@incorrect_ids];
+# 
+# 	return
+#     CGI::h3($r->maketext("Attempt Results")) .
+#     CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) .
+#     ($showSummary ? $summary : '&nbsp;');
+# }
+# 
+# 
+# # Note: previewAnswer is lifted into GatewayQuiz.pm
+# sub formatToolTip {
+# 	my $self = shift;
+# 	my $answer = shift;
+# 	my $formattedAnswer = shift;
+# 	return CGI::td({onmouseover=>qq!Tip('$answer',SHADOW, true, 
+# 		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
+# 		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+# 		                    $self->nbsp($formattedAnswer));
+# }
+# 
+# sub previewAnswer {
+# 	my ($self, $answerResult, $imgGen) = @_;
+# 	my $ce            = $self->r->ce;
+# 	my $effectiveUser = $self->{effectiveUser};
+# 	my $set           = $self->{set};
+# 	my $problem       = $self->{problem};
+# 	my $displayMode   = $self->{displayMode};
+# 	
+# 	# note: right now, we have to do things completely differently when we are
+# 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
+# 	# so we'll just deal with each case explicitly here. there's some code
+# 	# duplication that can be dealt with later by abstracting out dvipng/etc.
+# 	
+# 	my $tex = $answerResult->{preview_latex_string};
+# 	
+# 	return "" unless defined $tex and $tex ne "";
+# 	
+# 	if ($displayMode eq "plainText") {
+# 		return $tex;
+# 	} elsif (($answerResult->{type}//'') eq 'essay') {
+# 	    return $tex;
+# 	} elsif ($displayMode eq "images") {
+# 		$imgGen->add($tex);
+# 	} elsif ($displayMode eq "MathJax") {
+# 		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+# 	}
+# }
+# sub previewCorrectAnswer {
+# 	my ($self, $answerResult, $imgGen) = @_;
+# 	my $ce            = $self->r->ce;
+# 	my $effectiveUser = $self->{effectiveUser};
+# 	my $set           = $self->{set};
+# 	my $problem       = $self->{problem};
+# 	my $displayMode   = $self->{displayMode};
+# 	
+# 	# note: right now, we have to do things completely differently when we are
+# 	# rendering math from INSIDE the translator and from OUTSIDE the translator.
+# 	# so we'll just deal with each case explicitly here. there's some code
+# 	# duplication that can be dealt with later by abstracting out dvipng/etc.
+# 	
+# 	my $tex = $answerResult->{correct_ans_latex_string};
+# 	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
+# 	# return "" unless defined $tex and $tex ne "";
+# 	
+# 	if ($displayMode eq "plainText") {
+# 		return $tex;
+# 	} elsif ($displayMode eq "images") {
+# 		$imgGen->add($tex);
+# 	} elsif ($displayMode eq "MathJax") {
+# 		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+# 	}
+# }
 
 ################################################################################
 # Template escape implementations
@@ -1853,15 +1922,25 @@ sub output_summary{
 	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 
 	    # print this if user submitted answers OR requested correct answers	    
-	    my $results = $self->attemptResults($pg, 1,
-						$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);	    
+	    my $results = $self->attemptResults($pg, 
+	                    1,   # showAttemptAnswers --display the unformatted submitted answer attempt
+						$will{showCorrectAnswers}, # showCorrectAnswers
+						$pg->{flags}->{showPartialCorrectAnswers}, # showAttemptResults
+			            1, # showSummary
+			            1  # showAttemptPreview
+		);	    
 	    print $results;
 	    
 	} elsif ($will{checkAnswers}) {
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
-	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
+	    print $self->attemptResults($pg, 
+	    	1, # showAttemptAnswers
+	    	$will{showCorrectAnswers}, # showCorrectAnswers
+	    	1, # showAttemptResults
+	    	1, # showSummary
+	    	1  # showAttemptPreview
+	    );
 	    # show attempt answers
 	    # show correct answers if asked
 	    # show attempt results (correctness)
