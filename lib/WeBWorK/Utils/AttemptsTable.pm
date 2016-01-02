@@ -163,7 +163,7 @@ sub formatAnswerRow {
 		$resultStringClass = "ResultsWithError";
 		$resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $self->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
 	} else {
-		$resultString =  $self->maketext("[_1]% correct", wwRound($answerScore*100));
+		$resultString =  $self->maketext("[_1]% correct", wwRound(0, $answerScore*100));
 		#push @incorrect_ids, $ans_id if $answerScore < 1;
 	}
 	my $attemptResults = CGI::td({class=>$resultStringClass},
