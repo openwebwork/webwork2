@@ -293,8 +293,12 @@ sub attemptResults {
 		maketext               => WeBWorK::Localize::getLoc("en"),
 	);
 	# render equation images
+	my $answerTemplate = $tbl->answerTemplate; 
+	   # answerTemplate collects all the formulas to be displayed in the attempts table  
+	   # answerTemplate also collects the correct_ids and incorrect_ids
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
-	my $answerTemplate = $tbl->answerTemplate;   # this also collects the correct_ids and incorrect_ids
+	    # after all of the formulas have been collected the render command creates png's for them
+	    # refresh=>1 insures that we never reuse old images -- since the answers change frequently
 	$self->{correct_ids}   = $tbl->correct_ids;
 	$self->{incorrect_ids} = $tbl->incorrect_ids;
 	return $answerTemplate;
