@@ -132,7 +132,8 @@ sub formatAnswerRow {
 	my $rh_answer     = shift;
 	my $ans_id        = shift;
 	my $answerNumber  = shift;
-	my $answerString         = $rh_answer->{original_student_ans}||'&nbsp;';
+	my $answerString         = $rh_answer->{student_ans}||'&nbsp;'; 
+	# use student_ans and not original_student_ans above.  student_ans has had HTML entities translated to prevent XSS.
 	my $answerPreview        = $self->previewAnswer($rh_answer)||'&nbsp;';
 	my $correctAnswer        = $rh_answer->{correct_ans}//'';
 	my $correctAnswerPreview = $self->previewCorrectAnswer($rh_answer)||'&nbsp;';
