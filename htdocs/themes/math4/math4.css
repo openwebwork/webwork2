@@ -515,6 +515,32 @@ table.classlist-table .tbody {
     padding-left: 0.2em;
 }
 
+.lb-problem-header {
+    overflow:visible; 
+    background-color: #FFFFFF; 
+    margin: 0px auto;
+}
+
+.lb-problem-add {
+    text-align: left;
+}
+
+.lb-problem-path {
+    text-align: left; 
+    cursor: pointer;
+}
+
+.lb-problem-icons {
+    float:right; 
+    text-align: right; 
+    margin-right:.8em;
+}
+
+.lb-problem-stats {
+    float:right; 
+    text-align:right;
+}
+
 /* Footer */
 #footer {
 	clear: both;
