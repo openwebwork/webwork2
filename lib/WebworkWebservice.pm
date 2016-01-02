@@ -205,6 +205,11 @@ if ($UNIT_TESTS_ON) {
  	   print STDERR  "Self has type ", ref($self), "\n";
  	   print STDERR   "self has data: \n", format_hash_ref($self), "\n";
 	}
+	
+	die "Please use 'course_password' instead of 'password' as the key for submitting
+		passwords to this webservice\n" 
+	  if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
+
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
 #   FIXME:  can/should we change this????
