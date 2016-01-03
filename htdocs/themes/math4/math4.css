@@ -516,9 +516,11 @@ table.classlist-table .tbody {
 }
 
 .lb-problem-header {
-    overflow:visible; 
+    overflow:auto;
     background-color: #FFFFFF; 
     margin: 0px auto;
+    min-height:30px;
+    display:block;
 }
 
 .lb-problem-add {
