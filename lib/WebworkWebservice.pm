@@ -268,14 +268,8 @@ my $authz  = $fake_r->authz;
 	}
 	
 	die "Please use 'course_password' instead of 'password' as the key for submitting
-<<<<<<< HEAD
-	passwords to this webservice\n" 
-	  if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
-=======
 		passwords to this webservice\n" 
 	  if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
-
->>>>>>> develop
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
 #   FIXME:  can/should we change this????
