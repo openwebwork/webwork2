@@ -46,7 +46,8 @@ $WeBWorK::Debug::Logfile = $WeBWorK::Constants::WEBWORK_DIRECTORY . "/logs/debug
 # For example, this pattern prevents the dispatch() function from logging:
 #     $WeBWorK::Debug::DenySubroutineOutput = qr/^WeBWorK::dispatch$/;
 #
-$WeBWorK::Debug::DenySubroutineOutput = qr/RenderProblem|dispatch|Authen|URLPath/;
+$WeBWorK::Debug::DenySubroutineOutput = undef;
+#$WeBWorK::Debug::DenySubroutineOutput = qr/^WeBWorK::dispatch$/;
 
 # If defined, allow only subroutines matching the following regular expression
 # to log.
