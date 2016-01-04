@@ -258,8 +258,12 @@ sub build_library_subject_tree {
 		$subject_tree->{num_files} = $numFiles;
 
 		$i++;
-		print $i . " ";
 
+		print sprintf("%3d", $i);
+
+		if ($i%10 == 0) {
+		    print "\n";
+		}
 
 		my $clone = { % {$subject_tree}};
 		push (@subject_tree, $clone);
@@ -318,7 +322,7 @@ sub build_library_textbook_tree {
 
 	for my $textbook (@textbooks){
 		$i++;
-		printf("%3d",$i);
+		printf("%4d",$i);
 		print("\n") if ($i %10==0);
 
 		my $results = $dbh->selectall_arrayref("select ch.chapter_id,ch.name,ch.number "
