@@ -336,8 +336,8 @@ sub displayStudentStats {
 
 		$string =~ s/&nbsp;/ /g;
 		$twoString =~ s/&nbsp;/ /g;
-		my @prob_scores = $string =~ /.{3}/g;
-		my @prob_att = $twoString =~ /.{3}/g;
+		my @prob_scores = $string =~ /.{4}/g;
+		my @prob_att = $twoString =~ /.{4}/g;
 
 		my @cgi_prob_scores = ();
 
@@ -354,6 +354,7 @@ sub displayStudentStats {
 		    }
 		    my $att = defined($prob_att[$i]) ?
 			$prob_att[$i] : '&nbsp;';
+
 		    $cgi_prob_scores[$i] = CGI::td(
                               CGI::span({class=>$class},$score).
 					CGI::br().
@@ -570,7 +571,7 @@ sub grade_set {
 			# Determine the string $longStatus which 
 			# will display the student's current score
 			###########################################			
-
+			
 			if (!$attempted){
 				$longStatus     = '.';
 			} elsif   ($valid_status) {
