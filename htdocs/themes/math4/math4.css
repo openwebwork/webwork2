@@ -543,6 +543,11 @@ table.classlist-table .tbody {
     text-align:right;
 }
 
+.lb-mlt-group {
+    border:2px solid black;
+    width :100%;
+}
+
 /* Footer */
 #footer {
 	clear: both;
