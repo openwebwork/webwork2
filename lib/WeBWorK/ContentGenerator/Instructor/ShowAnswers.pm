@@ -30,6 +30,8 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id); 
 use PGcore;
 
+use Text::CSV;
+
 sub initialize {
 	my $self       = shift;
 	my $r          = $self->r;
@@ -39,6 +41,11 @@ sub initialize {
 	my $authz      = $r->authz;
 	my $courseName = $urlpath->arg("courseID");
 	my $user       = $r->param('user');
+	my $root          = $ce->{webworkURLs}->{root};
+	my $key           = $r->param('key');
+	my $setNameRegExp       = $r->param('setID') || '*';     # these are passed in the search args in this case
+	my $problemNumberRegExp = $r->param('problemID') || '*'; # blank entries count as *'s 
+
 	
 	unless ($authz->hasPermissions($user, "view_answers")) {
 		$self->addbadmessage("You aren't authorized to view past answers");
@@ -55,22 +62,7 @@ sub initialize {
 	$extraStopActingParams->{problemID} = $r->param('problemID');
 	$r->{extraStopActingParams} = $extraStopActingParams;
 
-}
 
-
-sub body {
-	my $self          = shift;
-	my $r             = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $db            = $r->db;
-	my $ce            = $r->ce;
-	my $authz         = $r->authz;
-	my $root          = $ce->{webworkURLs}->{root};
-	my $courseName    = $urlpath->arg('courseID');  
-	my $setNameRegExp       = $r->param('setID') || '*';     # these are passed in the search args in this case
-	my $problemNumberRegExp = $r->param('problemID') || '*'; # blank entries count as *'s 
-	my $user          = $r->param('user');
-	my $key           = $r->param('key');
 	my $studentUserRegExp;
 	if ( defined($r->param('studentUser'))) {
 	    $studentUserRegExp   = $r->param('studentUser') || '*';
@@ -78,50 +70,6 @@ sub body {
 	    $studentUserRegExp = '*';
 	}
 	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
-
-	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
-
-	
-	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
-	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
-	my $renderAnswers = 0;
-	# Figure out if MathJax is available
-	if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
-	    $renderAnswers = 1;
-	}
-
-
-	#####################################################################
-	# print form
-	#####################################################################
-
-	#only instructors should be able to veiw other people's answers.
-	
-	if ($instructor) {
-	    ########## print site identifying information
-	    
-	    print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
-	    print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_ANSWER_LOG_DESCRIPTION")));
-	    
-	    print CGI::p(),CGI::hr();
-	    
-	    print CGI::start_form({-target=>'WW_Info',-id=>'past-answer-form'},"POST", $showAnswersURL),
-	    $self->hidden_authen_fields;
-	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
-	    " &nbsp;".CGI::label($r->maketext('User:')." &nbsp;",
-	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 )),
-	    " &nbsp;".CGI::label($r->maketext('Set:')." &nbsp;",
-	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  )), 
-	    " &nbsp;".CGI::label($r->maketext('Problem:')."&nbsp;",
-	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  )),  
-	    " &nbsp; ";
-	    print CGI::end_form();
-	}
-
-		#####################################################################
-		# print result table of answers
-		#####################################################################
 
 	# If not instructor then force table to use current user-id
 	if (!$instructor) {
@@ -140,6 +88,7 @@ sub body {
 	# so go through all of the possible things and trying to figure out which 
 	# we should display
 	
+	my %records;
 	my @studentUsers;
 
 	# Set up * as a wildcard for the student user regexp
@@ -243,16 +192,6 @@ sub body {
 		    
 		    my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
 		    
-		    print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
-
-		    my $prettyProblemNumber = $problemNumber;
-
-		    if ($isJitarSet) {
-			$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
-		    }
-
-		    print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $prettyProblemNumber));
-		    print $r->maketext("No entries for [_1], set [_2], problem [_3]", $studentUser, $setName, $prettyProblemNumber) unless @pastAnswerIDs;
 		    
 		    # changed this to use the db for the past answers.  
 		    
@@ -295,6 +234,192 @@ sub body {
 			push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
 		    }
 		    
+		    foreach my $answerID (@pastAnswerIDs) {
+			my $pastAnswer = $db->getPastAnswer($answerID);
+			my $answers = $pastAnswer->answer_string;
+			my $scores = $pastAnswer->scores;
+			my $time = $self->formatDateTime($pastAnswer->timestamp);
+			my @scores = split(//, $scores);
+			my @answers = split(/\t/,$answers);
+			
+			my $num_ans = $#answers;
+			
+			$records{$studentUser}{$setName}{$problemNumber} = 
+			{ time => $time,
+			  answers => @answers;
+			  answerTypes => @answerTypes;
+			  scores => @scores;
+			  comment => $pastAnswer->comment_string // '';
+			};
+			
+		    }
+		    
+		}
+	    }
+	}
+
+	my $self->{records} = \%records;
+
+	# Prepare a csv if we are an instructor
+	if ($instructor && $r->param('createCSV') {
+	    my $filename = 'past_answers';
+	    my $scoringDir = $ce->{courseDirs}->{scoring};
+	    if (-e "${scoringDir}/${filename}.csv") {
+		my $i=1;
+		while(-e "${scoringDir}/${filename}_bak$i.csv") {$i++;}      #don't overwrite existing backups
+		my $bakFileName ="${scoringDir}/${filename}_bak$i.csv";
+		rename $filename, $bakFileName or warn "Unable to rename $filename to $bakFileName";
+	    }
+
+	    $filename .= '.csv';
+
+	    open my $fh, ">", $filename or warn "Unable to open $filename for writing";
+
+	    my $csv = Text::CSV->new();
+	    my @columns;
+
+	    $columns[0] = $r->maketext('User ID');
+	    $columns[1] = $r->maketext('Set ID');
+	    $columns[2] = $r->maketext('Problem Number');
+	    $columns[3] = $r->maketext('Timestamp');
+	    $columns[4] = $r->maketext('Scores');
+	    $columns[5] = $r->maketext('Answers');
+	    $columns[6] = $r->maketext('Comment');
+	    
+	    $csv->print($fh, \@columns); 
+
+	    foreach my $studentID (sort keys %records) {
+		$columns[0] = $studentID;
+		foreach my $setID (sort keys %records{$studentID}) {
+		    $columns[1] = $setID;
+		    foreach my $probNum (sort keys $records{$studentID}{$setID}) {
+			my $record = \$records{$studentID}{$setID}{$probNum};
+			$columns[2] = $probNum;
+			$columns[3] = $record->{time};
+			$columns[4] = join(';' ,$record->{scores});
+			$columns[5] = join(';' ,$record->{answers});
+			$columns[6] = join(';' ,$record->{comment});
+
+			$csv->print($fh,\@columns);
+		    }
+		}
+	    }
+
+	    close($fh) or warn "Couldn't Close $filename";
+	    
+	    }
+
+}
+
+
+sub body {
+	my $self          = shift;
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $db            = $r->db;
+	my $ce            = $r->ce;
+	my $authz         = $r->authz;
+	my $root          = $ce->{webworkURLs}->{root};
+	my $courseName    = $urlpath->arg('courseID');  
+	my $setNameRegExp       = $r->param('setID') || '*';     # these are passed in the search args in this case
+	my $problemNumberRegExp = $r->param('problemID') || '*'; # blank entries count as *'s 
+	my $user          = $r->param('user');
+	my $key           = $r->param('key');
+
+	my $instructor = $authz->hasPermissions($user, "access_instructor_tools");
+
+	return CGI::em("You are not authorized to view past answers") unless $authz->hasPermissions($user, "view_answers");
+
+	
+	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module,  $r, courseID => $courseName);
+	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
+	my $renderAnswers = 0;
+	# Figure out if MathJax is available
+	if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
+	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
+	    $renderAnswers = 1;
+	}
+
+
+	#####################################################################
+	# print form
+	#####################################################################
+
+	#only instructors should be able to veiw other people's answers.
+	
+	if ($instructor) {
+	    ########## print site identifying information
+	    
+	    print WeBWorK::CGI_labeled_input(-type=>"button", -id=>"show_hide", -input_attr=>{-value=>$r->maketext("Show/Hide Site Description"), -class=>"button_input"});
+	    print CGI::p({-id=>"site_description", -style=>"display:none"}, CGI::em($r->maketext("_ANSWER_LOG_DESCRIPTION")));
+	    
+	    print CGI::p(),CGI::hr();
+	    
+	    print CGI::start_form({-target=>'WW_Info',-id=>'past-answer-form'},"POST", $showAnswersURL),
+	    $self->hidden_authen_fields;
+	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
+	    " &nbsp;".CGI::label($r->maketext('User:')." &nbsp;",
+	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 )),
+	    " &nbsp;".CGI::label($r->maketext('Set:')." &nbsp;",
+	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  )), 
+	    " &nbsp;".CGI::label($r->maketext('Problem:')."&nbsp;",
+	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  )),  
+	    CGI::br(),
+	    " &nbsp;".CGI::label($r->maketext('Create CSV:')."&nbsp;",
+				 CGI::checkbox(-name => 'createCSV', -value => $r->param('Create CSV')//0 ));
+
+	    print CGI::end_form();
+	}
+
+	####################################################################
+	# If necessary print a link to the csv file
+	####################################################################
+
+	my $filename = 'past_answers.csv';
+	my $scoringDir = $ce->{courseDirs}->{scoring};
+
+	if ($instructor && $r->param('Create CSV') &&
+	    -e "${scoringDir}/${filename}") {
+
+	    my $scoringDownloadPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ScoringDownload", $r, courseID => $courseName
+		);
+	    
+	    print CGI::span($r->maketext('Download:'),
+			    CGI::a({href=>$self->systemLink($scoringDownloadPage,
+							    params=>{getFile => $filename } )}, $filename);
+			    
+		}
+	    
+
+	#####################################################################
+	# print result table of answers
+	#####################################################################
+	
+	print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
+
+	my $prettyProblemNumber = $problemNumber;
+	
+	if ($isJitarSet) {
+	    $prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
+	}
+	
+	print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $prettyProblemNumber));
+	print $r->maketext("No entries for [_1], set [_2], problem [_3]", $studentUser, $setName, $prettyProblemNumber) unless @pastAnswerIDs;
+	
+	
+	
+	my @row;
+	my $rowOptions = {};
+
+
+		    # check to see what type the answers are.  right now it only checks for essay but could do more
+		    my %answerHash = %{ $pg->{answers} };
+		    my @answerTypes;
+
+		    foreach (sortByName(undef, keys %answerHash)) {
+			push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
+		    }
+		    
 		    my $previousTime = -1;
 		    
 		    foreach my $answerID (@pastAnswerIDs) {
@@ -302,8 +427,6 @@ sub body {
 			my $answers = $pastAnswer->answer_string;
 			my $scores = $pastAnswer->scores;
 			my $time = $self->formatDateTime($pastAnswer->timestamp);
-			my @row;
-			my $rowOptions = {};
 
 			if ($previousTime < 0) {
 			    $previousTime = $pastAnswer->timestamp;
@@ -359,8 +482,8 @@ sub body {
 		    
 		    print CGI::end_table();
 		}
-	    }
-	}
+
+
 
 	if ($renderAnswers) {
 	    print <<EOS;
