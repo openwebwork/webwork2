@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -32,9 +32,10 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
+use WeBWorK::Utils::LibraryStats;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -956,6 +957,7 @@ sub make_top_row {
 sub make_data_row {
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $r->{ce};
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
@@ -1023,7 +1025,7 @@ sub make_data_row {
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "&nbsp;";
+	my $inSet = ($self->{isInSet}{$sourceFileName})?" (in target set)" : "&nbsp;";
 	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
@@ -1063,24 +1065,62 @@ sub make_data_row {
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
+	# get statistics to display
+	
+	my $global_problem_stats = '';
+	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
+	    my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
+	    if ($stats->{students_attempted}) {
+		$global_problem_stats =    $self->helpMacro("Global_Usage_Data",$r->maketext('GLOBAL Usage')).': '.
+					   $stats->{students_attempted}.', '.
+                                           $self->helpMacro("Global_Average_Attempts_Data",$r->maketext('Attempts')).': '.
+					   wwRound(2,$stats->{average_attempts}).', '.
+                                           $self->helpMacro("Global_Average_Status_Data",$r->maketext('Status')).': '.
+					   wwRound(0,100*$stats->{average_status}).'%;&nbsp;';
+	    }
+	}
+	
+		
+	my $local_problem_stats = '';
+	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
+	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
+	    if ($stats->{students_attempted}) {
+		$local_problem_stats =     $self->helpMacro("Local_Usage_Data",$r->maketext('LOCAL Usage')).': '.
+					   $stats->{students_attempted}.', '.
+                                           $self->helpMacro("Local_Average_Attempts_Data",$r->maketext('Attempts')).': '.
+					   wwRound(2,$stats->{average_attempts}).', '.
+                                           $self->helpMacro("Local_Average_Status_Data",$r->maketext('Status')).': '.
+					   wwRound(0,100*$stats->{average_status}).'%&nbsp;';
+	    }
+	}
+
+        my $problem_stats = '';
+        if ($global_problem_stats or $local_problem_stats) {
+                $problem_stats = CGI::span({class=>"lb-problem-stats"},
+                                    $global_problem_stats . $local_problem_stats );
+        }
+
+
 	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
-		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
-		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
+		CGI::div({-class=>"lb-problem-header"},
+		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
 		      -value=>"Add",
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
-			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
-				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
-			CGI::span({-style=>"float:right ; text-align: right"}, 
+			"\n",CGI::span({-class=>"lb-problem-path"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
+			 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
+			CGI::span({-class=>"lb-problem-icons"}, 
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
 				-title=>"Hide this problem",
 				-style=>"cursor: pointer",
-				-onClick=>"return delrow($cnt)"}, "X"),
-			)), 
+				   -onClick=>"return delrow($cnt)"}, "X")),
+                         $problem_stats,
+
+			  ), 
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
@@ -1408,8 +1448,10 @@ sub pre_header_initialize {
 			$r->param('local_sets',$newSetName);  ## use of two parameter param
 			debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
-			if (defined($newSetRecord)) {
-	            $self->addbadmessage("The set name $newSetName is already in use.  
+			if (! $newSetName) {
+			    $self->addbadmessage("You did not specify a new set name.  ");
+			} elsif (defined($newSetRecord)) {
+			    $self->addbadmessage("The set name $newSetName is already in use.  
 	            Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
 				# DBFIXME use $db->newGlobalSet
@@ -1436,6 +1478,7 @@ sub pre_header_initialize {
 				
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
+				$newSetRecord->assignment_type('default');
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
@@ -1538,6 +1581,15 @@ sub pre_header_initialize {
 			$total_probs++;
 		}
 	}
+
+
+        my $library_stats_handler = '';
+	
+	if ($ce->{problemLibrary}{showLibraryGlobalStats} ||
+	   $ce->{problemLibrary}{showLibraryLocalStats} ) {
+	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
+	}
+
 	############# Now store data in self for retreival by body
 	$self->{first_shown} = $first_shown;
 	$self->{last_shown} = $last_shown;
@@ -1549,6 +1601,7 @@ sub pre_header_initialize {
 	$self->{pg_files} = \@pg_files;
 	$self->{all_db_sets} = \@all_db_sets;
 	$self->{library_basic} = $library_basic;
+	$self->{library_stats_handler} = $library_stats_handler; 
 }
 
 

@@ -91,18 +91,18 @@
     </ol>
     </div>
   </div> <!-- div.help-pane -->
-  <div class="form-inline">  
-    <div class="col-md-4">
-      <label for="files">Select file:</label><input class="btn" type="file" id="files" name="files" />
-    </div>
-    <div class="col-md-4">
-        <div class="checkbox">
-            <label>Use First Row for Headers<input type="checkbox" id="useFirst"></input></label>
-      </div>
-    </div>
-  </div>        
-        
-  <div id="studentTable"></div></p>
+  <table>
+    <tbody>
+      <tr><td class="header">Select File:</td><td><input class="btn" type="file" id="files" name="files"></td>
+      <td><label><input type="checkbox" id="useFirst">Use First Row for Headers</label></td></tr>
+      <tr><td><label><input type="checkbox" id="create-email">Create Email from Login Name</label></td>
+        <td><input type="text" id="email-suffix"></td>
+        <td><label><input type="checkbox" id="create-username">Create Login Name from Email</label></td></tr>
+    
+      </tbody>
+  </table>
+  <div id="studentTable"></div>
+  </div>
 </script>
 
 <script type="text/template" id="imported-from-file-table">

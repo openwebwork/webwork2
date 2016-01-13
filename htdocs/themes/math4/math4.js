@@ -62,7 +62,7 @@ $(function(){
 
     // Fix bug with skip to main content link in chrome
     $('#stmc-link').click(function() {
-	$('#content').attr('tabIndex', -1).focus();
+	$('#page-title').attr('tabIndex', -1).focus();
     });
 
     // Turn submit inputs into buttons
@@ -88,7 +88,7 @@ $(function(){
     });
     $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
 	event.preventDefault();
-    }).html('<i class="icon-question-sign"/>');
+    }).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');    
@@ -118,7 +118,8 @@ $(function(){
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
     $('.answerComments').addClass('well');
-
+    $('#SMA_button').addClass('btn btn-primary');
+    
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
 	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
 	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
