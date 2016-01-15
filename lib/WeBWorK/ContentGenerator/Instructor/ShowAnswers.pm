@@ -46,6 +46,9 @@ sub initialize {
 	my $setNameRegExp       = $r->param('setID') || '*';     # these are passed in the search args in this case
 	my $problemNumberRegExp = $r->param('problemID') || '*'; # blank entries count as *'s 
 
+
+	$self->{setNameRegExp} = $setNameRegExp;
+	$self->{problemNumberRegExp} = $problemNumberRegExp;
 	
 	unless ($authz->hasPermissions($user, "view_answers")) {
 		$self->addbadmessage("You aren't authorized to view past answers");
@@ -76,13 +79,12 @@ sub initialize {
 	    $studentUserRegExp = $user;
 	}
 
+	$self->{studentUserRegExp} = $studentUserRegExp;
+	
 	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide
 			    a student ID, a set ID, and a problem number.'))
 	    unless defined($studentUserRegExp)  && defined($setNameRegExp) 
 	    && defined($problemNumberRegExp);
-
-	# a flag to indicate if there were any matches
-	my $foundMatches = 0;
 
 	#our student name, set name and problem name might actually have wildcards
 	# so go through all of the possible things and trying to figure out which 
@@ -188,9 +190,7 @@ sub initialize {
 		
 		foreach my $problemNumber (@problemNumbers) {
 
-		    $foundMatches = 1 unless $foundMatches;
-		    
-		    my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
+		  my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
 		    
 		    
 		    # changed this to use the db for the past answers.  
@@ -242,15 +242,8 @@ sub initialize {
 			my @scores = split(//, $scores);
 			my @answers = split(/\t/,$answers);
 			
-			my $num_ans = $#answers;
 			
-			$records{$studentUser}{$setName}{$problemNumber} = 
-			{ time => $time,
-			  answers => @answers;
-			  answerTypes => @answerTypes;
-			  scores => @scores;
-			  comment => $pastAnswer->comment_string // '';
-			};
+			$records{$studentUser}{$setName}{$problemNumber}{$answerID} =  { time => $time, answers => @answers, answerTypes => @answerTypes, scores => @scores, comment => $pastAnswer->comment_string // '' };
 			
 		    }
 		    
@@ -258,10 +251,10 @@ sub initialize {
 	    }
 	}
 
-	my $self->{records} = \%records;
+	$self->{records} = \%records;
 
 	# Prepare a csv if we are an instructor
-	if ($instructor && $r->param('createCSV') {
+	if ($instructor && $r->param('createCSV')) {
 	    my $filename = 'past_answers';
 	    my $scoringDir = $ce->{courseDirs}->{scoring};
 	    if (-e "${scoringDir}/${filename}.csv") {
@@ -290,17 +283,20 @@ sub initialize {
 
 	    foreach my $studentID (sort keys %records) {
 		$columns[0] = $studentID;
-		foreach my $setID (sort keys %records{$studentID}) {
+		foreach my $setID (sort keys %{$records{$studentID}}) {
 		    $columns[1] = $setID;
-		    foreach my $probNum (sort keys $records{$studentID}{$setID}) {
-			my $record = \$records{$studentID}{$setID}{$probNum};
-			$columns[2] = $probNum;
+		    foreach my $probNum (sort keys %{$records{$studentID}{$setID}}) {
+		      $columns[2] = $probNum;
+		      foreach my $answerID (sort keys %{$records{$studentID}{$setID}{$probNum}}) {
+			my $record = %{$records{$studentID}{$setID}{$probNum}{$answerID}};
+		      
 			$columns[3] = $record->{time};
 			$columns[4] = join(';' ,$record->{scores});
 			$columns[5] = join(';' ,$record->{answers});
 			$columns[6] = join(';' ,$record->{comment});
-
+			
 			$csv->print($fh,\@columns);
+		      }
 		    }
 		}
 	    }
@@ -359,11 +355,11 @@ sub body {
 	    $self->hidden_authen_fields;
 	    print CGI::submit(-name => 'action', -value=>$r->maketext('Past Answers for'))," &nbsp; ",
 	    " &nbsp;".CGI::label($r->maketext('User:')." &nbsp;",
-	    CGI::textfield(-name => 'studentUser', -value => $studentUserRegExp, -size =>10 )),
+	    CGI::textfield(-name => 'studentUser', -value => $self->{studentUserRegExp}, -size =>10 )),
 	    " &nbsp;".CGI::label($r->maketext('Set:')." &nbsp;",
-	    CGI::textfield( -name => 'setID', -value => $setNameRegExp, -size =>10  )), 
+	    CGI::textfield( -name => 'setID', -value => $self->{setNameRegExp}, -size =>10  )), 
 	    " &nbsp;".CGI::label($r->maketext('Problem:')."&nbsp;",
-	    CGI::textfield(-name => 'problemID', -value => $problemNumberRegExp,-size =>10  )),  
+	    CGI::textfield(-name => 'problemID', -value => $self->{problemNumberRegExp}, -size =>10  )),  
 	    CGI::br(),
 	    " &nbsp;".CGI::label($r->maketext('Create CSV:')."&nbsp;",
 				 CGI::checkbox(-name => 'createCSV', -value => $r->param('Create CSV')//0 ));
@@ -386,7 +382,7 @@ sub body {
 	    
 	    print CGI::span($r->maketext('Download:'),
 			    CGI::a({href=>$self->systemLink($scoringDownloadPage,
-							    params=>{getFile => $filename } )}, $filename);
+							    params=>{getFile => $filename } )}, $filename));
 			    
 		}
 	    
@@ -394,99 +390,95 @@ sub body {
 	#####################################################################
 	# print result table of answers
 	#####################################################################
+
+	my $records = $self->{records};
 	
 	print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
 
-	my $prettyProblemNumber = $problemNumber;
+	my $foundMatches = 0;
 	
-	if ($isJitarSet) {
-	    $prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
-	}
+	foreach my $studentUser (sort keys %{$records}) {
+	  foreach my $setName (sort keys %{$records->{$studentUser}}) {
+	    foreach my $problemNumber (sort keys %{$records->{$studentUser}{$setName}}) {
+
+	      my @pastAnswerIDs = sort keys %{$records->{$studentUser}{$setName}{$problemNumber}};
+	      print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $problemNumber));
+	      print $r->maketext("No entries for [_1], set [_2], problem [_3]", $studentUser, $setName, $problemNumber) unless @pastAnswerIDs;
 	
-	print CGI::h3($r->maketext("Past Answers for [_1], set [_2], problem [_3]" ,$studentUser, $setName, $prettyProblemNumber));
-	print $r->maketext("No entries for [_1], set [_2], problem [_3]", $studentUser, $setName, $prettyProblemNumber) unless @pastAnswerIDs;
-	
-	
-	
-	my @row;
-	my $rowOptions = {};
+	      my @row;
+	      my $rowOptions = {};
 
-
-		    # check to see what type the answers are.  right now it only checks for essay but could do more
-		    my %answerHash = %{ $pg->{answers} };
-		    my @answerTypes;
-
-		    foreach (sortByName(undef, keys %answerHash)) {
-			push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
-		    }
-		    
-		    my $previousTime = -1;
-		    
-		    foreach my $answerID (@pastAnswerIDs) {
-			my $pastAnswer = $db->getPastAnswer($answerID);
-			my $answers = $pastAnswer->answer_string;
-			my $scores = $pastAnswer->scores;
-			my $time = $self->formatDateTime($pastAnswer->timestamp);
-
-			if ($previousTime < 0) {
-			    $previousTime = $pastAnswer->timestamp;
-			}
-
-			my @scores = split(//, $scores);
-			my @answers = split(/\t/,$answers);
+	      my $previousTime = -1;
+	      
+	      foreach my $answerID (@pastAnswerIDs) {
+		$foundMatches = 1 unless $foundMatches;
+		
+		my %record = $records->{$studentUser}{$setName}{$problemNumber}{$answerID};
+		my @answers = $record{answers};
+		my @scores = $record{scores};
+		my @answerTypes = $record{answerTypes};
+		my $time = $self->formatDateTime($record{time});
+		
+		if ($previousTime < 0) {
+		  $previousTime = $record{time};
+		}
+		
 			
-			my $num_ans = $#answers;
+		my $num_ans = $#answers;
 			
-			if ($pastAnswer->timestamp - $previousTime > $ce->{sessionKeyTimeout}) {
-			    $rowOptions->{'class'} = 'table-rule';
-			}
-
-			@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
-
-			
-			for (my $i = 0; $i <= $num_ans; $i++) {
-			    my $td;
-			    my $answer = $answers[$i];
-			    my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
-			    my $score = shift(@scores); 
-			    #Only color answer if its an instructor
-			    if ($instructor) {
-				$td->{style} = $score? "color:#006600": "color:#660000";
-			    } 
-			    delete($td->{style}) unless $answer ne "" && defined($score) && $answerType ne 'essay';
-			    
-			    my $answerstring;
-			    if ($answer eq '') {		    
-				$answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
-			      } elsif (!$renderAnswers) {
-				$answerstring = PGcore::encode_pg_and_html($answer);
-			      } elsif ($answerType eq 'essay') {
-				$answerstring = PGcore::encode_pg_and_html($answer);
-				$td->{class} = 'essay';
-			    } else {
-			      $answerstring = PGcore::encode_pg_and_html($answer);
-			    }
-			    
-			    push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
-			}
-			
-			if ($pastAnswer->comment_string) {
-			    push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".PGcore::encode_pg_and_html($pastAnswer->comment_string)));
-			}
-			
-			print CGI::Tr($rowOptions,@row);
-			
-			$previousTime = $pastAnswer->timestamp;
-			
-		    }
-		    
-		    print CGI::end_table();
+		if ($record{time} - $previousTime > $ce->{sessionKeyTimeout}) {
+		  $rowOptions->{'class'} = 'table-rule';
 		}
 
+		@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
+
+		
+		for (my $i = 0; $i <= $num_ans; $i++) {
+		  my $td;
+		  my $answer = $answers[$i];
+		  my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
+		  my $score = shift(@scores); 
+		  #Only color answer if its an instructor
+		  if ($instructor) {
+		    $td->{style} = $score? "color:#006600": "color:#660000";
+		  } 
+		  delete($td->{style}) unless $answer ne "" && defined($score) && $answerType ne 'essay';
+		  
+		  my $answerstring;
+		  if ($answer eq '') {		    
+		    $answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
+		  } elsif (!$renderAnswers) {
+		    $answerstring = PGcore::encode_pg_and_html($answer);
+		  } elsif ($answerType eq 'essay') {
+		    $answerstring = PGcore::encode_pg_and_html($answer);
+		    $td->{class} = 'essay';
+		  } else {
+		    $answerstring = PGcore::encode_pg_and_html($answer);
+		  }
+		  
+		  push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
+		}
+		
+		if ($record{comment}) {
+		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".PGcore::encode_pg_and_html($record{comment})));
+		}
+		
+		print CGI::Tr($rowOptions,@row);
+		
+		$previousTime = $record{time};
+		
+	      }
+	    }
+	  }
+	}
+      	      
+	print CGI::end_table();
+	
 
 
+	
 	if ($renderAnswers) {
-	    print <<EOS;
+	  print <<EOS;
 	    <script type="text/javascript">
 		MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
 		    var AM = MathJax.InputJax.AsciiMath.AM;
@@ -506,7 +498,7 @@ EOS
 	print $r->maketext('No problems matched the given parameters.') unless $foundMatches;
 
 	return "";
-}
+      }
 
 sub generateRegExp {
     my $regExp = shift;
