@@ -1045,6 +1045,18 @@ div.problem_set_options {
 }
 /*BUG FIXES*/
 
+.additional-scoring-msg {
+    background-color:#DDDDDD;
+    margin:.75em;
+    padding:.5em;
+}
+
+.grades-course-total, 
+.grades-course-total th {
+    font-weight: bold;
+    font-size:105%;
+}
+
 table#grades_table pre{
 	float: left;
 }

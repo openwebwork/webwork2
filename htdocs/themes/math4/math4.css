@@ -1141,6 +1141,12 @@ table#grades_table pre{
 	float: left;
 }
 
+.grades-course-total, 
+.grades-course-total th {
+    font-weight: bold;
+    font-size:105%;
+}
+
 #config-form input[type="checkbox"] {
     margin-right:1.5ex;
 }

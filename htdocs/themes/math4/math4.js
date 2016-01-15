@@ -151,7 +151,8 @@ $(function(){
     
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
-
+    $('.additional-scoring-msg').addClass('well');
+    
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small');
