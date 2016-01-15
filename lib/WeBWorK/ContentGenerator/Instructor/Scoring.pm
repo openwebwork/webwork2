@@ -449,7 +449,7 @@ sub scoreSet {
 		my $column = 5 + $problem * $columnsPerProblem;
 		if ($scoringItems->{header}) {
 		        my $prettyProblemID = $globalProblem->problem_id;
-		        if ($isJitarSet) {
+		        if ($isJitarSet && $globalProblem->problem_id) {
 			  $prettyProblemID = join('.',jitar_id_to_seq($prettyProblemID));
 			}
 
@@ -476,7 +476,7 @@ sub scoreSet {
 		}
 		# if its a jitar set then we only want to add top level problems to the value total
 		# otherwise we add up everything
-		if ($isJitarSet) {
+		if ($isJitarSet && $globalProblem->problem_id) {
 		    my @seq = jitar_id_to_seq($globalProblem->problem_id);
 		    if ($#seq == 0) {
 			$valueTotal += $globalProblem->value;
@@ -500,14 +500,14 @@ sub scoreSet {
 			my $user_problem_status          = ($userProblem->status =~/^[\d\.]+$/) ? $userProblem->status : 0; # ensure it's numeric
 			# the grade is the adjusted status if its a jitar set 
 			# and this is an actual problem
-			if ($isJitarSet && $userProblem->problem_id) {
+			if ($isJitarSet && $userProblem->value) {
 			    $user_problem_status = jitar_problem_adjusted_status($userProblem, $db);
 			}
 
 			# if its a jitar set then we only want to add top level problems 
 			# to the student total score
 			# otherwise we add up everything
-			if ($isJitarSet) {
+			if ($isJitarSet && $userProblem->problem_id) {
 			    my @seq = jitar_id_to_seq($userProblem->problem_id);
 			    if ($#seq == 0) {
 				$userStatusTotals{$user} += $user_problem_status * $userProblem->value;	
