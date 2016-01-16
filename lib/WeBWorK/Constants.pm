@@ -47,6 +47,7 @@ $WeBWorK::Debug::Logfile = $WeBWorK::Constants::WEBWORK_DIRECTORY . "/logs/debug
 #     $WeBWorK::Debug::DenySubroutineOutput = qr/^WeBWorK::dispatch$/;
 #
 $WeBWorK::Debug::DenySubroutineOutput = undef;
+#$WeBWorK::Debug::DenySubroutineOutput = qr/^WeBWorK::dispatch$/;
 
 # If defined, allow only subroutines matching the following regular expression
 # to log.

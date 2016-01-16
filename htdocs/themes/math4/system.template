@@ -24,7 +24,7 @@
 ################################################################################
 -->
 
-<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<link rel="icon" type="x-image/icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>

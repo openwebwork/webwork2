@@ -1,0 +1,95 @@
+<script type=text/javascript
+   src=http://cdn.mathjax.org/mathjax/latest/MathJax.js>
+</script>
+
+<h4> Entering Partial Derivatives</h4>
+<br>
+ 
+<table style=width:100%>
+  <tr>
+    <td>Partial Derivative</td>
+    <td>Enter into WeBWork</td>
+  </tr>
+  <tr>
+    <td>\(\frac{\partial u}{\partial x}\)</td>
+    <td> ux</td>
+  </tr>
+  <tr>
+    <td>\(\frac{\partial u}{\partial t}\)</td>
+    <td>ut</td>
+  </tr>
+  <tr>
+    <td>\(\frac{\partial u}{\partial y}\)</td>
+    <td>uy</td>
+  </tr>
+  <tr>
+    <td>\(\frac{\partial^2 u}{\partial x^2}\)</td>
+    <td>uxx</td>
+  </tr>
+  <tr>
+    <td>\(\frac{\partial^2 u}{\partial t^2}\)</td>
+    <td>utt</td>
+  </tr>
+  <tr>
+    <td>\(\frac{\partial^2 u}{\partial y^2}\)</td>
+    <td>uyy</tdd>
+  </tr>
+</table
+<br>
+<br>
+To answer questions that require you to input a PDE you will also need to know the form
+of the PDE WeBWorK is expecting. In particular you will need to use the same letters
+for constants that WeBWorK is expecting. Below is a table of the PDE's 
+you may encounter.
+<br>
+<h4> Models </h4>
+<br>
+<table>
+  <tr>
+     <td>Model</td>
+     <td>PDE</td>
+  </tr>
+     <td>heat equation</td>
+     <td>\(k \frac{\partial^2 u}{\partial x^2} = \frac{\partial u}{\partial t}\)</td>
+  </tr>
+  <tr>
+     <td>heat equation with lateral heat transfer - \(u_m\) is the temperature of the surrounding medium and will be given, h is the constant from Newton's $
+     <td>\(k \frac{\partial^2 u}{\partial x^2}-h (u-um) = \frac{\partial u}{\partial t}\)</td>
+  </tr>
+  <tr>
+     <td>wave equation</td>
+     <td>\(a^2 \frac{\partial^2 u}{\partial x^2} = \frac{\partial^2 u}{\partial t^2}\))</td>
+  </tr>
+  <tr>
+     <td>wave equation with damping</td>
+     <td>\(a^2 \frac{\partial^2 u}{\partial x^2} = \frac{\partial^2 u}{\partial t^2}+c \frac{\partial u}{\partial t}\)</td>
+  </tr>
+  <tr>
+     <td>wave equation with an external force (f(x,t) will specified in the problem</td>
+     <td>\(a^2 \frac{\partial^2 u}{\partial x^2} + f(x,t) = \frac{\partial^2 u}{\partial t^2}\)</td>
+  </tr>
+  <tr>
+     <td>Laplace's equation</td>
+     <td>\(\frac{\partial^2 u}{\partial x^2}+\frac{\partial^2 u}{\partial y^2} = 0\)</td>
+  </tr>
+</table>
+<br>
+For problems with proportional quantities the constant of proportionality is c.
+<br>
+<br>
+<h4>  Entering Boundary and Initial Conditions </h4>
+<br>
+There are three types of boundary conditions we will consider:
+<br>
+1. Ends held at a constant temperature \(u_0\) (Dirichlet condition): \(u(L,t) = u_0\)
+<br>
+2. Ends insulated (Neumann condition): \(\frac{\partial u}{\partial x}\big\vert_{x=L} = 0\)
+<br>
+3. Heat transfer through the ends into a medium held at constant temperature \(u_m\)
+<br>
+<br>
+
+Suppose that we want to enter the boundary condition \(\frac{\partial u}{\partial x}\big\vert_{x=0}=0\).
+You will be given two answer blanks: the first is to input the partial derivative and the point, ux(0,t),
+and the second will be for the right hand side. In WeBWorK notation the boundary condition would be given as <code>ux(0,t) = 0</code>.
+
