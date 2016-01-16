@@ -338,6 +338,11 @@ ul.courses-list a:hover {
     white-space: normal;
 }
 
+.past-answer-download {
+    font-weight: bold;
+    font-size: 110%;
+}
+
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */
