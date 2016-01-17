@@ -430,7 +430,7 @@ sub displayStudentStats {
 	  $class = 'correct';
 	}
 
-	print CGI::Tr({class=>"grades-course-total"}, CGI::th({scope=>'row'},$r->maketext("Course Totals")),
+	print CGI::Tr({class=>"grades-course-total"}, CGI::th({scope=>'row'},$r->maketext("Homework Totals")),
 		      CGI::td(CGI::span({class=>"$class"},$totalRightPercent.'%')),
 		      CGI::td($courseTotalRight),
 		      CGI::td($courseTotal),
