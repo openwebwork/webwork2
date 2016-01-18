@@ -71,7 +71,7 @@ sub listLocalSetProblems{
 
   	debug("Loading problems for " . $setName);
 
-  	my $templateDir = $self->{ce}->{courseDirs}->{templates}."/";
+  	my $templateDir = $self->ce->{courseDirs}->{templates}."/";
 
         # If a command is passed, then we want relative paths rather than
         # absolute paths.  Do that by setting templateDir to the empty
@@ -436,7 +436,7 @@ sub reorderProblems {
 	my $db = $self->db;
 	my $setID = $params->{set_id};
 	my @problemList = split(/,/, $params->{probList});
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 
 
 	# get all the problems
@@ -484,7 +484,7 @@ sub updateProblem{
 	my $db = $self->db;
 	my $setID = $params->{set_id};
 	my $path = $params->{path};
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 	$path =~ s|^$topdir/*||;
 
 	my @problems = $db->getAllGlobalProblems($setID);
@@ -655,7 +655,7 @@ sub addProblem {
 	my $setName = $params->{set_id};
 
 	my $file = $params->{path};
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 	
 	# DBFIXME count would work just as well
@@ -672,15 +672,15 @@ sub addProblem {
 	    $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	}
 
-	my $value_default = $self->{ce}->{problemDefaults}->{value};
-	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
-	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
-	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};	
-	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};	
+	my $value_default = $self->ce->{problemDefaults}->{value};
+	my $max_attempts_default = $self->ce->{problemDefaults}->{max_attempts};	
+	my $showMeAnother_default = $self->ce->{problemDefaults}->{showMeAnother};	
+	my $att_to_open_children_default = $self->ce->{problemDefaults}->{att_to_open_children};	
+	my $counts_parent_grade_default = $self->ce->{problemDefaults}->{counts_parent_grade};	
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
 	
-	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
+	my $prPeriod_default = $self->ce->{problemDefaults}->{prPeriod};
 	
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
@@ -734,7 +734,7 @@ sub deleteProblem {
 	my $setName = $params->{set_id};
 	
 	my $file = $params->{path};
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 	# DBFIXME count would work just as well
 	foreach my $problem ($db->listGlobalProblems($setName)) {
@@ -754,7 +754,7 @@ sub deleteProblem {
 use File::Find;
 sub get_set_defs {
 	my $self = shift;
-	my $topdir = $self->{ce}->{courseDirs}{templates};#shift #sort of hard coded for now;
+	my $topdir = $self->ce->{courseDirs}{templates};#shift #sort of hard coded for now;
 	my @found_set_defs;
 	# get_set_defs_wanted is a closure over @found_set_defs
 	my $get_set_defs_wanted = sub {
