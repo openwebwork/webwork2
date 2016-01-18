@@ -164,7 +164,7 @@ sub scoring_info {
 	$msg =~ s/\n/<br>/g;
 	
 	
- 	$msg = CGI::div({class=>"additional-scoring-msg"}, $msg);
+ 	$msg = CGI::div({class=>"additional-scoring-msg"}, CGI::h3($r->maketext("Scoring Message")), $msg);
 
 	$msg .= CGI::div($r->maketext('This scoring message is generated from ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file)) if ($r->authz->hasPermissions($userID, "access_instructor_tools"));
 	return $msg;
