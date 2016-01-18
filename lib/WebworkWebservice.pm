@@ -116,8 +116,8 @@ sub pretty_print_rh {
 
 	if (defined($type) and $type) {
 		$out .= " type = $type; ";
-	} else {
-		$out .= " type is not undefined; ";
+	} elsif ($rh == undef) {
+		$out .= " type = scalar; ";
 	}
 	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
 	    $out .= "{\n";
@@ -268,7 +268,7 @@ my $authz  = $fake_r->authz;
 	}
 	
 	die "Please use 'course_password' instead of 'password' as the key for submitting
-	passwords to this webservice\n" 
+		passwords to this webservice\n" 
 	  if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
@@ -291,7 +291,6 @@ my $authz  = $fake_r->authz;
 # 		local *WeBWorK::Authen::maybe_kill_cookie = \&WebworkXMLRPC::noop;
 # 		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
 # 		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
-		# warn "authen is $authen ", ref($authen);
 		$authenOK = $authen->verify;
 	} or do {
 		my $e;

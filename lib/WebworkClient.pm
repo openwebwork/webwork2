@@ -117,6 +117,7 @@ use WeBWorK::PG::ImageGenerator;
 use HTML::Entities;
 use WeBWorK::Localize;
 use HTML::Entities;
+use WeBWorK::PG::ImageGenerator;
 use IO::Socket::SSL;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
@@ -287,7 +288,7 @@ sub xmlrpcCall {
  		
 	  local( $result);
 	  # use eval to catch errors
-	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %{$self->request_object}),"\n";
+	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
 	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
@@ -609,10 +610,10 @@ sub formatRenderedProblem {
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}
-	my $problemHeadText   = $rh_result->{header_text}//'';
+	my $problemHeadText = $rh_result->{header_text}//'';
 	my $rh_answers        = $rh_result->{answers}//{};
 	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
-	my $encoded_source    = $self->encoded_source//'';
+	my $encoded_source     = $self->encoded_source//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
 	
@@ -741,7 +742,9 @@ sub formatRenderedProblem {
 	return $template;
 }
 
+=back
 
+=cut
 ######################################################
 # Utilities
 ######################################################
@@ -772,9 +775,8 @@ sub writeRenderLogEntry($$$) {
 
 =item pretty_print_self
 
-=back
-
 =cut
+
 
 sub pretty_print {    # provides html output -- NOT a method
     my $r_input = shift;
@@ -813,5 +815,7 @@ sub pretty_print {    # provides html output -- NOT a method
 	return $out." ";
 }
 
+=back
 
+=cut
 1;

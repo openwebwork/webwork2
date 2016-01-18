@@ -1704,7 +1704,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1735,7 +1735,8 @@ sub importSetsFromDef {
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
-		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
+		$newSetRecord->reduced_scoring_date($reducedScoringDate);
+		$newSetRecord->enable_reduced_scoring($enableReducedScoring);
 		$newSetRecord->description($description);
 		$newSetRecord->email_instructor($emailInstructor);
 		$newSetRecord->restrict_prob_progression($restrictProbProgression);
@@ -1846,8 +1847,8 @@ sub readSetDef {
 	
 	my $r = $self->r;
 
-	if ($fileName =~ m|^.*set([.\w-]+)\.def$|) {
-		$setName = $1;
+	if ($fileName =~ m|^(.*/)?set([.\w-]+)\.def$|) {
+		$setName = $2;
 	} else {
 		$self->addbadmessage( 
 		    qq{The setDefinition file name must begin with   <CODE>set</CODE>},
@@ -1863,11 +1864,11 @@ sub readSetDef {
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
 	my $description = '';
-	my ($dueDate, $openDate, $answerDate);
+	my ($dueDate, $openDate, $reducedScoringDate, $answerDate);
 	my @problemData;	
 
 # added fields for gateway test/versioned set definitions:
-	my ( $assignmentType, $attemptsPerVersion, $timeInterval, 
+	my ( $assignmentType, $attemptsPerVersion, $timeInterval, $enableReducedScoring, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
 	     $problemsPerPage, $restrictLoc, 
 	     $emailInstructor, $restrictProbProgression, 
@@ -1911,7 +1912,11 @@ sub readSetDef {
 			} elsif ($item eq 'openDate') {
 				$openDate = $value;
 			} elsif ($item eq 'answerDate') {
-				$answerDate = $value;
+			        $answerDate = $value;
+			} elsif ($item eq 'enableReducedScoring') {
+			        $enableReducedScoring = $value;
+			} elsif ($item eq 'reducedScoringDate') {
+				$reducedScoringDate = $value;
 			} elsif ($item eq 'assignmentType') {
 				$assignmentType = $value;
 			} elsif ($item eq 'attemptsPerVersion') {
@@ -1963,6 +1968,26 @@ sub readSetDef {
 			warn $r->maketext("The open date: [_1], due date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
 		}
 
+		# validate reduced credit date
+		$reducedScoringDate = $self->parseDateTime($reducedScoringDate) if ($reducedScoringDate);
+
+		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
+		    warn $r->maketext("The reduced credit date should be between the open date [_1] and due date [_2]", $openDate, $dueDate);
+		} elsif (!$reducedScoringDate) {
+		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
+		}
+
+		if ($enableReducedScoring ne '' && $enableReducedScoring eq 'Y') {
+		    $enableReducedScoring = 1;
+		} elsif ($enableReducedScoring ne '' && $enableReducedScoring eq 'N') {
+		    $enableReducedScoring = 0;
+		} elsif ($enableReducedScoring ne '') {
+		    warn($r->maketext("The value [_1] for enableReducedScoring is not valid; it willb e replaced with 'N'.",$enableReducedScoring)."\n");
+		    $enableReducedScoring = 0;
+		} else {
+		    $enableReducedScoring = DEFAULT_ENABLED_REDUCED_SCORING_STATE;
+		}
+	       
 		# Check header file names
 		$paperHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
 		$screenHeaderFile =~ s/(.*?)\s*$/$1/;   #remove trailing white space
@@ -2158,6 +2183,14 @@ sub readSetDef {
 						countsParentGrade => $countsParentGrade,
 				 });
 			    
+			    # reset the various values
+			    $name = '';
+			    $problemID = '';
+			    $weight = '';
+			    $attemptLimit = '';
+			    $showMeAnother = '';
+			    $attToOpenChildren = '';
+			    $countsParentGrade = '';
 			    
 			} else {
 			    warn $r->maketext("readSetDef error, can't read the line: ||[_1]||", $line);
@@ -2175,7 +2208,10 @@ sub readSetDef {
 		 $time2,
 		 $time3,
 		 \@problemData,
-		 $assignmentType, $attemptsPerVersion, $timeInterval, 
+		 $assignmentType,
+		 $enableReducedScoring,
+		 $reducedScoringDate,
+		 $attemptsPerVersion, $timeInterval, 
 		 $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
 		 $problemsPerPage, 
 		 $hideScore,
@@ -2231,12 +2267,14 @@ SET:	foreach my $set (keys %filenames) {
 		my $openDate     = $self->formatDateTime($setRecord->open_date);
 		my $dueDate      = $self->formatDateTime($setRecord->due_date);
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
+		my $reducedScoringDate =  $self->formatDateTime($setRecord->reduced_scoring_date);
 		my $description = $setRecord->description;
 		if ($description) {
 		    $description =~ s/\r?\n/<n>/g;
 		}
 
 		my $assignmentType = $setRecord->assignment_type;
+		my $enableReducedScoring = $setRecord->enable_reduced_scoring ? 'Y' : 'N';
 		my $setHeader    = $setRecord->set_header;
 		my $paperHeader  = $setRecord->hardcopy_header;
 		my $emailInstructor = $setRecord->email_instructor;
@@ -2278,12 +2316,12 @@ SET:	foreach my $set (keys %filenames) {
 			# the labelled list makes it easier to add variables and 
 			# easier to tell when they are missing
 			$problemList     .= "problem_start\n";
+			$problemList     .= "problem_id = $problem_id\n";
 			$problemList     .= "source_file = $source_file\n";
 			$problemList     .= "value = $value\n";
 			$problemList     .= "max_attempts = $max_attempts\n";
 			$problemList     .= "showMeAnother = $showMeAnother\n";
 			$problemList     .= "prPeriod = $prPeriod\n";
-			$problemList     .= "problem_id = $problem_id\n";
 			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
 			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
 			$problemList     .= "problem_end\n"
@@ -2333,8 +2371,10 @@ EOG
 		my $fileContents = <<EOF;
 assignmentType      = $assignmentType
 openDate          = $openDate
+reducedScoringDate = $reducedScoringDate
 dueDate           = $dueDate
 answerDate        = $answerDate
+enableReducedScoring = $enableReducedScoring
 paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields
 description       = $description

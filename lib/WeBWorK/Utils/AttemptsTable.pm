@@ -144,6 +144,7 @@ use warnings;
 package WeBWorK::Utils::AttemptsTable;
 use Class::Accessor 'antlers';
 use Scalar::Util 'blessed';
+use WeBWorK::Utils 'wwRound';
 use CGI;
 
 # has answers     => (is => 'ro');
@@ -245,12 +246,13 @@ sub formatAnswerRow {
 	my $rh_answer     = shift;
 	my $ans_id        = shift;
 	my $answerNumber  = shift;
-	my $answerString         = $rh_answer->{original_student_ans}||'&nbsp;';
-	my $answerPreview        = $self->previewAnswer($rh_answer)||'&nbsp;';
+	my $answerString         = $rh_answer->{student_ans}//''; 
+	# use student_ans and not original_student_ans above.  student_ans has had HTML entities translated to prevent XSS.
+	my $answerPreview        = $self->previewAnswer($rh_answer)//'&nbsp;';
 	my $correctAnswer        = $rh_answer->{correct_ans}//'';
-	my $correctAnswerPreview = $self->previewCorrectAnswer($rh_answer)||'&nbsp;';
+	my $correctAnswerPreview = $self->previewCorrectAnswer($rh_answer)//'&nbsp;';
 	
-	my $answerMessage   = $rh_answer->{ans_message}||'';
+	my $answerMessage   = $rh_answer->{ans_message}//'';
 	$answerMessage =~ s/\n/<BR>/g;
 	my $answerScore      = $rh_answer->{score}//0;
 	$self->{numCorrect}  += $answerScore >=1;
@@ -274,7 +276,7 @@ sub formatAnswerRow {
 		$resultStringClass = "ResultsWithError";
 		$resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $self->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
 	} else {
-		$resultString =  $self->maketext("[_1]% correct", int($answerScore*100));
+		$resultString =  $self->maketext("[_1]% correct", wwRound(0, $answerScore*100));
 		#push @incorrect_ids, $ans_id if $answerScore < 1;
 	}
 	my $attemptResults = CGI::td({class=>$resultStringClass},
@@ -285,9 +287,7 @@ sub formatAnswerRow {
 			  ($self->showAnswerNumbers) ? CGI::td({},$answerNumber):'',
 			  ($self->showAttemptAnswers) ? CGI::td({},$self->nbsp($answerString)):'' ,   # student original answer
 			  ($self->showAttemptPreviews)?  $self->formatToolTip($answerString, $answerPreview):"" ,
-			  ($self->showAttemptResults)?   CGI::td({class=>$resultStringClass},
-	               				CGI::a({href=>"javascript:document.getElementById(\"$ans_id\").focus()"},
-	               						$self->nbsp($resultString))) :'' ,
+			  ($self->showAttemptResults)?   $attemptResults : '' ,
 			  ($self->showCorrectAnswers)?  $self->formatToolTip($correctAnswer,$correctAnswerPreview):"" ,
 			  ($self->showMessages)?        CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)):"",
 			  "\n"
