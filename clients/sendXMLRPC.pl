@@ -2,7 +2,8 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/clients/renderProblem.pl,v 1.4 2010/05/11 15:44:05 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,14 +21,6 @@
 webwork2/clients/sendXMLRPC.pl
 
 =head1 DESCRIPTION
-
-
-This module provides functions for rendering html from files outside the normal
-context of providing a webwork homework set user  an existing problem set.
-
-It can be used to create a live version of a single problem, one that is not
-part of any set, and can facilitate editing these problems outside of the 
-context of WeBWorK2. 
 
 This script will take a list of files or directories
 and send it to a WeBWorK daemon webservice
@@ -204,18 +197,14 @@ BEGIN {
 
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
-use Carp;
 use Crypt::SSLeay;  # needed for https
+use WebworkClient;
 use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
 use File::Find;
 use FileHandle;
 use Cwd 'abs_path';
-use WebworkClient;
-use FormatRenderedProblem;
-use 5.10.0;
-$Carp::Verbose = 1;
 
 #############################################
 # Configure displays for local operating system
@@ -225,7 +214,7 @@ $Carp::Verbose = 1;
  our $UNIT_TESTS_ON             = 0;
   
  ### Command line for displaying the temporary file in a browser.
-#use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile 
+ #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile 
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
 use constant  HASH_DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
 
@@ -240,15 +229,12 @@ use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/bad_problems.txt";
 die "You must first create an output file at ".LOG_FILE().
      " with permissions 777 " unless -w LOG_FILE();
 
-### Command for editing the pg source file in the browswer
-use constant EDIT_COMMAND =>"bbedit";   # for Mac BBedit editor (used as `EDIT_COMMAND() . " $file_path")
-
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
 use constant PROBLEMSEED   => '987654321'; 
 
 ############################################################
-# End configure displays for local operating system
+# End configure
 ############################################################
  
 ############################################################
@@ -294,10 +280,6 @@ GetOptions(
 
 
 print_help_message() if $print_help_message;
-
-############################################################
-# End Read command line options
-############################################################
 
 ####################################################
 # get credentials
@@ -364,9 +346,9 @@ our $DISPLAYMODE          = $credentials{WWdisplayMode}//DISPLAYMODE();
 #  END gathering credentials for client
 ##################################################
 
-##################################################
-#  set default inputs for the problem
-##################################################
+############################################
+# Build  client defaults
+############################################
  
 my $default_input = { 
 		userID      			=> $credentials{userID}//'',
@@ -378,8 +360,7 @@ my $default_input = {
 
 my $default_form_data = { 
 		displayMode				=> $DISPLAYMODE,
-		outputformat 			=> $format//'sticky',
-		problemSeed             => PROBLEMSEED(),
+		outputformat 			=> $format,
 };
 
 ##################################################
@@ -389,7 +370,6 @@ my $default_form_data = {
 ##################################################
 #  MAIN SECTION gather and process problem template files
 ##################################################
-my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
 
 our @files_and_directories = @ARGV;
 # print "files ", join("|", @files_and_directories), "\n";
@@ -440,14 +420,10 @@ sub wanted {
 }
 
 
-
-##########################################################
-#  Subroutines
-##########################################################
-
 #######################################################################
 # Process the pg file
 #######################################################################
+
 sub process_pg_file {
 	my $file_path = shift;
 	my $NO_ERRORS = "";
@@ -456,15 +432,15 @@ sub process_pg_file {
 	my $form_data1 = { %$default_form_data,
 					  problemSeed => $problemSeed1};
 
-	my ($error_flag, $formatter, $error_string) = 
+	my ($error_flag, $xmlrpc_client, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
 	# extract and display result
 		#print "display $file_path\n";
 		edit_source_file($file_path) if $edit_source_file;
-		display_html_output($file_path, $formatter) if $display_html_output1;
-		display_hash_output($file_path, $formatter) if $display_hash_output1;
-		display_ans_output($file_path, $formatter) if $display_ans_output1;
-		$NO_ERRORS = record_problem_ok1($error_flag, $formatter, $file_path) if $record_ok1;      
+		display_html_output($file_path, $xmlrpc_client->formatRenderedProblem) if $display_html_output1;
+		display_hash_output($file_path, $xmlrpc_client->return_object) if $display_hash_output1;
+		display_ans_output($file_path, $xmlrpc_client->return_object) if $display_ans_output1;
+		$NO_ERRORS = record_problem_ok1($error_flag, $xmlrpc_client, $file_path) if $record_ok1;      
 		
 		unless ($display_html_output2 or $display_hash_output2 or $display_ans_output2 or $record_ok2) {
 			print "DONE -- $NO_ERRORS -- \n"if $verbose;
@@ -476,13 +452,12 @@ sub process_pg_file {
 
 	my %correct_answers = (); 
 	my $some_correct_answers_not_specified = 0;
-	foreach my $ans_id (keys %{$formatter->return_object->{answers}} ) {
-		my $ans_obj = $formatter->return_object->{answers}->{$ans_id};
-		# the answergrps are in PG_ANSWERS_HASH
-		my $answergroup = $formatter->return_object->{PG_ANSWERS_HASH}->{$ans_id};
+	foreach my $ans_id (keys %{$xmlrpc_client->return_object->{answers}} ) {
+		my $ans_obj = $xmlrpc_client->return_object->{answers}->{$ans_id};
+		my $answergroup = $xmlrpc_client->return_object->{PG_ANSWERS_HASH}->{$ans_id};
 		my @response_order = @{$answergroup->{response}->{response_order}};
 		#print scalar(@response_order), " first response $response_order[0] $ans_id\n";
-		$ans_obj->{type} = $ans_obj->{type}//'';  #make sure it's defined.
+		$ans_obj->{type} = $ans_obj->{type}//'';
 		if ($ans_obj->{type} eq 'MultiAnswer') { 
 		    # singleResponse multianswer type
 		    # an outrageous hack
@@ -545,17 +520,13 @@ sub process_pg_file {
 				   WWcorrectAns          => 1, # show correct answers
 				   %correct_answers
 				};
-	($error_flag, $formatter, $error_string)=();
-	my $pg_start = time; # this is Time::HiRes's time, which gives floating point values
-	($error_flag, $formatter, $error_string) = 
+	($error_flag, $xmlrpc_client, $error_string)=();
+	($error_flag, $xmlrpc_client, $error_string) = 
 			process_problem($file_path, $default_input, $form_data2);
-	my $pg_stop = time;
-	my $pg_duration = $pg_stop-$pg_start;
-
-	display_html_output($file_path, $formatter) if $display_html_output2;
-	display_hash_output($file_path, $formatter) if $display_hash_output2;
-	display_ans_output($file_path, $formatter) if $display_ans_output2;
-	$ALL_CORRECT = record_problem_ok2($error_flag, $formatter, $file_path, $some_correct_answers_not_specified, $pg_duration) if $record_ok2;      
+	display_html_output($file_path, $xmlrpc_client->formatRenderedProblem) if $display_html_output2;
+	display_hash_output($file_path, $xmlrpc_client->return_object) if $display_hash_output2;
+	display_ans_output($file_path, $xmlrpc_client->return_object) if $display_ans_output2;
+	$ALL_CORRECT = record_problem_ok2($error_flag, $xmlrpc_client, $file_path, $some_correct_answers_not_specified) if $record_ok2;      
 	display_inputs(%correct_answers) if $verbose;  # choice of correct answers submitted 
 	# should this information on what answers are being submitted have an option switch?
 
@@ -567,186 +538,22 @@ sub process_pg_file {
 #######################################################################
 
 
-
-sub process_problem {
-	my $file_path = shift;
-	my $input    = shift;
-	my $form_data  = shift;
-	# %credentials is global
-	my $problemSeed = $form_data->{problemSeed};
-	my $displayMode = $form_data->{displayMode};
-	my $inputs_ref = {%$input, %$form_data};
-	
-	### get source and correct file_path name so that it is relative to templates directory
-	my ($adj_file_path, $source) = get_source($file_path);
-	#print "find file at $adj_file_path ", length($source), "\n";
-	### build client
-	my $xmlrpc_client = new WebworkClient (
-		url                    => $credentials{site_url},
-		form_action_url        => $credentials{form_action_url},
-		site_password          =>  $credentials{site_password}//'',
-		courseID               =>  $credentials{courseID},
-		userID                 =>  $credentials{userID},
-		session_key            =>  $credentials{session_key}//'',
-		sourceFilePath         => $adj_file_path,
-	);
-	
-	### update client
-	$xmlrpc_client->encodeSource($source);
-	$form_data->{showAnsGroupInfo} 		= $print_answer_group;
-	$form_data->{showAnsHashInfo}       = $print_answer_hash;
-	$form_data->{showPGInfo}	        = $print_pg_hash;
-	$xmlrpc_client->form_data( $form_data	);
-	
-	### update inputs
-	my $updated_input = {%$input, 
-					  envir => $xmlrpc_client->environment(
-							   fileName       => $adj_file_path,
-							   sourceFilePath => $adj_file_path,
-							   problemSeed    => $problemSeed,),
-	};
-	
-	##################################################
-	# input section
-	##################################################
-	### store the time before we invoke the content generator
-	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
-
-
-	############################################
-	# Call server via xmlrpc_client
-	############################################
-	our($result, $error_flag, $error_string);
-	$error_flag=0; $error_string='';    
-	$result = $xmlrpc_client->xmlrpcCall('renderProblem', $updated_input);
-	unless ( $xmlrpc_client->fault  )    {
-		print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
-		print pretty_print_rh($result) if $UNIT_TESTS_ON;
-	    if (not defined $result) {  #FIXME make sure this is the right error message if site is unavailable
-	    	$error_string = "0\t Could not connect to rendering site ". $xmlrpc_client->{url}."\n";
-	    } elsif (defined($result->{flags}->{error_flag}) and $result->{flags}->{error_flag} ) {
-			$error_string = "0\t $file_path has errors\n";
-		} elsif (defined($result->{errors}) and $result->{errors} ){
-			$error_string = "0\t $file_path has syntax errors\n";
-		}
-		$error_flag=1 if $result->{errors};
-	} else {
-		$error_flag=1;
-		$error_string = $xmlrpc_client->return_object;  # error report		
-	}	
-
-	##################################################
-	# log elapsed time
-	##################################################
-	my $scriptName = 'sendXMLRPC';
-	my $cg_end = time;
-	my $cg_duration = $cg_end - $cg_start;
-	writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
-
-#   approximate contents of $xmlrpc_client->return_object;	
-# 	my $out2   = {
-# 		text 						=> encode_base64( $pg->{body_text}  ),
-# 		header_text 				=> encode_base64( $pg->{head_text} ),
-# 		answers 					=> $pg->{answers},
-# 		errors         				=> $pg->{errors},
-# 		WARNINGS	   				=> encode_base64( 
-# 		                                 "WARNINGS\n".$warning_messages."\n<br/>More<br/>\n".$pg->{warnings} 
-# 		                               ),
-# 		PG_ANSWERS_HASH             => $pg->{pgcore}->{PG_ANSWERS_HASH},
-# 		problem_result 				=> $pg->{result},
-# 		problem_state				=> $pg->{state},
-# 		flags						=> $pg->{flags},
-# 		warning_messages            => $pgwarning_messages,
-# 		debug_messages              => $pgdebug_messages,
-# 		internal_debug_messages     => $internal_debug_messages,
-# 	};
-# return object keys 
-# 	PG_ANSWERS_HASH WARNINGS answers ---ok
-# 	compute_time courseID debug_messages errors --- ok -- extra: compute_time and courseID extra
-# 	flags header_text internal_debug_messages --- ok
-# 	problem_result problem_state session_key text --- ok -- session_key 
-# 	userID warning_messages
-
-# 	my $return_object = $xmlrpc_client->return_object;	
-# 	warn "return object keys ", join(" ", sort keys %{$return_object}), "\n";
-# 	warn "return PG_ANSWERS_HASH keys ", join(" ", sort keys %{$return_object->{PG_ANSWERS_HASH}}), "\n";
-# 	warn "return answers keys ", join(" ", sort keys %{$return_object->{answers}}), "\n";
-# 	
-	
-	
-	
-	return $error_flag, $xmlrpc_client, $error_string, ;
+sub display_inputs {
+	my %correct_answers = @_;
+	foreach my $key (sort keys %correct_answers) {
+		print "$key => $correct_answers{$key}\n";
+	}
 }
-
-
-sub	display_html_output {  #display the problem in a browser
+sub edit_source_file {
 	my $file_path = shift;
-	my $xmlrpc_client = shift;
-	my $output_text = $xmlrpc_client->formatRenderedProblem;
-	$file_path =~s|/$||;   # remove final /
-	$file_path =~ m|/?([^/]+)$|;
-	my $file_name = $1;
-	$file_name =~ s/\.\w+$/\.html/;    # replace extension with html
-	my $output_file = TEMPOUTPUTDIR().$file_name;
-	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
-	print FH $output_text;
-	close(FH);
-
-	system($HTML_DISPLAY_COMMAND." ".$output_file);
-	sleep 1;   #wait 1 seconds
-	unlink($output_file);
+	system("bbedit $file_path");
 }
-
-sub display_hash_output {   # print the entire hash output to the command line
-	my $file_path = shift;
-	my $xmlrpc_client = shift;
-	my $output_text = $xmlrpc_client->formatRenderedProblem;
-	$file_path =~s|/$||;   # remove final /
-	$file_path =~ m|/?([^/]+)$|;
-	my $file_name = $1;
-	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
-	my $output_file = TEMPOUTPUTDIR().$file_name;
-	my $output_text2 = pretty_print_rh($output_text);
-	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
-	print FH $output_text2;
-	close(FH);
-
-	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
-	#sleep 1; #wait 1 seconds
-	#unlink($output_file);
-}
-
-sub display_ans_output {  # print the collection of answer hashes to the command line
-	my $file_path = shift;
-	my $xmlrpc_client = shift;
-	my $return_object = $xmlrpc_client->return_object;	
-	$file_path =~s|/$||;   # remove final /
-	$file_path =~ m|/?([^/]+)$|;
-	my $file_name = $1;
-	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
-	my $output_file = TEMPOUTPUTDIR().$file_name;
-	my $output_text = pretty_print_rh($return_object->{answers});
-	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
-	print FH $output_text;
-	close(FH);
-
-	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
-	sleep 1; #wait 1 seconds
-	unlink($output_file);
-}
-
-
 sub record_problem_ok1 {
 	my $error_flag = shift//'';
-	my $xmlrpc_client = shift;  # for formatting
+	my $xmlrpc_client = shift;
 	my $file_path = shift;
-	my $return_string = '';
-	my $return_object = $xmlrpc_client->return_object;
-
-	my $result = $return_object;
+	my $return_string = shift;
+	my $result = $xmlrpc_client->return_object;
 	if (defined($result->{flags}->{DEBUG_messages}) ) {
 		my @debug_messages = @{$result->{flags}->{DEBUG_messages}};
 		$return_string .= (pop @debug_messages ) ||'' ; #avoid error if array was empty
@@ -787,66 +594,157 @@ sub record_problem_ok2 {
 	my $xmlrpc_client = shift;
 	my $file_path = shift;
 	my $some_correct_answers_not_specified = shift;
-	my $pg_duration = shift;  #processing time
-	my $return_object = $xmlrpc_client->return_object;
 	my %scores = ();
 	my $ALL_CORRECT= 0;
 	my $all_correct = ($error_flag)?0:1;
-		foreach my $ans (keys %{$return_object->{answers}} ) {
+		foreach my $ans (keys %{$xmlrpc_client->return_object->{answers}} ) {
 			$scores{$ans} = 
-			      $return_object->{answers}->{$ans}->{score};
+			      $xmlrpc_client->return_object->{answers}->{$ans}->{score};
 			$all_correct =$all_correct && $scores{$ans};
 		}
 	$all_correct = "2" if $some_correct_answers_not_specified;
 	$ALL_CORRECT = ($all_correct == 1)?'All answers correct':'Some answers are incorrect';
 	local(*FH);
 	open(FH, '>>',LOG_FILE()) or die "Can't open file ".LOG_FILE()." for writing";
-	print FH "$all_correct Answers for $file_path are all correct = $all_correct; errors: $error_flag sendxmlrpc_time: $pg_duration\n";
+	print FH "$all_correct Answers for $file_path are all correct = $all_correct; errors: $error_flag\n";
 	close(FH);
 	return $ALL_CORRECT;
 }
-
-sub display_inputs {
-	my %correct_answers = @_;
-	foreach my $key (sort keys %correct_answers) {
-		print "$key => $correct_answers{$key}\n";
-	}
-}
-sub edit_source_file {
+sub process_problem {
 	my $file_path = shift;
-	system(EDIT_COMMAND()." $file_path");
+	my $input    = shift;
+	my $form_data  = shift;
+	# %credentials is global
+	my $problemSeed = $form_data->{problemSeed};
+	die "problem seed not defined in sendXMLRPC::process_problem" unless $problemSeed;
+	
+	### get source and correct file_path name so that it is relative to templates directory
+	my ($adj_file_path, $source) = get_source($file_path);
+	#print "find file at $adj_file_path ", length($source), "\n";
+	### build client
+	my $xmlrpc_client = new WebworkClient (
+		url                    => $credentials{site_url},
+		form_action_url        => $credentials{form_action_url},
+		site_password          =>  $credentials{site_password}//'',
+		courseID               =>  $credentials{courseID},
+		userID                 =>  $credentials{userID},
+		session_key            =>  $credentials{session_key}//'',
+		sourceFilePath         => $adj_file_path,
+	);
+	
+	### update client
+	$xmlrpc_client->encodeSource($source);
+	$form_data->{showAnsGroupInfo} 		= $print_answer_group;
+	$form_data->{showAnsHashInfo}       = $print_answer_hash;
+	$form_data->{showPGInfo}	        = $print_pg_hash;
+	$xmlrpc_client->form_data( $form_data	);
+	
+	### update inputs
+	my $updated_input = {%$input, 
+					  envir => $xmlrpc_client->environment(
+							   fileName       => $adj_file_path,
+							   sourceFilePath => $adj_file_path,
+							   problemSeed    => $problemSeed,),
+	};
+	
+	##################################################
+	# input section
+	##################################################
+	### store the time before we invoke the content generator
+	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
+
+
+	############################################
+	# Call server via xmlrpc_client
+	############################################
+	our($output, $return_string, $result, $error_flag, $error_string);
+	$error_flag=0; $error_string='';    
+	$result = $xmlrpc_client->xmlrpcCall('renderProblem', $updated_input);
+	unless ( $xmlrpc_client->fault  )    {
+		print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
+		print pretty_print_rh($result) if $UNIT_TESTS_ON;
+	    if (not defined $result) {  #FIXME make sure this is the right error message if site is unavailable
+	    	$error_string = "0\t Could not connect to rendering site ". $xmlrpc_client->{url}."\n";
+	    } elsif (defined($result->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
+			$error_string = "0\t $file_path has errors\n";
+		} elsif (defined($result->{errors}) and $output->{errors} ){
+			$error_string = "0\t $file_path has syntax errors\n";
+		}
+		$error_flag=1 if $result->{errors};
+	} else {
+		$error_flag=1;
+		$error_string = $xmlrpc_client->return_object;  # error report		
+	}	
+	##################################################
+	# log elapsed time
+	##################################################
+	my $scriptName = 'sendXMLRPC';
+	my $cg_end = time;
+	my $cg_duration = $cg_end - $cg_start;
+	WebworkClient::writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
+	return $error_flag, $xmlrpc_client, $error_string;
 }
 
-#######################################################################
-# Auxiliary subroutines
-#######################################################################
+##################################################
+# print the output (or the error message)  and display
+#FIXME -- possibly refactor these two into display_output()??
+##################################################
 
-# sub create_course_environment {
-# 	my $seed_ce = WeBWorK::CourseEnvironment->new( 
-# 				{webwork_dir		=>		$OpaqueServer::RootWebwork2Dir, 
-# 				 courseName         =>      $OpaqueServer::courseName,
-# 				 webworkURL         =>      $OpaqueServer::RPCURL,
-# 				 pg_dir             =>      $OpaqueServer::RootPGDir,
-# 				 });
-# 	warn "Unable to find environment for course: |$OpaqueServer::courseName|" unless ref($seed_ce);
-# 	return ($seed_ce);
-# }
-####################################################################################
-# Write logs -- to replace subroutine from WebworkClient
-####################################################################################
+sub	display_html_output {  #display the problem in a browser
+	my $file_path = shift;
+	my $output_text = shift;
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.html/;    # replace extension with html
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	local(*FH);
+	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	print FH $output_text;
+	close(FH);
 
-sub writeRenderLogEntry($$$) {
-	my ($function, $details, $beginEnd) = @_;
-	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
-	#WeBWorK::Utils::writeLog( "render_timing", "$$ ".time." $beginEnd $function [$details]");
+	system($HTML_DISPLAY_COMMAND." ".$output_file);
+	sleep 1;   #wait 1 seconds
+	unlink($output_file);
 }
 
+sub display_hash_output {   # print the entire hash output to the command line
+	my $file_path = shift;
+	my $output_text = shift;	
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	my $output_text2 = pretty_print_rh($output_text);
+	local(*FH);
+	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
+	print FH $output_text2;
+	close(FH);
 
-####################################################################################
-# format output  to replace subroutine from WebworkClient
-####################################################################################
+	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+	#sleep 1; #wait 1 seconds
+	#unlink($output_file);
+}
 
-# to be written
+sub display_ans_output {  # print the collection of answer hashes to the command line
+	my $file_path = shift;
+	my $return_object = shift;	
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	my $output_text = pretty_print_rh($return_object->{answers});
+	local(*FH);
+	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
+	print FH $output_text;
+	close(FH);
+
+	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+	sleep 1; #wait 1 seconds
+	unlink($output_file);
+}
 
 ##################################################
 # Get problem template source and adjust file_path name
