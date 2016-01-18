@@ -326,13 +326,15 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$xmlrpc_client->xmlrpcCall('renderProblem', $input);
-		$xmlrpc_client->{renderProblem} = 1; #flag to indicate the renderProblem command was executed.
+		# original method of signaling $xmlrpc_client->{renderProblem} = 1; #flag to indicate the renderProblem command was executed.
+		$self->{xml_command} = 'renderProblem';
 		$self->{output} = $xmlrpc_client;
 		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
 		# FIXME  -- figure out why commmenting out the line above means that $envir->{fileName} is not defined. 
 		#$self->{output}->{text} = "Rendered problem";
 	} else {	
 		$xmlrpc_client->xmlrpcCall($r->param("xml_command"), $input);
+		$self->{xml_command} = $r->param("xml_command");
 		$self->{output} = $xmlrpc_client
 	}
  }
@@ -341,6 +343,7 @@ sub pre_header_initialize {
 sub standard_input {
 	my $out = {
 #		pw            			=>   '',   # not needed
+
 		course_password         =>   '',   # not needed  use site_password??
 		session_key             =>   '',
 		userID          		=>   '',   # not needed
@@ -431,10 +434,18 @@ sub content {
 	if ( ($xmlrpc_client->fault) ) {  # error -- print error string
 	    my $err_string = $xmlrpc_client->error_string;	    
 	    die($err_string);
-	} elsif($xmlrpc_client->{renderProblem}){ # rendered problem 
-	         # print only the text field (not the ra_out field)
-	         # and print the text directly without formatting.
-		print $xmlrpc_client->return_object->{text};
+	} elsif($self->{xml_command} eq 'renderProblem'){
+		# FIXME hack
+		# we need to regularize the way that text is returned.
+		# it behaves differently when re-randomization in the library takes place
+		# then during the initial rendering. 
+		# print only the text field (not the ra_out field)
+		# and print the text directly without formatting.
+		if ($xmlrpc_client->return_object->{problem_out}->{text}) {
+			print $xmlrpc_client->return_object->{problem_out}->{text};
+		} else {
+				print $xmlrpc_client->return_object->{text}; 
+		}
 	} else {  #returned something other than a rendered problem.
 	    	  # in this case format a json string and print it. 
 	    	  # the contents of "{text}" needs to be labeled server response;

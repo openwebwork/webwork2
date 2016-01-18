@@ -316,7 +316,7 @@ sub attemptResults {
 		$answers,
 		answersSubmitted       => 1,
 		answerOrder            => $pg->{flags}->{ANSWER_ENTRY_ORDER},
-		displayMode            => 'MathJax',
+		displayMode            => $self->{displayMode},
 		showAnswerNumbers      => 0,
 		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
 		showAttemptPreviews    => $showAttemptPreview,
@@ -326,11 +326,15 @@ sub attemptResults {
 		showSummary            => $showSummary,
 		imgGen                 => $imgGen, # not needed if ce is present ,
 		ce                     => '',	   # not needed if $imgGen is present
-		maketext               => WeBWorK::Localize::getLoc("en"),
+		maketext               => WeBWorK::Localize::getLoc($ce->{language}),
 	);
 	# render equation images
+	my $answerTemplate = $tbl->answerTemplate; 
+	   # answerTemplate collects all the formulas to be displayed in the attempts table  
+	   # answerTemplate also collects the correct_ids and incorrect_ids
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
-	my $answerTemplate = $tbl->answerTemplate;   # this also collects the correct_ids and incorrect_ids
+	    # after all of the formulas have been collected the render command creates png's for them
+	    # refresh=>1 insures that we never reuse old images -- since the answers change frequently
 	$self->{correct_ids}   = $tbl->correct_ids;
 	$self->{incorrect_ids} = $tbl->incorrect_ids;
 	return $answerTemplate;

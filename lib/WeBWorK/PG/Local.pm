@@ -45,8 +45,7 @@ use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 use WeBWorK::Utils::DelayedMailer;
 
 BEGIN{
- 	unless (exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >=2) {
- 		warn "requiring mod_perl.pm\n";
+ 	unless (exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2) {
 		require "mod_perl.pm";  # used only for mod_perl1  should we continue to support this?
 	}
 
