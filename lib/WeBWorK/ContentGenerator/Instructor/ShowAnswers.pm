@@ -30,8 +30,9 @@ use WeBWorK::CGI;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id); 
 use PGcore;
-
 use Text::CSV;
+
+use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
 sub initialize {
 	my $self       = shift;
@@ -84,9 +85,17 @@ sub initialize {
 
 	    # search for selected sets assigned to students
 	    my @allSets = $db->listUserSets($studentUser);
-	    foreach my $set (@allSets) {
-	      if (grep(/^$set$/,@$selectedSets)) {
-		push (@setNames, $set);
+	    foreach my $setName (@allSets) {
+	      my $set = $db->getMergedSet($studentUser,$setName);
+	      if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/) {
+		my @versions = $db->listSetVersions($studentUser, $setName);
+		foreach my $version(@versions) {
+		  if (grep/^$setName,v$version$/,@$selectedSets) {
+		    push(@setNames, "$setName,v$version");
+		  }
+		}
+	      } elsif (grep(/^$setName$/,@$selectedSets)) {
+		push (@setNames, $setName);
 	      }
 	      
 	    }
@@ -95,7 +104,7 @@ sub initialize {
 
 	    foreach my $setName (@setNames) {
 		my @problemNumbers;
-		my $setRecord = $db->getGlobalSet($setName);
+		my $setRecord = $db->getMergedSet($studentUser,$setName);
 		my $isJitarSet = ($setRecord && $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
 
 		# search for matching problems
@@ -187,7 +196,7 @@ sub initialize {
 	
 	# Prepare a csv if we are an instructor
 	if ($instructor && $r->param('createCSV')) {
-	    my $filename = 'past_answers';
+	    my $filename = PAST_ANSWERS_FILENAME;
 	    my $scoringDir = $ce->{courseDirs}->{scoring};
 	    my $fullFilename = "${scoringDir}/${filename}.csv";
 	    if (-e $fullFilename) {
@@ -225,7 +234,7 @@ sub initialize {
 		      
 			$columns[3] = $self->formatDateTime($record{time});
 			$columns[4] = join(',' ,@{$record{scores}});
-			$columns[5] = join(',' ,@{$record{answers}});
+			$columns[5] = join("\t" ,@{$record{answers}});
 			$columns[6] = $record{comment};
 			
 			$csv->print($fh,\@columns);
@@ -341,9 +350,6 @@ sub body {
 	    }
 	  }
 	  
-	  my @selected_users = $r->param("selected_users");
-	  my @selected_sets = $r->param("selected_sets");
-	  
 	  
 	  my %all_problems;
 	  #Figure out what problems we need to show.
@@ -389,7 +395,7 @@ sub body {
 	  # If necessary print a link to the csv file
 	  ####################################################################
 
-	  my $filename = 'past_answers.csv';
+	  my $filename = PAST_ANSWERS_FILENAME.'.csv';
 	  my $scoringDir = $ce->{courseDirs}->{scoring};
 	  my $scoringDownloadMessage = '';
 	  
