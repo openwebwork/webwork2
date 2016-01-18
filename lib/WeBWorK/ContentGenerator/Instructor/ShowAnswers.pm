@@ -81,7 +81,7 @@ sub initialize {
 	my %prettyProblemNumbers;
 	
   	foreach my $studentUser (@$selectedUsers) {
-	    my @setNames;
+	    my @sets;
 
 	    # search for selected sets assigned to students
 	    my @allSets = $db->listUserSets($studentUser);
@@ -91,21 +91,22 @@ sub initialize {
 		my @versions = $db->listSetVersions($studentUser, $setName);
 		foreach my $version(@versions) {
 		  if (grep/^$setName,v$version$/,@$selectedSets) {
-		    push(@setNames, "$setName,v$version");
+		    $set = $db->getUserSet($studentUser,"$setName,v$version");
+		    push(@sets, $set);
 		  }
 		}
 	      } elsif (grep(/^$setName$/,@$selectedSets)) {
-		push (@setNames, $setName);
+		push (@sets, $set);
 	      }
 	      
 	    }
 	    
-	    next unless @setNames;
+	    next unless @sets;
 
-	    foreach my $setName (@setNames) {
-		my @problemNumbers;
-		my $setRecord = $db->getMergedSet($studentUser,$setName);
-		my $isJitarSet = ($setRecord && $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
+	    foreach my $setRecord (@sets) {
+	        my @problemNumbers;
+		my $setName = $setRecord->set_id;
+		my $isJitarSet = (defined($setRecord->assignment_type) && $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
 
 		# search for matching problems
 		my @allProblems = $db->listUserProblems($studentUser, $setName);
