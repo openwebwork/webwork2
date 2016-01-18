@@ -2140,10 +2140,7 @@ sub warningOutput($$) {
 	    );
 	
 	foreach my $warning (@warnings) {
-	    # This used to be commented out because it interfered with warnings
-	    # from PG.  But now PG has a seperate warning channel thats not
-	    # encoded.  Since these warnings have html they
-	    # look better scrubbed
+            # Since these warnings have html they look better scrubbed
 
 	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);
