@@ -52,7 +52,7 @@ IMPORTANT: Create a valid credentials file.
 =head2 credentials file
     
     These locations are searched, in order,  for the credentials file.
-    ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials')
+    ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist')
     
     Place a credential file containing the following information at one of the locations above 
     or create a file with this information and specify it with the --credentials option.
@@ -287,7 +287,7 @@ print_help_message() if $print_help_message;
 
 # credentials file location -- search for one of these files 
 
-our @path_list = ( "$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials',);
+our @path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
 
 my $credentials_string = <<EOF;
 The credentials file should contain this:
@@ -848,8 +848,8 @@ SYNOPSIS
 DETAILS
   credentials file
         These locations are searched, in order,  for the credentials file.
-        ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials')
-    
+        ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
+
         Place a credential file containing the following information at one of the locations above 
         or create a file with this information and specify it with the --credentials option.
     
