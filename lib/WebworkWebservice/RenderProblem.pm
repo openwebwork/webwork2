@@ -497,7 +497,7 @@ sub renderProblem {
 	if ($debugXmlCode) {
 		my $logDirectory =$ce->{courseDirs}->{logs};
 		my $xmlDebugLog  = "$logDirectory/xml_debug.txt";
-		#warn "RenderProblem.pm: Opening debug log $xmlDebugLog\n" ;
+		warn "RenderProblem.pm: Opening debug log $xmlDebugLog\n" ;
 		open (DEBUGCODE, ">>$xmlDebugLog") || die "Can't open debug log $xmlDebugLog";
 		print DEBUGCODE "\n\nStart xml encoding\n";
 	}
@@ -520,12 +520,20 @@ sub xml_filter {
 	my $input = shift;
 	my $level = shift || 0;
 	my $space="  ";
-	# Hack to filter out CODE references
+	# protect against modules defined in Safe which can't find their stringify procedure.
+	my $dummy = eval { "$input"  };
+	if ($@ ) {
+		print DEBUGCODE "Unable to determine stringify for this item\n";
+		print DEBUGCODE $@, "\n";
+		return;
+	}
 	my $type = ref($input);
+	
+	# Hack to filter out CODE references??
 	if (!defined($type) or !$type ) {
 		print DEBUGCODE $space x $level." : scalar -- not converted\n" if $debugXmlCode;
 	} elsif( $type =~/HASH/i or "$input"=~/HASH/i) {
-		print DEBUGCODE "HASH reference with ".%{$input}." elements will be investigated\n" if $debugXmlCode;
+		print DEBUGCODE "HASH reference ($input) with ".%{$input}." elements will be investigated\n" if $debugXmlCode;
 		$level++;
 		foreach my $item (keys %{$input}) {
 			print DEBUGCODE "  "x$level."$item is " if $debugXmlCode;
@@ -543,12 +551,12 @@ sub xml_filter {
 		}
 		$input = $tmp;
 		$level--;
-		print DEBUGCODE "  "x$level."ARRAY reference completed",join(" ",@$input),"\n" if $debugXmlCode;
+		print DEBUGCODE "  "x$level."ARRAY reference completed: ",join(" ",@$input),"\n" if $debugXmlCode;
 	} elsif($type =~ /CODE/i or "$input" =~/CODE/i) {
 		$input = "CODE reference";
 		print DEBUGCODE "  "x$level."CODE reference, converted $input\n" if $debugXmlCode;
 	} else {
-		print DEBUGCODE  "  "x$level." $type and was  converted to string\n" if $debugXmlCode;
+		print DEBUGCODE  "  "x$level." type |$type| and was  converted to string\n" if $debugXmlCode;
 		$input = "$type reference";
 	}
 	$input;
