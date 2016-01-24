@@ -442,7 +442,7 @@ sub content {
 		if ($xmlrpc_client->return_object->{problem_out}->{text}) {
 			print $xmlrpc_client->return_object->{problem_out}->{text};
 		} else {
-			print $xmlrpc_client->return_object->{text}; 
+				print $xmlrpc_client->return_object->{text}; 
 		}
 	} else {  #returned something other than a rendered problem.
 	    	  # in this case format a json string and print it. 
