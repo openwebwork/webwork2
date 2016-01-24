@@ -75,10 +75,10 @@ my %ignoredir = (
 sub listLibraries {  # list the problem libraries that are available.
 	my $self = shift;
 	my $rh = shift;
-	#my $my_ce = $self->{ce};
-	my %libraries = %{$self->{ce}->{courseFiles}->{problibs}};
+	#my $my_ce = $self->ce;
+	my %libraries = %{$self->ce->{courseFiles}->{problibs}};
  
-	my $templateDirectory = $self->{ce}->{courseDirs}{templates};
+	my $templateDirectory = $self->ce->{courseDirs}{templates};
 
 	foreach my $key (keys %libraries) {
  		$libraries{$key} = "$templateDirectory/$key";
@@ -99,9 +99,9 @@ sub readFile {
 	my $out = {};
 	my $filePath = $rh->{filePath};
 
-	my %libraries = %{$self->{ce}->{courseFiles}->{problibs}};
+	my %libraries = %{$self->ce->{courseFiles}->{problibs}};
  
-	my $templateDirectory = $self->{ce}->{courseDirs}{templates};
+	my $templateDirectory = $self->ce->{courseDirs}{templates};
 
 	foreach my $key (keys %libraries) {
  		$libraries{$key} = "$templateDirectory/$key";
@@ -309,7 +309,7 @@ sub searchLib {    #API for searching the NPL database
 	};
 	'getDBListings' eq $subcommand && do {
 
-		my $templateDir = $self->{ce}->{courseDirs}->{templates};
+		my $templateDir = $self->ce->{courseDirs}->{templates};
 		$self->{library_subjects} = $rh->{library_subjects};
 		$self->{library_chapters} = $rh->{library_chapters};
 		$self->{library_sections} = $rh->{library_sections};
@@ -388,9 +388,9 @@ sub getProblemDirectories {
 	my $self = shift;
 	my $rh = shift;
 	my $out = {};
-	my $ce = $self->{ce};
+	my $ce = $self->ce;
 
-	my %libraries = %{$self->{ce}->{courseFiles}->{problibs}};
+	my %libraries = %{$self->ce->{courseFiles}->{problibs}};
 
 	my $lib = "Library";
 	my $source = $ce->{courseDirs}{templates};
@@ -422,7 +422,7 @@ sub buildBrowseTree {
 	my $self = shift;
 	my $rh = shift;
 	my $out = {};
-	my $ce = $self->{ce};
+	my $ce = $self->ce;
 	my @tree = ();
 	my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
 	foreach my $sub (@subjects) {

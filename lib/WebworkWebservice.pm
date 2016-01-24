@@ -116,7 +116,7 @@ sub pretty_print_rh {
 
 	if (defined($type) and $type) {
 		$out .= " type = $type; ";
-	} elsif ($rh == undef) {
+	} elsif (not defined($rh) ) {
 		$out .= " type = scalar; ";
 	}
 	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
@@ -255,8 +255,6 @@ my $authz  = $fake_r->authz;
 		user_id		=>  $rh_input ->{userID},
 		password    =>  $rh_input ->{course_password},  #should this be course_password?
 		session_key =>  $rh_input ->{session_key},
-#		ce			=>  $fake_r->ce,
-#		db          =>  $fake_r->db,
 		fake_r      =>  $fake_r,
 	};	
 	$self = bless $self, $class;
@@ -272,7 +270,6 @@ my $authz  = $fake_r->authz;
 	die "Please use 'course_password' instead of 'password' as the key for submitting
 		passwords to this webservice\n" 
 	  if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
-
 #   we need to trick some of the methods within the webwork framework 
 #   since we are not coming in with a standard apache request
 #   FIXME:  can/should we change this????
@@ -280,7 +277,7 @@ my $authz  = $fake_r->authz;
 #   We are borrowing tricks from the AuthenWeBWorK.pm module
 #
 # 	
-
+	
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
 	my $authenOK;
@@ -294,16 +291,25 @@ my $authz  = $fake_r->authz;
 # 		local *WeBWorK::Authen::maybe_kill_cookie = \&WebworkXMLRPC::noop;
 # 		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
 # 		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
-		#warn "authen is $authen ", ref($authen);
 		$authenOK = $authen->verify;
 	} or do {
+		my $e;
 		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
 			# was asked to authenticate into a non-existent course
 			die SOAP::Fault
 				->faultcode('404')
-				->faultstring("Course |$courseName| not found.")
+				->faultstring("WebworkWebservice: Course |$courseName| not found.")
 		}
-		die "Webservice.pm: Error when trying to authenticate. $@\n";
+		# this next bit is a Hack to catch errors when the session key has timed out
+		# and an error message which is approximately 
+		# "invoked with WeBWorK::FakeRequest object with no `r' key"
+		if ($e = Exception::Class->caught() and $e =~/object\s+with\s+no\s+.r.\s+key/ ) {
+			# was asked to authenticate into a non-existent course
+			die SOAP::Fault
+				->faultcode('404')
+				->faultstring("WebworkWebservice: Can't authenticate -- session may have timed out.")
+		}
+		die "Webservice.pm: Error when trying to authenticate. $e\n";
 	};
 ###########################################################################
 # security check -- check that the user is in fact at least a proctor in the course
@@ -990,20 +996,6 @@ sub format_hash_ref {
 	}
 	$out_str;
 }
-
-
-# sub create_course_environment {
-# 	my $self = shift;
-# 	my $courseName = shift;
-# 	my $ce = WeBWorK::CourseEnvironment->new( 
-# 				{webwork_dir		=>		$WebworkWebservice::WW_DIRECTORY, 
-# 				 courseName         =>      $courseName
-# 				 });
-# 	#warn "Unable to find environment for course: |$courseName|" unless ref($ce);
-# 	return ($ce);
-# }
-###############################
-
 
 
 # -- SOAP::Lite -- guide.soaplite.com -- Copyright (C) 2001 Paul Kulchenko --
