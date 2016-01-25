@@ -46,7 +46,7 @@ $scoreSummary
 
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-	       <input type="hidden" name="problemSource" value="$encodedSource"> 
+	       <input type="hidden" name="problemSource" value="$encoded_source"> 
 	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
@@ -61,7 +61,7 @@ $scoreSummary
 		   <p>
 		      <input type="submit" name="preview"  value="Preview" /> 
 			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWgrade" value="Show correct answer"/>
+		      <input type="submit" name="WWcorrectAns" value="Show correct answer"/>
 		   </p>
 	       </form>
 </div>

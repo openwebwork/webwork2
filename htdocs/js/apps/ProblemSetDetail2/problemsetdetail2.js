@@ -285,7 +285,7 @@ function render(id) {
     if ($('#problem\\.'+id+'\\.problem_seed').length > 0) {
 	ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed').val();
     } else {
-	ro.problemSeed = 0;
+	ro.problemSeed = 1;
     }
     var source_file
 
