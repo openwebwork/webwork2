@@ -285,8 +285,11 @@ sub xmlrpcCall {
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $requestObject) };
 	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
-	  print "Errors: \n $@\n End Errors\n" if $@;
-
+	  print STDERR "Errors: \n $@\n End Errors\n" if $@;
+	
+          print CGI::h2("WebworkClient Errors") if $@;
+	  print CGI::p("Errors:",CGI::br(),CGI::blockquote({style=>"color:red"},CGI::code($@)),CGI::br(),"End Errors") if $@;
+	
 	  unless (ref($result) and $result->fault) {
 	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
 	  		$result->result()->{text} = decode_base64($result->result()->{text});
