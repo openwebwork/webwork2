@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>test alternate templates</title>
+	<meta name="generator" content="BBEdit 11.1" />
+</head>
+<body>
+
+<h3>Links</h3>
+<p>
+<a href="https://hosted2.webwork.rochester.edu/webwork2/UR102/Demo/2">regular template</a>
+</p>
+
+<p>
+<a href="https://hosted2.webwork.rochester.edu/webwork2/UR102/Demo/2?templateName=simple">simple template</a>
+
+</p>
+<h3>Embedddings</h3>
+<p>
+Regular (system) template
+</p>
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo/2" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+
+<p>
+Simple  template
+</p>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo/2?templateName=plain" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+
+<p>
+Simple  template -- homework set page (Demo)
+</p>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo?templateName=plain" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+
+<p>
+Simple  template -- course home page 
+</p>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo?templateName=plain" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+</body>
+</html>

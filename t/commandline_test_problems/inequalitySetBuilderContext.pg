@@ -1,0 +1,36 @@
+DOCUMENT();      
+loadMacros(
+"PGstandard.pl",     # Standard macros for PG language
+"MathObjects.pl",
+"contextAlternateIntervals.pl",
+"contextInequalitySetBuilder.pl"
+);
+Context("InequalitySetBuilder");
+context::AlternateIntervals->Enable;
+Context()->flags->set(enterIntervals=>"either", displayIntervals=>"alternate");
+$S1 = Compute("{ x : 1 < x <= 4 }");
+$S2 = SetBuilder("]1,4[");     # force interval to be set in set-builder notation
+$S3 = Interval("[1,4[");
+$S4 = Compute("{ x : x < -2 or x > 2 }");  # forms the Union (-inf,-2) U (2,inf)
+$S5 = Compute("{ x : x > 2 and x <= 4 }"); # forms the Interval (2,4]
+$S6 = Compute("{ x : x = 1 }");            # forms the Set {1}
+$S7 = Compute("{ x : x != 1 }");           # forms the Union (-inf,1) U (1,inf)
+Context()->texStrings;
+BEGIN_TEXT
+\($S1\) \{$S1->ans_rule\} $BR
+\($S2\) \{$S2->ans_rule\} $BR
+\($S3\) \{$S3->ans_rule\} $BR
+\($S4\) \{$S4->ans_rule\} $BR
+\($S5\) \{$S5->ans_rule\} $BR
+\($S6\) \{$S6->ans_rule\} $BR
+\($S7\) \{$S7->ans_rule\} $BR
+END_TEXT
+Context()->normalStrings;
+ANS($S1->cmp());
+ANS($S2->cmp());
+ANS($S3->cmp());
+ANS($S4->cmp());
+ANS($S5->cmp());
+ANS($S6->cmp());
+ANS($S7->cmp());
+ENDDOCUMENT();        
