@@ -6,6 +6,16 @@
 	<meta name="generator" content="BBEdit 11.1" />
 </head>
 <body>
+<p>
+You will need to customize this file to access the website you are testing.
+</p>
+
+<p>
+If you use it to test hosted2.webwork.rochester.edu you will need to login
+as guest the first time you access the site.  After that the cookie stored
+on your computer will give you access to the pages.
+</p>
+
 
 <h3>Links</h3>
 <p>
@@ -21,7 +31,7 @@
 Regular (system) template
 </p>
 <p>
-<iframe src= "http://localhost/webwork2/maa101/Demo/2" height="600" width="800"> 
+<iframe src= "https://hosted2.webwork.rochester.edu/webwork2/UR102/Demo/2" height="600" width="800"> 
 iframe here
 </iframe>
 </p>
@@ -31,7 +41,7 @@ Simple  template
 </p>
 
 <p>
-<iframe src= "http://localhost/webwork2/maa101/Demo/2?templateName=plain" height="600" width="800"> 
+<iframe src= "https://hosted2.webwork.rochester.edu/webwork2/UR102/Demo/2?templateName=plain" height="600" width="800"> 
 iframe here
 </iframe>
 </p>
@@ -41,7 +51,7 @@ Simple  template -- homework set page (Demo)
 </p>
 
 <p>
-<iframe src= "http://localhost/webwork2/maa101/Demo?templateName=plain" height="600" width="800"> 
+<iframe src= "https://hosted2.webwork.rochester.edu/webwork2/UR102/Demo?templateName=plain" height="600" width="800"> 
 iframe here
 </iframe>
 </p>
@@ -51,7 +61,7 @@ Simple  template -- course home page
 </p>
 
 <p>
-<iframe src= "http://localhost/webwork2/maa101/Demo?templateName=plain" height="600" width="800"> 
+<iframe src= "https://hosted2.webwork.rochester.edu/webwork2/UR102/Demo?templateName=plain" height="600" width="800"> 
 iframe here
 </iframe>
 </p>
