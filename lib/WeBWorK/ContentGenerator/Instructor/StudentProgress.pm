@@ -580,8 +580,8 @@ sub displaySets {
 # 					$longStatus 	= 'X';
 # 				}
 # 			
-# 				$string     .= threeSpaceFill($longStatus);
-# 				$twoString  .= threeSpaceFill($num_incorrect);
+# 				$string     .= fourSpaceFill($longStatus);
+# 				$twoString  .= fourSpaceFill($num_incorrect);
 # 
 # 				$total      += $probValue;
 # 				$totalRight += round_score($status*$probValue) 
@@ -765,7 +765,7 @@ sub displaySets {
 	}	    
 
 
-	$problem_header = '<pre>'.join("", map {&threeSpaceFill($_)}  @list_problems  ).'</pre>';
+	$problem_header = '<pre>'.join("", map {&fourSpaceFill($_)}  @list_problems  ).'</pre>';
 
 # changes for gateways/versioned sets here.  in this case we allow instructors
 # to modify the appearance of output, which we do with a form.  so paste in the
@@ -815,11 +815,7 @@ sub displaySets {
 	print
 #		CGI::br(),
 		CGI::br(),
-		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, a &quot;C&quot; indicates a problem has been answered 100% correctly, and a number from 0 to 99 indicates the percentage of partial credit earned. The number on the second line gives the number of incorrect attempts.'),
-#		'The success indicator,' ,CGI::i('Ind'),', for each student is calculated as',
-#		CGI::br(),
-#		'100*(totalNumberOfCorrectProblems / totalNumberOfProblems)^2 / (AvgNumberOfAttemptsPerProblem)',CGI::br(),
-#		'or 0 if there are no attempts.'
+		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, and a number from 0 to 100 indicates the grade earned. The number on the second line gives the number of incorrect attempts.'),
 		),
 		CGI::br(),
 		$r->maketext("Click on a student's name to see the student's version of the homework set. Click heading to sort table."),
@@ -1152,14 +1148,14 @@ sub grade_set {
 				$longStatus     = '.';
 			} elsif   ($valid_status) {
 				$longStatus     = 100*wwRound(2,$status);
-				$longStatus='C' if ($longStatus==100);
+				
 			} else	{
 				$longStatus 	= 'X';
 			}
 		
-                        $class = ($longStatus eq 'C')?"correct": (($longStatus eq '.')?'unattempted':'');
-                        $string      .= '<span class="'.$class.'">'.threeSpaceFill($longStatus).'</span>';
-			$twoString      .= threeSpaceFill($num_incorrect);
+                        $class = ($longStatus eq '100')?"correct": (($longStatus eq '.')?'unattempted':'');
+                        $string      .= '<span class="'.$class.'">'.fourSpaceFill($longStatus).'</span>';
+			$twoString      .= fourSpaceFill($num_incorrect);
 			my $probValue   =  $problemRecord->value;
 			$probValue      =  1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total          += $probValue;
@@ -1204,12 +1200,13 @@ sub grade_set {
 #################################
 # Utility function NOT a method
 #################################
-sub threeSpaceFill {
+sub fourSpaceFill {
 	my $num = shift @_ || 0;
 
-	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
-	elsif (length($num)==2) {return "$num".'&nbsp;';}
-	else {return "## ";}
+	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;&nbsp;';}
+	elsif (length($num)==2) {return "$num".'&nbsp;&nbsp;';}
+	elsif (length($num)==3) {return "$num".'&nbsp;';}
+	else {return "### ";}
 }
 
 

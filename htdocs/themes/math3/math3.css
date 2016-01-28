@@ -557,6 +557,11 @@ li.currentProblem{
     font-size:90%;
 }
 
+.lb-mlt-group {
+    border:1px solid black;
+    width :100%;
+}
+
 #footer {
 	/* white-space: nowrap; */
 	clear: both;
