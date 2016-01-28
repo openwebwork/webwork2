@@ -34,8 +34,8 @@ use Selenium::Utilities;
 
 
 my $sel = Test::WWW::Selenium->new( host => "localhost", 
-                                    port => 80, 
-                                    browser => "*chrome", 
+                                    port => 4444, 
+                                    browser => "*firefox", 
                                     browser_url => "http://localhost/" );
 
 

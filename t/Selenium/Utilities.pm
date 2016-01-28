@@ -31,22 +31,23 @@ BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 	   unless($ENV{WEBWORK_ROOT});}
 use lib "$ENV{WEBWORK_ROOT}/t";
 
-use Exporter;
+use Exporter 'import';
 use WWW::Selenium;
 
 use constant DEFAULT_COURSE_ID => "TestCourse";
 use constant DEFAULT_SET_ID => "TestSet";
 
 
-@Export = qw(
-	      create_course
-	      delete_course
-	      log_into_course
-	      create_set
-	      import_set
-	      delete_set
-	      create_problem
-	      edit_problem
+our @EXPORT= qw(
+	     create_course
+	     delete_course
+	     log_into_course
+	     create_set
+	     import_set
+	     delete_set
+	     create_problem
+	     edit_problem
+	     create_student
 	   );
 
 =item create_course
@@ -86,7 +87,7 @@ sub create_course {
 
 }
 
-= item delete_course
+=item delete_course
 
 This deletes a course. The ID of the course is assumed to be TestCourse
 unless something else is passed in as a parameter.  It is assumed that the 
@@ -156,7 +157,11 @@ from scratch then the routine assumes that you are currently logged into
 a course.
 
 create_set($sel, createCourse => 0,
-                 setID => "TestCourse");
+                 setID => "TestCourse",
+                 openDate => "12/01/2001 at 1:00pm",
+                 dueDate => "12/01/2025 at 1:00pm"
+                 answerDate => "12/01/2025 at 1:00pm"
+                 );
 
 =cut
 
@@ -175,9 +180,15 @@ sub create_set {
   $sel->click("link=Create");
   $sel->type("id=create_text", $setID );
   $sel->click("id=take_action");
+  $sel->add_selection("name=selected_sets", "label=$setID");
+  $sel->click("name=edit_sets");
+  $sel->wait_for_page_to_load("30000");
+  $sel->type("id=set.${setID}.open_date_id", $options{openDate} // "12/01/2001 at 01:00pm");
+  $sel->type("id=set.${setID}.due_date_id", $options{dueDate} // "12/01/2025 at 01:00pm");
+  $sel->type("id=set.${setID}.answer_date_id", $options{setDate} // "12/01/2025 at 01:00pm");
   $sel->wait_for_page_to_load("30000");
 
-  return $sel->text_is('css=div.ResultsWithoutError','Set $setID was assigned to*');
+  return $sel->text_is("//div[\@id='Message']/div[2]",'changes saved');
 }
 
 =item import_set
@@ -197,7 +208,7 @@ sub import_set {
   my $courseID = $options{courseID} //  DEFAULT_COURSE_ID;
   my $setDef = $options{importSetDef} // "setDemo.def";
   my $setID = $setDef;
-  $setID =~ /^set(.*)\.def$/$1/;
+  $setID =~ s/^set(.*)\.def$/$1/;
   
 
   if ($options{createCourse}) {
@@ -210,8 +221,15 @@ sub import_set {
   $sel->select("id=import_source_select", "label=$setDef");
   $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
+    $sel->add_selection("name=selected_sets", "label=$setID");
+  $sel->click("name=edit_sets");
+  $sel->wait_for_page_to_load("30000");
+  $sel->type("id=set.${setID}.open_date_id", $options{openDate} // "12/01/2001 at 01:00pm");
+  $sel->type("id=set.${setID}.due_date_id", $options{dueDate} // "12/01/2025 at 01:00pm");
+  $sel->type("id=set.${setID}.answer_date_id", $options{setDate} // "12/01/2025 at 01:00pm");
+  $sel->wait_for_page_to_load("30000");
 
-  return $sel->text_is("css=div.ResultsWithoutError", "1 sets added, 0 sets skipped. Skipped sets: ()");
+  return $sel->text_is("//div[\@id='Message']/div[2]",'changes saved');
 
 }
 
@@ -310,6 +328,40 @@ sub edit_problem {
   return $sel->title_is('* : $setID : 1 : Editor');
 }
 
+
+=item create_student
+  This method creates a student user.  The username and password can be specified, as can the option to create the course first.  
+
+create_student($sel, createCourse=>0,
+                     userID=>"teststud",
+                     studentID=>"teststud", #also initial passwd
+                     firstName=>"Test",
+                     lastName=>"Student");
+
+=cut
+
+sub create_student {
+  my $sel = shift;
+  my %options = shift;
+  my $courseID = $options{courseID} //  DEFAULT_COURSE_ID;
+
+  if ($options{createCourse}) {
+    warn "Unable to create course" unless create_course($sel,%options);
+  }
+
+  $sel->open("/webwork2/$courseID/instructor/users2");
+  sel->click("link=Add");
+  $sel->click("id=take_action");
+  $sel->wait_for_page_to_load("30000");
+  $sel->type("name=last_name_1", $options{firstName} // "Student");
+  $sel->type("name=first_name_1", $options{lastName} // "Test");
+  $sel->type("name=student_id_1", $options{studentID} // "teststud");
+  $sel->type("name=new_user_id_1", $options{userID} // "teststud");
+  $sel->click("name=addStudents");
+  $sel->wait_for_page_to_load("30000");
+
+  return $sel->text_is("//div[\@id='page_body']/p/b", "Entered student:");
+}
 
 =back
 

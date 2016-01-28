@@ -23,6 +23,9 @@ BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 	   unless($ENV{WEBWORK_ROOT});}
 use lib "$ENV{WEBWORK_ROOT}/t";
 
+# After you write your test you should add the number of tests here like
+# use Test::More tests => 23
+
 use Test::More qw(no_plan);
 use Test::WWW::Selenium;
 use Test::Exception;
@@ -31,47 +34,37 @@ use Selenium::Utilities;
 
 
 my $sel = Test::WWW::Selenium->new( host => "localhost", 
-                                    port => 80, 
-                                    browser => "*chrome", 
+                                    port => 4444, 
+                                    browser => "*firefox", 
                                     browser_url => "http://localhost/" );
 
-$sel->open_ok("/webwork2/");
-$sel->click_ok("link=Course Administration");
+
+# Create a test course
+create_course($sel);
+import_set($sel);
+
+$sel->click_ok("link=Instructor Tools");
 $sel->wait_for_page_to_load_ok("30000");
-$sel->type_ok("id=uname", "admin");
-$sel->type_ok("id=pswd", "admin");
-$sel->click_ok("id=none");
+$sel->add_selection_ok("name=selected_users", "label=Administrator, (admin)");
+$sel->add_selection_ok("name=selected_sets", "label=Demo");
+$sel->click_ok("name=edit_set_for_users");
 $sel->wait_for_page_to_load_ok("30000");
-$sel->click_ok("link=Add Course");
+$sel->type_ok("id=problem.1.problem_seed_id", "100");
+$sel->click_ok("id=submit_changes_2");
 $sel->wait_for_page_to_load_ok("30000");
-$sel->type_ok("name=add_courseID", "MyTestCourse");
-$sel->type_ok("name=add_courseTitle", "Test Course");
-$sel->type_ok("name=add_courseInstitution", "Test University");
-$sel->type_ok("name=add_initial_userID", "testprof");
-$sel->type_ok("name=add_initial_password", "proof");
-$sel->type_ok("name=add_initial_confirmPassword", "proof");
-$sel->type_ok("name=add_initial_firstName", "Test");
-$sel->type_ok("name=add_initial_lastName", "Prof");
-$sel->type_ok("name=add_initial_email", "prof\@prof.univ");
-$sel->click_ok("name=add_course");
+$sel->click_ok("link=Homework Sets");
 $sel->wait_for_page_to_load_ok("30000");
-ok(not $sel->is_element_present("css=div.Warnings"));
-$sel->text_is("css=div.ResultsWithoutError > p", "Successfully created the course MyTestCourse");
-$sel->click_ok("link=Log into MyTestCourse");
+$sel->click_ok("link=Demo");
 $sel->wait_for_page_to_load_ok("30000");
-$sel->type_ok("id=uname", "admin");
-$sel->type_ok("id=pswd", "admin");
-$sel->click_ok("id=none");
+$sel->click_ok("link=Problem 1");
 $sel->wait_for_page_to_load_ok("30000");
-$sel->title_is("WeBWorK : MyTestCourse");
-ok(not $sel->is_element_present("css=div.Warnings"));
-$sel->text_is("css=h1.page-title", "Test Course");
-$sel->click_ok("link=Classlist Editor");
+$sel->type_ok("id=AnSwEr0001", "2.828427");
+$sel->type_ok("id=AnSwEr0002", "2");
+$sel->type_ok("id=AnSwEr0003", "3");
+$sel->click_ok("id=submitAnswers_id");
 $sel->wait_for_page_to_load_ok("30000");
-$sel->text_is("link=testprof", "testprof");
-$sel->text_is("link=admin", "admin");
-$sel->click_ok("css=#loginstatus>a");
-$sel->wait_for_page_to_load_ok("30000");
-$sel->click_ok("link=webwork");
-$sel->wait_for_page_to_load_ok("30000");
-$sel->text_is("link=MyTestCourse", "MyTestCourse");
+$sel->text_is("//div[\@id='output_summary']/table/tbody/tr[2]/td[3]/a/span", "correct");
+$sel->text_is("//div[\@id='output_summary']/table/tbody/tr[3]/td[3]/a/span", "correct");
+$sel->text_is("//div[\@id='output_summary']/table/tbody/tr[4]/td[3]/a/span", "correct");
+
+delete_course($sel);
