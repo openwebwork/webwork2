@@ -83,8 +83,8 @@ sub create_course {
   $sel->click("name=add_course");
   $sel->wait_for_page_to_load("30000");
 
-  return log_into_course($sel, %options);
-
+  log_into_course($sel);
+  
 }
 
 =item delete_course
@@ -105,10 +105,12 @@ sub delete_course {
   
   $sel->open("/webwork2/admin");
   $sel->wait_for_page_to_load("30000");
-  $sel->type("id=uname", "admin");
-  $sel->type("id=pswd", "admin");
-  $sel->click("id=none");
-  $sel->wait_for_page_to_load("30000");
+  if ($sel->is_element_present("id=uname")) {
+      $sel->type("id=uname", "admin");
+      $sel->type("id=pswd", "admin");
+      $sel->click("id=none");
+      $sel->wait_for_page_to_load("30000");
+  }
   $sel->click("link=Delete Course");
   $sel->wait_for_page_to_load("30000");
   $sel->select("name=delete_courseID", "label=$courseID (visible :: *)");
@@ -116,7 +118,8 @@ sub delete_course {
   $sel->wait_for_page_to_load("30000");
   $sel->click("name=confirm_delete_course");
   $sel->wait_for_page_to_load("30000");
-  return $sel->text_is("css=div.ResultsWithoutError > p", "Successfully deleted the course $courseID.");
+ 
+
 
 }
 
@@ -144,8 +147,6 @@ sub log_into_course {
   $sel->click("id=none");
   $sel->wait_for_page_to_load("30000");
 
-  return $sel->title_is("WeBWorK : $courseID");
-
 }
 
 =item create_set
@@ -167,7 +168,7 @@ create_set($sel, createCourse => 0,
 
 sub create_set {
   my $sel = shift;
-  my %options = shift;
+  my %options = @_;
   my $courseID = $options{courseID} // DEFAULT_COURSE_ID;
   my $setID = $options{setID} // DEFAULT_SET_ID;
 
@@ -180,15 +181,17 @@ sub create_set {
   $sel->click("link=Create");
   $sel->type("id=create_text", $setID );
   $sel->click("id=take_action");
-  $sel->add_selection("name=selected_sets", "label=$setID");
-  $sel->click("name=edit_sets");
+  $sel->check("id=${setID}_id");
+  $sel->click("link=Edit");
+  $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
   $sel->type("id=set.${setID}.open_date_id", $options{openDate} // "12/01/2001 at 01:00pm");
   $sel->type("id=set.${setID}.due_date_id", $options{dueDate} // "12/01/2025 at 01:00pm");
   $sel->type("id=set.${setID}.answer_date_id", $options{setDate} // "12/01/2025 at 01:00pm");
+  $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
 
-  return $sel->text_is("//div[\@id='Message']/div[2]",'changes saved');
+
 }
 
 =item import_set
@@ -204,7 +207,7 @@ import_set($sel, importSetDef=>"setDemo.def",
 
 sub import_set {
   my $sel = shift;
-  my %options = shift;
+  my %options = @_;
   my $courseID = $options{courseID} //  DEFAULT_COURSE_ID;
   my $setDef = $options{importSetDef} // "setDemo.def";
   my $setID = $setDef;
@@ -221,15 +224,16 @@ sub import_set {
   $sel->select("id=import_source_select", "label=$setDef");
   $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
-    $sel->add_selection("name=selected_sets", "label=$setID");
-  $sel->click("name=edit_sets");
+  $sel->check("id=${setID}_id");
+  $sel->click("link=Edit");
+  $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
   $sel->type("id=set.${setID}.open_date_id", $options{openDate} // "12/01/2001 at 01:00pm");
   $sel->type("id=set.${setID}.due_date_id", $options{dueDate} // "12/01/2025 at 01:00pm");
   $sel->type("id=set.${setID}.answer_date_id", $options{setDate} // "12/01/2025 at 01:00pm");
+  $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
 
-  return $sel->text_is("//div[\@id='Message']/div[2]",'changes saved');
 
 }
 
@@ -244,7 +248,7 @@ delete_set($sel, setID=>"TestSet");
 
 sub delete_set {
   my $sel = shift;
-  my %options = shift;
+  my %options = @_;
   my $courseID = $options{courseID} // DEFAULT_COURSE_ID;
   my $setID = $options{setID} // DEFAULT_SET_ID;
 
@@ -255,7 +259,6 @@ sub delete_set {
   $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
 
-  return $sel->text_is("css=div.ResultsWithoutError", "deleted 1 sets");
 }
 
 =item create_problem
@@ -271,7 +274,7 @@ create_problem($sel, createCourse => 0,
 
 sub create_problem {
   my $sel = shift;
-  my %options = shift;
+  my %options = @_;
   my $courseID = $options{courseID} // DEFAULT_COURSE_ID;
   my $setID = $options{setID} // DEFAULT_SET_ID;
 
@@ -292,7 +295,6 @@ sub create_problem {
   $sel->click("id=submit_button_id");
   $sel->wait_for_page_to_load("30000");
 
-  return $sel->text_is("css=div.ResultsWithoutError", "Saved to file '[TMPL]/set${setID}/testProblem.pg'.");
 
 }
 
@@ -312,7 +314,7 @@ edit_problem($sel, createProblem => 0,
 
 sub edit_problem {
   my $sel = shift;
-  my %options = shift;
+  my %options = @_;
   my $courseID = $options{courseID} // DEFAULT_COURSE_ID;
   my $setID = $options{setID} // DEFAULT_SET_ID;
 
@@ -325,7 +327,6 @@ sub edit_problem {
   $sel->type("id=action_view_seed_id", "$options{seed}" // "1234");
   $sel->uncheck("id=newWindow");
 
-  return $sel->title_is('* : $setID : 1 : Editor');
 }
 
 
@@ -342,7 +343,7 @@ create_student($sel, createCourse=>0,
 
 sub create_student {
   my $sel = shift;
-  my %options = shift;
+  my %options = @_;
   my $courseID = $options{courseID} //  DEFAULT_COURSE_ID;
 
   if ($options{createCourse}) {
@@ -360,7 +361,6 @@ sub create_student {
   $sel->click("name=addStudents");
   $sel->wait_for_page_to_load("30000");
 
-  return $sel->text_is("//div[\@id='page_body']/p/b", "Entered student:");
 }
 
 =back

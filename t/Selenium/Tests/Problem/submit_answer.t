@@ -23,10 +23,7 @@ BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 	   unless($ENV{WEBWORK_ROOT});}
 use lib "$ENV{WEBWORK_ROOT}/t";
 
-# After you write your test you should add the number of tests here like
-# use Test::More tests => 23
-
-use Test::More qw(no_plan);
+use Test::More tests => 22;
 use Test::WWW::Selenium;
 use Test::Exception;
 use Time::HiRes qw(sleep);
@@ -43,7 +40,7 @@ my $sel = Test::WWW::Selenium->new( host => "localhost",
 create_course($sel);
 import_set($sel);
 
-$sel->click_ok("link=Instructor Tools");
+$sel->open('/webwork2/TestCourse/instructor');
 $sel->wait_for_page_to_load_ok("30000");
 $sel->add_selection_ok("name=selected_users", "label=Administrator, (admin)");
 $sel->add_selection_ok("name=selected_sets", "label=Demo");
@@ -58,9 +55,9 @@ $sel->click_ok("link=Demo");
 $sel->wait_for_page_to_load_ok("30000");
 $sel->click_ok("link=Problem 1");
 $sel->wait_for_page_to_load_ok("30000");
-$sel->type_ok("id=AnSwEr0001", "2.828427");
-$sel->type_ok("id=AnSwEr0002", "2");
-$sel->type_ok("id=AnSwEr0003", "3");
+$sel->type_ok("id=AnSwEr0001", "8.2462112");
+$sel->type_ok("id=AnSwEr0002", "-3");
+$sel->type_ok("id=AnSwEr0003", "-5");
 $sel->click_ok("id=submitAnswers_id");
 $sel->wait_for_page_to_load_ok("30000");
 $sel->text_is("//div[\@id='output_summary']/table/tbody/tr[2]/td[3]/a/span", "correct");

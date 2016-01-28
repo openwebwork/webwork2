@@ -25,7 +25,6 @@ use lib "$ENV{WEBWORK_ROOT}/t";
 
 # After you write your test you should add the number of tests here like
 # use Test::More tests => 23
-
 use Test::More qw(no_plan);
 use Test::WWW::Selenium;
 use Test::Exception;
@@ -56,5 +55,8 @@ create_course($sel);
 # Selenium IDE Plugin: https://addons.mozilla.org/en-US/firefox/addon/selenium-ide/
 # Selenium IDE Perl Plugin: https://addons.mozilla.org/en-US/firefox/addon/selenium-ide-perl-formatter/
 # 
+# Be sure to look at webwork2/t/Selenium/Utilities.pm to see what
+# utilities are available. This will save a lot of time in creating test
+# components like sets and users.  
 
 delete_course($sel);
