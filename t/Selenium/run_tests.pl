@@ -40,14 +40,12 @@ use constant TESTING_DIRECTORY => "$ENV{WEBWORK_ROOT}/t/Selenium/Tests";
 
 my @files;
 
-if (length(@ARGV)) {
-  
+if (scalar(@ARGV)) {
   @files = @ARGV;
-  
 } else {
-  
-  @files = find(sub {/*.t/;}, TESTING_DIRECTORY);
+    find(sub {/\.t$/ && push @files, $File::Find::name;}, TESTING_DIRECTORY);
 }
 
-runtests( @test_Files);
-  
+if (scalar(@files)) {
+    runtests( @files);
+}
