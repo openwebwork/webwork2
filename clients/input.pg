@@ -8,6 +8,7 @@ loadMacros(
 "PGbasicmacros.pl",
 "PGchoicemacros.pl",
 "PGanswermacros.pl",
+"PGinfo.pl",
 "PGauxiliaryFunctions.pl"
 );
 
@@ -20,7 +21,7 @@ $d = random(1,11,1);
 
 BEGIN_TEXT
 $PAR
-displayMode  is $displayMode $BR
+displayMode  is $displayMode  problem seed is $problemSeed $BR
 $PAR
 This problem demonstrates how you enter numerical answers into WeBWorK. $PAR
 Evaluate the expression \(3($a )($b -$c -2($d ))\):

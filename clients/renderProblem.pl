@@ -81,6 +81,7 @@ use MIME::Base64 qw( encode_base64 decode_base64);
 
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
+use constant PROBLEMSEED   => '32145'; 
 
 
 ### select a rendering site
@@ -279,14 +280,15 @@ die "Something is wrong with the contents of $fileName\n" if $@;
 our $xmlrpc_client = new WebworkClient (
 	url                    => $XML_URL,
 	form_action_url        => $FORM_ACTION_URL,
-	displayMode            => DISPLAYMODE(),
+#	displayMode            => DISPLAYMODE(),
 	site_password          =>  $XML_PASSWORD//'',
 	courseID               =>  $credentials{courseID},
 	userID                 =>  $credentials{userID},
 	session_key            =>  $credentials{session_key}//'',
 	sourceFilePath         =>  $fileName,
+	inputs_ref             =>  {displayMode => DISPLAYMODE(), problemSeed => PROBLEMSEED(),},
 );
- 
+
  $xmlrpc_client->encodeSource($source);
  
  my $input = { 
@@ -301,8 +303,10 @@ our $xmlrpc_client = new WebworkClient (
 		                               sourceFilePath => $fileName
 		                            ),
  };
-		                 
-
+$input->{envir}->{inputs_ref} = { displayMode => DISPLAYMODE(),	
+                                  problemSeed => PROBLEMSEED(),	  
+};               
+								  
 $xmlrpc_client->{sourceFilePath}  = $fileName;
 
 ############################################
@@ -358,7 +362,7 @@ sub pretty_print_rh {
 	}
 	return $out." " unless defined($rh);
 	
-	if ( ref($rh) =~/HASH/ or "$rh" =~/HASH/ ) {
+	if ( ref($rh) =~/HASH/  ) {
 	    $out .= "{\n";
 	    $indent++;
  		foreach my $key (sort keys %{$rh})  {

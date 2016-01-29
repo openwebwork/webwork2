@@ -145,18 +145,6 @@ sub scoring_info {
 		$msg =~ s/\$COL\[(\-?\d+)\]//g
 	}
 	
-# 	old version 
-#  	$msg =~ s/(\$SID)/eval($1)/ge;
-#  	$msg =~ s/(\$LN)/eval($1)/ge;
-#  	$msg =~ s/(\$FN)/eval($1)/ge;
-#  	$msg =~ s/(\$STATUS)/eval($1)/ge;
-#  	$msg =~ s/(\$SECTION)/eval($1)/ge;
-#  	$msg =~ s/(\$RECITATION)/eval($1)/ge;
-#  	$msg =~ s/(\$EMAIL)/eval($1)/ge;
-#  	$msg =~ s/(\$LOGIN)/eval($1)/ge;
-#  	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
-#  	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
- 	
  	$msg =~ s/\r//g;
  	$msg = "<pre>$msg</pre>";
  	$msg = qq!More scoring information goes here in [TMPL]/email/report_grades.msg. It
@@ -263,7 +251,20 @@ sub displayStudentStats {
 	my $max_problems=0;
 
 	foreach my $setName (@allSetIDs) {
-	    my $num_of_problems = $db->countGlobalProblems($setName);
+	    my $set = $db->getGlobalSet($setName);
+	    my $num_of_problems;
+	    # For jitar sets we only display grades for top level problems
+	    # so we need to count how many there are
+	    if ($set && $set->assignment_type() eq 'jitar') {
+		my @problemIDs = $db->listGlobalProblems($setName);
+		foreach my $problemID (@problemIDs) {
+		    my @seq = jitar_id_to_seq($problemID);
+		    $num_of_problems++ if ($#seq == 0);
+		}
+	    } else {
+		# for other sets we just count the number of problems. 
+		$num_of_problems = $db->countGlobalProblems($setName);
+	    }
 	    $max_problems = ($max_problems<$num_of_problems)? $num_of_problems:$max_problems;
 	}
 	
@@ -335,8 +336,8 @@ sub displayStudentStats {
 
 		$string =~ s/&nbsp;/ /g;
 		$twoString =~ s/&nbsp;/ /g;
-		my @prob_scores = $string =~ /.{3}/g;
-		my @prob_att = $twoString =~ /.{3}/g;
+		my @prob_scores = $string =~ /.{4}/g;
+		my @prob_att = $twoString =~ /.{4}/g;
 
 		my @cgi_prob_scores = ();
 
@@ -344,15 +345,16 @@ sub displayStudentStats {
 		    my $score = defined($prob_scores[$i]) ? 
 			$prob_scores[$i] :  '&nbsp;';
 		    my $class = '';
-		    if ($score =~ /C\s*/) {
-			$score = '&nbsp;C&nbsp;';
+		    if ($score =~ /100\s*/) {
+			$score = '100&nbsp;';
 			$class = "correct";
 		    } elsif ($score =~ /\.\s*/) {
-			$score = '&nbsp;.&nbsp;';
+			$score = '&nbsp;.&nbsp;&nbsp;';
 			$class = "unattempted";
 		    }
 		    my $att = defined($prob_att[$i]) ?
 			$prob_att[$i] : '&nbsp;';
+
 		    $cgi_prob_scores[$i] = CGI::td(
                               CGI::span({class=>$class},$score).
 					CGI::br().
@@ -386,7 +388,7 @@ sub displayStudentStats {
 	my $problem_header = "";
 	foreach (1 .. $max_problems) {
 		$problem_header .= CGI::th({scope=>'col'},
-					   &threeSpaceFill($_));
+					   &fourSpaceFill($_));
 	}
 	
 	my $table_header = join("\n",
@@ -569,18 +571,17 @@ sub grade_set {
 			# Determine the string $longStatus which 
 			# will display the student's current score
 			###########################################			
-
+			
 			if (!$attempted){
 				$longStatus     = '.';
 			} elsif   ($valid_status) {
 				$longStatus     = 100*wwRound(2,$status);
-				$longStatus='C' if ($longStatus==100);
 			} else	{
 				$longStatus 	= 'X';
 			}
 
-			$string          .= threeSpaceFill($longStatus);
-			$twoString       .= threeSpaceFill($num_incorrect);
+			$string          .= fourSpaceFill($longStatus);
+			$twoString       .= fourSpaceFill($num_incorrect);
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total           += $probValue;
@@ -621,12 +622,13 @@ sub grade_set {
 #################################
 # Utility function NOT a method
 #################################
-sub threeSpaceFill {
+sub fourSpaceFill {
 	my $num = shift @_ || 0;
 
-	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
-	elsif (length($num)==2) {return "$num".'&nbsp;';}
-	else {return "## ";}
+	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;&nbsp;';}
+	elsif (length($num)==2) {return "$num".'&nbsp;&nbsp;';}
+	elsif (length($num)==3) {return "$num".'&nbsp;';}
+	else {return "### ";}
 }
 
 1;

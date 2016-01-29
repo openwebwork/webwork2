@@ -29,7 +29,7 @@ sub create {
 	# note this ce is different from $self->ce!
 	# FIXME!!!!
 	my $ce = WeBWorK::CourseEnvironment->new({
-			webwork_dir => $self->{ce}->{webwork_dir},
+			webwork_dir => $self->ce->{webwork_dir},
 			courseName => $newcourse
 		});
 	my $db = $self->db;
