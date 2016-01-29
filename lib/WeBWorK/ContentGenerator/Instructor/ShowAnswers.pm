@@ -79,6 +79,7 @@ sub initialize {
 	
 	my %records;
 	my %prettyProblemNumbers;
+	my %answerTypes;
 	
   	foreach my $studentUser (@$selectedUsers) {
 	    my @sets;
@@ -111,15 +112,15 @@ sub initialize {
 		# search for matching problems
 		my @allProblems = $db->listUserProblems($studentUser, $setName);
 		next unless @allProblems;
-		foreach my $problem (@allProblems) {
-		  my $prettyProblemNumber = $problem;
+		foreach my $problemNumber (@allProblems) {
+		  my $prettyProblemNumber = $problemNumber;
 		  if ($isJitarSet) {
-		    $prettyProblemNumber = join('.',jitar_id_to_seq($problem));
+		    $prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
 		  }
-		  $prettyProblemNumbers{$setName}{$problem} = $prettyProblemNumber;
+		  $prettyProblemNumbers{$setName}{$problemNumber} = $prettyProblemNumber;
 
 		  if (grep(/^$prettyProblemNumber$/,@$selectedProblems)) {
-		    push (@problemNumbers, $problem);
+		    push (@problemNumbers, $problemNumber);
 		  }
 		}
 				
@@ -127,46 +128,48 @@ sub initialize {
 
 		foreach my $problemNumber (@problemNumbers) {
 		  my @pastAnswerIDs = $db->listProblemPastAnswers($studentUser, $setName, $problemNumber);
+
+		  if (!defined($answerTypes{$setName}{$problemNumber})) {
+		    #set up a silly problem to figure out what type the answers are
+		    #(why isn't this stored somewhere)
+		    my $unversionedSetName = $setName;
+		    $unversionedSetName =~ s/,v[0-9]*$//;
+		    my $displayMode   = $self->{displayMode};
+		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
+		    my $set = $db->getMergedSet($studentUser, $unversionedSetName);
+		    my $problem = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
+		    my $userobj = $db->getUser($studentUser);
+		    #if these things dont exist then the problem doesnt exist and past answers dont make sense
+		    next unless defined($set) && defined($problem) && defined($userobj); 
+		    
+		    my $pg = WeBWorK::PG->new(
+					      $ce,
+					      $userobj,
+					      $key,
+					      $set,
+					      $problem,
+					      $set->psvn, # FIXME: this field should be removed
+					      $formFields,
+					      { # translation options
+					       displayMode     => 'plainText',
+					       showHints       => 0,
+					       showSolutions   => 0,
+					       refreshMath2img => 0,
+					       processAnswers  => 1,
+					       permissionLevel => $db->getPermissionLevel($studentUser)->permission,
+					       effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
+					      },
+					     );
 		  
-		  # changed this to use the db for the past answers.  
+		    # check to see what type the answers are.  right now it only checks for essay but could do more
+		    my %answerHash = %{ $pg->{answers} };
+		    my @answerTypes;
 		  
-		  #set up a silly problem to figure out what type the answers are
-		  #(why isn't this stored somewhere)
-		  my $unversionedSetName = $setName;
-		  $unversionedSetName =~ s/,v[0-9]*$//;
-		  my $displayMode   = $self->{displayMode};
-		  my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars }; 
-		  my $set = $db->getMergedSet($studentUser, $unversionedSetName);
-		  my $problem = $db->getMergedProblem($studentUser, $unversionedSetName, $problemNumber);
-		  my $userobj = $db->getUser($studentUser);
-		  #if these things dont exist then the problem doesnt exist and past answers dont make sense
-		  next unless defined($set) && defined($problem) && defined($userobj); 
-		  
-		  my $pg = WeBWorK::PG->new(
-					    $ce,
-					    $userobj,
-					    $key,
-					    $set,
-					    $problem,
-					    $set->psvn, # FIXME: this field should be removed
-					    $formFields,
-					    { # translation options
-					     displayMode     => 'plainText',
-					     showHints       => 0,
-					     showSolutions   => 0,
-					     refreshMath2img => 0,
-					     processAnswers  => 1,
-					     permissionLevel => $db->getPermissionLevel($studentUser)->permission,
-					     effectivePermissionLevel => $db->getPermissionLevel($studentUser)->permission,
-					    },
-					   );
-		  
-		  # check to see what type the answers are.  right now it only checks for essay but could do more
-		  my %answerHash = %{ $pg->{answers} };
-		  my @answerTypes;
-		  
-		  foreach (sortByName(undef, keys %answerHash)) {
-		    push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
+		    foreach (sortByName(undef, keys %answerHash)) {
+		      push(@answerTypes,defined($answerHash{$_}->{type})?$answerHash{$_}->{type}:'undefined');
+		    }
+
+		    $answerTypes{$setName}{$problemNumber} = [@answerTypes];
 		  }
 		  
 		  my @pastAnswers = $db->getPastAnswers(\@pastAnswerIDs);
@@ -182,7 +185,7 @@ sub initialize {
 		    
 		    $records{$studentUser}{$setName}{$problemNumber}{$answerID} =  { time => $time,
 										     answers => [@answers],
-										     answerTypes => [@answerTypes],
+										     answerTypes => $answerTypes{$setName}{$problemNumber},
 										     scores => [@scores],
 										     comment => $pastAnswer->comment_string // '' };
 		    
