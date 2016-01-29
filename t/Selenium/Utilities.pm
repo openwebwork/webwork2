@@ -67,7 +67,6 @@ sub create_course {
   my $sel = shift;
   # rest of the options are in hash form
   my %options = @_;
-
   
   $sel->open("/webwork2/admin");
   $sel->wait_for_page_to_load("30000");
@@ -351,7 +350,7 @@ sub create_student {
   }
 
   $sel->open("/webwork2/$courseID/instructor/users2");
-  sel->click("link=Add");
+  $sel->click("link=Add");
   $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
   $sel->type("name=last_name_1", $options{firstName} // "Student");

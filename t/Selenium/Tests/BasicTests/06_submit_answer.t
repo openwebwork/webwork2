@@ -23,7 +23,7 @@ BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 	   unless($ENV{WEBWORK_ROOT});}
 use lib "$ENV{WEBWORK_ROOT}/t";
 
-use Test::More tests => 22;
+use Test::More tests => 26;
 use Test::WWW::Selenium;
 use Test::Exception;
 use Time::HiRes qw(sleep);
@@ -49,17 +49,21 @@ $sel->wait_for_page_to_load_ok("30000");
 $sel->type_ok("id=problem.1.problem_seed_id", "100");
 $sel->click_ok("id=submit_changes_2");
 $sel->wait_for_page_to_load_ok("30000");
+ok(not $sel->is_element_present("css=#warnings"));
 $sel->click_ok("link=Homework Sets");
 $sel->wait_for_page_to_load_ok("30000");
 $sel->click_ok("link=Demo");
 $sel->wait_for_page_to_load_ok("30000");
+ok(not $sel->is_element_present("css=#warnings"));
 $sel->click_ok("link=Problem 1");
 $sel->wait_for_page_to_load_ok("30000");
+ok(not $sel->is_element_present("css=#warnings"));
 $sel->type_ok("id=AnSwEr0001", "8.2462112");
 $sel->type_ok("id=AnSwEr0002", "-3");
 $sel->type_ok("id=AnSwEr0003", "-5");
 $sel->click_ok("id=submitAnswers_id");
 $sel->wait_for_page_to_load_ok("30000");
+ok(not $sel->is_element_present("css=#warnings"));
 $sel->text_is("//div[\@id='output_summary']/table/tbody/tr[2]/td[3]/a/span", "correct");
 $sel->text_is("//div[\@id='output_summary']/table/tbody/tr[3]/td[3]/a/span", "correct");
 $sel->text_is("//div[\@id='output_summary']/table/tbody/tr[4]/td[3]/a/span", "correct");
