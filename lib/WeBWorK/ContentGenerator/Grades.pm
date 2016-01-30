@@ -87,13 +87,16 @@ sub scoring_info {
 	
 	my $userName          = $r->param('effectiveUser') || $r->param('user');
 	my $userID              = $r->param('user');
-    my $ur                = $db->getUser($userName);
+	my $ur                = $db->getUser($userName);
 	my $emailDirectory    = $ce->{courseDirs}->{email};
-	my $filePath          = "$emailDirectory/report_grades.msg";
+	my $message_file = "report_grades.msg";
+	my $filePath          = "$emailDirectory/$message_file";
 	my $merge_file         = "report_grades_data.csv";
 	my $delimiter            = ',';
 	my $scoringDirectory    = $ce->{courseDirs}->{scoring};
-	return $r->maketext("There is no additional grade information. The spreadsheet file [_1] cannot be found.", $filePath) unless -e "$scoringDirectory/$merge_file";
+
+	return  $r->maketext('There is no additional grade information.  A message about additional grades can go in in ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file) unless (-e "$scoringDirectory/$merge_file" && -e "$filePath");
+	
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my $text;
 	my $header = '';
@@ -146,13 +149,13 @@ sub scoring_info {
 	}
 	
  	$msg =~ s/\r//g;
- 	$msg = "<pre>$msg</pre>";
- 	$msg = qq!More scoring information goes here in [TMPL]/email/report_grades.msg. It
-		is merged with the file [Scoring]/report_grades_data.csv. <br>These files can be edited 
-		using the "Email" link and the "Scoring Tools" link in the left margin.<p>!.$msg if ($r->authz->hasPermissions($userID, "access_instructor_tools"));
-	return CGI::div(
-		{style =>"background-color:#DDDDDD"}, $msg
-	);
+	$msg =~ s/\n/<br>/g;
+	
+	
+ 	$msg = CGI::div({class=>"additional-scoring-msg"}, CGI::h3($r->maketext("Scoring Message")), $msg);
+
+	$msg .= CGI::div($r->maketext('This scoring message is generated from ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file)) if ($r->authz->hasPermissions($userID, "access_instructor_tools"));
+	return $msg;
 }
 
 sub displayStudentStats {
@@ -249,7 +252,9 @@ sub displayStudentStats {
 	
 	my @rows;
 	my $max_problems=0;
-
+	my $courseTotal=0;
+	my $courseTotalRight=0;
+	
 	foreach my $setName (@allSetIDs) {
 	    my $set = $db->getGlobalSet($setName);
 	    my $num_of_problems;
@@ -370,16 +375,25 @@ sub displayStudentStats {
 		
 		# prettify versioned set display
 		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
-	
+
+		# get percentage correct
+		my $totalRightPercent = 100*wwRound(2,$total ? $totalRight/$total : 0);
+		my $class = '';
+		if ($totalRightPercent == 0) {
+		  $class = 'unattempted';
+		} elsif ($totalRightPercent == 100) {
+		  $class = 'correct';
+		}
+
+		$courseTotal += $total;
+		$courseTotalRight += $totalRight;
+		
 		push @rows, CGI::Tr({},
 			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
+			CGI::td(CGI::span({-class=>$class},$totalRightPercent.'%')),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
-			#CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator -- leave this out
 			@cgi_prob_scores     # problems
-			#CGI::td($studentRecord->section),
-			#CGI::td($studentRecord->recitation),
-			#CGI::td($studentRecord->user_id),			
 			
 		);
 	
@@ -396,6 +410,7 @@ sub displayStudentStats {
 		CGI::start_table({style=>'font-size:smaller',-id=>"grades_table"}),
 		CGI::Tr({},
 			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Set')),
+			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Percent')),
 			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Score')),
 			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Out Of')),
 			CGI::th({colspan=>$max_problems,scope=>'col'},$r->maketext('Problems')
@@ -405,6 +420,24 @@ sub displayStudentStats {
 		
 	print $table_header;
 	print @rows;
+
+	#Print out a row giving course totals
+
+	# get percentage correct
+	my $totalRightPercent = 100*wwRound(2,$courseTotal ? $courseTotalRight/$courseTotal : 0);
+	my $class = '';
+	if ($totalRightPercent == 0) {
+	  $class = 'unattempted';
+	} elsif ($totalRightPercent == 100) {
+	  $class = 'correct';
+	}
+
+	print CGI::Tr({class=>"grades-course-total"}, CGI::th({scope=>'row'},$r->maketext("Homework Totals")),
+		      CGI::td(CGI::span({class=>"$class"},$totalRightPercent.'%')),
+		      CGI::td($courseTotalRight),
+		      CGI::td($courseTotal),
+		      CGI::td({colspan=>$max_problems},'&nbsp;'));
+	
 	print CGI::end_table();
 			
 	return "";
