@@ -31,7 +31,7 @@ TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
 \par
 \noindent{\large \bf {Devoir\{protect_underbar($setNumber)\} doit être remis le  $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}h$DueDateMinute}}
 \par\noindent \bigskip
-Un résumé des commandes et notations que WeBWorK reconnaît est disponible à cette adresse : http://mathema-tic.ca/wp-content/uploads/2015/10/Didacticiel_WebWorK.pdf.
+Un résumé des commandes et notations que WeBWorK reconnaît est disponible à cette adresse : http://mathema-tic.ca/wp-content/uploads/2016/01/Didacticiel_WebWorK.pdf.
 
 EOT
 
