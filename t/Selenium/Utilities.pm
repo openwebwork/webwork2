@@ -172,14 +172,14 @@ sub create_set {
   my $setID = $options{setID} // DEFAULT_SET_ID;
 
   if ($options{createCourse}) {
-    warn "Unable to create course" unless create_course($sel,%options);
+      create_course($sel,%options);
   }
-
   $sel->open("/webwork2/$courseID/instructor/sets2");
   $sel->wait_for_page_to_load("30000");
   $sel->click("link=Create");
   $sel->type("id=create_text", $setID );
   $sel->click("id=take_action");
+  $sel->wait_for_page_to_load("30000");
   $sel->check("id=${setID}_id");
   $sel->click("link=Edit");
   $sel->click("id=take_action");
@@ -189,7 +189,6 @@ sub create_set {
   $sel->type("id=set.${setID}.answer_date_id", $options{setDate} // "12/01/2025 at 01:00pm");
   $sel->click("id=take_action");
   $sel->wait_for_page_to_load("30000");
-
 
 }
 
@@ -214,7 +213,7 @@ sub import_set {
   
 
   if ($options{createCourse}) {
-    warn "Unable to create course" unless create_course($sel,%options);
+      create_course($sel,%options);
   }
 
   $sel->open("/webwork2/$courseID/instructor/sets2");
@@ -267,7 +266,8 @@ the problem is always the first problem.  You can set the setID as a
 parameter as well as if a course should be created.
 
 create_problem($sel, createCourse => 0,
-                     setID => "TestSet");
+                     setID => "TestSet",
+                     createSet => 1);
 
 =cut
 
@@ -277,7 +277,9 @@ sub create_problem {
   my $courseID = $options{courseID} // DEFAULT_COURSE_ID;
   my $setID = $options{setID} // DEFAULT_SET_ID;
 
-  warn "Unable to create set" unless create_set($sel,%options);
+  unless (defined($options{createSet}) && not $options{createSet}) {
+      create_set($sel,%options);
+  }
   
   $sel->open("/webwork2/$courseID/instructor/sets2/$setID");
   $sel->wait_for_page_to_load("30000");
@@ -285,7 +287,7 @@ sub create_problem {
   $sel->click("id=submit_changes_2");
   $sel->wait_for_page_to_load("30000");
 
-  warn "Unable to create problem!" unless $sel->text_is("css=div.ResultsWithoutError", "Added set${setID}/blankProblem.pg to $setID *");
+  warn "Unable to create problem!" unless $sel->get_text("css=div.ResultsWithoutError") =~ /Added set${setID}\/blankProblem.pg to $setID/;
 
   $sel->open("/webwork2/$courseID/instructor/pgProblemEditor2/${setID}/1");
   $sel->wait_for_page_to_load("30000");
@@ -318,13 +320,14 @@ sub edit_problem {
   my $setID = $options{setID} // DEFAULT_SET_ID;
 
   if ($options{createProblem}) {
-    warn("Unable to create problem") unless create_problem($sel,%options);
+      create_problem($sel,%options);
   }
 
   $sel->open("/webwork2/$courseID/instructor/pgProblemEditor2/${setID}/1");
   $sel->wait_for_page_to_load("30000");
+  $sel->click("link=View");
   $sel->type("id=action_view_seed_id", "$options{seed}" // "1234");
-  $sel->uncheck("id=newWindow");
+  $sel->click("id=newWindow");
 
 }
 
@@ -346,7 +349,7 @@ sub create_student {
   my $courseID = $options{courseID} //  DEFAULT_COURSE_ID;
 
   if ($options{createCourse}) {
-    warn "Unable to create course" unless create_course($sel,%options);
+      create_course($sel,%options);
   }
 
   $sel->open("/webwork2/$courseID/instructor/users2");
