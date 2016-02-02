@@ -24,8 +24,8 @@ BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 use lib "$ENV{WEBWORK_ROOT}/t";
 
 use Test::WWW::Selenium;
-use Selenium::Utilities;
 use Getopt::Long;
+use Selenium::Utilities;
 
 my $admin_uname   = "admin";
 my $admin_pwd = "admin";
@@ -50,18 +50,11 @@ EOS
     exit;
 }
 
-if ($admin_uname) {
-    $ENV{WW_TEST_UNAME} = $admin_uname;
-}
-
-if ($admin_pwd) {
-    $ENV{WW_TEST_PWD} = $admin_pwd;
-}
-
-
 my $sel = Test::WWW::Selenium->new( host => "localhost", 
 			      port => 4444, 
 			      browser => "*firefox", 
 			      browser_url => "http://localhost/" );
 
-delete_course($sel);
+
+
+delete_course($sel,uname=>$admin_uname,pwd=>$admin_pwd);

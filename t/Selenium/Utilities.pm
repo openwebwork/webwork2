@@ -109,12 +109,15 @@ sub delete_course {
   my %options = @_;
 
   my $courseID = $options{courseID} // DEFAULT_COURSE_ID;
+
+  my $uname = $options{uname} // $admin_uname;
+  my $pwd = $options{pwd} // $admin_pwd;
   
   $sel->open("/webwork2/admin");
   $sel->wait_for_page_to_load("30000");
   if ($sel->is_element_present("id=uname")) {
-      $sel->type("id=uname", $admin_uname );
-      $sel->type("id=pswd", $admin_pwd );
+      $sel->type("id=uname", $uname );
+      $sel->type("id=pswd", $pwd );
       $sel->click("id=none");
       $sel->wait_for_page_to_load("30000");
 
