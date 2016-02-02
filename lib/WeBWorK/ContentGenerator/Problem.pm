@@ -348,9 +348,6 @@ sub templateName {
 	my $self = shift;
 	my $r = $self->r;
 	my $templateName = $r->param('templateName')//'system';
-	unless ($templateName =~/^system$|^gateway$|^simple$/ ) {
-		$templateName = 'system';
-	}
 	$self->{templateName}= $templateName;
 	$templateName;
 }

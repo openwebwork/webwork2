@@ -1,0 +1,19 @@
+DOCUMENT();      
+loadMacros(
+"PGstandard.pl",     # Standard macros for PG language
+"MathObjects.pl",
+"contextAlternateDecimal.pl"
+);
+
+Context("Matrix");
+context::AlternateDecimal->Default(",",",");
+
+TEXT(beginproblem());
+$pi = Compute("[[3,14; 2,18]; [3,22; 3,14*x^(2,12)]]");
+Context()->texStrings;
+BEGIN_TEXT
+\($pi\) and \{$pi->ans_rule\} $BR
+END_TEXT
+Context()->normalStrings;
+ANS($pi->cmp);
+ENDDOCUMENT();    
