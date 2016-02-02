@@ -25,6 +25,38 @@ use lib "$ENV{WEBWORK_ROOT}/t";
 
 use Test::WWW::Selenium;
 use Selenium::Utilities;
+use Getopt::Long;
+
+my $admin_uname   = "admin";
+my $admin_pwd = "admin";
+my $help = 0;
+
+GetOptions ("uname=s"  => \$admin_uname,    
+	    "pwd=s"    => \$admin_pwd,      
+	    "help"  => \$help,)   
+    or die("Error in command line arguments\n");
+
+if ($help) {
+    print <<EOS;
+    This command deletes the standard Selenium test course and can be used to
+clean up after a failed run of tests.  This command takes the following 
+options:
+    --uname=<admin username> :  This is the username for the admin user that 
+will be used to run the tests.
+    --pwd=<admin pwd> : This is the password for the admin user that will be 
+used to run the tests.
+    --help : Print this message.
+EOS
+    exit;
+}
+
+if ($admin_uname) {
+    $ENV{WW_TEST_UNAME} = $admin_uname;
+}
+
+if ($admin_pwd) {
+    $ENV{WW_TEST_PWD} = $admin_pwd;
+}
 
 
 my $sel = Test::WWW::Selenium->new( host => "localhost", 

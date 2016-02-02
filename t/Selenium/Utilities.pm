@@ -34,7 +34,7 @@ use lib "$ENV{WEBWORK_ROOT}/t";
 use Exporter 'import';
 use WWW::Selenium;
 
-use constant DEFAULT_COURSE_ID => "TestCourse";
+use constant DEFAULT_COURSE_ID => "TestCourseX";
 use constant DEFAULT_SET_ID => "TestSet";
 
 
@@ -50,14 +50,17 @@ our @EXPORT= qw(
 	     create_student
 	   );
 
+my $admin_uname = $ENV{WW_TEST_UNAME} // "admin";
+my $admin_pwd = $ENV{WW_TEST_PWD} // "admin";
+
 =item create_course
 
 This creates a course.  The id, name and institution default to
-TestCourse; Test Course; and Test University but can be passed as
+TestCourseX; Test Course; and Test University but can be passed as
 paramters as well. It expects the Selenium object to be passed in as the
 first parameter.
 
-create_course($sel, courseID=>"TestCourse",
+create_course($sel, courseID=>"TestCourseX",
                     courseTitle=>"Test Course",
                     courseInstitution=>"Test University");
 
@@ -70,10 +73,15 @@ sub create_course {
   
   $sel->open("/webwork2/admin");
   $sel->wait_for_page_to_load("30000");
-  $sel->type("id=uname", "admin");
-  $sel->type("id=pswd", "admin");
+  $sel->type("id=uname", $admin_uname );
+  $sel->type("id=pswd", $admin_pwd );
   $sel->click("id=none");
   $sel->wait_for_page_to_load("30000");
+
+  if ($sel->get_text("css=p") =~ /Your authentication failed/) {
+      die "Login to the admin course failed with username ${admin_uname}.  If the admin user doesn't have user name admin and pasword admin you will need to specify the login credentials on the command line.\n";
+  } 
+  
   $sel->click("link=Add Course");
   $sel->wait_for_page_to_load("30000");
   $sel->type("name=add_courseID", $options{courseID} // DEFAULT_COURSE_ID);
@@ -88,11 +96,11 @@ sub create_course {
 
 =item delete_course
 
-This deletes a course. The ID of the course is assumed to be TestCourse
+This deletes a course. The ID of the course is assumed to be TestCourseX
 unless something else is passed in as a parameter.  It is assumed that the 
 selenium object will be passed to the function 
 
-delete_course($sel, courseID=>"TestCourse");
+delete_course($sel, courseID=>"TestCourseX");
 
 =cut
 
@@ -105,10 +113,14 @@ sub delete_course {
   $sel->open("/webwork2/admin");
   $sel->wait_for_page_to_load("30000");
   if ($sel->is_element_present("id=uname")) {
-      $sel->type("id=uname", "admin");
-      $sel->type("id=pswd", "admin");
+      $sel->type("id=uname", $admin_uname );
+      $sel->type("id=pswd", $admin_pwd );
       $sel->click("id=none");
       $sel->wait_for_page_to_load("30000");
+
+      if ($sel->get_text("css=p") =~ /Your authentication failed/) {
+	  die "Login to the admin course failed with username ${admin_uname}.  If the admin user doesn't have user name admin and pasword admin you will need to specify the login credentials on the command line.\n";
+      } 
   }
   $sel->click("link=Delete Course");
   $sel->wait_for_page_to_load("30000");
@@ -124,10 +136,10 @@ sub delete_course {
 
 =item log_into_course
 
-This logs into a test course.  By default the course id is TestCourse and the 
+This logs into a test course.  By default the course id is TestCourseX and the 
 username and password are admin/admin.  These can be overriden as options
 
-log_into_course($sel, courseID=>"TestCourse",
+log_into_course($sel, courseID=>"TestCourseX",
                       userID=>"admin", 
                       password=>"admin");
 
@@ -141,8 +153,13 @@ sub log_into_course {
 
   $sel->open("/webwork2/$courseID");
   $sel->wait_for_page_to_load("30000");
-  $sel->type("id=uname", $options{userID} // "admin");
-  $sel->type("id=pswd", $options{password} // "admin");
+  $sel->type("id=uname", $options{userID} // $admin_uname);
+  $sel->type("id=pswd", $options{password} // $admin_pwd);
+
+  if ($sel->get_text("css=p") =~ /Your authentication failed/) {
+      die "Login to $courseID failed.  You will need to specify the login credentials manually.\n";
+  } 
+
   $sel->click("id=none");
   $sel->wait_for_page_to_load("30000");
 
@@ -157,7 +174,7 @@ from scratch then the routine assumes that you are currently logged into
 a course.
 
 create_set($sel, createCourse => 0,
-                 setID => "TestCourse",
+                 setID => "TestSet",
                  openDate => "12/01/2001 at 1:00pm",
                  dueDate => "12/01/2025 at 1:00pm"
                  answerDate => "12/01/2025 at 1:00pm"

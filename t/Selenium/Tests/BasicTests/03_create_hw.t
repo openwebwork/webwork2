@@ -38,7 +38,7 @@ my $sel = Test::WWW::Selenium->new( host => "localhost",
 
 create_course($sel);
 
-$sel->open_ok("/webwork2/TestCourse/");
+$sel->open_ok("/webwork2/TestCourseX/");
 $sel->click_ok("link=Hmwk Sets Editor");
 $sel->wait_for_page_to_load_ok("30000");
 $sel->click_ok("link=Import");

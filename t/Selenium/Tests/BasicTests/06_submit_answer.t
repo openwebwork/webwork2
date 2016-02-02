@@ -40,7 +40,7 @@ my $sel = Test::WWW::Selenium->new( host => "localhost",
 create_course($sel);
 import_set($sel);
 
-$sel->open('/webwork2/TestCourse/instructor');
+$sel->open('/webwork2/TestCourseX/instructor');
 $sel->wait_for_page_to_load_ok("30000");
 $sel->add_selection_ok("name=selected_users", "label=Administrator, (admin)");
 $sel->add_selection_ok("name=selected_sets", "label=Demo");

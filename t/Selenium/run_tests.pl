@@ -35,17 +35,65 @@ use lib "$ENV{WEBWORK_ROOT}/t";
 
 use File::Find;
 use Test::Harness;
+use Getopt::Long;
 
 use constant TESTING_DIRECTORY => "$ENV{WEBWORK_ROOT}/t/Selenium/Tests";
 
-my @files;
+my $admin_uname   = "admin";
+my $admin_pwd = "admin";
+my $help = 0;
+my $alltests = 0;
 
+GetOptions ("uname=s"  => \$admin_uname,    
+	    "pwd=s"    => \$admin_pwd,      
+	    "help"  => \$help,
+            "all-tests" => \$alltests)   
+    or die("Error in command line arguments\n");
+
+if ($help || 
+    (scalar(@ARGV) == 0 && !$alltests)) {
+    print <<EOS;
+    This command is used to run Selenium based testing scripts for WeBWorK.  
+In order to use it you will need to have a Selenium Standalone Server running. 
+The jar file for this server can be downloaded from www.seleniumhq.org.  You 
+will also need a copy of Firefox and can optionally set up Xvfb to run the 
+tests "headlessly".  This command takes the following options:
+    --uname=<admin username> :  This is the username for the admin user that 
+will be used to run the tests.
+    --pwd=<admin pwd> : This is the password for the admin user that will be 
+used to run the tests.
+    --all-tests : This runs all of the tests in the Tests directory.  
+Alternatively individual tests files can be provided on the command line.
+    --help : Print this message.
+
+Example:
+
+run_tests.pl --uname=admin -pwd=12345 Tests/BasicTests/*    
+
+Note:  You can also perminantly set the username and password used for
+Selenium tests by setting the WW_TEST_UNAME and WW_TEST_PWD environment
+variables.  
+EOS
+exit;
+}
+
+if ($admin_uname) {
+    $ENV{WW_TEST_UNAME} = $admin_uname;
+}
+
+if ($admin_pwd) {
+    $ENV{WW_TEST_PWD} = $admin_pwd;
+}
+
+my @files;
+    
 if (scalar(@ARGV)) {
   @files = @ARGV;
-} else {
+} elsif ($alltests) {
     find(sub {/\.t$/ && push @files, $File::Find::name;}, TESTING_DIRECTORY);
 }
 
 if (scalar(@files)) {
+    @files = sort @files;
     runtests( @files);
 }

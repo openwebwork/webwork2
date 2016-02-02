@@ -40,7 +40,7 @@ create_course($sel);
 import_set($sel);
 create_student($sel);
 
-$sel->open_ok("/webwork2/TestCourse/");
+$sel->open_ok("/webwork2/TestCourseX/");
 $sel->click_ok("link=Instructor Tools");
 $sel->wait_for_page_to_load_ok("30000");
 ok(not $sel->is_element_present("css=#warnings"));
