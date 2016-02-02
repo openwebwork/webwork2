@@ -56,7 +56,7 @@ $sel->text_is("css=option[value=\"Derivatives of polynomials and power functions
 $sel->select_ok("name=library_sections", "label=Derivatives of polynomials and power functions");
 sleep(2);
 $sel->click_ok("name=lib_view");
-$sel->wait_for_page_to_load_ok("30000");
+$sel->wait_for_page_to_load_ok("90000");
 ok(not $sel->is_element_present("css=#warnings"));
 $sel->click_ok("id=filepath1");
 my $prob1 = $sel->get_text("id=filepath1");
