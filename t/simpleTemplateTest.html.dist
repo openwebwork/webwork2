@@ -43,7 +43,7 @@ src="http://localhost/webwork2/html2xml?
 	&displayMode=MathJax
 	&showSummary=1
 	&language=en
-	&outputformat=sticky">
+	&outputformat=simple">
 </iframe>
 <!--
 	&sourceFilePath=Library/Utah/Calculus_I/set5_The_Derivative/1210s5p17/1210s5p17.pg
