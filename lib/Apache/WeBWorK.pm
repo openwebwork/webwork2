@@ -31,6 +31,7 @@ details.
 use strict;
 use warnings;
 use HTML::Entities;
+use HTML::Scrubber;
 use Date::Format;
 use WeBWorK;
 
@@ -184,8 +185,22 @@ associated warnings.
 sub htmlMessage($$$@) {
 	my ($r, $warnings, $exception, @backtrace) = @_;
 	
-	$warnings = htmlEscape($warnings);
-	$exception = htmlEscape($exception);
+	# Warnings have html and look better scrubbed. 
+	
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+
+	$warnings = $scrubber->scrub($warnings);
+	$exception = $scrubber->scrub($exception);
 	
 	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);

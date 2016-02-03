@@ -89,7 +89,7 @@ sub process_and_log_answer{
 				$answerString  .= $student_ans."\t";
 				# answer score *could* actually be a float, and this doesnt
 				# allow for fractional answers :(
-				$scores .= $answerHash{$_}->{score} >= 1 ? "1" : "0";
+				$scores .= ($answerHash{$_}->{score}//0) >= 1 ? "1" : "0";
 				$isEssay = 1 if ($answerHash{$_}->{type}//'') eq 'essay';
 
 			}
@@ -133,18 +133,31 @@ sub process_and_log_answer{
 		if (defined $pureProblem) {
 			# store answers in DB for sticky answers
 			my %answersToStore;
-			my %answerHash = %{ $pg->{answers} };
-			$answersToStore{$_} = $self->{formFields}->{$_}  #$answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  Don't use it!!
-			foreach (keys %answerHash);
+			#my %answerHash = %{ $pg->{answers} };
+			# may not need to store answerHash explicitly since
+			# it (usually?) has the same name as the first of the responses
+			# $answersToStore{$_} = $self->{formFields}->{$_} foreach (keys %answerHash);
+			# $answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  
+			# Don't use it!!
+			my @answer_order;
+			my %answerHash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+   			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+   				foreach my $response_id ($answerHash{$ans_id}->response_obj->response_labels) {
+   					$answersToStore{$response_id} = $self->{formFields}->{$response_id}; 
+   				    push @answer_order, $response_id;
+   				 }	
+   			}
 			
 			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
 			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
 			# however we need to store them.  Fortunately they are still in the input form.
-			my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}};
-			$answersToStore{$_} = $self->{formFields}->{$_} foreach  (@extra_answer_names);
+			#my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}//[]};
+			#$answersToStore{$_} = $self->{formFields}->{$_} foreach  (@extra_answer_names);
 			
 			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
-			my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}, @extra_answer_names);
+			#my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]}, @extra_answer_names);
+			# %answerToStore and @answer_order are passed as references
+			# because of profile for encodeAnswers
 			my $answerString = encodeAnswers(%answersToStore,
 							 @answer_order);
 			

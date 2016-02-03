@@ -271,7 +271,7 @@ sub scoreSet {
 	$format = "normal" unless defined $format;
 	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
-	
+
 	# DBFIXME these have already been fetched in ra_set_records
 	my $setRecord = $db->getGlobalSet($setID); #checked
 	die "global set $setID not found. " unless $setRecord;
@@ -294,19 +294,11 @@ sub scoreSet {
 	
 	my $isJitarSet = $setRecord->assignment_type eq 'jitar';
 
-	# for jitar sets we only want the top level ids
 	if ($isJitarSet) {
-	    my @topLevelIDs;
-	    
-	    foreach my $id (@problemIDs) {
-		my @seq = jitar_id_to_seq($id);
-		push @topLevelIDs, seq_to_jitar_id($seq[0]) if ($#seq == 0);
-	    }
-
-	    @problemIDs = @topLevelIDs;
-	}
-
-
+	  $columnsPerProblem++
+	};
+	
+	
 	# determine what information will be returned
 	if ($format eq 'normal') {
 		$scoringItems  = {    info             => 1,
@@ -360,12 +352,12 @@ sub scoreSet {
 	#my @userKeys = sort keys %users; # list of "student IDs" NOT user IDs
 	
 	if ($scoringItems->{header}) {
-		$scoringData[0][0] = "NO OF FIELDS";
-		$scoringData[1][0] = "SET NAME";
-		$scoringData[2][0] = "PROB NUMBER";
-		$scoringData[3][0] = "DUE DATE";
-		$scoringData[4][0] = "DUE TIME";
-		$scoringData[5][0] = "PROB VALUE";
+		$scoringData[0][0] = $r->maketext("NO OF FIELDS");
+		$scoringData[1][0] = $r->maketext("SET NAME");
+		$scoringData[2][0] = $r->maketext("PROB NUMBER");
+		$scoringData[3][0] = $r->maketext("DUE DATE");
+		$scoringData[4][0] = $r->maketext("DUE TIME");
+		$scoringData[5][0] = $r->maketext("PROB VALUE");
 
 	
 	
@@ -400,8 +392,7 @@ sub scoreSet {
   # get each user's problems.  For gateway (versioned) sets, we get the 
   # user's best version and return that
 	if ( ! defined( $setRecord->assignment_type() ) ||
-	     ($setRecord->assignment_type() !~ /gateway/ &&
-	      $setRecord->assignment_type() ne 'jitar')) {
+	     $setRecord->assignment_type() !~ /gateway/) {
 		foreach my $userID (@sortedUserIDs) {
 			my %CurrUserProblems = map { $_->problem_id => $_ }
 				$db->getAllMergedUserProblems($userID, $setID);
@@ -441,23 +432,14 @@ sub scoreSet {
 			}
 			$UserProblems{$userID} = { %{$CurrUserProblems} };
 		}
-	} else {
-	    # for jitar sets @problemIDs will only be the top level ids, 
-	    # so we cant use getAllMergeduserProblems
-	    foreach my $userID (@sortedUserIDs) {
-		my @where = map {[$userID, $setID, $_]} @problemIDs;
-		my %CurrUserProblems = map { $_->problem_id => $_ }
-		 $db->getMergedProblems(@where);
-		$UserProblems{$userID} = \%CurrUserProblems;
-	    }
-
-	}
+	} 
+	  
 
 	debug("done pre-fetching user problems for set $setID");
-	
+
 	# Write the problem data
 	my $dueDateString = $self->formatDateTime($setRecord->due_date);
-	my ($dueDate, $dueTime) = $dueDateString =~ m/^([^\s]*)\s*([^\s]*)$/;
+	my ($dueDate, $dueTime) = $dueDateString =~ /^(.*) at (.*)$/;
 	my $valueTotal = 0;
 	my %userStatusTotals = ();
 	my %userSuccessIndex = ();
@@ -471,29 +453,54 @@ sub scoreSet {
 		
 		my $column = 5 + $problem * $columnsPerProblem;
 		if ($scoringItems->{header}) {
+		        my $prettyProblemID = $globalProblem->problem_id;
+		        if ($isJitarSet && $globalProblem->problem_id) {
+			  $prettyProblemID = join('.',jitar_id_to_seq($prettyProblemID));
+			}
+
 			$scoringData[0][$column] = "";
 			$scoringData[1][$column] = $setRecord->set_id;
-			$scoringData[2][$column] = $globalProblem->problem_id;
+			$scoringData[2][$column] = $prettyProblemID;
 			$scoringData[3][$column] = $dueDate;
 			$scoringData[4][$column] = $dueTime;
 			$scoringData[5][$column] = $globalProblem->value;
-			$scoringData[6][$column] = "STATUS";
-			if ($scoringItems->{header} and $scoringItems->{problemAttempts}) { # Fill in with blanks, or maybe the problem number
-				for (my $row = 0; $row < 6; $row++) {
-					for (my $col = $column+1; $col <= $column + 2; $col++) {
-						if ($row == 2) {
-							$scoringData[$row][$col] = $globalProblem->problem_id;
-						} else {
-							$scoringData[$row][$col] = "";
-						}
-					}
-				}
-				$scoringData[6][$column + 1] = "#corr";
-				$scoringData[6][$column + 2] = "#incorr";
+			$scoringData[6][$column] = $r->maketext("STATUS");
+			my $extraColumns = 0;
+			if ($isJitarSet) {
+			  $extraColumns++;
+			  $scoringData[6][$column + $extraColumns] = $r->maketext("ADJ STATUS");
 			}
+			
+			if ($scoringItems->{header} and
+			    $scoringItems->{problemAttempts}) { # Fill in with blanks, or maybe the problem number
+			  $extraColumns++;
+			  $scoringData[6][$column + $extraColumns] = $r->maketext("#corr");
+			  $extraColumns++;
+			  $scoringData[6][$column + $extraColumns] = $r->maketext("#incorr");
+			}
+
+			for (my $row = 0; $row < 6; $row++) {
+			  for (my $col = $column+1; $col <= $column + $extraColumns; $col++) {
+			    if ($row == 2) {
+			      $scoringData[$row][$col] = $prettyProblemID;
+			    } else {
+			      $scoringData[$row][$col] = "";
+			    }
+			  }
+			}
+
+			
 		}
-		$valueTotal += $globalProblem->value;
-		
+		# if its a jitar set then we only want to add top level problems to the value total
+		# otherwise we add up everything
+		if ($isJitarSet && $globalProblem->problem_id) {
+		    my @seq = jitar_id_to_seq($globalProblem->problem_id);
+		    if ($#seq == 0) {
+			$valueTotal += $globalProblem->value;
+		    }
+		} else {
+		    $valueTotal += $globalProblem->value;
+		}
 		
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
 			#my $userProblem = $userProblems{    $users{$userKeys[$user]}->user_id   };
@@ -510,10 +517,22 @@ sub scoreSet {
 			my $user_problem_status          = ($userProblem->status =~/^[\d\.]+$/) ? $userProblem->status : 0; # ensure it's numeric
 			# the grade is the adjusted status if its a jitar set 
 			# and this is an actual problem
-			if ($isJitarSet && $userProblem->problem_id) {
+			if ($isJitarSet && $userProblem->value) {
 			    $user_problem_status = jitar_problem_adjusted_status($userProblem, $db);
 			}
-			$userStatusTotals{$user}        += $user_problem_status * $userProblem->value;	
+
+			# if its a jitar set then we only want to add top level problems 
+			# to the student total score
+			# otherwise we add up everything
+			if ($isJitarSet && $userProblem->problem_id) {
+			    my @seq = jitar_id_to_seq($userProblem->problem_id);
+			    if ($#seq == 0) {
+				$userStatusTotals{$user} += $user_problem_status * $userProblem->value;	
+			    }
+			} else {
+			    $userStatusTotals{$user} += $user_problem_status * $userProblem->value;	
+			}
+
 			if ($scoringItems->{successIndex})   {
 				$numberOfAttempts{$user}  = 0 unless defined($numberOfAttempts{$user});
 				my $num_correct     = $userProblem->num_correct;
@@ -523,11 +542,18 @@ sub scoreSet {
 				$numberOfAttempts{$user} += $num_correct + $num_incorrect;	 
 			}
 			if ($scoringItems->{problemScores}) {
-				$scoringData[7 + $user][$column] = $userProblem->status;
-				if ($scoringItems->{problemAttempts}) {
-					$scoringData[7 + $user][$column + 1] = $userProblem->num_correct;
-					$scoringData[7 + $user][$column + 2] = $userProblem->num_incorrect;
-				}
+			  $scoringData[7 + $user][$column] = $userProblem->status;
+			  my $extraColumns = 0;
+			  if ($isJitarSet) {
+			    $extraColumns++;
+			    $scoringData[7 + $user][$column + $extraColumns] = $user_problem_status;
+			  }
+			  if ($scoringItems->{problemAttempts}) {
+			    $extraColumns++;
+			    $scoringData[7 + $user][$column + $extraColumns] = $userProblem->num_correct;
+			    $extraColumns++;
+			    $scoringData[7 + $user][$column + $extraColumns] = $userProblem->num_incorrect;
+			  }
 			}
 		}
 	}
@@ -546,7 +572,7 @@ sub scoreSet {
 		$scoringData[3][$totalsColumn]    = "";
 		$scoringData[4][$totalsColumn]    = "";
 		$scoringData[5][$totalsColumn]    = $valueTotal;
-		$scoringData[6][$totalsColumn]    = "total";
+		$scoringData[6][$totalsColumn]    = $r->maketext("total");
 		if ($scoringItems->{successIndex}) {
 			$scoringData[0][$totalsColumn+1]    = "";
 			$scoringData[1][$totalsColumn+1]    = $setRecord->set_id;
@@ -554,7 +580,7 @@ sub scoreSet {
 			$scoringData[3][$totalsColumn+1]    = "";
 			$scoringData[4][$totalsColumn+1]    = "";
 			$scoringData[5][$totalsColumn+1]    = '100';
-			$scoringData[6][$totalsColumn+1]  = "index" ;
+			$scoringData[6][$totalsColumn+1]  = $r->maketext("index");
 		}
 		for (my $user = 0; $user < @sortedUserIDs; $user++) {
             $userStatusTotals{$user} =$userStatusTotals{$user} ||0;

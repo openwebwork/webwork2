@@ -1063,9 +1063,9 @@ sub pre_header_initialize {
 	my $displayMode      = $User->displayMode || 
 		$ce->{pg}->{options}->{displayMode};
 	my $redisplay        = $r->param("redisplay");
-	my $submitAnswers    = $r->param("submitAnswers");
-	my $checkAnswers     = $r->param("checkAnswers");
-	my $previewAnswers   = $r->param("previewAnswers");
+	my $submitAnswers    = $r->param("submitAnswers") // 0;
+	my $checkAnswers     = $r->param("checkAnswers") // 0;
+	my $previewAnswers   = $r->param("previewAnswers") // 0;
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
@@ -1106,7 +1106,8 @@ sub pre_header_initialize {
 	     showSolutions      => ($r->param("showSolutions") || 
 		                   $ce->{pg}->{options}->{showSolutions}) &&
                                    ($submitAnswers || $checkAnswers),
-	     recordAnswers      => $submitAnswers,
+	     recordAnswers      => $submitAnswers && !$authz->hasPermissions($userName, 
+							    "avoid_recording_answers"),
 	# we also want to check answers if we were checking answers and are
 	#    switching between pages
 	     checkAnswers       => $checkAnswers,
@@ -1119,8 +1120,7 @@ sub pre_header_initialize {
 	     showCorrectAnswers => 0,
 	     showHints          => 0,
 	     showSolutions      => 0,
-	     recordAnswers      => ! $authz->hasPermissions($userName, 
-							    "avoid_recording_answers"),
+	     recordAnswers      => 0,
 	     checkAnswers       => 0,
 	     useMathView        => 0,
 	     );
@@ -1145,9 +1145,8 @@ sub pre_header_initialize {
 	# final values for options
 	my %will;
 	foreach (keys %must) {
-		$will{$_} = $can{$_} && ($must{$_} || $want{$_}) ;
+	  $will{$_} = $can{$_} && ($must{$_} || $want{$_}) ;
 	}
-
 	##### store fields #####
 
 ## FIXME: the following is present in Problem.pm, but missing here.  how do we 
@@ -1764,8 +1763,7 @@ sub body {
 	#    even more interesting, we are avoiding translating all of the 
 	#    problems when checking answers
 	my $attemptScore = 0;
-
-	if ( $will{submitAnswers} || $will{checkAnswers} ) {
+	if ( $will{recordAnswers} || $will{checkAnswers} ) {
 		my $i=0;
 		foreach my $pg ( @pg_results ) {
 			my $pValue = $problems[$i]->value() ? $problems[$i]->value() : 1;
@@ -1824,7 +1822,7 @@ sub body {
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
 	$attemptScore = wwRound(2,$attemptScore);
-	if ( $will{submitAnswers} ) {
+	if ( $will{recordAnswers} ) {
 		# the distinction between $can{recordAnswers} and ! $can{} has 
 		#    been dealt with above and recorded in @scoreRecordedMessage
 		my $divClass = 'ResultsWithoutError';
@@ -2265,10 +2263,13 @@ sub body {
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
-			CGI::hidden(-name => 'problemID', -value=>"$firstProb - $lastProb"), "\n",
-			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
-			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
-			CGI::p(
+			CGI::hidden(-name => 'selected_sets',  -value=>$setVName), "\n",
+			  CGI::hidden(-name => 'selected_users',    -value=>$effectiveUser), "\n";
+	    for (my $prob=$firstProb; $prob <= $lastProb; $prob++) {
+	      print CGI::hidden(-name => 'selected_problems', -value=>"$prob"), "\n";
+	    }
+
+	    print CGI::p(
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 				), "\n",
 			CGI::end_form();

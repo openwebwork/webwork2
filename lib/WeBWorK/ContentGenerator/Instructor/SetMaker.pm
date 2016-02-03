@@ -1039,7 +1039,7 @@ sub make_data_row {
 		my $numchild = scalar(@{$sourceFileData->{children}});
 		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
-		$mltstart = "<tr><td><table id='mlt-table$cnt' style='border:1px solid black' width='100%'><tr><td>\n";
+		$mltstart = "<tr><td><table id='mlt-table$cnt' class='lb-mlt-group'><tr><td>\n";
 	}
 	$mltend = "</td></tr></table></td></tr>\n" if($mltnumleft==0);
 	my $noshow = '';
@@ -1096,7 +1096,7 @@ sub make_data_row {
 
         my $problem_stats = '';
         if ($global_problem_stats or $local_problem_stats) {
-                $problem_stats = CGI::span({style=>"float:right; text-align:right;", class=>"problem-stats"},
+                $problem_stats = CGI::span({class=>"lb-problem-stats"},
                                     $global_problem_stats . $local_problem_stats );
         }
 
@@ -1104,14 +1104,14 @@ sub make_data_row {
 	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
-		CGI::div({-style=>"overflow:auto; background-color: #FFFFFF; margin: 0px auto"},
-		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
+		CGI::div({-class=>"lb-problem-header"},
+		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
 		      -value=>"Add",
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
-			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
+			"\n",CGI::span({-class=>"lb-problem-path"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
 			 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
-			CGI::span({-style=>"float:right ; text-align: right"}, 
+			CGI::span({-class=>"lb-problem-icons"}, 
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
@@ -1448,8 +1448,10 @@ sub pre_header_initialize {
 			$r->param('local_sets',$newSetName);  ## use of two parameter param
 			debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
-			if (defined($newSetRecord)) {
-	            $self->addbadmessage("The set name $newSetName is already in use.  
+			if (! $newSetName) {
+			    $self->addbadmessage("You did not specify a new set name.  ");
+			} elsif (defined($newSetRecord)) {
+			    $self->addbadmessage("The set name $newSetName is already in use.  
 	            Pick a different name if you would like to start a new set.");
 			} else {			# Do it!
 				# DBFIXME use $db->newGlobalSet
@@ -1476,6 +1478,7 @@ sub pre_header_initialize {
 				
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
+				$newSetRecord->assignment_type('default');
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
@@ -1728,6 +1731,7 @@ sub body {
 		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." of ".CGI::span({-id=>'totalshown'}, $total_probs).
 			" shown.", $prev_button, " ", $next_button,
 		);
+		print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
 	}
 	#	 }
 	print CGI::end_form(), "\n";

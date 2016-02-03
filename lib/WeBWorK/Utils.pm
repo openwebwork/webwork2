@@ -1571,10 +1571,11 @@ sub jitar_problem_adjusted_status {
 sub jitar_problem_finished {
     my ($userProblem,  $db) = @_;
 
-    # the problem is open if you can still make attempts
-    return 0 if ($userProblem->max_attempts == -1 ||
+    # the problem is open if you can still make attempts and you dont have a 100%
+    return 0 if ($userProblem->status < 1 &&
+		 ($userProblem->max_attempts == -1 ||
 	$userProblem->max_attempts > ($userProblem->num_correct + 
-				      $userProblem->num_incorrect));
+				      $userProblem->num_incorrect)));
 
     # find children 
     my @problemSeq = jitar_id_to_seq($userProblem->problem_id);

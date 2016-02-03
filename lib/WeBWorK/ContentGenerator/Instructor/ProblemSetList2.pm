@@ -1151,6 +1151,7 @@ sub create_handler {
 		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
+		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
 		return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: no set selected for duplication!")) unless $oldSetID =~ /\S/;
@@ -1819,6 +1820,7 @@ sub importSetsFromDef {
 	    foreach my $setID (@added) {
 		my $setRecord = $db->getGlobalSet($setID);
 		$setRecord->open_date($setRecord->open_date + $dateshift);
+		$setRecord->reduced_scoring_date($setRecord->reduced_scoring_date + $dateshift);
 		$setRecord->due_date($setRecord->due_date + $dateshift);
 		$setRecord->answer_date($setRecord->answer_date + $dateshift);
 		$db->putGlobalSet($setRecord);

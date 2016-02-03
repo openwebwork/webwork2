@@ -35,6 +35,7 @@ use base qw(WeBWorK::ContentGenerator);
 use strict;
 use warnings;
 use WebworkClient;
+use WeBWorK::Debug;
 
 
 =head1 Description
@@ -117,7 +118,7 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 
 
-	$XML_URL             =  "$server_root_url/mod_xmlrpc";
+	$XML_URL             =  "$server_root_url";  #"$server_root_url/mod_xmlrpc";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
 use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
@@ -134,48 +135,48 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
- 
- 	my %inputs_ref;
-	my @keys = $r->mutable_param;  # $r->param;
-	foreach my $key ( @keys ) {
-		$inputs_ref{$key} = $r->param("$key");
-	}
+	# Note: Vars helps handle things like checkbox 'packed' data;
+	my %inputs_ref =  WeBWorK::Form->new_from_paramable($r)->Vars ;
 	my $user_id      = $inputs_ref{userID};
-	my $session_key	 = $inputs_ref{session_key};
 	my $courseName   = $inputs_ref{courseID};
-
+	my $displayMode  = $inputs_ref{displayMode};
+	my $problemSeed  = $inputs_ref{problemSeed};
+	unless ( $user_id && $courseName && $displayMode && $problemSeed) {
+		debug( "\n\n\nMissing essential data in web dataform: 
+		      userID: |$user_id|, courseID: |$courseName|,	
+		      displayMode: |$displayMode|, problemSeed: |$problemSeed|");
+		
+	}
     #######################
     #  setup xmlrpc client
     #######################
     my $xmlrpc_client = new WebworkClient;
 
-	$xmlrpc_client->{encodedSource}   = $r->param('problemSource') ; # this source has already been encoded
-	$xmlrpc_client->url($XML_URL);
+	$xmlrpc_client ->encoded_source($r->param('problemSource')) ; # this source has already been encoded
+	$xmlrpc_client-> url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
-	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
+#	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
-	$xmlrpc_client->{password}        = $inputs_ref{password};
+	$xmlrpc_client->{course_password} = $inputs_ref{course_password};
 	$xmlrpc_client->{site_password}   = $XML_PASSWORD;
 	$xmlrpc_client->{session_key}     = $inputs_ref{session_key};
 	$xmlrpc_client->{courseID}        = $inputs_ref{courseID};
 	$xmlrpc_client->{outputformat}    = $inputs_ref{outputformat};
 	$xmlrpc_client->{sourceFilePath}  = $inputs_ref{sourceFilePath};
-	
-
-	$xmlrpc_client->{inputs_ref} = \%inputs_ref;
+	$xmlrpc_client->{inputs_ref} = \%inputs_ref;  # contains form data
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 	
 	##############################
 	# xmlrpc_client calls webservice to have problem rendered
 	#
-	# and stores the resulting HTML output in $self->{output}
+	# and stores the resulting HTML output in $self->return_object
 	# from which it will eventually be returned to the browser
 	#
 	##############################
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $xmlrpc_client->{inputs_ref}) )    {
-			$self->{output} = $xmlrpc_client->formatRenderedProblem;
+			$self->{output} = $xmlrpc_client->formatRenderedProblem ;
 	} else {
-		$self->{output} = $xmlrpc_client->{output};  # error report
+		$self->{output}= $xmlrpc_client->return_object;  # error report
 	}
 	
 	################################

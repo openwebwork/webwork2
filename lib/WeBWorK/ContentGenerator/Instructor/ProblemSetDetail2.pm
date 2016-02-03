@@ -1133,7 +1133,7 @@ sub initialize {
 		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
 		    $setRecord->enable_reduced_scoring;
-		
+
 		if ($enable_reduced_scoring && 
 		    $reduced_scoring_date 
 		    && ($reduced_scoring_date > $due_date 
@@ -1142,11 +1142,6 @@ sub initialize {
 		    $error = $r->param('submit_changes');
 		}
 
-		if ($reduced_scoring_date && ($reduced_scoring_date > $due_date || $reduced_scoring_date < $open_date)) {
-			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
-			$error = $r->param('submit_changes');
-		}
-		
 		# make sure the dates are not more than 10 years in the future
 		my $curr_time = time;
 		my $seconds_per_year = 31_556_926;
@@ -2410,7 +2405,7 @@ sub body {
 		if (!$error && $r->param('auto_render')) {
 		    @problem_html = renderProblems(
 			r=> $r, 
-					user => $db->getUser($userToShow),
+			user => $db->getUser($userToShow),
 			displayMode=> $default_problem_mode,
 			problem_number=> $problemID,
 			this_set => $this_set,

@@ -744,10 +744,8 @@ sub links {
 			}
 
 			
-			if ($authz->hasPermissions($userID, "change_password") or $authz->hasPermissions($userID, "change_email_address")) {
 				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-			}
-			
+					
 			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			
 			if ($ce->{achievementsEnabled}) {
@@ -1730,7 +1728,7 @@ sub hidden_fields {
 	foreach my $param (@fields) {
 	    my @values = $r->param($param);
 	    foreach my $value (@values) {
-		next unless $value;
+		next unless defined($value);
 #		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
 		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
 	    }
@@ -2142,12 +2140,9 @@ sub warningOutput($$) {
 	    );
 	
 	foreach my $warning (@warnings) {
-	    # This used to be commented out because it interfered with warnings
-	    # from PG.  But now PG has a seperate warning channel thats not
-	    # encoded.  Since these warnings have html they
-	    # look better scrubbed
-	  
-   	    #$warning = HTML::Entities::encode_entities($warning);
+            # Since these warnings have html they look better scrubbed
+
+	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);
 	    $warning = CGI::li(CGI::code($warning));
 	}

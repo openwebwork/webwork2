@@ -12,6 +12,8 @@ $(function(){
 	    .addClass('hidden-desktop hidden-tablet');
 	$('#pg_editor_frame_id').contents().find('#content')
 	    .removeClass('span10').addClass('span12');
+	$("#pg_editor_frame_id").contents().find('#toggle-sidebar')
+	    .addClass('hidden');
     });
 });
 

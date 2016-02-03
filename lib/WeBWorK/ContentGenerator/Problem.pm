@@ -43,6 +43,7 @@ use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
+use WeBWorK::Utils::AttemptsTable;
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -113,6 +114,41 @@ sub can_showCorrectAnswers {
 		$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")
 		;
 }
+sub can_showAnsGroupInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+#FIXME -- may want to adjust this
+	return
+		$authz->hasPermissions($User->user_id, "show_answer_group_info_checkbox")
+		;
+}
+
+sub can_showAnsHashInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+#FIXME -- may want to adjust this
+	return
+		$authz->hasPermissions($User->user_id, "show_answer_hash_info_checkbox")
+		;
+}
+
+sub can_showPGInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+#FIXME -- may want to adjust this
+	return
+		$authz->hasPermissions($User->user_id, "show_pg_info_checkbox")
+		;
+}
+
+sub can_showResourceInfo {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+	
+	return
+		$authz->hasPermissions($User->user_id, "show_resource_info")
+		;
+}
 
 sub can_showHints {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
@@ -131,6 +167,7 @@ sub can_showSolutions {
 		$authz->hasPermissions($User->user_id, "show_solutions_before_answer_date")
 		;
 }
+
 
 sub can_recordAnswers {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
@@ -245,34 +282,20 @@ sub can_showMeAnother {
 
 # Note: the substance of attemptResults is lifted into GatewayQuiz.pm,
 # with some changes to the output format
-
 sub attemptResults {
 	my $self = shift;
 	my $r = $self->r;
 	my $pg = shift;
-	my $showAttemptAnswers = shift;
+	my $showAttemptAnswers = shift//0;
 	my $showCorrectAnswers = shift;
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
-	my $showAttemptPreview = shift || 0;
-	
+	my $showAttemptPreview = shift // 1;
 	my $ce = $self->r->ce;
-	
-	# for color coding the responses.
-	my @correct_ids = ();
-	my @incorrect_ids = ();
-
-
-	my $problemResult = $pg->{result}; # the overall result of the problem
-	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	
-	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
-	
-	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
 	
 	# to make grabbing these options easier, we'll pull them out now...
 	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
-	
+
 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
 		tempDir         => $ce->{webworkDirs}->{tmp},
 		latex	        => $ce->{externalPrograms}->{latex},
@@ -284,187 +307,53 @@ sub attemptResults {
 		dvipng_align    => $imagesModeOptions{dvipng_align},
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
-	
+
+	my $answers = $pg->{answers};
 	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
 
-	my $header;
-	#$header .= CGI::th("Part");
-	if ($showEvaluatedAnswers) {
-		$header .= $showAttemptAnswers ? CGI::th($r->maketext("Entered"))  : "";
-	}	
-	$header .= $showAttemptPreview ? CGI::th($r->maketext("Answer Preview"))  : "";
-	$header .= $showAttemptResults ? CGI::th($r->maketext("Result"))   : "";
-	$header .= $showMessages       ? CGI::th($r->maketext("Messages")) : "";
-	$header .= $showCorrectAnswers ? CGI::th($r->maketext("Correct Answer"))  : "";
-
-	my $fully = '';
-	my @tableRows = ( $header );
-	my $numCorrect = 0;
-	my $numBlanks  =0;
-	my $numEssay = 0;
-	my $tthPreambleCache;
-	foreach my $name (@answerNames) {
-		my $answerResult  = $pg->{answers}->{$name}//'';
-		my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
-		my $preview       = ($showAttemptPreview
-		                    	? $self->previewAnswer($answerResult, $imgGen)
-		                    	: "");
-
-		my $correctAnswerPreview = $self->previewCorrectAnswer($answerResult, $imgGen, \$tthPreambleCache)//'';
-		my $correctAnswer = $answerResult->{correct_ans}//'';
-		my $answerScore   = $answerResult->{score}//0;
-		my $answerMessage = $showMessages ? $answerResult->{ans_message}//'' : "";
-
-		$answerMessage =~ s/\n/<BR>/g;
-		$numCorrect += $answerScore >= 1;
-		$numEssay += ($answerResult->{type}//'') eq 'essay';
-		$numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;   
-
-		my $resultString;
-		my $resultStringClass;
-		if ($answerScore >= 1) {
-		    $resultString = CGI::span({class=>"ResultsWithoutError"}, $r->maketext("correct"));
-		    $resultStringClass = "ResultsWithoutError";  
-		    push @correct_ids,   $name if $answerScore == 1;
-		} elsif (($answerResult->{type}//'') eq 'essay') {
-		    $resultString =  $r->maketext("Ungraded"); 
-		    $self->{essayFlag} = 1;
-		} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
-		    push @incorrect_ids, $name if $answerScore < 1;
-		    $resultStringClass = "ResultsWithError";
-		    $resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $r->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
-		} else {
-		    $resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		    push @incorrect_ids, $name if $answerScore < 1;
-		}
-		
-		# need to capture auxiliary answers as well and identify their ids.
-		my $row;
-		#$row .= CGI::td($name);
-		if ($showEvaluatedAnswers) {
-		  $row .= $showAttemptAnswers ? CGI::td($self->nbsp($studentAnswer)) : "";
-		}
-		$row .= $showAttemptPreview ? CGI::td({onmouseover=>qq!Tip('$studentAnswer',SHADOW, true, 
-		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
-		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
-		                    $self->nbsp($preview))       : "";
-		$row .= $showAttemptResults ? CGI::td({class=>$resultStringClass},CGI::a({href=>"javascript:document.getElementById(\"$name\").focus()"},$self->nbsp($resultString)))  : "";
-
-		my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
-		$row .= $showMessages       ? CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)) : "";
-		$row .= $showCorrectAnswers ? CGI::td({onmouseover=> qq!Tip('$correctAnswer',SHADOW, true, 
-		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
-		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
-		                  $self->nbsp($correctAnswerPreview)) : "";
-
-		push @tableRows, $row;
-	}
-	
+# Create AttemptsTable object	
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$answers,
+		answersSubmitted       => 1,
+		answerOrder            => $pg->{flags}->{ANSWER_ENTRY_ORDER},
+		displayMode            => $self->{displayMode},
+		showAnswerNumbers      => 0,
+		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
+		showAttemptPreviews    => $showAttemptPreview,
+		showAttemptResults     => $showAttemptResults,
+		showCorrectAnswers     => $showCorrectAnswers,
+		showMessages           => $showAttemptAnswers, # internally checks for messages
+		showSummary            => $showSummary,
+		imgGen                 => $imgGen, # not needed if ce is present ,
+		ce                     => '',	   # not needed if $imgGen is present
+		maketext               => WeBWorK::Localize::getLoc($ce->{language}),
+	);
 	# render equation images
-	$imgGen->render(refresh => 1);
-	
-#	my $numIncorrectNoun = scalar @answerNames == 1 ? "question" : "questions";
-	my $scorePercent = wwRound(0, $problemResult->{score} * 100).'%';
-	my $summary = ""; 
-	unless (defined($problemResult->{summary}) and $problemResult->{summary} =~ /\S/) {
-		if (scalar @answerNames == 1) {  #default messages
-				if ($numCorrect == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("The answer above is correct."));
-				} elsif ($self->{essayFlag}) {
-				    $summary .= CGI::div($r->maketext("The answer will be graded later.", $fully));
-				 } else {
-					 $summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("The answer above is NOT [_1]correct.", $fully));
-				 }
-		} else {
-				if ($numCorrect + $numEssay == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$r->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
-				 } 
-				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
-				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
-					$summary .= CGI::div({class=>"ResultsWithError"},$r->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
-				 }
-				 if ($numBlanks > $numEssay) {
-					my $s = ($numBlanks>1)?'':'s';
-					$summary .= CGI::div({class=>"ResultsAlert"},$r->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
-				 }
-		}
-	} else {
-		$summary = $problemResult->{summary};   # summary has been defined by grader
-	}
+	my $answerTemplate = $tbl->answerTemplate; 
+	   # answerTemplate collects all the formulas to be displayed in the attempts table  
+	   # answerTemplate also collects the correct_ids and incorrect_ids
+	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	    # after all of the formulas have been collected the render command creates png's for them
+	    # refresh=>1 insures that we never reuse old images -- since the answers change frequently
+	$self->{correct_ids}   = $tbl->correct_ids;
+	$self->{incorrect_ids} = $tbl->incorrect_ids;
+	return $answerTemplate;
 
-	$summary = CGI::div({role=>"alert", class=>"attemptResultsSummary"},
-			  $summary);
-
-	$self->{correct_ids}   = [@correct_ids];
-	$self->{incorrect_ids} = [@incorrect_ids];
-
-	return
-    CGI::h3($r->maketext("Attempt Results")) .
-    CGI::table({-class=>"attemptResults"}, CGI::Tr(\@tableRows)) .
-    ($showSummary ? $summary : '&nbsp;');
-}
-
-
-# Note: previewAnswer is lifted into GatewayQuiz.pm
-
-
-sub previewAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->r->ce;
-	my $effectiveUser = $self->{effectiveUser};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $displayMode   = $self->{displayMode};
-	
-	# note: right now, we have to do things completely differently when we are
-	# rendering math from INSIDE the translator and from OUTSIDE the translator.
-	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out dvipng/etc.
-	
-	my $tex = $answerResult->{preview_latex_string};
-	
-	return "" unless defined $tex and $tex ne "";
-	
-	if ($displayMode eq "plainText") {
-		return $tex;
-	} elsif (($answerResult->{type}//'') eq 'essay') {
-	    return $tex;
-	} elsif ($displayMode eq "images") {
-		$imgGen->add($tex);
-	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	}
-}
-sub previewCorrectAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->r->ce;
-	my $effectiveUser = $self->{effectiveUser};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $displayMode   = $self->{displayMode};
-	
-	# note: right now, we have to do things completely differently when we are
-	# rendering math from INSIDE the translator and from OUTSIDE the translator.
-	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out dvipng/etc.
-	
-	my $tex = $answerResult->{correct_ans_latex_string};
-	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
-	# return "" unless defined $tex and $tex ne "";
-	
-	if ($displayMode eq "plainText") {
-		return $tex;
-	} elsif ($displayMode eq "images") {
-		$imgGen->add($tex);
-	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	}
 }
 
 ################################################################################
 # Template escape implementations
 ################################################################################
-
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $templateName = $r->param('templateName')//'system';
+	unless ($templateName =~/^system$|^gateway$|^simple$/ ) {
+		$templateName = 'system';
+	}
+	$self->{templateName}= $templateName;
+	$templateName;
+}
 sub content {
   my $self = shift;
   my $result = $self->SUPER::content(@_);
@@ -705,6 +594,10 @@ sub pre_header_initialize {
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
 		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
+		showAnsGroupInfo     => $r->param('showAnsGroupInfo') || $ce->{pg}->{options}->{showAnsGroupInfo},
+		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
+		showPGInfo         => $r->param('showPGInfo') || $ce->{pg}->{options}->{showPGInfo},
+		showResourceInfo   => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
 		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
@@ -719,6 +612,10 @@ sub pre_header_initialize {
 	my %must = (
 		showOldAnswers     => 0,
 		showCorrectAnswers => 0,
+		showAnsGroupInfo     => 0,
+		showAnsHashInfo    => 0,
+		showPGInfo		   => 0,
+		showResourceInfo   => 0,
 		showHints          => 0,
 		showSolutions      => 0,
 		recordAnswers      => ! $authz->hasPermissions($userName, "avoid_recording_answers"),
@@ -734,13 +631,17 @@ sub pre_header_initialize {
 	my %can = (
 		showOldAnswers           => $self->can_showOldAnswers(@args),
 		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
+		showAnsGroupInfo         => $self->can_showAnsGroupInfo(@args),
+		showAnsHashInfo          => $self->can_showAnsHashInfo(@args),
+		showPGInfo           	 => $self->can_showPGInfo(@args),
+		showResourceInfo         => $self->can_showResourceInfo(@args),
 		showHints                => $self->can_showHints(@args),
 		showSolutions            => $self->can_showSolutions(@args),
 		recordAnswers            => $self->can_recordAnswers(@args, 0),
 		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
 		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
 		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-	        useMathView              => $self->can_useMathView(@args)
+	    useMathView              => $self->can_useMathView(@args)
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -805,6 +706,7 @@ sub pre_header_initialize {
 		{ # translation options
 			displayMode     => $displayMode,
 			showHints       => $will{showHints},
+			showResourceInfo => $will{showResourceInfo},
 			showSolutions   => $will{showSolutions},
 			refreshMath2img => $will{showHints} || $will{showSolutions},
 			processAnswers  => 1,
@@ -1002,14 +904,14 @@ sub siblings {
 	    } else {
 	      # incorrect
 	      if($total_attempts >= $problemRecord->max_attempts and $problemRecord->max_attempts!=-1){
-		$total_incorrect++;
-		$status_symbol = " &#x2717;"; # cross
+			$total_incorrect++;
+			$status_symbol = " &#x2717;"; # cross
 	      } else {
-		# in progress
-		if($problemRecord->attempted>0){
-		  $total_inprogress++;
-		  $status_symbol = " &hellip;"; # horizontal ellipsis
-		}
+			# in progress
+			if($problemRecord->attempted>0){
+			  $total_inprogress++;
+			  $status_symbol = " &hellip;"; # horizontal ellipsis
+			}
 	      }
 	    }
 	  }
@@ -1384,12 +1286,16 @@ sub output_checkboxes{
     my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
-
+	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
+	    $can{showHints} or $can{showSolutions} or 
+	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
+		print "Show: &nbsp;&nbsp;";
+	}
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
 			-id		 => "showCorrectAnswers_id",
-			-label_text => $r->maketext("Show correct answer column"),
+			-label_text => $r->maketext("CorrectAnswers"),
 			-input_attr => $will{showCorrectAnswers} ?
 			{
 				-name    => "showCorrectAnswers",
@@ -1403,12 +1309,86 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
+	if ($can{showAnsGroupInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showAnsGroupInfo_id",
+			-label_text => $r->maketext("AnswerGroupInfo"),
+			-input_attr => $will{showAnsGroupInfo} ?
+			{
+				-name    => "showAnsGroupInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showAnsGroupInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	if ($can{showResourceInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showResourceInfo_id",
+			-label_text => $r->maketext("Show Auxiliary Resources"),
+			-input_attr => $will{showResourceInfo} ?
+			{
+				-name    => "showResourceInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showResourceInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+
+	if ($can{showAnsHashInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showAnsHashInfo_id",
+			-label_text => $r->maketext("AnswerHashInfo"),
+			-input_attr => $will{showAnsHashInfo} ?
+			{
+				-name    => "showAnsHashInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showAnsHashInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
 	
+	if ($can{showPGInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showPGInfo_id",
+			-label_text => $r->maketext("PGInfo"),
+			-input_attr => $will{showPGInfo} ?
+			{
+				-name    => "showPGInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showPGInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+
 	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
 	if ($can{showHints} ) {
 	  # warn "can showHints is ", $can{showHints};
-	    if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
-		print WeBWorK::CGI_labeled_input(
+		if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
+			print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
 				-label_text => $r->maketext("Show Hints"),
@@ -1423,11 +1403,11 @@ sub output_checkboxes{
 					-name    => "showHints",
 					-value   => 1,
 				}
-		),"&nbsp;";
-	  } else {
-	  	print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
-	  
-	  }
+			),"&nbsp;";
+		} else {
+			print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
+
+		}
 	}
 	
 	if ($can{showSolutions} ) {
@@ -1453,7 +1433,10 @@ sub output_checkboxes{
 	  }
 	}
 	
-	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
+
+	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
+	    $can{showHints} or $can{showSolutions} or 
+	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
        
@@ -1657,16 +1640,18 @@ sub output_score_summary{
 	    } elsif (scalar(@children_counts_indexs) > 1) {
 	      print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
 	    }
-	    
 	  }
 	  
 	  
 	  # print information if this set has restricted progression and if you need
 	  # to finish this problem (and maybe its children) to proceed
-	  if ($set->restrict_prob_progression() && $next_id <= $#problemIDs && is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
+	  if ($set->restrict_prob_progression() &&
+	      $next_id <= $#problemIDs && 
+	      is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
 	    if ($hasChildren) {
 	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its graded subproblems.',join('.',@{$problemSeqs[$next_id]}));
-	    } else {
+	  } elsif (scalar(@seq) == 1 ||
+			   $problem->counts_parent_grade()) {
 	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 	    }
 	  }
@@ -1791,39 +1776,24 @@ sub output_comments{
 		    my $comment = $userPastAnswer->comment_string;
 		    $comment = CGI::escapeHTML($comment);
 		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		    my $user = $db->getUser($eUserID);
-
-		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPreamble}{HTML} = ''; 
-		    local $ce->{pg}->{specialPGEnvironmentVars}->{problemPostamble}{HTML} = '';
-		    my $source = "DOCUMENT();\n loadMacros(\"PG.pl\",\"PGbasicmacros.pl\",\"MathObjects.pl\");\n BEGIN_TEXT\n";
-		    $source .= $comment . "\nEND_TEXT\n ENDDOCUMENT();";
-		    my $pg = WeBWorK::PG->new(
-			$ce,
-			$user,
-			$key,
-			$set,
-			$problem,
-			$set->psvn, # FIXME: this field should be removed
-			$formFields,
-			{ # translation options
-			    displayMode     => $displayMode,
-			    showHints       => 0,
-			    showSolutions   => 0,
-			    refreshMath2img => 1,
-			    processAnswers  => 0,
-			    permissionLevel => 0,
-			    effectivePermissionLevel => 0,
-			    r_source => \$source,
-			},
-			);
-		    
-		    
-		    my $htmlout = $pg->{body_text};
-		    
-		    print CGI::div({class=>"answerComments"},
-		    CGI::b("Instructor Comment:"),
-		    CGI::br(),
-		    $htmlout);
+		   		    print CGI::start_div({id=>"answerComment", class=>"answerComments"});
+		    print CGI::b("Instructor Comment:"),  CGI::br();
+		    print $comment;
+		    print <<EOS;
+				<script type="text/javascript">
+					MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
+					var AM = MathJax.InputJax.AsciiMath.AM;
+					for (var i=0; i< AM.symbols.length; i++) {
+						if (AM.symbols[i].input == '**') {
+						AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
+						}
+					}
+									 });
+				MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
+	
+				MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'answerComment']);
+				</script>
+EOS
 		}
 	}
 
@@ -1865,15 +1835,25 @@ sub output_summary{
 	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 
 	    # print this if user submitted answers OR requested correct answers	    
-	    my $results = $self->attemptResults($pg, 1,
-						$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);	    
+	    my $results = $self->attemptResults($pg, 
+	                    1,   # showAttemptAnswers --display the unformatted submitted answer attempt
+						$will{showCorrectAnswers}, # showCorrectAnswers
+						$pg->{flags}->{showPartialCorrectAnswers}, # showAttemptResults
+			            1, # showSummary
+			            1  # showAttemptPreview
+		);	    
 	    print $results;
 	    
 	} elsif ($will{checkAnswers}) {
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
-	    print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
+	    print $self->attemptResults($pg, 
+	    	1, # showAttemptAnswers
+	    	$will{showCorrectAnswers}, # showCorrectAnswers
+	    	1, # showAttemptResults
+	    	1, # showSummary
+	    	1  # showAttemptPreview
+	    );
 	    # show attempt answers
 	    # show correct answers if asked
 	    # show attempt results (correctness)
@@ -2048,9 +2028,9 @@ sub output_past_answer_button{
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
-			CGI::hidden(-name => 'problemID', -value=>$problemNumber), "\n",
-			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
-               		CGI::hidden(-name => 'studentUser',  -value=>$problem->user_id), "\n",
+			CGI::hidden(-name => 'selected_problems', -value=>$problemNumber), "\n",
+			CGI::hidden(-name => 'selected_sets',  -value=>$problem->set_id), "\n",
+               		CGI::hidden(-name => 'selected_users',  -value=>$problem->user_id), "\n",
 			CGI::p(
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",
@@ -2091,7 +2071,9 @@ sub output_email_instructor{
 
 sub output_hidden_info {
     my $self = shift;
-
+	print CGI::hidden({name => "templateName", 
+	            id=>"templateName_id", value => $self->{templateName}}
+	       );
     return "";
 }
 

@@ -54,7 +54,6 @@ my $webwork_dir = "/opt/webwork/webwork2";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
-$ENV{WEBWORK_SERVER_ADMIN}= $ENV{SERVER_ADMIN};
 
 #################################################################
 # The following code reads defauls.config and extracts the remaining configuration
@@ -81,12 +80,16 @@ my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/co
 
 my $webwork_server_admin_email = $ce->{webwork_server_admin_email};
 if ($webwork_server_admin_email) {
-	$webwork_server_admin_email = $ce->{webwork_server_admin_email};
-	warn "set email from site.conf";
+	print "webwork.apache2-config: webwork_server_admin_email for reporting bugs has been set to $webwork_server_admin_email in site.conf\n";
 } else {
 	$webwork_server_admin_email= $ENV{SERVER_ADMIN};
 }
 $ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
+
+# link to PG code libraries
+eval "use lib '$pg_dir/lib'"; die $@ if $@;
+$WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
+$ENV{PG_ROOT} = $pg_dir;
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
@@ -99,8 +102,6 @@ print "webwork.apache2-config:  WeBWorK server groupID is ", $ce->{server_groupI
 print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
 
 
-# link to PG code libraries
-eval "use lib '$pg_dir/lib'"; die $@ if $@;
 
 require Apache::WeBWorK; # force compilation of pretty much everything
 

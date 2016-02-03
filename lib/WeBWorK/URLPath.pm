@@ -455,7 +455,7 @@ our %pathTypes = (
 	},
 
         instructor_problem_grader => {
-		name    => 'Manual Grader for Set $setID Problem $problemID',
+		name    => 'Manual Grader',
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^grader/([^/]+)/([^/]+)/|,
@@ -827,7 +827,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Problem',
         },
         show_me_another => {
-		name    => 'Show Me Another $problemID',
+		name    => 'Show Me Another',
 		parent  => 'problem_detail',
 		kids    => [ qw// ],
 		match   => qr|^show_me_another/|,
