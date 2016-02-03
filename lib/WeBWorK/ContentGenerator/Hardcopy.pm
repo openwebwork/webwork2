@@ -899,9 +899,10 @@ sub write_multiuser_tex {
 	my @setIDs = @$setIDsRef;
 	
 	# get snippets
-	my $preamble = $ce->{webworkFiles}->{hardcopySnippets}->{preamble};
-	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble};
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$ce->{hardcopyTheme};
+	my $preamble = $ce->{webworkFiles}->{hardcopySnippets}->{preamble} // "$themeDir/hardcopyPreamble.tex";
+	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble} // "$themeDir/hardcopyPostamble.tex";
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider} // "$themeDir/hardcopyUserDivider.tex";
 	
 	# write preamble
 	$self->write_tex_file($FH, $preamble);
@@ -930,7 +931,8 @@ sub write_multiset_tex {
 	}
 	
 	# get set divider
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$ce->{hardcopyTheme};
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider} // "$themeDir/hardcopySetDivider.tex";
 	
 	# write each set
 	while (defined (my $setID = shift @setIDs)) {
@@ -993,12 +995,14 @@ sub write_set_tex {
 	}
 	
 	# get snippets
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$ce->{hardcopyTheme};
 	my $header = $MergedSet->hardcopy_header
 		? $MergedSet->hardcopy_header
 		: $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
   if ($header eq 'defaultHeader') {$header = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};}
-	my $footer = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider};
+	my $footer = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter} //
+	  "$themeDir/hardcopySetFooter.pg";
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider} // "$themeDir/hardcopyProblemDivider.tex";
 	
 	# get list of problem IDs
 	# DBFIXME use ORDER BY in database
