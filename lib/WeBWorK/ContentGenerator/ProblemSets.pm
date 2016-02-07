@@ -433,8 +433,8 @@ sub setListRow {
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 	      } else {
 		$interactive = $r->maketext("Take [_1] test", $display_name);
-		$control = "";
 	      }
+	      $control = "";
 	      
 	    } elsif ( $t < $set->due_date() ) {
 	      
@@ -455,6 +455,7 @@ sub setListRow {
 		# reset the link
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
 				      $r->maketext("Take [_1] test", $display_name));
+		$control = "";
 	      } else {
 		$control = "";
 		$interactive = $r->maketext("Take [_1] test", $display_name);
@@ -469,7 +470,7 @@ sub setListRow {
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 	      }
 	    }
-	  } 	  
+	  } 
 	  # old conditional
 	} elsif (time < $set->open_date) {
 	  $status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
@@ -488,7 +489,6 @@ sub setListRow {
 	  
 	  if (!@restricted) {
 	    $setIsOpen = 1;
-	    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 	  } else {
 	    my $restriction = ($set->restricted_status)*100;
 	    $control = "" unless $preOpenSets;
