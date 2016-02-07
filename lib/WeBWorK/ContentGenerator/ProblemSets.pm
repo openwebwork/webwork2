@@ -409,9 +409,26 @@ sub setListRow {
 			} elsif ( time() > $set->due_date() + 
 				  $self->r->ce->{gatewayGracePeriod} ) {
 				$status = $r->maketext("over time, closed.");
-			} else {
-				$status = $r->maketext("open, complete by [_1]",  
-					$self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
+			      } else {
+				my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date < $set->due_date;
+				my $reduced_scoring_date = $set->reduced_scoring_date;
+				my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date,undef,$ce->{studentDateDisplayFormat});
+		
+				if ($enable_reduced_scoring &&
+				    time < $reduced_scoring_date) {
+
+				  $status .= $r->maketext("open, reduced scoring starts on [_1]", $beginReducedScoringPeriod);
+				  
+				} elsif ($enable_reduced_scoring && $reduced_scoring_date &&
+					 time > $reduced_scoring_date) {
+
+				  $status = $r->maketext("open, complete by [_1]",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));  
+				  $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("reduced scoring started on [_1]", $beginReducedScoringPeriod));
+				  
+				} else {
+				  $status = $r->maketext("open, complete by [_1]",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
+				}
+
 			}
 			# we let people go back to old tests
 			$setIsOpen = 1;
@@ -443,43 +460,84 @@ sub setListRow {
 		  }
 		}
 				if ( $preOpenSets ) {
-					# reset the link
-					$interactive = CGI::a({href=>$interactiveURL,class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()},
-							      $r->maketext("Take [_1] test", $display_name));
+				  # reset the link
+				  $interactive = CGI::a({href=>$interactiveURL,class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()},
+							$r->maketext("Take [_1] test", $display_name));
 				} else {
 					$control = "";
 					$interactive = $r->maketext("Take [_1] test", $display_name);
+				      }
+			      } elsif ( $t < $set->due_date() && !@restricted ) {
+				
+				my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+				my $reduced_scoring_date = $set->reduced_scoring_date;
+				my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date,undef,$ce->{studentDateDisplayFormat});
+		
+				if ($enable_reduced_scoring &&
+				    time < $reduced_scoring_date) {
+				  
+				  $status = $r->maketext("open, reduced scoring starts [_1]", $beginReducedScoringPeriod);
+				  
+				} elsif ($enable_reduced_scoring && $reduced_scoring_date &&
+					 time > $reduced_scoring_date) {
+	
+				  $status = $r->maketext("open, due [_1],", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
+				  $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("reduced scoring started on [_1]", $beginReducedScoringPeriod));
+				} else {
+				  $status = $r->maketext("open, due [_1]", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
 				}
-			} elsif ( $t < $set->due_date() && !@restricted ) {
-				$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
+				
 				$setIsOpen = 1;
 				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
-			} elsif ( $t < $set->due_date() && @restricted) {
+			      } elsif ( $t < $set->due_date() && @restricted) {
 				my $restriction = ($set->restricted_status)*100;
-				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
-		if(@restricted > 1) {
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
-		  foreach(0..$#restricted) {
-		    $status .= " $restricted[$_] " if $_ != $#restricted;
-		    $status .= " and $restricted[$_] " if $_ == $#restricted;
-		  }
-		  $status .= " to open this test."
-		}
-				if ( $preOpenSets ) {
-					# reset the link
-					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $display_name));
+				$control = "" unless $preOpenSets;
+				$interactive = $name unless $preOpenSets;
+
+				my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+				my $reduced_scoring_date = $set->reduced_scoring_date;
+				my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date,undef,$ce->{studentDateDisplayFormat});
+		
+				if ($enable_reduced_scoring && time < $reduced_scoring_date) {
+				  
+				  $status = $r->maketext("open, reduced scoring starts [_1],", $beginReducedScoringPeriod);
+				  
+				} elsif ($enable_reduced_scoring && time > $reduced_scoring_date) {
+				  
+				  $status = $r->maketext("open, due [_1],", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
+				  $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("reduced scoring started on [_1],  ", $beginReducedScoringPeriod));
 				} else {
-					$control = "";
-					$interactive = $r->maketext("Take [_1] test", $display_name);
+				  $status = $r->maketext("open, due [_1],", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
 				}
-			} else {
+				
+				$status .= $r->maketext(" but you must score at least [_1]% on set [_2] to open this set.", sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
+
+				if(@restricted > 1) {
+				  $status .= $r->maketext(" but you must score at least [_1]% on sets", sprintf("%.0f",$restriction));
+				  foreach(0..$#restricted) {
+				    $status .= " $restricted[$_] " if $_ != $#restricted;
+				    $status .= " and $restricted[$_] " if $_ == $#restricted;
+				  }
+				  $status .= $r->maketext(" to open this set.")
+				}
+				
+				$setIsOpen = 0;
+			      
+				if ( $preOpenSets ) {
+				  # reset the link
+				  $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
+							$r->maketext("Take [_1] test", $display_name));
+				} else {
+				  $control = "";
+				  $interactive = $r->maketext("Take [_1] test", $display_name);
+				}
+			      } else {
 				$status = $r->maketext("Closed");
 
 				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
 				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 							      
-				} else {
+				  } else {
 				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
 				}
 			}
@@ -502,43 +560,58 @@ sub setListRow {
 		}
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
-	} elsif (time < $set->due_date && !@restricted) {
-			$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
-			my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
-			my $reduced_scoring_date = $set->reduced_scoring_date;
-			if ($reduced_scoring_date and $enable_reduced_scoring
-			    and $reduced_scoring_date != $set->due_date) {
-			    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
-			    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
-			    
-			}
+	      } elsif (time < $set->due_date && !@restricted) {
+		my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+		my $reduced_scoring_date = $set->reduced_scoring_date;
+		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date,undef,$ce->{studentDateDisplayFormat});
+		
+		if ($enable_reduced_scoring &&
+		    time < $reduced_scoring_date) {
+		  
+		  $status = $r->maketext("open, reduced scoring starts [_1]", $beginReducedScoringPeriod);
+
+		} elsif ($enable_reduced_scoring && $reduced_scoring_date &&
+		   time > $reduced_scoring_date) {
+	
+		  $status = $r->maketext("open, due [_1],", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
+		  $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("reduced scoring started on [_1]", $beginReducedScoringPeriod));
+		} else {
+		  $status = $r->maketext("open, due [_1]", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
+		}
+		
 		$setIsOpen = 1;
 	} elsif (time < $set->due_date && @restricted) {
 		my $restriction = ($set->restricted_status)*100;
 		$control = "" unless $preOpenSets;
 		$interactive = $name unless $preOpenSets;
 
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
+		my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+		my $reduced_scoring_date = $set->reduced_scoring_date;
+		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date,undef,$ce->{studentDateDisplayFormat});
+		
+		if ($enable_reduced_scoring && time < $reduced_scoring_date) {
+		  
+		  $status = $r->maketext("open, reduced scoring starts [_1],", $beginReducedScoringPeriod);
+
+		} elsif ($enable_reduced_scoring && time > $reduced_scoring_date) {
+		  
+		  $status = $r->maketext("open, due [_1],", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
+		  $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("reduced scoring started on [_1],  ", $beginReducedScoringPeriod));
+		} else {
+		  $status = $r->maketext("open, due [_1],", $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}));
+		}
+		
+		$status .= $r->maketext(" but you must score at least [_1]% on set [_2] to open this set.", sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
 
 		if(@restricted > 1) {
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
+		  $status .= $r->maketext(" but you must score at least [_1]% on sets", sprintf("%.0f",$restriction));
 		  foreach(0..$#restricted) {
 		    $status .= " $restricted[$_] " if $_ != $#restricted;
 		    $status .= " and $restricted[$_] " if $_ == $#restricted;
 		  }
-		 $status .= " to open this set."
+		  $status .= $r->maketext(" to open this set.")
 		}
 
-		my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
-		my $reduced_scoring_date = $set->reduced_scoring_date;
-		if ($reduced_scoring_date and $enable_reduced_scoring) {
-		    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
-		    
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
-		    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
-		    
-		}
 		$setIsOpen = 0;
 	} elsif (time < $set->answer_date) {
 		$status = $r->maketext("closed, answers on [_1]", $self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat}));

@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound between after);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -126,11 +126,20 @@ sub title {
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
 	
 	my $title = $setID;
+	#put either due date or reduced scoring date in the title. 
 	my $set = $r->db->getMergedSet($eUserID, $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
+	  my $enable_reduced_scoring =  $r->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+	  if ($enable_reduced_scoring && 
+	      before($set->reduced_scoring_date)) {
+	    $title .= ' - '.$r->maketext("Reduced Scoring Starts [_1]", 
+	         $self->formatDateTime($set->reduced_scoring_date,undef,
+				       $r->ce->{studentDateDisplayFormat}));
+	  } elsif ($set->due_date) {
 	    $title .= ' - '.$r->maketext("Due [_1]", 
 	         $self->formatDateTime($set->due_date,undef,
 				       $r->ce->{studentDateDisplayFormat}));
+	  }
 	}
 
 	return $title;
@@ -340,22 +349,25 @@ sub body {
 	# print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
 
 
-	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+
 	my $reduced_scoring_date = $set->reduced_scoring_date;
-	if ($reduced_scoring_date and $enable_reduced_scoring
-	    and $reduced_scoring_date != $set->due_date) {
+	if ($enable_reduced_scoring) {
 		my $dueDate = $self->formatDateTime($set->due_date());
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
 		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
-
-		if (time < $set->due_date()) {
-			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_1",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		
+		if (before($reduced_scoring_date)) {
+		  print CGI::div({class=>"ResultsAlert"}, $r->maketext("After the reduced scoring peroid begins all work counts for [_3]% of its value.  The set is due [_2]", $beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		  
+		} elsif (between($reduced_scoring_date,$set->due_date())) {
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set is in its reduced scoring period.  All work counts for [_2]% of its value.",$beginReducedScoringPeriod,$reducedScoringPerCent));
 		} else {
-			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_2",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		}
-	}
-
+	      }
+	
 	# DBFIXME use iterator
 	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 
