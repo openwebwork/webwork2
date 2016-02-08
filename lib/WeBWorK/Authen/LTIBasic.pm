@@ -637,7 +637,7 @@ sub authenticate
 								$db -> addUserSet($userSet);
 								}
 							}
-						elsif ( $globalSet -> open_date < $open_cut and $globalSet -> due_date < $due_cut )
+						elsif ( $globalSet -> open_date < $open_cut )
 							{
 							if (not $db -> existsUserSet($userID, $globalSet -> set_id ) ) {
 								$userSet = $db -> newUserSet();
