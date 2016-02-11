@@ -16,9 +16,10 @@
 
 package WeBWorK::AchievementEvaluator;
 use base qw(WeBWorK);
+
 =head1 NAME
 
-    WeBWorK::Cheevos - Cheevo code
+  WeBWorK::AchievmeentEvaulator  -  Runs achievement evaluators for problems.
 
 =cut
 

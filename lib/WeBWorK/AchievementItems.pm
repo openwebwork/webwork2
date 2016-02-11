@@ -132,10 +132,9 @@ sub use_item {
     return "You need to input a Set Name" unless
 	(defined $setID);
 
-    my $set = $db->getMergedSet($userName,$setID);
+    my $set = $db->getUserSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
-
 
     # Set a new due date and answer time for the student and remove the item
     $set->due_date(time()+86400);
@@ -226,12 +225,13 @@ sub use_item {
     my $set = $db->getMergedSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
-
+    my $userSet = $db->getUserSet($userName,$setID);
+    
     #add time to the due date and answer date and remove item from inventory
-    $set->due_date($set->due_date()+86400);
-    $set->answer_date($set->answer_date()+86400);
+    $userSet->due_date($set->due_date()+86400);
+    $userSet->answer_date($set->answer_date()+86400);
 
-    $db->putUserSet($set);
+    $db->putUserSet($userSet);
 	
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
@@ -308,12 +308,13 @@ sub use_item {
     my $set = $db->getMergedSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
-
+    my $userSet = $db->getUserSet($userName,$setID);
+    
     #add time to the due date and answer date and remove item from inventory
-    $set->due_date($set->due_date()+172800);
-    $set->answer_date($set->answer_date()+172800);
+    $userSet->due_date($set->due_date()+172800);
+    $userSet->answer_date($set->answer_date()+172800);
 
-    $db->putUserSet($set);
+    $db->putUserSet($userSet);
 	
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
@@ -398,17 +399,17 @@ sub use_item {
     my $set = $db->getMergedSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
-
+    my $userSet = $db->getUserSet($userName,$setID);
 
     # enable reduced scoring on the set and add the reduced scoring period 
     # to the due date.  
     my $additionalTime = 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
-    $set->enable_reduced_scoring(1);
-    $set->reduced_scoring_date($set->due_date());
-    $set->due_date($set->due_date()+$additionalTime);
-    $set->answer_date($set->answer_date()+$additionalTime);
+    $userSet->enable_reduced_scoring(1);
+    $userSet->reduced_scoring_date($set->due_date());
+    $userSet->due_date($set->due_date()+$additionalTime);
+    $userSet->answer_date($set->answer_date()+$additionalTime);
 
-    $db->putUserSet($set);
+    $db->putUserSet($userSet);
 	
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
@@ -1392,11 +1393,13 @@ sub use_item {
     my $set = $db->getMergedSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
+
+    my $userSet = $db->getUserSet($userName,$setID);
     
-    $set->versions_per_interval($set->versions_per_interval()+1)
+    $userSet->versions_per_interval($set->versions_per_interval()+1)
       unless ($set->versions_per_interval() == 0);
     
-    $db->putUserSet($set);
+    $db->putUserSet($userSet);
     
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
@@ -1491,12 +1494,13 @@ sub use_item {
     my $set = $db->getMergedSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
-
+    my $userSet = $db->getUserSet($userName,$setID);
+    
     #add time to the due date and answer date
-    $set->due_date($set->due_date()+86400);
-    $set->answer_date($set->answer_date()+86400);
+    $userSet->due_date($set->due_date()+86400);
+    $userSet->answer_date($set->answer_date()+86400);
 
-    $db->putUserSet($set);
+    $db->putUserSet($userSet);
 
     #add time to the due date and answer date of verious verisons
     my @versions = $db->listSetVersions($userName,$setID);
@@ -1588,10 +1592,10 @@ sub use_item {
     return "You need to input a Gateway Name" unless
 	(defined $setID);
 
-    my $set = $db->getMergedSet($userName,$setID);
+    my $set = $db->getUserSet($userName,$setID);
     return "Couldn't find that set!" unless
 	($set);
-
+    
     #add time to the due date and answer date and remove item from inventory
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
