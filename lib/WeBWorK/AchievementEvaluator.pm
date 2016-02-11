@@ -54,6 +54,23 @@ sub checkForAchievements {
     my $isGatewaySet = ( $set->assignment_type =~ /gateway/ ) ? 1 : 0;
     my $isJitarSet = ( $set->assignment_type eq 'jitar' ) ? 1 : 0;
 
+    #### Temporary Transition Code ####
+    # If an achievement doesn't have either a number or an assignment_type
+    # then its probably an old achievement in which case we should
+    # update its assignment_type to include 'default'.
+    # This whole block of code can be removed once people have had time
+    # to transition over.  (I.E. around 2017)
+    
+    foreach my $achievement (@achievements) {
+      unless ($achievement->assignment_type || $achievement->number) {
+	$achievement->assignment_type('default');
+	$db->putAchievement($achievement);
+      }
+    }
+    
+    ### End Transition Code.  ###
+    
+    
     # If its a gateway set get the current version
     if ($isGatewaySet) {
 	$set = $db->getSetVersion($user_id, $set_id, $options{setVersion});

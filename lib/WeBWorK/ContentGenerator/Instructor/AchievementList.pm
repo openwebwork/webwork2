@@ -166,24 +166,6 @@ sub initialize {
 	$self->{allAchievementIDs} = \@allAchievementIDs;
 	$self->{totalUsers} = scalar @users;
 
-	#### Temporary Transition Code ####
-	# If an achievement doesn't have either a number or an assignment_type
-	# then its probably an old achievement in which case we should
-	# update its assignment_type to include 'default'.
-	# This whole block of code can be removed once people have had time
-	# to transition over.  (I.E. around 2017)
-
-	my @achievements = $db->getAchievements(@allAchievementIDs);
-
-	foreach my $achievement (@achievements) {
-	  unless ($achievement->assignment_type || $achievement->number) {
-	    $achievement->assignment_type('default');
-	    $db->putAchievement($achievement);
-	  }
-	}
-
-	### End Transition Code.  ###
-
 	
 	if (defined $r->param("selected_achievements")) {
 		$self->{selectedAchievementIDs} = [ $r->param("selected_achievements") ];
