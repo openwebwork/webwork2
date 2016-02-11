@@ -1080,7 +1080,7 @@ sub sortAchievements {
 	@Achievements = sort {($a->number || 0) <=> ($b->number || 0)} @Achievements;
 	
 	@Achievements = sort {
-	  if (defined($a->number) && defined($b->number)) {
+	  if ($a->number && $b->number) {
 	    return $a->number <=> $b->number;
 	  } elsif ($a->{category} eq $b->{category}) {
 	    return 0; 
