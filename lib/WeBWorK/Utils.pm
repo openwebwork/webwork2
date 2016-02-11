@@ -1074,9 +1074,23 @@ sub sortAchievements {
 
 	@Achievements = sort {uc($a->{achievement_id}) cmp uc($b->{achievement_id})}  @Achievements;
 
-	# Next sort by number
+	# Next sort by number if there are numbers, otherwise sort by
+	# category.  
 
 	@Achievements = sort {($a->number || 0) <=> ($b->number || 0)} @Achievements;
+	
+	@Achievements = sort {
+	  if (defined($a->number) && defined($b->number)) {
+	    return $a->number <=> $b->number;
+	  } elsif ($a->{category} eq $b->{category}) {
+	    return 0; 
+	  } elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
+	    return -1;
+	  } elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
+	    return 1;
+	  } else {
+	    return $a->{category} cmp $b->{category};
+	  } } @Achievements;
 
 	return @Achievements;
        
