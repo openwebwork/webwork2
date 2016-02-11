@@ -1308,7 +1308,7 @@ sub use_item {
     return;
 }
 
-#Item to reset number of incorrect attempts on a Gateway
+#Item to allow students to take an addition test
 package WeBWorK::AchievementItems::AddNewTestGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
@@ -1321,7 +1321,7 @@ sub new {
     my $self = {
 	id => "AddNewTestGW",
 	name => "Oil of Cleansing",
-	description => "Allows you to create a fresh version of an assessment. This means you can retry an assessment that you’ve already submitted and the system will record the best score. Note: The assessment must still be open for this to work; i.e., it cannot be done after the assessment is due, nor does it extend the due date.",
+	description => "Unlock an additional version of a Gateway Test.  If used before the due date of the Gateway Test this will allow you to generate a new version of the test.",
 	%options,
     };
     
@@ -1347,8 +1347,7 @@ sub print_form {
     # we don't want the versioned gateways though.  
     foreach my $set (@unfilteredsets) {
 	if ($set->assignment_type() =~ /gateway/ &&
-	    $set->set_id !~ /,v\d+$/ &&
-	    $set->set_id !~ /Practice/) {
+	    $set->set_id !~ /,v\d+$/) {
 	    push @sets, $set;
 	}
     }	    
@@ -1394,13 +1393,11 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
     
-    #add time to the due date and answer date and remove item from inventory
-    
     $set->versions_per_interval($set->versions_per_interval()+1)
-	unless ($set->versions_per_interval() == 0);
-
+      unless ($set->versions_per_interval() == 0);
+    
     $db->putUserSet($set);
-	
+    
     $globalData->{$self->{id}} = 0;
     $globalUserAchievement->frozen_hash(nfreeze($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
@@ -1423,7 +1420,7 @@ sub new {
     my $self = {
 	id => "ExtendDueDateGW",
 	name => "Amulet of Extension",
-	description => "Extends the due date of an assessment by 24 hours. Note: The assessment must still be open for this to work (i.e., it cannot be used after an assessment is due), and you cannot have submitted the assessment yet.",
+	description => "Extends the due date of a gateway test by 24 hours. Note: The test must still be open for this to work.",
 	%options,
     };
     
@@ -1449,8 +1446,7 @@ sub print_form {
     # we don't want the versioned gateways though.  
     foreach my $set (@unfilteredsets) {
 	if ($set->assignment_type() =~ /gateway/ &&
-	    $set->set_id !~ /,v\d+$/ &&
-	    $set->set_id !~ /Practice/) {
+	    $set->set_id !~ /,v\d+$/) {
 	    push @sets, $set;
 	}
     }	    
@@ -1534,7 +1530,7 @@ sub new {
     my $self = {
 	id => "RessurectGW",
 	name => "Necromancers Charm",
-	description => "Reopens any assessment for an additional 24 hours. This allows you to take an assessment even if the due date has past. Note: You cannot use the Necromancers Charm on an assessment that you’ve already started (or submitted) unless you also use the Oil of Cleansing at the same time. But, if you missed a due date during the semester, this item will help you.",
+	description => "Reopens any gateway test for an additional 24 hours. This allows you to take a test even if the due date has past. This item does not allow you to take additional versions of the test.",
 	%options,
     };
     
@@ -1559,8 +1555,7 @@ sub print_form {
     # we going to have to find the gateways for these achievements. 
     foreach my $set (@unfilteredsets) {
 	if ($set->assignment_type() =~ /gateway/ &&
-	    $set->set_id !~ /,v\d+$/ &&
-	    $set->set_id !~ /Practice/) {
+	    $set->set_id !~ /,v\d+$/) {
 	    push @sets, $set->set_id;
 	}
     }	    
