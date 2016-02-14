@@ -359,10 +359,10 @@ sub body {
 		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
 		
 		if (before($reduced_scoring_date)) {
-		  print CGI::div({class=>"ResultsAlert"}, $r->maketext("After the reduced scoring peroid begins all work counts for [_3]% of its value.  The set is due [_2]", $beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		  print CGI::div({class=>"ResultsAlert"}, $r->maketext("After the reduced scoring peroid begins all work counts for [_1]% of its value.", $reducedScoringPerCent));
 		  
 		} elsif (between($reduced_scoring_date,$set->due_date())) {
-		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set is in its reduced scoring period.  All work counts for [_2]% of its value.",$beginReducedScoringPeriod,$reducedScoringPerCent));
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set is in its reduced scoring period.  All work counts for [_1]% of its value.",$reducedScoringPerCent));
 		} else {
 		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		}
