@@ -66,11 +66,28 @@ sub initialize {
 	
 	my $openfilename      =	   $r->param('openfilename');
 	my $savefilename      =	   $r->param('savefilename');
+	my $mergefile         =    $r->param('merge_file');
 	
 	#FIXME  get these values from global course environment (see subroutines as well)
 	my $default_msg_file       =    'default.msg';  
 	my $old_default_msg_file   =    'old_default.msg';
-	
+
+	#if mergefile or openfilename haven't been defined via parameter
+	# check the database to see if there is a file we should use.
+	# if they have been defined via parameter then we should update the db
+
+	if (defined($openfilename) && $openfilename) {
+	  $db->setSettingValue("${user}_openfile",$openfilename);
+	} elsif ($db->settingExists("${user}_openfile")) {
+	  $openfilename = $db->getSettingValue("${user}_openfile");
+	}
+	  
+	if (defined($mergefile) && $mergefile) {
+	  $db->setSettingValue("${user}_mergefile",$mergefile);
+	} elsif ($db->settingExists("${user}_mergefile")) {
+	  $mergefile = $db->getSettingValue("${user}_mergefile");
+	}
+
 	# Figure out action from submit data
 	my $action = ''; 
 	if ($r->param('sendEmail')) {
@@ -101,7 +118,7 @@ sub initialize {
 	$self->{columns}                =   (defined($r->param('columns'))) ? $r->param('columns') : $ce->{mail}->{editor_window_columns};
 	$self->{default_msg_file}	    =   $default_msg_file;
 	$self->{old_default_msg_file}   =   $old_default_msg_file;
-	$self->{merge_file}             =   (defined($r->param('merge_file'  )))    ? $r->param('merge_file')   : 'None';
+	$self->{merge_file}             =   $mergefile;
 	#$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : $user;
 	# an expermiment -- share the scrolling list for preivew and sendTo actions.
 	my @classList                   =   (defined($r->param('classList')))    ? $r->param('classList') : ($user);
@@ -397,7 +414,9 @@ sub initialize {
 		#################################################################
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" ) unless ($output_file =~ /^[~.]/ || $output_file =~ /\.\./ || not $output_file =~ m|\.msg$|);
 		unless ( $self->{submit_message} or not -w "${emailDirectory}/$output_file" )  {  # if there are no errors report success
-			$self->addgoodmessage(CGI::p("Message saved to file <code>${emailDirectory}/$output_file</code>."));
+		  $self->addgoodmessage(CGI::p("Message saved to file <code>${emailDirectory}/$output_file</code>."));
+		  $self->{input_file} = $output_file;
+		  $db->setSettingValue("${user}_openfile",$output_file);
 		}    
 
 	} elsif ($action eq 'previewMessage') {

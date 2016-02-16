@@ -2028,9 +2028,9 @@ sub output_past_answer_button{
 			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
-			CGI::hidden(-name => 'problemID', -value=>$problemNumber), "\n",
-			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
-               		CGI::hidden(-name => 'studentUser',  -value=>$problem->user_id), "\n",
+			CGI::hidden(-name => 'selected_problems', -value=>$problemNumber), "\n",
+			CGI::hidden(-name => 'selected_sets',  -value=>$problem->set_id), "\n",
+               		CGI::hidden(-name => 'selected_users',  -value=>$problem->user_id), "\n",
 			CGI::p(
 				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
 			), "\n",

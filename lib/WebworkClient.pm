@@ -292,8 +292,10 @@ sub xmlrpcCall {
 	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
 	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
-	  print "Errors: \n $@\n End Errors\n" if $@;
-	  
+	  print STDERR "Errors: \n $@\n End Errors\n" if $@;
+
+          print CGI::h2("WebworkClient Errors") if $@;
+	  print CGI::p("Errors:",CGI::br(),CGI::blockquote({style=>"color:red"},CGI::code($@)),CGI::br(),"End Errors") if $@;
 	  
 	  if (not ref($result) ) {
 	  	my $error_string = "xmlrpcCall to $command returned no result for ". 
