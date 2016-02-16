@@ -18,7 +18,7 @@ $debug_lti_parameters = 0; # set this to 1 to have LTI calling parameters printe
 
 ###################
 $authen{user_module} = [ 
-	{  "*" => "WeBWorK::Authen::LTIBasic", },           #preferred authorization method
+	{  "*" => "WeBWorK::Authen::LTIAdvanced", },           #preferred authorization method
 	{  "*" => "WeBWorK::Authen::Basic_TheLastOption",}  #fallback authorization method
 ];
 
