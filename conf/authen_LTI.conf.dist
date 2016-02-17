@@ -89,7 +89,7 @@ $preferred_source_of_username = "lis_person_sourcedid";
 # You should choose your own secret word for security and should treat it
 # like a password. 
 
-$LTIBasicConsumerSecret = "WeBWorK_LTI";  
+$LTIBasicConsumerSecret = "";  #This must be set  
 
 # The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
 # The NonceLifeTime (in seconds) must be short enought to prevent
@@ -100,6 +100,15 @@ $LTIBasicConsumerSecret = "WeBWorK_LTI";
 
 $NonceLifeTime=10; # in seconds
 
+# WeBWorK will automatically create users when logging in via the LMS for the
+# first time.  If the following flag is enabled then it will also keep the
+# user demographic data up to date with the LMS.  If a users information change
+# in the LMS then it will change in WeBWorK. However, any changes to the
+# student data via WeBWorK will be overwritten the next time the student
+# logs in.  
+
+$LMSManageUserData=1;
+
 # This allows you to override the URL that Oauth will use to validate the 
 # authentication.  This is important if you have some sort of setup (e.g. load
 # distributing) where the path in the LMS does not match the path that ends up 
@@ -107,20 +116,67 @@ $NonceLifeTime=10; # in seconds
 
 #$LTIBasicToThisSiteURL = "";
 
+################################################################################
+# Authorization system   LTI:  LMS Grade Passback
+################################################################################
 
-# For security reasons accounts with high permissions should not be auto
-# created via LTI requests.  Set this variable to "professor" if you want
-# professor accounts to be created automatically
+# WeBWorK can automatically report grades back to your LMS.  However the
+# system is reasonably restrictive.  When you create an LTI link in your
+# LMS you can choose to have that LTI link have a grade associated to it.
+# WeBWorK can report back a single percentage as the "grade" for that link.
+# There are two modes under which this can occur.
+#
+# Single Course Grade Mode:  $LTIGradeMode = "course";
+# 
+# In this mode you create a single Link/Assignment which points to your
+# WeBWorK Course address.  E.G. In Blackboard
+# Name: WeBWorK
+# URL: https://webwork.university.edu/webwork2/CourseName
+# Check Yes:  This link is to a Tool Provider
+# Enable Evaluation: Yes
+# Points Possible: 100
+#   Students will receive a LMS grade associated to the Link/Assignment
+# which is determined by their percentage total homework grade in WeBWorK.
+# This total homework grade is the same as the grade that would be generated
+# if you selected all sets in the Scoring Tools  page.  In particular every
+# set is graded.  To prevent a Set from counting set all of the "Values" of
+# the problems in the set to 0.  Students must log into the course via the
+# LMS at least once, but future logins can be to WeBWorK directly if that is
+# enabled.  
+#
+# Individual Homework Grade Mode:  $LTIGradeMode = "homework";
+#
+# In this mode you create a single Link/Assignment for *every* homework set in
+# the course.  The address should be the address of that set in the Course.
+# E.G. in Blackboard
+# Name: Set Name
+# URL: https://webwork.university.edu/webwork2/CourseName/SetName
+# Check Yes:  This link is to a Tool Provider
+# Enable Evaluation: Yes
+# Points Possible: 100
+#   Students will receive a grade for each Link/Assignment which is determined
+# by their percentage homework grade on the Set which the Link/Assignment
+# points to.  Students need to use the Link/Assignment in the LMS at least
+# to enable grade passback.  In particular when working in this mode it is
+# recommended that you only allow students to log in via the LMS.  
+#
+#    Note: For both of these modes only the grades are passed back.  In
+# particular nothing else about the Link/Assignment in the LMS and the
+# homework set in WeBWorK is syncronized.  In particular the total number of
+# points/problems, the due dates, the open dates are not kept in sync
+# automatically.  
 
-$LTIAccountCreationCutoff = "ta";
+$LTIGradeMode = "none";
+#$LTIGradeMode = "course";
+#$LTIGradeMode = "homework";
 
 ################################################################################
 # Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
 ################################################################################
 
-## Each institution will need to customize these correspondences
-## to take into account the roles that are used in its
-## Learning Management System.
+# You may need to customize this hash to take into account the roles
+# that are used in your LMS.  Set the debug_lti_parameters flag to see
+# what roles are being reported to WeBWorK by your LMS
 
 %LMSrolesToWeBWorKroles = (
     "AI/TA" => "ta",
@@ -134,6 +190,12 @@ $LTIAccountCreationCutoff = "ta";
     "Learner" => "student",
     "Teaching Assistant" => "ta",
     );
+
+# For security reasons accounts with high permissions should not be auto
+# created via LTI requests.  Set this variable to "professor" if you want
+# professor accounts to be created automatically
+
+$LTIAccountCreationCutoff = "ta";
 
 ################################################################################
 # Local routines  

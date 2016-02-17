@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
 # 
@@ -29,13 +29,11 @@ use Carp;
 use WeBWorK::Debug;
 use DBI;
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(formatDateTime);
+use WeBWorK::Utils qw(formatDateTime grade_set grade_gateway grade_all_sets);
 use WeBWorK::Localize;
 use WeBWorK::ContentGenerator::Instructor;
 use URI::Escape;
 use Net::OAuth;
-use HTTP::Request;
-use LWP::UserAgent;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
@@ -343,7 +341,6 @@ sub authenticate {
   debug("LTIAdvanced::authenticate called for user |$user|");
   debug "ref(r) = |". ref($r) . "|";
   debug "ref of r->{paramcache} = |" . ref($r->{paramcache}) . "|";
-  debug "request_method = |" . $r->request_method . "|";
 
   my $ce = $r->ce;
   my $db = $r->db;
@@ -356,6 +353,7 @@ sub authenticate {
   my $nonce = WeBWorK::Authen::LTIAdvanced::Nonce->new($r, $self->{oauth_nonce}, $self->{oauth_timestamp}); 
   if (!($nonce->ok ) ) {
     $self->{error} .=  $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator if this recurs.");
+    debug("Failed to verify nonce");
     return 0;
   }
 
@@ -364,7 +362,7 @@ sub authenticate {
   my @keys = keys %{$r-> {paramcache}};
   foreach my $key (@keys) {
     $request_hash{$key} =  $r->param($key); 
-    debug("$key->|" . $requestHash->{$key} . "|");
+    debug("$key->|" . $request_hash{$key} . "|");
   }	
   my $requestHash = \%request_hash;
 
@@ -396,14 +394,14 @@ sub authenticate {
 
   if ($@) {
       debug("construction of Net::OAuth object failed: $@");
-      debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
+      debug( "eval failed: ", $@, "<br /><br />");
 
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
       $self->{log_error} .= "Construction of OAuth request record failed";
       return 0;
     } elsif (! $request->verify && ! $altrequest->verify) {
       debug("LTIAdvanced::authenticate request-> verify failed");
-      debug("OAuth verification Failed "; print_keys($r));
+      debug("OAuth verification Failed ");
       
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
       $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
@@ -413,72 +411,36 @@ sub authenticate {
       return 0;
     } else {
       debug("OAuth verification SUCCEEDED !!");
-
-      ####### Return a grade test code ######
-
-      my $sourcedid = $r->param('lis_result_sourcedid');
-      my $score = .65;
-
-      my $replaceResultXML = <<EOS;
-<?xml version = "1.0" encoding = "UTF-8"?>
-<imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
-  <imsx_POXHeader>
-    <imsx_POXRequestHeaderInfo>
-      <imsx_version>V1.0</imsx_version>
-      <imsx_messageIdentifier>999999123</imsx_messageIdentifier>
-    </imsx_POXRequestHeaderInfo>
-  </imsx_POXHeader>
-  <imsx_POXBody>
-    <replaceResultRequest>
-      <resultRecord>
-	<sourcedGUID>
-	  <sourcedId>$sourcedid</sourcedId>
-	</sourcedGUID>
-	<result>
-	  <resultScore>
-	    <language>en</language>
-	    <textString>$score</textString>
-	  </resultScore>
-	</result>
-      </resultRecord>
-    </replaceResultRequest>
-  </imsx_POXBody>
-</imsx_POXEnvelopeRequest>
-EOS
-
-      my $gradeRequest = Net::OAuth->request("consumer")->new(
-		  request_url => $r->param('lis_outcome_service_url'),
-		  request_method => "POST",
-		  consumer_secret => $ce->{LTIBasicConsumerSecret},
-		  consumer_key => $request->consumer_key,
-		  signature_method => $request->signature_method,
-		  nonce => int(rand( 2**32)),
-		  timestamp => time(),
-								 );
-
-      $gradeRequest->sign();
-	  
-      my $HTTPRequest = HTTP::Request->new(
-	       $gradeRequest->request_method,
-	       $gradeRequest->request_url,
-	       [
-		  'Authorization' => $gradeRequest->to_authorization_header,
-		  'Content-Type'  => 'application/xml',
-	       ],
-	       $replaceResultXML,
-					      );
-      warn(CGI::escapeHTML($HTTPRequest->as_string));
-      my $response = LWP::UserAgent->new->request($HTTPRequest);
-      warn($response->message);
-      warn(CGI::escapeHTML($response->content));
       
       my $userID = $self->{user_id};
       if (! $db->existsUser($userID) ) { # New User. Create User record
-	return $self->create_user();
-      }  else {
+	unless ($self->create_user()) {
+	  $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
+	  $self->{log_error} .= "Failed to create user $userID.";
+	  if ( $ce->{debug_lti_parameters} ) {
+	    warn("Failed to create user $userID.");
+	  }
+	}
+      }  elsif ($ce->{LMSManageUserData}) {
 	# Existing user.  Possibly modify demographic information and permission level.
-	return $self->maybe_update_user();
+	unless ($self->maybe_update_user()) {
+	  $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
+	  $self->{log_error} .= "Failed to update user $userID.";
+	  if ( $ce->{debug_lti_parameters} ) {
+	    warn("Failed to updateuser $userID.");
+	  }
+	}
       }
+
+      # If we are using grade passback then make sure the data
+      # we need to submit the grade is kept up to date.  
+      if ($ce->{LTIGradeMode} eq 'course' ||
+	  $ce->{LTIGradeMode} eq 'homework') {
+	my $submitGrade = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+	$submitGrade->update_sourcedid($userID);
+      }
+
+      return 1;
     }
   
   debug("LTIAdvanced is returning a failed authentication");
@@ -538,7 +500,7 @@ sub create_user {
 
   # We dont create users with too high of a permission level
   # for security reasons. 
-  if ($self->{LTI_webwork_permissionLevel} > $ce->{userRoles}->{$ce->{LTIAccountCreationCutoff}}) {
+  if ($LTI_webwork_permissionLevel > $ce->{userRoles}->{$ce->{LTIAccountCreationCutoff}}) {
     $self->{log_error}.= "userID: $userID -- Unknown instructor attempting to log in via LTI.  Instructor accounts must be created manually";
     croak $r->maketext("The instructor account with user id [_1] does not exist.  Please create the account manually via WeBWorK.",$userID);
     return 0;
@@ -573,7 +535,7 @@ sub create_user {
 
   
   # Assign existing sets
-  my $instructorTools = new WeBWorK::ContentGenerator::Instructor->new($r);
+  my $instructorTools = WeBWorK::ContentGenerator::Instructor->new($r);
   my @setsToAssign = ();
   
   my @globalSetIDs = $db->listGlobalSets;
@@ -634,13 +596,17 @@ sub maybe_update_user {
       $ce->{LTI_modify_user}($self,$tempUser);
     }
 
-    my @elements = qw(last_name, first_name, email_address, status, section, recitation);
+    my @elements = qw(last_name first_name 
+		      email_address status 
+		      section recitation);
 
     my $change_made = 0;
 
     for my $element (@elements) {
       if ($user->$element ne $tempUser->$element) {
 	$change_made = 1;
+	warn "WeBWorK User has $element: ".$user->$element." but LMS user has $element ".$tempUser->$element."\n" 
+	  if ( $ce->{debug_lti_parameters} );
       }
     }
 
@@ -648,26 +614,14 @@ sub maybe_update_user {
       $user->comment(formatDateTime(time, "local"));
       $db->putUser($tempUser);
       $self->write_log_entry("Demographic data for user $userID modified via LTIAdvanced login");
+      warn "Existing user: $userID updated.\n"
+	if ( $ce->{debug_lti_parameters} );
     }
-    warn "Existing user: $userID updated.\n". 
-      "User section is |".$user->{section}. "|\n recitation is |".$user->{recitation}."|\n" if ( $ce->{debug_lti_parameters} );
-  
+      
     $self->{initial_login} = 1;
   }
 
   return 1;
-}
-
-sub print_keys {
-	my ($self, $r) = @_;
-	my @keys = keys %{$r-> {paramcache}};
-	my %request_hash;
-	my $key;
-	foreach $key (@keys) {
-		$request_hash{$key} =  $r->param($key); 
-		warn("$key->|" . $request_hash{$key} . "|");
-	}
-	my $requestHash = \%request_hash;
 }
 
 ################################################################################
@@ -701,6 +655,12 @@ sub ok {
   $self->maybe_purge_nonces();
   
   if ($self->{timestamp} < time() - $ce->{NonceLifeTime}) {
+    warn($self->{timestamp});
+    warn(time());
+    warn($ce->{NonceLifeTime});
+    if ( $ce->{debug_lti_parameters} ) {
+      warn("Nonce Expired.  Your NonceLifeTime may be too short");
+    }
     return 0;
   }
   
@@ -730,7 +690,7 @@ sub maybe_purge_nonces {
   my $ce = $r->{ce};
   my $db = $self->{r}->{db};
   my $time = time;
-  my $lastPurge = $db->getSetting('lastNoncePurge');
+  my $lastPurge = $db->getSettingValue('lastNoncePurge');
 
   # only purge if the last purge was never or over NONCE_LIFETIME ago
   if (!defined($lastPurge) || ($time-$lastPurge > NONCE_LIFETIME)) {
@@ -740,17 +700,14 @@ sub maybe_purge_nonces {
     # Delete any "nonce" keys that are older than NONCE_LIFETIME
     foreach my $Key (@Keys) {
       if ($Key->key eq "nonce" && ($time-$Key->timestamp > NONCE_LIFETIME)) {
-	$db->deleteKey($user_id);
+	$db->deleteKey($Key->user_id);
       }
     }
 
+    $db->setSettingValue('lastNoncePurge',$time);
   }
 
 }
-
-################################################################################
-# END NONCE SUB-PACKAGE
-################################################################################
 
 1;
 
