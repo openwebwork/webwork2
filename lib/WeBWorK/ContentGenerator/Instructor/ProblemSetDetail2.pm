@@ -1130,12 +1130,12 @@ sub initialize {
 
 		my $enable_reduced_scoring = 
 		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
-		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    (defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
-		    $setRecord->enable_reduced_scoring;
+		    $setRecord->enable_reduced_scoring);
 
-		if ($enable_reduced_scoring && 
-		    $reduced_scoring_date 
+		if ($enable_reduced_scoring &&
+		    $reduced_scoring_date
 		    && ($reduced_scoring_date > $due_date 
 			|| $reduced_scoring_date < $open_date)) {
 		    $self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
