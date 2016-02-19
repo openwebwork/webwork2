@@ -551,11 +551,11 @@ sub create_user {
 
   # Give schools the chance to modify newly added sets 
   if (defined($ce->{LTI_modify_user_sets})) {
-    my @userSetIDs = map {[$userID,$_]} @setsToAssign;
-    my @userSets = $db->getUserSets(@userSetIDs);
-
-    foreach my $userSet (@userSets) {
-      $ce->{LTI_modify_user_sets}($self,$userSet);
+    foreach my $globalSet (@setsToAssign) {
+      my $userSet = $db->getUserSet($userID,$globalSet->set_id);
+      next unless $userSet;
+      
+      $ce->{LTI_modify_user_sets}($self,$globalSet,$userSet);
       $db->putUserSet($userSet);
     }
   }

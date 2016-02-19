@@ -166,9 +166,19 @@ $LMSManageUserData=1;
 # points/problems, the due dates, the open dates are not kept in sync
 # automatically.  
 
-$LTIGradeMode = "none";
 #$LTIGradeMode = "course";
 #$LTIGradeMode = "homework";
+
+# When set this variable sends grades back to the LMS every time a user
+# submits an answer.  This keeps students grades up to date but can be
+# a drain on the server.
+
+$LTIGradeOnSubmit = 1;
+
+# The system periodically updates student grades on the LMS.  This
+# variable controls how often that happens.  Set to -1 to disable.  
+
+$LTIMassUpdateInterval = 86400; #in seconds
 
 ################################################################################
 # Authorization system   LTI:  LMS Roles Mapped to WeBWorK Roles
@@ -240,6 +250,7 @@ $LTIAccountCreationCutoff = "ta";
 #$LTI_modify_user_set = sub {
 #  # The self object from LTIAdvanced.pm
 #  my $self = shift;
+#  my $globalSet = shift;
 #  # The userSet object to be modified
 #  my $userSet = shift;
 
@@ -255,8 +266,8 @@ $LTIAccountCreationCutoff = "ta";
 #  elsif ($weekDay == 6) {$niceDueDay += 2;}
 #  my $niceAnswerTime = $niceDueTime + 600;
     
-#  $userSet -> due_date($niceDueTime);
-#  $userSet -> answer_date($niceAnswerTime);
+#  $userSet->due_date($niceDueTime);
+#  $userSet->answer_date($niceAnswerTime);
 #}
   
 

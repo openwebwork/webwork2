@@ -222,19 +222,19 @@ sub process_and_log_answer{
 				#Try to update the student score on the LMS
 				# if that option is enabled.
 				my $LTIGradeMode = $self->{ce}->{LTIGradeMode} // '';
-				if ($LTIGradeMode) {
+				if ($LTIGradeMode && $self->{ce}->{LTIGradeOnSubmit}) {
 				  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 				  if ($LTIGradeMode eq 'course') {
 				    if ($grader->submit_course_grade($problem->user_id)) {
 				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully setn to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
 				    }
 				  } elsif ($LTIGradeMode eq 'homework') {
 				    if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
 				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully setn to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
 				    }
 				  }
 				}

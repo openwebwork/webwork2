@@ -202,7 +202,7 @@ sub submit_grade {
 </imsx_POXEnvelopeRequest>
 EOS
 
-  warn("Using sourcedid: $sourcedid and score: $score") if
+  warn("Submitting grade using sourcedid: $sourcedid and score: $score") if
     $ce->{debug_lti_parameters};
   
   my $request_url = $db->getSettingValue('lis_outcome_service_url');
@@ -263,6 +263,43 @@ EOS
     debug(CGI::escapeHTML($response->content));
     return 0;
   }
+}
+
+sub mass_update {
+  my $self = shift;
+  my $r = $self->{r};
+  my $ce = $r->{ce};
+  my $db = $self->{r}->{db};
+    
+  my $lastUpdate = $db->getSettingValue('LTILastUpdate') // 0;
+  my $updateInterval = $ce->{LTIMassUpdateInterval} // 0;
+
+  if ($updateInterval != -1 &&
+      time - $lastUpdate > $updateInterval) {
+
+    $db->setSettingValue('LTILastUpdate',time());
+    
+    if ($ce->{LTIGradeMode} eq 'course') {
+      my @users = $db->listUsers();
+
+      foreach my $user (@users) {
+	$self->submit_course_grade($user);
+      }
+      
+    } elsif ($ce->{LTIGradeMode} eq 'homework') {
+      my @users = $db->listUsers();
+      
+      foreach my $user (@users) {
+	my @sets = $db->listUserSets($user);
+	foreach my $set (@sets) {
+
+	  $self->submit_set_grade($user,$set);
+
+	}
+      }
+    }
+  }
+
 }
 
 1;

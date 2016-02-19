@@ -348,7 +348,13 @@ sub setListRow {
 	
 	my $name = $set->set_id;
 	my @restricted = $ce->{options}{enableConditionalRelease} ?  
-	    is_restricted($db, $set, $effectiveUser) : ();
+	  is_restricted($db, $set, $effectiveUser) : ();
+	# The set shouldn't be shown if the LTI grade mode is set to homework and we dont
+	# have a source did to use to send back grades.  
+	my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework'
+	  && !defined($set->lis_source_did);
+
+	
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");
@@ -450,10 +456,20 @@ sub setListRow {
 					$control = "";
 					$interactive = $r->maketext("Take [_1] test", $display_name);
 				}
-			} elsif ( $t < $set->due_date() && !@restricted ) {
+			} elsif ( $t < $set->due_date() && !@restricted && !$LTIRestricted) {
 				$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
 				$setIsOpen = 1;
 				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+			} elsif ( $t < $set->due_date() && !@restricted && $LTIRestricted) {
+			  $status = $r->maketext("Opened on [_1] but you must log into the set through your Learning Management System (E.G. Blackboard, Moodle, Etc...");
+			  if ( $preOpenSets ) {
+			    # reset the link
+			    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
+						  $r->maketext("Take [_1] test", $display_name));
+			  } else {
+			    $control = "";
+			    $interactive = $r->maketext("Take [_1] test", $display_name);
+			  }
 			} elsif ( $t < $set->due_date() && @restricted) {
 				my $restriction = ($set->restricted_status)*100;
 				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;

@@ -1261,9 +1261,8 @@ sub grade_gateway {
       my $versionedSet = $db->getSetVersion($studentName,$setName,$i);
 
       my ($totalRight,$total) = grade_set($db,$versionedSet,$versionedSet->set_id, $studentName,1);
-
       if ($totalRight > $bestTotalRight) {
-	$totalRight = $bestTotalRight;
+	$bestTotalRight = $totalRight;
 	$bestTotal = $total;
       }
     }
@@ -1294,6 +1293,7 @@ sub grade_all_sets {
 
   foreach my $userSet (@userSets) {
     if ($userSet->assignment_type() =~ /gateway/) {
+
       my ($totalRight,$total) = grade_gateway($db,$userSet,$userSet->set_id,$studentName);
       $courseTotalRight += $totalRight;
       $courseTotal += $total;
