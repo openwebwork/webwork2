@@ -1,18 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% WeBWorK Online Homework Delivery System
-% Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-% $CVSHeader: webwork2/conf/snippets/hardcopyPreamble.tex,v 1.3 2005/09/17 20:12:01 gage Exp $
-% 
-% This program is free software; you can redistribute it and/or modify it under
-% the terms of either: (a) the GNU General Public License as published by the
-% Free Software Foundation; either version 2, or (at your option) any later
-% version, or (b) the "Artistic License" which comes with this package.
-% 
-% This program is distributed in the hope that it will be useful, but WITHOUT
-% ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-% FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
-% Artistic License for more details.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \batchmode
 \documentclass[10pt]{amsart}
@@ -39,6 +24,9 @@
 \newcommand{\less}{<}
 \newcommand{\grt}{>}
 
+% This is used to signal PG that we are not using multicols
+\newcommand{\nocolumns}{}
+
 % BEGIN capa tex macros
 
 \newcommand{\capa}{{\sl C\kern-.10em\raise-.00ex\hbox{\rm A}\kern-.22em%
@@ -61,5 +49,3 @@
 \voffset=-0.8in
 \newpage
 \setcounter{page}{1}
-\begin{multicols}{2}
-\columnwidth=\linewidth

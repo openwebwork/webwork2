@@ -1,4 +1,6 @@
-package WeBWorK::AchievementItems;
+Auto-merging conf/snippets/hardcopyThemes/twoColumn/hardcopyPreamble.tex
+  Automatic merge failed; fix conflicts and then commit the result.
+  package WeBWorK::AchievementItems;
 use base qw(WeBWorK);
 
 use strict;
@@ -339,7 +341,7 @@ sub new {
 	name => "Ring of Reduction",
 	#Reduced credit needs to be set up in course configuration for this
 	# item to work,
-	description => "Enable reduced scoring for a homework set.  This will allow you to submit answers for partial credit for limited time after the due date.",
+	description => "Enable reduced scoring for a homework set.  This will allow you to submit answers for partial credit for 24 hours after the due date.",
 	%options,
     };
     

@@ -1531,9 +1531,9 @@ sub saveEdit_handler {
 		# check that the reduced scoring date is in the right place
 		my $enable_reduced_scoring = 
 		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
-		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    (defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
-		    $Set->enable_reduced_scoring;
+		     $Set->enable_reduced_scoring);
 		
 		if ($enable_reduced_scoring && 
 		    $Set->reduced_scoring_date
