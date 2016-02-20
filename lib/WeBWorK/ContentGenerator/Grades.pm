@@ -272,6 +272,10 @@ sub displayStudentStats {
 	    }
 	    $max_problems = ($max_problems<$num_of_problems)? $num_of_problems:$max_problems;
 	}
+
+	# variables to help compute gateway scores
+	my $numGatewayVersions = 0;
+	my $bestGatewayScore = 0;
 	
 	foreach my $setName (@allSetIDs)   {
 		my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
@@ -373,9 +377,6 @@ sub displayStudentStats {
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 		
-		# prettify versioned set display
-		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
-
 		# get percentage correct
 		my $totalRightPercent = 100*wwRound(2,$total ? $totalRight/$total : 0);
 		my $class = '';
@@ -385,8 +386,36 @@ sub displayStudentStats {
 		  $class = 'correct';
 		}
 
-		$courseTotal += $total;
-		$courseTotalRight += $totalRight;
+		# If its a gateway set then in order to mimic the scoring done
+		# in Scoring Tools we need to use the best score a student had.
+		# Otherwise we just add the set to the running course total
+		if ($setIsVersioned) {
+		  # prettify versioned set display
+		  $setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
+		  my $gatewayName = $1;
+		  my $currentVersion = $2;
+
+		  # If we are just starting a new gateway then set variables
+		  # to look for the max.  
+		  if ($currentVersion == 1) {
+		    $numGatewayVersions = $db->countSetVersions($studentName,$gatewayName);
+		  }
+
+		  if ($totalRight > $bestGatewayScore) {
+		    $bestGatewayScore = $totalRight;
+		  }
+		  
+		    # If its the last version then add the max to the course
+		    # totals and reset variables;
+		  if ($currentVersion == $numGatewayVersions) {
+		    $courseTotal += $total;
+		    $courseTotalRight += $bestGatewayScore;
+		    $bestGatewayScore = 0;
+		  }
+		} else {		
+		  $courseTotal += $total;
+		  $courseTotalRight += $totalRight;
+		}
 		
 		push @rows, CGI::Tr({},
 			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
@@ -432,11 +461,13 @@ sub displayStudentStats {
 	  $class = 'correct';
 	}
 
-	print CGI::Tr({class=>"grades-course-total"}, CGI::th({scope=>'row'},$r->maketext("Homework Totals")),
-		      CGI::td(CGI::span({class=>"$class"},$totalRightPercent.'%')),
-		      CGI::td($courseTotalRight),
-		      CGI::td($courseTotal),
-		      CGI::td({colspan=>$max_problems},'&nbsp;'));
+	if ($ce->{showCourseHomeworkTotals}) {
+	  print CGI::Tr({class=>"grades-course-total"}, CGI::th({scope=>'row'},$r->maketext("Homework Totals")),
+			CGI::td(CGI::span({class=>"$class"},$totalRightPercent.'%')),
+			CGI::td($courseTotalRight),
+			CGI::td($courseTotal),
+			CGI::td({colspan=>$max_problems},'&nbsp;'));
+	}
 	
 	print CGI::end_table();
 			
