@@ -1820,6 +1820,7 @@ sub importSetsFromDef {
 	    foreach my $setID (@added) {
 		my $setRecord = $db->getGlobalSet($setID);
 		$setRecord->open_date($setRecord->open_date + $dateshift);
+		$setRecord->reduced_scoring_date($setRecord->reduced_scoring_date + $dateshift);
 		$setRecord->due_date($setRecord->due_date + $dateshift);
 		$setRecord->answer_date($setRecord->answer_date + $dateshift);
 		$db->putGlobalSet($setRecord);

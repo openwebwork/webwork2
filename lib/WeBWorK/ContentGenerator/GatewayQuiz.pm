@@ -2263,10 +2263,13 @@ sub body {
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
-			CGI::hidden(-name => 'problemID', -value=>"$firstProb - $lastProb"), "\n",
-			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
-			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
-			CGI::p(
+			CGI::hidden(-name => 'selected_sets',  -value=>$setVName), "\n",
+			  CGI::hidden(-name => 'selected_users',    -value=>$effectiveUser), "\n";
+	    for (my $prob=$firstProb; $prob <= $lastProb; $prob++) {
+	      print CGI::hidden(-name => 'selected_problems', -value=>"$prob"), "\n";
+	    }
+
+	    print CGI::p(
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 				), "\n",
 			CGI::end_form();

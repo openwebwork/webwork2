@@ -86,7 +86,7 @@ $(function(){
     $('a.table-summary').popover().click(function (event) {
 	event.preventDefault();
     });
-    $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
+    $('a.help-popup').popover({trigger : 'click'}).click(function (event) {
 	event.preventDefault();
     }).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 
@@ -152,7 +152,8 @@ $(function(){
     
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
-
+    $('.additional-scoring-msg').addClass('well');
+    
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small');
