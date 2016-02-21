@@ -1284,7 +1284,6 @@ sub output_checkboxes{
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
-	    $can{showHints} or $can{showSolutions} or 
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
 		print "Show: &nbsp;&nbsp;";
 	}
@@ -1432,7 +1431,7 @@ sub output_checkboxes{
 	
 
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
-	    $can{showHints} or $can{showSolutions} or 
+	    $can{showHints} or $can{showSolutions} or # needed to put buttons on newline
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
