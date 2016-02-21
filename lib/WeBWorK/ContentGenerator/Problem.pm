@@ -2063,7 +2063,6 @@ sub output_email_instructor{
 }
 
 # output_hidden_info subroutine
-
 # outputs the hidden fields required for the form
 
 sub output_hidden_info {
