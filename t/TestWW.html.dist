@@ -39,12 +39,13 @@ This problem will help you to understand averages.
 <div class="wwproblem" style="display: none;">
 <hr>
 <iframe  width="800" height="600" 
-src="https://devel1.webwork.rochester.edu/webwork2/html2xml?
+src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
 	&answersSubmitted=0
 	&sourceFilePath=Library/LoyolaChicago/Precalc/Chap1Sec2/Q03.pg
 	&problemSeed=123567
 	&courseID=daemon_course
 	&userID=daemon
+	&displayMode=images
 	&course_password=daemon
 	&outputformat=simple">
 </iframe>
@@ -62,12 +63,13 @@ This problem gives you practice finding tangents to curves in the plane.
 <div class="wwproblem" style="display: none;">
 <hr>
 <iframe  width="800" height="600" 
-src="https://devel2.webwork.rochester.edu/webwork2/html2xml?
+src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
 	&answersSubmitted=0
 	&sourceFilePath=Library/Utah/Calculus_I/set5_The_Derivative/1210s5p17/1210s5p17.pg
 	&problemSeed=123567
 	&courseID=daemon_course
 	&userID=daemon
+	&displayMode=MathJax
 	&course_password=daemon
 	&outputformat=simple">
 </iframe>
@@ -108,7 +110,7 @@ This contains embedded PG code in base64 format.
 <div class="wwproblem" style="display: none;">
 <hr>
 <iframe  width="800" height="600" 
-src="https://devel3.webwork.rochester.edu/webwork2/html2xml?
+src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
 	&answersSubmitted=0
 	&problemSeed=123567890
 	&displayMode=MathJax
