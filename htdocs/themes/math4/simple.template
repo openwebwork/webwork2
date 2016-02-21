@@ -24,7 +24,7 @@
 ################################################################################
 -->
 
-<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<link rel="icon" type="x-image/icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
@@ -70,7 +70,7 @@ var tabberOptions = {manualStartup:true};
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
 <!--#endif-->
 
-<title>Simple--<!--#path style="text" text=" : " textonly="1"--></title>
+<title><!--#path style="text" text=" : " textonly="1"--></title>
 
 <!--#head-->
 </head>
