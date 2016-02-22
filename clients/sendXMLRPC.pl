@@ -614,11 +614,11 @@ sub record_problem_ok2 {
 			      $xmlrpc_client->return_object->{answers}->{$ans}->{score};
 			$all_correct =$all_correct && $scores{$ans};
 		}
-	$all_correct = "2" if $some_correct_answers_not_specified;
+	$all_correct = ".5" if $some_correct_answers_not_specified;
 	$ALL_CORRECT = ($all_correct == 1)?'All answers are correct':'Some answers are incorrect';
 	local(*FH);
 	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
-	print FH "$all_correct All answers for $file_path are correct; error_flag=$error_flag\n";
+	print FH "$all_correct $file_path\n"; #  do we need this? compile_errors=$error_flag\n";
 	close(FH);
 	return $ALL_CORRECT;
 }
