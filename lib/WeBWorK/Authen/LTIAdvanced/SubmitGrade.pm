@@ -100,17 +100,17 @@ sub update_sourcedid {
   } elsif ($ce->{LTIGradeMode} eq 'homework') {
     my $urlpath = $r->urlpath;
     my $setID = $urlpath->arg("setID");
-    
     if (!defined($setID)) {
       warn "Not a link to a Problem Set and in homework grade mode. Links to WeBWorK should point to specific problem sets." if $ce->{debug_lti_parameters};
     } else {
       my $set = $db->getUserSet($userID,$setID);
       # if set is not defined and we are going to a page with
       # is set dependent then there are problems that will be caught
-      # later 
+      # later
       if (defined($set) &&
 	  (!defined($set->lis_source_did) ||
 	   $set->lis_source_did ne $sourcedid)) {
+	warn($sourcedid);
 	$set->lis_source_did($sourcedid);
 	$db->putUserSet($set);
 	
@@ -156,7 +156,7 @@ sub submit_set_grade {
     $score = grade_set($db,$userSet,$userSet->set_id,$userID,0);
   }
 
-  return $self->submit_grade($user->lis_source_did,$score);
+  return $self->submit_grade($userSet->lis_source_did,$score);
 
 }
 
@@ -171,6 +171,7 @@ sub submit_grade {
   # We have to fail gracefully here because some users, like instructors,
   # may not actually have a sourcedid
   if (!$sourcedid) {
+    warn("No sourcedid for this user/assignment.  Some LMS's do not provide sourcedid for instructors so this may not be a problem, or it might mean your settings are not correct.") if $ce->{debug_lti_parameters};
     return 0;
   }
   
