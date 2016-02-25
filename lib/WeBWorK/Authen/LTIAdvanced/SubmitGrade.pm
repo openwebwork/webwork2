@@ -25,9 +25,7 @@ WeBWorK::Authen::LTIAdvanced::SubmitGrade - pass back grades to an enabled LMS
 
 use strict;
 use warnings;
-use Carp;
 use WeBWorK::Debug;
-use DBI;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets);
 use Net::OAuth;
@@ -35,7 +33,6 @@ use HTTP::Request;
 use LWP::UserAgent;
 
 # This package contains utilities for submitting grades to the LMS
-
 sub new {
   my ($invocant, $r) = @_;
   my $class = ref($invocant) || $invocant;
@@ -46,7 +43,9 @@ sub new {
   return $self;
 }
 
-
+# This updates the sourcedid for the object we are looking at.  Its either
+# the sourcedid for the user for course grades or the sourcedid for the
+# userset for homework grades. 
 sub update_sourcedid {
   my $self = shift;
   my $userID = shift;
@@ -118,6 +117,8 @@ sub update_sourcedid {
   }
 }
 
+# computes and submits the course grade for userID to the LMS
+# the course grade is the average of all sets assigned to the user.  
 sub submit_course_grade {
   my $self = shift;
   my $userID = shift;
@@ -134,6 +135,8 @@ sub submit_course_grade {
   
 }
 
+# computes and submits the set grade for $userID and $setID to the
+# LMS.  For gateways the best score is used.  
 sub submit_set_grade {
   my $self = shift;
   my $userID = shift;
@@ -159,6 +162,8 @@ sub submit_set_grade {
 
 }
 
+# submits a score of $score to the lms with $sourcedid as the
+# identifier.  
 sub submit_grade {
   my $self = shift;
   my $sourcedid = shift;
@@ -265,6 +270,8 @@ EOS
   }
 }
 
+# does a mass update of all grades.  This is all user grades for
+# course grade mode and all user set grades for homework grade mode.  
 sub mass_update {
   my $self = shift;
   my $r = $self->{r};

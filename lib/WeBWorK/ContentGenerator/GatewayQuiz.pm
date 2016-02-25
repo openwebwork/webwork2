@@ -1806,11 +1806,11 @@ sub body {
 
 		if ( $recdMsg ) {
 			# then there was an error when saving the results
-			print CGI::strong($r->maketext("Your score on this [_1] [_2]) was NOT recorded.",$testNounNum,$versionNumber),
+			print CGI::strong($r->maketext("Your score on this [_1][_2]) was NOT recorded.",$testNounNum,$versionNumber),
 					  $recdMsg), CGI::br();
 		} else {
 			# no error; print recorded message
-			print CGI::strong($r->maketext("Your score on this [_1] [_2]) WAS recorded.",$testNounNum,$versionNumber)), 
+			print CGI::strong($r->maketext("Your score on this [_1][_2]) WAS recorded.",$testNounNum,$versionNumber)), 
 			  CGI::br();
 
 			# and show the score if we're allowed to do that
@@ -2312,32 +2312,6 @@ sub getProblemHTML {
 
 	return    $pg;
 }
-
-##### output utilities #####
-sub problemListRow($$$) {
-	my $self = shift;
-	my $set = shift;
-	my $Problem = shift;
-	my $r = $self->r;
-	
-	my $name = $Problem->problem_id;
-	my $interactiveURL = "$name/?" . $self->url_authen_args;
-	my $interactive = CGI::a({-href=>$interactiveURL}, $r->maketext("Problem [_1]", $name));
-	my $attempts = $Problem->num_correct + $Problem->num_incorrect;
-	my $remaining = $Problem->max_attempts < 0
-		? $r->maketext("unlimited")
-		: $Problem->max_attempts - $attempts;
-	my $status = sprintf("%.0f%%", $Problem->status * 100); # round to whole number
-	
-	return CGI::Tr(CGI::td({-nowrap=>1}, [
-		$interactive,
-		$attempts,
-		$remaining,
-		$status,
-	]));
-}
-
-##### logging subroutine ####
 
 sub output_JS{
 	my $self = shift;

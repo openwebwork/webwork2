@@ -11,14 +11,14 @@
 # different LMS systems have different parameters
 $debug_lti_parameters = 0; 
 
-# This first section enables LTI authentication.  To enable failover to another
-# Authentication method, uncomment the remaining lines, and fill in the
-# appropriate authentication module.
+# This first section enables LTI authentication.
+# Failover to Basic_TheLastOption is necessary to authenticate with
+# cookie keys.  
 
 ###################
 $authen{user_module} = [ 
 	{  "*" => "WeBWorK::Authen::LTIAdvanced", }, #preferred authorization method
-#	{  "*" => "WeBWorK::Authen::Basic_TheLastOption",}  #fallback authorization method
+	{  "*" => "WeBWorK::Authen::Basic_TheLastOption",}  #fallback authorization method
 ];
 
 # If the preferred module is an external authentication
@@ -186,16 +186,23 @@ $LTIMassUpdateInterval = 86400; #in seconds
 # what roles are being reported to WeBWorK by your LMS
 
 %LMSrolesToWeBWorKroles = (
-    "AI/TA" => "ta",
-    "instructor" => "professor",
-    "librarian" => "guest",
-    "observer" => "guest",
-    "student" => "student",
-    "visitor" => "guest",
-    "Instructor" => "professor",
-    "Student" => "student",
-    "Learner" => "student",
-    "Teaching Assistant" => "ta",
+			   "librarian" => "guest",
+			   "observer" => "guest",
+			   "visitor" => "guest",
+			   "Guest"  => "guest",
+			   "Designer" => "professor",
+			   "instructor" => "professor",
+			   "Instructor" => "professor",
+			   "Teacher" => "professor",
+			   "Student" => "student",
+			   "Learner" => "student",
+			   "student" => "student",
+			   "AI/TA" => "ta",
+			   "TA" => "ta",
+			   "Teaching Assistant" => "ta",
+			   "Teaching Assistant (TA)" => "ta",
+			   "Non-editing teacher" => "ta",
+			   "Grader" => "ta",
     );
 
 # For security reasons accounts with high permissions should not be auto
@@ -225,16 +232,18 @@ $LTIAccountCreationCutoff = "ta";
 #  my $self = shift;
 #  # The user object to be modified
 #  my $user = shift;
-#  
-#  #my @chars = ("A".."Z", "a".."z");
-#  #my $string;
-#  #$string .= $chars[rand @chars] for 1..8;
-#  # Set the $user, possibly using things from $self E.G. 
-#  # $user->student_id($string);
-#  # my @course_id=split /-/, $self -> {"context_id"};
-#  # $user->{"section"} = $course_id[4];
+#
+#  # Make up a random initial password
+#  my @chars = ("A".."Z", "a".."z");
+#  my $string = '';
+#  $string .= $chars[int(rand(52))] for 1..8;
+#  $user->student_id($string);
 
-#  }
+#  # Parse context_id for additional information.  E.G.  
+#  my @course_id=split /-/, $self -> {"context_id"};
+#  $user->{"section"} = $course_id[4];
+
+#  };
 
 
 ################################################################################
@@ -252,21 +261,18 @@ $LTIAccountCreationCutoff = "ta";
 #  # The userSet object to be modified
 #  my $userSet = shift;
 
-#  my $numberOfSetsAssigned = $self->{numberOfSetsAssigned};
-#  my $daysPerSetMakeup = 2;
-#  my $reasonableNumberOfDays = $numberOfSetsAssigned*$daysPerSetMakeup +1;
-#  if ($reasonableNumberOfDays < 2) {$reasonableNumberOfDays = 2;}
-#  my ($sec, $min, $day, $monthDay, $month, $year, $weekDay, $yearDay, $isdst) = localtime();
-#  my $niceDueDay = $yearDay + 1 + $reasonableNumberOfDays;
-#  my $niceDueTime = Time::Local::timelocal_nocheck(0,30,8,$niceDueDay,0,$year);
-#  ($sec, $min, $day, $monthDay, $month, $year, $weekDay, $yearDay, $isdst) = localtime($niceDueTime);
-#  if ($weekDay == 0) {$niceDueDay +=1;}
-#  elsif ($weekDay == 6) {$niceDueDay += 2;}
-#  my $niceAnswerTime = $niceDueTime + 600;
-    
-#  $userSet->due_date($niceDueTime);
-#  $userSet->answer_date($niceAnswerTime);
-#}
+#   my $numberOfSetsAssigned = $self->{numberOfSetsAssigned};
+#   my $daysPerSetMakeup = 2;
+#   my $reasonableNumberOfDays = $numberOfSetsAssigned*$daysPerSetMakeup +1;
+#   if ($reasonableNumberOfDays < 2) {$reasonableNumberOfDays = 2;}
+
+#   my $niceDueTime = $globalSet->due_date + $reasonableNumberOfDays*86400;
+#   my $niceAnswerTime = $niceDueTime + 600;
+  
+#   $userSet->due_date($niceDueTime);
+#   $userSet->answer_date($niceAnswerTime);
+
+#};
   
 
 1; #final line of the file to reassure perl that it was read properly.

@@ -1189,7 +1189,6 @@ sub grade_set {
     
     unless (defined($problemRecord) ){
       # warn "Can't find record for problem $prob in set $setName for $student";
-      # FIXME check the legitimate reasons why a student record might not be defined
       next;
     }
     
@@ -1199,28 +1198,6 @@ sub grade_set {
     # top level problems. 
     if ($set->assignment_type eq 'jitar') {
       $status = jitar_problem_adjusted_status($problemRecord,$db);
-    }
-    
-    my  $attempted    = $problemRecord->attempted;
-    my $num_correct   = $problemRecord->num_correct || 0;
-    my $num_incorrect = $problemRecord->num_incorrect   || 0;
-    
-    #######################################################
-    # This is a fail safe mechanism that makes sure that
-    # the problem is marked as attempted if the status has
-    # been set or if the problem has been attempted
-    # DBFIXME this should happen in the database layer, not here!
-    if (!$attempted && ($status || $num_correct || $num_incorrect )) {
-      $attempted = 1;
-      $problemRecord->attempted('1');
-      # DBFIXME: this is another case where it 
-      #    seems we shouldn't have to check for 
-      #    which routine to use here...
-      if ( $setIsVersioned ) {
-	$db->putProblemVersion($problemRecord);
-      } else {
-	$db->putUserProblem($problemRecord );
-      }
     }
     
     # sanity check that the status (score) is 

@@ -165,11 +165,9 @@ sub get_credentials {
 	 ['oauth_signature', 'oauth_signature'],
 	 ['oauth_nonce', 'oauth_nonce'],
 	 ['oauth_timestamp', 'oauth_timestamp'],
-	 ['semester', 'custom_semester'],
 	 ['section', 'custom_section'],
 	 ['recitation', 'custom_recitation'],
 	);
-
 
       # Some LMS's misspell the lis_person_sourcedid parameter name
       # so we try a number of variations here
@@ -188,9 +186,8 @@ sub get_credentials {
       $self->{email} = uri_unescape($r->param("lis_person_contact_email_primary"));
 
       # if preferred_source_of_username eq "lis_person_contact_email_primary"
+      # or if the user_id is still undefined at this point 
       # then replace the user_id with the full email address. 
-      # or if the user_id is still undefined try to set the user_id to
-      # the full email address
       # if strip_address_from_email ==1  strip off the part of the address
       # after @
 
@@ -216,9 +213,6 @@ sub get_credentials {
 	croak "LTIAdvanced was unable to create a username from the user_id or from the mail address. Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
       }
       
-      if (!defined($self->{section})) {
-	$self->{section} = "unknown";
-      }
       $self->{login_type} = "normal";
       $self->{credential_source} = "LTIAdvanced";
       debug("LTIAdvanced::get_credentials is returning a 1\n");
@@ -345,8 +339,6 @@ sub authenticate {
   my $ce = $r->ce;
   my $db = $r->db;
   my $courseName = $r->ce->{'courseName'};
-  my $verify_code=0;
-  my $timestamp=0;
   
   # Check nonce to see whether request is legitimate
   debug("Nonce = |" . $self-> {oauth_nonce} . "|");
@@ -433,9 +425,10 @@ sub authenticate {
       }
 
       # If we are using grade passback then make sure the data
-      # we need to submit the grade is kept up to date.  
-      if ($ce->{LTIGradeMode} eq 'course' ||
-	  $ce->{LTIGradeMode} eq 'homework') {
+      # we need to submit the grade is kept up to date.
+      my $LTIGradeMode = $ce->{LTIGradeMode} // '';
+      if ($LTIGradeMode eq 'course' ||
+	  $LTIGradeMode eq 'homework') {
 	my $submitGrade = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 	$submitGrade->update_sourcedid($userID);
       }
@@ -550,12 +543,12 @@ sub create_user {
   $self->{numberOfSetsAssigned} = scalar @setsToAssign;
 
   # Give schools the chance to modify newly added sets 
-  if (defined($ce->{LTI_modify_user_sets})) {
+  if (defined($ce->{LTI_modify_user_set})) {
     foreach my $globalSet (@setsToAssign) {
       my $userSet = $db->getUserSet($userID,$globalSet->set_id);
       next unless $userSet;
       
-      $ce->{LTI_modify_user_sets}($self,$globalSet,$userSet);
+      $ce->{LTI_modify_user_set}($self,$globalSet,$userSet);
       $db->putUserSet($userSet);
     }
   }
@@ -611,7 +604,7 @@ sub maybe_update_user {
     }
 
     if ($change_made) {
-      $user->comment(formatDateTime(time, "local"));
+      $tempUser->comment(formatDateTime(time, "local"));
       $db->putUser($tempUser);
       $self->write_log_entry("Demographic data for user $userID modified via LTIAdvanced login");
       warn "Existing user: $userID updated.\n"
