@@ -68,8 +68,8 @@ $external_auth=1;
 # lis_person_sourceid, one must nevertheless use
 # the correct spelling here, i.e. "lis_person_sourcedid".
 
-$preferred_source_of_username = "lis_person_sourcedid";
-#$preferred_source_of_username = "lis_person_contact_email_primary";
+#$preferred_source_of_username = "lis_person_sourcedid";
+$preferred_source_of_username = "lis_person_contact_email_primary";
 
 # Some LMS systems, Blackboard in particular, do not send lis_person_sourcedid
 # if you enable this flag and have $preferred_source_of_username set to
