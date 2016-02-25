@@ -98,7 +98,7 @@ $LTIBasicConsumerSecret = "";  #This must be set
 # (and perhaps non-synchronization of server time clocks).
 #
 
-$NonceLifeTime=10; # in seconds
+$NonceLifeTime=60; # in seconds
 
 # WeBWorK will automatically create users when logging in via the LMS for the
 # first time.  If the following flag is enabled then it will also keep the
@@ -137,12 +137,9 @@ $LMSManageUserData=1;
 # Points Possible: 100
 #   Students will receive a LMS grade associated to the Link/Assignment
 # which is determined by their percentage total homework grade in WeBWorK.
-# This total homework grade is the same as the grade that would be generated
-# if you selected all sets in the Scoring Tools  page.  In particular every
-# set is graded.  To prevent a Set from counting set all of the "Values" of
-# the problems in the set to 0.  Students must log into the course via the
-# LMS at least once, but future logins can be to WeBWorK directly if that is
-# enabled.  
+# This total homework grade is the same as the grade that is reported on the
+# grades page.  You can change the weight of sets by altering the weight of
+# the problems in the set.  
 #
 # Individual Homework Grade Mode:  $LTIGradeMode = "homework";
 #
@@ -156,7 +153,7 @@ $LMSManageUserData=1;
 # Points Possible: 100
 #   Students will receive a grade for each Link/Assignment which is determined
 # by their percentage homework grade on the Set which the Link/Assignment
-# points to.  Students need to use the Link/Assignment in the LMS at least
+# points to.  Students need to use the Link/Assignment in the LMS at least once
 # to enable grade passback.  In particular when working in this mode it is
 # recommended that you only allow students to log in via the LMS.  
 #
@@ -221,13 +218,14 @@ $LTIAccountCreationCutoff = "ta";
 # When users are added to the system WeBWorK will do its best to fill out
 # user information.  However, institutions can add code to the following
 # routine to set fields not normally set by WeBWorK.  E.G.  The student ID
-# field
+# field.
 
 #$LTI_modify_user = sub {
 #  # The self object from LTIAdvanced.pm
 #  my $self = shift;
 #  # The user object to be modified
 #  my $user = shift;
+#  
 #  #my @chars = ("A".."Z", "a".."z");
 #  #my $string;
 #  #$string .= $chars[rand @chars] for 1..8;

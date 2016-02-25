@@ -367,7 +367,7 @@ sub authenticate {
   my $requestHash = \%request_hash;
 
   # We need to provide the request URL when verifying the OAuth request.
-  # We use the url request by default, but also allow it to be override
+  # We use the url request by default, but also allow it to be overriden
   my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
   $path = $ce->{LTIBasicToThisSiteURL} ? 
     $ce->{LTIBasicToThisSiteURL} : $path;
@@ -496,7 +496,7 @@ sub create_user {
   ####### End defining roles and $LTI_webwork_permissionLevel#######
   
   
-  warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel. Only new users with permission levels less than or equal to 'ta = 5' can be created." if ( $ce->{debug_lti_parameters} );
+  warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel." if ( $ce->{debug_lti_parameters} );
 
   # We dont create users with too high of a permission level
   # for security reasons. 
@@ -630,8 +630,7 @@ sub maybe_update_user {
 
 package WeBWorK::Authen::LTIAdvanced::Nonce;
 
-# This controls how often the key database is scrubbed for old nonce's and also
-# how long nonces are kept around.  
+# This controls how often the key database is scrubbed for old nonce's 
 use constant NONCE_LIFETIME => 86400; #24 hours
 
 sub new {
@@ -655,9 +654,6 @@ sub ok {
   $self->maybe_purge_nonces();
   
   if ($self->{timestamp} < time() - $ce->{NonceLifeTime}) {
-    warn($self->{timestamp});
-    warn(time());
-    warn($ce->{NonceLifeTime});
     if ( $ce->{debug_lti_parameters} ) {
       warn("Nonce Expired.  Your NonceLifeTime may be too short");
     }

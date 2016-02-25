@@ -57,7 +57,7 @@ sub update_sourcedid {
   # These parameters are used to build the passback request
   # warn if no outcome service url
   if (!defined($r->param('lis_outcome_service_url'))) {
-    warn "No LIS Outcome Service URL.  Unable to report grades to the LMS. Are external grades enabled in the LMS" if $ce->{debug_lti_parameters};
+    warn "No LIS Outcome Service URL.  Unable to report grades to the LMS. Are external grades enabled in the LMS?" if $ce->{debug_lti_parameters};
   } else {
     # otherwise keep it up to date
     my $lis_outcome_service_url = $db->getSettingValue('lis_outcome_service_url');
@@ -84,7 +84,7 @@ sub update_sourcedid {
   }
   
   # The $sourcedid is what identifies the user and assignment
-  # to the LMS.  It is either a course grade or a userset grade
+  # to the LMS.  It is either a course grade or a set grade
   # depending on the request and the mode we are in.  
   my $sourcedid = $r->param('lis_result_sourcedid');
   if (!defined($sourcedid)) {
@@ -110,7 +110,6 @@ sub update_sourcedid {
       if (defined($set) &&
 	  (!defined($set->lis_source_did) ||
 	   $set->lis_source_did ne $sourcedid)) {
-	warn($sourcedid);
 	$set->lis_source_did($sourcedid);
 	$db->putUserSet($set);
 	
@@ -273,7 +272,7 @@ sub mass_update {
   my $db = $self->{r}->{db};
     
   my $lastUpdate = $db->getSettingValue('LTILastUpdate') // 0;
-  my $updateInterval = $ce->{LTIMassUpdateInterval} // 0;
+  my $updateInterval = $ce->{LTIMassUpdateInterval} // -1;
 
   if ($updateInterval != -1 &&
       time - $lastUpdate > $updateInterval) {
