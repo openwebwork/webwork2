@@ -408,11 +408,12 @@ sub path {
 	my $courseName  = $urlpath->arg("courseID");
 	my $setName = $r->urlpath->arg("setID") || '';
 	my $problemNumber = $r->urlpath->arg("problemID") || '';
-
+	my $prettyProblemNumber = $problemNumber;
+	
 	if ($setName) {
 	    my $set = $r->db->getGlobalSet($setName);
 	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
-		$problemNumber = join('.',jitar_id_to_seq($problemNumber));
+		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
 	    }
 	}
 
@@ -421,7 +422,7 @@ sub path {
 	my @path = ( 'WeBWork', $r->location,
 	          "$courseName", $r->location."/$courseName",
 	          "$setName",    $r->location."/$courseName/$setName",
-	          "$problemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
 	          "Editor", ""
 	);
 	
