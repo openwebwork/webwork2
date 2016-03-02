@@ -145,7 +145,13 @@ sub title {
 	return $title;
 
 }
-
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $templateName = $r->param('templateName')//'system';
+	$self->{templateName}= $templateName;
+	$templateName;
+}
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -337,10 +343,6 @@ sub body {
 	
 	my $isJitarSet = ($set->assignment_type eq 'jitar');
 
-	#my $hardcopyURL =
-	#	$ce->{webworkURLs}->{root} . "/"
-	#	. $ce->{courseName} . "/"
-	#	. "hardcopy/$setName/?" . $self->url_authen_args;
 	
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, 
 		courseID => $courseID, setID => $setName);
@@ -427,27 +429,6 @@ sub body {
 		print CGI::p($r->maketext("This homework set contains no problems."));
 	}
 	
-	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", $r, 
-	#	courseID => $courseID);
-	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	#
-	##print feedback form
-	#print
-	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-	#	$self->hidden_authen_fields,"\n",
-	#	CGI::hidden("module",             __PACKAGE__),"\n",
-	#	CGI::hidden("set",                $self->{set}->set_id),"\n",
-	#	CGI::hidden("problem",            ''),"\n",
-	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-	#	CGI::hidden("showOldAnswers",     ''),"\n",
-	#	CGI::hidden("showCorrectAnswers", ''),"\n",
-	#	CGI::hidden("showHints",          ''),"\n",
-	#	CGI::hidden("showSolutions",      ''),"\n",
-	#	CGI::p({-align=>"left"},
-	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-	#	),
-	#	CGI::end_form(),"\n";
 	
 	print CGI::start_div({-class=>"problem_set_options"});
 	print $self->feedbackMacro(
