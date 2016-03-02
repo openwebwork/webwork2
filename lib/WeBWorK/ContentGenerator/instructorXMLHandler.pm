@@ -342,8 +342,6 @@ sub pre_header_initialize {
 
 sub standard_input {
 	my $out = {
-#		pw            			=>   '',   # not needed
-
 		course_password         =>   '',   # not needed  use site_password??
 		session_key             =>   '',
 		userID          		=>   '',   # not needed

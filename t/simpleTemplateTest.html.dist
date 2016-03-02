@@ -29,8 +29,10 @@
 </head>
 <body>
 
-<h2>Problem 1-- xmlrpc version</h2>
-
+<h2>Problem 1-- xmlrpc version of a simple template</h2>
+<p>
+Problem is rendered at daemon_course -- no student information is retained. 
+</p>
 <hr>
 <iframe  width="1000" height="400" 
 src="http://localhost/webwork2/html2xml?
@@ -43,13 +45,13 @@ src="http://localhost/webwork2/html2xml?
 	&displayMode=MathJax
 	&showSummary=1
 	&language=en
-	&outputformat=sticky">
+	&outputformat=simple">
 </iframe>
 <!--
 	&sourceFilePath=Library/Utah/Calculus_I/set5_The_Derivative/1210s5p17/1210s5p17.pg
 -->
 <hr>
-<h2>Problem 2 -- </h2>
+<h2>Problem 2 -- webwork2 version of a simple template</h2>
 <p>
 Direct access using RESTful url.  Sign in is necessary and score is recorded. 
 </p>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>test alternate templates</title>
+	<meta name="generator" content="BBEdit 11.1" />
+</head>
+<body>
+<p>
+This illustrates the possibility of using the "simple" template when calling
+a webwork2 site.  This template hides much of the frame including the navigation
+buttons which usually surround the rendered problem.  The expected use case
+is when embedding a PG problem or homework set in an html page or LMS.
+<p>
+You will need to customize this file to access the website you are testing.
+</p>
+
+<p>
+If you use it to test hosted2.webwork.rochester.edu (the default) you will need to login
+as guest the first time you access the site.  After that the cookie stored
+on your computer will give you access to the pages.
+</p>
+
+
+<h3>Links to a single problem</h3>
+<p>
+<a href="http://localhost/webwork2/maa101/Demo/2">regular template</a>
+</p>
+
+<p>
+<a href="http://localhost/webwork2/maa101/Demo/2?templateName=simple">simple template</a>
+
+</p>
+<h3>Embedddings</h3>
+<h4>
+Regular (system) template for a single problem
+</h4>
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo/2" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+
+<h4>
+Simple  template for a single problem
+</h4>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo/2?templateName=simple" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+
+<h3> Alternate templates for Homework set page (ProblemSet.pm)</h3>
+
+<p>
+Versions embedded in iframes are illustrated below.  One can also simply use direct links to bring the WeBWorK page
+in a new window or tab or to replace the current browser page.
+</p>
+
+<p>
+The internal links on the homework set homepage and the course homepage revert to the standard "system" template.
+The "simple" template is not (currently) sticky in this case as it is when viewing a single problem. We're awaiting further
+use cases to see if these internal links should be sticky (this hides navigational links) or whether a more complicated 
+algorithm is required for determining which template to use.
+</p>
+<h4>
+Regular  template -- for a homework set page (Demo)
+</h4>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+<h4>
+Simple  template -- for a homework set page (Demo)
+</h4>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101/Demo?templateName=simple" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+
+<h3> Alternate templates for Course homepage page (ProblemSets.pm)</h3>
+
+<h4>
+regular  template -- for course home page 
+</h4>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+<h4>
+Simple  template -- for course home page 
+</h4>
+
+<p>
+<iframe src= "http://localhost/webwork2/maa101?templateName=simple" height="600" width="800"> 
+iframe here
+</iframe>
+</p>
+</body>
+</html>

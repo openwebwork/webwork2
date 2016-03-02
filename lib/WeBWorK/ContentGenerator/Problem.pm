@@ -348,9 +348,6 @@ sub templateName {
 	my $self = shift;
 	my $r = $self->r;
 	my $templateName = $r->param('templateName')//'system';
-	unless ($templateName =~/^system$|^gateway$|^simple$/ ) {
-		$templateName = 'system';
-	}
 	$self->{templateName}= $templateName;
 	$templateName;
 }
@@ -1287,7 +1284,6 @@ sub output_checkboxes{
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
-	    $can{showHints} or $can{showSolutions} or 
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
 		print "Show: &nbsp;&nbsp;";
 	}
@@ -1435,7 +1431,7 @@ sub output_checkboxes{
 	
 
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
-	    $can{showHints} or $can{showSolutions} or 
+	    $can{showHints} or $can{showSolutions} or # needed to put buttons on newline
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
@@ -2066,7 +2062,6 @@ sub output_email_instructor{
 }
 
 # output_hidden_info subroutine
-
 # outputs the hidden fields required for the form
 
 sub output_hidden_info {

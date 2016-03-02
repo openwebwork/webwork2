@@ -36,7 +36,7 @@ use strict;
 use warnings;
 use WebworkClient;
 use WeBWorK::Debug;
-
+use CGI;
 
 =head1 Description
 
@@ -121,8 +121,6 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 	$XML_URL             =  "$server_root_url";  #"$server_root_url/mod_xmlrpc";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
-use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
-
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
 
@@ -153,11 +151,19 @@ sub pre_header_initialize {
 	my $courseName   = $inputs_ref{courseID};
 	my $displayMode  = $inputs_ref{displayMode};
 	my $problemSeed  = $inputs_ref{problemSeed};
+	
+	# FIXME -- it might be better to send this error if the input is not all correct
+	# rather than trying to set defaults such as displaymode
 	unless ( $user_id && $courseName && $displayMode && $problemSeed) {
-		debug( "\n\n\nMissing essential data in web dataform: 
-		      userID: |$user_id|, courseID: |$courseName|,	
-		      displayMode: |$displayMode|, problemSeed: |$problemSeed|");
-		
+		print CGI::ul( 
+		      CGI::h1("Missing essential data in web dataform:"),
+			  CGI::li(CGI::escapeHTML([
+		      	"userID: |$user_id|", 
+		      	"courseID: |$courseName|",	
+		        "displayMode: |$displayMode|", 
+		        "problemSeed: |$problemSeed|"
+		      ])));
+		return;
 	}
     #######################
     #  setup xmlrpc client
@@ -167,7 +173,6 @@ sub pre_header_initialize {
 	$xmlrpc_client ->encoded_source($r->param('problemSource')) ; # this source has already been encoded
 	$xmlrpc_client-> url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
-#	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
 	$xmlrpc_client->{course_password} = $inputs_ref{course_password};
 	$xmlrpc_client->{site_password}   = $XML_PASSWORD;
