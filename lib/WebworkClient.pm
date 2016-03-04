@@ -742,8 +742,8 @@ sub formatRenderedProblem {
 	  my $consumer_key = $self->{inputs_ref}->{'oauth_consumer_key'}; 
 	  my $signature_method = $self->{inputs_ref}->{'oauth_signature_method'};
 	  my $sourcedid = $self->{inputs_ref}->{'lis_result_sourcedid'};
-	  my $consumer_secret = $self->{seed_ce}->{'LISConsumerKeyHash'}->{$consumer_key};	  
-	  my $score = $problemResult->{score} // 0;
+	  my $consumer_secret = $self->{seed_ce}->{'LISConsumerKeyHash'}->{$consumer_key};
+	  my $score = $problemResult ? $problemResult->{score} : 0;
 	  
 	  # This is boilerplate XML used to submit the $score for $sourcedid
   my $replaceResultXML = <<EOS;
