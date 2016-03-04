@@ -31,7 +31,7 @@ use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets);
 use Net::OAuth;
 use HTTP::Request;
 use LWP::UserAgent;
-use Digest::SHA qw(sha1 sha1_base64);
+use Digest::SHA qw(sha1_base64);
 
 # This package contains utilities for submitting grades to the LMS
 sub new {

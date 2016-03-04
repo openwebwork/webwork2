@@ -119,6 +119,7 @@ use WeBWorK::Localize;
 use HTML::Entities;
 use WeBWorK::PG::ImageGenerator;
 use IO::Socket::SSL;
+use Digest::SHA qw(sha1_base64);
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -772,18 +773,29 @@ sub formatRenderedProblem {
 </imsx_POXEnvelopeRequest>
 EOS
 
-	  my $gradeRequest = Net::OAuth->request("consumer")->new(
-								  request_url => $request_url,
-								  request_method => "POST",
-								  consumer_secret => $consumer_secret,
-								  consumer_key => $consumer_key,
-								  signature_method => $signature_method,
-								  nonce => int(rand( 2**32)),
-								  timestamp => time(),
-								 );
-	  
+	  my $bodyhash = sha1_base64($replaceResultXML);
+
+	  # since sha1_base64 doesn't pad we have to do so manually 
+	  while (length($bodyhash) % 4) {
+	    $bodyhash .= '=';
+	  }
+
+	  my $requestGen = Net::OAuth->request("consumer");
+  
+	  $requestGen->add_required_message_params('body_hash');
+  
+	  my $gradeRequest = $requestGen->new(
+		  request_url => $request_url,
+		  request_method => "POST",
+		  consumer_secret => $ce->{LTIBasicConsumerSecret},
+		  consumer_key => $consumer_key,
+		  signature_method => $signature_method,
+		  nonce => int(rand( 2**32)),
+		  timestamp => time(),
+		  body_hash => $bodyhash
+							 );
 	  $gradeRequest->sign();
-	  
+
 	  my $HTTPRequest = HTTP::Request->new(
 					       $gradeRequest->request_method,
 					       $gradeRequest->request_url,
