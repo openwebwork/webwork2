@@ -787,7 +787,7 @@ EOS
 	  my $gradeRequest = $requestGen->new(
 		  request_url => $request_url,
 		  request_method => "POST",
-		  consumer_secret => $ce->{LTIBasicConsumerSecret},
+		  consumer_secret => $consumer_secret,
 		  consumer_key => $consumer_key,
 		  signature_method => $signature_method,
 		  nonce => int(rand( 2**32)),
