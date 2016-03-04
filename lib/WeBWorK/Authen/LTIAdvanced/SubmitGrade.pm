@@ -31,6 +31,7 @@ use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets);
 use Net::OAuth;
 use HTTP::Request;
 use LWP::UserAgent;
+use Digest::SHA qw(sha1 sha1_base64);
 
 # This package contains utilities for submitting grades to the LMS
 sub new {
@@ -207,6 +208,13 @@ sub submit_grade {
 </imsx_POXEnvelopeRequest>
 EOS
 
+  my $bodyhash = sha1_base64($replaceResultXML);
+
+  # since sha1_base64 doesn't pad we have to do so manually 
+  while (length($bodyhash) % 4) {
+    $bodyhash .= '=';
+  }
+
   warn("Submitting grade using sourcedid: $sourcedid and score: $score") if
     $ce->{debug_lti_parameters};
   
@@ -227,8 +235,12 @@ EOS
     warn("Cannot submit grades to LMS, no signature_method");
     return 0;
   }
+
+  my $requestGen = Net::OAuth->request("consumer");
   
-  my $gradeRequest = Net::OAuth->request("consumer")->new(
+  $requestGen->add_required_message_params('body_hash');
+  
+  my $gradeRequest = $requestGen->new(
 		  request_url => $request_url,
 		  request_method => "POST",
 		  consumer_secret => $ce->{LTIBasicConsumerSecret},
@@ -236,8 +248,8 @@ EOS
 		  signature_method => $signature_method,
 		  nonce => int(rand( 2**32)),
 		  timestamp => time(),
+		  body_hash => $bodyhash
 							 );
-
   $gradeRequest->sign();
 	  
   my $HTTPRequest = HTTP::Request->new(
