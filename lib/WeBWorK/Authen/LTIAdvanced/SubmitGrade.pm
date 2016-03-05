@@ -27,7 +27,7 @@ use strict;
 use warnings;
 use WeBWorK::Debug;
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets);
+use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
 use Net::OAuth;
 use HTTP::Request;
 use LWP::UserAgent;
@@ -173,6 +173,8 @@ sub submit_grade {
   my $ce = $r->{ce};
   my $db = $self->{r}->{db};
 
+  $score = wwRound(2,$score);
+  
   # We have to fail gracefully here because some users, like instructors,
   # may not actually have a sourcedid
   if (!$sourcedid) {

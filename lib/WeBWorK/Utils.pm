@@ -1216,8 +1216,7 @@ sub grade_set {
   } else {
     
     return 0 unless $total;
-    my $percentage = $totalRight/$total;
-    return wwRound(2,$percentage);
+    return $totalRight/$total;
   }
 }
 
@@ -1231,7 +1230,7 @@ sub grade_gateway {
   my @versionNums = $db->listSetVersions($studentName,$setName);
 
   my $bestTotalRight = 0;
-  my $bestTotal = 1;
+  my $bestTotal = 0;
 
   if ( @versionNums ) {
     for my $i ( @versionNums ) {
@@ -1249,8 +1248,7 @@ sub grade_gateway {
     return ($bestTotalRight,$bestTotal);
   } else {
     return 0 unless $bestTotal;
-    my $percentage = $bestTotalRight/$bestTotal;
-    return wwRound(2,$percentage);
+    return $bestTotalRight/$bestTotal;
   }
 }
 
@@ -1276,6 +1274,7 @@ sub grade_all_sets {
       $courseTotal += $total;
     } else {
       my ($totalRight,$total) = grade_set($db,$userSet,$userSet->set_id,$studentName,0);
+
       $courseTotalRight += $totalRight;
       $courseTotal += $total;
     }
@@ -1285,8 +1284,7 @@ sub grade_all_sets {
     return ($courseTotalRight,$courseTotal);
   } else {
     return 0 unless $courseTotal;
-    my $percentage = $courseTotalRight/$courseTotal;
-    return wwRound(2,$percentage);
+    return $courseTotalRight/$courseTotal;
   }
 
 }
