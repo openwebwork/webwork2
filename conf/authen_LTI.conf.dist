@@ -233,12 +233,6 @@ $LTIAccountCreationCutoff = "ta";
 #  # The user object to be modified
 #  my $user = shift;
 #
-#  # Make up a random initial password
-#  my @chars = ("A".."Z", "a".."z");
-#  my $string = '';
-#  $string .= $chars[int(rand(52))] for 1..8;
-#  $user->student_id($string);
-
 #  # Parse context_id for additional information.  E.G.  
 #  my @course_id=split /-/, $self -> {"context_id"};
 #  $user->{"section"} = $course_id[4];
