@@ -877,7 +877,7 @@ sub decodeAnswers($) {
 	my $serialized = shift;
 	return unless defined $serialized and $serialized;
 	my $array_ref = eval{ Storable::thaw($serialized) };
-	if ($@) {
+	if ($@ or !defined $array_ref) {
 		# My hope is that this next warning is no longer needed since there are few legacy base64 days and the fix seems transparent.
 		# warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away  permanently for this question.   $@";
 		return ();
