@@ -209,7 +209,7 @@ msgstr "Assigner ce devoir à quels utilisateurs?"
 #
 #: ContentGenerator/Instructor/UserList.pm:2064
 msgid "Assigned Sets"
-msgstr "Devoirs assignés"
+msgstr "Devoirs attribués"
 
 #
 #. ($fully)
@@ -414,7 +414,7 @@ msgstr "Modifier les données de tous les devoirs"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:439
 msgid "Edit Assigned Users"
-msgstr "Modifier les utilisateurs assignés"
+msgstr "Modifier les utilisateurs désignés"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:438
@@ -2859,7 +2859,7 @@ msgstr "Rafraîchir la page"
 
 #
 msgid "General Information"
-msgstr "Information Générale"
+msgstr "Informations générales"
 
 msgid "Headers"
 msgstr "Entêtes"
@@ -3167,11 +3167,11 @@ msgstr ""
 msgid ""
 "The following users are NOT assigned to this set and will be ignored: %1"
 msgstr ""
-"Les utilisateurs suivants ne sont PAS assignés à un devoir et seront "
+"Les utilisateurs suivants ne sont PAS désignés à un devoir et seront "
 "ignorés : %1"
 
 msgid "None of the selected users are assigned to this set: %1"
-msgstr "Aucun des utilisateurs ne sont assignés à ce devoir : %1"
+msgstr "Aucun des utilisateurs ne sont désignés pour ce devoir : %1"
 
 msgid "Global set data will be shown instead of user specific data"
 msgstr ""
@@ -3179,13 +3179,13 @@ msgstr ""
 "l'utilisateur."
 
 msgid "The set-version (%1, version %2) is not assigned to user %3."
-msgstr "Le set-version (%1, version %2) n'est pas assigné à l'utilisateur %3."
+msgstr "Le set-version (%1, version %2) n'est pas attribué à l'utilisateur %3."
 
 msgid "The set %1 is assigned to %2."
-msgstr "Le devoir %1 est assigné à %2."
+msgstr "Le devoir %1 est attribué à %2."
 
 msgid "The user %1 has been assigned %2."
-msgstr "L'utilisateur %1 a été assigné %2."
+msgstr "L'utilisateur %1 a été désigné %2."
 
 msgid "Assigned to "
 msgstr "Assigné à "
@@ -3198,16 +3198,16 @@ msgid ""
 "assigned sets."
 msgstr ""
 "Pour modifier une version spécifique à un étudiant de ce devoir, modifier "
-"(tous) ses devoirs assignés."
+"(tous) ses devoirs attribués."
 
 msgid "Editing problem set %1 data for these individual students: %2"
 msgstr "Modifier le devoir %1 pour ces étudiants : %2"
 
 msgid "Edit set %1 data for ALL students assigned to this set."
-msgstr "Modifier le devoir %1 pour TOUS les étudiants assignés à ce devoir."
+msgstr "Modifier le devoir %1 pour TOUS les étudiants désignés à ce devoir."
 
 msgid "This set %1 is assigned to %2."
-msgstr "Ce devoir %1 est assigné à %2."
+msgstr "Ce devoir %1 est attibué à %2."
 
 msgid "Edit %1 of set %2."
 msgstr "Modification %1 du devoir %1."
@@ -4406,7 +4406,7 @@ msgid "Save as Default"
 msgstr "Enregistrer par défaut"
 
 msgid "Hmwk Sets Editor2"
-msgstr "Éditeur de devoir(2)"
+msgstr "Éditeur de devoirs"
 
 msgid "Classlist Editor2"
 msgstr "Liste des utilisateurs(2)"
