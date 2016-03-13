@@ -204,7 +204,7 @@ msgstr "Appliquer les options"
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1545
 msgid "Assign this set to which users?"
-msgstr "Assigner ce devoir à quels utilisateurs?"
+msgstr "Attribuer ce devoir à quels utilisateurs?"
 
 #
 #: ContentGenerator/Instructor/UserList.pm:2064
@@ -308,7 +308,7 @@ msgstr "Fermé"
 #: ContentGenerator/Instructor/UserList.pm:861
 #: ContentGenerator/Instructor/UserList.pm:904
 msgid "Comment"
-msgstr "Commenter"
+msgstr "Note"
 
 #
 #. ($e_user_name)
@@ -3188,7 +3188,7 @@ msgid "The user %1 has been assigned %2."
 msgstr "L'utilisateur %1 a été désigné %2."
 
 msgid "Assigned to "
-msgstr "Assigné à "
+msgstr "Attribuer à "
 
 msgid "Edit set %1 for this user."
 msgstr "Modifier le devoir %1 pour cet utilisateur."
@@ -3216,7 +3216,7 @@ msgid ""
 "Any changes made below will be reflected in the set for ONLY the student(s) "
 "listed above."
 msgstr ""
-"Les changements suivants vont être reflètés dans le devoir SEULEMENT pour "
+"Les changements suivants vont être reflétés dans le devoir SEULEMENT pour "
 "les étudiants dans la liste suivante."
 
 msgid "Reset Form"
@@ -4588,7 +4588,7 @@ msgstr ""
 
 # ContentGenerator/Instructor/UsersAssignedToSet.pm (132)
 msgid "Assigned"
-msgstr "Attribué"
+msgstr "Désigné"
 
 msgid "Student Name"
 msgstr "Nom de l'étudiant"
