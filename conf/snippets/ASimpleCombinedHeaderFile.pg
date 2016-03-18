@@ -31,7 +31,7 @@ TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
 \par
 \noindent{\large \bf {Devoir\{protect_underbar($setNumber)\} doit être remis le  $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}h$DueDateMinute}}
 \par\noindent \bigskip
-Un résumé des commandes et notations que WeBWorK reconnaît est disponible à cette adresse : http://mathema-tic.ca/wp-content/uploads/2016/01/Didacticiel_WebWorK.pdf.
+Un résumé des commandes et notations que WeBWorK reconnaît est disponible à cette adresse : http://mathema-tic.ca/medias/formations_et_tutoriels/pour_les_etudiants/tutoriel_webwork/Didacticiel_WebWorK.pdf.
 
 EOT
 
@@ -52,7 +52,7 @@ TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 
 $BBOLD Ce devoir WeBWorK \{ protect_underbar($setNumber) \} doit être remis le $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}h$DueDateMinute. $EBOLD
 $PAR
-Un résumé des commandes et notations que WeBWorK reconnaît est $BBOLD\{ htmlLink(qq!http://mathema-tic.ca/wp-content/uploads/2016/01/Didacticiel_WebWorK.pdf!,"disponible ici") \}$EBOLD.
+Un résumé des commandes et notations que WeBWorK reconnaît est $BBOLD\{ htmlLink(qq!http://mathema-tic.ca/medias/formations_et_tutoriels/pour_les_etudiants/tutoriel_webwork/Didacticiel_WebWorK.pdf!,"disponible ici") \}$EBOLD.
 $BR
 
 EOT
