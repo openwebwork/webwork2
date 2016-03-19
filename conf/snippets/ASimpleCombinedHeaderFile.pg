@@ -29,7 +29,7 @@ TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
 % Décommenter la ligne ci-dessous s'il existe plusieurs groupes dans ce cours. Notez que ceci est un commentaire en LaTeX car cette section est compilée seulement par LaTeX
 %   {\large \bf { Section: \{protect_underbar($sectionName)\} } }
 \par
-\noindent{\large \bf {Devoir\{protect_underbar($setNumber)\} doit être remis le  $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}h$DueDateMinute}}
+\noindent{\large \bf {Devoir\{protect_underbar($setNumber)\} doit être remis le  $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}:$DueDateMinute}}
 \par\noindent \bigskip
 Un résumé des commandes et notations que WeBWorK reconnaît est disponible à cette adresse : http://mathema-tic.ca/medias/formations_et_tutoriels/pour_les_etudiants/tutoriel_webwork/Didacticiel_WebWorK.pdf.
 
@@ -50,7 +50,7 @@ EOT
 ####################################################
 TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 
-$BBOLD Ce devoir WeBWorK \{ protect_underbar($setNumber) \} doit être remis le $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}h$DueDateMinute. $EBOLD
+$BBOLD Ce devoir WeBWorK \{ protect_underbar($setNumber) \} doit être remis le $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}:$DueDateMinute. $EBOLD
 $PAR
 Un résumé des commandes et notations que WeBWorK reconnaît est $BBOLD\{ htmlLink(qq!http://mathema-tic.ca/medias/formations_et_tutoriels/pour_les_etudiants/tutoriel_webwork/Didacticiel_WebWorK.pdf!,"disponible ici") \}$EBOLD.
 $BR
