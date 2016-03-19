@@ -193,7 +193,7 @@ msgstr "Aperçu des réponses"
 #: ContentGenerator/Instructor/ProblemSetList.pm:531
 msgid "Any changes made below will be reflected in the set for ALL students."
 msgstr ""
-"Les changements effectués ci-bas affecteront les devoirs de TOUS les "
+"Les changements effectués ci-dessous affecteront les devoirs de TOUS les "
 "étudiants."
 
 #
@@ -210,6 +210,11 @@ msgstr "Attribuer ce devoir à quels utilisateurs?"
 #: ContentGenerator/Instructor/UserList.pm:2064
 msgid "Assigned Sets"
 msgstr "Devoirs attribués"
+
+#
+#: ContentGenerator/Instructor/UserList2.pm:1835
+msgid "Email Link"
+msgstr "Courriel"
 
 #
 #. ($fully)
@@ -308,7 +313,7 @@ msgstr "Fermé"
 #: ContentGenerator/Instructor/UserList.pm:861
 #: ContentGenerator/Instructor/UserList.pm:904
 msgid "Comment"
-msgstr "Note"
+msgstr "Commentaire"
 
 #
 #. ($e_user_name)
@@ -458,7 +463,7 @@ msgstr "Adresse courriel"
 # avant : Envoyer un courriel à l'enseignant
 #: ContentGenerator.pm:1526 ContentGenerator.pm:1549 ContentGenerator.pm:1572
 msgid "Email instructor"
-msgstr "Envoyer un courriel à l'enseignant"
+msgstr "Envoyer un courriel au professeur"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1120
@@ -488,12 +493,12 @@ msgstr "Statut d'inscription"
 #
 #: ContentGenerator/Instructor/UserList.pm:1321
 msgid "Enter filename below"
-msgstr "Entrer le nom du fichier ci-bas"
+msgstr "Entrer le nom du fichier ci-dessous"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:1502
 msgid "Enter filenames below"
-msgstr "Entrer les noms de fichiers ci-bas"
+msgstr "Entrer les noms de fichiers ci-dessous"
 
 #
 #: ContentGenerator/Problem.pm:240
@@ -2510,7 +2515,7 @@ msgstr "Enregistrer sous"
 
 #
 msgid "Select action below"
-msgstr "Sélectionner une action ci-bas"
+msgstr "Sélectionner une action ci-dessous"
 
 #
 msgid "The file '[_1]' cannot be found."
@@ -2781,7 +2786,7 @@ msgstr ""
 # avant: msgstr "Options. Les bonnes réponses et les solutions ne sont disponibles qu'après la date de remise."
 #
 msgid "E-mail Instructor"
-msgstr "Envoyer un courriel à l'enseignant"
+msgstr "Envoyer un courriel au professeur"
 
 #
 msgid "Send E-mail"
@@ -2805,7 +2810,7 @@ msgid ""
 "or an error in a problem you are attempting. Along with your message, "
 "additional information about the state of the system will be included."
 msgstr ""
-"Utiliser ce formulaire pour signaler à l'enseignant un problème avec le "
+"Utiliser ce formulaire pour signaler au professeur un problème avec le "
 "système WeBWorK ou une erreur dans un problème d'un devoir. Des informations "
 "additionnelles sur l'état du système utilisé accompagneront votre message."
 
@@ -3638,7 +3643,7 @@ msgid "Allowed to <em>act as</em> another user"
 msgstr "Autorisé à <em> agir comme </ em> un autre utilisateur"
 
 msgid "Can e-mail instructor"
-msgstr "Peut envoyer un courriel à l'enseignant"
+msgstr "Peut envoyer un courriel au professeur"
 
 msgid "Can submit answers for a student"
 msgstr "Peut soumettre les réponses pour un étudiant"
@@ -3714,7 +3719,7 @@ msgstr ""
 
 # avant: "Format pour la ligne sujet dans les e-mails de feedback"
 msgid "Format for the subject line in feedback e-mails"
-msgstr "Format pour la ligne sujet dans les courriels de commentaires"
+msgstr "Format pour l'objet des courriels"
 
 msgid "E-mail verbosity level"
 msgstr "Niveau de verbosité pour les courriels"
@@ -3826,7 +3831,7 @@ msgid ""
 "instructor."
 msgstr ""
 "Seul ce niveau de permission, et ceux supérieurs, peuvent voir le bouton "
-"pour l'envoi de courriel à l'enseignant."
+"pour l'envoi de courriel au professeur."
 
 # avant: "En agissant comme un étudiant, ce niveau de permission, et ceux supérieurs, peuvent soumettre des réponses pour cet élève."
 msgid ""
@@ -4057,9 +4062,9 @@ msgid ""
 "= problem ID<li> %x = section<li> %r = recitation<li> %% = literal percent "
 "sign</ul>"
 msgstr ""
-"Lorsque les élèves cliquent sur le bouton <em>Envoyer un courriel à "
-"l'enseignant</ em> pour envoyer vos commentaires, WeBWorK remplit la ligne "
-"du sujet. Ici vous pouvez définir la ligne du sujet. Dans ce document, vous "
+"Lorsque les élèves cliquent sur le bouton <em>Envoyer un courriel au "
+"professeur</ em> pour envoyer vos commentaires, WeBWorK remplit la ligne du "
+"sujet. Ici vous pouvez définir la ligne du sujet. Dans ce document, vous "
 "pouvez avoir plusieurs bits d'information remplis avec les séquences "
 "suivantes.<p><ul><li> %c = ID du cours<li> %u = ID de l'utilisateur<li> %s = "
 "ID du devoir<li> %p = ID du problème<li> %x = groupe<li> %r = recitation<li> "
@@ -4084,8 +4089,8 @@ msgid ""
 msgstr ""
 "Les utilisateurs avec ce niveau de permission ou supérieur recevront "
 "automatiquement les commentaires des étudiants (généré quand ils utilisent "
-"le bouton \"Envoyer un courriel à l'enseignant\" sur n'importe quelle page "
-"de problème). Par ailleurs, le message de réponse est envoyé aux adresses ci-"
+"le bouton \"Envoyer un courriel au professeur\" sur n'importe quelle page de "
+"problème). Par ailleurs, le message de réponse est envoyé aux adresses ci-"
 "dessous. Pour envoyer SEULEMENT aux adresses énumérées ci-après, régler le "
 "niveau de permission à \"nobody\"."
 
@@ -4409,7 +4414,7 @@ msgid "Hmwk Sets Editor2"
 msgstr "Éditeur de devoirs"
 
 msgid "Classlist Editor2"
-msgstr "Liste des utilisateurs(2)"
+msgstr "Liste des utilisateurs"
 
 #: ContentGenerator/Instructor.pm (584)
 msgid "no students"
@@ -4588,7 +4593,7 @@ msgstr ""
 
 # ContentGenerator/Instructor/UsersAssignedToSet.pm (132)
 msgid "Assigned"
-msgstr "Désigné"
+msgstr "Attribué"
 
 msgid "Student Name"
 msgstr "Nom de l'étudiant"
@@ -4712,7 +4717,7 @@ msgstr "Recitation : "
 
 # ContentGenerator/Feedback.pm
 msgid "Comment:    "
-msgstr "Commenter : "
+msgstr "Commentaire : "
 
 # ContentGenerator/Feedback.pm
 msgid "Set ID:                    "
