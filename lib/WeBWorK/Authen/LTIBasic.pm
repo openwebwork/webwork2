@@ -339,7 +339,7 @@ sub check_user {
 			return 1;  #This may be a new user coming in from a LMS via LTI.
 		} else {
 		$self->{log_error} .= " $user_id - user unknown";
-		$self->{error} = $r->maketext("Username presented:"."  ". $user_id . "<br />" . $GENERIC_UNKNOWN_USER_ERROR_MESSAGE);
+		$self->{error} = $r->maketext("Username presented:  [_1]",$user_id)."<br/>". $r->maketext($GENERIC_UNKNOWN_USER_ERROR_MESSAGE);
 		return 0;
 		}
 	}
@@ -562,7 +562,7 @@ sub authenticate
 				      Only new users with permission levels less than or equal to 'ta = 5' can be created." if ( $ce->{debug_lti_parameters} );
 				if ($LTI_webwork_permissionLevel > $ce ->{userRoles} -> {"ta"}) {
 				    $self->{log_error}.= "userID: $userID --".' '. $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE;
-					croak $r->maketext("userID: [_1] -- ". $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE,$userID);
+					croak $r->maketext("userID: [_1] --", $userID).$r->maketext($GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
 				}
 				my $newUser = $db -> newUser();
 					$newUser -> user_id($userID);

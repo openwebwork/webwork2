@@ -8,8 +8,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: WeBWorK\n"
-"POT-Creation-Date: 2016-03-21 12:58-0500\n"
-"PO-Revision-Date: 2016-03-21 13:01-0500\n"
+"POT-Creation-Date: 2016-03-21 14:36-0500\n"
+"PO-Revision-Date: 2016-03-21 14:37-0500\n"
 "Last-Translator: Geoff Goehle <goehle@gmail.com>\n"
 "Language-Team: Chinese (China) <trans@webwork.maa.org>\n"
 "Language: zh_CN\n"
@@ -24,29 +24,25 @@ msgid "You can earn partial credit on this problem."
 msgstr "这一题你可以得到部分成绩"
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:661
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:672
 msgid "answer"
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:667
 #, fuzzy
-msgid "problem "
+msgid "problem"
 msgstr "第%1题"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:672
-#, fuzzy
-msgid "answer "
-msgstr "答案日期"
-
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:678
-msgid "part "
+msgid "part"
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:684
-msgid "row "
+msgid "row"
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:685
-msgid " column "
+msgid "column"
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1226
@@ -88,26 +84,55 @@ msgid ""
 "speak with your instructor."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:188
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:187
 msgid "Invalid user ID or password."
 msgstr "无效的用户名或者密码."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:238
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:237
 msgid ""
-"Your authentication failed.  Please try again.  Please speak with your "
+"Your authentication failed.  Please try again. Please speak with your "
 "instructor if you need help."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:440
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:438
 msgid "You must specify a user ID."
 msgstr "您必须指定用户名。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:540
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:538
 msgid "Your session has timed out due to inactivity. Please log in again."
 msgstr "您的会话已因闲置超时。请重新登录。"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:243
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:259
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:391
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:398
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:410
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:419
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:440
+msgid ""
+"There was an error during the login process.  Please speak to your "
+"instructor or system administrator."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:266
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:272
+msgid "Authentication failed.  Please speak to your instructor."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:347
+msgid ""
+"There was an error during the login process.  Please speak to your "
+"instructor or system administrator if this recurs."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:498
+msgid ""
+"The instructor account with user id [_1] does not exist.  Please create the "
+"account manually via WeBWorK."
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:342
-msgid "Username presented:  "
+msgid "Username presented:  [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:444
@@ -116,103 +141,162 @@ msgid ""
 "please speak with your instructor"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:485
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:497
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:484
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:495
 msgid "Your authentication failed.  Please return to Oncourse and login again."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:486
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:485
 msgid ""
 "Something was wrong with your LTI parameters.  If this recurs, please speak "
 "with your instructor"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:498
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:496
 msgid ""
 "Your LTI OAuth verification failed.  If this recurs, please speak with your "
 "instructor"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:568
-msgid "userID: [_1] -- "
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:565
+#, fuzzy
+msgid "userID: [_1] --"
+msgstr "替换 [_1]"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:403
+msgid "Requested version ([_1]) of set '[_2]' is not assigned to user [_3]."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:701
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:407
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:430
+msgid "Requested set '[_1]' could not be found in the database for user [_2]."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:426
+#, fuzzy
+msgid "Requested set '[_1]' is not assigned to user [_2]."
+msgstr "WeBWorK 作业 [_1] 截至于 : [_2]。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:441
+#, fuzzy
+msgid "Requested set '[_1]' is not yet open."
+msgstr "这个作业还未开始。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:451
+msgid "Requested set '[_1]' is not available yet."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:459
+msgid ""
+"Requested set '[_1]' is a test/quiz assignment but the regular homework "
+"assignment content generator [_2] was called.  Try re-entering the set from "
+"the problem sets listing page."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:464
+msgid ""
+"Requested set '[_1]' is a homework assignment but the gateway/quiz content "
+"generator [_2] was called.  Try re-entering the set from the problem sets "
+"listing page."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:474
+msgid ""
+"Requested set '[_1]' is a proctored test/quiz assignment, but no valid "
+"proctor authorization has been obtained."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:488
+msgid ""
+"You must use your Learning Managment System (E.G. Blackboard, Moodle, "
+"Canvas, etc...) to access this set.  Try logging in to the Learning "
+"Managment System and visiting the set from there."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:552
+msgid ""
+"Client ip address [_1] is not allowed to work this assignment, because the "
+"assignment has ip address restrictions and there are no allowed locations "
+"associated with the restriction.  Contact your professor to have this "
+"problem resolved."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:730
 msgid "Main Menu"
 msgstr "主菜单"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:704
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:733
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:468
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Home.pm:95
 msgid "Courses"
 msgstr "课程"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:737
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:766
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:928
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:930
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:934
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:490
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:492
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:495
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:497
 msgid "Problem [_1]"
 msgstr "第 [_1] 题"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:823
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:852
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1610
 msgid "Library Browser"
 msgstr "浏览资料库"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:825
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:854
 msgid "Library Browser 2"
 msgstr "浏览资料库2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:827
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:856
 #, fuzzy
 msgid "Library Browser 3"
 msgstr "浏览资料库2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:829
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:858
 #, fuzzy
 msgid "Orig. Lib. Browser"
 msgstr "浏览资料库"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:915
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:944
 msgid "Help"
 msgstr "帮助"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:929
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:958
 msgid "Report bugs"
 msgstr "报告错误"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:971
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:973
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1000
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1002
 #, fuzzy
-msgid "Logged in as [_1]. "
+msgid "Logged in as [_1]."
 msgstr "登录为 %1 。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:971
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:973
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1000
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1002
 msgid "Log Out"
 msgstr "登出"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:975
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1004
 #, fuzzy
-msgid "Acting as [_1]. "
+msgid "Acting as [_1]."
 msgstr "您现在的身份是 %1。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:975
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1004
 msgid "Stop Acting"
 msgstr "停止担任"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:978
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1007
 msgid "Not logged in."
 msgstr "没有登录。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1096
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1124
 #, fuzzy
 msgid "Page generated at [_1]"
 msgstr "页面生成于 %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1097
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1125
 msgid "The WeBWorK Project"
 msgstr "WeBWorK项目"
 
@@ -258,12 +342,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:804
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:835
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1777
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:293
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:768
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:791
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:814
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:843
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1867
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:296
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:771
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:794
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:817
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:846
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1870
 msgid "First Name"
 msgstr "名"
 
@@ -274,12 +358,12 @@ msgstr "名"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:805
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:836
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1778
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:294
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:769
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:792
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:815
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:844
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:297
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:772
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:795
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:818
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:847
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1871
 msgid "Last Name"
 msgstr "姓"
 
@@ -290,7 +374,7 @@ msgstr "姓"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:806
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:837
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1779
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:295
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:298
 msgid "Email Address"
 msgstr "电子邮件地址"
 
@@ -389,90 +473,336 @@ msgstr "发送电子邮件："
 msgid "Cancel E-mail"
 msgstr "取消电子邮件"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:380
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:371
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:312
 msgid "Entered"
 msgstr "已输入"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:381
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:372
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:313
 msgid "Answer Preview"
 msgstr "答案预览"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:382
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:373
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1904
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:420
 msgid "Correct"
 msgstr "正确"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:383
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:374
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1901
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:314
 msgid "Result"
 msgstr "结果"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:384
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:375
 msgid "Messages"
 msgstr "消息"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:410
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:401
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:513
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:268
 msgid "correct"
 msgstr "正确"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:413
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:404
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:272
 msgid "Ungraded"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:416
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:407
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:277
 msgid "incorrect"
 msgstr "错误"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:419
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:410
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:279
 #, fuzzy, perl-format
 msgid "[_1]% correct"
 msgstr "%1% 正确"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:440
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:431
 #, fuzzy
 msgid "This answer is correct."
 msgstr "上面的答案是正确的."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:442
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:433
 #, fuzzy
 msgid "The answer will be graded later."
 msgstr "上面的答案是正确的."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:444
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:435
 #, fuzzy
 msgid "This answer is NOT completely correct."
 msgstr "以上答案不是%1c正确。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:446
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:437
 #, fuzzy
 msgid "This answer is NOT correct."
 msgstr "以上答案不是%1c正确。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:451
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:442
 #, fuzzy
 msgid "All of the gradeable answers are correct."
 msgstr "上面的所有答案都是正确的."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:456
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:447
 #, fuzzy
 msgid "At least one of these answers is NOT completely correct."
 msgstr "以上答案至少其中一个不是%1c正确。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2063
-msgid "Jump to Page: "
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1523
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1799
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2072
+#, fuzzy
+msgid "Your score on this problem was recorded."
+msgstr "您的成绩已记录。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1525
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:204
+msgid ""
+"Your score was not recorded because there was a failure in storing the "
+"problem record to the database."
+msgstr "您的成绩没有被记录因为在将该问题的分数存入到数据库时出错。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1548
+#, fuzzy
+msgid ""
+"Your score was not recorded because this problem set version is not open."
+msgstr "因为这个题目没有布置给您，所以您的成绩没有被记录。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1552
+#, fuzzy
+msgid ""
+"Your score was not recorded because you have no attempts remaining on this "
+"set version."
+msgstr "因为这个题目没有布置给您，所以您的成绩没有被记录。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1564
+msgid ""
+"Your score was not recorded because you have exceeded the time limit for "
+"this test. (Time taken: [_1] min; allowed: [_2] min.)"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2090
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2092
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1566
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:246
+#, fuzzy
+msgid "Your score was not recorded."
+msgstr "您的成绩已记录。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1786
+#, fuzzy
+msgid "submission"
+msgstr "提交答案"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1786
+#, fuzzy
+msgid "test"
+msgstr "%1 测试"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1788
+msgid "submission (test "
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1788
+#, fuzzy
+msgid "test ("
+msgstr "%1 测试"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1809
+#, fuzzy
+msgid "Your score on this [_1][_2]) was NOT recorded."
+msgstr "您的成绩已记录。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1813
+#, fuzzy
+msgid "Your score on this [_1][_2]) WAS recorded."
+msgstr "您的成绩已记录。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1818
+#, fuzzy
+msgid "Your score on this [_1] is [_2]/[_3]."
+msgstr "您总的纪录分数是%1. %2"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1824
+msgid "(Your score on this [_1] is not available[_2].)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1833
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:229
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:235
+msgid "Your score was successfully sent to the LMS"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1834
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:231
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:237
+msgid "Your score was not successfully sent to the LMS"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1846
+#, fuzzy
+msgid "The recorded score for this test is  [_1]/[_2]."
+msgstr "您总的纪录分数是%1. %2"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1853
+msgid "Your score on this (checked, not recorded) submission is [_1]/[_2]."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1856
+#, fuzzy
+msgid "The recorded score for this test is [_1]/[_2]. "
+msgstr "您总的纪录分数是%1. %2"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1883
+msgid "You have less than 1 minute to complete this test."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1887
+msgid "You are out of time.  Press grade now!"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1894
+#, fuzzy
+msgid "You have [_1] attempt(s) remaining on this test."
+msgstr "您还剩下 %1 %2。"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1899
+msgid "Score summary for last submit:"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1901
+#, fuzzy
+msgid "Prob"
+msgstr "题目"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1901
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:397
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1078
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1092
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:294
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:300
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1874
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:412
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:221
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:222
+msgid "Status"
+msgstr "状态"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1904
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:426
+#, fuzzy
+msgid "Incorrect"
+msgstr "错误"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1914
+#, fuzzy
+msgid "Your recorded score on this test (number [_1]) is [_2]/[_3]"
+msgstr "您总的纪录分数是%1. %2"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1917
+msgid ", because you exceeded the allowed time."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1928
+msgid "Time taken on test: [_1] min ([_2] min allowed)."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1932
+msgid ""
+"(This test is overtime because it was not submitted in the allowed time.)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1937
+msgid "The test (which is number [_1]) may  no longer be submitted for a grade"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1938
+msgid ", but you may still check your answers."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1948
+msgid "Print Test"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1970
+msgid " until "
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1973
+msgid "Completed results for this assignment are not available[_1]."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2020
+#, fuzzy
+msgid "Jump to Page:"
+msgstr "下一题"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2047
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2049
 #, fuzzy
 msgid "Jump to Problem:"
 msgstr "下一题"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2074
+#, fuzzy
+msgid "ANSWERS NOT RECORDED --"
+msgstr "只是预览 -- 答案未记录"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2085
+#, fuzzy
+msgid "ANSWERS ONLY CHECKED -- "
+msgstr "答案仅检查 -- 答案没有被记录"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2086
+#, fuzzy
+msgid "ANSWERS NOT RECORDED"
+msgstr "只是预览 -- 答案未记录"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2096
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1859
+msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
+msgstr "只是预览 -- 答案未记录"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2109
+#, fuzzy
+msgid "Note: "
+msgstr "注意"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2113
+#, fuzzy
+msgid "preview answers"
+msgstr "答案预览"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2161
+msgid "Show correct answers"
+msgstr "显示正确答案"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2167
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1414
+msgid "Show Solutions"
+msgstr "显示答案"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2172
+#, fuzzy
+msgid "Preview Test"
+msgstr "答案预览"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2175
+#, fuzzy
+msgid "Grade Test"
+msgstr "成绩"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2178
+#, fuzzy
+msgid "Check Test"
+msgstr "检查答案"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2181
+msgid ""
+"Note: grading the test grades all problems, not just those on this page."
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:98
 msgid ""
@@ -503,6 +833,7 @@ msgid "Percent"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:443
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:479
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:392
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:726
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:545
@@ -518,12 +849,12 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:445
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2152
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2313
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:432
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2319
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:430
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:845
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:876
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:871
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:400
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:405
 msgid "Problems"
 msgstr "题目"
 
@@ -550,15 +881,15 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:499
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1253
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:367
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:430
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:428
 #, fuzzy
 msgid "Users"
 msgstr "添加用户"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:500
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:368
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:431
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:187
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:429
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:192
 msgid "Sets"
 msgstr "作业"
 
@@ -667,15 +998,15 @@ msgstr "作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:642
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:593
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:686
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:701
 #, fuzzy
 msgid "sets"
 msgstr "没有作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:227
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:527
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:420
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:485
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:418
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:488
 msgid "Show/Hide Site Description"
 msgstr "显示/隐藏站点描述"
 
@@ -691,7 +1022,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:248
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:564
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:522
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:525
 msgid "Select an action to perform"
 msgstr "选择一个操作去执行"
 
@@ -699,13 +1030,23 @@ msgstr "选择一个操作去执行"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:582
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:607
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:562
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:559
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:562
 msgid "Take Action!"
 msgstr "确认操作！"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:343
-#, fuzzy
-msgid "Edit "
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1253
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1254
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:156
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:348
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:380
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:381
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:409
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2263
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2465
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:819
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:854
+msgid "Edit"
 msgstr "编辑"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:349
@@ -722,12 +1063,13 @@ msgid "selected achievements"
 msgstr "选中的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:381
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:407
 #, fuzzy
-msgid "Assign "
+msgid "Assign"
 msgstr "已布置的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:392
-msgid " to all users, create global data, and "
+msgid "to all users, create global data, and"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:398
@@ -737,11 +1079,6 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:399
 msgid "preserve existing data"
 msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:479
-#, fuzzy
-msgid "Score "
-msgstr "成绩"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:485
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:608
@@ -759,8 +1096,11 @@ msgid "selected achievements."
 msgstr "选中的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:602
-#, fuzzy
-msgid "Delete "
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:160
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:352
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1067
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:940
+msgid "Delete"
 msgstr "删除"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:613
@@ -773,16 +1113,18 @@ msgid "Create a new achievement with ID"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:731
-msgid "Import achievements from "
-msgstr ""
+#, fuzzy
+msgid "Import achievements from"
+msgstr "导出已选定的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:735
 msgid "the following file"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:739
-msgid "assigning the achievements to "
-msgstr ""
+#, fuzzy
+msgid "assigning the achievements to"
+msgstr "这次作业留给哪些用户?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:745
 #, fuzzy
@@ -795,8 +1137,8 @@ msgid "no users."
 msgstr "没有用户"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:824
-#, fuzzy
-msgid "Export "
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1089
+msgid "Export"
 msgstr "导出"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:862
@@ -813,20 +1155,20 @@ msgstr "导出已选定的作业"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1417
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1451
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1159
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1208
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1283
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1211
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1286
 msgid "Abandon changes"
 msgstr "放弃更改"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:949
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1441
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1475
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:373
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:456
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:316
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:399
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1182
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1255
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1232
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1307
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1235
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1310
 msgid "Save changes"
 msgstr "保存修变"
 
@@ -843,7 +1185,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1234
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1238
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1252
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:403
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:408
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:218
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:219
 msgid "Name"
@@ -874,6 +1216,7 @@ msgid "Counter"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1243
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:113
 #, fuzzy
 msgid "Description"
 msgstr "习题课"
@@ -885,20 +1228,6 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1245
 msgid "Icon File"
 msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1253
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1254
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:156
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:348
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:380
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:381
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:409
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2257
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2459
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:819
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:854
-msgid "Edit"
-msgstr "编辑"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1254
 msgid "Evaluator"
@@ -930,13 +1259,13 @@ msgstr "保存修改"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:643
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1760
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1950
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1956
 #, fuzzy
 msgid "You are not authorized to access the Instructor tools."
 msgstr "您没有被授权使用教师工具。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:656
-msgid "Variable Documentation: "
+msgid "Variable Documentation:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:673
@@ -950,6 +1279,8 @@ msgid "What"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:693
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:373
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:384
 msgid "Default"
 msgstr ""
 
@@ -960,8 +1291,8 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:704
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1950
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2325
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2122
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2551
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2128
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2557
 #, fuzzy
 msgid "Save Changes"
 msgstr "保存修变"
@@ -994,8 +1325,8 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:155
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:347
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2257
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2460
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2263
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2466
 msgid "View"
 msgstr "查看"
 
@@ -1009,13 +1340,6 @@ msgstr ""
 #, fuzzy
 msgid "Rename"
 msgstr "文件名"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:160
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:352
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1067
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:940
-msgid "Delete"
-msgstr "删除"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:161
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:353
@@ -1057,10 +1381,6 @@ msgstr "保存"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:169
 msgid "Init"
-msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:170
-msgid "\\"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:322
@@ -1105,35 +1425,38 @@ msgid "Warning:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:727
-msgid " You have requested that the following items be deleted"
+msgid "You have requested that the following items be deleted"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:730
-msgid "Some of these files are directories. "
+msgid ""
+"Some of these files are directories. Only delete directories if you really "
+"know what you are doing. You can seriously damage your course if you delete "
+"the wrong thing."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:733
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:731
 msgid "There is no undo for deleting files or directories!"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:734
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:732
 msgid "Really delete the items listed above?"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:769
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:767
 msgid "Archive '[_1]' created successfully ([_2] file[_3])"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:828
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:826
 #, fuzzy
 msgid "New file name:"
 msgstr "文件名"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:849
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:847
 msgid "New folder name:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:902
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:900
 msgid "File <b>[_1]</b> already exists. Overwrite it, or rename it as:"
 msgstr ""
 
@@ -1218,6 +1541,7 @@ msgstr "选中的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:395
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2314
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2546
 msgid "Add"
 msgstr "添加"
 
@@ -1240,11 +1564,6 @@ msgstr "没有作业"
 #, fuzzy
 msgid "Name for new set here"
 msgstr "命名新作业"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:407
-#, fuzzy
-msgid "Assign"
-msgstr "已布置的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:407
 msgid "selected <b>users</b> to selected <b>sets</b>"
@@ -1277,42 +1596,42 @@ msgid "course files"
 msgstr "课程"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:462
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:521
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:527
 #, fuzzy
 msgid "User Values"
 msgstr "用户名"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:463
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:522
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:528
 msgid "Class values"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:533
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:592
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:598
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1076
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1090
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:404
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:409
 msgid "Attempts"
 msgstr "尝试次数"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:564
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:623
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:629
 #, fuzzy
 msgid "No data exists for set [_1] and problem [_2]"
 msgstr "作业[_1]/第[_2]题"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:565
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:624
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:630
 msgid "No user specific data exists for user [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:745
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:807
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:813
 msgid "Gateway parameters"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:757
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:840
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:846
 msgid ""
 "Proctored tests require proctor authorization to start and to grade.  "
 "Provide a password to have a single password for all students to start a "
@@ -1320,206 +1639,206 @@ msgid ""
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:807
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:890
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:896
 #, fuzzy
 msgid "Restrict Locations"
 msgstr "习题课"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:837
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:920
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:926
 msgid "Password (Leave blank for regular proctoring)"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:885
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:995
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1001
 msgid "global [_1] for set [_2] not found."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:944
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:998
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1004
 msgid ""
 "UserProblem missing for user=[_1] set=[_2] problem=[_3]. This may indicate "
 "database corruption."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:995
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1067
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1073
 #, fuzzy
 msgid "global set [_1] not found."
 msgstr "找不到这个文件 '[_1]'。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1050
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1122
-msgid "Answers cannot be made available until on or after the due date!"
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1128
+msgid "Answers cannot be made available until on or after the close date!"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1055
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1127
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1133
 msgid "Answers cannot be due until on or after the open date!"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1069
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1141
-msgid "The reduced scoring date should be between the open date and due date."
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1147
+msgid ""
+"The reduced scoring date should be between the open date and close date."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1078
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1150
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1156
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1515
 msgid "Error: open date cannot be more than 10 years from now in set [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1082
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1154
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1517
-msgid "Error: due date cannot be more than 10 years from now in set [_1]"
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1160
+msgid "Error: close date cannot be more than 10 years from now in set [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1086
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1158
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1164
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1519
 msgid "Error: answer date cannot be more than 10 years from now in set [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1093
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1165
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1171
 #, fuzzy
 msgid "No changes were saved!"
 msgstr "已保存修改"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1344
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1417
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1423
 msgid ""
 "Error getting old set-proctor password from the database: [_1].  No update "
 "to the password was done."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1368
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1441
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1447
 msgid "Error adding set-level proctor: [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1402
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1475
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1481
 msgid "Global problem [_1] for set [_2] not found."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1439
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1465
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1499
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1512
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1538
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1572
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1518
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1544
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1578
 msgid ""
 "Source file paths cannot include .. or start with /: your source file path "
 "was modified."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1611
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1797
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1803
 #, fuzzy
 msgid "Can't write to file [_1]"
 msgstr "已保存到'[_1]'"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1624
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1814
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1820
 msgid "Added [_1] to [_2] as problem [_3]"
 msgstr "添加[_1]到[_2]作为问题[_3]"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1627
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1817
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1823
 msgid ""
 "Could not add [_1] problems to this set.  The number must be between 1 and "
 "[_2]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1699
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1889
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1895
 msgid "No source filePath specified"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1700
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1890
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1896
 msgid "Problem source is drawn from a grouping set"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1708
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1898
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1904
 msgid "Invalid headerType [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1717
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1907
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1913
 msgid "This source file is not readable!"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1718
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1908
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1914
 #, fuzzy
 msgid "This source file is a directory!"
 msgstr "这个文件'[_1]'是一个目录！"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1719
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1909
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1915
 msgid "This source file does not exist!"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1720
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1910
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1916
 msgid "This source file is not a plain file!"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1756
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1946
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1952
 #, fuzzy
 msgid "No record for global set [_1]."
 msgstr "设置 [_1] 的作业名"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1758
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1948
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1954
 #, fuzzy
 msgid "No record for user [_1]."
 msgstr "设置 [_1] 的作业名"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1763
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1953
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1959
 msgid "You are not authorized to modify problems."
 msgstr "您没有被授权修改题目。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1768
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1958
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1964
 msgid "Versions of a set can only be edited for one user at a time."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1786
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1976
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1982
 msgid ""
 "The following users are NOT assigned to this set and will be ignored: [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1788
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1978
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1984
 msgid "None of the selected users are assigned to this set: [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1789
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1979
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1985
 msgid "Global set data will be shown instead of user specific data"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1800
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1990
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1996
 msgid "The set-version ([_1], version [_2]) is not assigned to user [_3]."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1837
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2026
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2032
 #, fuzzy
 msgid "The set [_1] is assigned to [_2]."
 msgstr "WeBWorK 作业 [_1] 截至于 : [_2]。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1838
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2027
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2033
 #, fuzzy
 msgid "The user [_1] has been assigned [_2]."
 msgstr "作业[_1]的文件名被改为'[_2]'。"
@@ -1531,60 +1850,60 @@ msgid ""
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1858
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2041
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2047
 #, fuzzy
-msgid "Assigned to "
+msgid "Assigned to"
 msgstr "已布置的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1870
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2053
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2059
 msgid "Edit set [_1] for this user."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1878
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2061
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2067
 msgid ""
 "To edit a specific student version of this set, edit (all of) her/his "
 "assigned sets."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1885
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2067
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2073
 msgid "Editing problem set [_1] data for these individual students: [_2]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1886
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2068
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2074
 msgid "Edit set [_1] data for ALL students assigned to this set."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1895
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2077
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2083
 #, fuzzy
 msgid "This set [_1] is assigned to [_2]."
 msgstr "作业[_1]的文件名被改为'[_2]'。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1896
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2078
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2084
 #, fuzzy
 msgid "Edit [_1] of set [_2]."
 msgstr "编辑 [_1] 在文件 '[_2]' 中"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1896
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2078
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2084
 msgid "individual versions"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1920
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1921
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1922
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2091
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2092
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2097
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2098
 msgid "None"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1942
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2112
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2118
 #, fuzzy
 msgid ""
 "Any changes made below will be reflected in the set for ONLY the student(s) "
@@ -1592,39 +1911,40 @@ msgid ""
 msgstr "以下所有修改会影响所有学生的这次作业。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1944
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2114
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2120
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:531
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:561
 msgid "Any changes made below will be reflected in the set for ALL students."
 msgstr "以下所有修改会影响所有学生的这次作业。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1951
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2123
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2552
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2129
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2558
 msgid "Reset Form"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1962
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2134
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2140
 #, fuzzy
 msgid "General Information"
 msgstr "站点信息"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2007
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2179
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2185
 #, fuzzy
 msgid "Set Description"
 msgstr "显示/隐藏站点描述"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2027
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2207
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2213
 #, fuzzy
 msgid "Headers"
 msgstr "作业头"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2029
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2154
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2323
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2329
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:378
 #, fuzzy
 msgid "Display Mode:"
 msgstr "显示模式"
@@ -1635,7 +1955,8 @@ msgid "Refresh Display"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2084
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2249
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:97
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2255
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:447
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:762
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:778
@@ -1645,7 +1966,7 @@ msgid "Set Header"
 msgstr "作业头"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2085
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2250
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2256
 msgid "Set headers are not used in display of gateway tests."
 msgstr ""
 
@@ -1661,24 +1982,24 @@ msgid "View it"
 msgstr "查看"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2102
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2266
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2272
 msgid "Use Default Header File"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2113
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2273
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2279
 msgid ""
 "Screen and Hardcopy set header information can not be overridden for "
 "individual students."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2153
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2208
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2214
 msgid "Data"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2218
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2395
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2401
 msgid "This problem uses the same source file as number [_1]."
 msgstr ""
 
@@ -1687,13 +2008,13 @@ msgid "Try it"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2268
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2462
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2468
 #, fuzzy
 msgid "Delete it?"
 msgstr "删除"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2270
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2463
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2469
 #, fuzzy
 msgid "Mark Correct?"
 msgstr "正确"
@@ -1728,13 +2049,13 @@ msgid "before"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2310
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2536
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2542
 #, fuzzy
 msgid "This set doesn't contain any problems yet."
 msgstr "这个作业没有包含任何题目。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2321
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2547
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2553
 msgid "blank problem template(s) to end of homework set"
 msgstr ""
 
@@ -1743,98 +2064,403 @@ msgid "Reorder problems only"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2327
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2553
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2559
 msgid "(Any unsaved changes will be lost.)"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:828
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:105
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:448
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:763
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:779
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:471
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:781
+msgid "Hardcopy Header"
+msgstr "文件头"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:119
+#, fuzzy
+msgid "Opens"
+msgstr "开始日期"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:129
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:85
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:85
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:86
+#, fuzzy
+msgid "Closes"
+msgstr "已关闭"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:139
+#, fuzzy
+msgid "Answers Available"
+msgstr "已关闭，查看答案"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:149
+#, fuzzy
+msgid "Visible to Students"
+msgstr "对学生是可见的"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:154
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:164
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:255
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:289
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:304
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:311
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:320
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:330
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:409
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:437
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:458
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2652
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2653
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2654
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:234
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:250
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:526
+msgid "Yes"
+msgstr "是"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:155
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:165
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:212
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:255
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:289
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:304
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:311
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:320
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:330
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:410
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:438
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:458
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2652
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2653
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2654
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:234
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:250
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:526
+msgid "No"
+msgstr "否"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:159
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:453
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2223
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2539
+#, fuzzy
+msgid "Reduced Scoring Enabled"
+msgstr "减分模式已启用"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:169
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:473
+#, fuzzy
+msgid "Reduced Scoring Date"
+msgstr "减分模式已禁用"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:179
+msgid "Restrict release by set(s)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:187
+msgid ""
+"This set will be unavailable to students until they have earned a certain "
+"score on the sets specified in this field.  The sets should be written as a "
+"comma separated list.  The minimum score required on the sets is specified "
+"in the following field."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:190
+msgid "Score required for release"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:207
+msgid "Restrict Access by IP"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:213
+#, fuzzy
+msgid "Restrict To"
+msgstr "习题课"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:214
+msgid "Deny From"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:219
+msgid "Relax IP restrictions when?"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:224
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:372
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:385
+#, fuzzy
+msgid "Never"
+msgstr "恢复"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:225
+#, fuzzy
+msgid "After set answer date"
+msgstr "答案日期"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:226
+msgid "(gw/quiz) After version answer date"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:231
+#, fuzzy
+msgid "Assignment type"
+msgstr "已布置的作业"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:242
+msgid "Test Time Limit (min; 0=Close Date)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:251
+msgid "Cap Test Time at Set Close Date?"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:258
+msgid "Number of Graded Submissions per Test (0=infty)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:266
+msgid "Time Interval for New Test Versions (min; 0=infty)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:275
+msgid "Number of Tests per Time Interval (0=infty)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:285
+#, fuzzy
+msgid "Order Problems Randomly"
+msgstr "题目"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:292
+msgid "Number of Problems per Page (0=all)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:300
+msgid "Show Scores on Finished Assignments?"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:304
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:311
+msgid "Only after set answer date"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:304
+msgid "Totals only (not problem scores)"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:304
+msgid "Totals only, only after answer date"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:307
+msgid "Show Problems on Finished Tests"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:315
+msgid "Restrict Problem Progression"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:321
+msgid ""
+"If this is enabled then students will be unable to attempt a problem until "
+"they have completed all of the previous problems, and their child problems "
+"if necessary"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:325
+#, fuzzy
+msgid "Email Instructor On Failed Attempt"
+msgstr "发电子邮件给老师"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:331
+msgid ""
+"If this is enabled then instructors with the ability to receive feedback "
+"emails will be notified whenever a student runs out of attempts on a problem "
+"and its children without receiving an adjusted status of 100%"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:342
+msgid "Source File"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:349
+msgid "Weight"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:356
+#, fuzzy
+msgid "Max attempts"
+msgstr "尝试次数"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:362
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:503
+msgid "unlimited"
+msgstr "无限"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:366
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1485
+#, fuzzy
+msgid "Show me another"
+msgstr "在新的窗口里显示"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:375
+msgid ""
+"When a student has more attempts than is specified here they will be able to "
+"view another version of this problem.  If set to -1 the feature is disabled "
+"and if set to -2 the course default is used."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:378
+msgid "Rerandomize after"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:387
+msgid ""
+"This specifies the rerandomization period: the number of attempts before a "
+"new version of the problem is generated by changing the Seed value. The "
+"value of -1 uses the default from course configuration. The value of 0 "
+"disables rerandomization."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:390
+msgid "Seed"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:404
+#, fuzzy
+msgid "Attempted"
+msgstr "尝试次数"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:415
+#, fuzzy
+msgid "Last Answer"
+msgstr "显示以往的回答"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:432
+#, fuzzy
+msgid "Hide Hints from Students"
+msgstr "对学生隐藏"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:442
+msgid "Att. to Open Children"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:448
+msgid "max"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:450
+msgid ""
+"The child problems for this problem will become visible to the student when "
+"they either have more incorrect attempts than is specified here, or when "
+"they run out of attempts, whichever comes first.  If \"max\" is specified "
+"here then child problems will only be available after a student runs out of "
+"attempts."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:453
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:415
+msgid "Counts for Parent"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:459
+msgid ""
+"If this flag is set then this problem will count towards the grade of its "
+"parent problem.  In general the adjusted status on a problem is the larger "
+"of the problem's status and the weighted average of the status of its child "
+"problems which have this flag enabled."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:834
 msgid "Just-In-Time parameters"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2186
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2192
 #, fuzzy
 msgid "No Description"
 msgstr "显示/隐藏站点描述"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2257
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2263
 #, fuzzy
 msgid "Edit Header"
 msgstr "作业头"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2257
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2460
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2263
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2466
 msgid "Open in New Window"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2314
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2320
 #, fuzzy
 msgid "Renumber Problems"
 msgstr "题目"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2316
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2322
 msgid "Render All"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2318
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2324
 msgid "Hide All"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2320
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2326
 msgid "Expand All"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2322
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2328
 msgid "Collapse All"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2433
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2439
 #, fuzzy
 msgid "Grade Problem"
 msgstr "下一题"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2433
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2439
 #, fuzzy
 msgid "Grade"
 msgstr "成绩"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2448
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2454
 msgid "Expand"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2449
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2455
 msgid "Collapse"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2454
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2460
 msgid "Move"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2458
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2464
 #, fuzzy
 msgid "Render Problem"
 msgstr "下一题"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2458
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2464
 msgid "Render"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2459
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2465
 #, fuzzy
 msgid "Edit Problem"
 msgstr "编辑题目"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2526
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2532
 msgid "Automatically render problems on page load"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2532
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2538
 msgid "Force problems to be numbered consecutively from one"
 msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2540
-#, fuzzy
-msgid "Add "
-msgstr "添加用户"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:399
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:413
@@ -1866,14 +2492,6 @@ msgstr "定义作业的文件名"
 msgid "Edit Set Data"
 msgstr "编辑作业信息"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:448
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:763
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:779
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:471
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:781
-msgid "Hardcopy Header"
-msgstr "文件头"
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:449
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:764
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:780
@@ -1892,7 +2510,8 @@ msgstr "开始日期"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:802
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:825
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
-msgid "Due Date"
+#, fuzzy
+msgid "Close Date"
 msgstr "截止日期"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:451
@@ -1910,13 +2529,6 @@ msgstr "答案日期"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:913
 msgid "Visible"
 msgstr "可见的"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:453
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2223
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2539
-#, fuzzy
-msgid "Reduced Scoring Enabled"
-msgstr "减分模式已启用"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:563
 msgid "Select all sets"
@@ -2116,35 +2728,13 @@ msgstr ""
 msgid "Reduced Scoring Disabled"
 msgstr "减分模式已禁用"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2652
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2653
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2654
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:234
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:250
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:521
-msgid "Yes"
-msgstr "是"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2652
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2653
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2654
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:234
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:250
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:521
-msgid "No"
-msgstr "否"
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:279
 msgid "No sets selected for scoring."
 msgstr "没有选中作业去计分。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:321
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:435
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:272
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:275
 msgid "You are not authorized to access the instructor tools."
 msgstr "您没有被授权使用教师工具。"
 
@@ -2159,7 +2749,7 @@ msgid "You are not authorized to modify set definition files."
 msgstr "您没有被授权修改作业定义文件。"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:392
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:374
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:377
 #, fuzzy
 msgid "Action [_1] not found"
 msgstr "找不到这个文件 '[_1]'。"
@@ -2169,14 +2759,9 @@ msgid "Results of last action performed"
 msgstr "最后一次操作的结果"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:406
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:390
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:393
 msgid "You are not authorized to perform this action."
 msgstr "您没有被授权执行此操作。"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:473
-#, fuzzy
-msgid "Reduced Scoring Date"
-msgstr "减分模式已禁用"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:477
 msgid "Reduced Scoring"
@@ -2258,13 +2843,13 @@ msgstr "没有显示任何作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:773
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:759
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:761
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:764
 msgid "Sort by"
 msgstr "排序方式为"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:794
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:784
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:807
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:787
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:810
 msgid "Then by"
 msgstr "然后按"
 
@@ -2338,12 +2923,12 @@ msgid "No sets selected for scoring"
 msgstr "没有选中作业去计分"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1025
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:954
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:957
 msgid "Warning: Deletion destroys all user-related data and is not undoable!"
 msgstr "警告：删除会销毁所有与用户相关的资料且不可撤销！"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1029
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:958
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:961
 msgid "Delete how many?"
 msgstr "删除多少?"
 
@@ -2446,6 +3031,10 @@ msgstr "%1次作业已导出，%2次作业已跳过。跳过的作业有：(%3)"
 msgid "changes abandoned"
 msgstr "已放弃修改"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1517
+msgid "Error: due date cannot be more than 10 years from now in set [_1]"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1525
 msgid "Error: Due date must come after open date in set [_1]"
 msgstr ""
@@ -2487,7 +3076,7 @@ msgid "Success"
 msgstr "成功"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1687
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1389
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1392
 msgid ""
 "won't be able to read from file [_1]/[_2]: does it exist? is it readable?"
 msgstr ""
@@ -2516,13 +3105,13 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1969
 msgid ""
-"The open date: [_1], due date: [_2], and answer date: [_3] must be defined "
+"The open date: [_1], close date: [_2], and answer date: [_3] must be defined "
 "and in chronological order."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1976
 msgid ""
-"The reduced credit date should be between the open date [_1] and due date "
+"The reduced credit date should be between the open date [_1] and close date "
 "[_2]"
 msgstr ""
 
@@ -2657,11 +3246,11 @@ msgid "PROB NUMBER"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:358
-msgid "DUE DATE"
+msgid "CLOSE DATE"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:359
-msgid "DUE TIME"
+msgid "CLOSE TIME"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:360
@@ -2701,7 +3290,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:656
 #, fuzzy
-msgid "Message file: "
+msgid "Message file:"
 msgstr "头文件"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:657
@@ -2711,12 +3300,12 @@ msgstr "开始日期"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:663
 #, fuzzy
-msgid "Save file to: "
+msgid "Save file to:"
 msgstr "保存编辑"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:665
 #, fuzzy
-msgid "Merge file: "
+msgid "Merge file:"
 msgstr "头文件"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:675
@@ -2733,7 +3322,7 @@ msgid "Editor rows: "
 msgstr "编辑题目"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:680
-msgid " columns: "
+msgid "columns:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:691
@@ -2752,7 +3341,7 @@ msgstr "选中的作业"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:697
 #, fuzzy
-msgid "Preview set to: "
+msgid "Preview set to:"
 msgstr "答案预览"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:698
@@ -2780,14 +3369,10 @@ msgstr "另存为"
 msgid "Save as Default"
 msgstr "使用系统默认配置"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:378
-#, fuzzy
-msgid " Display Mode: "
-msgstr "显示模式"
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:383
-msgid " Max. Shown: "
-msgstr ""
+#, fuzzy
+msgid "Max. Shown:"
+msgstr "显示："
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:405
 msgid "Local"
@@ -2805,12 +3390,11 @@ msgstr "编辑题目"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:430
 #, fuzzy
-msgid "[_1] Problems: "
+msgid "[_1] Problems:"
 msgstr "题目"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:454
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:811
-msgid "Browse from: "
+msgid "Browse from:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:532
@@ -2882,6 +3466,10 @@ msgstr ""
 msgid "Keywords:"
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:811
+msgid "Browse from: "
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:840
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:756
 #, fuzzy
@@ -2890,12 +3478,13 @@ msgstr "题目"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:854
 #, fuzzy
-msgid "Add problems to "
+msgid "Add problems to"
 msgstr "添加题目"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:855
-msgid "Target Set: "
-msgstr ""
+#, fuzzy
+msgid "Target Set:"
+msgstr "编辑作业信息"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:861
 #, fuzzy
@@ -2907,7 +3496,7 @@ msgid "Create a New Set in This Course:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:884
-msgid "Browse "
+msgid "Browse"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:885
@@ -2965,79 +3554,65 @@ msgstr "题目列表"
 msgid "GLOBAL Usage"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1078
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1092
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:294
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1781
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:297
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1871
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:407
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:221
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:222
-msgid "Status"
-msgstr "状态"
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1088
 msgid "LOCAL Usage"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:76
-msgid ""
-"You must provide\n"
-"\t\t\t    a student ID, a set ID, and a problem number."
+msgid "You must provide a student ID, a set ID, and a problem number."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:220
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:218
 msgid "User ID"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:221
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:219
 #, fuzzy
 msgid "Set ID"
 msgstr "学号"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:222
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:220
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:577
 #, fuzzy
 msgid "Problem Number"
 msgstr "题目预览"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:223
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:221
 msgid "Timestamp"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:224
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:222
 #, fuzzy
 msgid "Scores"
 msgstr "成绩"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:225
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:223
 #, fuzzy
 msgid "Answers"
 msgstr "检查答案"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:226
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:224
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:297
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:773
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:792
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:811
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:842
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1784
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:300
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:774
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:797
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:820
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:849
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1874
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:303
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:777
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:800
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:823
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:852
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1877
 msgid "Comment"
 msgstr "评论"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:412
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:410
 #, fuzzy
 msgid "Download:"
 msgstr "成绩下载"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:421
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:419
 #, fuzzy
 msgid "_ANSWER_LOG_DESCRIPTION"
 msgstr ""
@@ -3047,22 +3622,22 @@ msgstr ""
 "使用方法：首先选择您想执行的操作，接着在信息栏中输入相关信息，然后点击在表格"
 "底部的“确认执行！”。 该页的下方是一个显示作业以及它们相关信息的表格。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:440
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:438
 #, fuzzy
 msgid "Display Past Answers"
 msgstr "显示以往的回答"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:441
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:439
 #, fuzzy
 msgid "Create CSV"
 msgstr "创建"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:461
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:459
 #, fuzzy
 msgid "Past Answers for [_1], set [_2], problem [_3]"
 msgstr "添加[_1]到[_2]作为问题[_3]"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:555
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:553
 msgid "No problems matched the given parameters."
 msgstr ""
 
@@ -3078,12 +3653,6 @@ msgstr " [_1]的统计数据"
 #, fuzzy
 msgid "student"
 msgstr "学号"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:85
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:85
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:86
-msgid "Due"
-msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:153
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:153
@@ -3235,12 +3804,12 @@ msgstr "学生进度 [_1]"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:809
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:840
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1782
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:298
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:772
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:795
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:818
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:847
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1872
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:301
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:775
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:798
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:821
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:850
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1875
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Section"
 msgstr "班级"
@@ -3253,12 +3822,12 @@ msgstr "班级"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:810
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:841
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1783
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:299
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:773
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:796
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:819
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:848
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1873
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:302
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:776
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:799
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:822
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:851
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1876
 msgid "Recitation"
 msgstr "习题课"
 
@@ -3295,7 +3864,26 @@ msgstr "名"
 msgid "Last"
 msgstr "姓"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:352
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:40
+#, fuzzy
+msgid "Open:"
+msgstr "开始日期"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:41
+msgid "Reduced:"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:42
+#, fuzzy
+msgid "Closes:"
+msgstr "已关闭"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:43
+#, fuzzy
+msgid "Answer:"
+msgstr "检查答案"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:295
 msgid "Assign All Sets to Current User"
 msgstr ""
 
@@ -3304,12 +3892,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:784
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:803
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:834
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:292
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:767
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:790
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:813
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:842
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1864
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:295
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:770
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:793
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:816
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:845
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1867
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Login Name"
 msgstr "登录名"
@@ -3320,12 +3908,12 @@ msgstr "登录名"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:807
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:838
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1780
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:296
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:770
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:793
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:816
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:845
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1870
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:299
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:773
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:796
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:819
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:848
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1873
 msgid "Student ID"
 msgstr "学号"
 
@@ -3335,12 +3923,12 @@ msgstr "学号"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:812
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:843
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1785
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:301
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:775
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:798
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:821
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:850
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1875
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:304
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:778
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:801
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:824
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:853
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1878
 msgid "Permission Level"
 msgstr "权限等级"
 
@@ -3363,7 +3951,7 @@ msgid "users"
 msgstr "没有用户"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:575
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:571
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:574
 msgid ""
 "Click on the login name to edit individual problem set data, (e.g. due "
 "dates) for these students."
@@ -3373,19 +3961,19 @@ msgstr "点击用户名去修改该用户的作业信息(比如截至日期)。"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:860
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:903
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1095
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:654
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:870
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:917
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1130
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:657
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:873
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:920
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1133
 msgid "all users"
 msgstr "所有用户"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:656
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:946
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:655
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:964
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1055
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1071
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:658
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:967
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1058
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1074
 msgid "no users"
 msgstr "没有用户"
 
@@ -3394,12 +3982,12 @@ msgstr "没有用户"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:905
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:948
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1097
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:656
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:872
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:919
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:966
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1054
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1132
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:659
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:875
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:922
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:969
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1057
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1135
 msgid "selected users"
 msgstr "选中的用户"
 
@@ -3416,10 +4004,10 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:789
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:808
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:839
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:771
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:794
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:817
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:846
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:774
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:797
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:820
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:849
 msgid "Enrollment Status"
 msgstr "注册状态"
 
@@ -3432,10 +4020,10 @@ msgstr "然后按"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:861
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:904
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1096
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:871
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:918
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1053
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1131
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:874
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:921
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1056
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1134
 msgid "visible users"
 msgstr "可见的用户"
 
@@ -3448,10 +4036,6 @@ msgstr "为哪些用户设置新密码？"
 #, fuzzy
 msgid "Deletion destroys all user-related data and is not undoable!"
 msgstr "警告：删除会销毁所有与用户相关的资料且不可撤销！"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1089
-msgid "Export"
-msgstr "导出"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1101
 msgid "to"
@@ -3472,34 +4056,34 @@ msgid "inactive"
 msgstr "不活跃的"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1775
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1865
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
 msgid "Login Status"
 msgstr "登录状态"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1776
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1866
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1869
 msgid "Assigned Sets"
 msgstr "已布置的作业"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:212
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:215
 msgid "number of students not defined"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:339
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:345
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:342
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:348
 msgid "You are not authorized to modify student data"
 msgstr "您没有授权修改学生数据"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:386
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:389
 #, fuzzy
 msgid "Result of last action performed: [_1]"
 msgstr "最近一次操作的结果：%1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:469
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:472
 msgid "added missing permission level for user"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:486
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:489
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
 msgstr ""
 "这是班级名单修改页面，您可以在这里查看并修改这门课目前已注册的所有学生的记"
@@ -3509,208 +4093,208 @@ msgstr ""
 "息，然后点击在表格底部的“确认执行！” 。该页的下方是一个显示学生用户名以及他们"
 "信息的表格。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:565
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:568
 #, fuzzy
 msgid "Showing [_1] out of [_2] users"
 msgstr "显示 %2 个用户中的 %1 个"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:567
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:570
 msgid ""
 "If a password field is left blank, the student's current password will be "
 "maintained."
 msgstr "若密码栏为空，则保留学生当前密码。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:648
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:651
 msgid "Show Which Users?"
 msgstr "显示哪些用户？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:657
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:660
 msgid "users who match on selected field"
 msgstr "匹配所选字段的用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:668
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:671
 msgid "What field should filtered users match on?"
 msgstr "匹配用户哪项信息？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:681
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:684
 msgid "Filter by what text?"
 msgstr "关键字"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:709
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:712
 msgid "showing all users"
 msgstr "显示所有用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:712
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:715
 msgid "showing no users"
 msgstr "没有显示任何用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:715
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:718
 msgid "showing selected users"
 msgstr "显示选中的用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:718
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:721
 msgid "showing matching users"
 msgstr "显示匹配的用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:853
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:856
 #, fuzzy
 msgid "Users sorted by [_1], then by [_2], then by [_3]"
 msgstr "依据 %1 对用户进行排序，再依据 %2，接着依据 %3"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:864
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:867
 msgid "Edit Which Users?"
 msgstr "编辑哪些用户?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:888
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:891
 msgid "editing all users"
 msgstr "编辑所有用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:891
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:894
 msgid "editing visible users"
 msgstr "编辑可见的用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:894
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:897
 msgid "editing selected users"
 msgstr "编辑选中的用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:911
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:914
 msgid "Give new password to which users?"
 msgstr "为哪些用户设置新密码？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:935
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:938
 msgid "giving new passwords to all users"
 msgstr "给所有用户设置新密码"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:938
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:941
 msgid "giving new passwords to visible users"
 msgstr "给所有可见的用户设置新密码"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:941
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:944
 msgid "giving new passwords to selected users"
 msgstr "给选中的用户设置新密码"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:997
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1000
 msgid "You cannot delete yourself!"
 msgstr "你不能删除自己!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1011
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1014
 #, fuzzy
 msgid "deleted [_1] users"
 msgstr "删除 %1 个用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1017
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1020
 msgid "Add how many students?"
 msgstr "增加多少学生?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1034
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1037
 msgid "Import users from what file?"
 msgstr "从哪个文件导入用户？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1046
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1049
 msgid "Replace which users?"
 msgstr "替换哪些用户？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1052
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1070
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1055
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1073
 msgid "any users"
 msgstr "任何用户"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1064
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1067
 msgid "Add which new users?"
 msgstr "增加哪种新用户?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1113
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1116
 #, fuzzy
 msgid ""
 "[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: "
 "([_4])"
 msgstr "%1个用户已替换，%2个用户已添加，%3个用户已跳过。跳过的用户有：(%4)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1124
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1127
 msgid "Export which users?"
 msgstr "导出哪些用户？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1141
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1144
 msgid "Export to what kind of file?"
 msgstr "导出为哪种文件类型？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1145
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1148
 msgid "Enter filename below"
 msgstr "输入文件名"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1155
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1158
 msgid "Filename"
 msgstr "文件名"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1202
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1205
 #, fuzzy
 msgid "[_1] users exported to file [_2]/[_3]"
 msgstr "%1 个用户导出到文件 %2/%3"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1226
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1301
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1229
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1304
 msgid "Changes abandoned"
 msgstr "放弃修改"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1245
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1318
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1248
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1321
 #, fuzzy
 msgid "record for visible user [_1] not found"
 msgstr "找不到这个文件 '[_1]'。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1247
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1250
 msgid "permissions for [_1] not defined"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1277
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1280
 msgid "Changes saved"
 msgstr "保存修改"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1339
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1342
 msgid "New passwords saved"
 msgstr "新密码已保存"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1388
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1482
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1391
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1485
 msgid "illegal character in input: '/'"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1527
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1530
 msgid "Email"
 msgstr "电子邮件"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1720
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1723
 msgid "Active"
 msgstr "活跃的"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1720
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1723
 msgid "Inactive"
 msgstr "不活跃的"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1726
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1729
 msgid "You may not change your own password here!"
 msgstr "您不能在这里修改您自己的密码！"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1730
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1879
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1733
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1882
 msgid "New Password"
 msgstr "新密码"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1869
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1872
 #, fuzzy
 msgid "Email Link"
 msgstr "电子邮件"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1884
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1886
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1887
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1889
 msgid "_USER_TABLE_SUMMARY"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1889
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1892
 msgid "Users List"
 msgstr "用户列表"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1912
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1915
 #, fuzzy
 msgid ""
 "No students shown.  Choose one of the options above to list the students in "
@@ -3757,7 +4341,7 @@ msgid "Student Name"
 msgstr "作业名"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:199
-msgid "Edit data for "
+msgid "Edit data for [_1]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:217
@@ -4061,10 +4645,6 @@ msgstr ""
 msgid "Show Hints"
 msgstr "显示提示"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1414
-msgid "Show Solutions"
-msgstr "显示答案"
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1460
 msgid "Request New Version"
 msgstr ""
@@ -4096,11 +4676,6 @@ msgid ""
 "You can use this feature [quant,_1,more time,more times,as many times as you "
 "want] on this problem"
 msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1485
-#, fuzzy
-msgid "Show me another"
-msgstr "在新的窗口里显示"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1497
 #, fuzzy
@@ -4207,13 +4782,10 @@ msgstr ""
 msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
 msgstr "答案仅检查 -- 答案没有被记录"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1859
-msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
-msgstr "只是预览 -- 答案未记录"
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1982
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:63
-msgid "Viewing temporary file: "
+#, fuzzy
+msgid "Viewing temporary file:"
 msgstr "打开临时文件: "
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2031
@@ -4236,51 +4808,51 @@ msgstr "降低总分开始于：%1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:139
 #, fuzzy
-msgid "Due [_1]"
-msgstr "替换 [_1]"
+msgid "Closes [_1]"
+msgstr "恢复到[_1]"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:259
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:264
 msgid "Viewing temporary file"
 msgstr "打开临时文件"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:302
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:304
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:307
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:309
 msgid "Set Info"
 msgstr "作业信息"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:302
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:307
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:71
 #, fuzzy
 msgid "~[edit~]"
 msgstr "[修改]"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:340
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:345
 #, fuzzy
 msgid "The selected problem set ([_1]) is not a valid set for [_2]"
 msgstr "选中的作业(%1)对%2不是有效的"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:364
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:369
 #, perl-format
 msgid ""
 "After the reduced scoring peroid begins all work counts for [_1]% of its "
 "value."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:367
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:372
 #, perl-format
 msgid ""
 "This set is in its reduced scoring period.  All work counts for [_1]% of its "
 "value."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:369
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:374
 #, perl-format
 msgid ""
 "This set had a reduced scoring period that started on [_1] and ended on "
 "[_2].  During that period all work counted for [_3]% of its value."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:399
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:404
 msgid ""
 "This table shows the problems that are in this problem set.  The columns "
 "from left to right are: name of the problem, current number of attempts "
@@ -4289,45 +4861,37 @@ msgid ""
 "problem page."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:401
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:406
 msgid ""
 "The adjusted status of a problem is the larger of the problem's status and "
 "the weighted average of the status of those problems which count towards the "
 "parent grade."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:405
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:410
 msgid "Remaining"
 msgstr "剩余"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:406
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:411
 msgid "Worth"
 msgstr "分数"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:409
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:414
 msgid "Adjusted Status"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:410
-msgid "Counts for Parent"
-msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:414
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:419
 #, fuzzy
 msgid "Grader"
 msgstr "成绩"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:429
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:434
 msgid "This homework set contains no problems."
 msgstr "这个作业没有包含任何题目。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:446
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:451
 msgid "Download PDF or TeX Hardcopy for Current Set"
 msgstr "下载当前作业的PDF或者TeX文件"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:498
-msgid "unlimited"
-msgstr "无限"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:71
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:73
@@ -4368,91 +4932,98 @@ msgstr "清除"
 msgid "Download PDF or TeX Hardcopy for Selected Sets"
 msgstr "下载已选定的作业的PDF或者TeX文件"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:415
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:421
 msgid "completed."
 msgstr "已完成。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:418
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:424
 #, fuzzy
 msgid "over time, closed."
 msgstr "超时: 已关闭."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:428
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:434
 #, fuzzy
 msgid "[_1] (test [_2])"
 msgstr "%1(测试 %2)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:432
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:483
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:438
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:493
 #, fuzzy
 msgid "will open on [_1]"
 msgstr "开放于 %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:440
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:442
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:464
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:468
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:446
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:448
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:474
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:477
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:478
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:484
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:487
 #, fuzzy
 msgid "Take [_1] test"
 msgstr "参加 %1 测试"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:471
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:463
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:516
+msgid ""
+"You must log into this set via your Learning Management System (e.g. "
+"Blackboard, Moodle, etc...)."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:481
 msgid "Closed"
 msgstr "已关闭"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:510
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:525
 #, fuzzy
 msgid "closed, answers on [_1]"
 msgstr "已关闭，答案在%1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:512
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:527
 msgid "closed, answers recently available"
 msgstr "已关闭, 答案在近期公布"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:514
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:529
 msgid "closed, answers available"
 msgstr "已关闭，查看答案"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:539
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:554
 msgid "Download [_1]"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:650
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:665
 msgid "open, reduced scoring starts on [_1]"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:653
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:668
 #, fuzzy
 msgid "open, complete by [_1]"
 msgstr "进行中：已完成 %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:655
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:670
 #, fuzzy
-msgid "open, due [_1]"
+msgid "open, closes [_1]"
 msgstr "现在开放中, 截止于"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:660
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:675
 msgid "reduced scoring started on [_1]"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:676
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:691
 #, perl-format
 msgid "if you score at least [_1]% on"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:678
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:693
 #, perl-format
 msgid "but you must score at least [_1]% on"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:684
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:699
 #, fuzzy
 msgid "set [_1]."
 msgstr "恢复到[_1]"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:689
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:704
 msgid "and"
 msgstr ""
 
@@ -4460,92 +5031,74 @@ msgstr ""
 msgid "Your score was recorded."
 msgstr "您的成绩已记录。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:204
-msgid ""
-"Your score was not recorded because there was a failure in storing the "
-"problem record to the database."
-msgstr "您的成绩没有被记录因为在将该问题的分数存入到数据库时出错。"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:223
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:244
 msgid "Your score was not recorded because this homework set is closed."
 msgstr "因为这个作业已经截止了，所以您的成绩没有记录。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:225
-#, fuzzy
-msgid "Your score was not recorded."
-msgstr "您的成绩已记录。"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:229
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:250
 msgid ""
 "Your score was not recorded because this problem has not been assigned to "
 "you."
 msgstr "因为这个题目没有布置给您，所以您的成绩没有被记录。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:355
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:354
 msgid "[_1]: Problem [_2] Show Me Another"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:456
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:455
 msgid ""
 "You are currently checking answers to a different version of your problem - "
-"these \n"
-"                                                                     will "
-"not be recorded, and you should remember to return to your original \n"
-"                                                                     problem "
-"once you are done here."
+"these will not be recorded, and you should remember to return to your "
+"original problem once you are done here."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:463
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:460
 msgid ""
 "You are currently previewing answers to a different version of your problem "
-"- these \n"
-"                                                                 will not be "
-"recorded, and you should remember to return to your original \n"
-"                                                                 problem "
-"once you are done here."
+"- these will not be recorded, and you should remember to return to your "
+"original problem once you are done here."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:485
-msgid "Here is a new version of your problem[_1]. [_2] "
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:480
+msgid "Here is a new version of your problem[_1]. [_2]"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:486
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:481
 msgid "Remember to return to your original problem when you're finished here!"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:490
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:485
 msgid ""
 "You are only allowed to click on Show Me Another [quant,_1,time,times] per "
-"problem.\n"
-"                                                                         [_2] "
-"Close this tab, and return to the original problem."
+"problem. [_2] Close this tab, and return to the original problem."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:493
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:487
 #, fuzzy
 msgid ""
 "You must attempt this problem [quant,_1,time,times] before Show Me Another "
 "is available."
 msgstr "您已经试过这个题目%quant(%1,次,次)。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:498
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:492
 msgid ""
-"WeBWorK was unable to generate a different version of this problem;\n"
-"                       close this tab, and return to the original problem."
+"WeBWorK was unable to generate a different version of this problem; close "
+"this tab, and return to the original problem."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/DropdownList.pm:172
 #, fuzzy
-msgid "Sort: "
+msgid "Sort:"
 msgstr "排序"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/DropdownList.pm:173
-msgid "Format: "
-msgstr ""
+#, fuzzy
+msgid "Format:"
+msgstr "文件格式"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/DropdownList.pm:174
 #, fuzzy
-msgid "Filter: "
+msgid "Filter:"
 msgstr "过滤"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/DropdownList.pm:175
@@ -4600,8 +5153,37 @@ msgstr "以上答案至少其中一个不是%1c正确。"
 msgid "[quant,_1,of the questions remains,of the questions remain] unanswered."
 msgstr "%quant(%1,个问题,个问题) 未完成。"
 
-#~ msgid "%1 test"
-#~ msgstr "%1 测试"
+#, fuzzy
+#~ msgid "answer "
+#~ msgstr "答案日期"
+
+#, fuzzy
+#~ msgid "Edit "
+#~ msgstr "编辑"
+
+#, fuzzy
+#~ msgid "Assign "
+#~ msgstr "已布置的作业"
+
+#, fuzzy
+#~ msgid "Score "
+#~ msgstr "成绩"
+
+#, fuzzy
+#~ msgid "Delete "
+#~ msgstr "删除"
+
+#, fuzzy
+#~ msgid "Export "
+#~ msgstr "导出"
+
+#, fuzzy
+#~ msgid "Add "
+#~ msgstr "添加用户"
+
+#, fuzzy
+#~ msgid " Display Mode: "
+#~ msgstr "显示模式"
 
 #~ msgid "%1: Problem %2"
 #~ msgstr "%1：第%2题"
@@ -4655,12 +5237,6 @@ msgstr "%quant(%1,个问题,个问题) 未完成。"
 
 #~ msgid "Remember Me"
 #~ msgstr "自动登录"
-
-#~ msgid "Show correct answers"
-#~ msgstr "显示正确答案"
-
-#~ msgid "You have %1 %2 remaining."
-#~ msgstr "您还剩下 %1 %2。"
 
 #~ msgid "_EXTERNAL_AUTH_MESSAGE"
 #~ msgstr ""
