@@ -13,7 +13,7 @@ use Locale::Maketext::Lexicon;
 
 my $path = "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize";
 my   $pattern = File::Spec->catfile($path, '*.[pm]o');
-my   $decode = 0;
+my   $decode = 1;
 my   $encoding = undef;
 
 # For some reason this next stanza needs to be evaluated 
