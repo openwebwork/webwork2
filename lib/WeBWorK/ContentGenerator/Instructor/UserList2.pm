@@ -186,6 +186,9 @@ use constant  FIELD_PROPERTIES => {
 	},
 	useMathView => {
 	    access => 'hidden',
+        },
+        lis_source_did => {
+	    access => 'hidden',
 	},
 };
 sub pre_header_initialize {

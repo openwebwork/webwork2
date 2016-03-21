@@ -182,18 +182,17 @@ sub pre_header_initialize {
 		
                 # check to see if we've found a new version
                 if ($showMeAnotherNewPG->{body_text} ne $showMeAnotherOriginalPG->{body_text}) {
-		    # if we've found a new version, then 
-		    # increment the counter detailing the number of times showMeAnother has been used
-		    # unless we're trying to check answers from the showMeAnother screen
+		  # if we've found a new version, then 
+		  # increment the counter detailing the number of times showMeAnother has been used 
+		  # unless we're trying to check answers from the showMeAnother screen
+		  unless ($showMeAnother{CheckAnswers}) {
+		  
 		    $showMeAnother{Count}++ unless($showMeAnother{CheckAnswers});
-		    
 		    # update the database (make sure to put the old problem seed back in)
-		    $problem->{showMeAnotherCount}=$showMeAnother{Count};
-		    $problem->{problem_seed} = $oldProblemSeed;
-		    $db->putUserProblem($problem);
-		    
-		    # put the new problem seed back in
-		    $problem->{problem_seed} = $newProblemSeed;
+		    my $userProblem = $db->getUserProblem($effectiveUserName,$setName,$problemNumber);
+		    $userProblem->{showMeAnotherCount}=$showMeAnother{Count};
+		    $db->putUserProblem($userProblem);
+		  }
 		    
 		    # make sure to switch on the possibility
 		    $showMeAnother{IsPossible} = 1;

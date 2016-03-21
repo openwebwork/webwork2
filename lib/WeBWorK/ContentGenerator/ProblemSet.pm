@@ -178,8 +178,13 @@ sub siblings {
 	} else {
 		@setIDs    = grep {my $set = $db->getMergedSet($eUserID, $_); 
 				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $set, $eUserID) : ();
+				   my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework' && !$set->lis_source_did;
+
+				   after($set->open_date) && 
 				   $set->assignment_type() !~ /gateway/ && 
-				       ( defined($set->visible()) ? $set->visible() : 1 ) && !@restricted;
+				     ( defined($set->visible()) ? $set->visible() : 1 )
+				     && !@restricted
+				     && !$LTIRestricted;
 				           }   @setIDs;
 	}
 

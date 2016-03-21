@@ -135,6 +135,17 @@ sub pre_header_initialize {
 	my $r = $self->r;
 	# Note: Vars helps handle things like checkbox 'packed' data;
 	my %inputs_ref =  WeBWorK::Form->new_from_paramable($r)->Vars ;
+
+	# When passing parameters via an LMS you get "custom_" put in front of them. So lets
+	# try to clean that up
+	$inputs_ref{userID} = $inputs_ref{custom_userid} if $inputs_ref{custom_userid};
+	$inputs_ref{courseID} = $inputs_ref{custom_courseid} if $inputs_ref{custom_courseid};
+	$inputs_ref{displayMode} = $inputs_ref{custom_displaymode} if $inputs_ref{custom_displaymode};
+	$inputs_ref{course_password} = $inputs_ref{custom_course_password} if $inputs_ref{custom_course_password};
+	$inputs_ref{answersSubmitted} = $inputs_ref{custom_answerssubmitted} if $inputs_ref{custom_answerssubmitted};
+	$inputs_ref{problemSeed} = $inputs_ref{custom_problemseed} if $inputs_ref{custom_problemseed};
+	$inputs_ref{sourceFilePath} = $inputs_ref{custom_sourcefilepath} if $inputs_ref{custom_sourcefilepath};
+	$inputs_ref{outputformat} = $inputs_ref{custom_outputformat} if $inputs_ref{custom_outputformat};
 	
 	my $user_id      = $inputs_ref{userID};
 	my $courseName   = $inputs_ref{courseID};

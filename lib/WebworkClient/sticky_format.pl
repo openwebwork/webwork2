@@ -55,6 +55,8 @@ $scoreSummary
 $localStorageMessages
 </p>
 
+$LTIGradeMessage
+
 <input type="hidden" name="answersSubmitted" value="1"> 
 <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 <input type="hidden" name="problemSource" value="$encoded_source"> 
