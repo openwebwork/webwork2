@@ -653,16 +653,16 @@ sub print_form {
 	#############################################################################################	
 
 			 CGI::td({},
-			     CGI::strong($r->maketext("Message file: ")), $input_file,"\n",CGI::br(),
+			     CGI::strong($r->maketext("Message file:").' '), $input_file,"\n",CGI::br(),
 				 CGI::submit(-name=>'openMessage', -value=>$r->maketext('Open')), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
 				 CGI::popup_menu(-name=>'openfilename', 
 				                 -values=>\@sorted_messages, 
 				                 -default=>$input_file
 				 ), 
 				 "\n",CGI::br(),
-				 CGI::strong($r->maketext("Save file to: ")), $output_file,
+				 CGI::strong($r->maketext("Save file to:").' '), $output_file,
 				 "\n",CGI::br(),
-				 CGI::strong($r->maketext('Merge file: ')), $merge_file, 
+				 CGI::strong($r->maketext('Merge file:').' '), $merge_file, 
 				 CGI::br(),
 				 CGI::popup_menu(-name=>'merge_file', 
 				                 -values=>\@sorted_merge_files, 
@@ -672,12 +672,12 @@ sub print_form {
 				 #CGI::hr(),
 				 CGI::div(
 					 "\n", $r->maketext('From:'),'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
-					 "\n", CGI::br(),$r->maketext('Reply-To: '), CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-					 "\n", CGI::br(),$r->maketext('Subject:  '), CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
+					 "\n", CGI::br(),$r->maketext('Reply-To:'.' '), CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
+					 "\n", CGI::br(),$r->maketext('Subject: '.' '), CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
 				),
 				#CGI::hr(),
-				$r->maketext("Editor rows: "), CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
-				$r->maketext(" columns: "), CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
+				$r->maketext("Editor rows:".' '), CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
+				' '.$r->maketext("columns:").' ', CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
 				CGI::br(),
 				CGI::submit(-name=>'updateSettings', -value=>$r->maketext("Update settings and refresh page")),
 				 
@@ -694,7 +694,7 @@ sub print_form {
 		                                   -labels=>{all_students=>$r->maketext('All students in course'),studentID => $r->maketext('Selected students')},
 		                                   -default=>'studentID', -linebreak=>0), 
 							CGI::br(),$scrolling_user_list,
-							CGI::i($r->maketext("Preview set to: ")), $preview_record->last_name,'(', $preview_record->user_id,')',
+							CGI::i($r->maketext("Preview set to:").' '), $preview_record->last_name,'(', $preview_record->user_id,')',
 							CGI::submit(-name=>'previewMessage', -value=>'preview',-label=>$r->maketext('Preview message')),'&nbsp;&nbsp;',
 					),
 	); # end Tr

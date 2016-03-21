@@ -129,7 +129,7 @@ sub body {
 	);
 				        
 	print CGI::start_table({});
-	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Assigned"),$r->maketext("Login Name"),"&nbsp;",$r->maketext("Student Name"),"&nbsp;",$r->maketext("Section"),"&nbsp;",$r->maketext("Due Date")]));
+	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Assigned"),$r->maketext("Login Name"),"&nbsp;",$r->maketext("Student Name"),"&nbsp;",$r->maketext("Section"),"&nbsp;",$r->maketext("Close Date")]));
 	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
@@ -196,7 +196,7 @@ sub body {
 						                         params =>{editForUser=> $user}
 						)},
 						"",
-						$r->maketext("Edit data for ").$user
+						$r->maketext("Edit data for [_1]",$user)
 					))
 					: ()
 				),

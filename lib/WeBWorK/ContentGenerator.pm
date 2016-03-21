@@ -968,11 +968,11 @@ sub loginstatus {
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
-			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 			print CGI::br();
-			print $r->maketext("Acting as [_1]. ", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
+			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
 		print $r->maketext("Not logged in.");

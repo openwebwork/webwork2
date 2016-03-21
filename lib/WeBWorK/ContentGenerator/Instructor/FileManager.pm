@@ -167,7 +167,7 @@ sub body {
 	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
 	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
-	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
+	elsif($action eq "^"        || $action eq "\\") {$self->ParentDir;} 
 	else {
 	  $self->addbadmessage("Unknown action");
 	  $self->Refresh;
@@ -724,12 +724,10 @@ sub Delete {
 		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
 		print CGI::Tr(
 			CGI::td(
-			  CGI::b($r->maketext("Warning:")),$r->maketext(" You have requested that the following items be deleted"),
+			  CGI::b($r->maketext("Warning:").' '),$r->maketext("You have requested that the following items be deleted"),
 			  CGI::ul(CGI::li(\@filelist)),
 			    ((grep { -d "$dir/$_" } @files)?
-					 CGI::p({style=>"width:500"},$r->maketext("Some of these files are directories. ",
-									"Only delete directories if you really know what you are doing. ",
-									"You can seriously damage your course if you delete the wrong thing.")): ""),
+					 CGI::p({style=>"width:500"},$r->maketext("Some of these files are directories. Only delete directories if you really know what you are doing. You can seriously damage your course if you delete the wrong thing.")): ""),
 			  CGI::p({style=>"color:red"},$r->maketext("There is no undo for deleting files or directories!")),
 			  CGI::p($r->maketext("Really delete the items listed above?")),
 			  CGI::div({style=>"float:left; padding-left:3ex"},

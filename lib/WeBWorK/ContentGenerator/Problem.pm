@@ -954,7 +954,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"correct-progress set-id-tooltip",-style=>"width:$progress_bar_correct_width%",
 					   "aria-label"=>"correct progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Correct: $total_correct/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Correct: [_1]/[_2]",$total_correct,$num_of_problems)
 					  });
 		# perfect scores deserve some stars (&#9733;)
 		$progress_bar .= ($total_correct == $num_of_problems)?"&#9733;Perfect&#9733;":"";
@@ -964,7 +964,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"inprogress-progress set-id-tooltip",-style=>"width:$progress_bar_inprogress_width%",
 					   "aria-label"=>"in progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("In progress: $total_inprogress/$num_of_problems")
+					   "data-original-title"=>$r->maketext("In progress: [_1]/[_2]",$total_inprogress, $num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -972,7 +972,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"incorrect-progress set-id-tooltip",-style=>"width:$progress_bar_incorrect_width%",
 					   "aria-label"=>"incorrect progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Incorrect: $total_incorrect/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Incorrect: [_1]/[_2]",$total_incorrect,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -980,7 +980,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"unattempted-progress set-id-tooltip",-style=>"width:$progress_bar_unattempted_width%",
 					   "aria-label"=>"unattempted progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Unattempted: $unattempted/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Unattempted: [_1]/[_2]",$unattempted,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -1979,7 +1979,7 @@ sub output_custom_edit_message{
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $problem->source_file));
+			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:").' ', $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
 			# taken care of in the initialization phase
 		}

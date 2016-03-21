@@ -375,12 +375,12 @@ sub view_problems_line {
 	# We have our own displayMode since its value may be None, which is illegal
 	# in other modules.
 	my $mydisplayMode = $r->param('mydisplayMode') || $r->ce->{pg}->{options}->{displayMode};
-	$result .= $r->maketext(' Display Mode: ').CGI::popup_menu(-name=> 'mydisplayMode',
+	$result .= ' '.$r->maketext('Display Mode:').' '.CGI::popup_menu(-name=> 'mydisplayMode',
 	                                                            -values=>\@active_modes,
 	                                                            -default=> $mydisplayMode);
 	# Now we give a choice of the number of problems to show
 	my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
-	$result .= $r->maketext(' Max. Shown: ').
+	$result .= ' '.$r->maketext('Max. Shown:').' '.
 		CGI::popup_menu(-name=> 'max_shown',
 		                -values=>[5,10,15,20,25,30,50,'All'],
 		                -default=> $defaultMax);
@@ -427,7 +427,7 @@ sub browse_local_panel {
 		my %labels = map { my($l)=$_=~/^$lib\/(.*)$/;$_=>$l } @$list_of_prob_dirs;
 		push @popup_menu_args, -labels => \%labels;
 	}
-	print CGI::Tr({}, CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("[_1] Problems: ", $name),
+	print CGI::Tr({}, CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("[_1] Problems:", $name).' ',
 		              CGI::popup_menu(@popup_menu_args),
 		              CGI::br(), 
 		              $view_problem_line,
@@ -451,7 +451,7 @@ sub browse_mysets_panel {
 
 	my $view_problem_line = view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r);
 	print CGI::Tr({},
-		CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from: "),
+		CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:").' ',
 		CGI::popup_menu(-name=> 'library_sets', 
 		                -values=>$list_of_local_sets, 
 		                -default=> $library_selected),
@@ -851,8 +851,8 @@ sub make_top_row {
 	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
         my $courseID = $self->r->urlpath->arg("courseID");
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Add problems to "),
-		CGI::b($r->maketext("Target Set: ")),
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Add problems to").' ',
+		CGI::b($r->maketext("Target Set:").' '),
 		CGI::popup_menu(-name=> 'local_sets', 
 						-values=>$list_of_local_sets, 
 						-default=> $set_selected,
@@ -881,7 +881,7 @@ sub make_top_row {
 	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
-		$r->maketext("Browse "),
+		$r->maketext("Browse").' ',
 		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),

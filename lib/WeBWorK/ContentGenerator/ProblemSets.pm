@@ -60,7 +60,7 @@ sub info {
 				$course_info_path = $r->param("sourceFilePath");
 				$course_info_path = $ce->{courseDirs}{templates}.'/'.$course_info_path unless $course_info_path =~ m!^/!;
 				die "sourceFilePath is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates});
-				$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $course_info_path));
+				$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:").' ', $course_info_path));
 			}
 			
 			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",  $r, courseID => $courseID);
@@ -652,7 +652,7 @@ sub set_due_msg {
     if ($gwversion) {
       $status = $r->maketext("open, complete by [_1]",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
     } else {
-      $status = $r->maketext("open, due [_1]",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));  
+      $status = $r->maketext("open, closes [_1]",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));  
     }
 
     if ($enable_reduced_scoring && $reduced_scoring_date &&

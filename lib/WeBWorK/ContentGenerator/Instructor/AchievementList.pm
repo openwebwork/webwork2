@@ -340,7 +340,7 @@ sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	return join("",
-		$r->maketext("Edit "),
+		$r->maketext("Edit")." ",
 		CGI::popup_menu(
 			-name => "action.edit.scope",
 			-values => [qw(all selected)],
@@ -378,7 +378,7 @@ sub assign_form {
 	my $r = $self->r;
 
 	return join("",
-		    $r->maketext("Assign "),
+		    $r->maketext("Assign")." ",
 		CGI::popup_menu(
 			-name => "action.assign.scope",
 			-values => [qw(all selected)],
@@ -389,7 +389,7 @@ sub assign_form {
 			},
 			-onchange => $onChange,
 		),
-		    $r->maketext(" to all users, create global data, and "),
+		    " ".$r->maketext("to all users, create global data, and")." ",
    		CGI::popup_menu(
 			-name => "action.assign.overwrite",
 			-values => [qw(everything new_only)],
@@ -476,7 +476,7 @@ sub score_form {
 	my $r = $self->r;
 
 	return join ("",
-		$r->maketext("Score "),
+		$r->maketext("Score")." ",
 		CGI::popup_menu(
 			-name => "action.score.scope",
 			-values => [qw(none all selected)],
@@ -599,7 +599,7 @@ sub delete_form {
 	my $r = $self->r;
 	return join("",
 		CGI::div({class=>"ResultsWithError"}, 
-			$r->maketext("Delete "),
+			$r->maketext("Delete")." ",
 			CGI::popup_menu(
 				-name => "action.delete.scope",
 				-values => [qw(none selected)],
@@ -728,7 +728,7 @@ sub import_form {
 	my $user = $r->param('user');
 
 	return join(" ",
-		$r->maketext("Import achievements from "),
+		$r->maketext("Import achievements from")." ",
 		CGI::popup_menu(
 			-name => "action.import.source",
 			-values => [ "", $self->getAxpList() ],
@@ -736,7 +736,7 @@ sub import_form {
 			-default => $actionParams{"action.import.source"}->[0] || "",
 		        -onchange => $onChange,
 		),
-		    $r->maketext("assigning the achievements to ") .
+		    $r->maketext("assigning the achievements to").' '.
 		    CGI::popup_menu(
 			-name => "action.import.assign",
 			-value => [qw(none all)],
@@ -821,7 +821,7 @@ sub export_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	return join("",
-		$r->maketext("Export "),
+		$r->maketext("Export").' ',
 		CGI::popup_menu(
 			-name => "action.export.scope",
 			-values => [qw(all selected)],

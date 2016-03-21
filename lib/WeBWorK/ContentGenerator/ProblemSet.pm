@@ -136,7 +136,7 @@ sub title {
 	         $self->formatDateTime($set->reduced_scoring_date,undef,
 				       $r->ce->{studentDateDisplayFormat}));
 	  } elsif ($set->due_date) {
-	    $title .= ' - '.$r->maketext("Due [_1]", 
+	    $title .= ' - '.$r->maketext("Closes [_1]", 
 	         $self->formatDateTime($set->due_date,undef,
 				       $r->ce->{studentDateDisplayFormat}));
 	  }

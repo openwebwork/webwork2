@@ -653,7 +653,7 @@ sub body {
 					if($con->{var} eq $r->param('var_name'));
 			}
 		}
-		print CGI::h2($r->maketext("Variable Documentation: "). CGI::code('$'.$r->param('var_name'))),
+		print CGI::h2($r->maketext("Variable Documentation:").' '. CGI::code('$'.$r->param('var_name'))),
 			CGI::p(),
 			CGI::blockquote( $r->maketext($docstring) );
 		return "";

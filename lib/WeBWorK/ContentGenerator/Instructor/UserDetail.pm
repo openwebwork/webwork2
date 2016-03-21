@@ -31,10 +31,16 @@ use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
-use constant DATE_FIELDS => {   open_date    => " Open: ",
-                                reduced_scoring_date => " Reduced&nbsp;: ",
-	                            due_date     => " Due&nbsp;: ",
-	                            answer_date  => " Ans&nbsp;: "
+# This is a wrapper that we can put around string defined as constants that
+# will tag them as needing to be translated. 
+sub maketext {
+  return @_;
+}
+
+use constant DATE_FIELDS => {   open_date    => maketext("Open:"),
+                                reduced_scoring_date => maketext("Reduced:"),
+	                            due_date     => maketext("Closes:"),
+	                            answer_date  => maketext("Answer:")
 };
 use constant DATE_FIELDS_ORDER =>[qw(open_date reduced_scoring_date due_date answer_date )];
 sub initialize {
@@ -243,69 +249,6 @@ sub body {
 
 	print CGI::h4({align=>'center'},"Edit ",CGI::a({href=>$basicInfoUrl},'class list data')," for  $userName ($editForUserID) who has been assigned $setCount sets.");
 	
-	#print CGI::h4("User Data");
-# 	print CGI::start_table({ align=>'center', border=>1,cellpadding=>5});
-# 	print CGI::Tr(
-# 		CGI::th(CGI::checkbox({ type => 'checkbox',
-# 								name => "edit.basic.info",
-# 								label => '',
-#                         		checked => 0
-#         }),"Edit class list data for $editForUserID"),
-#         CGI::th(CGI::checkbox({ type => 'checkbox',
-# 								name => "change.password",
-# 								label => '',
-#                         		checked => 0
-#         }),"Change Password for $editForUserID"));
-#         
-# 	print "<tr><td rowspan=\"2\">";
-# 	########################################
-# 	# Basic student data
-# 	########################################
-# 	print CGI::start_table();
-# 	foreach ($userTemplate->FIELDS()) {
-# 		next if $_ eq 'user_id';   # don't print login name
-# 		print CGI::Tr(
-# 			CGI::td([
-# 		        	$prettyFieldNames{$_}, 
-# 				CGI::input({ -value => $UserRecord->$_, -size => 25 })
-# 			])
-# 		);
-# 	}
-# 	foreach ($permissionLevelTemplate->FIELDS()) {
-# 		print CGI::Tr(
-# 			CGI::td([
-# 		        	$prettyFieldNames{$_}, 
-# 				CGI::input({ -value => $PermissionRecord->$_, -size => 25 })
-# 			])
-# 		);
-# 	}
-# 	print CGI::end_table();
-# 	
-# 	#print CGI::br();
-# 	print "</td><td valign=\"top\">";
-# 	########################################
-# 	# Change password section
-# 	########################################
-# 	my $profRecord = $db->getUser($userID);
-# 	my $profName = $profRecord->first_name . " " . $profRecord->last_name;
-# 	my $poss = "'s ";
-# 	my $pass = " password ";
-# 	
-# 	print CGI::start_table();
-# 	print CGI::Tr(CGI::td(["<b>$profName</b>$poss$pass", CGI::input({ -type => "password", -name => "$userID.password"})]));
-# 	print CGI::Tr(CGI::td(["<b>$userName</b>$poss new $pass", CGI::input({ -type => "password", -name => "$editForUserID.password.1"})]));
-# 	print CGI::Tr(CGI::td(["Confirm <b>$userName</b>$poss new $pass", CGI::input({ -type => "password", -name => "$editForUserID.password.2"})]));
-# 	print CGI::end_table();
-# 	print "</td></tr>";
-# 	print CGI::Tr(CGI::th(  #FIXME  enable this once it can be handled
-# # 		CGI::checkbox({ type => 'checkbox',
-# # 								name => "change.login",
-# # 								label => '',
-# #                         		checked => 0
-# #         }),
-#         "Change login name $editForUserID to ", CGI::input({-name=>'new_login', -value=>''  ,-size=>25})
-# 	));
-# 	print CGI::end_table();
 	
 	print CGI::br();
 
@@ -467,32 +410,6 @@ sub body {
 	);
 
 
-#	print CGI::start_table();
-#	print CGI::Tr(
-#		CGI::th({ -align => "center"},[
-#			"Assigned",
-#			"Set Name",
-#			"Opens",
-#			"Answers Due",
-#			"Answers Available",
-#		])
-#	);
-				
-#	foreach my $setID (sortByName(undef, @UserSetIDs)) {
-#		my $MergedSetRecord = $MergedSetRecords{$setID};
-#		print CGI::Tr(
-#			CGI::td({ -align => "center" }, [
-#				CGI::checkbox({checked => (defined $MergedSetRecord)}),
-#				$setID,
-#				CGI::checkbox() .
-#				CGI::input({ -value => $self->formatDateTime($MergedSetRecord->open_date), -size => 25}),
-#				CGI::checkbox() .
-#				CGI::input({ -value => $self->formatDateTime($MergedSetRecord->due_date), -size => 25}),
-#				CGI::checkbox() .
-#				CGI::input({ -value => $self->formatDateTime($MergedSetRecord->answer_date), -size => 25}),
-#			])
-#		);
-#	}
 	return '';
 }
 
@@ -603,7 +520,7 @@ sub DBFieldTable {
 		my $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
        
 		push @results, 
-			[$rh_fieldLabels->{$field},
+			[$r->maketext($rh_fieldLabels->{$field}).' ',
 			 defined $UserRecord ? 
 				CGI::checkbox({
 					type => "checkbox",

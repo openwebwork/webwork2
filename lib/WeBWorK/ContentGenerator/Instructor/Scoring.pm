@@ -355,8 +355,8 @@ sub scoreSet {
 		$scoringData[0][0] = $r->maketext("NO OF FIELDS");
 		$scoringData[1][0] = $r->maketext("SET NAME");
 		$scoringData[2][0] = $r->maketext("PROB NUMBER");
-		$scoringData[3][0] = $r->maketext("DUE DATE");
-		$scoringData[4][0] = $r->maketext("DUE TIME");
+		$scoringData[3][0] = $r->maketext("CLOSE DATE");
+		$scoringData[4][0] = $r->maketext("CLOSE TIME");
 		$scoringData[5][0] = $r->maketext("PROB VALUE");
 
 	

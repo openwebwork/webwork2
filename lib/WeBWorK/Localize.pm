@@ -122,13 +122,13 @@ The "level" category is used for the achievements associated to a users level.
 },
 "_REDUCED_CREDIT_MESSAGE_1" => q{
 This assignment has a Reduced Credit Period that begins [_1] and
-ends on the due date, [_2].  During this period all additional work done counts [_3]\% of the
+ends on the close date, [_2].  During this period all additional work done counts [_3]\% of the
 original.
 },
 
 "_REDUCED_CREDIT_MESSAGE_2" => q{
 This assignment had a Reduced Credit Period that began [_1] and
-ended on the due date, [_2].  During that period all additional work done counted [_3]\% of the
+ended on the close date, [_2].  During that period all additional work done counted [_3]\% of the
 original.
 },
 "_GUEST_LOGIN_MESSAGE"   => q{This course supports guest logins. Click [_1] to log into this course as a guest.},

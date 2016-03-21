@@ -2060,7 +2060,7 @@ sub body {
 			}
 		}
 		if ( $numProbPerPage && $numPages > 1 ) {
-			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),
+			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page:'))),
 					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 

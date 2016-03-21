@@ -471,7 +471,7 @@ sub body {
 		$r->maketext("Hardcopy Header"), 
 		$r->maketext("Open Date"),
 	        $r->maketext("Reduced Scoring Date"),
-		$r->maketext("Due Date"), 
+		$r->maketext("Close Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
 	        $r->maketext("Reduced Scoring"), 
@@ -780,7 +780,7 @@ sub sort_form {
 					set_header 	=> $r->maketext("Set Header"),
 					hardcopy_header	=> $r->maketext("Hardcopy Header"),
 					open_date	=> $r->maketext("Open Date"),
-					due_date	=> $r->maketext("Due Date"),
+					due_date	=> $r->maketext("Close Date"),
 					answer_date	=> $r->maketext("Answer Date"),
 					visible	=> $r->maketext("Visibility"),
 				},
@@ -799,7 +799,7 @@ sub sort_form {
 				-labels => {
 					set_id		=> $r->maketext("Set Name"),
 					open_date	=> $r->maketext("Open Date"),
-					due_date	=> $r->maketext("Due Date"),
+					due_date	=> $r->maketext("Close Date"),
 					answer_date	=> $r->maketext("Answer Date"),
 					visible	=> $r->maketext("Visibility"),
 				},
@@ -822,7 +822,7 @@ sub sort_handler {
 	my %names = (
 		set_id		=> $r->maketext("Set Name"),
 		open_date	=> $r->maketext("Open Date"),
-		due_date	=> $r->maketext("Due Date"),
+		due_date	=> $r->maketext("Close Date"),
 		answer_date	=> $r->maketext("Answer Date"),
 		visible	=> $r->maketext("Visibility"),
 	);
@@ -1633,7 +1633,7 @@ sub byOpenDate      {
 sub byDueDate       { 
 					  my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
                       return $result unless $@;
-                      warn "Due date not correctly defined.";
+                      warn "Close date not correctly defined.";
                       return 0;
 }
 sub byAnswerDate    { 
@@ -1966,14 +1966,14 @@ sub readSetDef {
 		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn $r->maketext("The open date: [_1], due date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
+			warn $r->maketext("The open date: [_1], close date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
 		}
 
 		# validate reduced credit date
 		$reducedScoringDate = $self->parseDateTime($reducedScoringDate) if ($reducedScoringDate);
 
 		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
-		    warn $r->maketext("The reduced credit date should be between the open date [_1] and due date [_2]", $openDate, $dueDate);
+		    warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
 		} elsif (!$reducedScoringDate) {
 		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}

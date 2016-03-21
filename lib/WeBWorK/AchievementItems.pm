@@ -133,7 +133,7 @@ sub use_item {
 	($set);
 
 
-    # Set a new due date and answer time for the student and remove the item
+    # Set a new close date and answer time for the student and remove the item
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
 
@@ -154,7 +154,7 @@ sub use_item {
     return;
 }
 
-#Item to extend a due date by 24 hours. 
+#Item to extend a close date by 24 hours. 
 
 package WeBWorK::AchievementItems::ExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
@@ -168,7 +168,7 @@ sub new {
     my $self = {
 	id => "ExtendDueDate",
 	name => "Tunic of Extension",
-	description => "Adds 24 hours to the due date of a homework.",
+	description => "Adds 24 hours to the close date of a homework.",
 	%options,
     };
     
@@ -193,7 +193,7 @@ sub print_form {
     }
 
     return join("",
-	CGI::p("Choose the set whose due date you would like to extend."),
+	CGI::p("Choose the set whose close date you would like to extend."),
 	CGI::label("Set Name ",
 	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
 }
@@ -222,7 +222,7 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
-    #add time to the due date and answer datae and remove item from inventory
+    #add time to the close date and answer datae and remove item from inventory
     $set->due_date($set->due_date()+86400);
     $set->answer_date($set->answer_date()+86400);
 
@@ -235,7 +235,7 @@ sub use_item {
     return;
 }
 
-#Item to extend a due date by 48 hours. 
+#Item to extend a close date by 48 hours. 
 
 package WeBWorK::AchievementItems::SuperExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
@@ -249,7 +249,7 @@ sub new {
     my $self = {
 	id => "SuperExtendDueDate",
 	name => "Robe of Longevity",
-	description => "Adds 48 hours to the due date of a homework.",
+	description => "Adds 48 hours to the close date of a homework.",
 	%options,
     };
     
@@ -274,7 +274,7 @@ sub print_form {
     }
 
     return join("",
-	CGI::p("Choose the set whose due date you would like to extend."),
+	CGI::p("Choose the set whose close date you would like to extend."),
 	CGI::label("Set Name ",
 	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
 }
@@ -303,7 +303,7 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
-    #add time to the due date and answer datae and remove item from inventory
+    #add time to the close date and answer datae and remove item from inventory
     $set->due_date($set->due_date()+172800);
     $set->answer_date($set->answer_date()+172800);
 
@@ -316,7 +316,7 @@ sub use_item {
     return;
 }
 
-#Item to extend a due date by 24 hours for reduced credit
+#Item to extend a close date by 24 hours for reduced credit
 
 package WeBWorK::AchievementItems::ReducedCred;
 our @ISA = qw(WeBWorK::AchievementItems);
@@ -332,7 +332,7 @@ sub new {
 	name => "Ring of Reduction",
 	#Reduced credit needs to be set up in course configuration for this
 	# item to work,
-	description => "Enable reduced scoring for a homework set.  This will allow you to submit answers for partial credit for 24 hours after the due date.",
+	description => "Enable reduced scoring for a homework set.  This will allow you to submit answers for partial credit for 24 hours after the close date.",
 	%options,
     };
     
@@ -394,7 +394,7 @@ sub use_item {
 	($set);
 
 
-    # enable reduced scoring on the set add 24 hours to the due date.
+    # enable reduced scoring on the set add 24 hours to the close date.
     my $additionalTime = 86400;
     $set->enable_reduced_scoring(1);
     $set->reduced_scoring_date($set->due_date());
