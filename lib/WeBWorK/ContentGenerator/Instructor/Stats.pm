@@ -105,7 +105,7 @@ sub siblings {
 	                                        courseID => $courseID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2("Statistics");
+	print CGI::h2($r->maketext("Statistics"));
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
@@ -686,13 +686,13 @@ print  CGI::p($r->maketext('The percentage of active students with correct answe
 	my @setUsers = $db->listSetUsers($setName);
 	my @GradeableRows;
 	my $showGradeRow = 0;
-	unshift (@GradeableRows, CGI::td({}, "manual grader"));
+	unshift (@GradeableRows, CGI::td({}, $r->maketext("Manual Grader")));
 	foreach my $problemID (@problemIDs) {
 	    my $globalProblem = $db->getGlobalProblem($setName,$problemID);
 	    if ($globalProblem->flags =~ /essay/) {
 		$showGradeRow = 1;
 		my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem")));
+		push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $r->maketext("Grade Problem"))));
 		
 	    }  else {
 		push (@GradeableRows, CGI::td());

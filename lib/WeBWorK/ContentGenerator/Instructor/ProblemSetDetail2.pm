@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -85,16 +85,11 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
-# This is a wrapper that we can put around string defined as constants that
-# will tag them as needing to be translated. 
-sub maketext {
-  return @_;
-}
-
+# We use the x function to mark strings for localizaton 
 use constant FIELD_PROPERTIES => {
 	# Set information
 	set_header => {
-		name      => maketext("Set Header"),
+		name      => x("Set Header"),
 		type      => "edit",
 		size      => "50",
 		override  => "all",
@@ -102,7 +97,7 @@ use constant FIELD_PROPERTIES => {
 		default   => "",
 	},
 	hardcopy_header => {
-		name      => maketext("Hardcopy Header"),
+		name      => x("Hardcopy Header"),
 		type      => "edit",
 		size      => "50",
 		override  => "all",
@@ -110,13 +105,13 @@ use constant FIELD_PROPERTIES => {
 		default   => "",		
 	},
 	description => {
-		name      => maketext("Description"),
+		name      => x("Description"),
 		type      => "edit",
 		override  => "all",
 		default   => "",
 	},
 	open_date => {
-		name      => maketext("Opens"),
+		name      => x("Opens"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
@@ -126,7 +121,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	due_date => {
-		name      => maketext("Closes"),
+		name      => x("Closes"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
@@ -136,7 +131,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	answer_date => {
-		name      => maketext("Answers Available"),
+		name      => x("Answers Available"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
@@ -146,27 +141,27 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	visible => {
-		name      => maketext("Visible to Students"),
+		name      => x("Visible to Students"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => maketext("Yes"),
-				0 => maketext("No"),
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 	},
 	enable_reduced_scoring => {
-		name      => maketext("Reduced Scoring Enabled"),
+		name      => x("Reduced Scoring Enabled"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => maketext("Yes"),
-				0 => maketext("No"),
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 	},
 	reduced_scoring_date => {
-		name      => maketext("Reduced Scoring Date"),
+		name      => x("Reduced Scoring Date"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
@@ -176,7 +171,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	restricted_release => {
-		name      => maketext("Restrict release by set(s)"),
+		name      => x("Restrict release by set(s)"),
 		type      => "edit",
 		size      => "30",
 		override  => "any",
@@ -184,10 +179,10 @@ use constant FIELD_PROPERTIES => {
 				#0 => "None Specified",
 				"" => "None Specified",
 		},
-                help_text => maketext("This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field.")
+                help_text => x("This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field.")
 	},
 	restricted_status => {
-		name      => maketext("Score required for release"),
+		name      => x("Score required for release"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 )],
@@ -204,31 +199,31 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	restrict_ip => {
-		name      => maketext("Restrict Access by IP"),
+		name      => x("Restrict Access by IP"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( No RestrictTo DenyFrom )],
 		labels    => {
-				No => maketext("No"),
-				RestrictTo => maketext("Restrict To"),
-				DenyFrom => maketext("Deny From"),
+				No => x("No"),
+				RestrictTo => x("Restrict To"),
+				DenyFrom => x("Deny From"),
 		},
 		default   => 'No',
 	},
 	relax_restrict_ip => { 
-		name      => maketext("Relax IP restrictions when?"),
+		name      => x("Relax IP restrictions when?"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( No AfterAnswerDate AfterVersionAnswerDate )],
 		labels    => {
-				No => maketext("Never"),
-				AfterAnswerDate => maketext("After set answer date"),
-				AfterVersionAnswerDate => maketext("(gw/quiz) After version answer date"),
+				No => x("Never"),
+				AfterAnswerDate => x("After set answer date"),
+				AfterVersionAnswerDate => x("(gw/quiz) After version answer date"),
 		},
 		default   => 'No',
 	},
 	assignment_type => {
-		name      => maketext("Assignment type"),
+		name      => x("Assignment type"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( default gateway proctored_gateway jitar)],
@@ -239,7 +234,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	version_time_limit => {
-		name      => maketext("Test Time Limit (min; 0=Close Date)"),
+		name      => x("Test Time Limit (min; 0=Close Date)"),
 		type      => "edit",
 		size      => "4",
 		override  => "any",
@@ -248,14 +243,14 @@ use constant FIELD_PROPERTIES => {
 		convertby => 60,
 	},
 	time_limit_cap => {
-		name      => maketext("Cap Test Time at Set Close Date?"),
+		name      => x("Cap Test Time at Set Close Date?"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw(0 1)],
-		labels    => { '0' => maketext('No'), '1' => maketext('Yes') },
+		labels    => { '0' => 'No', '1' =>'Yes' },
 	},
 	attempts_per_version => {
-		name      => maketext("Number of Graded Submissions per Test (0=infty)"),
+		name      => x("Number of Graded Submissions per Test (0=infty)"),
 		type      => "edit",
 		size      => "3",
 		override  => "any",
@@ -263,7 +258,7 @@ use constant FIELD_PROPERTIES => {
 #		labels    => {	"" => 1 },
 	},
 	time_interval => {
-		name      => maketext("Time Interval for New Test Versions (min; 0=infty)"),
+		name      => x("Time Interval for New Test Versions (min; 0=infty)"),
 		type      => "edit",
                 size      => "5",
 		override  => "any",
@@ -272,7 +267,7 @@ use constant FIELD_PROPERTIES => {
 		convertby => 60,
 	},
 	versions_per_interval => {
-		name      => maketext("Number of Tests per Time Interval (0=infty)"),
+		name      => x("Number of Tests per Time Interval (0=infty)"),
 		type      => "edit",
                 size      => "3",
 		override  => "any",
@@ -282,14 +277,14 @@ use constant FIELD_PROPERTIES => {
 #		labels    => {	"" => 1 },
 	},
 	problem_randorder => {
-		name      => maketext("Order Problems Randomly"),
+		name      => x("Order Problems Randomly"),
 		type      => "choose",
 		choices   => [qw( 0 1 )],
 		override  => "any",
-		labels    => {	0 => maketext("No"), 1 => maketext("Yes") },
+		labels    => {	0 => "No", 1 =>"Yes" },
 	},
 	problems_per_page => {
-	        name      => maketext("Number of Problems per Page (0=all)"),
+	        name      => x("Number of Problems per Page (0=all)"),
 		type      => "edit",
 		size      => "3",
 		override  => "any",
@@ -297,38 +292,38 @@ use constant FIELD_PROPERTIES => {
 #		labels    => { "" => 0 },
 	},
 	'hide_score:hide_score_by_problem' => {
-		name      => maketext("Show Scores on Finished Assignments?"),
+		name      => x("Show Scores on Finished Assignments?"),
 		type      => "choose",
 		choices   => [ qw( N: Y:N BeforeAnswerDate:N Y:Y BeforeAnswerDate:Y ) ],
 		override  => "any",
-		labels    => { 'N:' => maketext('Yes'), 'Y:N' => maketext('No'), 'BeforeAnswerDate:N' => maketext('Only after set answer date'), 'Y:Y' => maketext('Totals only (not problem scores)'), 'BeforeAnswerDate:Y' => maketext('Totals only, only after answer date') },
+		labels    => { 'N:' => 'Yes', 'Y:N' =>'No', 'BeforeAnswerDate:N' =>x('Only after set answer date'), 'Y:Y' =>x('Totals only (not problem scores)'), 'BeforeAnswerDate:Y' => x('Totals only, only after answer date') },
 	},
 	hide_work         => {
-		name      => maketext("Show Problems on Finished Tests"),
+		name      => x("Show Problems on Finished Tests"),
 		type      => "choose",
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
-		labels    => { 'N' => maketext("Yes"), 'Y' => maketext("No"), 'BeforeAnswerDate' => maketext('Only after set answer date') },
+		labels    => { 'N' => "Yes", 'Y' =>"No", 'BeforeAnswerDate' =>x('Only after set answer date') },
 	},
 
 	restrict_prob_progression => {
-		name      => maketext("Restrict Problem Progression"),
+		name      => x("Restrict Problem Progression"),
 		type      => "choose",
 		choices   => [ qw(0 1) ],
 		override  => "all",
                 default   => "0",
-		labels    => { '1' => maketext("Yes"), '0' => maketext("No"), },
-                help_text => maketext("If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary"),
+		labels    => { '1' => "Yes", '0' =>"No", },
+                help_text => x("If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary"),
 	},
 
 	email_instructor  => {
-		name      => maketext("Email Instructor On Failed Attempt"),
+		name      => x("Email Instructor On Failed Attempt"),
 		type      => "choose",
 		choices   => [ qw(0 1) ],
 		override  => "any",
                 default   => "0",
-		labels    => { '1' => maketext("Yes"), '0' => maketext("No")},
-                help_text => maketext("If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%"),
+		labels    => { '1' => "Yes", '0' =>"No"},
+                help_text => x("If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%"),
 	},
 
 	# in addition to the set fields above, there are a number of things
@@ -339,124 +334,124 @@ use constant FIELD_PROPERTIES => {
 	#
 	# Problem information
 	source_file => {
-		name      => maketext("Source File"),
+		name      => x("Source File"),
 		type      => "edit",
 		size      => 50,
 		override  => "any",
 		default   => "",
 	},
 	value => {
-		name      => maketext("Weight"),
+		name      => x("Weight"),
 		type      => "edit",
 		size      => 6,
 		override  => "any",
                 default => "1",
 	},
 	max_attempts => {
-		name      => maketext("Max attempts"),
+		name      => x("Max attempts"),
 		type      => "edit",
 		size      => 6,
 		override  => "any",
                 default => "-1",
 		labels    => {
-				"-1" => maketext("unlimited"),
+				"-1" => x("unlimited"),
 		},
 	},
         showMeAnother => {
-                 name => maketext("Show me another"),
+                 name => x("Show me another"),
                  type => "edit",
                  size => "6",
                  override  => "any",
                  default=>"-1",
                  labels    => {
-			       "-1" => maketext("Never"),
-			       "-2" => maketext("Default"),
+			       "-1" => x("Never"),
+			       "-2" => x("Default"),
                  },
-                 help_text => maketext("When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used.")
+                 help_text => x("When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used.")
         },
 	prPeriod => {
-		name => maketext("Rerandomize after"),
+		name => x("Rerandomize after"),
 		type => "edit",
 		size => "6",
 		override => "any",
 		default=>"-1",
 		labels => {
-			"-1" => maketext("Default"),
-			"0" => maketext("Never"),
+			"-1" => x("Default"),
+			"0" => x("Never"),
 		},
-		help_text => maketext("This specifies the rerandomization period: the number of attempts before a new version of the problem is generated by changing the Seed value. The value of -1 uses the default from course configuration. The value of 0 disables rerandomization."),
+		help_text => x("This specifies the rerandomization period: the number of attempts before a new version of the problem is generated by changing the Seed value. The value of -1 uses the default from course configuration. The value of 0 disables rerandomization."),
 	},
 	problem_seed => {
-		name      => maketext("Seed"),
+		name      => x("Seed"),
 		type      => "edit",
 		size      => 6,
 		override  => "one",
 		
 	},
 	status => {
-		name      => maketext("Status"),
+		name      => x("Status"),
 		type      => "edit",
 		size      => 6,
 		override  => "one",
 		default   => "0",
 	},
 	attempted => {
-		name      => maketext("Attempted"),
+		name      => x("Attempted"),
 		type      => "hidden",
 		override  => "none",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => maketext("Yes"),
-				0 => maketext("No"),
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 		default   => "0",
 	},
 	last_answer => {
-		name      => maketext("Last Answer"),
+		name      => x("Last Answer"),
 		type      => "hidden",
 		override  => "none",
 	},
 	num_correct => {
-		name      => maketext("Correct"),
+		name      => x("Correct"),
 		type      => "hidden",
 		override  => "none",
 		default   => "0",
 	},
 	num_incorrect => {
-		name      => maketext("Incorrect"),
+		name      => x("Incorrect"),
 		type      => "hidden",
 		override  => "none",
 		default   => "0",
 	},
 	hide_hint => {
-		name      => maketext("Hide Hints from Students"),
+		name      => x("Hide Hints from Students"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => maketext("Yes"),
-				0 => maketext("No"),
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 	},
 	att_to_open_children  => {
-		name      => maketext("Att. to Open Children"),
+		name      => x("Att. to Open Children"),
 		type      => "edit",
 		size      => 6,
 		override  => "any",
                 default => "0",
 		labels    => {
-				"-1" => maketext("max"),
+				"-1" => x("max"),
 		},
-                help_text => maketext("The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max\" is specified here then child problems will only be available after a student runs out of attempts."),
+                help_text => x("The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max\" is specified here then child problems will only be available after a student runs out of attempts."),
 	},
 	counts_parent_grade  => {
-		name      => maketext("Counts for Parent"),
+		name      => x("Counts for Parent"),
 		type      => "choose",
 		choices   => [ qw(0 1) ],
 		override  => "any",
                 default   => "0",
-		labels    => { '1' => maketext("Yes"), '0' => maketext("No"), },
-                help_text => maketext("If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled."),
+		labels    => { '1' => "Yes", '0' =>"No", },
+                help_text => x("If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled."),
 	},
 
 

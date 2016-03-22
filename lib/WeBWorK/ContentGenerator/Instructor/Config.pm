@@ -517,7 +517,7 @@ sub print_navigation_tabs {
 		}
 	}
 	print CGI::p() .
-		'<div align="center">' . join('&nbsp;|&nbsp;', @tab_names) .'</div>'.
+		'<div align="center">' . join('&nbsp;|&nbsp;', map {$r->maketext($_)} @tab_names) .'</div>'.
 		CGI::p();
 }
 
@@ -687,7 +687,7 @@ sub body {
 	$tabnumber =~ s/tab//;
 	my @configSectionArray = @{$ConfigValues->[$tabnumber]};
 	my $configTitle = shift @configSectionArray;
-	print CGI::p(CGI::div({-align=>'center'}, CGI::b($configTitle)));
+	print CGI::p(CGI::div({-align=>'center'}, CGI::b($r->maketext($configTitle))));
 
 	print CGI::start_table({-border=>"1"});
 	print '<tr>'.CGI::th($r->maketext('What')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));

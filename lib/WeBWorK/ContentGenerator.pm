@@ -665,12 +665,9 @@ sub links {
 		
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
+
+		defined $text or $text = $r->maketext($new_urlpath->name);  #too clever
 		
-		defined $text or $text = $new_urlpath->name;  #too clever
-		
-		my $id = $text;
-		$id =~ s/\W/\_/g; 
-		#$text = sp2nbsp($text); # ugly hack to prevent text from wrapping
 		
 		# try to set $active automatically by comparing 
 		if (not defined $active) {
@@ -694,10 +691,8 @@ sub links {
 		my $new_anchor;
 		if ($active) {
 			# add active class for current location
-#			$new_anchor = CGI::a({href=>$new_systemlink, class=>"$id active", %target}, $text);
 			$new_anchor = CGI::a({href=>$new_systemlink, class=>"active", %target}, $text);
 		} else {
-#			$new_anchor = CGI::a({href=>$new_systemlink, class=>$id, %target}, "$text");
 			$new_anchor = CGI::a({href=>$new_systemlink, %target}, "$text");
 		}
 		
@@ -737,9 +732,9 @@ sub links {
 	if (defined $courseID) {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
-                        my $primaryMenuName = "Homework Sets";
-                        $primaryMenuName = "Course Administration" if ($ce->{courseName} eq 'admin');
-			print &$makelink("${pfx}ProblemSets", text=>$r->maketext($primaryMenuName), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+                        my $primaryMenuName = $r->maketext("Homework Sets");
+                        $primaryMenuName = $r->maketext("Course Administration") if ($ce->{courseName} eq 'admin');
+			print &$makelink("${pfx}ProblemSets", text=>$primaryMenuName, urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
 			    print CGI::start_li();
@@ -1207,7 +1202,7 @@ sub title {
 	    #print underscore2nbsp($r->urlpath->name);
 	    my $name = $urlpath->name;
 	    # $name =~ s/_/ /g;
-	    print $name;
+	    print $r->maketext($name);
 	    #print "<!-- END " . __PACKAGE__ . "::title -->\n";
 	}
 	

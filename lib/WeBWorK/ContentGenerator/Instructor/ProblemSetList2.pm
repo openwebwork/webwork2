@@ -84,7 +84,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName jitar_id_to_seq seq_to_jitar_id x);
 
 use WeBWorK::Utils::DatePickerScripts;
 
@@ -2814,8 +2814,13 @@ sub output_JS{
 
 # Just tells template to output the stylesheet for Tabber
 sub output_tabber_CSS{
-	return "";
+  # capture names for maketext
+  x('Filter');
+  x('Sort');
+  x('Publish');
+  return "";
 }
+
 
 1;
 

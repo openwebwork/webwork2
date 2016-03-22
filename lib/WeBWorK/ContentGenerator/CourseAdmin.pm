@@ -79,24 +79,6 @@ sub pre_header_initialize {
     $self->addgoodmessage(CGI::p("$table_update_result")) if $table_update_result;
     
     
-	## if the user is asking for the downloaded database...
-	#if (defined $r->param("download_exported_database")) {
-	#	my $courseID = $r->param("export_courseID");
-	#	my $random_chars = $r->param("download_exported_database");
-	#	
-	#	die "courseID not specified" unless defined $courseID;
-	#	die "invalid file specification" unless $random_chars =~ m/^\w+$/;
-	#	
-	#	my $tempdir = $ce->{webworkDirs}->{tmp};
-	#	my $export_file = "$tempdir/db_export_$random_chars";
-	#	
-	#	$self->reply_with_file("application/xml", $export_file, "${courseID}_database.xml", 0);
-	#	
-	#	return "";
-	#}
-	#
-	## otherwise...
-	
 	my @errors;
 	my $method_to_call;
 	
@@ -347,40 +329,6 @@ sub pre_header_initialize {
 	$self->{method_to_call} = $method_to_call;
 }
 
-sub header {
-	my ($self) = @_;
-	my $method_to_call = $self->{method_to_call};
-# 	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-# 		my $r = $self->r;
-# 		my $courseID = $r->param("export_courseID");
-# 		$r->content_type("application/octet-stream");
-# 		$r->header_out("Content-Disposition" => "attachment; filename=\"${courseID}_database.xml\"");
-# 		$r->send_http_header;
-# 	} else {
-		$self->SUPER::header;
-#	}
-}
-
-# sends:
-# 
-# HTTP/1.1 200 OK
-# Date: Fri, 09 Jul 2004 19:05:55 GMT
-# Server: Apache/1.3.27 (Unix) mod_perl/1.27
-# Content-Disposition: attachment; filename="mth143_database.xml"
-# Connection: close
-# Content-Type: application/octet-stream
-
-sub content {
-	my ($self) = @_;
-	my $method_to_call = $self->{method_to_call};
-	if (defined $method_to_call and $method_to_call eq "do_export_database") {
-		#$self->do_export_database;
-		$self->SUPER::content;
-	} else {
-		$self->SUPER::content;
-	}
-}
-
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -421,10 +369,6 @@ sub body {
 		" | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"delete_course"})}, $r->maketext("Delete Course")),
 		" | ",
-		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"export_database"})}, $r->maketext("Export Database")),
-		# " | ",
-		# CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"import_database"})}, $r->maketext("Import Database")),
-		# " | ",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"archive_course"})}, $r->maketext("Archive Course")),
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, $r->maketext("Unarchive Course")),
@@ -459,8 +403,8 @@ sub body {
 	    	$msg .=  CGI::li("unable to write to directory $ce->{webworkDirs}{tmp}" )  unless -w $ce->{webworkDirs}{tmp}; 
 	    	$msg .=  CGI::li("unable to write to directory $ce->{webworkDirs}{DATA}")  unless -w $ce->{webworkDirs}{DATA}; 
 	    	if ($msg) {
-				print CGI::h2("Directory permission errors ").CGI::ul($msg).
-				CGI::p(" The webwork server must be able to write to these directories. Please correct the permssion errors.") ;
+		  print CGI::h2("Directory permission errors ").CGI::ul($msg).
+		    CGI::p(" The webwork server must be able to write to these directories. Please correct the permssion errors.") ;
 			}
 	
 		print $self->upgrade_notification();
@@ -479,7 +423,7 @@ sub body {
 		
 		print CGI::end_ol();
 		
-		print CGI::h2("Archived Courses");
+		print CGI::h2($r->maketext("Archived Courses"));
 		print CGI::start_ol();
 		
 		@courseIDs = listArchivedCourses($ce);
@@ -498,9 +442,6 @@ sub add_course_form {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	#my $db = $r->db;
-	#my $authz = $r->authz;
-	#my $urlpath = $r->urlpath;
 	
 	my $add_courseID                     = trim_spaces( $r->param("add_courseID") ) || "";
 	my $add_courseTitle                  = trim_spaces( $r->param("add_courseTitle") ) || "";
@@ -550,49 +491,48 @@ sub add_course_form {
 	my @existingCourses = listCourses($ce);
 	@existingCourses = sort { lc($a) cmp lc ($b) } @existingCourses; #make sort case insensitive 
 	
-	print CGI::h2("Add Course");
+	print CGI::h2($r->maketext("Add Course"));
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores.");
+	print CGI::p($r->maketext("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores."));
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Course ID:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Course ID:")),
 			CGI::td(CGI::textfield(-name=>"add_courseID", -value=>$add_courseID, -size=>25, -maxlength=>$ce->{maxCourseIdLength})),
 		),
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Course Title:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Course Title:")),
 			CGI::td(CGI::textfield(-name=>"add_courseTitle", -value=>$add_courseTitle, -size=>25)),
 		),
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Institution:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Institution:")),
 			CGI::td(CGI::textfield(-name=>"add_courseInstitution", -value=>$add_courseInstitution, -size=>25)),
 		),
 	);
 	
-	print CGI::p("To add the WeBWorK administrators to the new course (as administrators) check the box below.");
+	print CGI::p($r->maketext("To add the WeBWorK administrators to the new course (as administrators) check the box below."));
 	my @checked = ($add_admin_users) ?(checked=>1): ();  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
-	print CGI::p({},CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, "Add WeBWorK administrators to new course"));
+	print CGI::p({},CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, $r->maketext("Add WeBWorK administrators to new course")));
 
-	print CGI::p("To add an additional instructor to the new course, specify user information below. The user ID may contain only 
-	numbers, letters, hyphens, periods (dots), commas,and underscores.\n");
+	print CGI::p($r->maketext("To add an additional instructor to the new course, specify user information below. The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.\n"));
 	
 	print CGI::table({class=>"FormLayout"}, CGI::Tr({},
 		CGI::td({},
 			CGI::table({class=>"FormLayout"},
 				CGI::Tr({},
-					CGI::th({class=>"LeftHeader"}, "User ID:"),
+					CGI::th({class=>"LeftHeader"}, $r->maketext("User ID:")),
 					CGI::td(CGI::textfield(-name=>"add_initial_userID", -value=>$add_initial_userID, -size=>25)),
 				),
 				CGI::Tr({},
-					CGI::th({class=>"LeftHeader"}, "Password:"),
+					CGI::th({class=>"LeftHeader"}, $r->maketext("Password:")),
 					CGI::td(CGI::password_field(-name=>"add_initial_password", -value=>$add_initial_password, -size=>25)),
 				),
 				CGI::Tr({},
-					CGI::th({class=>"LeftHeader"}, "Confirm Password:"),
+					CGI::th({class=>"LeftHeader"}, $r->maketext("Confirm Password:")),
 					CGI::td(CGI::password_field(-name=>"add_initial_confirmPassword", -value=>$add_initial_confirmPassword, -size=>25)),
 				),
 			),
@@ -616,11 +556,11 @@ sub add_course_form {
 		),
 	));
 	
-	print CGI::p("To copy problem templates from an existing course, select the course below.");
+	print CGI::p($r->maketext("To copy problem templates from an existing course, select the course below."));
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Copy templates from:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Copy templates from:")),
 			CGI::td(
 				CGI::popup_menu(
 					-name => "add_templates_course",
@@ -637,7 +577,7 @@ sub add_course_form {
 	
 	
 	
-	print CGI::p("Select a database layout below.");
+	print CGI::p($r->maketext("Select a database layout below."));
 	print CGI::start_table({class=>"FormLayout"});
 	
 	my %dbLayout_buttons;
@@ -653,7 +593,7 @@ sub add_course_form {
 		);
 	}
 	print CGI::end_table();
-	print CGI::p({style=>"text-align: left"}, CGI::submit(-name=>"add_course", -label=>"Add Course"));
+	print CGI::p({style=>"text-align: left"}, CGI::submit(-name=>"add_course", -label=>$r->maketext("Add Course")));
 	
 	print CGI::end_form();
 }
@@ -690,39 +630,33 @@ sub add_course_validate {
 	my @errors;
 	
 	if ($add_courseID eq "") {
-		push @errors, "You must specify a course ID.";
+		push @errors, $r->maketext("You must specify a course ID.");
 	}
 	unless ($add_courseID =~ /^[\w-]*$/) { # regex copied from CourseAdministration.pm
-		push @errors, "Course ID may only contain letters, numbers, hyphens, and underscores.";
+		push @errors, $r->maketext("Course ID may only contain letters, numbers, hyphens, and underscores.");
 	}
 	if (grep { $add_courseID eq $_ } listCourses($ce)) {
-		push @errors, "A course with ID $add_courseID already exists.";
+		push @errors, $r->maketext("A course with ID [_1] already exists.", $add_courseID);
 	}
-	#if ($add_courseTitle eq "") {
-	#	push @errors, "You must specify a course title.";
-	#}
-	#if ($add_courseInstitution eq "") {
-	#	push @errors, "You must specify an institution for this course.";
-	#}
 	
 	if ($add_initial_userID ne "") {
 		if ($add_initial_password eq "") {
-			push @errors, "You must specify a password for the initial instructor.";
+			push @errors, $r->maketext("You must specify a password for the initial instructor.");
 		}
 		if ($add_initial_confirmPassword eq "") {
-			push @errors, "You must confirm the password for the initial instructor.";
+			push @errors, $r->maketext("You must confirm the password for the initial instructor.");
 		}
 		if ($add_initial_password ne $add_initial_confirmPassword) {
-			push @errors, "The password and password confirmation for the instructor must match.";
+			push @errors, $r->maketext("The password and password confirmation for the instructor must match.");
 		}
 		if ($add_initial_firstName eq "") {
-			push @errors, "You must specify a first name for the initial instructor.";
+			push @errors, $r->maketext("You must specify a first name for the initial instructor.");
 		}
 		if ($add_initial_lastName eq "") {
-			push @errors, "You must specify a last name for the initial instructor.";
+			push @errors, $r->maketext("You must specify a last name for the initial instructor.");
 		}
 		if ($add_initial_email eq "") {
-			push @errors, "You must specify an email address for the initial instructor.";
+			push @errors, $r->maketext("You must specify an email address for the initial instructor.");
 		}
 	}
 	
@@ -912,13 +846,13 @@ sub do_add_course {
 			eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
 		}
 		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p("Successfully created the course $add_courseID"),
+			CGI::p($r->maketext("Successfully created the course [_1]", $add_courseID)),
 		);
 		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $add_courseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
 		print CGI::div({style=>"text-align: center"},
-			CGI::a({href=>$newCourseURL}, "Log into $add_courseID"),
+			CGI::a({href=>$newCourseURL}, $r->maketext("Log into [_1]",$add_courseID)),
 		);
 	}
 
@@ -962,20 +896,18 @@ sub rename_course_form {
 		$courseLabels{$courseID} = "$courseID";
 	}
 	
-	print CGI::h2("Rename Course");
+	print CGI::h2($r->maketext("Rename Course"));
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p("Select a course to rename. 
-				  The courseID is used in the url and can only contain alphanumeric characters and underscores.
-	              The course title appears on the course home page and can be any string.");
+	print CGI::p($r->maketext("Select a course to rename.  The courseID is used in the url and can only contain alphanumeric characters and underscores. The course title appears on the course home page and can be any string."));
 	
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Course ID:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Course ID:")),
 			CGI::td(
 				CGI::scrolling_list(
 					-name => "rename_oldCourseID",
@@ -990,7 +922,7 @@ sub rename_course_form {
 		CGI::Tr({},
 			CGI::td( CGI::checkbox(
 				{name=>"rename_newCourseID_checkbox", 
-				 label=>'Change CourseID to:', 
+				 label=>$r->maketext('Change CourseID to:'), 
 				 checked=>$rename_newCourseID_checkbox,
 				 value=>'on',
 				 }) ),
@@ -1001,7 +933,7 @@ sub rename_course_form {
 		CGI::Tr({},
 			CGI::td( CGI::checkbox(
 				{name=>"rename_newCourseTitle_checkbox", 
-				 -label=>'Change Course Title to:', 
+				 -label=>$r->maketext('Change Course Title to:'), 
 				 -selected=>$rename_newCourseTitle_checkbox,
 				 -value=>'on'
 				 }) ),
@@ -1012,7 +944,7 @@ sub rename_course_form {
 		CGI::Tr({},
 			CGI::td( CGI::checkbox(
 				{name=>"rename_newCourseInstitution_checkbox", 
-				 label=>'Change Institution to:', 
+				 label=>$r->maketext('Change Institution to:'), 
 				 checked=>$rename_newCourseInstitution_checkbox,
 				 value=>'on'
 				 }) ),
@@ -1024,7 +956,7 @@ sub rename_course_form {
 	
 	print CGI::end_table();
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"rename_course", -label=>"Rename Course"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"rename_course", -label=>$r->maketext("Rename Course")));
 	
 	print CGI::end_form();
 }
@@ -1060,11 +992,10 @@ sub rename_course_confirm {
 	
 	my ($change_course_title_str, $change_course_institution_str)=("");
 	if ( $rename_newCourseTitle_checkbox) {
-		$change_course_title_str ="Change title from $rename_oldCourseTitle to $rename_newCourseTitle";
+		$change_course_title_str =$r->maketext("Change title from [_1] to [_2]", $rename_oldCourseTitle, $rename_newCourseTitle);
 	}
 	if ( $rename_newCourseInstitution_checkbox) {
-		$change_course_institution_str="Change course institution from 
-		    $rename_oldCourseInstitution to $rename_newCourseInstitution";
+		$change_course_institution_str=$r->maketext("Change course institution from [_1] to [_2]", $rename_oldCourseInstitution, $rename_newCourseInstitution);
 	}
 
 #############################################################################
@@ -1087,12 +1018,12 @@ sub rename_course_confirm {
 
 		print CGI::div({style=>"text-align: left"},
 			    CGI::hr(),			    
-			    CGI::h4("Make these changes in  course: $rename_oldCourseID"),
+			    CGI::h4($r->maketext("Make these changes in  course:")." $rename_oldCourseID"),
 			    CGI::p($change_course_title_str),
 			    CGI::p($change_course_institution_str),
-				CGI::submit(-name=>"decline_retitle_course", -value=>"Don't make changes"),
+				CGI::submit(-name=>"decline_retitle_course", -value=>$r->maketext("Don't make changes")),
 				"&nbsp;",
-				CGI::submit(-name=>"confirm_retitle_course", -value=>"Make changes") ,
+				CGI::submit(-name=>"confirm_retitle_course", -value=>$r->maketext("Make changes")) ,
 			    CGI::hr(),
 			);
 		 print CGI::end_form();
@@ -1136,7 +1067,7 @@ sub rename_course_confirm {
 		my $all_tables_ok=1;
 		my $extra_database_tables=0;
 		my $extra_database_fields=0;
-		my $str=CGI::h4("Report on database structure for course $rename_oldCourseID:").CGI::br();
+		my $str=CGI::h4($r->maketext("Report on database structure for course")." $rename_oldCourseID:").CGI::br();
 		foreach my $table (sort keys %$dbStatus) {
 		    my $table_status = $dbStatus->{$table}->[0];
 			$str .= CGI::b($table) .  $msg{ $table_status } . CGI::br();
@@ -1181,17 +1112,15 @@ sub rename_course_confirm {
 
 		print CGI::p($str);
 		if ($extra_database_tables) {
-				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database tables which are not defined in the schema.  
-				                                                     They can only be removed manually from the database. They will not be renamed.");
+				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database tables which are not defined in the schema.  They can only be removed manually from the database. They will not be renamed.");
 		} 
 		if ($extra_database_fields) {
-				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database fields  which are not defined in the schema for at least one table.  
-				                                                     They can only be removed manually from the database.");
+				print CGI::p({-style=>'color:red; font-weight:bold'},"There are extra database fields  which are not defined in the schema for at least one table.  They can only be removed manually from the database.");
 		} 		
 		if ($all_tables_ok) {
-			print CGI::p({-style=>'color:green; font-weight:bold'},"Course $rename_oldCourseID database is in order");
+			print CGI::p({-style=>'color:green; font-weight:bold'},$r->maketext("Course [_1] database is in order",$rename_oldCourseID));
 		} else {
-			print CGI::p({-style=>'color:red; font-weight:bold'}, "Course $rename_oldCourseID databases must be updated before renaming this course.");
+			print CGI::p({-style=>'color:red; font-weight:bold'}, $r->maketext("Course [_1] databases must be updated before renaming this course.",$rename_oldCourseID));
 		}	
 		
 #############################################################################
@@ -1202,9 +1131,8 @@ sub rename_course_confirm {
       my ($directories_ok, $str2) = $CIchecker->checkCourseDirectories($ce2);
       my $style = ($directories_ok)?"color:green" : "color:red";
       print CGI::h2("Directory structure"), CGI::p($str2),
-      ($directories_ok)? CGI::p({style=>$style},"Directory structure is ok") :
-              CGI::p({style=>$style},"Directory structure is missing directories 
-                          or the webserver lacks sufficient privileges.");
+      ($directories_ok)? CGI::p({style=>$style},$r->maketext("Directory structure is ok")) :
+              CGI::p({style=>$style},$r->maketext("Directory structure is missing directories or the webserver lacks sufficient privileges."));
     
 #############################################################################
 # Print form for choosing next action.
@@ -1235,23 +1163,23 @@ sub rename_course_confirm {
 		if ($all_tables_ok && $directories_ok ) { # no missing tables or missing fields or directories
 			print CGI::p({style=>"text-align: center"},
 			    CGI::hr(),
-			    CGI::h4("Rename $rename_oldCourseID to $rename_newCourseID"),
+			    CGI::h4($r->maketext("Rename [_1] to [_2]", $rename_oldCourseID, $rename_newCourseID)),
 			    CGI::div($change_course_title_str),
 			    CGI::div($change_course_institution_str),
-				CGI::submit(-name=>"decline_rename_course", -value=>"Don't rename"),
+				CGI::submit(-name=>"decline_rename_course", -value=>$r->maketext("Don't rename")),
 				"&nbsp;",
-				CGI::submit(-name=>"confirm_rename_course", -value=>"Rename") ,
+				CGI::submit(-name=>"confirm_rename_course", -value=>$r->maketext("Rename")) ,
 			);
 		} elsif(  $directories_ok  ) {
 			print CGI::p({style=>"text-align: center"},
-				CGI::submit(-name => "decline_rename_course", -value => "Don't rename"),
+				CGI::submit(-name => "decline_rename_course", -value => $r->maketext("Don't rename")),
 				"&nbsp;",
-				CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
+				CGI::submit(-name=>"upgrade_course_tables", -value=>$r->maketext("Upgrade Course Tables")),
 			);
 		} else  {
 			print CGI::p({style=>"text-align: center"},
-				CGI::submit(-name => "decline_rename_course", -value => "Don't rename"),
-				CGI::br(),"Directory structure needs to be repaired manually before renaming."
+				CGI::submit(-name => "decline_rename_course", -value => $r->maketext("Don't rename")),
+				CGI::br(),$r->maketext("Directory structure needs to be repaired manually before renaming.")
 			);
 		} 
 		print CGI::end_form();
@@ -1353,27 +1281,22 @@ sub do_retitle_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
-			($title_checkbox) ? CGI::div("The title of the course $rename_oldCourseID 
-			has been changed from $rename_oldCourseTitle to $rename_newCourseTitle")
+			($title_checkbox) ? CGI::div($r->maketext("The title of the course [_1] has been changed from [_2] to [_3]",$rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle))
 			:'', 
-			($institution_checkbox) ? CGI::div("The institution associated with 
-			the course $rename_oldCourseID has been changed from 
-			$rename_oldCourseInstitution to  $rename_newCourseInstitution")
+			($institution_checkbox) ? CGI::div($r->maketext("The institution associated with the course [_1] has been changed from [_2] to [_3]",$rename_oldCourseID, $rename_oldCourseInstitution, $rename_newCourseInstitution))
 			:'', 
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
-	    	"\tRetitled",
+	    	"\t",$r->maketext("Retitled"),
 	    	"",
 	    	"",
-	    	"$rename_oldCourseID title and institution changed 
-	    	 from $rename_oldCourseTitle to $rename_newCourseTitle 
-	    	 and from $rename_oldCourseInstitution to $rename_newCourseInstitution",
+		$r->maketext("[_1] title and institution changed from [_2] to [_3] and from [_4] to [_5]",$rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle, $rename_oldCourseInstitution, $rename_newCourseInstitution)
 	    ));		
 		my $oldCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $rename_oldCourseID);
 		my $oldCourseURL = $self->systemLink($oldCoursePath, authen => 0);
 		print CGI::div({style=>"text-align: center"},
-			CGI::a({href=>$oldCourseURL}, "Log into $rename_oldCourseID"),
+			CGI::a({href=>$oldCourseURL}, $r->maketext("Log into")." $rename_oldCourseID"),
 		);
 	}
 }
@@ -1442,7 +1365,7 @@ sub do_rename_course {
 		print CGI::div({class=>"ResultsWithoutError"},
 			CGI::p($title_message),
 			CGI::p($institution_message),
-			CGI::p("Successfully renamed the course $rename_oldCourseID to $rename_newCourseID"),
+			CGI::p($r->maketext("Successfully renamed the course [_1] to [_2]", $rename_oldCourseID, $rename_newCourseID)),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tRenamed",
@@ -1454,7 +1377,7 @@ sub do_rename_course {
 			courseID => $rename_newCourseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
 		print CGI::div({style=>"text-align: center"},
-			CGI::a({href=>$newCourseURL}, "Log into $rename_newCourseID"),
+			CGI::a({href=>$newCourseURL}, $r->maketext("Log into")." $rename_newCourseID"),
 		);
 	}
 }
@@ -1516,17 +1439,15 @@ sub delete_course_form {
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	my %list_labels = (
-								alphabetically => 'alphabetically', 
-								last_login => 'by last login date',
-								);
+			   alphabetically => $r->maketext('alphabetically'), 
+			   last_login => $r->maketext('by last login date'),
+			  );
 	print CGI::p(
-		'Courses are listed either alphabetically or in order by the time of most recent login activity, oldest first.
-		To change the listing order check the mode you want and click "Refresh Listing".  The listing format is: Course_Name 
-		(status :: date/time of most recent login) where status is "hidden" or "visible".');
+		     $r->maketext('Courses are listed either alphabetically or in order by the time of most recent login activity, oldest first. To change the listing order check the mode you want and click "Refresh Listing".  The listing format is: Course_Name (status :: date/time of most recent login) where status is "hidden" or "visible".'));
 
 	print CGI::table(
 			CGI::Tr({},
-			CGI::p("Select a listing format:"),
+			CGI::p($r->maketext("Select a listing format:")),
 			CGI::radio_group(-name=>'delete_listing_format',
 											-values=>['alphabetically', 'last_login'],
 											-default=>'alphabetically',
@@ -1534,16 +1455,16 @@ sub delete_course_form {
 											),
 			),
 		);	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course_refresh", -value=>"Refresh Listing"), 
-	  CGI::submit(-name=>"delete_course", -value=>"Delete Course"));	
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course_refresh", -value=>$r->maketext("Refresh Listing")), 
+	  CGI::submit(-name=>"delete_course", -value=>$r->maketext("Delete Course")));	
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
 
-	print CGI::p("Select a course to delete.");
+	print CGI::p($r->maketext("Select a course to delete."));
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Course Name:")),
 			CGI::td(
 				CGI::scrolling_list(
 					-name => "delete_courseID",
@@ -1557,8 +1478,8 @@ sub delete_course_form {
 		),
 	);
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course_refresh", -value=>"Refresh Listing"), 
-	  CGI::submit(-name=>"delete_course", -value=>"Delete Course"));	
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"delete_course_refresh", -value=>$r->maketext("Refresh Listing")), 
+	  CGI::submit(-name=>"delete_course", -value=>$r->maketext("Delete Course")));	
 	
 	print CGI::end_form();
 }
@@ -1606,8 +1527,7 @@ sub delete_course_confirm {
 		courseName => $delete_courseID,
 	});
 	
-	print CGI::p("Are you sure you want to delete the course " . CGI::b($delete_courseID)
-		. "? All course files and data will be destroyed. There is no undo available.");
+	print CGI::p($r->maketext("Are you sure you want to delete the course [_1]? All course files and data will be destroyed. There is no undo available.",CGI::b($delete_courseID)));
 	
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -1615,9 +1535,9 @@ sub delete_course_confirm {
 	print $self->hidden_fields(qw/delete_courseID/);
 	
 	print CGI::p({style=>"text-align: center"},
-		CGI::submit(-name=>"decline_delete_course", -label=>"Don't delete"),
+		CGI::submit(-name=>"decline_delete_course", -label=>$r->maketext("Don't delete")),
 		"&nbsp;",
-		CGI::submit(-name=>"confirm_delete_course", -label=>"Delete"),
+		CGI::submit(-name=>"confirm_delete_course", -label=>$r->maketext("Delete")),
 	);
 	
 	print CGI::end_form();
@@ -1676,7 +1596,7 @@ sub do_delete_course {
 		}
         
 		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p("Successfully deleted the course $delete_courseID."),
+			       CGI::p($r->maketext("Successfully deleted the course $delete_courseID.")),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tDeleted",
@@ -1688,7 +1608,7 @@ sub do_delete_course {
 		print $self->hidden_authen_fields;
 		print $self->hidden_fields("subDisplay");
 		
-		print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_delete_course", -value=>"OK"),);
+		print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"decline_delete_course", -value=>$r->maketext("OK")),);
 		
 		print CGI::end_form();
 	}
@@ -1742,29 +1662,23 @@ sub archive_course_form {
 		@courseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
 	}
 	
-	print CGI::h2("Archive Course");
+	print CGI::h2($r->maketext("Archive Course"));
 	
 	print CGI::p(
-		'Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK
-		courses directory. Before archiving, the course database is dumped into
-		a subdirectory of the course\'s DATA directory. Currently the archive
-		facility is only available for mysql databases. It depends on the
-		mysqldump application.'
+		     $r->maketext('Creates a gzipped tar archive (.tar.gz) of a course in the WeBWorK courses directory. Before archiving, the course database is dumped into a subdirectory of the course\'s DATA directory. Currently the archive facility is only available for mysql databases. It depends on the mysqldump application.')
 	);
 		print CGI::p(
-		'Courses are listed either alphabetically or in order by the time of most recent login activity, oldest first.
-		To change the listing order check the mode you want and click "Refresh Listing".  The listing format is: Course_Name 
-		(status :: date/time of most recent login) where status is "hidden" or "visible".');
+		$r->maketext('Courses are listed either alphabetically or in order by the time of most recent login activity, oldest first. To change the listing order check the mode you want and click "Refresh Listing".  The listing format is: Course_Name (status :: date/time of most recent login) where status is "hidden" or "visible".'));
 
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	my %list_labels = (
-								alphabetically => 'alphabetically', 
-								last_login => 'by last login date', 
+			   alphabetically => $r->maketext('alphabetically'), 
+			   last_login => $r->maketext('by last login date'), 
 								);
 											
 	print CGI::table(
 			CGI::Tr({},
-			CGI::p("Select a listing format:"),
+			CGI::p($r->maketext("Select a listing format:")),
 			CGI::radio_group(-name=>'archive_listing_format',
 											-values=>['alphabetically', 'last_login'],
 											-default=>'alphabetically',
@@ -1772,16 +1686,16 @@ sub archive_course_form {
 											),
 			),
 		);	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course_refresh", -value=>"Refresh Listing"), 
-	  CGI::submit(-name=>"archive_course", -value=>"Archive Courses"));	
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course_refresh", -value=>$r->maketext("Refresh Listing")), 
+	  CGI::submit(-name=>"archive_course", -value=>$r->maketext("Archive Courses")));	
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p("Select course(s) to archive.");
+	print CGI::p($r->maketext("Select course(s) to archive."));
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Course Name:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Course Name:")),
 			CGI::td(
 				CGI::scrolling_list(
 					-name => "archive_courseIDs",
@@ -1795,20 +1709,20 @@ sub archive_course_form {
 			
 		),
 		CGI::Tr({},
-			CGI::th({class=>"LeftHeader"}, "Delete course:"),
+			CGI::th({class=>"LeftHeader"}, $r->maketext("Delete course:")),
 			CGI::td({-style=>'color:red'}, CGI::checkbox({ 
 			                    -name=>'delete_course', 
 			                    -checked=>0,
 			                    -value => 1,
-			                    -label =>'Delete course after archiving. Caution there is no undo!',
+			                    -label =>$r->maketext('Delete course after archiving. Caution there is no undo!'),
 			                   },
 			       ),
 			),
 		)
 	);
 	
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course_refresh", -value=>"Refresh Listing"), 
-	CGI::submit(-name=>"archive_course", -value=>"Archive Courses"));
+	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"archive_course_refresh", -value=>$r->maketext("Refresh Listing")), 
+	CGI::submit(-name=>"archive_course", -value=>$r->maketext("Archive Courses")));
 	
 	print CGI::end_form();
 }
@@ -2005,28 +1919,27 @@ sub archive_course_confirm {
 		if ($all_tables_ok && $directories_ok ) { # no missing fields
 			# Warn about overwriting an existing archive
 			if (-e $archive_path and -w $archive_path) {
-				print CGI::p({-style=>'color:red; font-weight:bold'},"The course '$archive_courseID' has already been archived at '$archive_path'.
-				  This earlier archive will be erased.  This cannot be undone.");
+				print CGI::p({-style=>'color:red; font-weight:bold'},$r->maketext("The course '[_1]' has already been archived at '[_2]'. This earlier archive will be erased.  This cannot be undone.", $archive_courseID, $archive_path));
 			}
 			# archive execute button
 			print CGI::p({style=>"text-align: center"},
-				CGI::submit(-name=>"decline_archive_course", -value=>"Stop archiving"),
+				CGI::submit(-name=>"decline_archive_course", -value=>$r->maketext("Stop Archiving")),
 				"&nbsp;",
-				(@archive_courseIDs)? CGI::submit(-name=>"archive_course", -value=>"Skip archiving this course")."&nbsp;":'',
-				CGI::submit(-name=>"confirm_archive_course", -value=>"Archive") ,
+				(@archive_courseIDs)? CGI::submit(-name=>"archive_course", -value=>$r->maketext("Skip archiving this course"))."&nbsp;":'',
+				CGI::submit(-name=>"confirm_archive_course", -value=>$r->maketext("Archive")) ,
 			);
 		} elsif( $directories_ok)  {
 			print CGI::p({style=>"text-align: center"},
-			CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),
+			CGI::submit(-name => "decline_archive_course", -value => $r->maketext("Don't Archive")),
 				"&nbsp;",
-				CGI::submit(-name=>"upgrade_course_tables", -value=>"upgrade course tables"),
+				CGI::submit(-name=>"upgrade_course_tables", -value=>$r->maketext("Upgrade Course Tables")),
 			);
 		} else {
 			print CGI::p({style=>"text-align: center"},
 			CGI::br(),
-			"Directory structure needs to be repaired manually before archiving.",CGI::br(),
-			CGI::submit(-name => "decline_archive_course", -value => "Don't archive"),
-			CGI::submit(-name => "upgrade_course_tables", -value => "Attempt to upgrade directories"),
+			$r->maketext("Directory structure needs to be repaired manually before archiving."),CGI::br(),
+			CGI::submit(-name => "decline_archive_course", -value => $r->maketext("Don't Archive")),
+			CGI::submit(-name => "upgrade_course_tables", -value => $r->maketext("Attempt to upgrade directories")),
 			);
 		
 		}
@@ -2085,7 +1998,7 @@ sub do_archive_course {
 		);
 	} else {
 		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p("Successfully archived the course $archive_courseID"),
+			CGI::p($r->maketext("Successfully archived the course [_1].", $archive_courseID)),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tarchived",
@@ -2128,7 +2041,7 @@ sub do_archive_course {
 				}
 				
 				print CGI::div({class=>"ResultsWithoutError"},
-					CGI::p("Successfully deleted the course $archive_courseID."),
+					CGI::p($r->maketext("Successfully deleted the course [_1].", $archive_courseID)),
 				);
 			}
 		
@@ -2142,8 +2055,8 @@ sub do_archive_course {
 			print $self->hidden_fields(qw/delete_course/);
 
 			print CGI::hidden('archive_courseIDs',@archive_courseIDs);		
-			print CGI::p({style=>"text-align: center"}, CGI::submit("decline_archive_course", "Stop archiving courses"),
-				CGI::submit("archive_course", "archive next course")
+			print CGI::p({style=>"text-align: center"}, CGI::submit("decline_archive_course", $r->maketext("Stop archiving courses")),
+				CGI::submit("archive_course", $r->maketext("Archive next course"))
 			);
  			print CGI::end_form();
  		} else {
@@ -2151,7 +2064,7 @@ sub do_archive_course {
 			print $self->hidden_authen_fields;
 			print $self->hidden_fields("subDisplay");
 			print CGI::hidden("archive_courseID",$archive_courseID);
-			print CGI::p( CGI::submit("decline_archive_course", "OK")  );
+			print CGI::p( CGI::submit("decline_archive_course", $r->maketext("OK"))  );
 			print CGI::end_form();
 		}
 	}

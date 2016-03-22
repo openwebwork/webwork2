@@ -2211,7 +2211,7 @@ sub body {
 	    }
 
 	    print CGI::p(
-				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+				CGI::submit(-name => 'action',  -value=>$r->maketext('Show Past Answers'))
 				), "\n",
 			CGI::end_form();
 	}

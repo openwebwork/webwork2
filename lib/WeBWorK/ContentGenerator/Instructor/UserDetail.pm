@@ -27,20 +27,15 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils qw(sortByName x);
 use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
-# This is a wrapper that we can put around string defined as constants that
-# will tag them as needing to be translated. 
-sub maketext {
-  return @_;
-}
-
-use constant DATE_FIELDS => {   open_date    => maketext("Open:"),
-                                reduced_scoring_date => maketext("Reduced:"),
-	                            due_date     => maketext("Closes:"),
-	                            answer_date  => maketext("Answer:")
+# We use the x function to mark strings for localizaton 
+use constant DATE_FIELDS => {   open_date    => x("Open:"),
+                                reduced_scoring_date => x("Reduced:"),
+	                            due_date     => x("Closes:"),
+	                            answer_date  => x("Answer:")
 };
 use constant DATE_FIELDS_ORDER =>[qw(open_date reduced_scoring_date due_date answer_date )];
 sub initialize {
@@ -247,13 +242,11 @@ sub body {
 		                                              }
 		);
 
-	print CGI::h4({align=>'center'},"Edit ",CGI::a({href=>$basicInfoUrl},'class list data')," for  $userName ($editForUserID) who has been assigned $setCount sets.");
+	print CGI::h4({align=>'center'},$r->maketext("Edit")," ",CGI::a({href=>$basicInfoUrl},$r->maketext('class list data'))," ",$r->maketext("for  [_1] ([_2]) who has been assigned [_3] sets.",$userName, $editForUserID, $setCount));
 	
 	
 	print CGI::br();
 
-	#print CGI::h4("Sets assigned to $userName");
-	# construct url for the form
 	my $userDetailPage = $urlpath->new(type =>'instructor_user_detail',
 					                       args =>{
 						                             courseID => $courseID,
@@ -301,17 +294,13 @@ sub body {
 	# Print warning
 	########################################
 	print CGI::div({-class=>'ResultsWithError'},
-		       "Do not uncheck a set unless you know what you are doing.", CGI::br(),
-		       "There is NO undo for unassigning a set.");
+		       $r->maketext("Do not uncheck a set unless you know what you are doing."),
+		       CGI::br(),
+		       $r->maketext("There is NO undo for unassigning a set."));
 
-	print CGI::p("To change status (scores or grades) for this student for one
-	              set, click on the individual set link.");
+	print CGI::p($r->maketext("To change status (scores or grades) for this student for one set, click on the individual set link."));
 
-	print CGI::div({-class=>'ResultsWithError'},"When you uncheck a homework set (and save the changes), you destroy all
-		      of the data for that set for this student.   If you
-		      reassign the set, the student will receive a new version of each problem.
-		      Make sure this is what you want to do before unchecking sets."
-	);
+	print CGI::div({-class=>'ResultsWithError'},$r->maketext("When you uncheck a homework set (and save the changes), you destroy all of the data for that set for this student.   If you reassign the set, the student will receive a new version of each problem. Make sure this is what you want to do before unchecking sets."));
 
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	

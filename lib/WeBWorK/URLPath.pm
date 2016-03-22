@@ -28,6 +28,7 @@ use Carp;
 use WeBWorK::Debug;
 use WeBWorK::Localize;
 use WeBWorK::DB qw(validateKeyfieldValue);
+use WeBWorK::Utils qw(x);
 
 use Scalar::Util qw(weaken);
 {
@@ -151,6 +152,7 @@ answer_log                           /$courseID/show_answers/
 # tree of path types
 ################################################################################
 
+# we use the x function to mark strings for localizatin 
 our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
@@ -162,7 +164,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Home',
 	},
 	course_admin => {
-		name    => 'Course Administration',
+		name    => x('Course Administration'),
 		parent  => 'root',
 		kids    => [ qw/logout options instructor_tools/ ],
 		match   => qr|^(admin)/|,
@@ -214,7 +216,7 @@ our %pathTypes = (
 	################################################################################
 	
 	equation_display => {
-		name    => 'Equation Display',
+		name    => x('Equation Display'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^equation/|,
@@ -223,7 +225,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::EquationDisplay',
 	},
 	feedback => {
-		name    => 'Feedback',
+		name    => x('Feedback'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^feedback/|,
@@ -242,7 +244,7 @@ our %pathTypes = (
 	},
 
     	answer_log => {
-		name    => 'Answer Log',
+		name    => x('Answer Log'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^show_answers/|,
@@ -252,7 +254,7 @@ our %pathTypes = (
 	},
 
 	proctored_gateway_quiz => {
-		name    => 'Proctored Gateway Quiz $setID',
+		name    => x('Proctored Gateway Quiz $setID'),
 		parent  => 'set_list',
 		kids    => [ qw/proctored_gateway_proctor_login/ ],
 		match   => qr|^proctored_quiz_mode/([^/]+)/|,
@@ -261,7 +263,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
 	},
 	proctored_gateway_proctor_login => {
-		name    => 'Proctored Gateway Quiz $setID Proctor Login',
+		name    => x('Proctored Gateway Quiz $setID Proctor Login'),
 		parent  => 'proctored_gateway_quiz',
 		kids    => [ qw// ],
 		match   => qr|^proctored_quiz_mode/([^/]+)/|,
@@ -270,7 +272,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::LoginProctor',
 	},
 	grades => {
-		name    => 'Grades',
+		name    => x('Grades'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^grades/|,
@@ -279,7 +281,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Grades',
 	},
         achievements  => {
-	        name    => 'Achievements',
+	        name    => x('Achievements'),
                 parent  => 'set_list',
                 kids    => [ qw// ],
                 match   => qr|^achievements/|,
@@ -288,7 +290,7 @@ our %pathTypes = (
                 display => 'WeBWorK::ContentGenerator::Achievements',
         },
 	hardcopy => {
-		name    => 'Hardcopy Generator',
+		name    => x('Hardcopy Generator'),
 		parent  => 'set_list',
 		kids    => [ qw/hardcopy_preselect_set/ ],
 		match   => qr|^hardcopy/|,
@@ -297,7 +299,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Hardcopy',
 	},
 	hardcopy_preselect_set => {
-		name    => 'Hardcopy Generator',
+		name    => x('Hardcopy Generator'),
 		parent  => 'hardcopy',
 		kids    => [ qw// ],
 		match   => qr|^([^/]+)/|,
@@ -306,7 +308,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Hardcopy',
 	},
 	logout => {
-		name    => 'Logout',
+		name    => x('Logout'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^logout/|,
@@ -315,7 +317,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Logout',
 	},
 	options => {
-		name    => 'User Settings',
+		name    => x('User Settings'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^options/|,
@@ -323,15 +325,6 @@ our %pathTypes = (
 		produce => 'options/',
 		display => 'WeBWorK::ContentGenerator::Options',
 	},
-	#test => {
-	#	name    => 'Test',
-	#	parent  => 'set_list',
-	#	kids    => [ qw// ],
-	#	match   => qr|^test/|,
-	#	capture => [ qw// ],
-	#	produce => 'test/',
-	#	display => 'WeBWorK::ContentGenerator::Test',
-	#},
 	#render => {
 	#	name    => 'Render',
 	#	parent  => 'set_list',
@@ -345,7 +338,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_tools => {
-		name    => 'Instructor Tools',
+		name    => x('Instructor Tools'),
 		parent  => 'set_list',
 		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2
 		    instructor_add_users instructor_achievement_list 
@@ -368,7 +361,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_user_list => {
-		name    => 'Old Classlist Editor',
+		name    => x('Old Classlist Editor'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users/|,
@@ -377,7 +370,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList',
 	},
 	instructor_user_list2 => {
-		name    => 'Classlist Editor',
+		name    => x('Classlist Editor'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users2/|,
@@ -386,7 +379,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_detail => {
-		name    => 'Sets assigned to $userID',
+		name    => x('Sets assigned to $userID'),
 		parent  => 'instructor_user_list2',
 		kids    => [ qw/instructor_sets_assigned_to_user/ ],
 		match   => qr|^([^/]+)/|,
@@ -395,7 +388,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserDetail',
 	},
 	instructor_sets_assigned_to_user => {
-		name    => 'Sets Assigned to User',
+		name    => x('Sets Assigned to User'),
 		parent  => 'instructor_user_detail',
 		kids    => [ qw// ],
 		match   => qr|^sets/|,
@@ -407,7 +400,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_set_list => {
-		name    => 'Old Hmwk Sets Editor',
+		name    => x('Old Hmwk Sets Editor'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets/|,
@@ -416,7 +409,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList',
 	},
 	instructor_set_list2 => {
-		name    => 'Hmwk Sets Editor',
+		name    => x('Hmwk Sets Editor'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail2/ ],
 		match   => qr|^sets2/|,
@@ -425,7 +418,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
 	},
 	instructor_set_detail => {
-		name    => 'Set Detail for set $setID',
+		name    => x('Set Detail for set $setID'),
 		parent  => 'instructor_set_list',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
@@ -435,7 +428,7 @@ our %pathTypes = (
 	},
 
 	instructor_set_detail2 => {
-		name    => 'Set Detail 2 for set $setID',
+		name    => x('Set Detail 2 for set $setID'),
 		parent  => 'instructor_set_list2',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
@@ -445,7 +438,7 @@ our %pathTypes = (
 	},
 
 	instructor_users_assigned_to_set => {
-		name    => 'Users Assigned to Set $setID',
+		name    => x('Users Assigned to Set $setID'),
 		parent  => 'instructor_set_detail',
 		kids    => [ qw// ],
 		match   => qr|^users/|,
@@ -455,7 +448,7 @@ our %pathTypes = (
 	},
 
         instructor_problem_grader => {
-		name    => 'Manual Grader',
+		name    => x('Manual Grader'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^grader/([^/]+)/([^/]+)/|,
@@ -468,7 +461,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_add_users => {
-		name    => 'Add Users',
+		name    => x('Add Users'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^add_users/|,
@@ -477,7 +470,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::AddUsers',
 	},
 	instructor_set_assigner => {
-		name    => 'Set Assigner',
+		name    => x('Set Assigner'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^assigner/|,
@@ -486,7 +479,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Assigner',
 	},
 	instructor_config => {
-		name    => 'Course Configuration',
+		name    => x('Course Configuration'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^config/|,
@@ -495,7 +488,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Config',
 	},
 	instructor_compare => {
-		name    => 'File Compare',
+		name    => x('File Compare'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^compare/|,
@@ -505,7 +498,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Compare',
 	},
 	instructor_set_maker => {
-		name    => 'Library Browser',
+		name    => x('Library Browser'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^setmaker/|,
@@ -514,7 +507,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
 	},
 	instructor_set_maker_no_js => {
-		name    => 'Library Browser no js',
+		name    => x('Library Browser no js'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^setmakernojs/|,
@@ -523,7 +516,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMakernojs',
 	},
 	instructor_set_maker2 => {
-		name    => 'Library Browser 2',
+		name    => x('Library Browser 2'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^setmaker2/|,
@@ -532,7 +525,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker2',
 	},
 		instructor_set_maker3 => {
-		name    => 'Library Browser 3',
+		name    => x('Library Browser 3'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^setmaker3/|,
@@ -541,7 +534,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker3',
 	},
 	instructor_get_target_set_problems => {
-		name    => 'Get Target Set Problems',
+		name    => x('Get Target Set Problems'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^GetTargetSetProblems/|,
@@ -550,7 +543,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::GetTargetSetProblems',
 	},
 	instructor_get_library_set_problems => {
-		name    => 'Get Library Set Problems',
+		name    => x('Get Library Set Problems'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^GetLibrarySetProblems/|,
@@ -559,7 +552,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems',
 	},
 	instructor_file_manager => {
-		name    => 'File Manager',
+		name    => x('File Manager'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^file_manager/|,
@@ -568,7 +561,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::FileManager',
 	},
 	instructor_problem_editor => {
-		name    => 'Problem Editor',
+		name    => x('Problem Editor'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_problem_editor_withset/ ],
 		match   => qr|^pgProblemEditor/|,
@@ -577,7 +570,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
 	instructor_problem_editor2 => {
-		name    => 'Problem Editor2',
+		name    => x('Problem Editor2'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_problem_editor2_withset/ ],
 		match   => qr|^pgProblemEditor2/|,
@@ -586,7 +579,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
 	},
 	instructor_problem_editor3 => {
-		name    => 'Problem Editor3',
+		name    => x('Problem Editor3'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_problem_editor3_withset/ ],
 		match   => qr|^pgProblemEditor3/|,
@@ -649,7 +642,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
 	instructor_scoring => {
-		name    => 'Scoring Tools',
+		name    => x('Scoring Tools'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^scoring/|,
@@ -658,7 +651,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Scoring',
 	},
 	instructor_scoring_download => {
-		name    => 'Scoring Download',
+		name    => x('Scoring Download'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^scoringDownload/|,
@@ -667,7 +660,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ScoringDownload',
 	},
 	instructor_mail_merge => {
-		name    => 'Email',
+		name    => x('Email'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^send_mail/|,
@@ -676,7 +669,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
 	},
 	instructor_preflight => {
-		name    => 'Preflight Log',
+		name    => x('Preflight Log'),
 		parent  => 'instructor_tools',
 		kids    => [ qw// ],
 		match   => qr|^preflight/|,
@@ -688,7 +681,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_statistics => {
-		name    => 'Statistics',
+		name    => x('Statistics'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_statistics instructor_user_statistics/ ],
 		match   => qr|^stats/|,
@@ -697,7 +690,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	instructor_set_statistics => {
-		name    => 'Statistics',
+		name    => x('Statistics'),
 		parent  => 'instructor_statistics',
 		kids    => [ qw// ],
 		match   => qr|^(set)/([^/]+)/|,
@@ -706,7 +699,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	instructor_user_statistics => {
-		name    => 'Statistics',
+		name    => x('Statistics'),
 		parent  => 'instructor_statistics',
 		kids    => [ qw// ],
 		match   => qr|^(student)/([^/]+)/|,
@@ -715,38 +708,10 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
 	
-		instructor_statistics_old => {
-		name    => 'Statistics_old',
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_statistics_old instructor_user_statistics_old/ ],
-		match   => qr|^stats_old/|,
-		capture => [ qw// ],
-		produce => 'stats_old/',
-		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
-	},
-	instructor_set_statistics_old => {
-		name    => 'Statistics_old',
-		parent  => 'instructor_statistics_old',
-		kids    => [ qw// ],
-		match   => qr|^(set)/([^/]+)/|,
-		capture => [ qw/statType setID/ ],
-		produce => 'set/$setID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
-	},
-	instructor_user_statistics_old => {
-		name    => 'Statistics_old',
-		parent  => 'instructor_statistics_old',
-		kids    => [ qw// ],
-		match   => qr|^(student)/([^/]+)/|,
-		capture => [ qw/statType userID/ ],
-		produce => 'student/$userID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::Stats_old',
-	},
-
 	################################################################################
 
         instructor_achievement_list => {
-                name    =>  'Achievement Editor',
+                name    =>  x('Achievement Editor'),
                 parent  =>  'instructor_tools', 
                 kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
                 match   =>  qr|^achievement_list/|,
@@ -756,7 +721,7 @@ our %pathTypes = (
         },
 
         instructor_achievement_editor => {
-	        name    => 'Achievement Evaluator Editor',
+	        name    => x('Achievement Evaluator Editor'),
                 parent  => 'instructor_achievement_list', 
                 kids => [ qw// ],
                 match => qr|^([^/]+)/editor/|,
@@ -766,7 +731,7 @@ our %pathTypes = (
 	},
 
         instructor_achievement_user_editor => {
-	        name    => 'Achievement User Editor',
+	        name    => x('Achievement User Editor'),
                 parent  => 'instructor_achievement_list', 
                 kids => [ qw// ],
 		match   => qr|^([^/]+)/users/|,
@@ -779,7 +744,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_progress => {
-		name    => 'Student Progress',
+		name    => x('Student Progress'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_progress instructor_user_progress/ ],
 		match   => qr|^progress/|,
@@ -788,7 +753,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_set_progress => {
-		name    => 'Student Progress',
+		name    => x('Student Progress'),
 		parent  => 'instructor_progress',
 		kids    => [ qw// ],
 		match   => qr|^(set)/([^/]+)/|,
@@ -797,7 +762,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
 	instructor_user_progress => {
-		name    => 'Student Progress',
+		name    => x('Student Progress'),
 		parent  => 'instructor_progress',
 		kids    => [ qw// ],
 		match   => qr|^(student)/([^/]+)/|,
@@ -827,7 +792,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Problem',
         },
         show_me_another => {
-		name    => 'Show Me Another',
+		name    => x('Show Me Another'),
 		parent  => 'problem_detail',
 		kids    => [ qw// ],
 		match   => qr|^show_me_another/|,

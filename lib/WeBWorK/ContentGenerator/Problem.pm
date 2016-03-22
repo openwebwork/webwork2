@@ -1285,7 +1285,7 @@ sub output_checkboxes{
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
-		print "Show: &nbsp;&nbsp;";
+		print $r->maketext("Show: &nbsp;&nbsp;");
 	}
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(

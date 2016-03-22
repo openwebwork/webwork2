@@ -150,16 +150,12 @@ sub body {
 		  ),
 		  CGI::div({-style=>"color:red"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
 	           $r->maketext("There is NO undo for unassigning students.")),
-	      CGI::p("When you unassign
-				        by unchecking a student's name, you destroy all
-				        of the data for achievement ".CGI::b($achievementID)." for this student. You will then need to
-				        reassign the set to these students and they will receive new versions of the problems.
-				        Make sure this is what you want to do before unchecking students."
+	      CGI::p($r->maketext("When you unassign by unchecking a student's name, you destroy all of the data for achievement [_1] for this student. Make sure this is what you want to do.", CGI::b($achievementID))
 	);
 				    
 	# Print table
 	print CGI::start_table({});
-	print CGI::Tr({-valign=>"top"}, CGI::th(["Assigned","Login Name","&nbsp;","Student Name","&nbsp;","Section","&nbsp;","Earned","&nbsp;","Counter"]));
+	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Assigned"),$r->maketext("Login Name"),"&nbsp;",$r->maketext("Student Name"),"&nbsp;",$r->maketext("Section"),"&nbsp;",$r->maketext("Earned"),"&nbsp;",$r->maketext("Counter")]));
 	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
@@ -220,18 +216,15 @@ sub body {
 	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 	print CGI::end_table();
 	print $self->hidden_authen_fields;
-	print CGI::submit({name=>"assignToSelected", value=>"Save"});
+	print CGI::submit({name=>"assignToSelected", value=>$r->maketext("Save")});
 
 	#Print unassign from everyone stuff
 	print CGI::p( CGI::hr(),
 				  CGI::div( {class=>'ResultsWithError'},
-						"There is NO undo for this function.  
-				        Do not use it unless you know what you are doing!  When you unassign
-				        a student using this button, or by unchecking their name, you destroy all
-				        of the data for achievement $achievementID for this student.",
+					    $r->maketext("There is NO undo for this function.  Do not use it unless you know what you are doing!  When you unassign a student using this button, or by unchecking their name, you destroy all of the data for achievement $achievementID for this student."),
 						CGI::br(),
-						CGI::submit({name=>"unassignFromAll", value=>"Unassign from All Users"}),
-						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow unassign'}),
+						CGI::submit({name=>"unassignFromAll", value=>$r->maketext("Unassign from All Users")}),
+						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->maketext('Read only'), 1=>$r->maketext('Allow unassign')}),
 				  ),
 				  CGI::hr(),
 	);
