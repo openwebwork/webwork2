@@ -117,7 +117,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	due_date => {
@@ -127,7 +127,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	answer_date => {
@@ -137,7 +137,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	visible => {
@@ -167,7 +167,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	restricted_release => {
@@ -177,7 +177,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
                 help_text => x("This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field.")
 	},
@@ -627,6 +627,10 @@ sub FieldHTML {
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	my %labels = %{ $properties{labels} };
 
+	foreach my $key (keys %labels) {
+	  $labels{$key} = $r->maketext($labels{$key});
+	}
+
 	return "" if $properties{type} eq "hidden";
 	return "" if $properties{override} eq "one" && not $forOneUser;
 	return "" if $properties{override} eq "none" && not $forOneUser;
@@ -735,10 +739,6 @@ sub FieldHTML {
 			$value = ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field);
 		}
 		
-		foreach my $l (keys %labels){
-			$labels{$l} = $r->maketext($labels{$l});
-		}
-
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
@@ -749,21 +749,21 @@ sub FieldHTML {
 		});
 	}
 	
-	my $gDisplVal = defined($properties{labels}) && defined($properties{labels}->{$globalValue}) ? $properties{labels}->{$globalValue} : $globalValue;
+	my $gDisplVal = defined($properties{labels}) && defined($properties{labels}->{$globalValue}) ? $r->maketext($properties{labels}->{$globalValue}) : $globalValue;
 
 	# FIXME: adding ":" in the checked => allows for multiple fields to be set by one selector
-#	return (($forUsers && $edit && $check) ? CGI::checkbox({
+
 	return (($forUsers && $check) ? CGI::checkbox({
 				type => "checkbox",
 				name => "$recordType.$recordID.$field.override",
 				id => "$recordType.$recordID.$field.override_id",
 				label => "",
 				value => $field,
-				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
+				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} // '') || $blankfield) ? 1 : 0,
 		}) : "",
 		$r->maketext($properties{name}).
 		($properties{help_text} ? "&nbsp;".CGI::a({class=>'help-popup',href=>'#',
-						  'data-content'=>$properties{help_text},'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
+						  'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);
@@ -1086,7 +1086,7 @@ sub initialize {
 	# takes a hash of hashes and inverts it
 	my %undoLabels;
 	foreach my $key (keys %properties) {
-		%{ $undoLabels{$key} } = map { $properties{$key}->{labels}->{$_} => $_ } keys %{ $properties{$key}->{labels} };
+		%{ $undoLabels{$key} } = map { $r->maketext($properties{$key}->{labels}->{$_}) => $_ } keys %{ $properties{$key}->{labels} };
 	}
 
 	# Unfortunately not everyone uses Javascript enabled browsers so

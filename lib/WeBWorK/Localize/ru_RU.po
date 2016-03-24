@@ -1181,7 +1181,6 @@ msgstr ""
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:315
-#, fuzzy
 msgid "Correct Answer"
 msgstr "Правильные ответы"
 

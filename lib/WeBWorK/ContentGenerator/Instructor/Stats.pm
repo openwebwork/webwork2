@@ -762,7 +762,7 @@ print  CGI::p($r->maketext('The percentage of active students with correct answe
 	foreach my $probID (@problemIDs) {
 		print	CGI::Tr(
 					CGI::td( [
-						CGI::a({ href=>$self->systemLink($problemPage{$probID}) },"Prob ".$prettyProblemIDs{$probID}),
+						CGI::a({ href=>$self->systemLink($problemPage{$probID}) },$r->maketext("Problem [_1]",$prettyProblemIDs{$probID})),
 						( prevent_repeats reverse map { sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2),
 
 						]

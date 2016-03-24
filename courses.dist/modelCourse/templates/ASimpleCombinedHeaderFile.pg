@@ -28,7 +28,7 @@ TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
 % Uncomment the line below if this course has sections. Note that this is a comment in TeX mode since this is only processed by LaTeX
 %   {\large \bf { Section: \{protect_underbar($sectionName)\} } }
 \par
-\noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  due $formatedDueDate}}
+\noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  closes $formatedDueDate}}
 \par\noindent \bigskip
 % Uncomment and edit the line below if this course has a web page. Note that this is a comment in TeX mode.
 %See the course web page for information http://yoururl/yourcourse
@@ -49,7 +49,7 @@ EOT
 ####################################################
 TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 
-$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
+$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  closes :  $formattedDueDate. $EBOLD
 $PAR
 Here's the list of 
 \{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"functions and symbols") \}

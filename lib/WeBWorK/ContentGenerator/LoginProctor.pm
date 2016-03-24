@@ -280,7 +280,7 @@ sub body {
 	print CGI::Tr( $userNameFields ) if ( $userNameFields );
 	print CGI::Tr( CGI::td([
 			 CGI::label(
-				    $r->maketext("Proctor password:"(,
+				    $r->maketext("Proctor password:"),
 				CGI::input({-type=>"password", 
 					    -name=>"proctor_passwd", 
 					    -value=>""})),

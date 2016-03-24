@@ -191,7 +191,7 @@ sub maketext {
 	# $self->{language_handle}->maketext(@_);
 	&{ $self->{language_handle} }(@_);
 	# uncomment to check that your strings are run through maketext
-	#return '------';
+	return '+'.&{ $self->{language_handle} }(@_).'+';
 }
 
 =item location()

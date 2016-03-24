@@ -1935,7 +1935,7 @@ sub output_achievement_message{
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
 	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
-	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
+	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $r);
 	    print $achievementMessage;
 	}
 	

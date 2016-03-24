@@ -942,7 +942,7 @@ sub links {
 				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
 				    my %augmentedSystemLinks = %systemlink_args;
 				    $augmentedSystemLinks{params}->{archiveCourse}=1;
-					print CGI::li(&$makelink("${pfx}FileManager", text=>"Archive this Course",urlpath_args=>{%args}, systemlink_args=>\%augmentedSystemLinks));
+					print CGI::li(&$makelink("${pfx}FileManager", text=>$r->maketext("Archive this Course"),urlpath_args=>{%args}, systemlink_args=>\%augmentedSystemLinks));
 				}
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools

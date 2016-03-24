@@ -129,10 +129,6 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
  
- instructor_statistics_old               /$courseID/instructor/stats_old/
- instructor_set_statistics_old           /$courseID/instructor/stats_old/set/$setID/
- instructor_user_statistics_old          /$courseID/instructor/stats_old/student/$userID/
- 
  instructor_progress                  /$courseID/instructor/StudentProgress/
  instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
  instructor_user_progress             /$courseID/instructor/StudentProgress/student/$userID/
@@ -348,7 +344,7 @@ our %pathTypes = (
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_preflight instructor_statistics instructor_statistics_old
+			instructor_preflight instructor_statistics
 			instructor_progress			
                         instructor_problem_grader
 		/ ],

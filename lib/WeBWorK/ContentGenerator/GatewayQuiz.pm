@@ -1785,7 +1785,7 @@ sub body {
 	# a handy noun for when referring to a test
 	my $testNoun = (( $set->attempts_per_version || 0 ) > 1) ? $r->maketext("submission") : $r->maketext("test");
 	my $testNounNum = ( ( $set->attempts_per_version ||0 ) > 1 ) ? 
-		$r->maketext("submission (test ") : $r->maketext("test (");
+		$r->maketext("submission (test [_1])",$versionNumber) : $r->maketext("test ([_1])",$versionNumber);
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
@@ -1806,11 +1806,11 @@ sub body {
 
 		if ( $recdMsg ) {
 			# then there was an error when saving the results
-			print CGI::strong($r->maketext("Your score on this [_1][_2]) was NOT recorded.",$testNounNum,$versionNumber),
+			print CGI::strong($r->maketext("Your score on this [_1] was NOT recorded.",$testNounNum),
 					  $recdMsg), CGI::br();
 		} else {
 			# no error; print recorded message
-			print CGI::strong($r->maketext("Your score on this [_1][_2]) WAS recorded.",$testNounNum,$versionNumber)), 
+			print CGI::strong($r->maketext("Your score on this [_1] WAS recorded.",$testNounNum)), 
 			  CGI::br();
 
 			# and show the score if we're allowed to do that
