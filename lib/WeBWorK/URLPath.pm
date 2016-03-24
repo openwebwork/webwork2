@@ -148,7 +148,13 @@ answer_log                           /$courseID/show_answers/
 # tree of path types
 ################################################################################
 
-# we use the x function to mark strings for localizatin 
+# we use the x function to mark strings for localization
+# Note for the localization
+# [_1] = $userID
+# [_2] = $setID
+# [_3] = $problemID
+# [_4] = $courseID
+
 our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
@@ -198,7 +204,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::instructorXMLHandler',
 	},
 	set_list => {
-		name    => '$courseID',
+		name    => '[_4]',
 		parent  => 'root',
 		kids    => [ qw/equation_display feedback gateway_quiz proctored_gateway_quiz answer_log grades hardcopy achievements
 			logout options instructor_tools problem_list
@@ -230,7 +236,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Feedback',
 	},
 	gateway_quiz => {
-		name    => 'Gateway Quiz $setID',
+		name    => x('Gateway Quiz [_2]'),
 		parent  => 'set_list',
 		kids    => [ qw// ],
 		match   => qr|^quiz_mode/([^/]+)/|,
@@ -250,7 +256,7 @@ our %pathTypes = (
 	},
 
 	proctored_gateway_quiz => {
-		name    => x('Proctored Gateway Quiz $setID'),
+		name    => x('Proctored Gateway Quiz [_2]'),
 		parent  => 'set_list',
 		kids    => [ qw/proctored_gateway_proctor_login/ ],
 		match   => qr|^proctored_quiz_mode/([^/]+)/|,
@@ -259,7 +265,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::ProctoredGatewayQuiz',
 	},
 	proctored_gateway_proctor_login => {
-		name    => x('Proctored Gateway Quiz $setID Proctor Login'),
+		name    => x('Proctored Gateway Quiz [_2] Proctor Login'),
 		parent  => 'proctored_gateway_quiz',
 		kids    => [ qw// ],
 		match   => qr|^proctored_quiz_mode/([^/]+)/|,
@@ -375,7 +381,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
 	},
 	instructor_user_detail => {
-		name    => x('Sets assigned to $userID'),
+		name    => x('Sets assigned to [_1]'),
 		parent  => 'instructor_user_list2',
 		kids    => [ qw/instructor_sets_assigned_to_user/ ],
 		match   => qr|^([^/]+)/|,
@@ -414,7 +420,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
 	},
 	instructor_set_detail => {
-		name    => x('Set Detail for set $setID'),
+		name    => x('Set Detail for set [_2]'),
 		parent  => 'instructor_set_list',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
@@ -424,7 +430,7 @@ our %pathTypes = (
 	},
 
 	instructor_set_detail2 => {
-		name    => x('Set Detail 2 for set $setID'),
+		name    => x('Set Detail 2 for set [_2]'),
 		parent  => 'instructor_set_list2',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
@@ -434,7 +440,7 @@ our %pathTypes = (
 	},
 
 	instructor_users_assigned_to_set => {
-		name    => x('Users Assigned to Set $setID'),
+		name    => x('Users Assigned to Set [_2]'),
 		parent  => 'instructor_set_detail',
 		kids    => [ qw// ],
 		match   => qr|^users/|,
@@ -584,7 +590,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
 	instructor_problem_editor_withset => {
-		name    => '$setID',
+		name    => '[_2]',
 		parent  => 'instructor_problem_editor',
 		kids    => [ qw/instructor_problem_editor_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
@@ -593,7 +599,7 @@ our %pathTypes = (
 		display => undef,
 	},
 	instructor_problem_editor2_withset => {
-		name    => '$setID',
+		name    => '[_2]',
 		parent  => 'instructor_problem_editor2',
 		kids    => [ qw/instructor_problem_editor2_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
@@ -602,7 +608,7 @@ our %pathTypes = (
 		display => undef,
 	},
 	instructor_problem_editor3_withset => {
-		name    => '$setID',
+		name    => '[_2]',
 		parent  => 'instructor_problem_editor3',
 		kids    => [ qw/instructor_problem_editor3_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
@@ -611,7 +617,7 @@ our %pathTypes = (
 		display => undef,
 	},
 	instructor_problem_editor_withset_withproblem => {
-		name    => '$problemID',
+		name    => '[_3]',
 		parent  => 'instructor_problem_editor_withset',
 		kids    => [ qw// ],
 		match   => qr|^([^/]+)/|,
@@ -620,7 +626,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
 	instructor_problem_editor2_withset_withproblem => {
-		name    => '$problemID',
+		name    => '[_3]',
 		parent  => 'instructor_problem_editor2_withset',
 		kids    => [ qw// ],
 		match   => qr|^([^/]+)/|,
@@ -629,7 +635,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
 	},
 	instructor_problem_editor3_withset_withproblem => {
-		name    => '$problemID',
+		name    => '[_3]',
 		parent  => 'instructor_problem_editor3_withset',
 		kids    => [ qw// ],
 		match   => qr|^([^/]+)/|,
@@ -770,7 +776,7 @@ our %pathTypes = (
 	################################################################################
 	
 	problem_list => {
-		name    => '$setID',
+		name    => '[_2]',
 		parent  => 'set_list',
 		kids    => [ qw/problem_detail/ ],
 		match   => qr|^([^/]+)/|,
@@ -779,7 +785,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::ProblemSet',
 	},
 	problem_detail => {
-		name    => '$problemID',
+		name    => '[_3]',
 		parent  => 'problem_list',
 		kids    => [ qw/show_me_another/ ],
 		match   => qr|^([^/]+)/|,
@@ -962,8 +968,10 @@ sub name {
 	my %args = $self->args;
 	
 	my $name = $pathTypes{$type}->{name};
-	$name = $self->{r}->maketext($name);   # translate the display name
-	$name = interpolate($name, %args);
+	$name = $self->{r}->maketext($name, $args{userID} // '',
+				     $args{setID} // '',
+				     $args{problemID} // '',
+				     $args{courseID} // '');   # translate the display name
 	
 	return $name;
 }

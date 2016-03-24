@@ -114,7 +114,7 @@ sub nav {
 	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
 	my $problemSetsPage = $urlpath->parent;
 	
-	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("navUp"));
+	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, "Homework Sets");
 	return $self->navMacro($args, '', @links);
 }
 

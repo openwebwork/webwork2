@@ -1983,7 +1983,7 @@ sub readSetDef {
 		} elsif ($enableReducedScoring ne '' && $enableReducedScoring eq 'N') {
 		    $enableReducedScoring = 0;
 		} elsif ($enableReducedScoring ne '') {
-		    warn($r->maketext("The value [_1] for enableReducedScoring is not valid; it willb e replaced with 'N'.",$enableReducedScoring)."\n");
+		    warn($r->maketext("The value [_1] for enableReducedScoring is not valid; it will be replaced with 'N'.",$enableReducedScoring)."\n");
 		    $enableReducedScoring = 0;
 		} else {
 		    $enableReducedScoring = DEFAULT_ENABLED_REDUCED_SCORING_STATE;

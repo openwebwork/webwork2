@@ -417,7 +417,7 @@ sub path {
 	          "$courseName", $r->location."/$courseName",
 	          "$setName",    $r->location."/$courseName/$setName",
 	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
-	          "Editor", ""
+		  $r->maketext("Editor"), ""
 	);
 	
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
@@ -426,6 +426,7 @@ sub path {
 	
 	return "";
 }
+
 sub title {
 	my $self = shift;
 	my $r = $self->r;
@@ -1549,7 +1550,7 @@ sub add_problem_handler {
 
 sub save_form {
 	my ($self, $onChange, %actionParams) = @_;
-	my $r => $self->r;
+	my $r = $self->r;
 	#return "" unless defined($self->{tempFilePath}) and -e $self->{tempFilePath};
 	if ($self->{editFilePath} =~ /$BLANKPROBLEM$/ ) {
 		return "";  #Can't save blank problems without changing names

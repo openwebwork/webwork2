@@ -76,14 +76,13 @@ sub title {
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $type                = $self->{type};
-	my $string              = $r->maketext("Statistics for")." ".$self->{ce}->{courseName}." ";
-	
+	my $string = '';
 	if ($type eq 'student') {
-		$string             .= $r->maketext("student")." ".$self->{studentName};
+	  $string = $r->maketext("Statistics for [_1] student [_2]", $self->{ce}->{courseName}, $self->{studentName});
 	} elsif ($type eq 'set' ) {
-		$string             .= $r->maketext("set")." ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Closes")." ". $self->formatDateTime($self->{set_due_date});
+	  $string = $r->maketext("Statistics for [_1] set [_2]. Closes [_3]", $self->{ce}->{courseName}, $self->{setName}, $self->formatDateTime($self->{set_due_date}));
 	}
+	
 	return $string;
 }
 sub siblings {

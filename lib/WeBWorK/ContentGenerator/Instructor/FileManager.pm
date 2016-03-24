@@ -766,8 +766,8 @@ sub MakeArchive {
 	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -cvzf ".shell_quote($archive,@files);
 	@files = readpipe $tar." 2>&1";
 	if ($? == 0) {
-		my $n = scalar(@files); my $s = ($n == 1? "": "s");
-		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([_2] file[_3])",$archive, $n, $s));
+		my $n = scalar(@files); 
+		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([quant, _2, file])",$archive, $n));
 	} else {
 		$self->addbadmessage($r->maketext("Can't create archive '[_1]': command returned [_2]",$archive,systemError($?)));
 	}

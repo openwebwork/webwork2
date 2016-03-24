@@ -515,7 +515,7 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
         }	
 
-		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
+		my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
 		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText))));
 
@@ -1059,23 +1059,23 @@ sub nav {
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $prevID);
-		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("navPrev");
+		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("Previous Problem");
 	} else {
-		push @links, $r->maketext("Previous Problem"), "", $r->maketext("navPrevGrey");
+		push @links, $r->maketext("Previous Problem"), "", $r->maketext("Previous Problem");
 	}
 
 	if (defined($setID) && $setID ne 'Undefined_Set') {
-		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("navProbList");
+		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("Problem List");
 	} else {
-		push @links, $r->maketext("Problem List"), "", $r->maketext("navProbListGrey");
+		push @links, $r->maketext("Problem List"), "", $r->maketext("Problem List");
 	}
 
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $nextID);
-		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("navNext");
+		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("Next Problem");
 	} else {
-		push @links, $r->maketext("Next Problem"), "", $r->maketext("navNextGrey");
+		push @links, $r->maketext("Next Problem"), "", $r->maketext("Next Problem");
 	}
 
 	my $tail = "";
@@ -1084,6 +1084,33 @@ sub nav {
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
 	return $self->navMacro($args, $tail, @links);
+}
+
+sub path {
+	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $courseName    = $urlpath->arg("courseID");
+	my $setName       = $urlpath->arg("setID") || '';
+	my $problemNumber = $urlpath->arg("problemID") || '';
+	my $prettyProblemNumber = $problemNumber;
+	
+	if ($setName) {
+	    my $set = $r->db->getGlobalSet($setName);
+	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
+		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
+	    }
+	}
+
+	my @path = ( 'WeBWorK', $r->location,
+	          "$courseName", $r->location."/$courseName",
+	          "$setName",    $r->location."/$courseName/$setName",
+	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	);
+	
+	print $self->pathMacro($args, @path);
+	
+	return "";
 }
 
 sub title {

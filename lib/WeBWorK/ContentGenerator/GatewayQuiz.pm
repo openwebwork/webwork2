@@ -1817,11 +1817,11 @@ sub body {
 			if ( $can{showScore} ) {
 			  print CGI::strong($r->maketext("Your score on this [_1] is [_2]/[_3].", $testNoun,$attemptScore,$totPossible));
 			} else {
-				my $when = 
-					($set->hide_score eq 'BeforeAnswerDate')
-					? ' until ' . ($self->formatDateTime($set->answer_date) )
-					: '';
-				print $r->maketext("(Your score on this [_1] is not available[_2].)",$testNoun,$when);
+			  if ($set->hide_score eq 'BeforeAnswerDate') {
+			    print $r->maketext("(Your score on this [_1] is not available until [_2].)",$testNoun, $self->formatDateTime($set->answer_date));
+			  } else {
+			    print $r->maketext("(Your score on this [_1] is not available.)",$testNoun);
+			  }
 			}
 
 			
@@ -1970,7 +1970,11 @@ sub body {
 			? $r->maketext(' until ') . ($self->formatDateTime($set->answer_date))
 			: '';
 		print CGI::start_div({class=>"gwProblem"});
-		print CGI::strong($r->maketext("Completed results for this assignment are not available[_1].",$when));
+		if ( $set->hide_work eq 'BeforeAnswerDate' ) {
+		  print CGI::strong($r->maketext("Completed results for this assignment are not available until [_1]",$self->formatDateTime($set->answer_date)));
+		} else {
+		  print CGI::strong($r->maketext("Completed results for this assignment are not available."));
+		}
 		print CGI::end_div();
 
 	# else: we're not hiding answers

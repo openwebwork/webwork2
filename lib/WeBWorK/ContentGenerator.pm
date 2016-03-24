@@ -666,7 +666,7 @@ sub links {
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 
-		defined $text or $text = $r->maketext($new_urlpath->name);  #too clever
+		defined $text or $text = $new_urlpath->name;  #too clever
 		
 		
 		# try to set $active automatically by comparing 
@@ -1202,7 +1202,7 @@ sub title {
 	    #print underscore2nbsp($r->urlpath->name);
 	    my $name = $urlpath->name;
 	    # $name =~ s/_/ /g;
-	    print $r->maketext($name);
+	    print $name;
 	    #print "<!-- END " . __PACKAGE__ . "::title -->\n";
 	}
 	
@@ -1493,15 +1493,15 @@ sub pathMacro {
 		next unless $name =~/\S/;  #skip blank names. Blanks can happen for course header and set header files.
 		if ($url and not $args{textonly}) {
 		    if($args{style} eq "bootstrap"){
-		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name))));
+		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, lc($name)));
 		    } else {
-			    push @result, CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name)));
+			    push @result, CGI::a({-href=>"$url?$auth"}, lc($name));
 		    }
 		} else {
 		    if($args{style} eq "bootstrap"){
-                push @result, CGI::li({-class=>"active"}, $r->maketext($name));
+                push @result, CGI::li({-class=>"active"}, $name);
             } else {
-			    push @result, $r->maketext($name);
+			    push @result, $name;
 			}
 		}
 	}
@@ -1579,19 +1579,11 @@ sub navMacro {
 		my $url = shift @links;
 		my $direction = shift @links;
 		my $html = ($direction && $args{style} eq "buttons") ? $direction : $name;
-			# ($img && $args{style} eq "images")
-			# ? CGI::img(
-				# {src=>($prefix."/".$img.$args{imagesuffix}),
-				# border=>"",
-				# alt=>"$name"})
-			# : $name."lol";
-#		unless($img && !$url) {  ## these are now "disabled" versions in grey -- DPVC
-			push @result, $url
-				? CGI::a({-href=>"$url?$auth$tail", -class=>"nav_button"}, $html)
-				: CGI::span({-class=>"gray_button"}, $html);
-#		}
-	}
-
+		push @result, $url
+		  ? CGI::a({-href=>"$url?$auth$tail", -class=>"nav_button"}, $html)
+		  : CGI::span({-class=>"gray_button"}, $html);
+	      }
+	
 	return join($args{separator}, @result) . "\n";
 }
 
