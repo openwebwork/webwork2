@@ -580,6 +580,7 @@ msgstr "Points de réussite par problème"
 msgid "Achievement User Editor"
 msgstr "Points de réussite par problème"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:266
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:286
 #, fuzzy
 msgid "Achievements"
@@ -3432,6 +3433,10 @@ msgstr ""
 "C'est avant la date d'ouverture. Vous voulez probablement renuméroter les "
 "problèmes si vous en effacer quelques-uns dans le milieu."
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:226
+msgid "Items"
+msgstr ""
+
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2024
 #, fuzzy
@@ -5815,6 +5820,13 @@ msgstr "Soumettre les réponses"
 
 # avant: msgstr "ID de l'étudiant"
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:254
+#, fuzzy
+msgid "Submit"
+msgstr "Soumettre les réponses"
+
+# avant: msgstr "ID de l'étudiant"
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1502
 msgid "Submit Answers"
 msgstr "Soumettre les réponses"
@@ -7205,6 +7217,10 @@ msgstr "Utiliser le fichier d'entête par défaut"
 msgid "Use Equation Editor?"
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:239
+msgid "Use Item"
+msgstr ""
+
 # avant: msgstr "Dessélectionner pour les usagers"
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2723
@@ -7873,6 +7889,10 @@ msgid "You do not have permission to view the details of this error."
 msgstr ""
 "Les droits qui vous sont assignés ne permettent pas de voir les détails de "
 "cette erreur."
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:263
+msgid "You don't have any items!"
+msgstr ""
 
 #. ($numLeft)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1894

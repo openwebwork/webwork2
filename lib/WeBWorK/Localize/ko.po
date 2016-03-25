@@ -516,6 +516,7 @@ msgstr ""
 msgid "Achievement User Editor"
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:266
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:286
 #, fuzzy
 msgid "Achievements"
@@ -3059,6 +3060,10 @@ msgid ""
 "you are deleting some from the middle."
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:226
+msgid "Items"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2024
 #, fuzzy
 msgid "Jump to Page:"
@@ -5204,6 +5209,11 @@ msgstr ""
 msgid "Submission time:"
 msgstr "답안 제출하기"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:254
+#, fuzzy
+msgid "Submit"
+msgstr "정답 제출하기"
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1502
 msgid "Submit Answers"
 msgstr "정답 제출하기"
@@ -6451,6 +6461,10 @@ msgstr ""
 msgid "Use Equation Editor?"
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:239
+msgid "Use Item"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2723
 msgid "Use System Default"
 msgstr "시스템 초기값 사용"
@@ -7025,6 +7039,10 @@ msgstr "비밀번호를 변경할 권한이 없습니다."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1289
 msgid "You do not have permission to view the details of this error."
 msgstr "자세한 오류를 볼 권한이 없습니다."
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:263
+msgid "You don't have any items!"
+msgstr ""
 
 #. ($numLeft)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1894

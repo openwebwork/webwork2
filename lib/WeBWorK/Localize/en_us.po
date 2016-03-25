@@ -479,6 +479,7 @@ msgstr ""
 msgid "Achievement User Editor"
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:266
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:286
 msgid "Achievements"
 msgstr ""
@@ -2842,6 +2843,10 @@ msgid ""
 "you are deleting some from the middle."
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:226
+msgid "Items"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2024
 msgid "Jump to Page:"
 msgstr ""
@@ -4859,6 +4864,10 @@ msgstr ""
 msgid "Submission time:"
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:254
+msgid "Submit"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1502
 msgid "Submit Answers"
 msgstr ""
@@ -6032,6 +6041,10 @@ msgstr ""
 msgid "Use Equation Editor?"
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:239
+msgid "Use Item"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2723
 msgid "Use System Default"
 msgstr ""
@@ -6578,6 +6591,10 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1289
 msgid "You do not have permission to view the details of this error."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:263
+msgid "You don't have any items!"
 msgstr ""
 
 #. ($numLeft)
