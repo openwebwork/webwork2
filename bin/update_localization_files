@@ -6,8 +6,8 @@ LOCDIR=$WEBWORK_ROOT/lib/WeBWorK/Localize
 
 cd $LOCDIR
 
-echo "Updating webwork2.pot"
+echo "Updating $WEBWORK_ROOT/webwork2.pot"
 
 xgettext.pl -o=webwork2.pot -D $WEBWORK_ROOT/lib -D $PG_ROOT
 
-find $WEBWORK_ROOT/lib/WeBWorK/Localize -name '*.po' -exec echo "Updating {}" \; -exec msgmerge -qU {} webwork2.pot \;
+find $LOCDIR -name '*.po' -exec bash -c "echo \"Updating {}\"; msgmerge -qU {} webwork2.pot" \;
