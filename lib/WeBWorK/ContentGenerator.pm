@@ -824,7 +824,7 @@ sub links {
 					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
 					    
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"---$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
 					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
@@ -2103,10 +2103,10 @@ sub errorOutput($$$) {
 	   $details = [$details];
 	}
 	return
-		CGI::h2("WeBWorK Error"),
+		CGI::h2($r->maketext("WeBWorK Error")),
 		CGI::p($r->maketext("_REQUEST_ERROR")),
 
-		CGI::h3("Error messages"),
+		CGI::h3($r->maketext("Error messages")),
 
 		CGI::p(CGI::code($error)),
 		CGI::h3("Error details"),
@@ -2117,18 +2117,34 @@ sub errorOutput($$$) {
 		# not using inclusive CGI calls here saves about 30Meg of memory!
 		CGI::end_p(),CGI::end_code(),
 		
-		CGI::h3("Request information"),
+		CGI::h3($r->maketext("Request information")),
 		CGI::table({border=>"1"},
-			CGI::Tr({},CGI::td("Time"), CGI::td($time)),
-			CGI::Tr({},CGI::td("Method"), CGI::td($method)),
-			CGI::Tr({},CGI::td("URI"), CGI::td($uri)),
-			CGI::Tr({},CGI::td("HTTP Headers"), CGI::td(
+			CGI::Tr({},CGI::td($r->maketext("Time")), CGI::td($time)),
+			CGI::Tr({},CGI::td($r->maketext("Method")), CGI::td($method)),
+			CGI::Tr({},CGI::td($r->maketext("URI")), CGI::td($uri)),
+			CGI::Tr({},CGI::td($r->maketext("HTTP Headers")), CGI::td(
 				CGI::table($headers),
 			)),
 		),
 	;  
 	
 }
+
+=item warningMessage
+
+Used to print out a generic warning message at the top of the page
+
+=cut
+
+sub warningMessage {
+  my $self = shift;
+  my $r = $self->r;
+  
+  return CGI::b($r->maketext("Warning")), ' -- ',
+    $r->maketext("There may be something wrong with this question. Please inform your instructor including the warning messages below.");
+  
+}
+
 
 =item warningOutput($warnings)
 
@@ -2174,22 +2190,15 @@ sub warningOutput($$) {
 	#};
 	
 	return
-		CGI::h2("WeBWorK Warnings"),
-		CGI::p(<<EOF),
-WeBWorK has encountered warnings while processing your request. If this occured
-when viewing a problem, it was likely caused by an error or ambiguity in that
-problem. Otherwise, it may indicate a problem with the WeBWorK system itself. If
-you are a student, report these warnings to your professor to have them
-corrected. If you are a professor, please consult the warning output below for
-more information.
-EOF
-		CGI::h3("Warning messages"),
+		CGI::h2($r->maketext("WeBWorK Warnings")),
+		CGI::p($r->maketext('WeBWorK has encountered warnings while processing your request. If this occured when viewing a problem, it was likely caused by an error or ambiguity in that problem. Otherwise, it may indicate a problem with the WeBWorK system itself. If you are a student, report these warnings to your professor to have them corrected. If you are a professor, please consult the warning output below for more information.')),
+		CGI::h3($r->maketext("Warning messages")),
 		CGI::ul($warnings),
-		CGI::h3("Request information"),
+		CGI::h3($r->maketext("Request information")),
 		CGI::table({border=>"1"},
-			CGI::Tr({},CGI::td("Time"), CGI::td($time)),
-			CGI::Tr({},CGI::td("Method"), CGI::td($method)),
-			CGI::Tr({},CGI::td("URI"), CGI::td($uri)),
+			CGI::Tr({},CGI::td($r->maketext("Time")), CGI::td($time)),
+			CGI::Tr({},CGI::td($r->maketext("Method")), CGI::td($method)),
+			CGI::Tr({},CGI::td($r->maketext("URI")), CGI::td($uri)),
 			#CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
 			#	CGI::table($headers),
 			#)),
