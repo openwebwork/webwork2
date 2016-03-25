@@ -1,3 +1,5 @@
+package WeBWorK::Localize::ConfigStrings;
+
 # This is a dummy perl file.  It is not compiled or used anywhere.  Its sole
 # purpose is to have the config strings wrapped in the x function so
 # that they will be included in webwork2.pot when xgettext.pl is run.  
