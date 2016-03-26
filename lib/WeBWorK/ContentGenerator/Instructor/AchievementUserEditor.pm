@@ -48,19 +48,19 @@ sub initialize {
 	
 	#Check and see if we need to assign or unassign things
 	if (defined $r->param('assignToAll')) {
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Achievement has been assigned to all users."));
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Achievement has been assigned to all users.")));
 		%selectedUsers = map {$_ => 1} @users;
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
 		%selectedUsers = ( );
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Achievement has been unassigned to all students."));
+		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Achievement has been unassigned to all students.")));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Achievement has been assigned to selected users."));
+	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maktext("Achievement has been assigned to selected users.")));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param("unassignFromAll")) {
 	   # no action taken
-	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, "No action taken"));
+	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, $r->maketext("No action taken")));
 	}
 	
 	#do actual assignment and unassignment
@@ -148,7 +148,7 @@ sub body {
 	print CGI::p(
 		    CGI::submit({name=>"assignToAll", value => $r->maketext("Assign to All Current Users")}), CGI::i($r->maketext("This action will not overwrite existing users."))
 		  ),
-		  CGI::div({-style=>"color:red"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
+		  CGI::div({-class=>"ResultsWithError"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
 	           $r->maketext("There is NO undo for unassigning students.")),
 	      CGI::p($r->maketext("When you unassign by unchecking a student's name, you destroy all of the data for achievement [_1] for this student. Make sure this is what you want to do.", CGI::b($achievementID))
 	);

@@ -450,6 +450,13 @@ msgstr ""
 
 #
 #. ($self->shortPath($outputFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:626
+#, fuzzy
+msgid "A new file has been created at '%1'"
+msgstr "Задание %1 уже имеется. Новое задание не создано"
+
+#
+#. ($self->shortPath($outputFilePath)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1916
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1969
 #, fuzzy
@@ -534,6 +541,17 @@ msgstr "Не сохранять изменений"
 msgid "Abandon export"
 msgstr "Не делать экспортирование"
 
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:156
+#, fuzzy
+msgid "Achievement"
+msgstr "выбранные задания"
+
+#. ($targetAchievementID, $self->shortPath($outputFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:620
+msgid "Achievement %1 created with evaluator '%2'."
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:716
 msgid "Achievement Editor"
 msgstr ""
@@ -542,10 +560,19 @@ msgstr ""
 msgid "Achievement Evaluator Editor"
 msgstr ""
 
+#. ($achievementID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:173
+msgid "Achievement Evaluator for achievement %1"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1233
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1237
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1250
 msgid "Achievement ID"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:587
+msgid "Achievement ID exists!  No new achievement created.  File not saved."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:205
@@ -554,6 +581,16 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:736
 msgid "Achievement User Editor"
+msgstr ""
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:51
+#, fuzzy
+msgid "Achievement has been assigned to all users."
+msgstr "Заголовок для задания [_1] был перпеименован в  '[_2]'."
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:56
+msgid "Achievement has been unassigned to all students."
 msgstr ""
 
 #
@@ -625,6 +662,12 @@ msgstr ""
 #, fuzzy
 msgid "Add Course"
 msgstr "Курсы"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:197
+#, fuzzy
+msgid "Add Students"
+msgstr "выдимы студентам"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:466
@@ -996,6 +1039,11 @@ msgid ""
 "Any time problem numbers are intentionally changed, the problems will always "
 "be renumbered consecutively, starting from one.  When deleting problems, "
 "gaps will be left in the numbering unless the box above is checked."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:130
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:131
+msgid "Append"
 msgstr ""
 
 #
@@ -1587,6 +1635,8 @@ msgid "Collapse All"
 msgstr ""
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:224
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1784
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:297
@@ -1601,6 +1651,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:798
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:827
 msgid "Comment"
+msgstr "Комментарий"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:517
+#, fuzzy
+msgid "Comment: "
 msgstr "Комментарий"
 
 #. ($self->formatDateTime($set->answer_date)
@@ -1835,6 +1891,7 @@ msgid ""
 msgstr ""
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:170
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:396
 msgid "Create"
 msgstr "Создать"
@@ -2176,6 +2233,13 @@ msgstr "Удалить"
 msgid "Don't make changes"
 msgstr "Сохранить изменения"
 
+#
+#. ($saveMode)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:628
+#, fuzzy
+msgid "Don't recognize saveMode: |%1|. Unknown error."
+msgstr "Неопознанная saveMode: |[_1]|. Причина ошибки неизвестна."
+
 #. ($type)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:168
 msgid "Don't recognize statistics display type: |%1|"
@@ -2186,6 +2250,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1181
 msgid "Don't rename"
 msgstr ""
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:520
+#, fuzzy
+msgid "Don't use in an achievement"
+msgstr "Сохранить изменения"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2532
 msgid "Done"
@@ -2287,6 +2357,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:392
 msgid "E-mail verbosity level"
 msgstr ""
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:378
+#, fuzzy
+msgid "E-mail:"
+msgstr "Email"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:158
 msgid "Earned"
@@ -2445,6 +2521,13 @@ msgid "Editing %1 in file '%2'"
 msgstr "Редактирование [_1] в файле '[_2]'"
 
 #
+#. ($self->shortPath($sourceFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:212
+#, fuzzy
+msgid "Editing achievement in file '%1'"
+msgstr "Редактирование [_1] в файле '[_2]'"
+
+#
 #. ($locationID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2807
 #, fuzzy
@@ -2479,6 +2562,7 @@ msgstr "Email"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:545
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1779
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:292
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:768
@@ -2610,11 +2694,23 @@ msgstr "Напечатайте имя файла "
 msgid "Enter filenames below"
 msgstr "Напечатайте имена файлов"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:132
+msgid ""
+"Enter information below for students you wish to add. Each student's "
+"password will initially be set to their student ID."
+msgstr ""
+
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:371
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:313
 msgid "Entered"
 msgstr "Введено"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:88
+#, fuzzy
+msgid "Entered student: "
+msgstr "выбранные задания"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:221
 msgid "Equation Display"
@@ -2633,6 +2729,12 @@ msgid ""
 "Error getting old set-proctor password from the database: %1.  No update to "
 "the password was done."
 msgstr ""
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:81
+#, fuzzy
+msgid "Error message: "
+msgstr "Сообщения"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2109
@@ -2656,6 +2758,14 @@ msgid ""
 "Error: Reduced scoring date must come between the open date and due date in "
 "set %1"
 msgstr ""
+
+#
+#. ($editFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1976
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:2029
+#, fuzzy
+msgid "Error: The original file %1 cannot be read."
+msgstr "Ошибка: Первоначсальный файл [_1] не удаётся прочесть."
 
 #. ($setID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1086
@@ -2808,6 +2918,12 @@ msgid "Failed to duplicate set: set %1 already exists!"
 msgstr "Не удалось создать дубликат задания: задание %1 уже существует!"
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:77
+#, fuzzy
+msgid "Failed to enter student: "
+msgstr "Не удаётся слздать новое задание: %1"
+
+#
 #. ($filePath)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2392
 #, fuzzy
@@ -2862,6 +2978,11 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1812
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3594
 msgid "Field missing in schema"
+msgstr ""
+
+#. ($self->shortPath($outputFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:581
+msgid "File '%1' exists.  File not saved.  No changes have been made."
 msgstr ""
 
 #
@@ -2949,6 +3070,7 @@ msgstr "Имя"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:537
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1777
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:290
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:766
@@ -3100,6 +3222,10 @@ msgstr "Баллы"
 #, fuzzy
 msgid "Grades"
 msgstr "Баллы"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:97
+msgid "Grades have been saved for all current users."
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm:229
 msgid "Grading assignment:"
@@ -3424,6 +3550,7 @@ msgstr "Отобразить предыдущие ответы"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:541
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1778
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:291
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:767
@@ -3438,6 +3565,12 @@ msgstr "Отобразить предыдущие ответы"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:822
 msgid "Last Name"
 msgstr "Фамилия"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
+#, fuzzy
+msgid "Latest Answers"
+msgstr "Отобразить предыдущие ответы"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:145
 msgid ""
@@ -3589,6 +3722,7 @@ msgstr "Информация о вошедшем"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:158
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:877
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:289
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:765
@@ -3651,6 +3785,16 @@ msgstr ""
 #, fuzzy
 msgid "Manual Grader"
 msgstr "Баллы"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:213
+msgid "Mark All"
+msgstr ""
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
+#, fuzzy
+msgid "Mark Correct"
+msgstr "Верно"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2270
@@ -3738,6 +3882,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1234
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1238
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1252
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:834
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:863
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:408
@@ -3811,6 +3956,11 @@ msgstr ""
 msgid "New passwords saved"
 msgstr "Новый пароль сохранён"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:132
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:133
+msgid "NewVersion"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1852
 msgid "Newer problem set def files must be imported using Hmwk Sets Editor2"
 msgstr ""
@@ -3849,6 +3999,7 @@ msgid "No Description"
 msgstr "Показать/Скрыть описание сайта"
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:63
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:69
 #, fuzzy
 msgid "No action taken"
@@ -3903,6 +4054,12 @@ msgstr ""
 #. ($badID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2765
 msgid "No location with name %1 exists in the database"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:583
+msgid ""
+"No new Achievement ID specified.  No new achievement created.  File not "
+"saved."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:553
@@ -4326,6 +4483,7 @@ msgid "Please select at least one user and try again."
 msgstr "Вам надо указать имя файла для того, чтобы сохранить новый файл."
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:556
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1806
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1856
 msgid "Please specify a file to save to."
@@ -4545,6 +4703,7 @@ msgid "Really delete the items listed above?"
 msgstr ""
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:155
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:842
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:875
@@ -4894,6 +5053,8 @@ msgstr ""
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:167
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:586
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:133
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:134
 msgid "Revert"
 msgstr "Вернуть"
 
@@ -4914,12 +5075,21 @@ msgid "STATUS"
 msgstr ""
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:44
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:219
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:169
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:587
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:386
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:756
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:209
 msgid "Save"
+msgstr "Сохранить"
+
+#
+#. (CGI::b($self->shortPath($self->{sourceFilePath})
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:454
+#, fuzzy
+msgid "Save %1"
 msgstr "Сохранить"
 
 #
@@ -4937,6 +5107,13 @@ msgstr "Сохранить как"
 #, fuzzy
 msgid "Save Changes"
 msgstr "Сохранить изменения"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:45
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:525
+#, fuzzy
+msgid "Save as"
+msgstr "Сохранить как"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:760
@@ -4981,6 +5158,7 @@ msgstr "Сохранить [_1] и просмотреть"
 
 #
 #. ($self->shortPath($outputFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:411
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1194
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1248
 #, fuzzy
@@ -5009,6 +5187,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:837
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:865
 msgid "Score"
+msgstr "Баллы"
+
+# The last symbol "ы" is displayed incorrectly on the button on the "Instructor tools" page 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
+#, fuzzy
+msgid "Score (%)"
 msgstr "Баллы"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:185
@@ -5061,6 +5245,8 @@ msgstr ""
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:158
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:154
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:841
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:873
@@ -5144,6 +5330,12 @@ msgid "Select a listing format:"
 msgstr "Выбрать действите для выполнения"
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:287
+#, fuzzy
+msgid "Select above then:"
+msgstr "выбранные задания"
+
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2259
 #, fuzzy
 msgid "Select all eligible courses"
@@ -5188,6 +5380,10 @@ msgstr "Выбарите действие нмже"
 msgid ""
 "Select one or more sets and one or more users below to assign/unassign each "
 "selected set to/from all selected users."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:189
+msgid "Select sets below to assign them to the newly-created users."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3015
@@ -5678,6 +5874,7 @@ msgid "Stop archiving courses"
 msgstr "Курсы"
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1780
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:293
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:769
@@ -5848,6 +6045,7 @@ msgstr "Выполнить тест %1"
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2635
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2849
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:288
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:281
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:729
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:769
@@ -6022,6 +6220,13 @@ msgid ""
 "as in Simple, plus user, set, problem, and PG data<li value=\"Debug\"> "
 "Debug: as in Standard, plus the problem environment (debugging data)</ol>"
 msgstr ""
+
+#
+#. ($achievementName, $self->shortPath($outputFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:607
+#, fuzzy
+msgid "The evaluator for %1 has been renamed to '%2'."
+msgstr "Заголовок задания [_1] был переименован в  '[_2]'."
 
 #
 #. ($self->shortPath($inputFilePath)
@@ -6719,6 +6924,10 @@ msgid ""
 "value."
 msgstr ""
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:178
+msgid "This set needs to be assigned to you before you can grade it."
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:182
 msgid ""
 "This set will be unavailable to students until they have earned a certain "
@@ -6892,9 +7101,23 @@ msgstr ""
 msgid "URI"
 msgstr ""
 
+#
+#. ($achievementName)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:609
+#, fuzzy
+msgid "Unable to change the evaluator for set %1. Unknown error."
+msgstr "Не удалось изменить заголовок для задания [_1]. Неизвестная ошибка."
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:780
 msgid "Unable to obtain error messages from within the PG question."
 msgstr ""
+
+#
+#. ($self->shortPath($outputFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:399
+#, fuzzy
+msgid "Unable to write to '%1': %2"
+msgstr "Сохранени в файл '[_1]'"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2186
@@ -6990,6 +7213,11 @@ msgstr "Отменить выбр всех заданий"
 msgid "Unselect all users"
 msgstr "Отменить выбор всех пользователей"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:131
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:132
+msgid "Update"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:803
 msgid "Update Display"
 msgstr ""
@@ -7066,6 +7294,19 @@ msgstr ""
 msgid "Use System Default"
 msgstr "Использовать системные настройки по умолчанию"
 
+#
+#. (CGI::b("$achievementID")
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:500
+#, fuzzy
+msgid "Use in achievement %1"
+msgstr "выбранные задания"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:508
+#, fuzzy
+msgid "Use in new achievement:"
+msgstr "выбранные задания"
+
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:367
 msgid "Use log base 10 instead of base <i>e</i>"
 msgstr ""
@@ -7079,6 +7320,17 @@ msgid ""
 "Use the interface below to quickly access commonly-used instructor tools, or "
 "select a tool from the list to the left."
 msgstr ""
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:375
+msgid ""
+"Use this form to report to your professor a problem with the WeBWorK system "
+"or an error in a problem you are attempting. Along with your message, "
+"additional information about the state of the system will be included."
+msgstr ""
+"Используйте эту форму для того, чтобы сообщить вашему преподавателю об "
+"ошибке в работе системы WebWork или об ошибке в задаче. Вместе с этим "
+"сообщением будет отправлена дополнительная информация о состоянии системы."
 
 #. ($userID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:728
@@ -7222,6 +7474,8 @@ msgstr ""
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:156
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:348
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:129
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:130
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2258
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2461
 msgid "View"
@@ -7467,6 +7721,35 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:411
 msgid "Worth"
 msgstr "Ценность"
+
+#
+#. ($self->shortPath($outputFilePath)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:397
+#, fuzzy
+msgid ""
+"Write permissions have not been enabled for '%1'.  Changes must be saved to "
+"another file for viewing."
+msgstr ""
+"Файл  '[_1]' защищён от записи. Изменения должны быть сохранены в другой "
+"файл для просмотра."
+
+#
+#. ($self->shortPath($currentDirectory)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:395
+#, fuzzy
+msgid ""
+"Write permissions have not been enabled in '%1'.  Changes must be saved to a "
+"different directory for viewing."
+msgstr ""
+"Папка  '[_1]' защищена от записи. Изменения должны быть записаны в другую "
+"папку для посмотра."
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:393
+msgid ""
+"Write permissions have not been enabled in the templates directory.  No "
+"changes can be made."
+msgstr "Папка templates закрыта для записи.  Изменения не могут быть записаны."
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:149
@@ -7881,6 +8164,7 @@ msgid "You must specify an email address for the initial instructor."
 msgstr "Вам надо указать имя файла для того, чтобы сохранить новый файл."
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:346
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1074
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1130
 #, fuzzy
@@ -8485,9 +8769,28 @@ msgid "editing visible users"
 msgstr "редактировать видимых пользоваателей"
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:79
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:90
+#, fuzzy
+msgid "email: "
+msgstr "Email"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:503
+#, fuzzy
+msgid "empty"
+msgstr "попытка"
+
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:687
 msgid "enter matching set IDs below"
 msgstr "ниже введите ID для требуемых заданий"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:171
+#, fuzzy
+msgid "entry rows. "
+msgstr "Редактировать задачи"
 
 #. ($restrictLoc, $setName, $@)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1772
@@ -8660,6 +8963,11 @@ msgstr "экспортировать выбранные задания"
 #, fuzzy
 msgid "login"
 msgstr "Логин"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:78
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:89
+msgid "login/studentID: "
+msgstr ""
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:932
@@ -8887,6 +9195,13 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:795
 #, fuzzy
 msgid "section #"
+msgstr "Отдел"
+
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:80
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:91
+#, fuzzy
+msgid "section: "
 msgstr "Отдел"
 
 #
@@ -9402,10 +9717,6 @@ msgstr "выдимы студентам"
 #~ msgstr "_СООБЩЕНИ_ОБ_УМЕНЬШЕНИИ_БАЛЛОВ_2"
 
 #
-#~ msgid "attempt"
-#~ msgstr "попытка"
-
-#
 #~ msgid "completely"
 #~ msgstr "полностью"
 
@@ -9442,13 +9753,6 @@ msgstr "выдимы студентам"
 #
 #~ msgid "hardcopy header file"
 #~ msgstr "файл заголовка для печетной версии задания"
-
-#
-#~ msgid ""
-#~ "Write permissions have not been enabled in the templates directory.  No "
-#~ "changes can be made."
-#~ msgstr ""
-#~ "Папка templates закрыта для записи.  Изменения не могут быть записаны."
 
 #
 #~ msgid "Unpublished"
@@ -9505,28 +9809,12 @@ msgstr "выдимы студентам"
 #~ msgstr "Это задание для студентов [_1]."
 
 #
-#~ msgid ""
-#~ "Write permissions have not been enabled in '[_1]'.  Changes must be saved "
-#~ "to a different directory for viewing."
-#~ msgstr ""
-#~ "Папка  '[_1]' защищена от записи. Изменения должны быть записаны в другую "
-#~ "папку для посмотра."
-
-#
 #~ msgid "blank problem"
 #~ msgstr "пустая задача"
 
 #
 #~ msgid "Enrolled"
 #~ msgstr "Включен в списки"
-
-#
-#~ msgid ""
-#~ "Write permissions have not been enabled for '[_1]'.  Changes must be "
-#~ "saved to another file for viewing."
-#~ msgstr ""
-#~ "Файл  '[_1]' защищён от записи. Изменения должны быть сохранены в другой "
-#~ "файл для просмотра."
 
 #
 #~ msgid ""
@@ -9602,10 +9890,6 @@ msgstr "выдимы студентам"
 #~ "Интерактивная лаборатрия может помочь Вам изучить этот язык."
 
 #
-#~ msgid "Unrecognized saveMode: |[_1]|. Unknown error."
-#~ msgstr "Неопознанная saveMode: |[_1]|. Причина ошибки неизвестна."
-
-#
 #~ msgid ""
 #~ "Error: This path is already in the temporary edit directory -- no new "
 #~ "temporary file is created. path = [_1]"
@@ -9657,10 +9941,6 @@ msgstr "выдимы студентам"
 #~ msgstr "Отменить экспортирование"
 
 #
-#~ msgid "Unable to change the set header for set [_1]. Unknown error."
-#~ msgstr "Не удалось изменить заголовок для задания [_1]. Неизвестная ошибка."
-
-#
 #~ msgid "options information"
 #~ msgstr "информация об опциях"
 
@@ -9676,14 +9956,3 @@ msgstr "выдимы студентам"
 #
 #~ msgid "Drop"
 #~ msgstr "Пропустить"
-
-#
-#~ msgid ""
-#~ "Use this form to report to your professor a problem with the WeBWorK "
-#~ "system or an error in a problem you are attempting. Along with your "
-#~ "message, additional information about the state of the system will be "
-#~ "included."
-#~ msgstr ""
-#~ "Используйте эту форму для того, чтобы сообщить вашему преподавателю об "
-#~ "ошибке в работе системы WebWork или об ошибке в задаче. Вместе с этим "
-#~ "сообщением будет отправлена дополнительная информация о состоянии системы."

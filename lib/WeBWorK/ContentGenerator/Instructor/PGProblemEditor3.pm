@@ -31,7 +31,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id x);
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
@@ -127,11 +127,11 @@ use Fcntl;
 #hiding add_problem option to see if its needed
 use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
-view        => "View",
-add_problem => "Append",
-save        => "Update",
-save_as     => "NewVersion",
-revert      => "Revert",
+view        => x("View"),
+add_problem => x("Append"),
+save        => x("Update"),
+save_as     => x("NewVersion"),
+revert      => x("Revert"),
 };
 #[qw(view save save_as revert add_problem add_header make_local_copy)];
 
@@ -746,7 +746,7 @@ EOF
 				$radio_params->{id} = "action$i";
 
 				if($line_contents){
-					my $title = $actionFormTitles{$actionID};
+					my $title = $r->maketext($actionFormTitles{$actionID});
 					push @divArr, join("",
 					CGI::h3($title),
 					CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br()),
@@ -2026,7 +2026,7 @@ sub revert_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	my $editFilePath    = $self->{editFilePath};
-	return "Error: The original file $editFilePath cannot be read." unless -r $editFilePath;
+	return $r->maketext("Error: The original file [_1] cannot be read.", $editFilePath) unless -r $editFilePath;
 	return "" unless defined($self->{tempFilePath}) and -e $self->{tempFilePath} ;
 	return $r->maketext("Revert to [_1]",$self->shortPath($editFilePath)) ;
 
