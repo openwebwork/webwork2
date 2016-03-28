@@ -261,7 +261,7 @@ sub info {
 			$screenSetHeader = $r->param('sourceFilePath');
 			$screenSetHeader = $ce->{courseDirs}{templates}.'/'.$screenSetHeader unless $screenSetHeader =~ m!^/!;
 			die "sourceFilePath is unsafe!" unless path_is_subdir($screenSetHeader, $ce->{courseDirs}->{templates});
-			$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file").": ",
+			$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:")." ",
 			            $screenSetHeader));
 			$displayMode = $r->param("displayMode") if $r->param("displayMode");
 		}

@@ -367,7 +367,7 @@ sub body {
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"unarchive_course"})}, $r->maketext("Unarchive Course")),
 		 "|",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"upgrade_course"})}, $r->maketext("Upgrade courses")),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"upgrade_course"})}, $r->maketext("Upgrade Courses")),
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, $r->maketext("Manage Locations")),
 		 "|",
@@ -518,7 +518,7 @@ sub add_course_form {
 		CGI::td({},
 			CGI::table({class=>"FormLayout"},
 				CGI::Tr({},
-					CGI::th({class=>"LeftHeader"}, $r->maketext("User ID:")),
+					CGI::th({class=>"LeftHeader"}, $r->maketext("User ID").":"),
 					CGI::td(CGI::textfield(-name=>"add_initial_userID", -value=>$add_initial_userID, -size=>25)),
 				),
 				CGI::Tr({},
@@ -1057,12 +1057,12 @@ sub rename_course_confirm {
 		my %msg =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A         => CGI::span({style=>"color:red"},$r->maketext("Table defined in schema but missing in database")),
 		              WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"},$r->maketext("Table defined in database but missing in schema")),
 		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"},$r->maketext("Table is ok")),
-		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database table definitions do not agree "),
+		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database table definitions do not agree"),
 		);
 		my %msg2 =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A        => CGI::span({style=>"color:red"},$r->maketext("Field missing in database")),
 		              WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"},$r->maketext("Field missing in schema")),
-		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"},$r->maketext("Field is ok ")),
-		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database field definitions do not agree "),
+		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"},$r->maketext("Field is ok")),
+		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database field definitions do not agree"),
 		);
 		my $all_tables_ok=1;
 		my $extra_database_tables=0;
@@ -1594,7 +1594,7 @@ sub do_delete_course {
 		}
         
 		print CGI::div({class=>"ResultsWithoutError"},
-			       CGI::p($r->maketext("Successfully deleted the course $delete_courseID.")),
+			       CGI::p($r->maketext("Successfully deleted the course [_1].",$delete_courseID)),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tDeleted",
@@ -1805,13 +1805,13 @@ sub archive_course_confirm {
 
 		my %msg =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A         => CGI::span({style=>"color:red"}, $r->maketext("Table defined in schema but missing in database")),
 		              WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"}, $r->maketext("Table defined in database but missing in schema")),
-		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"}, $r->maketext("Table is ok ")),
-		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}, $r->maketext("Schema and database table definitions do not agree ")),
+		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"}, $r->maketext("Table is ok")),
+		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}, $r->maketext("Schema and database table definitions do not agree")),
 		);
 		my %msg2 =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A        => CGI::span({style=>"color:red"}, $r->maketext("Field missing in database")),
 		              WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"}, $r->maketext("Field missing in schema")),
 		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"}, $r->maketext("Field is ok")),
-		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}, $r->maketext("Schema and database field definitions do not agree ")),
+		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}, $r->maketext("Schema and database field definitions do not agree")),
 		);
 		my $all_tables_ok=1;
 		my $extra_database_tables=0;
@@ -2589,7 +2589,7 @@ sub manage_location_form {
 		CGI::td({-align=>"left"},[ $actionRadios[1], 
 			$r->maketext("Create Location:") ]),
 		CGI::td({-colspan=>2},
-			$r->maketext("Location name: ") .
+			$r->maketext("Location name:").' ' .
 			CGI::textfield(-name=>"new_location_name",
 				       -size=>"10",
 				       -default=>$r->param("new_location_name")?$r->param("new_location_name"):'')));
@@ -3592,8 +3592,8 @@ sub formatReportOnDatabaseTables {
 		);
 		my %msg2 =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A        => CGI::span({style=>"color:red"},$r->maketext("Field missing in database")),
 					  WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"},$r->maketext("Field missing in schema")),
-					  WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"},$r->maketext("Field is ok ")),
-					  WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"},$r->maketext("Schema and database field definitions do not agree ")),
+					  WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"},$r->maketext("Field is ok")),
+					  WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"},$r->maketext("Schema and database field definitions do not agree")),
 		);
 		my $all_tables_ok=1;
 		my $extra_database_tables=0;

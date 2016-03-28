@@ -482,9 +482,9 @@ sub score_form {
 			-values => [qw(none all selected)],
 			-default => $actionParams{"action.score.scope"}->[0] || "none",
 			-labels => {
-				none => $r->maketext("no achievements."),
-				all => $r->maketext("all achievements."),
-				selected => $r->maketext("selected achievements."),
+				none => $r->maketext("no achievements"),
+				all => $r->maketext("all achievements"),
+				selected => $r->maketext("selected achievements"),
 			},
 			-onchange => $onChange,
 		),
@@ -742,8 +742,8 @@ sub import_form {
 			-value => [qw(none all)],
 			-default => $actionParams{"action.import.assign"}->[0] || "none",
 			-labels => {
-			    all => $r->maketext("all current users."),
-			    none => $r->maketext("no users."),
+			    all => $r->maketext("all current users"),
+			    none => $r->maketext("no users"),
 			},
 			-onchange => $onChange,
 		   ) );

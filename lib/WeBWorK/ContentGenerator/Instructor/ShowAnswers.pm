@@ -514,7 +514,7 @@ sub body {
 		}
 		
 		if ($record{comment}) {
-		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},$r->maketext("Comment: ").PGcore::encode_pg_and_html($record{comment})));
+		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},$r->maketext("Comment").": ".PGcore::encode_pg_and_html($record{comment})));
 		}
 		
 		print CGI::Tr($rowOptions,@row);

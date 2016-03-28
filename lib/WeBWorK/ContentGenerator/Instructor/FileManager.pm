@@ -542,7 +542,7 @@ sub Save {
 			eval {print OUTFILE $data; close(OUTFILE)};
 			if ($@) {$self->addbadmessage($r->maketext("Failed to save: [_1]",$@))}
 			   else {$self->addgoodmessage($r->maketext("File saved"))}
-		} else {$self->addbadmessage($r->maketext("Can't write to file: [_1]", $!))}
+		} else {$self->addbadmessage($r->maketext("Can't write to file [_1]", $!))}
 	} else {$data = ""; $self->addbadmessage("Error: no file data was submitted!")}
 
 	$self->{pwd} = $pwd;
@@ -727,7 +727,7 @@ sub Delete {
 		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
 		print CGI::Tr(
 			CGI::td(
-			  CGI::b($r->maketext("Warning:").' '),$r->maketext("You have requested that the following items be deleted"),
+			  CGI::b($r->maketext("Warning").': '),$r->maketext("You have requested that the following items be deleted"),
 			  CGI::ul(CGI::li(\@filelist)),
 			    ((grep { -d "$dir/$_" } @files)?
 					 CGI::p({style=>"width:500"},$r->maketext("Some of these files are directories. Only delete directories if you really know what you are doing. You can seriously damage your course if you delete the wrong thing.")): ""),
@@ -991,7 +991,7 @@ sub getFile {
 		return;
 	}
 	if (scalar(@files) == 0 || $files[0] eq "") {
-		$self->addbadmessage($r->maketext("You need to select a file to $action."));
+		$self->addbadmessage($r->maketext("You need to select a file to [_1].",$action));
 		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
 		return;
 	}

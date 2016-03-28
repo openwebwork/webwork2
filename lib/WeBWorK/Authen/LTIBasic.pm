@@ -438,7 +438,6 @@ sub authenticate
 	my $nonce = WeBWorK::Authen::LTIBasic::Nonce -> new($r, $self -> {oauth_nonce}, $self -> {oauth_timestamp}); 
 	if (!($nonce -> ok ) )
 		{
-		#croak ($r->maketext("Bad Nonce for user " . $self->{user_id} . ": Nonce = " . $self -> {oauth_nonce} . ", Nonce_timestamp = " . $self -> {oauth_timestamp} .  ", at time " . time()));
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
 		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
 				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor");

@@ -276,7 +276,7 @@ sub pre_header_initialize {
 		my @setsToScore = ();
 	
 		if ($scope eq "none") { 
-			return $r->maketext("No sets selected for scoring".".");
+			return $r->maketext("No sets selected for scoring");
 		} elsif ($scope eq "all") {
 #			@setsToScore = @{ $r->param("allSetIDs") };
 		    @setsToScore = $db->listGlobalSets;
@@ -934,17 +934,23 @@ sub publish_handler {
 	my @setIDs;
 	
 	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
-		@setIDs = ();
-		$result = CGI::div({class=>"ResultsWithError"},$r->maketext("No change made to any set"));
+	  @setIDs = ();
+	  $result = CGI::div({class=>"ResultsWithError"},$r->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
-		@setIDs = @{ $self->{allSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets [_1] all students", $verb));
+	  @setIDs = @{ $self->{allSetIDs} };
+	  $result = $value ?
+	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets made visible for all students")) :
+	      CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets hidden from all students")) ;
 	} elsif ($scope eq "visible") {
-		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible sets [_1] all students", $verb));
+	  @setIDs = @{ $self->{visibleSetIDs} };
+	  $result = $value ?
+	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible sets made visible for all students")) :
+		    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible hidden from all students")) ;
 	} elsif ($scope eq "selected") {
-		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets [_1] all students", $verb));
+	  @setIDs = @{ $genericParams->{selected_sets} };
+	  $result = $value ?
+	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets made visible for all students")) :
+	      CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets hidden from all students")) ;
 	}
 	
 	# can we use UPDATE here, instead of fetch/change/store?
@@ -1514,7 +1520,7 @@ sub saveEdit_handler {
 		my $cutoff = $curr_time + $seconds_per_year*10;
 		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->open_date > $cutoff;
-		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: due date cannot be more than 10 years from now in set [_1]", $setID))
+		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->due_date > $cutoff;
 		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->answer_date > $cutoff;
@@ -1522,10 +1528,10 @@ sub saveEdit_handler {
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date)  {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Due date must come after open date in set [_1]", $setID));
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Close date must come after open date in set [_1]", $setID));
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after due date in set [_1]", $setID));
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after close date in set [_1]", $setID));
 		}
 		
 		# check that the reduced scoring date is in the right place
@@ -1539,7 +1545,7 @@ sub saveEdit_handler {
 		    $Set->reduced_scoring_date
 		    && ($Set->reduced_scoring_date > $Set->due_date 
 			|| $Set->reduced_scoring_date < $Set->open_date)) {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Reduced scoring date must come between the open date and due date in set [_1]", $setID));
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Reduced scoring date must come between the open date and close date in set [_1]", $setID));
 		}
 		
 		$db->putGlobalSet($Set);
@@ -2535,7 +2541,7 @@ sub recordEditHTML {
 	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $visibleClass = $Set->visible ? $r->maketext("font-visible") : $r->maketext("font-hidden");
+	my $visibleClass = $Set->visible ? "font-visible" : "font-hidden";
 	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Scoring Enabled') : $r->maketext('Reduced Scoring Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);

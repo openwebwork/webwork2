@@ -42,7 +42,7 @@ use Fcntl;
 use constant ACTION_FORMS => [qw(save save_as)]; 
 use constant ACTION_FORM_TITLES => {  
 save        => x("Save"),
-save_as     => x("Save as"),
+save_as     => x("Save As"),
 };
 
 
@@ -522,7 +522,7 @@ sub save_as_form {  # calls the save_as_handler
 	my $andRelink = CGI::br(). $use_in_current_achievement.CGI::br().
 	    $create_new_achievement.CGI::br().$dont_use_in_achievement;
 	    
-	return $r->maketext('Save as').
+	return $r->maketext('Save As').
 	    CGI::textfield(
 		-name=>'action.save_as.target_file', -size=>40, -value=>"$sourceFileName",  
 	    ).

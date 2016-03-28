@@ -1853,7 +1853,7 @@ sub body {
 			print CGI::strong($r->maketext("Your score on this (checked, not recorded) submission is [_1]/[_2].",$attemptScore,$totPossible)), 
 				CGI::br();
 			my $recScore = wwRound(2,$recordedScore);
-			print $r->maketext("The recorded score for this test is [_1]/[_2]. ",$recScore, $totPossible);
+			print $r->maketext("The recorded score for this test is [_1]/[_2].",$recScore, $totPossible);
 			print CGI::end_div();
 		}
 	}
@@ -1911,10 +1911,10 @@ sub body {
 			if ( $can{showScore} ) {
 			    print CGI::start_div({class=>'gwMessage'});
 			    
-			    my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3]", $versionNumber, wwRound(2,$recordedScore), $totPossible);
+			    my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3].", $versionNumber, wwRound(2,$recordedScore), $totPossible);
 			    if ( $exceededAllowedTime && 
 				 $recordedScore == 0 ) {
-				$scMsg .= $r->maketext(", because you exceeded the allowed time.");
+				$scMsg .= $r->maketext("You exceeded the allowed time.");
 			    } else {
 				$scMsg .= ".  ";
 			    }
@@ -1934,8 +1934,8 @@ sub body {
 		}
 
 		if ( $canShowWork && $set->set_id ne "Undefined_Set" ) {
-			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade",$versionNumber);
-			print "" . (($can{showScore}) ? $r->maketext(", but you may still check your answers.") : ".") ;
+			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade.",$versionNumber);
+			print "" . (($can{showScore}) ? $r->maketext("You may still check your answers.") : ".") ;
 
 			# print a "printme" link if we're allowed to see our 
 			#    work
@@ -1966,9 +1966,6 @@ sub body {
 	# now, we print out the rest of the page if we're not hiding submitted
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
-		my $when = ( $set->hide_work eq 'BeforeAnswerDate' ) 
-			? $r->maketext(' until ') . ($self->formatDateTime($set->answer_date))
-			: '';
 		print CGI::start_div({class=>"gwProblem"});
 		if ( $set->hide_work eq 'BeforeAnswerDate' ) {
 		  print CGI::strong($r->maketext("Completed results for this assignment are not available until [_1]",$self->formatDateTime($set->answer_date)));
@@ -2110,7 +2107,7 @@ sub body {
 					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
-				       CGI::b($r->maketext("Note: ")) : "", 
+				       CGI::b($r->maketext("Note")).': ' : "", 
 				       CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 

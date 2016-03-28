@@ -672,11 +672,11 @@ sub print_form {
 				 #CGI::hr(),
 				 CGI::div(
 					 "\n", $r->maketext('From:'),'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
-					 "\n", CGI::br(),$r->maketext('Reply-To:'.' '), CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-					 "\n", CGI::br(),$r->maketext('Subject: '.' '), CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
+					 "\n", CGI::br(),$r->maketext('Reply-To:'),' ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
+					 "\n", CGI::br(),$r->maketext('Subject: ').' ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
 				),
 				#CGI::hr(),
-				$r->maketext("Editor rows:".' '), CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
+				$r->maketext("Editor rows:").' ', CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
 				' '.$r->maketext("columns:").' ', CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
 				CGI::br(),
 				CGI::submit(-name=>'updateSettings', -value=>$r->maketext("Update settings and refresh page")),
@@ -754,7 +754,7 @@ sub print_form {
 				 CGI::Tr( {},
 					 CGI::td({}, CGI::submit(-name=>'sendEmail', -id=>"sendEmail_id", -value=>$r->maketext('Send Email')) ), "\n",
 					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save'))," to $output_file"), " \n",
-					 CGI::td({}, CGI::submit(-name=>'saveAs', -value=>$r->maketext('Save as:')),
+					 CGI::td({}, CGI::submit(-name=>'saveAs', -value=>$r->maketext('Save as').":"),
 					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
 					 ), "\n",
 					 CGI::td(CGI::submit(-name=>'saveDefault', -value=>$r->maketext('Save as Default'))),

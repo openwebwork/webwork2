@@ -614,7 +614,7 @@ sub display_form {
 		$perm_change_theme ?
 		 CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
-				CGI::b($r->maketext("Hardcopy Theme:")), " ",
+				CGI::b($r->maketext("Hardcopy Theme")), ": ",
 				CGI::radio_group(
 					-name    => "hardcopy_theme",
 					-values  => $ce->{hardcopyThemes},

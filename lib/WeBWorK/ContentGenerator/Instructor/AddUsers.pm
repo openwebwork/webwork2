@@ -74,21 +74,21 @@ sub initialize {
 			if ($@) {
 				my $addError = $@;
 				$self->{studentEntryReport} .= join("",
-					CGI::b($r->maketext("Failed to enter student: ")), $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", ".$r->maketext("login/studentID: ")), $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", ".$r->maketext("email: ")), $newUser->email_address,
-					CGI::b(", ".$r->maketext("section: ")), $newUser->section,
-					CGI::br(), CGI::b($r->maketext("Error message: ")), $addError,
+					CGI::b($r->maketext("Failed to enter student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
+					CGI::b(", ".$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
+					CGI::b(", ".$r->maketext("email:")),' ', $newUser->email_address,
+					CGI::b(", ".$r->maketext("section:")),' ', $newUser->section,
+					CGI::br(), CGI::b($r->maketext("Error message:")), ' ', $addError,
 					CGI::hr(),CGI::br(),
 				);
 			} else {
 				$db->addPermissionLevel($newPermissionLevel);
 				$db->addPassword($newPassword);
 				$self->{studentEntryReport} .= join("",
-					CGI::b($r->maketext("Entered student: ")), $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", ",$r->maketext("login/studentID: ")), $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", ",$r->maketext("email: ")), $newUser->email_address,
-					CGI::b(", ",$r->maketext("section: ")), $newUser->section,CGI::hr(),CGI::br(),
+					CGI::b($r->maketext("Entered student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
+					CGI::b(", ",$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
+					CGI::b(", ",$r->maketext("email:")),' ', $newUser->email_address,
+					CGI::b(", ",$r->maketext("section:")),' ', $newUser->section,CGI::hr(),CGI::br(),
 
 				);
 			}
@@ -168,7 +168,7 @@ sub addStudentForm {
 		CGI::start_form({method=>"post", action=>$r->uri(),name=>"add_users"}),
 		$self->hidden_authen_fields(),"\n",
 		CGI::submit(-name=>"Create", -value=>$r->maketext("Create")),"&nbsp;&nbsp;","\n",
-		CGI::input({type=>'text', name=>'number_of_students', value=>$numberOfStudents,size => 3}), " ".$r->maketext("entry rows. "),"\n",
+		CGI::input({type=>'text', name=>'number_of_students', value=>$numberOfStudents,size => 3}), " ".$r->maketext("entry rows."),"\n",
 		CGI::end_form(),"\n",
 		CGI::hr(),
 		

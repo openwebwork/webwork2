@@ -615,7 +615,7 @@ sub pre_header_initialize {
 		if ($write_result) {
 			$self->addbadmessage($write_result);
 		} else {
-			$self->addgoodmessage($r->maketext("Changes saved."));
+			$self->addgoodmessage($r->maketext("Changes saved"));
 		}
 	}
 }
@@ -690,7 +690,7 @@ sub body {
 	print CGI::p(CGI::div({-align=>'center'}, CGI::b($r->maketext($configTitle))));
 
 	print CGI::start_table({-border=>"1"});
-	print '<tr>'.CGI::th($r->maketext('What')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
+	print '<tr>'.CGI::th($r->maketext('Setting')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
 		print "\n<tr>";

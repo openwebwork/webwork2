@@ -176,7 +176,7 @@ sub body {
 	
 
 	
-	print CGI::h2($r->maketext("Change Display Options"));
+	print CGI::h2($r->maketext("Change Display Settings"));
 
 	if ($changeOptions) {
 	    
