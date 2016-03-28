@@ -33,6 +33,13 @@ $authen{user_module} = [
 
 $external_auth=1;
 
+# NOTE:  If external authentication is disabled
+# then you should probably also prevent students
+# from changing their passwords (because they cant use them).
+# To do this ucomment the following
+
+#  $permissionLevels{change_password} = "ta";
+
 ################################################################################
 # LTI Basic parameters
 ################################################################################
@@ -108,6 +115,14 @@ $NonceLifeTime=60; # in seconds
 # logs in.  
 
 $LMSManageUserData=1;
+
+
+# NOTE:  If mange user data is enabled  then you should probably also
+# prevent students from changing their email because the changes
+# will be overwritten.  To do this ucomment the following
+
+#  $permissionLevels{change_email} = "ta";
+
 
 # This allows you to override the URL that Oauth will use to validate the 
 # authentication.  This is important if you have some sort of setup (e.g. load
