@@ -94,8 +94,8 @@ $(function(){
     $('#login_form input').addClass('input-large');    
     
     // Changes edit links in info panels to buttons
-    $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
-    var editButton = $("#info-panel-right a:contains('[edit]')");
+    var editButton = $("#info-panel-right h2:first a:first")
+    editButton.addClass('btn btn-small btn-info');
     editButton.text(editButton.text().replace(/\[([^\]].*)\]/, '$1'));
 
     //Problem page
