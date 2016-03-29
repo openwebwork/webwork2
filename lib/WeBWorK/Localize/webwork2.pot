@@ -1881,6 +1881,11 @@ msgstr ""
 msgid "Error: open date cannot be more than 10 years from now in set %1"
 msgstr ""
 
+#. ($problem_desc, $problem_name, CGI::br()
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1230
+msgid "Errors encountered while processing %1. This %2 has been omitted from the hardcopy. Error text: %3"
+msgstr ""
+
 #. ("$coursesDir/$failed_courses[0]/")
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3124
 msgid "Errors occured while hiding the courses listed below when attempting to create the file hide_directory in the course's directory. Check the ownership and permissions of the course's directory, e.g %1"
@@ -5171,6 +5176,11 @@ msgstr ""
 msgid "Warning: Deletion destroys all user-related data and is not undoable!"
 msgstr ""
 
+#. ($problem_desc , CGI::br()
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1223
+msgid "Warnings encountered while processing %1. Error text: %2"
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2106
 msgid "WeBWorK Error"
 msgstr ""
@@ -5762,7 +5772,7 @@ msgid "Your systems are up to date!"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:307 /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:71
-msgid "[edit]"
+msgid "[Edit]"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:228

@@ -95,7 +95,8 @@ $(function(){
     
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
-    $("#info-panel-right a:contains('[edit]')").text('Edit');
+    var editButton = $("#info-panel-right a:contains('[edit]')");
+    editButton.text(editButton.text().replace(/\[([^\]].*)\]/, '$1'));
 
     //Problem page
     $('.currentProblem').addClass('active');
@@ -104,7 +105,7 @@ $(function(){
     $('#problem-sets-form').addClass('form-inline');
     $('.body:has(.problem_set_table)').addClass('problem_set_body');
     $('.problem_set_table').addClass('table');
-    if($('.problem_set_table th:contains("Test Score")').length > 0) {
+    if($('.problem_set_table').find("tr:first th").length > 3) {
 	$('.problem_set_table').addClass('small-table-text');
     }
 

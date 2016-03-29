@@ -68,7 +68,7 @@ sub info {
 		}
 		
 		if ($editorURL) {
-			print CGI::h2($r->maketext("Course Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[edit~]")));
+			print CGI::h2($r->maketext("Course Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[Edit~]")));
 		} else {
 			print CGI::h2($r->maketext("Course Info"));
 		}

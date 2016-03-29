@@ -2725,6 +2725,13 @@ msgstr ""
 msgid "Error: open date cannot be more than 10 years from now in set %1"
 msgstr ""
 
+#. ($problem_desc, $problem_name, CGI::br()
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1230
+msgid ""
+"Errors encountered while processing %1. This %2 has been omitted from the "
+"hardcopy. Error text: %3"
+msgstr ""
+
 #. ("$coursesDir/$failed_courses[0]/")
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3124
 msgid ""
@@ -7596,6 +7603,11 @@ msgid "Warning: Deletion destroys all user-related data and is not undoable!"
 msgstr ""
 "tr: Warning: Deletion destroys all user-related data and is not undoable!"
 
+#. ($problem_desc , CGI::br()
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1223
+msgid "Warnings encountered while processing %1. Error text: %2"
+msgstr ""
+
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2106
 #, fuzzy
@@ -8454,7 +8466,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:307
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:71
 #, fuzzy
-msgid "[edit]"
+msgid "[Edit]"
 msgstr "עריכה []"
 
 #

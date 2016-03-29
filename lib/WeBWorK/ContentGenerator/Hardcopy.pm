@@ -1219,18 +1219,15 @@ sub write_problem_tex {
 		
 	# deal with PG warnings
 	if ($pg->{warnings} ne "") {
-		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, "[edit]")
-			." Warnings encountered while processing $problem_desc. "
-			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings}))
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("[Edit]"))
+			.' '.$r->maketext("Warnings encountered while processing [_1]. Error text: [_2]", $problem_desc , CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings})))
 		);
 	}
 	
 	# deal with PG errors
 	if ($pg->{flags}->{error_flag}) {
-		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, "[edit]")
-			." Errors encountered while processing $problem_desc. "
-			."This $problem_name has been omitted from the hardcopy. "
-			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors}))
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("[Edit]")).' '
+			.$r->maketext("Errors encountered while processing [_1]. This [_2] has been omitted from the hardcopy. Error text: [_3]", $problem_desc, $problem_name, CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors})))
 		);
 		return;
 	}

@@ -239,7 +239,7 @@ sub _init {
 
 sub maketext {
 	my $self = shift;
-	return '+'.&{$self->{maketext}}(@_).'+';
+	return '_'.&{$self->{maketext}}(@_).'_';
 	return &{$self->{maketext}}(@_);
 }
 sub formatAnswerRow {
