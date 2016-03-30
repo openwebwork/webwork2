@@ -355,7 +355,13 @@ sub setListRow {
 	
 	my $name = $set->set_id;
 	my @restricted = $ce->{options}{enableConditionalRelease} ?  
-	    is_restricted($db, $set, $effectiveUser) : ();
+	  is_restricted($db, $set, $effectiveUser) : ();
+	# The set shouldn't be shown if the LTI grade mode is set to homework and we dont
+	# have a source did to use to send back grades.  
+	my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework'
+	  && !$set->lis_source_did;
+
+	
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");
@@ -447,17 +453,21 @@ sub setListRow {
 	      
 	      $status = $self->set_due_msg($set,0);
 	      
-	      if (!@restricted) {
-		$setIsOpen = 1;
-	      } else {
+	      if (@restricted) {
 		my $restriction = ($set->restricted_status)*100;
 		$control = "" unless $preOpenSets;
-		$interactive = $name unless $preOpenSets;
-		
-		$status .= restricted_progression_msg($r,0,$restriction,@restricted);
+		$interactive = $display_name unless $preOpenSets;
 		$setIsOpen = 0;
+		$status .= restricted_progression_msg($r,0,$restriction,@restricted);
+	      } elsif ($LTIRestricted) {
+		$status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");   
+		$control = "" unless $preOpenSets;
+		$interactive = $display_name unless $preOpenSets;
+		$setIsOpen = 0;
+	      } else {
+	      	$setIsOpen = 1;
 	      }
-
+	      
 	      if ($setIsOpen ||  $preOpenSets ) {
 		# reset the link
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
@@ -488,22 +498,27 @@ sub setListRow {
 	  }
 	  
 	  $control = "" unless $preOpenSets;
-	  $interactive = $name unless $preOpenSets;
+	  $interactive = $display_name unless $preOpenSets;
 	  
 	} elsif (time < $set->due_date) {
 	  
 	  $status = $self->set_due_msg($set,0);
 	  
-	  if (!@restricted) {
-	    $setIsOpen = 1;
-	  } else {
+	  if (@restricted) {
 	    my $restriction = ($set->restricted_status)*100;
 	    $control = "" unless $preOpenSets;
-	    $interactive = $name unless $preOpenSets;
+	    $interactive = $display_name unless $preOpenSets;
 	    
 	    $status .= restricted_progression_msg($r,0,$restriction, @restricted);
 	    
 	    $setIsOpen = 0;
+	  } elsif ($LTIRestricted) {
+	    $status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");   
+	    $control = "" unless $preOpenSets;
+	    $interactive = $display_name unless $preOpenSets;
+	    $setIsOpen = 0;
+	  } else {
+	    $setIsOpen = 1;
 	  }
 	  
 	} elsif (time < $set->answer_date) {
@@ -636,14 +651,14 @@ sub set_due_msg {
   my $ce = $r->ce;
   my $set = shift;
   my $gwversion = shift;
-  my $status; 
+  my $status = ''; 
 
   my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date < $set->due_date;
   my $reduced_scoring_date = $set->reduced_scoring_date;
   my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date,undef,$ce->{studentDateDisplayFormat});
+
   my $t = time;
 
-  
   if ($enable_reduced_scoring &&
       $t < $reduced_scoring_date) {
     

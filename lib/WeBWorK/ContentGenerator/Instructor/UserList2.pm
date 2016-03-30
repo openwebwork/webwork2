@@ -186,6 +186,9 @@ use constant  FIELD_PROPERTIES => {
 	},
 	useMathView => {
 	    access => 'hidden',
+        },
+        lis_source_did => {
+	    access => 'hidden',
 	},
 };
 sub pre_header_initialize {
@@ -1318,11 +1321,16 @@ sub savePassword_handler {
 		die $r->maketext("record for visible user [_1] not found", $userID) unless $User;
 		my $param = "user.${userID}.new_password";
 			if ((defined $tableParams->{$param}->[0]) and ($tableParams->{$param}->[0])) {
-				my $newP = $tableParams->{$param}->[0];
-				my $Password = eval {$db->getPassword($User->user_id)}; # checked	 	
-				my 	$cryptPassword = cryptPassword($newP);											 
-				$Password->password(cryptPassword($newP));
-				eval { $db->putPassword($Password) };				
+			  my $newP = $tableParams->{$param}->[0];
+			  my $Password = eval {$db->getPassword($User->user_id)}; # checked
+			  my 	$cryptPassword = cryptPassword($newP);											 				if (!defined($Password)) {
+			    $Password = $db->newPassword();
+			    $Password->user_id($userID);
+			    $Password->password(cryptPassword($newP));
+			    eval { $db->addPassword($Password) };		             		} else { 
+			      
+			      $Password->password(cryptPassword($newP));
+			      eval { $db->putPassword($Password) };		             		}
 			}
 	}
 	
