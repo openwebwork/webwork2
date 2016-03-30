@@ -566,8 +566,8 @@ sub display_form {
 	
 	}
 
-	    
-
+	my %hardcopyThemeNames = map {$_ => $r->maketext($ce->{hardcopyThemeNames}->{$_})} @{$ce->{hardcopyThemes}};
+	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
@@ -619,7 +619,7 @@ sub display_form {
 					-name    => "hardcopy_theme",
 					-values  => $ce->{hardcopyThemes},
 					-default => scalar($r->param("hardcopyTheme")) || $ce->{hardcopyTheme},
-					-labels  => $ce->{hardcopyThemeNames}, 
+					-labels  => \%hardcopyThemeNames
 				),
 			),
 		       ) : '',
@@ -1219,14 +1219,14 @@ sub write_problem_tex {
 		
 	# deal with PG warnings
 	if ($pg->{warnings} ne "") {
-		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("[Edit]"))
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("~[Edit~]"))
 			.' '.$r->maketext("Warnings encountered while processing [_1]. Error text: [_2]", $problem_desc , CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings})))
 		);
 	}
 	
 	# deal with PG errors
 	if ($pg->{flags}->{error_flag}) {
-		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("[Edit]")).' '
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("~[Edit~]")).' '
 			.$r->maketext("Errors encountered while processing [_1]. This [_2] has been omitted from the hardcopy. Error text: [_3]", $problem_desc, $problem_name, CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors})))
 		);
 		return;
@@ -1258,13 +1258,15 @@ sub write_problem_tex {
 			my $recScore = $pg->{state}->{recorded_score};
 			my $corrMsg = '';
 			if ( $recScore == 1 ) {
-				$corrMsg = ' (correct)';
+				$corrMsg = ' '.$r->maketext('(correct)');
 			} elsif ( $recScore == 0 ) {
-				$corrMsg = ' (incorrect)';
+				$corrMsg = ' '.$r->maketext('(incorrect)');
 			} else {
-				$corrMsg = " (score $recScore)";
+				$corrMsg = " ".$r->maketext('(score [_1])',$recScore);
 			}
-		my $stuAnswers = "\\par{\\small{\\it Answer(s) submitted:}\n" .
+			my $stuAnswers = "\\par{\\small{\\it ".
+			  $r->maketext("Answer(s) submitted:").
+			  "}\n" .
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
 			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
@@ -1277,8 +1279,10 @@ sub write_problem_tex {
 	# write the list of correct answers is appropriate; ANSWER_ENTRY_ORDER
 	#   isn't defined for versioned sets?  this seems odd FIXME  GWCHANGE
 	if ($showCorrectAnswers && $MergedProblem->problem_id != 0 && @ans_entry_order) {
-		my $correctTeX = "\\par{\\small{\\it Correct Answers:}\n"
-			. "\\vspace{-\\parskip}\\begin{itemize}\n";
+	  my $correctTeX = "\\par{\\small{\\it ".
+	    $r->maketext("Correct Answers:").
+	    "}\n".
+	    "\\vspace{-\\parskip}\\begin{itemize}\n";
 		
 		foreach my $ansName (@ans_entry_order) {
 			my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};

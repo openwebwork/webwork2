@@ -367,7 +367,7 @@ sub view_problems_line {
 	my $internal_name = shift;
 	my $label = shift;
 	my $r = shift; # so we can get parameter values
-	my $result = CGI::submit(-name=>"$internal_name", -value=>$r->maketext($label));
+	my $result = CGI::submit(-name=>"$internal_name", -value=>$label);
 
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 	my @active_modes = grep { exists $display_modes{$_} }

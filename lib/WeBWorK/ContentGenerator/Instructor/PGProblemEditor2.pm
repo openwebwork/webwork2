@@ -1913,7 +1913,7 @@ sub save_as_handler {
 		#################################################
 
 			#$self->{status_message} = '';  ## DPVC remove old messages
-			$self->addgoodmessage($r->maketext("A new file has been created at '[_1]' with the contents below.  Now changes have been made to set [_2]", $self->shortPath($outputFilePath), $setName));
+			$self->addgoodmessage($r->maketext("A new file has been created at '[_1]' with the contents below.  No changes have been made to set [_2]", $self->shortPath($outputFilePath), $setName));
 		} else {
 			$self->addbadmessage("Don't recognize saveMode: |$saveMode|. Unknown error.");
 		}

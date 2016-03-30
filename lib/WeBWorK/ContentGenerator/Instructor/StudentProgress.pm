@@ -795,7 +795,7 @@ sub displaySets {
 					   -label=>$r->maketext('section #')),
 			     CGI::checkbox(-name=>'show_recitation', -value=>'1', 
 					   -checked=>$showColumns{'recit'},
-					   -label=>$r->maktext('recitation #')),
+					   -label=>$r->maketext('recitation #')),
 			     CGI::checkbox(-name=>'show_login', -value=>'1', 
 					   -checked=>$showColumns{'login'}, 
 					   -label=>$r->maketext('login')), CGI::br();

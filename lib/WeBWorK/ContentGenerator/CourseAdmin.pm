@@ -371,7 +371,7 @@ sub body {
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, $r->maketext("Manage Locations")),
 		 "|",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"hide_inactive_course"})}, $r->maketext("Hide Inactive courses")),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"hide_inactive_course"})}, $r->maketext("Hide Inactive Courses")),
 		CGI::hr(),
 		$methodMessage,
 		
@@ -1057,12 +1057,12 @@ sub rename_course_confirm {
 		my %msg =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A         => CGI::span({style=>"color:red"},$r->maketext("Table defined in schema but missing in database")),
 		              WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"},$r->maketext("Table defined in database but missing in schema")),
 		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"},$r->maketext("Table is ok")),
-		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database table definitions do not agree"),
+		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"},$r->maketext("Schema and database table definitions do not agree")),
 		);
 		my %msg2 =(    WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_A        => CGI::span({style=>"color:red"},$r->maketext("Field missing in database")),
 		              WeBWorK::Utils::CourseIntegrityCheck::ONLY_IN_B         => CGI::span({style=>"color:red"},$r->maketext("Field missing in schema")),
 		              WeBWorK::Utils::CourseIntegrityCheck::SAME_IN_A_AND_B   => CGI::span({style=>"color:green"},$r->maketext("Field is ok")),
-		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"}," Schema and database field definitions do not agree"),
+		              WeBWorK::Utils::CourseIntegrityCheck::DIFFER_IN_A_AND_B => CGI::span({style=>"color:red"},$r->maketext("Schema and database field definitions do not agree")),
 		);
 		my $all_tables_ok=1;
 		my $extra_database_tables=0;
@@ -2850,7 +2850,7 @@ sub edit_location_form {
 
 	} else {
 		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("Location $locationID does not exist in the WeBWorK database.  Please check your input (perhaps you need to reload the location management page?).",$locationID));
+			       $r->maketext("Location [_1] does not exist in the WeBWorK database.  Please check your input (perhaps you need to reload the location management page?).",$locationID));
 
 		$self->manage_location_form;
 	}
@@ -3010,7 +3010,7 @@ sub hide_inactive_course_form {
 		@hideCourseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
 	}
 	
-	print CGI::h2($r->maketext("Hide Inactive courses"));
+	print CGI::h2($r->maketext("Hide Inactive Courses"));
 	
 		print CGI::p($r->maketext('Select the course(s) you want to hide (or unhide) and then click "Hide Courses" (or "Unhide Courses"). Hiding a course that is already hidden does no harm (the action is skipped). Likewise unhiding a course that is already visible does no harm (the action is skipped).  Hidden courses are still active but are not listed in the list of WeBWorK courses on the opening page.  To access the course, an instructor or student must know the full URL address for the course.')
 	);

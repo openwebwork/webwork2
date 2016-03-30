@@ -1,6 +1,14 @@
 #!/bin/bash
 
-command -v xgettext.pl >/dev/null 2>&1 || { echo >&2 "xgettext.pl needs to be installed.  It is inlcuded in the perl package Locale::Maketext::Extract. Aborting."; exit 1; }
+if [ -z "$WEBWORK_ROOT" ] || [ -z "$PG_ROOT" ]; then
+    echo >&2 "You need to set both the WEBWORK_ROOT and PG_ROOT environment variables.  Aborting."
+    exit 1
+fi
+
+command -v xgettext.pl >/dev/null 2>&1 || {
+    echo >&2 "xgettext.pl needs to be installed.  It is inlcuded in the perl package Locale::Maketext::Extract. Aborting.";
+    exit 1;
+}
 
 LOCDIR=$WEBWORK_ROOT/lib/WeBWorK/Localize
 

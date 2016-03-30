@@ -490,7 +490,7 @@ sub setListRow {
 	  } 
 	  # old conditional
 	} elsif (time < $set->open_date) {
-	  $status = $r->maketext("Will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
+	  $status = $r->maketext("Will open on [_1].", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
 	  
 	  if (@restricted) {
 	    my $restriction = ($set->restricted_status)*100;
@@ -522,11 +522,11 @@ sub setListRow {
 	  }
 	  
 	} elsif (time < $set->answer_date) {
-	  $status = $r->maketext("Closed, answers on [_1]", $self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat}));
+	  $status = $r->maketext("Closed, answers on [_1].", $self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat}));
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
-	  $status = $r->maketext("Closed, answers recently available");
+	  $status = $r->maketext("Closed, answers recently available.");
 	} else {
-	  $status = $r->maketext("Closed, answers available");
+	  $status = $r->maketext("Closed, answers available.");
 	}
 	
 	if ($multiSet) {

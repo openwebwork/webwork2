@@ -1511,7 +1511,7 @@ sub fieldEditHTML {
 		if ($type eq "status") {
 			my $status_name = $ce->status_abbrev_to_name($value);
 			if (defined $status_name) {
-				$value = "$status_name";
+				$value = $r->maketext($status_name);
 			}
 		}
 		return $value;
@@ -1583,7 +1583,7 @@ sub fieldEditHTML {
 			my $val = $roles{$role};
 			next unless $val <= $editorUserPermission;
 			push(@values, $val);
-			$labels{$val} = $role;
+			$labels{$val} = $r->maketext($role);
 			$default = $val if ( $value eq $role );
 		}
 		
@@ -1751,7 +1751,8 @@ sub recordEditHTML {
 		my $fieldValue = $PermissionLevel->$field;
 		# get name out of permission level 
 		if ( $field eq 'permission' ) {
-			($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } ( keys ( %{$ce->{userRoles}} ) );
+		  ($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } ( keys ( %{$ce->{userRoles}} ) );
+		  $fieldValue = $r->maketext($fieldValue)
 		}
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = 'readonly' unless $editMode;

@@ -83,7 +83,7 @@ sub negquant {
 %Lexicon = (
 	    '_AUTO' => 1,
 	    
-	    '_REQUEST_ERROR' => x(q{ WeBWorK has encountered a software error while attempting to process this problem. It is likely that there is an error in the problem itself. If you are a student, report this error message to your professor to have it corrected. If you are a professor, please consult the error output below for more information.}),
+	    '_REQUEST_ERROR' => x(q{WeBWorK has encountered a software error while attempting to process this problem. It is likely that there is an error in the problem itself. If you are a student, report this error message to your professor to have it corrected. If you are a professor, please consult the error output below for more information.}),
 	    
 	    '_LOGIN_MESSAGE' => x(q{If you check [_1] your login information will be remembered by the browser you are using, allowing you to visit WeBWorK pages without typing your user name and password (until your session expires). This feature is not safe for public workstations, untrusted machines, and machines over which you do not have direct control.}),
 	    
@@ -100,6 +100,14 @@ sub negquant {
 	    
 	    "_USER_TABLE_SUMMARY"    => x(q{A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user.}),
 
+	    "_ONE_COLUMN" => x('One Column'),
+
+	    "_TWO_COLUMNS" => x('Two Columns'), 
+
+	    "_PERMISSIONS" => [x('guest'), x('student'), x('login_proctor'), x('grade_proctor'), x('ta'), x('professor'), x('admin'), x('nobody')],
+
+	    "_STATUS" => [x('Enrolled'),x('Audit'),x('Drop'),x('Proctor')],
+	    
 	   );
 
 # These are strings from the config page.  They are reproduced here only so
@@ -380,9 +388,9 @@ my $ConfigStrings = [
 		{ var => 'mail{feedbackVerbosity}',
 		  doc => x('E-mail verbosity level'),
 		  doc2 => x('The e-mail verbosity level controls how much information is automatically added to feedback e-mails.  Levels are<ol><li value="Simple"> Simple: send only the feedback comment and context link<li value="Standard"> Standard: as in Simple, plus user, set, problem, and PG data<li value="Debug"> Debug: as in Standard, plus the problem environment (debugging data)</ol>'),
-		  labels=>{'0' => 'Simple',
-			   '1' => 'Standard',
-			   '2' => 'Debug'},
+		  labels=>{'0' => x('Simple'),
+			   '1' => x('Standard'),
+			   '2' => x('Debug')},
 		  values => [qw(0 1 2)],
 		  type => 'popuplist'
 

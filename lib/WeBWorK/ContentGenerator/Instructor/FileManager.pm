@@ -932,7 +932,7 @@ sub Upload {
 	}
 
 	if (-e $file) {
-	  $self->addgoodmessage($r->maketext("[_1] file '[_2]' uploaded successfully",$type, $name));
+	  $self->addgoodmessage($r->maketext("File '[_2]' uploaded successfully",$name));
 	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
 	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
 	      if (unlink($file)) {$self->addgoodmessage($r->maketext("Archive '[_1]' deleted", $name))}
