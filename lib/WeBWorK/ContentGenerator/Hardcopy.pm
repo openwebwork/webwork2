@@ -153,7 +153,7 @@ sub pre_header_initialize {
 		
 		# make sure we are allowed to generate hardcopy in this format
 		unless ($authz->hasPermissions($userID, "download_hardcopy_format_$hardcopy_format")) {
-			$self->addbadmessage($r->maketext("You do not have permission to generate hardcopy in $hardcopy_format format."));
+			$self->addbadmessage($r->maketext("You do not have permission to generate hardcopy in [_1] format.", $hardcopy_format));
 			$validation_failed = 1;
 		}
 

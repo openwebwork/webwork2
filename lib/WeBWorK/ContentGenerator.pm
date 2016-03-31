@@ -43,7 +43,6 @@ miscellaneous utilities are provided.
 
 use strict;
 use warnings;
-use utf8;
 use Carp;
 #use CGI qw(-nosticky *ul *li escapeHTML);
 use WeBWorK::CGI;

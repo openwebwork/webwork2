@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2016-03-30 15:01-0400\n"
+"PO-Revision-Date: 2016-03-31 10:14-0400\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -187,11 +187,13 @@ msgstr ""
 msgid "(This test is overtime because it was not submitted in the allowed time.)"
 msgstr ""
 
+# $testNoun is either "test" or "submission"
 #. ($testNoun, $self->formatDateTime($set->answer_date)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1821
 msgid "(Your score on this %1 is not available until %2.)"
 msgstr ""
 
+# $testNoun is either "test" or "submission"
 #. ($testNoun)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1823
 msgid "(Your score on this %1 is not available.)"
@@ -6027,16 +6029,19 @@ msgstr ""
 msgid "Your recorded score on this test (number %1) is %2/%3."
 msgstr ""
 
+# $testNounNum is either "test (#)" or "submission (#)"
 #. ($testNounNum)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1813
 msgid "Your score on this %1 WAS recorded."
 msgstr ""
 
+# $testNoun is either "test" or "submission"
 #. ($testNoun,$attemptScore,$totPossible)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1818
 msgid "Your score on this %1 is %2/%3."
 msgstr ""
 
+# $testNounNum is either "test (#)" or "submission (#)
 #. ($testNounNum)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1809
 msgid "Your score on this %1 was NOT recorded."
