@@ -136,42 +136,43 @@ msgstr "%1% correcto"
 
 #
 #. ($e_user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:163
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:187
 #, fuzzy
 msgid "%1's Current Address"
 msgstr " %1's E-mail actual"
 
 #
 #. ($user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:118
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:142
 #, fuzzy
 msgid "%1's Current Password"
 msgstr "Contraseña actual"
 
 #
 #. ($e_user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:167
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:191
 #, fuzzy
 msgid "%1's New Address"
 msgstr "%1's nuevo correo"
 
 #
 #. ($e_user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:122
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:146
 #, fuzzy
 msgid "%1's New Password"
 msgstr "Nueva Contraseña"
 
 #
 #. ($e_user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:97
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:121
 #, fuzzy
 msgid "%1's new password cannot be blank."
 msgstr "%1 nueva contraseña no puede dejarse en blanco."
 
 #
 #. ($e_user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:85
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:107
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:93
 #, fuzzy
 msgid "%1's password has been changed."
 msgstr "La contraseña de %1 ha sido cambiada."
@@ -565,7 +566,7 @@ msgstr ""
 
 #
 #. (HTML::Entities::encode_entities($eUserID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1000
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:999
 #, fuzzy
 msgid "Acting as %1."
 msgstr "Actuando como %1"
@@ -579,7 +580,7 @@ msgid "Action %1 not found"
 msgstr "tr: The file '%1' cannot be found."
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1698
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1703
 msgid "Active"
 msgstr "tr: Active"
 
@@ -1060,7 +1061,7 @@ msgid "Archive next course"
 msgstr "Cursos"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:945
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:944
 #, fuzzy
 msgid "Archive this Course"
 msgstr "Cursos"
@@ -1126,7 +1127,7 @@ msgstr "tr: Edit Assigned Users"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1776
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1845
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1850
 #, fuzzy
 msgid "Assigned Sets"
 msgstr "tr: Edit Assigned Users"
@@ -1320,14 +1321,14 @@ msgstr "No se puede obtener la contraseña para el usuario '%1': %2"
 
 #
 #. ($eUserID,$@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:72
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:75
 #, fuzzy
 msgid "Can't get password record for effective user '%1': %2"
 msgstr "No se puede obtener la contraseña para el usuario efectivo '%1': %2"
 
 #
 #. ($userID,$@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:69
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:67
 #, fuzzy
 msgid "Can't get password record for user '%1': %2"
 msgstr "No se puede obtener la contraseña para el usuario '%1': %2"
@@ -1419,7 +1420,7 @@ msgid "Change CourseID to:"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:179
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:203
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/DropdownList.pm:175
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/ScrollingRecordList.pm:84
 #, fuzzy
@@ -1427,7 +1428,7 @@ msgid "Change Display Settings"
 msgstr "tr: Display Options"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:134
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:158
 #, fuzzy
 msgid "Change Email Address"
 msgstr "Cambio de e-mail"
@@ -1444,7 +1445,7 @@ msgid "Change Password"
 msgstr "Cambio de contraseña"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:258
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:282
 #, fuzzy
 msgid "Change User Settings"
 msgstr "Cambio de opciones de usuario"
@@ -1659,7 +1660,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:792
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:811
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:842
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1853
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1858
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:278
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:752
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:775
@@ -1689,8 +1690,8 @@ msgstr ""
 
 #
 #. ($e_user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:126
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:91
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:115
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:150
 #, fuzzy
 msgid "Confirm %1's New Password"
 msgstr "Confirme su nueva contraseña."
@@ -1790,14 +1791,15 @@ msgstr ""
 
 #
 #. ($e_user_name,$@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:81
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:104
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:90
 #, fuzzy
 msgid "Couldn't change %1's password: %2"
 msgstr "No se puede cambiar la contraseña %2 de %1."
 
 #
 #. ($@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:145
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:169
 #, fuzzy
 msgid "Couldn't change your email address: %1"
 msgstr "No se pudo cambiar su dirección de correo."
@@ -1819,7 +1821,7 @@ msgstr ""
 
 #
 #. ($@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:197
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:221
 #, fuzzy
 msgid "Couldn't save your display options: %1"
 msgstr "No se pudo cambiar su dirección de correo."
@@ -1847,7 +1849,7 @@ msgid "Course %1 databases must be updated before renaming this course."
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:736
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:735
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:169
 msgid "Course Administration"
 msgstr "Administración del curso"
@@ -1896,7 +1898,7 @@ msgid "Course archived."
 msgstr "tr: First Name"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:729
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:728
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:406
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Home.pm:95
 msgid "Courses"
@@ -2598,7 +2600,7 @@ msgstr "tr: Edit Problems"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:411
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1505
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1510
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:665
 msgid "Email"
 msgstr "E-mail"
@@ -2629,7 +2631,7 @@ msgid "Email Instructor On Failed Attempt"
 msgstr "E-mail del profesor"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1848
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1853
 #, fuzzy
 msgid "Email Link"
 msgstr "E-mail"
@@ -2641,9 +2643,9 @@ msgid "Email address"
 msgstr "tr: Email Address"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1662
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1689
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1713
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1661
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1688
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1712
 #, fuzzy
 msgid "Email instructor"
 msgstr "E-mail del profesor"
@@ -2808,7 +2810,7 @@ msgid "Error message:"
 msgstr "Mensajes"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2109
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2108
 #, fuzzy
 msgid "Error messages"
 msgstr "Mensajes"
@@ -3192,7 +3194,7 @@ msgstr "tr: First Name"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:785
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:804
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:835
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1846
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1851
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:271
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:746
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:769
@@ -3372,7 +3374,7 @@ msgid "Guest Login"
 msgstr "tr: Guest Login"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2125
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2124
 #, fuzzy
 msgid "HTTP Headers"
 msgstr "tr: Set Header"
@@ -3415,7 +3417,7 @@ msgid "Headers"
 msgstr "tr: Set Header"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:940
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:939
 msgid "Help"
 msgstr "tr: Help"
 
@@ -3487,7 +3489,7 @@ msgid "Hmwk Sets Editor"
 msgstr "Editor de tareas"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:735
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:734
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:117
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:233
 msgid "Homework Sets"
@@ -3602,7 +3604,7 @@ msgid "In progress: %1/%2"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1698
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1703
 msgid "Inactive"
 msgstr "tr: Inactive"
 
@@ -3738,7 +3740,7 @@ msgstr "Mostrar la respuesta anterior"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:786
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:805
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:836
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1847
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1852
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:272
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:747
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:770
@@ -3775,21 +3777,21 @@ msgid "Level:"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:848
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:847
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1610
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:503
 msgid "Library Browser"
 msgstr "Explorador de bibliotecas"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:850
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:849
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:521
 #, fuzzy
 msgid "Library Browser 2"
 msgstr "Explorador de bibliotecas"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:852
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:851
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:530
 #, fuzzy
 msgid "Library Browser 3"
@@ -3875,8 +3877,8 @@ msgid "Log In Again"
 msgstr "Volver a iniciar sesión"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:996
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:998
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:995
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:997
 msgid "Log Out"
 msgstr "Salir"
 
@@ -3893,8 +3895,8 @@ msgstr ""
 
 #
 #. (HTML::Entities::encode_entities($userID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:996
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:998
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:995
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:997
 #, fuzzy
 msgid "Logged in as %1."
 msgstr "Autentificado como: %1"
@@ -3921,7 +3923,7 @@ msgstr "tr: Login Name"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:784
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:803
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:834
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1843
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1848
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:270
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:745
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:768
@@ -3933,7 +3935,7 @@ msgstr "tr: Login Name"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1775
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1844
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1849
 #, fuzzy
 msgid "Login Status"
 msgstr "tr: Login Name"
@@ -3944,7 +3946,7 @@ msgid "Logout"
 msgstr "Salir"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:726
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:725
 msgid "Main Menu"
 msgstr "Ana Menü"
 
@@ -4055,8 +4057,8 @@ msgstr "Mensajes"
 msgid "Messages"
 msgstr "Mensajes"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2123
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2200
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2122
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2199
 msgid "Method"
 msgstr ""
 
@@ -4144,8 +4146,8 @@ msgid "New Name:"
 msgstr "tr: Set Name"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1708
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1858
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1713
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1863
 msgid "New Password"
 msgstr "tr: New Password"
 
@@ -4160,7 +4162,7 @@ msgid "New folder name:"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1317
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1322
 msgid "New passwords saved"
 msgstr "tr: New passwords saved"
 
@@ -4194,8 +4196,8 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2658
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2659
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2660
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:234
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:250
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:258
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:274
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:526
 msgid "No"
 msgstr "tr: No"
@@ -4350,7 +4352,7 @@ msgid "No source_file for problem in .def file"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1891
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1896
 #, fuzzy
 msgid ""
 "No students shown.  Choose one of the options above to list the students in "
@@ -4399,7 +4401,7 @@ msgid "None of the selected users are assigned to this set: %1"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1003
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1002
 msgid "Not logged in."
 msgstr "No ha iniciado sesión"
 
@@ -4535,7 +4537,7 @@ msgid "Order Problems Randomly"
 msgstr "Problemas"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:854
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:853
 #, fuzzy
 msgid "Orig. Lib. Browser"
 msgstr "Explorador de bibliotecas"
@@ -4626,7 +4628,7 @@ msgstr "tr: Pad Fields"
 
 #
 #. (timestamp($self)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1120
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1119
 #, fuzzy
 msgid "Page generated at %1"
 msgstr "tr: Page generated at %1"
@@ -4682,7 +4684,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:793
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:812
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:843
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1854
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1859
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:279
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:753
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:776
@@ -4833,7 +4835,7 @@ msgstr "tr: Problem"
 #. ($problemID)
 #. ($problemNumber)
 #. ($prettyProblemIDs{$probID})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:762
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:761
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:450
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:450
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:764
@@ -4992,7 +4994,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:791
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:810
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:841
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1852
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1857
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:277
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:751
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:774
@@ -5168,7 +5170,7 @@ msgid "Report Bugs in this Problem"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:954
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:953
 msgid "Report bugs"
 msgstr "Reportar problemas (bugs)"
 
@@ -5192,8 +5194,8 @@ msgid "Request New Version"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2120
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2197
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2119
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2196
 #, fuzzy
 msgid "Request information"
 msgstr "tr: Options Information"
@@ -5566,7 +5568,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:790
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:809
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:840
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1851
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1856
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:276
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:750
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:773
@@ -5981,7 +5983,7 @@ msgid "Show path ..."
 msgstr "tr: showing all sets"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:229
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:253
 #, fuzzy
 msgid "Show saved answers?"
 msgstr "Mostrar la respuesta anterior"
@@ -6087,7 +6089,7 @@ msgstr ""
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2825
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1916
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1921
 #, fuzzy
 msgid "Sort"
 msgstr "tr: Sort"
@@ -6175,7 +6177,7 @@ msgstr "tr: View statistics by student"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1093
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1781
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:294
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1850
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1855
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:275
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:412
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:221
@@ -6185,7 +6187,7 @@ msgid "Status"
 msgstr "Estatus"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1000
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:999
 msgid "Stop Acting"
 msgstr "Volver al usuario original"
 
@@ -6210,7 +6212,7 @@ msgstr "Cursos"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:788
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:807
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:838
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1849
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1854
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:274
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:748
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:771
@@ -6462,7 +6464,7 @@ msgid ""
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1121
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1120
 msgid "The WeBWorK Project"
 msgstr "tr: The WeBWorK Project"
 
@@ -6730,7 +6732,7 @@ msgstr ""
 
 #
 #. (CGI::b($r->maketext("[_1]'s Current Password",$user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:102
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:126
 #, fuzzy
 msgid ""
 "The password you entered in the %1 field does not match your current "
@@ -6741,7 +6743,7 @@ msgstr ""
 
 #
 #. (CGI::b($r->maketext("[_1]'s New Password",$e_user_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:91
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:115
 #, fuzzy
 msgid ""
 "The passwords you entered in the %1 and %2 fields don't match. Please retype "
@@ -7093,7 +7095,7 @@ msgstr ""
 msgid "There is no written solution available for this problem."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2144
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2143
 msgid ""
 "There may be something wrong with this question. Please inform your "
 "instructor including the warning messages below."
@@ -7408,8 +7410,8 @@ msgid ""
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2122
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2199
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2121
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2198
 #, fuzzy
 msgid "Time"
 msgstr "tr: Test Date"
@@ -7527,8 +7529,8 @@ msgstr ""
 msgid "Two Columns"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2124
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2201
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2123
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2200
 msgid "URI"
 msgstr ""
 
@@ -7709,7 +7711,7 @@ msgstr ""
 msgid "Use Default Header File"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:245
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:269
 msgid "Use Equation Editor?"
 msgstr ""
 
@@ -7831,7 +7833,7 @@ msgid "Users Assigned to Set %2"
 msgstr "tr: Edit Assigned Users"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1873
 msgid "Users List"
 msgstr "tr: Users List"
 
@@ -7920,7 +7922,7 @@ msgstr "tr: View"
 msgid "View Problems"
 msgstr "tr: Edit Problems"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:216
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:240
 msgid "View equations as"
 msgstr ""
 
@@ -7990,14 +7992,14 @@ msgid "Visible to Students"
 msgstr "tr: visible to students"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2143
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2142
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:730
 #, fuzzy
 msgid "Warning"
 msgstr "Quedan"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2195
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2194
 #, fuzzy
 msgid "Warning messages"
 msgstr "Herramientas para evaluar"
@@ -8015,13 +8017,13 @@ msgid "Warnings encountered while processing %1. Error text: %2"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2106
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2105
 #, fuzzy
 msgid "WeBWorK Error"
 msgstr "WeBWorK"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2193
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2192
 #, fuzzy
 msgid "WeBWorK Warnings"
 msgstr "WeBWorK"
@@ -8041,7 +8043,7 @@ msgid ""
 "more information."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2194
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2193
 msgid ""
 "WeBWorK has encountered warnings while processing your request. If this "
 "occured when viewing a problem, it was likely caused by an error or "
@@ -8201,8 +8203,8 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2658
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2659
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2660
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:234
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:250
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:258
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:274
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:526
 msgid "Yes"
 msgstr "tr: Yes"
@@ -8388,8 +8390,8 @@ msgid "You didn't enter any message."
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:155
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:173
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:179
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:197
 msgid "You do not have permission to change email addresses."
 msgstr "Usted no tiene permiso para cambiar su dirección de correo."
 
@@ -8400,8 +8402,8 @@ msgid "You do not have permission to change the hardcopy theme."
 msgstr "Usted no tiene permiso para cambiar su dirección de correo."
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:109
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:131
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:133
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:155
 msgid "You do not have permission to change your password."
 msgstr "Usted no tiene permiso para cambar su contraseña."
 
@@ -8412,10 +8414,10 @@ msgid "You do not have permission to edit this file."
 msgstr "Usted no tiene permiso para ver los detalles de este error."
 
 #
+#. ($hardcopy_format)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:156
 #, fuzzy
-msgid ""
-"You do not have permission to generate hardcopy in $hardcopy_format format."
+msgid "You do not have permission to generate hardcopy in %1 format."
 msgstr "Usted no tiene permiso para cambar su contraseña."
 
 #
@@ -8500,7 +8502,7 @@ msgid ""
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1704
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1709
 msgid "You may not change your own password here!"
 msgstr "tr: You may not change your own password here!"
 
@@ -8747,13 +8749,13 @@ msgid "Your current branch of the Open Problem Library is up to date."
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:201
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:225
 #, fuzzy
 msgid "Your display options have been saved."
 msgstr "Su dirección de correo ha sido cambiada."
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:149
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:173
 msgid "Your email address has been changed."
 msgstr "Su dirección de correo ha sido cambiada."
 
@@ -9002,7 +9004,7 @@ msgid "_PROBLEM_SET_SUMMARY"
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2107
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2106
 msgid "_REQUEST_ERROR"
 msgstr ""
 "WebWork ha detectado un error de software al intentar procesar este "
@@ -9011,8 +9013,8 @@ msgstr ""
 "subsanado. Si usted es un profesor, por favor consulte la salida de error "
 "para obtener más información."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1863
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1865
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1870
 msgid "_USER_TABLE_SUMMARY"
 msgstr ""
 
@@ -9446,8 +9448,8 @@ msgstr "tr: hidden sets"
 msgid "i"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1366
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1460
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1371
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1465
 msgid "illegal character in input: '/'"
 msgstr ""
 
@@ -10132,7 +10134,7 @@ msgstr ""
 
 #. ($dir, $fileName)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1693
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1367
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1372
 msgid "won't be able to read from file %1/%2: does it exist? is it readable?"
 msgstr ""
 
