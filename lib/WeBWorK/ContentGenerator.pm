@@ -43,6 +43,7 @@ miscellaneous utilities are provided.
 
 use strict;
 use warnings;
+use utf8;
 use Carp;
 #use CGI qw(-nosticky *ul *li escapeHTML);
 use WeBWorK::CGI;
@@ -97,7 +98,7 @@ sub new {
 		db => $r->db(),       # backward-compatability
 		authz => $r->authz(), # with unconverted CGs
 		noContent => undef, # FIXME this should get clobbered at some point
-	};
+		   };
  	weaken $self -> {r};
 	bless $self, $class;
 	return $self;
