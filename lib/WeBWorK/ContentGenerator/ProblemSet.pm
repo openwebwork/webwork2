@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound between after);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -126,17 +126,32 @@ sub title {
 	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
 	
 	my $title = $setID;
+	#put either due date or reduced scoring date in the title. 
 	my $set = $r->db->getMergedSet($eUserID, $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
+	  my $enable_reduced_scoring =  $r->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+	  if ($enable_reduced_scoring && 
+	      before($set->reduced_scoring_date)) {
+	    $title .= ' - '.$r->maketext("Reduced Scoring Starts [_1]", 
+	         $self->formatDateTime($set->reduced_scoring_date,undef,
+				       $r->ce->{studentDateDisplayFormat}));
+	  } elsif ($set->due_date) {
 	    $title .= ' - '.$r->maketext("Due [_1]", 
 	         $self->formatDateTime($set->due_date,undef,
 				       $r->ce->{studentDateDisplayFormat}));
+	  }
 	}
 
 	return $title;
 
 }
-
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $templateName = $r->param('templateName')//'system';
+	$self->{templateName}= $templateName;
+	$templateName;
+}
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -163,8 +178,13 @@ sub siblings {
 	} else {
 		@setIDs    = grep {my $set = $db->getMergedSet($eUserID, $_); 
 				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $set, $eUserID) : ();
+				   my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework' && !$set->lis_source_did;
+
+				   after($set->open_date) && 
 				   $set->assignment_type() !~ /gateway/ && 
-				       ( defined($set->visible()) ? $set->visible() : 1 ) && !@restricted;
+				     ( defined($set->visible()) ? $set->visible() : 1 )
+				     && !@restricted
+				     && !$LTIRestricted;
 				           }   @setIDs;
 	}
 
@@ -328,10 +348,6 @@ sub body {
 	
 	my $isJitarSet = ($set->assignment_type eq 'jitar');
 
-	#my $hardcopyURL =
-	#	$ce->{webworkURLs}->{root} . "/"
-	#	. $ce->{courseName} . "/"
-	#	. "hardcopy/$setName/?" . $self->url_authen_args;
 	
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, 
 		courseID => $courseID, setID => $setName);
@@ -340,22 +356,25 @@ sub body {
 	# print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
 
 
-	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+
 	my $reduced_scoring_date = $set->reduced_scoring_date;
-	if ($reduced_scoring_date and $enable_reduced_scoring
-	    and $reduced_scoring_date != $set->due_date) {
+	if ($enable_reduced_scoring) {
 		my $dueDate = $self->formatDateTime($set->due_date());
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
 		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
-
-		if (time < $set->due_date()) {
-			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_1",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		
+		if (before($reduced_scoring_date)) {
+		  print CGI::div({class=>"ResultsAlert"}, $r->maketext("After the reduced scoring peroid begins all work counts for [_1]% of its value.", $reducedScoringPerCent));
+		  
+		} elsif (between($reduced_scoring_date,$set->due_date())) {
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set is in its reduced scoring period.  All work counts for [_1]% of its value.",$reducedScoringPerCent));
 		} else {
-			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_2",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		}
-	}
-
+	      }
+	
 	# DBFIXME use iterator
 	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 
@@ -384,19 +403,23 @@ sub body {
 		# This table now contains a summary, a caption, and scope variables for the columns.
 	    print CGI::start_table({-class=>"problem_set_table problem_table", -summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")});
 	    print CGI::caption($r->maketext("Problems"));
-	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.  If a problem does count towards its parent grade, then that score is listed in the column to the right.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
+	    my  $AdjustedStatusPopover = "&nbsp;".CGI::a({class=>'help-popup',href=>'#', 'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.')  ,'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072');
 	    
-	    print CGI::Tr({},
-			  
-			  CGI::th($r->maketext("Name")),
+	    my $thRow = [ CGI::th($r->maketext("Name")),
 			  CGI::th($r->maketext("Attempts")),
 			  CGI::th($r->maketext("Remaining")),
 			  CGI::th($r->maketext("Worth")),
-			  CGI::th($isJitarSet ? $r->maketext("Adjusted Status").$AdjustedStatusPopover :
-				  $r->maketext("Status")),
-			  $isJitarSet  ? CGI::th($r->maketext("Credit For Parent")) : CGI::th(""),
-			      $canScoreProblems ? CGI::th($r->maketext("Grader")) : ''
-		);
+			  CGI::th($r->maketext("Status")) ];
+	    if ($isJitarSet) {
+	      push @$thRow, CGI::th($r->maketext("Adjusted Status").$AdjustedStatusPopover);
+	      push @$thRow, CGI::th($r->maketext("Counts for Parent"));
+	    }
+
+	    if ($canScoreProblems) {
+		push @$thRow, CGI::th($r->maketext("Grader"));
+	    }
+
+	    print CGI::Tr({}, @$thRow);
 		
 	    @problemNumbers = sort { $a <=> $b } @problemNumbers;
 
@@ -411,27 +434,6 @@ sub body {
 		print CGI::p($r->maketext("This homework set contains no problems."));
 	}
 	
-	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", $r, 
-	#	courseID => $courseID);
-	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	#
-	##print feedback form
-	#print
-	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-	#	$self->hidden_authen_fields,"\n",
-	#	CGI::hidden("module",             __PACKAGE__),"\n",
-	#	CGI::hidden("set",                $self->{set}->set_id),"\n",
-	#	CGI::hidden("problem",            ''),"\n",
-	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-	#	CGI::hidden("showOldAnswers",     ''),"\n",
-	#	CGI::hidden("showCorrectAnswers", ''),"\n",
-	#	CGI::hidden("showHints",          ''),"\n",
-	#	CGI::hidden("showSolutions",      ''),"\n",
-	#	CGI::p({-align=>"left"},
-	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-	#	),
-	#	CGI::end_form(),"\n";
 	
 	print CGI::start_div({-class=>"problem_set_options"});
 	print $self->feedbackMacro(
@@ -506,29 +508,22 @@ sub problemListRow($$$$$) {
 	$value = '' if ($isJitarSet && $problemLevel != 0 
 			&& !$problem->counts_parent_grade);
 
-	# we only show the (adjusted status) for the top level JITAR problems
-	# since they are the only grades that count.  We have a seperate 
-	# column for child problems whose grades count toward the parent
 	my $rawStatus = 0;
-	if ($isJitarSet && $problemLevel == 0) {
-	    $rawStatus = jitar_problem_adjusted_status($problem, $db);
-	} else {
-	    $rawStatus = $problem->status;
-	}
+	$rawStatus = $problem->status;
 
-	my $status = '';
+	my $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
+	$status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
+	# FIXME  -- this may not cover all cases.
+
+	my $adjustedStatus = '';
 	if (!$isJitarSet || $problemLevel == 0) {
-
-	    $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
-	    $status = 'unknown(FIXME)' if $@; # use a blank if problem status was not defined or not numeric.
-	    # FIXME  -- this may not cover all cases.
-	    
-#	my $msg = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
+	  $adjustedStatus = jitar_problem_adjusted_status($problem, $db);
+	  $adjustedStatus = eval{wwRound(0, $adjustedStatus*100).'%'};
 	}
 
-	my $statusForParent = "";
-	if ($isJitarSet && $problem->counts_parent_grade && $problemLevel != 0 ) {
-	    $statusForParent =  eval{ wwRound(0, jitar_problem_adjusted_status($problem,$db) * 100).'%'};
+	my $countsForParent = "";
+	if ($isJitarSet && $problemLevel != 0 ) {
+	  $countsForParent = $problem->counts_parent_grade() ? $r->maketext('Yes') : $r->maketext('No');
 
 	}
 
@@ -540,18 +535,23 @@ sub problemListRow($$$$$) {
 	    $graderLink = CGI::td('');
 	}
 
-	return CGI::Tr({},
-#		CGI::td({-nowrap=>1, -align=>"left"},$interactive),
-#		CGI::td({-nowrap=>1, -align=>"center"},
-		CGI::td($interactive),
-		CGI::td([
-				$attempts,
-				$remaining,
-				$value,
-				$status, 
-		                $statusForParent,
-		       $graderLink ? $graderLink : ''
-			]));
+	my $problemRow = [CGI::td($interactive),
+			  CGI::td([
+			      $attempts,
+			      $remaining,
+			      $value,
+			      $status])];
+	if ($isJitarSet) {
+	  push @$problemRow, CGI::td($adjustedStatus);
+	  push @$problemRow, CGI::td($countsForParent);
+	}
+
+	if ($canScoreProblems) {
+	    push @$problemRow, $graderLink;
+	}
+	    
+	
+	return CGI::Tr({}, @$problemRow);
 }
 
 1;

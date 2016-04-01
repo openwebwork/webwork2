@@ -26,12 +26,13 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 sub create {
 	my ($self, $params) = @_;
 	my $newcourse = $params->{'name'};
-	# note this ce is different from $self->{ce}!
+	# note this ce is different from $self->ce!
+	# FIXME!!!!
 	my $ce = WeBWorK::CourseEnvironment->new({
-			webwork_dir => $self->{ce}->{webwork_dir},
+			webwork_dir => $self->ce->{webwork_dir},
 			courseName => $newcourse
 		});
-	my $db = $self->{db};
+	my $db = $self->db;
 	my $authz = $self->{authz};
 	my $out = {};
 
@@ -44,7 +45,7 @@ sub create {
 		return $out
 	}
 	# only users from the admin course with appropriate permissions allowed
-	if (!($self->{ce}->{courseName} eq 'admin')) {
+	if (!($ce->{courseName} eq 'admin')) {
 		debug("Course creation attempt when not logged into admin course.");
 		$out->{status} = "failure";
 		$out->{message} = "Course creation allowed only for admin course users.";
@@ -104,8 +105,8 @@ sub create {
 sub listUsers {
     my ($self, $params) = @_;
     my $out = {};
-    my $db = $self->{db};
-    my $ce = $self->{ce};
+    my $db = $self->db;
+    my $ce = $self->ce;
     
 
     # make sure course actions are enabled
@@ -150,8 +151,8 @@ sub addUser {
 	my ($self, $params) = @_;
 	my $out = {};
 	$out->{text} = encode_base64("");
-	my $db = $self->{db};
-	my $ce = $self->{ce};
+	my $db = $self->db;
+	my $ce = $self->ce;
 
 	# make sure course actions are enabled
 	#if (!$ce->{webservices}{enableCourseActions}) {
@@ -169,7 +170,7 @@ sub addUser {
 	my $permission; # stores user's permission level
 	if ($olduser) { 
 		# a dropped user decided to re-enrol
-		my $enrolled = $self->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
+		my $enrolled = $self->ce->{statuses}->{Enrolled}->{abbrevs}->[0];
 		$olduser->status($enrolled);
 		$db->putUser($olduser);
 		addLog($ce, "User ". $id . " re-enrolled in " . 
@@ -179,7 +180,7 @@ sub addUser {
 	}
 	else {
 		# a new user showed up
-		my $ce = $self->{ce};
+		my $ce = $self->ce;
 		
 		# student record
 		my $enrolled = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
@@ -255,8 +256,8 @@ sub addUser {
 
 sub dropUser {
 	my ($self, $params) = @_;
-	my $db = $self->{db};
-	my $ce = $self->{ce};
+	my $db = $self->db;
+	my $ce = $self->ce;
 	my $out = {};
 	debug("Webservices drop user request.");
 
@@ -268,7 +269,7 @@ sub dropUser {
 	}
 
 	# Mark user as dropped
-	my $drop = $self->{ce}->{statuses}->{Drop}->{abbrevs}->[0];
+	my $drop = $self->ce->{statuses}->{Drop}->{abbrevs}->[0];
 	my $person = $db->getUser($params->{'id'});
 	if ($person) {
 		$person->status($drop);
@@ -288,8 +289,8 @@ sub dropUser {
 sub deleteUser {
 	my ($self, $params) = @_;
 	my $out = {};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
+	my $db = $self->db;
+	my $ce = $self->ce;
 	$out->{text} = encode_base64("");
 	
 	my $user = $params->{'id'};
@@ -343,8 +344,8 @@ sub deleteUser {
 
 sub editUser {
 	my ($self, $params) = @_;
-    my $db = $self->{db};
-    my $ce = $self->{ce};
+    my $db = $self->db;
+    my $ce = $self->ce;
     my $out = {};
     debug("Webservices edit user request.");
     $out->{text} = encode_base64("");
@@ -407,8 +408,8 @@ sub changeUserPassword {
 
 	my ($self, $params) = @_;
 	my $out = {};
-	my $db = $self->{db};
-	my $ce = $self->{ce};
+	my $db = $self->db;
+	my $ce = $self->ce;
 	$out->{text} = encode_base64("");
 	
 	my $userid = $params->{'id'};
@@ -676,7 +677,7 @@ sub updateSetting {
 
 sub sendEmail {
 	my ($self, $params) = @_;
-	my $ce = $self->{ce};
+	my $ce = $self->ce;
 
 # Should we build in the merge_file?  
 #  get merge file

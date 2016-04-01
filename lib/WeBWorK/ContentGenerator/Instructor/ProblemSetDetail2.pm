@@ -50,7 +50,7 @@ use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts s
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
-use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
+use constant JITAR_PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod att_to_open_children counts_parent_grade attempted last_answer num_correct num_incorrect)];
 
 
 # we exclude the gateway set fields from the set field order, because they
@@ -152,7 +152,7 @@ use constant FIELD_PROPERTIES => {
 	enable_reduced_scoring => {
 		name      => "Reduced Scoring Enabled",
 		type      => "choose",
-		override  => "all",
+		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
 				1 => "Yes",
@@ -363,9 +363,10 @@ use constant FIELD_PROPERTIES => {
                  override  => "any",
                  default=>"-1",
                  labels    => {
-                      "-1" => "Never",
+			       "-1" => "Never",
+			       "-2" => "Default",
                  },
-                 help_text => "When a student has more attempts than is specified here they will be able to view another version of this problem.  The new version is guaranteed to be different or the feature will fail gracefully.  Depending on the course configuration students will be able to attempt this new version as many times as they want or see a worked out solution, if one exists."
+                 help_text => "When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used."
         },
 	prPeriod => {
 		name => "Rerandomize after",
@@ -695,6 +696,15 @@ sub FieldHTML {
 	
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
+
+	my $onChange = "";
+
+	# if we are creating override feilds we should add the js to automatically check the
+	# override box.
+	if ($forUsers && $check) {
+	    $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
+	}
+	
 	if ($edit) {
 		$inputType = CGI::font({class=>"visible"}, CGI::input({
 		                type => "text",
@@ -702,6 +712,7 @@ sub FieldHTML {
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
+				onChange => $onChange,
 		}));
 
 	} elsif ($choose) {
@@ -733,6 +744,7 @@ sub FieldHTML {
 				values => $properties{choices},
 				labels => \%labels,
 				default => $value,
+				onChange => $onChange,
 		});
 	}
 	
@@ -743,6 +755,7 @@ sub FieldHTML {
 	return (($forUsers && $check) ? CGI::checkbox({
 				type => "checkbox",
 				name => "$recordType.$recordID.$field.override",
+				id => "$recordType.$recordID.$field.override_id",
 				label => "",
 				value => $field,
 				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
@@ -1117,23 +1130,18 @@ sub initialize {
 
 		my $enable_reduced_scoring = 
 		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
-		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    (defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
-		    $setRecord->enable_reduced_scoring;
-		
-		if ($enable_reduced_scoring && 
-		    $reduced_scoring_date 
+		    $setRecord->enable_reduced_scoring);
+
+		if ($enable_reduced_scoring &&
+		    $reduced_scoring_date
 		    && ($reduced_scoring_date > $due_date 
 			|| $reduced_scoring_date < $open_date)) {
 		    $self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
 		    $error = $r->param('submit_changes');
 		}
 
-		if ($reduced_scoring_date && ($reduced_scoring_date > $due_date || $reduced_scoring_date < $open_date)) {
-			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
-			$error = $r->param('submit_changes');
-		}
-		
 		# make sure the dates are not more than 10 years in the future
 		my $curr_time = time;
 		my $seconds_per_year = 31_556_926;
@@ -2397,7 +2405,7 @@ sub body {
 		if (!$error && $r->param('auto_render')) {
 		    @problem_html = renderProblems(
 			r=> $r, 
-					user => $db->getUser($userToShow),
+			user => $db->getUser($userToShow),
 			displayMode=> $default_problem_mode,
 			problem_number=> $problemID,
 			this_set => $this_set,

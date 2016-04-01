@@ -148,7 +148,7 @@ use constant FIELD_PROPERTIES => {
 	enable_reduced_scoring => {
 		name      => "Reduced Scoring Enabled",
 		type      => "choose",
-		override  => "all",
+		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
 				1 => "Yes",
@@ -337,7 +337,8 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default=>"-1",
 		labels    => {
-				"-1" => "Never",
+			      "-1" => "Never",
+			      "-2" => "Default",
 		},
         },
 	prPeriod => {
@@ -635,6 +636,15 @@ sub FieldHTML {
 	
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
+
+	my $onChange = '';
+	
+	# if we are creating override feilds we should add the js to automatically check the
+	# override box.
+	if ($forUsers && $check) {
+	    $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
+	}
+	
 	if ($edit) {
 		$inputType = CGI::input({
 		                type => "text",
@@ -642,6 +652,7 @@ sub FieldHTML {
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
+				onchange => $onChange,
 					});
 
 	} elsif ($choose) {
@@ -673,6 +684,7 @@ sub FieldHTML {
 				values => $properties{choices},
 				labels => \%labels,
 				default => $value,
+				onchange => $onChange,
 		});
 	}
 	
@@ -683,6 +695,7 @@ sub FieldHTML {
 	return (($forUsers && $check) ? CGI::checkbox({
 				type => "checkbox",
 				name => "$recordType.$recordID.$field.override",
+				id => "$recordType.$recordID.$field.override_id",
 				label => "",
 				value => $field,
 				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
@@ -1045,9 +1058,9 @@ sub initialize {
 
 		my $enable_reduced_scoring = 
 		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
-		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    (defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
-		    $setRecord->enable_reduced_scoring;
+		    $setRecord->enable_reduced_scoring);
 
 		if ($enable_reduced_scoring && 
 		    $reduced_scoring_date 

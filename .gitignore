@@ -35,3 +35,4 @@ math4-overrides.css
 math4-overrides.js
 DATA/*
 *.swp
+.dump_past_answers_salt

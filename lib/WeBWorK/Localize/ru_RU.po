@@ -1,0 +1,2616 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2016-02-27 23:01+0500\n"
+"PO-Revision-Date: 2016-03-02 17:50+0500\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#
+#. ($name, $vnum)
+#: ContentGenerator/ProblemSets.pm:416
+msgid "%1 (test %2)"
+msgstr "%1 (тест %2)"
+
+#
+#. ($numAdded, $numSkipped, join(", ", @$skipped)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1581
+msgid "%1 sets added, %2 sets skipped. Skipped sets: (%3)"
+msgstr "%1 заданий добавлено %2 заданий пропущено. Пропущеные задания: (%3)"
+
+#
+#. ($numExported, $numSkipped, (($numSkipped)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1701
+msgid "%1 sets exported, %2 sets skipped. Skipped sets: (%3)"
+msgstr ""
+"%1 заданий экспортировано, %2 заданий пропущено. Пропущенные задания: (%3)"
+
+#
+#. ($name)
+#: ContentGenerator/ProblemSets.pm:427 ContentGenerator/ProblemSets.pm:441
+msgid "%1 test"
+msgstr "%1 тест"
+
+#
+#. (scalar @userIDsToExport, $dir, $fileName)
+#: ContentGenerator/Instructor/UserList.pm:1385
+msgid "%1 users exported to file %2/%3"
+msgstr "%1 пользователей экспортировано в файл %2/%3"
+
+#
+#. ($numReplaced, $numAdded, $numSkipped, join (", ", @$skipped)
+#: ContentGenerator/Instructor/UserList.pm:1269
+msgid ""
+"%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
+msgstr ""
+"%1 пользователей заменено, %2 пользователей добавлено, %3 пользователей "
+"пропущено. Пропущенные пользователи: (%4)"
+
+#
+#. (int($answerScore*100)
+#: ContentGenerator/Problem.pm:265
+msgid "%1% correct"
+msgstr "%1% верно"
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:171
+msgid "%1's Current Address"
+msgstr "Текущий адркс для %1"
+
+#
+#. ($user_name)
+#: ContentGenerator/Options.pm:126
+msgid "%1's Current Password"
+msgstr "Текущий пароль для %1"
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:175
+msgid "%1's New Address"
+msgstr "Новый адрес для %1"
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:130
+msgid "%1's New Password"
+msgstr "Новый пароль для %1"
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:101
+msgid "%1's new password cannot be blank."
+msgstr "Новый пароль для %1 не может быть пустым."
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:84
+msgid "%1's password has been changed."
+msgstr "Новый пароль для %1 установлен."
+
+#
+#. ($setID, $problemID)
+#: ContentGenerator/Problem.pm:884
+msgid "%1: Problem %2"
+msgstr "Задание %1: Задача %2"
+
+#
+#. ($numBlanks)
+#: ContentGenerator/Problem.pm:319
+msgid "%quant(%1,of the questions remains,of the questions remain) unanswered."
+msgstr ""
+"%quant (%1,из вопросов остался без ответа,из вопросов остались без ответа,"
+"все ответы даны)."
+
+#
+#: ContentGenerator/Problem.pm:1188
+msgid "(This problem will not count towards your grade.)"
+msgstr "(Эта задача не будет Вам засчитана.)"
+
+#
+#: ContentGenerator/Problem.pm:1299
+msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
+msgstr "ОТВЕТЫ ПРОВЕРЕНЫ, НО ОНИ НЕ ЗАПИСАНЫ"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1708
+#: ContentGenerator/Instructor/UserList.pm:1391
+#: ContentGenerator/Instructor/UserList.pm:1463
+msgid "Abandon changes"
+msgstr "Не сохранять изменений"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1647
+msgid "Abandon export"
+msgstr "Не делать экспортирование"
+
+#
+#. ($eUserID)
+#: ContentGenerator.pm:848
+msgid "Acting as %1. "
+msgstr "Действуете как %1. "
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1927
+msgid "Active"
+msgstr "Активен"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1142
+msgid "Add how many students?"
+msgstr "Сколько студентов добавить?"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1220
+msgid "Add which new users?"
+msgstr "Каких новых пользователей добавить?"
+
+# I have translated this string, however it is displayed untranslated.
+#: ContentGenerator/Problem.pm:311
+msgid "All of the answers above are correct."
+msgstr "Все вышеперечисленные ответы верны."
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1052
+msgid "All selected sets %1 all students"
+msgstr "Все выделенные задания %1 всем студентам"
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1046
+msgid "All sets %1 all students"
+msgstr "Все задания %1 всем студентам"
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1049
+msgid "All visible sets %1 all students"
+msgstr "Все видимые задания %1 всем студентам"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:446
+#: ContentGenerator/Instructor/ProblemSetList.pm:832
+#: ContentGenerator/Instructor/ProblemSetList.pm:870
+msgid "Answer Date"
+msgstr "Дата ответа"
+
+#
+#: ContentGenerator/Problem.pm:242
+msgid "Answer Preview"
+msgstr "Предварительный просмсотр ответа"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:531
+msgid "Any changes made below will be reflected in the set for ALL students."
+msgstr ""
+"Все сделанные нимже изменения будут отражаться в задании для ВСЕХ студентов."
+
+#
+#: ContentGenerator.pm:1481
+msgid "Apply Options"
+msgstr "Применить выбранные опции"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1545
+msgid "Assign this set to which users?"
+msgstr "Кому из пользователей назначить это задание?"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2064
+msgid "Assigned Sets"
+msgstr "Назначенные задания"
+
+#
+#. ($fully)
+#: ContentGenerator/Problem.pm:315
+msgid "At least one of the answers above is NOT %1correct."
+msgstr "По крайней мере один из ответов выше НЕ %1 верен."
+
+#
+#: ContentGenerator/ProblemSet.pm:350
+msgid "Attempts"
+msgstr "Попытки"
+
+#
+#. ($eUserID,$@)
+#: ContentGenerator/Options.pm:71
+msgid "Can't get password record for effective user '%1': %2"
+msgstr "Не удается получить пароль данного пользователя \"% 1\":% 2"
+
+#
+#. ($userID,$@)
+#: ContentGenerator/Options.pm:68
+msgid "Can't get password record for user '%1': %2"
+msgstr "Не удается получить пароль пользователя \"% 1\":% 2"
+
+#
+#: ContentGenerator/Options.pm:142
+msgid "Change Email Address"
+msgstr "Сменить адрес e-mail"
+
+#
+#: ContentGenerator/Options.pm:61
+msgid "Change Password"
+msgstr "Сменить пароль"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1409
+#: ContentGenerator/Instructor/UserList.pm:1481
+msgid "Changes abandoned"
+msgstr "Изменения отменены"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1457
+msgid "Changes saved"
+msgstr "Изменения сохранены"
+
+#
+#: ContentGenerator/Problem.pm:1118
+msgid "Check Answers"
+msgstr "Проверить ответы"
+
+#
+#: ContentGenerator/Problem.pm:1227
+msgid "Checking additional error messages"
+msgstr "Проверяются дополнительные сообщения об ошибках"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1011
+msgid "Choose visibility of the sets to be affected"
+msgstr "Выберите опцию видимое/невидимое для отмеченных заданий"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1084
+#: ContentGenerator/Instructor/ProblemSetList.pm:982
+msgid "Choose which sets to be affected"
+msgstr "Выберите задания, к которым это применяется"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:597
+#: ContentGenerator/Instructor/UserList.pm:550
+#: ContentGenerator/ProblemSets.pm:288
+msgid "Clear"
+msgstr "Очистить"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:562
+msgid ""
+"Click on the login name to edit individual problem set data, (e.g. due "
+"dates) for these students."
+msgstr ""
+"Кликните логин студентов для того чтобы задать индивидуальные настройки для "
+"этих студентов."
+
+#
+#: ContentGenerator/ProblemSets.pm:435
+msgid "Closed"
+msgstr "Закрыто"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2072
+#: ContentGenerator/Instructor/UserList.pm:290
+#: ContentGenerator/Instructor/UserList.pm:818
+#: ContentGenerator/Instructor/UserList.pm:861
+#: ContentGenerator/Instructor/UserList.pm:904
+msgid "Comment"
+msgstr "Комментарий"
+
+#
+#. ($e_user_name)
+#: ContentGenerator/Options.pm:134 ContentGenerator/Options.pm:95
+msgid "Confirm %1's New Password"
+msgstr "Подтвердите новый пароль для %1"
+
+#
+#: ContentGenerator/Login.pm:206
+msgid "Continue"
+msgstr "Продолжить"
+
+#
+#: ContentGenerator/Problem.pm:243
+msgid "Correct"
+msgstr "Верно"
+
+#
+#. ($e_user_name,$@)
+#: ContentGenerator/Options.pm:80
+msgid "Couldn't change %1's password: %2"
+msgstr "Не удаётся сменить пароль для %1: %2"
+
+#
+#. ($@)
+#: ContentGenerator/Options.pm:153
+msgid "Couldn't change your email address: %1"
+msgstr "Не удаётся сменить адрес e-mail для %1"
+
+#
+#: ContentGenerator/ProblemSets.pm:71 ContentGenerator/ProblemSets.pm:73
+msgid "Course Info"
+msgstr "Сведения о курсе"
+
+#
+#: ContentGenerator.pm:657 ContentGenerator/Home.pm:94
+msgid "Courses"
+msgstr "Курсы"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1351
+msgid "Create as what type of set?"
+msgstr "Создать как задание какого типа?"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1263
+#: ContentGenerator/Instructor/UserList.pm:1082
+msgid "Delete how many?"
+msgstr "Удалить кого?"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1119
+msgid "Disable"
+msgstr "Отключить"
+
+#
+#: ContentGenerator.pm:1442
+msgid "Display Options"
+msgstr "Опции отображения"
+
+#
+#. ($pl)
+#: ContentGenerator/ProblemSets.pm:283
+msgid "Download Hardcopy for Selected %plural(%1,Set,Sets)"
+msgstr "Скачать печатную версию для %1 заданий"
+
+#
+#: ContentGenerator/ProblemSet.pm:321
+msgid "Download PDF or TeX Hardcopy for Current Set"
+msgstr "Скачать PDF или TeX файл для данного задания"
+
+#
+#: ContentGenerator/ProblemSets.pm:289
+msgid "Download PDF or TeX Hardcopy for Selected Sets"
+msgstr "Скачать PDF оли TeX файл для отмеченных заданий"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:445
+#: ContentGenerator/Instructor/ProblemSetList.pm:831
+#: ContentGenerator/Instructor/ProblemSetList.pm:869
+msgid "Due Date"
+msgstr "Дата закрытия"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1812
+msgid "Duplicate this set and name it"
+msgstr "Создать копию задания и назвать его "
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1720
+#: ContentGenerator/Instructor/UserList.pm:1785
+#: ContentGenerator/Instructor/UserList.pm:1818
+msgid "Edit"
+msgstr "Редактировать"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:603
+msgid "Edit All Set Data"
+msgstr "Редактировать все настройки задания"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:439
+msgid "Edit Assigned Users"
+msgstr "Редактировать список студентов, которым назначено задание"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:438
+msgid "Edit Problems"
+msgstr "Редактировать задачи"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:441
+msgid "Edit Set Data"
+msgstr "Редактировать настройки задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:961
+msgid "Edit Which Users?"
+msgstr "Кого из пользователей редактировать?"
+
+#
+#: ContentGenerator/Problem.pm:1011
+msgid "Edit this problem"
+msgstr "Редактировать данную задачу"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:923
+msgid "Edit which sets?"
+msgstr "Какие из заданий редактировать?"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2067
+#: ContentGenerator/Instructor/UserList.pm:285
+#: ContentGenerator/Instructor/UserList.pm:813
+#: ContentGenerator/Instructor/UserList.pm:856
+#: ContentGenerator/Instructor/UserList.pm:899
+msgid "Email Address"
+msgstr "Адрес e-mail"
+
+#
+#: ContentGenerator.pm:1526 ContentGenerator.pm:1549 ContentGenerator.pm:1572
+msgid "Email instructor"
+msgstr "Написать e-mail инструктору"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1120
+msgid "Enable"
+msgstr "Включить"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:604
+msgid "Enable Reduced Credit"
+msgstr "Включить возможность уменьшенных оценок"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1113
+msgid "Enable/Disable reduced scoring for selected sets"
+msgstr ""
+"Включить/выключить возможность получения уменьшенных оценок для отмеченных "
+"заданий"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:815
+#: ContentGenerator/Instructor/UserList.pm:858
+#: ContentGenerator/Instructor/UserList.pm:901
+msgid "Enrollment Status"
+msgstr "Статус участия"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1321
+msgid "Enter filename below"
+msgstr "Напечатайте имя файла "
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1502
+msgid "Enter filenames below"
+msgstr "Напечатайте имена файлов"
+
+#
+#: ContentGenerator/Problem.pm:240
+msgid "Entered"
+msgstr "Введено"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1671
+msgid "Export selected sets"
+msgstr "Экспортировать выделенные задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1317
+msgid "Export to what kind of file?"
+msgstr "Экспортировать в какой файл?"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1604
+msgid "Export which sets?"
+msgstr "Какие из заданий экспортировать?"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1292
+msgid "Export which users?"
+msgstr "Кого из пользователей экспортировать?"
+
+#
+#. ($@)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1435
+msgid "Failed to create new set: %1"
+msgstr "Не удаётся слздать новое задание: %1"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1374
+msgid "Failed to create new set: no set name specified!"
+msgstr "Не укдаётся создать новое задание: не указано название для задания! "
+
+#
+#. ($@)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1848
+msgid "Failed to duplicate set: %1"
+msgstr "Не удалось создать дубликат задания: %1"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1832
+msgid "Failed to duplicate set: no set name specified!"
+msgstr "Не удалось создать дубликат задания: имя задания не указано!"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1396
+#: ContentGenerator/Instructor/ProblemSetList.pm:1830
+msgid "Failed to duplicate set: no set selected for duplication!"
+msgstr ""
+"Не удалось создать дубликат задания: задания для дублирования не выбрано!"
+
+#
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1834
+msgid "Failed to duplicate set: set %1 already exists!"
+msgstr "Не удалось создать дубликат задания: задание %1 уже существует!"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1339
+msgid "Filename"
+msgstr "Имя файла"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:678
+msgid "Filter by what text?"
+msgstr "По какому тексту ыильтровать?"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2065
+#: ContentGenerator/Instructor/UserList.pm:283
+#: ContentGenerator/Instructor/UserList.pm:811
+#: ContentGenerator/Instructor/UserList.pm:854
+#: ContentGenerator/Instructor/UserList.pm:897
+msgid "First Name"
+msgstr "Имя"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1020
+msgid "Give new password to which users?"
+msgstr "Кому из пользователей назначить новый пароль?"
+
+#
+#: ContentGenerator/Login.pm:231
+msgid "Guest Login"
+msgstr "Гостевой вход"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:443
+#: ContentGenerator/Instructor/ProblemSetList.pm:829
+#: ContentGenerator/Instructor/ProblemSetList.pm:867
+msgid "Hardcopy Header"
+msgstr "Заголовок печатной версии залания"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1017
+msgid "Hidden"
+msgstr "Скрытое"
+
+#
+#: ContentGenerator.pm:667 ContentGenerator/ProblemSet.pm:110
+#: ContentGenerator/ProblemSets.pm:226
+msgid "Homework Sets"
+msgstr "Задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:558
+msgid ""
+"If a password field is left blank, the student's current password will be "
+"maintained."
+msgstr ""
+"Если поле пароля оставлено пустым, текущий пароль студента останется без "
+"изменений. "
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1498
+msgid "Import from where?"
+msgstr "Откуда импортировать?"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1473
+msgid "Import how many sets?"
+msgstr "Сколько заданий импортировать?"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1520
+msgid "Import sets with names"
+msgstr "Импортировать задания с именами"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1165
+msgid "Import users from what file?"
+msgstr "Из какого файла импортировать пользователей?"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1927
+msgid "Inactive"
+msgstr "Не активен"
+
+#
+#: Authen.pm:148
+msgid "Invalid user ID or password."
+msgstr "Неверный логин или пароль. "
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2066
+#: ContentGenerator/Instructor/UserList.pm:284
+#: ContentGenerator/Instructor/UserList.pm:812
+#: ContentGenerator/Instructor/UserList.pm:855
+#: ContentGenerator/Instructor/UserList.pm:898
+msgid "Last Name"
+msgstr "Фамилия"
+
+#
+#: ContentGenerator.pm:730
+msgid "Library Browser"
+msgstr "Подбор задач"
+
+#
+#: ContentGenerator.pm:731
+msgid "Library Browser 2"
+msgstr "Подбор задач 2"
+
+#
+#: ContentGenerator/Logout.pm:124
+msgid "Log In Again"
+msgstr "Войти снова"
+
+#
+#: ContentGenerator.pm:845 ContentGenerator.pm:847
+msgid "Log Out"
+msgstr "выйти"
+
+#
+#. ($userID)
+#: ContentGenerator.pm:845 ContentGenerator.pm:847
+msgid "Logged in as %1. "
+msgstr "Вы вошли как  %1. "
+
+#
+#: ContentGenerator/Login.pm:74 ContentGenerator/Login.pm:77
+msgid "Login Info"
+msgstr "Информация о вошедшем"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2062
+#: ContentGenerator/Instructor/UserList.pm:282
+#: ContentGenerator/Instructor/UserList.pm:810
+#: ContentGenerator/Instructor/UserList.pm:853
+#: ContentGenerator/Instructor/UserList.pm:896
+msgid "Login Name"
+msgstr "Логин"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2063
+msgid "Login Status"
+msgstr "Статус вошедшего"
+
+#
+#: ContentGenerator.pm:654
+msgid "Main Menu"
+msgstr "Главное меню"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:705
+msgid "Match on what? (separate multiple IDs with commas)"
+msgstr "Совпадение с кем? (разделяйте идентификаторы запятыми)"
+
+#
+#: ContentGenerator/Problem.pm:245
+msgid "Messages"
+msgstr "Сообщения"
+
+#
+#: ContentGenerator/ProblemSet.pm:349 ContentGenerator/ProblemSets.pm:212
+#: ContentGenerator/ProblemSets.pm:213
+msgid "Name"
+msgstr "Имя"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1328
+msgid "Name the new set"
+msgstr "Дайте имя для нового задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1937
+#: ContentGenerator/Instructor/UserList.pm:2077
+msgid "New Password"
+msgstr "Новый пароль"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1519
+msgid "New passwords saved"
+msgstr "Новый пароль сохранён"
+
+#
+#: ContentGenerator/Problem.pm:864 ContentGenerator/Problem.pm:866
+msgid "Next Problem"
+msgstr "Следующая задача"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2625
+#: ContentGenerator/Instructor/ProblemSetList.pm:2626
+msgid "No"
+msgstr "Нет"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1043
+#: ContentGenerator/Instructor/ProblemSetList.pm:1145
+msgid "No change made to any set"
+msgstr "Ни одно из заданий не изменено"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1217
+msgid "No sets selected for scoring"
+msgstr "Не выбраны задания для подсчёта баллов по ним"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:266
+msgid "No sets selected for scoring."
+msgstr "Не выбраны задания для подсчёта баллов по ним."
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2722
+msgid ""
+"No sets shown.  Choose one of the options above to list the sets in the "
+"course."
+msgstr ""
+"Список заданий не отображён. Выберите одну из опций выше для того, чтобы "
+"отобразить список заданий в курсе."
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2110
+msgid ""
+"No students shown.  Choose one of the options above to \n"
+"\t              list the students in the course."
+msgstr ""
+"Список студентов не отображен. Выберите одну из опций выше \n"
+"\t              для того, чтобы отобразить список студентов в курсе. "
+
+#
+#: ContentGenerator.pm:851
+msgid "Not logged in."
+msgstr "Вы не вошли"
+
+#
+#: ContentGenerator/Problem.pm:975
+msgid "Note"
+msgstr "Замечание"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:444
+#: ContentGenerator/Instructor/ProblemSetList.pm:830
+#: ContentGenerator/Instructor/ProblemSetList.pm:868
+msgid "Open Date"
+msgstr "Дата открытия"
+
+#
+#: ContentGenerator/Problem.pm:1307
+msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
+msgstr "ПРЕДВАРИТЕЛЬНВЙ ПРОСМОТР -- ОТВЕТЫ НЕ ЗАПИСАНЫ"
+
+#
+#. (timestamp($self)
+#: ContentGenerator.pm:953
+msgid "Page generated at %1"
+msgstr "Страница сгенерирована %1"
+
+#
+#: ContentGenerator/Login.pm:202
+msgid "Password"
+msgstr "Пароль"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2073
+#: ContentGenerator/Instructor/UserList.pm:291
+#: ContentGenerator/Instructor/UserList.pm:819
+#: ContentGenerator/Instructor/UserList.pm:862
+#: ContentGenerator/Instructor/UserList.pm:905
+msgid "Permission Level"
+msgstr "Уровень допуска"
+
+#
+#. (CGI::b($r->maketext($course)
+#: ContentGenerator/Login.pm:154
+msgid "Please enter your username and password for %1 below:"
+msgstr "Введите ниже Ваш логин и  пароль для %1:"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:396
+msgid "Please select action to be performed."
+msgstr "Выберите действие, которое будет выполнено."
+
+#
+#: ContentGenerator/Problem.pm:1116
+msgid "Preview Answers"
+msgstr "Предварительный просмотр ответов. "
+
+#
+#: ContentGenerator/Problem.pm:850 ContentGenerator/Problem.pm:852
+msgid "Previous Problem"
+msgstr "Предыдущая задача"
+
+#
+#. ($problemID)
+#: ContentGenerator.pm:686 ContentGenerator/Problem.pm:808
+#: ContentGenerator/ProblemSet.pm:424
+msgid "Problem %1"
+msgstr "Задача %1"
+
+#
+#: ContentGenerator/Problem.pm:856 ContentGenerator/Problem.pm:858
+msgid "Problem List"
+msgstr "Список задач"
+
+#
+#: ContentGenerator/Problem.pm:796 ContentGenerator/ProblemSet.pm:346
+msgid "Problems"
+msgstr "Задачи"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2071
+#: ContentGenerator/Instructor/UserList.pm:289
+#: ContentGenerator/Instructor/UserList.pm:817
+#: ContentGenerator/Instructor/UserList.pm:860
+#: ContentGenerator/Instructor/UserList.pm:903
+msgid "Recitation"
+msgstr "Подразделение"
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1148
+msgid "Reduced Credit %1 for all sets"
+msgstr "Уменьшение баллов %1 для всез заданий"
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1154
+msgid "Reduced Credit %1 for selected sets"
+msgstr "Ументшение бкллов %1 для выделенных заданий"
+
+#
+#. ($verb)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1151
+msgid "Reduced Credit %1 for visable sets"
+msgstr "Ументшение бкллов %1 для видимых заданий"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2523
+msgid "Reduced Credit Disabled"
+msgstr "Уменьшение баллов отключено"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2523
+#: ContentGenerator/Instructor/ProblemSetList.pm:448
+msgid "Reduced Credit Enabled"
+msgstr "Уменьшение баллов включено"
+
+#
+#. ($beginReducedScoringPeriod)
+#: ContentGenerator/ProblemSets.pm:459
+msgid "Reduced Credit Starts: %1"
+msgstr "Начинается уменьшените баллов: %1"
+
+#
+#: ContentGenerator/ProblemSet.pm:351
+msgid "Remaining"
+msgstr "Остаётся"
+
+#
+#: ContentGenerator/Login.pm:204
+msgid "Remember Me"
+msgstr "Запомнить меня"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1190
+msgid "Replace which users?"
+msgstr "Кого из пользователей заменить?"
+
+#
+#: ContentGenerator.pm:799
+msgid "Report bugs"
+msgstr "Сообщить об ошибках"
+
+#
+#: ContentGenerator/Problem.pm:244
+msgid "Result"
+msgstr "Результат"
+
+#
+#. (CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)
+#: ContentGenerator/Instructor/UserList.pm:376
+msgid "Result of last action performed: %1"
+msgstr "Результат последнего из выполненых действий: %1"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:386
+msgid "Results of last action performed"
+msgstr "Результат последнего из выполненых действий"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1732
+#: ContentGenerator/Instructor/UserList.pm:1415
+#: ContentGenerator/Instructor/UserList.pm:1487
+msgid "Save changes"
+msgstr "Сохранить изменения"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1186
+msgid "Score which sets?"
+msgstr "Посчитать баллы в отношении каких из заданий?"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2070
+#: ContentGenerator/Instructor/UserList.pm:288
+#: ContentGenerator/Instructor/UserList.pm:816
+#: ContentGenerator/Instructor/UserList.pm:859
+#: ContentGenerator/Instructor/UserList.pm:902
+msgid "Section"
+msgstr "Отдел"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:582
+msgid "Select all sets"
+msgstr "Выбрать все задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:535
+msgid "Select all users"
+msgstr "Выбрать всех пользователей"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:534
+#: ContentGenerator/Instructor/UserList.pm:512
+msgid "Select an action to perform"
+msgstr "Выбрать действите для выполнения"
+
+#
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1375
+msgid "Set %1 exists.  No set created"
+msgstr "Задание %1 уже имеется. Новое задание не создано"
+
+#: ContentGenerator/Instructor/ProblemSetList.pm:440
+msgid "Set Definition Filename"
+msgstr "Имя файла, определяющего задание"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:442
+#: ContentGenerator/Instructor/ProblemSetList.pm:828
+#: ContentGenerator/Instructor/ProblemSetList.pm:866
+msgid "Set Header"
+msgstr "Заголовок задания"
+
+#
+#: ContentGenerator/ProblemSet.pm:273 ContentGenerator/ProblemSet.pm:275
+msgid "Set Info"
+msgstr "Информация о задании"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2700
+msgid "Set List"
+msgstr "Список заданий"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:827
+#: ContentGenerator/Instructor/ProblemSetList.pm:865
+msgid "Set Name"
+msgstr "Имя задания"
+
+#
+#: ContentGenerator/ProblemSet.pm:153
+msgid "Sets"
+msgstr "Задания"
+
+#
+#: ContentGenerator/Problem.pm:1063
+msgid "Show Hints"
+msgstr "Отобразить подсказки"
+
+#
+#: ContentGenerator/Problem.pm:1370
+msgid "Show Past Answers"
+msgstr "Отобразить предыдущие ответы"
+
+#
+#: ContentGenerator/Problem.pm:1082
+msgid "Show Solutions"
+msgstr "Показать решения"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:645
+msgid "Show Which Users?"
+msgstr "Кого из пользователей показать"
+
+#
+#: ContentGenerator/Problem.pm:1044
+msgid "Show correct answers"
+msgstr "Показать правильные ответы"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:683
+msgid "Show which sets?"
+msgstr "Какие из заданий отобразить?"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:497
+#: ContentGenerator/Instructor/UserList.pm:475
+msgid "Show/Hide Site Description"
+msgstr "Показать/Скрыть описание сайта"
+
+#
+#. (scalar @visibleSetIDs, scalar @allSetIDs)
+#: ContentGenerator/Instructor/ProblemSetList.pm:607
+msgid "Showing %1 out of %2 sets."
+msgstr "Отображено %1 изf %2 заданий."
+
+#
+#. (scalar @Users, scalar @allUserIDs)
+#: ContentGenerator/Instructor/UserList.pm:556
+msgid "Showing %1 out of %2 users"
+msgstr "Отображено %1 из %2 пользователей"
+
+#
+#: ContentGenerator/Login.pm:96 ContentGenerator/Login.pm:99
+msgid "Site Information"
+msgstr "Информация о сайте"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:821
+#: ContentGenerator/Instructor/UserList.pm:804
+msgid "Sort by"
+msgstr "Сортировать по полю"
+
+#
+#. ($names{$primary}, $names{$secondary})
+#: ContentGenerator/Instructor/ProblemSetList.pm:899
+msgid "Sort by %1 and then by %2"
+msgstr "Сортировать сначала по полю %1 и затем по полю %2"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2069
+#: ContentGenerator/Instructor/UserList.pm:287
+#: ContentGenerator/ProblemSet.pm:353 ContentGenerator/ProblemSets.pm:215
+#: ContentGenerator/ProblemSets.pm:216
+msgid "Status"
+msgstr "Статус"
+
+#
+#: ContentGenerator.pm:848
+msgid "Stop Acting"
+msgstr "Прекратить действие"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2068
+#: ContentGenerator/Instructor/UserList.pm:286
+#: ContentGenerator/Instructor/UserList.pm:814
+#: ContentGenerator/Instructor/UserList.pm:857
+#: ContentGenerator/Instructor/UserList.pm:900
+msgid "Student ID"
+msgstr "ID студента"
+
+#
+#: ContentGenerator/Problem.pm:1127
+msgid "Submit Answers"
+msgstr "Отправить ответы"
+
+#
+#. ($effectiveUser)
+#: ContentGenerator/Problem.pm:1124
+msgid "Submit Answers for %1"
+msgstr "Отправтьь ответы на %1"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1850
+msgid "Success"
+msgstr "Успешно"
+
+#. ($newSetID)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1437
+msgid "Successfully created new set %1"
+msgstr "Успешно создано новое задание"
+
+#
+#. ($name)
+#: ContentGenerator/ProblemSets.pm:424 ContentGenerator/ProblemSets.pm:433
+#: ContentGenerator/ProblemSets.pm:439
+msgid "Take %1 test"
+msgstr "Выполнить тест %1"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:598
+#: ContentGenerator/Instructor/UserList.pm:551
+msgid "Take Action!"
+msgstr "Выполнить действие!"
+
+#
+#: ContentGenerator/ProblemSets.pm:236
+msgid "Test Date"
+msgstr "Дата тестирования"
+
+#
+#: ContentGenerator/ProblemSets.pm:235
+msgid "Test Score"
+msgstr "Баллы за тестирование"
+
+#
+#: ContentGenerator.pm:954
+msgid "The WeBWorK Project"
+msgstr "Проект WebWork"
+
+#
+#. ($fully)
+#: ContentGenerator/Problem.pm:307
+msgid "The answer above is NOT %1correct."
+msgstr "Приведённый выше ответ не %1 верен."
+
+#
+#: ContentGenerator/Problem.pm:305
+msgid "The answer above is correct."
+msgstr "Приведённый выше ответ верен."
+
+#
+#. (CGI::b($r->maketext("[_1]'s Current Password",$user_name)
+#: ContentGenerator/Options.pm:107
+msgid ""
+"The password you entered in the %1 \n"
+"\t\t\t\t\t\tfield does not match your current\n"
+"\t\t\t\t\t\tpassword. Please retype your current password and try\n"
+"\t\t\t\t\t\tagain."
+msgstr ""
+"Введённый пароль в поле %1 \n"
+"\t\t\t\t\t\tне совпадает с вашим текущим паролем для \n"
+"\t\t\t\t\t\t. Наберите пароль и попробуйте \n"
+"\t\t\t\t\t\tещё раз."
+
+#
+#. (CGI::b($r->maketext("[_1]'s New Password",$e_user_name)
+#: ContentGenerator/Options.pm:91
+msgid ""
+"The passwords you entered in the \n"
+"\t\t\t\t\t\t\t\t%1 and %2\n"
+"\t\t\t\t\t\t\t\tfields don't match. Please retype your new password and try\n"
+"\t\t\t\t\t\t\t\tagain."
+msgstr ""
+"Пароли введённые в полях\n"
+"\t\t\t\t\t\t%1 и %2\n"
+"\t\t\t\t\t\tне совпадают.\n"
+"\t\t\t\t\t\tНаберите пароли попробуйте ещё раз."
+
+#
+#. ($setName,$effectiveUser)
+#: ContentGenerator/ProblemSet.pm:308
+msgid "The selected problem set (%1) is not a valid set for %2"
+msgstr "Выбранное задание (%1) не назначено %2"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:859
+#: ContentGenerator/Instructor/UserList.pm:847
+#: ContentGenerator/Instructor/UserList.pm:890
+msgid "Then by"
+msgstr "Затем по полю"
+
+#
+#: ContentGenerator/ProblemSet.pm:365
+msgid "This homework set contains no problems."
+msgstr "Это задане не содержит задач."
+
+#
+#: ContentGenerator/Problem.pm:1175
+msgid "This homework set is closed."
+msgstr "Это задание закрыто. "
+
+#
+#: ContentGenerator/Problem.pm:1173
+msgid "This homework set is not yet open."
+msgstr "Это задание пока не открыто. "
+
+#
+#: ContentGenerator/Problem.pm:611
+msgid "This problem will not count towards your grade."
+msgstr "Эта задача не будет засчитана в ваших баллах. "
+
+#
+#. (CGI::font({class=>$visiblityStateClass}, $visiblityStateText)
+#: ContentGenerator/Problem.pm:605 ContentGenerator/ProblemSet.pm:88
+msgid "This set is %1"
+msgstr "Это задание %1"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:588
+msgid "Unselect all sets"
+msgstr "Отменить выбр всех заданий"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:541
+msgid "Unselect all users"
+msgstr "Отменить выбор всех пользователей"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2683
+msgid "Use System Default"
+msgstr "Использовать системные настройки по умолчанию"
+
+#
+#: ContentGenerator/Login.pm:200
+msgid "Username"
+msgstr "Имя пользователя"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:2087
+msgid "Users List"
+msgstr "Список пользователей"
+
+#
+#. ($names{$primary}, $names{$secondary}, $names{$ternary})
+#: ContentGenerator/Instructor/UserList.pm:938
+msgid "Users sorted by %1, then by %2, then by %3"
+msgstr ""
+"Пользователи упорядовены по полю %1, затем по полю %2, затем по полю %3"
+
+#
+#: ContentGenerator/ProblemSet.pm:230
+msgid "Viewing temporary file"
+msgstr "Отображается временный файл"
+
+#
+#: ContentGenerator/Problem.pm:1332 ContentGenerator/ProblemSets.pm:63
+msgid "Viewing temporary file: "
+msgstr "Отображается временный файл: "
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:833
+#: ContentGenerator/Instructor/ProblemSetList.pm:871
+msgid "Visibility"
+msgstr "Видимость"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1018
+#: ContentGenerator/Instructor/ProblemSetList.pm:447
+msgid "Visible"
+msgstr "Видимое"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1259
+#: ContentGenerator/Instructor/UserList.pm:1078
+msgid "Warning: Deletion destroys all user-related data and is not undoable!"
+msgstr ""
+"Предупреждаем: Удаление уничтожит все данные пользователя и это действие "
+"необратимо!"
+
+#
+#: ContentGenerator/Home.pm:87
+msgid "Welcome to WeBWorK!"
+msgstr "Добро пожаловать в WebWork!"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:665
+msgid "What field should filtered users match on?"
+msgstr "По какому из полей сделапть выборку пользователей."
+
+#
+#: ContentGenerator/ProblemSet.pm:352
+msgid "Worth"
+msgstr "Ценность"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2625
+#: ContentGenerator/Instructor/ProblemSetList.pm:2626
+msgid "Yes"
+msgstr "Да"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:306
+#: ContentGenerator/Instructor/ProblemSetList.pm:418
+#: ContentGenerator/Instructor/UserList.pm:262
+msgid "You are not authorized to access the instructor tools."
+msgstr "У вас нет прав доступа к инструментам инструктора. "
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:339
+msgid "You are not authorized to modify homework sets."
+msgstr "У вас нет прав доступа для изменения заданий."
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:344
+msgid "You are not authorized to modify set definition files."
+msgstr "У вас нет прав доступа для изменения файлов отпределения заданий. "
+
+#
+#: ContentGenerator/Instructor/UserList.pm:329
+#: ContentGenerator/Instructor/UserList.pm:335
+msgid "You are not authorized to modify student data"
+msgstr "У вас нет прав доступа для изменения данных студентов. "
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:389
+#: ContentGenerator/Instructor/UserList.pm:380
+msgid "You are not authorized to perform this action."
+msgstr "У вас нет прав доступа для выполнения этого действия. "
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1121
+msgid "You cannot delete yourself!"
+msgstr "Вы не можете удалить самого себя! "
+
+#
+#: ContentGenerator/Options.pm:163 ContentGenerator/Options.pm:180
+msgid "You do not have permission to change email addresses."
+msgstr "У вас нет прав доступа для изменения адресов e-mail. "
+
+#
+#: ContentGenerator/Options.pm:117 ContentGenerator/Options.pm:139
+msgid "You do not have permission to change your password."
+msgstr "У вас нет прав доступа для изменеия Вашего пароля. "
+
+#
+#. ($attemptsLeft,$attemptsLeftNoun)
+#: ContentGenerator/Problem.pm:1196
+msgid "You have %1 %2 remaining."
+msgstr "У вас осталось %1 %2."
+
+#
+#. ($attemptsLeft)
+#: ContentGenerator/Problem.pm:1197
+msgid "You have %negquant(%1,unlimited attempts,attempt,attempts) remaining."
+msgstr "У вас осталось %1 попыток."
+
+#
+#. ($attempts)
+#: ContentGenerator/Problem.pm:1191
+msgid "You have attempted this problem %quant(%1,time,times)."
+msgstr "Вы пробовали решить эту задачу %1 раз."
+
+#
+#: ContentGenerator/Logout.pm:119
+msgid "You have been logged out of WeBWorK."
+msgstr "Вы вышли из WebWork. "
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1933
+msgid "You may not change your own password here!"
+msgstr "Здесь Вы не можете поменять Ваш собственный пароль. "
+
+#
+#: Authen.pm:317
+msgid "You must specify a user ID."
+msgstr "Надо указать ID пользователя. "
+
+#
+#. (sprintf("%.0f%%", $pg->{result}->{score} * 100)
+#: ContentGenerator/Problem.pm:1192
+msgid "You received a score of %1 for this attempt."
+msgstr "Вы получили оценку %1 за эту попытку. "
+
+#
+#: ContentGenerator/Options.pm:157
+msgid "Your email address has been changed."
+msgstr "Ваш адрес e-mail изменён."
+
+#
+#. ($lastScore,$notCountedMessage)
+#: ContentGenerator/Problem.pm:1194
+msgid "Your overall recorded score is %1.  %2"
+msgstr "Ваш общий итог %1 баллов. %2"
+
+#
+#: Authen.pm:416
+msgid "Your session has timed out due to inactivity. Please log in again."
+msgstr ""
+"Ваша сессия закрыта по причине длительного отсутствия обращений к серверу. "
+"Пожалуйста, авторизуйтесь повтрно."
+
+#
+#: ContentGenerator/ProblemSet.pm:273 ContentGenerator/ProblemSets.pm:71
+msgid "[edit]"
+msgstr "[рндактировать]"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:476
+msgid "_CLASSLIST_EDITOR_DESCRIPTION"
+msgstr "_ОПИСАНИЕ_РЕДАКТОРА_СПИСКОВ_ПОЛЬЗОВАЕЛЕЙ"
+
+#
+#. (CGI::strong($r->maketext($course)
+#: ContentGenerator/Login.pm:151
+msgid "_EXTERNAL_AUTH_MESSAGE"
+msgstr "_СООБЩЕНИЕ_О_ВНЕШНЕЙ_АВТОРИЗАЦИИ"
+
+#
+#. (CGI::b($r->maketext("Guest Login")
+#: ContentGenerator/Login.pm:230
+msgid "_GUEST_LOGIN_MESSAGE"
+msgstr "В данном курсе имеется гостевой вход, не требующий логина и пароля. "
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:498
+msgid "_HMWKSETS_EDITOR_DESCRIPTION"
+msgstr "_ОПИСАНИЕ_РЕДАКТОРА_ЗАДАНИЙ"
+
+#
+#. (CGI::b($r->maketext("Remember Me")
+#: ContentGenerator/Login.pm:155
+msgid "_LOGIN_MESSAGE"
+msgstr "_СООБЩЕНИЕ_ОБ_АВТОРИЗАЦИИ"
+
+#
+#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#: ContentGenerator/ProblemSet.pm:333
+msgid "_REDUCED_CREDIT_MESSAGE_1"
+msgstr "_СООБЩЕНИ_ОБ_УМЕНЬШЕНИИ_БАЛЛОВ_1"
+
+#
+#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#: ContentGenerator/ProblemSet.pm:335
+msgid "_REDUCED_CREDIT_MESSAGE_2"
+msgstr "_СООБЩЕНИ_ОБ_УМЕНЬШЕНИИ_БАЛЛОВ_2"
+
+#
+#: ContentGenerator.pm:1951
+msgid "_REQUEST_ERROR"
+msgstr "_ОШИБКА_ЗАПРОСА"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1358
+msgid "a duplicate of the first selected set"
+msgstr "дубликат первого из выбраных заданий"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1357
+msgid "a new empty set"
+msgstr "новое пустое задание"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1479
+msgid "a single set"
+msgstr "одно задаие"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1091
+#: ContentGenerator/Instructor/ProblemSetList.pm:1193
+#: ContentGenerator/Instructor/ProblemSetList.pm:1610
+#: ContentGenerator/Instructor/ProblemSetList.pm:689
+#: ContentGenerator/Instructor/ProblemSetList.pm:929
+#: ContentGenerator/Instructor/ProblemSetList.pm:989
+msgid "all sets"
+msgstr "все задания"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1551
+#: ContentGenerator/Instructor/UserList.pm:1026
+#: ContentGenerator/Instructor/UserList.pm:1298
+#: ContentGenerator/Instructor/UserList.pm:651
+#: ContentGenerator/Instructor/UserList.pm:967
+msgid "all users"
+msgstr "всех пользователей"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1196
+#: ContentGenerator/Instructor/UserList.pm:1226
+msgid "any users"
+msgstr "любых пользователей"
+
+#
+#: ContentGenerator/Problem.pm:1165
+msgid "attempt"
+msgstr "попытка"
+
+#
+#: ContentGenerator/Problem.pm:1162 ContentGenerator/Problem.pm:1165
+msgid "attempts"
+msgstr "попытки"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1726
+msgid "changes abandoned"
+msgstr "изменение не сохранены"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1790
+msgid "changes saved"
+msgstr "изменения сохранены"
+
+#
+#: ContentGenerator/ProblemSets.pm:468
+msgid "closed, answers available"
+msgstr "задание закрыто, ответы доступны"
+
+#
+#. ($self->formatDateTime($set->answer_date)
+#: ContentGenerator/ProblemSets.pm:464
+msgid "closed, answers on %1"
+msgstr "задание закрыто, ответы будут доступны %1"
+
+#
+#: ContentGenerator/ProblemSets.pm:466
+msgid "closed, answers recently available"
+msgstr "задание закрыто, ответы вскоре будут доступны"
+
+#
+#: ContentGenerator/ProblemSets.pm:402
+msgid "completed."
+msgstr "завершено."
+
+#
+#: ContentGenerator/Problem.pm:267
+msgid "completely"
+msgstr "полностью"
+
+#
+#: ContentGenerator/Problem.pm:264
+msgid "correct"
+msgstr "верно"
+
+#
+#. ($num)
+#: ContentGenerator/Instructor/ProblemSetList.pm:1310
+msgid "deleted %1 sets"
+msgstr "удалено %1 заданий"
+
+#
+#. ($num)
+#: ContentGenerator/Instructor/UserList.pm:1135
+msgid "deleted %1 users"
+msgstr "удалено %1 пользователей"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:947
+msgid "editing all sets"
+msgstr "редактороваать все задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:985
+msgid "editing all users"
+msgstr "редактировать всех пользователей"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:953
+msgid "editing selected sets"
+msgstr "редактировать выбранные задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:991
+msgid "editing selected users"
+msgstr "редактировать выбранных пользователей"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:950
+msgid "editing visible sets"
+msgstr "редактировать видимые задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:988
+msgid "editing visible users"
+msgstr "редактировать видимых пользоваателей"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:694
+msgid "enter matching set IDs below"
+msgstr "ниже введите ID для требуемых заданий"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1665
+msgid "export abandoned"
+msgstr "экспортирование отменено"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1629
+msgid "exporting all sets"
+msgstr "экспортировать все задания"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1636
+msgid "exporting selected sets"
+msgstr "экспортировать выбранные задания"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1633
+msgid "exporting visible sets"
+msgstr "экспортировать видимые задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1044
+msgid "giving new passwords to all users"
+msgstr "назначить новый пароль всем пользователям"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1050
+msgid "giving new passwords to selected users"
+msgstr "назначить новый пароль выбранным пользователям"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1047
+msgid "giving new passwords to visible users"
+msgstr "назначить новый пароль видимым пользователям"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2522
+#: ContentGenerator/Problem.pm:603
+msgid "hidden"
+msgstr "скрыто"
+
+#
+#: ContentGenerator/Problem.pm:604 ContentGenerator/ProblemSet.pm:86
+msgid "hidden from students"
+msgstr "скрыто от студентов"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:693
+msgid "hidden sets"
+msgstr "скрытые задания"
+
+#
+#: ContentGenerator/Problem.pm:266
+msgid "incorrect"
+msgstr "неверно"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1480
+msgid "multiple sets"
+msgstr "множество заданий"
+
+#
+#: ContentGenerator/Problem.pm:864
+msgid "navNext"
+msgstr "След."
+
+#
+#: ContentGenerator/Problem.pm:866
+msgid "navNextGrey"
+msgstr "След."
+
+#
+#: ContentGenerator/Problem.pm:850
+msgid "navPrev"
+msgstr "Пред."
+
+#
+#: ContentGenerator/Problem.pm:852
+msgid "navPrevGrey"
+msgstr "Пред."
+
+#
+#: ContentGenerator/Problem.pm:856
+msgid "navProbList"
+msgstr "К списку задач"
+
+#
+#: ContentGenerator/Problem.pm:858
+msgid "navProbListGrey"
+msgstr "К списку задач"
+
+# The up arrow symbol  would be best, but Poedit does not support it.
+#: ContentGenerator/ProblemSet.pm:110
+msgid "navUp"
+msgstr "Вверх"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1090
+#: ContentGenerator/Instructor/ProblemSetList.pm:1192
+#: ContentGenerator/Instructor/ProblemSetList.pm:1269
+#: ContentGenerator/Instructor/ProblemSetList.pm:690
+#: ContentGenerator/Instructor/ProblemSetList.pm:988
+msgid "no sets"
+msgstr "ни одного задания"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1552
+#: ContentGenerator/Instructor/UserList.pm:1088
+#: ContentGenerator/Instructor/UserList.pm:1199
+#: ContentGenerator/Instructor/UserList.pm:1227
+#: ContentGenerator/Instructor/UserList.pm:652
+msgid "no users"
+msgstr "никого из пользователей"
+
+#
+#: ContentGenerator/ProblemSets.pm:430 ContentGenerator/ProblemSets.pm:452
+msgid "now open, due "
+msgstr "сейчас открыто, закроется "
+
+#
+#. ($self->formatDateTime($set->due_date()
+#: ContentGenerator/ProblemSets.pm:408
+msgid "open: complete by %1"
+msgstr "открыто: завершите решение до %1"
+
+#
+#: ContentGenerator/ProblemSets.pm:405
+msgid "over time: closed."
+msgstr "истекло время: закрыто."
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1093
+#: ContentGenerator/Instructor/ProblemSetList.pm:1194
+#: ContentGenerator/Instructor/ProblemSetList.pm:1271
+#: ContentGenerator/Instructor/ProblemSetList.pm:1612
+#: ContentGenerator/Instructor/ProblemSetList.pm:691
+#: ContentGenerator/Instructor/ProblemSetList.pm:931
+#: ContentGenerator/Instructor/ProblemSetList.pm:991
+msgid "selected sets"
+msgstr "выбранные задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1028
+#: ContentGenerator/Instructor/UserList.pm:1090
+#: ContentGenerator/Instructor/UserList.pm:1198
+#: ContentGenerator/Instructor/UserList.pm:1300
+#: ContentGenerator/Instructor/UserList.pm:653
+#: ContentGenerator/Instructor/UserList.pm:969
+msgid "selected users"
+msgstr "выбранных пользователей"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:762
+msgid "showing all sets"
+msgstr "оторажены все задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:738
+msgid "showing all users"
+msgstr "отображены все пользователи"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:747
+msgid "showing matching users"
+msgstr "отображены пользователи, удовлетворяющие критерию выбрки"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:765
+msgid "showing no sets"
+msgstr "ни одного задания не показано"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:741
+msgid "showing no users"
+msgstr "ни одного пользователя не показано"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:768
+msgid "showing selected sets"
+msgstr "отображены выбранные задания"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:744
+msgid "showing selected users"
+msgstr "отображены выбраные пользователи"
+
+#
+#: ContentGenerator/Problem.pm:1124
+msgid "submitAnswers"
+msgstr "submitAnswers"
+
+#
+#: ContentGenerator/Problem.pm:1154
+msgid "time"
+msgstr "время"
+
+#
+#: ContentGenerator/Problem.pm:1154
+msgid "times"
+msgstr "раз"
+
+#
+#: ContentGenerator/Problem.pm:1161 ContentGenerator/ProblemSet.pm:427
+msgid "unlimited"
+msgstr "неогр. кол-во"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:654
+msgid "users who match on selected field"
+msgstr "пользователи, которые соответствуют условию выборки по выбранному полю"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:2522
+#: ContentGenerator/Problem.pm:603
+msgid "visible"
+msgstr "видимый"
+
+#
+#: ContentGenerator/Instructor/ProblemSetList.pm:1611
+#: ContentGenerator/Instructor/ProblemSetList.pm:692
+#: ContentGenerator/Instructor/ProblemSetList.pm:930
+msgid "visible sets"
+msgstr "видимые задания"
+
+#
+#: ContentGenerator/Problem.pm:604 ContentGenerator/ProblemSet.pm:86
+msgid "visible to students"
+msgstr "выдимы студентам"
+
+#
+#: ContentGenerator/Instructor/UserList.pm:1027
+#: ContentGenerator/Instructor/UserList.pm:1197
+#: ContentGenerator/Instructor/UserList.pm:1299
+#: ContentGenerator/Instructor/UserList.pm:968
+msgid "visible users"
+msgstr "видимых пользователей"
+
+#
+#. ($self->formatDateTime($set->open_date)
+#: ContentGenerator/ProblemSets.pm:420 ContentGenerator/ProblemSets.pm:448
+msgid "will open on %1"
+msgstr "откроется %1"
+
+#
+msgid "Add to which set?"
+msgstr "В какое из заданий добавить?"
+
+#
+msgid "Course Information for course [_1]"
+msgstr "Информация о курсе [_1]"
+
+#
+msgid "report bugs in this problem"
+msgstr "сообщить об ошибке в этой задача"
+
+#
+msgid "Problem [_1]"
+msgstr "Задача [_1]"
+
+#
+msgid "Cancel Password"
+msgstr "Отменить назначение пароля"
+
+#
+msgid "WeBWorK"
+msgstr "WeBWorK"
+
+#
+msgid "Audit"
+msgstr "Аудит"
+
+#
+msgid "Hardcopy Header for set [_1]"
+msgstr "Заголовок печатной версии задания [_1]"
+
+#
+msgid ""
+"Report bugs in a WeBWorK question/problem using this link. The very first "
+"time you do this you will need to register with an email address so that "
+"information on the bug fix can be reported back to you."
+msgstr ""
+"Сообщить об ошибке в задаче WeBWorK. В первый раз, когда вы сообщаете об "
+"ошибке, вам потребуется зарегистрироваться с указанием адреса e-mail, чтобы "
+"Вам смогли сообщить об устранении ошибки по этому адресу. "
+
+#
+msgid "Pad Fields"
+msgstr "Заполненые поля"
+
+#
+msgid "Set Header for set [_1]"
+msgstr "Заголовок задания для [_1]"
+
+#
+msgid "Statistics for [_1]"
+msgstr "Статистика для [_1]"
+
+#
+msgid "Filter"
+msgstr "Фильтр"
+
+#
+msgid "set [_1]/problem [_2]"
+msgstr "задание [_1]/задача [_2]"
+
+#
+msgid "You are not authorized to modify problems."
+msgstr "У вас нет прав доступа для изменения задач."
+
+#
+msgid "hardcopy header file"
+msgstr "файл заголовка для печетной версии задания"
+
+#
+msgid ""
+"Write permissions have not been enabled in the templates directory.  No "
+"changes can be made."
+msgstr "Папка templates закрыта для записи.  Изменения не могут быть записаны."
+
+#
+msgid "Save [_1] and View"
+msgstr "Сохранить [_1] и просмотреть"
+
+#
+msgid "Create"
+msgstr "Создать"
+
+#
+msgid "Changes in this file have not yet been permanently saved."
+msgstr "Изменения в этом файле ещё не были сохранены."
+
+#
+msgid "Instructor Tools"
+msgstr "Инструменты инструктора"
+
+# The last symbol "ы" is displayed incorrectly on the button on the "Instructor tools" page 
+msgid "Score"
+msgstr "Баллы"
+
+#
+msgid "Show in another window"
+msgstr "Показать в другом окне"
+
+#
+msgid "Copied auxiliary files from [_1] to  new location at [_2]"
+msgstr "Вспомогательные файлы скопированы из [_1] в новое место [_2]"
+
+#
+msgid "Unpublished"
+msgstr "Не опубликовано"
+
+#
+msgid "Login"
+msgstr "Логин"
+
+#
+msgid "Email"
+msgstr "Email"
+
+#
+msgid "File Manager"
+msgstr "Менеджер файлов"
+
+#
+msgid "Unable to change the hardcopy header for set [_1]. Unknown error."
+msgstr ""
+"Не удалось изменить заголовок печатной версии для задания [_1]. Причина "
+"ошибки неизвестна."
+
+#
+msgid "Unable to make '[_1]' the set header for [_2]"
+msgstr "Не удалсь сделать '[_1]' заголовком задания для  [_2]"
+
+#
+msgid "Can't determine user of temporary edit file [_1]."
+msgstr "Не удалось установить принадлежность временного файла [_1]."
+
+#
+msgid "Download a hardcopy of this homework set."
+msgstr "Загрузить печатную версию этого задания."
+
+#
+msgid "Problem Editor"
+msgstr "Редактор задач"
+
+#
+msgid "The file '[_1]' is protected!"
+msgstr "Файл '[_1]' зашищён от записи!"
+
+#
+msgid "Top level of author information on the wiki."
+msgstr "Верхний уровень информации об авторе в wiki."
+
+#
+msgid "Score selected set(s) and save to:"
+msgstr "Выставить баллы по выбранным заданиям и согранить их в:"
+
+#
+msgid "Save Password"
+msgstr "Сохранить пароль"
+
+#
+msgid "The file '[_1]' is a blank problem!"
+msgstr "Файл '[_1]' это пустая задача!"
+
+#
+msgid "Add as what filetype?"
+msgstr "Дрбавить как файл какого типа?"
+
+#
+msgid "no action"
+msgstr "бездействие"
+
+#
+msgid "Added '[_1]' to [_2] as new set header"
+msgstr "'[_1]' добавлен к [_2] в качестве заголовка задания"
+
+#
+msgid "View statistics by set"
+msgstr "Посмотреть статистику по заданию"
+
+#
+msgid "Set"
+msgstr "Задание"
+
+#
+msgid ""
+"This is a blank problem template file and can not be edited directly. Use "
+"the 'Save as' action below to create a local copy of the file and add it to "
+"the current problem set."
+msgstr ""
+"Это файо шаблона для задачи, его нелтзя редактировать напрямую. Выполните "
+"коменду 'сохранить как' ниже для того, чтобы изготовить локальную копию "
+"задачи и добавить её к текущему заданию."
+
+#
+msgid "Logout"
+msgstr "Выйти"
+
+#
+msgid "You do not have permission to view the details of this error."
+msgstr "У вас нет оазрешений посмотреть детали этой ошибки."
+
+#
+msgid "Reverting to original file '[_1]'"
+msgstr "Вернуться к исходному файлу '[_1]'"
+
+#
+msgid "Delete"
+msgstr "Удалить"
+
+#
+msgid "Wiki summary page for MathObjects"
+msgstr "Резюмирующая страничка wiki по объектам MathObjects"
+
+#
+msgid "Your score was recorded."
+msgstr "Ваши баллы записаны"
+
+#
+msgid "You must specify an file name in order to save a new file."
+msgstr "Вам надо указать имя файла для того, чтобы сохранить новый файл."
+
+#
+msgid ""
+"To edit this text you must first make a copy of this file using the 'Save "
+"as' action below."
+msgstr ""
+"Для того, чтобы редактировать этот текст, надо создать копию файла, выполнив "
+"действие 'Сохранить как' ниже."
+
+#
+msgid "unassigned problem file"
+msgstr "не назначенный файл задачи"
+
+#
+msgid "View statistics by student"
+msgstr "Посмотреть статистику по студентам"
+
+#
+msgid "Publish"
+msgstr "Опубликовать"
+
+#
+msgid "Password/Email"
+msgstr "Пароль/e-mail"
+
+#
+msgid "Cancel Edit"
+msgstr "Отменить редактирование"
+
+#
+msgid "Math Objects"
+msgstr "Math Objects"
+
+#
+msgid "Snippets of PG code illustrating specific techniques"
+msgstr "Фрагменты PG кода, иллюстрирующие отдельные методы программирования"
+
+#
+msgid "Error copying [_1] to [_2]"
+msgstr "Ошибка при копировании [_1] в [_2]"
+
+#
+msgid "Hmwk Sets Editor"
+msgstr "Редактор заданий"
+
+#
+msgid "This set is [_1] students."
+msgstr "Это задание для студентов [_1]."
+
+#
+msgid "header file"
+msgstr "файл заголовка"
+
+#
+msgid "Include Index"
+msgstr "Включить оглавление"
+
+#
+msgid "Display Mode"
+msgstr "Способ отображения"
+
+#
+msgid "You can earn partial credit on this problem."
+msgstr "Балл за эту задачу может дробиться. "
+
+#
+msgid ""
+"Write permissions have not been enabled in '[_1]'.  Changes must be saved to "
+"a different directory for viewing."
+msgstr ""
+"Папка  '[_1]' защищена от записи. Изменения должны быть записаны в другую "
+"папку для посмотра."
+
+#
+msgid "blank problem"
+msgstr "пустая задача"
+
+#
+msgid "Save Edit"
+msgstr "Сохранить изменения"
+
+#
+msgid "Enrolled"
+msgstr "Включен в списки"
+
+#
+msgid ""
+"Write permissions have not been enabled for '[_1]'.  Changes must be saved "
+"to another file for viewing."
+msgstr ""
+"Файл  '[_1]' защищён от записи. Изменения должны быть сохранены в другой "
+"файл для просмотра."
+
+#
+msgid ""
+"Note: this problem viewer is for viewing purposes only. As of right now, "
+"testing functionality is not possible."
+msgstr ""
+"Замечание: этот редактор предназначен только для просмотра задач. Проверка "
+"работоспособности задачи на данный момент в нём не предусмотрена."
+
+#
+msgid "Save Export"
+msgstr "Сохранить экспортируемое"
+
+#
+msgid "webwork"
+msgstr "webwork"
+
+#
+msgid "Problem Viewer"
+msgstr "Просмотр задач"
+
+#
+msgid "submit button clicked"
+msgstr "нажата кнопка отправить"
+
+#
+msgid "Student Progress for [_1]"
+msgstr "Текущие результаты студентов по [_1]"
+
+#
+msgid ""
+"A new file has been created at '[_1]' with the contents below. No changes "
+"have been made to set [_2]."
+msgstr ""
+"Новый файл был создан в папке '[_1]', егр содержание ниже. Никаких изменений "
+"в задание [_2] не внесено. "
+
+#
+msgid ""
+"Your score was not recorded because this problem has not been assigned to "
+"you."
+msgstr "Ваши баллы не записаны, поскольку эта задача вам не назначена."
+
+#
+msgid "Sort"
+msgstr "Сортировать"
+
+#
+msgid "Add problem"
+msgstr "Добавить задачу"
+
+#
+msgid "Author Info"
+msgstr "Информация об авторе"
+
+#
+msgid "Replace [_1]"
+msgstr "Заменить [_1]"
+
+#
+msgid "Help"
+msgstr "Помощь"
+
+#
+msgid "Add Users"
+msgstr "Добавить пользователей"
+
+#
+msgid "Problem Source Code"
+msgstr "Исходный код задачи"
+
+#
+msgid ""
+"Test snippets of PG code in interactive lab.  Good way to learn PG language."
+msgstr ""
+"Испытайте образцы PG кода в интерактивной лаборатории. Это хороший способ "
+"изучить язык программирования PG."
+
+#
+msgid "Page generated at [_1] at [_2]"
+msgstr "Страничка сгенерирована [_1]  [_2]"
+
+#
+msgid "Import"
+msgstr "Импортировать"
+
+#
+msgid "View Using Seed Number"
+msgstr "Просмотреть, используя генератор случайных чисел с базовым числом "
+
+#
+msgid "Grades"
+msgstr "Баллы"
+
+#
+msgid "Published"
+msgstr "Опукбликовано"
+
+#
+msgid "Your score was not recorded because this homework set is closed."
+msgstr "Ваши баллы не записаны, поскольку задание закрыто."
+
+#
+msgid ""
+"The text box now contains the source of the original problem. You can "
+"recover lost edits by using the Back button on your browser."
+msgstr ""
+"Текстовое окно теперь содержит код исходной задачи. Вы можете восстановить "
+"сделанные ранее изменения при момощи кнопки Назад в Вашем браузере."
+
+#
+msgid "The file '[_1]' is a directory!"
+msgstr "Afqk '[_1]' является папкой!"
+
+#
+msgid "Save As"
+msgstr "Сохранить как"
+
+#
+msgid ""
+"Documentation from source code for PG modules and macro files. Often the "
+"most up-to-date information."
+msgstr ""
+"Документация из исходных кеодов PG модулей и макрофайлов. Часто это самая "
+"свежая информация по теме. "
+
+#
+msgid "Problem Techniques"
+msgstr "Техника программирования задач. "
+
+#
+msgid "Course Configuration"
+msgstr "Конфигурация курса. "
+
+#
+msgid "Feedback"
+msgstr "Обратная связь"
+
+#
+msgid "Export"
+msgstr "Экспортировать"
+
+#
+msgid ""
+"PG mark down syntax used to format WeBWorK questions. This interactive lab "
+"can help you to learn the techniques."
+msgstr ""
+"Язык разметки PG использован для отображения задач в WebWork. Интерактивная "
+"лаборатрия может помочь Вам изучить этот язык."
+
+#
+msgid "Record Scores for Single Sets"
+msgstr "Записать баллы для отдельных заданий"
+
+#
+msgid "Append to end of set [_1]"
+msgstr "Дописать в конец задания [_1]"
+
+#
+msgid "Unrecognized saveMode: |[_1]|. Unknown error."
+msgstr "Неопознанная saveMode: |[_1]|. Причина ошибки неизвестна."
+
+#
+msgid ""
+"Your score was not recorded because there was a failure in storing the "
+"problem record to the database."
+msgstr ""
+"Ваши баллы не записаны, поскольку произошла ошибка при сохранении "
+"результатов по задаче в базу данных."
+
+#
+msgid "The hardcopy header for set [_1] has been renamed to '[_2]'."
+msgstr "Заголовок задания [_1] был переименован в  '[_2]'."
+
+#
+msgid "Save as"
+msgstr "Сохранить как"
+
+#
+msgid "Select action below"
+msgstr "Выбарите действие нмже"
+
+#
+msgid "The file '[_1]' cannot be found."
+msgstr "Файл '[_1]' не найден."
+
+#
+msgid "Unable to write to '[_1]': [_2]"
+msgstr "Не удалось записать в '[_1]': [_2]"
+
+#
+msgid "Save"
+msgstr "Сохранить"
+
+#
+msgid ""
+"File '[_1]' exists. File not saved. No changes have been made. You can "
+"change the file path for this problem manually from the 'Hmwk Sets Editor' "
+"page"
+msgstr ""
+"Файл '[_1]' существует. Файл не был сохранён. Никаких изменений в нём не "
+"производилось. Вы можете изменить путь к файлу для этой задачи вручную из "
+"редактора заданий"
+
+#
+msgid "The set header for set [_1] has been renamed to '[_2]'."
+msgstr "Заголовок для задания [_1] был перпеименован в  '[_2]'."
+
+#
+msgid ""
+"Error: This path is already in the temporary edit directory -- no new "
+"temporary file is created. path = [_1]"
+msgstr ""
+"Ошибка: Этот путь указывает внурть папки временных редактирований -- новых "
+"временных файлов не создано. Путь = [_1]"
+
+#
+msgid ""
+"Please use radio buttons to choose the method for saving this file. Can't "
+"recognize saveMode: |[_1]|."
+msgstr ""
+"Используйте кнопки выбора для того, чтобы выбрать способ сохранения этого "
+"файла. НЕ удалось распознать  saveMode: |[_1]|."
+
+#
+msgid "Saved to file '[_1]'"
+msgstr "Сохранени в файл '[_1]'"
+
+#
+msgid "Please specify a file to save to."
+msgstr "Укажите файл, в который следует сохранитиь. "
+
+#
+msgid "The selected problem ([_1]) is not a valid problem for set [_2]."
+msgstr "Выбранная задача ([_1]) не является корректной для задания [_2]."
+
+#
+msgid "Editing [_1] in file '[_2]'"
+msgstr "Редактирование [_1] в файле '[_2]'"
+
+#
+msgid "Deleting temp file at [_1]"
+msgstr "Удаляется временый файл в  [_1]"
+
+#
+msgid "hidden from"
+msgstr "скрыто от"
+
+#
+msgid "View student progress by set"
+msgstr "Просмотреть текущие результаты студентов по заданиям"
+
+#
+msgid "View"
+msgstr "Просмотреть"
+
+#
+msgid "Resources"
+msgstr "Ресурсы"
+
+#
+msgid "Scoring Download"
+msgstr "Скачать баллы"
+
+#
+msgid "Duplicate"
+msgstr "Создать дубликат"
+
+#
+msgid "This path |[_1]| is not the path to a temporary edit file."
+msgstr "Путь  |[_1]| не является путём к файлу временного редактирования."
+
+#
+msgid "visible to"
+msgstr "виден"
+
+#
+msgid ""
+"Unable to change the source file path for set [_1], problem [_2]. Unknown "
+"error."
+msgstr ""
+"Не удаётся изменить путь к задаче [_2] в задании [_1]. Неизвестная ошибка."
+
+#
+msgid "Course Administration"
+msgstr "Администрирование курса"
+
+#
+msgid "Added [_1] to [_2] as problem [_3]"
+msgstr "Задача [_1] добавлена в задание [_2] как хадача [_3]"
+
+#
+msgid "Options Information"
+msgstr "Информация об опциях"
+
+#
+msgid "Proctor"
+msgstr "Смотритель"
+
+#
+msgid "Student Progress"
+msgstr "Результаты студентов"
+
+#
+msgid "Revert"
+msgstr "Вернуть"
+
+#
+msgid "Statistics"
+msgstr "Статистика"
+
+#
+msgid "Save as new independent problem"
+msgstr "Сохранить как новую отдельную задачу"
+
+#
+msgid "Scoring Tools"
+msgstr "Инструменты для подсчёта баллов"
+
+#
+msgid ""
+"The source file for 'set [_1] / problem [_2]' has been changed from [_3] to "
+"'[_4]'."
+msgstr ""
+"Исходный файл для задачи  [_2] из задания  [_1]  был изменён с  [_3] на "
+"'[_4]'."
+
+#
+msgid "Cancel Export"
+msgstr "Отменить экспортирование"
+
+#
+msgid "View student progress by student"
+msgstr "Просмотреть результаты по студентам"
+
+#
+msgid "Revert to [_1]"
+msgstr "Вернуться к [_1]"
+
+#
+msgid "Classlist Editor"
+msgstr "Редактор списка пользователей"
+
+#
+msgid "Add"
+msgstr "Добавить"
+
+#
+msgid "the original path to the file is [_1]"
+msgstr "первоначальный путь к файлу - это [_1]"
+
+#
+msgid "The path to the original file should be absolute"
+msgstr "Путь к первоначальному файлу должен быть абсолютным"
+
+#
+msgid ""
+"To edit this text you must use the 'Save AS' action below to save it to "
+"another file."
+msgstr ""
+"Для редактирования этого текстанадо выполнить действте 'Сохранить как' ниже "
+"и сохранить его в другой файл."
+
+#
+msgid "Error: The original file [_1] cannot be read."
+msgstr "Ошибка: Первоначсальный файл [_1] не удаётся прочесть."
+
+#
+msgid "Unable to change the set header for set [_1]. Unknown error."
+msgstr "Не удалось изменить заголовок для задания [_1]. Неизвестная ошибка."
+
+#
+msgid "options information"
+msgstr "информация об опциях"
+
+#
+msgid "The selected problem([_1]) is not a valid problem for set [_2]."
+msgstr "Выбранная задача [_1] не является корректной задачей ждя задания [_2]."
+
+#
+msgid "Unknown file type"
+msgstr "Неизвестный тип файла"
+
+#
+msgid "course information"
+msgstr "информация о курсе"
+
+#
+msgid "Change User Options"
+msgstr "Изменить опции пользователя"
+
+#
+msgid "Drop"
+msgstr "Пропустить"
+
+#
+msgid "Solutions"
+msgstr "Решения"
+
+#
+msgid "Show:"
+msgstr "Показать:"
+
+#
+msgid "WeBWorK Assignment [_1] is due : [_2]."
+msgstr "Задание WeBWorK [_1] закрыто: [_2]."
+
+#
+msgid "Hardcopy Generator"
+msgstr "Генератор печатных версий"
+
+#
+msgid "This set is visible to students."
+msgstr "Это задание видимо для студентов"
+
+#
+msgid "View equations as"
+msgstr "Просматривать уравнения как"
+
+# При отправке e-mail инструктору
+msgid "From:"
+msgstr "От:"
+
+#
+msgid "Generate Hardcopy"
+msgstr "Создать печатную версию"
+
+#
+msgid ""
+"You may choose to show any of the following data. Correct answers and "
+"solutions are only available after the answer date of the homework set."
+msgstr ""
+"Вы можете выбрать любое из следующих данных. Верные ответы и решения могут "
+"быть доступны только после даты закрытия задания."
+
+#
+msgid "E-mail Instructor"
+msgstr "Написать e-mail инструктору"
+
+#
+msgid "Send E-mail:"
+msgstr "Отправить e-mail:"
+
+#
+msgid "Cancel Email"
+msgstr "Отменить отправку e-mail"
+
+#
+msgid "E-mail:"
+msgstr "E-mail:"
+
+#
+msgid "Correct answers"
+msgstr "Правильные ответы"
+
+#
+msgid ""
+"Use this form to report to your professor a problem with the WeBWorK system "
+"or an error in a problem you are attempting. Along with your message, "
+"additional information about the state of the system will be included."
+msgstr ""
+"Используйте эту форму для того, чтобы сообщить вашему преподавателю об "
+"ошибке в работе системы WebWork или об ошибке в задаче. Вместе с этим "
+"сообщением будет отправлена дополнительная информация о состоянии системы."
+
+#
+msgid "Student answers"
+msgstr "Ответы студента"
+
+#
+msgid "Hints"
+msgstr "Подсказки"
+
+#
+msgid "Hardcopy Format:"
+msgstr "Формат печатной версии:"

@@ -156,6 +156,14 @@ sub pre_header_initialize {
 			$self->addbadmessage("You do not have permission to generate hardcopy in $hardcopy_format format.");
 			$validation_failed = 1;
 		}
+
+		# make sure we are allowed to use this hardcopy theme
+		unless ($authz->hasPermissions($userID, "download_hardcopy_change_theme") ||
+			!defined($r->param('hardcopy_theme'))) {
+		        $self->addbadmessage("You do not have permission to change the hardcopy theme.");
+			$validation_failed = 1;
+		}
+
 		
 		# is there at least one user and set selected?
 		unless (@userIDs) {
@@ -337,6 +345,7 @@ sub display_form {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
@@ -360,6 +369,7 @@ sub display_form {
 	my $perm_multiset = $authz->hasPermissions($userID, "download_hardcopy_multiset");
 	my $perm_multiuser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
 	my $perm_texformat = $authz->hasPermissions($userID, "download_hardcopy_format_tex");
+	my $perm_change_theme = $authz->hasPermissions($userID, "download_hardcopy_change_theme");
 	my $perm_unopened = $authz->hasPermissions($userID, "view_unopened_sets");
 	my $perm_view_hidden = $authz->hasPermissions($userID, "view_hidden_sets");
 	my $perm_view_answers = $authz->hasPermissions($userID, "show_correct_answers_before_answer_date");
@@ -507,20 +517,55 @@ sub display_form {
 		print CGI::hidden("selected_sets",   $selected_set_id ),
 		      CGI::hidden( "selected_users", $selected_user_id);
 
-		my $mergedSet = $db->getMergedSet($selected_user_id,
-						  $selected_set_id);
-
+ 		my $mergedSet;
+ 		if ( $selected_set_id =~ /(.*),v(\d+)$/ ) {
+ 		    # showing answers is more complicated for gateway tests
+ 		    my $the_set_id = $1;
+ 		    my $the_set_version = $2;
+ 		    $mergedSet = $db->getMergedSetVersion( $selected_user_id,
+ 							   $the_set_id,
+ 							   $the_set_version );
+ 		    my $mergedProblem = $db->getMergedProblemVersion(
+ 			$selected_user_id, $the_set_id, $the_set_version, 1 );
+ 
+ 		    # then the parameters we need to know to determine
+ 		    #    if correct answers may be shown are
+ 		    my $maxAttempts = $mergedSet->attempts_per_version() || 0;
+ 		    my $attemptsUsed = $mergedProblem->num_correct + $mergedProblem->num_incorrect || 0;
+ 
+ 		    $canShowCorrectAnswers = $perm_view_answers ||
+ 			( defined($mergedSet) && defined($mergedProblem) &&
+ 			  ( ( after($mergedSet->answer_date) ||
+ 			       ( ( $attemptsUsed >= $maxAttempts &&
+                                   $maxAttempts != 0 ) ||
+                                 after($mergedSet->due_date +
+                                       ($mergedSet->answer_date -
+                                        $mergedSet->due_date)) )
+ 			    ) &&
+ 			    ( ( $mergedSet->hide_score eq 'N' &&
+ 				$mergedSet->hide_score_by_problem ne 'Y' ) ||
+ 			      ( $mergedSet->hide_score eq 'BeforeAnswerDate' &&
+ 				after($mergedSet->answer_date) ) 
+ 			    ) 
+ 			  ) 
+ 			);
+ 			    
+ 		} else {
+ 		    $mergedSet = $db->getMergedSet($selected_user_id,
+ 						   $selected_set_id);
+ 
+ 		    $canShowCorrectAnswers = $perm_view_answers ||
+ 			(defined($mergedSet) && after($mergedSet->answer_date));
+ 		}
 	        # make display for versioned sets a bit nicer
 		$selected_set_id =~ s/,v(\d+)$/ (test $1)/;
 	
 		# FIXME!	
 		print CGI::p($r->maketext("Download hardcopy of set [_1] for [_2]?", $selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name));
 		
-		$canShowCorrectAnswers = $perm_view_answers ||
-		    (defined($mergedSet) && after($mergedSet->answer_date));
-
-		$canShowSolutions = $perm_view_answers ||
-		    (defined($mergedSet) && after($mergedSet->answer_date));
+ 		$canShowSolutions = $canShowCorrectAnswers;
+ 		# $canShowSolutions = $perm_view_answers ||
+ 		#     (defined($mergedSet) && after($mergedSet->answer_date));
 
 	
 	}
@@ -561,7 +606,7 @@ sub display_form {
 		),
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
-				CGI::b("Hardcopy Format:"), " ",
+				CGI::b($r->maketext("Hardcopy Format:")), " ",
 				CGI::radio_group(
 					-name    => "hardcopy_format",
 					-values  => \@formats,
@@ -569,7 +614,19 @@ sub display_form {
 					-labels  => \%format_labels,
 				),
 			),
-		),
+		       ),
+		$perm_change_theme ?
+		 CGI::Tr({},
+			CGI::td({colspan=>2, class=>"ButtonRow"},
+				CGI::b($r->maketext("Hardcopy Theme:")), " ",
+				CGI::radio_group(
+					-name    => "hardcopy_theme",
+					-values  => $ce->{hardcopyThemes},
+					-default => scalar($r->param("hardcopyTheme")) || $ce->{hardcopyTheme},
+					-labels  => $ce->{hardcopyThemeNames}, 
+				),
+			),
+		       ) : '',
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::submit(
@@ -864,9 +921,11 @@ sub write_multiuser_tex {
 	my @setIDs = @$setIDsRef;
 	
 	# get snippets
-	my $preamble = $ce->{webworkFiles}->{hardcopySnippets}->{preamble};
-	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble};
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider};
+	my $theme = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$theme;
+	my $preamble = $ce->{webworkFiles}->{hardcopySnippets}->{preamble} // "$themeDir/hardcopyPreamble.tex";
+	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble} // "$themeDir/hardcopyPostamble.tex";
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider} // "$themeDir/hardcopyUserDivider.tex";
 	
 	# write preamble
 	$self->write_tex_file($FH, $preamble);
@@ -895,7 +954,9 @@ sub write_multiset_tex {
 	}
 	
 	# get set divider
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider};
+	my $theme = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$theme;
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider} // "$themeDir/hardcopySetDivider.tex";
 	
 	# write each set
 	while (defined (my $setID = shift @setIDs)) {
@@ -958,12 +1019,15 @@ sub write_set_tex {
 	}
 	
 	# get snippets
+	my $theme = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$theme;
 	my $header = $MergedSet->hardcopy_header
 		? $MergedSet->hardcopy_header
 		: $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
   if ($header eq 'defaultHeader') {$header = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};}
-	my $footer = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider};
+	my $footer = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter} //
+	  "$themeDir/hardcopySetFooter.pg";
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider} // "$themeDir/hardcopyProblemDivider.tex";
 	
 	# get list of problem IDs
 	# DBFIXME use ORDER BY in database

@@ -65,6 +65,7 @@ use WeBWorK::Utils qw(before after between);
 use WeBWorK::Authen::Proctor;
 use Net::IP;
 use Scalar::Util qw(weaken);
+use version;
 
 ################################################################################
 
@@ -399,14 +400,11 @@ sub checkSet {
 			if ($db->existsSetVersion($effectiveUserName,$setName,$verNum)) {
 				$set = $db->getMergedSetVersion($effectiveUserName,$setName,$verNum);
 			} else {
-				return "Requested version ($verNum) of set " .
-					"'$setName' is not assigned to user " .
-					"$effectiveUserName.";
+				return $r->maketext("Requested version ([_1]) of set '[_2]' is not assigned to user [_3].",$verNum,$setName,$effectiveUserName);
 			}
 		}
 		if ( ! $set ) {
-			return "Requested set '$setName' could not be found " .
-				"in the database for user $effectiveUserName.";
+			return $r->maketext("Requested set '[_1]' could not be found in the database for user [_2].",$setName,$effectiveUserName);
 		}
 	} else {
 
@@ -425,13 +423,11 @@ sub checkSet {
 				#   instructor tool users.
 				return 0;
 			} else {
-				return "Requested set '$setName' is not " .
-					"assigned to user $effectiveUserName.";
+				return $r->maketext("Requested set '[_1]' is not assigned to user [_2].",$setName,$effectiveUserName);
 			}
 		}
 		if ( ! $set ) {
-			return "Requested set '$setName' could not be found " .
-				"in the database for user $effectiveUserName.";
+			return $r->maketext("Requested set '[_1]' could not be found in the database for user [_2].", $setName, $effectiveUserName);
 		}
 	}
 	# cache the set for future use as needed.  this should probably 
@@ -442,7 +438,7 @@ sub checkSet {
 	#    check to see if we're trying to access a set that's not open
 	if ( before($set->open_date) && 
 	     ! $self->hasPermissions($userName, "view_unopened_sets") ) {
-		return "Requested set '$setName' is not yet open.";
+		return $r->maketext("Requested set '[_1]' is not yet open.",$setName);
 	} 
 
 	# also check to make sure that the set is visible, or that we're
@@ -452,7 +448,7 @@ sub checkSet {
 			  $set->visible ne '1' ) ? 1 : $set->visible;
 	if ( ! $visible && 
 	     ! $self->hasPermissions($userName, "view_hidden_sets") ) { 
-		return "Requested set '$setName' is not available yet.";
+		return $r->maketext("Requested set '[_1]' is not available yet.",$setName);
 	}
 
 	# check to be sure that gateways are being sent to the correct
@@ -460,18 +456,12 @@ sub checkSet {
 	if (defined($set->assignment_type) && 
 	    $set->assignment_type =~ /gateway/ && 
 	    ($node_name eq 'problem_list' || $node_name eq 'problem_detail')) {
-		return "Requested set '$setName' is a test/quiz assignment " . 
-			"but the regular homework assignment content " .
-			"generator $node_name was called.  Try re-entering " .
-			"the set from the problem sets listing page.";
+		return $r->maketext("Requested set '[_1]' is a test/quiz assignment but the regular homework assignment content generator [_2] was called.  Try re-entering the set from the problem sets listing page.",$setName,$node_name);
 	} elsif ( (! defined($set->assignment_type) ||
 #		   $set->assignment_type eq 'homework') &&
 		   $set->assignment_type eq 'default') &&
 		  $node_name =~ /gateway/ ) {
-		return "Requested set '$setName' is a homework assignment " . 
-			"but the gateway/quiz content " .
-			"generator $node_name was called.  Try re-entering " .
-			"the set from the problem sets listing page.";
+		return $r->maketext("Requested set '[_1]' is a homework assignment but the gateway/quiz content generator [_2] was called.  Try re-entering the set from the problem sets listing page.",$setName,$node_name);
 	}
 		
 	# and check that if we're entering a proctored assignment that we 
@@ -481,15 +471,24 @@ sub checkSet {
 	if (defined($set->assignment_type) && 
 	    $set->assignment_type =~ /proctored/ &&
 	    ! WeBWorK::Authen::Proctor->new($r,$ce,$db)->verify() ) {
-		return "Requested set '$setName' is a proctored test/quiz " .
-			"assignment, but no valid proctor authorization " .
-			"has been obtained.";
+		return $r->maketext("Requested set '[_1]' is a proctored test/quiz assignment, but no valid proctor authorization has been obtained.",$setName);
 	}
 
 	# and whether there are ip restrictions that we need to check
 	my $badIP = $self->invalidIPAddress($set);
 	return $badIP if $badIP;
 
+	# if the LTI grade passback is enabled and set to 'homework' mode
+	# then we need to make sure that there is a sourcedid for this set
+	# before students access it.
+
+	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
+
+	if ($LTIGradeMode eq 'homework' && !$self->hasPermissions($userName, "view_unopened_sets")) {
+	  return $r->maketext("You must use your Learning Managment System (E.G. Blackboard, Moodle, Canvas, etc...) to access this set.  Try logging in to the Learning Managment System and visiting the set from there.")
+	    unless $set->lis_source_did;
+	}
+	
 	return 0;
 }
 
@@ -503,6 +502,7 @@ sub invalidIPAddress {
 
 	my $r = $self->{r};
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $urlPath = $r->urlpath;
 #	my $setName = $urlPath->arg("setID");  # not always defined
 	my $setName = $set->set_id;
@@ -513,7 +513,32 @@ sub invalidIPAddress {
 			$set->restrict_ip eq '' || $set->restrict_ip eq 'No' ||
 		     $self->hasPermissions($userName,'view_ip_restricted_sets'));
 
-	my $clientIP = new Net::IP($r->connection->remote_ip);
+	my $APACHE24 = 0;
+	my $version;
+
+	# check to see if the version is manually defined
+	if (defined($ce->{server_apache_version}) &&
+	    $ce->{server_apache_version}) {
+	  $version = $ce->{server_apache_version};
+	  # otherwise try and get it from the banner
+	} elsif (Apache2::ServerUtil::get_server_banner() =~ 
+		 m:^Apache/(\d\.\d+):) {
+	  $version = $1;
+	}
+
+	if ($version) {
+	  $APACHE24 = version->parse($version) >= version->parse('2.4');
+	}
+
+	# If its apache 2.4 then the API has changed
+	my $clientIP;
+	
+	if ($APACHE24) {
+	  $clientIP = new Net::IP($r->useragent_ip);
+	} else { 	
+	  $clientIP = new Net::IP($r->connection->remote_ip);
+	}
+
 	# make sure that we're using the non-versioned set name
 	$setName =~ s/,v\d+$//;
 
@@ -524,11 +549,7 @@ sub invalidIPAddress {
 
 	# if there are no addresses in the locations, return an error that
 	#    says this
-	return "Client ip address " . $clientIP->ip() . " is not allowed to " .
-	    "work this assignment, because the assignment has ip address " .
-	    "restrictions and there are no allowed locations associated " .
-	    "with the restriction.  Contact your professor to have this " .
-	    "problem resolved." if ( ! @restrictAddresses );
+	return $r->maketext("Client ip address [_1] is not allowed to work this assignment, because the assignment has ip address restrictions and there are no allowed locations associated with the restriction.  Contact your professor to have this problem resolved.",$clientIP->ip() ) if ( ! @restrictAddresses );
 
 	# build a set of IP objects to match against
 	my @restrictIPs = ( map {new Net::IP($_)} @restrictAddresses );

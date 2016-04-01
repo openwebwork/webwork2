@@ -1,14 +1,77 @@
-setNumber=0
-openDate = 1/7/00 at 6:00am
-dueDate = 1/20/09 at 6:00am
-answerDate = 1/21/09 at 6:00am
-paperHeaderFile = set0/paperHeaderFile0.pg
-screenHeaderFile = set0/screenHeaderFile0.pg
-problemList =
-set0/prob1.pg,    0
-set0/prob1a.pg,   0
-set0/prob1b.pg,   0
-set0/prob2.pg,   0
-set0/prob3.pg,   0
-set0/prob4/prob4.pg,   0
-set0/prob5.pg,   0
+assignmentType      = default
+openDate          = 01/07/2000 at 06:00am EST
+reducedScoringDate = 01/20/2009 at 06:00am EST
+dueDate           = 01/20/2009 at 06:00am EST
+answerDate        = 01/21/2009 at 06:00am EST
+enableReducedScoring = N
+paperHeaderFile   = set0/paperHeaderFile0.pg
+screenHeaderFile  = set0/screenHeaderFile0.pg
+description       = 
+restrictProbProgression = 0
+emailInstructor   = 0
+
+problemListV2 
+problem_start
+problem_id = 1
+source_file = set0/prob1.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 2
+source_file = set0/prob1a.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 3
+source_file = set0/prob1b.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 4
+source_file = set0/prob2.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 5
+source_file = set0/prob3.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 6
+source_file = set0/prob4/prob4.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+problem_start
+problem_id = 7
+source_file = set0/prob5.pg
+value = 1
+max_attempts = -1
+showMeAnother = -1
+counts_parent_grade = 0
+att_to_open_children = 1 
+problem_end
+

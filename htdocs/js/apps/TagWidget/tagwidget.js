@@ -2,8 +2,7 @@
 var basicWebserviceURL = "/webwork2/instructorXMLHandler";
 var basicRequestObject = {
     "xml_command":"listLib",
-    "pw":"",
-    "password":'change-me',
+    "course_password":'change-me',
     "session_key":'change-me',
     "user":"user-needs-to-be-defined",
     "library_name":"Library",

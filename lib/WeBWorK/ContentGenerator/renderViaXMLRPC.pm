@@ -35,7 +35,8 @@ use base qw(WeBWorK::ContentGenerator);
 use strict;
 use warnings;
 use WebworkClient;
-
+use WeBWorK::Debug;
+use CGI;
 
 =head1 Description
 
@@ -117,10 +118,8 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 
 
-	$XML_URL             =  "$server_root_url/mod_xmlrpc";
+	$XML_URL             =  "$server_root_url";  #"$server_root_url/mod_xmlrpc";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
-
-use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
 
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
@@ -134,48 +133,67 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
- 
- 	my %inputs_ref;
-	my @keys = $r->mutable_param;  # $r->param;
-	foreach my $key ( @keys ) {
-		$inputs_ref{$key} = $r->param("$key");
-	}
-	my $user_id      = $inputs_ref{userID};
-	my $session_key	 = $inputs_ref{session_key};
-	my $courseName   = $inputs_ref{courseID};
+	# Note: Vars helps handle things like checkbox 'packed' data;
+	my %inputs_ref =  WeBWorK::Form->new_from_paramable($r)->Vars ;
 
+	# When passing parameters via an LMS you get "custom_" put in front of them. So lets
+	# try to clean that up
+	$inputs_ref{userID} = $inputs_ref{custom_userid} if $inputs_ref{custom_userid};
+	$inputs_ref{courseID} = $inputs_ref{custom_courseid} if $inputs_ref{custom_courseid};
+	$inputs_ref{displayMode} = $inputs_ref{custom_displaymode} if $inputs_ref{custom_displaymode};
+	$inputs_ref{course_password} = $inputs_ref{custom_course_password} if $inputs_ref{custom_course_password};
+	$inputs_ref{answersSubmitted} = $inputs_ref{custom_answerssubmitted} if $inputs_ref{custom_answerssubmitted};
+	$inputs_ref{problemSeed} = $inputs_ref{custom_problemseed} if $inputs_ref{custom_problemseed};
+	$inputs_ref{sourceFilePath} = $inputs_ref{custom_sourcefilepath} if $inputs_ref{custom_sourcefilepath};
+	$inputs_ref{outputformat} = $inputs_ref{custom_outputformat} if $inputs_ref{custom_outputformat};
+	
+	my $user_id      = $inputs_ref{userID};
+	my $courseName   = $inputs_ref{courseID};
+	my $displayMode  = $inputs_ref{displayMode};
+	my $problemSeed  = $inputs_ref{problemSeed};
+	
+	# FIXME -- it might be better to send this error if the input is not all correct
+	# rather than trying to set defaults such as displaymode
+	unless ( $user_id && $courseName && $displayMode && $problemSeed) {
+		print CGI::ul( 
+		      CGI::h1("Missing essential data in web dataform:"),
+			  CGI::li(CGI::escapeHTML([
+		      	"userID: |$user_id|", 
+		      	"courseID: |$courseName|",	
+		        "displayMode: |$displayMode|", 
+		        "problemSeed: |$problemSeed|"
+		      ])));
+		return;
+	}
     #######################
     #  setup xmlrpc client
     #######################
     my $xmlrpc_client = new WebworkClient;
 
-	$xmlrpc_client->{encodedSource}   = $r->param('problemSource') ; # this source has already been encoded
-	$xmlrpc_client->url($XML_URL);
+	$xmlrpc_client ->encoded_source($r->param('problemSource')) ; # this source has already been encoded
+	$xmlrpc_client-> url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
-	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
-	$xmlrpc_client->{password}        = $inputs_ref{password};
+	$xmlrpc_client->{course_password} = $inputs_ref{course_password};
 	$xmlrpc_client->{site_password}   = $XML_PASSWORD;
 	$xmlrpc_client->{session_key}     = $inputs_ref{session_key};
 	$xmlrpc_client->{courseID}        = $inputs_ref{courseID};
 	$xmlrpc_client->{outputformat}    = $inputs_ref{outputformat};
 	$xmlrpc_client->{sourceFilePath}  = $inputs_ref{sourceFilePath};
-	
-
-	$xmlrpc_client->{inputs_ref} = \%inputs_ref;
+	$xmlrpc_client->{inputs_ref} = \%inputs_ref;  # contains form data
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 	
 	##############################
 	# xmlrpc_client calls webservice to have problem rendered
 	#
-	# and stores the resulting HTML output in $self->{output}
+	# and stores the resulting HTML output in $self->return_object
 	# from which it will eventually be returned to the browser
 	#
 	##############################
 	if ( $xmlrpc_client->xmlrpcCall('renderProblem', $xmlrpc_client->{inputs_ref}) )    {
-			$self->{output} = $xmlrpc_client->formatRenderedProblem;
+			$self->{output} = $xmlrpc_client->formatRenderedProblem ;
 	} else {
-		$self->{output} = $xmlrpc_client->{output};  # error report
+		$self->{output}= $xmlrpc_client->return_object;  # error report
 	}
 	
 	################################

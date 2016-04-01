@@ -561,7 +561,7 @@ sub add_course_form {
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course ID:"),
-			CGI::td(CGI::textfield(-name=>"add_courseID", -value=>$add_courseID, -size=>25)),
+			CGI::td(CGI::textfield(-name=>"add_courseID", -value=>$add_courseID, -size=>25, -maxlength=>$ce->{maxCourseIdLength})),
 		),
 		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Title:"),
@@ -996,7 +996,7 @@ sub rename_course_form {
 				 }) ),
 			#CGI::th({class=>"LeftHeader"}, "New CourseID:"),
 			CGI::td(CGI::textfield(-name=>"rename_newCourseID",
-			     -value=>$rename_newCourseID, -size=>25)),
+			     -value=>$rename_newCourseID, -size=>25, -maxlength=>$ce->{maxCourseIdLength})),
 		),
 		CGI::Tr({},
 			CGI::td( CGI::checkbox(
@@ -1012,7 +1012,7 @@ sub rename_course_form {
 		CGI::Tr({},
 			CGI::td( CGI::checkbox(
 				{name=>"rename_newCourseInstitution_checkbox", 
-				 label=>'Change institution to:', 
+				 label=>'Change Institution to:', 
 				 checked=>$rename_newCourseInstitution_checkbox,
 				 value=>'on'
 				 }) ),
@@ -1294,7 +1294,7 @@ sub rename_course_validate {
 	if ($rename_newCourseInstitution eq "" and $rename_newCourseInstitution_checkbox eq 'on')  {
 		push @errors, "You must specify a new institution for the course.";
 	}
-	unless ($rename_newCourseID or $rename_newCourseID_checkbox or $rename_newCourseTitle_checkbox ) {
+	unless ($rename_newCourseID or $rename_newCourseID_checkbox or $rename_newCourseTitle_checkbox or $rename_newCourseInstitution_checkbox) {
 		push @errors, "No changes specified.  You must mark the 
 		checkbox of the item(s) to be changed and enter the change data.";
 	}
@@ -2210,10 +2210,10 @@ sub unarchive_course_form {
 	
 		CGI::Tr({},
 				CGI::th({class=>"LeftHeader"}, CGI::checkbox(-name => "create_newCourseID",-default=>'',-value=>1, -label=>'New Name:')),
-				CGI::td(CGI::textfield(-name=>"new_courseID", -value=>'', -size=>25)),
+				CGI::td(CGI::textfield(-name=>"new_courseID", -value=>'', -size=>25, -maxlength=>$ce->{maxCourseIdLength})),
 			),
 	);
-	
+
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"unarchive_course", -value=>"Unarchive Course"));
 	
 	print CGI::end_form();
