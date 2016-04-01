@@ -43,6 +43,7 @@ miscellaneous utilities are provided.
 
 use strict;
 use warnings;
+use utf8;
 use Carp;
 #use CGI qw(-nosticky *ul *li escapeHTML);
 use WeBWorK::CGI;
@@ -60,8 +61,6 @@ use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
 use WeBWorK::Utils qw(jitar_id_to_seq);
-use Encode;
-use utf8;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -98,7 +97,7 @@ sub new {
 		db => $r->db(),       # backward-compatability
 		authz => $r->authz(), # with unconverted CGs
 		noContent => undef, # FIXME this should get clobbered at some point
-	};
+		   };
  	weaken $self -> {r};
 	bless $self, $class;
 	return $self;
@@ -703,7 +702,7 @@ sub links {
 	print CGI::h2($r->maketext("Main Menu"));
 	print CGI::end_li();
 	print CGI::start_li(); # Courses
-	print &$makelink("${pfx}Home", text=>decode('utf8',$r->maketext("Courses")), systemlink_args=>{authen=>0});
+	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
 	print CGI::end_li(); # end Courses
 	
 	if (defined $courseID) {
@@ -711,7 +710,7 @@ sub links {
 			print CGI::start_li(); # Homework Sets
                         my $primaryMenuName = "Homework Sets";
                         $primaryMenuName = "Course Administration" if ($ce->{courseName} eq 'admin');
-			print &$makelink("${pfx}ProblemSets", text=>decode('utf8',$r->maketext($primaryMenuName)), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+			print &$makelink("${pfx}ProblemSets", text=>$r->maketext($primaryMenuName), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
 			    print CGI::start_li();
@@ -746,7 +745,7 @@ sub links {
 			}
 
 			
-				print CGI::li(&$makelink("${pfx}Options", text=>decode('utf8',$r->maketext('User Settings')), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 					
 			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			
@@ -822,13 +821,13 @@ sub links {
 				    print CGI::end_li();
 				}
 				
-				print CGI::li(&$makelink("${pfx}SetMaker", text=>decode('utf8',$r->maketext("Library Browser")), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser1};
-				print CGI::li(&$makelink("${pfx}SetMaker2", text=>decode('utf8',$r->maketext("Library Browser 2")), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser2};
-				print CGI::li(&$makelink("${pfx}SetMaker3", text=>decode('utf8',$r->maketext("Library Browser 3")), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowser3};
-				print CGI::li(&$makelink("${pfx}SetMakernojs", text=>decode('utf8',$r->maketext("Orig. Lib. Browser")), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
+				print CGI::li(&$makelink("${pfx}SetMakernojs", text=>$r->maketext("Orig. Lib. Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
 					if $ce->{showeditors}->{librarybrowsernojs};
 #print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				print CGI::start_li(); # Stats
