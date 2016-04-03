@@ -89,7 +89,7 @@ sub body {
 	
 	if ($haveAdminCourse and !(-f "$coursesDir/admin/hide_directory")) {
 		my $urlpath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => "admin");
-		print CGI::p(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, "Course Administration"));
+		print CGI::p(CGI::a({href=>$self->systemLink($urlpath, authen => 0)}, $r->maketext("Course Administration")));
 	}
 	
 	print CGI::h2($r->maketext("Courses"));
