@@ -141,11 +141,13 @@ of the default summaries are created:
 
 use strict;
 use warnings;
-package WeBWorK::Utils::AttemptsTable;
 use Class::Accessor 'antlers';
 use Scalar::Util 'blessed';
 use WeBWorK::Utils 'wwRound';
 use CGI;
+
+package WeBWorK::Utils::AttemptsTable;
+use base qw(Class::Accessor);
 
 # has answers     => (is => 'ro');
 # has displayMode => (is =>'ro');
