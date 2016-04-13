@@ -141,17 +141,12 @@ of the default summaries are created:
 
 use strict;
 use warnings;
-use Class::Accessor 'antlers';
 use Scalar::Util 'blessed';
 use WeBWorK::Utils 'wwRound';
 use CGI;
 
 package WeBWorK::Utils::AttemptsTable;
 use base qw(Class::Accessor);
-
-# has answers     => (is => 'ro');
-# has displayMode => (is =>'ro');
-# has imgGen      => (is =>'ro');
 
 # Object contains hash of answer results
 # Object contains display mode
