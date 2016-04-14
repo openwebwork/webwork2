@@ -52,7 +52,7 @@ TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 
 $BBOLD Ce devoir WeBWorK \{ protect_underbar($setNumber) \} doit être remis le $DueDateDay $DueDateMonthWord $DueDateYear4Digit à ${DueDateHour24}:$DueDateMinute. $EBOLD
 $PAR
-Un résumé des commandes et notations que WeBWorK reconnaît est $BBOLD\{ htmlLink(qq!http://mathema-tic.ca/medias/formations_et_tutoriels/pour_les_etudiants/tutoriel_webwork/Didacticiel_WebWorK.pdf!,"disponible ici") \}$EBOLD.
+Un résumé des commandes et notations que WeBWorK reconnaît est $BBOLD <a href="http://mathema-tic.ca/medias/formations_et_tutoriels/pour_les_etudiants/tutoriel_webwork/Didacticiel_WebWorK.pdf" target="_blank">disponible ici</a>$EBOLD.
 $BR
 
 EOT
