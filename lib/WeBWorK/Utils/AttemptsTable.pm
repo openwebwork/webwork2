@@ -139,14 +139,14 @@ of the default summaries are created:
 
 =cut
 
+package WeBWorK::Utils::AttemptsTable;
+use base qw(Class::Accessor);
+
 use strict;
 use warnings;
 use Scalar::Util 'blessed';
 use WeBWorK::Utils 'wwRound';
 use CGI;
-
-package WeBWorK::Utils::AttemptsTable;
-use base qw(Class::Accessor);
 
 # Object contains hash of answer results
 # Object contains display mode
