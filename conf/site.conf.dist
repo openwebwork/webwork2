@@ -104,7 +104,7 @@ $externalPrograms{git} = "/usr/bin/git";
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
 $externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
-$externalPrograms{dvipng}   ="/usr/bin//dvipng";
+$externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
