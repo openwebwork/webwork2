@@ -313,13 +313,14 @@ sub getAllDBsubjects {
 	my $r = shift;
 	my %tables = getTables($r->ce);
 	my @results=();
-	my $row;
-	my $query = "SELECT DISTINCT name FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
+	my @row;
+	my $query = "SELECT DISTINCT name, DBsubject_id FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
 	my $dbh = getDB($r->ce);
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
-	while ($row = $sth->fetchrow_array()) {
-		push @results, $row;
+
+	while (@row = $sth->fetchrow_array()) {
+		push @results, $row[0];
 	}
 	# @results = sortByName(undef, @results);
 	return @results;
