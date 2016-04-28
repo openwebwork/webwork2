@@ -95,7 +95,14 @@ sub scoring_info {
 	my $delimiter            = ',';
 	my $scoringDirectory    = $ce->{courseDirs}->{scoring};
 
-	return  $r->maketext('There is no additional grade information.  A message about additional grades can go in in ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file) unless (-e "$scoringDirectory/$merge_file" && -e "$filePath");
+	# get out if the files don't exist
+	if (!(-e "$scoringDirectory/$merge_file" && -e "$filePath")) {
+	  if ($r->authz->hasPermissions($userID, "access_instructor_tools")) {
+	    return  $r->maketext('There is no additional grade information.  A message about additional grades can go in in ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file);
+	  } else {
+	    return '';
+	  }
+	}
 	
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my $text;
