@@ -340,7 +340,8 @@ sub getAllDBchapters {
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT c.name FROM `$tables{dbchapter}` c, 
+	my $query = "SELECT DISTINCT c.name, c.DBchapter_id 
+                                FROM `$tables{dbchapter}` c, 
 				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\" ORDER BY c.DBchapter_id";
@@ -365,7 +366,8 @@ sub getAllDBsections {
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT s.name FROM `$tables{dbsection}` s,
+	my $query = "SELECT DISTINCT s.name, s.DBsection_id 
+                 FROM `$tables{dbsection}` s,
                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND
