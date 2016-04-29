@@ -26,7 +26,9 @@ Two perpendicular sides of a triangle are $fx m and
 $fy m long respectively.  
 What is the length of the third side of the triangle? $BR$BR
 You can answer this in terms of m's, cm's, km's, in's, ft, etc. but you must enter the units. $BR$BR
-Check "Show Hint" and then "Submit Answer" if you don't remember the Pythagorean theorem.
+Click "Hint" below if you don't remember the Pythagorean theorem.
+$BR$BR
+\{ans_rule(40) \}
 END_TEXT
 
 HINT(EV3(<<'EOT'));
@@ -34,8 +36,5 @@ Remembering the Pythagorean theorem \( A^2 +B^2 = C^2 \), you can enter
 sqrt(${fx}${CARET}2 + ${fy}${CARET}2) m or  \{spf($ansxy, "%0.2f" )\} m or  \{spf($anscm, "%0.2f" )\} cm or ...
 EOT
 
-BEGIN_TEXT
-\{ans_rule(40) \}
-END_TEXT
 ANS(num_cmp("$ansxy", units => 'm'));
 ENDDOCUMENT()
