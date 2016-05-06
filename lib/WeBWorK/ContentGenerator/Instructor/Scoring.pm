@@ -653,15 +653,18 @@ sub everything2normal {
 	my ($self, @everything) = @_;
 	my @result = ();
 	my $adjstatus = 0;
+
+	# if its has adjusted status columns we need to include
+	# those as well
+	my $str = $self->r->maketext('ADJ STATUS');
+	if (grep(grep(/$str/, @{$_}),@everything)) {
+	    $adjstatus = 1;
+	}
+		
 	foreach my $row (@everything) {
 		my @row = @$row;
 		my @newRow = ();
 		push @newRow, @row[0..4];
-		# if its has adjusted status columns we need to include
-		# those as well
-		if ($row[6] eq $self->r->maketext("ADJ STATUS")) {
-		  $adjstatus = 1;
-		}
 		if ($adjstatus) {
 		  for (my $i = 5; $i < @row; $i+=4) {
 		    push @newRow, $row[$i];
