@@ -357,9 +357,18 @@ sub displayStudentStats {
 
 		my @cgi_prob_scores = ();
 
+		my $show_problem_scores = 1;
+
+		if ( defined( $set->hide_score_by_problem ) &&
+		     ! $authz->hasPermissions($r->param("user"), "view_hidden_work")
+		     && $set->hide_score_by_problem eq 'Y' )  {
+		  $show_problem_scores = 0;
+		}
+		
 		for (my $i = 0; $i < $max_problems; $i++) {
-		    my $score = defined($prob_scores[$i]) ? 
-			$prob_scores[$i] :  '&nbsp;';
+		  my $score = (defined($prob_scores[$i]) &&
+		    $show_problem_scores) ? 
+		      $prob_scores[$i] :  '&nbsp;';
 		    my $class = '';
 		    if ($score =~ /100\s*/) {
 			$score = '100&nbsp;';
@@ -368,7 +377,7 @@ sub displayStudentStats {
 			$score = '&nbsp;.&nbsp;&nbsp;';
 			$class = "unattempted";
 		    }
-		    my $att = defined($prob_att[$i]) ?
+		    my $att = defined($prob_att[$i]) && $show_problem_scores ?
 			$prob_att[$i] : '&nbsp;';
 
 		    $cgi_prob_scores[$i] = CGI::td(

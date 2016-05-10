@@ -2133,7 +2133,7 @@ sub body {
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
 				my @curr_fields = grep /^$curr_prefix/, keys %{$self->{formFields}};
 				foreach my $curr_field ( @curr_fields ) {
- 					foreach ( split(/\0/, $self->{formFields}->{$curr_field}) ) {
+ 					foreach ( split(/\0/, $self->{formFields}->{$curr_field} // '') ) {
  						print CGI::hidden({-name=>$curr_field, 
  							   	   -value=>$_});
  					}
