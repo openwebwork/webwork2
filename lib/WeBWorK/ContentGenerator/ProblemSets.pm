@@ -600,7 +600,6 @@ sub setListRow {
 	    $startTime = localtime($set->version_creation_time() || 0); #fixes error message for undefined creation_time
 	    
 	    if ( $authz->hasPermissions($user, "view_hidden_work") || 
-		 $set->hide_score_by_problem eq 'Y' ||
 		 $set->hide_score() eq 'N' || 
 		 ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
 	      # find score

@@ -259,10 +259,14 @@ sub can_checkAnswers {
 	#    be shown, but not show the score on any individual problem.  
 	#    to deal with this, we use the least restrictive view of hiding 
 	#    here, and then filter for the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+	#    showing correcrt answers but not showing scores doesn't make sense
+	#    so we should hide the correct answers if we aren not showing
+	#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -305,7 +309,6 @@ sub can_showScore {
 
 	# address hiding scores by problem
 	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
 			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
 				after($tmplSet->answer_date) ) );
 
