@@ -96,10 +96,15 @@ sub can_showCorrectAnswers {
 #    any individual problem.  to deal with this, we make 
 #    can_showCorrectAnswers give the least restrictive view of hiding, and 
 #    then filter scores for the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+
+#    showing correcrt answers but not showing scores doesn't make sense
+#    so we should hide the correct answers if we aren not showing
+#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $maxAttempts && 
@@ -138,10 +143,14 @@ sub can_showSolutions {
 #    any individual problem.  to deal with this, we make can_showSolutions 
 #    give the least restrictive view of hiding, and then filter scores for 
 #    the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+#    showing correcrt answers but not showing scores doesn't make sense
+#    so we should hide the correct answers if we aren not showing
+#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $attempts_per_version &&
@@ -1708,8 +1717,9 @@ sub body {
 
 	# some convenient output variables
 	my $canShowProblemScores = $can{showScore} && 
-	    ($set->hide_score eq 'N' || $set->hide_score_by_problem eq 'N' ||
+	    ($set->hide_score_by_problem eq 'N' ||
 	     $authz->hasPermissions($user, "view_hidden_work"));
+
 	my $canShowWork = $authz->hasPermissions($user, "view_hidden_work") || ($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date));
 
 	# for nicer answer checking on multi-page tests, we want to keep 
