@@ -1221,7 +1221,7 @@ sub initialize {
 							my @fields = split(/:/, $field);
 							for ( my $i=0; $i<@values; $i++ ) { 
 								my $f=$fields[$i]; 
-								$record->$f($values[$i]); 
+								$record->$f($values[$i]);
 							}
 						} else {
 							$record->$field($param);
