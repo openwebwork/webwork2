@@ -541,7 +541,7 @@ sub addProblemToSet {
 	if (defined($args{value})){$value = $args{value};}  # 0 is a valid value for $args{value}  
 
 	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
-	my $showMeAnother = $args{showMeAnother} || $showMeAnother_default;
+	my $showMeAnother = $args{showMeAnother} // $showMeAnother_default;
 	my $prPeriod = $prPeriod_default;
 	if (defined($args{prPeriod})){
 		$prPeriod = $args{prPeriod};

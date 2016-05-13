@@ -1149,6 +1149,7 @@ sub create_handler {
 		$newSetRecord->hardcopy_header("defaultHeader");
 		#Rest of the dates are set according to to course configuration
 		$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
+		$newSetRecord->reduced_scoring_date($dueDate - 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
