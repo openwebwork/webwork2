@@ -173,7 +173,7 @@ sub checkForAchievements {
     # get the problem tags if its not a gatway
     # if it is a gateway get rid of $problem since it doensn't make sense
     if ($isGatewaySet) {
-	$problem = 0;
+	$problem = undef;
     } else {
 	my $templateDir = $ce->{courseDirs}->{templates};
 	$tags = WeBWorK::Utils::Tags->new($templateDir.'/'.$problem->source_file());
