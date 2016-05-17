@@ -481,9 +481,11 @@ sub body {
 		}
 			
 		my $num_ans = $#scores;
-		
+	
 		if ($record{time} - $previousTime > $ce->{sessionKeyTimeout}) {
 		  $rowOptions->{'class'} = 'table-rule';
+		} else {
+		  $rowOptions->{'class'} = '';
 		}
 
 		@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
