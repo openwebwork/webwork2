@@ -33,6 +33,37 @@ use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted wwR
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
+# the "default" data in the course_info.txt file
+use constant DEFAULT_COURSE_INFO_TXT => "Put information about your course here.  Click the edit button above to add your own message.\n";
+
+
+sub if_can {
+  my ($self, $arg) = @_;
+
+  if ($arg ne 'info') {
+    return $self->can($arg) ? 1 : 0;
+  } else {
+    my $r = $self->r;
+    my $ce = $r->ce;
+    my $urlpath = $r->urlpath;
+    my $authz = $r->authz;
+    my $user = $r->param("user");
+
+    # we only print the info box if the viewer has permission
+    # to edit it or if its not the standard template box.
+    
+    my $course_info_path = $ce->{courseDirs}->{templates} . "/"
+      . $ce->{courseFiles}->{course_info};
+    my $text;
+
+    if (-f $course_info_path) { #check that it's a plain  file
+      $text = eval { readFile($course_info_path) };
+    }
+    return $authz->hasPermissions($user, "access_instructor_tools") ||
+	  $text ne DEFAULT_COURSE_INFO_TXT;
+    
+  }
+}
 
 sub info {
 	my ($self) = @_;
@@ -50,9 +81,6 @@ sub info {
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 			
-		#print CGI::start_div({-class=>"info-wrapper"});
-		#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
-		
 		# deal with instructor crap
 		my $editorURL;
 		if ($authz->hasPermissions($user, "access_instructor_tools")) {
@@ -84,9 +112,6 @@ sub info {
 			}
 		}
 
-		#print CGI::end_div();
-		#print CGI::end_div();
-		
 		return "";
 	}
 }
@@ -575,7 +600,6 @@ sub setListRow {
 	    $startTime = localtime($set->version_creation_time() || 0); #fixes error message for undefined creation_time
 	    
 	    if ( $authz->hasPermissions($user, "view_hidden_work") || 
-		 $set->hide_score_by_problem eq 'Y' ||
 		 $set->hide_score() eq 'N' || 
 		 ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
 	      # find score
@@ -690,7 +714,7 @@ sub restricted_progression_msg {
   if ($open) {
     $status .= $r->maketext("if you score at least [_1]% on", sprintf("%.0f",$restriction));
   } else {
-    $status .= $r->maketext("but you must score at least [_1]% on", sprintf("%.0f",$restriction));
+    $status .= $r->maketext("but to access it you must score at least [_1]% on", sprintf("%.0f",$restriction));
   }
   
   $status .= ' ';

@@ -2805,7 +2805,7 @@ sub add_location_handler {
 
 	# a check to be sure that the location addresses don't already
 	#    exist
-	my $badLocAddr;
+	my $badLocAddr = '';
 	if ( ! $badAddr && $locationID ) {
 		if ( $db->countLocationAddresses( $locationID ) ) {
 			my @allLocAddr = $db->listLocationAddresses($locationID);

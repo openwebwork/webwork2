@@ -123,9 +123,10 @@ sub title {
 	my $r = $self->r;
 	my $eUserID = $r->param("effectiveUser");
 	# using the url arguments won't break if the set/problem are invalid
-	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+	my $prettySetID = WeBWorK::ContentGenerator::underscore2nbsp($r->urlpath->arg("setID"));
+	my $setID = $r->urlpath->arg("setID");
 	
-	my $title = $setID;
+	my $title = $prettySetID;
 	#put either due date or reduced scoring date in the title. 
 	my $set = $r->db->getMergedSet($eUserID, $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
