@@ -558,8 +558,12 @@ sub addProblemToSet {
 	    # makes it a new top level problem 
 	    if ($set && $set->assignment_type eq 'jitar') {
 		my @problemIDs = $db->listGlobalProblems($setName);
-		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
-		$problemID = seq_to_jitar_id($seq[0]+1);
+		if (@problemIDs) {
+		  my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+		  $problemID = seq_to_jitar_id($seq[0]+1);
+		} else {
+		  $problemID = seq_to_jitar_id(1);
+		}
 	    } else {
 		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 	    }
