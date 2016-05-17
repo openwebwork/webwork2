@@ -264,15 +264,13 @@ sub add_selected {
 	my @selected = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
 	# DBFIXME count would work just as well
-	$freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	my $addedcount=0;
 
 	for $selected (@selected) {
 		if($selected->[1] & ADDED) {
 			$file = $selected->[0];
 			my $problemRecord = $self->addProblemToSet(setName => $setName,
-				sourceFile => $file, problemID => $freeProblemID);
-			$freeProblemID++;
+				sourceFile => $file);
 			$self->assignProblemToAllSetUsers($problemRecord);
 			$selected->[1] |= SUCCESS;
 			$addedcount++;
@@ -794,7 +792,7 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		"Browse ",
-		CGI::submit(-name=>"browse_npl_library", -value=>"National Problem Library", -style=>$these_widths, @dis1),
+		CGI::submit(-name=>"browse_npl_library", -value=>"Open Problem Library", -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
 		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>$these_widths, @dis4),

@@ -11,8 +11,7 @@ Your course is at
 Your login name is $LOGIN and your initial password is $SID
 
 You should change your password, once you have logged in, by clicking on the
-password/email link in the upper left.  After entering your new password,
-press the Change User Options button to save your change.
+User Settings link in the upper left.  
 
 Some help pages about WeBWorK are at URL
 	http://webwork.maa.org/wiki/Category:Students

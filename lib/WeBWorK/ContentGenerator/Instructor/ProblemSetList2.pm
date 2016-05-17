@@ -750,13 +750,15 @@ sub filter_handler {
                 $result = $r->maketext("showing visible sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @visibleSetIDs = map { $_->visible ? $_->set_id : ""} @setRecords;		
+		my @visibleSetIDs = grep { $_->visible } @setRecords;
+		@visibleSetIDs = map {$_->set_id} @visibleSetIDs;
 		$self->{visibleSetIDs} = \@visibleSetIDs;
 	} elsif ($scope eq "unvisible") {
                 $result = $r->maketext("showing hidden sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @unvisibleSetIDs = map { (not $_->visible) ? $_->set_id : ""} @setRecords;
+		my @unvisibleSetIDs = grep { not $_->visible } @setRecords;
+		@unvisibleSetIDs = map {$_->set_id} @unvisibleSetIDs;
 		$self->{visibleSetIDs} = \@unvisibleSetIDs;
 	}
 	
@@ -1147,6 +1149,7 @@ sub create_handler {
 		$newSetRecord->hardcopy_header("defaultHeader");
 		#Rest of the dates are set according to to course configuration
 		$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
+		$newSetRecord->reduced_scoring_date($dueDate - 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set

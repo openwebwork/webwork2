@@ -652,12 +652,28 @@ sub everything2info {
 sub everything2normal {
 	my ($self, @everything) = @_;
 	my @result = ();
+	my $adjstatus = 0;
+
+	# if its has adjusted status columns we need to include
+	# those as well
+	my $str = $self->r->maketext('ADJ STATUS');
+	if (grep(grep(/$str/, @{$_}),@everything)) {
+	    $adjstatus = 1;
+	}
+		
 	foreach my $row (@everything) {
 		my @row = @$row;
 		my @newRow = ();
 		push @newRow, @row[0..4];
-		for (my $i = 5; $i < @row; $i+=3) {
-			push @newRow, $row[$i];
+		if ($adjstatus) {
+		  for (my $i = 5; $i < @row; $i+=4) {
+		    push @newRow, $row[$i];
+		    push @newRow, $row[$i+1];
+		  }
+		} else {
+		  for (my $i = 5; $i < @row; $i+=3) {
+		    push @newRow, $row[$i];
+		  }
 		}
 		#push @newRow, $row[$#row];
 		push @result, [@newRow];
@@ -695,16 +711,6 @@ sub appendColumns {
 # Reads a CSV file and returns an array of arrayrefs, each containing a
 # row of data:
 # (["c1r1", "c1r2", "c1r3"], ["c2r1", "c2r2", "c2r3"])
-sub readCSV {
-	my ($self, $fileName) = @_;
-	my @result = ();
-	my @rows = split m/\n/, readFile($fileName);
-	foreach my $row (@rows) {
-		push @result, [split m/\s*,\s*/, $row];
-	}
-	return @result;
-}
-
 # Write a CSV file from an array in the same format that readCSV produces
 sub writeCSV {
 	my ($self, $filename, @csv) = @_;
