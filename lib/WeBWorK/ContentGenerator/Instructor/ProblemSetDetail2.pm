@@ -2585,6 +2585,7 @@ sub output_JS {
 	.changed {background-color: #ffffcc}
     </style>!,"\n";
 
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
