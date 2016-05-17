@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -32,9 +32,10 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
+use WeBWorK::Utils::LibraryStats;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 
@@ -956,6 +957,7 @@ sub make_top_row {
 sub make_data_row {
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $r->{ce};
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
 	my $pg = shift;
@@ -1023,7 +1025,7 @@ sub make_data_row {
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?"(in target set)" : "&nbsp;";
+	my $inSet = ($self->{isInSet}{$sourceFileName})?" (in target set)" : "&nbsp;";
 	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
@@ -1037,7 +1039,7 @@ sub make_data_row {
 		my $numchild = scalar(@{$sourceFileData->{children}});
 		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
-		$mltstart = "<tr><td><table id='mlt-table$cnt' style='border:1px solid black' width='100%'><tr><td>\n";
+		$mltstart = "<tr><td><table id='mlt-table$cnt' class='lb-mlt-group'><tr><td>\n";
 	}
 	$mltend = "</td></tr></table></td></tr>\n" if($mltnumleft==0);
 	my $noshow = '';
@@ -1063,24 +1065,62 @@ sub make_data_row {
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
+	# get statistics to display
+	
+	my $global_problem_stats = '';
+	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
+	    my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
+	    if ($stats->{students_attempted}) {
+		$global_problem_stats =    $self->helpMacro("Global_Usage_Data",$r->maketext('GLOBAL Usage')).': '.
+					   $stats->{students_attempted}.', '.
+                                           $self->helpMacro("Global_Average_Attempts_Data",$r->maketext('Attempts')).': '.
+					   wwRound(2,$stats->{average_attempts}).', '.
+                                           $self->helpMacro("Global_Average_Status_Data",$r->maketext('Status')).': '.
+					   wwRound(0,100*$stats->{average_status}).'%;&nbsp;';
+	    }
+	}
+	
+		
+	my $local_problem_stats = '';
+	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
+	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
+	    if ($stats->{students_attempted}) {
+		$local_problem_stats =     $self->helpMacro("Local_Usage_Data",$r->maketext('LOCAL Usage')).': '.
+					   $stats->{students_attempted}.', '.
+                                           $self->helpMacro("Local_Average_Attempts_Data",$r->maketext('Attempts')).': '.
+					   wwRound(2,$stats->{average_attempts}).', '.
+                                           $self->helpMacro("Local_Average_Status_Data",$r->maketext('Status')).': '.
+					   wwRound(0,100*$stats->{average_status}).'%&nbsp;';
+	    }
+	}
+
+        my $problem_stats = '';
+        if ($global_problem_stats or $local_problem_stats) {
+                $problem_stats = CGI::span({class=>"lb-problem-stats"},
+                                    $global_problem_stats . $local_problem_stats );
+        }
+
+
 	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
-		CGI::div({-style=>"background-color: #FFFFFF; margin: 0px auto"},
-		    CGI::span({-style=>"text-align: left"},CGI::button(-name=>"add_me", 
+		CGI::div({-class=>"lb-problem-header"},
+		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
 		      -value=>"Add",
 			-title=>"Add problem to target set",
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
-			"\n",CGI::span({-style=>"text-align: left; cursor: pointer"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
-				 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
-			CGI::span({-style=>"float:right ; text-align: right ; margin-right:.8em;"}, 
+			"\n",CGI::span({-class=>"lb-problem-path"},CGI::span({id=>"filepath$cnt"},"Show path ...")),"\n",
+			 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "Show path ...", "Hide path: '.$sourceFileName.'")</script>',
+			CGI::span({-class=>"lb-problem-icons"}, 
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
 				-title=>"Hide this problem",
 				-style=>"cursor: pointer",
-				-onClick=>"return delrow($cnt)"}, "X"),
-			)), 
+				   -onClick=>"return delrow($cnt)"}, "X")),
+                         $problem_stats,
+
+			  ), 
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
@@ -1541,6 +1581,15 @@ sub pre_header_initialize {
 			$total_probs++;
 		}
 	}
+
+
+        my $library_stats_handler = '';
+	
+	if ($ce->{problemLibrary}{showLibraryGlobalStats} ||
+	   $ce->{problemLibrary}{showLibraryLocalStats} ) {
+	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
+	}
+
 	############# Now store data in self for retreival by body
 	$self->{first_shown} = $first_shown;
 	$self->{last_shown} = $last_shown;
@@ -1552,6 +1601,7 @@ sub pre_header_initialize {
 	$self->{pg_files} = \@pg_files;
 	$self->{all_db_sets} = \@all_db_sets;
 	$self->{library_basic} = $library_basic;
+	$self->{library_stats_handler} = $library_stats_handler; 
 }
 
 
@@ -1681,6 +1731,7 @@ sub body {
 		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." of ".CGI::span({-id=>'totalshown'}, $total_probs).
 			" shown.", $prev_button, " ", $next_button,
 		);
+		print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
 	}
 	#	 }
 	print CGI::end_form(), "\n";

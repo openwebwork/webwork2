@@ -285,7 +285,7 @@ function render(id) {
     if ($('#problem\\.'+id+'\\.problem_seed').length > 0) {
 	ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed').val();
     } else {
-	ro.problemSeed = 0;
+	ro.problemSeed = 1;
     }
     var source_file
 
@@ -316,13 +316,6 @@ function render(id) {
 	  data: ro,
 	  timeout: 10000, //milliseconds
 	  success: function (data) {
-	      if (data.match(/WeBWorK error/)) {
-		  console.log(data)
-		  var error = data.match(/(Errors:[\s\S]*End Errors)/);
-		  if (error) {
-		      alert(error[1]);
-		  }
-	      }
 	      var response = data;
 	      // Give nicer file not found error
 	      if (/No such file or directory at/i.test(response) ||

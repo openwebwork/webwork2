@@ -87,13 +87,23 @@ sub scoring_info {
 	
 	my $userName          = $r->param('effectiveUser') || $r->param('user');
 	my $userID              = $r->param('user');
-    my $ur                = $db->getUser($userName);
+	my $ur                = $db->getUser($userName);
 	my $emailDirectory    = $ce->{courseDirs}->{email};
-	my $filePath          = "$emailDirectory/report_grades.msg";
+	my $message_file = "report_grades.msg";
+	my $filePath          = "$emailDirectory/$message_file";
 	my $merge_file         = "report_grades_data.csv";
 	my $delimiter            = ',';
 	my $scoringDirectory    = $ce->{courseDirs}->{scoring};
-	return $r->maketext("There is no additional grade information. The spreadsheet file [_1] cannot be found.", $filePath) unless -e "$scoringDirectory/$merge_file";
+
+	# get out if the files don't exist
+	if (!(-e "$scoringDirectory/$merge_file" && -e "$filePath")) {
+	  if ($r->authz->hasPermissions($userID, "access_instructor_tools")) {
+	    return  $r->maketext('There is no additional grade information.  A message about additional grades can go in in ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file);
+	  } else {
+	    return '';
+	  }
+	}
+	
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my $text;
 	my $header = '';
@@ -145,26 +155,14 @@ sub scoring_info {
 		$msg =~ s/\$COL\[(\-?\d+)\]//g
 	}
 	
-# 	old version 
-#  	$msg =~ s/(\$SID)/eval($1)/ge;
-#  	$msg =~ s/(\$LN)/eval($1)/ge;
-#  	$msg =~ s/(\$FN)/eval($1)/ge;
-#  	$msg =~ s/(\$STATUS)/eval($1)/ge;
-#  	$msg =~ s/(\$SECTION)/eval($1)/ge;
-#  	$msg =~ s/(\$RECITATION)/eval($1)/ge;
-#  	$msg =~ s/(\$EMAIL)/eval($1)/ge;
-#  	$msg =~ s/(\$LOGIN)/eval($1)/ge;
-#  	$msg =~ s/\$COL\[ *-/\$COL\[$endCol-/g;
-#  	$msg =~ s/(\$COL\[.*?\])/eval($1)/ge;
- 	
  	$msg =~ s/\r//g;
- 	$msg = "<pre>$msg</pre>";
- 	$msg = qq!More scoring information goes here in [TMPL]/email/report_grades.msg. It
-		is merged with the file [Scoring]/report_grades_data.csv. <br>These files can be edited 
-		using the "Email" link and the "Scoring Tools" link in the left margin.<p>!.$msg if ($r->authz->hasPermissions($userID, "access_instructor_tools"));
-	return CGI::div(
-		{style =>"background-color:#DDDDDD"}, $msg
-	);
+	$msg =~ s/\n/<br>/g;
+	
+	
+ 	$msg = CGI::div({class=>"additional-scoring-msg"}, CGI::h3($r->maketext("Scoring Message")), $msg);
+
+	$msg .= CGI::div($r->maketext('This scoring message is generated from ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file)) if ($r->authz->hasPermissions($userID, "access_instructor_tools"));
+	return $msg;
 }
 
 sub displayStudentStats {
@@ -261,11 +259,30 @@ sub displayStudentStats {
 	
 	my @rows;
 	my $max_problems=0;
-
+	my $courseTotal=0;
+	my $courseTotalRight=0;
+	
 	foreach my $setName (@allSetIDs) {
-	    my $num_of_problems = $db->countGlobalProblems($setName);
+	    my $set = $db->getGlobalSet($setName);
+	    my $num_of_problems;
+	    # For jitar sets we only display grades for top level problems
+	    # so we need to count how many there are
+	    if ($set && $set->assignment_type() eq 'jitar') {
+		my @problemIDs = $db->listGlobalProblems($setName);
+		foreach my $problemID (@problemIDs) {
+		    my @seq = jitar_id_to_seq($problemID);
+		    $num_of_problems++ if ($#seq == 0);
+		}
+	    } else {
+		# for other sets we just count the number of problems. 
+		$num_of_problems = $db->countGlobalProblems($setName);
+	    }
 	    $max_problems = ($max_problems<$num_of_problems)? $num_of_problems:$max_problems;
 	}
+
+	# variables to help compute gateway scores
+	my $numGatewayVersions = 0;
+	my $bestGatewayScore = 0;
 	
 	foreach my $setName (@allSetIDs)   {
 		my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
@@ -335,24 +352,34 @@ sub displayStudentStats {
 
 		$string =~ s/&nbsp;/ /g;
 		$twoString =~ s/&nbsp;/ /g;
-		my @prob_scores = $string =~ /.{3}/g;
-		my @prob_att = $twoString =~ /.{3}/g;
+		my @prob_scores = $string =~ /.{4}/g;
+		my @prob_att = $twoString =~ /.{4}/g;
 
 		my @cgi_prob_scores = ();
 
+		my $show_problem_scores = 1;
+
+		if ( defined( $set->hide_score_by_problem ) &&
+		     ! $authz->hasPermissions($r->param("user"), "view_hidden_work")
+		     && $set->hide_score_by_problem eq 'Y' )  {
+		  $show_problem_scores = 0;
+		}
+		
 		for (my $i = 0; $i < $max_problems; $i++) {
-		    my $score = defined($prob_scores[$i]) ? 
-			$prob_scores[$i] :  '&nbsp;';
+		  my $score = (defined($prob_scores[$i]) &&
+		    $show_problem_scores) ? 
+		      $prob_scores[$i] :  '&nbsp;';
 		    my $class = '';
-		    if ($score =~ /C\s*/) {
-			$score = '&nbsp;C&nbsp;';
+		    if ($score =~ /100\s*/) {
+			$score = '100&nbsp;';
 			$class = "correct";
 		    } elsif ($score =~ /\.\s*/) {
-			$score = '&nbsp;.&nbsp;';
+			$score = '&nbsp;.&nbsp;&nbsp;';
 			$class = "unattempted";
 		    }
-		    my $att = defined($prob_att[$i]) ?
+		    my $att = defined($prob_att[$i]) && $show_problem_scores ?
 			$prob_att[$i] : '&nbsp;';
+
 		    $cgi_prob_scores[$i] = CGI::td(
                               CGI::span({class=>$class},$score).
 					CGI::br().
@@ -366,18 +393,52 @@ sub displayStudentStats {
 		my $avg_num_attempts = ($num_of_problems) ? $num_of_attempts/$num_of_problems : 0;
 		my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
 		
-		# prettify versioned set display
-		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
-	
+		# get percentage correct
+		my $totalRightPercent = 100*wwRound(2,$total ? $totalRight/$total : 0);
+		my $class = '';
+		if ($totalRightPercent == 0) {
+		  $class = 'unattempted';
+		} elsif ($totalRightPercent == 100) {
+		  $class = 'correct';
+		}
+
+		# If its a gateway set then in order to mimic the scoring done
+		# in Scoring Tools we need to use the best score a student had.
+		# Otherwise we just add the set to the running course total
+		if ($setIsVersioned) {
+		  # prettify versioned set display
+		  $setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
+		  my $gatewayName = $1;
+		  my $currentVersion = $2;
+
+		  # If we are just starting a new gateway then set variables
+		  # to look for the max.  
+		  if ($currentVersion == 1) {
+		    $numGatewayVersions = $db->countSetVersions($studentName,$gatewayName);
+		  }
+
+		  if ($totalRight > $bestGatewayScore) {
+		    $bestGatewayScore = $totalRight;
+		  }
+		  
+		    # If its the last version then add the max to the course
+		    # totals and reset variables;
+		  if ($currentVersion == $numGatewayVersions) {
+		    $courseTotal += $total;
+		    $courseTotalRight += $bestGatewayScore;
+		    $bestGatewayScore = 0;
+		  }
+		} else {		
+		  $courseTotal += $total;
+		  $courseTotalRight += $totalRight;
+		}
+		
 		push @rows, CGI::Tr({},
 			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
+			CGI::td(CGI::span({-class=>$class},$totalRightPercent.'%')),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
-			#CGI::td(sprintf("%0.0f",100*$successIndicator)),   # indicator -- leave this out
 			@cgi_prob_scores     # problems
-			#CGI::td($studentRecord->section),
-			#CGI::td($studentRecord->recitation),
-			#CGI::td($studentRecord->user_id),			
 			
 		);
 	
@@ -386,7 +447,7 @@ sub displayStudentStats {
 	my $problem_header = "";
 	foreach (1 .. $max_problems) {
 		$problem_header .= CGI::th({scope=>'col'},
-					   &threeSpaceFill($_));
+					   &fourSpaceFill($_));
 	}
 	
 	my $table_header = join("\n",
@@ -394,6 +455,7 @@ sub displayStudentStats {
 		CGI::start_table({style=>'font-size:smaller',-id=>"grades_table"}),
 		CGI::Tr({},
 			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Set')),
+			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Percent')),
 			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Score')),
 			CGI::th({rowspan=>2,scope=>'col'},$r->maketext('Out Of')),
 			CGI::th({colspan=>$max_problems,scope=>'col'},$r->maketext('Problems')
@@ -403,6 +465,26 @@ sub displayStudentStats {
 		
 	print $table_header;
 	print @rows;
+
+	#Print out a row giving course totals
+
+	# get percentage correct
+	my $totalRightPercent = 100*wwRound(2,$courseTotal ? $courseTotalRight/$courseTotal : 0);
+	my $class = '';
+	if ($totalRightPercent == 0) {
+	  $class = 'unattempted';
+	} elsif ($totalRightPercent == 100) {
+	  $class = 'correct';
+	}
+
+	if ($ce->{showCourseHomeworkTotals}) {
+	  print CGI::Tr({class=>"grades-course-total"}, CGI::th({scope=>'row'},$r->maketext("Homework Totals")),
+			CGI::td(CGI::span({class=>"$class"},$totalRightPercent.'%')),
+			CGI::td($courseTotalRight),
+			CGI::td($courseTotal),
+			CGI::td({colspan=>$max_problems},'&nbsp;'));
+	}
+	
 	print CGI::end_table();
 			
 	return "";
@@ -569,18 +651,17 @@ sub grade_set {
 			# Determine the string $longStatus which 
 			# will display the student's current score
 			###########################################			
-
+			
 			if (!$attempted){
 				$longStatus     = '.';
 			} elsif   ($valid_status) {
 				$longStatus     = 100*wwRound(2,$status);
-				$longStatus='C' if ($longStatus==100);
 			} else	{
 				$longStatus 	= 'X';
 			}
 
-			$string          .= threeSpaceFill($longStatus);
-			$twoString       .= threeSpaceFill($num_incorrect);
+			$string          .= fourSpaceFill($longStatus);
+			$twoString       .= fourSpaceFill($num_incorrect);
 			my $probValue     = $problemRecord->value;
 			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
 			$total           += $probValue;
@@ -621,12 +702,13 @@ sub grade_set {
 #################################
 # Utility function NOT a method
 #################################
-sub threeSpaceFill {
+sub fourSpaceFill {
 	my $num = shift @_ || 0;
 
-	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;';}
-	elsif (length($num)==2) {return "$num".'&nbsp;';}
-	else {return "## ";}
+	if (length($num)<=1) {return "$num".'&nbsp;&nbsp;&nbsp;';}
+	elsif (length($num)==2) {return "$num".'&nbsp;&nbsp;';}
+	elsif (length($num)==3) {return "$num".'&nbsp;';}
+	else {return "### ";}
 }
 
 1;

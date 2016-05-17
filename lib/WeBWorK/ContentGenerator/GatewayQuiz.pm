@@ -40,22 +40,13 @@ use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
+use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use PGrandom;
 
 # template method
 sub templateName {
 	return "gateway";
 }
-
-# small utility to round scores to 5 decimal places
-# use wwRound instead (akp 11/2014)
-#sub tidy_score {
-#	my $s = shift;
-#	$s = sprintf("%.5f", $s);
-#	$s =~ s/0+$// if $s =~ /\./;
-#	$s =~ s/\.$//;
-#	return $s;
-#}
 
 ################################################################################
 # "can" methods
@@ -105,10 +96,15 @@ sub can_showCorrectAnswers {
 #    any individual problem.  to deal with this, we make 
 #    can_showCorrectAnswers give the least restrictive view of hiding, and 
 #    then filter scores for the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+
+#    showing correcrt answers but not showing scores doesn't make sense
+#    so we should hide the correct answers if we aren not showing
+#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $maxAttempts && 
@@ -147,10 +143,14 @@ sub can_showSolutions {
 #    any individual problem.  to deal with this, we make can_showSolutions 
 #    give the least restrictive view of hiding, and then filter scores for 
 #    the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+#    showing correcrt answers but not showing scores doesn't make sense
+#    so we should hide the correct answers if we aren not showing
+#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $attempts_per_version &&
@@ -259,10 +259,14 @@ sub can_checkAnswers {
 	#    be shown, but not show the score on any individual problem.  
 	#    to deal with this, we use the least restrictive view of hiding 
 	#    here, and then filter for the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+	#    showing correcrt answers but not showing scores doesn't make sense
+	#    so we should hide the correct answers if we aren not showing
+	#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -305,7 +309,6 @@ sub can_showScore {
 
 	# address hiding scores by problem
 	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
 			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
 				after($tmplSet->answer_date) ) );
 
@@ -507,20 +510,6 @@ sub previewAnswer {
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
-	# this display mode is no longer supported
-#	} elsif ($displayMode eq "formattedText") {
-#		my $tthCommand = $ce->{externalPrograms}->{tth}
-#			. " -L -f5 -r 2> /dev/null <<END_OF_INPUT; echo > /dev/null\n"
-#			. "\\(".$tex."\\)\n"
-#			. "END_OF_INPUT\n";
-		
-		# call tth
-#		my $result = `$tthCommand`;
-#		if ($?) {
-#			return "<b>[tth failed: $? $@]</b>";
-#		} else {
-#			return $result;
-#		}
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
@@ -1438,6 +1427,7 @@ sub body {
 	debug("begin answer processing"); 
 
 	my @scoreRecordedMessage = ('') x scalar(@problems);
+	my $LTIGradeResult = -1;
 
 	####################################
 	# save results to database as appropriate
@@ -1542,15 +1532,9 @@ sub body {
   $pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
 
 				if ( $db->putProblemVersion( $pureProblem ) ) {
-					$scoreRecordedMessage[$i] = "Your " .
-						"score on this problem was " .
-						"recorded.";
+					$scoreRecordedMessage[$i] = $r->maketext("Your score on this problem was recorded.");
 				} else {
-					$scoreRecordedMessage[$i] = "Your " .
-						"score was not recorded " .
-						"because there was a failure " .
-						"in storing the problem " .
-						"record to the database.";
+					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because there was a failure in storing the problem record to the database.");
 				}
 				# write the transaction log
 				writeLog( $self->{ce}, "transaction",
@@ -1573,18 +1557,11 @@ sub body {
 				#    message
 
 				if ($self->{isClosed}) {
-					$scoreRecordedMessage[$i] = "Your " .
-						"score was not recorded " .
-						"because this problem set " .
-						"version is not open.";
+					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because this problem set version is not open.");
 				} elsif ( $problems[$i]->num_correct + 
 					  $problems[$i]->num_incorrect >= 
 					  $set->attempts_per_version ) {
-					$scoreRecordedMessage[$i] = "Your " .
-						"score was not recorded " .
-						"because you have no " .
-						"attempts remaining on this " .
-						"set version.";
+					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because you have no attempts remaining on this set version.");
 				} elsif ( ! $self->{versionIsOpen} ) {
 					my $endTime = ( $set->version_last_attempt_time ) ? $set->version_last_attempt_time : $timeNow;
 					if ($endTime > $set->due_date && 
@@ -1596,15 +1573,9 @@ sub body {
 					# we assume that allowed is an even 
 					#    number of minutes
 					my $allowed = ($set->due_date - $set->open_date)/60;
-					$scoreRecordedMessage[$i] = "Your " .
-						"score was not recorded " .
-						"because you have exceeded " .
-						"the time limit for this " .
-						"test. (Time taken: $elapsed " .
-						"min; allowed: $allowed min.)";
+					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded because you have exceeded the time limit for this test. (Time taken: [_1] min; allowed: [_2] min.)", $elapsed, $allowed);
 				} else {
-					$scoreRecordedMessage[$i] = "Your " .
-						"score was not recorded.";
+					$scoreRecordedMessage[$i] = $r->maketext("Your score was not recorded.");
 				}
 			} else {
 				# finally, we must be previewing or switching
@@ -1614,6 +1585,20 @@ sub body {
 			}
 		} # end loop through problems
 
+
+		#Try to update the student score on the LMS
+		# if that option is enabled.
+		my $LTIGradeMode = $self->{ce}->{LTIGradeMode} // '';
+		if ($submitAnswers && $will{recordAnswers} && $LTIGradeMode
+		   && $self->{ce}->{LTIGradeOnSubmit}) {
+		  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+		  if ($LTIGradeMode eq 'course') {
+		    $LTIGradeResult = $grader->submit_course_grade($effectiveUser);
+		  } elsif ($LTIGradeMode eq 'homework') {
+		    $LTIGradeResult = $grader->submit_set_grade($effectiveUser, $setName);
+		  }
+		}
+		
 		## finally, log student answers if we're submitting, 
 		##    previewing, or changing pages, provided that we can 
 		##    record answers.  note that this will log an overtime 
@@ -1735,8 +1720,9 @@ sub body {
 
 	# some convenient output variables
 	my $canShowProblemScores = $can{showScore} && 
-	    ($set->hide_score eq 'N' || $set->hide_score_by_problem eq 'N' ||
+	    ($set->hide_score_by_problem eq 'N' ||
 	     $authz->hasPermissions($user, "view_hidden_work"));
+
 	my $canShowWork = $authz->hasPermissions($user, "view_hidden_work") || ($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date));
 
 	# for nicer answer checking on multi-page tests, we want to keep 
@@ -1771,11 +1757,6 @@ sub body {
 			my $numParts = 0;
 			if ( ref( $pg ) ) {  # then we have a pg object
 ###
-				#foreach (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
-				#	$pScore += $pg->{answers}->{$_}->{score};
-				#	$numParts++;
-				#}
-				#$probStatus[$i] = $pScore/($numParts>0 ? $numParts : 1);
 				$pScore = $pg->{state}->{recorded_score};
 				$probStatus[$i] = $pScore;
 				$numParts = 1;
@@ -1815,9 +1796,9 @@ sub body {
 	my $attemptNumber = $Problem->num_correct + $Problem->num_incorrect;
 
 	# a handy noun for when referring to a test
-	my $testNoun = (( $set->attempts_per_version || 0 ) > 1) ? "submission" : "test";
+	my $testNoun = (( $set->attempts_per_version || 0 ) > 1) ? $r->maketext("submission") : $r->maketext("test");
 	my $testNounNum = ( ( $set->attempts_per_version ||0 ) > 1 ) ? 
-		"submission (test " : "test (";
+		$r->maketext("submission (test ") : $r->maketext("test (");
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
@@ -1828,7 +1809,7 @@ sub body {
 		my $divClass = 'ResultsWithoutError';
 		my $recdMsg = '';
 		foreach ( @scoreRecordedMessage ) {
-			if ($_ ne 'Your score on this problem was recorded.') {
+			if ($_ !~ $r->maketext('Your score on this problem was recorded.')) {
 				$recdMsg = $_;
 				$divClass = 'ResultsWithError';
 				last;
@@ -1838,29 +1819,34 @@ sub body {
 
 		if ( $recdMsg ) {
 			# then there was an error when saving the results
-			print CGI::strong("Your score on this $testNounNum ",
-					  "$versionNumber) was NOT recorded.  ",
+			print CGI::strong($r->maketext("Your score on this [_1][_2]) was NOT recorded.",$testNounNum,$versionNumber),
 					  $recdMsg), CGI::br();
 		} else {
 			# no error; print recorded message
-			print CGI::strong("Your score on this $testNounNum ",
-					  "$versionNumber) WAS recorded."), 
-			CGI::br();
+			print CGI::strong($r->maketext("Your score on this [_1][_2]) WAS recorded.",$testNounNum,$versionNumber)), 
+			  CGI::br();
 
 			# and show the score if we're allowed to do that
 			if ( $can{showScore} ) {
-				print CGI::strong("Your score on this " .
-						  "$testNoun is ", 
-						  "$attemptScore/$totPossible.");
+			  print CGI::strong($r->maketext("Your score on this [_1] is [_2]/[_3].", $testNoun,$attemptScore,$totPossible));
 			} else {
 				my $when = 
 					($set->hide_score eq 'BeforeAnswerDate')
 					? ' until ' . ($self->formatDateTime($set->answer_date) )
 					: '';
-				print CGI::br() . 
-					"(Your score on this $testNoun " .
-					"is not available$when.)";
+				print $r->maketext("(Your score on this [_1] is not available[_2].)",$testNoun,$when);
 			}
+
+			
+			# Print a message if we are trying to send the score to
+			# an LMS
+			if ($LTIGradeResult != -1) {
+			  print CGI::br();
+			  print $LTIGradeResult ?
+			    $r->maketext("Your score was successfully sent to the LMS") :
+			    $r->maketext("Your score was not successfully sent to the LMS");
+			}
+			
 		}
 
 		# finally, if there is another, recorded message, print that 
@@ -1870,21 +1856,17 @@ sub body {
 		     $recordedScore != $attemptScore && $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
 			my $recScore = wwRound(2,$recordedScore);
-			print "The recorded score for this test is ",
-				"$recScore/$totPossible.";
+			print $r->maketext("The recorded score for this test is  [_1]/[_2].",$recScore,$totPossible);
 			print CGI::end_div();
 		}
 
 	} elsif ( $will{checkAnswers} ) {
 		if ( $can{showScore} ) {
 			print CGI::start_div({class=>'gwMessage'});
-			print CGI::strong("Your score on this (checked, not ",
-					  "recorded) submission is ",
-					  "$attemptScore/$totPossible."), 
+			print CGI::strong($r->maketext("Your score on this (checked, not recorded) submission is [_1]/[_2].",$attemptScore,$totPossible)), 
 				CGI::br();
 			my $recScore = wwRound(2,$recordedScore);
-			print "The recorded score for this test is " .
-				"$recScore/$totPossible.  ";
+			print $r->maketext("The recorded score for this test is [_1]/[_2]. ",$recScore, $totPossible);
 			print CGI::end_div();
 		}
 	}
@@ -1911,32 +1893,28 @@ sub body {
 		if ( $timeLeft < 1 && $timeLeft > 0 &&
 		     ! $authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
 			print CGI::span({-class=>"resultsWithError"}, 
-					CGI::b("You have less than 1 minute ",
-					       "to complete this test.\n"));
+					CGI::b($r->maketext("You have less than 1 minute to complete this test.")."\n"));
 		} elsif ( $timeLeft <= 0 &&
 			  ! $authz->hasPermissions($user, "record_answers_when_acting_as_student") ) {
 			print CGI::span({-class=>"resultsWithError"}, 
-					CGI::b("You are out of time.  ",
-					       "Press grade now!\n"));
+					CGI::b($r->maketext("You are out of time.  Press grade now!")."\n"));
 		}
 		# if there are multiple attempts per version, indicate the 
 		#    number remaining, and if we've submitted a multiple 
 		#    attempt multi-page test, show the score on the previous
 		#    submission
 		if ( $set->attempts_per_version > 1 ) {
-			print CGI::em("You have $numLeft attempt(s) remaining ",
-				      "on this test.");
+			print CGI::em($r->maketext("You have [_1] attempt(s) remaining on this test.",$numLeft));
 			if ( $numLeft < $set->attempts_per_version &&
 			     $numPages > 1 &&
 			     $can{showScore} ) {
 				print CGI::start_div({-id=>"gwScoreSummary"}),
-					CGI::strong({},"Score summary for " .
-						    "last submit:");
+					CGI::strong({},$r->maketext("Score summary for last submit:"));
 				print CGI::start_table();
-				print CGI::Tr({},CGI::th({-align=>"left"},"Prob"), CGI::td(""), CGI::th("Status"), CGI::td(""), CGI::th("Result"));
+				print CGI::Tr({},CGI::th({-align=>"left"},$r->maketext("Prob")), CGI::td(""), CGI::th($r->maketext("Status")), CGI::td(""), CGI::th($r->maketext("Result")));
 				for ( my $i=0; $i<@probStatus; $i++ ) {
 					print CGI::Tr({},
-						CGI::td({},[($i+1),"",int(100*$probStatus[$probOrder[$i]]+0.5) . "%","", $probStatus[$probOrder[$i]] == 1 ? "Correct" : "Incorrect"]));
+						CGI::td({},[($i+1),"",int(100*$probStatus[$probOrder[$i]]+0.5) . "%","", $probStatus[$probOrder[$i]] == 1 ? $r->maketext("Correct") : $r->maketext("Incorrect")]));
 				}
 				print CGI::end_table(), CGI::end_div();
 			}
@@ -1946,13 +1924,10 @@ sub body {
 			if ( $can{showScore} ) {
 			    print CGI::start_div({class=>'gwMessage'});
 			    
-			    my $scMsg = "Your recorded score on this " .
-				"(test number $versionNumber) is " .
-				wwRound(2,$recordedScore)."/$totPossible";
+			    my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3]", $versionNumber, wwRound(2,$recordedScore), $totPossible);
 			    if ( $exceededAllowedTime && 
 				 $recordedScore == 0 ) {
-				$scMsg .= ", because you exceeded " .
-				    "the allowed time.";
+				$scMsg .= $r->maketext(", because you exceeded the allowed time.");
 			    } else {
 				$scMsg .= ".  ";
 			    }
@@ -1963,21 +1938,17 @@ sub body {
 
 		if ( $set->version_last_attempt_time ) {
 			print CGI::start_div({class=>'gwMessage'});
-			print "Time taken on test: $elapsedTime min " .
-				"($allowed min allowed).";
+			print $r->maketext("Time taken on test: [_1] min ([_2] min allowed).",$elapsedTime,$allowed);
 			print CGI::end_div();
 		} elsif ( $exceededAllowedTime && $recordedScore != 0 ) {
 			print CGI::start_div({class=>'gwMessage'});
-			print "(This test is overtime because it was not " .
-				"submitted in the allowed time.)";
+			print $r->maketext("(This test is overtime because it was not submitted in the allowed time.)");
 			print CGI::end_div();
 		}
 
 		if ( $canShowWork && $set->set_id ne "Undefined_Set" ) {
-			print "The test (which is number $versionNumber) may " .
-				"no longer be submitted for a grade";
-			print "" . (($can{showScore}) ? ", but you may still " .
-				    "check your answers." : ".") ;
+			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade",$versionNumber);
+			print "" . (($can{showScore}) ? $r->maketext(", but you may still check your answers.") : ".") ;
 
 			# print a "printme" link if we're allowed to see our 
 			#    work
@@ -1987,7 +1958,7 @@ sub body {
 				$self->url_authen_args;
 			my $printmsg = CGI::div({-class=>'gwPrintMe'}, 
 						CGI::a({-href=>$link}, 
-						       "Print Test"));
+						       $r->maketext("Print Test")));
 			print $printmsg;
 		}
 	}
@@ -2009,11 +1980,10 @@ sub body {
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
 		my $when = ( $set->hide_work eq 'BeforeAnswerDate' ) 
-			? ' until ' . ($self->formatDateTime($set->answer_date))
+			? $r->maketext(' until ') . ($self->formatDateTime($set->answer_date))
 			: '';
 		print CGI::start_div({class=>"gwProblem"});
-		print CGI::strong("Completed results for this assignment are " .
-				  "not available$when.");
+		print CGI::strong($r->maketext("Completed results for this assignment are not available[_1].",$when));
 		print CGI::end_div();
 
 	# else: we're not hiding answers
@@ -2111,10 +2081,10 @@ sub body {
 				my $resultsTable = '';
 
 				if ($pg->{flags}->{showPartialCorrectAnswers}>=0 && $submitAnswers){
-					if ( $scoreRecordedMessage[$probOrder[$i]] ne 
-					     "Your score on this problem was recorded." ) {
+					if ( $scoreRecordedMessage[$probOrder[$i]] !~ 
+					     $r->maketext("Your score on this problem was recorded.") ) {
 						$recordMessage = CGI::span({class=>"resultsWithError"},
-									   "ANSWERS NOT RECORDED --", 
+									   $r->maketext("ANSWERS NOT RECORDED --"), 
 									   $scoreRecordedMessage[$probOrder[$i]]);
 
 					}
@@ -2125,8 +2095,8 @@ sub body {
 					
 				} elsif ( $will{checkAnswers} ) {
 					$recordMessage = CGI::span({class=>"resultsWithError"},
-								   "ANSWERS ONLY CHECKED -- ", 
-								   "ANSWERS NOT RECORDED");
+								   $r->maketext("ANSWERS ONLY CHECKED -- "), 
+								   $r->maketext("ANSWERS NOT RECORDED"));
 					
 					$resultsTable = 
 					    $self->attemptResults($pg, 1, $will{showCorrectAnswers},
@@ -2136,7 +2106,7 @@ sub body {
 				} elsif ( $previewAnswers ) {
 					$recordMessage = 
 					    CGI::span({class=>"resultsWithError"},
-						      "PREVIEW ONLY -- ANSWERS NOT RECORDED");
+						      $r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED"));
 					$resultsTable = $self->attemptResults($pg, 1, 0, 0, 0, 1);
  
 				}	    
@@ -2145,15 +2115,15 @@ sub body {
 				my $i1 = $i+1;
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
 				print CGI::div({-id=>"prob$i"},"");
-				print CGI::h2("Problem $problemNumber."), 
+				print CGI::h2($r->maketext("Problem [_1].",$problemNumber)), 
 					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
-				       CGI::b("Note: ") : "", 
+				       CGI::b($r->maketext("Note: ")) : "", 
 				       CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 
-						    "preview answers"));
+						    $r->maketext("preview answers")));
 
 				print $resultsTable if $resultsTable; 
 
@@ -2176,8 +2146,10 @@ sub body {
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
 				my @curr_fields = grep /^$curr_prefix/, keys %{$self->{formFields}};
 				foreach my $curr_field ( @curr_fields ) {
-					print CGI::hidden({-name=>$curr_field, 
-							   -value=>$self->{formFields}->{$curr_field}});
+ 					foreach ( split(/\0/, $self->{formFields}->{$curr_field} // '') ) {
+ 						print CGI::hidden({-name=>$curr_field, 
+ 							   	   -value=>$_});
+ 					}
 				}
 				# finally, store the problem status for 
 				#    continued attempts recording
@@ -2199,44 +2171,28 @@ sub body {
 			print CGI::checkbox(-name   =>"showCorrectAnswers",
 #				-checked => $will{showCorrectAnswers},
 					    -checked=>$want{showCorrectAnswers},
-					    -label  =>"Show correct answers",
+					    -label  =>$r->maketext("Show correct answers"),
 					    );
 		}
-#     if ($can{showHints}) {
-# 	print CGI::div({style=>"color:red"},
-# 		       CGI::checkbox(-name    => "showHints",
-# 				     -checked => $will{showHints},
-# 				     -label   => "Show Hints",
-# 				     )
-# 		       );
-#     }
 		if ($can{showSolutions}) {
 			print CGI::checkbox(-name    => "showSolutions",
 					    -checked => $will{showSolutions},
-					    -label   => "Show Solutions",
+					    -label   => $r->maketext("Show Solutions"),
 					    );
 		}
 
 		print CGI::p( CGI::submit( -name=>"previewAnswers", 
-					   -label=>"Preview Test" ),
+					   -label=>$r->maketext("Preview Test") ),
 			      ($can{recordAnswersNextTime} ? 
 			       CGI::submit( -name=>"submitAnswers",
-					    -label=>"Grade Test" ) : " "),
+					    -label=>$r->maketext("Grade Test") ) : " "),
 			      ($can{checkAnswersNextTime} && ! $can{recordAnswersNextTime} ?
 			       CGI::submit( -name=>"checkAnswers",
-					    -label=>"Check Test" ) : " "),
+					    -label=>$r->maketext("Check Test") ) : " "),
 			      ($numProbPerPage && $numPages > 1 && 
 			       $can{recordAnswersNextTime} ? CGI::br() . 
-			       CGI::em("Note: grading the test grades " . 
-				       CGI::b("all") . " problems, not just those " . 
-				       "on this page.") : " ") );
+			       CGI::em($r->maketext("Note: grading the test grades all problems, not just those on this page.")) : " ") );
 
-		## save the source file, etc., if we're trying an undefined
-		##    set
-		# print( CGI::hidden(
-		# 		   -name   => 'sourceFilePath',
-		# 		   -value  =>  $self->{problem}->{source_file}
-		# 		  ))  if defined($self->{problem}->{source_file});
 		print( CGI::hidden(
 				   -name   => 'sourceFilePath',
 				   -value  =>  $r->param("sourceFilePath")
@@ -2261,42 +2217,18 @@ sub body {
 		print "\n", CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
 			$hiddenFields,"\n",
 			CGI::hidden(-name => 'courseID',  -value=>$ce->{courseName}), "\n",
-			CGI::hidden(-name => 'problemID', -value=>"$firstProb - $lastProb"), "\n",
-			CGI::hidden(-name => 'setID',  -value=>$setVName), "\n",
-			CGI::hidden(-name => 'studentUser',    -value=>$effectiveUser), "\n",
-			CGI::p(
+			CGI::hidden(-name => 'selected_sets',  -value=>$setVName), "\n",
+			  CGI::hidden(-name => 'selected_users',    -value=>$effectiveUser), "\n";
+	    for (my $prob=$firstProb; $prob <= $lastProb; $prob++) {
+	      print CGI::hidden(-name => 'selected_problems', -value=>"$prob"), "\n";
+	    }
+
+	    print CGI::p(
 				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
 				), "\n",
 			CGI::end_form();
 	}
 
-# debugging verbiage
-#     if ( $can{checkAnswersNextTime} ) {
-# 	print "Can check answers next time\n";
-#     } else {
-# 	print "Can NOT check answers next time\n";
-#     }
-#     if ( $can{recordAnswersNextTime} ) {
-# 	print "Can record answers next time\n";
-#     } else {
-# 	print "Can NOT record answers next time\n";
-#     }
-
-  # we exclude the feedback form from gateway tests.  they can use the feedback
-  #   button on the preceding or following pages
-#     my $ce = $r->ce;
-#     my $root = $ce->{webworkURLs}->{root};
-#     my $courseName = $ce->{courseName};
-#     my $feedbackURL = "$root/$courseName/feedback/";
-#     print CGI::start_form("POST", $feedbackURL),
-#           $self->hidden_authen_fields,
-#           CGI::hidden("module", __PACKAGE__),
-#           CGI::hidden("set",    $self->{set}->set_id),
-#           CGI::p({-align=>"right"},
-# 		 CGI::submit(-name=>"feedbackForm", -label=>"Send Feedback")
-# 		 ),
-# 	  CGI::end_form();
-	
 	return "";
 
 }
@@ -2393,35 +2325,6 @@ sub getProblemHTML {
 
 	return    $pg;
 }
-
-##### output utilities #####
-sub problemListRow($$$) {
-	my $self = shift;
-	my $set = shift;
-	my $Problem = shift;
-	
-	my $name = $Problem->problem_id;
-	my $interactiveURL = "$name/?" . $self->url_authen_args;
-	my $interactive = CGI::a({-href=>$interactiveURL}, "Problem $name");
-	my $attempts = $Problem->num_correct + $Problem->num_incorrect;
-	my $remaining = $Problem->max_attempts < 0
-		? "unlimited"
-		: $Problem->max_attempts - $attempts;
-	my $status = sprintf("%.0f%%", $Problem->status * 100); # round to whole number
-	
-	return CGI::Tr(CGI::td({-nowrap=>1}, [
-		$interactive,
-		$attempts,
-		$remaining,
-		$status,
-	]));
-}
-# sub nbsp {
-# 	my $str = shift;
-# 	($str) ? $str : '&nbsp;';  # returns non-breaking space for empty strings
-# }
-
-##### logging subroutine ####
 
 sub output_JS{
 	my $self = shift;

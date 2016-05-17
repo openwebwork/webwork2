@@ -338,6 +338,11 @@ ul.courses-list a:hover {
     white-space: normal;
 }
 
+.past-answer-download {
+    font-weight: bold;
+    font-size: 110%;
+}
+
 /* Classlist Editor */
 /* this table is a pain, it wants to be a certain width and it'll force you
  * to scroll if you don't have that width, don't know how to fix it */
@@ -513,6 +518,39 @@ table.classlist-table .tbody {
 .library-browser-table-nojs td {
     padding-right: 0.2em;
     padding-left: 0.2em;
+}
+
+.lb-problem-header {
+    overflow:auto;
+    background-color: #FFFFFF; 
+    margin: 0px auto;
+    min-height:30px;
+    display:block;
+}
+
+.lb-problem-add {
+    text-align: left;
+}
+
+.lb-problem-path {
+    text-align: left; 
+    cursor: pointer;
+}
+
+.lb-problem-icons {
+    float:right; 
+    text-align: right; 
+    margin-right:.8em;
+}
+
+.lb-problem-stats {
+    float:right; 
+    text-align:right;
+}
+
+.lb-mlt-group {
+    border:2px solid black;
+    width :100%;
 }
 
 /* Footer */
@@ -1139,6 +1177,12 @@ div.problem_sets_options {
 
 table#grades_table pre{
 	float: left;
+}
+
+.grades-course-total, 
+.grades-course-total th {
+    font-weight: bold;
+    font-size:105%;
 }
 
 #config-form input[type="checkbox"] {

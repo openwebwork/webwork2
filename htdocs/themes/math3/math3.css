@@ -519,6 +519,49 @@ li.currentProblem{
 	border-bottom: 1px solid #ccc;
 }
 
+.lb-problem-header {
+    background-color: #FFFFFF; 
+    margin: 0px auto;
+    font-size:90%;
+    display: block;
+    min-height:25px;
+    overflow:auto;
+}
+
+.lb-problem-add {
+    text-align: left;
+}
+
+.lb-problem-path {
+    text-align: left; 
+    cursor: pointer;
+    height:25px;
+    padding-top:5px;
+}
+
+.lb-problem-icons {
+    float:right; 
+    text-align: right; 
+    margin-right:.8em;
+    vertical-align:bottom;
+}
+
+.lb-problem-stats {
+    float:right; 
+    text-align:right;
+    height:25px;
+    padding-top:5px;
+}
+
+.lb-problem-stats a {
+    font-size:90%;
+}
+
+.lb-mlt-group {
+    border:1px solid black;
+    width :100%;
+}
+
 #footer {
 	/* white-space: nowrap; */
 	clear: both;
@@ -1044,6 +1087,18 @@ div.problem_set_options {
 	clear: both;
 }
 /*BUG FIXES*/
+
+.additional-scoring-msg {
+    background-color:#DDDDDD;
+    margin:.75em;
+    padding:.5em;
+}
+
+.grades-course-total, 
+.grades-course-total th {
+    font-weight: bold;
+    font-size:105%;
+}
 
 table#grades_table pre{
 	float: left;

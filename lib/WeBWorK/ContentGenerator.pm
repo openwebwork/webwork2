@@ -43,6 +43,7 @@ miscellaneous utilities are provided.
 
 use strict;
 use warnings;
+use utf8;
 use Carp;
 #use CGI qw(-nosticky *ul *li escapeHTML);
 use WeBWorK::CGI;
@@ -60,7 +61,8 @@ use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
 use WeBWorK::Utils qw(jitar_id_to_seq);
-
+use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+  
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
 
@@ -96,7 +98,7 @@ sub new {
 		db => $r->db(),       # backward-compatability
 		authz => $r->authz(), # with unconverted CGs
 		noContent => undef, # FIXME this should get clobbered at some point
-	};
+		   };
  	weaken $self -> {r};
 	bless $self, $class;
 	return $self;
@@ -164,6 +166,34 @@ sub go {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
+
+	# If grades are begin passed back to the lti then we peroidically
+	# update all of the grades because things can get out of sync if
+	# instructors add or modify sets.
+	if ($ce->{LTIGradeMode}) {
+
+	  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+	  
+	  my $post_connection_action = sub {
+	    my $grader = shift;
+	    
+	    # catch exceptions generated during the sending process
+	    my $result_message = eval { $grader->mass_update() };
+	    if ($@) {
+	      # add the die message to the result message
+	      $result_message .= "An error occurred while trying to update grades via LTI.\n"
+		. "The error message is:\n\n$@\n\n";
+	      # and also write it to the apache log
+	      $r->log->error("An error occurred while trying to update grades via LTI: $@\n");
+	    }
+	  };
+	  if (MP2) {
+	    $r->connection->pool->cleanup_register($post_connection_action, $grader);
+	  } else {
+	    $r->post_connection($post_connection_action, $grader);
+	  }
+
+	}
 
 	# check to verify if there are set-level problems with running
 	#    this content generator (individual content generators must
@@ -781,28 +811,28 @@ sub links {
 				    print CGI::start_ul();
 				    if ($ce->{showeditors}->{problemsetdetail1}) {
 					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>"-$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail", text=>$r->maketext("[_1] (old editor)", $prettySetID), urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
 				    }
 
 				    if ($ce->{showeditors}->{problemsetdetail2}) {
 					print CGI::start_li(); # $setID (2)
-					print &$makelink("${pfx}ProblemSetDetail2", text=>"--$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail2", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
 				    }
 
 					if (defined $problemID) {
 					    print CGI::start_li();
 					    print CGI::start_ul();
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>$r->maketext("[_1] (old editor)", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
 					    
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 						if $ce->{showeditors}->{simplepgeditor};;
 					    print CGI::end_ul();
 					    print CGI::end_li();
@@ -1055,7 +1085,6 @@ sub path {
  		    }
  		}
 	    }
-	    
 	    unshift @path, $name, $r->location . $urlpath->path;
 	} while ($urlpath = $urlpath->parent);
 	
@@ -2140,10 +2169,7 @@ sub warningOutput($$) {
 	    );
 	
 	foreach my $warning (@warnings) {
-	    # This used to be commented out because it interfered with warnings
-	    # from PG.  But now PG has a seperate warning channel thats not
-	    # encoded.  Since these warnings have html they
-	    # look better scrubbed
+            # Since these warnings have html they look better scrubbed
 
 	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);

@@ -24,19 +24,13 @@ $funct1 = "2*$a1*x-$b1";
 BEGIN_TEXT
 If \( f(x) =  $a1 x^2 - $b1 x -$c1 \), find \( f'( x ) \).
 $BR $BR \{ans_rule(48) \}
-$BR
+$BR $BR
 END_TEXT
 
 $ans = $funct1;
 &ANS(fun_cmp($ans));
 
 $a1_2 = 2*$a1;
-&SOLUTION(EV3(<<'EOT'));
-$SOL $BR
-In general the derivative of \( x^n \) is \( nx^{n-1} \). Using this (and the 
-basic sum and constant multiple rules) we find the derivative of $BR
-\(${a1}x^2 - ${b1}x -$c1 \quad \) is $BR \( ${a1_2}x - $b1 \).$BR $BR
-EOT
 
 BEGIN_TEXT
 Find \( f'( $x1 ) \).
@@ -49,7 +43,11 @@ $ans = $deriv1;
 
 &SOLUTION(EV3(<<'EOT'));
 $SOL $BR
-To find the derivative we just have to evaluate \( f'( x ) \) at 
+In general the derivative of \( x^n \) is \( nx^{n-1} \). Using this (and the 
+basic sum and constant multiple rules) we find the derivative of $BR
+\(${a1}x^2 - ${b1}x -$c1 \quad \) is $BR \( ${a1_2}x - $b1 \).$BR $BR
+
+To find the derivative at \($x1\) we just have to evaluate \( f'( x ) \) at 
 \( x = $x1) \), i.e.  \( ${a1_2}\cdot$x1 - $b1 \) or $ans.
 EOT
 

@@ -42,12 +42,12 @@ our $HOST_NAME    = $WebworkWebservice::HOST_NAME;
 our $PASSWORD     = $WebworkWebservice::PASSWORD;
 our $ce           = WeBWorK::CourseEnvironment->new({webwork_dir=>$WW_DIRECTORY, courseName=> $COURSENAME});
 
-our $UNIT_TESTS_ON =1;
+our $UNIT_TESTS_ON =0;
 
 sub listLocalSets{
   debug("in listLocalSets");
   my $self = shift;
-  my $db = $self->{db};
+  my $db = $self->db;
   my @found_sets;
   @found_sets = $db->listGlobalSets;
   my $out = {};
@@ -64,14 +64,14 @@ sub listLocalSets{
 sub listLocalSetProblems{
 	my ($self, $params) = @_;
 
-  	my $db = $self->{db};
+  	my $db = $self->db;
   	my @found_problems;
 
   	my $setName = $params->{set_id};
 
   	debug("Loading problems for " . $setName);
 
-  	my $templateDir = $self->{ce}->{courseDirs}->{templates}."/";
+  	my $templateDir = $self->ce->{courseDirs}->{templates}."/";
 
         # If a command is passed, then we want relative paths rather than
         # absolute paths.  Do that by setting templateDir to the empty
@@ -104,7 +104,7 @@ sub listLocalSetProblems{
 
 sub getSets{
   my ($self,$params) = @_;
-  my $db = $self->{db};
+  my $db = $self->db;
   my @found_sets = $db->listGlobalSets;
   
   my @all_sets = $db->getGlobalSets(@found_sets);
@@ -131,7 +131,7 @@ sub getSets{
 
 sub getUserSets{
   my ($self,$params) = @_;
-  my $db = $self->{db};
+  my $db = $self->db;
   
   my @userSetNames = $db->listUserSets($params->{user});
   debug(@userSetNames);
@@ -158,7 +158,7 @@ sub getUserSets{
 
 sub getSet {
   my ($self, $params) = @_;
-  my $db = $self->{db};
+  my $db = $self->db;
   my $setName = $params->{set_id};
   my $set = $db->getGlobalSet($setName);
   
@@ -176,7 +176,7 @@ sub getSet {
 
 sub updateSetProperties {
 	my ($self, $params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 
 	my $set = $db->getGlobalSet($params->{set_id});
 	$set->set_header($params->{set_header});
@@ -253,7 +253,7 @@ sub updateSetProperties {
 
 sub listSetUsers {
 	my ($self,$params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
     
     my $out = {};
     my @users = $db->listSetUsers($params->{set_id});
@@ -265,7 +265,7 @@ sub listSetUsers {
 
 sub createNewSet{
 	my ($self,$params) = @_;
-  	my $db = $self->{db};
+  	my $db = $self->db;
   	my $out;
 
   	debug("in createNewSet");
@@ -342,7 +342,7 @@ sub createNewSet{
 
 sub assignSetToUsers {
 	my ($self,$params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
     
     my $setID = $params->{set_id};
     my $GlobalSet = $db->getGlobalSet($params->{set_id});
@@ -387,7 +387,7 @@ sub assignSetToUsers {
 #problem utils from Instructor.pm
 sub assignProblemToUser {
 	my ($self,$userID,$GlobalProblem,$seed) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 	
 	my $UserProblem = $db->newUserProblem;
 	$UserProblem->user_id($userID);
@@ -412,7 +412,7 @@ sub assignProblemToUser {
 
 sub deleteProblemSet {
 	my ($self,$params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 	my $setID = $params->{set_id};
 	my $result = $db->deleteGlobalSet($setID);
 
@@ -433,10 +433,10 @@ sub deleteProblemSet {
 sub reorderProblems {
 	my ($self,$params) =  @_; 
 
-	my $db = $self->{db};
+	my $db = $self->db;
 	my $setID = $params->{set_id};
 	my @problemList = split(/,/, $params->{probList});
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 
 
 	# get all the problems
@@ -481,10 +481,10 @@ sub reorderProblems {
 
 sub updateProblem{
 	my ($self,$params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 	my $setID = $params->{set_id};
 	my $path = $params->{path};
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 	$path =~ s|^$topdir/*||;
 
 	my @problems = $db->getAllGlobalProblems($setID);
@@ -511,7 +511,7 @@ sub updateProblem{
 
 sub updateUserSet {
   	my ($self, $params) = @_;
-  	my $db = $self->{db};
+  	my $db = $self->db;
   	my @users = split(',',$params->{users});
 
   	debug($params->{open_date});
@@ -552,7 +552,7 @@ gets all user sets for set $setID
 
 sub getUserSets {
 	my ($self,$params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 
 	my @setUserIDs = $db->listSetUsers($params->{set_id});
 
@@ -572,7 +572,7 @@ sub getUserSets {
 
 sub saveUserSets {
 	my ($self,$params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 	debug($params->{overrides});
 
 	my @overrides = @{from_json($params->{overrides})};
@@ -599,7 +599,7 @@ Unassigns the given set and all problems therein from the given user.
 
 sub unassignSetFromUsers {
   	my ($self, $params) = @_;
-  	my $db = $self->{db};
+  	my $db = $self->db;
   	my @users = split(',',$params->{users});
     # should we check if the user is assigned before trying to unassign? 
   	foreach my $user (@users) {
@@ -620,7 +620,7 @@ returned.
 
 sub assignAllSetsToUser {
 	my ($self, $userID) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 	
 	# assign only sets that are not already assigned
 	#my %userSetIDs = map { $_ => 1 } $db->listUserSets($userID);
@@ -651,11 +651,11 @@ sub assignAllSetsToUser {
 
 sub addProblem {
 	my ($self,$params) = @_;
-	my $db = $self->{db};
+	my $db = $self->db;
 	my $setName = $params->{set_id};
 
 	my $file = $params->{path};
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 	
 	# DBFIXME count would work just as well
@@ -666,19 +666,25 @@ sub addProblem {
 	# for jitar sets the next problem id is the next top level problem
 	if ($set->assignment_type eq 'jitar') {
 	  my @problemIDs = $db->listGlobalProblems($setName);
-	  my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+	  my @seq = (0);
+	  if ($#problemIDs != -1) {
+	    @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+	  }
+	    
 	  $freeProblemID = seq_to_jitar_id($seq[0]+1);
 	} else {
 	    $freeProblemID = max($db->listGlobalProblems($setName)) + 1;
 	}
 
-	my $value_default = $self->{ce}->{problemDefaults}->{value};
-	my $max_attempts_default = $self->{ce}->{problemDefaults}->{max_attempts};	
-	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
-	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};	
-	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};	
+	my $value_default = $self->ce->{problemDefaults}->{value};
+	my $max_attempts_default = $self->ce->{problemDefaults}->{max_attempts};	
+	my $showMeAnother_default = $self->ce->{problemDefaults}->{showMeAnother};	
+	my $att_to_open_children_default = $self->ce->{problemDefaults}->{att_to_open_children};	
+	my $counts_parent_grade_default = $self->ce->{problemDefaults}->{counts_parent_grade};	
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
+	
+	my $prPeriod_default = $self->ce->{problemDefaults}->{prPeriod};
 	
 	my $value = $value_default;
 	if (defined($params->{value}) and length($params->{value})){$value = $params->{value};}  # 0 is a valid value for $params{value} but we don't want emptystring
@@ -689,6 +695,10 @@ sub addProblem {
 	my $countsParentGrade = $params->{counts_parent_grade} || $counts_parent_grade_default;
 	my $attToOpenChildren = $params->{att_to_open_children} || $att_to_open_children_default;
 
+	my $prPeriod = $prPeriod_default;
+	if (defined($params->{prPeriod})){
+		$prPeriod = $params->{prPeriod};
+	}
 
 	unless ($problemID) {
 		$problemID = $freeProblemID;
@@ -703,7 +713,9 @@ sub addProblem {
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$problemRecord->{att_to_open_children} = $attToOpenChildren;
-	$problemRecord->{counts_parent_grade} = $countsParentGrade;	
+	$problemRecord->{counts_parent_grade} = $countsParentGrade;
+	$problemRecord->prPeriod($prPeriod);
+	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
 	my @results; 
@@ -722,11 +734,11 @@ sub addProblem {
 sub deleteProblem {
 	my ($self,$params) = @_;
 	
-	my $db = $self->{db};
+	my $db = $self->db;
 	my $setName = $params->{set_id};
 	
 	my $file = $params->{path};
-	my $topdir = $self->{ce}->{courseDirs}{templates};
+	my $topdir = $self->ce->{courseDirs}{templates};
 	$file =~ s|^$topdir/*||;
 	# DBFIXME count would work just as well
 	foreach my $problem ($db->listGlobalProblems($setName)) {
@@ -746,7 +758,7 @@ sub deleteProblem {
 use File::Find;
 sub get_set_defs {
 	my $self = shift;
-	my $topdir = $self->{ce}->{courseDirs}{templates};#shift #sort of hard coded for now;
+	my $topdir = $self->ce->{courseDirs}{templates};#shift #sort of hard coded for now;
 	my @found_set_defs;
 	# get_set_defs_wanted is a closure over @found_set_defs
 	my $get_set_defs_wanted = sub {
@@ -820,3 +832,4 @@ sub read_set_def {
 	return(@pg_files);
 }
 
+1;

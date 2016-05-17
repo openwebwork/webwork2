@@ -138,6 +138,7 @@ Note:  Only database keyfield values can be used as path parameters.
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
+ show_me_another                     /$courseID/$setID/$problemID/show_me_another
 answer_log                           /$courseID/show_answers/
  achievements                        /$courseID/achievements
  instructor_achievement_list         /$courseID/instructor/achievement_list
@@ -425,7 +426,7 @@ our %pathTypes = (
 	},
 	instructor_set_detail => {
 		name    => 'Set Detail for set $setID',
-		parent  => 'instructor_set_list',
+		parent  => 'instructor_set_list2',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
@@ -819,12 +820,22 @@ our %pathTypes = (
 	problem_detail => {
 		name    => '$problemID',
 		parent  => 'problem_list',
-		kids    => [ qw// ],
+		kids    => [ qw/show_me_another/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Problem',
+        },
+        show_me_another => {
+		name    => 'Show Me Another',
+		parent  => 'problem_detail',
+		kids    => [ qw// ],
+		match   => qr|^show_me_another/|,
+		capture => [ qw// ],
+		produce => 'show_me_another/',
+		display => 'WeBWorK::ContentGenerator::ShowMeAnother',
 	},
+
 	
 );
 

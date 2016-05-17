@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Embed WW in HTML page</title>
+	<meta name="generator" content="BBEdit 11.0" />
+	<link href="https://hosted2.webwork.rochester.edu/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+	<link href="https://hosted2.webwork.rochester.edu/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script>
+	$(document).ready(function(){
+		$( ".clickme" ).click(function() {
+		  $( this).next().slideToggle( "slow", function() {
+			// Animation complete.
+		  });
+		});
+
+	   // jQuery methods go here...
+	});
+	</script>
+	<style>
+		.clickme {background-color: #ccccFF ;}
+		iframe {
+			margin-left: 20px;
+			padding-left: 10px;
+		}
+	</style>
+</head>
+<body>
+
+<h2>Problem 1-- xmlrpc version of a simple template</h2>
+<p>
+Problem is rendered at daemon_course -- no student information is retained. 
+</p>
+<hr>
+<iframe  width="1000" height="400" 
+src="http://localhost/webwork2/html2xml?
+	&answersSubmitted=0
+	&sourceFilePath=Library/Utah/Quantitative_Analysis/set4_Derivatives/pr_15.pg
+	&problemSeed=123567
+	&courseID=daemon_course
+	&userID=daemon
+	&course_password=daemon
+	&displayMode=MathJax
+	&showSummary=1
+	&language=en
+	&outputformat=simple">
+</iframe>
+<!--
+	&sourceFilePath=Library/Utah/Calculus_I/set5_The_Derivative/1210s5p17/1210s5p17.pg
+-->
+<hr>
+<h2>Problem 2 -- webwork2 version of a simple template</h2>
+<p>
+Direct access using RESTful url.  Sign in is necessary and score is recorded. 
+</p>
+<hr>
+<iframe  width="1000" height="400" 
+src="http://localhost/webwork2/gage_course/test6/3/?&templateName=simple">
+</iframe>
+<hr>
+</body>
+</html>

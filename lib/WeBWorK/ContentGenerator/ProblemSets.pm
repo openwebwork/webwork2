@@ -33,6 +33,37 @@ use WeBWorK::Utils qw(after readFile sortByName path_is_subdir is_restricted wwR
 use WeBWorK::Localize;
 # what do we consider a "recent" problem set?
 use constant RECENT => 2*7*24*60*60 ; # Two-Weeks in seconds
+# the "default" data in the course_info.txt file
+use constant DEFAULT_COURSE_INFO_TXT => "Put information about your course here.  Click the edit button above to add your own message.\n";
+
+
+sub if_can {
+  my ($self, $arg) = @_;
+
+  if ($arg ne 'info') {
+    return $self->can($arg) ? 1 : 0;
+  } else {
+    my $r = $self->r;
+    my $ce = $r->ce;
+    my $urlpath = $r->urlpath;
+    my $authz = $r->authz;
+    my $user = $r->param("user");
+
+    # we only print the info box if the viewer has permission
+    # to edit it or if its not the standard template box.
+    
+    my $course_info_path = $ce->{courseDirs}->{templates} . "/"
+      . $ce->{courseFiles}->{course_info};
+    my $text;
+
+    if (-f $course_info_path) { #check that it's a plain  file
+      $text = eval { readFile($course_info_path) };
+    }
+    return $authz->hasPermissions($user, "access_instructor_tools") ||
+	  $text ne DEFAULT_COURSE_INFO_TXT;
+    
+  }
+}
 
 sub info {
 	my ($self) = @_;
@@ -50,9 +81,6 @@ sub info {
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
 			
-		#print CGI::start_div({-class=>"info-wrapper"});
-		#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
-		
 		# deal with instructor crap
 		my $editorURL;
 		if ($authz->hasPermissions($user, "access_instructor_tools")) {
@@ -84,9 +112,6 @@ sub info {
 			}
 		}
 
-		#print CGI::end_div();
-		#print CGI::end_div();
-		
 		return "";
 	}
 }
@@ -97,6 +122,13 @@ sub help {   # non-standard help, since the file path includes the course name
 	$name = lc('course home') unless defined($name);
 	$name =~ s/\s/_/g;
 	$self->helpMacro($name);
+}
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $templateName = $r->param('templateName')//'system';
+	$self->{templateName}= $templateName;
+	$templateName;
 }
 sub initialize {
 
@@ -348,7 +380,13 @@ sub setListRow {
 	
 	my $name = $set->set_id;
 	my @restricted = $ce->{options}{enableConditionalRelease} ?  
-	    is_restricted($db, $set, $effectiveUser) : ();
+	  is_restricted($db, $set, $effectiveUser) : ();
+	# The set shouldn't be shown if the LTI grade mode is set to homework and we dont
+	# have a source did to use to send back grades.  
+	my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework'
+	  && !$set->lis_source_did;
+
+	
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");
@@ -399,238 +437,205 @@ sub setListRow {
 	my $setIsOpen = 0;
 	my $status = '';
 	if ( $gwtype ) {
-		if ( $gwtype == 1 ) {
-		  unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
-			if ( $set->attempts_per_version() &&
-			     $problemRecords[0]->num_correct() + 
-			     $problemRecords[0]->num_incorrect() >= 
-			     $set->attempts_per_version()) {
-				$status = $r->maketext("completed.");
-			} elsif ( time() > $set->due_date() + 
-				  $self->r->ce->{gatewayGracePeriod} ) {
-				$status = $r->maketext("over time, closed.");
-			} else {
-				$status = $r->maketext("open, complete by [_1]",  
-					$self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
-			}
-			# we let people go back to old tests
-			$setIsOpen = 1;
-
-			# reset the link to give the test number
-			my $vnum = $set->version_id;
-			$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
-					      $r->maketext("[_1] (test [_2])", $display_name, $vnum));
-		} else {
-			my $t = time();
-			if ( $t < $set->open_date() && !@restricted ) {
-				$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
-				if ( $preOpenSets ) {
-					# reset the link
-					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
-				} else {
-				    $interactive = $r->maketext("Take [_1] test", $display_name);
-				    $control = "";
-		
-				}
-			} elsif ( $t < $set->open_date() && @restricted ) {
-				my $restriction = ($set->restricted_status)*100;
-		  		$status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
-				if(@restricted > 1) {
-		  			$status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
-		  			foreach(0..$#restricted) {
-		    				$status .= " $restricted[$_], " if $_ != $#restricted;
-		    				$status .= " and $restricted[$_]. " if $_ == $#restricted;
-		  }
-		}
-				if ( $preOpenSets ) {
-					# reset the link
-					$interactive = CGI::a({href=>$interactiveURL,class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description()},
-							      $r->maketext("Take [_1] test", $display_name));
-				} else {
-					$control = "";
-					$interactive = $r->maketext("Take [_1] test", $display_name);
-				}
-			} elsif ( $t < $set->due_date() && !@restricted ) {
-				$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
-				$setIsOpen = 1;
-				$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
-			} elsif ( $t < $set->due_date() && @restricted) {
-				my $restriction = ($set->restricted_status)*100;
-				$status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
-		if(@restricted > 1) {
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
-		  foreach(0..$#restricted) {
-		    $status .= " $restricted[$_] " if $_ != $#restricted;
-		    $status .= " and $restricted[$_] " if $_ == $#restricted;
-		  }
-		  $status .= " to open this test."
-		}
-				if ( $preOpenSets ) {
-					# reset the link
-					$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
-							      $r->maketext("Take [_1] test", $display_name));
-				} else {
-					$control = "";
-					$interactive = $r->maketext("Take [_1] test", $display_name);
-				}
-			} else {
-				$status = $r->maketext("Closed");
-
-				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
-				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
-							      
-				} else {
-				    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
-				}
-			}
-		}
-
-# old conditional
-	} elsif (time < $set->open_date && !@restricted) {
-		$status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
-		$control = "" unless $preOpenSets;
-		$interactive = $name unless $preOpenSets;
-	} elsif (time < $set->open_date && @restricted) {
+	  if ( $gwtype == 1 ) {
+	    unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
+	    if ( $set->attempts_per_version() &&
+		 $problemRecords[0]->num_correct() + 
+		 $problemRecords[0]->num_incorrect() >= 
+		 $set->attempts_per_version()) {
+	      $status = $r->maketext("completed.");
+	    } elsif ( time() > $set->due_date() + 
+		      $self->r->ce->{gatewayGracePeriod} ) {
+	      $status = $r->maketext("over time, closed.");
+	    } else {
+	      $status = $self->set_due_msg($set,1);
+	    }
+	    # we let people go back to old tests
+	    $setIsOpen = 1;
+	    
+	    # reset the link to give the test number
+	    my $vnum = $set->version_id;
+	    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
+				  $r->maketext("[_1] (test [_2])", $display_name, $vnum));
+	  } else {
+	    my $t = time();
+	    if ( $t < $set->open_date() ) {
+	      $status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
+	      
+	      if (@restricted) {
 		my $restriction = ($set->restricted_status)*100;
-		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on set [_3]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
-		if(@restricted > 1) {
-		  $status = $r->maketext("will open on [_1] if you score at least [_2]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
-		  foreach(0..$#restricted) {
-		    $status .= " $restricted[$_], " if $_ != $#restricted;
-		    $status .= " and $restricted[$_]. " if $_ == $#restricted;
-		  }
-		}
-		$control = "" unless $preOpenSets;
-		$interactive = $name unless $preOpenSets;
-	} elsif (time < $set->due_date && !@restricted) {
-			$status = $r->maketext("open, due ") . $self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat});
-			my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
-			my $reduced_scoring_date = $set->reduced_scoring_date;
-			if ($reduced_scoring_date and $enable_reduced_scoring
-			    and $reduced_scoring_date != $set->due_date) {
-			    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
-			    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
-			    
-			}
-		$setIsOpen = 1;
-	} elsif (time < $set->due_date && @restricted) {
+		$status .= restricted_progression_msg($r,1, $restriction, @restricted);
+	      }  
+	      if ( $preOpenSets ) {
+		# reset the link
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+	      } else {
+		$interactive = $r->maketext("Take [_1] test", $display_name);
+	      }
+	      $control = "";
+	      
+	    } elsif ( $t < $set->due_date() ) {
+	      
+	      $status = $self->set_due_msg($set,0);
+	      
+	      if (@restricted) {
 		my $restriction = ($set->restricted_status)*100;
 		$control = "" unless $preOpenSets;
-		$interactive = $name unless $preOpenSets;
-
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on set [_4] to open this set.", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction),@restricted) if scalar(@restricted) == 1;
-
-		if(@restricted > 1) {
-		  $status = $r->maketext("Opened on [_1] and due [_2].\n But you must score at least [_3]% on sets", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}),$self->formatDateTime($set->due_date,undef,$ce->{studentDateDisplayFormat}),sprintf("%.0f",$restriction));
-		  foreach(0..$#restricted) {
-		    $status .= " $restricted[$_] " if $_ != $#restricted;
-		    $status .= " and $restricted[$_] " if $_ == $#restricted;
-		  }
-		 $status .= " to open this set."
-		}
-
-		my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
-		my $reduced_scoring_date = $set->reduced_scoring_date;
-		if ($reduced_scoring_date and $enable_reduced_scoring) {
-		    my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
-		    
-#				$status .= '. <FONT COLOR="#cc6600">Reduced Scoring starts ' . $beginReducedScoringPeriod . '</FONT>';
-		    $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("Reduced Scoring Starts: [_1]", $beginReducedScoringPeriod));
-		    
-		}
+		$interactive = $display_name unless $preOpenSets;
 		$setIsOpen = 0;
+		$status .= restricted_progression_msg($r,0,$restriction,@restricted);
+	      } elsif ($LTIRestricted) {
+		$status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");   
+		$control = "" unless $preOpenSets;
+		$interactive = $display_name unless $preOpenSets;
+		$setIsOpen = 0;
+	      } else {
+	      	$setIsOpen = 1;
+	      }
+	      
+	      if ($setIsOpen ||  $preOpenSets ) {
+		# reset the link
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
+				      $r->maketext("Take [_1] test", $display_name));
+		$control = "";
+	      } else {
+		$control = "";
+		$interactive = $r->maketext("Take [_1] test", $display_name);
+	      }
+	    } else {
+	      $status = $r->maketext("Closed");
+	    
+	      if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+	      
+	      } else {
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+	      }
+	    }
+	  } 
+	  # old conditional
+	} elsif (time < $set->open_date) {
+	  $status = $r->maketext("will open on [_1]", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
+	  
+	  if (@restricted) {
+	    my $restriction = ($set->restricted_status)*100;
+	    $status .= restricted_progression_msg($r,1,$restriction,@restricted);
+	  }
+	  
+	  $control = "" unless $preOpenSets;
+	  $interactive = $display_name unless $preOpenSets;
+	  
+	} elsif (time < $set->due_date) {
+	  
+	  $status = $self->set_due_msg($set,0);
+	  
+	  if (@restricted) {
+	    my $restriction = ($set->restricted_status)*100;
+	    $control = "" unless $preOpenSets;
+	    $interactive = $display_name unless $preOpenSets;
+	    
+	    $status .= restricted_progression_msg($r,0,$restriction, @restricted);
+	    
+	    $setIsOpen = 0;
+	  } elsif ($LTIRestricted) {
+	    $status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");   
+	    $control = "" unless $preOpenSets;
+	    $interactive = $display_name unless $preOpenSets;
+	    $setIsOpen = 0;
+	  } else {
+	    $setIsOpen = 1;
+	  }
+	  
 	} elsif (time < $set->answer_date) {
-		$status = $r->maketext("closed, answers on [_1]", $self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat}));
+	  $status = $r->maketext("closed, answers on [_1]", $self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat}));
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
-		$status = $r->maketext("closed, answers recently available");
+	  $status = $r->maketext("closed, answers recently available");
 	} else {
-		$status = $r->maketext("closed, answers available");
+	  $status = $r->maketext("closed, answers available");
 	}
 	
 	if ($multiSet) {
-		if ( $gwtype < 2 ) {
-		    $control = CGI::input({
-				-type=>"checkbox",
-				-id=>$name . ($gwtype ? ",v" . $set->version_id : ''), 
-				-name=>"selected_sets",
-				-value=>$name . ($gwtype ? ",v" . $set->version_id : '')
-					  });
-		    # make sure interactive is the label for control
-		    $interactive = CGI::label({"for"=>$name . ($gwtype ? ",v" . $set->version_id : '')},$interactive);
-
-		} else {
-		    $control = '';
-		}
+	  if ( $gwtype < 2 ) {
+	    $control = CGI::input({
+				   -type=>"checkbox",
+				   -id=>$name . ($gwtype ? ",v" . $set->version_id : ''), 
+				   -name=>"selected_sets",
+				   -value=>$name . ($gwtype ? ",v" . $set->version_id : '')
+				  });
+	    # make sure interactive is the label for control
+	    $interactive = CGI::label({"for"=>$name . ($gwtype ? ",v" . $set->version_id : '')},$interactive);
+	    
+	  } else {
+	    $control = '';
+	  }
 	} else {
-		if ( $gwtype < 2 && after($set->open_date) && 
-		    (!@restricted || after($set->due_date))) {
-			my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
-			my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, courseID => $courseName, setID => $urlname);
-			
-			my $link = $self->systemLink($hardcopyPage,
-	                            params=>{selected_sets=>$n});
-			$control = CGI::a({class=>"hardcopy-link", href=>$link},CGI::span({class=>"icon icon-download", title=>$r->maketext("Download [_1]",$set->set_id), 'data-alt'=>$r->maketext("Download [_1]",$set->set_id)}));
-		} else {
-		    $control = '';
-		}
+	  if ( $gwtype < 2 && after($set->open_date) && 
+	       (!@restricted || after($set->due_date))) {
+	    my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
+	    my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, courseID => $courseName, setID => $urlname);
+	    
+	    my $link = $self->systemLink($hardcopyPage,
+					 params=>{selected_sets=>$n});
+	    $control = CGI::a({class=>"hardcopy-link", href=>$link},CGI::span({class=>"icon icon-download", title=>$r->maketext("Download [_1]",$set->set_id), 'data-alt'=>$r->maketext("Download [_1]",$set->set_id)}));
+	  } else {
+	    $control = '';
+	  }
 	}
-
+	
 	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
-
+	
 	$status = CGI::span({class=>$visiblityStateClass}, $status) if $preOpenSets;
 	
-# check to see if we need to return a score and a date column
+	# check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {
-	    return CGI::Tr(CGI::td([ $control,
-			     $interactive,
-		             $status,
-	    ]));
+	  return CGI::Tr(CGI::td([ $control,
+				   $interactive,
+				   $status,
+				 ]));
 	} else {
-		my ( $startTime, $score );
-
-		if ( defined( $set->assignment_type() ) && 
-		     $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
-			$startTime = localtime($set->version_creation_time() || 0); #fixes error message for undefined creation_time
-
-			if ( $authz->hasPermissions($user, "view_hidden_work") || 
-			     $set->hide_score_by_problem eq 'Y' ||
-			     $set->hide_score() eq 'N' || 
-			     ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
-				# find score
-
-			# DBFIXME we can do this math in the database, i think
-				my $possible = 0;
-				$score = 0;
-				foreach my $pRec ( @problemRecords ) {
-					my $pval = $pRec->value() ? $pRec->value() : 1;
-			    		if ( defined( $pRec ) && 
-					     $score ne 'undef' ) {
-						$score += $pRec->status()*$pval || 0;
-					} else {
-						$score = 'undef';
-					}
-					$possible += $pval;
-				}
-				$score = wwRound(2,$score);
-				$score = "$score/$possible";
-			} else {
-				$score = "n/a";
-			}
+	  my ( $startTime, $score );
+	  
+	  if ( defined( $set->assignment_type() ) && 
+	       $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
+	    $startTime = localtime($set->version_creation_time() || 0); #fixes error message for undefined creation_time
+	    
+	    if ( $authz->hasPermissions($user, "view_hidden_work") || 
+		 $set->hide_score() eq 'N' || 
+		 ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
+	      # find score
+	      
+	      # DBFIXME we can do this math in the database, i think
+	      my $possible = 0;
+	      $score = 0;
+	      foreach my $pRec ( @problemRecords ) {
+		my $pval = $pRec->value() ? $pRec->value() : 1;
+		if ( defined( $pRec ) && 
+		     $score ne 'undef' ) {
+		  $score += $pRec->status()*$pval || 0;
 		} else {
-			$startTime = '&nbsp;';
-			$score = $startTime;
+		  $score = 'undef';
 		}
-
-		return CGI::Tr(CGI::td([
-		                     $control,
-				     $interactive,
-		                     $score,
-		                     $startTime,
-		                     $status,
-		]));
+		$possible += $pval;
+	      }
+	      $score = wwRound(2,$score);
+	      $score = "$score/$possible";
+	    } else {
+	      $score = "n/a";
+	    }
+	  } else {
+	    $startTime = '&nbsp;';
+	    $score = $startTime;
+	  }
+	  
+	  return CGI::Tr(CGI::td([
+				  $control,
+				  $interactive,
+				  $score,
+				  $startTime,
+				  $status,
+				 ]));
 	}
-}
+      }
 
 sub byname { $a->set_id cmp $b->set_id; }
 
@@ -663,5 +668,71 @@ sub check_sets {
 	  return 1;
 	}
 }
+
+sub set_due_msg {
+  my $self = shift;
+  my $r = $self->r;
+  my $ce = $r->ce;
+  my $set = shift;
+  my $gwversion = shift;
+  my $status = ''; 
+
+  my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date < $set->due_date;
+  my $reduced_scoring_date = $set->reduced_scoring_date;
+  my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date,undef,$ce->{studentDateDisplayFormat});
+
+  my $t = time;
+
+  if ($enable_reduced_scoring &&
+      $t < $reduced_scoring_date) {
+    
+    $status .= $r->maketext("open, reduced scoring starts on [_1]", $beginReducedScoringPeriod);
+  } else {
+    if ($gwversion) {
+      $status = $r->maketext("open, complete by [_1]",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
+    } else {
+      $status = $r->maketext("open, due [_1]",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));  
+    }
+
+    if ($enable_reduced_scoring && $reduced_scoring_date &&
+	$t > $reduced_scoring_date) {
+      $status .= CGI::div({-class=>"ResultsAlert"}, $r->maketext("reduced scoring started on [_1]", $beginReducedScoringPeriod));
+    }
+  }
+
+  return $status;
+}  
+  
+
+sub restricted_progression_msg {
+  my $r = shift;
+  my $open = shift;
+  my $restriction = shift;
+  my @restricted = @_;
+  my $status = ' ';
+
+  if ($open) {
+    $status .= $r->maketext("if you score at least [_1]% on", sprintf("%.0f",$restriction));
+  } else {
+    $status .= $r->maketext("but to access it you must score at least [_1]% on", sprintf("%.0f",$restriction));
+  }
+  
+  $status .= ' ';
+  
+  if (scalar(@restricted) == 1) {
+    $status .= $r->maketext("set [_1].", @restricted);
+  } else {
+    $status .= $r->maketext("sets");
+    foreach(0..$#restricted) {
+      $status .= " $restricted[$_], " if $_ != $#restricted;
+      $status .= " ".$r->maketext("and")." ".$restricted[$_].'.' if $_ == $#restricted;
+    }
+  }
+
+  return $status;
+}
+
+
+  
 
 1;

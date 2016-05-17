@@ -43,11 +43,13 @@ var ToggleNavigation = function () {
 	
 	
 	$(window).resize(function(){
-	    windowwidth = $(window).width();
-	    if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
-		hideSidebar();
-	    } else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
-		showSidebar();
+	    if ($(window).width() != windowwidth) {
+		windowwidth = $(window).width();
+		if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+		    hideSidebar();
+		} else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
+		    showSidebar();
+		}
 	    }
 	}); 
     }
@@ -86,7 +88,7 @@ $(function(){
     $('a.table-summary').popover().click(function (event) {
 	event.preventDefault();
     });
-    $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
+    $('a.help-popup').popover({trigger : 'click'}).click(function (event) {
 	event.preventDefault();
     }).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 
@@ -118,7 +120,8 @@ $(function(){
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
     $('.answerComments').addClass('well');
-
+    $('#SMA_button').addClass('btn btn-primary');
+    
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
 	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
 	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
@@ -151,7 +154,8 @@ $(function(){
     
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
-
+    $('.additional-scoring-msg').addClass('well');
+    
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small');

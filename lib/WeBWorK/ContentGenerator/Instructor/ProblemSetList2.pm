@@ -750,13 +750,15 @@ sub filter_handler {
                 $result = $r->maketext("showing visible sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @visibleSetIDs = map { $_->visible ? $_->set_id : ""} @setRecords;		
+		my @visibleSetIDs = grep { $_->visible } @setRecords;
+		@visibleSetIDs = map {$_->set_id} @visibleSetIDs;
 		$self->{visibleSetIDs} = \@visibleSetIDs;
 	} elsif ($scope eq "unvisible") {
                 $result = $r->maketext("showing hidden sets");
 		# DBFIXME do filtering in the database, please!
 		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @unvisibleSetIDs = map { (not $_->visible) ? $_->set_id : ""} @setRecords;
+		my @unvisibleSetIDs = grep { not $_->visible } @setRecords;
+		@unvisibleSetIDs = map {$_->set_id} @unvisibleSetIDs;
 		$self->{visibleSetIDs} = \@unvisibleSetIDs;
 	}
 	
@@ -1147,6 +1149,7 @@ sub create_handler {
 		$newSetRecord->hardcopy_header("defaultHeader");
 		#Rest of the dates are set according to to course configuration
 		$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
+		$newSetRecord->reduced_scoring_date($dueDate - 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
 		$newSetRecord->due_date($dueDate);
 		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
@@ -1531,9 +1534,9 @@ sub saveEdit_handler {
 		# check that the reduced scoring date is in the right place
 		my $enable_reduced_scoring = 
 		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
-		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    (defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
-		    $Set->enable_reduced_scoring;
+		     $Set->enable_reduced_scoring);
 		
 		if ($enable_reduced_scoring && 
 		    $Set->reduced_scoring_date
@@ -1796,6 +1799,7 @@ sub importSetsFromDef {
 			  value => $rh_problem->{value},
 			  maxAttempts => $rh_problem->{max_attempts},
 			  showMeAnother => $rh_problem->{showMeAnother},
+			  prPeriod => $rh_problem->{prPeriod},
 			  attToOpenChildren => $rh_problem->{attToOpenChildren},
 			    countsParentGrade => $rh_problem->{countsParentGrade}
 			    );
@@ -1841,7 +1845,8 @@ sub readSetDef {
 	my $counts_parent_grade_default = 
 	    $self->{ce}->{problemDefaults}->{counts_parent_grade};
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};
-
+	my $prPeriod_default=$self->{ce}->{problemDefaults}->{prPeriod};
+	
 	my $setName = '';
 	
 	my $r = $self->r;
@@ -1869,7 +1874,10 @@ sub readSetDef {
 # added fields for gateway test/versioned set definitions:
 	my ( $assignmentType, $attemptsPerVersion, $timeInterval, $enableReducedScoring, 
 	     $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
-	     $problemsPerPage, $restrictLoc, $emailInstructor, $restrictProbProgression, $countsParentGrade, $attToOpenChildren, $problemID, $showMeAnother, $listType
+	     $problemsPerPage, $restrictLoc, 
+	     $emailInstructor, $restrictProbProgression, 
+	     $countsParentGrade, $attToOpenChildren, 
+	     $problemID, $showMeAnother, $prPeriod, $listType
 	     ) = 
 		 ('')x16;  # initialize these to ''
 	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
@@ -2086,9 +2094,11 @@ sub readSetDef {
 			# can't put continuation flag onto the first problem
 			push(@problemData, {source_file    => $name,
 			                    value          =>  $weight,
-			                    max_attempts   =>, $attemptLimit,
-			                    showMeAnother   =>, $showMeAnother,
-			                    continuation   => $continueFlag 
+			                    max_attempts   => $attemptLimit,
+			                    showMeAnother   => $showMeAnother,
+			                    # use default since it's not going to be in the file
+			                    prPeriod		=> $prPeriod_default, 
+			                    continuation   => $continueFlag,
 			     });
 		    }
 		} else {
@@ -2122,6 +2132,8 @@ sub readSetDef {
 			    $attemptLimit = ( $value ) ? $value : $max_attempts_default;
 			} elsif ( $item eq 'showMeAnother' ) {
 			    $showMeAnother = ( $value ) ? $value : 0;
+			} elsif ( $item eq 'prPeriod' ) {
+			    $prPeriod = ( $value ) ? $value : 0;
 			} elsif ( $item eq 'restrictProbProgression' ) {
 			    $restrictProbProgression = ( $value ) ? $value : 'No';
 			} elsif ( $item eq 'problem_id' ) {
@@ -2149,6 +2161,9 @@ sub readSetDef {
 			    unless ($showMeAnother =~ /-?\d+/) {$showMeAnother = $showMeAnother_default;}		
 			    $showMeAnother =~ s/[^-?\d-]*//g;
 
+			    unless ($prPeriod =~ /-?\d+/) {$prPeriod = $prPeriod_default;}
+			    $prPeriod =~ s/[^-?\d-]*//g;
+
 			    unless ($attToOpenChildren =~ /\d+/) {$attToOpenChildren = $att_to_open_children_default;}		
 			    $attToOpenChildren =~ s/[^\d-]*//g;
 					
@@ -2165,10 +2180,11 @@ sub readSetDef {
 			    push(@problemData, {source_file    => $name,
 						problemID      => $problemID, 
 						value          =>  $weight,
-						max_attempts   =>, $attemptLimit,
-						showMeAnother  =>, $showMeAnother,
+						max_attempts   => $attemptLimit,
+						showMeAnother  => $showMeAnother,
+						prPeriod		=> $prPeriod,
 						attToOpenChildren => $attToOpenChildren,
-						countsParentGrade => $countsParentGrade
+						countsParentGrade => $countsParentGrade,
 				 });
 			    
 			    # reset the various values
@@ -2289,6 +2305,7 @@ SET:	foreach my $set (keys %filenames) {
 			my $value         = $problemRecord->value();
 			my $max_attempts  = $problemRecord->max_attempts();
 			my $showMeAnother  = $problemRecord->showMeAnother();
+			my $prPeriod		= $problemRecord->prPeriod();
 			my $countsParentGrade = $problemRecord->counts_parent_grade();
 			my $attToOpenChildren = $problemRecord->att_to_open_children();
 
@@ -2297,6 +2314,7 @@ SET:	foreach my $set (keys %filenames) {
 			$value =~ s/([,\\])/\\$1/g;
 			$max_attempts =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
+			$prPeriod =~ s/([,\\])/\\$1/g;
 
 			# This is the new way of saving problem information
 			# the labelled list makes it easier to add variables and 
@@ -2307,6 +2325,7 @@ SET:	foreach my $set (keys %filenames) {
 			$problemList     .= "value = $value\n";
 			$problemList     .= "max_attempts = $max_attempts\n";
 			$problemList     .= "showMeAnother = $showMeAnother\n";
+			$problemList     .= "prPeriod = $prPeriod\n";
 			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
 			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
 			$problemList     .= "problem_end\n"

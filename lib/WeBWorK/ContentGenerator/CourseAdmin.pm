@@ -561,7 +561,7 @@ sub add_course_form {
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course ID:"),
-			CGI::td(CGI::textfield(-name=>"add_courseID", -value=>$add_courseID, -size=>25)),
+			CGI::td(CGI::textfield(-name=>"add_courseID", -value=>$add_courseID, -size=>25, -maxlength=>$ce->{maxCourseIdLength})),
 		),
 		CGI::Tr({},
 			CGI::th({class=>"LeftHeader"}, "Course Title:"),
@@ -996,7 +996,7 @@ sub rename_course_form {
 				 }) ),
 			#CGI::th({class=>"LeftHeader"}, "New CourseID:"),
 			CGI::td(CGI::textfield(-name=>"rename_newCourseID",
-			     -value=>$rename_newCourseID, -size=>25)),
+			     -value=>$rename_newCourseID, -size=>25, -maxlength=>$ce->{maxCourseIdLength})),
 		),
 		CGI::Tr({},
 			CGI::td( CGI::checkbox(
@@ -2210,10 +2210,10 @@ sub unarchive_course_form {
 	
 		CGI::Tr({},
 				CGI::th({class=>"LeftHeader"}, CGI::checkbox(-name => "create_newCourseID",-default=>'',-value=>1, -label=>'New Name:')),
-				CGI::td(CGI::textfield(-name=>"new_courseID", -value=>'', -size=>25)),
+				CGI::td(CGI::textfield(-name=>"new_courseID", -value=>'', -size=>25, -maxlength=>$ce->{maxCourseIdLength})),
 			),
 	);
-	
+
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"unarchive_course", -value=>"Unarchive Course"));
 	
 	print CGI::end_form();
@@ -2805,7 +2805,7 @@ sub add_location_handler {
 
 	# a check to be sure that the location addresses don't already
 	#    exist
-	my $badLocAddr;
+	my $badLocAddr = '';
 	if ( ! $badAddr && $locationID ) {
 		if ( $db->countLocationAddresses( $locationID ) ) {
 			my @allLocAddr = $db->listLocationAddresses($locationID);

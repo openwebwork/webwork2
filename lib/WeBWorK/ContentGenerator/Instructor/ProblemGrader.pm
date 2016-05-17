@@ -219,9 +219,40 @@ sub body {
 
 	my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseName, setID => $setID, problemID => $problemID });
 
+	my %dropDown;
+	my $delta = $ce->{options}{problemGraderScoreDelta};
+	#construct the drop down.  
+	for (my $i=int(100/$delta); $i>=0; $i--) {
+	  $dropDown{$i*$delta}=$i*$delta;
+	}
+	
+	my @scores = sort {$b <=> $a} keys %dropDown;
+	
+	my @myUsers = ();
+	my (@viewable_sections, @viewable_recitations);
+	if (defined $ce->{viewable_sections}->{$userID})
+		{@viewable_sections = @{$ce->{viewable_sections}->{$userID}};}
+	if (defined $ce->{viewable_recitations}->{$userID})
+		{@viewable_recitations = @{$ce->{viewable_recitations}->{$userID}};}
+	if (@viewable_sections or @viewable_recitations){
+		foreach my $studentL (@users){
+			my $keep = 0;
+			my $student = $db->getUser($studentL);
+			foreach my $sec (@viewable_sections){
+				if ($student->section() eq $sec){$keep = 1; last;}
+			}
+			foreach my $rec (@viewable_recitations){
+				if ($student->recitation() eq $rec){$keep = 1; last;}
+			}
+			if ($keep) {push @myUsers, $studentL;}		
+		}
+	}
+	else {@myUsers = @users;}
+
+	
 	# get user records
 	my @userRecords  = ();
-	foreach my $currentUser ( @users) {
+	foreach my $currentUser ( @myUsers) {
 		my $userObj = $db->getUser($currentUser); #checked
 		die "Unable to find user object for $currentUser. " unless $userObj;
 		push (@userRecords, $userObj );
@@ -311,14 +342,15 @@ sub body {
 				      rows=>3,
 					cols=>30,}).CGI::br().CGI::input({-class=>'preview', -type=>'button', -name=>"$userID.preview", -value=>"Preview" }) unless $noCommentField;
 	    
-	    
-	    my %dropDown;
-	    my $delta = $ce->{options}{problemGraderScoreDelta};
-	    #construct the drop down.  
-	    for (my $i=int(100/$delta); $i>=0; $i--) {
-		    $dropDown{$i*$delta}=$i*$delta;
-	    }
 
+	    # this selects the score available in the drop down that is just above the student score
+	    my $selectedScore = 0;
+	    foreach my $item (@scores) {
+	      if ($score <= $item) {
+		$selectedScore = $item;
+	      }
+	    }
+	    
 	    print CGI::Tr({-valign=>"top"}, 
 			  CGI::td({},[
 				      $userRecord->section,
@@ -338,8 +370,8 @@ sub body {
 						    }), " ",
 				      CGI::popup_menu(-name=>"$userID.score",
 						      -class=> "score-selector",
-						      -values => [sort {$b <=> $a} keys %dropDown],
-						      -default => $score,
+						      -values => \@scores,
+						      -default => $selectedScore,
 				                      -labels => \%dropDown)
 				      ," ", $commentBox
 				  ])	  

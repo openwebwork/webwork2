@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound between after);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -123,20 +123,36 @@ sub title {
 	my $r = $self->r;
 	my $eUserID = $r->param("effectiveUser");
 	# using the url arguments won't break if the set/problem are invalid
-	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+	my $prettySetID = WeBWorK::ContentGenerator::underscore2nbsp($r->urlpath->arg("setID"));
+	my $setID = $r->urlpath->arg("setID");
 	
-	my $title = $setID;
+	my $title = $prettySetID;
+	#put either due date or reduced scoring date in the title. 
 	my $set = $r->db->getMergedSet($eUserID, $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
+	  my $enable_reduced_scoring =  $r->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+	  if ($enable_reduced_scoring && 
+	      before($set->reduced_scoring_date)) {
+	    $title .= ' - '.$r->maketext("Reduced Scoring Starts [_1]", 
+	         $self->formatDateTime($set->reduced_scoring_date,undef,
+				       $r->ce->{studentDateDisplayFormat}));
+	  } elsif ($set->due_date) {
 	    $title .= ' - '.$r->maketext("Due [_1]", 
 	         $self->formatDateTime($set->due_date,undef,
 				       $r->ce->{studentDateDisplayFormat}));
+	  }
 	}
 
 	return $title;
 
 }
-
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $templateName = $r->param('templateName')//'system';
+	$self->{templateName}= $templateName;
+	$templateName;
+}
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -163,8 +179,13 @@ sub siblings {
 	} else {
 		@setIDs    = grep {my $set = $db->getMergedSet($eUserID, $_); 
 				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $set, $eUserID) : ();
+				   my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework' && !$set->lis_source_did;
+
+				   after($set->open_date) && 
 				   $set->assignment_type() !~ /gateway/ && 
-				       ( defined($set->visible()) ? $set->visible() : 1 ) && !@restricted;
+				     ( defined($set->visible()) ? $set->visible() : 1 )
+				     && !@restricted
+				     && !$LTIRestricted;
 				           }   @setIDs;
 	}
 
@@ -328,10 +349,6 @@ sub body {
 	
 	my $isJitarSet = ($set->assignment_type eq 'jitar');
 
-	#my $hardcopyURL =
-	#	$ce->{webworkURLs}->{root} . "/"
-	#	. $ce->{courseName} . "/"
-	#	. "hardcopy/$setName/?" . $self->url_authen_args;
 	
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, 
 		courseID => $courseID, setID => $setName);
@@ -340,22 +357,25 @@ sub body {
 	# print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set")));
 
 
-	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
+
 	my $reduced_scoring_date = $set->reduced_scoring_date;
-	if ($reduced_scoring_date and $enable_reduced_scoring
-	    and $reduced_scoring_date != $set->due_date) {
+	if ($enable_reduced_scoring) {
 		my $dueDate = $self->formatDateTime($set->due_date());
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
 		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
-
-		if (time < $set->due_date()) {
-			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_1",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		
+		if (before($reduced_scoring_date)) {
+		  print CGI::div({class=>"ResultsAlert"}, $r->maketext("After the reduced scoring peroid begins all work counts for [_1]% of its value.", $reducedScoringPerCent));
+		  
+		} elsif (between($reduced_scoring_date,$set->due_date())) {
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set is in its reduced scoring period.  All work counts for [_1]% of its value.",$reducedScoringPerCent));
 		} else {
-			print CGI::div({class=>"ResultsAlert"},$r->maketext("_REDUCED_CREDIT_MESSAGE_2",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
 		}
-	}
-
+	      }
+	
 	# DBFIXME use iterator
 	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 
@@ -415,27 +435,6 @@ sub body {
 		print CGI::p($r->maketext("This homework set contains no problems."));
 	}
 	
-	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", $r, 
-	#	courseID => $courseID);
-	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	#
-	##print feedback form
-	#print
-	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-	#	$self->hidden_authen_fields,"\n",
-	#	CGI::hidden("module",             __PACKAGE__),"\n",
-	#	CGI::hidden("set",                $self->{set}->set_id),"\n",
-	#	CGI::hidden("problem",            ''),"\n",
-	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-	#	CGI::hidden("showOldAnswers",     ''),"\n",
-	#	CGI::hidden("showCorrectAnswers", ''),"\n",
-	#	CGI::hidden("showHints",          ''),"\n",
-	#	CGI::hidden("showSolutions",      ''),"\n",
-	#	CGI::p({-align=>"left"},
-	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-	#	),
-	#	CGI::end_form(),"\n";
 	
 	print CGI::start_div({-class=>"problem_set_options"});
 	print $self->feedbackMacro(

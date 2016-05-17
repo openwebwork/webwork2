@@ -19,30 +19,141 @@ use 5.010;
 
 =head1 NAME
 
-lib/WeBWorK/Utils/AttemptsTable.pm
+	AttemptsTable
 
-This file contains subroutines for formatting the table which reports the 
-results of a student's attempt on a WeBWorK question.
+=head1 SYNPOSIS
+
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$answers,
+		answersSubmitted       => 1,
+		answerOrder            => $pg->{flags}->{ANSWER_ENTRY_ORDER},
+		displayMode            => 'MathJax',
+		showAnswerNumbers      => 0,
+		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
+		showAttemptPreviews    => $showAttemptPreview,
+		showAttemptResults     => $showAttemptResults,
+		showCorrectAnswers     => $showCorrectAnswers,
+		showMessages           => $showAttemptAnswers, # internally checks for messages
+		showSummary            => $showSummary,
+		imgGen                 => $imgGen, # not needed if ce is present ,
+		ce                     => '',	   # not needed if $imgGen is present
+		maketext               => WeBWorK::Localize::getLoc("en"),
+	);
+	$tbl->{imgGen}->render(refresh => 1) if $tbl->displayMode eq 'images';
+	my $answerTemplate = $tbl->answerTemplate;   
+	# this also collects the correct_ids and incorrect_ids
+	$self->{correct_ids}   = $tbl->correct_ids;
+	$self->{incorrect_ids} = $tbl->incorrect_ids;
+
+ 
+=head1 DESCRIPTION
+This module handles the formatting of the table which presents the results of analyzing a student's 
+answer to a WeBWorK problem.  It is used in Problem.pm, OpaqueServer.pm, standAlonePGproblemRender
+
+=head2 new
+
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$answers,
+		answersSubmitted       => 1,
+		answerOrder            => $pg->{flags}->{ANSWER_ENTRY_ORDER},
+		displayMode            => 'MathJax',
+		showAnswerNumbers      => 0,
+		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
+		showAttemptPreviews    => $showAttemptPreview,
+		showAttemptResults     => $showAttemptResults,
+		showCorrectAnswers     => $showCorrectAnswers,
+		showMessages           => $showAttemptAnswers, # internally checks for messages
+		showSummary            => $showSummary,
+		imgGen                 => $imgGen, # not needed if ce is present ,
+		ce                     => '',	   # not needed if $imgGen is present
+		maketext               => WeBWorK::Localize::getLoc("en"),
+		summary                =>'',
+	);
+
+	$answers -- a hash of student answers e.g. $pg->{answers}
+	answersSubmitted     if 0 then then the attemptsTable is not displayed (???)
+	answerOrder       -- an array indicating the order the answers appear on the page.
+	displayMode       'MathJax' and 'images' are the most common
+	
+	showAnswerNumbers, showAttemptAnswers, showAttemptPreviews,showAttemptResults,
+	showCorrectAnswers and showMessages control the display of each column in the table.
+	
+	attemptAnswers     the student's typed in answer (possibly simplified numerically)
+	attemptPreview     the student's answer after typesetting
+	attemptResults     "correct", "_% correct",  "incorrect" or "ungraded"- links to the answer blank
+	correctAnswers     typeset version (untypeset versions are available via tooltips)
+	messages           warns of formatting typos in the answer, or 
+	                    more detailed messages about a wrong answer  
+	summary            is obtained from $pg->{result}->{summary}. 
+	                   If this is empty then a (localized) 
+	                   version of "all answers are correct" 
+	                   or "at least one answer is not coorrect"
+	imgGen             points to a prebuilt image generator objectfor "images" mode
+	ce                 points to the CourseEnvironment -- it is needed if AttemptsTable
+	                    is required to build its own imgGen object    
+	maketext           points to a localization subroutine
+	
+	
+
+
+=head2 Methods 
+
+=over 4
+
+=item answerTemplate
+
+Returns HTML which formats the analysis of the student's answers to the problem.
+
+=back 
+
+=head2 Read/Write Properties
+
+=over 4
+
+=item correct_ids, incorrect_ids, 
+
+These are references to lists of the ids of the correct answers and the incorrect answers respectively.
+
+=item showMessages, 
+	
+This can be switched on or off before exporting the answerTemplate, perhaps under instructions
+	from the PG problem.
+	
+=item summary
+
+The contents of the summary can be defined when the attemptsTable object is created.
+
+The summary can be defined by the PG problem grader 
+usually returned as $pg->{result}->{summary}.
+
+If the summary is not explicitly defined then (localized) versions 
+of the default summaries are created:
+
+	"The answer above is correct.",
+	"Some answers will be graded later.",
+	"All of the [gradeable] answers above are correct.",
+	"[N] of the questions remain unanswered.",
+	"At least one of the answers above is NOT [fully] correct.',
+	
+=back
 
 =cut
 
+package WeBWorK::Utils::AttemptsTable;
+use base qw(Class::Accessor);
+
 use strict;
 use warnings;
-package WeBWorK::Utils::AttemptsTable;
-use Class::Accessor 'antlers';
 use Scalar::Util 'blessed';
+use WeBWorK::Utils 'wwRound';
 use CGI;
-
-# has answers     => (is => 'ro');
-# has displayMode =>(is =>'ro');
-# has imgGen      => (is =>'ro');
 
 # Object contains hash of answer results
 # Object contains display mode
 # Object contains or creates Image generator
 # object returns table
 # object returns color map for answer blanks
-# javaScript for handling the color map????
+# object returns javaScript for handling the color map
 
 
 sub new {
@@ -55,21 +166,31 @@ sub new {
 		answers      		=> $rh_answers,
 		answerOrder         => $options{answerOrder}//(),
 		answersSubmitted    => $options{answersSubmitted}//0,
+		summary             => $options{summary}//'', # summary provided by problem grader
 	    displayMode 		=> $options{displayMode} || "MathJax",
-	    #showAttemptAnswers =>  # answers are always shown         # show student answer as entered and simplified 
+	    showAnswerNumbers    => $options{showAnswerNumbers}//1,
+	    showAttemptAnswers =>  $options{showAttemptAnswers}//1,    # show student answer as entered and simplified 
 	                                                               #  (e.g numerical formulas are calculated to produce numbers)
 	    showAttemptPreviews => $options{showAttemptPreviews}//1,   # show preview of student answer
 	    showAttemptResults 	=> $options{showAttemptResults}//1,    # show whether student answer is correct
 	    showMessages 		=> $options{showMessages}//1,          # show any messages generated by evaluation
 	    showCorrectAnswers  => $options{showCorrectAnswers}//1,    # show the correct answers
+	    showSummary         => $options{showSummary}//1,           # show summary to students
+	    maketext            => $options{maketext}//sub {return @_},  # pointer to the maketext subroutine
+	    imgGen              => undef,                              # created in _init method
 	};
 	bless $self, $class;
-	$self->mk_ro_accessors(qw(answers answerOrder answersSubmitted displayMode imgGen));
-	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages));
-	$self->mk_ro_accessors(qw(showAttemptPreviews showAttemptResults showCorrectAnswers));
+	# create read only accessors/mutators
+	$self->mk_ro_accessors(qw(answers answerOrder answersSubmitted displayMode imgGen maketext));
+	$self->mk_ro_accessors(qw(showAnswerNumbers showAttemptAnswers 
+	                          showAttemptPreviews showAttemptResults 
+	                          showCorrectAnswers showSummary));
+	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages  summary));
+	# sanity check and initialize imgGenerator.
 	_init($self, %options);
 	return $self;
 }
+
 sub _init {
 	# verify display mode
 	# build imgGen if it is not supplied 
@@ -81,7 +202,11 @@ sub _init {
 	my @reallyShowMessages =  grep { $self->answers->{$_}->{ans_message} } @{$self->answerOrder};
 	$self->showMessages( $self->showMessages && !!@reallyShowMessages );  
 	                               #           (!! forces boolean scalar environment on list)
-	
+	# only used internally -- don't need accessors.
+	$self->{numCorrect}=0;
+	$self->{numBlanks}=0;
+	$self->{numEssay}=0;
+
 	if ( $self->displayMode eq 'images') {
 		if ( blessed( $options{imgGen} ) ) {
 			$self->{imgGen} = $options{imgGen};
@@ -108,29 +233,59 @@ sub _init {
 		}
 	}
 }
+
+sub maketext {
+	my $self = shift;
+	return &{$self->{maketext}}(@_);
+}
 sub formatAnswerRow {
 	my $self          = shift;
 	my $rh_answer     = shift;
+	my $ans_id        = shift;
 	my $answerNumber  = shift;
-	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
-	my $answerPreview = $self->previewAnswer($rh_answer)||'&nbsp;';
-	my $correctAnswer = $self->previewCorrectAnswer($rh_answer)||'&nbsp;';
+	my $answerString         = $rh_answer->{student_ans}//''; 
+	# use student_ans and not original_student_ans above.  student_ans has had HTML entities translated to prevent XSS.
+	my $answerPreview        = $self->previewAnswer($rh_answer)//'&nbsp;';
+	my $correctAnswer        = $rh_answer->{correct_ans}//'';
+	my $correctAnswerPreview = $self->previewCorrectAnswer($rh_answer)//'&nbsp;';
 	
-	my $answerMessage   = $rh_answer->{ans_message}||'';
-	my $feedbackMessageClass = ($answerMessage eq "") ? "" : "FeedbackMessage";
+	my $answerMessage   = $rh_answer->{ans_message}//'';
+	$answerMessage =~ s/\n/<BR>/g;
+	my $answerScore      = $rh_answer->{score}//0;
+	$self->{numCorrect}  += $answerScore >=1;
+	$self->{numEssay}    += ($rh_answer->{type}//'') eq 'essay';
+	$self->{numBlanks}++ unless $answerString =~/\S/ || $answerScore >= 1; 
 	
-	my $score         = (($rh_answer->{type}//'') eq 'essay') ?
-						CGI::td({class => "UngradedResults"},"Not graded"): 
-						  ($rh_answer->{score}) ? 
-							CGI::td({class => "ResultsWithoutError"},"Correct") :
-							CGI::td({class => "ResultsWithError"},"Incorrect");
+	my $feedbackMessageClass = ($answerMessage eq "") ? "" : $self->maketext("FeedbackMessage");
 	
+	my (@correct_ids, @incorrect_ids);
+	my $resultString;
+	my $resultStringClass;
+	if ($answerScore >= 1) {
+		$resultString = CGI::span({class=>"ResultsWithoutError"}, $self->maketext("correct"));
+		$resultStringClass = "ResultsWithoutError";  
+		# push @correct_ids,   $name if $answerScore == 1;
+	} elsif (($rh_answer->{type}//'') eq 'essay') {
+		$resultString =  $self->maketext("Ungraded"); 
+		# $self->{essayFlag} = 1;
+	} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
+		# push @incorrect_ids, $name if $answerScore < 1;
+		$resultStringClass = "ResultsWithError";
+		$resultString = CGI::span({class=>"ResultsWithError ResultsWithErrorInResultsTable"}, $self->maketext("incorrect")); # If the latter class is defined, override the older red-on-white 
+	} else {
+		$resultString =  $self->maketext("[_1]% correct", wwRound(0, $answerScore*100));
+		#push @incorrect_ids, $ans_id if $answerScore < 1;
+	}
+	my $attemptResults = CGI::td({class=>$resultStringClass},
+	               CGI::a({href=>"javascript:document.getElementById(\"$ans_id\").focus()"},
+	               $self->nbsp($resultString)));
+
 	my $row = join('',
-			  CGI::td({},$answerNumber) ,
-			  CGI::td({},$answerString) ,   # student original answer
-			  ($self->showAttemptPreviews)?  CGI::td({},$answerPreview):"" ,
-			  ($self->showAttemptResults)?  $score :"" ,
-			  ($self->showCorrectAnswers)?  CGI::td({},$correctAnswer):"" ,
+			  ($self->showAnswerNumbers) ? CGI::td({},$answerNumber):'',
+			  ($self->showAttemptAnswers) ? CGI::td({},$self->nbsp($answerString)):'' ,   # student original answer
+			  ($self->showAttemptPreviews)?  $self->formatToolTip($answerString, $answerPreview):"" ,
+			  ($self->showAttemptResults)?   $attemptResults : '' ,
+			  ($self->showCorrectAnswers)?  $self->formatToolTip($correctAnswer,$correctAnswerPreview):"" ,
 			  ($self->showMessages)?        CGI::td({class=>$feedbackMessageClass},$self->nbsp($answerMessage)):"",
 			  "\n"
 			  );
@@ -150,24 +305,25 @@ sub answerTemplate {
 	my @incorrect_ids;
 
 	push @tableRows,CGI::Tr(
-			CGI::th("#"),
-			CGI::th("Answer"),  # student original answer
-			($self->showAttemptPreviews)? CGI::th("Preview"):'',
-			($self->showAttemptResults)?  CGI::th("Result"):'',
-			($self->showCorrectAnswers)?  CGI::th("Correct Answer"):'',
-			($self->showMessages)?        CGI::th("Message"):'',
+			($self->showAnswerNumbers) ? CGI::th("#"):'',
+			($self->showAttemptAnswers)? CGI::th($self->maketext("Entered")):'',  # student original answer
+			($self->showAttemptPreviews)? CGI::th($self->maketext("Answer Preview")):'',
+			($self->showAttemptResults)?  CGI::th($self->maketext("Result")):'',
+			($self->showCorrectAnswers)?  CGI::th($self->maketext("Correct Answer")):'',
+			($self->showMessages)?        CGI::th($self->maketext("Message")):'',
 		);
 
 	my $answerNumber     = 1;
-	#FIXME need to use answer order variable, not sort.
     foreach my $ans_id (@{ $self->answerOrder() }) {  
-        #FIXME -- need something more sophisticated to get the answer order correct
-    	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $answerNumber++));
-    	push @correct_ids,   $ans_id if $rh_answers->{$ans_id}->{score} >= 1;
-    	push @incorrect_ids,   $ans_id if $rh_answers->{$ans_id}->{score} < 1;
+    	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
+    	push @correct_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) >= 1;
+    	push @incorrect_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) < 1;
+    	$self->{essayFlag} = 1;
     }
-	my $answerTemplate = CGI::h3("Results for this submission") .
+	my $answerTemplate = CGI::h3($self->maketext("Results for this submission")) .
     	CGI::table({class=>"attemptResults"},@tableRows);
+    ### "results for this submission" is better than "attempt results" for a headline
+    $answerTemplate .= ($self->showSummary)? $self->createSummary() : '';
     $answerTemplate = "" unless $self->answersSubmitted; # only print if there is at least one non-blank answer
     $self->correct_ids(\@correct_ids);
     $self->incorrect_ids(\@incorrect_ids);
@@ -221,6 +377,48 @@ sub previewCorrectAnswer {
 	}
 }
 
+###########################################
+# Create summary
+###########################################
+sub createSummary {
+	my $self = shift;
+	my $summary = ""; 
+	my $numCorrect = $self->{numCorrect};
+	my $numBlanks  = $self->{numBlanks};
+	my $numEssay   = $self->{numEssay};
+	my $fully = '';    #FIXME -- find out what this is used for in maketext.
+	unless (defined($self->summary) and $self->summary =~ /\S/) {
+		my @answerNames = @{$self->answerOrder()};
+		if (scalar @answerNames == 1) {  #default messages
+				if ($numCorrect == scalar @answerNames) {
+					$summary .= CGI::div({class=>"ResultsWithoutError"},$self->maketext("The answer above is correct."));
+				} elsif ($self->{essayFlag}) {
+				    $summary .= CGI::div($self->maketext("Some answers will be graded later.", $fully));
+				 } else {
+					 $summary .= CGI::div({class=>"ResultsWithError"},$self->maketext("The answer above is NOT [_1]correct.", $fully));
+				 }
+		} else {
+				if ($numCorrect + $numEssay == scalar @answerNames) {
+					$summary .= CGI::div({class=>"ResultsWithoutError"},$self->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
+				 } 
+				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
+				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
+					$summary .= CGI::div({class=>"ResultsWithError"},$self->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
+				 }
+				 if ($numBlanks > $numEssay) {
+					my $s = ($numBlanks>1)?'':'s';
+					$summary .= CGI::div({class=>"ResultsAlert"},$self->maketext("[quant,_1,of the questions remains,of the questions remain] unanswered.", $numBlanks));
+				 }
+		}
+	} else {
+		$summary = $self->summary;   # summary has been defined by grader
+	}
+	$summary = CGI::div({role=>"alert", class=>"attemptResultsSummary"},
+			  $summary);
+	$self->summary($summary);
+	return $summary;   # return formatted version of summary in class "attemptResultsSummary" div
+}
+################################################
 
 
 sub color_answer_blanks {
@@ -244,6 +442,17 @@ sub nbsp {
 	my ($self, $str) = @_;
 	return (defined $str && $str =~/\S/) ? $str : "&nbsp;";
 }
+
+sub formatToolTip {  # note that formatToolTip output includes CGI::td wrapper
+	my $self = shift;
+	my $answer = shift;
+	my $formattedAnswer = shift;
+	return CGI::td({onmouseover=>qq!Tip('$answer',SHADOW, true, 
+		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
+		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
+		                    $self->nbsp($formattedAnswer));
+}
+
 
 
 

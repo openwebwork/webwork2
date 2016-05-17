@@ -40,12 +40,12 @@ use WeBWorK::Utils::DatePickerScripts;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother prPeriod)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
@@ -288,9 +288,9 @@ use constant FIELD_PROPERTIES => {
 	'hide_score:hide_score_by_problem' => {
 		name      => "Show Scores on Finished Assignments?",
 		type      => "choose",
-		choices   => [ qw( N: Y:N BeforeAnswerDate:N Y:Y BeforeAnswerDate:Y ) ],
+		choices   => [ qw( N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y ) ],
 		override  => "any",
-		labels    => { 'N:' => 'Yes', 'Y:N' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'Y:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
+		labels    => { 'N:N' => 'Yes', 'Y:Y' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'N:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
 	},
 	hide_work         => {
 		name      => "Show Problems on Finished Tests",
@@ -337,9 +337,21 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default=>"-1",
 		labels    => {
-				"-1" => "Never",
+			      "-1" => "Never",
+			      "-2" => "Default",
 		},
         },
+	prPeriod => {
+		name => "Rerandomize after",
+		type => "edit",
+		size => "6",
+		override => "any",
+		default=>"-1",
+		labels => {
+			"-1" => "Default",
+			"0" => "Never",
+		},
+	},
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -496,6 +508,10 @@ sub FieldTable {
 	        next if ( $field eq 'showMeAnother' &&
                           !$ce->{pg}->{options}->{enableShowMeAnother} );
 
+		# skip the periodic re-randomization field if it is not enabled
+		next if ( $field eq 'prPeriod' &&
+			!$ce->{pg}->{options}->{enablePeriodicRandomization} );
+
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
 		}
@@ -588,8 +604,8 @@ sub FieldHTML {
 	}
 
 	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
-	$globalValue = (defined($globalValue)) ? ($labels{$globalValue || ""} || $globalValue) : "";
-	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : $blankfield;
+	$globalValue = (defined($globalValue)) ? ($labels{$globalValue // ""} || $globalValue) : ""; # this allows for a label if value is 0
+	$userValue = (defined($userValue)) ? ($labels{$userValue // ""} || $userValue) : $blankfield; # this allows for a label if value is 0
 
 	if ($field =~ /_date/) {
 		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P') if defined $globalValue && $globalValue ne $labels{""};
@@ -1042,9 +1058,9 @@ sub initialize {
 
 		my $enable_reduced_scoring = 
 		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && 
-		    defined($r->param("set.$setID.enable_reduced_scoring")) ? 
+		    (defined($r->param("set.$setID.enable_reduced_scoring")) ? 
 		    $r->param("set.$setID.enable_reduced_scoring") : 
-		    $setRecord->enable_reduced_scoring;
+		    $setRecord->enable_reduced_scoring);
 
 		if ($enable_reduced_scoring && 
 		    $reduced_scoring_date 

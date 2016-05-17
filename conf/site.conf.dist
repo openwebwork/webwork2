@@ -66,10 +66,20 @@ $server_groupID    = 'wwdata';
 
 #$server_apache_version = ''; # e.g. '2.22.1'
 
-# Set this to override the default admin email set by apache.  
+# The following variable is the address that will be listed in server error 
+# messages that come from WeBWorK: 
+#	 "An error occured while processing your request. 
+#	 For help, please send mail to this site's webmaster 
+# 	(mail link to <webwork_server_admin_email>), including all of the following 
+#	 information as well as what what you were doing when the error occurred... etc..."
+# Make sure that your webwork.apacheX-config file is up to date with the distributed version 
+# and that the line $ENV{WEBWORK_SERVER_ADMIN} = $ce->{webwork_server_admin_email};
+# is present in the file. 
+# If $webwork_server_admin_email is not defined then the 
+# ServerAdmin address defined in httpd.conf is used.
+
+ 
 $webwork_server_admin_email ='';
-
-
 ################################################################################
 # Paths to external programs 
 ################################################################################
@@ -94,7 +104,7 @@ $externalPrograms{git} = "/usr/bin/git";
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
 $externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
-$externalPrograms{dvipng}   ="/usr/bin//dvipng";
+$externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
@@ -110,7 +120,6 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 ####################################################
 # url checker
 ####################################################
-
 # set timeout time (-t 40 sec) to be less than timeout for problem (usually 60 seconds)
 $externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -t 40 -mHEAD "; # or "/usr/local/bin/w3c -head "
 $externalPrograms{curlCommand}  = "/usr/bin/curl";

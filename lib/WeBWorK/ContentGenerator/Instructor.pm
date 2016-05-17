@@ -523,6 +523,7 @@ sub addProblemToSet {
 	my $showMeAnother_default = $self->{ce}->{problemDefaults}->{showMeAnother};	
 	my $att_to_open_children_default = $self->{ce}->{problemDefaults}->{att_to_open_children};	
 	my $counts_parent_grade_default = $self->{ce}->{problemDefaults}->{counts_parent_grade};	
+	my $prPeriod_default = $self->{ce}->{problemDefaults}->{prPeriod};
     # showMeAnotherCount is the number of times that showMeAnother has been clicked; initially 0
 	my $showMeAnotherCount = 0;	
 	
@@ -539,8 +540,13 @@ sub addProblemToSet {
 	my $value = $value_default;
 	if (defined($args{value})){$value = $args{value};}  # 0 is a valid value for $args{value}  
 
-	my $maxAttempts = $args{maxAttempts} // $max_attempts_default;
+	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
 	my $showMeAnother = $args{showMeAnother} // $showMeAnother_default;
+	my $prPeriod = $prPeriod_default;
+	if (defined($args{prPeriod})){
+		$prPeriod = $args{prPeriod};
+	}
+
 	my $problemID = $args{problemID};
 	my $countsParentGrade = $args{countsParentGrade} // $counts_parent_grade_default;
 	my $attToOpenChildren = $args{attToOpenChildren} // $att_to_open_children_default;
@@ -552,8 +558,12 @@ sub addProblemToSet {
 	    # makes it a new top level problem 
 	    if ($set && $set->assignment_type eq 'jitar') {
 		my @problemIDs = $db->listGlobalProblems($setName);
-		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
-		$problemID = seq_to_jitar_id($seq[0]+1);
+		if (@problemIDs) {
+		  my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+		  $problemID = seq_to_jitar_id($seq[0]+1);
+		} else {
+		  $problemID = seq_to_jitar_id(1);
+		}
 	    } else {
 		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 	    }
@@ -569,6 +579,8 @@ sub addProblemToSet {
 	$problemRecord->counts_parent_grade($countsParentGrade);
 	$problemRecord->showMeAnother($showMeAnother);
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
+	$problemRecord->prPeriod($prPeriod);
+	$problemRecord->prCount(0);
 	$db->addGlobalProblem($problemRecord);
 
 	return $problemRecord;

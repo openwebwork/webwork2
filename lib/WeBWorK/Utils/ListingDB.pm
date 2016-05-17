@@ -21,6 +21,7 @@ use DBI;
 use WeBWorK::Utils qw(sortByName);
 use WeBWorK::Utils::Tags;
 use File::Basename;
+use WeBWorK::Debug;
 
 use constant LIBRARY_STRUCTURE => {
 	textbook => { select => 'tbk.textbook_id,tbk.title,tbk.author,tbk.edition',
@@ -312,13 +313,14 @@ sub getAllDBsubjects {
 	my $r = shift;
 	my %tables = getTables($r->ce);
 	my @results=();
-	my $row;
-	my $query = "SELECT DISTINCT name FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
+	my @row;
+	my $query = "SELECT DISTINCT name, DBsubject_id FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
 	my $dbh = getDB($r->ce);
 	my $sth = $dbh->prepare($query);
 	$sth->execute();
-	while ($row = $sth->fetchrow_array()) {
-		push @results, $row;
+
+	while (@row = $sth->fetchrow_array()) {
+		push @results, $row[0];
 	}
 	# @results = sortByName(undef, @results);
 	return @results;
@@ -338,7 +340,8 @@ sub getAllDBchapters {
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT c.name FROM `$tables{dbchapter}` c, 
+	my $query = "SELECT DISTINCT c.name, c.DBchapter_id 
+                                FROM `$tables{dbchapter}` c, 
 				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
                  t.name = \"$subject\" ORDER BY c.DBchapter_id";
@@ -363,7 +366,8 @@ sub getAllDBsections {
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
-	my $query = "SELECT DISTINCT s.name FROM `$tables{dbsection}` s,
+	my $query = "SELECT DISTINCT s.name, s.DBsection_id 
+                 FROM `$tables{dbsection}` s,
                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND

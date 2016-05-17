@@ -112,15 +112,17 @@ sub new {
 		$seedVars{pg_dir}         = $rest[2];
 		$seedVars{courseName}     = $rest[3];
 	}
-	
+	$seedVars{courseName} = $seedVars{courseName}||"___"; # prevents extraneous error messages
 	my $safe = WWSafe->new;
-	
+	$safe->permit('rand');
+	# to avoid error messages make sure that courseName is defined
+	$seedVars{courseName} = $seedVars{courseName}//"foobar_course";
 	# seed course environment with initial values
 	while (my ($var, $val) = each %seedVars) {
 		$val = "" if not defined $val;
 		$safe->reval("\$$var = '$val';");
 	}
-	
+
 	# Compile the "include" function with all opcodes available.
 	my $include = q[ sub include {
 		my ($file) = @_;
@@ -152,11 +154,16 @@ sub new {
 	my $globalEnvironmentFile;
 	if (-r "$seedVars{webwork_dir}/conf/defaults.config") {
 		$globalEnvironmentFile = "$seedVars{webwork_dir}/conf/defaults.config";
+	} else {
+		croak "Cannot read global environment file $globalEnvironmentFile";
 	}
-	
+
 	# read and evaluate the global environment file
 	my $globalFileContents = readFile($globalEnvironmentFile);
+	# warn "about to evaluate defaults.conf $seedVars{courseName}\n";
+	# warn  join(" | ", (caller(1))[0,1,2,3,4] ), "\n";
 	$safe->reval($globalFileContents);
+	# warn "end the evaluation\n";
 	
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!

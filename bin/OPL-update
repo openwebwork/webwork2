@@ -133,13 +133,13 @@ if($libraryVersion eq '2.5') {
 @create_tables = (
 [$tables{dbsubject}, '
 	DBsubject_id int(15) NOT NULL auto_increment,
-	name varchar(127) NOT NULL,
+	name varchar(255) NOT NULL,
 	KEY DBsubject (name),
 	PRIMARY KEY (DBsubject_id)
 '],
 [$tables{dbchapter}, '
 	DBchapter_id int(15) NOT NULL auto_increment,
-	name varchar(127) NOT NULL,
+	name varchar(255) NOT NULL,
 	DBsubject_id int(15) DEFAULT 0 NOT NULL,
 	KEY DBchapter (name),
 	KEY (DBsubject_id),
@@ -156,8 +156,8 @@ if($libraryVersion eq '2.5') {
 [$tables{author}, '
 	author_id int (15) NOT NULL auto_increment,
 	institution tinyblob,
-	lastname varchar (100) NOT NULL,
-	firstname varchar (100) NOT NULL,
+	lastname varchar (255) NOT NULL,
+	firstname varchar (255) NOT NULL,
 	email varchar (255),
 	KEY author (lastname, firstname),
 	PRIMARY KEY (author_id)
@@ -165,8 +165,8 @@ if($libraryVersion eq '2.5') {
 [$tables{path}, '
 	path_id int(15) NOT NULL auto_increment,
 	path varchar(255) NOT NULL,
-	machine varchar(127),
-	user varchar(127),
+	machine varchar(255),
+	user varchar(255),
 	KEY (path),
 	PRIMARY KEY (path_id)
 '],
@@ -179,14 +179,14 @@ if($libraryVersion eq '2.5') {
 	filename varchar(255) NOT NULL,
 	morelt_id int(127) DEFAULT 0 NOT NULL,
 	level int(15),
-	language varchar(15),
+	language varchar(255),
 	static TINYINT,
 	MO TINYINT,
 	PRIMARY KEY (pgfile_id)
 '],
 [$tables{keyword}, '
 	keyword_id int(15) NOT NULL auto_increment,
-	keyword varchar(65) NOT NULL,
+	keyword varchar(255) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (keyword_id)
 '],
@@ -199,18 +199,18 @@ if($libraryVersion eq '2.5') {
 [$tables{textbook}, '
 	textbook_id int (15) NOT NULL auto_increment,
 	title varchar (255) NOT NULL,
-	edition int (3) DEFAULT 0 NOT NULL,
-	author varchar (63) NOT NULL,
-	publisher varchar (127),
+	edition int (15) DEFAULT 0 NOT NULL,
+	author varchar (255) NOT NULL,
+	publisher varchar (255),
 	isbn char (15),
-	pubdate varchar (27),
+	pubdate varchar (255),
 	PRIMARY KEY (textbook_id)
 '],
 [$tables{chapter}, '
 	chapter_id int (15) NOT NULL auto_increment,
 	textbook_id int (15),
 	number int(3),
-	name varchar(127) NOT NULL,
+	name varchar(255) NOT NULL,
 	page int(4),
 	KEY (textbook_id, name),
 	KEY (number),
@@ -220,7 +220,7 @@ if($libraryVersion eq '2.5') {
 	section_id int(15) NOT NULL auto_increment,
 	chapter_id int (15),
 	number int(3),
-	name varchar(127) NOT NULL,
+	name varchar(255) NOT NULL,
 	page int(4),
 	KEY (chapter_id, name),
 	KEY (number),
@@ -237,7 +237,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{morelt}, '
 	morelt_id int(15) NOT NULL auto_increment,
-	name varchar(127) NOT NULL,
+	name varchar(255) NOT NULL,
 	DBsection_id int(15),
 	leader int(15), # pgfile_id of the MLT leader
 	KEY (name),
@@ -755,6 +755,8 @@ sub pgfiles {
 				$query = "SELECT textbook_id FROM `$tables{textbook}` WHERE title = \"$text\" AND edition = \"$edition\" AND author=\"$textauthor\"";
 				my $textbook_id = $dbh->selectrow_array($query);
 				if (!defined($textbook_id)) {
+ 				        # make sure edition is an integer
+				        $edition = 0 unless $edition;
 					$dbh->do("INSERT INTO `$tables{textbook}`
 					VALUES(
 						NULL,
@@ -961,5 +963,12 @@ build_library_subject_tree($ce,$dbh);
 build_library_textbook_tree($ce,$dbh);
 
 $dbh->disconnect;
+
+if ($ce->{problemLibrary}{showLibraryLocalStats} ||
+    $ce->{problemLibrary}{showLibraryGlobalStats}) {
+  print "\nUpdating Library Statistics.\n";
+  do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+}
+
 
 print "\nDone.\n";

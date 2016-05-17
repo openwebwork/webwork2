@@ -24,7 +24,7 @@
 ################################################################################
 -->
 
-<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<link rel="icon" type="x-image/icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
@@ -82,7 +82,7 @@ var tabberOptions = {manualStartup:true};
 <!--#endif-->
 
 <!-- Bootstrap Fluid Layout Scaffolding start -->
-<div class="container-fluid">
+<div id="bs-container" class="container-fluid">
 <!-- Header -->
 <div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
@@ -114,12 +114,12 @@ var tabberOptions = {manualStartup:true};
 	<!--#endif-->
 
 	<!--#if can="siblings"-->
-	<div>
+	<div id="siblings">
 	  <!--#siblings-->
 	  </div>
 	<!--#endif-->
 	<!--#if can="options"-->
-	<div class="info-box">
+	<div id="options" class="info-box">
 	  <!--#options-->
 	  </div>
 	<!--#endif-->
@@ -172,14 +172,14 @@ var tabberOptions = {manualStartup:true};
 
 	<!--#if can="nav" can="message"--> 
 	<div class="row-fluid">
-	  <div class="problem-nav span7" role="navigation" aria-label="problem navigation">
+	  <div id="problem-nav" class="problem-nav span7" role="navigation" aria-label="problem navigation">
 	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
 	<!--#if can="nav"-->
 		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
 	<!--#endif-->
 	  </div>
 	  
-	  <div class="Message span4 offset1">
+	  <div id="Message" class="Message span4 offset1">
 	    <!-- Message for the user -->
 	    <!--#if can="message"-->
 	        <!--#message-->
@@ -198,7 +198,7 @@ var tabberOptions = {manualStartup:true};
 	<!-- Indicate presence of perl warnings -->
 	<!--#if warnings="1"-->
 	<div class="row-fluid">
-		<div class="span12 alert alert-error">
+		<div id="alert-error" class="span12 alert alert-error">
 			<strong>Warning</strong> -- there may be something wrong with this question. Please inform your instructor including the warning messages below.
 		</div>
 	</div>
@@ -206,34 +206,34 @@ var tabberOptions = {manualStartup:true};
              
 	<!--#if can="output_tag_info"-->
 	<div class="row-fluid">
-	  <div class="span12">
+	  <div id="tag_info" class="span12">
 		<!--#output_tag_info-->
 	</div></div>
 	<!--#endif-->
 
 	 <!--#if can="output_problem_body"--> 
 	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
-		  <div class="Body span12">
+		  <div id="problem_body" class="Body span12">
 
 			<!--#if can="output_custom_edit_message"-->
-			<div class="row-fluid"><div class="span10">
+			<div id="custom_edit_message" class="row-fluid"><div class="span10">
 				<!--#output_custom_edit_message-->
 			</div><div class="span2"></div></div>
 			<!--#endif-->
 			<!--#if can="output_summary"-->
-			<div class="row-fluid"><div class="span10">
+			<div class="row-fluid"><div id="output_summary" class="span10">
 					<!--#output_summary-->
 			</div><div class="span2"></div></div>
 			<!--#endif-->
 
 			<!--#if can="output_achievement_message"-->
-			<div class="row-fluid"><div class="span10">
+			<div class="row-fluid"><div id="output_achievement_message" class="span10">
 					<!--#output_achievement_message-->
 			</div><div class="span2"></div></div>
 			<!--#endif-->
 			
 			<!--#if can="output_comments" "-->
-			<div class="row-fluid"><div class="span10">
+			<div class="row-fluid"><div id="output_comments" class="span10">
 				  <!--#output_comments-->
 			</div><div class="span2"></div></div>
 			<!--#endif-->
@@ -252,7 +252,7 @@ var tabberOptions = {manualStartup:true};
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
 						<!--#if can="output_problem_body"-->
-						<div class="problem-content">
+						<div id="problem_body" class="problem-content">
 							<!--#output_problem_body-->
 						</div>
 						<!--#endif-->
@@ -276,7 +276,7 @@ var tabberOptions = {manualStartup:true};
 					</p>
 				<!--#endif-->
 				<!--#if can="output_score_summary"-->
-					<div class="scoreSummary">
+					<div id="score_summary" class="scoreSummary">
 						<!--#output_score_summary-->
 					</div>
 				<!--#endif-->
@@ -306,7 +306,7 @@ var tabberOptions = {manualStartup:true};
 	  <!--#if can="info"-->
 	  <div class="body span8">
 	  <!--#else-->
-	    <div class="body span12">
+	    <div id="page_body" class="body span12">
 	  <!--#endif-->
 	      <!--#body-->
 	</div>
@@ -322,7 +322,7 @@ var tabberOptions = {manualStartup:true};
 
 <!--			      ==============END BODY OF PROBLEM===============      -->
 	<!--#if can="output_past_answer_button" can="output_email_instructor"-->
-		<div class="problemFooter">
+		<div id="problemFooter" class="problemFooter">
 			<!--#if can="output_past_answer_button"-->
 				<!--#output_past_answer_button-->
 			<!--#endif-->
@@ -333,12 +333,12 @@ var tabberOptions = {manualStartup:true};
 	<!--#endif-->
 
 <!--#if warnings="1"-->
-<div class="Warnings alert alert-error">
+<div id="warnings" class="Warnings alert alert-error">
 	<!--#warnings-->
 </div>
 <!--#endif-->
 <!--#if can="message"-->
-<div class="Message">
+<div id="Message_bottom" class="Message">
   <!--#message-->
 </div>
 <!--#endif-->

@@ -6,14 +6,14 @@ package WeBWorK::Localize;
 #use base ("Locale::Maketext::Simple");
 use File::Spec;
 
-print STDERR "Localize.pm: Full path for the localization directory set to |$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize|\n";
+# print STDERR "Localize.pm: Full path for the localization directory set to |$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize|\n";
 #Locale::Maketext::Simple->import(Path => "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize");
 use Locale::Maketext;
 use Locale::Maketext::Lexicon;
 
 my $path = "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize";
 my   $pattern = File::Spec->catfile($path, '*.[pm]o');
-my   $decode = 0;
+my   $decode = 1;
 my   $encoding = undef;
 
 # For some reason this next stanza needs to be evaluated 

@@ -30,9 +30,9 @@ var WWLocalStorage = function(givenContainer) {
 	    .each(function(index,input) {
 		if ($(input).attr('type').toUpperCase() == 'RADIO') {
 		    var name = $(input).attr('name');
-		    storedData['inputs'][name] = $('input[name="'+name'"]:checked').val();
-		} else if (!/previous_/.test($(input).attr('name'))) {
-		
+		    storedData['inputs'][name] = $('input[name="'+name+'"]:checked').val();
+		} else if (/AnSwEr/.test($(input).attr('name'))) {
+		    
 		    storedData['inputs'][$(input).attr('name')] = $(input).val();
 		}
 	    });
@@ -47,7 +47,7 @@ var WWLocalStorage = function(givenContainer) {
 	    var keys = Object.keys(storedData['inputs']);
 	    
 	    keys.forEach(function(key) {
-		my input = $(container).find('[name="'+key'"]');
+		var input = $(container).find('[name="'+key+'"]');
 		
 		if (input.length > 0 &&
 		    $(input).attr('type').toUpperCase() == 'RADIO') {
@@ -56,13 +56,14 @@ var WWLocalStorage = function(givenContainer) {
 			if ($(this).val() == storedData['inputs'][key]) {
 			    $(this).attr('checked',true);
 			}
+		    });
    
 		} else if (input.length > 0) {
 		    $(input).val(storedData['inputs'][key]);
 		}
 	    });	    
 	}
-	
+
 	if ($('#problem-result-score').length > 0) {
 	    if (!storedData['score'] ||
 		storedData['score'] < $('#problem-result-score').val()) {
