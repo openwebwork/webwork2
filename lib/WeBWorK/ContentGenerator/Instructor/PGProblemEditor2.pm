@@ -696,7 +696,7 @@ EOF
 			foreach my $actionID (@formsToShow) {
 
 				my $actionForm = "${actionID}_form";
-				my $newWindow = ($actionID =~ m/^(view|add_problem|save)$/)? 1: 0;
+				my $newWindow = ($actionID =~ m/^(view|save)$/)? 1: 0;
 				my $onChange = "setRadio($i,$newWindow)";
 				my %actionParams = $self->getActionParams($actionID);
 				my $line_contents = $self->$actionForm($onChange, %actionParams);

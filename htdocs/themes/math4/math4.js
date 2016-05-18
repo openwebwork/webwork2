@@ -43,11 +43,13 @@ var ToggleNavigation = function () {
 	
 	
 	$(window).resize(function(){
-	    windowwidth = $(window).width();
-	    if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
-		hideSidebar();
-	    } else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
-		showSidebar();
+	    if ($(window).width() != windowwidth) {
+		windowwidth = $(window).width();
+		if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+		    hideSidebar();
+		} else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
+		    showSidebar();
+		}
 	    }
 	}); 
     }

@@ -288,9 +288,9 @@ use constant FIELD_PROPERTIES => {
 	'hide_score:hide_score_by_problem' => {
 		name      => "Show Scores on Finished Assignments?",
 		type      => "choose",
-		choices   => [ qw( N: Y:N BeforeAnswerDate:N Y:Y BeforeAnswerDate:Y ) ],
+		choices   => [ qw( N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y ) ],
 		override  => "any",
-		labels    => { 'N:' => 'Yes', 'Y:N' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'Y:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
+		labels    => { 'N:N' => 'Yes', 'Y:Y' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'N:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
 	},
 	hide_work         => {
 		name      => "Show Problems on Finished Tests",

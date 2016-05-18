@@ -805,28 +805,28 @@ sub links {
 				    print CGI::start_ul();
 				    if ($ce->{showeditors}->{problemsetdetail1}) {
 					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>"-$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail", text=>$r->maketext("[_1] (old editor)", $prettySetID), urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
 				    }
 
 				    if ($ce->{showeditors}->{problemsetdetail2}) {
 					print CGI::start_li(); # $setID (2)
-					print &$makelink("${pfx}ProblemSetDetail2", text=>"--$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail2", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
 				    }
 
 					if (defined $problemID) {
 					    print CGI::start_li();
 					    print CGI::start_ul();
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>$r->maketext("[_1] (old editor)", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
 					    
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"---$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 						if $ce->{showeditors}->{simplepgeditor};;
 					    print CGI::end_ul();
 					    print CGI::end_li();
@@ -870,24 +870,6 @@ sub links {
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Stats
-				# old stats
-#				print CGI::start_li(); # Stats_old
-#				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-#				if ($userID ne $eUserID or defined $setID) {
-#					print CGI::start_ul();
-#					if ($userID ne $eUserID) {
-#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
-#					}
-#					if (defined $setID) {
-#						# make sure we don't try to send a versioned
-#						#    set id in to the Stats_old link
-#						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
-#						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
-#					}
-#					print CGI::end_ul();
-#				}
-#				print CGI::end_li(); # end Stats_old
 				
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);

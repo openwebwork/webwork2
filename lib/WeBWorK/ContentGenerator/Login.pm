@@ -186,7 +186,7 @@ sub body {
 	# generating module.
 	my $authen_error = MP2 ? $r->notes->get("authen_error") : $r->notes("authen_error");
 	if ($authen_error) {
-		print CGI::div({class=>"ResultsWithError"},
+		print CGI::div({class=>"ResultsWithError", tabindex=>'0'},
 			CGI::p($authen_error)
 		);
 	}

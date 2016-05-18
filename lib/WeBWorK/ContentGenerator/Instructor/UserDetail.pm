@@ -191,29 +191,6 @@ sub body {
 	my %prettyFieldNames = map { $_ => $_ } 
 		$userTemplate->FIELDS();
 	
-# 	@prettyFieldNames{qw(
-# 		#user_id
-# 		first_name
-# 		last_name
-# 		email_address
-# 		student_id
-# 		status
-# 		section
-# 		recitation
-# 		comment
-# 		permission
-# 	)} = (
-# 		#"Login Name",
-# 		"First Name",
-# 		"Last Name",
-# 		"Email",
-# 		"Student ID",
-# 		"Status",
-# 		"Section",
-# 		"Recitation",
-# 		"Comment",
-# 		"Permission Level",
-# 	);
 	
 	my @dateFields         = @{DATE_FIELDS_ORDER()};
 	my $rh_dateFieldLabels =  DATE_FIELDS();
@@ -319,31 +296,29 @@ sub body {
 	# get a list of sets to show
 	# DBFIXME already have this data
 	my @setsToShow = sortByName( undef, $db->listGlobalSets() );
-	# insert any set versions that we have
-	my $i = $#setsToShow;
-	if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
-		push( @setsToShow, map{ $_->set_id . ",v" . $_->version_id }
-			@{$UserSetVersionRecords{$setsToShow[$i]}} );
-	}
-	$i--;
-	my $numit = 0;
-	while ( $i>=0 ) {
-		if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
-			splice( @setsToShow, $i+1, 0,
-				map{ $_->set_id . ",v" . $_->version_id }
-				@{$UserSetVersionRecords{$setsToShow[$i]}} );
-		}
-		$i--;
-		$numit++;
-		# just to be safe
-		last if $numit >= 150;
-	}
-	warn("Truncated display of sets at 150 in UserDetail.pm.  This is a " .
-	     "brake to avoid spiraling into the abyss.  If you really have " .
-	     "more than 150 sets in your course, reset the limit at about line " .
-	     "370 in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.")
-		if ( $numit == 150 );
 
+	# insert any set versions that we have
+	if (@setsToShow) {
+	  my $i = $#setsToShow;
+	  if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
+	    push( @setsToShow, map{ $_->set_id . ",v" . $_->version_id }
+		  @{$UserSetVersionRecords{$setsToShow[$i]}} );
+	  }
+	  $i--;
+	  my $numit = 0;
+	  while ( $i>=0 ) {
+	    if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
+	      splice( @setsToShow, $i+1, 0,
+		      map{ $_->set_id . ",v" . $_->version_id }
+		      @{$UserSetVersionRecords{$setsToShow[$i]}} );
+	    }
+	    $i--;
+	    $numit++;
+	    # just to be safe
+		last if $numit >= 150;
+	  }
+	  warn("Truncated display of sets at 150 in UserDetail.pm.  This is a brake to avoid spiraling into the abyss.  If you really have more than 150 sets in your course, reset the limit at about line 370 in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.") if ( $numit == 150 );
+	}
 
 	foreach my $setID ( @setsToShow ) {
 		# catch the versioned sets that we just added
