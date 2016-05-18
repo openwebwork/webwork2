@@ -123,9 +123,10 @@ sub title {
 	my $r = $self->r;
 	my $eUserID = $r->param("effectiveUser");
 	# using the url arguments won't break if the set/problem are invalid
-	my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
+	my $prettySetID = WeBWorK::ContentGenerator::underscore2nbsp($r->urlpath->arg("setID"));
+	my $setID = $r->urlpath->arg("setID");
 	
-	my $title = $setID;
+	my $title = $prettySetID;
 	#put either due date or reduced scoring date in the title. 
 	my $set = $r->db->getMergedSet($eUserID, $setID);
 	if (defined($set) && between($set->open_date, $set->due_date)) {
@@ -145,7 +146,13 @@ sub title {
 	return $title;
 
 }
-
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $templateName = $r->param('templateName')//'system';
+	$self->{templateName}= $templateName;
+	$templateName;
+}
 sub siblings {
 	my ($self) = @_;
 	my $r = $self->r;
@@ -172,8 +179,13 @@ sub siblings {
 	} else {
 		@setIDs    = grep {my $set = $db->getMergedSet($eUserID, $_); 
 				   my @restricted = $ce->{options}{enableConditionalRelease} ?  is_restricted($db, $set, $eUserID) : ();
+				   my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework' && !$set->lis_source_did;
+
+				   after($set->open_date) && 
 				   $set->assignment_type() !~ /gateway/ && 
-				       ( defined($set->visible()) ? $set->visible() : 1 ) && !@restricted;
+				     ( defined($set->visible()) ? $set->visible() : 1 )
+				     && !@restricted
+				     && !$LTIRestricted;
 				           }   @setIDs;
 	}
 
@@ -337,10 +349,6 @@ sub body {
 	
 	my $isJitarSet = ($set->assignment_type eq 'jitar');
 
-	#my $hardcopyURL =
-	#	$ce->{webworkURLs}->{root} . "/"
-	#	. $ce->{courseName} . "/"
-	#	. "hardcopy/$setName/?" . $self->url_authen_args;
 	
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, 
 		courseID => $courseID, setID => $setName);
@@ -427,27 +435,6 @@ sub body {
 		print CGI::p($r->maketext("This homework set contains no problems."));
 	}
 	
-	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback", $r, 
-	#	courseID => $courseID);
-	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	#
-	##print feedback form
-	#print
-	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-	#	$self->hidden_authen_fields,"\n",
-	#	CGI::hidden("module",             __PACKAGE__),"\n",
-	#	CGI::hidden("set",                $self->{set}->set_id),"\n",
-	#	CGI::hidden("problem",            ''),"\n",
-	#	CGI::hidden("displayMode",        $self->{displayMode}),"\n",
-	#	CGI::hidden("showOldAnswers",     ''),"\n",
-	#	CGI::hidden("showCorrectAnswers", ''),"\n",
-	#	CGI::hidden("showHints",          ''),"\n",
-	#	CGI::hidden("showSolutions",      ''),"\n",
-	#	CGI::p({-align=>"left"},
-	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-	#	),
-	#	CGI::end_form(),"\n";
 	
 	print CGI::start_div({-class=>"problem_set_options"});
 	print $self->feedbackMacro(

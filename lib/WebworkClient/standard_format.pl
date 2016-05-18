@@ -37,7 +37,12 @@ $problemHeadText
 		    $answerTemplate
 		    $color_input_blanks_script
 		    <form action="$FORM_ACTION_URL" method="post">
+<div class="problem-content">
 			$problemText
+</div>
+$scoreSummary
+$LTIGradeMessage
+
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encoded_source"> 

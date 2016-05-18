@@ -36,7 +36,7 @@ use strict;
 use warnings;
 use WebworkClient;
 use WeBWorK::Debug;
-
+use CGI;
 
 =head1 Description
 
@@ -121,8 +121,6 @@ our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 	$XML_URL             =  "$server_root_url";  #"$server_root_url/mod_xmlrpc";
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
-use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
-
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
 
@@ -137,15 +135,35 @@ sub pre_header_initialize {
 	my $r = $self->r;
 	# Note: Vars helps handle things like checkbox 'packed' data;
 	my %inputs_ref =  WeBWorK::Form->new_from_paramable($r)->Vars ;
+
+	# When passing parameters via an LMS you get "custom_" put in front of them. So lets
+	# try to clean that up
+	$inputs_ref{userID} = $inputs_ref{custom_userid} if $inputs_ref{custom_userid};
+	$inputs_ref{courseID} = $inputs_ref{custom_courseid} if $inputs_ref{custom_courseid};
+	$inputs_ref{displayMode} = $inputs_ref{custom_displaymode} if $inputs_ref{custom_displaymode};
+	$inputs_ref{course_password} = $inputs_ref{custom_course_password} if $inputs_ref{custom_course_password};
+	$inputs_ref{answersSubmitted} = $inputs_ref{custom_answerssubmitted} if $inputs_ref{custom_answerssubmitted};
+	$inputs_ref{problemSeed} = $inputs_ref{custom_problemseed} if $inputs_ref{custom_problemseed};
+	$inputs_ref{sourceFilePath} = $inputs_ref{custom_sourcefilepath} if $inputs_ref{custom_sourcefilepath};
+	$inputs_ref{outputformat} = $inputs_ref{custom_outputformat} if $inputs_ref{custom_outputformat};
+	
 	my $user_id      = $inputs_ref{userID};
 	my $courseName   = $inputs_ref{courseID};
 	my $displayMode  = $inputs_ref{displayMode};
 	my $problemSeed  = $inputs_ref{problemSeed};
+	
+	# FIXME -- it might be better to send this error if the input is not all correct
+	# rather than trying to set defaults such as displaymode
 	unless ( $user_id && $courseName && $displayMode && $problemSeed) {
-		debug( "\n\n\nMissing essential data in web dataform: 
-		      userID: |$user_id|, courseID: |$courseName|,	
-		      displayMode: |$displayMode|, problemSeed: |$problemSeed|");
-		
+		print CGI::ul( 
+		      CGI::h1("Missing essential data in web dataform:"),
+			  CGI::li(CGI::escapeHTML([
+		      	"userID: |$user_id|", 
+		      	"courseID: |$courseName|",	
+		        "displayMode: |$displayMode|", 
+		        "problemSeed: |$problemSeed|"
+		      ])));
+		return;
 	}
     #######################
     #  setup xmlrpc client
@@ -155,7 +173,6 @@ sub pre_header_initialize {
 	$xmlrpc_client ->encoded_source($r->param('problemSource')) ; # this source has already been encoded
 	$xmlrpc_client-> url($XML_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
-#	$xmlrpc_client->{displayMode}     = $inputs_ref{displayMode} // DISPLAYMODE();
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
 	$xmlrpc_client->{course_password} = $inputs_ref{course_password};
 	$xmlrpc_client->{site_password}   = $XML_PASSWORD;

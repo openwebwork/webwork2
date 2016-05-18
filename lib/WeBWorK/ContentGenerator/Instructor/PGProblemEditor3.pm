@@ -408,11 +408,12 @@ sub path {
 	my $courseName  = $urlpath->arg("courseID");
 	my $setName = $r->urlpath->arg("setID") || '';
 	my $problemNumber = $r->urlpath->arg("problemID") || '';
-
+	my $prettyProblemNumber = $problemNumber;
+	
 	if ($setName) {
 	    my $set = $r->db->getGlobalSet($setName);
 	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
-		$problemNumber = join('.',jitar_id_to_seq($problemNumber));
+		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
 	    }
 	}
 
@@ -421,7 +422,7 @@ sub path {
 	my @path = ( 'WeBWork', $r->location,
 	          "$courseName", $r->location."/$courseName",
 	          "$setName",    $r->location."/$courseName/$setName",
-	          "$problemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
 	          "Editor", ""
 	);
 	
@@ -2042,7 +2043,7 @@ sub save_as_handler {
 			# problems at the end		
 			if ($set->assignment_type eq 'jitar') {
 				my @problemIDs = $self->r->db->listGlobalProblems($setName);
-				@problemIDs = sort @problemIDs;
+				@problemIDs = sort { $a <=> $b } @problemIDs;
 				my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
 				$targetProblemNumber = seq_to_jitar_id($seq[0]+1);
 			} else {

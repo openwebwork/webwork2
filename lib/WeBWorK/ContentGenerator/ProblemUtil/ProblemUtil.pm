@@ -42,7 +42,7 @@ use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswe
 	ref2string makeTempDirectory path_is_subdir sortByName before after between jitar_problem_adjusted_status jitar_id_to_seq);
 use WeBWorK::DB::Utils qw(global2user user2global);
 use URI::Escape;
-
+use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 # process_and_log_answer subroutine.
@@ -217,7 +217,28 @@ sub process_and_log_answer{
 					$pureProblem->last_answer."\t".
 					$pureProblem->num_correct."\t".
 					$pureProblem->num_incorrect
-				);
+					);
+
+				#Try to update the student score on the LMS
+				# if that option is enabled.
+				my $LTIGradeMode = $self->{ce}->{LTIGradeMode} // '';
+				if ($LTIGradeMode && $self->{ce}->{LTIGradeOnSubmit}) {
+				  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+				  if ($LTIGradeMode eq 'course') {
+				    if ($grader->submit_course_grade($problem->user_id)) {
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				    } else {
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				    }
+				  } elsif ($LTIGradeMode eq 'homework') {
+				    if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				    } else {
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				    }
+				  }
+				}
+				
 			} else {
 				if (before($set->open_date) or after($set->due_date)) {
 					$scoreRecordedMessage = $r->maketext("Your score was not recorded because this homework set is closed.");

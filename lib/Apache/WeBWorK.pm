@@ -63,7 +63,11 @@ sub handler($) {
 	my ($r) = @_;
 	my $log = $r->log;
 	my $uri = $r->uri;
-	
+
+	# We set the bimode for print to utf8 because some language options
+	# use utf8 characters
+	binmode(STDOUT, ":utf8");
+
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
 	my $warning_handler;

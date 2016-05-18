@@ -119,6 +119,7 @@ use WeBWorK::Localize;
 use HTML::Entities;
 use WeBWorK::PG::ImageGenerator;
 use IO::Socket::SSL;
+use Digest::SHA qw(sha1_base64);
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -471,6 +472,8 @@ sub default_inputs {
 	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir});
  	die "Can't create seed course environment for webwork in $webwork_dir" unless ref($seed_ce);
 
+	$self->{seed_ce} = $seed_ce;
+	
 	my @modules_to_evaluate;
 	my @extra_packages_to_load;
 	my @modules = @{ $seed_ce->{pg}->{modules} };
@@ -724,8 +727,109 @@ sub formatRenderedProblem {
 		$scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
 	}
 
-	# This stuff is put here because eventually we will add locale support so the 
-	# text will have to be done server side. 
+	##########################################################
+	#  Try to save the grade to an LTI if one provided us data
+	##########################################################
+
+	my $LTIGradeMessage = '';
+	if (defined($self->{inputs_ref}->{lis_outcome_service_url}) &&
+	    defined($self->{inputs_ref}->{'oauth_consumer_key'}) &&
+	    defined($self->{inputs_ref}->{'oauth_signature_method'}) &&
+	    defined($self->{inputs_ref}->{'lis_result_sourcedid'}) &&
+	    defined($self->{seed_ce}->{'LISConsumerKeyHash'}->{$self->{inputs_ref}->{'oauth_consumer_key'}}) ) {
+	  
+	  my $request_url = $self->{inputs_ref}->{lis_outcome_service_url};
+	  my $consumer_key = $self->{inputs_ref}->{'oauth_consumer_key'}; 
+	  my $signature_method = $self->{inputs_ref}->{'oauth_signature_method'};
+	  my $sourcedid = $self->{inputs_ref}->{'lis_result_sourcedid'};
+	  my $consumer_secret = $self->{seed_ce}->{'LISConsumerKeyHash'}->{$consumer_key};
+	  my $score = $problemResult ? $problemResult->{score} : 0;
+	  
+	  # This is boilerplate XML used to submit the $score for $sourcedid
+  my $replaceResultXML = <<EOS;
+<?xml version = "1.0" encoding = "UTF-8"?>
+<imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
+  <imsx_POXHeader>
+    <imsx_POXRequestHeaderInfo>
+      <imsx_version>V1.0</imsx_version>
+      <imsx_messageIdentifier>999999123</imsx_messageIdentifier>
+    </imsx_POXRequestHeaderInfo>
+  </imsx_POXHeader>
+  <imsx_POXBody>
+    <replaceResultRequest>
+      <resultRecord>
+	<sourcedGUID>
+	  <sourcedId>$sourcedid</sourcedId>
+	</sourcedGUID>
+	<result>
+	  <resultScore>
+	    <language>en</language>
+	    <textString>$score</textString>
+	  </resultScore>
+	</result>
+      </resultRecord>
+    </replaceResultRequest>
+  </imsx_POXBody>
+</imsx_POXEnvelopeRequest>
+EOS
+
+	  my $bodyhash = sha1_base64($replaceResultXML);
+
+	  # since sha1_base64 doesn't pad we have to do so manually 
+	  while (length($bodyhash) % 4) {
+	    $bodyhash .= '=';
+	  }
+
+	  my $requestGen = Net::OAuth->request("consumer");
+  
+	  $requestGen->add_required_message_params('body_hash');
+  
+	  my $gradeRequest = $requestGen->new(
+		  request_url => $request_url,
+		  request_method => "POST",
+		  consumer_secret => $consumer_secret,
+		  consumer_key => $consumer_key,
+		  signature_method => $signature_method,
+		  nonce => int(rand( 2**32)),
+		  timestamp => time(),
+		  body_hash => $bodyhash
+							 );
+	  $gradeRequest->sign();
+
+	  my $HTTPRequest = HTTP::Request->new(
+					       $gradeRequest->request_method,
+					       $gradeRequest->request_url,
+					       [
+						'Authorization' => $gradeRequest->to_authorization_header,
+						'Content-Type'  => 'application/xml',
+					       ],
+					       $replaceResultXML,
+					      );
+	  
+	  my $response = LWP::UserAgent->new->request($HTTPRequest);
+	  
+	  if ($response->is_success) {
+	    $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+	    my $message = $1;
+	    if ($message ne 'success') {
+	      $LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$message);
+	      $debug_messages .= CGI::escapeHTML($response->content);
+	    } else {
+	      $LTIGradeMessage = CGI::p("Grade sucessfully saved.");
+	    }
+	  } else {
+	    $LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$response->message);
+	    $debug_messages .= CGI::escapeHTML($response->content);
+	  }
+
+	  # save parameters for next time
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'lis_outcome_service_url', value=>$request_url});
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'oauth_consumer_key', value=>$consumer_key});
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'oauth_signature_method', value=>$signature_method});
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'lis_result_sourcedid', value=>$sourcedid});
+	  
+	}
+
 	my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
 	$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
 	$localStorageMessages .= CGI::end_div();

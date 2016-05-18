@@ -36,9 +36,6 @@ The capital letter switches, -B, -H, and -C render the question twice.  The firs
 time returns an answer hash which contains the correct answers. The question is
 then resubmitted to the renderer with the correct answers filled in and displayed.  
 
-IMPORTANT: Remember to configure the local output file and display command near the 
-top of this script. !!!!!!!!
-
 IMPORTANT: Create a valid credentials file.
 
 =cut
@@ -63,10 +60,10 @@ IMPORTANT: Create a valid credentials file.
     			courseID               => "the name of the webwork course",
                 site_url	           => "url of rendering site
                 site_password          => "site password" # preliminary access to site
-              form_action_url          =>  'http://localhost:80/webwork2/html2xml'; #action url for form
-              WWdisplayMode            =>  'MathJax', # optional 
+                form_action_url        =>  'http://localhost:80/webwork2/html2xml'; #action url for form
+                ww_display_mode        =>  'MathJax', # optional 
                                           # --  'MathJax' and 'images' are the possible values           
-              HTMLdisplayCommand       =>  "open -a 'Google Chrome' "  # optional
+                html_display_command   =>  "open -a 'Google Chrome' "  # optional
                                                       # for Mac: have Chrome read html output file
                                                       # modify this for other platforms or browsers  
     	);
@@ -97,7 +94,7 @@ IMPORTANT: Create a valid credentials file.
 
 =item  -h  
 
-	Prints to the command line the entire object returned by 
+	Prints to STDOUT the entire object returned by 
     the webwork_client xmlrpc request.
     This includes the answer information displayed by -a and -A and much more.
 
@@ -148,7 +145,7 @@ IMPORTANT: Create a valid credentials file.
 	Triggers the printing of the all of the variables available to the PG question. 
     The table appears within the question content. Use in conjunction with -b or -B.
 
-=item		--anshash 
+=item	--anshash 
 
 	Prints the answer hash for each answer in the PG_debug output which appears below
     the question content. Use in conjunction with -b or -B. 
@@ -168,6 +165,9 @@ IMPORTANT: Create a valid credentials file.
 =item	--help
 
        Prints help information. 
+       
+=item  --log 
+       Sets path to log file
 
 =back
 =cut
@@ -213,10 +213,9 @@ use Cwd 'abs_path';
 ### verbose output when UNIT_TESTS_ON =1;
  our $UNIT_TESTS_ON             = 0;
   
- ### Command line for displaying the temporary file in a browser.
- #use constant  DISPLAY_COMMAND  => 'open -a firefox ';   #browser opens tempoutputfile 
+#Default display commands.
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
-use constant  HASH_DISPLAY_COMMAND => " less ";   # display tempoutputfile with less
+#use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
 
 ### Path to a temporary file for storing the output of renderProblem.pl
  use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
@@ -224,10 +223,8 @@ use constant  HASH_DISPLAY_COMMAND => " less ";   # display tempoutputfile with 
      " writeable " unless -w TEMPOUTPUTDIR();
  use constant TEMPOUTPUTFILE  => TEMPOUTPUTDIR()."temporary_output.html";
     
-### Path to a temporary file for storing the output of sendXMLRPC.pl
-use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/bad_problems.txt";
-die "You must first create an output file at ".LOG_FILE().
-     " with permissions 777 " unless -w LOG_FILE();
+### Default path to a temporary file for storing the output of sendXMLRPC.pl
+use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/xmlrpc_results.log";
 
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
@@ -258,6 +255,7 @@ my $print_answer_group;
 my $print_pg_hash;
 my $print_help_message;
 my $read_list_from_this_file;
+my $path_to_log_file;
 GetOptions(
 	'a' => \$display_ans_output1,
 	'A' => \$display_ans_output2,
@@ -276,10 +274,12 @@ GetOptions(
 	'f=s' 			=> \$format,
 	'credentials=s' => \$credentials_path,
 	'help'          => \$print_help_message,
+	'log=s'         => \$path_to_log_file,
 );
 
 
 print_help_message() if $print_help_message;
+
 
 ####################################################
 # get credentials
@@ -298,9 +298,9 @@ The credentials file should contain this:
             site_url	        => "url of rendering site",
             site_password       => "site password", # preliminary access to site
             form_action_url     =>  'http://localhost:80/webwork2/html2xml', #action url for form
-            WWdisplayMode       =>  'MathJax', # optional 
+            ww_display_mode       =>  'MathJax', # optional 
                                                # --  'MathJax' and 'images' are the possible values
-            HTMLdisplayCommand  =>  "open -a 'Google Chrome' "  # optional
+            html_display_command  =>  "open -a 'Google Chrome' "  # optional
                                                       # for Mac: have Chrome read html output file
                                                       # modify this for other platforms or browsers
 	);
@@ -340,8 +340,20 @@ if ($verbose) {
 }
 
 #allow credentials to overrride the default displayMode and the browser display
-our $HTML_DISPLAY_COMMAND = $credentials{HTMLdisplayCommand}//HTML_DISPLAY_COMMAND();
-our $DISPLAYMODE          = $credentials{WWdisplayMode}//DISPLAYMODE();
+our $HTML_DISPLAY_COMMAND = $credentials{html_display_command}//HTML_DISPLAY_COMMAND();
+#our $HASH_DISPLAY_COMMAND = $credentials{hashdisplayCommand}//HASH_DISPLAY_COMMAND();
+
+our $DISPLAYMODE          = $credentials{ww_display_mode}//DISPLAYMODE();
+$path_to_log_file         = $path_to_log_file //$credentials{path_to_log_file}//LOG_FILE();  #set log file path.
+
+eval { # attempt to create log file
+	local(*FH);
+	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	close(FH);	
+};
+die "You must first create an output file at $path_to_log_file
+     with permissions 777 " unless -w $path_to_log_file;
+
 ##################################################
 #  END gathering credentials for client
 ##################################################
@@ -584,7 +596,7 @@ sub record_problem_ok1 {
 	}
 	 
 	local(*FH);
-	open(FH, '>>',LOG_FILE()) or die "Can't open file ".LOG_FILE()." for writing";
+	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	print FH $return_string;
 	close(FH);
 	return $SHORT_RETURN_STRING;
@@ -602,11 +614,11 @@ sub record_problem_ok2 {
 			      $xmlrpc_client->return_object->{answers}->{$ans}->{score};
 			$all_correct =$all_correct && $scores{$ans};
 		}
-	$all_correct = "2" if $some_correct_answers_not_specified;
-	$ALL_CORRECT = ($all_correct == 1)?'All answers correct':'Some answers are incorrect';
+	$all_correct = ".5" if $some_correct_answers_not_specified;
+	$ALL_CORRECT = ($all_correct == 1)?'All answers are correct':'Some answers are incorrect';
 	local(*FH);
-	open(FH, '>>',LOG_FILE()) or die "Can't open file ".LOG_FILE()." for writing";
-	print FH "$all_correct Answers for $file_path are all correct = $all_correct; errors: $error_flag\n";
+	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	print FH "$all_correct $file_path\n"; #  do we need this? compile_errors=$error_flag\n";
 	close(FH);
 	return $ALL_CORRECT;
 }
@@ -717,12 +729,13 @@ sub display_hash_output {   # print the entire hash output to the command line
 	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	my $output_text2 = pretty_print_rh($output_text);
-	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
-	print FH $output_text2;
-	close(FH);
-
-	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+	print STDOUT $output_text2;
+# 	local(*FH);
+# 	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
+# 	print FH $output_text2;
+# 	close(FH);
+# 
+# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
 	#sleep 1; #wait 1 seconds
 	#unlink($output_file);
 }
@@ -736,14 +749,15 @@ sub display_ans_output {  # print the collection of answer hashes to the command
 	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	my $output_text = pretty_print_rh($return_object->{answers});
-	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
-	print FH $output_text;
-	close(FH);
-
-	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
-	sleep 1; #wait 1 seconds
-	unlink($output_file);
+	print STDOUT $output_text;
+# 	local(*FH);
+# 	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
+# 	print FH $output_text;
+# 	close(FH);
+# 
+# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+# 	sleep 1; #wait 1 seconds
+# 	unlink($output_file);
 }
 
 ##################################################
@@ -876,7 +890,7 @@ DETAILS
                 Same as -b but renders the question with the correct answers submitted.
 
     -h
-                Prints to the command line the entire object returned by 
+                Prints to STDOUT the entire object returned by 
                    the webwork_client xmlrpc request.
                    This includes the answer information displayed by -a and -A and much more.
 
@@ -906,6 +920,12 @@ DETAILS
 				Open the source file in an editor. 
 
                 The single letter options can be "bundled" e.g.  -vcCbB
+                
+	--list   pg_list
+				Read and process a list of .pg files contained in the file C<pg_list>.  C<pg_list>
+				consists of a sequence of lines each of which contains the full path to a pg
+				file that should be processed. (For example this might be the output from an
+				earlier run of sendXMLRPC using the -c flag. )
 
     --pg
                 Triggers the printing of the all of the variables available to the PG question. 
@@ -925,8 +945,11 @@ DETAILS
     --credentials=s
                 Specifies a file s where the  credential information can be found.
 
-    --help
-               Prints help information.
+	--help
+		   Prints help information. 
+	   
+	--log 
+		   Sets path to log file
 
 
 EOT
