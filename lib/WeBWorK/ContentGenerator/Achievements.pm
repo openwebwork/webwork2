@@ -231,8 +231,8 @@ sub body {
 		foreach my $item (@items) {
 		    # Print each items name and description 
 		    print CGI::start_div({class=>"achievement-item"});
-		    print CGI::h3($item->name());
-		    print CGI::p($item->description());
+		    print CGI::h3($r->maketext($item->name()));
+		    print CGI::p($r->maketext($item->description()));
 		    # Print a modal popup for each item which contains the form
 		    # necessary to get the data to use the item.  Print the 
 		    # form in the modal body.  
@@ -306,7 +306,7 @@ sub body {
 			print CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'});
 			print CGI::start_div({class=>'cheevotextbox'});
 			print CGI::h3($achievement->name);
-			print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
+			print CGI::div(CGI::i($r->maketext("[_1] Points:", $achievement->{points})).' '.$achievement->{description});
 			
 			if ($achievement->max_counter and not $userAchievement->earned) {
 			my $userCounter = $userAchievement->counter;

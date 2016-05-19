@@ -2157,7 +2157,6 @@ sub warningOutput($$) {
 
 	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);
-
 	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);
