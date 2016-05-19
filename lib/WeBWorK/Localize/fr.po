@@ -13,29 +13,6 @@ msgstr ""
 "fichier n'a été créé. Chemin = %1\n"
 "X-Generator: Poedit 1.6.10\n"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:93
-msgid ""
-"\n"
-"This is the Achievement Editor.  It is used to edit the achievements "
-"available to students.  Please keep in mind the following facts: Achievments "
-"are displayed, and evaluated, in the order they are listed. The \"secret\" "
-"category creates achievements which are not visible to students until they "
-"are earned.  The \"level\" category is used for the achievements associated "
-"to a users level."
-msgstr ""
-
-#
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1218
-#, fuzzy
-msgid " Copy this Problem "
-msgstr "Éditer ce problème"
-
-#
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1220
-#, fuzzy
-msgid " To this Problem "
-msgstr "Éditer ce problème"
-
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:477
 #, fuzzy
@@ -143,7 +120,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:98
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:97
 msgid ""
 "%1 uses an external authentication system.  You've authenticated through "
 "that system, but aren't allowed to log in to this course."
@@ -327,7 +304,7 @@ msgstr "Résultat"
 msgid "1 student"
 msgstr "étudiant"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:224
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:223
 #, fuzzy
 msgid ""
 "<p>After the Reduced Scoring Date all additional work done by the student "
@@ -356,7 +333,7 @@ msgstr ""
 "le std_problem_grader (notation tout ou rien). Il travaillera avec les "
 "élèves personnalisées si elles sont écrites de façon appropriée. </p>"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:341
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:340
 msgid ""
 "<p>When viewing a problem, users may choose different methods of rendering "
 "formulas via an options box in the left panel. Here, you can adjust what "
@@ -383,7 +360,7 @@ msgstr ""
 "un seule, la boîte d'options ne montrera aucun choix de modes (car il n'y "
 "aura qu'un seul actif). </ p>"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:264
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:263
 msgid ""
 "<ul><li><b>SMAcheckAnswers</b>: enables the Check Answers button <i>for the "
 "new problem</i> when Show Me Another is clicked</li> "
@@ -468,7 +445,7 @@ msgid ""
 "number of incorrect attempts."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:174
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:173
 msgid ""
 "A switch to govern the use of a Progress Bar for the student; this also "
 "enables/disables the highlighting of the current problem in the side bar, "
@@ -476,7 +453,7 @@ msgid ""
 "(&#x2717;), or unattempted (no symbol)."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:102
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:101
 msgid ""
 "A table showing all the current users along with several fields of user "
 "information. The fields from left to right are: Login Name, Login Status, "
@@ -580,7 +557,7 @@ msgstr ""
 msgid "Achievement ID exists!  No new achievement created.  File not saved."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:203
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:202
 #, fuzzy
 msgid "Achievement Points Per Problem"
 msgstr "Points de réussite par problème"
@@ -642,7 +619,7 @@ msgstr "L'action % n'a pas été trouvé."
 msgid "Active"
 msgstr "Actif"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:199
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:198
 msgid ""
 "Activiating this will enable Mathchievements for webwork.  Mathchievements "
 "can be managed by using the Achievement Editor link."
@@ -650,7 +627,7 @@ msgstr ""
 "Ceci est pour activer Mathchievements pour webwork. Mathchievements peut "
 "être géré en utilisant le lien de l'éditeur d'objectifs."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:209
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:208
 msgid ""
 "Activiating this will enable achievement items. This features rewards "
 "students who earn achievements with items that allow them to affect their "
@@ -758,7 +735,7 @@ msgstr "Ajout de '%1' à %2 en tant que nouvel entête"
 msgid "Added addresses %1 to location %2."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:410
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:409
 msgid "Additional addresses for receiving feedback e-mail."
 msgstr "Autres adresses pour recevoir les commentaires par e-mail."
 
@@ -918,42 +895,42 @@ msgstr "Tous les devoirs visibles %1 à tous les étudiants"
 msgid "Allow unassign"
 msgstr "Assigné à "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:377
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:376
 msgid "Allowed error, as a percentage, for numerical comparisons"
 msgstr "Erreur permise, en pourcentage, pour les comparaisons numériques"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:292
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:291
 msgid "Allowed to <em>act as</em> another user"
 msgstr "Autorisé à <em> agir comme </ em> un autre utilisateur"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:311
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:310
 msgid "Allowed to change their e-mail address"
 msgstr "Autorisés à modifier leur adresse e-mail"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:287
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:286
 msgid "Allowed to change their password"
 msgstr "Autorisés à changer leur mot de passe"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:283
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:282
 msgid "Allowed to login to the course"
 msgstr "Autorisé à se connecter au cours"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:329
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:328
 msgid "Allowed to see solutions before the answer date"
 msgstr ""
 "Autorisés à voir les solutions avant la date de disponibilité des réponses"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:325
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:324
 msgid "Allowed to see the correct answers before the answer date"
 msgstr ""
 "Autorisé à voir les bonnes réponses avant la date de disponibilité des "
 "réponses"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:316
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:315
 msgid "Allowed to view past answers"
 msgstr "Autorisés à voir les anciennes réponses"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:321
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:320
 msgid "Allowed to view problems in sets which are not open yet"
 msgstr ""
 "Autorisés à voir des problèmes dans des devoirs qui ne sont pas encore "
@@ -1246,7 +1223,7 @@ msgid "Attempts"
 msgstr "Essais"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:110
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:109
 #, fuzzy
 msgid "Audit"
 msgstr "Audit"
@@ -1299,7 +1276,7 @@ msgstr "Naviguer "
 msgid "Browse from:"
 msgstr "Naviguer de: "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:416
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:415
 msgid ""
 "By default, feeback is always sent to all users specified to recieve "
 "feedback.  This variable sets the system to only email feedback to users who "
@@ -1307,7 +1284,7 @@ msgid ""
 "will only be sent to section leaders."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:411
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:410
 msgid ""
 "By default, feeback is sent to all users above who have permission to "
 "receive feedback. Feedback is also sent to any addresses specified in this "
@@ -1330,20 +1307,20 @@ msgstr ""
 msgid "Cake of Enlargment"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:296
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:295
 msgid "Can e-mail instructor"
 msgstr "Peut envoyer des emails à un instructeur"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:306
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:305
 msgid "Can report bugs"
 msgstr "Peut rapporter des bugs"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:333
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:332
 #, fuzzy
 msgid "Can show old answers"
 msgstr "Peut voir les anciennes réponses par défaut"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:301
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:300
 msgid "Can submit answers for a student"
 msgstr "Peut soumettre les réponses pour un étudiant"
 
@@ -1829,6 +1806,12 @@ msgid "Copy templates from:"
 msgstr ""
 
 #
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1218
+#, fuzzy
+msgid "Copy this Problem"
+msgstr "Éditer ce problème"
+
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1917
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:385
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:415
@@ -2103,7 +2086,7 @@ msgstr "exportation annulée"
 msgid "Date"
 msgstr "Date d'ouverture"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:394
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:393
 #, fuzzy
 msgid "Debug"
 msgstr "pg debug"
@@ -2115,7 +2098,7 @@ msgstr "pg debug"
 msgid "Default"
 msgstr "Enregistrer par défaut"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:190
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:189
 #, fuzzy
 msgid ""
 "Default Amount of Time (in minutes) after Due Date that Answers are Open"
@@ -2123,7 +2106,7 @@ msgstr ""
 "Laps de temps (en minutes) après la date d'échéance que les réponses sont "
 "ouvertes"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:184
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:183
 #, fuzzy
 msgid ""
 "Default Amount of Time (in minutes) before Due Date that the Assignment is "
@@ -2131,12 +2114,12 @@ msgid ""
 msgstr ""
 "Laps de temps (en minutes) avant la date d'échéance que le devoir est ouvert"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:248
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:247
 #, fuzzy
 msgid "Default Length of Reduced Scoring Period in minutes"
 msgstr "Durée de la période de crédit réduit par minutes"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:178
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:177
 #, fuzzy
 msgid "Default Time that the Assignment is Due"
 msgstr "Temps où le devoir est due"
@@ -2336,7 +2319,7 @@ msgstr "Afficher les réponses précédentes"
 msgid "Display options: Show"
 msgstr "Options d'affichage"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:360
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:359
 msgid "Display the evaluated student answer"
 msgstr "Afficher la réponse évalué de l'élève"
 
@@ -2467,7 +2450,7 @@ msgid "Download:"
 msgstr "Télécharger"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:110
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:109
 #, fuzzy
 msgid "Drop"
 msgstr "Déposer"
@@ -2477,7 +2460,7 @@ msgstr "Déposer"
 msgid "Duplicate this set and name it"
 msgstr "Copier ce devoir et le renommer"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:372
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:371
 msgid ""
 "During summer 2005, a newer version of the answer checkers was implemented "
 "for answers which are functions and numbers.  The newer checkers allow more "
@@ -2499,7 +2482,7 @@ msgstr ""
 "utilisées par défaut, et en choisissant <i>true</i> signifie que l'ancien "
 "vérivicateur de réponses sera utilisé par défaut."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:382
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:381
 msgid "E-Mail"
 msgstr ""
 
@@ -2509,12 +2492,12 @@ msgstr ""
 msgid "E-mail Instructor"
 msgstr "Envoyer un courriel à l'enseignant"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:400
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:399
 msgid "E-mail addresses which can receive e-mail from a pg problem"
 msgstr ""
 "Adresses e-mail qui peuvent recevoir des e-mail à partir d'un problème pg"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:405
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:404
 msgid ""
 "E-mail feedback from students automatically sent to this permission level "
 "and higher:"
@@ -2522,7 +2505,7 @@ msgstr ""
 "Feedback par e-mail des étudiants envoyés automatiquement à ce niveau "
 "d'autorisation et supérieur:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:390
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:389
 msgid "E-mail verbosity level"
 msgstr "Niveau de verbose pour les emails"
 
@@ -2781,39 +2764,39 @@ msgstr ""
 msgid "Emails to be sent to the following:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:208
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:207
 #, fuzzy
 msgid "Enable Achievement Items"
 msgstr "Activer les objectifs des cours"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:213
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:212
 msgid "Enable Conditional Release"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:198
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:197
 #, fuzzy
 msgid "Enable Course Achievements"
 msgstr "Activer les objectifs des cours"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:173
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:172
 msgid "Enable Progress Bar and current problem highlighting"
 msgstr ""
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:590
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:613
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:218
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:217
 #, fuzzy
 msgid "Enable Reduced Scoring"
 msgstr "Permettre l'attribution de points partiels."
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:253
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:252
 #, fuzzy
 msgid "Enable Show Me Another button"
 msgstr "Afficher dans une autre fenêtre"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:271
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:270
 msgid "Enable periodic re-randomization of problems"
 msgstr ""
 
@@ -2830,14 +2813,14 @@ msgstr ""
 msgid "Enabled"
 msgstr "Activer"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:272
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:271
 msgid ""
 "Enables periodic re-randomization of problems after a given number of "
 "attempts. Student would have to click Request New Version to obtain new "
 "version of the problem and to continue working on the problem"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:214
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:213
 msgid ""
 "Enables the use of the conditional release system.  To use conditional "
 "release you need to specify a list of set names on the Problem Set Detail "
@@ -2846,13 +2829,13 @@ msgid ""
 "sets."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:163
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:162
 msgid ""
 "Enables the use of the date picker on the Homework Sets Editor 2 page and "
 "the Problem Set Detail page"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:254
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:253
 msgid ""
 "Enables use of the Show Me Another button, which offers the student a newly-"
 "seeded version of the current problem, complete with solution (if it exists "
@@ -2860,7 +2843,7 @@ msgid ""
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:110
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:109
 msgid "Enrolled"
 msgstr "Inscrit"
 
@@ -3224,7 +3207,7 @@ msgstr "signaler une erreur pour ce problème"
 msgid "Feedback"
 msgstr "Commentaires"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:415
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:414
 msgid "Feedback by Section."
 msgstr ""
 
@@ -3396,7 +3379,7 @@ msgstr ""
 "Forcer les problèmes à être numérotées par un (toujours fait lors de la "
 "renumérotation des problèmes)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:384
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:383
 msgid "Format for the subject line in feedback e-mails"
 msgstr "Format pour la ligne sujet dans les e-mails de feedback"
 
@@ -3445,7 +3428,7 @@ msgstr ""
 msgid "Gateway parameters"
 msgstr "Paramètres passerelle"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:121
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:120
 msgid "General"
 msgstr ""
 
@@ -3604,7 +3587,7 @@ msgstr "Entête d'impression"
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:617
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:154
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:153
 #, fuzzy
 msgid "Hardcopy Theme"
 msgstr "Entête d'impression"
@@ -3807,7 +3790,7 @@ msgstr ""
 msgid "Inactive"
 msgstr "Inactif"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:142
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:141
 msgid "Inactivity time before a user is required to login again"
 msgstr "Temps d'inactivité avant que l'utilisateur doit se connecter à nouveau"
 
@@ -3916,7 +3899,7 @@ msgstr ""
 msgid "LOCAL Usage"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:136
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:135
 msgid "Language (refresh page after saving changes to reveal new language.)"
 msgstr ""
 "Langue (rafraîchir la page après l'enregistrement des modifications pour "
@@ -3974,7 +3957,7 @@ msgstr "Nom de famille"
 msgid "Latest Answers"
 msgstr "Afficher les réponses précédentes"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:143
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:142
 msgid ""
 "Length of time, in seconds, a user has to be inactive before he is required "
 "to login again.<p> This value should be entered as a number, so as 3600 "
@@ -4021,11 +4004,11 @@ msgstr "Navigateur des librairies 3"
 msgid "Library Browser no js"
 msgstr "Choisir des problèmes 2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:340
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:339
 msgid "List of display modes made available to students"
 msgstr "Liste des modes d'affichage mis à la disposition des étudiants"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:401
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:400
 msgid ""
 "List of e-mail addresses to which e-mail can be sent by a problem. "
 "Professors need to be added to this list if questionaires are used, or other "
@@ -4037,7 +4020,7 @@ msgstr ""
 "du courrier électronique dans le cadre de leur mécanisme de réponse."
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:263
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:262
 #, fuzzy
 msgid "List of options for Show Me Another button"
 msgstr "Afficher dans une autre fenêtre"
@@ -4235,7 +4218,7 @@ msgstr "Essais maximum"
 msgid "Max. Shown:"
 msgstr " Max. affiché:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:258
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:257
 msgid "Maximum times Show me Another can be used per problem (-1 => unlimited)"
 msgstr ""
 
@@ -4328,7 +4311,7 @@ msgid "Name for new set here"
 msgstr "Nom du nouveau cours ici"
 
 # /home/francois/ExtractStrings/defaults.config (doc)
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:123
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:122
 msgid "Name of course information file"
 msgstr "Nom du fichier pour les informations du cours"
 
@@ -4674,7 +4657,7 @@ msgstr "Liste d'usagers"
 msgid "Old Hmwk Sets Editor"
 msgstr "Éditeur de devoirs"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:104
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:103
 #, fuzzy
 msgid "One Column"
 msgstr " colonnes: "
@@ -4684,7 +4667,7 @@ msgstr " colonnes: "
 msgid "Only after set answer date"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:297
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:296
 msgid ""
 "Only this permission level and higher get buttons for sending e-mail to the "
 "instructor."
@@ -4757,7 +4740,7 @@ msgstr "Ouverture"
 msgid "Opens any homework set for 24 hours."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:196
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:195
 msgid "Optional Modules"
 msgstr ""
 
@@ -4791,7 +4774,7 @@ msgstr ""
 msgid "Overwrite existing files silently"
 msgstr "Écraser les fichier existant en silence"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:338
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:337
 msgid "PG - Problem Display/Answer Checking"
 msgstr ""
 
@@ -4922,7 +4905,7 @@ msgid "Permission Level"
 msgstr "Niveau de permission"
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:281
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:280
 #, fuzzy
 msgid "Permissions"
 msgstr "Niveau de permission"
@@ -5192,7 +5175,7 @@ msgid "Problems have been assigned to all current users."
 msgstr ""
 
 #
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:110
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:109
 #, fuzzy
 msgid "Proctor"
 msgstr "Superviseur"
@@ -6151,20 +6134,20 @@ msgstr ""
 "Les entêtes de devoir ne sont pas utilisés pour affichée les tests "
 "passerelle."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:366
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:365
 msgid ""
 "Set to true for log to mean base 10 log and false for log to mean natural "
 "logarithm"
 msgstr "Définir à vrai pour log base 10 et à faux logarithme naturel"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:356
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:355
 msgid ""
 "Set to true to display MathView equation editor icon next to each answer box"
 msgstr ""
 "Définir la valeur à true pour afficher l'icone de l'éditeur d'équation "
 "mathview à côté de chaque boîte de réponse"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:361
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:360
 msgid ""
 "Set to true to display the \"Entered\" column which automatically shows the "
 "evaluated student answer, e.g. 1 if student input is sin(pi/2). If this is "
@@ -6251,7 +6234,7 @@ msgstr ""
 msgid "Show Solutions"
 msgstr "Afficher les solutions"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:167
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:166
 msgid "Show Total Homework Grade on Grades Page"
 msgstr ""
 
@@ -6335,7 +6318,7 @@ msgstr "%1 devoirs affichés sur un total de %2."
 msgid "Showing %1 out of %2 users"
 msgstr "%1 usagers affichés sur un total de %2."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:392
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:391
 #, fuzzy
 msgid "Simple"
 msgstr "EditionSimple"
@@ -6385,7 +6368,7 @@ msgstr ""
 "répertoires si vous savez vraiment ce que vous faites. Vous pouvez "
 "endommager sérieusement votre cours si vous supprimez la mauvaise chose."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:148
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:147
 #, fuzzy
 msgid ""
 "Some servers handle courses taking place in different timezones.  If this "
@@ -6462,7 +6445,7 @@ msgid ""
 "contain only letters, numbers, hyphens, and underscores."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:393
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:392
 msgid "Standard"
 msgstr ""
 
@@ -6776,14 +6759,14 @@ msgstr "Livre:"
 msgid "That symbolic link takes you outside your course directory"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:259
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:258
 msgid ""
 "The Maximum number of times Show me Another can be used per problem by a "
 "student. If set to -1 then there is no limit to the number of times that "
 "Show Me Another can be used."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:249
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:248
 msgid ""
 "The Reduced Scoring Period is the default period before the due date during "
 "which all additional work done by the student counts at a reduced rate. When "
@@ -6808,7 +6791,7 @@ msgid ""
 "parent grade."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:191
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:190
 #, fuzzy
 msgid ""
 "The amount of time (in minutes) after the due date that the Answers are "
@@ -6818,7 +6801,7 @@ msgstr ""
 "La nombre de temps (en minutes) après la date d'échéance que les réponses "
 "sont à la disposition des étudiants pour les voir."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:185
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:184
 #, fuzzy
 msgid ""
 "The amount of time (in minutes) before the due date when the assignment is "
@@ -6869,17 +6852,17 @@ msgid ""
 "be erased.  This cannot be undone."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:348
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:347
 msgid "The default display mode"
 msgstr "Le mode d'affichage par défaut"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:277
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:276
 msgid ""
 "The default number of attempts before the problem is re-randomized. ( 0 => "
 "never )"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:276
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:275
 msgid ""
 "The default number of attempts between re-randomization of the problems ( 0 "
 "=> never)"
@@ -6894,7 +6877,7 @@ msgstr "Ce fichier source n'existe pas!"
 msgid "The display was already cleared."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:391
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:390
 msgid ""
 "The e-mail verbosity level controls how much information is automatically "
 "added to feedback e-mails.  Levels are<ol><li value=\"Simple\"> Simple: send "
@@ -7055,7 +7038,7 @@ msgid ""
 msgstr ""
 
 # /home/francois/ExtractStrings/defaults.config (doc2)
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:124
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:123
 msgid ""
 "The name of course information file (located in the templates directory). "
 "Its contents are displayed in the right panel next to the list of homework "
@@ -7219,7 +7202,7 @@ msgid ""
 "checked, but the result will not be counted."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:179
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:178
 #, fuzzy
 msgid ""
 "The time of the day that the assignment is due.  This can be changed on an "
@@ -7321,7 +7304,7 @@ msgid ""
 "correct the permssion errors."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:129
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:128
 msgid "Theme (refresh page after saving changes to reveal new theme.)"
 msgstr ""
 "Thème (rafraîchir la page après l'enregistrement des modifications pour "
@@ -7340,14 +7323,14 @@ msgstr "Ensuite selon"
 msgid "There are %1 matching WeBWorK problems"
 msgstr "Il y a %1 problèmes de Webwork correspondants"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:155
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:154
 msgid ""
 "There are currently two hardcopy themes to choose from: One Column and Two "
 "Columns.  The Two Columns theme is the traditional hardcopy format.  The One "
 "Column theme uses the full page width for each column"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:130
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:129
 #, fuzzy
 msgid ""
 "There are currently two themes (or skins) to choose from: math3 and math4.  "
@@ -7507,7 +7490,7 @@ msgid ""
 "instructor or system administrator."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:317
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:316
 msgid ""
 "These users and higher get the \"Show Past Answers\" button on the problem "
 "page."
@@ -7541,7 +7524,7 @@ msgstr "La réponse ci-dessus N'EST PAS %1correcte."
 msgid "This answer is correct."
 msgstr "La réponse ci-dessus est correcte."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:96
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:95
 msgid ""
 "This course supports guest logins. Click %1 to log into this course as a "
 "guest."
@@ -7576,7 +7559,7 @@ msgstr ""
 "directement. Utiliser la fonction \"Enregistrer sous\" pour créer une copie "
 "locale du fichier et l'ajouter au devoir courant."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:100
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:99
 msgid ""
 "This is a table showing the current Homework sets for this class.  The "
 "fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned "
@@ -7587,6 +7570,16 @@ msgid ""
 "take you to a page where you can edit the containing problems, and the cells "
 "in the edit assigned users field contains links which take you to a page "
 "where you can edit what students the set is assigned to."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:93
+msgid ""
+"This is the Achievement Editor.  It is used to edit the achievements "
+"available to students.  Please keep in mind the following facts: Achievments "
+"are displayed, and evaluated, in the order they are listed. The \"secret\" "
+"category creates achievements which are not visible to students until they "
+"are earned.  The \"level\" category is used for the achievements associated "
+"to a users level."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:91
@@ -7616,7 +7609,7 @@ msgid ""
 "relevant information."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:204
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:203
 msgid ""
 "This is the number of achievement points given to each user for completing a "
 "problem."
@@ -7723,7 +7716,7 @@ msgid ""
 "in the following field."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:219
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:218
 #, fuzzy
 msgid ""
 "This sets whether the Reduced Scoring system will be enabled.  If enabled "
@@ -7818,7 +7811,7 @@ msgstr ""
 msgid "Timestamp"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:147
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:146
 msgid "Timezone for the course"
 msgstr "Fuseau horaire pour le cours"
 
@@ -7888,6 +7881,12 @@ msgstr ""
 "Pour modifier ce texte, utiliser l'action \"Enregistrer sous\" offerte plus "
 "bas pour l'enregistrer dans un autre fichier."
 
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1220
+#, fuzzy
+msgid "To this Problem"
+msgstr "Éditer ce problème"
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:555
 msgid "To:"
 msgstr ""
@@ -7921,7 +7920,7 @@ msgstr "Essayer"
 msgid "Tunic of Extension"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:106
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:105
 #, fuzzy
 msgid "Two Columns"
 msgstr " colonnes: "
@@ -8112,7 +8111,7 @@ msgstr ""
 msgid "Upload"
 msgstr "Envoyer"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:162
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:161
 msgid "Use Date Picker"
 msgstr ""
 
@@ -8151,11 +8150,11 @@ msgstr "Activer les objectifs des cours"
 msgid "Use in new achievement:"
 msgstr "devoirs sélectionnés"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:365
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:364
 msgid "Use log base 10 instead of base <i>e</i>"
 msgstr "Utiliser une base log 10 au lieu de <i>e</i>"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:371
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:370
 msgid "Use older answer checkers"
 msgstr "Utiliser l'ancien vérificateur de réponses"
 
@@ -8253,7 +8252,7 @@ msgstr "Éditer les usagers assignés"
 msgid "Users List"
 msgstr "Liste d'usagers"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:312
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:311
 msgid ""
 "Users at this level and higher are allowed to change their e-mail address. "
 "Normally guest users are not allowed to change the e-mail address since it "
@@ -8264,7 +8263,7 @@ msgstr ""
 "modifier l'adresse e-mail car il n'est pas logique d'envoyer des e-mail à "
 "des comptes anonymes."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:288
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:287
 msgid ""
 "Users at this level and higher are allowed to change their password. "
 "Normally guest users are not allowed to change their password."
@@ -8280,7 +8279,7 @@ msgstr ""
 msgid "Users sorted by %1, then by %2, then by %3"
 msgstr "Usagers triés selon %1, ensuite selon %2 et ensuite selon %3"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:307
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:306
 msgid ""
 "Users with at least this permission level get a link in the left panel for "
 "reporting bugs to the bug tracking system in Rochester"
@@ -8289,7 +8288,7 @@ msgstr ""
 "lien dans le panneau de gauche pour signaler des bogues dans le système de "
 "suivi des bogues à Rochester"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:406
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:405
 msgid ""
 "Users with this permssion level or greater will automatically be sent "
 "feedback from students (generated when they use the \"Contact instructor\" "
@@ -8319,7 +8318,7 @@ msgstr "Le mode d'affichage par défaut"
 msgid "Using what seed?: "
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:223
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:222
 #, fuzzy
 msgid "Value of work done in Reduced Scoring Period"
 msgstr "Valeur du travail effectué durant la période de crédit réduite"
@@ -8462,7 +8461,7 @@ msgstr "WeBWorK"
 msgid "WeBWorK Warnings"
 msgstr "WeBWorK"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:137
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:136
 msgid ""
 "WeBWorK currently has translations for four languages: \"English en\", "
 "\"Turkish tr\", \"Spanish es\", and \"French fr\" "
@@ -8527,7 +8526,7 @@ msgid ""
 "and if set to -2 the course default is used."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:302
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:301
 msgid ""
 "When acting as a student, this permission level and higher can submit "
 "answers for that student."
@@ -8544,7 +8543,7 @@ msgid ""
 msgstr ""
 "Si le numéro du problème est changé, le problème sera %1 le numéro choisis"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:385
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:384
 msgid ""
 "When students click the <em>Email Instructor</em> button to send feedback, "
 "WeBWorK fills in the subject line.  Here you can set the subject line.  In "
@@ -8560,14 +8559,14 @@ msgstr ""
 "du cours<li> %u = ID de l'utilisateur<li> %s = ID du devoir<li> %p = ID du "
 "problème<li> %x = section<li> %r = recitation<li> %% = signe pourcent</ul>"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:168
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:167
 msgid ""
 "When this is on students will see a line on the Grades page which has their "
 "total cumulative homework score.  This score includes all sets assigned to "
 "the student."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:334
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:333
 #, fuzzy
 msgid ""
 "When viewing a problem, WeBWorK usually puts the previously submitted answer "
@@ -9537,7 +9536,7 @@ msgstr "addGlobalSet %1 dans ProblemSetList: %2"
 msgid "added missing permission level for user"
 msgstr "le niveau d'autorisation manquant pour l'utilisateur a été ajouté"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 msgid "admin"
 msgstr ""
 
@@ -9879,11 +9878,11 @@ msgstr "devoir global %1 introuvable."
 msgid "global set %1 not found."
 msgstr "global set %1 non trouvé."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 msgid "grade_proctor"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 msgid "guest"
 msgstr ""
 
@@ -9978,7 +9977,7 @@ msgstr "Nom d'usager"
 msgid "login/studentID:"
 msgstr "Numéro de l'étudiant"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 msgid "login_proctor"
 msgstr ""
 
@@ -10054,7 +10053,7 @@ msgid "no users"
 msgstr "aucun usager"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:235
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 msgid "nobody"
 msgstr ""
 
@@ -10171,7 +10170,7 @@ msgstr "Problème %1"
 msgid "problems"
 msgstr "Problème %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 msgid "professor"
 msgstr ""
 
@@ -10382,7 +10381,7 @@ msgid "still open"
 msgstr "sera disponible le %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:82
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 msgid "student"
 msgstr "étudiant"
 
@@ -10409,7 +10408,7 @@ msgstr "Soumettre les réponses"
 msgid "summary"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
 #, fuzzy
 msgid "ta"
 msgstr "Données"

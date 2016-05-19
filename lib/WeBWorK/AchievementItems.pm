@@ -1215,9 +1215,9 @@ sub print_form {
 	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"tran_set_id", name=>"tran_set_id",onchange=>$problem_id_script})),
 	" ",
-	CGI::label($r->maketext(" Copy this Problem "),
+	CGI::label(' '.$r->maketext("Copy this Problem").' ',
 	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id",id=>"tran_problem_id",attributes=>\%attributes})),
-	CGI::label($r->maketext(" To this Problem "),
+	CGI::label(' '.$r->maketext("To this Problem").' ',
 	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id2",id=>"tran_problem_id2",attributes=>\%attributes}))
 
 
