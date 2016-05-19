@@ -16,7 +16,7 @@ PSVN =>
 	shfn	SetHeaderFileName			the file name of the set header file (shown when selecting problem?)
 	phfn	ProbHeaderFileName			the file name of the problem header file (shown when viewing a problem)
 	opdt	OpenDate				the date that the problem set "opens"
-	dudt	DueDate					the date after which no credit can be recieved
+	dudt	closeDate					the date after which no credit can be recieved
 	andt	AnswerDate				the date when answers can be shown
 	pfn#	ProblemFileName(#)			the file name of the problem
 	pva#	ProblemValue(#)				the number of points that the problem is worth

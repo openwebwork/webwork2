@@ -163,8 +163,8 @@ sub body {
 		my $prettyName = $userRecord->last_name
 			. ", "
 			. $userRecord->first_name;
-		my $dueDate    = $userSetRecord->due_date if ref($userSetRecord);
-		my $prettyDate = ($dueDate)?  '(' . $self->formatDateTime($dueDate) . ') ' : '';
+		my $closeDate    = $userSetRecord->due_date if ref($userSetRecord);
+		my $prettyDate = ($closeDate)?  '(' . $self->formatDateTime($closeDate) . ') ' : '';
 		print CGI::Tr({}, 
 			CGI::td({-align=>"center"},
 				($user eq $globalUserID

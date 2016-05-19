@@ -32,15 +32,15 @@ DoubleProb
 HalfCreditProb
 FullCreditProb
 ReducedCred
-ExtendDueDate
+ExtendcloseDate
 DoubleSet
 RessurectHW
 Surprise
-SuperExtendDueDate
+SuperExtendcloseDate
 HalfCreditSet
 FullCreditSet
 AddNewTestGW
-ExtendDueDateGW
+ExtendcloseDateGW
 RessurectGW
 )];
 
@@ -175,7 +175,7 @@ sub use_item {
 
 #Item to extend a close date by 24 hours. 
 
-package WeBWorK::AchievementItems::ExtendDueDate;
+package WeBWorK::AchievementItems::ExtendcloseDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
 use WeBWorK::Utils qw(sortByName before after between x);
@@ -185,7 +185,7 @@ sub new {
     my %options = @_;
 
     my $self = {
-	id => "ExtendDueDate",
+	id => "ExtendcloseDate",
 	name => x("Tunic of Extension"),
 	description => x("Adds 24 hours to the close date of a homework."),
 	%options,
@@ -258,7 +258,7 @@ sub use_item {
 
 #Item to extend a close date by 48 hours. 
 
-package WeBWorK::AchievementItems::SuperExtendDueDate;
+package WeBWorK::AchievementItems::SuperExtendcloseDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
 use WeBWorK::Utils qw(sortByName before after between x);
@@ -268,7 +268,7 @@ sub new {
     my %options = @_;
 
     my $self = {
-	id => "SuperExtendDueDate",
+	id => "SuperExtendcloseDate",
 	name => x("Robe of Longevity"),
 	description => x("Adds 48 hours to the close date of a homework."),
 	%options,
@@ -1427,7 +1427,7 @@ sub use_item {
 }
 
 #Item to extend the due date on a gateway 
-package WeBWorK::AchievementItems::ExtendDueDateGW;
+package WeBWorK::AchievementItems::ExtendcloseDateGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
 use WeBWorK::Utils qw(sortByName before after between x);
@@ -1437,7 +1437,7 @@ sub new {
     my %options = @_;
 
     my $self = {
-	id => "ExtendDueDateGW",
+	id => "ExtendcloseDateGW",
 	name => x("Amulet of Extension"),
 	description => x("Extends the close date of a gateway test by 24 hours. Note: The test must still be open for this to work."),
 	%options,

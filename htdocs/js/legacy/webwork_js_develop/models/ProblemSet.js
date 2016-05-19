@@ -165,15 +165,15 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
         */
         isDueOn: function (_date,reducedCredit){
             var date = new XDate(_date);
-            var dueDate = new XDate(this.get("due_date"));
-            var reducedDate = new XDate(dueDate.getTime()-1000*60*reducedCredit);
+            var closeDate = new XDate(this.get("due_date"));
+            var reducedDate = new XDate(closeDate.getTime()-1000*60*reducedCredit);
             return ((date.getMonth()===reducedDate.getMonth()) && (date.getDate()===reducedDate.getDate()) && (date.getFullYear() ===reducedDate.getFullYear()));
         },
         isOpen: function (_date,reducedCredit){
             var date = new XDate(_date);
             var openDate = new XDate(this.get("open_date"));
-            var dueDate = new XDate(this.get("due_date"));
-            var reducedDate = new XDate(dueDate.getTime()-1000*60*reducedCredit);
+            var closeDate = new XDate(this.get("due_date"));
+            var reducedDate = new XDate(closeDate.getTime()-1000*60*reducedCredit);
             return ((date >openDate) && (date < reducedDate));
 
         },
@@ -182,17 +182,17 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             if (this.get("enable_reduced_scoring")==="no") {return false;}
             var date = new XDate(_date);
             var openDate = new XDate(this.get("open_date"));
-            var dueDate = new XDate(this.get("due_date"));
-            var reducedDate = new XDate(dueDate.getTime()-1000*60*reducedCredit);
-            return ((date >reducedDate) && (date < dueDate));
+            var closeDate = new XDate(this.get("due_date"));
+            var reducedDate = new XDate(closeDate.getTime()-1000*60*reducedCredit);
+            return ((date >reducedDate) && (date < closeDate));
 
         },
         overlaps: function (_set){
             var openDate1 = new XDate(this.get("open_date"));
-            var dueDate1 = new XDate(this.get("due_date"));
+            var closeDate1 = new XDate(this.get("due_date"));
             var openDate2 = new XDate(_set.get("open_date"));
-            var dueDate2 = new XDate(_set.get("due_date"));
-            return (openDate1<openDate2)?(dueDate1>openDate2):(dueDate2>openDate1);
+            var closeDate2 = new XDate(_set.get("due_date"));
+            return (openDate1<openDate2)?(closeDate1>openDate2):(closeDate2>openDate1);
         },
         getAssignedUsers: function ()
         {
@@ -229,11 +229,11 @@ define(['Backbone', 'underscore','config','XDate','./ProblemList'], function(Bac
             });
 
         },
-        updateUserSet: function(_users,_openDate,_dueDate,_answerDate){
+        updateUserSet: function(_users,_openDate,_closeDate,_answerDate){
             var self = this;
             console.log("Updating the dates to users " + _users);
             var requestObject = {xml_command: "updateUserSet", users: _users.join(","), set_id: this.get("set_id"),
-                                    open_date: _openDate, due_date: _dueDate, answer_date: _answerDate};
+                                    open_date: _openDate, due_date: _closeDate, answer_date: _answerDate};
             console.log(requestObject);
             _.defaults(requestObject, config.requestObject);
             $.post(config.webserviceURL, requestObject, function (data){

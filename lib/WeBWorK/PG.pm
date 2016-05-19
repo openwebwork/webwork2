@@ -109,7 +109,7 @@ sub defineProblemEnvir {
 	$envir{texDisposition}      = "pdf"; # in webwork2, we use pdflatex
 	
 	# Problem Information
-	# ADDED: courseName, formatedDueDate, enable_reduced_scoring
+	# ADDED: courseName, formatedcloseDate, enable_reduced_scoring
 	
 	$envir{openDate}            = $set->open_date;
 	$envir{formattedOpenDate}   = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone});
@@ -128,24 +128,24 @@ sub defineProblemEnvir {
 	$envir{OpenDateTimeZone}    = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone}, "%Z", $ce->{siteDefaults}{locale});
 	$envir{OpenDateTime12}      = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone}, "%I:%M%P", $ce->{siteDefaults}{locale});
 	$envir{OpenDateTime24}      = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone}, "%R", $ce->{siteDefaults}{locale});
-	$envir{dueDate}             = $set->due_date;
-	$envir{formattedDueDate}    = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone});
-	$envir{formatedDueDate}     = $envir{formattedDueDate}; # typo in many header files
-	$envir{DueDateDayOfWeek}    = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%A", $ce->{siteDefaults}{locale});
-	$envir{DueDateDayOfWeekAbbrev} = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%a", $ce->{siteDefaults}{locale});
-	$envir{DueDateDay}          = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%d", $ce->{siteDefaults}{locale});
-	$envir{DueDateMonthNumber}  = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%m", $ce->{siteDefaults}{locale});
-	$envir{DueDateMonthWord}    = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%B", $ce->{siteDefaults}{locale});
-	$envir{DueDateMonthAbbrev}  = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%b", $ce->{siteDefaults}{locale});
-	$envir{DueDateYear2Digit}   = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%y", $ce->{siteDefaults}{locale});
-	$envir{DueDateYear4Digit}   = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%Y", $ce->{siteDefaults}{locale});
-	$envir{DueDateHour12}       = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%I", $ce->{siteDefaults}{locale});
-	$envir{DueDateHour24}       = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%H", $ce->{siteDefaults}{locale});
-	$envir{DueDateMinute}       = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%M", $ce->{siteDefaults}{locale});
-	$envir{DueDateAMPM}         = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%P", $ce->{siteDefaults}{locale});
-	$envir{DueDateTimeZone}     = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%Z", $ce->{siteDefaults}{locale});
-	$envir{DueDateTime12}       = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%I:%M%P", $ce->{siteDefaults}{locale});
-	$envir{DueDateTime24}       = formatDateTime($envir{dueDate}, $ce->{siteDefaults}{timezone}, "%R", $ce->{siteDefaults}{locale});
+	$envir{closeDate}             = $set->due_date;
+	$envir{formattedcloseDate}    = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone});
+	$envir{formatedcloseDate}     = $envir{formattedcloseDate}; # typo in many header files
+	$envir{closeDateDayOfWeek}    = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%A", $ce->{siteDefaults}{locale});
+	$envir{closeDateDayOfWeekAbbrev} = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%a", $ce->{siteDefaults}{locale});
+	$envir{closeDateDay}          = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%d", $ce->{siteDefaults}{locale});
+	$envir{closeDateMonthNumber}  = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%m", $ce->{siteDefaults}{locale});
+	$envir{closeDateMonthWord}    = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%B", $ce->{siteDefaults}{locale});
+	$envir{closeDateMonthAbbrev}  = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%b", $ce->{siteDefaults}{locale});
+	$envir{closeDateYear2Digit}   = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%y", $ce->{siteDefaults}{locale});
+	$envir{closeDateYear4Digit}   = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%Y", $ce->{siteDefaults}{locale});
+	$envir{closeDateHour12}       = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%I", $ce->{siteDefaults}{locale});
+	$envir{closeDateHour24}       = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%H", $ce->{siteDefaults}{locale});
+	$envir{closeDateMinute}       = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%M", $ce->{siteDefaults}{locale});
+	$envir{closeDateAMPM}         = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%P", $ce->{siteDefaults}{locale});
+	$envir{closeDateTimeZone}     = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%Z", $ce->{siteDefaults}{locale});
+	$envir{closeDateTime12}       = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%I:%M%P", $ce->{siteDefaults}{locale});
+	$envir{closeDateTime24}       = formatDateTime($envir{closeDate}, $ce->{siteDefaults}{timezone}, "%R", $ce->{siteDefaults}{locale});
 	$envir{answerDate}          = $set->answer_date;
 	$envir{formattedAnswerDate} = formatDateTime($envir{answerDate}, $ce->{siteDefaults}{timezone});
 	$envir{AnsDateDayOfWeek}    = formatDateTime($envir{answerDate}, $ce->{siteDefaults}{timezone}, "%A", $ce->{siteDefaults}{locale});

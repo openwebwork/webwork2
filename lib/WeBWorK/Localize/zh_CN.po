@@ -6328,7 +6328,7 @@ msgid ""
 "sets."
 msgstr ""
 
-#. ($openDate, $dueDate, $answerDate)
+#. ($openDate, $closeDate, $answerDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1978
 msgid ""
 "The open date: %1, close date: %2, and answer date: %3 must be defined and "
@@ -6384,7 +6384,7 @@ msgstr "您总的纪录分数是%1. %2"
 msgid "The recorded score for this test is %1/%2."
 msgstr "您总的纪录分数是%1. %2"
 
-#. ($openDate, $dueDate)
+#. ($openDate, $closeDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1985
 msgid ""
 "The reduced credit date should be between the open date %1 and close date %2"
@@ -6873,7 +6873,7 @@ msgstr "作业[_1]的文件名被改为'[_2]'。"
 msgid "This set doesn't contain any problems yet."
 msgstr "这个作业没有包含任何题目。"
 
-#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#. ($beginReducedScoringPeriod,$closeDate,$reducedScoringPerCent)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:375
 msgid ""
 "This set had a reduced scoring period that started on %1 and ended on %2.  "

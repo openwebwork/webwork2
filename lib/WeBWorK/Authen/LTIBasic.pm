@@ -617,7 +617,7 @@ sub authenticate
 					{
 					if (defined($globalSet)) 
 						{
-						if (defined($ce -> {"adjustDueDatesForLateAdds"}) and $ce -> {"adjustDueDatesForLateAdds"}
+						if (defined($ce -> {"adjustcloseDatesForLateAdds"}) and $ce -> {"adjustcloseDatesForLateAdds"}
 							and $globalSet -> open_date < $open_cut and $globalSet -> due_date < $due_cut
 							) 
 							{

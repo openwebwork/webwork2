@@ -438,8 +438,8 @@ sub scoreSet {
 	debug("done pre-fetching user problems for set $setID");
 
 	# Write the problem data
-	my $dueDateString = $self->formatDateTime($setRecord->due_date);
-	my ($dueDate, $dueTime) = $dueDateString =~ /^(.*) at (.*)$/;
+	my $closeDateString = $self->formatDateTime($setRecord->due_date);
+	my ($closeDate, $dueTime) = $closeDateString =~ /^(.*) at (.*)$/;
 	my $valueTotal = 0;
 	my %userStatusTotals = ();
 	my %userSuccessIndex = ();
@@ -461,7 +461,7 @@ sub scoreSet {
 			$scoringData[0][$column] = "";
 			$scoringData[1][$column] = $setRecord->set_id;
 			$scoringData[2][$column] = $prettyProblemID;
-			$scoringData[3][$column] = $dueDate;
+			$scoringData[3][$column] = $closeDate;
 			$scoringData[4][$column] = $dueTime;
 			$scoringData[5][$column] = $globalProblem->value;
 			$scoringData[6][$column] = $r->maketext("STATUS");

@@ -7048,7 +7048,7 @@ msgstr ""
 "templates). Son contenu est affiché dans le panneau juste à côté de la liste "
 "des devoirs."
 
-#. ($openDate, $dueDate, $answerDate)
+#. ($openDate, $closeDate, $answerDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1978
 #, fuzzy
 msgid ""
@@ -7116,7 +7116,7 @@ msgstr "Votre résultat final est : %1.  %2"
 msgid "The recorded score for this test is %1/%2."
 msgstr "Votre résultat final est : %1.  %2"
 
-#. ($openDate, $dueDate)
+#. ($openDate, $closeDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1985
 #, fuzzy
 msgid ""
@@ -7675,7 +7675,7 @@ msgstr "Ce devoir %1 est assigné à %2."
 msgid "This set doesn't contain any problems yet."
 msgstr "Ce devoir ne contient pas encore de problème."
 
-#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#. ($beginReducedScoringPeriod,$closeDate,$reducedScoringPerCent)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:375
 msgid ""
 "This set had a reduced scoring period that started on %1 and ended on %2.  "

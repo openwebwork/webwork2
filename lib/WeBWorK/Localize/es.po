@@ -6974,7 +6974,7 @@ msgid ""
 "sets."
 msgstr ""
 
-#. ($openDate, $dueDate, $answerDate)
+#. ($openDate, $closeDate, $answerDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1978
 msgid ""
 "The open date: %1, close date: %2, and answer date: %3 must be defined and "
@@ -7039,7 +7039,7 @@ msgstr "Tu calificación total es de %1.  %2."
 msgid "The recorded score for this test is %1/%2."
 msgstr "Tu calificación total es de %1.  %2."
 
-#. ($openDate, $dueDate)
+#. ($openDate, $closeDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1985
 msgid ""
 "The reduced credit date should be between the open date %1 and close date %2"
@@ -7560,7 +7560,7 @@ msgstr "tr: The set header for set %1 has been renamed to '%2'."
 msgid "This set doesn't contain any problems yet."
 msgstr "Esta tarea no contiene problemas."
 
-#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#. ($beginReducedScoringPeriod,$closeDate,$reducedScoringPerCent)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:375
 msgid ""
 "This set had a reduced scoring period that started on %1 and ended on %2.  "

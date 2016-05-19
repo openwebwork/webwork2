@@ -98,9 +98,9 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
             var today = XDate.today();
             var openDate = today.clone().addDays(7);
             var assignOpenPriorToDue = this.parent.settings.getSettingValue("pg{assignOpenPriorToDue}");
-            var dueDate = openDate.clone().addMinutes(assignOpenPriorToDue);
-            var answerAfterDueDate = this.parent.settings.getSettingValue("pg{answersOpenAfterDueDate}");
-            var answerDate = dueDate.clone().addMinutes(answerAfterDueDate);
+            var closeDate = openDate.clone().addMinutes(assignOpenPriorToDue);
+            var answerAftercloseDate = this.parent.settings.getSettingValue("pg{answersOpenAftercloseDate}");
+            var answerDate = closeDate.clone().addMinutes(answerAftercloseDate);
  
 
             // _openDate.toString("MM/dd/yyyy") + " at " + _openDate.toString("hh:mmtt")+ " " + tz[1];            
@@ -108,7 +108,7 @@ function(Backbone, _,ProblemSetList,ProblemSet,config){
             var problemSet = new ProblemSet({set_id: setname,
                 answer_date: answerDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
                 open_date: openDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone,
-                due_date: dueDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone
+                due_date: closeDate.toString("MM/dd/yyyy") + " at " + timeAssignDue + " " + timezone
             });
             problemSet.assignedUsers = [];
             var errorMessage = problemSet.preValidate('set_id', setname);

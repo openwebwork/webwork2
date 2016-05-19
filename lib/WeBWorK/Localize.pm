@@ -185,11 +185,11 @@ my $ConfigStrings = [
 		type => 'number',
 		hashVar => '{pg}->{assignOpenPriorToDue}'
 	 },
-	 {	var => 'pg{answersOpenAfterDueDate}',
+	 {	var => 'pg{answersOpenAftercloseDate}',
 		doc => x('Default Amount of Time (in minutes) after Due Date that Answers are Open'),
 		doc2 => x('The amount of time (in minutes) after the due date that the Answers are available to student to view.  You can change this for individual homework, but WeBWorK will use this value when a set is created.'),
 		type => 'number',
-		hashVar => '{pg}->{answersOpenAfterDueDate}'
+		hashVar => '{pg}->{answersOpenAftercloseDate}'
 	 },
     ],
 	[x('Optional Modules'),

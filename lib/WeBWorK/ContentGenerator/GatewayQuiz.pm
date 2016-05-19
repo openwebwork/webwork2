@@ -826,7 +826,7 @@ sub pre_header_initialize {
 	my $versionIsOpen = 0;  # can we do anything to this version?
 
 	# recall $isOpen = timeNow > openDate [for the merged userset] and 
-	#    $isClosed = timeNow > dueDate [for the merged userset]
+	#    $isClosed = timeNow > closeDate [for the merged userset]
 	#    again, if $self->{invalidSet} is already set, we don't need to 
 	#    to check this
 	if ( $isOpen && ! $isClosed && ! $self->{invalidSet} ) {
