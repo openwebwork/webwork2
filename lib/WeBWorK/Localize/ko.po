@@ -17,6 +17,10 @@ msgstr ""
 "X-Generator: Poedit 1.6.10\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:685
+msgid " column "
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:477
 #, fuzzy
 msgid "#corr"
@@ -42,8 +46,15 @@ msgstr ""
 msgid "% students"
 msgstr "학생들에게 보임"
 
+#. ($prettySetID)
+#. ($prettyProblemID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:808
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:821
+msgid "%1 (old editor)"
+msgstr ""
+
 #. ($display_name, $vnum)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:434
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:459
 #, fuzzy
 msgid "%1 (test %2)"
 msgstr "%1 (시험 %2)"
@@ -55,19 +66,19 @@ msgid "%1 Problems:"
 msgstr "문제"
 
 #. ($numAdded, $numSkipped, join(", ", @$skipped)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1342
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1345
 #, fuzzy
 msgid "%1 sets added, %2 sets skipped. Skipped sets: (%3)"
 msgstr "%1 추가된 문제집, %2 건너뛴 문제집, 건너뛴 문제집: (%3) "
 
 #. ($numExported, $numSkipped, (($numSkipped)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1450
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1453
 #, fuzzy
 msgid "%1 sets exported, %2 sets skipped. Skipped sets: (%3)"
 msgstr "%1 내보낸 문제집, %2 넘어간 문제집. 넘어간 문제집: (%3)"
 
 #. ($count, $numUsers)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:622
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:626
 #, fuzzy
 msgid "%1 students out of %2"
 msgstr "학생들에게 보임"
@@ -116,8 +127,8 @@ msgstr "완료됨."
 
 #. (wwRound(0, $answerScore*100)
 #. (int($answerScore*100)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:410
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:280
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:422
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:277
 #, fuzzy
 msgid "%1% correct"
 msgstr "%1 맞음"
@@ -193,7 +204,7 @@ msgid "%quant(%1,file) unpacked successfully"
 msgstr ""
 
 #. ($numBlanks)
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:418
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:415
 #, fuzzy
 msgid "%quant(%1,of the questions remains,of the questions remain) unanswered."
 msgstr "%quant(%1, 전체 문제 중)문제가 입력되지 않았습니다."
@@ -213,30 +224,23 @@ msgstr "점수"
 msgid "(Any unsaved changes will be lost.)"
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1267
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1274
-msgid ""
-"(Instructor hint preview: show the student hint after the following number "
-"of attempts:"
-msgstr ""
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1603
 msgid "(This problem will not count towards your grade.)"
 msgstr "(이 문제는 성적에 들어가지 않습니다.)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1932
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1945
 msgid ""
 "(This test is overtime because it was not submitted in the allowed time.)"
 msgstr ""
 
 #. ($testNoun, $self->formatDateTime($set->answer_date)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1821
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1834
 #, fuzzy
 msgid "(Your score on this %1 is not available until %2.)"
 msgstr "총점은 %1입니다. %2"
 
 #. ($testNoun)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1823
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1836
 #, fuzzy
 msgid "(Your score on this %1 is not available.)"
 msgstr "총점은 %1입니다. %2"
@@ -261,7 +265,7 @@ msgstr "실패"
 msgid "(score %1)"
 msgstr "점수"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:618
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:622
 #, fuzzy
 msgid "1 student"
 msgstr "학생 ID"
@@ -401,20 +405,21 @@ msgid ""
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:471
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:659
 msgid "ADJ STATUS"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2087
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2100
 #, fuzzy
 msgid "ANSWERS NOT RECORDED"
 msgstr "미리보기만 -- 답이 입력되지 않았습니다"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2075
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2088
 #, fuzzy
 msgid "ANSWERS NOT RECORDED --"
 msgstr "미리보기만 -- 답이 입력되지 않았습니다"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2086
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2099
 #, fuzzy
 msgid "ANSWERS ONLY CHECKED -- "
 msgstr "답안만 체크됨 -- 답안 기록되지 않음"
@@ -425,7 +430,7 @@ msgstr "답안만 체크됨 -- 답안 기록되지 않음"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:932
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1417
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1457
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1460
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1159
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1186
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1261
@@ -433,7 +438,7 @@ msgid "Abandon changes"
 msgstr "변경사항 취소"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:860
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1396
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1399
 msgid "Abandon export"
 msgstr "저장후 내보내기 취소"
 
@@ -516,7 +521,7 @@ msgid "Act as:"
 msgstr ""
 
 #. (HTML::Entities::encode_entities($eUserID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:999
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:981
 #, fuzzy
 msgid "Acting as %1."
 msgstr "%1 실행중"
@@ -692,7 +697,7 @@ msgid ""
 "ranges (e.g., 192.168.1.101-192.168.1.150)):"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:414
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:415
 msgid "Adjusted Status"
 msgstr ""
 
@@ -706,7 +711,7 @@ msgid "After set answer date"
 msgstr "대답한 날짜"
 
 #. ($reducedScoringPerCent)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:369
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:370
 msgid ""
 "After the reduced scoring peroid begins all work counts for %1% of its value."
 msgstr ""
@@ -719,12 +724,12 @@ msgstr ""
 msgid "All assignments were made successfully."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:409
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:406
 #, fuzzy
 msgid "All of the answers above are correct."
 msgstr "위의 답안은 모두 정답입니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:407
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:404
 #, fuzzy
 msgid "All of the gradeable answers above are correct."
 msgstr "위의 답안은 모두 정답입니다."
@@ -733,22 +738,22 @@ msgstr "위의 답안은 모두 정답입니다."
 msgid "All of these files will also be made available for mail merge."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:953
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:955
 #, fuzzy
 msgid "All selected sets hidden from all students"
 msgstr "선택된 모든 문제집 1% 모든 학생"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:952
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:954
 #, fuzzy
 msgid "All selected sets made visible for all students"
 msgstr "선택된 모든 문제집 1% 모든 학생"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:943
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:945
 #, fuzzy
 msgid "All sets hidden from all students"
 msgstr "학생들로부터 숨김"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:942
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:944
 #, fuzzy
 msgid "All sets made visible for all students"
 msgstr "학생들에게 보임"
@@ -761,12 +766,12 @@ msgstr ""
 msgid "All unassignments were made successfully."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:948
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:950
 #, fuzzy
 msgid "All visible hidden from all students"
 msgstr "보이는 모든 문제집 %1 모든 학생들"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:947
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:949
 #, fuzzy
 msgid "All visible sets made visible for all students"
 msgstr "보이는 모든 문제집 %1 모든 학생들"
@@ -849,9 +854,9 @@ msgstr "새로운 문제집 %1이 성공적으로 생성되었습니다"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:766
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:782
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:475
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:784
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:803
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:826
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:786
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:805
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:828
 msgid "Answer Date"
 msgstr "대답한 날짜"
 
@@ -860,8 +865,8 @@ msgstr "대답한 날짜"
 msgid "Answer Log"
 msgstr "정답 확인"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:372
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:314
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:384
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:311
 msgid "Answer Preview"
 msgstr "정답 미리보기"
 
@@ -968,7 +973,7 @@ msgstr "수업내역"
 msgid "Archive next course"
 msgstr "수업내역"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:944
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:926
 #, fuzzy
 msgid "Archive this Course"
 msgstr "수업내역"
@@ -1003,7 +1008,7 @@ msgstr ""
 msgid "Assign"
 msgstr "할당된 문제집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:288
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:265
 msgid "Assign All Sets to Current User"
 msgstr ""
 
@@ -1012,7 +1017,7 @@ msgstr ""
 msgid "Assign selected sets to selected users"
 msgstr "이 문제집을 할당할 사용자는?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1300
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1303
 msgid "Assign this set to which users?"
 msgstr "이 문제집을 할당할 사용자는?"
 
@@ -1048,7 +1053,7 @@ msgstr "할당된 문제집"
 msgid "Assignment type"
 msgstr "할당된 문제집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:414
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:411
 #, fuzzy
 msgid "At least one of the answers above is NOT correct."
 msgstr "제출 답안 중 최소 한 개가 %1 올바르지 않습니다. "
@@ -1070,7 +1075,7 @@ msgstr "시도"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:593
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1077
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1091
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:409
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:410
 msgid "Attempts"
 msgstr "시도"
 
@@ -1220,7 +1225,7 @@ msgid "Can't open %1"
 msgstr "파일 '[_1]'로 저장하기"
 
 #. ($filePath)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2235
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2238
 #, fuzzy
 msgid "Can't open file %1"
 msgstr "파일 '[_1]'로 저장하기"
@@ -1356,7 +1361,7 @@ msgstr ""
 msgid "Check Answers"
 msgstr "정답 확인"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2179
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2192
 #, fuzzy
 msgid "Check Test"
 msgstr "정답 확인"
@@ -1376,11 +1381,11 @@ msgstr ""
 msgid "Checking additional error messages"
 msgstr "추가 오류 메시지 확인"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:906
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:908
 msgid "Choose visibility of the sets to be affected"
 msgstr "보여질 문제집 선택"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:888
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:890
 msgid "Choose which sets to be affected"
 msgstr "적용될 문제집을 선택하세요"
 
@@ -1393,7 +1398,7 @@ msgstr ""
 msgid "Classlist Editor"
 msgstr "Classlist 편집자"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:299
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:324
 msgid "Clear"
 msgstr "Clear"
 
@@ -1434,31 +1439,31 @@ msgstr "닫기"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:765
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:781
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:474
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:783
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:802
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:825
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:785
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:804
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:827
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 #, fuzzy
 msgid "Close Date"
 msgstr "마감일"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:529
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:554
 #, fuzzy
 msgid "Closed, answers available."
 msgstr "닫힘, 답안 보기"
 
 #. ($self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:525
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:550
 #, fuzzy
 msgid "Closed, answers on %1."
 msgstr "닫힘, 답안 %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:527
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:552
 #, fuzzy
 msgid "Closed, answers recently available."
 msgstr "닫힘, 정답 보기 가능"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:481
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:506
 #, fuzzy
 msgid "Closed."
 msgstr "닫기"
@@ -1470,7 +1475,7 @@ msgid "Closes"
 msgstr "닫기"
 
 #. ($self->formatDateTime($set->due_date,undef,				       $r->ce->{studentDateDisplayFormat})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:141
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:142
 #, fuzzy
 msgid "Closes %1"
 msgstr "[_1]로 돌아가기"
@@ -1492,7 +1497,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:224
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:517
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:519
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1784
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:297
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:773
@@ -1509,15 +1514,15 @@ msgid "Comment"
 msgstr "코멘트"
 
 #. ($self->formatDateTime($set->answer_date)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1971
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1984
 msgid "Completed results for this assignment are not available until %1"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1973
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1986
 msgid "Completed results for this assignment are not available."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:421
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:446
 #, fuzzy
 msgid "Completed."
 msgstr "완료됨."
@@ -1568,8 +1573,8 @@ msgstr ""
 msgid "Copy templates from:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1904
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:373
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1917
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:385
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:415
 msgid "Correct"
 msgstr "수정"
@@ -1578,7 +1583,7 @@ msgstr "수정"
 msgid "Correct Adjusted Status"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:316
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:313
 #, fuzzy
 msgid "Correct Answer"
 msgstr "답안 수정"
@@ -1655,7 +1660,7 @@ msgid "Counter"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:448
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:415
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:416
 msgid "Counts for Parent"
 msgstr ""
 
@@ -1672,6 +1677,7 @@ msgid "Course %1 databases must be updated before renaming this course."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:735
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Home.pm:92
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:169
 msgid "Course Administration"
 msgstr "수업 관리"
@@ -1691,8 +1697,8 @@ msgstr ""
 msgid "Course ID:"
 msgstr "수업 정보"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:71
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:73
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:101
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:99
 msgid "Course Info"
 msgstr "수업 정보"
 
@@ -1753,7 +1759,7 @@ msgstr ""
 msgid "Create a new achievement with ID"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1106
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1108
 msgid "Create as what type of set?"
 msgstr "어떤 종류의 문제집으로 생성?"
 
@@ -1868,7 +1874,7 @@ msgstr ""
 msgid "Delete course:"
 msgstr "삭제"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1035
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1037
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:936
 msgid "Delete how many?"
 msgstr "삭제할 개수는?"
@@ -2025,7 +2031,7 @@ msgstr "지난 정답 보기"
 msgid "Do not unassign students unless you know what you are doing."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:297
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:274
 msgid "Do not uncheck a set unless you know what you are doing."
 msgstr ""
 
@@ -2097,29 +2103,29 @@ msgid "Download"
 msgstr "점수 다운로드"
 
 #. ($set->set_id)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:554
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:579
 #, fuzzy
 msgid "Download %1"
 msgstr "점수 다운로드"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:305
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:236
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:242
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:261
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:267
 #, fuzzy
 msgid "Download Hardcopy"
 msgstr "Hardcopy 생성"
 
 #. ($pl)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:292
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:317
 msgid "Download Hardcopy for Selected %plural(%1,Set,Sets)"
 msgstr "선택된 %plural(%1, Set, Sets)에 Hardcopy 다운로드"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:356
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:451
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:357
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:452
 msgid "Download PDF or TeX Hardcopy for Current Set"
 msgstr "PDF 다운로드 혹은 현재 문제집을 TeX Hardcopy"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:300
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:325
 msgid "Download PDF or TeX Hardcopy for Selected Sets"
 msgstr "선택된 문제집의 PDF또는 TeX Hardcopy 다운로드"
 
@@ -2138,7 +2144,7 @@ msgstr "점수 다운로드"
 msgid "Drop"
 msgstr "중단"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1579
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1582
 msgid "Duplicate this set and name it"
 msgstr "이 문제집 복사 후 이름 바꾸기"
 
@@ -2196,7 +2202,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2258
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2460
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:819
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:245
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:222
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:854
 msgid "Edit"
 msgstr "편집"
@@ -2291,7 +2297,7 @@ msgid ""
 "changes and return to the Manage Locations page."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:842
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:844
 msgid "Edit which sets?"
 msgstr "수정할 문제집은?"
 
@@ -2383,9 +2389,9 @@ msgstr "이메일"
 msgid "Email address"
 msgstr "이메일 주소"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1661
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1688
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1712
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1643
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1670
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1694
 msgid "Email instructor"
 msgstr "강사에게 이메일 전송"
 
@@ -2493,7 +2499,7 @@ msgstr "등록 현황"
 msgid "Enter filename below"
 msgstr "아래에 파일명을 입력해주세요"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1263
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1266
 msgid "Enter filenames below"
 msgstr "아래에 파일명을 입력해주세요"
 
@@ -2503,8 +2509,8 @@ msgid ""
 "password will initially be set to their student ID."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:371
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:313
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:383
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:310
 msgid "Entered"
 msgstr "접속됨"
 
@@ -2536,23 +2542,23 @@ msgstr ""
 msgid "Error message:"
 msgstr "메시지"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2108
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2090
 #, fuzzy
 msgid "Error messages"
 msgstr "메시지"
 
 #. ($setID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1534
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1537
 msgid "Error: Answer date must come after close date in set %1"
 msgstr ""
 
 #. ($setID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1531
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1534
 msgid "Error: Close date must come after open date in set %1"
 msgstr ""
 
 #. ($setID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1548
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1551
 msgid ""
 "Error: Reduced scoring date must come between the open date and close date "
 "in set %1"
@@ -2568,21 +2574,21 @@ msgstr "오류: 원본파일 [_1]을 읽을 수 없습니다."
 #. ($setID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1086
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1159
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1525
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1528
 msgid "Error: answer date cannot be more than 10 years from now in set %1"
 msgstr ""
 
 #. ($setID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1082
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1155
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1523
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1526
 msgid "Error: close date cannot be more than 10 years from now in set %1"
 msgstr ""
 
 #. ($setID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1078
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1151
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1521
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1524
 msgid "Error: open date cannot be more than 10 years from now in set %1"
 msgstr ""
 
@@ -2636,7 +2642,7 @@ msgid ""
 msgstr ""
 
 #. ($filePath)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2271
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2274
 msgid "Existing file %1 could not be backed up and was lost."
 msgstr ""
 
@@ -2658,7 +2664,7 @@ msgstr "저장 후 내보내기"
 msgid "Export selected achievements."
 msgstr "선택된 문제집 저장 후 내보내기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1420
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1423
 msgid "Export selected sets"
 msgstr "선택된 문제집 저장 후 내보내기"
 
@@ -2666,7 +2672,7 @@ msgstr "선택된 문제집 저장 후 내보내기"
 msgid "Export to what kind of file?"
 msgstr "저장 후 내보낼 파일 종류?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1353
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1356
 msgid "Export which sets?"
 msgstr "저장 후 내보낼 문제집은?"
 
@@ -2696,12 +2702,12 @@ msgid "Failed to create new achievement: no achievement ID specified!"
 msgstr "새로운 문제집 생성 실패: 문제집 이름 없음!"
 
 #. ($@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1202
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1205
 #, fuzzy
 msgid "Failed to create new set: %1"
 msgstr "새로운 문제집:%1 생성 실패"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1130
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1132
 msgid "Failed to create new set: no set name specified!"
 msgstr "새로운 문제집 생성 실패: 문제집 이름 없음!"
 
@@ -2712,22 +2718,22 @@ msgid ""
 msgstr "문제집 복사 실패: 복사할 문제집이 선택되지 않음! "
 
 #. ($@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1615
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1618
 #, fuzzy
 msgid "Failed to duplicate set: %1"
 msgstr "문제집:%1 복사 실패"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1599
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1602
 msgid "Failed to duplicate set: no set name specified!"
 msgstr "문제집 복사 실패: 문제집 이름이 없음!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1163
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1597
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1166
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1600
 msgid "Failed to duplicate set: no set selected for duplication!"
 msgstr "문제집 복사 실패: 복사할 문제집이 선택되지 않음! "
 
 #. ($newSetID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1601
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1604
 #, fuzzy
 msgid "Failed to duplicate set: set %1 already exists!"
 msgstr "문제집 복사 실패 : 문제집 %1이 이미 존재합니다!"
@@ -2743,7 +2749,7 @@ msgstr "새로운 문제집:%1 생성 실패"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:531
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:765
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:901
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2398
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2401
 #, fuzzy
 msgid "Failed to open %1"
 msgstr "파일 '[_1]'로 저장하기"
@@ -2773,7 +2779,7 @@ msgstr "피드백"
 msgid "Feedback by Section."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:263
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:260
 #, fuzzy
 msgid "FeedbackMessage"
 msgstr "피드백"
@@ -2932,7 +2938,7 @@ msgid "Format:"
 msgstr "Hardcopy 포맷:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:888
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:799
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:797
 msgid "From This Course"
 msgstr ""
 
@@ -3021,17 +3027,17 @@ msgstr "성적"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2434
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:694
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:533
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:534
 #, fuzzy
 msgid "Grade Problem"
 msgstr "다음 문제"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2176
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2189
 #, fuzzy
 msgid "Grade Test"
 msgstr "성적"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:419
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:420
 #, fuzzy
 msgid "Grader"
 msgstr "성적"
@@ -3053,7 +3059,7 @@ msgstr ""
 msgid "Guest Login"
 msgstr "게스트 로그인"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2124
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2106
 #, fuzzy
 msgid "HTTP Headers"
 msgstr "문제집 헤더"
@@ -3072,7 +3078,7 @@ msgstr "Hardcopy Generator"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:763
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:779
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:471
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:783
 msgid "Hardcopy Header"
 msgstr "Hardcopy Header"
 
@@ -3088,7 +3094,7 @@ msgstr "Hardcopy Header"
 msgid "Headers"
 msgstr "문제집 헤더"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:939
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:921
 msgid "Help"
 msgstr "도움말"
 
@@ -3096,7 +3102,7 @@ msgstr "도움말"
 msgid "Here is a new version of your problem."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:912
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:914
 msgid "Hidden"
 msgstr "숨김"
 
@@ -3151,11 +3157,11 @@ msgstr "문제집 에디터"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:734
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:117
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:233
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:258
 msgid "Homework Sets"
 msgstr "문제집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:465
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:481
 #, fuzzy
 msgid "Homework Totals"
 msgstr "문제집"
@@ -3211,7 +3217,7 @@ msgstr ""
 msgid "Illegal file '%1' specified"
 msgstr "파일 [_1]이 보호되었습니다!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2256
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2259
 msgid "Illegal filename contains '..'"
 msgstr ""
 
@@ -3224,15 +3230,15 @@ msgstr "가져오기"
 msgid "Import achievements from"
 msgstr "선택된 문제집 저장 후 내보내기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1259
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1262
 msgid "Import from where?"
 msgstr "어디서 가져오겠습니까?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1243
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1246
 msgid "Import how many sets?"
 msgstr "가져올 문제집 개수는?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1276
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1279
 msgid "Import sets with names"
 msgstr "새로운 이름으로 문제집 가져오기"
 
@@ -3264,7 +3270,7 @@ msgstr ""
 msgid "Include Success Index"
 msgstr "인덱스 포함"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1904
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1917
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:421
 #, fuzzy
 msgid "Incorrect"
@@ -3326,13 +3332,13 @@ msgstr ""
 msgid "Items"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2021
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2034
 #, fuzzy
 msgid "Jump to Page:"
 msgstr "다음 문제"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2048
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2050
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2061
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2063
 #, fuzzy
 msgid "Jump to Problem:"
 msgstr "다음 문제"
@@ -3455,7 +3461,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:887
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker2.pm:980
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:798
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:796
 #, fuzzy
 msgid "Local Problems"
 msgstr "문제"
@@ -3498,8 +3504,8 @@ msgstr "동작 멈춤"
 msgid "Log In Again"
 msgstr "다시 로그인해주세요"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:995
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:997
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:977
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:979
 msgid "Log Out"
 msgstr "로그아웃"
 
@@ -3515,8 +3521,8 @@ msgid "Log into %1"
 msgstr ""
 
 #. (HTML::Entities::encode_entities($userID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:995
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:997
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:977
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:979
 #, fuzzy
 msgid "Logged in as %1."
 msgstr "%1으로 로그인"
@@ -3634,7 +3640,7 @@ msgstr ""
 msgid "Merge file:"
 msgstr "헤더 파일"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:317
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:314
 #, fuzzy
 msgid "Message"
 msgstr "메시지"
@@ -3654,12 +3660,12 @@ msgstr ""
 msgid "Message:"
 msgstr "메시지"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:375
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:387
 msgid "Messages"
 msgstr "메시지"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2122
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2199
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2104
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2181
 msgid "Method"
 msgstr ""
 
@@ -3693,9 +3699,9 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:834
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:863
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:408
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:218
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:219
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:409
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:243
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:244
 msgid "Name"
 msgstr "이름"
 
@@ -3710,7 +3716,7 @@ msgstr "새로운 문제집 이름"
 msgid "Name of course information file"
 msgstr "수업 정보"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1093
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1095
 msgid "Name the new set"
 msgstr "새로운 문제집 이름"
 
@@ -3781,12 +3787,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:433
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2658
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2659
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2660
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2661
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2662
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2663
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:258
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:274
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:526
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:527
 msgid "No"
 msgstr "아니오"
 
@@ -3811,7 +3817,7 @@ msgid ""
 "speak with your instructor."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:938
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:940
 msgid "No change made to any set"
 msgstr "문제집에 변화없음"
 
@@ -3867,7 +3873,7 @@ msgid ""
 "saved."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:553
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:555
 msgid "No problems matched the given parameters."
 msgstr ""
 
@@ -3892,12 +3898,12 @@ msgid "No record for user %1."
 msgstr "문제집 [_1]의 헤더"
 
 #. ($prob)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2298
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2301
 #, fuzzy
 msgid "No record found for problem %1."
 msgstr "문제집 [_1]의 헤더"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2263
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2266
 msgid "No record found."
 msgstr ""
 
@@ -3905,12 +3911,12 @@ msgstr ""
 msgid "No sets in this course yet"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1004
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1006
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:279
 msgid "No sets selected for scoring"
 msgstr "점수기록할 문제집이 선택되지 않음."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2774
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2777
 msgid ""
 "No sets shown.  Choose one of the options above to list the sets in the "
 "course."
@@ -3921,7 +3927,7 @@ msgstr "문제집이 없습니다. 기입할 문제집을 위해 강좌에서 �
 msgid "No source filePath specified"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2130
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2133
 msgid "No source_file for problem in .def file"
 msgstr ""
 
@@ -3970,16 +3976,16 @@ msgstr ""
 msgid "None of the selected users are assigned to this set: %1"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1002
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:984
 msgid "Not logged in."
 msgstr "로그인 실패"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2110
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2123
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1229
 msgid "Note"
 msgstr "공지"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2182
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2195
 msgid ""
 "Note: grading the test grades all problems, not just those on this page."
 msgstr ""
@@ -4035,9 +4041,9 @@ msgstr "날짜 열기"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:764
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:780
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:472
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:782
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:801
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:824
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:784
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:803
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:826
 msgid "Open Date"
 msgstr "날짜 열기"
 
@@ -4057,19 +4063,19 @@ msgid "Open in new window"
 msgstr ""
 
 #. ($self->formatDateTime($set->due_date()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:670
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:694
 #, fuzzy
 msgid "Open, closes %1."
 msgstr "열림, 기한"
 
 #. ($self->formatDateTime($set->due_date()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:668
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:692
 #, fuzzy
 msgid "Open, complete by %1."
 msgstr "열기: 1% 완료"
 
 #. ($beginReducedScoringPeriod)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:665
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:689
 #, fuzzy
 msgid "Open, reduced scoring starts on %1."
 msgstr "감점 시작: %1"
@@ -4098,13 +4104,13 @@ msgstr "문제"
 msgid "Orig. Lib. Browser"
 msgstr "라이브러리 브라우저"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:444
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:460
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:838
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:866
 msgid "Out Of"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:424
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:449
 #, fuzzy
 msgid "Over time, closed."
 msgstr "시간 초과: 닫힘"
@@ -4161,7 +4167,7 @@ msgstr ""
 msgid "POD"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2097
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2110
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1886
 msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
 msgstr "미리보기만 -- 답이 입력되지 않았습니다"
@@ -4179,7 +4185,7 @@ msgid "Pad Fields"
 msgstr "필드 삽입"
 
 #. (timestamp($self)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1119
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1101
 #, fuzzy
 msgid "Page generated at %1"
 msgstr "페이지 생성 1% "
@@ -4204,7 +4210,7 @@ msgstr "비밀번호"
 msgid "Past Answers for %1, set %2, problem %3"
 msgstr "[_2]에 문제 [_3]으로 덧붙여진 [_1]"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:442
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:458
 msgid "Percent"
 msgstr ""
 
@@ -4309,7 +4315,7 @@ msgstr "정답 미리보기"
 msgid "Preview My Answers"
 msgstr "정답 미리보기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2173
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2186
 #, fuzzy
 msgid "Preview Test"
 msgstr "정답 미리보기"
@@ -4338,11 +4344,11 @@ msgstr "이전 문제"
 msgid "Primary sort"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1948
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1961
 msgid "Print Test"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1901
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1914
 #, fuzzy
 msgid "Prob"
 msgstr "문제"
@@ -4369,14 +4375,14 @@ msgstr "문제 %1"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:928
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:930
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:934
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:495
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:497
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:496
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:498
 #, fuzzy
 msgid "Problem %1"
 msgstr "문제 %1"
 
 #. ($problemNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2106
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2119
 #, fuzzy
 msgid "Problem %1."
 msgstr "문제 %1"
@@ -4421,14 +4427,14 @@ msgstr "문제 편집기"
 msgid "Problem source is drawn from a grouping set"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:445
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:461
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2152
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2314
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:430
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:840
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:871
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:871
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:405
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:406
 msgid "Problems"
 msgstr "문제"
 
@@ -4478,7 +4484,7 @@ msgid ""
 "proctored test."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2826
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2829
 msgid "Publish"
 msgstr "출판"
 
@@ -4532,7 +4538,7 @@ msgid "Reduced Scoring Date"
 msgstr "감점 불가능"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2223
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2545
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2548
 #, fuzzy
 msgid "Reduced Scoring Disabled"
 msgstr "감점 불가능"
@@ -4540,19 +4546,19 @@ msgstr "감점 불가능"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:154
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2223
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:453
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2545
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2548
 #, fuzzy
 msgid "Reduced Scoring Enabled"
 msgstr "감점 가능"
 
 #. ($self->formatDateTime($set->reduced_scoring_date,undef,				       $r->ce->{studentDateDisplayFormat})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:137
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:138
 #, fuzzy
 msgid "Reduced Scoring Starts %1"
 msgstr "감점 시작: %1"
 
 #. ($beginReducedScoringPeriod)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:676
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:700
 #, fuzzy
 msgid "Reduced scoring started on %1."
 msgstr "감점 시작: %1"
@@ -4585,7 +4591,7 @@ msgstr "사용자 리스트"
 msgid "Relax IP restrictions when?"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:410
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:411
 msgid "Remaining"
 msgstr "시도 횟수"
 
@@ -4667,7 +4673,7 @@ msgstr ""
 msgid "Report Bugs in this Problem"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:953
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:935
 msgid "Report bugs"
 msgstr "오류 보고"
 
@@ -4689,8 +4695,8 @@ msgstr ""
 msgid "Request New Version"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2119
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2196
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2101
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2178
 #, fuzzy
 msgid "Request information"
 msgstr "사이트 정보"
@@ -4800,9 +4806,9 @@ msgstr "설명"
 msgid "Restrict release by set(s)"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1901
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:374
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:315
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1914
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:386
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:312
 msgid "Result"
 msgstr "결과"
 
@@ -4817,7 +4823,7 @@ msgstr "마지막으로 실행된 결과"
 msgid "Result of last action performed: %1"
 msgstr "마지막으로 실행된 결과: %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:327
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:324
 msgid "Results for this submission"
 msgstr ""
 
@@ -4908,9 +4914,9 @@ msgstr "시스템 초기값 사용"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:947
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1441
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1481
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:305
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:388
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1484
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:282
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:363
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1182
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1255
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1210
@@ -4952,7 +4958,7 @@ msgstr ""
 msgid "Schema and database table definitions do not agree"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:443
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:459
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:479
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:392
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:725
@@ -4975,11 +4981,11 @@ msgstr ""
 msgid "Score selected set(s) and save to:"
 msgstr "선택된 문제집 점수 부여하고 저장:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1899
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1912
 msgid "Score summary for last submit:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:973
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:975
 msgid "Score which sets?"
 msgstr "점수매길 문제집은?"
 
@@ -4993,7 +4999,7 @@ msgstr "점수"
 msgid "Scoring Download"
 msgstr "점수 도구"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:155
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:162
 #, fuzzy
 msgid "Scoring Message"
 msgstr "점수 도구"
@@ -5188,12 +5194,12 @@ msgstr "이메일 전송:"
 msgid "Send to:"
 msgstr "이메일 전송:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:441
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:457
 msgid "Set"
 msgstr "문제집"
 
 #. ($newSetID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1131
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1133
 #, fuzzy
 msgid "Set %1 exists.  No set created"
 msgstr "문제집 %1 존재함. 생성된 문제집 없음."
@@ -5221,7 +5227,7 @@ msgid "Set Definition Filename"
 msgstr "문제집 정의 파일명"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:889
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:800
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:798
 #, fuzzy
 msgid "Set Definition Files"
 msgstr "문제집 정의 파일명"
@@ -5247,7 +5253,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:762
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:778
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:470
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:780
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:782
 msgid "Set Header"
 msgstr "문제집 헤더"
 
@@ -5256,20 +5262,20 @@ msgstr "문제집 헤더"
 msgid "Set ID"
 msgstr "학생 ID"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:307
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:309
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:308
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:310
 msgid "Set Info"
 msgstr "문제집 정보"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2752
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2755
 msgid "Set List"
 msgstr "문제집 리스트"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:761
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:777
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:779
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:800
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:823
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:802
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:825
 msgid "Set Name"
 msgstr "문제집 이름"
 
@@ -5301,7 +5307,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:496
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:368
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:429
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:192
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:193
 msgid "Sets"
 msgstr "문제집"
 
@@ -5320,7 +5326,7 @@ msgstr "배정된 사용자 편집하기"
 msgid "Setting"
 msgstr "사용자 설정 바꾸기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1288
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1291
 msgid "Shift dates so that the earliest is"
 msgstr ""
 
@@ -5347,7 +5353,7 @@ msgstr "힌트보여주기"
 msgid "Show Me Another"
 msgstr "새 창에서 보이기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2215
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2228
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2058
 msgid "Show Past Answers"
 msgstr "지난 정답 보기"
@@ -5360,7 +5366,7 @@ msgstr ""
 msgid "Show Scores on Finished Assignments?"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2168
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1441
 msgid "Show Solutions"
 msgstr "풀이 보기"
@@ -5379,7 +5385,7 @@ msgstr "보여줄 사용자는?"
 msgid "Show all paths"
 msgstr "선택된 모든 문제집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2162
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2175
 msgid "Show correct answers"
 msgstr "정답 보기"
 
@@ -5468,7 +5474,7 @@ msgstr "풀이"
 msgid "Solutions"
 msgstr "풀이"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:400
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:397
 msgid "Some answers will be graded later."
 msgstr ""
 
@@ -5495,20 +5501,20 @@ msgid ""
 "with your instructor"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2825
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2828
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1921
 #, fuzzy
 msgid "Sort"
 msgstr "분류"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:773
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:775
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:759
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:739
 msgid "Sort by"
 msgstr "분류"
 
 #. ($names{$primary}, $names{$secondary})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:830
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:832
 #, fuzzy
 msgid "Sort by %1 and then by %2"
 msgstr "%1로 분류하고 %2로 분류함"
@@ -5570,7 +5576,7 @@ msgstr "[_2]에 문제 [_3]으로 덧붙여진 [_1]"
 msgid "Statistics for %1 student %2"
 msgstr "학생별 진행상황 통계 보기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1901
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1914
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:392
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1079
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1093
@@ -5578,13 +5584,13 @@ msgstr "학생별 진행상황 통계 보기"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:294
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1855
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:275
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:412
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:221
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:222
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:413
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:246
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:247
 msgid "Status"
 msgstr "상태"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:999
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:981
 msgid "Stop Acting"
 msgstr "동작 중지"
 
@@ -5675,7 +5681,7 @@ msgstr "정답 제출하기"
 msgid "Submit Answers for %1"
 msgstr "답안 %1 제출하기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1617
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1620
 msgid "Success"
 msgstr "성공"
 
@@ -5698,7 +5704,7 @@ msgid "Successfully created new achievement %1"
 msgstr "새로운 문제집 %1이 성공적으로 생성되었습니다"
 
 #. ($newSetID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1204
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1207
 #, fuzzy
 msgid "Successfully created new set %1"
 msgstr "새로운 문제집 %1이 성공적으로 생성되었습니다"
@@ -5748,17 +5754,17 @@ msgid "Table is ok"
 msgstr ""
 
 #. ($display_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:446
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:448
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:484
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:487
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:471
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:473
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:509
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:512
 #, fuzzy
 msgid "Take %1 test"
 msgstr "%1 시험 보기"
 
 #. ($display_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:474
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:478
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:499
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:503
 #, fuzzy
 msgid "Take %1 test."
 msgstr "%1 시험 보기"
@@ -5781,11 +5787,11 @@ msgstr "실행!"
 msgid "Target Set:"
 msgstr "문제집 데이터 편집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:245
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:270
 msgid "Test Date"
 msgstr "시험 날짜"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:244
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:269
 msgid "Test Score"
 msgstr "시험 점수"
 
@@ -5840,11 +5846,11 @@ msgid ""
 "work done counts 50% of the original.\" will be displayed."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1120
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:1102
 msgid "The WeBWorK Project"
 msgstr "WeBWorK 프로젝트"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:406
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:407
 msgid ""
 "The adjusted status of a problem is the larger of the problem's status and "
 "the weighted average of the status of those problems which count towards the "
@@ -5865,16 +5871,16 @@ msgid ""
 "this value when a set is created. "
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:402
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:399
 #, fuzzy
 msgid "The answer above is NOT correct."
 msgstr "위의 답안은 %1 틀립니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:398
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:395
 msgid "The answer above is correct."
 msgstr "정답입니다"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:433
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:445
 #, fuzzy
 msgid "The answer will be graded later."
 msgstr "정답입니다"
@@ -6082,7 +6088,7 @@ msgid ""
 msgstr ""
 
 #. ($openDate, $dueDate, $answerDate)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1975
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1978
 msgid ""
 "The open date: %1, close date: %2, and answer date: %3 must be defined and "
 "in chronological order."
@@ -6134,19 +6140,19 @@ msgid ""
 msgstr ""
 
 #. ($recScore,$totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1846
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1859
 #, fuzzy
 msgid "The recorded score for this test is  %1/%2."
 msgstr "총점은 %1입니다. %2"
 
 #. ($recScore, $totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1856
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1869
 #, fuzzy
 msgid "The recorded score for this test is %1/%2."
 msgstr "총점은 %1입니다. %2"
 
 #. ($openDate, $dueDate)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1982
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1985
 msgid ""
 "The reduced credit date should be between the open date %1 and close date %2"
 msgstr ""
@@ -6164,7 +6170,7 @@ msgid "The score for this problem can count towards score of problem %1."
 msgstr "이 문제는 성적에 들어가지 않습니다."
 
 #. ($setName,$effectiveUser)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:345
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:346
 #, fuzzy
 msgid "The selected problem set (%1) is not a valid set for %2"
 msgstr "선택된 문제집(%1)이 유효한 문제집 %2이 아닙니다"
@@ -6211,7 +6217,7 @@ msgstr ""
 "'문제집 [_1] / 문제 [_2]'의 소스 파일이 [_3]에서 '[_4]'로 바뀌었습니다."
 
 #. ($versionNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1937
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1950
 msgid "The test (which is number %1) may  no longer be submitted for a grade."
 msgstr ""
 
@@ -6250,42 +6256,42 @@ msgid "The user %1 has been assigned %2."
 msgstr "문제집 [_1]의 헤더가 '[_2]'로 이름이 바뀌었습니다."
 
 #. ($enableReducedScoring)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1992
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1995
 msgid ""
 "The value %1 for enableReducedScoring is not valid; it will be replaced with "
 "'N'."
 msgstr ""
 
 #. ($timeCap)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2023
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2026
 msgid ""
 "The value %1 for the capTimeLimit option is not valid; it will be replaced "
 "with '0'."
 msgstr ""
 
 #. ($hideScore)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2014
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2017
 msgid ""
 "The value %1 for the hideScore option is not valid; it will be replaced with "
 "'N'."
 msgstr ""
 
 #. ($hideWork)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2019
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2022
 msgid ""
 "The value %1 for the hideWork option is not valid; it will be replaced with "
 "'N'."
 msgstr ""
 
 #. ($relaxRestrictIP)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2036
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2039
 msgid ""
 "The value %1 for the relaxRestrictIP option is not valid; it will be "
 "replaced with 'No'."
 msgstr ""
 
 #. ($restrictIP)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2028
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2031
 msgid ""
 "The value %1 for the restrictIP option is not valid; it will be replaced "
 "with 'No'."
@@ -6301,7 +6307,7 @@ msgstr ""
 msgid "Theme (refresh page after saving changes to reveal new theme.)"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:794
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:796
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:762
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:785
 msgid "Then by"
@@ -6392,7 +6398,7 @@ msgid ""
 "student."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:299
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:276
 msgid "There is NO undo for unassigning a set."
 msgstr ""
 
@@ -6415,7 +6421,7 @@ msgid "There is a written solution available"
 msgstr ""
 
 #. ($message_file, $merge_file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:98
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:101
 msgid ""
 "There is no additional grade information.  A message about additional grades "
 "can go in in [TMPL]/email/%1. It is merged with the file [Scoring]/%2. These "
@@ -6443,7 +6449,7 @@ msgstr ""
 msgid "There is no written solution available for this problem."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2143
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2125
 msgid ""
 "There may be something wrong with this question. Please inform your "
 "instructor including the warning messages below."
@@ -6481,17 +6487,17 @@ msgstr ""
 msgid "This action will not overwrite existing users."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:435
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:447
 #, fuzzy
 msgid "This answer is NOT completely correct."
 msgstr "위의 답안은 %1 틀립니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:437
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:449
 #, fuzzy
 msgid "This answer is NOT correct."
 msgstr "위의 답안은 %1 틀립니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:431
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:443
 #, fuzzy
 msgid "This answer is correct."
 msgstr "정답입니다"
@@ -6502,7 +6508,7 @@ msgid ""
 "guest."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:434
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:435
 msgid "This homework set contains no problems."
 msgstr "이 문제집에는 문제가 없습니다."
 
@@ -6582,7 +6588,7 @@ msgid ""
 "problem."
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2812
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:2805
 msgid "This problem contains a video which must be viewed online."
 msgstr ""
 
@@ -6618,7 +6624,7 @@ msgid ""
 msgstr "이 문제는 성적에 들어가지 않습니다."
 
 #. ($message_file, $merge_file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:157
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:164
 msgid ""
 "This scoring message is generated from [TMPL]/email/%1. It is merged with "
 "the file [Scoring]/%2. These files can be edited using the \"Email\" link "
@@ -6639,7 +6645,7 @@ msgid "This set doesn't contain any problems yet."
 msgstr "이 문제집에는 문제가 없습니다."
 
 #. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:374
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:375
 msgid ""
 "This set had a reduced scoring period that started on %1 and ended on %2.  "
 "During that period all work counted for %3% of its value."
@@ -6659,7 +6665,7 @@ msgid "This set is %1"
 msgstr "이 문제집은 %1입니다"
 
 #. ($reducedScoringPerCent)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:372
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:373
 msgid ""
 "This set is in its reduced scoring period.  All work counts for %1% of its "
 "value."
@@ -6718,7 +6724,7 @@ msgid ""
 "disables rerandomization."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:232
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:257
 msgid ""
 "This table lists out the available homework sets for this class, along with "
 "its current status. Click on the link on the name of the homework sets to "
@@ -6730,7 +6736,7 @@ msgid ""
 "clear button and an Email instructor button at the end of the table."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:404
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:405
 msgid ""
 "This table shows the problems that are in this problem set.  The columns "
 "from left to right are: name of the problem, current number of attempts "
@@ -6739,8 +6745,8 @@ msgid ""
 "problem page."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2121
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2198
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2103
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2180
 #, fuzzy
 msgid "Time"
 msgstr "시험 날짜"
@@ -6750,7 +6756,7 @@ msgid "Time Interval for New Test Versions (min; 0=infty)"
 msgstr ""
 
 #. ($elapsedTime,$allowed)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1928
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1941
 msgid "Time taken on test: %1 min (%2 min allowed)."
 msgstr ""
 
@@ -6760,6 +6766,17 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:146
 msgid "Timezone for the course"
+msgstr ""
+
+#. (sprintf("%.0f",$restriction)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:716
+msgid "To access this set you must score at least %1% on set %2."
+msgstr ""
+
+#. (sprintf("%.0f",$restriction)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:718
+msgid ""
+"To access this set you must score at least %1% on the following sets: %2."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:514
@@ -6775,7 +6792,7 @@ msgid ""
 "check the box below."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:301
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:278
 msgid ""
 "To change status (scores or grades) for this student for one set, click on "
 "the individual set link."
@@ -6812,16 +6829,6 @@ msgid ""
 msgstr ""
 "이 문자열을 수정하려면 아래의 '저장하기'를 이용해 다른 파일로 저장하세요."
 
-#. (sprintf("%.0f",$restriction)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:692
-msgid "To open this set you must score at least %1% on set %2."
-msgstr ""
-
-#. (sprintf("%.0f",$restriction)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:694
-msgid "To open this set you must score at least %1% on the following sets: %2."
-msgstr ""
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:555
 msgid "To:"
 msgstr ""
@@ -6855,8 +6862,8 @@ msgstr ""
 msgid "Two Columns"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2123
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2200
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2105
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2182
 msgid "URI"
 msgstr ""
 
@@ -6927,8 +6934,8 @@ msgstr "'[_1]'로 쓸 수 없음: [_2]"
 msgid "Unclassified Problems"
 msgstr "문제 수정하기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:404
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:273
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:416
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:270
 msgid "Ungraded"
 msgstr ""
 
@@ -7030,7 +7037,7 @@ msgstr ""
 msgid "Use Item"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2729
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2732
 msgid "Use System Default"
 msgstr "시스템 초기값 사용"
 
@@ -7255,23 +7262,23 @@ msgid "View/Edit"
 msgstr "편집"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2009
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:264
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:63
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:265
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:91
 #, fuzzy
 msgid "Viewing temporary file:"
 msgstr "임시파일 보이기:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:767
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:783
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:785
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:804
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:827
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:787
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:806
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:829
 msgid "Visibility"
 msgstr "보임"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:452
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:476
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:913
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:915
 msgid "Visible"
 msgstr "보임"
 
@@ -7280,18 +7287,18 @@ msgstr "보임"
 msgid "Visible to Students"
 msgstr "학생들에게 보임"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2142
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2124
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:730
 #, fuzzy
 msgid "Warning"
 msgstr "시도 횟수"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2194
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2176
 #, fuzzy
 msgid "Warning messages"
 msgstr "점수 도구"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1031
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1033
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:932
 msgid "Warning: Deletion destroys all user-related data and is not undoable!"
 msgstr "경고: 삭제시 모든 사용자 관련 정보가 사라지고, 복구되지 않습니다!"
@@ -7301,12 +7308,12 @@ msgstr "경고: 삭제시 모든 사용자 관련 정보가 사라지고, 복구
 msgid "Warnings encountered while processing %1. Error text: %2"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2105
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2087
 #, fuzzy
 msgid "WeBWorK Error"
 msgstr "WeBWorK"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2192
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2174
 #, fuzzy
 msgid "WeBWorK Warnings"
 msgstr "WeBWorK"
@@ -7326,7 +7333,7 @@ msgid ""
 "more information."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2193
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2175
 msgid ""
 "WeBWorK has encountered warnings while processing your request. If this "
 "occured when viewing a problem, it was likely caused by an error or "
@@ -7421,7 +7428,7 @@ msgid ""
 "problems. Make sure this is what you want to do before unchecking students."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:303
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:280
 msgid ""
 "When you uncheck a homework set (and save the changes), you destroy all of "
 "the data for that set for this student.   If you reassign the set, the "
@@ -7430,13 +7437,13 @@ msgid ""
 msgstr ""
 
 #. ($self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:438
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:493
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:463
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:518
 #, fuzzy
 msgid "Will open on %1."
 msgstr "%1후에 열립니다"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:411
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:412
 msgid "Worth"
 msgstr "점수"
 
@@ -7470,12 +7477,12 @@ msgstr "템플릿 디렉토리에서 허가되지 않음. 변경할 수 없음."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:432
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2658
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2659
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2660
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2661
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2662
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2663
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:258
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:274
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:526
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:527
 msgid "Yes"
 msgstr "예"
 
@@ -7558,7 +7565,7 @@ msgid ""
 "problem. %2 Close this tab, and return to the original problem."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1887
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1900
 msgid "You are out of time.  Press grade now!"
 msgstr ""
 
@@ -7678,12 +7685,12 @@ msgstr "자세한 오류를 볼 권한이 없습니다."
 msgid "You don't have any items!"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1917
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1930
 msgid "You exceeded the allowed time."
 msgstr ""
 
 #. ($numLeft)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1894
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1907
 #, fuzzy
 msgid "You have %1 attempt(s) remaining on this test."
 msgstr "%1 %2 남았습니다."
@@ -7711,7 +7718,7 @@ msgstr "이 문제를 %quant(%1, 번) 시도했습니다."
 msgid "You have been logged out of WeBWorK."
 msgstr "WeBWorK에서 로그아웃되었습니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1883
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1896
 msgid "You have less than 1 minute to complete this test."
 msgstr ""
 
@@ -7752,7 +7759,7 @@ msgstr ""
 msgid "You may not change your own password here!"
 msgstr "여기서 비밀번호를 바꿀 수 없습니다!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1938
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1951
 #, fuzzy
 msgid "You may still check your answers."
 msgstr "여기서 비밀번호를 바꿀 수 없습니다!"
@@ -7777,8 +7784,8 @@ msgstr "이 문제를 %quant(%1, 번) 시도했습니다."
 msgid "You must confirm the password for the initial instructor."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:463
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:516
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:488
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:541
 msgid ""
 "You must log into this set via your Learning Management System (e.g. "
 "Blackboard, Moodle, etc...)."
@@ -7954,7 +7961,7 @@ msgid ""
 "instructor if you need help."
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2807
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:2800
 msgid "Your browser does not support the video tag."
 msgstr ""
 
@@ -7994,43 +8001,43 @@ msgid "Your overall recorded score is %1.  %2"
 msgstr "총점은 %1입니다. %2"
 
 #. ($versionNumber, wwRound(2,$recordedScore)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1914
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1927
 #, fuzzy
 msgid "Your recorded score on this test (number %1) is %2/%3."
 msgstr "총점은 %1입니다. %2"
 
 #. ($testNounNum)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1813
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1826
 #, fuzzy
 msgid "Your score on this %1 WAS recorded."
 msgstr "점수가 기록되었습니다."
 
 #. ($testNoun,$attemptScore,$totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1818
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1831
 #, fuzzy
 msgid "Your score on this %1 is %2/%3."
 msgstr "총점은 %1입니다. %2"
 
 #. ($testNounNum)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1809
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1822
 #, fuzzy
 msgid "Your score on this %1 was NOT recorded."
 msgstr "점수가 기록되었습니다."
 
 #. ($attemptScore,$totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1853
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1866
 #, fuzzy
 msgid "Your score on this (checked, not recorded) submission is %1/%2."
 msgstr "점수가 기록되었습니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1523
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1799
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2073
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1535
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1812
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2086
 #, fuzzy
 msgid "Your score on this problem was recorded."
 msgstr "점수가 기록되었습니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1525
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1537
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:204
 msgid ""
 "Your score was not recorded because there was a failure in storing the "
@@ -8047,34 +8054,34 @@ msgid ""
 "you."
 msgstr "점수가 기록되지 않았습니다. 이 문제가 할당되지 않았음."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1548
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1560
 #, fuzzy
 msgid ""
 "Your score was not recorded because this problem set version is not open."
 msgstr "점수가 기록되지 않았습니다. 이 문제가 할당되지 않았음."
 
 #. ($elapsed, $allowed)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1564
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1576
 #, fuzzy
 msgid ""
 "Your score was not recorded because you have exceeded the time limit for "
 "this test. (Time taken: %1 min; allowed: %2 min.)"
 msgstr "점수가 기록되지 않았습니다. 이 문제가 할당되지 않았음."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1552
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1564
 #, fuzzy
 msgid ""
 "Your score was not recorded because you have no attempts remaining on this "
 "set version."
 msgstr "점수가 기록되지 않았습니다. 이 문제가 할당되지 않았음."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1566
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1578
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:246
 #, fuzzy
 msgid "Your score was not recorded."
 msgstr "점수가 기록되었습니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1834
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1847
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:231
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:237
 msgid "Your score was not successfully sent to the LMS"
@@ -8084,7 +8091,7 @@ msgstr ""
 msgid "Your score was recorded."
 msgstr "점수가 기록되었습니다."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1833
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1846
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:229
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:235
 msgid "Your score was successfully sent to the LMS"
@@ -8100,8 +8107,8 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1222
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1229
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:307
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:71
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:308
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:99
 #, fuzzy
 msgid "[Edit]"
 msgstr "[편집]"
@@ -8139,12 +8146,12 @@ msgstr "_문제집_편집자_정보"
 msgid "_LOGIN_MESSAGE"
 msgstr "_로그인_메시지"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2747
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2749
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2750
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2752
 msgid "_PROBLEM_SET_SUMMARY"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2106
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2088
 msgid "_REQUEST_ERROR"
 msgstr "_오류_보고"
 
@@ -8154,12 +8161,12 @@ msgid "_USER_TABLE_SUMMARY"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1139
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1113
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1115
 msgid "a duplicate of the first selected set"
 msgstr "첫번쨰 선택된 문제집 사본"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1138
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1112
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1114
 msgid "a new empty set"
 msgstr "새로운 빈 문제집"
 
@@ -8168,7 +8175,7 @@ msgid "a new file named:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1244
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1249
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1252
 msgid "a single set"
 msgstr "문제집 하나"
 
@@ -8183,7 +8190,7 @@ msgid "add problems"
 msgstr "문제 추가"
 
 #. ($setName, $@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1768
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1771
 msgid "addGlobalSet %1 in ProblemSetList:  %2"
 msgstr ""
 
@@ -8204,7 +8211,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:743
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1273
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1306
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1309
 #, fuzzy
 msgid "all current users"
 msgstr "모든 사용자"
@@ -8213,22 +8220,22 @@ msgstr "모든 사용자"
 msgid "all set dates for one <b>user</b>"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:636
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:640
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1016
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1319
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:657
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:825
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:866
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:936
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1359
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1362
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:682
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:848
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:895
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:980
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:850
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:897
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:982
 msgid "all sets"
 msgstr "모든 문제집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:616
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:620
 #, fuzzy
 msgid "all students"
 msgstr "모든 문제집"
@@ -8255,9 +8262,13 @@ msgid "alphabetically"
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:661
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:672
 #, fuzzy
 msgid "answer"
+msgstr "대답한 날짜"
+
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:672
+#, fuzzy
+msgid "answer "
 msgstr "대답한 날짜"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1030
@@ -8297,16 +8308,16 @@ msgid "by last login date"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:941
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1475
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1478
 msgid "changes abandoned"
 msgstr "변경사항 취소됨"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:976
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1564
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1567
 msgid "changes saved"
 msgstr "변경사항 저장"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:245
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:222
 #, fuzzy
 msgid "class list data"
 msgstr "Classlist 편집자"
@@ -8320,17 +8331,13 @@ msgstr ""
 msgid "close"
 msgstr "닫기"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:685
-msgid "column"
-msgstr ""
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:673
 msgid "columns:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:401
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:413
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:513
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:269
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:266
 msgid "correct"
 msgstr "수정"
 
@@ -8340,7 +8347,7 @@ msgid "course files"
 msgstr "수업내역"
 
 #. ($num)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1082
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1084
 #, fuzzy
 msgid "deleted %1 sets"
 msgstr "삭제된 문제집 %1"
@@ -8356,7 +8363,7 @@ msgstr "삭제된 사용자 %1"
 msgid "editing all achievements"
 msgstr "모든 문제집 수정"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:866
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:868
 msgid "editing all sets"
 msgstr "모든 문제집 수정"
 
@@ -8369,7 +8376,7 @@ msgstr "모든 사용자 수정"
 msgid "editing selected achievements"
 msgstr "선택된 문제집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:872
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:874
 msgid "editing selected sets"
 msgstr "선택된 문제집 수정"
 
@@ -8377,7 +8384,7 @@ msgstr "선택된 문제집 수정"
 msgid "editing selected users"
 msgstr "선택된 사용자 수정"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:869
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:871
 msgid "editing visible sets"
 msgstr "보이는 문제집 수정"
 
@@ -8391,7 +8398,7 @@ msgstr "보이는 사용자 수정"
 msgid "email:"
 msgstr "이메일"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:503
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:505
 #, fuzzy
 msgid "empty"
 msgstr "시도"
@@ -8406,12 +8413,12 @@ msgid "entry rows."
 msgstr "문제 수정하기"
 
 #. ($restrictLoc, $setName, $@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1778
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1781
 msgid "error adding set location %1 for set %2: %3"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:869
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1414
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1417
 msgid "export abandoned"
 msgstr "내보내기 취소"
 
@@ -8420,7 +8427,7 @@ msgstr "내보내기 취소"
 msgid "exporting all achievements"
 msgstr "모든 문제집 내보내기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1378
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1381
 msgid "exporting all sets"
 msgstr "모든 문제집 내보내기"
 
@@ -8429,16 +8436,16 @@ msgstr "모든 문제집 내보내기"
 msgid "exporting selected achievements"
 msgstr "선택된 문제집 저장 후 내보내기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1385
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1388
 msgid "exporting selected sets"
 msgstr "선택된 문제집 저장 후 내보내기"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1382
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1385
 msgid "exporting visible sets"
 msgstr "보이는 문제집 저장 후 내보내기"
 
 #. ($userName, $editForUserID, $setCount)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:245
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:222
 #, fuzzy
 msgid "for  %1 (%2) who has been assigned %3 sets."
 msgstr "문제집 [_1]의 헤더가 '[_2]'로 이름이 바뀌었습니다."
@@ -8508,7 +8515,7 @@ msgstr ""
 msgid "hidden"
 msgstr "숨김"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:932
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:934
 msgid "hidden from"
 msgstr "숨겨짐"
 
@@ -8543,8 +8550,8 @@ msgstr ""
 msgid "inactive"
 msgstr "비활성화"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:407
-#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:278
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:419
+#: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:275
 msgid "incorrect"
 msgstr "실패"
 
@@ -8553,7 +8560,7 @@ msgid "index"
 msgstr ""
 
 #. ($restrictLoc, $setName)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1784
 msgid "input set location %1 already exists for set %2."
 msgstr ""
 
@@ -8586,7 +8593,7 @@ msgstr "학생 ID"
 msgid "login_proctor"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:932
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:934
 #, fuzzy
 msgid "made visible for"
 msgstr "~에게 보임"
@@ -8596,7 +8603,7 @@ msgid "max"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1245
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1250
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1253
 msgid "multiple sets"
 msgstr "많은 문제집"
 
@@ -8624,18 +8631,18 @@ msgstr ""
 msgid "no location"
 msgstr "풀이"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:634
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:638
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1015
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1073
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:658
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1041
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1043
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:683
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:894
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:979
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:896
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:981
 msgid "no sets"
 msgstr "없는 문제집입니다"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:614
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:618
 #, fuzzy
 msgid "no students"
 msgstr "없는 문제집입니다"
@@ -8676,7 +8683,7 @@ msgid "one <b>user</b> (on one <b>set</b>)"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1274
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1307
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1310
 msgid "only"
 msgstr ""
 
@@ -8694,7 +8701,7 @@ msgid "or"
 msgstr "분류"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:841
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:756
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:754
 #, fuzzy
 msgid "or Problems from"
 msgstr "문제"
@@ -8709,7 +8716,7 @@ msgid "overwrite all data"
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:678
-msgid "part"
+msgid "part "
 msgstr ""
 
 #. ($userID)
@@ -8729,12 +8736,12 @@ msgstr ""
 msgid "pg warning"
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2187
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:2180
 #, fuzzy
 msgid "point"
 msgstr "힌트"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2185
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:2177
 #, fuzzy
 msgid "points"
 msgstr "힌트"
@@ -8743,14 +8750,14 @@ msgstr "힌트"
 msgid "preserve existing data"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2114
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2127
 #, fuzzy
 msgid "preview answers"
 msgstr "정답 미리보기"
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:667
 #, fuzzy
-msgid "problem"
+msgid "problem "
 msgstr "문제 %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:792
@@ -8768,8 +8775,8 @@ msgid "progress"
 msgstr ""
 
 #. ($line)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1965
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2203
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1968
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2206
 msgid "readSetDef error, can't read the line: ||%1||"
 msgstr ""
 
@@ -8792,13 +8799,13 @@ msgid "record for visible user %1 not found"
 msgstr "파일 '[_1]'을 찾을 수 없음."
 
 #. ($restrictLoc)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1784
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1787
 msgid ""
 "restriction location %1 does not exist.  IP restrictions have been ignored."
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:684
-msgid "row"
+msgid "row "
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:795
@@ -8840,12 +8847,12 @@ msgstr "선택된 문제집"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:827
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:868
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:938
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1043
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1361
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1045
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1364
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:684
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:850
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:897
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:981
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:852
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:899
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:983
 msgid "selected sets"
 msgstr "선택된 문제집"
 
@@ -8868,13 +8875,13 @@ msgstr "선택된 사용자"
 msgid "separate multiple IDs with commas"
 msgstr "무엇과 대응됩니까? (여러개의 ID를 콤마로 구별하시오) "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:638
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:642
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:84
 #, fuzzy
 msgid "set"
 msgstr "문제집"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:642
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:646
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:593
 #, fuzzy
 msgid "sets"
@@ -8907,7 +8914,7 @@ msgstr "선택된 모든 문제집"
 msgid "showing all users"
 msgstr "선택된 모든 사용자"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:756
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:757
 #, fuzzy
 msgid "showing hidden sets"
 msgstr "어떤 문제집도 보이지않기"
@@ -8962,13 +8969,13 @@ msgstr "학생 ID"
 msgid "students"
 msgstr "학생 ID"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1786
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1799
 #, fuzzy
 msgid "submission"
 msgstr "답안 제출하기"
 
 #. ($versionNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1788
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1801
 #, fuzzy
 msgid "submission (test %1)"
 msgstr "답안 제출하기"
@@ -8981,13 +8988,13 @@ msgstr ""
 msgid "ta"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1786
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1799
 #, fuzzy
 msgid "test"
 msgstr "%1 시험"
 
 #. ($versionNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1788
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1801
 #, fuzzy
 msgid "test (%1)"
 msgstr "%1 시험"
@@ -9072,7 +9079,7 @@ msgid "unable to write to directory %1"
 msgstr "파일 '[_1]'로 저장하기"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:357
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:503
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:504
 msgid "unlimited"
 msgstr "무제한"
 
@@ -9111,9 +9118,9 @@ msgstr "보임"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1320
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:826
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1360
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1363
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:685
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:849
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:851
 msgid "visible sets"
 msgstr "풀이집 보임"
 
@@ -9137,7 +9144,7 @@ msgid "with set name(s):"
 msgstr ""
 
 #. ($dir, $fileName)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1693
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1696
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1372
 msgid "won't be able to read from file %1/%2: does it exist? is it readable?"
 msgstr ""
