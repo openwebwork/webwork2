@@ -1917,7 +1917,7 @@ sub readSetDef {
 				$paperHeaderFile = $value;
 			} elsif ($item eq 'screenHeaderFile') {
 				$screenHeaderFile = $value;
-			} elsif ($item eq 'closeDate') {
+			} elsif ($item eq 'closeDate' or $item eq 'dueDate') {
 				$closeDate = $value;
 			} elsif ($item eq 'openDate') {
 				$openDate = $value;
