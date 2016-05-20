@@ -370,7 +370,7 @@ EOF
 		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>$r->maketext("Upload"),id=>"Upload"}),
 		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		  CGI::br(),
-		  CGI::small(join(' &nbsp; ',"Format:",
+		  CGI::small(join(' &nbsp; ',$r->maketext('Format').':',
 		    CGI::radio_group(-name=>'format', -value=>[$r->maketext('Text'),$r->maketext('Binary'),$r->maketext('Automatic')],
 				     -default=>$self->getFlag('format','Automatic')))),
 		),
@@ -543,7 +543,7 @@ sub Save {
 			if ($@) {$self->addbadmessage($r->maketext("Failed to save: [_1]",$@))}
 			   else {$self->addgoodmessage($r->maketext("File saved"))}
 		} else {$self->addbadmessage($r->maketext("Can't write to file [_1]", $!))}
-	} else {$data = ""; $self->addbadmessage("Error: no file data was submitted!")}
+	} else {$data = ""; $self->addbadmessage($r->maketext("Error: no file data was submitted!"))}
 
 	$self->{pwd} = $pwd;
 	$self->RefreshEdit($data,$filename);
