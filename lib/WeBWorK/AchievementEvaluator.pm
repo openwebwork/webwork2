@@ -36,10 +36,10 @@ sub checkForAchievements {
 
     our $problem = shift;
     my $pg = shift;
-    my $db = shift;
-    my $ce = shift;
+    my $r = shift;
     my %options = @_;
-
+    my $db = $r->db;
+    my $ce = $r->ce;
 
     #set up variables and get achievements
     my $cheevoMessage = '';
@@ -265,7 +265,7 @@ sub checkForAchievements {
 			$cheevoMessage = $cheevoMessage . CGI::h2("$achievement->{name}");
 			#print out description as part of message if we are using items
 			
-			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : "Congratulations, you earned a new level!");
+			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : $r->maketext("Congratulations, you earned a new level!"));
 			$cheevoMessage .= CGI::end_div();
 
 	    } else {

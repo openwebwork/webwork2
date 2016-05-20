@@ -78,13 +78,13 @@ sub title {
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $type                = $self->{type};
-	my $string              = $r->maketext("Student Progress for")." ".$self->{ce}->{courseName}." ";
+	my $string = '';
 	if ($type eq 'student') {
-		$string             .= $r->maketext("student")." ".$self->{studentName};
+	  $string = $r->maketext("Student Progress for [_1] student [_2]", $self->{ce}->{courseName}, $self->{studentName});
 	} elsif ($type eq 'set' ) {
-		$string             .= $r->maketext("set")." ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ". $self->formatDateTime($self->{set_due_date});
+	  $string = $r->maketext("Student Progress for [_1] set [_2]. Closes [_3]", $self->{ce}->{courseName}, $self->{setName}, $self->formatDateTime($self->{set_due_date}));
 	}
+
 	return $string;
 }
 sub siblings {
@@ -106,7 +106,7 @@ sub siblings {
 	                                        courseID => $courseID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2("Student Progress");
+	print CGI::h2($r->maketext("Student Progress"));
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
@@ -274,7 +274,6 @@ sub displaySets {
 	my $user             = $r->param('user');
 	my $GlobalSet        = $self->{setRecord};
 	my $root             = $ce->{webworkURLs}->{root};
-	
 	my $setStatsPage     = $urlpath->newFromModule($urlpath->module, $r, courseID=>$courseName,statType=>'sets',setID=>$setName);
 	my $primary_sort_method_name = $r->param('primary_sort');
 	my $secondary_sort_method_name = $r->param('secondary_sort'); 
@@ -614,10 +613,9 @@ sub displaySets {
 						$testTime = $timeLimit if ( $testTime > $timeLimit );
 						$testTime = sprintf("%3.1f min", $testTime);
 					} elsif ( time() - $userSet->open_date() < $userSet->version_time_limit() ) {
-						$testTime = 'still open';
+						$testTime = $r->maketext('still open');
 					} else {
-						$testTime = 'time limit ' .
-							'exceeded';
+						$testTime = $r->maketext('time limit exceeded');
 					}
 				} else {
 					$dateOfTest = '???';
@@ -777,35 +775,32 @@ sub displaySets {
 				       'action' => $self->systemLink($urlpath,authen=>0),'name' => 'StudentProgress'});
 		print $self->hidden_authen_fields();
 		   print CGI::start_div();		   
-			print	  CGI::h4("Display options: Show ");	
+			print	  CGI::h4($r->maketext("Display options: Show"));	
 			print   CGI::start_div({'class'=>'metabox-prefs'});	   
 			print     CGI::hidden(-name=>'returning', -value=>'1'),
 			     CGI::checkbox(-name=>'show_best_only', -value=>'1', 
 					   -checked=>$showBestOnly, 
-					   -label=>'only best scores'),
-#			     CGI::checkbox(-name=>'show_index', -value=>'1', 
-#					   -checked=>$showColumns{'index'},
-#					   -label=>' success indicator; '),
+					   -label=>$r->maketext('only best scores')),
 			     CGI::checkbox(-name=>'show_date', -value=>'1', 
 					   -checked=>$showColumns{'date'},
-					   -label=>'test date'),
+					   -label=>$r->maketext('test date')),
 			     CGI::checkbox(-name=>'show_testtime', -value=>'1', 
 					   -checked=>$showColumns{'testtime'},
-					   -label=>'test time'),
+					   -label=>$r->maketext('test time')),
 			     CGI::checkbox(-name=>'show_problems', -value=>'1', 
 					   -checked=>$showColumns{'problems'},
-					   -label=>'problems'),
+					   -label=>$r->maketext('problems')),
 			     CGI::checkbox(-name=>'show_section', -value=>'1', 
 					   -checked=>$showColumns{'section'}, 
-					   -label=>'section #'),
+					   -label=>$r->maketext('section #')),
 			     CGI::checkbox(-name=>'show_recitation', -value=>'1', 
 					   -checked=>$showColumns{'recit'},
-					   -label=>'recitation #'),
+					   -label=>$r->maketext('recitation #')),
 			     CGI::checkbox(-name=>'show_login', -value=>'1', 
 					   -checked=>$showColumns{'login'}, 
-					   -label=>'login'), CGI::br();
+					   -label=>$r->maketext('login')), CGI::br();
 			print CGI::end_div();		    
-			print CGI::submit(-value=>'Update Display');	
+			print CGI::submit(-value=>$r->maketext('Update Display'));	
 		print CGI::end_div();
 		print CGI::end_form();
 	  print CGI::end_div();
@@ -836,7 +831,7 @@ sub displaySets {
 	    print
 		CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),
 		CGI::Tr(CGI::td(  {-align=>'left'},
-			['Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},$r->maketext('First')).
+			[$r->maketext('Name').CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %past_sort_methods})},$r->maketext('First')).
 			   '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %past_sort_methods })},$r->maketext('Last')).CGI::br().
 			   CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'email_address', %past_sort_methods })},'Email'),
 			CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %past_sort_methods})},$r->maketext("Score")),
@@ -865,21 +860,21 @@ sub displaySets {
 		);
 		my %params = (%past_sort_methods, %display_options);
 	    my @columnHdrs = ();
-	    push( @columnHdrs, 'Name'.CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},$r->maketext('First')).
+	    push( @columnHdrs, $r->maketext('Name').CGI::br().CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'first_name', %params})},$r->maketext('First')).
 		  '&nbsp;&nbsp;&nbsp;'.CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'last_name', %params })},$r->maketext('Last')) );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %params})},'Score') );
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'score', %params})},$r->maketext('Score')) );
 	    push( @columnHdrs, $r->maketext('Out Of') );
-	    push( @columnHdrs, 'Date' ) if ( $showColumns{ 'date' } );
-	    push( @columnHdrs, 'TestTime' ) if ( $showColumns{ 'testtime' } );
+	    push( @columnHdrs, $r->maketext('Date') ) if ( $showColumns{ 'date' } );
+	    push( @columnHdrs, $r->maketext('Test Time') ) if ( $showColumns{ 'testtime' } );
 #	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'index', %params})},'Ind') )
 #		if ( $showColumns{ 'index' } );
 	    push( @columnHdrs, $r->maketext("Problems").CGI::br().$problem_header )
 		if ( $showColumns{ 'problems' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %params})},'Section') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'section', %params})},$r->maketext('Section')) )
 		if ( $showColumns{ 'section' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %params})},'Recitation') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'recitation', %params})},$r->maketext('Recitation')) )
 		if ( $showColumns{ 'recit' } );
-	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},'Login Name') )
+	    push( @columnHdrs, CGI::a({"href"=>$self->systemLink($setStatsPage,params=>{primary_sort=>'user_id', %params})},$r->maketext('Login Name')) )
 		if ( $showColumns{ 'login' } );
 
 	    print CGI::start_table({-class=>"progress-table", -border=>5,style=>'font-size:smaller'}),
@@ -957,7 +952,7 @@ sub displaySets {
 				my @cols = ( CGI::td( $fullName ),
 					     CGI::td( $rec->{score} ),
 					     CGI::td({colspan=>$numCol},
-						     CGI::em($self->nbsp("No tests taken."))) );
+						     CGI::em($self->nbsp($r->maketext("No tests taken.")))) );
 				push(@cols, 
 				     CGI::td($self->nbsp($rec->{section})))
 					if ( $showColumns{'section'} );

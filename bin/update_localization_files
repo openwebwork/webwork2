@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ -z "$WEBWORK_ROOT" ] || [ -z "$PG_ROOT" ]; then
+    echo >&2 "You need to set both the WEBWORK_ROOT and PG_ROOT environment variables.  Aborting."
+    exit 1
+fi
+
+command -v xgettext.pl >/dev/null 2>&1 || {
+    echo >&2 "xgettext.pl needs to be installed.  It is inlcuded in the perl package Locale::Maketext::Extract. Aborting.";
+    exit 1;
+}
+
+LOCDIR=$WEBWORK_ROOT/lib/WeBWorK/Localize
+
+cd $LOCDIR
+
+echo "Updating $WEBWORK_ROOT/webwork2.pot"
+
+xgettext.pl -o webwork2.pot -D $WEBWORK_ROOT/lib -D $PG_ROOT/lib -D $PG_ROOT/macros
+
+find $LOCDIR -name '*.po' -exec bash -c "echo \"Updating {}\"; msgmerge -qU {} webwork2.pot" \;

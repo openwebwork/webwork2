@@ -87,7 +87,7 @@ sub UserItems {
 package WeBWorK::AchievementItems::RessurectHW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -95,8 +95,8 @@ sub new {
 
     my $self = {
 	id => "RessurectHW",
-	name => "Scroll of Ressurection",
-	description => "Opens any homework set for 24 hours.",
+	name => x("Scroll of Ressurection"),
+	description => x("Opens any homework set for 24 hours."),
 	%options,
     };
     
@@ -152,7 +152,7 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
-    # Set a new due date and answer time for the student and remove the item
+    # Set a new close date and answer time for the student and remove the item
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
 
@@ -173,12 +173,12 @@ sub use_item {
     return;
 }
 
-#Item to extend a due date by 24 hours. 
+#Item to extend a close date by 24 hours. 
 
 package WeBWorK::AchievementItems::ExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -186,8 +186,8 @@ sub new {
 
     my $self = {
 	id => "ExtendDueDate",
-	name => "Tunic of Extension",
-	description => "Adds 24 hours to the due date of a homework.",
+	name => x("Tunic of Extension"),
+	description => x("Adds 24 hours to the close date of a homework."),
 	%options,
     };
     
@@ -213,7 +213,7 @@ sub print_form {
     }
 
     return join("",
-	CGI::p($r->maketext("Choose the set whose due date you would like to extend.")),
+	CGI::p($r->maketext("Choose the set whose close date you would like to extend.")),
 	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
 }
@@ -256,12 +256,12 @@ sub use_item {
     return;
 }
 
-#Item to extend a due date by 48 hours. 
+#Item to extend a close date by 48 hours. 
 
 package WeBWorK::AchievementItems::SuperExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -269,8 +269,8 @@ sub new {
 
     my $self = {
 	id => "SuperExtendDueDate",
-	name => "Robe of Longevity",
-	description => "Adds 48 hours to the due date of a homework.",
+	name => x("Robe of Longevity"),
+	description => x("Adds 48 hours to the close date of a homework."),
 	%options,
     };
     
@@ -296,7 +296,7 @@ sub print_form {
     }
 
     return join("",
-	CGI::p($r->maketext("Choose the set whose due date you would like to extend.")),
+	CGI::p($r->maketext("Choose the set whose close date you would like to extend.")),
 	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"ext_set_id", name=>"ext_set_id"})));
 }
@@ -339,12 +339,12 @@ sub use_item {
     return;
 }
 
-#Item to extend a due date by 24 hours for reduced credit
+#Item to extend a close date by 24 hours for reduced credit
 
 package WeBWorK::AchievementItems::ReducedCred;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -352,10 +352,10 @@ sub new {
 
     my $self = {
 	id => "ReducedCred",
-	name => "Ring of Reduction",
+	name => x("Ring of Reduction"),
 	#Reduced credit needs to be set up in course configuration for this
 	# item to work,
-	description => "Enable reduced scoring for a homework set.  This will allow you to submit answers for partial credit for 24 hours after the due date.",
+	description => x("Enable reduced scoring for a homework set.  This will allow you to submit answers for partial credit for 24 hours after the close date."),
 	%options,
     };
     
@@ -439,7 +439,7 @@ sub use_item {
 package WeBWorK::AchievementItems::DoubleSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -447,8 +447,8 @@ sub new {
 
     my $self = {
 	id => "DoubleSet",
-	name => "Cake of Enlargment",
-	description => "Cause the selected homework set to count for twice as many points as it normally would.",
+	name => x("Cake of Enlargment"),
+	description => x("Cause the selected homework set to count for twice as many points as it normally would."),
 	%options,
     };
     
@@ -526,7 +526,7 @@ sub use_item {
 package WeBWorK::AchievementItems::ResetIncorrectAttempts;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -534,8 +534,8 @@ sub new {
 
     my $self = {
 	id => "ResetIncorrectAttempts",
-	name => "Potion of Forgetfullness",
-	description => "Resets the number of incorrect attempts on a single homework problem.",
+	name => x("Potion of Forgetfullness"),
+	description => x("Resets the number of incorrect attempts on a single homework problem."),
 	%options,
     };
     
@@ -637,7 +637,7 @@ sub use_item {
 package WeBWorK::AchievementItems::DoubleProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -645,8 +645,8 @@ sub new {
 
     my $self = {
 	id => "DoubleProb",
-	name => "Cupcake of Enlargement",
-	description => "Causes a single homework problem to be worth twice as much..",
+	name => x("Cupcake of Enlargement"),
+	description => x("Causes a single homework problem to be worth twice as much."),
 	%options,
     };
     
@@ -750,7 +750,7 @@ sub use_item {
 package WeBWorK::AchievementItems::HalfCreditProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -758,8 +758,8 @@ sub new {
 
     my $self = {
 	id => "HalfCreditProb",
-	name => "Lesser Rod of Revelation",
-	description => "Gives half credit on a single homework problem.",
+	name => x("Lesser Rod of Revelation"),
+	description => x("Gives half credit on a single homework problem."),
 	%options,
     };
     
@@ -866,7 +866,7 @@ sub use_item {
 package WeBWorK::AchievementItems::HalfCreditSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -874,8 +874,8 @@ sub new {
 
     my $self = {
 	id => "HalfCreditSet",
-	name => "Lesser Tome of Enlightenment",
-	description => "Gives half credit on every problem in a set.",
+	name => x("Lesser Tome of Enlightenment"),
+	description => x("Gives half credit on every problem in a set."),
 	%options,
     };
     
@@ -956,7 +956,7 @@ sub use_item {
 package WeBWorK::AchievementItems::FullCreditProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -964,8 +964,8 @@ sub new {
 
     my $self = {
 	id => "FullCreditProb",
-	name => "Greater Rod of Revelation",
-	description => "Gives full credit on a single homework problem.",
+	name => x("Greater Rod of Revelation"),
+	description => x("Gives full credit on a single homework problem."),
 	%options,
     };
     
@@ -1067,7 +1067,7 @@ sub use_item {
 package WeBWorK::AchievementItems::FullCreditSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -1075,8 +1075,8 @@ sub new {
 
     my $self = {
 	id => "FullCreditSet",
-	name => "Greater Tome of Enlightenment",
-	description => "Gives full credit on every problem in a set.",
+	name => x("Greater Tome of Enlightenment"),
+	description => x("Gives full credit on every problem in a set."),
 	%options,
     };
     
@@ -1152,7 +1152,7 @@ sub use_item {
 package WeBWorK::AchievementItems::DuplicateProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -1160,8 +1160,8 @@ sub new {
 
     my $self = {
 	id => "DuplicateProb",
-	name => "Box of Transmogrification",
-	description => "Causes a homework problem to become a clone of another problem from the same set.",
+	name => x("Box of Transmogrification"),
+	description => x("Causes a homework problem to become a clone of another problem from the same set."),
 	%options,
     };
     
@@ -1215,9 +1215,9 @@ sub print_form {
 	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"tran_set_id", name=>"tran_set_id",onchange=>$problem_id_script})),
 	" ",
-	CGI::label($r->maketext(" Copy this Problem "),
+	CGI::label(' '.$r->maketext("Copy this Problem").' ',
 	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id",id=>"tran_problem_id",attributes=>\%attributes})),
-	CGI::label($r->maketext(" To this Problem "),
+	CGI::label(' '.$r->maketext("To this Problem").' ',
 	CGI::popup_menu({values=>\@problemIDs,name=>"tran_problem_id2",id=>"tran_problem_id2",attributes=>\%attributes}))
 
 
@@ -1277,7 +1277,7 @@ sub use_item {
 package WeBWorK::AchievementItems::Surprise;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -1285,8 +1285,8 @@ sub new {
 
     my $self = {
 	id => "Surprise",
-	name => "Mysterious Package (with Ribbons)",
-	description => "What could be inside?",
+	name => x("Mysterious Package (with Ribbons)"),
+	description => x("What could be inside?"),
 	%options,
     };
     
@@ -1329,7 +1329,7 @@ sub use_item {
 package WeBWorK::AchievementItems::AddNewTestGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -1337,8 +1337,8 @@ sub new {
 
     my $self = {
 	id => "AddNewTestGW",
-	name => "Oil of Cleansing",
-	description => "Unlock an additional version of a Gateway Test.  If used before the due date of the Gateway Test this will allow you to generate a new version of the test.",
+	name => x("Oil of Cleansing"),
+	description => x("Unlock an additional version of a Gateway Test.  If used before the close date of the Gateway Test this will allow you to generate a new version of the test."),
 	%options,
     };
     
@@ -1430,7 +1430,7 @@ sub use_item {
 package WeBWorK::AchievementItems::ExtendDueDateGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -1438,8 +1438,8 @@ sub new {
 
     my $self = {
 	id => "ExtendDueDateGW",
-	name => "Amulet of Extension",
-	description => "Extends the due date of a gateway test by 24 hours. Note: The test must still be open for this to work.",
+	name => x("Amulet of Extension"),
+	description => x("Extends the close date of a gateway test by 24 hours. Note: The test must still be open for this to work."),
 	%options,
     };
     
@@ -1482,7 +1482,7 @@ sub print_form {
     #print open gateways in a drop down. 
     
     return join("",
-		CGI::p($r->maketext("Extend the due date for which Gateway?")),
+		CGI::p($r->maketext("Extend the close date for which Gateway?")),
 		CGI::label($r->maketext("Gateway Name "),
 		   CGI::popup_menu({values=>\@openGateways,id=>"eddgw_gw_id", name=>"eddgw_gw_id"})));
 }
@@ -1541,7 +1541,7 @@ sub use_item {
 package WeBWorK::AchievementItems::RessurectGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
-use WeBWorK::Utils qw(sortByName before after between);
+use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
     my $class = shift;
@@ -1549,8 +1549,8 @@ sub new {
 
     my $self = {
 	id => "RessurectGW",
-	name => "Necromancers Charm",
-	description => "Reopens any gateway test for an additional 24 hours. This allows you to take a test even if the due date has past. This item does not allow you to take additional versions of the test.",
+	name => x("Necromancers Charm"),
+	description => x("Reopens any gateway test for an additional 24 hours. This allows you to take a test even if the close date has past. This item does not allow you to take additional versions of the test."),
 	%options,
     };
     

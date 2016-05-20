@@ -199,7 +199,7 @@ var tabberOptions = {manualStartup:true};
 	<!--#if warnings="1"-->
 	<div class="row-fluid">
 		<div id="alert-error" class="span12 alert alert-error">
-			<strong>Warning</strong> -- there may be something wrong with this question. Please inform your instructor including the warning messages below.
+		    <!--#warningMessage-->
 		</div>
 	</div>
 	<!--#endif-->
