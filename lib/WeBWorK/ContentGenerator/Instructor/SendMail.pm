@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ¬© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.64 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -746,7 +746,7 @@ sub print_form {
 	print    CGI::table( { -border=>2,-cellpadding=>4},
 				 CGI::Tr( {},
 					 CGI::td({}, CGI::submit(-name=>'sendEmail', -id=>"sendEmail_id", -value=>$r->maketext('Send Email')) ), "\n",
-					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save')),$r->maketext(' to ').$output_file), " \n",
+					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save')),' ',$r->maketext('to'),' ',$output_file), " \n",
 					 CGI::td({}, CGI::submit(-name=>'saveAs', -value=>$r->maketext('Save as').":"),
 					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
 					 ), "\n",
@@ -1004,9 +1004,9 @@ sub process_message {
 }
 
 
-# › sub data_format {
+# √ù sub data_format {
 # 
-# › › › › ›map {$_ =~s/\s/\./g;$_} › › map {sprintf('%-8.8s',$_);} ›@_;
+# √ù √ù √ù √ù √ùmap {$_ =~s/\s/\./g;$_} √ù √ù map {sprintf('%-8.8s',$_);} √ù@_;
  sub data_format {
  	    map {"COL[$_]".'&nbsp;'x(3-length($_));}  @_;  # problems if $_ has length bigger than 4
  }
