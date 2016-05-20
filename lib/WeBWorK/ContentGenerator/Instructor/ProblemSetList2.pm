@@ -1141,11 +1141,11 @@ sub create_handler {
 	my $closeDate = time+2*ONE_WEEK();
 	my $display_tz = $ce->{siteDefaults}{timezone};
 	my $fcloseDate = $self->formatDateTime($closeDate, $display_tz);
-	my $dueTime = $ce->{pg}{timeAssignDue};
+	my $closeTime = $ce->{pg}{timeAssignDue};
 
 	# We replace the due time by the one from the config variable
 	# and try to bring it back to unix time if possible
-	$fcloseDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
+	$fcloseDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$closeTime/;
 	
 	$closeDate = $self->parseDateTime($fcloseDate, $display_tz);
 	

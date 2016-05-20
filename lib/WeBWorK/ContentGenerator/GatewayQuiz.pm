@@ -885,12 +885,12 @@ sub pre_header_initialize {
 				$set->open_date( $timeNow );
 				# figure out the due date, taking into account
 				#    any time limit cap
-				my $dueTime = 
+				my $closeTime = 
 				    ( $timeLimit == 0 || ($set->time_limit_cap &&
 				      $timeNow+$timeLimit > $set->due_date) ) ?
 				      $set->due_date : $timeNow+$timeLimit;
 
-				$set->due_date( $dueTime );
+				$set->due_date( $closeTime );
 				$set->answer_date($set->due_date + $ansOffset);
 				$set->version_last_attempt_time( 0 );
 

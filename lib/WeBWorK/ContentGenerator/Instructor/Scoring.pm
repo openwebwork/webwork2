@@ -439,7 +439,7 @@ sub scoreSet {
 
 	# Write the problem data
 	my $closeDateString = $self->formatDateTime($setRecord->due_date);
-	my ($closeDate, $dueTime) = $closeDateString =~ /^(.*) at (.*)$/;
+	my ($closeDate, $closeTime) = $closeDateString =~ /^(.*) at (.*)$/;
 	my $valueTotal = 0;
 	my %userStatusTotals = ();
 	my %userSuccessIndex = ();
@@ -462,7 +462,7 @@ sub scoreSet {
 			$scoringData[1][$column] = $setRecord->set_id;
 			$scoringData[2][$column] = $prettyProblemID;
 			$scoringData[3][$column] = $closeDate;
-			$scoringData[4][$column] = $dueTime;
+			$scoringData[4][$column] = $closeTime;
 			$scoringData[5][$column] = $globalProblem->value;
 			$scoringData[6][$column] = $r->maketext("STATUS");
 			my $extraColumns = 0;
