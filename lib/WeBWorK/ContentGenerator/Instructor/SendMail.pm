@@ -746,7 +746,7 @@ sub print_form {
 	print    CGI::table( { -border=>2,-cellpadding=>4},
 				 CGI::Tr( {},
 					 CGI::td({}, CGI::submit(-name=>'sendEmail', -id=>"sendEmail_id", -value=>$r->maketext('Send Email')) ), "\n",
-					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save'))," to $output_file"), " \n",
+					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save')),$r->maketext(' to ').$output_file), " \n",
 					 CGI::td({}, CGI::submit(-name=>'saveAs', -value=>$r->maketext('Save as').":"),
 					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
 					 ), "\n",
