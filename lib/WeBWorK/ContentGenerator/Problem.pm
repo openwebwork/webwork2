@@ -22,7 +22,6 @@ use base qw(WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil);  # not needed?
 =head1 NAME
  
 WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
-
 =cut
 
 use strict;
@@ -1305,11 +1304,86 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
+	if ($can{showAnsGroupInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showAnsGroupInfo_id",
+			-label_text => $r->maketext("AnswerGroupInfo"),
+			-input_attr => $will{showAnsGroupInfo} ?
+			{
+				-name    => "showAnsGroupInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showAnsGroupInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	if ($can{showResourceInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showResourceInfo_id",
+			-label_text => $r->maketext("Show Auxiliary Resources"),
+			-input_attr => $will{showResourceInfo} ?
+			{
+				-name    => "showResourceInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showResourceInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+
+	if ($can{showAnsHashInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showAnsHashInfo_id",
+			-label_text => $r->maketext("AnswerHashInfo"),
+			-input_attr => $will{showAnsHashInfo} ?
+			{
+				-name    => "showAnsHashInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showAnsHashInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	
+	if ($can{showPGInfo}) {
+		print WeBWorK::CGI_labeled_input(
+			-type	 => "checkbox",
+			-id		 => "showPGInfo_id",
+			-label_text => $r->maketext("PGInfo"),
+			-input_attr => $will{showPGInfo} ?
+			{
+				-name    => "showPGInfo",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showPGInfo",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+
 	#  warn "can showHints $can{showHints} can show solutions $can{showSolutions}";
 	if ($can{showHints} ) {
 	  # warn "can showHints is ", $can{showHints};
-	  if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
-		print WeBWorK::CGI_labeled_input(
+		if ($showHintCheckbox or not $useKnowlsForHints) { # always allow checkbox to display if knowls are not used.
+			print WeBWorK::CGI_labeled_input(
 				-type	 => "checkbox",
 				-id		 => "showHints_id",
 				-label_text => $r->maketext("Show Hints"),
@@ -1324,11 +1398,11 @@ sub output_checkboxes{
 					-name    => "showHints",
 					-value   => 1,
 				}
-		),"&nbsp;";
-	  } else {
-	  	print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
-	  
-	  }
+			),"&nbsp;";
+		} else {
+			print CGI::hidden({name => "showHints", id=>"showHints_id", value => 1})
+
+		}
 	}
 	
 	if ($can{showSolutions} ) {
@@ -1354,10 +1428,13 @@ sub output_checkboxes{
 	  }
 	}
 	
-	if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
+
+	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
+	    $can{showHints} or $can{showSolutions} or # needed to put buttons on newline
+	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
-	
+       
 	return "";
 }
 
@@ -1368,26 +1445,57 @@ sub output_checkboxes{
 sub output_submit_buttons{
 	my $self = shift;
 	my $r = $self->r;
+	my $ce = $self->r->ce;
 	my %can = %{ $self->{can} };
-	
+	my %will = %{ $self->{will} };
+	my $urlpath = $r->urlpath;
+	my $problem = $self->{problem};
+	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
-
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-name=>"previewAnswers", -value=>$r->maketext("Preview Answers")});
-	if ($can{checkAnswers}) {
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
+	my %showMeAnother = %{ $self->{showMeAnother} };
+	
+	if ($will{requestNewSeed}){
+		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
+		return "";
 	}
-	if ($can{getSubmitButton}) {
-		if ($user ne $effectiveUser) {
-			# if acting as a student, make it clear that answer submissions will
-			# apply to the student's records, not the professor's.
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
-		} else {
-			#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>""});
-			# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
-			# WTF???
-		}
+
+        print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
+        if ($can{checkAnswers}) {
+        	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
+        }
+        if ($can{getSubmitButton}) {
+        	if ($user ne $effectiveUser) {
+        		# if acting as a student, make it clear that answer submissions will
+        		# apply to the student's records, not the professor's.
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
+        	} else {
+        		#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
+        		# FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
+        		# WTF???
+        	}
+        }
+        if ($can{showMeAnother}) {
+            # only output showMeAnother button if we're not on the showMeAnother page
+	    my $SMAURL = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::ShowMeAnother", $r,courseID => $courseID, setID => $problem->set_id, problemID =>$problem->problem_id));
+
+	    print CGI::a({href=>$SMAURL, class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", id=>"SMA_button", title=>"", target=>"_wwsma", 
+				   "data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")}, $r->maketext("Show me another"));
+        } else {
+            # if showMeAnother is available for the course, and for the current problem (but not yet
+            # because the student hasn't tried enough times) then gray it out; otherwise display nothing
+
+	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
+	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+	  
+            if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
+                my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
+                print CGI::span({class=>"gray_button set-id-tooltip",
+                                "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"",
+                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
+                                }, $r->maketext("Show me another [_1]",$exhausted));
+              }
 	}
 	
 	return "";
@@ -1405,16 +1513,41 @@ sub output_score_summary{
 	my $problem = $self->{problem};
 	my $set = $self->{set};
 	my $pg = $self->{pg};
-	my $scoreRecordedMessage = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
+	my $effectiveUser = $r->param('effectiveUser') || $r->param('user');
+	my $scoreRecordedMessage = $self->{scoreRecordedMessage};
 	my $submitAnswers = $self->{submitAnswers};
+	my %will = %{ $self->{will} };
+
+	my $prEnabled = $ce->{pg}->{options}->{enablePeriodicRandomization} // 0;
+	my $rerandomizePeriod = $ce->{pg}->{options}->{periodicRandomizationPeriod} // 0;
+	if ( (defined $problem->{prPeriod}) and ($problem->{prPeriod} > -1) ){
+		$rerandomizePeriod = $problem->{prPeriod};
+	}
+	$prEnabled = 0 if ($rerandomizePeriod < 1);
 
 	# score summary
 	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect 
-	        unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
+	  unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
+	
+	my $prMessage = "";
+	if ($prEnabled){
+		my $attempts_before_rr = ($rerandomizePeriod) - ($attempts ) % ($rerandomizePeriod);
+		$attempts_before_rr = 0 if ( (defined $will{requestNewSeed}) and $will{requestNewSeed});
+		$prMessage =
+			$r->maketext(
+				" You have [quant,_1,attempt,attempts] left before new version will be requested.",
+				$attempts_before_rr)
+			if ($attempts_before_rr > 0);
+		$prMessage =
+			$r->maketext(" Request new version now.")
+			if ($attempts_before_rr == 0);
+	}
+	$prMessage = "" if ( after($set->due_date) or before($set->open_date) );
+	
 	my $problem_status    = $problem->status || 0;
-	my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
+	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
 	
 	my $setClosed = 0;
