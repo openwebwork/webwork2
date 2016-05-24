@@ -202,7 +202,7 @@ sub body {
 					),
 				),
 				CGI::Tr(CGI::td({colspan =>2,align=>'center'},
-					CGI::input({type=>'submit',value=>'Score selected set(s) and save to: ',name=>'score-sets'}),
+					CGI::input({type=>'submit', value=>$r->maketext('Score selected set(s) and save to:'), name=>'score-sets'}),
 					CGI::input({type=>'text', name=>'scoringFileName', size=>'40',value=>"$scoringFileName"})
 				)),
 			

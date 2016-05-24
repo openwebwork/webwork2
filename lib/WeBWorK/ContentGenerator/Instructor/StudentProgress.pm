@@ -106,7 +106,7 @@ sub siblings {
 	                                        courseID => $courseID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2("Student Progress");
+	print CGI::h2($r->maketext("Student Progress"));
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
