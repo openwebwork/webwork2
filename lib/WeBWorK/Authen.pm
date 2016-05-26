@@ -251,6 +251,7 @@ sub verify {
 	}
 	
 	debug("END VERIFY");
+	debug("result $result");
 	return $result;
 }
 
@@ -297,11 +298,11 @@ sub do_verify {
 	my $db = $r->db;
 	
 	return 0 unless $db;
-	
+	debug("db ok");
 	return 0 unless $self->get_credentials;
-	
+	debug("credentials ok");
 	return 0 unless $self->check_user;
-	
+	debug ("check user ok");
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
 	if (defined($self->{login_type}) && $self->{login_type} eq "guest"){
 		return $self->verify_practice_user;
@@ -315,7 +316,7 @@ sub get_credentials {
 	my $r = $self->{r};
 	my $ce = $r->ce;
 	my $db = $r->db;
-	
+	debug("self is $self ");
 	# allow guest login: if the "Guest Login" button was clicked, we find an unused
 	# practice user and create a session for it.
 	if ($r->param("login_practice_user")) {
@@ -325,7 +326,7 @@ sub get_credentials {
 		my @GuestUsers = $db->getUsers(@guestUserIDs);
 		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
 		my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
-		
+
 		foreach my $userID (List::Util::shuffle(@allowedGestUserIDs)) {
 			if (not $self->unexpired_session_exists($userID)) {
 				my $newKey = $self->create_session($userID);
@@ -341,7 +342,7 @@ sub get_credentials {
 		}
 		
 		$self->{log_error} = "no guest logins are available";
-		$self->{error} = "No guest logins are available. Please try again in a few minutes.";
+		$self->{error} = $r->maketext("No guest logins are available. Please try again in a few minutes.");
 		return 0;
 	}
 	
@@ -950,19 +951,28 @@ sub write_log_entry {
 	    }
 	}
 	# If its apache 2.4 then the API has changed
-	if ($APACHE24) {
-	    	$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
-		$remote_port = $r->connection->client_addr->port || "UNKNOWN";
-	} elsif (MP2) {
-		$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
-		$remote_port = $r->connection->remote_addr->port || "UNKNOWN";
-	} else {
-		($remote_port, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
-		$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
+	my $connection;
+	my $user_agent;
+	eval {$connection = $r->connection};
+	if ($@) { # no connection available
+		$remote_host = "UNKNOWN" unless defined $remote_host;
 		$remote_port = "UNKNOWN" unless defined $remote_port;
+		$user_agent = "UNKNOWN";
+	} else { 
+		if ($APACHE24) {
+			$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+			$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
+		} elsif (MP2) {
+			$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
+			$remote_port = $r->connection->remote_addr->port   || "UNKNOWN";
+		} else {
+			($remote_port, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
+			$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
+			$remote_port = "UNKNOWN" unless defined $remote_port;
+		}
+
+		$user_agent = $r->headers_in->{"User-Agent"};
 	}
-	my $user_agent = $r->headers_in->{"User-Agent"};
-	
 	my $log_msg = "$message user_id=$user_id login_type=$login_type credential_source=$credential_source host=$remote_host port=$remote_port UA=$user_agent";
 	debug("Writing to login log: '$log_msg'.\n");
 	writeCourseLog($ce, "login_log", $log_msg);

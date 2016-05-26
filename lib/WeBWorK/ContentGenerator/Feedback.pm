@@ -250,6 +250,7 @@ sub body {
 		
 		# bring up a mailer
 		my $mailer = Mail::Sender->new({
+			tls_allowed => $ce->{tls_allowed}//1, # default for Mail::Sender is allow tls
 			from => $ce->{mail}{smtpSender},
 			fake_from => $sender,
 			to => join(",", @recipients),

@@ -599,12 +599,16 @@ sub DBFieldTable {
 		my $globalValue = $GlobalRecord->$field;
 		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
 		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
+
+		my $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
+       
 		push @results, 
 			[$rh_fieldLabels->{$field},
 			 defined $UserRecord ? 
 				CGI::checkbox({
 					type => "checkbox",
 					name => "$recordType.$recordID.$field.override",
+					id => "$recordType.$recordID.$field.override_id",
 					label => "",
 					value => $field,
 					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || ($isVersioned && $field ne 'reduced_scoring_date')) ? 1 : 0
@@ -613,7 +617,8 @@ sub DBFieldTable {
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
 						      -id =>"$recordType.$recordID.${field}_id",
 						      -type=> "text",
-					              -value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "None Specified", 
+					              -value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "None Specified",
+						      -onchange => $onChange,
 					              -size => 25})
 					) : "",
 				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),				

@@ -1,3 +1,3 @@
 # $Id: adminClasslist.lst,v 1.2 2009-06-26 00:58:52 gage Exp $
 # Field order: student_id,last_name,first_name,status,comment,section,recitation,email_address,user_id,password,permission
-admin,Administrator,,C,,,,,admin,.bxpcera4I/bg,10
+admin,Administrator,,C,,,,,admin,.bxpcera4I/bg,20

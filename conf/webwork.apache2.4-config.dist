@@ -35,7 +35,9 @@
 # The "show source" button is most useful for webwork "courses" used to train new authors
 # It is not desirable to expose the code of regular homework questions to students
 
-#ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+
+PerlChildInitHandler "sub { srand }"
 
 PerlModule mod_perl2
 
@@ -52,7 +54,6 @@ my $webwork_dir = "/opt/webwork/webwork2";
 $ENV{WEBWORK_ROOT} = $webwork_dir;
 $WeBWorK::SeedCE{webwork_dir} = $webwork_dir;
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $webwork_dir;
-
 
 #################################################################
 # The following code reads defauls.config and extracts the remaining configuration
@@ -77,7 +78,18 @@ my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/we
 my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
 my $webwork_courses_dir = $ce->{webwork_courses_dir};    # e.g.  /opt/webwork/courses
 
+my $webwork_server_admin_email = $ce->{webwork_server_admin_email};
+if ($webwork_server_admin_email) {
+	print "webwork.apache2-config: webwork_server_admin_email for reporting bugs has been set to $webwork_server_admin_email in site.conf\n";
+} else {
+	$webwork_server_admin_email= $ENV{SERVER_ADMIN};
+}
+$ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
 
+# link to PG code libraries
+eval "use lib '$pg_dir/lib'"; die $@ if $@;
+$WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
+$ENV{PG_ROOT} = $pg_dir;
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
@@ -90,8 +102,6 @@ print "webwork.apache2-config:  WeBWorK server groupID is ", $ce->{server_groupI
 print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
 
 
-# link to PG code libraries
-eval "use lib '$pg_dir/lib'"; die $@ if $@;
 
 require Apache::WeBWorK; # force compilation of pretty much everything
 
@@ -143,34 +153,7 @@ if ($webwork_url eq "") {
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
 
-##########################################################################
-# WeBWork 3
-# This sets up webwork 3 to be served via dancer via cgi
-# If you want to serve webwork 3 directly through dancer comment
-# out the following block, and then uncomment the proxy pass lines below
-# You will need to start dancer manually, or set it up as service
-##########################################################################
-
-my $webwork3_htdocs_dir = $webwork_dir."/webwork3/public";
-# Set up /webwork3 to point to the dispatch cgi
-push @Alias, [ "/webwork3/js" => "$webwork3_htdocs_dir/js"];
-push @Alias, [ "/webwork3/css" => "$webwork3_htdocs_dir/css"];
-push @Alias, [ "/webwork3/images" => "$webwork3_htdocs_dir/images"];
-push @PerlConfig, "ScriptAlias /webwork3 $webwork3_htdocs_dir/dispatch.fcgi";
-
-# Allow cgi to run in the webwork3 dir
-$Directory{"$webwork3_htdocs_dir"} = {
-    AllowOverride => "None",
-    Options => "+ExecCGI -MultiViews +SymLinksIfOwnerMatch",
-    Require => "all granted",    
-    AddHandler => "fcgid-script .fcgi",
-};
-
 </Perl>
-
-# These lines are for service WeBWork 3 through dancer directly.  
-#ProxyPass /webwork3 http://localhost:3000
-#ProxyPassReverse /webwork3 http://localhost:3000
 
 ####################################################################
 # WebworkSOAP handlers (for integration with moodle)
@@ -179,7 +162,7 @@ $Directory{"$webwork3_htdocs_dir"} = {
 
  # WEBWORK SOAP CONFIGURATION
  <Location /webwork2_rpc>
-         PerlHandler Apache2::SOAP
+         PerlHandler Apache::SOAP
          SetHandler perl-script
          PerlSetVar dispatch_to "WebworkSOAP"
          PerlSetVar options "compress_threshold => 10000"
@@ -230,10 +213,10 @@ PerlModule WebworkWebservice
 #</Location>
 
 ####################################################################
-# WebworkSOAP  "bridge2" handler 
+# WebworkSOAP  "bridge2" handler (Moodle/WeBWorK Question bridge)
 ####################################################################
 
-# Include /opt/webwork/wwqs/conf/problemserver.apache-config
+#Include /Volumes/WW_test/opt/webwork/ww_opaque_server/conf/opaqueserver.apache-config
 
 ####################################################################
 # Expires Module configuration

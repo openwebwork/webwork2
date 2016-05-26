@@ -122,7 +122,7 @@ function MathViewer(field,button,container,userOptions) {
     if (this.options.decoratedTextBoxAsInput) {
 	this.inputTextBox = $(field);
     } else {
-	this.inputTextBox = $('<input>',{type : 'text', class : 'mv-input', size:'40'});
+	this.inputTextBox = $('<input>',{type : 'text', class : 'mv-input', size:'32'});
     }
 
     MathJax.Hub.Config({

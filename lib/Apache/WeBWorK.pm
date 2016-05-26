@@ -31,6 +31,7 @@ details.
 use strict;
 use warnings;
 use HTML::Entities;
+use HTML::Scrubber;
 use Date::Format;
 use WeBWorK;
 
@@ -184,15 +185,36 @@ associated warnings.
 sub htmlMessage($$$@) {
 	my ($r, $warnings, $exception, @backtrace) = @_;
 	
-	$warnings = htmlEscape($warnings);
-	$exception = htmlEscape($exception);
+	# Warnings have html and look better scrubbed. 
+	
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+
+	$warnings = $scrubber->scrub($warnings);
+	$exception = $scrubber->scrub($exception);
 	
 	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
+
+	# $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf
+	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
+	# if an explicit email address has not been set.
 	
-	my $admin = ($ENV{SERVER_ADMIN}
-		? " (<a href=\"mailto:$ENV{SERVER_ADMIN}\">$ENV{SERVER_ADMIN}</a>)"
+	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
+	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined. 
+
+	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
+		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
 		: "");
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = htmlEscape( $r->method  );
@@ -207,7 +229,7 @@ sub htmlMessage($$$@) {
 <div style="text-align:left">
  <h2>WeBWorK error</h2>
  <p>An error occured while processing your request. For help, please send mail
- to this site's webmaster$admin, including all of the following information as
+ to this site's webmaster $admin, including all of the following information as
  well as what what you were doing when the error occured.</p>
  <p>$time</p>
  <h3>Warning messages</h3>

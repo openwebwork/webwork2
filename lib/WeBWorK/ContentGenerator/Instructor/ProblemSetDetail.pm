@@ -40,12 +40,12 @@ use WeBWorK::Utils::DatePickerScripts;
 
 # these constants determine which fields belong to what type of record
 use constant SET_FIELDS => [qw(set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible description enable_reduced_scoring restricted_release restricted_status restrict_ip relax_restrict_ip assignment_type attempts_per_version version_time_limit time_limit_cap versions_per_interval time_interval problem_randorder problems_per_page hide_score:hide_score_by_problem hide_work hide_hint)];
-use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother)];
+use constant PROBLEM_FIELDS =>[qw(source_file value max_attempts showMeAnother prPeriod)];
 use constant USER_PROBLEM_FIELDS => [qw(problem_seed status num_correct num_incorrect)];
 
 # these constants determine what order those fields should be displayed in
 use constant HEADER_ORDER => [qw(set_header hardcopy_header)];
-use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother attempted last_answer num_correct num_incorrect)];
+use constant PROBLEM_FIELD_ORDER => [qw(problem_seed status value max_attempts showMeAnother prPeriod attempted last_answer num_correct num_incorrect)];
 # for gateway sets, we don't want to allow users to change max_attempts on a per
 #    problem basis, as that's nothing but confusing.
 use constant GATEWAY_PROBLEM_FIELD_ORDER => [qw(problem_seed status value attempted last_answer num_correct num_incorrect)];
@@ -148,7 +148,7 @@ use constant FIELD_PROPERTIES => {
 	enable_reduced_scoring => {
 		name      => "Reduced Scoring Enabled",
 		type      => "choose",
-		override  => "all",
+		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
 				1 => "Yes",
@@ -337,9 +337,21 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default=>"-1",
 		labels    => {
-				"-1" => "Never",
+			      "-1" => "Never",
+			      "-2" => "Default",
 		},
         },
+	prPeriod => {
+		name => "Rerandomize after",
+		type => "edit",
+		size => "6",
+		override => "any",
+		default=>"-1",
+		labels => {
+			"-1" => "Default",
+			"0" => "Never",
+		},
+	},
 	problem_seed => {
 		name      => "Seed",
 		type      => "edit",
@@ -496,6 +508,10 @@ sub FieldTable {
 	        next if ( $field eq 'showMeAnother' &&
                           !$ce->{pg}->{options}->{enableShowMeAnother} );
 
+		# skip the periodic re-randomization field if it is not enabled
+		next if ( $field eq 'prPeriod' &&
+			!$ce->{pg}->{options}->{enablePeriodicRandomization} );
+
 		unless ($properties{type} eq "hidden") {
 			$output .= CGI::Tr({}, CGI::td({}, [$self->FieldHTML($userID, $setID, $problemID, $globalRecord, $userRecord, $field)])) . "\n";
 		}
@@ -588,8 +604,8 @@ sub FieldHTML {
 	}
 
 	# use defined instead of value in order to allow 0 to printed, e.g. for the 'value' field
-	$globalValue = (defined($globalValue)) ? ($labels{$globalValue || ""} || $globalValue) : "";
-	$userValue = (defined($userValue)) ? ($labels{$userValue || ""} || $userValue) : $blankfield;
+	$globalValue = (defined($globalValue)) ? ($labels{$globalValue // ""} || $globalValue) : ""; # this allows for a label if value is 0
+	$userValue = (defined($userValue)) ? ($labels{$userValue // ""} || $userValue) : $blankfield; # this allows for a label if value is 0
 
 	if ($field =~ /_date/) {
 		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P') if defined $globalValue && $globalValue ne $labels{""};
@@ -620,6 +636,15 @@ sub FieldHTML {
 	
 	# $inputType contains either an input box or a popup_menu for changing a given db field
 	my $inputType = "";
+
+	my $onChange = '';
+	
+	# if we are creating override feilds we should add the js to automatically check the
+	# override box.
+	if ($forUsers && $check) {
+	    $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
+	}
+	
 	if ($edit) {
 		$inputType = CGI::input({
 		                type => "text",
@@ -627,6 +652,7 @@ sub FieldHTML {
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
+				onchange => $onChange,
 					});
 
 	} elsif ($choose) {
@@ -658,6 +684,7 @@ sub FieldHTML {
 				values => $properties{choices},
 				labels => \%labels,
 				default => $value,
+				onchange => $onChange,
 		});
 	}
 	
@@ -668,6 +695,7 @@ sub FieldHTML {
 	return (($forUsers && $check) ? CGI::checkbox({
 				type => "checkbox",
 				name => "$recordType.$recordID.$field.override",
+				id => "$recordType.$recordID.$field.override_id",
 				label => "",
 				value => $field,
 				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),

@@ -1,34 +1,68 @@
-$(function(){
-
-    // Add a button to make the sidebar more dynamic for small screens
-    $('#toggle-sidebar').click(function (event) {
-	event.preventDefault();
-	var toggleIcon = $('#toggle-sidebar-icon');
-	$('#site-navigation').toggleClass('hidden');
-	toggleIcon.toggleClass('icon-chevron-left')
-	    .toggleClass('icon-chevron-right');
-	$('#site-navigation').toggleClass('span2');
-	$('#content').toggleClass('span10').toggleClass('span11');
-	if (toggleIcon.next('.sr-only-glyphicon').html() == 'close sidebar') {
-	    toggleIcon.next('.sr-only-glyphicon').html('open sidebar');
-	} else {
-	    toggleIcon.next('.sr-only-glyphicon').html('close sidebar');
-	}
-    });
+// Object for toggling the sidebar
+var ToggleNavigation = function () {
+    var threshold = 768
+    var windowwidth = $(window).width();
+    var navigation_element = $('#site-navigation');
     
+    var hideSidebar = function () {
+	$('#site-navigation').remove();
+	$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');	
+	$('#content').removeClass('span10').addClass('span11');
+    }
+
+    var showSidebar = function () {
+	$('#body-row').prepend(navigation_element);
+	$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');
+	$('#content').addClass('span10').removeClass('span11');	
+    }
+
+    var toggleSidebar = function () {
+	if ($('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+	    hideSidebar();
+	} else {
+	    showSidebar();
+	}
+    }
+        
     // if no fish eye then collapse site-navigation 
     if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
-	$('#site-navigation').removeClass('span2');
+	$('#site-navigation').remove();
 	$('#content').removeClass('span10').addClass('span11');
 	$('#toggle-sidebar').addClass('hidden');
+	$('#breadcrumb-navigation').width('100%');
+    } else {
+	// otherwise enable site-navigation toggling
+	if (windowwidth < threshold) {
+	    hideSidebar();
+	}
+	    
+	$('#toggle-sidebar').click(function (event) {
+	    event.preventDefault();
+	    toggleSidebar();
+	});
+	
+	
+	$(window).resize(function(){
+	    windowwidth = $(window).width();
+	    if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+		hideSidebar();
+	    } else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
+		showSidebar();
+	    }
+	}); 
     }
+}
+
+$(function(){
+    // Initialize navigation menu toggling
+    ToggleNavigation();
     
     // Focus on a  results with error if one is around and focussable. 
     $('.ResultsWithError').first().focus();
 
     // Fix bug with skip to main content link in chrome
     $('#stmc-link').click(function() {
-	$('#content').attr('tabIndex', -1).focus();
+	$('#page-title').attr('tabIndex', -1).focus();
     });
 
     // Turn submit inputs into buttons
@@ -43,9 +77,6 @@ $(function(){
 
     // Make grey_buttons disabled buttons
     $('.gray_button').addClass('btn disabled').removeClass('gray_button');
-    
-    // Make grey_buttons disabled buttons
-    $('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
     // replace pencil gifs by something prettier
     $('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <span class='icon icon-pencil' data-alt='edit'></span>")); });
@@ -57,7 +88,7 @@ $(function(){
     });
     $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
 	event.preventDefault();
-    }).html('<i class="icon-question-sign"/>');
+    }).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');    
@@ -65,11 +96,6 @@ $(function(){
     // Changes edit links in info panels to buttons
     $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
     $("#info-panel-right a:contains('[edit]')").text('Edit');
-
-    //Toggles the sidebar if the window is narrow
-    if($(window).width() < 650) {
-	$('#toggle-sidebar').click();
-    }
 
     //Problem page
     $('.currentProblem').addClass('active');
@@ -92,7 +118,8 @@ $(function(){
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
     $('.answerComments').addClass('well');
-
+    $('#SMA_button').addClass('btn btn-primary');
+    
     $("table.attemptResults td[onmouseover*='Tip']").each(function () {
 	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
 	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
@@ -105,6 +132,22 @@ $(function(){
 	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',content:data});	
 	} 
 	    
+    });
+
+    // sets up problems to rescale the image accoring to attr height width
+    // and not native height width.  
+    var rescaleImage = function (index,element) {
+	if ($(element).attr('height') != $(element).get(0).naturalHeight || 
+	$(element).attr('width') != $(element).get(0).naturalWidth) {
+	    $(element).height($(element).width()*$(element).attr('height')
+			   /$(element).attr('width'));
+	}
+    }
+    
+    $('.problem-content img').each(rescaleImage);
+
+    $(window).resize(function () {
+	$('.problem-content img').each(rescaleImage);
     });
     
     // Grades formatting

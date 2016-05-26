@@ -20,14 +20,32 @@
 
 webwork2/clients/WebworkClient.pm
 
+
+Rembember to configure the local output file and display command !!!!!!!!
+
+
+=head1 SYNPOSIS
+	our $xmlrpc_client = new WebworkClient (
+		url                    => $XML_URL,
+		form_action_url        => $FORM_ACTION_URL,
+		displayMode            => DISPLAYMODE(),
+		site_password          =>  $XML_PASSWORD//'',
+		courseID               =>  $credentials{courseID},
+		userID                 =>  $credentials{userID},
+		session_key            =>  $credentials{session_key}//'',
+		sourceFilePath         =>  $fileName,
+	);
+	
+=head1 DESCRIPTION
+
 This script will take a file and send it to a WeBWorK daemon webservice
 to have it rendered.  The result is split into the basic HTML rendering
 and evaluation of answers and then passed to a browser for printing.
 
 The formatting allows the browser presentation to be interactive with the 
-daemon running the script webwork2/lib/renderViaXMLRPC.pm
+daemon running the script webwork2/lib/renderViaXMLRPC.pm  
+and with instructorXMLRPChandler.
 
-Rembember to configure the local output file and display command !!!!!!!!
 
 =cut
 
@@ -79,12 +97,21 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 
 package WebworkClient;
 
-#use Crypt::SSLeay;  # needed for https
+use Crypt::SSLeay;  # needed for https
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
+use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Utils qw( wwRound);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
+
+use WeBWorK::PG::ImageGenerator;
+use HTML::Entities;
+use WeBWorK::Localize;
+use HTML::Entities;
+use WeBWorK::PG::ImageGenerator;
+use IO::Socket::SSL;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -97,13 +124,23 @@ our $UNIT_TESTS_ON             = 0;
 
 # create seed_ce
 # then create imgGen
-our $seed_ce = WeBWorK::CourseEnvironment->new( 
+our $seed_ce;
+
+eval {
+	$seed_ce = WeBWorK::CourseEnvironment->new( 
 				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY, 
 				 courseName         =>      '',
 				 webworkURL         =>      '',
-				 pg_dir             =>      "$WeBWorK::Constants::WEBWORK_DIRECTORY/../pg",
+				 pg_dir             =>      $WeBWorK::Constants::PG_DIRECTORY,
 				 });
-	warn "Unable to find environment for WebworkClient: " unless ref($seed_ce);
+};
+	if ($@ or not ref($seed_ce)){
+		warn "Unable to find environment for WebworkClient: 
+			 webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY 
+			 pg_dir      => $WeBWorK::Constants::PG_DIRECTORY";
+	}
+
+
 
 our %imagesModeOptions = %{$seed_ce->{pg}->{displayModeOptions}->{images}};
 our $site_url = $seed_ce->{server_root_url};	
@@ -117,7 +154,7 @@ our $imgGen = WeBWorK::PG::ImageGenerator->new(
 		cacheDB         => $seed_ce->{webworkFiles}->{equationCacheDB},
 		dvipng_align    => $imagesModeOptions{dvipng_align},
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-	);
+);
 #####################
 # error formatting
 sub format_hash_ref {
@@ -130,13 +167,15 @@ sub new {
     my $invocant = shift;
     my $class = ref $invocant || $invocant;
 	my $self = {
-		output   		=> '',
+		return_object   => {},
+		request_object  => {},
 		error_string    => '',
 		encodedSource 	=> '',
 		url             => '',
-		password        => '',
+		course_password        => '',
 		site_password   => '',
-		course          => '',
+		courseID        => '',
+		userID          => '',
 		displayMode     => '',
 		inputs_ref      => {		 AnSwEr0001 => '',
 				 					 AnSwEr0002 => '',
@@ -156,16 +195,68 @@ our $result;
 #    this code is identical between renderProblem.pl and renderViaXMLRPC.pm
 ##################################################
 
+=head2 xmlrpcCall
+
+
+	
+    $xmlrpc_client->encodeSource($source);
+    $xmlrpc_client->{sourceFilePath}  = $fileName;
+    
+ my $input = { 
+        userID                  => $credentials{userID}//'',
+        session_key             => $credentials{session_key}//'',
+        courseID                => $credentials{courseID}//'',
+        courseName              => $credentials{courseID}//'',
+        course_password         => $credentials{course_password}//'',   
+        site_password           => $XML_PASSWORD//'',
+        envir                   => $xmlrpc_client->environment(
+                                       fileName       => $fileName,
+                                       sourceFilePath => $fileName
+                                    ),
+ };                          
+    our($output, $return_string, $result);    
+    
+
+    if ( $result = $xmlrpc_client->xmlrpcCall('renderProblem', $input) )    {
+        $output = $xmlrpc_client->formatRenderedProblem;
+    } else {
+    	$output = $xmlrpc_client->return_object;  # error report
+    }
+
+	Keys in $result or in  $xmlrpc_client->return_object for the command "renderProblem"
+	 session_key
+	 flags
+	 errors
+	 internal_debug_messages
+	 WARNINGS
+	 problem_state
+	 debug_messages
+	 userID
+	 compute_time
+	 warning_messages
+	 courseID
+	 text
+	 problem_result
+	 header_text
+	 answers
+
+
+=cut
+
+
+
 
 
 sub xmlrpcCall {
 	my $self = shift;
 	my $command = shift;
 	my $input   = shift||{};
-
+	my $requestObject;
 	$command   = 'listLibraries' unless defined $command;
-	  my $input2 = $self->setInputTable();
-	  $input = {%$input2, %$input};
+	  my $default_inputs = $self->default_inputs();
+	  $requestObject = {%$default_inputs, %$input};  #input values can override default inputs
+	  
+	$self->request_object($requestObject);   # store the request object for later
 	
 	my $requestResult; 
 	my $transporter = TRANSPORT_METHOD->new;
@@ -177,12 +268,12 @@ sub xmlrpcCall {
 		-> proxy(($self->url).'/'.REQUEST_URI);
 	};
 	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
-	# turn of verification of the ssl cert 
+	# turn off verification of the ssl cert 
 	$transporter->transport->ssl_opts(verify_hostname=>0,
-	    SSL_verify_mode => 'SSL_VERIFY_NONE');
+		SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE);
 			
     if ($UNIT_TESTS_ON) {
-        print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->{url},"\n";
+        print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->url,"\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %$input),"\n";
     	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
@@ -191,7 +282,8 @@ sub xmlrpcCall {
 	  local( $result);
 	  # use eval to catch errors
 	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
-	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $input) };
+	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $requestObject) };
+	  # result is of type XMLRPC::SOM
 	  print STDERR "There were a lot of errors\n" if $@;
 	  print "Errors: \n $@\n End Errors\n" if $@;
 
@@ -203,9 +295,11 @@ sub xmlrpcCall {
 		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
 	  	}
 
-		#print  pretty_print($result->result()),"\n";  #$result->result()
-		$self->{output}= $result->result();
-		return $result->result();  # would it be better to return the entire $result?
+		$self->return_object($result->result());
+		# print "\n retrieve result ",  keys %{$self->return_object};
+		return $self->return_object; # $result->result();  
+		# would it be better to return the entire $result?
+		# probably not, there is no hash directly available from the $result object. 
 	  } else {
 		my $err_string = 'Error message for '.
 		  join( ' ',
@@ -218,9 +312,10 @@ sub xmlrpcCall {
 		  );
 
 		  print STDERR $err_string;
-		  $self->{output}= $result->result();
-		  $self->{error_string}= $err_string;
-		  return $result;
+		  $self->return_object($result->result());
+		  $self->error_string($err_string);
+		  $self->fault(1); # set fault flag to true
+		  return $self;  
 	  }
 }
 
@@ -255,21 +350,52 @@ sub jsXmlrpcCall {
 	  	my $rh_result = $result->result();
 	  	print "\n success \n";
 	    print pretty_print($rh_result->{'ra_out'});
-		$self->{output} = $rh_result; #$self->formatRenderedProblem($rh_result);
+		$self->return_object( $rh_result ); 
 		return 1; # success
 
 	  } else {
-		$self->{output} = 'Error from server: '. join( ",\n ",
+		$self->return_object( 'Error from server: '. join( ",\n ",
 		  $result->faultcode,
-		  $result->faultstring);
+		  $result->faultstring)
+		);
 		return 0; #failure
 	  }
 }
   
 sub encodeSource {
 	my $self = shift;
-	my $source = shift;
+	my $source = shift||'';
 	$self->{encodedSource} =encode_base64($source);
+}
+sub encoded_source {
+	my $self = shift;
+	my $source = shift;
+	$self->{encodedSource} =$source if defined $source and $source =~/\S/; # source is non-empty
+	$self->{encodedSource};
+}
+sub request_object {   # in or input
+	my $self = shift;
+	my $object = shift;
+	$self->{request_object} =$object if defined $object and ref($object); # source is non-empty
+	$self->{request_object};
+}
+sub return_object {   # out
+	my $self = shift;
+	my $object = shift;
+	$self->{return_object} =$object if defined $object and ref($object); # source is non-empty
+	$self->{return_object};
+}
+sub error_string {   
+	my $self = shift;
+	my $string = shift;
+	$self->{error_string} =$string if defined $string and $string =~/\S/; # source is non-empty
+	$self->{error_string};
+}
+sub fault {   
+	my $self = shift;
+	my $fault_flag = shift;
+	$self->{fault_flag} =$fault_flag if defined $fault_flag and $fault_flag =~/\S/; # source is non-empty
+	$self->{fault_flag};
 }
 sub url {
 	my $self = shift;
@@ -317,7 +443,6 @@ sub pretty_print {    # provides html output -- NOT a method
 sub setInputTable_for_listLib {
 	my $self = shift;
 	my $out = {
-		pw          =>   $self->{password},
 		set         =>   'set0',
 		library_name =>  'Library',
 		command      =>  'all',
@@ -325,7 +450,8 @@ sub setInputTable_for_listLib {
 
 	$out;
 }
-sub setInputTable {
+
+sub default_inputs {
 	my $self = shift;
 	my $webwork_dir = $WeBWorK::Constants::WEBWORK_DIRECTORY; #'/opt/webwork/webwork2';
 	my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir});
@@ -344,7 +470,6 @@ sub setInputTable {
 	}
 
 	my $out = {
-		pw          =>   $self->{site_password},
 		library_name =>  'Library',
 		command      =>  'renderProblem',
 		answer_form_submitted   => 1,
@@ -359,10 +484,7 @@ sub setInputTable {
 			num_of_incorrect_ans => 4,
 			recorded_score       => 1.0,
 		},
-		source                   => $self->{encodedSource},  #base64 encoded
-		
-		
-		
+		source                   => $self->encoded_source,  #base64 encoded		
 	};
 
 	$out;
@@ -435,45 +557,45 @@ sub environment {
 		
 		showHints => 1,               # extra options -- usually passed from the input form
 		showSolutions => 1,
-		
+		@_,
 	};
 	$envir;
 };
 
-sub formatAnswerRow {
-	my $self          = shift;
-	my $rh_answer     = shift;
-	my $answerNumber  = shift;
-	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
-	my $correctAnswer = $rh_answer->{correct_ans}||'';
-	my $ans_message   = $rh_answer->{ans_message}||'';
-	my $score         = ($rh_answer->{score}) ? 'Correct' : 'Incorrect';
-	my $row = qq{
-		<tr>
-		    <td>
-				Prob: $answerNumber
-			</td>
-			<td>
-				$answerString
-			</td>
-			<td>
-			    $score
-			</td>
-			<td>
-				Correct answer is $correctAnswer
-			</td>
-			<td>
-				<i>$ans_message</i>
-			</td>
-		</tr>\n
-	};
-	$row;
-}
+# sub formatAnswerRow {   #moved to attemptsTable object
+# 	my $self          = shift;
+# 	my $rh_answer     = shift;
+# 	my $answerNumber  = shift;
+# 	my $answerString  = $rh_answer->{original_student_ans}||'&nbsp;';
+# 	my $correctAnswer = $rh_answer->{correct_ans}||'';
+# 	my $ans_message   = $rh_answer->{ans_message}||'';
+# 	my $score         = ($rh_answer->{score}) ? 'Correct' : 'Incorrect';
+# 	my $row = qq{
+# 		<tr>
+# 		    <td>
+# 				Prob: $answerNumber
+# 			</td>
+# 			<td>
+# 				$answerString
+# 			</td>
+# 			<td>
+# 			    $score
+# 			</td>
+# 			<td>
+# 				Correct answer is $correctAnswer
+# 			</td>
+# 			<td>
+# 				<i>$ans_message</i>
+# 			</td>
+# 		</tr>\n
+# 	};
+# 	$row;
+# }
 	
 sub formatRenderedLibraries {
 	my $self 			  = shift;
-	#my @rh_result         = @{$self->{output}};  # wrap problem in formats
-	my %rh_result         = %{$self->{output}};
+	#my @rh_result         = @{$self->return_object};  # wrap problem in formats
+	my %rh_result         = %{$self->return_object};
 	my $result = "";
 	foreach my $key (sort  keys %rh_result) {
 		$result .= "$key";
@@ -484,21 +606,23 @@ sub formatRenderedLibraries {
 
 sub formatRenderedProblem {
 	my $self 			  = shift;
-	my $rh_result         = $self->{output}|| {};  # wrap problem in formats
-	my $problemText       = "No output from rendered Problem";
+	my $rh_result         = $self->return_object() || {};  # wrap problem in formats
+	my $problemText       = "No output from rendered Problem" unless $rh_result ;
+	#print "formatRenderedProblem text $rh_result = ",%$rh_result,"\n";
 	if (ref($rh_result) and $rh_result->{text} ) {
 		$problemText       =  $rh_result->{text};
 	} else {
-		$problemText       = "Unable to decode problem text\n".
+		$problemText       .= "Unable to decode problem text<br/>\n".
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
 	}
 	my $problemHeadText = $rh_result->{header_text}//'';
 	my $rh_answers        = $rh_result->{answers}//{};
 	my $answerOrder       = $rh_result->{flags}->{ANSWER_ENTRY_ORDER}; #[sort keys %{ $rh_result->{answers} }];
-	my $encodedSource     = $self->{encodedSource}//'';
+	my $encodedSource     = $self->encoded_source//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
+	
 	#################################################
 	# regular Perl warning messages generated with warn
 	#################################################
@@ -544,317 +668,101 @@ sub formatRenderedProblem {
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
-	my $password         =  $self->{password};
-	my $problemSeed      =  $self->{inputs_ref}->{problemSeed};
+	my $course_password  =  $self->{course_password};
+	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//314159;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{displayMode};
+	
 	my $previewMode      =  defined($self->{inputs_ref}->{preview});
+	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck});
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWgrade});
         # Can be added to the request as a parameter.  Adds a prefix to the 
         # identifier used by the sticky format.  
 	my $problemIdentifierPrefix = $self->{inputs_ref}->{problemIdentifierPrefix} //'';
-        my $problemResult    =  $rh_result->{problem_result}//'';
-        my $problemState     =  $rh_result->{problem_state}//'';
+    my $problemResult    =  $rh_result->{problem_result}//'';
+    my $problemState     =  $rh_result->{problem_state}//'';
+    my $showSummary      = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
+	my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
+
 	my $scoreSummary     =  '';
 
-my $tbl = WeBWorK::Utils::AttemptsTable->new(
-	$rh_answers,
-	answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
-	answerOrder            => $answerOrder//[],
-	displayMode            => $self->{displayMode},
-	imgGen                 => $imgGen,
-	ce                     => '',	#used only to build the imgGen
-	showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
-	showAttemptResults     => ($submitMode or $showCorrectMode),
-	showCorrectAnswers     => ($showCorrectMode),
-	showMessages           => ($previewMode or $submitMode or $showCorrectMode),
-);
-
-my $answerTemplate = $tbl->answerTemplate;
-my $color_input_blanks_script = $tbl->color_answer_blanks;
-$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
-
-# warn "imgGen is ", $tbl->imgGen;
-#warn "answerOrder ", $tbl->answerOrder;
-#warn "answersSubmitted ", $tbl->answersSubmitted;
-# render equation images
-
-if ($submitMode && $problemResult) {
-    $scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
-    if ($problemResult->{msg}) {
-         $scoreSummary .= CGI::p($problemResult->{msg});
-    }
-
-    $scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
-    $scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
-}
-
-# This stuff is put here because eventually we will add locale support so the 
-# text will have to be done server side. 
-my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
-$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
-$localStorageMessages .= CGI::end_div();	
-
-	###########################
-	# Define problem templates
-	###########################
-	#FIXME -- this can be improved to use substitution trick 
-	# that way only the chosen problemTemplate will be interpolated
-$self->{outputformats}->{standard} = <<ENDPROBLEMTEMPLATE;
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$rh_answers,
+		answersSubmitted       => $self->{inputs_ref}->{answersSubmitted}//0,
+		answerOrder            => $answerOrder//[],
+		displayMode            => $self->{displayMode},
+		imgGen                 => $imgGen,
+		ce                     => '',	#used only to build the imgGen
+		showAttemptPreviews    => ($previewMode or $submitMode or $showCorrectMode),
+		showAttemptResults     => ($submitMode or $showCorrectMode),
+		showCorrectAnswers     => ($showCorrectMode),
+		showMessages           => ($previewMode or $submitMode or $showCorrectMode),
+		showSummary            => ( ($showSummary and ($submitMode or $showCorrectMode) )//0 )?1:0,  
+		maketext               => WeBWorK::Localize::getLoc($formLanguage//'en'),
+		summary                => ($self->{problem_result}->{summary} )//'', # can be set by problem grader
+	);
 
 
-<html>
-<head><link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
+	my $answerTemplate = $tbl->answerTemplate;
+	my $color_input_blanks_script = $tbl->color_answer_blanks;
+	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-
-<!-- JS Loads -->
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
-<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
-<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
-<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-$problemHeadText
-
-<base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host: $XML_URL,  format: standard</title>
-</head>
-<body>
-
-<h2> WeBWorK Editor using host: $XML_URL,  format: standard</h2>
-		    $answerTemplate
-		    $color_input_blanks_script
-		    <form action="$FORM_ACTION_URL" method="post">
-			$problemText
-	       <input type="hidden" name="answersSubmitted" value="1"> 
-		   <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
-	       <input type="hidden" name="pathToProblemFile" value="$fileName">
-	       <input type="hidden" name=courseName value="$courseID">
-	       <input type="hidden" name=courseID value="$courseID">
-	       <input type="hidden" name="userID" value="$userID">
-	       <input type="hidden" name="password" value="$password">
-	       <input type="hidden" name="passwd" value="$password">
-	       <input type="hidden" name="displayMode" value="$displayMode">
-	       <input type="hidden" name="session_key" value="$session_key">
-		   <p>
-		      <input type="submit" name="preview"  value="Preview" /> 
-			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWgrade" value="Show correct answer"/>
-		   </p>
-	       
-	     </form>
-<HR>
-<h3> Perl warning section </h3>
-$warnings
-<h3> PG Warning section </h3>
-$PG_warning_messages;
-<h3> Debug message section </h3>
-$debug_messages
-<h3> internal errors </h3>
-$internal_debug_messages
-
-</body>
-</html>
-
-ENDPROBLEMTEMPLATE
-
-$self->{outputformats}->{simple}= <<ENDPROBLEMTEMPLATE;
-
-<!DOCTYPE html>
-<html>
-<head>
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
-
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-
-<!-- JS Loads -->
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
-<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
-<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
-<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-$problemHeadText
-
-<base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
-</head>
-<body>
-<div class="container-fluid">
-<div class="row-fluid">
-<div class="span12 problem">			
-		    $answerTemplate
-		    <form action="$FORM_ACTION_URL" method="post">
-<div class="problem-content">
-			$problemText
-</div>
-$scoreSummary
-
-	       <input type="hidden" name="answersSubmitted" value="1"> 
-	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-	       <input type="hidden" name="problemSource" value="$encodedSource"> 
-	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
-	       <input type="hidden" name="pathToProblemFile" value="$fileName">
-	       <input type="hidden" name=courseName value="$courseID">
-	       <input type="hidden" name=courseID value="$courseID">
-	       <input type="hidden" name="userID" value="$userID">
-	       <input type="hidden" name="password" value="$password">
-	       <input type="hidden" name="passwd" value="$password">
-	       <input type="hidden" name="displayMode" value="$displayMode">
-	       <input type="hidden" name="session_key" value="$session_key">
-	       <input type="hidden" name="outputformat" value="simple">
-		   <p>
-		      <input type="submit" name="preview"  value="Preview" /> 
-			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWgrade" value="Show correct answer"/>
-		   </p>
-
-	       </form>
-</div>
-</div></div>
-</body>
-</html>
-
-ENDPROBLEMTEMPLATE
-
-$self->{outputformats}->{sticky}= <<ENDPROBLEMTEMPLATE;
-
-<!DOCTYPE html>
-<html>
-<head>
-<link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
-
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-
-<!-- JS Loads -->
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
-<script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jquery.json.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
-<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
-<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
-<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
-<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-$problemHeadText
-
-<base href="$XML_URL">
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: sticky seed: $problemSeed</title>
-</head>
-<body>
-<div class="container-fluid">
-<div class="row-fluid">
-<div class="span12 problem">			
-$answerTemplate
-<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
-<div class="problem-content">
-$problemText
-</div>
-$scoreSummary
-$localStorageMessages
-<input type="hidden" name="answersSubmitted" value="1"> 
-<input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-<input type="hidden" name="problemSource" value="$encodedSource"> 
-<input type="hidden" name="problemSeed" value="$problemSeed"> 
-<input type="hidden" name="pathToProblemFile" value="$fileName">
-<input type="hidden" name="courseName" value="$courseID">
-<input type="hidden" name="courseID" value="$courseID">
-<input type="hidden" name="userID" value="$userID">
-<input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
-<input type="hidden" name="password" value="$password">
-<input type="hidden" name="passwd" value="$password">
-<input type="hidden" name="displayMode" value="$displayMode">
-<input type="hidden" name="session_key" value="$session_key">
-<input type="hidden" name="outputformat" value="sticky">
-<p>
-<input type="submit" name="preview"  value="Preview" /> 
-<input type="submit" name="WWsubmit" value="Submit answer"/> 
-<input type="submit" name="WWgrade" value="Show correct answer"/>
-</p>
-</form>
-</div>
-</div>
-</div>
-<!-- Activate local storage js -->
-<script type="text/javascript">WWLocalStorage();</script>
-</body>
-</html>
-
-ENDPROBLEMTEMPLATE
-
-$self->{outputformats}->{debug}= 
-qq{
-
-	<html>
-	<head>
-	<base href="$XML_URL">
-	<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: debug</title>
-	</head>
-	<body>
-			
-	<h2> WeBWorK Editor using host: $XML_URL,  format: debug</h2>
-}.  pretty_print($self) . 
-qq{		   
-</body>
-</html>
-};
+	# warn "imgGen is ", $tbl->imgGen;
+	#warn "answerOrder ", $tbl->answerOrder;
+	#warn "answersSubmitted ", $tbl->answersSubmitted;
+	# render equation images
 
 
-#  choose problem template
-	$self->{outputformat}= $self->{inputs_ref}->{outputformat}//'standard';
-    if (defined($self->{outputformats}->{$self->{outputformat}}) ) {
-    	return $self->{outputformats}->{$self->{outputformat}};
-    } else {
-    	return $self->{outputformats}->{standard};
-    }
+
+	if ($submitMode && $problemResult) {
+		$scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+		if ($problemResult->{msg}) {
+			 $scoreSummary .= CGI::p($problemResult->{msg});
+		}
+
+		$scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+		$scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+	}
+
+	# This stuff is put here because eventually we will add locale support so the 
+	# text will have to be done server side. 
+	my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
+	$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
+	$localStorageMessages .= CGI::end_div();
+		
+	my $pretty_print_self  = pretty_print($self);
+######################################################
+# Return interpolated problem template
+######################################################
+
+	my $format_name = $self->{inputs_ref}->{outputformat}//'sticky';
+	# find the appropriate template in WebworkClient folder
+	my $template = do("WebworkClient/${format_name}_format.pl");
+	die "Unknown format name $format_name" unless $template;
+	# interpolate values into template
+	$template =~ s/(\$\w+)/$1/gee;  
+	return $template;
 }
 
 
+######################################################
+# Utilities
+######################################################
+
+### Write log
+# $ce - a WeBWork::CourseEnvironment object
+# $function - fully qualified function name
+# $details - any information, do not use the characters '[' or ']'
+# $beginEnd - the string "begin", "intermediate", or "end"
+# use the intermediate step begun or completed for INTERMEDIATE
+# use an empty string for $details when calling for END
+# Information printed in format:
+# [formatted date & time ] processID unixTime BeginEnd $function  $details
+sub writeRenderLogEntry($$$) {
+	my ($function, $details, $beginEnd) = @_;
+	$beginEnd = ($beginEnd eq "begin") ? ">" : ($beginEnd eq "end") ? "<" : "-";
+	WeBWorK::Utils::writeLog($seed_ce, "render_timing", "$$ ".time." $beginEnd $function [$details]");
+}
 
 1;

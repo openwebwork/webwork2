@@ -480,11 +480,29 @@ sub Edit {
 	my $self = shift;
 	my $filename = $self->getFile('edit'); return unless $filename;
 	my $file = "$self->{courseRoot}/$self->{pwd}/$filename";
+	my $r = $self->r;
+	my $userID = $r->param('user');
+	my $ce = $r->ce;
+	my $authz = $r->authz;
+
+	# if its a restricted file, dont allow the web editor to edit it unless
+	# that option has been set for the course.  
+	foreach my $restrictedFile (@{$ce->{uneditableCourseFiles}}) {
+	    if (File::Spec->canonpath($file) eq
+		File::Spec->canonpath("$self->{courseRoot}/$restrictedFile") &&
+		!$authz->hasPermissions($userID, "edit_restricted_files") ) {
+		    $self->addbadmessage("You do not have permission to edit this file.");
+		    $self->Refresh; return;
+	    }
+	}
 
 	if (-d $file) {
 		$self->addbadmessage("You can't edit a directory");
 		$self->Refresh; return;
 	}
+
+	
+
 	unless (-f $file) {
 		$self->addbadmessage("You can only edit text files");
 		$self->Refresh; return;

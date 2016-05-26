@@ -60,7 +60,7 @@ sub tex2pdf {
 	my $rh 		= 	shift;
 	local($|)	=	1;
 	my $out 	= 	{};
-	unless ($rh->{pw} eq $PASSWORD ) {
+	unless ($rh->{pw} eq $PASSWORD ) { #FIXME pw is deprecated  use site_password instead?
 		$out->{error}	=	404;
 		return($out);
 	}
