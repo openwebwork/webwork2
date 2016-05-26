@@ -202,7 +202,7 @@ sub reorderProblems {
         if($db->existsGlobalProblem($setID,$new_problems->[$i]->{problem_id})){
             $prob = $db->getGlobalProblem($setID,$new_problems->[$i]->{problem_id});
         } else {
-            $prob = $db->newGlobalProblem();##$setID,$new_problems->[$i]->{problem_id});
+            $prob = $db->newGlobalProblem();
             $prob->{set_id} = $setID;
             $prob->{problem_id} = $new_problems->[$i]->{problem_id};
         }
@@ -227,6 +227,9 @@ sub reorderProblems {
             
             ## need to make a new User Problem.  Reusing the old one results in a problem. 
             my $newUserProblem = createNewUserProblem($user_id,$setID,$new_problems->[$i]->{problem_id});
+            
+            debug to_dumper $newUserProblem;
+            debug to_dumper $user_prob;
             for my $prop (@user_problem_props) {
                 $newUserProblem->{$prop} = $user_prob->{$prop};
             }
