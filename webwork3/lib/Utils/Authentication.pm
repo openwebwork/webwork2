@@ -2,7 +2,7 @@ package Utils::Authentication;
 use base qw(Exporter);
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(setCourseEnvironment buildSession checkPermissions setCookie);
+our @EXPORT_OK = qw(setCourseEnvironment buildSession checkPermissions setCookie isSessionCurrent);
 
 use Dancer ':syntax';
 
@@ -84,6 +84,26 @@ sub buildSession {
 	session 'logged_in' => 1;
 
 	setCookie();
+}
+
+# this checks if the session is current by seeing if course_id, user_id, key is set and the timestamp is within a standard time. 
+
+sub isSessionCurrent {
+	return "" unless (session 'course');
+	return "" unless (session 'user');
+	return "" unless (session 'key');
+	my $key = vars->{db}->getKey(session 'user');
+	if(time() - $key->{timestamp} > vars->{ce}->{sessionKeyTimeout}){
+		session 'logged_in' => 0;
+		session 'timestamp' => 0;
+		return "";
+	} else {
+		# update the timestamp in the database so the user isn't logged out prematurely.
+		$key->{timestamp} = time();
+		session 'timestamp' => $key->{timestamp};
+		vars->{db}->putKey($key);
+	}
+	return 1;
 }
 
 

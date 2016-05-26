@@ -1,13 +1,19 @@
 use Test::More tests => 4;
-use strict;
-use warnings;
-use JSON qw/from_json/;
+BEGIN {
+        die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+        die "PG_ROOT not found in environment.\n" unless exists $ENV{PG_ROOT};
+                
+        use lib "$ENV{WEBWORK_ROOT}/lib";
+        use lib "$ENV{WEBWORK_ROOT}/webwork3/lib";
+        use lib "$ENV{PG_ROOT}/lib";
+}
+
 
 BEGIN {$ENV{MOD_PERL_API_VERSION}=2}
 
-# the order is important
 use WeBWorK3;
 Dancer::set logger => 'console';
+use Dancer qw/:tests/;
 use Dancer::Test;
 
 
@@ -31,7 +37,7 @@ $obj = from_json $resp->{content};
 my $course_exists = ($obj->{message} ||"") eq "Course exists."; 
 
 if($course_exists) {
-    is($obj->{message}, "Course exists.", "The course " .$new_course_name . " exists."); 
+    is($obj->{message}, "Course exists.", "The course $new_course_name exists.  We can't test that the course is created.  Delete the course $new_course_name first. "); 
 } else {
     ## create a new course called $new_course_name 
     $resp = dancer_response(POST=>'/courses/'. $new_course_name, 

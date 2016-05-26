@@ -61,6 +61,14 @@ get '/courses/:course_id' => sub {
 
         setCourseEnvironment(params->{course_id});
 
+        my $coursePath = path(vars->{ce}->{webworkDirs}->{courses},params->{course_id});
+
+		if (! -e $coursePath) {
+			return {course_id => params->{course_id}, message=> "Course doesn't exist", course_exists=> JSON::false};
+		}
+
+
+
 		my $ce2 = new WeBWorK::CourseEnvironment({
 		 	webwork_dir         => vars->{ce}->{webwork_dir},
 			courseName => params->{course_id},
@@ -68,11 +76,6 @@ get '/courses/:course_id' => sub {
         
         
 
-		my $coursePath = vars->{ce}->{webworkDirs}->{courses} . "/" . params->{course_id};
-
-		if (! -e $coursePath) {
-			return {};
-		}
 
 
 		my ($tables_ok,$dbStatus);
@@ -82,7 +85,7 @@ get '/courses/:course_id' => sub {
             return { coursePath => $coursePath, tables_ok => $tables_ok, dbStatus => $dbStatus,
                         message => "Course exists."};
 		} else {
-            return {course_id => params->{course_id}, message=> "Course exists."};
+            return {course_id => params->{course_id}, message=> "Course exists.", course_exists=> JSON::true};
         }
 		
 	} else {

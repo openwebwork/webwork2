@@ -1,20 +1,27 @@
+###
+#  This test course is a basic test that the  basic dancer app is working.  
+##
+
 use Test::More tests => 5;
 use strict;
 use warnings;
 
-use Data::Dump qw/dd/; 
-use JSON qw/from_json/;
+BEGIN {
+        die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+        die "PG_ROOT not found in environment.\n" unless exists $ENV{PG_ROOT};
+                
+        use lib "$ENV{WEBWORK_ROOT}/lib";
+        use lib "$ENV{WEBWORK_ROOT}/webwork3/lib";
+        use lib "$ENV{PG_ROOT}/lib";
+}
+
 
 BEGIN {$ENV{MOD_PERL_API_VERSION}=2}
 
 use WeBWorK3;
 Dancer::set logger => 'console';
+use Dancer qw/:tests/;
 use Dancer::Test;
-
-
-#
-#my $settings = Dancer::Config::settings();
-#dd $settings; 
 
 response_status_is [GET => '/app-info'], 200, "GET /webwork3/app-info is found";
 route_exists [GET => '/app-info'], "GET /webwork3/app-info is handled";

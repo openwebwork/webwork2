@@ -8,6 +8,7 @@ use Dancer ':syntax';
 use Dancer::Plugin::Database;
 use WeBWorK::Utils qw(readDirectory);
 use WeBWorK3::PG::Local;
+#use Data::Dump qw/dd/;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
 our @answerFields = qw/preview_latex_string done original_student_ans preview_text_string ans_message 
@@ -38,8 +39,8 @@ sub render {
 	# remove any pretty garbage around the problem
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
-
-
+    
+    
 	my $translationOptions = {
 		displayMode     => $renderParams->{displayMode},
 		showHints       => $renderParams->{showHints},
@@ -49,6 +50,8 @@ sub render {
 		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
 	};
     
+    $translationOptions->{r_source} = $renderParams->{source} if defined($renderParams->{source});
+
     
 	my $pg = new WeBWorK3::PG::Local(
 		$ce,

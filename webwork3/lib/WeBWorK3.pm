@@ -9,14 +9,38 @@ use File::Find::Rule;
 
 set serializer => 'JSON';
 
+my $webwork_dir = "";
+my $pg_dir = ""; 
+
+
 BEGIN{
-  $ENV{WEBWORK_ROOT} = config->{webwork_dir};
+
+
+    if (exists config->{webwork_dir}) {
+        $webwork_dir = config->{webwork_dir};
+    } elsif (exists $ENV{WEBWORK_ROOT}) {
+        $webwork_dir = $ENV{WEBWORK_ROOT}; 
+    } else {
+       die "both WEBWORK_ROOT does not exist and the configuration file is missing.";
+    }
+
+    if (exists config->{pg_dir}) {
+        $pg_dir = config->{webwork_dir};
+    } elsif (exists $ENV{PG_ROOT}) {
+        $pg_dir = $ENV{PG_ROOT}; 
+    } else {
+       die "both pg_ROOT does not exist and the configuration file is missing.";
+    }
+
+    $ENV{WEBWORK_ROOT} = $webwork_dir;
+    $ENV{PG_ROOT} = $pg_dir; 
 }
 
 
 # link to WeBWorK code libraries
-use lib config->{webwork_dir}.'/lib';
-use lib config->{pg_dir}.'/lib';
+
+use lib $webwork_dir . '/lib';
+use lib $pg_dir .'/lib';
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
