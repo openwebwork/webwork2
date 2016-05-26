@@ -1,0 +1,53 @@
+DOCUMENT(); 
+ 
+loadMacros(
+"PGstandard.pl",
+"MathObjects.pl",
+"parserMultiAnswer.pl",
+"MatrixCheckers.pl",
+"PGmatrixmacros.pl",
+"PGinfo.pl",
+"PGcourse.pl",
+);
+
+Context("Matrix");
+
+TEXT(beginproblem());
+TEXT($BEGIN_ONE_COLUMN);
+$showPartialCorrectAnswers = 1;
+
+
+BEGIN_TEXT
+MathObject matrices
+$PAR
+\{display_matrix([[1,4,7],[3,1,7]]) \}
+
+END_TEXT
+
+$M = Matrix(" [[4,5,6],[3,2,1]]" );
+$M2 = Matrix("[[1,2],[3,4]]");
+$M3 = Matrix("[[3,1],[4,1]]");
+$input = $inputs_ref->{AnSwEr0001}//'[0]';
+$N = Matrix($input);
+$N2 = Matrix($inputs_ref->{mymatrix}//'[0]');
+Context()->texStrings;
+BEGIN_TEXT
+Enter a matrix here [[4,5,6],[3,2,1]] \{ANS($M->cmp), ans_box( 4,80) \} $BR
+and the entered matrix is 
+\[$N\]
+$BR
+Enter a matrix here [[1,2],[3,4]] \{NAMED_ANS_BOX('mymatrix', 4,80) \} $BR
+\[$N2\]
+$BR
+Enter a final matrix [[3,1],[4,1]] here $PAR
+\{ANS($M3->cmp),$M3->ans_array(3) \} $PAR
+END_TEXT
+Context()->normalStrings;
+
+
+LABELED_ANS('mymatrix', $M2->cmp);
+
+
+#listVariables();
+
+ENDDOCUMENT();

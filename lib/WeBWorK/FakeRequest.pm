@@ -19,10 +19,23 @@ use parent WeBWorK::Request;
 
 =head1 NAME
 
-WeBWorK:WeBWorK::FakeRequest - Imitate WeBWorK::Request behavior without benefit of Apache::Request
+	WeBWorK::FakeRequest 
+
+=head1 SYNPOSIS
+
+ 	$fake_r = WeBWorK::FakeRequest->new ($input_hash, 'xmlrpc_module')
+ 
+=head1 DESCRIPTION
+
+- Imitate WeBWorK::Request behavior without benefit of Apache::Request
+
+This module is used in the WebworkWebservice suite, specifically by the WebworkXMLRPC, to facilitate
+authorization and authentication when the input hash is not an WeBWorK::Request object but does
+contain the authorization and authentication data. 
+
+It might be applicable for use elsewhere.
 
 =cut
-
 use strict;
 use warnings;
 use WeBWorK::Debug;
@@ -115,7 +128,6 @@ Return the course environment (WeBWorK::CourseEnvironment) associated with this
 request. If $new is specified, set the course environment to $new before
 returning the value.
 
-=cut
 
 
 =item db([$new])
@@ -123,7 +135,6 @@ returning the value.
 Return the database (WeBWorK::DB) associated with this request. If $new is
 specified, set the database to $new before returning the value.
 
-=cut
 
 
 =item authen([$new])
@@ -131,7 +142,6 @@ specified, set the database to $new before returning the value.
 Return the authenticator (WeBWorK::Authen) associated with this request. If $new
 is specified, set the authenticator to $new before returning the value.
 
-=cut
 
 
 =item authz([$new])
@@ -139,7 +149,6 @@ is specified, set the authenticator to $new before returning the value.
 Return the authorizer (WeBWorK::Authz) associated with this request. If $new is
 specified, set the authorizer to $new before returning the value.
 
-=cut
 
 
 =item urlpath([$new])

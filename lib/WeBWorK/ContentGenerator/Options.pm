@@ -61,62 +61,86 @@ sub body {
 	
 	print CGI::h2($r->maketext("Change Password"));
 	
+	my $Password = eval {$db->getPassword($User->user_id)}; # checked
+	# Its ok if the $Password doesn't exist because students
+	# might be setting it for the first time. 
+	warn $r->maketext("Can't get password record for user '[_1]': [_2]",$userID,$@) if $@;
+			
+	
 	if ($changeOptions and ($currP or $newP or $confirmP)) {
 		
 		if ($authz->hasPermissions($userID, "change_password")) {
 			
-			my $Password = eval {$db->getPassword($User->user_id)}; # checked
-			warn $r->maketext("Can't get password record for user '[_1]': [_2]",$userID,$@) if $@ or not defined $Password;
-			
-			my $EPassword = eval {$db->getPassword($EUser->user_id)}; # checked
-			warn $r->maketext("Can't get password record for effective user '[_1]': [_2]",$eUserID,$@) if $@ or not defined $EPassword;
-			
-			if (crypt($currP, $Password->password) eq $Password->password) {
-				if ($newP or $confirmP) {
-					if ($newP eq $confirmP) {
-						$EPassword->password(cryptPassword($newP));
-						eval { $db->putPassword($EPassword) };
-						if ($@) {
-							print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
-								CGI::p($r->maketext("Couldn't change [_1]'s password: [_2]",$e_user_name,$@)),
-							);
-						} else {
-							print CGI::div({class=>"ResultsWithoutError"},
-								CGI::p($r->maketext("[_1]'s password has been changed.",$e_user_name)),
-							);
-						}
-					} else {
-						print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
-							CGI::p(
-								$r->maketext("The passwords you entered in the [_1] and [_2] fields don't match. Please retype your new password and try again.", CGI::b($r->maketext("[_1]'s New Password",$e_user_name)), CGI::b($r->maketext("Confirm [_1]'s New Password",$e_user_name))) 
-							),
-						);
-					}
-				} else {
-					print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-						CGI::p($r->maketext("[_1]'s new password cannot be blank.",$e_user_name)),
-					);
-				}
+		  my $EPassword = eval {$db->getPassword($EUser->user_id)}; # checked
+		  warn $r->maketext("Can't get password record for effective user '[_1]': [_2]",$eUserID,$@) if $@;
+
+		  #Check that either password is not defined or if it is
+		  #defined then we have the right one.  
+		  if ((not defined $Password) || (crypt($currP // '', $Password->password) eq $Password->password)) {
+		    if ($newP or $confirmP) {
+		      if ($newP eq $confirmP) {
+			if (not defined $EPassword) {
+			  $EPassword = $db->newPassword();
+			  $EPassword->user_id($EUser->user_id);
+			  $EPassword->password(cryptPassword($newP));
+			  eval {$db->addPassword($EPassword)};
+			  $Password = $Password // $EPassword;
+			  if ($@) {
+			    print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
+					   CGI::p($r->maketext("Couldn't change [_1]'s password: [_2]",$e_user_name,$@)));
+			  } else {
+			    print CGI::div({class=>"ResultsWithoutError"},
+					   CGI::p($r->maketext("[_1]'s password has been changed.",$e_user_name)),
+					  );
+			  }
+
 			} else {
-				print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-					CGI::p($r->maketext("The password you entered in the [_1] field does not match your current password. Please retype your current password and try again.", CGI::b($r->maketext("[_1]'s Current Password",$user_name)))
-					),
-				);
-			}
-			
+			    
+			    $EPassword->password(cryptPassword($newP));
+			    eval { $db->putPassword($EPassword) };
+			    $Password = $Password // $EPassword;
+			    if ($@) {
+			      print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
+					     CGI::p($r->maketext("Couldn't change [_1]'s password: [_2]",$e_user_name,$@)));
+			    } else {
+			      print CGI::div({class=>"ResultsWithoutError"},
+					     CGI::p($r->maketext("[_1]'s password has been changed.",$e_user_name)),
+					    );
+			    }
+
+			  }
+		      } else {
+			print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
+				       CGI::p(
+					      $r->maketext("The passwords you entered in the [_1] and [_2] fields don't match. Please retype your new password and try again.", CGI::b($r->maketext("[_1]'s New Password",$e_user_name)), CGI::b($r->maketext("Confirm [_1]'s New Password",$e_user_name))) 
+					     ),
+				      );
+		      }
+		    } else {
+		      print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+				     CGI::p($r->maketext("[_1]'s new password cannot be blank.",$e_user_name)),
+					);
+		    }
+		  } else {
+		    print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+				   CGI::p($r->maketext("The password you entered in the [_1] field does not match your current password. Please retype your current password and try again.", CGI::b($r->maketext("[_1]'s Current Password",$user_name)))
+					 ),
+				  );
+		  }
+		  
 		} else {
-			print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-				CGI::p($r->maketext("You do not have permission to change your password.")))
-					unless $changeOptions and ($currP or $newP or $confirmP); # avoid double message
+		  print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+				 CGI::p($r->maketext("You do not have permission to change your password.")))
+		    unless $changeOptions and ($currP or $newP or $confirmP); # avoid double message
 		}
 		
-	}
+	      }
 	
 	if ($authz->hasPermissions($userID, "change_password")) {
 		print CGI::table({class=>"FormLayout"},
 			CGI::Tr({},
 				CGI::td(CGI::label({'for'=>'currPassword'},$r->maketext("[_1]'s Current Password",$user_name))),
-				CGI::td(CGI::password_field(-name=>"currPassword", -id=>"currPassword")),
+				CGI::td(CGI::password_field(-name=>"currPassword", -id=>"currPassword", (defined $Password) ? (): (-disabled, 1) )),
 			),
 			CGI::Tr({},
 				CGI::td(CGI::label({'for'=>"newPassword"},$r->maketext("[_1]'s New Password",$e_user_name))),
@@ -176,7 +200,7 @@ sub body {
 	
 
 	
-	print CGI::h2($r->maketext("Change Display Options"));
+	print CGI::h2($r->maketext("Change Display Settings"));
 
 	if ($changeOptions) {
 	    

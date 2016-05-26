@@ -61,6 +61,7 @@ BEGIN {
 		hide_hint                 => { type=>"INT" },
 		restrict_prob_progression => { type=>"INT" },
 		email_instructor          => { type=>"INT" },
+		lis_source_did            => { type=>"BLOB"},	     
 	);
 }
 

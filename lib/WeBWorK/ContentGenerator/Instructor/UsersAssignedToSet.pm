@@ -123,13 +123,13 @@ sub body {
 	print CGI::p(
 		    CGI::submit({name=>"assignToAll", value => $r->maketext("Assign to All Current Users")}), CGI::i($r->maketext("This action can take a long time if there are many students."))
 		  ),
-		  CGI::div({-style=>"color:red"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
+		  CGI::div({-class=>"ResultsWithError"}, $r->maketext("Do not uncheck students, unless you know what you are doing."),CGI::br(),
 	           $r->maketext("There is NO undo for unassigning students.")),
 	      CGI::p($r->maketext("When you unassign by unchecking a student's name, you destroy all of the data for homework set [_1] for this student. You will then need to reassign the set to these students and they will receive new versions of the problems. Make sure this is what you want to do before unchecking students.", CGI::b($setID))
 	);
 				        
 	print CGI::start_table({});
-	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Assigned"),$r->maketext("Login Name"),"&nbsp;",$r->maketext("Student Name"),"&nbsp;",$r->maketext("Section"),"&nbsp;",$r->maketext("Due Date")]));
+	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Assigned"),$r->maketext("Login Name"),"&nbsp;",$r->maketext("Student Name"),"&nbsp;",$r->maketext("Section"),"&nbsp;",$r->maketext("Close Date")]));
 	print CGI::Tr(CGI::td([CGI::hr(),CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	# get user records
@@ -196,7 +196,7 @@ sub body {
 						                         params =>{editForUser=> $user}
 						)},
 						"",
-						$r->maketext("Edit data for ").$user
+						$r->maketext("Edit data for [_1]",$user)
 					))
 					: ()
 				),
@@ -209,13 +209,10 @@ sub body {
 	print CGI::submit({name=>"assignToSelected", value=>$r->maketext("Save")});
 	print CGI::p( CGI::hr(),
 				  CGI::div( {class=>'ResultsWithError'},
-						"There is NO undo for this function.  
-				        Do not use it unless you know what you are doing!  When you unassign
-				        a student using this button, or by unchecking their name, you destroy all
-				        of the data for homework set $setID for this student.",
+					   $r->maketext("There is NO undo for this function.  Do not use it unless you know what you are doing!  When you unassign a student using this button, or by unchecking their name, you destroy all of the data for homework set $setID for this student."),
 						CGI::br(),
 						CGI::submit({name=>"unassignFromAll", value=>$r->maketext("Unassign from All Users")}),
-						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>'Read only', 1=>'Allow unassign'}),
+						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->maketext('Read only'), 1=>$r->maketext('Allow unassign')}),
 				  ),
 				  CGI::hr(),
 	);

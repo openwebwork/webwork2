@@ -372,10 +372,10 @@ sub feedbackForm {
 			? CGI::tt($user->email_address)
 			: CGI::textfield("from", "", 40))
 	);
-	print CGI::p("Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included.");
+	print CGI::p($r->maketext("Use this form to report to your professor a problem with the WeBWorK system or an error in a problem you are attempting. Along with your message, additional information about the state of the system will be included."));
 	print CGI::p(CGI::i($message)) if $message;
 	print CGI::p(
-		CGI::label({'for'=>"feedback"},CGI::b("E-mail:").CGI::span({class=>"required-field"},'*')),
+		CGI::label({'for'=>"feedback"},CGI::b($r->maketext("E-mail:")).CGI::span({class=>"required-field"},'*')),
 		CGI::textarea({name=>"feedback", id=>"feedback", cols=>"80", rows=>"20"}),
 	);
 	print CGI::submit("sendFeedback", $r->maketext("Send E-mail"));

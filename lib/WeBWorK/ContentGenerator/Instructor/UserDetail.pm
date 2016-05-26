@@ -27,14 +27,15 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(sortByName);
+use WeBWorK::Utils qw(sortByName x);
 use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
-use constant DATE_FIELDS => {   open_date    => " Open: ",
-                                reduced_scoring_date => " Reduced&nbsp;: ",
-	                            due_date     => " Due&nbsp;: ",
-	                            answer_date  => " Ans&nbsp;: "
+# We use the x function to mark strings for localizaton 
+use constant DATE_FIELDS => {   open_date    => x("Open:"),
+                                reduced_scoring_date => x("Reduced:"),
+	                            due_date     => x("Closes:"),
+	                            answer_date  => x("Answer:")
 };
 use constant DATE_FIELDS_ORDER =>[qw(open_date reduced_scoring_date due_date answer_date )];
 sub initialize {
@@ -190,29 +191,6 @@ sub body {
 	my %prettyFieldNames = map { $_ => $_ } 
 		$userTemplate->FIELDS();
 	
-# 	@prettyFieldNames{qw(
-# 		#user_id
-# 		first_name
-# 		last_name
-# 		email_address
-# 		student_id
-# 		status
-# 		section
-# 		recitation
-# 		comment
-# 		permission
-# 	)} = (
-# 		#"Login Name",
-# 		"First Name",
-# 		"Last Name",
-# 		"Email",
-# 		"Student ID",
-# 		"Status",
-# 		"Section",
-# 		"Recitation",
-# 		"Comment",
-# 		"Permission Level",
-# 	);
 	
 	my @dateFields         = @{DATE_FIELDS_ORDER()};
 	my $rh_dateFieldLabels =  DATE_FIELDS();
@@ -241,76 +219,11 @@ sub body {
 		                                              }
 		);
 
-	print CGI::h4({align=>'center'},"Edit ",CGI::a({href=>$basicInfoUrl},'class list data')," for  $userName ($editForUserID) who has been assigned $setCount sets.");
+	print CGI::h4({align=>'center'},$r->maketext("Edit")," ",CGI::a({href=>$basicInfoUrl},$r->maketext('class list data'))," ",$r->maketext("for  [_1] ([_2]) who has been assigned [_3] sets.",$userName, $editForUserID, $setCount));
 	
-	#print CGI::h4("User Data");
-# 	print CGI::start_table({ align=>'center', border=>1,cellpadding=>5});
-# 	print CGI::Tr(
-# 		CGI::th(CGI::checkbox({ type => 'checkbox',
-# 								name => "edit.basic.info",
-# 								label => '',
-#                         		checked => 0
-#         }),"Edit class list data for $editForUserID"),
-#         CGI::th(CGI::checkbox({ type => 'checkbox',
-# 								name => "change.password",
-# 								label => '',
-#                         		checked => 0
-#         }),"Change Password for $editForUserID"));
-#         
-# 	print "<tr><td rowspan=\"2\">";
-# 	########################################
-# 	# Basic student data
-# 	########################################
-# 	print CGI::start_table();
-# 	foreach ($userTemplate->FIELDS()) {
-# 		next if $_ eq 'user_id';   # don't print login name
-# 		print CGI::Tr(
-# 			CGI::td([
-# 		        	$prettyFieldNames{$_}, 
-# 				CGI::input({ -value => $UserRecord->$_, -size => 25 })
-# 			])
-# 		);
-# 	}
-# 	foreach ($permissionLevelTemplate->FIELDS()) {
-# 		print CGI::Tr(
-# 			CGI::td([
-# 		        	$prettyFieldNames{$_}, 
-# 				CGI::input({ -value => $PermissionRecord->$_, -size => 25 })
-# 			])
-# 		);
-# 	}
-# 	print CGI::end_table();
-# 	
-# 	#print CGI::br();
-# 	print "</td><td valign=\"top\">";
-# 	########################################
-# 	# Change password section
-# 	########################################
-# 	my $profRecord = $db->getUser($userID);
-# 	my $profName = $profRecord->first_name . " " . $profRecord->last_name;
-# 	my $poss = "'s ";
-# 	my $pass = " password ";
-# 	
-# 	print CGI::start_table();
-# 	print CGI::Tr(CGI::td(["<b>$profName</b>$poss$pass", CGI::input({ -type => "password", -name => "$userID.password"})]));
-# 	print CGI::Tr(CGI::td(["<b>$userName</b>$poss new $pass", CGI::input({ -type => "password", -name => "$editForUserID.password.1"})]));
-# 	print CGI::Tr(CGI::td(["Confirm <b>$userName</b>$poss new $pass", CGI::input({ -type => "password", -name => "$editForUserID.password.2"})]));
-# 	print CGI::end_table();
-# 	print "</td></tr>";
-# 	print CGI::Tr(CGI::th(  #FIXME  enable this once it can be handled
-# # 		CGI::checkbox({ type => 'checkbox',
-# # 								name => "change.login",
-# # 								label => '',
-# #                         		checked => 0
-# #         }),
-#         "Change login name $editForUserID to ", CGI::input({-name=>'new_login', -value=>''  ,-size=>25})
-# 	));
-# 	print CGI::end_table();
 	
 	print CGI::br();
 
-	#print CGI::h4("Sets assigned to $userName");
-	# construct url for the form
 	my $userDetailPage = $urlpath->new(type =>'instructor_user_detail',
 					                       args =>{
 						                             courseID => $courseID,
@@ -358,17 +271,13 @@ sub body {
 	# Print warning
 	########################################
 	print CGI::div({-class=>'ResultsWithError'},
-		       "Do not uncheck a set unless you know what you are doing.", CGI::br(),
-		       "There is NO undo for unassigning a set.");
+		       $r->maketext("Do not uncheck a set unless you know what you are doing."),
+		       CGI::br(),
+		       $r->maketext("There is NO undo for unassigning a set."));
 
-	print CGI::p("To change status (scores or grades) for this student for one
-	              set, click on the individual set link.");
+	print CGI::p($r->maketext("To change status (scores or grades) for this student for one set, click on the individual set link."));
 
-	print CGI::div({-class=>'ResultsWithError'},"When you uncheck a homework set (and save the changes), you destroy all
-		      of the data for that set for this student.   If you
-		      reassign the set, the student will receive a new version of each problem.
-		      Make sure this is what you want to do before unchecking sets."
-	);
+	print CGI::div({-class=>'ResultsWithError'},$r->maketext("When you uncheck a homework set (and save the changes), you destroy all of the data for that set for this student.   If you reassign the set, the student will receive a new version of each problem. Make sure this is what you want to do before unchecking sets."));
 
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
 	
@@ -387,31 +296,29 @@ sub body {
 	# get a list of sets to show
 	# DBFIXME already have this data
 	my @setsToShow = sortByName( undef, $db->listGlobalSets() );
-	# insert any set versions that we have
-	my $i = $#setsToShow;
-	if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
-		push( @setsToShow, map{ $_->set_id . ",v" . $_->version_id }
-			@{$UserSetVersionRecords{$setsToShow[$i]}} );
-	}
-	$i--;
-	my $numit = 0;
-	while ( $i>=0 ) {
-		if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
-			splice( @setsToShow, $i+1, 0,
-				map{ $_->set_id . ",v" . $_->version_id }
-				@{$UserSetVersionRecords{$setsToShow[$i]}} );
-		}
-		$i--;
-		$numit++;
-		# just to be safe
-		last if $numit >= 150;
-	}
-	warn("Truncated display of sets at 150 in UserDetail.pm.  This is a " .
-	     "brake to avoid spiraling into the abyss.  If you really have " .
-	     "more than 150 sets in your course, reset the limit at about line " .
-	     "370 in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.")
-		if ( $numit == 150 );
 
+	# insert any set versions that we have
+	if (@setsToShow) {
+	  my $i = $#setsToShow;
+	  if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
+	    push( @setsToShow, map{ $_->set_id . ",v" . $_->version_id }
+		  @{$UserSetVersionRecords{$setsToShow[$i]}} );
+	  }
+	  $i--;
+	  my $numit = 0;
+	  while ( $i>=0 ) {
+	    if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
+	      splice( @setsToShow, $i+1, 0,
+		      map{ $_->set_id . ",v" . $_->version_id }
+		      @{$UserSetVersionRecords{$setsToShow[$i]}} );
+	    }
+	    $i--;
+	    $numit++;
+	    # just to be safe
+		last if $numit >= 150;
+	  }
+	  warn("Truncated display of sets at 150 in UserDetail.pm.  This is a brake to avoid spiraling into the abyss.  If you really have more than 150 sets in your course, reset the limit at about line 370 in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.") if ( $numit == 150 );
+	}
 
 	foreach my $setID ( @setsToShow ) {
 		# catch the versioned sets that we just added
@@ -467,32 +374,6 @@ sub body {
 	);
 
 
-#	print CGI::start_table();
-#	print CGI::Tr(
-#		CGI::th({ -align => "center"},[
-#			"Assigned",
-#			"Set Name",
-#			"Opens",
-#			"Answers Due",
-#			"Answers Available",
-#		])
-#	);
-				
-#	foreach my $setID (sortByName(undef, @UserSetIDs)) {
-#		my $MergedSetRecord = $MergedSetRecords{$setID};
-#		print CGI::Tr(
-#			CGI::td({ -align => "center" }, [
-#				CGI::checkbox({checked => (defined $MergedSetRecord)}),
-#				$setID,
-#				CGI::checkbox() .
-#				CGI::input({ -value => $self->formatDateTime($MergedSetRecord->open_date), -size => 25}),
-#				CGI::checkbox() .
-#				CGI::input({ -value => $self->formatDateTime($MergedSetRecord->due_date), -size => 25}),
-#				CGI::checkbox() .
-#				CGI::input({ -value => $self->formatDateTime($MergedSetRecord->answer_date), -size => 25}),
-#			])
-#		);
-#	}
 	return '';
 }
 
@@ -603,7 +484,7 @@ sub DBFieldTable {
 		my $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
        
 		push @results, 
-			[$rh_fieldLabels->{$field},
+			[$r->maketext($rh_fieldLabels->{$field}).' ',
 			 defined $UserRecord ? 
 				CGI::checkbox({
 					type => "checkbox",

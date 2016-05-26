@@ -43,6 +43,7 @@ my @modulesList = qw(
 	Carp
 	CGI
 	Class::Accessor
+        Crypt::SSLeay
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dumper

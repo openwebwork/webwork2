@@ -153,13 +153,21 @@ sub pre_header_initialize {
 		
 		# make sure we are allowed to generate hardcopy in this format
 		unless ($authz->hasPermissions($userID, "download_hardcopy_format_$hardcopy_format")) {
-			$self->addbadmessage("You do not have permission to generate hardcopy in $hardcopy_format format.");
+			$self->addbadmessage($r->maketext("You do not have permission to generate hardcopy in [_1] format.", $hardcopy_format));
 			$validation_failed = 1;
 		}
+
+		# make sure we are allowed to use this hardcopy theme
+		unless ($authz->hasPermissions($userID, "download_hardcopy_change_theme") ||
+			!defined($r->param('hardcopy_theme'))) {
+		        $self->addbadmessage($r->maketext("You do not have permission to change the hardcopy theme."));
+			$validation_failed = 1;
+		}
+
 		
 		# is there at least one user and set selected?
 		unless (@userIDs) {
-			$self->addbadmessage("Please select at least one user and try again.");
+			$self->addbadmessage($r->maketext("Please select at least one user and try again."));
 			$validation_failed = 1;
 		}	
 
@@ -168,7 +176,7 @@ sub pre_header_initialize {
 # the following test "unless ((@setIDs) and ($setIDs[0] =~ /\S+/))" catches both cases and prevents
 # warning messages in the case of a professor's empty array.
 		unless ((@setIDs) and ($setIDs[0] =~ /\S+/)) {
-			$self->addbadmessage("Please select at least one set and try again.");
+			$self->addbadmessage($r->maketext("Please select at least one set and try again."));
 			$validation_failed = 1;			
 		}
 		
@@ -223,7 +231,7 @@ sub pre_header_initialize {
 										      $ce->{options}{enableConditionalRelease} && 
 											is_restricted($db, $userSet, $userID)))) {
 						    $validation_failed = 1;
-						    $self->addbadmessage("You are not permitted to generate a hardcopy for an unopened set.");
+						    $self->addbadmessage($r->maketext("You are not permitted to generate a hardcopy for an unopened set."));
 						    last;
 
 						}
@@ -235,16 +243,14 @@ sub pre_header_initialize {
 						       ( $userSet->hide_work eq 'BeforeAnswerDate' &&
 							 time < $userSet->answer_date ) ) ) {
 							$validation_failed = 1;
-							$self->addbadmessage("You are not permitted to generate a hardcopy for a set with hidden work.");
+							$self->addbadmessage($r->maketext("You are not permitted to generate a hardcopy for a set with hidden work."));
 							last;
 						}
 
 						if ( $authz->invalidIPAddress($userSet) ) {
 							$validation_failed = 1;
-							$self->addbadmessage("You are not allowed to generate a " .
-									     "hardcopy for " . $userSet->set_id . 
-									     " from your IP address, " .
-									     $r->connection->remote_ip . ".");
+							$self->addbadmessage(
+									     $r->maketext("You are not allowed to generate a hardcopy for [_1] from your IP address, [_2].", $userSet->set_id, $r->connection->remote_ip));
 							last;
 						}
 
@@ -279,7 +285,8 @@ sub pre_header_initialize {
 }
 
 sub body {
-	my ($self) = @_;
+        my ($self) = @_;
+	my $r = $self->r;
 	my $userID = $self->r->param("user");
 	my $perm_view_errors = $self->r->authz->hasPermissions($userID, "download_hardcopy_view_errors");
 	$perm_view_errors = (defined($perm_view_errors) ) ? $perm_view_errors : 0;
@@ -287,29 +294,26 @@ sub body {
 		my $final_file_url = $self->{final_file_url};
 		my %temp_file_map = %{$self->{temp_file_map}};
 		if($perm_view_errors) {
-			my $errors_str = $num > 1 ? "errors" : "error";
-			print CGI::p("$num $errors_str occured while generating hardcopy:");
+		  print CGI::p($r->maketext("[quant,_1,error] occured while generating hardcopy:",$num));
 			
 			print CGI::ul(CGI::li($self->get_errors_ref));
 		}
 		
 		if ($final_file_url) {
-			print CGI::p(
-				"A hardcopy file was generated, but it may not be complete or correct.", 
-				"Please check that no problems are missing and that they are all legible." , 
-				"If not, please inform your instructor.<br />",
-				CGI::a({href=>$final_file_url}, "Download Hardcopy"),
+		  print CGI::p($r->maketext("A hardcopy file was generated, but it may not be complete or correct. Please check that no problems are missing and that they are all legible. If not, please inform your instructor."),
+			       "<br />",
+				CGI::a({href=>$final_file_url}, $r->maketext("Download Hardcopy")),
 			);
 		} else {
 			print CGI::p(
-				"WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor. "
+				     $r->maketext("WeBWorK was unable to generate a paper copy of this homework set.  Please inform your instructor. ")
 			); 
 		
 		}
 		if($perm_view_errors) {
 			if (%temp_file_map) {
 				print CGI::start_p();
-				print "You can also examine the following temporary files: ";
+				print $r->maketext("You can also examine the following temporary files: ");
 				my $first = 1;
 				while (my ($temp_file_name, $temp_file_url) = each %temp_file_map) {
 					if ($first) {
@@ -337,6 +341,7 @@ sub display_form {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $db = $r->db;
+	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $userID = $r->param("user");
 	my $eUserID = $r->param("effectiveUser");
@@ -360,6 +365,7 @@ sub display_form {
 	my $perm_multiset = $authz->hasPermissions($userID, "download_hardcopy_multiset");
 	my $perm_multiuser = $authz->hasPermissions($userID, "download_hardcopy_multiuser");
 	my $perm_texformat = $authz->hasPermissions($userID, "download_hardcopy_format_tex");
+	my $perm_change_theme = $authz->hasPermissions($userID, "download_hardcopy_change_theme");
 	my $perm_unopened = $authz->hasPermissions($userID, "view_unopened_sets");
 	my $perm_view_hidden = $authz->hasPermissions($userID, "view_hidden_sets");
 	my $perm_view_answers = $authz->hasPermissions($userID, "show_correct_answers_before_answer_date");
@@ -560,8 +566,8 @@ sub display_form {
 	
 	}
 
-	    
-
+	my %hardcopyThemeNames = map {$_ => $r->maketext($ce->{hardcopyThemeNames}->{$_})} @{$ce->{hardcopyThemes}};
+	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
@@ -596,7 +602,7 @@ sub display_form {
 		),
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
-				CGI::b("Hardcopy Format:"), " ",
+				CGI::b($r->maketext("Hardcopy Format:")), " ",
 				CGI::radio_group(
 					-name    => "hardcopy_format",
 					-values  => \@formats,
@@ -604,7 +610,19 @@ sub display_form {
 					-labels  => \%format_labels,
 				),
 			),
-		),
+		       ),
+		$perm_change_theme ?
+		 CGI::Tr({},
+			CGI::td({colspan=>2, class=>"ButtonRow"},
+				CGI::b($r->maketext("Hardcopy Theme")), ": ",
+				CGI::radio_group(
+					-name    => "hardcopy_theme",
+					-values  => $ce->{hardcopyThemes},
+					-default => scalar($r->param("hardcopyTheme")) || $ce->{hardcopyTheme},
+					-labels  => \%hardcopyThemeNames
+				),
+			),
+		       ) : '',
 		CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
 				CGI::submit(
@@ -899,9 +917,11 @@ sub write_multiuser_tex {
 	my @setIDs = @$setIDsRef;
 	
 	# get snippets
-	my $preamble = $ce->{webworkFiles}->{hardcopySnippets}->{preamble};
-	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble};
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider};
+	my $theme = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$theme;
+	my $preamble = $ce->{webworkFiles}->{hardcopySnippets}->{preamble} // "$themeDir/hardcopyPreamble.tex";
+	my $postamble = $ce->{webworkFiles}->{hardcopySnippets}->{postamble} // "$themeDir/hardcopyPostamble.tex";
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{userDivider} // "$themeDir/hardcopyUserDivider.tex";
 	
 	# write preamble
 	$self->write_tex_file($FH, $preamble);
@@ -930,7 +950,9 @@ sub write_multiset_tex {
 	}
 	
 	# get set divider
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider};
+	my $theme = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$theme;
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{setDivider} // "$themeDir/hardcopySetDivider.tex";
 	
 	# write each set
 	while (defined (my $setID = shift @setIDs)) {
@@ -993,12 +1015,15 @@ sub write_set_tex {
 	}
 	
 	# get snippets
+	my $theme = $r->param('hardcopy_theme') // $ce->{hardcopyTheme};
+	my $themeDir = $ce->{webworkDirs}->{conf}.'/snippets/hardcopyThemes/'.$theme;
 	my $header = $MergedSet->hardcopy_header
 		? $MergedSet->hardcopy_header
 		: $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};
   if ($header eq 'defaultHeader') {$header = $ce->{webworkFiles}->{hardcopySnippets}->{setHeader};}
-	my $footer = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter};
-	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider};
+	my $footer = $ce->{webworkFiles}->{hardcopySnippets}->{setFooter} //
+	  "$themeDir/hardcopySetFooter.pg";
+	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider} // "$themeDir/hardcopyProblemDivider.tex";
 	
 	# get list of problem IDs
 	# DBFIXME use ORDER BY in database
@@ -1194,18 +1219,15 @@ sub write_problem_tex {
 		
 	# deal with PG warnings
 	if ($pg->{warnings} ne "") {
-		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, "[edit]")
-			." Warnings encountered while processing $problem_desc. "
-			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings}))
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("~[Edit~]"))
+			.' '.$r->maketext("Warnings encountered while processing [_1]. Error text: [_2]", $problem_desc , CGI::br().CGI::pre(CGI::escapeHTML($pg->{warnings})))
 		);
 	}
 	
 	# deal with PG errors
 	if ($pg->{flags}->{error_flag}) {
-		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, "[edit]")
-			." Errors encountered while processing $problem_desc. "
-			."This $problem_name has been omitted from the hardcopy. "
-			."Error text:".CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors}))
+		$self->add_errors(CGI::a({href=>$edit_url, target=>"WW_Editor"}, $r->maketext("~[Edit~]")).' '
+			.$r->maketext("Errors encountered while processing [_1]. This [_2] has been omitted from the hardcopy. Error text: [_3]", $problem_desc, $problem_name, CGI::br().CGI::pre(CGI::escapeHTML($pg->{errors})))
 		);
 		return;
 	}
@@ -1236,13 +1258,15 @@ sub write_problem_tex {
 			my $recScore = $pg->{state}->{recorded_score};
 			my $corrMsg = '';
 			if ( $recScore == 1 ) {
-				$corrMsg = ' (correct)';
+				$corrMsg = ' '.$r->maketext('(correct)');
 			} elsif ( $recScore == 0 ) {
-				$corrMsg = ' (incorrect)';
+				$corrMsg = ' '.$r->maketext('(incorrect)');
 			} else {
-				$corrMsg = " (score $recScore)";
+				$corrMsg = " ".$r->maketext('(score [_1])',$recScore);
 			}
-		my $stuAnswers = "\\par{\\small{\\it Answer(s) submitted:}\n" .
+			my $stuAnswers = "\\par{\\small{\\it ".
+			  $r->maketext("Answer(s) submitted:").
+			  "}\n" .
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
 			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
@@ -1255,8 +1279,10 @@ sub write_problem_tex {
 	# write the list of correct answers is appropriate; ANSWER_ENTRY_ORDER
 	#   isn't defined for versioned sets?  this seems odd FIXME  GWCHANGE
 	if ($showCorrectAnswers && $MergedProblem->problem_id != 0 && @ans_entry_order) {
-		my $correctTeX = "\\par{\\small{\\it Correct Answers:}\n"
-			. "\\vspace{-\\parskip}\\begin{itemize}\n";
+	  my $correctTeX = "\\par{\\small{\\it ".
+	    $r->maketext("Correct Answers:").
+	    "}\n".
+	    "\\vspace{-\\parskip}\\begin{itemize}\n";
 		
 		foreach my $ansName (@ans_entry_order) {
 			my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};

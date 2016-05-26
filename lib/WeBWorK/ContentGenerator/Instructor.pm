@@ -541,7 +541,7 @@ sub addProblemToSet {
 	if (defined($args{value})){$value = $args{value};}  # 0 is a valid value for $args{value}  
 
 	my $maxAttempts = $args{maxAttempts} || $max_attempts_default;
-	my $showMeAnother = $args{showMeAnother} || $showMeAnother_default;
+	my $showMeAnother = $args{showMeAnother} // $showMeAnother_default;
 	my $prPeriod = $prPeriod_default;
 	if (defined($args{prPeriod})){
 		$prPeriod = $args{prPeriod};
@@ -558,8 +558,12 @@ sub addProblemToSet {
 	    # makes it a new top level problem 
 	    if ($set && $set->assignment_type eq 'jitar') {
 		my @problemIDs = $db->listGlobalProblems($setName);
-		my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
-		$problemID = seq_to_jitar_id($seq[0]+1);
+		if (@problemIDs) {
+		  my @seq = jitar_id_to_seq($problemIDs[$#problemIDs]);
+		  $problemID = seq_to_jitar_id($seq[0]+1);
+		} else {
+		  $problemID = seq_to_jitar_id(1);
+		}
 	    } else {
 		$problemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 	    }
@@ -617,7 +621,7 @@ sub userCountMessage {
 	} elsif ($count == 1) {
 		$message = $self->r->maketext("1 student");
 	} elsif ($count > $numUsers || $count < 0) {
-		$message = CGI::em("an impossible number of users: $count out of $numUsers");
+		$message = CGI::em($self->r->maketext("an impossible number of users: [_1] out of [_2]",$count,$numUsers));
 	} else {
 		$message = $self->r->maketext("[_1] students out of [_2]", $count, $numUsers);
 	}
@@ -637,7 +641,7 @@ sub setCountMessage {
 	} elsif ($count == 1) {
 		$message = "1 ".$r->maketext("set");
 	} elsif ($count > $numSets || $count < 0) {
-		$message = CGI::em("an impossible number of sets: $count out of $numSets");
+		$message = CGI::em($self->r->maketext("an impossible number of sets: [_1] out of [_2]",$count,$numSets));
 	} else {
 		$message = $count." ".$r->maketext("sets");
 	}

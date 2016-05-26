@@ -468,7 +468,7 @@ EOF
 		translator => $translator,
 		head_text  => ${ $translator->r_header },
 		post_header_text => ${ $translator->r_post_header},
-		body_text  => ${ $body_text_ref } ,
+		body_text  => ${ $body_text_ref } , # from $translator->r_text
 		answers    => $translator->rh_evaluated_answers,
 		result     => $result,
 		state      => $state,

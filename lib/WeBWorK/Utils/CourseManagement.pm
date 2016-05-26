@@ -891,6 +891,13 @@ sub unarchiveCourse {
 	if (-e $old_dump_file) {
 		unlink $old_dump_file or carp "Failed to unlink course database dump file '$old_dump_file: $_\n";
 	}
+
+	# Create the html_temp folder (since it isn't included in the
+	# tarball
+	my $tmpDir = $ce2->{courseDirs}->{html_temp};
+	if (! -e $tmpDir) {
+	  mkdir $tmpDir or warn "Failed to create html_temp directory '$tmpDir': $!. You will have to create this directory manually.\n";
+	}
 	
 	##### step 6: rename course #####
 	

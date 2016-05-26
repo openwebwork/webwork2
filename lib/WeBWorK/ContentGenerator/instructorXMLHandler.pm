@@ -170,7 +170,7 @@ sub pre_header_initialize {
 
 	$xmlrpc_client->url($XML_URL);
 	$xmlrpc_client->{form_action_url}= $FORM_ACTION_URL;
-	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
+#	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
 	$xmlrpc_client->{user}          = 'xmluser';
 #	$xmlrpc_client->{password}      = $XML_PASSWORD;
 	$xmlrpc_client->{site_password} = $XML_PASSWORD;
@@ -184,6 +184,7 @@ sub pre_header_initialize {
 #		    pw                      => $r->param('pw') ||undef,
 		    session_key             => $r->param("session_key") ||undef,
 		    userID                  => $r->param("user") ||undef,
+		    courseID                => $r->param('courseID'),
 		    library_name            => $r->param("library_name") ||undef,
 		    user        	        => $r->param("user") ||undef,
 		    set                     => $r->param("set") ||undef,
@@ -261,7 +262,6 @@ sub pre_header_initialize {
 		    processAnswers => defined($r->param('processAnswers')) ? $r->param('processAnswers') : 1,
 	};
 
-	$input->{envir}->{probNum} = $r->param("probNum") ||undef;
 
 
 	if ($UNIT_TESTS_ON) {
@@ -279,16 +279,27 @@ sub pre_header_initialize {
 
 	my $std_input = standard_input();
 	$input = {%$std_input, %$input};
-	# Fix the environment display mode and set id
-	$input->{envir}->{displayMode} = $input->{displayMode} if($input->{displayMode});
-        # Set the permission level
-        $input->{envir}->{permissionLevel} = $r->{ce}->{userRoles}->{$r->param('permissionLevel')} // 0,	
-
+	# Fix the environment display mode and problemSeed
 	# Set environment variables for hints/solutions
-	$input->{envir}->{showHints} = $r->param('showHints') if($r->param('showHints'));
-	$input->{envir}->{showSolutions} = $r->param('showSolutions') if($r->param('showSolutions'));
+	# Set the permission level and probNum
+	$input->{envir} = {
+		%{$input->{envir}},		# this may have undefined entries
+		showHints 		=> ($r->param('showHints')) ? $r->param('showHints'):0,
+		showSolutions 	=> ($r->param('showSolutions')) ? $r->param('showSolutions'):0,
+		probNum  		=> $r->param("probNum") ||undef, 
+		permissionLevel => ($r->{ce}->{userRoles}->{$r->param('permissionLevel')//0})// 0,
+		displayMode     => $r->param("displayMode") || undef,
+		problemSeed	    => $r->param("problemSeed") || 0,
+		
+ 	};
+ 	$input->{envir}->{inputs_ref} ={
+ 		%{ $input->{envir}->{inputs_ref}},
+		displayMode => $r->param("displayMode") || 0,
+		problemSeed => $r->param("problemSeed") || 0,
+	};
+
+
 	
-	$input->{courseID} = $r->param('courseID');
 
 	##############################
 	# xmlrpc_client calls webservice with the requested command
@@ -315,6 +326,7 @@ sub pre_header_initialize {
 	    	$input->{envir}->{fileName}=$problemPath;
 	    }
 		$xmlrpc_client->xmlrpcCall('renderProblem', $input);
+		# original method of signaling $xmlrpc_client->{renderProblem} = 1; #flag to indicate the renderProblem command was executed.
 		$self->{xml_command} = 'renderProblem';
 		$self->{output} = $xmlrpc_client;
 		my @params = join(" ", $r->param() ); # this seems to be necessary to get things read.?
@@ -325,14 +337,12 @@ sub pre_header_initialize {
 		$self->{xml_command} = $r->param("xml_command");
 		$self->{output} = $xmlrpc_client
 	}
-	################################
  }
  
 
 sub standard_input {
 	my $out = {
-#		pw            			=>   '',   # not needed
-		course_password      			=>   '',   # not needed  use site_password??
+		course_password         =>   '',   # not needed  use site_password??
 		session_key             =>   '',
 		userID          		=>   '',   # not needed
 		set               		=>   '',
@@ -340,12 +350,13 @@ sub standard_input {
 		command      			=>  'all',
 		answer_form_submitted   =>   1,
 		mode                    => 'images',
-		envir                   => {displayMode=>DISPLAYMODE,
+		envir                   => { 
+		                inputs_ref => {displayMode => DISPLAYMODE()},
 					    problemValue => -1, 
 					    fileName => ''},
 		problem_state           => {
 		
-			num_of_correct_ans  => 200, # we are picking phoney values so
+			num_of_correct_ans  => 200, # we are picking phoney values so that solutions are available
 			num_of_incorrect_ans => 400,
 			recorded_score       => 1.0,
 		},
@@ -418,8 +429,7 @@ sub content {
 	} else {
 		Croak("No content was returned by the xmlrpc call");
 	}
-
-	if ( ($xmlrpc_client->fault) ) {
+	if ( ($xmlrpc_client->fault) ) {  # error -- print error string
 	    my $err_string = $xmlrpc_client->error_string;	    
 	    die($err_string);
 	} elsif($self->{xml_command} eq 'renderProblem'){
@@ -427,12 +437,16 @@ sub content {
 		# we need to regularize the way that text is returned.
 		# it behaves differently when re-randomization in the library takes place
 		# then during the initial rendering. 
+		# print only the text field (not the ra_out field)
+		# and print the text directly without formatting.
 		if ($xmlrpc_client->return_object->{problem_out}->{text}) {
 			print $xmlrpc_client->return_object->{problem_out}->{text};
 		} else {
-			print $xmlrpc_client->return_object->{text}; 
+				print $xmlrpc_client->return_object->{text}; 
 		}
 	} else {  #returned something other than a rendered problem.
+	    	  # in this case format a json string and print it. 
+	    	  # the contents of "{text}" needs to be labeled server response;
 		print '{"server_response":"'.$xmlrpc_client->return_object->{text}.'",';
 		if($xmlrpc_client->return_object->{ra_out}){
 			# print '"result_data":'.pretty_print_json($xmlrpc->return_object->{ra_out}).'}';

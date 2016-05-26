@@ -186,7 +186,7 @@ sub body {
 	# generating module.
 	my $authen_error = MP2 ? $r->notes->get("authen_error") : $r->notes("authen_error");
 	if ($authen_error) {
-		print CGI::div({class=>"ResultsWithError"},
+		print CGI::div({class=>"ResultsWithError", tabindex=>'0'},
 			CGI::p($authen_error)
 		);
 	}
@@ -202,7 +202,7 @@ sub body {
 		    print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
 		} 
 	} else {
-		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($r->maketext($course))));
+		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
 		if ($ce -> {session_management_via} ne "session_cookie") {
 			print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
 		}

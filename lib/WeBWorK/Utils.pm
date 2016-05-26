@@ -101,12 +101,15 @@ our @EXPORT_OK = qw(
 	wwRound
         is_restricted
         grade_set
+	grade_gateway
+	grade_all_sets
         jitar_id_to_seq
         seq_to_jitar_id
         is_jitar_problem_hidden
         is_jitar_problem_closed
         jitar_problem_adjusted_status
         jitar_problem_finished
+	x
 );
 
 =head1 FUNCTIONS
@@ -878,7 +881,7 @@ sub decodeAnswers($) {
 	my $serialized = shift;
 	return unless defined $serialized and $serialized;
 	my $array_ref = eval{ Storable::thaw($serialized) };
-	if ($@) {
+	if ($@ or !defined $array_ref) {
 		# My hope is that this next warning is no longer needed since there are few legacy base64 days and the fix seems transparent.
 		# warn "problem fetching answers -- possibly left over from base64 days. Not to worry -- press preview or submit and this will go away  permanently for this question.   $@";
 		return ();
@@ -1064,8 +1067,9 @@ sub sortByName($@) {
 
 
 ################################################################################
-# Sort Achievements by category and id
+# Sort Achievements by number and then by id
 ################################################################################
+
 
 sub sortAchievements {
 	my @Achievements = @_;
@@ -1074,18 +1078,23 @@ sub sortAchievements {
 
 	@Achievements = sort {uc($a->{achievement_id}) cmp uc($b->{achievement_id})}  @Achievements;
 
-	# Next sort by categoyr, but secret comes first and level last
+	# Next sort by number if there are numbers, otherwise sort by
+	# category.  
 
+	@Achievements = sort {($a->number || 0) <=> ($b->number || 0)} @Achievements;
+	
 	@Achievements = sort {
-	    if ($a->{category} eq $b->{category}) {
-		return 0; 
-	    } elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
-		return -1;
-	    } elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
-		return 1;
-	    } else {
-		return $a->{category} cmp $b->{category};
-	    } } @Achievements;
+	  if ($a->number && $b->number) {
+	    return $a->number <=> $b->number;
+	  } elsif ($a->{category} eq $b->{category}) {
+	    return 0; 
+	  } elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
+	    return -1;
+	  } elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
+	    return 1;
+	  } else {
+	    return $a->{category} cmp $b->{category};
+	  } } @Achievements;
 
 	return @Achievements;
        
@@ -1144,150 +1153,151 @@ sub is_restricted {
 	return @needed;
 }
 
+# Takes in $db, $set, $setName, $studentName, $setIsVersioned
+# and returns ($totalCorrect,$total) or the percentage correct
+
 sub grade_set {
         
-        my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
+  my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
+  
+  my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+  
+  my $status = 0;
+  my $totalRight = 0;
+  my $total      = 0;
+  
+  
+  # DBFIXME: to collect the problem records, we have to know 
+  #    which merge routines to call.  Should this really be an 
+  #    issue here?  That is, shouldn't the database deal with 
+  #    it invisibly by detecting what the problem types are?  
+  #    oh well.
+  
+  my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
+  my $num_of_problems  = @problemRecords || 0;
+  my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
+  
+  if ( $setIsVersioned ) {
+    @problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
+  }   # use versioned problems instead (assume that each version has the same number of problems.
+  
+  # for jitar sets we only use the top level problems
+  if ($set->assignment_type eq 'jitar') {
+    my @topLevelProblems;
+    foreach my $problem (@problemRecords) {
+      my @seq = jitar_id_to_seq($problem->problem_id);
+      push @topLevelProblems, $problem if ($#seq == 0);
+    }
+    
+    @problemRecords = @topLevelProblems;
+  }
+  
+  foreach my $problemRecord (@problemRecords) {
+    my $prob = $problemRecord->problem_id;
+    
+    unless (defined($problemRecord) ){
+      # warn "Can't find record for problem $prob in set $setName for $student";
+      next;
+    }
+    
+    $status           = $problemRecord->status || 0;
 
-        my $setID = $set->set_id();  #FIXME   setName and setID should be the same
+    # we need to get the adjusted jitar grade for our
+    # top level problems. 
+    if ($set->assignment_type eq 'jitar') {
+      $status = jitar_problem_adjusted_status($problemRecord,$db);
+    }
+    
+    # sanity check that the status (score) is 
+    # between 0 and 1
+    my $valid_status = ($status>=0 && $status<=1)?1:0;
+    
+    my $probValue     = $problemRecord->value;
+    $probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
+    $total           += $probValue;
+    $totalRight      += $status*$probValue if $valid_status;
+    
+  }  # end of problem record loop
+  
+  if (wantarray) {
+    return ($totalRight,$total);
+  } else {
+    
+    return 0 unless $total;
+    return $totalRight/$total;
+  }
+}
 
-		my $status = 0;
-		my $longStatus = '';
-		my $string     = '';
-		my $twoString  = '';
-		my $totalRight = 0;
-		my $total      = 0;
-		my $num_of_attempts = 0;
-	
-	
-		# DBFIXME: to collect the problem records, we have to know 
-		#    which merge routines to call.  Should this really be an 
-		#    issue here?  That is, shouldn't the database deal with 
-		#    it invisibly by detecting what the problem types are?  
-		#    oh well.
-		
-		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
-		my $num_of_problems  = @problemRecords || 0;
-		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
+# Takes in $db, $set, $setName, $studentName,
+# and returns ($totalCorrect,$total) or the percentage correct
+# for the highest scoring gateway
 
-		if ( $setIsVersioned ) {
-			@problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
-		}   # use versioned problems instead (assume that each version has the same number of problems.
-		
+sub grade_gateway {
+  my ($db,$set,$setName,$studentName) = @_;
 
-	####################
-	# Resort records
-	#####################
-		@problemRecords = sort {$a->problem_id <=> $b->problem_id }  @problemRecords;
-		
-		# for gateway/quiz assignments we have to be careful about 
-		#    the order in which the problems are displayed, because
-		#    they may be in a random order
-		if ( $set->problem_randorder ) {
-			my @newOrder = ();
-			my @probOrder = (0..$#problemRecords);
-			# we reorder using a pgrand based on the set psvn
-			my $pgrand = PGrandom->new();
-			$pgrand->srand( $set->psvn );
-			while ( @probOrder ) { 
-				my $i = int($pgrand->rand(scalar(@probOrder)));
-				push( @newOrder, $probOrder[$i] );
-				splice(@probOrder, $i, 1);
-			}
-			# now $newOrder[i] = pNum-1, where pNum is the problem
-			#    number to display in the ith position on the test
-			#    for sorting, invert this mapping:
-			my %pSort = map {($newOrder[$_]+1)=>$_} (0..$#newOrder);
+  my @versionNums = $db->listSetVersions($studentName,$setName);
 
-			@problemRecords = sort {$pSort{$a->problem_id} <=> $pSort{$b->problem_id}} @problemRecords;
-		}
-		
-		
-    #######################################################
-	# construct header
-	
-		foreach my $problemRecord (@problemRecords) {
-			my $prob = $problemRecord->problem_id;
-			
-			unless (defined($problemRecord) ){
-				# warn "Can't find record for problem $prob in set $setName for $student";
-				# FIXME check the legitimate reasons why a student record might not be defined
-				next;
-			}
-			
-		    $status           = $problemRecord->status || 0;
-		    my  $attempted    = $problemRecord->attempted;
-			my $num_correct   = $problemRecord->num_correct || 0;
-			my $num_incorrect = $problemRecord->num_incorrect   || 0;
-			$num_of_attempts  += $num_correct + $num_incorrect;
+  my $bestTotalRight = 0;
+  my $bestTotal = 0;
 
-#######################################################
-			# This is a fail safe mechanism that makes sure that
-			# the problem is marked as attempted if the status has
-			# been set or if the problem has been attempted
-			# DBFIXME this should happen in the database layer, not here!
-			if (!$attempted && ($status || $num_correct || $num_incorrect )) {
-				$attempted = 1;
-				$problemRecord->attempted('1');
-				# DBFIXME: this is another case where it 
-				#    seems we shouldn't have to check for 
-				#    which routine to use here...
-				if ( $setIsVersioned ) {
-					$db->putProblemVersion($problemRecord);
-				} else {
-					$db->putUserProblem($problemRecord );
-				}
-			}
-######################################################			
+  if ( @versionNums ) {
+    for my $i ( @versionNums ) {
+      my $versionedSet = $db->getSetVersion($studentName,$setName,$i);
 
-			# sanity check that the status (score) is 
-			# between 0 and 1
-			my $valid_status = ($status>=0 && $status<=1)?1:0;
+      my ($totalRight,$total) = grade_set($db,$versionedSet,$versionedSet->set_id, $studentName,1);
+      if ($totalRight > $bestTotalRight) {
+	$bestTotalRight = $totalRight;
+	$bestTotal = $total;
+      }
+    }
+  }
 
-			###########################################
-			# Determine the string $longStatus which 
-			# will display the student's current score
-			###########################################			
+  if (wantarray) {
+    return ($bestTotalRight,$bestTotal);
+  } else {
+    return 0 unless $bestTotal;
+    return $bestTotalRight/$bestTotal;
+  }
+}
 
-			if (!$attempted){
-				$longStatus     = '.';
-			} elsif   ($valid_status) {
-				$longStatus     = int(100*$status+.5);
-				$longStatus='C' if ($longStatus==100);
-			} else	{
-				$longStatus 	= 'X';
-			}
+# Takes in $db, $studentName,
+# and returns ($totalCorrect,$total) or the percentage correct
+# for all sets in the course
 
-			my $probValue     = $problemRecord->value;
-			$probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
-			$total           += $probValue;
-			$totalRight      += $status*$probValue if $valid_status;
-# 				
-# 			# initialize the number of correct answers 
-# 			# for this problem if the value has not been 
-# 			# defined.
-# 			$correct_answers_for_problem{$probID} = 0 
-# 				unless defined($correct_answers_for_problem{$probID});
-			
-# 				
-# 		# add on the scores for this problem
-# 			if (defined($attempted) and $attempted) {
-# 				$number_of_students_attempting_problem{$probID}++;
-# 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-# 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-# 				$h_problemData{$probID}                               = $num_incorrect;
-# 				$total_num_of_attempts_for_set                       += $num_of_attempts;
-# 				$correct_answers_for_problem{$probID}                += $status;
-# 			}
+sub grade_all_sets {
+  my ($db, $studentName) = @_;
 
-		}  # end of problem record loop
-		return 0 unless $total;
-		my $percentage = $totalRight/$total;
+  my @setIDs = $db->listUserSets($studentName);
+  my @userSetIDs = map {[$studentName,$_]} @setIDs;
+  my @userSets = $db->getMergedSets(@userSetIDs);
 
+  my $courseTotal = 0;
+  my $courseTotalRight = 0;
 
+  foreach my $userSet (@userSets) {
+    if ($userSet->assignment_type() =~ /gateway/) {
 
-		#return($status,  $longStatus, $string, $twoString, $totalRight, $total, $num_of_attempts, $num_of_problems			);
-		return $percentage;
-}	
+      my ($totalRight,$total) = grade_gateway($db,$userSet,$userSet->set_id,$studentName);
+      $courseTotalRight += $totalRight;
+      $courseTotal += $total;
+    } else {
+      my ($totalRight,$total) = grade_set($db,$userSet,$userSet->set_id,$studentName,0);
+
+      $courseTotalRight += $totalRight;
+      $courseTotal += $total;
+    }
+  }
+
+  if (wantarray) {
+    return ($courseTotalRight,$courseTotal);
+  } else {
+    return 0 unless $courseTotal;
+    return $courseTotalRight/$courseTotal;
+  }
+
+}
+  
+   
 
 #takes a tree sequence and returns the jitar id
 #  This id is specially crafted signed 32 bit integer of the form, in binary
@@ -1616,6 +1626,12 @@ sub jitar_problem_finished {
 
     # if we got here then the problem is finished
     return 1;
+}
+
+# This is a dummy function used to mark strings for localization
+
+sub x {
+  return @_;
 }
 
 1;

@@ -114,7 +114,7 @@ sub new {
 	}
 	$seedVars{courseName} = $seedVars{courseName}||"___"; # prevents extraneous error messages
 	my $safe = WWSafe->new;
-	
+	$safe->permit('rand');
 	# to avoid error messages make sure that courseName is defined
 	$seedVars{courseName} = $seedVars{courseName}//"foobar_course";
 	# seed course environment with initial values

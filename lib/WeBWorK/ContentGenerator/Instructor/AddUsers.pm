@@ -74,21 +74,21 @@ sub initialize {
 			if ($@) {
 				my $addError = $@;
 				$self->{studentEntryReport} .= join("",
-					CGI::b("Failed to enter student: "), $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", login/studentID: "), $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", email: "), $newUser->email_address,
-					CGI::b(", section: "), $newUser->section,
-					CGI::br(), CGI::b("Error message: "), $addError,
+					CGI::b($r->maketext("Failed to enter student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
+					CGI::b(", ".$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
+					CGI::b(", ".$r->maketext("email:")),' ', $newUser->email_address,
+					CGI::b(", ".$r->maketext("section:")),' ', $newUser->section,
+					CGI::br(), CGI::b($r->maketext("Error message:")), ' ', $addError,
 					CGI::hr(),CGI::br(),
 				);
 			} else {
 				$db->addPermissionLevel($newPermissionLevel);
 				$db->addPassword($newPassword);
 				$self->{studentEntryReport} .= join("",
-					CGI::b("Entered student: "), $newUser->last_name, ", ",$newUser->first_name,
-					CGI::b(", login/studentID: "), $newUser->user_id, "/",$newUser->student_id,
-					CGI::b(", email: "), $newUser->email_address,
-					CGI::b(", section: "), $newUser->section,CGI::hr(),CGI::br(),
+					CGI::b($r->maketext("Entered student:")), ' ', $newUser->last_name, ", ",$newUser->first_name,
+					CGI::b(", ",$r->maketext("login/studentID:")),' ', $newUser->user_id, "/",$newUser->student_id,
+					CGI::b(", ",$r->maketext("email:")),' ', $newUser->email_address,
+					CGI::b(", ",$r->maketext("section:")),' ', $newUser->section,CGI::hr(),CGI::br(),
 
 				);
 			}
@@ -129,7 +129,7 @@ sub body {
 				? $self->{studentEntryReport}
 				: ''
 		),
-		CGI::p("Enter information below for students you wish to add. Each student's password will initially be set to their student ID."),
+		CGI::p($r->maketext("Enter information below for students you wish to add. Each student's password will initially be set to their student ID.")),
 		$self->addStudentForm,
 	);
 }
@@ -167,8 +167,8 @@ sub addStudentForm {
 	return join("",		
 		CGI::start_form({method=>"post", action=>$r->uri(),name=>"add_users"}),
 		$self->hidden_authen_fields(),"\n",
-		CGI::submit(-name=>"Create", -value=>"Create"),"&nbsp;&nbsp;","\n",
-		CGI::input({type=>'text', name=>'number_of_students', value=>$numberOfStudents,size => 3}), " entry rows. ","\n",
+		CGI::submit(-name=>"Create", -value=>$r->maketext("Create")),"&nbsp;&nbsp;","\n",
+		CGI::input({type=>'text', name=>'number_of_students', value=>$numberOfStudents,size => 3}), " ".$r->maketext("entry rows."),"\n",
 		CGI::end_form(),"\n",
 		CGI::hr(),
 		
@@ -178,7 +178,7 @@ sub addStudentForm {
 		CGI::start_table({border=>'1', cellpadding=>'2'}),
 		CGI::Tr({},
 			CGI::th({},
-				['Last Name', 'First Name', 'Student ID'.CGI::span({class=>"required-field"},'*'), 'Login Name'.CGI::span({class=>"required-field"},'*'), 'Email Address', 'Section','Recitation', 'Comment']
+				[$r->maketext('Last Name'), $r->maketext('First Name'), $r->maketext('Student ID').CGI::span({class=>"required-field"},'*'), $r->maketext('Login Name').CGI::span({class=>"required-field"},'*'), $r->maketext('Email Address'), $r->maketext('Section'),$r->maketext('Recitation'), $r->maketext('Comment')]
 			)
 		),
 		@entryLines,
@@ -186,7 +186,7 @@ sub addStudentForm {
 		
 
 		
-		CGI::p("Select sets below to assign them to the newly-created users."),
+		CGI::p($r->maketext("Select sets below to assign them to the newly-created users.")),
 		CGI::scrolling_list(
 			-name     => "assignSets",
 			-values   => [ $db->listGlobalSets ],
@@ -194,16 +194,10 @@ sub addStudentForm {
 			-multiple => "1",
 		),
 		CGI::p(
-			CGI::submit({name=>"addStudents", value=>"Add Students"}),
+			CGI::submit({name=>"addStudents", value=>$r->maketext("Add Students")}),
 		),
 		CGI::end_form(),		
 
-		#qq{ <div style="color:red"> After entering new students you will still 
-		#need to assign sets to them.  This is done from the "set list" page. <br> 
-		#Click on the entry "xx users" in 
-		#the "assigned to" column at the far right. <br> Then click either "assign to all"  
-		#or check individual users and click "save" at the bottom.  </div>
-		#Soon ( real soon -- honest!!! :-)  ) you will also be able to assign sets to the students as they are entered from this page. }
 	);
 }
 

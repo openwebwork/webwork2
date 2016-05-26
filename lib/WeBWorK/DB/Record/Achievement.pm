@@ -37,6 +37,8 @@ BEGIN {
 		category                  => { type=>"TEXT" },
   	        enabled                   => { type=>"INT"  },
 	        max_counter               => { type=>"INT"  },
+	        number                    => { type=>"INT"  },
+	        assignment_type           => { type=>"TEXT"  },
 	);
 }
 

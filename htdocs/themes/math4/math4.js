@@ -43,11 +43,13 @@ var ToggleNavigation = function () {
 	
 	
 	$(window).resize(function(){
-	    windowwidth = $(window).width();
-	    if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
-		hideSidebar();
-	    } else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
-		showSidebar();
+	    if ($(window).width() != windowwidth) {
+		windowwidth = $(window).width();
+		if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+		    hideSidebar();
+		} else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
+		    showSidebar();
+		}
 	    }
 	}); 
     }
@@ -86,7 +88,7 @@ $(function(){
     $('a.table-summary').popover().click(function (event) {
 	event.preventDefault();
     });
-    $('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
+    $('a.help-popup').popover({trigger : 'click'}).click(function (event) {
 	event.preventDefault();
     }).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 
@@ -94,8 +96,9 @@ $(function(){
     $('#login_form input').addClass('input-large');    
     
     // Changes edit links in info panels to buttons
-    $("#info-panel-right a:contains('[edit]')").addClass('btn btn-small btn-info');
-    $("#info-panel-right a:contains('[edit]')").text('Edit');
+    var editButton = $("#info-panel-right h2:first a:first")
+    editButton.addClass('btn btn-small btn-info');
+    editButton.text(editButton.text().replace(/\[([^\]].*)\]/, '$1'));
 
     //Problem page
     $('.currentProblem').addClass('active');
@@ -104,7 +107,7 @@ $(function(){
     $('#problem-sets-form').addClass('form-inline');
     $('.body:has(.problem_set_table)').addClass('problem_set_body');
     $('.problem_set_table').addClass('table');
-    if($('.problem_set_table th:contains("Test Score")').length > 0) {
+    if($('.problem_set_table').find("tr:first th").length > 3) {
 	$('.problem_set_table').addClass('small-table-text');
     }
 
@@ -152,7 +155,8 @@ $(function(){
     
     // Grades formatting
     $('#grades_table').addClass('table table-bordered table-condensed');
-
+    $('.additional-scoring-msg').addClass('well');
+    
     //Problem Grader formatting
     $('#problem-grader-form').addClass('form-inline');
     $('#problem-grader-form input:button').addClass('btn btn-small');

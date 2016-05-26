@@ -60,7 +60,8 @@ use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
 use WeBWorK::Utils qw(jitar_id_to_seq);
-
+use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+  
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
 
@@ -96,7 +97,7 @@ sub new {
 		db => $r->db(),       # backward-compatability
 		authz => $r->authz(), # with unconverted CGs
 		noContent => undef, # FIXME this should get clobbered at some point
-	};
+		   };
  	weaken $self -> {r};
 	bless $self, $class;
 	return $self;
@@ -164,6 +165,34 @@ sub go {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
+
+	# If grades are begin passed back to the lti then we peroidically
+	# update all of the grades because things can get out of sync if
+	# instructors add or modify sets.
+	if ($ce->{LTIGradeMode}) {
+
+	  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
+	  
+	  my $post_connection_action = sub {
+	    my $grader = shift;
+	    
+	    # catch exceptions generated during the sending process
+	    my $result_message = eval { $grader->mass_update() };
+	    if ($@) {
+	      # add the die message to the result message
+	      $result_message .= "An error occurred while trying to update grades via LTI.\n"
+		. "The error message is:\n\n$@\n\n";
+	      # and also write it to the apache log
+	      $r->log->error("An error occurred while trying to update grades via LTI: $@\n");
+	    }
+	  };
+	  if (MP2) {
+	    $r->connection->pool->cleanup_register($post_connection_action, $grader);
+	  } else {
+	    $r->post_connection($post_connection_action, $grader);
+	  }
+
+	}
 
 	# check to verify if there are set-level problems with running
 	#    this content generator (individual content generators must
@@ -635,12 +664,9 @@ sub links {
 		
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
-		
+
 		defined $text or $text = $new_urlpath->name;  #too clever
 		
-		my $id = $text;
-		$id =~ s/\W/\_/g; 
-		#$text = sp2nbsp($text); # ugly hack to prevent text from wrapping
 		
 		# try to set $active automatically by comparing 
 		if (not defined $active) {
@@ -664,10 +690,8 @@ sub links {
 		my $new_anchor;
 		if ($active) {
 			# add active class for current location
-#			$new_anchor = CGI::a({href=>$new_systemlink, class=>"$id active", %target}, $text);
 			$new_anchor = CGI::a({href=>$new_systemlink, class=>"active", %target}, $text);
 		} else {
-#			$new_anchor = CGI::a({href=>$new_systemlink, class=>$id, %target}, "$text");
 			$new_anchor = CGI::a({href=>$new_systemlink, %target}, "$text");
 		}
 		
@@ -707,9 +731,9 @@ sub links {
 	if (defined $courseID) {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
-                        my $primaryMenuName = "Homework Sets";
-                        $primaryMenuName = "Course Administration" if ($ce->{courseName} eq 'admin');
-			print &$makelink("${pfx}ProblemSets", text=>$r->maketext($primaryMenuName), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
+                        my $primaryMenuName = $r->maketext("Homework Sets");
+                        $primaryMenuName = $r->maketext("Course Administration") if ($ce->{courseName} eq 'admin');
+			print &$makelink("${pfx}ProblemSets", text=>$primaryMenuName, urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
 			    print CGI::start_li();
@@ -786,28 +810,28 @@ sub links {
 				    print CGI::start_ul();
 				    if ($ce->{showeditors}->{problemsetdetail1}) {
 					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>"-$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail", text=>$r->maketext("[_1] (old editor)", $prettySetID), urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
 				    }
 
 				    if ($ce->{showeditors}->{problemsetdetail2}) {
 					print CGI::start_li(); # $setID (2)
-					print &$makelink("${pfx}ProblemSetDetail2", text=>"--$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSetDetail2", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
                      		        print CGI::end_li();
 				    }
 
 					if (defined $problemID) {
 					    print CGI::start_li();
 					    print CGI::start_ul();
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>$r->maketext("[_1] (old editor)", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
 							if $ce->{showeditors}->{pgproblemeditor1};
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
 							if $ce->{showeditors}->{pgproblemeditor2};;
 					    
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
+					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
 						if $ce->{showeditors}->{pgproblemeditor3};;
 	
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
+					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
 						if $ce->{showeditors}->{simplepgeditor};;
 					    print CGI::end_ul();
 					    print CGI::end_li();
@@ -851,24 +875,6 @@ sub links {
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Stats
-				# old stats
-#				print CGI::start_li(); # Stats_old
-#				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-#				if ($userID ne $eUserID or defined $setID) {
-#					print CGI::start_ul();
-#					if ($userID ne $eUserID) {
-#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
-#					}
-#					if (defined $setID) {
-#						# make sure we don't try to send a versioned
-#						#    set id in to the Stats_old link
-#						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
-#						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-#						print CGI::li(&$makelink("${pfx}Stats_old", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
-#					}
-#					print CGI::end_ul();
-#				}
-#				print CGI::end_li(); # end Stats_old
 				
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
@@ -922,7 +928,7 @@ sub links {
 				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
 				    my %augmentedSystemLinks = %systemlink_args;
 				    $augmentedSystemLinks{params}->{archiveCourse}=1;
-					print CGI::li(&$makelink("${pfx}FileManager", text=>"Archive this Course",urlpath_args=>{%args}, systemlink_args=>\%augmentedSystemLinks));
+					print CGI::li(&$makelink("${pfx}FileManager", text=>$r->maketext("Archive this Course"),urlpath_args=>{%args}, systemlink_args=>\%augmentedSystemLinks));
 				}
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools
@@ -973,11 +979,11 @@ sub loginstatus {
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 		
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 		} else {
-			print $r->maketext("Logged in as [_1]. ", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
 			print CGI::br();
-			print $r->maketext("Acting as [_1]. ", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
+			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
 		}
 	} else {
 		print $r->maketext("Not logged in.");
@@ -1060,7 +1066,6 @@ sub path {
  		    }
  		}
 	    }
-	    
 	    unshift @path, $name, $r->location . $urlpath->path;
 	} while ($urlpath = $urlpath->parent);
 	
@@ -1099,7 +1104,11 @@ sub footer(){
 	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
 	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
 	print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, "WeBWorK &#169; $copyright_years", "| theme: $theme | ww_version: $ww_version | pg_version: $pg_version|", CGI::a({-href=>"http://webwork.maa.org/"}, $r->maketext("The WeBWorK Project"), ));
+	print CGI::div({-id=>"copyright"}, $r->maketext("WeBWorK &#169; [_1]| theme: [_2] | ww_version: [_3] | pg_version [_4]|", 
+	                $copyright_years,$theme, $ww_version, $pg_version), 
+	                CGI::a({-href=>"http://webwork.maa.org/"}, 
+	                $r->maketext("The WeBWorK Project"), ));
+
 	return ""
 }
 
@@ -1474,15 +1483,15 @@ sub pathMacro {
 		next unless $name =~/\S/;  #skip blank names. Blanks can happen for course header and set header files.
 		if ($url and not $args{textonly}) {
 		    if($args{style} eq "bootstrap"){
-		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name))));
+		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, lc($name)));
 		    } else {
-			    push @result, CGI::a({-href=>"$url?$auth"}, $r->maketext(lc($name)));
+			    push @result, CGI::a({-href=>"$url?$auth"}, lc($name));
 		    }
 		} else {
 		    if($args{style} eq "bootstrap"){
-                push @result, CGI::li({-class=>"active"}, $r->maketext($name));
+                push @result, CGI::li({-class=>"active"}, $name);
             } else {
-			    push @result, $r->maketext($name);
+			    push @result, $name;
 			}
 		}
 	}
@@ -1560,19 +1569,11 @@ sub navMacro {
 		my $url = shift @links;
 		my $direction = shift @links;
 		my $html = ($direction && $args{style} eq "buttons") ? $direction : $name;
-			# ($img && $args{style} eq "images")
-			# ? CGI::img(
-				# {src=>($prefix."/".$img.$args{imagesuffix}),
-				# border=>"",
-				# alt=>"$name"})
-			# : $name."lol";
-#		unless($img && !$url) {  ## these are now "disabled" versions in grey -- DPVC
-			push @result, $url
-				? CGI::a({-href=>"$url?$auth$tail", -class=>"nav_button"}, $html)
-				: CGI::span({-class=>"gray_button"}, $html);
-#		}
-	}
-
+		push @result, $url
+		  ? CGI::a({-href=>"$url?$auth$tail", -class=>"nav_button"}, $html)
+		  : CGI::span({-class=>"gray_button"}, $html);
+	      }
+	
 	return join($args{separator}, @result) . "\n";
 }
 
@@ -2092,10 +2093,10 @@ sub errorOutput($$$) {
 	   $details = [$details];
 	}
 	return
-		CGI::h2("WeBWorK Error"),
+		CGI::h2($r->maketext("WeBWorK Error")),
 		CGI::p($r->maketext("_REQUEST_ERROR")),
 
-		CGI::h3("Error messages"),
+		CGI::h3($r->maketext("Error messages")),
 
 		CGI::p(CGI::code($error)),
 		CGI::h3("Error details"),
@@ -2106,18 +2107,34 @@ sub errorOutput($$$) {
 		# not using inclusive CGI calls here saves about 30Meg of memory!
 		CGI::end_p(),CGI::end_code(),
 		
-		CGI::h3("Request information"),
+		CGI::h3($r->maketext("Request information")),
 		CGI::table({border=>"1"},
-			CGI::Tr({},CGI::td("Time"), CGI::td($time)),
-			CGI::Tr({},CGI::td("Method"), CGI::td($method)),
-			CGI::Tr({},CGI::td("URI"), CGI::td($uri)),
-			CGI::Tr({},CGI::td("HTTP Headers"), CGI::td(
+			CGI::Tr({},CGI::td($r->maketext("Time")), CGI::td($time)),
+			CGI::Tr({},CGI::td($r->maketext("Method")), CGI::td($method)),
+			CGI::Tr({},CGI::td($r->maketext("URI")), CGI::td($uri)),
+			CGI::Tr({},CGI::td($r->maketext("HTTP Headers")), CGI::td(
 				CGI::table($headers),
 			)),
 		),
 	;  
 	
 }
+
+=item warningMessage
+
+Used to print out a generic warning message at the top of the page
+
+=cut
+
+sub warningMessage {
+  my $self = shift;
+  my $r = $self->r;
+  
+  return CGI::b($r->maketext("Warning")), ' -- ',
+    $r->maketext("There may be something wrong with this question. Please inform your instructor including the warning messages below.");
+  
+}
+
 
 =item warningOutput($warnings)
 
@@ -2149,7 +2166,6 @@ sub warningOutput($$) {
 
 	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);
-
 	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);
@@ -2163,22 +2179,15 @@ sub warningOutput($$) {
 	#};
 	
 	return
-		CGI::h2("WeBWorK Warnings"),
-		CGI::p(<<EOF),
-WeBWorK has encountered warnings while processing your request. If this occured
-when viewing a problem, it was likely caused by an error or ambiguity in that
-problem. Otherwise, it may indicate a problem with the WeBWorK system itself. If
-you are a student, report these warnings to your professor to have them
-corrected. If you are a professor, please consult the warning output below for
-more information.
-EOF
-		CGI::h3("Warning messages"),
+		CGI::h2($r->maketext("WeBWorK Warnings")),
+		CGI::p($r->maketext('WeBWorK has encountered warnings while processing your request. If this occured when viewing a problem, it was likely caused by an error or ambiguity in that problem. Otherwise, it may indicate a problem with the WeBWorK system itself. If you are a student, report these warnings to your professor to have them corrected. If you are a professor, please consult the warning output below for more information.')),
+		CGI::h3($r->maketext("Warning messages")),
 		CGI::ul($warnings),
-		CGI::h3("Request information"),
+		CGI::h3($r->maketext("Request information")),
 		CGI::table({border=>"1"},
-			CGI::Tr({},CGI::td("Time"), CGI::td($time)),
-			CGI::Tr({},CGI::td("Method"), CGI::td($method)),
-			CGI::Tr({},CGI::td("URI"), CGI::td($uri)),
+			CGI::Tr({},CGI::td($r->maketext("Time")), CGI::td($time)),
+			CGI::Tr({},CGI::td($r->maketext("Method")), CGI::td($method)),
+			CGI::Tr({},CGI::td($r->maketext("URI")), CGI::td($uri)),
 			#CGI::Tr(CGI::td("HTTP Headers"), CGI::td(
 			#	CGI::table($headers),
 			#)),
