@@ -66,7 +66,7 @@ sub handler($) {
 
 	# We set the bimode for print to utf8 because some language options
 	# use utf8 characters
-	binmode(STDOUT, ":utf8");
+	binmode(STDOUT, ":encoding(utf8)");
 
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting

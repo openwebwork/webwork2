@@ -46,7 +46,6 @@ use warnings;
 use utf8;
 use Carp;
 #use CGI qw(-nosticky *ul *li escapeHTML);
-use utf8;
 use WeBWorK::CGI;
 use WeBWorK::File::Scoring qw/parse_scoring_file/;
 use Date::Format;
