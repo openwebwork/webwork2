@@ -8,6 +8,8 @@ library-directory-tree.json
 library-subject-tree.json
 textbook-tree.json
 development.yml
+production.yml
+webwork3/public/js/bower_components
 *~
 !tmp/README
 !htdocs/tmp/README
