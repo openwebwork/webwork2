@@ -52,6 +52,8 @@ my $problem_source = read_file_content($path_to_pg_problem);
 
 my $params = {course_id=>$new_course_name, user=>'profa',password=>'profa', source=>$problem_source};
 
+#my $params = {course_id=>$new_course_name, user=>'profa',password=>'profa', source_file=>"Library/Rochester/set0/prob1.pg"};
+
 route_exists [POST => '/renderer'], "POST /webwork3/rendered is handled";
 
 $resp = dancer_response(POST=>'/renderer', {params=>$params});
