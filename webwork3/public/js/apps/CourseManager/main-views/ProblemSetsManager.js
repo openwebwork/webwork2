@@ -58,7 +58,8 @@ var ProblemSetsManager = MainView.extend({
         })
 
         // builds the "change:set_id ... " 
-        var changeableFields = _(this.problemSets.at(0).defaults).chain().keys().map(function(key){ 
+        var _set = new ProblemSet({}); 
+        var changeableFields = _(_set.defaults).chain().keys().map(function(key){ 
             return "change:" + key}).value().join(" ");
         
         this.problemSets.on(changeableFields,function(_set){
