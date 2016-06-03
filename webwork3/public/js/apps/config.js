@@ -240,14 +240,15 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         update: function($el, val, model, options){
             var popoverHTML = model.get("popupTemplate")(model.attributes);
             var _title = model.get("assign_type").replace("_"," ") + " Date";
-            $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true, 
-                        content: popoverHTML, container: "body"});
             $el.on("shown.bs.popover",function(){
                 $("a.goto-problem-set-button[data-setname='"+model.get("set_id")+"']").off()
                     .on("click",function(evt){
                         $el.popover("hide");
                         model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
                 })
+            }).on("click",function(){
+              $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true, 
+                        content: popoverHTML, container: "body", trigger: "click"});
             });
             var info = "";
             switch (model.get("assign_type")){
