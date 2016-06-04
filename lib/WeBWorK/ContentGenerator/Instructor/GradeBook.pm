@@ -23,31 +23,36 @@ WeBWorK::ContentGenerator::Instructor::GradeBook - Display Student Progress.
 
 =cut
 
+#TODO:  replace user=admin with user=...
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
 use WeBWorK::ContentGenerator::Instructor::StudentProgress;
-#use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
-use WeBWorK::DB::Record::UserSet;  #FIXME -- this is only used in one spot.
+use WeBWorK::DB; 
 
-# The table format has been borrowed from the Grades.pm module
+
 sub initialize {
 	my $self     = shift; 
-	# FIXME  are there args here?
-	my @components = @_;
 	my $r          = $self->{r};
-	my $urlpath    = $r->urlpath;
-	my $type       = $urlpath->arg("statType") || '';
+	my $urlpath    = $r->urlpath;	
 	my $db         = $self->{db};
 	my $ce         = $self->{ce};
 	my $authz      = $self->{authz};
 	my $courseName = $urlpath->arg('courseID');
- 	my $user       = $r->param('user');
+ 	my $user       = $r->param('user'); 	
+	my $deleteUserID = $r->param('deleteUser') || "";	
+	my $deleteSetID = $r->param('deleteSet') || ""; 	
+
+#Add modal to confirm delete in both cases.
+	if($deleteUserID){
+		$db->deleteUser($deleteUserID);
+	} elsif ($deleteSetID) {
+		$db->deleteGlobalSet($deleteSetID);
+	}
  	
  	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
@@ -165,7 +170,7 @@ sub getStudentScores {
 	}
 	
 
-#########################################################################################
+	#########################################################################################
 	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
 	my $effectiveUser = $studentRecord->user_id();
 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
@@ -281,7 +286,7 @@ sub index {
 	my $root = $ce->{webworkURLs}->{root};		
 
 	my @myUsers = @studentList;
-
+#TODO: effectiveUser!!!
 	my @studentRecords = $db->getUsers(@myUsers);
 	my @sortedStudentRecords = sortRecords({fields=>[qw/last_name first_name user_id/]}, @studentRecords);
 		
@@ -289,14 +294,20 @@ sub index {
 	my @studentLinks  = (); 
 	foreach my $set (@setList) {		
 		my $setProgressUrl = "$root/$courseName/instructor/progress/set/$set/?user=admin&key=".$r->param("key");
-	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module, $r, 
-	                                                      courseID => $courseName,
-	                                                      statType => 'set',
-	                                                      setID    => $set
-	    );
+		my $setEditUrl = "$root/$courseName/instructor/set2/?editMode=1&visible_sets=$set&user=admin&key=".$r->param("key");
+		my $setDeleteUrl = "$root/$courseName/instructor/gradebook/?deleteSet=$set&user=admin&key=".$r->param("key");		
 	    my $prettySetID = $set;
 	    $prettySetID =~ s/_/ /g;
-		push @setLinks, CGI::a({-href=>$setProgressUrl }, $prettySetID);
+		push @setLinks, CGI::div({-class=>"dropdown"},
+			CGI::div({-class=>"btn btn-default dropdown-toggle", "data-toggle"=>"dropdown"}, $prettySetID),
+			CGI::ul({-class=>"dropdown-menu"},
+				CGI::li(CGI::a({-href=>$setProgressUrl},"Progress")),
+				CGI::li(CGI::a({-href=>$setEditUrl},"Edit")),
+				CGI::li(CGI::a({-href=>$setDeleteUrl},"Delete"))
+				)
+			);
+
+
 	}
 
 	foreach my $studentRecord (@sortedStudentRecords) {
@@ -304,12 +315,24 @@ sub index {
 		my $last_name = $studentRecord->last_name;
 		my $user_id = $studentRecord->user_id;
 		my $studentProgressUrl = "$root/$courseName/instructor/progress/student/$user_id/?user=admin&key=".$r->param("key");
+		my $studentEditUrl = "$root/$courseName/instructor/user2/?editMode=1&effectiveUser=admin&user=admin&key=".$r->param("key");		
+		my $studentDeleteUrl = "$root/$courseName/instructor/gradebook/?user=admin&deleteUser=$user_id&key=".$r->param("key");			
 
-		push @studentLinks, CGI::Tr({},CGI::td(CGI::a({-href=>$studentProgressUrl},"  $last_name, $first_name  ($user_id)" ), $self->getStudentScores($studentRecord->user_id))),;	
+#Add a confirm delete.
+		push @studentLinks, CGI::Tr({},CGI::td(
+			CGI::div({-class=>"dropdown"},
+			CGI::div({-class=>"btn btn-default dropdown-toggle btn-block", "data-toggle"=>"dropdown"}, "  $last_name, $first_name  ($user_id)" ),
+			CGI::ul({-class=>"dropdown-menu"},
+				CGI::li(CGI::a({-href=>$studentProgressUrl},"Progress")),
+				CGI::li(CGI::a({-href=>$studentEditUrl},"Edit")),
+				CGI::li(CGI::a({-href=>$studentDeleteUrl},"Delete"))
+				)
+			)	
+			, $self->getStudentScores($studentRecord->user_id)));	
 				                                                     
 	}
 	print join("",
-		CGI::start_table({-class=>"gradebook",-border=>2}),
+		CGI::start_table({-class=>"gradebook table-striped",-border=>2}),
 		CGI::Tr({},
 			CGI::td({-class=>"column-name"},'Student'),
 			CGI::td({-class=>"column-set",-valign=>'top'}, [@setLinks]) 
