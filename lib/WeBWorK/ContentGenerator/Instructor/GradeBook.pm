@@ -294,7 +294,7 @@ sub index {
 	my @studentLinks  = (); 
 	foreach my $set (@setList) {		
 		my $setProgressUrl = "$root/$courseName/instructor/progress/set/$set/?user=admin&key=".$r->param("key");
-		my $setEditUrl = "$root/$courseName/instructor/set2/?editMode=1&visible_sets=$set&user=admin&key=".$r->param("key");
+		my $setEditUrl = "$root/$courseName/instructor/sets2/?user=admin&effectiveUser=admin&key=".$r->param("key")."&editMode=1&visible_sets=$set		";
 		my $setDeleteUrl = "$root/$courseName/instructor/gradebook/?deleteSet=$set&user=admin&key=".$r->param("key");		
 	    my $prettySetID = $set;
 	    $prettySetID =~ s/_/ /g;
@@ -315,7 +315,7 @@ sub index {
 		my $last_name = $studentRecord->last_name;
 		my $user_id = $studentRecord->user_id;
 		my $studentProgressUrl = "$root/$courseName/instructor/progress/student/$user_id/?user=admin&key=".$r->param("key");
-		my $studentEditUrl = "$root/$courseName/instructor/user2/?editMode=1&effectiveUser=admin&user=admin&key=".$r->param("key");		
+		my $studentEditUrl = "$root/$courseName/instructor/users2/?".$r->param("key")."user=admin&effectiveUser=admin&editMode=1&visible_users=$user_id		";
 		my $studentDeleteUrl = "$root/$courseName/instructor/gradebook/?user=admin&deleteUser=$user_id&key=".$r->param("key");			
 
 #Add a confirm delete.
