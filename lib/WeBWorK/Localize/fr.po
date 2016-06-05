@@ -847,7 +847,7 @@ msgstr "Veuillez sélectionner une action à effectuer."
 
 #
 #: ContentGenerator/Problem.pm:1116
-msgid "Preview Answers"
+msgid "Preview My Answers"
 msgstr "Visualiser les réponses"
 
 #
@@ -1061,8 +1061,11 @@ msgstr "Voir quels utilisateurs?"
 
 #
 #: ContentGenerator/Problem.pm:1044
-msgid "Show correct answers"
-msgstr "Voir les bonnes réponses"
+msgid "CorrectAnswers"
+msgstr "Les bonnes réponses"
+
+msgid "Undefined_Set"
+msgstr "Devoir_Non_Defini"
 
 #
 #: ContentGenerator/Instructor/ProblemSetList.pm:683
@@ -1437,7 +1440,7 @@ msgstr "Votre adresse courriel a été modifiée."
 #
 #. ($lastScore,$notCountedMessage)
 #: ContentGenerator/Problem.pm:1194
-msgid "Your overall recorded score is %1. %2"
+msgid "Your overall recorded score is %1.  %2"
 msgstr "Votre résultat final est %1. %2"
 
 # avant: msgstr "Le résultat final est : %1. %2"
@@ -1809,8 +1812,8 @@ msgstr "aucun utilisateur"
 
 #
 #: ContentGenerator/ProblemSets.pm:430 ContentGenerator/ProblemSets.pm:452
-msgid "open, due "
-msgstr "Disponible, date de remise : "
+msgid "open, due %1"
+msgstr "Disponible, date de remise : %1"
 
 #
 #. ($self->formatDateTime($set->due_date()
@@ -2997,9 +3000,6 @@ msgstr "Modifier3"
 
 msgid "SimpleEdit"
 msgstr "EditionSimple"
-
-msgid "You have attempted this problem %1 attemps."
-msgstr "Vous avez essayer ce problème %1 fois."
 
 msgid "You have %1 remaining."
 msgstr "Vous avez %1 restant."
@@ -4501,6 +4501,9 @@ msgstr ""
 msgid "Totals"
 msgstr "Totaux"
 
+msgid "Homework Totals"
+msgstr "Totaux des devoirs"
+
 # ContentGenerator/Instructor/ShowAnswers.pm (108)
 msgid "Past Answers for"
 msgstr "Réponses précédentes pour"
@@ -4798,3 +4801,9 @@ msgstr "Nombre d'essais corrects : "
 # ContentGenerator/Feedback.pm
 msgid "Number of incorrect attempts: "
 msgstr "Nombre d'essais erronés : "
+
+msgid "Show path ..."
+msgstr "Montrer le chemin du fichier ..."
+
+msgid "Hide path:"
+msgstr "Cacher le chemin :"

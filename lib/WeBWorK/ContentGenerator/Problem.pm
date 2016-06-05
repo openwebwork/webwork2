@@ -1284,7 +1284,7 @@ sub output_checkboxes{
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
-		print "Show: &nbsp;&nbsp;";
+		print $r->maketext("Show:")."&nbsp;&nbsp;";
 	}
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
@@ -1575,7 +1575,7 @@ sub output_score_summary{
 		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
 		print join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
-			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), $prMessage, CGI::br(),
+			$r->maketext("You have attempted this problem [quant,_1,time,times,0 time].",$attempts), $prMessage, CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
 			$problem->attempted
 		
