@@ -2243,8 +2243,8 @@ msgid "Publish"
 msgstr "Publier"
 
 #
-msgid "Password/Email"
-msgstr "Mot de passe/courriel"
+msgid "User Settings"
+msgstr "Paramètres utilisateur"
 
 #
 msgid "Cancel Edit"
