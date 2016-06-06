@@ -61,7 +61,6 @@ use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
 use WeBWorK::Utils qw(jitar_id_to_seq);
-use Encode;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
   
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
