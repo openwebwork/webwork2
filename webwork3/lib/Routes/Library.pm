@@ -13,7 +13,7 @@ use Dancer::Plugin::Database;
 use Path::Class;
 use File::Find::Rule;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
-use Utils::LibraryUtils qw/list_pg_files searchLibrary getProblemTags render/;
+use Utils::LibraryUtils qw/list_pg_files searchLibrary getProblemTags render render2/;
 use Utils::ProblemSets qw/record_results/;
 use Utils::Authentication qw/checkPermissions setCourseEnvironment isSessionCurrent/;
 use HTML::Entities qw/decode_entities/;
@@ -424,7 +424,7 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 		$renderParams->{problem}->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
 	} 
 
-	return render(vars->{ce},$renderParams);
+	return render(vars->{ce},vars->{db},$renderParams);
 
 };
 
@@ -478,7 +478,7 @@ any ['get', 'post'] => '/renderer/courses/:course_id/users/:user_id/sets/:set_id
 	$renderParams->{user} = vars->{db}->getUser(params->{user_id});
 	$renderParams->{set} = vars->{db}->getMergedSet(params->{user_id},params->{set_id});		
 
-	my $results = render($renderParams);
+	my $results = render(vars->{ce},vars->{db},$renderParams);
 
 
 	## if it was a post request, then we record the the results in the log file and in the past_answer database
@@ -506,15 +506,14 @@ post '/renderer' => sub {
 	send_error("Your session is out of date. You may need to authenticate again",401) unless (isSessionCurrent());
 
 	checkPermissions(10,session->{user});
-
-	my $source = decode_entities params->{source};
+	my $source = decode_entities params->{source} if defined(params->{source}); 
     
 	my $problem = fake_problem(vars->{db});
 	$problem->{problem_seed} = params->{seed} || 1;
 	$problem->{problem_id} = 1; 
-	$problem->{source_file} = "this_is_a_fake_path";
-
-	my $renderParams = {
+	$problem->{source_file} = params->{source_file} || "this_is_a_fake_path";
+    
+    my $renderParams = {
 		displayMode=>"MathJax",
 		showHints=>0,
 		showSolutions=>0,
@@ -523,10 +522,10 @@ post '/renderer' => sub {
 		user => fake_user(vars->{db}),
 		set => fake_set(vars->{db}),
 		problem => $problem,
-		source => \$source
+		source => defined($source)?\$source: undef
 	};
     
-	return render(vars->{ce},$renderParams);
+	return render(vars->{ce},vars->{db},$renderParams);
 };
 
 

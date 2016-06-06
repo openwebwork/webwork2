@@ -5,12 +5,16 @@ package Utils::LibraryUtils;
 use base qw(Exporter);
 use Path::Class qw/file dir/;
 use Dancer ':syntax';
+use Dancer::FileUtils qw/path read_file_content/;
 use Dancer::Plugin::Database;
 use WeBWorK::Utils qw(readDirectory);
 use WeBWorK3::PG::Local;
+use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
+use Data::Dump qw/dump/;
+
 #use Data::Dump qw/dd/;
 our @EXPORT    = ();
-our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render);
+our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render render2);
 our @answerFields = qw/preview_latex_string done original_student_ans preview_text_string ans_message 
 						student_ans error_flag score correct_ans ans_label error_message _filter_name type ans_name/;
 
@@ -19,113 +23,6 @@ my %ignoredir = (
 	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
 );
 
-###
-#
-#  Common functionality for the renderer
-#
-###
-
-sub render {
-	my ($ce,$renderParams) = @_;
-	my @anskeys = split(";",params->{answer_fields} || ""); 
-	
-	$renderParams->{formFields}= {};
-	for my $key (@anskeys){
-		$renderParams->{formFields}->{$key} = params->{$key};
-	}
-    $renderParams->{formFields}->{user} = session->{user};
-    $renderParams->{formFields}->{effectiveUser} = params->{effectiveUser} || session->{user};
-    
-	# remove any pretty garbage around the problem
-	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
-	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
-    
-    
-	my $translationOptions = {
-		displayMode     => $renderParams->{displayMode},
-		showHints       => $renderParams->{showHints},
-		showSolutions   => $renderParams->{showSolutions},
-		showAnswers		=> $renderParams->{showAnswers},
-		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
-		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
-	};
-    
-    $translationOptions->{r_source} = $renderParams->{source} if defined($renderParams->{source});
-
-    
-	my $pg = new WeBWorK3::PG::Local(
-		$ce,
-		$renderParams->{user},
-		params->{session_key},
-		$renderParams->{set},
-		$renderParams->{problem},
-		123, # PSVN (practically unused in PG)
-		$renderParams->{formFields},
-		$translationOptions,
-    );
-    
-  	my $warning_messages="";
-    my (@internal_debug_messages, @pgwarning_messages, @pgdebug_messages);
-    if (ref ($pg->{pgcore}) ) {
-    	@internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
-    	@pgwarning_messages        = $pg ->{pgcore}->get_warning_messages();
-    	@pgdebug_messages          = $pg ->{pgcore}->get_debug_messages();
-    } else {
-    	@internal_debug_messages = ('Error in obtaining debug messages from PGcore');
-    }
-    my $answers = {};
-
-    # extract the important parts of the answer, but don't send the correct_ans if not requested. 
-
-    for my $key (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
-    	$answers->{$key} = {};
-    	for my $field (@answerFields) {
-    		if ($field ne 'correct_ans' || $renderParams->{showAnswers}){
-	    		$answers->{$key}->{$field} = $pg->{answers}->{$key}->{$field};
-	    	}
-
-	    }
-    }
-
-    my $flags = {};
-
-    ## skip the CODE reference which appears in the PROBLEM_GRADER_TO_USE.  I don't think this is useful for 
-    ## passing out to the client since it is a perl code snippet.
-
-    for my $key (keys(%{$pg->{flags}})){
-     	if (ref($pg->{flags}->{$key}) ne "CODE"){
-     	$flags->{$key}=$pg->{flags}->{$key};}
-     }
-     
-     # FIXME: need to do a better job with problemRandomizes.  The follow works in the library, but not sure about the student view
-     $flags->{problemRandomize} = undef;
-
-    my $problem_hash = {
-		text 						=> $pg->{body_text},
-		header_text 				=> $pg->{head_text},
-		answers 					=> $answers,
-		errors         				=> $pg->{errors},
-		warnings	   				=> $pg->{warnings}, 
-		problem_result 				=> $pg->{result},
-		problem_state				=> $pg->{state},
-		flags						=> $flags,
-		warning_messages            => \@pgwarning_messages,
-		debug_messages              => \@pgdebug_messages,
-		internal_debug_messages     => \@internal_debug_messages,
-	};
-    
-    if($problem_hash->{errors}){
-        my $text = qq|<div><em>An error occurred while processing this problem.</em>  
-                    Click <a href="#" onclick='\$(this).parent().find(".bg-danger").removeClass("hidden"); return false'>here</a>
-                    to show details of the error. <p class='bg-danger hidden'>|;
-        $text .= $problem_hash->{errors} . "</p></div>";
-        
-        $problem_hash->{text} = $text;
-    }
-
-	return $problem_hash;
-
-}
 
 
 
@@ -244,8 +141,6 @@ sub searchLibrary {
 		$param->{$key} = $val;
 	}
 
-	debug $param;
-
 	my $selectClause = "SELECT CONCAT(path.path,'/',pg.filename),pg.pgfile_id "
 					. "FROM OPL_path AS path "
 					. "JOIN OPL_pgfile AS pg ON path.path_id=pg.path_id ";
@@ -357,7 +252,7 @@ sub searchLibrary {
 	}
 
 
-	debug $selectClause,$whereClause.$groupClause;
+	#debug $selectClause,$whereClause.$groupClause;
 
 	my $results = database->selectall_arrayref($selectClause . $whereClause . $groupClause . ";");
 
@@ -404,7 +299,7 @@ sub getProblemTags {
 						. "LEFT JOIN OPL_textbook AS textbook ON textbook.textbook_id = ch.textbook_id ";
 	my $whereClause ="WHERE pg.pgfile_id='". $fileID ."'";
 	
-	debug $selectClause. $whereClause;
+	# debug $selectClause. $whereClause;
 
 	my $results = database->selectrow_arrayref($selectClause . $whereClause . ";");
 
@@ -535,5 +430,250 @@ sub munge_pg_file_path {
 	# set.def file.
 	return($pg_path);
 }
+
+####
+#
+##  This is the general rendering function
+#
+#  input: $ce (course envinroment), $db (database variable) and $renderParams
+#
+##
+
+sub render {
+
+    my ($ce,$db,$renderParams) = @_;
+
+
+    my $problemFile = '';
+
+    my $form_data = {             
+    	displayMode => 'MathJax',
+    	outputformat => 'standard',
+    	problemSeed => 1234,
+    };
+    
+    my @anskeys = split(";",params->{answer_fields} || ""); 
+    for my $key (@anskeys){
+		$form_data->{$key} = params->{$key};
+	}
+    $form_data->{user} = session->{user};
+    $form_data->{effectiveUser} = params->{effectiveUser} || session->{user};
+    
+	my $key = '3211234567654321';
+    
+	my $user          = $renderParams->{user} || fake_user($db);
+	my $set           = $renderParams->{'this_set'} || fake_set($db);
+	my $problem_seed  = $renderParams->{'problem_seed'} || 0; #$r->param('problem_seed') || 0;
+	my $showHints     = $renderParams->{showHints} || 0;
+	my $showSolutions = $renderParams->{showSolutions} || 0;
+	my $problemNumber = $renderParams->{'problem_number'} || 1;
+    my $displayMode   = $renderParams->{displayMode}//
+                       $ce->{pg}->{options}->{displayMode};
+                       
+    #my $problem       = $renderParams->{problem} || fake_problem($db); 
+    
+    
+    
+	my $translationOptions = {
+		displayMode     => $displayMode,
+		showHints       => $showHints,
+		showSolutions   => $showSolutions,
+		refreshMath2img => 1,
+		processAnswers  => 1,
+		QUIZ_PREFIX     => '',	
+		use_site_prefix => $ce->{server_root_url},
+		use_opaque_prefix => 1,	
+	};
+	$translationOptions->{permissionLevel} = 20;
+    
+#    if (defined($renderParams->{source})) {
+#      $translationOptions->{r_source} = $renderParams->{source};
+#    } elsif (defined($renderParams->{problem}->{source_file})) {
+#      my $source_file_path = path($ce->{courseDirs}->{templates},$renderParams->{problem}->{source_file});
+#      $translationOptions->{r_source} = read_file_content($source_file_path); 
+#      
+#      ## check for an error
+#    }  ## what is neither is defined?  
+#    
+    #debug $translationOptions->{r_source};
+    
+    
+    
+    
+	my $extras = {};   # Check what this is used for.
+	
+	# Create template of problem then add source text or a path to the source file
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
+	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed);
+	$problem->{value} = -1;	
+    
+    
+    #FIXME temporary hack
+	$set->set_id('this set') unless $set->set_id();
+	$problem->problem_id('1') unless $problem->problem_id();
+    
+    if (ref $renderParams->{source}) { #in this case the actual source is passed
+			$problem->source_file('');
+			$translationOptions->{r_source} = $renderParams->{source};
+			# print "source is already read\n";
+			# a text string containing the problem
+	} else { 
+            $problem->{source_file} = $renderParams->{problem}->{source_file}; 
+            #my $source_file_path = path($ce->{courseDirs}->{templates},$renderParams->{problem}->{source_file});
+            #debug $source_file_path; 
+            #$translationOptions->{r_source} = read_file_content($source_file_path); 
+	}
+    #debug $translationOptions; 
+    #debug dump $problem;
+
+my $pg = new WeBWorK::PG(
+		$ce,
+		$user,
+		$key,
+		$set,
+		$problem,
+		123, # PSVN (practically unused in PG)  only used as an identifier
+		$form_data,
+		$translationOptions,
+		$extras,
+	);
+		# new version of output:
+	my $warning_messages = '';  # for now -- set up warning trap later
+	my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
+    if (ref ($pg->{pgcore}) ) {
+    	$internal_debug_messages   = $pg->{pgcore}->get_internal_debug_messages;
+    	$pgwarning_messages        = $pg ->{pgcore}->get_warning_messages();
+    	$pgdebug_messages          = $pg ->{pgcore}->get_debug_messages();
+    } else {
+    	$internal_debug_messages = ['Error in obtaining debug messages from PGcore'];
+    }
+
+	my $out2   = {
+		text 						=> $pg->{body_text},
+		header_text 				=> $pg->{head_text},
+		answers 					=> $pg->{answers},
+		
+		errors         				=> $pg->{errors},
+		WARNINGS	   				=> "WARNINGS\n".$warning_messages."\n<br/>More<br/>\n".$pg->{warnings},
+		PG_ANSWERS_HASH             => $pg->{pgcore}->{PG_ANSWERS_HASH},
+		problem_result 				=> $pg->{result},
+		problem_state				=> $pg->{state},
+		flags						=> $pg->{flags},
+		warning_messages            => $pgwarning_messages,
+		debug_messages              => $pgdebug_messages,
+		internal_debug_messages     => $internal_debug_messages,
+	};
+
+	return $out2;
+}
+
+###
+#
+#  Common functionality for the renderer
+#
+###
+
+sub render_old {
+	my ($ce,$renderParams) = @_;
+	my @anskeys = split(";",params->{answer_fields} || ""); 
+	
+	$renderParams->{formFields}= {};
+	for my $key (@anskeys){
+		$renderParams->{formFields}->{$key} = params->{$key};
+	}
+    $renderParams->{formFields}->{user} = session->{user};
+    $renderParams->{formFields}->{effectiveUser} = params->{effectiveUser} || session->{user};
+    
+	# remove any pretty garbage around the problem
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
+    
+    
+	my $translationOptions = {
+		displayMode     => $renderParams->{displayMode},
+		showHints       => $renderParams->{showHints},
+		showSolutions   => $renderParams->{showSolutions},
+		showAnswers		=> $renderParams->{showAnswers},
+		refreshMath2img => defined(param("refreshMath2img")) ? param("refreshMath2img") : 0 ,
+		processAnswers  => defined(param("processAnswers")) ? param("processAnswers") : 1
+	};
+    
+    $translationOptions->{r_source} = $renderParams->{source} if defined($renderParams->{source});
+
+	my $pg = new WeBWorK3::PG::Local(
+		$ce,
+		$renderParams->{user},
+		params->{session_key},
+		$renderParams->{set},
+		$renderParams->{problem},
+		123, # PSVN (practically unused in PG)
+		$renderParams->{formFields},
+		$translationOptions,
+    );
+    
+  	my $warning_messages="";
+    my (@internal_debug_messages, @pgwarning_messages, @pgdebug_messages);
+    if (ref ($pg->{pgcore}) ) {
+    	@internal_debug_messages = $pg->{pgcore}->get_internal_debug_messages;
+    	@pgwarning_messages        = $pg ->{pgcore}->get_warning_messages();
+    	@pgdebug_messages          = $pg ->{pgcore}->get_debug_messages();
+    } else {
+    	@internal_debug_messages = ('Error in obtaining debug messages from PGcore');
+    }
+    my $answers = {};
+
+    # extract the important parts of the answer, but don't send the correct_ans if not requested. 
+
+    for my $key (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}}){
+    	$answers->{$key} = {};
+    	for my $field (@answerFields) {
+    		if ($field ne 'correct_ans' || $renderParams->{showAnswers}){
+	    		$answers->{$key}->{$field} = $pg->{answers}->{$key}->{$field};
+	    	}
+
+	    }
+    }
+
+    my $flags = {};
+
+    ## skip the CODE reference which appears in the PROBLEM_GRADER_TO_USE.  I don't think this is useful for 
+    ## passing out to the client since it is a perl code snippet.
+
+    for my $key (keys(%{$pg->{flags}})){
+     	if (ref($pg->{flags}->{$key}) ne "CODE"){
+     	$flags->{$key}=$pg->{flags}->{$key};}
+     }
+     
+     # FIXME: need to do a better job with problemRandomizes.  The follow works in the library, but not sure about the student view
+     $flags->{problemRandomize} = undef;
+
+    my $problem_hash = {
+		text 						=> $pg->{body_text},
+		header_text 				=> $pg->{head_text},
+		answers 					=> $answers,
+		errors         				=> $pg->{errors},
+		warnings	   				=> $pg->{warnings}, 
+		problem_result 				=> $pg->{result},
+		problem_state				=> $pg->{state},
+		flags						=> $flags,
+		warning_messages            => \@pgwarning_messages,
+		debug_messages              => \@pgdebug_messages,
+		internal_debug_messages     => \@internal_debug_messages,
+	};
+    
+    if($problem_hash->{errors}){
+        my $text = qq|<div><em>An error occurred while processing this problem.</em>  
+                    Click <a href="#" onclick='\$(this).parent().find(".bg-danger").removeClass("hidden"); return false'>here</a>
+                    to show details of the error. <p class='bg-danger hidden'>|;
+        $text .= $problem_hash->{errors} . "</p></div>";
+        
+        $problem_hash->{text} = $text;
+    }
+
+	return $problem_hash;
+
+}
+
 
 1;

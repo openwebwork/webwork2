@@ -7,7 +7,7 @@ use Test::More tests => 2;
 use strict;
 use warnings;
 
-use Data::Dump qw/dd/; 
+use Data::Dump qw/dd dump/; 
 #use JSON qw/from_json/;
 
 BEGIN {
@@ -41,7 +41,7 @@ my $resp = dancer_response(POST=>"/courses/$new_course_name/login",{params=>{use
 my $obj = from_json $resp->{content};
 is($obj->{logged_in},1,"You successfully logged in to the $new_course_name course");
 
-
+route_exists [POST => '/renderer'], "POST /webwork3/rendered is handled";
 
 #
 #my $settings = Dancer::Config::settings();
@@ -50,15 +50,19 @@ my $path_to_pg_problem = path($webwork_dir,"..","libraries","webwork-open-proble
 
 my $problem_source = read_file_content($path_to_pg_problem); 
 
+
 my $params = {course_id=>$new_course_name, user=>'profa',password=>'profa', source=>$problem_source};
-
-#my $params = {course_id=>$new_course_name, user=>'profa',password=>'profa', source_file=>"Library/Rochester/set0/prob1.pg"};
-
-route_exists [POST => '/renderer'], "POST /webwork3/rendered is handled";
 
 $resp = dancer_response(POST=>'/renderer', {params=>$params});
 
-##dd from_json($resp->{content});
+#$params = {course_id=>$new_course_name, user=>'profa',password=>'profa', source_file=>"Library/Rochester/set0/prob1.pg"};
 
+
+
+#$resp = dancer_response(POST=>'/renderer', {params=>$params});
+
+$obj = from_json($resp->{content});
+
+debug $obj->{text}; 
 
 

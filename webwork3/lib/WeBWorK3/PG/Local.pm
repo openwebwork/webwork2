@@ -37,12 +37,14 @@ the WeBWorK::PG module for information about the API.
 
 use strict;
 use warnings;
-use WeBWorK::Constants;
-#use Dancer;
+#use WeBWorK::Constants;
+use Dancer qw(:syntax);
 use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
-use WeBWorK::Debug;
+#use WeBWorK::Debug;
+use Data::Dump qw/dump/;
+
 
 sub new_helper {
 	my $invocant = shift;
@@ -60,13 +62,7 @@ sub new_helper {
 		                     # hints and the display mode to use
 	) = @_;
 
-	
-
-	
-	# write timing log entry
-# 	writeTimingLogEntry($ce, "WeBWorK::PG::new",
-# 		"user=".$user->user_id.",problem=".$ce->{courseName}."/".$set->set_id."/".$problem->problem_id.",mode=".$translationOptions->{displayMode},
-# 		"begin");
+    debug "in WeBWorK3::PG::Local";
 	
 	# install a local warn handler to collect warnings  FIXME -- figure out what I meant to do here.
 	my $warnings = "";
@@ -107,7 +103,8 @@ sub new_helper {
 	# prepare an imagegenerator object (if we're in "images" mode)
 	############################################################################
 	my $image_generator;
-	if ($translationOptions->{displayMode} eq "images") {
+	my $site_prefix = ( $translationOptions->{use_site_prefix} )//'';
+	if ($translationOptions->{displayMode} eq "images" || $translationOptions->{displayMode} eq "opaque_image") {
 		my %imagesModeOptions = %{$ce->{pg}{displayModeOptions}{images}};
 		$image_generator = WeBWorK::PG::ImageGenerator->new(
 			tempDir         => $ce->{webworkDirs}->{tmp}, # global temp dir
@@ -115,13 +112,13 @@ sub new_helper {
 			dvipng          => $ce->{externalPrograms}->{dvipng},
 			useCache        => 1,
 			cacheDir        => $ce->{webworkDirs}{equationCache},
-			cacheURL        => $ce->{webworkURLs}{equationCache},
+			cacheURL        => $site_prefix . $ce->{webworkURLs}{equationCache},
 			cacheDB         => $ce->{webworkFiles}{equationCacheDB},
 			useMarkers      => ($imagesModeOptions{dvipng_align} && $imagesModeOptions{dvipng_align} eq 'mysql'),
 			dvipng_align    => $imagesModeOptions{dvipng_align},
 			dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
-		);
-	}
+      );
+    }
 	
 	
 	############################################################################
@@ -144,6 +141,8 @@ sub new_helper {
 	);
 	$translator->environment($envir);
 	
+    #debug dump $envir;
+    
 	############################################################################
 	# initialize the Translator
 	############################################################################
@@ -238,13 +237,16 @@ sub new_helper {
 	    # the templates directory. Unless the path starts with / assume
 	    # that it is relative to the templates directory
 	    
-	    $sourceFilePath = $ce->{courseDirs}->{templates}. "/" .$sourceFilePath unless ($sourceFilePath =~ /^\//);
+        $sourceFilePath = $ce->{courseDirs}->{templates}. "/" .$sourceFilePath unless ($sourceFilePath =~ /^\//);
 	    #now grab the source
 		eval {$source = readFile($sourceFilePath) };
+                
 		$readErrors = $@ if $@;
 	 }
 
-	############################################################################
+    debug dump $translationOptions; 
+
+    ############################################################################
     # put the source into the translator object
     ############################################################################
     
@@ -292,9 +294,12 @@ EOF
 	############################################################################
 	
 	#warn "PG: translating the PG source into text\n";
-	$translator->translate();
+    
+    
+    
+    $translator->translate();
 
-
+    
 	############################################################################
 	# !!!!!!!! IMPORTANT: $envir shouldn't be trusted after problem code runs!
 	############################################################################
