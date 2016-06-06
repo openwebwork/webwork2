@@ -60,10 +60,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             // remove any popups that exist already.  
             this.$(".show-set-popup-info").popover("destroy")
 
-
-    		this.$(".assign").popover({html: true});
-
-
             $('.show-date-types input, .show-date-types label').click(function(e) {
                 e.stopPropagation();
             });
@@ -83,8 +79,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 });
             });
             this.update();
-            //this.stickit(this.state,this.bindings);
-            //this.showHideAssigns(this.state);
+            this.stickit(this.state,this.bindings);
+            this.showHideAssigns(this.state);
             
             return this;
     	},
@@ -150,6 +146,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             });
         },
         showHideAssigns: function(model){
+            var self = this;
             // define the mapping between fields in the model and assignment classes. 
             var obj = {
                 reduced_scoring_date: "assign-reduced-scoring",
@@ -158,29 +155,30 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 answer_date: "assign-answer"
             }
 
+            
+            
             var keys = _(obj).keys();
             if(! this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 keys = _(keys).without("reduced_scoring_date");
             }
+
+            // show/hide the sets according to those selected in the "Date Types" dropdown.  
             _(keys).each(function(key){
                 util.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
             });
 
-            if(!model.get("reduced_scoring_date")){
-                return;
-            }
-            // hide the reduced credit sets that shouldn't be visible. 
-                        // show/hide the desired date types
-            if(this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
-                this.$(".assign-reduced-scoring").removeClass("hidden");
-            } else {
-                this.$(".assign-reduced-scoring").addClass("hidden");
-                return;
-            }
+          
+            // hide the reduced credit dates for those that are disabled.  
             this.problemSets.chain().each(function(_set) { 
-                util.changeClass({state: _set.get("enable_reduced_scoring"), remove_class: "hidden", 
-                    els: self.$(".assign-reduced-scoring[data-setname='"+_set.get("set_id")+"']")});
+                util.changeClass({state: _set.get("enable_reduced_scoring") &&            
+                                  self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")
+                                  , remove_class: "hidden", els: self.$(".assign-reduced-scoring[data-setname='"+_set.get("set_id")+"']")});
             });
+  
+        
+            // hide the check box in the Assignment types dropdown if needed:
+            util.changeClass({state: !this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
+                              add_class: "hidden", els: $(".checkbox.assign-reduced-scoring")});
         },
         setDate: function(_setName,_date,type){  // sets the date in the form YYYY-MM-DD
             var problemSet = this.problemSets.findWhere({set_id: _setName.toString()});

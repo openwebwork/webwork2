@@ -247,6 +247,8 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                         model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
                 })
             }).on("click",function(){
+              // this seems to be needed to get the popover to work, but it takes two clicks now to get working. 
+              // maybe a bug in bootstrap.js? 
               $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true, 
                         content: popoverHTML, container: "body", trigger: "click"});
             });
