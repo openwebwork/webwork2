@@ -1,6 +1,5 @@
 package WeBWorK::Localize;
 
-
 #use Locale::Maketext::Simple; 
  
 #use base ("Locale::Maketext::Simple");
@@ -27,6 +26,7 @@ my   $encoding = undef;
 eval "
 	package WeBWorK::Localize::I18N;
 	use base 'Locale::Maketext';
+	#require Locale::Maketext::Lexicon;
     %WeBWorK::Localize::I18N::Lexicon = ( '_AUTO' => 1 );
 	Locale::Maketext::Lexicon->import({
 	    'i-default' => [ 'Auto' ],
@@ -38,15 +38,20 @@ eval "
 	
 " or die "Can't process eval in WeBWorK/Localize.pm: line 35:  ". $@;
  
-package WeBWorK::Localize; 
 
 # This subroutine is shared with the safe compartment in PG to 
 # allow maketext() to be constructed in PG problems and macros
 # It seems to be a little fragile -- possibly it breaks
 # on perl 5.8.8
+#WeBWorK::Localize::I18N->get_handle("en");
+
+package WeBWorK::Localize;  #just in case the eval changed packages on us. 
+
 sub getLoc {
 	my $lang = shift;
-	my $lh = WeBWorK::Localize::I18N->get_handle($lang);	
+	#warn "mark1.1.1.1";
+	my $lh = WeBWorK::Localize::I18N->get_handle($lang);
+	#warn "mark1.1.1.2";	
 	return sub {$lh->maketext(@_)};
 }
 
@@ -419,7 +424,7 @@ my $ConfigStrings = [
 	],
 ];
 	
-package WeBWorK::Localize::I18N;
-use base(WeBWorK::Localize);
+#package WeBWorK::Localize::I18N;
+#use base(WeBWorK::Localize);
 
 1;
