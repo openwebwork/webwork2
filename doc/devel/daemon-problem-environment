@@ -14,7 +14,7 @@
 -	displayHintsQ
 	displayMode
 -	displaySolutionsQ
-	dueDate
+	closeDate
 -	externalDvipngPath
 	externalGif2EpsPath
 -	externalGif2PngPath
@@ -22,9 +22,9 @@
 	externalPng2EpsPath
 	externalTTHPath
 	fileName
-	formatedDueDate
+	formatedcloseDate
 	formattedAnswerDate
-	formattedDueDate
+	formattedcloseDate
 	formattedOpenDate
 	functAbsTolDefault
 	functLLimitDefault

@@ -215,11 +215,11 @@ sub body {
     # also print a message about submission times if we're submitting 
     # an answer
 	if ( $submitAnswers ) {
-	    my $dueTime = $UserSet->due_date();
+	    my $closeTime = $UserSet->due_date();
 	    my $timeLimit = $UserSet->version_time_limit();
 	    my ($color, $msg) = ("#ddddff", "");
 
-	    if ( $dueTime + $ce->{gatewayGracePeriod} < $timeNow ) {
+	    if ( $closeTime + $ce->{gatewayGracePeriod} < $timeNow ) {
 		$color = "#ffffaa";
 		$msg = CGI::br() . "\n".$r->maketext("The time limit on this assignment was exceeded. The assignment may be checked, but the result will not be counted.");
 	    }
@@ -230,7 +230,7 @@ sub body {
 				       $r->maketext("Submission time:")." ", 
 				       scalar(localtime($timeNow)), CGI::br(),
 				       $r->maketext("Closes:")." ",
-				       scalar(localtime($dueTime)), $msg));
+				       scalar(localtime($closeTime)), $msg));
 	}
 
 	# start printing the form

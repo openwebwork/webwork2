@@ -6330,7 +6330,7 @@ msgid ""
 "sets."
 msgstr ""
 
-#. ($openDate, $dueDate, $answerDate)
+#. ($openDate, $closeDate, $answerDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1978
 msgid ""
 "The open date: %1, close date: %2, and answer date: %3 must be defined and "
@@ -6394,7 +6394,7 @@ msgstr "총점은 %1입니다. %2"
 msgid "The recorded score for this test is %1/%2."
 msgstr "총점은 %1입니다. %2"
 
-#. ($openDate, $dueDate)
+#. ($openDate, $closeDate)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1985
 msgid ""
 "The reduced credit date should be between the open date %1 and close date %2"
@@ -6886,7 +6886,7 @@ msgstr "문제집 [_1]의 헤더가 '[_2]'로 이름이 바뀌었습니다."
 msgid "This set doesn't contain any problems yet."
 msgstr "이 문제집에는 문제가 없습니다."
 
-#. ($beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent)
+#. ($beginReducedScoringPeriod,$closeDate,$reducedScoringPerCent)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:375
 msgid ""
 "This set had a reduced scoring period that started on %1 and ended on %2.  "

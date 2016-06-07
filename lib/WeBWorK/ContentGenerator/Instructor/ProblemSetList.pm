@@ -124,7 +124,7 @@ use constant SORT_SUBS => {
 #	set_header	=> \&bySetHeader,  # can't figure out why these are useful
 #	hardcopy_header	=> \&byHardcopyHeader,  # can't figure out why these are useful
 	open_date	=> \&byOpenDate,
-	due_date	=> \&byDueDate,
+	due_date	=> \&bycloseDate,
 	answer_date	=> \&byAnswerDate,
 	visible	=> \&byVisible,
 
@@ -1575,7 +1575,7 @@ sub byOpenDate      { my $result = eval{( $a->open_date || 0 )      <=> ( $b->op
                       warn "Open date not correctly defined.";
                       return 0;
 }
-sub byDueDate       { my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
+sub bycloseDate       { my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
                       return $result unless $@;
                       warn "Close date not correctly defined.";
                       return 0;
@@ -1591,7 +1591,7 @@ sub byVisible     { my $result = eval{$a->visible      cmp $b->visible   };
                       return 0;
 }
 
-sub byOpenDue       { &byOpenDate || &byDueDate }
+sub byOpenDue       { &byOpenDate || &bycloseDate }
 
 ################################################################################
 # utilities
@@ -1645,7 +1645,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $closeDate, $answerDate, $ra_problemData, $assignmentType, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1668,7 +1668,7 @@ sub importSetsFromDef {
 		$newSetRecord->set_header($screenHeaderFile);
 		$newSetRecord->hardcopy_header($paperHeaderFile);
 		$newSetRecord->open_date($openDate);
-		$newSetRecord->due_date($dueDate);
+		$newSetRecord->due_date($closeDate);
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE);
@@ -1774,7 +1774,7 @@ sub readSetDef {
 	my ($line, $name, $value, $attemptLimit, $continueFlag);
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
-	my ($dueDate, $openDate, $answerDate);
+	my ($closeDate, $openDate, $answerDate);
 	my @problemData;	
 
 # added fields for gateway test/versioned set definitions:
@@ -1814,8 +1814,8 @@ sub readSetDef {
 				$paperHeaderFile = $value;
 			} elsif ($item eq 'screenHeaderFile') {
 				$screenHeaderFile = $value;
-			} elsif ($item eq 'dueDate') {
-				$dueDate = $value;
+			} elsif ($item eq 'closeDate' or $item eq 'dueDate') {
+				$closeDate = $value;
 			} elsif ($item eq 'openDate') {
 				$openDate = $value;
 			} elsif ($item eq 'answerDate') {
@@ -1858,10 +1858,10 @@ sub readSetDef {
 		#####################################################################
 		# Check and format dates
 		#####################################################################
-		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
+		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $closeDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn "The open date: $openDate, close date: $dueDate, and answer date: $answerDate must be defined and in chronological order.";
+			warn "The open date: $openDate, close date: $closeDate, and answer date: $answerDate must be defined and in chronological order.";
 		}
 
 		# Check header file names
@@ -2026,7 +2026,7 @@ SET:	foreach my $set (keys %filenames) {
 		}
 		
 		my $openDate     = $self->formatDateTime($setRecord->open_date);
-		my $dueDate      = $self->formatDateTime($setRecord->due_date);
+		my $closeDate      = $self->formatDateTime($setRecord->due_date);
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
 		my $setHeader    = $setRecord->set_header;
 		my $paperHeader  = $setRecord->hardcopy_header;
@@ -2099,7 +2099,7 @@ EOG
 		my $fileContents = <<EOF;
 
 openDate          = $openDate
-dueDate           = $dueDate
+closeDate           = $closeDate
 answerDate        = $answerDate
 paperHeaderFile   = $paperHeader
 screenHeaderFile  = $setHeader$gwFields

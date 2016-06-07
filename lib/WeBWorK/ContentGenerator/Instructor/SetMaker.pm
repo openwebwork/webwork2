@@ -789,7 +789,7 @@ sub browse_setdef_panel {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $library_selected = shift;
-	my $default_value = "Select a Set Definition File";
+	my $default_value = $r->maketext("Select a Set Definition File");
 	# in the following line, the parens after sort are important. if they are
 	# omitted, sort will interpret get_set_defs as the name of the comparison
 	# function, and ($ce->{courseDirs}{templates}) as a single element list to
@@ -807,7 +807,7 @@ sub browse_setdef_panel {
                                 -default=> $library_selected).
 		CGI::br().  $view_problem_line;
 	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
-		$popupetc = "there are no set definition files in this course to look at."
+		$popupetc = $r->maketext("there are no set definition files in this course to look at.");
 	}
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:")." ",
 		$popupetc
@@ -1462,19 +1462,19 @@ sub pre_header_initialize {
 				# It's convenient to set the due date two weeks from now so that it is 
 				# not accidentally available to students.  
 				
-				my $dueDate = time+2*60*60*24*7;
+				my $closeDate = time+2*60*60*24*7;
 				my $display_tz = $ce->{siteDefaults}{timezone};
-				my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
-				my $dueTime = $ce->{pg}{timeAssignDue};
+				my $fcloseDate = $self->formatDateTime($closeDate, $display_tz);
+				my $closeTime = $ce->{pg}{timeAssignDue};
 				
 				# We replace the due time by the one from the config variable
 				# and try to bring it back to unix time if possible
-				$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
+				$fcloseDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$closeTime/;
 				
-				$dueDate = $self->parseDateTime($fDueDate, $display_tz);
-				$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
-				$newSetRecord->due_date($dueDate);
-				$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});	
+				$closeDate = $self->parseDateTime($fcloseDate, $display_tz);
+				$newSetRecord->open_date($closeDate - 60*$ce->{pg}{assignOpenPriorToDue});
+				$newSetRecord->due_date($closeDate);
+				$newSetRecord->answer_date($closeDate + 60*$ce->{pg}{answersOpenAftercloseDate});	
 				
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);

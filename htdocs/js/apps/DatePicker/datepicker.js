@@ -85,7 +85,7 @@ function WWDatePicker(name,reduced) {
     
     var update = function() {
 	var openDate = getDate(open_rule);
-	var dueDate = getDate(due_rule);
+	var closeDate = getDate(due_rule);
 	var answerDate = getDate(answer_rule);
 	var reducedDate;
 
@@ -97,20 +97,20 @@ function WWDatePicker(name,reduced) {
 	    var reducedDate = new Date(openDate);
 	    reduced_rule.datetimepicker('setDate',reducedDate);
 	    reduced_rule.addClass('changed');
-	} else if (openDate && dueDate && openDate > dueDate) {
-	    dueDate = new Date(openDate);
-	    due_rule.datetimepicker('setDate',dueDate);
+	} else if (openDate && closeDate && openDate > closeDate) {
+	    closeDate = new Date(openDate);
+	    due_rule.datetimepicker('setDate',closeDate);
 	    due_rule.addClass('changed');
 	}
 	
-	if (reduced && reducedDate && dueDate && reducedDate > dueDate)  {
-	    dueDate = new Date(reducedDate);
-	    due_rule.datetimepicker('setDate',dueDate);
+	if (reduced && reducedDate && closeDate && reducedDate > closeDate)  {
+	    closeDate = new Date(reducedDate);
+	    due_rule.datetimepicker('setDate',closeDate);
 	    due_rule.addClass('changed');
 	}
 	
-	if (dueDate && answerDate && dueDate > answerDate) {
-	    answerDate = new Date(dueDate);
+	if (closeDate && answerDate && closeDate > answerDate) {
+	    answerDate = new Date(closeDate);
 	    answer_rule.datetimepicker('setDate',answerDate);
 	    answer_rule.addClass('changed');
 	}

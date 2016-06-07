@@ -127,7 +127,7 @@ use constant SORT_SUBS => {
 #	set_header	=> \&bySetHeader,  # can't figure out why these are useful
 #	hardcopy_header	=> \&byHardcopyHeader,  # can't figure out why these are useful
 	open_date	=> \&byOpenDate,
-	due_date	=> \&byDueDate,
+	due_date	=> \&bycloseDate,
 	answer_date	=> \&byAnswerDate,
 	visible	=> \&byVisible,
 
@@ -1138,26 +1138,26 @@ sub create_handler {
 	# It's convenient to set the due date two weeks from now so that it is 
 	# not accidentally available to students.  
 
-	my $dueDate = time+2*ONE_WEEK();
+	my $closeDate = time+2*ONE_WEEK();
 	my $display_tz = $ce->{siteDefaults}{timezone};
-	my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
-	my $dueTime = $ce->{pg}{timeAssignDue};
+	my $fcloseDate = $self->formatDateTime($closeDate, $display_tz);
+	my $closeTime = $ce->{pg}{timeAssignDue};
 
 	# We replace the due time by the one from the config variable
 	# and try to bring it back to unix time if possible
-	$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
+	$fcloseDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$closeTime/;
 	
-	$dueDate = $self->parseDateTime($fDueDate, $display_tz);
+	$closeDate = $self->parseDateTime($fcloseDate, $display_tz);
 	
 	if ($type eq "empty") {
 		$newSetRecord->set_id($newSetID);
 		$newSetRecord->set_header("defaultHeader");
 		$newSetRecord->hardcopy_header("defaultHeader");
 		#Rest of the dates are set according to to course configuration
-		$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
-		$newSetRecord->reduced_scoring_date($dueDate - 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
-		$newSetRecord->due_date($dueDate);
-		$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
+		$newSetRecord->open_date($closeDate - 60*$ce->{pg}{assignOpenPriorToDue});
+		$newSetRecord->reduced_scoring_date($closeDate - 60*$ce->{pg}{ansEvalDefaults}{reducedScoringPeriod});
+		$newSetRecord->due_date($closeDate);
+		$newSetRecord->answer_date($closeDate + 60*$ce->{pg}{answersOpenAftercloseDate});
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE());	# don't want students to see an empty set
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
 		$newSetRecord->assignment_type('default');
@@ -1639,7 +1639,7 @@ sub byOpenDate      {
                       warn "Open date not correctly defined.";
                       return 0;
 }
-sub byDueDate       { 
+sub bycloseDate       { 
 					  my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
                       return $result unless $@;
                       warn "Close date not correctly defined.";
@@ -1658,7 +1658,7 @@ sub byVisible     {
                       return 0;
 }
 
-sub byOpenDue       { &byOpenDate || &byDueDate }
+sub byOpenDue       { &byOpenDate || &bycloseDate }
 
 ################################################################################
 # utilities
@@ -1713,7 +1713,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $closeDate, $answerDate, $ra_problemData, $assignmentType, $enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1741,7 +1741,7 @@ sub importSetsFromDef {
 		$newSetRecord->set_header($screenHeaderFile);
 		$newSetRecord->hardcopy_header($paperHeaderFile);
 		$newSetRecord->open_date($openDate);
-		$newSetRecord->due_date($dueDate);
+		$newSetRecord->due_date($closeDate);
 		$newSetRecord->answer_date($answerDate);
 		$newSetRecord->visible(DEFAULT_VISIBILITY_STATE);
 		$newSetRecord->reduced_scoring_date($reducedScoringDate);
@@ -1874,7 +1874,7 @@ sub readSetDef {
 	my $paperHeaderFile = '';
 	my $screenHeaderFile = '';
 	my $description = '';
-	my ($dueDate, $openDate, $reducedScoringDate, $answerDate);
+	my ($closeDate, $openDate, $reducedScoringDate, $answerDate);
 	my @problemData;	
 
 # added fields for gateway test/versioned set definitions:
@@ -1917,8 +1917,8 @@ sub readSetDef {
 				$paperHeaderFile = $value;
 			} elsif ($item eq 'screenHeaderFile') {
 				$screenHeaderFile = $value;
-			} elsif ($item eq 'dueDate') {
-				$dueDate = $value;
+			} elsif ($item eq 'closeDate' or $item eq 'dueDate') {
+				$closeDate = $value;
 			} elsif ($item eq 'openDate') {
 				$openDate = $value;
 			} elsif ($item eq 'answerDate') {
@@ -1972,17 +1972,17 @@ sub readSetDef {
 		#####################################################################
 		# Check and format dates
 		#####################################################################
-		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
+		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $closeDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn $r->maketext("The open date: [_1], close date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
+			warn $r->maketext("The open date: [_1], close date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $closeDate, $answerDate);
 		}
 
 		# validate reduced credit date
 		$reducedScoringDate = $self->parseDateTime($reducedScoringDate) if ($reducedScoringDate);
 
 		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
-		    warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
+		    warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $closeDate);
 		} elsif (!$reducedScoringDate) {
 		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}
@@ -2275,7 +2275,7 @@ SET:	foreach my $set (keys %filenames) {
 		}
 		
 		my $openDate     = $self->formatDateTime($setRecord->open_date);
-		my $dueDate      = $self->formatDateTime($setRecord->due_date);
+		my $closeDate      = $self->formatDateTime($setRecord->due_date);
 		my $answerDate   = $self->formatDateTime($setRecord->answer_date);
 		my $reducedScoringDate =  $self->formatDateTime($setRecord->reduced_scoring_date);
 		my $description = $setRecord->description;
@@ -2382,7 +2382,7 @@ EOG
 assignmentType      = $assignmentType
 openDate          = $openDate
 reducedScoringDate = $reducedScoringDate
-dueDate           = $dueDate
+closeDate           = $closeDate
 answerDate        = $answerDate
 enableReducedScoring = $enableReducedScoring
 paperHeaderFile   = $paperHeader

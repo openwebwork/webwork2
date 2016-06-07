@@ -361,7 +361,7 @@ sub body {
 
 	my $reduced_scoring_date = $set->reduced_scoring_date;
 	if ($enable_reduced_scoring) {
-		my $dueDate = $self->formatDateTime($set->due_date());
+		my $closeDate = $self->formatDateTime($set->due_date());
 		my $reducedScoringValue = $ce->{pg}->{ansEvalDefaults}->{reducedScoringValue};
 		my $reducedScoringPerCent = int(100*$reducedScoringValue+.5);
 		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
@@ -372,7 +372,7 @@ sub body {
 		} elsif (between($reduced_scoring_date,$set->due_date())) {
 		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set is in its reduced scoring period.  All work counts for [_1]% of its value.",$reducedScoringPerCent));
 		} else {
-		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",$beginReducedScoringPeriod,$dueDate,$reducedScoringPerCent));
+		  print CGI::div({class=>"ResultsAlert"},$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",$beginReducedScoringPeriod,$closeDate,$reducedScoringPerCent));
 		}
 	      }
 	

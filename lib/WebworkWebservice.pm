@@ -217,7 +217,7 @@ use JSON;
 
 sub initiate_session {    # close to being a "new" subroutine
 	my ($invocant, @args) = @_;
-	my $class = ref $invocant || $invocant;
+	my $class = ref $invocant || $invocant; #usually WebworkXMLRPC 
 	######### trace commands ######
  	    my @caller = caller(1);  # caller data
  	    my $calling_function = $caller[3];

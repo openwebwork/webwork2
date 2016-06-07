@@ -17,7 +17,7 @@ EOT
 
 BEGIN_TEXT
 
-$BBOLD WeBWorK  assignment number  $setNumber  is due :  $formattedDueDate. $EBOLD
+$BBOLD WeBWorK  assignment number  $setNumber  is due :  $formattedcloseDate. $EBOLD
 
 $PAR
 The 

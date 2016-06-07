@@ -826,7 +826,7 @@ sub pre_header_initialize {
 	my $versionIsOpen = 0;  # can we do anything to this version?
 
 	# recall $isOpen = timeNow > openDate [for the merged userset] and 
-	#    $isClosed = timeNow > dueDate [for the merged userset]
+	#    $isClosed = timeNow > closeDate [for the merged userset]
 	#    again, if $self->{invalidSet} is already set, we don't need to 
 	#    to check this
 	if ( $isOpen && ! $isClosed && ! $self->{invalidSet} ) {
@@ -885,12 +885,12 @@ sub pre_header_initialize {
 				$set->open_date( $timeNow );
 				# figure out the due date, taking into account
 				#    any time limit cap
-				my $dueTime = 
+				my $closeTime = 
 				    ( $timeLimit == 0 || ($set->time_limit_cap &&
 				      $timeNow+$timeLimit > $set->due_date) ) ?
 				      $set->due_date : $timeNow+$timeLimit;
 
-				$set->due_date( $dueTime );
+				$set->due_date( $closeTime );
 				$set->answer_date($set->due_date + $ansOffset);
 				$set->version_last_attempt_time( 0 );
 
