@@ -170,6 +170,7 @@ sub defineProblemEnvir {
 	$envir{courseName}          = $ce->{courseName};
 	$envir{enable_reduced_scoring} = $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
 	$envir{language}            = $ce->{language};
+	$envir{language_subroutine} = WeBWorK::Localize::getLoc($envir{language});
 	$envir{reducedScoringDate} = $set->reduced_scoring_date;
 	
 	# Student Information
