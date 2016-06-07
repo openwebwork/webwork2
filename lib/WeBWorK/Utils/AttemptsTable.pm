@@ -235,8 +235,10 @@ sub _init {
 }
 
 sub maketext {
-	my $self = shift;
-	#return 'xXx'.&{$self->{maketext}}(@_).'xXx';
+
+        my $self = shift;
+#       Uncomment to check that strings are run through maketext
+#	return 'xXx'.&{$self->{maketext}}(@_).'xXx';
 	return &{$self->{maketext}}(@_);
 }
 sub formatAnswerRow {
