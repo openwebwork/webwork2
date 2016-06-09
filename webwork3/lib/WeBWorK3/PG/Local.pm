@@ -43,7 +43,6 @@ use File::Path qw(rmtree);
 use WeBWorK::PG::Translator;
 use WeBWorK::Utils qw(readFile writeTimingLogEntry);
 #use WeBWorK::Debug;
-use Data::Dump qw/dump/;
 
 
 sub new_helper {
@@ -243,8 +242,6 @@ sub new_helper {
                 
 		$readErrors = $@ if $@;
 	 }
-
-    debug dump $translationOptions; 
 
     ############################################################################
     # put the source into the translator object

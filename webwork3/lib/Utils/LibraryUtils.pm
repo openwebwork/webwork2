@@ -10,7 +10,7 @@ use Dancer::Plugin::Database;
 use WeBWorK::Utils qw(readDirectory);
 use WeBWorK3::PG::Local;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
-use Data::Dump qw/dump/;
+
 
 #use Data::Dump qw/dd/;
 our @EXPORT    = ();
@@ -565,7 +565,7 @@ my $pg = new WeBWorK::PG(
 		internal_debug_messages     => $internal_debug_messages,
 	};
 
-	return $out2;
+	return $out2->{text};
 }
 
 ###
