@@ -2,8 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/clients/renderProblem.pl,v 1.4 2010/05/11 15:44:05 gage Exp $
+# Copyright © 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -36,7 +35,10 @@ The capital letter switches, -B, -H, and -C render the question twice.  The firs
 time returns an answer hash which contains the correct answers. The question is
 then resubmitted to the renderer with the correct answers filled in and displayed.  
 
-IMPORTANT: Create a valid credentials file.
+IMPORTANT: Create a valid credentials file! This script is similar to
+standalonePGproblemRenderer.pl. It does not require a local WeBWorK site
+on the same computer but does require an internet connection to 
+a remote WeBWorK site.
 
 =cut
 
@@ -130,6 +132,10 @@ IMPORTANT: Create a valid credentials file.
 =item   -e
 	Open the source file in an editor. 
 	
+=item   --tex
+	Process question in TeX mode and output to the command line
+
+	
 =item   
 
 	The single letter options can be "bundled" e.g.  -vcCbB
@@ -158,6 +164,11 @@ IMPORTANT: Create a valid credentials file.
     the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
     This contains more information than printing the answer hash. (perhaps too much). 
 
+=item   --resource
+
+	Prints the resources used by the question. The information appears in 
+    the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
+
 =item	--credentials=s
 
  	Specifies a file s where the  credential information can be found.
@@ -180,6 +191,15 @@ use warnings;
 # Find the webwork2 root directory
 #######################################################
 BEGIN {
+	use File::Basename;
+	$main::dirname = dirname(__FILE__);
+}
+$ENV{MOD_PERL_API_VERSION} = 2;
+use lib "$main::dirname";
+# some files such as FormatRenderedProblem.pm may need to be in the same directory
+
+
+BEGIN {
         die "WEBWORK_ROOT not found in environment. \n
              WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
              It should be set to the webwork2 directory (e.g. /opt/webwork/webwork2)"
@@ -197,6 +217,9 @@ BEGIN {
 
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
+use 5.10.0;
+$Carp::Verbose = 1;
+
 use Crypt::SSLeay;  # needed for https
 use WebworkClient;
 use Time::HiRes qw/time/;
@@ -215,7 +238,7 @@ use Cwd 'abs_path';
   
 #Default display commands.
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
-#use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
+use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
 
 ### Path to a temporary file for storing the output of renderProblem.pl
  use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
@@ -226,12 +249,21 @@ use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS comm
 ### Default path to a temporary file for storing the output of sendXMLRPC.pl
 use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/xmlrpc_results.log";
 
+### Command for editing the pg source file in the browswer
+use constant EDIT_COMMAND =>"bbedit";   # for Mac BBedit editor (used as `EDIT_COMMAND() . " $file_path")
+
+### Command for editing and viewing the tex output of the pg question.
+use constant TEX_DISPLAY_COMMAND =>"open -a 'TeXShop'";
+
+### Command for editing and viewing the tex output of the pg question.
+use constant PDF_DISPLAY_COMMAND =>"open -a 'Preview'";
+
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
 use constant PROBLEMSEED   => '987654321'; 
 
 ############################################################
-# End configure
+# End configure displays for local operating system
 ############################################################
  
 ############################################################
@@ -250,27 +282,33 @@ my $verbose = '';
 my $credentials_path;
 my $format = 'standard';
 my $edit_source_file = '';
+my $display_tex_output='';
+my $display_pdf_output='';
 my $print_answer_hash;
 my $print_answer_group;
 my $print_pg_hash;
+my $print_resource_hash;
 my $print_help_message;
 my $read_list_from_this_file;
 my $path_to_log_file;
 GetOptions(
-	'a' => \$display_ans_output1,
-	'A' => \$display_ans_output2,
-	'b' => \$display_html_output1,
-	'B' => \$display_html_output2,
-	'h' => \$display_hash_output1,
-	'H' => \$display_hash_output2,
-	'c' => \$record_ok1, # record_problem_ok1 needs to be written
-	'C' => \$record_ok2,
-	'v' => \$verbose,
-	'e' => \$edit_source_file, 
-	'list=s' =>\$read_list_from_this_file,   # read file containing list of full file paths
+	'a' 			=> \$display_ans_output1,
+	'A' 			=> \$display_ans_output2,
+	'b' 			=> \$display_html_output1,
+	'B' 			=> \$display_html_output2,
+	'h' 			=> \$display_hash_output1,
+	'H' 			=> \$display_hash_output2,
+	'c' 			=> \$record_ok1, # record_problem_ok1 needs to be written
+	'C' 			=> \$record_ok2,
+	'v' 			=> \$verbose,
+	'e' 			=> \$edit_source_file, 
+	'tex' 			=> \$display_tex_output,
+	'pdf' 			=> \$display_pdf_output,
+	'list=s' 		=>\$read_list_from_this_file,   # read file containing list of full file paths
 	'pg' 			=> \$print_pg_hash,
 	'anshash' 		=> \$print_answer_hash,
 	'ansgrp'  		=> \$print_answer_group,
+	'resource'      => \$print_resource_hash,
 	'f=s' 			=> \$format,
 	'credentials=s' => \$credentials_path,
 	'help'          => \$print_help_message,
@@ -280,6 +318,9 @@ GetOptions(
 
 print_help_message() if $print_help_message;
 
+############################################################
+# End Read command line options
+############################################################
 
 ####################################################
 # get credentials
@@ -341,16 +382,21 @@ if ($verbose) {
 
 #allow credentials to overrride the default displayMode and the browser display
 our $HTML_DISPLAY_COMMAND = $credentials{html_display_command}//HTML_DISPLAY_COMMAND();
-#our $HASH_DISPLAY_COMMAND = $credentials{hashdisplayCommand}//HASH_DISPLAY_COMMAND();
-
+our $HASH_DISPLAY_COMMAND = $credentials{hashdisplayCommand}//HASH_DISPLAY_COMMAND();
 our $DISPLAYMODE          = $credentials{ww_display_mode}//DISPLAYMODE();
-$path_to_log_file         = $path_to_log_file //$credentials{path_to_log_file}//LOG_FILE();  #set log file path.
+our $TEX_DISPLAY_COMMAND  = TEX_DISPLAY_COMMAND();
+our $PDF_DISPLAY_COMMAND  = PDF_DISPLAY_COMMAND();
+
+
+
+$path_to_log_file         = $path_to_log_file ||$credentials{path_to_log_file}||LOG_FILE();  #set log file path.
 
 eval { # attempt to create log file
 	local(*FH);
 	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	close(FH);	
 };
+
 die "You must first create an output file at $path_to_log_file
      with permissions 777 " unless -w $path_to_log_file;
 
@@ -358,10 +404,13 @@ die "You must first create an output file at $path_to_log_file
 #  END gathering credentials for client
 ##################################################
 
-############################################
+###################################
 # Build  client defaults
-############################################
- 
+###################################
+##################################################
+#  set default inputs for the problem
+##################################################
+
 my $default_input = { 
 		userID      			=> $credentials{userID}//'',
 		session_key	 			=> $credentials{session_key}//'',
@@ -372,7 +421,8 @@ my $default_input = {
 
 my $default_form_data = { 
 		displayMode				=> $DISPLAYMODE,
-		outputformat 			=> $format,
+		outputformat 			=> $format//'standard',
+		problemSeed             => PROBLEMSEED(),
 };
 
 ##################################################
@@ -382,6 +432,7 @@ my $default_form_data = {
 ##################################################
 #  MAIN SECTION gather and process problem template files
 ##################################################
+my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
 
 our @files_and_directories = @ARGV;
 # print "files ", join("|", @files_and_directories), "\n";
@@ -432,6 +483,11 @@ sub wanted {
 }
 
 
+
+##########################################################
+#  Subroutines
+##########################################################
+
 #######################################################################
 # Process the pg file
 #######################################################################
@@ -443,7 +499,17 @@ sub process_pg_file {
 	my $problemSeed1 = 1112;
 	my $form_data1 = { %$default_form_data,
 					  problemSeed => $problemSeed1};
-
+	if ($display_tex_output or $display_pdf_output) {
+		my $form_data2 = {
+			%$form_data1,
+			displayMode  =>'tex',
+			outputformat => 'tex',
+		};
+		print "process tex files\n";
+		my ($error_flag, $xmlrpc_client, $error_string) = 
+	    	process_problem($file_path, $default_input, $form_data2);
+	    display_tex_output($file_path, $xmlrpc_client)  if $display_tex_output;
+	}
 	my ($error_flag, $xmlrpc_client, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
 	# extract and display result
@@ -469,7 +535,7 @@ sub process_pg_file {
 		my $answergroup = $xmlrpc_client->return_object->{PG_ANSWERS_HASH}->{$ans_id};
 		my @response_order = @{$answergroup->{response}->{response_order}};
 		#print scalar(@response_order), " first response $response_order[0] $ans_id\n";
-		$ans_obj->{type} = $ans_obj->{type}//'';
+		$ans_obj->{type} = $ans_obj->{type}//'';  #make sure it's defined.
 		if ($ans_obj->{type} eq 'MultiAnswer') { 
 		    # singleResponse multianswer type
 		    # an outrageous hack
@@ -532,6 +598,11 @@ sub process_pg_file {
 				   WWcorrectAns          => 1, # show correct answers
 				   %correct_answers
 				};
+
+	my $pg_start = time; # this is Time::HiRes's time, which gives floating point values
+
+				
+				
 	($error_flag, $xmlrpc_client, $error_string)=();
 	($error_flag, $xmlrpc_client, $error_string) = 
 			process_problem($file_path, $default_input, $form_data2);
@@ -548,21 +619,188 @@ sub process_pg_file {
 #######################################################################
 # Auxiliary subroutines
 #######################################################################
-
-
-sub display_inputs {
-	my %correct_answers = @_;
-	foreach my $key (sort keys %correct_answers) {
-		print "$key => $correct_answers{$key}\n";
-	}
-}
-sub edit_source_file {
+sub process_problem {
 	my $file_path = shift;
-	system("bbedit $file_path");
+	my $input    = shift;
+	my $form_data  = shift;
+	# %credentials is global
+	my $problemSeed = $form_data->{problemSeed};
+	die "problem seed not defined in sendXMLRPC::process_problem" unless $problemSeed;
+	
+	$form_data->{showAnsGroupInfo} 		= $print_answer_group;
+	$form_data->{showAnsHashInfo}       = $print_answer_hash;
+	$form_data->{showPGInfo}	        = $print_pg_hash;
+	$form_data->{showResourceInfo}	    = $print_resource_hash;
+	
+	### get source and correct file_path name so that it is relative to templates directory
+	my ($adj_file_path, $source) = get_source($file_path);
+	#print "find file at $adj_file_path ", length($source), "\n";
+	
+	### build client
+	my $xmlrpc_client = new WebworkClient (
+		url                    => $credentials{site_url},
+		form_action_url        => $credentials{form_action_url},
+		site_password          =>  $credentials{site_password}//'',
+		courseID               =>  $credentials{courseID},
+		userID                 =>  $credentials{userID},
+		session_key            =>  $credentials{session_key}//'',
+		sourceFilePath         => $adj_file_path,
+	);
+	
+	### update client
+	$xmlrpc_client->encodeSource($source);
+	$xmlrpc_client->form_data( $form_data	);
+	
+	### update inputs
+	my $updated_input = {%$input, 
+					  envir => $xmlrpc_client->environment(
+							   fileName       => $adj_file_path,
+							   sourceFilePath => $adj_file_path,
+							   problemSeed    => $problemSeed,),
+	};
+	
+	##################################################
+	# Process the pg file
+	##################################################
+	### store the time before we invoke the content generator
+	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
+
+
+	############################################
+	# Call server via xmlrpc_client
+	############################################
+	our($output, $return_string, $result, $error_flag, $error_string);
+	$error_flag=0; $error_string='';    
+	$result = $xmlrpc_client->xmlrpcCall('renderProblem', $updated_input);
+	
+	#######################################################################
+	# Handle errors
+	#######################################################################
+	
+	unless ( $xmlrpc_client->fault  )    {
+		print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
+		print pretty_print_rh($result) if $UNIT_TESTS_ON;
+	    if (not defined $result) {  #FIXME make sure this is the right error message if site is unavailable
+	    	$error_string = "0\t Could not connect to rendering site ". $xmlrpc_client->{url}."\n";
+	    } elsif (defined($result->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
+			$error_string = "0\t $file_path has errors\n";
+		} elsif (defined($result->{errors}) and $output->{errors} ){
+			$error_string = "0\t $file_path has syntax errors\n";
+		}
+		$error_flag=1 if $result->{errors};
+	} else {
+		$error_flag=1;
+		$error_string = $xmlrpc_client->return_object;  # error report		
+	}	
+	##################################################
+	# log elapsed time
+	##################################################
+	my $scriptName = 'sendXMLRPC';
+	my $cg_end = time;
+	my $cg_duration = $cg_end - $cg_start;
+	WebworkClient::writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
+	
+	#######################################################################
+	# End processing of the pg file
+	#######################################################################
+	
+	return $error_flag, $xmlrpc_client, $error_string;
 }
+
+sub display_tex_output {
+	my $file_path = shift;
+	my $xmlrpc_client = shift;
+	my $output_text = $xmlrpc_client->formatRenderedProblem;
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.tex/;    # replace extension with tex
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	local(*FH);
+	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	print FH $output_text;
+	close(FH);
+	print "tex result to $output_file\n";
+	if ($display_pdf_output) {
+		print "pdf mode\n";
+		my $pdf_file_name = $file_name;
+		$pdf_file_name =~ s/\.\w+$/\.pdf/;    # replace extension with pdf
+		my $pdf_path = TEMPOUTPUTDIR().$pdf_file_name;
+		print "pdflatex $output_file\n";
+		system("pdflatex $output_file");
+		print "pdflatex to $pdf_path DONE\n";
+		# this is doable but will require changing directories
+		# look at the solution done using hardcopy
+		system("open -a Preview ". $pdf_path);
+	} else {
+		system($TEX_DISPLAY_COMMAND." ".$output_file);
+	}
+#	sleep 5;   #wait 5 seconds
+#	unlink($output_file);
+
+}
+sub	display_html_output {  #display the problem in a browser
+	my $file_path = shift;
+	my $output_text = shift;
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.html/;    # replace extension with html
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	local(*FH);
+	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	print FH $output_text;
+	close(FH);
+
+	system($HTML_DISPLAY_COMMAND." ".$output_file);
+	sleep 1;   #wait 1 seconds
+	unlink($output_file);
+}
+
+sub display_hash_output {   # print the entire hash output to the command line	
+	my $file_path = shift;
+	my $output_text = shift;
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	my $output_text2 = pretty_print_rh($output_text);
+	print STDOUT $output_text2;
+
+# 	local(*FH);
+# 	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
+# 	print FH $output_text2;
+# 	close(FH);
+# 
+# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+	#sleep 1; #wait 1 seconds
+	#unlink($output_file);
+}
+
+sub display_ans_output {  # print the collection of answer hashes to the command line
+	my $file_path = shift;
+	my $return_object = shift;	
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	my $output_text = pretty_print_rh($return_object->{answers});
+	print STDOUT $output_text;
+# 	local(*FH);
+# 	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
+# 	print FH $output_text;
+# 	close(FH);
+# 
+# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+# 	sleep 1; #wait 1 seconds
+# 	unlink($output_file);
+}
+
 sub record_problem_ok1 {
 	my $error_flag = shift//'';
-	my $xmlrpc_client = shift;
+	my $xmlrpc_client = shift;  # for formatting
 	my $file_path = shift;
 	my $return_string = shift;
 	my $result = $xmlrpc_client->return_object;
@@ -606,6 +844,7 @@ sub record_problem_ok2 {
 	my $xmlrpc_client = shift;
 	my $file_path = shift;
 	my $some_correct_answers_not_specified = shift;
+	my $pg_duration = shift;  #processing time
 	my %scores = ();
 	my $ALL_CORRECT= 0;
 	my $all_correct = ($error_flag)?0:1;
@@ -622,143 +861,25 @@ sub record_problem_ok2 {
 	close(FH);
 	return $ALL_CORRECT;
 }
-sub process_problem {
+
+sub display_inputs {
+	my %correct_answers = @_;
+	foreach my $key (sort keys %correct_answers) {
+		print "$key => $correct_answers{$key}\n";
+	}
+}
+sub edit_source_file {
 	my $file_path = shift;
-	my $input    = shift;
-	my $form_data  = shift;
-	# %credentials is global
-	my $problemSeed = $form_data->{problemSeed};
-	die "problem seed not defined in sendXMLRPC::process_problem" unless $problemSeed;
-	
-	### get source and correct file_path name so that it is relative to templates directory
-	my ($adj_file_path, $source) = get_source($file_path);
-	#print "find file at $adj_file_path ", length($source), "\n";
-	### build client
-	my $xmlrpc_client = new WebworkClient (
-		url                    => $credentials{site_url},
-		form_action_url        => $credentials{form_action_url},
-		site_password          =>  $credentials{site_password}//'',
-		courseID               =>  $credentials{courseID},
-		userID                 =>  $credentials{userID},
-		session_key            =>  $credentials{session_key}//'',
-		sourceFilePath         => $adj_file_path,
-	);
-	
-	### update client
-	$xmlrpc_client->encodeSource($source);
-	$form_data->{showAnsGroupInfo} 		= $print_answer_group;
-	$form_data->{showAnsHashInfo}       = $print_answer_hash;
-	$form_data->{showPGInfo}	        = $print_pg_hash;
-	$xmlrpc_client->form_data( $form_data	);
-	
-	### update inputs
-	my $updated_input = {%$input, 
-					  envir => $xmlrpc_client->environment(
-							   fileName       => $adj_file_path,
-							   sourceFilePath => $adj_file_path,
-							   problemSeed    => $problemSeed,),
-	};
-	
-	##################################################
-	# input section
-	##################################################
-	### store the time before we invoke the content generator
-	my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
-
-
-	############################################
-	# Call server via xmlrpc_client
-	############################################
-	our($output, $return_string, $result, $error_flag, $error_string);
-	$error_flag=0; $error_string='';    
-	$result = $xmlrpc_client->xmlrpcCall('renderProblem', $updated_input);
-	unless ( $xmlrpc_client->fault  )    {
-		print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
-		print pretty_print_rh($result) if $UNIT_TESTS_ON;
-	    if (not defined $result) {  #FIXME make sure this is the right error message if site is unavailable
-	    	$error_string = "0\t Could not connect to rendering site ". $xmlrpc_client->{url}."\n";
-	    } elsif (defined($result->{flags}->{error_flag}) and $output->{flags}->{error_flag} ) {
-			$error_string = "0\t $file_path has errors\n";
-		} elsif (defined($result->{errors}) and $output->{errors} ){
-			$error_string = "0\t $file_path has syntax errors\n";
-		}
-		$error_flag=1 if $result->{errors};
-	} else {
-		$error_flag=1;
-		$error_string = $xmlrpc_client->return_object;  # error report		
-	}	
-	##################################################
-	# log elapsed time
-	##################################################
-	my $scriptName = 'sendXMLRPC';
-	my $cg_end = time;
-	my $cg_duration = $cg_end - $cg_start;
-	WebworkClient::writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
-	return $error_flag, $xmlrpc_client, $error_string;
+	system(EDIT_COMMAND()." $file_path");
 }
 
-##################################################
-# print the output (or the error message)  and display
-#FIXME -- possibly refactor these two into display_output()??
-##################################################
 
-sub	display_html_output {  #display the problem in a browser
-	my $file_path = shift;
-	my $output_text = shift;
-	$file_path =~s|/$||;   # remove final /
-	$file_path =~ m|/?([^/]+)$|;
-	my $file_name = $1;
-	$file_name =~ s/\.\w+$/\.html/;    # replace extension with html
-	my $output_file = TEMPOUTPUTDIR().$file_name;
-	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
-	print FH $output_text;
-	close(FH);
 
-	system($HTML_DISPLAY_COMMAND." ".$output_file);
-	sleep 1;   #wait 1 seconds
-	unlink($output_file);
-}
+#######################################################################
+# Auxiliary subroutines
+#######################################################################
 
-sub display_hash_output {   # print the entire hash output to the command line
-	my $file_path = shift;
-	my $output_text = shift;	
-	$file_path =~s|/$||;   # remove final /
-	$file_path =~ m|/?([^/]+)$|;
-	my $file_name = $1;
-	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
-	my $output_file = TEMPOUTPUTDIR().$file_name;
-	my $output_text2 = pretty_print_rh($output_text);
-	print STDOUT $output_text2;
-# 	local(*FH);
-# 	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
-# 	print FH $output_text2;
-# 	close(FH);
-# 
-# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
-	#sleep 1; #wait 1 seconds
-	#unlink($output_file);
-}
 
-sub display_ans_output {  # print the collection of answer hashes to the command line
-	my $file_path = shift;
-	my $return_object = shift;	
-	$file_path =~s|/$||;   # remove final /
-	$file_path =~ m|/?([^/]+)$|;
-	my $file_name = $1;
-	$file_name =~ s/\.\w+$/\.txt/;    # replace extension with html
-	my $output_file = TEMPOUTPUTDIR().$file_name;
-	my $output_text = pretty_print_rh($return_object->{answers});
-	print STDOUT $output_text;
-# 	local(*FH);
-# 	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
-# 	print FH $output_text;
-# 	close(FH);
-# 
-# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
-# 	sleep 1; #wait 1 seconds
-# 	unlink($output_file);
-}
 
 ##################################################
 # Get problem template source and adjust file_path name
@@ -919,6 +1040,9 @@ DETAILS
     -e
 				Open the source file in an editor. 
 
+	--tex    
+				Process question in TeX mode and output to the command line
+
                 The single letter options can be "bundled" e.g.  -vcCbB
                 
 	--list   pg_list
@@ -941,6 +1065,11 @@ DETAILS
                 Prints the PGanswergroup for each answer evaluator. The information appears in 
                 the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
                 This contains more information than printing the answer hash. (perhaps too much).
+	
+	--resource
+
+	Prints the resources used by the question. The information appears in 
+    the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
 
     --credentials=s
                 Specifies a file s where the  credential information can be found.
