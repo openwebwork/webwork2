@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -93,13 +93,13 @@ $ENV{PG_ROOT} = $pg_dir;
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
-print "webwork.apache2-config:  WeBWorK server is starting\n";
-print "webwork.apache2-config:  WeBWorK root directory set to $webwork_dir in webwork2/conf/webwork.apache2-config\n";
-print "webwork.apache2-config:  The following locations and urls are set in webwork2/conf/site.conf\n";
-print "webwork.apache2-config:  PG root directory set to $pg_dir\n";
-print "webwork.apache2-config:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
-print "webwork.apache2-config:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
-print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
+print "webwork.apache2.4-config:  WeBWorK server is starting\n";
+print "webwork.apache2.4-config:  WeBWorK root directory set to $webwork_dir in webwork2/conf/webwork.apache2-config\n";
+print "webwork.apache2.4-config:  The following locations and urls are set in webwork2/conf/site.conf\n";
+print "webwork.apache2.4-config:  PG root directory set to $pg_dir\n";
+print "webwork.apache2.4-config:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
+print "webwork.apache2.4-config:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
+print "webwork.apache2.4-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
 
 
 
