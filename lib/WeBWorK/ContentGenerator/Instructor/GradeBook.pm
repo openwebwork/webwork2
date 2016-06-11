@@ -72,6 +72,15 @@ sub title {
 	return $string;
 }
 
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBook.js"}), CGI::end_script();
+	return "";
+}
 
 sub body {
 	my $self       = shift;
