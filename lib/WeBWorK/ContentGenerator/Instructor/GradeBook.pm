@@ -334,7 +334,7 @@ sub index {
 			CGI::ul({-class=>"dropdown-menu"},
 				CGI::li(CGI::a({-href=>$studentProgressUrl},"Progress")),
 				CGI::li(CGI::a({-href=>$studentEditUrl},"Edit")),
-				CGI::li(CGI::a({-href=>$studentDeleteUrl},"Delete"))
+				CGI::li(CGI::a({-href=>"", -class=>"delete-student"},"Delete"))
 				)
 			)	
 			, $self->getStudentScores($studentRecord->user_id)));	

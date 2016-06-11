@@ -895,9 +895,11 @@ sub links {
 #				}
 #				print CGI::end_li(); # end Stats_old
 
+			if ($ce->{gradebookEnabled}) {
 				print CGI::start_li(); # GradeBook
 				print &$makelink("${pfx}GradeBook", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				print CGI::end_li(); #end GradeBook
+				print CGI::end_li(); 
+			}
 								
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
