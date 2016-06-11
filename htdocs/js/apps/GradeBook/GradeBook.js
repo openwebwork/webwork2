@@ -3,8 +3,10 @@
    Handles some minor dynamic functionality on the GradeBook page (i.e. Delete Modals). 
 */
 
-$(function(){
+$(document).ready(function(){
 
-	alert('hellow world!');
+	$( '.delete-student' ).on('click', function(){
+			console.log('delete-student');		
+	});
 
 });

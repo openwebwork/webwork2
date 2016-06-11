@@ -892,9 +892,11 @@ sub links {
 #				}
 #				print CGI::end_li(); # end Stats_old
 
+			if ($ce->{gradebookEnabled}) {
 				print CGI::start_li(); # GradeBook
 				print &$makelink("${pfx}GradeBook", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-				print CGI::end_li(); #end GradeBook
+				print CGI::end_li(); 
+			}
 								
 >>>>>>> made changes to ContentGenerator.pm and URLPath.pm and added a new file GradeBook.pm
 				print CGI::start_li(); # Student Progress
