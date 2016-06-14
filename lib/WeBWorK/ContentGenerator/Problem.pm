@@ -2171,6 +2171,15 @@ sub output_JS{
 
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
+	if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		my $taxo = '[]';
+		$taxo = join("", <TAXONOMY>);
+		close TAXONOMY;
+		print qq!\n<script>var taxo = $taxo ;</script>!;
+	} else {
+		print qq!\n<script>var taxo = [] ;</script>!;
+		print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+	}
 
 	return "";
 }

@@ -12,38 +12,14 @@ var basicRequestObject = {
     "command":"searchLib"
 };
 
-// Get the taxonomy
-
-var taxo=[];  // Global variable to hold it
-var loadtaxo = $.ajax({
-  dataType: "json",
-  url: "/webwork2_files/DATA/tagging-taxonomy.json", 
-  success: function(data) {
-    taxo = data;
-  },
-  error: function() {
-    alert("Failed to load OPL taxonomy from server.");
-  }
-});
-
-// If needed, wait until asynchronous load is done
-function fetch_taxo() {
-  if(taxo.length>0) {
-    return(taxo);
-  } else {
-    loadtaxo.done(fetch_taxo());
-  }
-}
-
 function readfromtaxo(who, valarray) {
-  var mytaxo = fetch_taxo();
   if(who == 'subjects') {
-	return(mytaxo.map(function(z) {return(z['name']);} ));
+	return(taxo.map(function(z) {return(z['name']);} ));
   }
   var failed = true;
-  for(var i=0; i<mytaxo.length; i++) {
-    if(mytaxo[i]['name'] == valarray[0]) {
-	  mytaxo = mytaxo[i]['subfields'];
+  for(var i=0; i<taxo.length; i++) {
+    if(taxo[i]['name'] == valarray[0]) {
+	  taxo = taxo[i]['subfields'];
 	  failed=false;
 	  break;
 	}
@@ -53,12 +29,12 @@ function readfromtaxo(who, valarray) {
 	return([]);
   }
   if(who == 'chapters') {
-	return(mytaxo.map(function(z) {return(z['name']);} ));
+	return(taxo.map(function(z) {return(z['name']);} ));
   }
   failed = true;
-  for(var i=0; i<mytaxo.length; i++) {
-    if(mytaxo[i]['name'] == valarray[1]) {
-	  mytaxo = mytaxo[i]['subfields'];
+  for(var i=0; i<taxo.length; i++) {
+    if(taxo[i]['name'] == valarray[1]) {
+	  taxo = taxo[i]['subfields'];
 	  failed=false;
 	  break;
 	}
@@ -68,7 +44,7 @@ function readfromtaxo(who, valarray) {
 	return([]);
   }
   if(who == 'sections') {
-	return(mytaxo.map(function(z) {return(z['name']);} ));
+	return(taxo.map(function(z) {return(z['name']);} ));
   }
   return([]); // Should not get here
 }

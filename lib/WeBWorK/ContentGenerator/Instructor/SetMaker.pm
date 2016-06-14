@@ -1760,6 +1760,15 @@ sub output_JS {
   if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
+	if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		my $taxo = '[]';
+		$taxo = join("", <TAXONOMY>); 
+		close TAXONOMY;
+		print qq!\n<script>var taxo = $taxo ;</script>!;
+	} else {
+		print qq!\n<script>var taxo = [] ;</script>!;
+		print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+	}
   }
   return '';
 
