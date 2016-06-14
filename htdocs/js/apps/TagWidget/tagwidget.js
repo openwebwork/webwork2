@@ -13,13 +13,14 @@ var basicRequestObject = {
 };
 
 function readfromtaxo(who, valarray) {
+  var mytaxo = taxo;
   if(who == 'subjects') {
-	return(taxo.map(function(z) {return(z['name']);} ));
+	return(mytaxo.map(function(z) {return(z['name']);} ));
   }
   var failed = true;
-  for(var i=0; i<taxo.length; i++) {
-    if(taxo[i]['name'] == valarray[0]) {
-	  taxo = taxo[i]['subfields'];
+  for(var i=0; i<mytaxo.length; i++) {
+    if(mytaxo[i]['name'] == valarray[0]) {
+	  mytaxo = mytaxo[i]['subfields'];
 	  failed=false;
 	  break;
 	}
@@ -29,12 +30,12 @@ function readfromtaxo(who, valarray) {
 	return([]);
   }
   if(who == 'chapters') {
-	return(taxo.map(function(z) {return(z['name']);} ));
+	return(mytaxo.map(function(z) {return(z['name']);} ));
   }
   failed = true;
-  for(var i=0; i<taxo.length; i++) {
-    if(taxo[i]['name'] == valarray[1]) {
-	  taxo = taxo[i]['subfields'];
+  for(var i=0; i<mytaxo.length; i++) {
+    if(mytaxo[i]['name'] == valarray[1]) {
+	  mytaxo = mytaxo[i]['subfields'];
 	  failed=false;
 	  break;
 	}
@@ -44,7 +45,7 @@ function readfromtaxo(who, valarray) {
 	return([]);
   }
   if(who == 'sections') {
-	return(taxo.map(function(z) {return(z['name']);} ));
+	return(mytaxo.map(function(z) {return(z['name']);} ));
   }
   return([]); // Should not get here
 }
