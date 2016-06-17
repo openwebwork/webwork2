@@ -94,7 +94,7 @@ sub initialize {
 
 	# if we need to gothrough and update grades
 	if ($r->param('assignGrades')) {
-	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "Grades have been saved for all current users."));
+	    $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Grades have been saved for all current users.")));
 
 	    my @users = $db->listUsers;
 	
@@ -175,7 +175,7 @@ sub body {
 	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
 	my $user = $db->getUser($userID);
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("This set needs to be assigned to you before you can grade it."))	unless $set && $problem;	
+	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("This set needs to be assigned to you before you can grade it.")))	unless $set && $problem;	
 
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(
@@ -210,11 +210,11 @@ sub body {
 
 	print CGI::start_form({method=>"post", action => $self->systemLink( $urlpath, authen=>0), id=>"problem-grader-form", name=>"problem-grader-form" });
 	 
-	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>'Mark All',
+	my $selectAll =CGI::input({-type=>'button', -name=>'check_all', -value=>$r->maketext('Mark All'),
 				   onClick => "\$('.mark_correct').each(function () { if (\$(this).attr('checked')) {\$(this).attr('checked',false);} else {\$(this).attr('checked',true);}});" });
 
 	print CGI::start_table({width=>"1020px"});
-	print CGI::Tr({-valign=>"top"}, CGI::th(["Section", "Name","&nbsp;","Latest Answer","&nbsp;","Mark Correct<br>".$selectAll, "&nbsp;", "Score (%)", "&nbsp;", "Comment"]));
+	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Section"), $r->maketext("Name"),"&nbsp;",$r->maketext("Latest Answers"),"&nbsp;",$r->maketext("Mark Correct")."<br>".$selectAll, "&nbsp;", $r->maketext("Score (%)"), "&nbsp;", $r->maketext("Comment")]));
 	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 	my $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseName, setID => $setID, problemID => $problemID });
@@ -379,22 +379,11 @@ sub body {
 	    print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 
 
-#  Text field for grade
-#				      CGI::input({type=>"text",
-#						  name=>"$userID.score",
-#						  value=>"$score",
-#						  size=>4,})
-#				      
-#				  
-#				  ])
-#		);
-
-
 	}
 
 	print CGI::end_table();
 	print $self->hidden_authen_fields;
-	print CGI::submit({name=>"assignGrades", value=>"Save"});
+	print CGI::submit({name=>"assignGrades", value=>$r->maketext("Save")});
 
 	print CGI::end_form();
 	

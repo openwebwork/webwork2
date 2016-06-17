@@ -73,9 +73,7 @@ sub initialize {
 	  $selectedUsers = [$user];
 	}
 
-	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide
-			    a student ID, a set ID, and a problem number.'))
-	    unless $selectedUsers  && $selectedSets && $selectedProblems;
+	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide a student ID, a set ID, and a problem number.')) unless $selectedUsers  && $selectedSets && $selectedProblems;
 	
 	my %records;
 	my %prettyProblemNumbers;
@@ -481,9 +479,11 @@ sub body {
 		}
 			
 		my $num_ans = $#scores;
-		
+	
 		if ($record{time} - $previousTime > $ce->{sessionKeyTimeout}) {
 		  $rowOptions->{'class'} = 'table-rule';
+		} else {
+		  $rowOptions->{'class'} = '';
 		}
 
 		@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
@@ -502,7 +502,7 @@ sub body {
 		  
 		  my $answerstring;
 		  if ($answer eq '') {		    
-		    $answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
+		    $answerstring  = CGI::small(CGI::i($r->maketext("empty"))) if ($answer eq "");
 		  } elsif (!$renderAnswers) {
 		    $answerstring = PGcore::encode_pg_and_html($answer);
 		  } elsif ($answerType eq 'essay') {
@@ -516,7 +516,7 @@ sub body {
 		}
 		
 		if ($record{comment}) {
-		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".PGcore::encode_pg_and_html($record{comment})));
+		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},$r->maketext("Comment").": ".PGcore::encode_pg_and_html($record{comment})));
 		}
 		
 		print CGI::Tr($rowOptions,@row);

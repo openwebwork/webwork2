@@ -58,7 +58,7 @@ $ITEMSEP
 $ITEM
 ${LQ}MathJax${RQ} mode is the default choice (what $WW uses unless you tell 
 it otherwise). It uses Cascading Style
-Sheets (CSS) with web fonts or SVG, instead of bitmap images or Flash, so equations scale with surrounding text at all zoom levels.  MathJax is compatible with screenreaders & provides zoom for everyone.
+Sheets (CSS) with web fonts or SVG, instead of bitmap images or Flash, so equations scale with surrounding text at all zoom levels.  MathJax is compatible with screenreaders and provides zoom for everyone.
 
 \{EndParList("UL")\}
 $PAR

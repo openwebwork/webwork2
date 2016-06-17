@@ -82,7 +82,7 @@ sub title {
 		$string             .= $r->maketext("student")." ".$self->{studentName};
 	} elsif ($type eq 'set' ) {
 		$string             .= $r->maketext("set")."   ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ".$self->formatDateTime($self->{set_due_date});
+		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Closes")." ".$self->formatDateTime($self->{set_due_date});
 	}
 	return $string;
 }
@@ -136,7 +136,7 @@ sub body {
 	my $type       = $self->{type};
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to access instructor tools")))
+	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to access the Instructor tools")))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	if ($type eq 'student') {
@@ -149,8 +149,8 @@ sub body {
 		my $email = $studentRecord->email_address;
 		
 		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			$r->maketext("Section:")." ", $studentRecord->section, CGI::br(),
-			$r->maketext("Recitation:")." ", $studentRecord->recitation, CGI::br();
+			$r->maketext("Section").": ", $studentRecord->section, CGI::br(),
+			$r->maketext("Recitation").": ", $studentRecord->recitation, CGI::br();
 		
 		if ($authz->hasPermissions($user, "become_student")) {
 			my $act_as_student_url = $self->systemLink($courseHomePage,
@@ -530,7 +530,7 @@ print
 #####################################################################################
 	print  
 
-	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores. The median score is in the 50% column. '))),
+	    	CGI::p(CGI::i($r->maketext('The percentage of students receiving at least these scores. The median score is in the 50% column.'))),
 			CGI::start_table({-class=>"stats-table",-border=>1}),
 				CGI::Tr(
 					CGI::td( ['% '.$r->maketext('students'),

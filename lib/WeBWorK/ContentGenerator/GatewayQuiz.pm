@@ -96,10 +96,15 @@ sub can_showCorrectAnswers {
 #    any individual problem.  to deal with this, we make 
 #    can_showCorrectAnswers give the least restrictive view of hiding, and 
 #    then filter scores for the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+
+#    showing correcrt answers but not showing scores doesn't make sense
+#    so we should hide the correct answers if we aren not showing
+#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $maxAttempts && 
@@ -138,10 +143,14 @@ sub can_showSolutions {
 #    any individual problem.  to deal with this, we make can_showSolutions 
 #    give the least restrictive view of hiding, and then filter scores for 
 #    the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+#    showing correcrt answers but not showing scores doesn't make sense
+#    so we should hide the correct answers if we aren not showing
+#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $attempts_per_version &&
@@ -250,10 +259,14 @@ sub can_checkAnswers {
 	#    be shown, but not show the score on any individual problem.  
 	#    to deal with this, we use the least restrictive view of hiding 
 	#    here, and then filter for the problems themselves later
-	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
-			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
-				after($tmplSet->answer_date) ) );
+	#    showing correcrt answers but not showing scores doesn't make sense
+	#    so we should hide the correct answers if we aren not showing
+	#    scores GG.
+
+	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	  ( $Set->hide_score eq 'N' ||
+	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
+	      after($tmplSet->answer_date) ) );
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -296,7 +309,6 @@ sub can_showScore {
 
 	# address hiding scores by problem
 	my $canShowScores = ( $Set->hide_score eq 'N' ||
-			      $Set->hide_score_by_problem eq 'Y' ||
 			      ( $Set->hide_score eq 'BeforeAnswerDate' &&
 				after($tmplSet->answer_date) ) );
 
@@ -1708,8 +1720,9 @@ sub body {
 
 	# some convenient output variables
 	my $canShowProblemScores = $can{showScore} && 
-	    ($set->hide_score eq 'N' || $set->hide_score_by_problem eq 'N' ||
+	    ($set->hide_score_by_problem eq 'N' ||
 	     $authz->hasPermissions($user, "view_hidden_work"));
+
 	my $canShowWork = $authz->hasPermissions($user, "view_hidden_work") || ($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date));
 
 	# for nicer answer checking on multi-page tests, we want to keep 
@@ -1785,7 +1798,7 @@ sub body {
 	# a handy noun for when referring to a test
 	my $testNoun = (( $set->attempts_per_version || 0 ) > 1) ? $r->maketext("submission") : $r->maketext("test");
 	my $testNounNum = ( ( $set->attempts_per_version ||0 ) > 1 ) ? 
-		$r->maketext("submission (test ") : $r->maketext("test (");
+		$r->maketext("submission (test [_1])",$versionNumber) : $r->maketext("test ([_1])",$versionNumber);
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
@@ -1806,22 +1819,22 @@ sub body {
 
 		if ( $recdMsg ) {
 			# then there was an error when saving the results
-			print CGI::strong($r->maketext("Your score on this [_1][_2]) was NOT recorded.",$testNounNum,$versionNumber),
+			print CGI::strong($r->maketext("Your score on this [_1] was NOT recorded.",$testNounNum),
 					  $recdMsg), CGI::br();
 		} else {
 			# no error; print recorded message
-			print CGI::strong($r->maketext("Your score on this [_1][_2]) WAS recorded.",$testNounNum,$versionNumber)), 
+			print CGI::strong($r->maketext("Your score on this [_1] WAS recorded.",$testNounNum)), 
 			  CGI::br();
 
 			# and show the score if we're allowed to do that
 			if ( $can{showScore} ) {
 			  print CGI::strong($r->maketext("Your score on this [_1] is [_2]/[_3].", $testNoun,$attemptScore,$totPossible));
 			} else {
-				my $when = 
-					($set->hide_score eq 'BeforeAnswerDate')
-					? ' until ' . ($self->formatDateTime($set->answer_date) )
-					: '';
-				print $r->maketext("(Your score on this [_1] is not available[_2].)",$testNoun,$when);
+			  if ($set->hide_score eq 'BeforeAnswerDate') {
+			    print $r->maketext("(Your score on this [_1] is not available until [_2].)",$testNoun, $self->formatDateTime($set->answer_date));
+			  } else {
+			    print $r->maketext("(Your score on this [_1] is not available.)",$testNoun);
+			  }
 			}
 
 			
@@ -1853,7 +1866,7 @@ sub body {
 			print CGI::strong($r->maketext("Your score on this (checked, not recorded) submission is [_1]/[_2].",$attemptScore,$totPossible)), 
 				CGI::br();
 			my $recScore = wwRound(2,$recordedScore);
-			print $r->maketext("The recorded score for this test is [_1]/[_2]. ",$recScore, $totPossible);
+			print $r->maketext("The recorded score for this test is [_1]/[_2].",$recScore, $totPossible);
 			print CGI::end_div();
 		}
 	}
@@ -1911,10 +1924,10 @@ sub body {
 			if ( $can{showScore} ) {
 			    print CGI::start_div({class=>'gwMessage'});
 			    
-			    my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3]", $versionNumber, wwRound(2,$recordedScore), $totPossible);
+			    my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3].", $versionNumber, wwRound(2,$recordedScore), $totPossible);
 			    if ( $exceededAllowedTime && 
 				 $recordedScore == 0 ) {
-				$scMsg .= $r->maketext(", because you exceeded the allowed time.");
+				$scMsg .= $r->maketext("You exceeded the allowed time.");
 			    } else {
 				$scMsg .= ".  ";
 			    }
@@ -1934,8 +1947,8 @@ sub body {
 		}
 
 		if ( $canShowWork && $set->set_id ne "Undefined_Set" ) {
-			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade",$versionNumber);
-			print "" . (($can{showScore}) ? $r->maketext(", but you may still check your answers.") : ".") ;
+			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade.",$versionNumber);
+			print "" . (($can{showScore}) ? $r->maketext("You may still check your answers.") : ".") ;
 
 			# print a "printme" link if we're allowed to see our 
 			#    work
@@ -1966,11 +1979,12 @@ sub body {
 	# now, we print out the rest of the page if we're not hiding submitted
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
-		my $when = ( $set->hide_work eq 'BeforeAnswerDate' ) 
-			? $r->maketext(' until ') . ($self->formatDateTime($set->answer_date))
-			: '';
 		print CGI::start_div({class=>"gwProblem"});
-		print CGI::strong($r->maketext("Completed results for this assignment are not available[_1].",$when));
+		if ( $set->hide_work eq 'BeforeAnswerDate' ) {
+		  print CGI::strong($r->maketext("Completed results for this assignment are not available until [_1]",$self->formatDateTime($set->answer_date)));
+		} else {
+		  print CGI::strong($r->maketext("Completed results for this assignment are not available."));
+		}
 		print CGI::end_div();
 
 	# else: we're not hiding answers
@@ -2017,7 +2031,7 @@ sub body {
 			}
 		}
 		if ( $numProbPerPage && $numPages > 1 ) {
-			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),
+			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page:'))),
 					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 
@@ -2106,7 +2120,7 @@ sub body {
 					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
-				       CGI::b($r->maketext("Note: ")) : "", 
+				       CGI::b($r->maketext("Note")).': ' : "", 
 				       CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 
@@ -2133,7 +2147,7 @@ sub body {
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
 				my @curr_fields = grep /^$curr_prefix/, keys %{$self->{formFields}};
 				foreach my $curr_field ( @curr_fields ) {
- 					foreach ( split(/\0/, $self->{formFields}->{$curr_field}) ) {
+ 					foreach ( split(/\0/, $self->{formFields}->{$curr_field} // '') ) {
  						print CGI::hidden({-name=>$curr_field, 
  							   	   -value=>$_});
  					}
@@ -2211,11 +2225,20 @@ sub body {
 	    }
 
 	    print CGI::p(
-				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+				CGI::submit(-name => 'action',  -value=>$r->maketext('Show Past Answers'))
 				), "\n",
 			CGI::end_form();
 	}
 
+	# prints the achievement message if there is one
+	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them.  
+	#Gateways are special.  We only provide the first problem just to seed the data, but all of the problems from the gateway will be provided to the achievement evaluator
+	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
+	    && $submitAnswers && $set->set_id ne 'Undefined_Set') {
+	    print  WeBWorK::AchievementEvaluator::checkForAchievements($problems[0], $pg_results[0], $r, setVersion=>$versionNumber);
+	    
+	}
+	
 	return "";
 
 }
@@ -2344,6 +2367,10 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 	
 	return "";
+}
+
+sub output_achievement_CSS {
+    return "";
 }
 
 1;

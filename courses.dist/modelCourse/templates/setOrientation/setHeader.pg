@@ -23,7 +23,7 @@ expressions and look at ways to find and correct errors in your
 entries.
 
 ",
-     "WeBWorK assignment $setNumber is due on $formattedDueDate.",
+     "WeBWorK assignment $setNumber closes on $formattedDueDate.",
      $END_ONE_COLUMN
 );
 

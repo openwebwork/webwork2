@@ -95,7 +95,14 @@ sub scoring_info {
 	my $delimiter            = ',';
 	my $scoringDirectory    = $ce->{courseDirs}->{scoring};
 
-	return  $r->maketext('There is no additional grade information.  A message about additional grades can go in in ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file) unless (-e "$scoringDirectory/$merge_file" && -e "$filePath");
+	# get out if the files don't exist
+	if (!(-e "$scoringDirectory/$merge_file" && -e "$filePath")) {
+	  if ($r->authz->hasPermissions($userID, "access_instructor_tools")) {
+	    return  $r->maketext('There is no additional grade information.  A message about additional grades can go in in ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file);
+	  } else {
+	    return '';
+	  }
+	}
 	
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 	my $text;
@@ -350,9 +357,18 @@ sub displayStudentStats {
 
 		my @cgi_prob_scores = ();
 
+		my $show_problem_scores = 1;
+
+		if ( defined( $set->hide_score_by_problem ) &&
+		     ! $authz->hasPermissions($r->param("user"), "view_hidden_work")
+		     && $set->hide_score_by_problem eq 'Y' )  {
+		  $show_problem_scores = 0;
+		}
+		
 		for (my $i = 0; $i < $max_problems; $i++) {
-		    my $score = defined($prob_scores[$i]) ? 
-			$prob_scores[$i] :  '&nbsp;';
+		  my $score = (defined($prob_scores[$i]) &&
+		    $show_problem_scores) ? 
+		      $prob_scores[$i] :  '&nbsp;';
 		    my $class = '';
 		    if ($score =~ /100\s*/) {
 			$score = '100&nbsp;';
@@ -361,7 +377,7 @@ sub displayStudentStats {
 			$score = '&nbsp;.&nbsp;&nbsp;';
 			$class = "unattempted";
 		    }
-		    my $att = defined($prob_att[$i]) ?
+		    my $att = defined($prob_att[$i]) && $show_problem_scores ?
 			$prob_att[$i] : '&nbsp;';
 
 		    $cgi_prob_scores[$i] = CGI::td(

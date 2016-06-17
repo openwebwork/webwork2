@@ -66,9 +66,6 @@ $server_groupID    = 'wwdata';
 
 #$server_apache_version = ''; # e.g. '2.22.1'
 
-# Set this to override the default admin email set by apache.  
-$webwork_server_admin_email ='';
-
 # The following variable is the address that will be listed in server error 
 # messages that come from WeBWorK: 
 #	 "An error occured while processing your request. 
@@ -82,7 +79,7 @@ $webwork_server_admin_email ='';
 # ServerAdmin address defined in httpd.conf is used.
 
  
-#$webwork_server_admin_email ='';
+$webwork_server_admin_email ='';
 ################################################################################
 # Paths to external programs 
 ################################################################################
@@ -107,7 +104,7 @@ $externalPrograms{git} = "/usr/bin/git";
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
 $externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
-$externalPrograms{dvipng}   ="/usr/bin//dvipng";
+$externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
