@@ -835,7 +835,7 @@ EOS
 	$localStorageMessages .= CGI::end_div();
 		
 
-#	my $pretty_print_self  = pretty_print($self);
+	# my $pretty_print_self  = pretty_print($self);
 
 ######################################################
 # Return interpolated problem template
