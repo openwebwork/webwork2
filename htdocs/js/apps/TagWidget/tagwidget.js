@@ -12,31 +12,8 @@ var basicRequestObject = {
     "command":"searchLib"
 };
 
-// Get the taxonomy
-
-var taxo=[];  // Global variable to hold it
-var loadtaxo = $.ajax({
-  dataType: "json",
-  url: "/webwork2_files/DATA/tagging-taxonomy.json", 
-  success: function(data) {
-    taxo = data;
-  },
-  error: function() {
-    alert("Failed to load OPL taxonomy from server.");
-  }
-});
-
-// If needed, wait until asynchronous load is done
-function fetch_taxo() {
-  if(taxo.length>0) {
-    return(taxo);
-  } else {
-    loadtaxo.done(fetch_taxo());
-  }
-}
-
 function readfromtaxo(who, valarray) {
-  var mytaxo = fetch_taxo();
+  var mytaxo = taxo;
   if(who == 'subjects') {
 	return(mytaxo.map(function(z) {return(z['name']);} ));
   }
