@@ -34,11 +34,10 @@ use HTML::Entities;
 use HTML::Scrubber;
 use Date::Format;
 use WeBWorK;
+use Encode;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-# We use uft8 encoding because we support languages that need it
-use encoding "utf8";
 
 # load correct modules
 BEGIN {
@@ -66,6 +65,9 @@ sub handler($) {
 	my $log = $r->log;
 	my $uri = $r->uri;
 
+	# we need this to print wide utf8 characters to the screen
+	binmode(STDOUT, ":utf8");
+	
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
 	my $warning_handler;
@@ -73,11 +75,12 @@ sub handler($) {
 		$warning_handler = sub {
 			my ($warning) = @_;
 			chomp $warning;
-			
 			my $warnings = $r->notes->get("warnings");
+			$warnings = Encode::decode_utf8($warnings);
 			$warnings .= "$warning\n";
 			#my $backtrace = join("\n",backtrace());
 			#$warnings .= "$backtrace\n\n";
+			$warnings = Encode::encode_utf8($warnings);
 			$r->notes->set(warnings => $warnings);
 			
 			$log->warn("[$uri] $warning");

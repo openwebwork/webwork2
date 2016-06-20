@@ -768,7 +768,7 @@ sub saveProblem {
     my $self      = shift;
 	my ($body, $probFileName)= @_;
 	local(*PROBLEM);
-	open (PROBLEM, ">$probFileName") ||
+	open (PROBLEM, ">:utf8",$probFileName) ||
 		$self->addbadmessage(CGI::p("Could not open $probFileName for writing.
 						Check that the  permissions for this problem are 660 (-rw-rw----)"));
 	print PROBLEM $body if -w $probFileName;
@@ -786,7 +786,7 @@ sub read_input_file {
 	my ($subject, $from, $replyTo);
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
-		open FILE, "$filePath" || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
+		open FILE, "<:utf8", $filePath || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
 		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
 			$header .= <FILE>; 
 		}

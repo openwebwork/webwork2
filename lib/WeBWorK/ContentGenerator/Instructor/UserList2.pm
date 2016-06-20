@@ -1226,7 +1226,7 @@ sub saveEdit_handler {
 		foreach my $field ($User->NONKEYFIELDS()) {
 			my $param = "user.${userID}.${field}";
 			if (defined $tableParams->{$param}->[0]) {
-				$User->$field($tableParams->{$param}->[0]);
+			    $User->$field($tableParams->{$param}->[0]);
 			}
 		}
 		

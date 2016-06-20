@@ -180,7 +180,7 @@ sub force_eoln($) {
 sub readFile($) {
 	my $fileName = shift;
 	local $/ = undef; # slurp the whole thing into one string
-	open my $dh, "<", $fileName
+	open my $dh, "<utf8:", $fileName
 		or croak "failed to read file $fileName: $!";
 	my $result = <$dh>;
 	close $dh;
