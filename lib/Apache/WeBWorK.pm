@@ -37,6 +37,8 @@ use WeBWorK;
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+# We use uft8 encoding because we support languages that need it
+use encoding "utf8";
 
 # load correct modules
 BEGIN {
@@ -63,10 +65,6 @@ sub handler($) {
 	my ($r) = @_;
 	my $log = $r->log;
 	my $uri = $r->uri;
-
-	# We set the bimode for print to utf8 because some language options
-	# use utf8 characters
-	binmode(STDOUT, ":utf8");
 
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
