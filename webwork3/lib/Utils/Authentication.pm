@@ -1,28 +1,36 @@
 package Utils::Authentication;
 use base qw(Exporter);
 
+use Dancer2; 
+use WeBWorK::CourseEnvironment;
+use WeBWork::DB;
+use Data::Dump qw/dump/;
+
 our @EXPORT    = ();
-our @EXPORT_OK = qw(setCourseEnvironment buildSession checkPermissions setCookie isSessionCurrent);
-
-use Dancer ':syntax';
-
+our @EXPORT_OK = qw/setCourseEnvironment buildSession checkPermissions setCookie isSessionCurrent/;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 
 sub setCourseEnvironment {
 
-	my $courseID = shift;
+	my ($courseID) = @_;
 
+    debug "in setCourseEnvironment"; 
+    debug $courseID;
+    debug session;
+    
 	if (defined($courseID)) {
-		session course => $courseID;
+      debug session;
+      debug "setting the course in the session";
+      session 'course' => $courseID;
+      
 	} else {
 		send_error("The course has not been defined.  You may need to authenticate again",401);	
 	}
-
-	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
-
-	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
+	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir},
+                                                courseName=> session('course')});
+    var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
 
 	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
 	$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
@@ -155,16 +163,17 @@ sub create_session {
 # This sets the cookie in the WW2 style to allow for seamless transfer back and forth. 
 
 sub setCookie {
-		my $cookieValue = (session 'user') . "\t". (session 'key') . "\t" . (session 'timestamp');
+    debug "in setCookie\n";
+    my $cookieValue = session('user') . "\t". session('key') . "\t" . session ('timestamp');
 
-		my $hostname = vars->{ce}->{server_root_url};
-		$hostname =~ s/https?:\/\///;
-        
-		if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
-			cookie "WeBWorK.CourseAuthen." . session->{course} => $cookieValue, domain=>$hostname;
-		} else {
-			cookie "WeBWorK.CourseAuthen." . session->{course} => $cookieValue;
-		}
+    my $hostname = vars->{ce}->{server_root_url};
+    $hostname =~ s/https?:\/\///;
+
+    if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
+        cookie "WeBWorK.CourseAuthen." . session("course") => $cookieValue, domain=>$hostname;
+    } else {
+        cookie "WeBWorK.CourseAuthen." . session("course") => $cookieValue;
+    }
 
 
 }

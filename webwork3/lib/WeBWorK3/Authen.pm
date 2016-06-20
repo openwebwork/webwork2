@@ -20,7 +20,7 @@ use base qw (WeBWorK::Authen);
 use strict;
 use warnings;
 #use Carp::Always;
-use Dancer ':syntax';
+use Dancer2 appname => 'webwork3';
 
 use WeBWorK::Utils qw/writeCourseLog runtime_use/;
 
@@ -121,6 +121,8 @@ sub new {
 	 	db => new WeBWorK::DB($ce->{dbLayout}),
 	 	params => {}
 	};
+    
+    debug "in Authen::new";
 	# weaken $self -> {r};
 	#initialize
 	$GENERIC_ERROR_MESSAGE = "Invalid user ID or password.";

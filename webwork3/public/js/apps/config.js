@@ -13,7 +13,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
     });
     
     var config = {
-        urlPrefix: "/webwork3/",
+        urlPrefix: "/webwork3/api/",
 
         // This is temporary to get the handshaking set up to dancer. 
         // in the future this should be taken care of with dancer
