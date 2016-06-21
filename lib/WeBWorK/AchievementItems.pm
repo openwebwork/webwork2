@@ -21,7 +21,9 @@ use strict;
 use warnings;
 
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
 
+use Encode qw(encode_utf8 );
 # have to add any new items to this list, furthermore
 # the elements of this list have to match the class name/id of the
 # item classes defined below. 
@@ -87,6 +89,8 @@ sub UserItems {
 package WeBWorK::AchievementItems::RessurectHW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -167,7 +171,7 @@ sub use_item {
     }
 
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -178,6 +182,8 @@ sub use_item {
 package WeBWorK::AchievementItems::ExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -250,7 +256,7 @@ sub use_item {
     $db->putUserSet($userSet);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -261,6 +267,8 @@ sub use_item {
 package WeBWorK::AchievementItems::SuperExtendDueDate;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -333,7 +341,7 @@ sub use_item {
     $db->putUserSet($userSet);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -344,6 +352,8 @@ sub use_item {
 package WeBWorK::AchievementItems::ReducedCred;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -428,7 +438,7 @@ sub use_item {
     $db->putUserSet($userSet);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -439,6 +449,8 @@ sub use_item {
 package WeBWorK::AchievementItems::DoubleSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -516,7 +528,7 @@ sub use_item {
     }
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -526,6 +538,8 @@ sub use_item {
 package WeBWorK::AchievementItems::ResetIncorrectAttempts;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -627,7 +641,7 @@ sub use_item {
     $db->putUserProblem($problem);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -637,6 +651,8 @@ sub use_item {
 package WeBWorK::AchievementItems::DoubleProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -740,7 +756,7 @@ sub use_item {
     $db->putUserProblem($problem);
 
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -750,6 +766,8 @@ sub use_item {
 package WeBWorK::AchievementItems::HalfCreditProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -856,7 +874,7 @@ sub use_item {
     $db->putUserProblem($problem);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -866,6 +884,8 @@ sub use_item {
 package WeBWorK::AchievementItems::HalfCreditSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -946,7 +966,7 @@ sub use_item {
     }
     
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -956,6 +976,8 @@ sub use_item {
 package WeBWorK::AchievementItems::FullCreditProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -1057,7 +1079,7 @@ sub use_item {
     $db->putUserProblem($problem);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -1067,6 +1089,8 @@ sub use_item {
 package WeBWorK::AchievementItems::FullCreditSet;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -1142,7 +1166,7 @@ sub use_item {
     }
     
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -1152,6 +1176,8 @@ sub use_item {
 package WeBWorK::AchievementItems::DuplicateProb;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -1267,7 +1293,7 @@ sub use_item {
     $db->putUserProblem($problem2);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     return;
@@ -1277,6 +1303,8 @@ sub use_item {
 package WeBWorK::AchievementItems::Surprise;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -1329,6 +1357,8 @@ sub use_item {
 package WeBWorK::AchievementItems::AddNewTestGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -1418,7 +1448,7 @@ sub use_item {
     $db->putUserSet($userSet);
     
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     
@@ -1430,6 +1460,8 @@ sub use_item {
 package WeBWorK::AchievementItems::ExtendDueDateGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
+
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -1531,7 +1563,7 @@ sub use_item {
     }
     
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
     
     return;
@@ -1541,6 +1573,7 @@ sub use_item {
 package WeBWorK::AchievementItems::RessurectGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8);
 use WeBWorK::Utils qw(sortByName before after between x);
 
 sub new {
@@ -1619,7 +1652,7 @@ sub use_item {
     $db->putUserSet($set);
 	
     $globalData->{$self->{id}} = 0;
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
     
     return;

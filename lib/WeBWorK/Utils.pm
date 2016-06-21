@@ -780,7 +780,7 @@ sub writeCourseLog($$@) {
 	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
 	surePathToFile($ce->{courseDirs}->{root}, $logFile);
 	local *LOG;
-	if (open LOG, ">>", $logFile) {
+	if (open LOG, ">>:utf8", $logFile) {
 		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
 		close LOG;
 	} else {

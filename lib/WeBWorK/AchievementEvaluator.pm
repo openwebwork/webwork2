@@ -31,6 +31,7 @@ use WeBWorK::Utils::Tags;
 
 use WWSafe;
 use Storable qw(nfreeze thaw);
+use Encode qw(encode_utf8 );
 
 sub checkForAchievements {
 
@@ -312,13 +313,13 @@ sub checkForAchievements {
 	
 	#update counter, nfreeze localData and store
 	$userAchievement->counter($counter);
-	$userAchievement->frozen_hash(nfreeze($localData));	
+	$userAchievement->frozen_hash(encode_utf8(nfreeze($localData)));	
 	$db->putUserAchievement($userAchievement);
 	
     }  #end for loop
     
     #nfreeze globalData and store
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     if ($cheevoMessage) {
