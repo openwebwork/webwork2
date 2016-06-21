@@ -31,10 +31,11 @@ use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
+use Encode qw(encode_utf8 decode_utf8);
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
 use Time::Zone;
-use MIME::Base64;
+use MIME::Base64 qw(encode_base64 decode_base64);
 use Errno;
 use File::Path qw(rmtree);
 use Storable;
@@ -68,8 +69,10 @@ our @EXPORT_OK = qw(
 	constituency_hash
 	cryptPassword
 	decodeAnswers
+        decode_utf8_base64
 	dequote
 	encodeAnswers
+        encode_utf8_base64
 	fisher_yates_shuffle
 	formatDateTime
 	has_aux_files
@@ -889,6 +892,10 @@ sub decodeAnswers($) {
 	}
 }
 
+sub decode_utf8_base64 {
+    return decode_utf8(decode_base64(shift));
+}
+
 sub encodeAnswers(\%\@) {
 	my %hash = %{shift()};
 	my @order = @{shift()};
@@ -900,7 +907,9 @@ sub encodeAnswers(\%\@) {
 
 }
 
-
+sub encode_utf8_base64 {
+    return encode_base64(encode_utf8(shift));
+}
 
 sub max(@) {
 	my $soFar;
