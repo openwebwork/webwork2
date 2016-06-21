@@ -1153,8 +1153,8 @@ sub saveFileChanges {
 		die "outputFilePath is unsafe!" unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 
 		eval {
-			local *OUTPUTFILE;
-			open OUTPUTFILE,  ">$outputFilePath"
+		    local *OUTPUTFILE;
+		    open OUTPUTFILE,  ">$outputFilePath"
 					or die "Failed to open $outputFilePath";
 			print OUTPUTFILE $problemContents;
 			close OUTPUTFILE;		
