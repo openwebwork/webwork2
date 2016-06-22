@@ -839,7 +839,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
-	my $these_widths = "width: 24ex";
+	my $these_widths = "width: 25ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -923,7 +923,7 @@ sub make_top_row {
 						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)) {
-		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:22ex",
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:25ex",
 		                         -value=>$r->maketext("Show all paths"),
 								 -id =>"toggle_paths",
 								 -onClick=>'return togglepaths()');
