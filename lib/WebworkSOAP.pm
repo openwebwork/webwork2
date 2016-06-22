@@ -569,6 +569,49 @@ sub get_user {
 =begin WSDL
 _IN authenKey $string
 _IN courseName $string
+_RETURN $WebworkSOAP::Classes::User of names objects.
+=end WSDL
+=cut
+sub get_practice_user {
+    my ($self,$authenKey,$courseName) = @_;
+    my $soapEnv = new WebworkSOAP($authenKey,$courseName);
+    my $practiceUserPrefix = $soapEnv->{ce}->{practiceUserPrefix};
+    # tant qu'à ajouter WeBWorK::Authen ici et réécriture des méthodes, je
+    # script les morceaux dont j'ai vraiment besoin
+    my @guestUserIDs = grep m/^$practiceUserPrefix/, $soapEnv->{db}->listUsers;
+    my @GuestUsers = $soapEnv->{db}->getUsers(@guestUserIDs);
+    my @allowedGuestUsers = grep { $soapEnv->{ce}->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
+    my @allowedGuestUserIDs = map { $_->user_id } @allowedGuestUsers;
+
+    foreach my $userID (@allowedGuestUserIDs) {
+        my $Key = $soapEnv->{db}->getKey($userID);
+        my $unexpired_session_exists = defined $Key;
+        if ($Key && time <= $Key->timestamp()+$soapEnv->{ce}->{sessionKeyTimeout}) {
+            $unexpired_session_exists = 1;
+        } else {
+            $unexpired_session_exists = 0;
+        }
+        if (not $unexpired_session_exists) {
+            return SOAP::Data->type( 'string', $userID );
+        }
+    }
+    # il n'y avait pas d'utilisateurs disponibles; il faut
+    # créer un nouveau compte 'practiceXXX' dont le numéro n'existe pas déjà
+    my @GuestUserIDNumbers = ();
+    for ($soapEnv->{db}->listUsers) {
+        if ($_ =~ m/(\d+)/) {
+            push @GuestUserIDNumbers, $1;
+        }
+    }
+    my @sortedGuestUserIDs = sort { $a <=> $b } @GuestUserIDNumbers;
+    my $newPracticeName = $practiceUserPrefix.( $sortedGuestUserIDs[-1] + 1 );
+    return SOAP::Data->type( 'string', $newPracticeName );
+}
+
+=pod
+=begin WSDL
+_IN authenKey $string
+_IN courseName $string
 _IN userIDs @string
 _RETURN @WebworkSOAP::Classes::User Array of user objects
 =end WSDL
