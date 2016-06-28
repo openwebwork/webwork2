@@ -945,7 +945,7 @@ sub make_data_row {
 	##    any target set is a gateway assignment or not
 	my $localSet = $self->r->param('local_sets');
 	my $setRecord;
-	if ( defined($localSet) && $localSet ne r->maketext(SELECT_SET_STRING) &&
+	if ( defined($localSet) && $localSet ne $r->maketext(SELECT_SET_STRING) &&
 	     $localSet ne $r->maketext(NO_LOCAL_SET_STRING) ) {
 		$setRecord = $db->getGlobalSet( $localSet );
 	}
