@@ -91,6 +91,7 @@ our @EXPORT_OK = qw(
 	writeCourseLog
 	writeLog
 	writeTimingLogEntry
+	x
 );
 
 =head1 FUNCTIONS
@@ -1084,6 +1085,12 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
     }
     return 0;    # no aux files with this .pg file
 
+}
+
+# This is a dummy function used to mark strings for localization
+
+sub x {
+  return @_;
 }
 
 1;

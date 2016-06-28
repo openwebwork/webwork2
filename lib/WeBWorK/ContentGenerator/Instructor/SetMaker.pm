@@ -32,7 +32,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName);
+use WeBWorK::Utils qw(readDirectory max sortByName x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use File::Find;
@@ -43,11 +43,11 @@ require WeBWorK::Utils::ListingDB;
 use constant SHOW_HINTS_DEFAULT => 0;
 use constant SHOW_SOLUTIONS_DEFAULT => 0;
 use constant MAX_SHOW_DEFAULT => 20;
-use constant NO_LOCAL_SET_STRING => 'No sets in this course yet';
-use constant SELECT_SET_STRING => 'Select a Set from this Course';
-use constant SELECT_LOCAL_STRING => 'Select a Problem Collection';
-use constant MY_PROBLEMS => '  My Problems  ';
-use constant MAIN_PROBLEMS => '  Unclassified Problems  ';
+use constant NO_LOCAL_SET_STRING => x('No sets in this course yet');
+use constant SELECT_SET_STRING => x('Select a Set from this Course');
+use constant SELECT_LOCAL_STRING => x('Select a Problem Collection');
+use constant MY_PROBLEMS => x('My Problems');
+use constant MAIN_PROBLEMS => x('Unclassified Problems');
 use constant CREATE_SET_BUTTON => 'Create New Set';
 use constant ALL_CHAPTERS => 'All Chapters';
 use constant ALL_SUBJECTS => 'All Subjects';
@@ -382,9 +382,9 @@ sub browse_local_panel {
 		$library_selected = $r->maketext("Found no directories containing problems");
 		unshift @{$list_of_prob_dirs}, $library_selected;
 	} else {
-		my $default_value = SELECT_LOCAL_STRING;
+		my $default_value = $r->maketext(SELECT_LOCAL_STRING);
 		if (not $library_selected or $library_selected eq $default_value) {
-			unshift @{$list_of_prob_dirs},	$r->maketext($default_value);
+			unshift @{$list_of_prob_dirs},	$default_value;
 			$library_selected = $default_value;
 		}
 	}
@@ -413,12 +413,12 @@ sub browse_mysets_panel {
 	my $r = $self->r;	
 	my $library_selected = shift;
 	my $list_of_local_sets = shift;
-	my $default_value = "Select a Homework Set";
+	my $default_value = $r->maketext("Select a Homework Set");
 
 	if(scalar(@$list_of_local_sets) == 0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
 	} elsif (not $library_selected or $library_selected eq $default_value) { 
-		unshift @{$list_of_local_sets},	 $r->maketext($default_value); 
+		unshift @{$list_of_local_sets},	 $default_value; 
 		$library_selected = $default_value; 
 	} 
 
@@ -761,7 +761,7 @@ sub browse_setdef_panel {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $library_selected = shift;
-	my $default_value = "Select a Set Definition File";
+	my $default_value = $r->maketext("Select a Set Definition File");
 	# in the following line, the parens after sort are important. if they are
 	# omitted, sort will interpret get_set_defs as the name of the comparison
 	# function, and ($ce->{courseDirs}{templates}) as a single element list to
@@ -770,7 +770,7 @@ sub browse_setdef_panel {
 	if(scalar(@list_of_set_defs) == 0) {
 		@list_of_set_defs = ($r->maketext(NO_LOCAL_SET_STRING));
 	} elsif (not $library_selected or $library_selected eq $default_value) { 
-		unshift @list_of_set_defs, $r->maketext($default_value); 
+		unshift @list_of_set_defs, $default_value; 
 		$library_selected = $default_value; 
 	}
 	my $view_problem_line = view_problems_line('view_setdef_set', $r->maketext('View Problems'), $self->r);
@@ -778,7 +778,7 @@ sub browse_setdef_panel {
                                 -values=>\@list_of_set_defs,
                                 -default=> $library_selected).
 		CGI::br().  $view_problem_line;
-	if($list_of_set_defs[0] eq NO_LOCAL_SET_STRING) {
+	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
 		$popupetc = "there are no set definition files in this course to look at."
 	}
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from: "),
@@ -817,9 +817,9 @@ sub make_top_row {
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
 	} elsif (not defined($set_selected) or $set_selected eq ""
-	  or $set_selected eq SELECT_SET_STRING) {
+	  or $set_selected eq $r->maketext(SELECT_SET_STRING)) {
 		unshift @{$list_of_local_sets}, $r->maketext(SELECT_SET_STRING);
-		$set_selected = SELECT_SET_STRING;
+		$set_selected = $r->maketext(SELECT_SET_STRING);
 	}
 	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
         my $courseID = $self->r->urlpath->arg("courseID");
@@ -849,7 +849,7 @@ sub make_top_row {
 	print CGI::Tr(CGI::td({class=>'table-separator'}));
 
 	# Tidy this list up since it is used in two different places
-	if ($list_of_local_sets->[0] eq SELECT_SET_STRING) {
+	if ($list_of_local_sets->[0] eq $r->maketext(SELECT_SET_STRING)) {
 		shift @{$list_of_local_sets};
 	}
 
@@ -945,8 +945,8 @@ sub make_data_row {
 	##    any target set is a gateway assignment or not
 	my $localSet = $self->r->param('local_sets');
 	my $setRecord;
-	if ( defined($localSet) && $localSet ne SELECT_SET_STRING &&
-	     $localSet ne NO_LOCAL_SET_STRING ) {
+	if ( defined($localSet) && $localSet ne r->maketext(SELECT_SET_STRING) &&
+	     $localSet ne $r->maketext(NO_LOCAL_SET_STRING) ) {
 		$setRecord = $db->getGlobalSet( $localSet );
 	}
 	my $isGatewaySet = ( defined($setRecord) && 
@@ -1291,7 +1291,7 @@ sub pre_header_initialize {
 	} elsif ($r->param('view_local_set')) {
 
 		my $set_to_display = $self->{current_library_set};
-		if (not defined($set_to_display) or $set_to_display eq SELECT_LOCAL_STRING or $set_to_display eq "Found no directories containing problems") {
+		if (not defined($set_to_display) or $set_to_display eq $r->maketext(SELECT_LOCAL_STRING) or $set_to_display eq "Found no directories containing problems") {
 			$self->addbadmessage('You need to select a set to view.');
 		} else {
 			$set_to_display = '.' if $set_to_display eq MY_PROBLEMS;
@@ -1310,7 +1310,7 @@ sub pre_header_initialize {
 		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Homework Set"
-				or $set_to_display eq NO_LOCAL_SET_STRING) {
+				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage("You need to select a set from this course to view.");
 		} else {
 			# DBFIXME don't use ID list, use an iterator
@@ -1346,7 +1346,7 @@ sub pre_header_initialize {
 		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Set Definition File"
-				or $set_to_display eq NO_LOCAL_SET_STRING) {
+				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage("You need to select a set definition file to view.");
 		} else {
 			@pg_files= $self->read_set_def($set_to_display);
