@@ -97,6 +97,19 @@ sub body {
 	return CGI::div({class=>"ResultsWithError"}. CGI::p("You are not authorized to access instructor tools"))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 		
+
+	print '<div id="confirm-delete-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="confirm-delete-modal" aria-hidden="true">
+  <div class="modal-header">    
+  </div>
+  <div class="modal-body">
+    <p>One fine body…</p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    <a id="confirm-delete-button" class="btn btn-danger" href="#">Delete</a>
+  </div>
+</div>';
+
 	$self->index;
 	
 
@@ -312,7 +325,7 @@ sub index {
 			CGI::ul({-class=>"dropdown-menu"},
 				CGI::li(CGI::a({-href=>$setProgressUrl},"Progress")),
 				CGI::li(CGI::a({-href=>$setEditUrl},"Edit")),
-				CGI::li(CGI::a({-href=>$setDeleteUrl},"Delete"))
+				CGI::li(CGI::a({-href=>$setDeleteUrl, -class=>"delete-assignment"},"Delete"))
 				)
 			);
 
@@ -334,7 +347,7 @@ sub index {
 			CGI::ul({-class=>"dropdown-menu"},
 				CGI::li(CGI::a({-href=>$studentProgressUrl},"Progress")),
 				CGI::li(CGI::a({-href=>$studentEditUrl},"Edit")),
-				CGI::li(CGI::a({-href=>"", -class=>"delete-student"},"Delete"))
+				CGI::li(CGI::a({-href=>$studentDeleteUrl, -class=>"delete-student"},"Delete"))
 				)
 			)	
 			, $self->getStudentScores($studentRecord->user_id)));	
