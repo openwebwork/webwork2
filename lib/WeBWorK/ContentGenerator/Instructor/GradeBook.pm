@@ -62,7 +62,7 @@ sub title {
 	# Check permissions
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	my $string              = $r->maketext("GradeBook for")." ".$self->{ce}->{courseName}." ";
+	my $string = $r->maketext("GradeBook for")." ".$self->{ce}->{courseName}." ";
 	return $string;
 }
 
@@ -73,6 +73,7 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBook.js"}), CGI::end_script();
+	print "<link href=\"$site_url/js/apps/GradeBook/GradeBook.css\" rel=\"stylesheet\" />";
 	return "";
 }
 
@@ -94,7 +95,7 @@ sub body {
 		CGI::div({-class=>"modal-header"},""),
 		CGI::div({-class=>"modal-body"},""),
 		CGI::div({-class=>"modal-footer"},
-			CGI::button({-class=>"btn", "data-dismiss"=>"modal", "aria-hidden"=>"true"}, "Close"),
+			CGI::a({-class=>"btn", "data-dismiss"=>"modal", "aria-hidden"=>"true"}, "Close"),
 			CGI::a({-id=>"confirm-delete-button", -class=>"btn btn-danger", -href=>"#"}, "Delete")
 		)
 	);
@@ -182,8 +183,6 @@ sub getStudentScores {
 	#  Print table
 	###############################################################
 	
-	my $max_problems=0;
-	
 	my @scores = ();	
 	foreach my $setName (@allSetIDs)   {
 		my $student_grade_cell_edit_url = "$root/$courseName/instructor/sets2/$setName/?user=".$r->param("user")."&key=".$r->param("key");
@@ -230,7 +229,8 @@ sub getStudentScores {
            $num_of_problems
            )   = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
 	
-		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url},sprintf("%0.2f",$totalRight)));
+		my $percentCorrect = int($totalRight/$total*100 + 0.5)."%";
+		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url, -class=>"cell"},$percentCorrect));
 	
 	}
 
