@@ -19,19 +19,15 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 =head1 NAME
 
-WeBWorK::ContentGenerator::Instructor::GradeBook - Display Student Progress.
+WeBWorK::ContentGenerator::Instructor::GradeBook - This module is provides a standard gradebook.
 
 =cut
 
-#TODO:  replace user=admin with user=...
 use strict;
 use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::ContentGenerator::Grades;
-use WeBWorK::ContentGenerator::Instructor::StudentProgress;
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
-use WeBWorK::Utils::Grades qw/list_set_versions/;
 use WeBWorK::DB; 
 
 
@@ -47,15 +43,13 @@ sub initialize {
 	my $deleteUserID = $r->param('deleteUser') || "";	
 	my $deleteSetID = $r->param('deleteSet') || ""; 	
 
-#Add modal to confirm delete in both cases.
+	return unless $authz->hasPermissions($user, "access_instructor_tools");
+
 	if($deleteUserID){
 		$db->deleteUser($deleteUserID);
 	} elsif ($deleteSetID) {
 		$db->deleteGlobalSet($deleteSetID);
 	}
- 	
- 	# Check permissions
-	return unless $authz->hasPermissions($user, "access_instructor_tools");
 }
 
 
@@ -94,24 +88,18 @@ sub body {
 	my $type       = $self->{type};
 
 	# Check permissions	
-	return CGI::div({class=>"ResultsWithError"}. CGI::p("You are not authorized to access instructor tools"))
-		unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::div({class=>"ResultsWithError"}. CGI::p("You are not authorized to access instructor tools")) unless $authz->hasPermissions($user, "access_instructor_tools");
 		
-
-	print '<div id="confirm-delete-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="confirm-delete-modal" aria-hidden="true">
-  <div class="modal-header">    
-  </div>
-  <div class="modal-body">
-    <p>One fine body…</p>
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-    <a id="confirm-delete-button" class="btn btn-danger" href="#">Delete</a>
-  </div>
-</div>';
+	print CGI::div({-id=>"confirm-delete-modal", -class=>"modal hide fade", -tabindex=>"-1", -role=>"dialog", "aria-labelledby"=>"confirm-delete-modal", "aria-hidden"=>"true"},
+		CGI::div({-class=>"modal-header"},""),
+		CGI::div({-class=>"modal-body"},""),
+		CGI::div({-class=>"modal-footer"},
+			CGI::button({-class=>"btn", "data-dismiss"=>"modal", "aria-hidden"=>"true"}, "Close"),
+			CGI::a({-id=>"confirm-delete-button", -class=>"btn btn-danger", -href=>"#"}, "Delete")
+		)
+	);
 
 	$self->index;
-	
 
 	return '';
 
@@ -167,8 +155,7 @@ sub getStudentScores {
 		#    adding that yet, however, so this will continue to 
 		#    use assignment_type...
 		#
-		if ( defined($set->assignment_type) && 
-		     $set->assignment_type =~ /gateway/ ) { 
+		if ( defined($set->assignment_type) && $set->assignment_type =~ /gateway/ ) { 
 			my @vList = $db->listSetVersions($studentName,$setName);
 			# we have to have the merged set versions to 
 			#    know what each of their assignment types 
@@ -190,33 +177,16 @@ sub getStudentScores {
 			$setVersionsByID{$setName} = "None";
 		}
 	}
-	
-
-	#########################################################################################
-	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
-	my $effectiveUser = $studentRecord->user_id();
-	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
-			"&effectiveUser=$effectiveUser&key=".$r->param("key");
-
-	
-	# FIXME: why is the following not "print CGI::h3($fullName);"?  Hmm.
-	#print CGI::h3($fullName ), 
 
 	###############################################################
 	#  Print table
 	###############################################################
-
-	# FIXME I'm assuming the problems are all the same
-	# FIXME what does this mean?
 	
-	my @rows;
 	my $max_problems=0;
 	
 	my @scores = ();	
 	foreach my $setName (@allSetIDs)   {
-		my $act_as_student_set_url = "$root/$courseName/$setName/?user=".$r->param("user").
-			"&effectiveUser=$effectiveUser&key=".$r->param("key");
-		my $student_grade_cell_edit_url = "$root/$courseName/instructor/sets2/$setName/?editForUser=$effectiveUser&user=admin&key=".$r->param("key");
+		my $student_grade_cell_edit_url = "$root/$courseName/instructor/sets2/$setName/?user=".$r->param("user")."&key=".$r->param("key");
 		my $set = $setsByID{ $setName };
 		my $setID = $set->set_id();  #FIXME   setName and setID should be the same
 
@@ -224,38 +194,18 @@ sub getStudentScores {
 		#    are no versions, we acknowledge that the set exists
 		#    and the student hasn't attempted it; otherwise, we 
 		#    skip it and let the versions speak for themselves
-		if ( defined( $set->assignment_type() ) &&
-		     $set->assignment_type() =~ /gateway/ &&
-		     ref( $setVersionsByID{ $setName } ) ) {
+		if ( defined( $set->assignment_type() ) && $set->assignment_type() =~ /gateway/ && ref( $setVersionsByID{ $setName } ) ) {
 			if ( @{$setVersionsByID{$setName}} ) {
 				next;
 			} else {
-				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2nbsp($setID)), 
-						     CGI::td({colspan=>4}, CGI::em("No versions of this assignment have been taken."))) );
 				next;
 			}
 		}
-		# if the set has hide_score set, then we need to skip printing
-		#    the score as well
-		if ( defined( $set->hide_score ) &&
-		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
-		       ( $set->hide_score eq 'Y' || 
-			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
-			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2nbsp("${setID}_(test_" . $set->version_id . ")")), 
-					     CGI::td({colspan=>4}, CGI::em("Display of scores for this set is not allowed."))) );
-			next;
-		}
 
-		# otherwise, if it's a gateway, adjust the act-as url
 		my $setIsVersioned = 0;
 		if ( defined( $set->assignment_type() ) && 
 		     $set->assignment_type() =~ /gateway/ ) {
 			$setIsVersioned = 1;
-			if ( $set->assignment_type() eq 'proctored_gateway' ) {
-				$act_as_student_set_url =~ s/($courseName)\//$1\/proctored_quiz_mode\//;
-			} else {
-				$act_as_student_set_url =~ s/($courseName)\//$1\/quiz_mode\//;
-			}
 		}
 	   ##############################################
 	   # this segment requires @problemRecords, $db, $set
@@ -279,14 +229,6 @@ sub getStudentScores {
            $num_of_attempts, 
            $num_of_problems
            )   = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
-
-# 		warn "status $status  longStatus $longStatus string $string twoString 
-# 		      $twoString totalRight $totalRight, total $total num_of_attempts $num_of_attempts 
-# 		      num_of_problems $num_of_problems setName $setName";
-
-		
-		# prettify versioned set display
-		$setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
 	
 		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url},sprintf("%0.2f",$totalRight)));
 	
@@ -308,16 +250,17 @@ sub index {
 	my $root = $ce->{webworkURLs}->{root};		
 
 	my @myUsers = @studentList;
-#TODO: effectiveUser!!!
 	my @studentRecords = $db->getUsers(@myUsers);
 	my @sortedStudentRecords = sortRecords({fields=>[qw/last_name first_name user_id/]}, @studentRecords);
 		
 	my @setLinks      = ();
 	my @studentLinks  = (); 
+
+
 	foreach my $set (@setList) {		
-		my $setProgressUrl = "$root/$courseName/instructor/progress/set/$set/?user=admin&key=".$r->param("key");
-		my $setEditUrl = "$root/$courseName/instructor/sets2/?user=admin&effectiveUser=admin&key=".$r->param("key")."&editMode=1&visible_sets=$set		";
-		my $setDeleteUrl = "$root/$courseName/instructor/gradebook/?deleteSet=$set&user=admin&key=".$r->param("key");		
+		my $setProgressUrl = "$root/$courseName/instructor/progress/set/$set/?user=".$r->param("user")."&key=".$r->param("key");
+		my $setEditUrl = "$root/$courseName/instructor/sets2/$set/?user=".$r->param("user")."&key=".$r->param("key")."&editMode=1&visible_sets=$set		";
+		my $setDeleteUrl = "$root/$courseName/instructor/gradebook/?deleteSet=$set&user=".$r->param("user")."&key=".$r->param("key");		
 	    my $prettySetID = $set;
 	    $prettySetID =~ s/_/ /g;
 		push @setLinks, CGI::div({-class=>"dropdown"},
@@ -328,19 +271,17 @@ sub index {
 				CGI::li(CGI::a({-href=>$setDeleteUrl, -class=>"delete-assignment"},"Delete"))
 				)
 			);
-
-
 	}
 
 	foreach my $studentRecord (@sortedStudentRecords) {
 		my $first_name = $studentRecord->first_name;
 		my $last_name = $studentRecord->last_name;
 		my $user_id = $studentRecord->user_id;
-		my $studentProgressUrl = "$root/$courseName/instructor/progress/student/$user_id/?user=admin&key=".$r->param("key");
-		my $studentEditUrl = "$root/$courseName/instructor/users2/?".$r->param("key")."user=admin&effectiveUser=admin&editMode=1&visible_users=$user_id		";
-		my $studentDeleteUrl = "$root/$courseName/instructor/gradebook/?user=admin&deleteUser=$user_id&key=".$r->param("key");			
+		my $effectiveUser = $studentRecord->user_id();
+		my $studentProgressUrl = "$root/$courseName/instructor/progress/student/$user_id/?user=".$r->param("user")."&key=".$r->param("key");
+		my $studentEditUrl = "$root/$courseName/instructor/users2/?key=".$r->param("key")."&user=".$r->param("user")."&editMode=1&visible_users=$user_id		";
+		my $studentDeleteUrl = "$root/$courseName/instructor/gradebook/?user=".$r->param("user")."&deleteUser=$user_id&key=".$r->param("key");			
 
-#Add a confirm delete.
 		push @studentLinks, CGI::Tr({},CGI::td(
 			CGI::div({-class=>"dropdown"},
 			CGI::div({-class=>"btn btn-default dropdown-toggle btn-block", "data-toggle"=>"dropdown"}, "  $last_name, $first_name  ($user_id)" ),
