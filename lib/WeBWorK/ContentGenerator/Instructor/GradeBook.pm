@@ -41,7 +41,8 @@ sub initialize {
 	my $courseName = $urlpath->arg('courseID');
  	my $user       = $r->param('user'); 	
 	my $deleteUserID = $r->param('deleteUser') || "";	
-	my $deleteSetID = $r->param('deleteSet') || ""; 	
+	my $deleteSetID = $r->param('deleteSet') || ""; 
+	my $setVisibilityID = $r->param('setVisibility') || "";	
 
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 
@@ -49,6 +50,10 @@ sub initialize {
 		$db->deleteUser($deleteUserID);
 	} elsif ($deleteSetID) {
 		$db->deleteGlobalSet($deleteSetID);
+	} elsif ($setVisibilityID) {
+		my $set = $db->getGlobalSet($setVisibilityID);
+		$set->visible ? $set->visible("0") : $set->visible("1");
+		$db->putGlobalSet($set);
 	}
 }
 
@@ -229,7 +234,7 @@ sub getStudentScores {
            $num_of_problems
            )   = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
 	
-		my $percentCorrect = int($totalRight/$total*100 + 0.5)."%";
+		my $percentCorrect = $total ? int($totalRight/$total*100 + 0.5)."%" : "0%";
 		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url, -class=>"cell"},$percentCorrect));
 	
 	}
@@ -260,13 +265,17 @@ sub index {
 	foreach my $set (@setList) {		
 		my $setProgressUrl = "$root/$courseName/instructor/progress/set/$set/?user=".$r->param("user")."&key=".$r->param("key");
 		my $setEditUrl = "$root/$courseName/instructor/sets2/$set/?user=".$r->param("user")."&key=".$r->param("key")."&editMode=1&visible_sets=$set		";
-		my $setDeleteUrl = "$root/$courseName/instructor/gradebook/?deleteSet=$set&user=".$r->param("user")."&key=".$r->param("key");		
+		my $setDeleteUrl = "$root/$courseName/instructor/gradebook/?deleteSet=$set&user=".$r->param("user")."&key=".$r->param("key");
+		my $setVisibilityUrl = "$root/$courseName/instructor/gradebook/?setVisibility=$set&user=".$r->param("user")."&key=".$r->param("key");
+		my $setGlobal = $db->getGlobalSet($set);
+		my $setVisibility = !($setGlobal->visible) ? "hidden-from-students" : "";
 	    my $prettySetID = $set;
 	    $prettySetID =~ s/_/ /g;
 		push @setLinks, CGI::div({-class=>"dropdown"},
-			CGI::div({-class=>"btn btn-default dropdown-toggle", "data-toggle"=>"dropdown"}, $prettySetID),
+			CGI::div({-class=>"btn btn-default dropdown-toggle $setVisibility", "data-toggle"=>"dropdown"}, $prettySetID),
 			CGI::ul({-class=>"dropdown-menu"},
 				CGI::li(CGI::a({-href=>$setProgressUrl},"Progress")),
+				CGI::li(CGI::a({-href=>$setVisibilityUrl}, $setGlobal->visible ? "Hide" : "Show")),
 				CGI::li(CGI::a({-href=>$setEditUrl},"Edit")),
 				CGI::li(CGI::a({-href=>$setDeleteUrl, -class=>"delete-assignment"},"Delete"))
 				)
