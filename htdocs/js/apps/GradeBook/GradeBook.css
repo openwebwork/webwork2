@@ -1,3 +1,7 @@
 .cell {
 	float: right;
 }
+
+.hidden-from-students {
+	font-style: italic;
+}
