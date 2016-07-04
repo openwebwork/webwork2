@@ -102,7 +102,7 @@ sub getCourseSettings {
 				}
 				$setting->{value} = eval('$ce->' . $string);
 				if ($hash->{var} eq 'defaultTheme'){
-					$setting->{value} = $themes;	
+            		$setting->{value} = eval('vars->{ce}->' . $string);		
 				}
 				$setting->{category} = $category;
 

@@ -10,7 +10,6 @@ function(Backbone, _,config){
             _.bindAll(this,'render');
             this.settings = options.settings;
             this.rowTemplate = _.template($("#row-setting-template").html());
-
             _(this.settings).each(function(setting){
                 setting.on("change", function (model) {
                     model.save();
