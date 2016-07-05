@@ -2308,7 +2308,7 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-	my @problemIDList = $db->listGlobalProblems($setID);
+        my @problemIDList = sort {$a <=> $b} $db->listGlobalProblems($setID);
 	
 	# DBFIXME use iterators instead of getting all at once
 	
