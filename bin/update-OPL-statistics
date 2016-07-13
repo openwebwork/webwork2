@@ -24,6 +24,7 @@ BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
 	   unless($ENV{WEBWORK_ROOT});}
 use lib "$ENV{WEBWORK_ROOT}/lib";
 use WeBWorK::CourseEnvironment;
+use String::ShellQuote;
 
 # hack to set version so that the script runs without warnings in 
 # earlier versions of WeBWorK, e.g. WW 2.7
@@ -192,11 +193,16 @@ if (-e $global_sql_file) {
   my $dbuser = $ce->{database_username};
   my $dbpass = $ce->{database_password};
 
+  
   $dbh->do(<<EOS);
 DROP TABLE IF EXISTS OPL_global_statistics;
 EOS
   $dbh->commit();
 
+  $dbuser = shell_quote($dbuser);
+  $dbpass = shell_quote($dbpass);
+  $db = shell_quote($db);
+  
   my $mysql_command = $ce->{externalPrograms}->{mysql};  
   
   `$mysql_command -h $host -u $dbuser -p$dbpass $db < $global_sql_file`;
