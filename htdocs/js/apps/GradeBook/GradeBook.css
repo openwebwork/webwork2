@@ -5,3 +5,11 @@
 .hidden-from-students {
 	font-style: italic;
 }
+
+.gradebook-menu{
+	margin-top: 10px;
+}
+
+th.column-set ul.dropdown-menu{
+	text-align: left;
+}

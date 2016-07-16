@@ -190,7 +190,7 @@ sub getStudentScores {
 	
 	my @scores = ();	
 	foreach my $setName (@allSetIDs)   {
-		my $student_grade_cell_edit_url = "$root/$courseName/instructor/sets2/$setName/?user=".$r->param("user")."&key=".$r->param("key");
+		my $student_grade_cell_edit_url = "$root/$courseName/instructor/sets2/$setName/?editForUser=".$studentName."&user=".$r->param("user")."&key=".$r->param("key");
 		my $set = $setsByID{ $setName };
 		my $setID = $set->set_id();  #FIXME   setName and setID should be the same
 
@@ -272,7 +272,7 @@ sub index {
 	    my $prettySetID = $set;
 	    $prettySetID =~ s/_/ /g;
 		push @setLinks, CGI::div({-class=>"dropdown"},
-			CGI::div({-class=>"btn btn-default dropdown-toggle $setVisibility", "data-toggle"=>"dropdown"}, $prettySetID),
+			CGI::div({-class=>"btn btn-default dropdown-toggle $setVisibility column-name", "data-toggle"=>"dropdown"}, $prettySetID),
 			CGI::ul({-class=>"dropdown-menu"},
 				CGI::li(CGI::a({-href=>$setProgressUrl},"Progress")),
 				CGI::li(CGI::a({-href=>$setVisibilityUrl}, $setGlobal->visible ? "Hide" : "Show")),
@@ -293,7 +293,7 @@ sub index {
 
 		push @studentLinks, CGI::Tr({},CGI::td(
 			CGI::div({-class=>"dropdown"},
-			CGI::div({-class=>"btn btn-default dropdown-toggle btn-block", "data-toggle"=>"dropdown"}, "  $last_name, $first_name  ($user_id)" ),
+			CGI::div({-class=>"btn btn-default dropdown-toggle btn-block row-name", "data-toggle"=>"dropdown"}, "  $last_name, $first_name  ($user_id)" ),
 			CGI::ul({-class=>"dropdown-menu"},
 				CGI::li(CGI::a({-href=>$studentProgressUrl},"Progress")),
 				CGI::li(CGI::a({-href=>$studentEditUrl},"Edit")),
@@ -303,15 +303,24 @@ sub index {
 			, $self->getStudentScores($studentRecord->user_id)));	
 				                                                     
 	}
+
 	print join("",
-		CGI::start_table({-class=>"gradebook table-striped",-border=>2}),
+		CGI::start_table({-id=>"gradebook", -class=>"gradebook table-striped",-border=>2}),
 		CGI::Tr({},
-			CGI::td({-class=>"column-name"},'Student'),
-			CGI::td({-class=>"column-set",-valign=>'top'}, [@setLinks]) 
+			CGI::th({-class=>"column-name"},'Student'),
+			CGI::th({-class=>"column-set",-valign=>'top'}, [@setLinks]) 
 		),
 		@studentLinks,
 		CGI::end_table(),
 	);
+
+	print CGI::div({-class=>"dropdown gradebook-menu"},
+			CGI::div({-class=>"btn btn-default dropdown-toggle", "data-toggle"=>"dropdown"}, "Menu" ),
+			CGI::ul({-class=>"dropdown-menu"},			
+				CGI::li(CGI::a({-href=>"$root/$courseName/instructor/setmaker/?user=".$r->param("user")."&key=uEK5QI4vbvXsQX5r8sA6S1XlJ67TmC4z"},"Add assignment")),
+				CGI::li(CGI::a({-id=>"export", -href=>"#"},"Export to CSV"))
+				)
+		  );
 	
 }
 
