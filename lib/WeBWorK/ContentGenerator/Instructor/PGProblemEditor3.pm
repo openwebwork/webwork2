@@ -676,7 +676,7 @@ EOF
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
 		CGI::div({},$PG_Editor_Reference_String),
 		CGI::p(
-			CGI::textarea(
+			CGI::textarea( -id => "problemContents", 
 				-name => 'problemContents', 
 			        -class => 'latexentryfield',
 			        -default => $problemContents,
@@ -2063,6 +2063,32 @@ sub output_JS{
 	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	}
+
+	if ($ce->{options}->{PGCodeMirror}) {
+	  
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
+	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
+
+	  print CGI::start_script({type=>"text/javascript"});
+	  print <<'EOS';
+$(function () {
+
+    cm = CodeMirror.fromTextArea(
+	$("#problemContents")[0],
+	{mode: "plain/text",
+	 indentUnit: 4,
+	 tabMode: "spaces",
+         lineNumbers: true,
+         extraKeys:
+             {Tab: function(cm) {cm.execCommand('insertSoftTab')}},
+         inputStyle: "textarea",         
+    });
+    cm.setSize(700,400);
+
+});
+EOS
+          print CGI::end_script(); 
 	}
 	
 	return "";
