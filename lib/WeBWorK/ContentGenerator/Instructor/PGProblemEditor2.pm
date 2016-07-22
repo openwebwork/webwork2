@@ -2015,29 +2015,13 @@ sub output_JS{
 	if ($ce->{options}->{PGCodeMirror}) {
 	  
 	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PG.js"}), CGI::end_script();
 	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
 
-	  print CGI::start_script({type=>"text/javascript"});
-	  print <<'EOS';
-$(function () {
-
-    cm = CodeMirror.fromTextArea(
-	$("#problemContents")[0],
-	{mode: "plain/text",
-	 indentUnit: 4,
-	 tabMode: "spaces",
-         lineNumbers: true,
-         extraKeys:
-             {Tab: function(cm) {cm.execCommand('insertSoftTab')}},
-         inputStyle: "textarea",         
-    });
-    cm.setSize(700,400);
-
-});
-EOS
-          print CGI::end_script(); 
 	}
-	    
+	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor2/pgproblemeditor2.js"}), CGI::end_script();
+	
 	return "";
 }
 

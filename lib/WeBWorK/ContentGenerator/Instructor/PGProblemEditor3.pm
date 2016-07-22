@@ -2056,7 +2056,6 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
 
 	if ($ce->{options}->{PGMathView}) {
 	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
@@ -2068,28 +2067,12 @@ sub output_JS{
 	if ($ce->{options}->{PGCodeMirror}) {
 	  
 	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PG.js"}), CGI::end_script();
 	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
 
-	  print CGI::start_script({type=>"text/javascript"});
-	  print <<'EOS';
-$(function () {
-
-    cm = CodeMirror.fromTextArea(
-	$("#problemContents")[0],
-	{mode: "plain/text",
-	 indentUnit: 4,
-	 tabMode: "spaces",
-         lineNumbers: true,
-         extraKeys:
-             {Tab: function(cm) {cm.execCommand('insertSoftTab')}},
-         inputStyle: "textarea",         
-    });
-    cm.setSize(700,400);
-
-});
-EOS
-          print CGI::end_script(); 
 	}
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
 	
 	return "";
 }
