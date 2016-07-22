@@ -186,9 +186,11 @@ my $global_sql_file = $ce->{problemLibrary}{root}.'/OPL_global_statistics.sql';
 
 if (-e $global_sql_file) {
 
-  my ($dbi,$dbtype,$db,$host) = split(':',$ce->{database_dsn});
+  my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
   
   $host = 'localhost' unless $host;
+
+  $port = 3306 unless $port;
   
   my $dbuser = $ce->{database_username};
   my $dbpass = $ce->{database_password};
@@ -204,8 +206,8 @@ EOS
   $db = shell_quote($db);
   
   my $mysql_command = $ce->{externalPrograms}->{mysql};  
-  
-  `$mysql_command -h $host -u $dbuser -p$dbpass $db < $global_sql_file`;
+
+  `$mysql_command --host=$host --port=$port --user=$dbuser --password=$dbpass $db < $global_sql_file`;
 
 }
 
