@@ -127,6 +127,32 @@ sub save_string {
 	return('$'. $varname . " = '$newval';\n");
 }
 
+########################### configtextarea
+package configtextarea;
+@configtextarea::ISA = qw(configobject);
+
+sub save_string {
+	my ($self, $oldval, $newvalsource) = @_;
+	my $varname = $self->{var};
+	my $newval = $self->convert_newval_source($newvalsource);
+	my $displayoldval = $self->comparison_value($oldval);
+	return '' if($displayoldval eq $newval);
+	# Remove quotes from the string, we will have a new type for text with quotes	
+	return('$'. $varname . " = '$newval';\n");
+}
+
+sub entry_widget {
+	my ($self, $name, $default) = @_;
+
+	$default = "" if not defined($default);
+	return CGI::textarea(
+		-name => $name,
+		-rows => 5,
+		-value => $default,
+		-columns => 25,
+	);
+}
+
 ########################### configtimezone
 ########################### just like text, but it validates the timezone before saving
 package configtimezone;

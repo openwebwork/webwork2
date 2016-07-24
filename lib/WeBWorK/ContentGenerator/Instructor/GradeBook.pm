@@ -29,6 +29,7 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::DB; 
+use JSON;
 
 
 sub initialize {
@@ -104,6 +105,8 @@ sub body {
 			CGI::a({-id=>"confirm-delete-button", -class=>"btn btn-danger", -href=>"#"}, "Delete")
 		)
 	);
+
+	print CGI::div({-id=>"gradebook-config", -style=>"display:none;"}, $ce->{gradebookConfig});
 
 	$self->index;
 
@@ -235,7 +238,7 @@ sub getStudentScores {
            )   = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
 	
 		my $percentCorrect = $total ? int($totalRight/$total*100 + 0.5)."%" : "0%";
-		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url, -class=>"cell"},$percentCorrect));
+		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url, -class=>"cell ". $set->assignment_type()},$percentCorrect));
 	
 	}
 

@@ -1,9 +1,25 @@
 /* GradeBook.js
 
-   Handles some minor dynamic functionality on the GradeBook page (i.e. Delete Modals). 
+   Handles some minor UI on the GradeBook page (i.e. Delete Modals, export to csv). 
+
 */
 
+
 $(document).ready(function(){
+
+//Gradebook Config (includes grading formula)
+	var gc = JSON.parse($('#gradebook-config').text());
+	// // preserve newlines, etc - use valid JSON
+	// gc = gc.replace(/\\n/g, "\\n")  
+	//                .replace(/\\'/g, "\\'")
+	//                .replace(/\\"/g, '\\"')
+	//                .replace(/\\&/g, "\\&")
+	//                .replace(/\\r/g, "\\r")
+	//                .replace(/\\t/g, "\\t")
+	//                .replace(/\\b/g, "\\b")
+	//                .replace(/\\f/g, "\\f");
+	// // remove non-printable and other non-valid JSON chars
+	// gc = gc.replace(/[\u0000-\u0019]+/g,""); 
 
 	$( '.delete-student' ).on('click', function(e){
 			e.preventDefault();
@@ -24,6 +40,64 @@ $(document).ready(function(){
 			$('#confirm-delete-button').attr("href",deleteUrl);
 			$('#confirm-delete-modal').modal();
 	});
+//Grading Utility
+	function calculateCourseGrades($myTable){
+		var $headers = $myTable.find('tr:has(th)'),
+			$rows = $myTable.find('tr:has(td)');
+		$headers.append('<th><div>Course Grades</div></th>');		
+		$.each( $rows ,function(index, value){
+			var courseGrade = 0,
+				studentRecord = $(value);
+			$.each(gc, function(key, val){
+				var filteredScores = $.map($(studentRecord).find("."+key), function(value, index){
+					return parseInt($(value).text());
+				});
+				
+				if(filteredScores.length > 0 ){
+					if(filteredScores.length > val.numberToDrop){
+						filteredScores = filteredScores.sort(function(a, b){return a-b}).slice(val.numberToDrop,filteredScores.length);									
+					} 
+					filteredScores.sum = filteredScores.reduce(function(prevVal,curVal){
+						return prevVal + curVal;
+					});
+					filteredScores.average = filteredScores.sum / filteredScores.length;
+				} else {
+					filteredScores.sum = 0;
+					filteredScores.average = 0;
+				}
+
+				courseGrade = courseGrade +	filteredScores.average * val.categoryWeight;		
+			});
+
+			$(studentRecord).append('<td><span class="course-grade">'+courseGrade+'%</span></td>');
+		});
+	}
+
+	calculateCourseGrades($('#gradebook'));
+	// 	{
+	// 	"custom_final":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_midterm":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_hw":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_labs":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_class_participation":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_test":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_quiz":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_exam":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_discussion":
+	// 		{"categoryWeight": 0, "numberToDrop": 0},
+	// 	"custom_oces":
+	// 		{"categoryWeight": 0, "numberToDrop": 0}
+	// }
+
+//CSV	
 
     function exportTableToCSV($myTable, filename) {
     	var $table = $myTable.clone(),
