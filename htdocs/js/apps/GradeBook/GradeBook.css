@@ -13,3 +13,7 @@
 th.column-set ul.dropdown-menu{
 	text-align: left;
 }
+
+.course-grade {
+	float: right;
+}
