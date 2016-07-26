@@ -8,7 +8,9 @@ $(function () {
          lineNumbers: true,
          extraKeys:
              {Tab: function(cm) {cm.execCommand('insertSoftTab')}},
-         inputStyle: "textarea",         
+	 highlightSelectionMatches: true,
+	 matchBrackets: true,
+	 
     });
     cm.setSize(700,400);
 
