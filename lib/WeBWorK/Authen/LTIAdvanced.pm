@@ -396,9 +396,9 @@ sub authenticate {
       debug("OAuth verification Failed ");
       
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-      $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
+      $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL.";
       if ( $ce->{debug_lti_parameters} ) {
-	warn("OAuth verification failed.  Check the Consumer Secret.");
+	warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL.");
       }
       return 0;
     } else {
