@@ -360,10 +360,13 @@ sub authenticate {
 
   # We need to provide the request URL when verifying the OAuth request.
   # We use the url request by default, but also allow it to be overriden
-  my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
+  my $path = $ce->{server_root_url}.$ce->{webwork_url};
   $path = $ce->{LTIBasicToThisSiteURL} ? 
     $ce->{LTIBasicToThisSiteURL} : $path;
 
+  # append the path the the server url
+  $path = $path.$r->urlpath()->path;
+  
   # We also try a version without the trailing / in case that was not
   # included when the LMS user created the LMS link 
   my $altpath = $path;
