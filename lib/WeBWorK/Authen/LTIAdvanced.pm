@@ -398,7 +398,7 @@ sub authenticate {
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
       $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
       if ( $ce->{debug_lti_parameters} ) {
-	warn("OAuth verification failed.  Check the Consumer Secret.");
+	warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the LMS url then you have https in \$server_root_url in site.conf");
       }
       return 0;
     } else {
