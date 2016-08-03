@@ -521,13 +521,13 @@ sub print_navigation_tabs {
 	my $str = '';
 	for my $tab (0..(scalar(@tab_names)-1)) {
 		if($current_tab eq "tab$tab") {
-			$tab_names[$tab] = $tab_names[$tab];
+			$tab_names[$tab] = $r->maketext($tab_names[$tab]);
 		} else {
-			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $tab_names[$tab]);
+			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]));
 		}
 	}
 	print CGI::p() .
-		'<div align="center">' . join('&nbsp;|&nbsp;', map {$r->maketext($_)} @tab_names) .'</div>'.
+		'<div align="center">' . join('&nbsp;|&nbsp;', @tab_names) .'</div>'.
 		CGI::p();
 }
 
