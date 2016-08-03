@@ -473,39 +473,125 @@ CodeMirror.defineMode("PG",function(){
         var RXstyle="string-2";
         var RXmodifiers=/[goseximacplud]/;              // NOTE: "m", "s", "y" and "tr" need to correct real modifiers for each regexp type
 
-        function tokenChain(stream,state,chain,style,tail){     // NOTE: chain.length > 2 is not working now (it's for s[...][...]geos;)
-                state.chain=null;                               //                                                          12   3tail
-                state.style=null;
-                state.tail=null;
-                state.tokenize=function(stream,state){
-                        var e=false,c,i=0;
-                        while(c=stream.next()){
-                                if(c===chain[i]&&!e){
-                                        if(chain[++i]!==undefined){
-                                                state.chain=chain[i];
-                                                state.style=style;
-                                                state.tail=tail;}
-                                        else if(tail)
-                                                stream.eatWhile(tail);
-                                        state.tokenize=tokenPerl;
-                                        return style;}
-                                e=!e&&c=="\\";}
-                        return style;};
-                return state.tokenize(stream,state);}
+    function tokenChain(stream,state,chain,style,tail,tokener){     // NOTE: chain.length > 2 is not working now (it's for s[...][...]geos;)
+        state.chain=null;
+        state.style=null;
+        state.tail=null;
 
-        function tokenSOMETHING(stream,state,string){
-                state.tokenize=function(stream,state){
-                        if(stream.string==string)
-                                state.tokenize=tokenPerl;
-                        stream.skipToEnd();
-                        return "string";};
-                return state.tokenize(stream,state);}
+        state.tokenize=function(stream,state){
+            var e=false,c,i=0;
+            while(c=stream.next()){
+                if(c===chain[i]&&!e){
+                    if(chain[++i]!==undefined){
+                        state.chain=chain[i];
+                        state.style=style;
+                        state.tail=tail;}
+                    else if(tail)
+                        stream.eatWhile(tail);
+                    state.tokenize=tokener || tokenPerl;
+                    return style;}
+                e=!e&&c=="\\";}
+            return style;};
+        return state.tokenize(stream,state);}
+    
+    function tokenSOMETHING(stream,state,string){
+        state.tokenize=function(stream,state){
+            if(stream.string==string)
+                state.tokenize=tokenPerl;
+            stream.skipToEnd();
+            return "string";};
+        return state.tokenize(stream,state);}
+
+    function tokenEV3(stream,state,string) {
+	state.tokenize=function(stream,state) {
+
+	    var thisEV3 = function(stream,state) {
+		return tokenEV3(stream,state,string);
+	    }
+	    
+	    if(stream.eatSpace())
+                return null;
+
+            if(state.chain)
+                return tokenChain(stream,state,state.chain,state.style,state.tail,thisEV3,string);
+
+	    if(stream.string==string) {
+		state.tokenize=tokenPerl;
+	    }
+
+	    if (stream.match(/^\\\(/)) {
+		return tokenChain(stream,state,["\\",")"],"comment",null,thisEV3);
+	    }
+
+	    if (stream.match(/^\\\[/)) {
+		return tokenChain(stream,state,["\\","]"],"comment",null,thisEV3);
+	    }
+		
+	    if (stream.match(/^\\{/)) {
+		return tokenChain(stream,state,["\\","}"],"string-2",null,thisEV3);
+	    }
+
+	    var ch = stream.next();
+
+	    if (ch =="$"){
+                var p=stream.pos;
+                if(stream.eatWhile(/\w/)||stream.eat("{")&&stream.eatWhile(/\w/)&&stream.eat("}")) {
+                    return "variable";
+                } else {
+                    stream.pos=p;
+		}
+	    }
+
+	    stream.eatWhile(/[^\$\\]/);
+
+	    return "string";};
+	return state.tokenize(stream,state);
+
+    }
+
+    
+    function tokenPGML(stream,state,string) {
+	state.tokenize=function(stream,state) {
+	    
+	    var thisPGML = function(stream,state) {
+		return tokenPGML(stream,state,string);
+	    }
+
+	    if (stream.match(/^ +$/)) {
+		stream.eatSpace();
+		return "trailingspace";
+	    } else if (stream.eatSpace())
+                return null;
+	    
+            if(state.chain)
+                return tokenChain(stream,state,state.chain,state.style,state.tail,thisPGML,string);
+	
+	    if (stream.string==string) {
+		state.tokenize=tokenPerl;
+	    } else if (stream.match(/^\[(:|`)/)) {
+		return tokenChain(stream,state,[stream.current().substr(1),"]"],"comment",'*',thisPGML);
+	    } else if (stream.match(/^\[(\||%)/)) {
+		return tokenChain(stream,state,[stream.current().substr(1),"]"],"bracket",'*',thisPGML);
+	    } else if (stream.match(/^\[@/)) {
+		return tokenChain(stream,state,["@","]"],"string-2",'*',thisPGML);
+	    } else if (stream.match(/^\[\$/)) {
+		return tokenChain(stream,state,["]"],"variable",'*',thisPGML);
+	    } else if (stream.match(/^\[/)) {
+		stream.next();
+	    }
+		
+	    stream.eatWhile(/[^\[ ]/);;
+
+	    return "string";};
+	return state.tokenize(stream,state);
+
+    }
 
         function tokenPerl(stream,state){
                 if(stream.eatSpace())
                         return null;
                 if(state.chain)
-                        return tokenChain(stream,state,state.chain,state.style,state.tail);
+                    return tokenChain(stream,state,state.chain,state.style,state.tail,tokenPerl);
                 if(stream.match(/^\-?[\d\.]/,false))
                         if(stream.match(/^(\-?(\d*\.\d+(e[+-]?\d+)?|\d+\.\d*)|0x[\da-fA-F]+|0b[01]+|\d+(e[+-]?\d+)?)/))
                                 return 'number';
@@ -517,27 +603,27 @@ CodeMirror.defineMode("PG",function(){
 
 	    if(stream.match(/^BEGIN_TEXT/)) {
 		stream.eatWhile(/\w/);
-		return tokenSOMETHING(stream,state,"END_TEXT");
+		return tokenEV3(stream,state,"END_TEXT");
 	    }
 	    if(stream.match(/^BEGIN_HINT/)) {
 		stream.eatWhile(/\w/);
-		return tokenSOMETHING(stream,state,"END_HINT");
+		return tokenEV3(stream,state,"END_HINT");
 	    }
 	    if(stream.match(/^BEGIN_SOLUTION/)) {
 		stream.eatWhile(/\w/);
-		return tokenSOMETHING(stream,state,"END_SOLUTION");
+		return tokenEV3(stream,state,"END_SOLUTION");
 	    }
 	    if(stream.match(/^BEGIN_PGML/)) {
 		stream.eatWhile(/\w/);
-		return tokenSOMETHING(stream,state,"END_PGML");
+		return tokenPGML(stream,state,"END_PGML");
 	    }
 	    if(stream.match(/^BEGIN_PGML_SOLUTION/)) {
 		stream.eatWhile(/\w/);
-		return tokenSOMETHING(stream,state,"END_PGML_SOLUTION");
+		return tokenPGML(stream,state,"END_PGML_SOLUTION");
 	    }
 	    if(stream.match(/^BEGIN_PGML_HINT/)) {
 		stream.eatWhile(/\w/);
-		return tokenSOMETHING(stream,state,"END_PGML_HINT");
+		return tokenPGML(stream,state,"END_PGML_HINT");
 	    }
 	    
 
@@ -798,7 +884,7 @@ CodeMirror.defineMode("PG",function(){
                                         return "meta";}
                         else
                                 return "meta";}
-                return null;}
+            return null;}
 
         return {
             startState: function() {
