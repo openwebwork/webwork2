@@ -919,9 +919,26 @@ sub nfreeze_base64 {
 }
 
 sub thaw_base64 {
-    return thaw(decode_base64(shift));
-}
+    my $string = shift;
 
+    if ($string =~ m{
+    ^
+    (?: [A-Za-z0-9+/]{4} )*
+    (?:
+        [A-Za-z0-9+/]{2} [AEIMQUYcgkosw048] =
+    |
+        [A-Za-z0-9+/] [AQgw] ==
+    )?
+    \z
+}x) {
+	return thaw(decode_base64($string));
+    } else {
+	# this is a hack to allow servers to transition over from non
+	# base64 frozen things to base64 ones with minimal pain
+	return thaw($string);
+    }
+
+}
 sub max(@) {
 	my $soFar;
 	foreach my $item (@_) {
