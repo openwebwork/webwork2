@@ -414,8 +414,7 @@ sub assign_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 
-	return join("",
-		    $r->maketext("Assign")." ",
+	return $r->maketext("Assign [_1] to all users, create global data, and [_2].",
 		CGI::popup_menu(
 			-name => "action.assign.scope",
 			-values => [qw(all selected)],
@@ -426,7 +425,6 @@ sub assign_form {
 			},
 			-onchange => $onChange,
 		),
-		    " ".$r->maketext("to all users, create global data, and")." ",
    		CGI::popup_menu(
 			-name => "action.assign.overwrite",
 			-values => [qw(everything new_only)],
@@ -436,8 +434,7 @@ sub assign_form {
 				new_only => $r->maketext("preserve existing data"),
 			},
 			-onchange => $onChange,
-		),
-
+		)
 	);
 }
 
