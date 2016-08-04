@@ -553,78 +553,109 @@
 
 	}
 
-	function tokenPGML(stream,state,string,prevState) {
-	    state.tokenize=function(stream,state) {
+	function tokenPGML(stream,state,string,style,prevState) {
+	    state.tokenize = function(stream,state) {
 
-		if (!state.style) {
-		    state.style = "block-quote";
-		}
-		
-		var thisPGML = function(stream,state) {
-		    return tokenPGML(stream,state,string);
-		}
-
-		if (stream.match(/^ +$/)) {
-		    stream.eatSpace();
-		    return "trailingspace";
-		}
-		
 		var reg = new RegExp("^"+string);
+
 		if (stream.match(reg)) {
 		    if (!prevState) {
 			state.tokenize = tokenPerl;
 		    } else {
-			stream.eatWhile(reg);
 			state.tokenize = function (stream,state) {
-			    tokenPGML(stream,prevState,prevState.string,prevState.prevState);
+			    return tokenPGML(stream,state,
+					     prevState.string,
+					     prevState.style,
+					     prevState.prevState);
 			}
-			return state.style;
+		    }
+
+		    return style;
+		} else {
+
+		    state.tokenize = function (stream,state) {
+			return tokenPGML(stream,state,
+					 string,style,prevState);
 		    }
 		}
 
+		var newPrevState = {};
+		
 		if (prevState) {
-		    prevState.prevState = prevState;
+		    var strValue = JSON.stringify(prevState)
+		    newPrevState.prevState = JSON.parse(strValue);
 		} else {
-		    prevState = {};
+		    newPrevState.prevState = null;
 		}
-		console.log(state.style);
-		prevState.style = state.style;
-		prevState.string = string;
+
+		newPrevState.style = style;
+		newPrevState.string = string;
 
 		if (stream.match(/^\[:/)) {
-		    stream.eatWhile("[:");
-		    state.style = "variable-3";
-		    return tokenPGML(stream,state,":\\]",prevState);
+		    style = "variable-3";
+		    state.tokenize = function (stream,state) {
+			return tokenPGML(stream,state,":\\]",
+					 style,
+					 newPrevState);
+		    }
+		    return style;
 		} else if (stream.match(/^\[`/)) {
-		    stream.eatWhile("[`");
-		    state.style = "comment";
-		    return tokenPGML(stream,state,"`\\]",prevState);
+		    style = "comment";
+		    state.tokenize = function (stream,state) {
+			return tokenPGML(stream,state,"`\\]",
+					 style,
+					 newPrevState);
+		    }
+		    return style;
 		} else if (stream.match(/^\[\|/)) {
-		    stream.eatWhile("[|");
-		    state.style = "tag";
-		    return tokenPGML(stream,state,"\\|\\]",prevState);
+		    style = "tag";
+		    state.tokenize = function (stream,state) {
+			return tokenPGML(stream,state,"\\|\\]",
+					 style,
+					 newPrevState);
+		    }
+		    return style;
 		} else if (stream.match(/^\[%/)) {
-		    stream.eatWhile("[%");
-		    state.style = "bracket";
-		    return tokenPGML(stream,state,"%\\]",prevState);
+		    style = "bracket";
+		    state.tokenize = function (stream,state) {
+			return tokenPGML(stream,state,"%\\]",
+					 style,
+					 newPrevState);
+		    }
+		    return style;
 		} else if (stream.match(/^\[@/)) {
-		    stream.eatWhile("[@");
-		    state.style = "variable-2";
-		    return tokenPGML(stream,state,"@\\]",prevState);
+		    style = "variable-2";
+		    state.tokenize = function (stream,state) {
+			return tokenPGML(stream,state,"@\\]",
+					 style,
+					 newPrevState);
+		    }
+		    return style;
 		} else if (stream.match(/^\[\$/)) {
-		    stream.eatWhile("[$");
-		    state.style = "variable";
-		    return tokenPGML(stream,state,"\\]",prevState);
-		} else if (stream.match(/^\[_+\]/)) {
+		    style = "variable";
+		    state.tokenize = function (stream,state) {
+			return tokenPGML(stream,state,"]",
+					 style,
+					 newPrevState);
+		    }
+		    return style;
+		} else if (stream.match(/^\[_+\]/,false)) {
 		    stream.eatWhile(/\[_+\]\{/);
-		    return tokenChain(stream,state,["}"],"builtin",tokenPGML);
+		    var thisPGML = function (stream,state) {
+			return tokenPGML(stream,state,string,style,prevState);
+		    }
+		    return tokenChain(stream,state,["}"],"builtin",
+				      null,thisPGML);
+		} else if (stream.match(/^ +$/)) {
+		    return "trailingspace";
 		} else if (stream.match(/^[\[\] :\|@%`]/)) {
-		    stream.next();
+		    return style;
 		}
 		
-		stream.eatWhile(/[^\[\] :\|@%`]/);;
+		stream.eatWhile(/[^\[\] :\|@%`]/);
 
-		return state.style || "block-quote";};
+		return style;
+	    };
 	    
 	    return state.tokenize(stream,state);
 
@@ -659,15 +690,17 @@
 	    }
 	    if(stream.match(/^BEGIN_PGML/)) {
 		stream.eatWhile(/\w/);
-		return tokenPGML(stream,state,"END_PGML");
+		return tokenPGML(stream,state,"END_PGML","block-quote");
 	    }
 	    if(stream.match(/^BEGIN_PGML_SOLUTION/)) {
 		stream.eatWhile(/\w/);
-		return tokenPGML(stream,state,"END_PGML_SOLUTION");
+		return tokenPGML(stream,state,"END_PGML_SOLUTION",
+				 "block-quote");
 	    }
 	    if(stream.match(/^BEGIN_PGML_HINT/)) {
 		stream.eatWhile(/\w/);
-		return tokenPGML(stream,state,"END_PGML_HINT");
+		return tokenPGML(stream,state,"END_PGML_HINT",
+				"block-quote");
 	    }
 	    
 	    
