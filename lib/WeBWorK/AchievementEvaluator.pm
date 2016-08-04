@@ -26,12 +26,10 @@ use base qw(WeBWorK);
 use strict;
 use warnings;
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(before after readFile sortAchievements);
+use WeBWorK::Utils qw(before after readFile sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::Tags;
 
 use WWSafe;
-use Storable qw(nfreeze thaw);
-use Encode qw(encode_utf8 );
 
 sub checkForAchievements {
 
@@ -119,9 +117,10 @@ sub checkForAchievements {
     #Methods alowed in the safe container
     $compartment->permit(qw(time localtime));
 
-    #Thaw globalData hash
-    if ($globalUserAchievement->frozen_hash) {       
-		$globalData = thaw($globalUserAchievement->frozen_hash);
+    #Thaw_Base64 globalData hash
+    if ($globalUserAchievement->frozen_hash) {
+
+		$globalData = thaw_base64($globalUserAchievement->frozen_hash);
     }
 
     #Update a couple of "standard" variables in globalData hash.
@@ -218,9 +217,9 @@ sub checkForAchievements {
 	my $setType = $set->assignment_type;
 	next unless $achievement->assignment_type =~ /$setType/;
 
-	#thaw localData hash
+	#thaw_base64 localData hash
 	if ($userAchievement->frozen_hash) {
-	    $localData = thaw($userAchievement->frozen_hash);
+	    $localData = thaw_base64($userAchievement->frozen_hash);
 	}
 
 	#recover counter information (for progress bar achievements)
@@ -311,15 +310,15 @@ sub checkForAchievements {
 	    $achievementPoints += $points;
 	}    
 	
-	#update counter, nfreeze localData and store
+	#update counter, nfreeze_base64 localData and store
 	$userAchievement->counter($counter);
-	$userAchievement->frozen_hash(encode_utf8(nfreeze($localData)));	
+	$userAchievement->frozen_hash(nfreeze_base64($localData));	
 	$db->putUserAchievement($userAchievement);
 	
     }  #end for loop
     
-    #nfreeze globalData and store
-    $globalUserAchievement->frozen_hash(encode_utf8(nfreeze($globalData)));
+    #nfreeze_base64 globalData and store
+    $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     if ($cheevoMessage) {

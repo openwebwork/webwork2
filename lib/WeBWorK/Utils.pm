@@ -41,6 +41,7 @@ use File::Path qw(rmtree);
 use Storable;
 use Carp;
 use Mail::Sender;
+use Storable qw(nfreeze thaw);
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -81,6 +82,7 @@ our @EXPORT_OK = qw(
 	listFilesRecursive
 	makeTempDirectory
 	max
+        nfreeze_base64
 	not_blank
 	parseDateTime
 	path_is_subdir
@@ -96,6 +98,7 @@ our @EXPORT_OK = qw(
 	textDateTime
 	timeToSec
 	trim_spaces
+        thaw_base64
 	undefstr
 	writeCourseLog
 	writeLog
@@ -909,6 +912,14 @@ sub encodeAnswers(\%\@) {
 
 sub encode_utf8_base64 {
     return encode_base64(encode_utf8(shift));
+}
+
+sub nfreeze_base64 {
+    return encode_base64(nfreeze(shift));
+}
+
+sub thaw_base64 {
+    return thaw(decode_base64(shift));
 }
 
 sub max(@) {
