@@ -414,8 +414,7 @@ sub assign_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 
-	return join("",
-		    $r->maketext("Assign")." ",
+	return $r->maketext("Assign [_1] to all users, create global data, and [_2].",
 		CGI::popup_menu(
 			-name => "action.assign.scope",
 			-values => [qw(all selected)],
@@ -426,7 +425,6 @@ sub assign_form {
 			},
 			-onchange => $onChange,
 		),
-		    " ".$r->maketext("to all users, create global data, and")." ",
    		CGI::popup_menu(
 			-name => "action.assign.overwrite",
 			-values => [qw(everything new_only)],
@@ -436,8 +434,7 @@ sub assign_form {
 				new_only => $r->maketext("preserve existing data"),
 			},
 			-onchange => $onChange,
-		),
-
+		)
 	);
 }
 
@@ -770,8 +767,7 @@ sub import_form {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 
-	return join(" ",
-		$r->maketext("Import achievements from")." ",
+	return $r->maketext("Import achievements from [_1] assigning the achievements to [_2].",
 		CGI::popup_menu(
 			-name => "action.import.source",
 			-values => [ "", $self->getAxpList() ],
@@ -779,7 +775,6 @@ sub import_form {
 			-default => $actionParams{"action.import.source"}->[0] || "",
 		        -onchange => $onChange,
 		),
-		    $r->maketext("assigning the achievements to").' '.
 		    CGI::popup_menu(
 			-name => "action.import.assign",
 			-value => [qw(none all)],
@@ -789,7 +784,8 @@ sub import_form {
 			    none => $r->maketext("no users"),
 			},
 			-onchange => $onChange,
-		   ) );
+		   )
+	);
 }
 
 # handler for importing achievements
