@@ -364,6 +364,12 @@ sub authenticate {
   $path = $ce->{LTIBasicToThisSiteURL} ? 
     $ce->{LTIBasicToThisSiteURL} : $path;
 
+  if ( $ce->{debug_lti_parameters} ) {
+      warn("The following path was reconstructed by WeBWorK.  It should 
+match the path in the LMS:");
+      warn($path);
+  }
+  
   # We also try a version without the trailing / in case that was not
   # included when the LMS user created the LMS link 
   my $altpath = $path;
