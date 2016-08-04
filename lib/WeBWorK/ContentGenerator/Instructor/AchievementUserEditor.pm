@@ -221,7 +221,7 @@ sub body {
 	#Print unassign from everyone stuff
 	print CGI::p( CGI::hr(),
 				  CGI::div( {class=>'ResultsWithError'},
-					    $r->maketext("There is NO undo for this function.  Do not use it unless you know what you are doing!  When you unassign a student using this button, or by unchecking their name, you destroy all of the data for achievement $achievementID for this student."),
+					    $r->maketext("There is NO undo for this function.  Do not use it unless you know what you are doing!  When you unassign a student using this button, or by unchecking their name, you destroy all of the data for achievement [_1] for this student.", $achievementID),
 						CGI::br(),
 						CGI::submit({name=>"unassignFromAll", value=>$r->maketext("Unassign from All Users")}),
 						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->maketext('Read only'), 1=>$r->maketext('Allow unassign')}),
