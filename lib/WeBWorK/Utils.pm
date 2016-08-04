@@ -920,22 +920,17 @@ sub nfreeze_base64 {
 
 sub thaw_base64 {
     my $string = shift;
+    my $result;
 
-    if ($string =~ m{
-    ^
-    (?: [A-Za-z0-9+/]{4} )*
-    (?:
-        [A-Za-z0-9+/]{2} [AEIMQUYcgkosw048] =
-    |
-        [A-Za-z0-9+/] [AQgw] ==
-    )?
-    \z
-}x) {
-	return thaw(decode_base64($string));
+    eval {
+	$result = thaw(decode_base64($string));
+    };
+
+    if ($@) {
+	warn("Deleting corrupted achievement data.");
+	return {};
     } else {
-	# this is a hack to allow servers to transition over from non
-	# base64 frozen things to base64 ones with minimal pain
-	return thaw($string);
+	return $result;
     }
 
 }
