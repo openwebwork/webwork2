@@ -203,11 +203,12 @@ sub display_value {
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
+	my $r = $self->{Module}->r;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
 	my $displayoldval = $self->comparison_value($oldval);
 	return '' if($displayoldval eq $newval);
-	return('$'. $varname . " = " . ($newval eq 'True' ? 1 : 0) .";\n");
+	return('$'. $varname . " = " . ($newval eq $r->maketext("True") ? 1 : 0) .";\n");
 }
 
 sub entry_widget {
