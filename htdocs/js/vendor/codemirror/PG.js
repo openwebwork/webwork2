@@ -562,6 +562,8 @@
 		    if (!prevState) {
 			state.tokenize = tokenPerl;
 		    } else {
+			stream.eatWhile('*');
+			stream.match(/\{.*\}/);
 			state.tokenize = function (stream,state) {
 			    return tokenPGML(stream,state,
 					     prevState.string,
@@ -639,13 +641,10 @@
 					 newPrevState);
 		    }
 		    return style;
-		} else if (stream.match(/^\[_+\]/,false)) {
-		    stream.eatWhile(/\[_+\]\{/);
-		    var thisPGML = function (stream,state) {
-			return tokenPGML(stream,state,string,style,prevState);
-		    }
-		    return tokenChain(stream,state,["}"],"builtin",
-				      null,thisPGML);
+		} else if (stream.match(/^\[_+\]/)) {
+		    stream.eatWhile('*');
+		    stream.match(/\{.*\}/);
+		    return "builtin"
 		} else if (stream.match(/^ +$/)) {
 		    return "trailingspace";
 		} else if (stream.match(/^[\[\] :\|@%`]/)) {
