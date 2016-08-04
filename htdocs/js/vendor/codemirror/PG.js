@@ -480,10 +480,23 @@
 
 	    state.tokenize=function(stream,state){
 		var e=false,c,i=0;
+		console.log(chain);
 		while(c=stream.next()){
 		    if(c===chain[i]&&!e){
-			if(chain[++i]!==undefined){
+			if (chain[i+1]!==undefined) {
+			    console.log(look(stream));
+			    console.log(chain[i+1]);
+			}
+
+			if(chain[i+1]!==undefined &&
+			   look(stream) === chain[i+1]){
+			    console.log("in");
+			    i++;
 			    state.chain=chain[i];
+			    state.style=style;
+			    state.tail=tail;}
+			else if(chain[i+1]!==undefined) {
+			    state.chain=chain;
 			    state.style=style;
 			    state.tail=tail;}
 			else if(tail)
