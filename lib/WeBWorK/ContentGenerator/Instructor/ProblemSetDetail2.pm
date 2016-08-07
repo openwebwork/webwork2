@@ -226,7 +226,7 @@ use constant FIELD_PROPERTIES => {
 		name      => x("Assignment type"),
 		type      => "choose",
 		override  => "all",
-		choices   => [qw( default custom_final custom_midterm custom_hw custom_class_participation custom_test custom_quiz custom_exam custom_discussion custom_oces jitar)],
+		choices   => [qw( default custom_final custom_midterm custom_hw custom_labs custom_class_participation custom_test custom_quiz custom_exam custom_discussion custom_oces jitar)],
 		labels    => {	default => "homework",
 				custom_final => "final",
 				custom_midterm => "midterm",

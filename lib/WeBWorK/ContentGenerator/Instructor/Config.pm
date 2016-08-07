@@ -147,9 +147,9 @@ sub entry_widget {
 	$default = "" if not defined($default);
 	return CGI::textarea(
 		-name => $name,
-		-rows => 5,
+		-rows => 20,
 		-value => $default,
-		-columns => 25,
+		-columns => 80,
 	);
 }
 

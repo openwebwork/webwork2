@@ -9,17 +9,6 @@ $(document).ready(function(){
 
 //Gradebook Config (includes grading formula)
 	var gc = JSON.parse($('#gradebook-config').text());
-	// // preserve newlines, etc - use valid JSON
-	// gc = gc.replace(/\\n/g, "\\n")  
-	//                .replace(/\\'/g, "\\'")
-	//                .replace(/\\"/g, '\\"')
-	//                .replace(/\\&/g, "\\&")
-	//                .replace(/\\r/g, "\\r")
-	//                .replace(/\\t/g, "\\t")
-	//                .replace(/\\b/g, "\\b")
-	//                .replace(/\\f/g, "\\f");
-	// // remove non-printable and other non-valid JSON chars
-	// gc = gc.replace(/[\u0000-\u0019]+/g,""); 
 
 	$( '.delete-student' ).on('click', function(e){
 			e.preventDefault();
