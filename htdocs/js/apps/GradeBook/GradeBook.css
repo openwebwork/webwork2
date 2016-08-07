@@ -17,3 +17,11 @@ th.column-set ul.dropdown-menu{
 .course-grade {
 	float: right;
 }
+
+.grades-course-total td:nth-child(n+3){
+	border-bottom: 1px solid #dddddd;
+}
+
+#course-average {
+	border-right: 1px solid #dddddd;	
+}

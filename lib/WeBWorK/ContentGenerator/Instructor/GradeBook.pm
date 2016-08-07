@@ -79,7 +79,6 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBook.js"}), CGI::end_script();
-	print "<link href=\"$site_url/js/apps/GradeBook/GradeBook.css\" rel=\"stylesheet\" />";
 	return "";
 }
 
