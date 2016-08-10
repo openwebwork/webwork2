@@ -1,8 +1,9 @@
 $(function () {
 
     if (CodeMirror) {
+    
 	cm = CodeMirror.fromTextArea(
-	    $("#problemContents")[0],
+	    $("#achievementContents")[0],
 	    {mode: "PG",
 	     indentUnit: 4,
 	     tabMode: "spaces",
