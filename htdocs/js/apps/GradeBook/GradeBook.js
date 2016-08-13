@@ -8,7 +8,8 @@
 $(document).ready(function(){
 
 //Gradebook Config (includes grading formula)
-	var gc = JSON.parse($('#gradebook-config').text());
+	var gc = JSON.parse($('#gradebook-config').text()),
+        categoryAverages={};
 
 	$( '.delete-student' ).on('click', function(e){
 			e.preventDefault();
@@ -36,6 +37,7 @@ $(document).ready(function(){
 		$headers.append('<th><div>Course Grades</div></th>');		
 		$.each( $rows ,function(index, value){
 			var courseGrade = 0,
+				controlGrade = 0,
 				studentRecord = $(value);
 			$.each(gc, function(key, val){
 				var filteredScores = $.map($(studentRecord).find("."+key), function(value, index){
@@ -50,41 +52,19 @@ $(document).ready(function(){
 						return prevVal + curVal;
 					});
 					filteredScores.average = filteredScores.sum / filteredScores.length;
+					controlGrade = controlGrade + 100 * val.categoryWeight;
 				} else {
 					filteredScores.sum = 0;
 					filteredScores.average = 0;
 				}
 
 				courseGrade = courseGrade +	filteredScores.average * val.categoryWeight;		
+                categoryAverages[key] = filteredScores.average * val.categoryWeight;                
 			});
 
-			$(studentRecord).append('<td><span class="course-grade">'+courseGrade+'%</span></td>');
+			$(studentRecord).append('<td><span class="course-grade">'+ (controlGrade > 0 ? ( courseGrade/controlGrade *100 ).toFixed(2) : 0 )+'%</span></td>');
 		});
-	}
-
-	calculateCourseGrades($('#gradebook'));
-	// 	{
-	// 	"custom_final":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_midterm":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_hw":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_labs":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_class_participation":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_test":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_quiz":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_exam":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_discussion":
-	// 		{"categoryWeight": 0, "numberToDrop": 0},
-	// 	"custom_oces":
-	// 		{"categoryWeight": 0, "numberToDrop": 0}
-	// }
+	}	
 
 //CSV	
 
@@ -172,6 +152,10 @@ $(document).ready(function(){
         }
     }
 
+    function filterAssignents($myTable) {
+
+    }
+
 
     // This must be a hyperlink
     $("#export").click(function (event) {
@@ -184,6 +168,56 @@ $(document).ready(function(){
         
         // IF CSV, don't do event.preventDefault() or return false
         // We actually need this to be a typical hyperlink
+    });
+
+    // $("#filterAssignments").click(function( event ){
+    //     filerAssignments($('#gradebook'));
+    // });
+
+    function appendFilterMenu($myMenu) {
+        $myMenu.find('ul').append('<li class="dropdown-submenu"><a tabindex="-1" href="#">Filter</a><ul id="filter-assignments-submenu" class="dropdown-menu"></ul></li>');
+        var $subMenu = $myMenu.find('#filter-assignments-submenu');
+        $subMenu.append('<li class="showAll"><a href="#">Show all</a></li>');
+        $.each(gc, function( key, value){
+            $subMenu.append('<li class="'+key+'"><a href="#">'+key+'</a></li>');
+        });
+    }
+
+    function filterAssignments( className ){ 
+        if( className == "showAll"){       
+            $('#gradebook td a.cell').parent().show();
+            $('#gradebook th div').parent().show()
+        } else {
+            $('#gradebook td a:not(.'+className+')').parent().hide();            
+            $('#gradebook th div.dropdown:not(.'+className+')').parent().hide()
+            $('#gradebook td a.'+className).parent().show();            
+            $('#gradebook th '+ className).parent().show();     
+        }
+    }
+
+    function appendCategoryAverages($myTable) {
+        $.each(categoryAverages, function( key, value){
+            $myTable.append('<tr><td>'+key+'</td><td>'+ value +'</td></tr>');
+        });        
+    }
+
+    function styleCells($myTable) {
+        $.each(gc, function(key, value){
+            $('#gradebook td .' + key).parent().css('background', value.categoryColor);
+        });
+    }
+    
+    calculateCourseGrades($('#gradebook'));
+
+    styleCells($('#gradebook'));
+
+    appendFilterMenu($('#gradebook-menu'));    
+
+    appendCategoryAverages($('#category_averages'));
+
+    $('#gradebook-menu #filter-assignments-submenu li').on('click', function( event ){
+        event.preventDefault();
+        filterAssignments(event.currentTarget.className);
     });
 
 });
