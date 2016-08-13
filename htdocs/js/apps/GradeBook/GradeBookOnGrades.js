@@ -8,7 +8,8 @@
 $(document).ready(function(){
 
 //Gradebook Config (includes grading formula)
-	var gc = JSON.parse($('#gradebook-config').text());
+	var gc = JSON.parse($('#gradebook-config').text()),
+		categoryAverages={};
 
 	function calculateCourseAverage($assignmentCells){
 		var courseGrade = 0,
@@ -33,9 +34,10 @@ $(document).ready(function(){
 			}
 
 			courseGrade = courseGrade +	filteredScores.average * val.categoryWeight;		
+			categoryAverages[key] = filteredScores.average * val.categoryWeight;
 		});
 
-		return 100 * courseGrade/controlGrade;
+		return (100 * courseGrade/controlGrade).toFixed(2);
 	}
 
 //Grading Utility
@@ -46,6 +48,20 @@ $(document).ready(function(){
 			$myTable.append('<tr><td>Course Average</td><td id="course-average">'+courseAverage+'%</td></tr>');				
 	}
 
-	appendCourseAverage($('#grades_table'));
+	function appendCategoryAverages($myTable) {
+		$.each(categoryAverages, function( key, value){
+			$myTable.append('<tr><td>'+key+'</td></tr>');
+		});
+	}
+
+    function appendCategoryAverages($myTable) {
+        $.each(categoryAverages, function( key, value){
+            $myTable.append('<tr><td>'+key+'</td><td>'+ value +'</td></tr>');
+        });
+    }
+    
+    appendCourseAverage($('#grades_table'));
+
+    appendCategoryAverages($('#category_averages'));
 
 });

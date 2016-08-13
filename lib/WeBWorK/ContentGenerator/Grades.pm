@@ -500,6 +500,15 @@ sub displayStudentStats {
 	}
 	
 	print CGI::end_table();
+
+	print join("",
+		CGI::start_table({-id=>"category_averages", -class=>"gradebook table-striped",-border=>2}),
+		CGI::Tr({},
+			CGI::th({-class=>"column-name"},'Category'),
+			CGI::th({-class=>"column-name"},'Average')			
+		),		
+		CGI::end_table()
+	);	
 			
 	return "";
 }

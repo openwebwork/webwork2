@@ -79,6 +79,7 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBook.js"}), CGI::end_script();
+	print "<link href=\"$site_url/js/apps/GradeBook/GradeBook.css\" rel=\"stylesheet\" />";
 	return "";
 }
 
@@ -273,7 +274,7 @@ sub index {
 		my $setVisibility = !($setGlobal->visible) ? "hidden-from-students" : "";
 	    my $prettySetID = $set;
 	    $prettySetID =~ s/_/ /g;
-		push @setLinks, CGI::div({-class=>"dropdown"},
+		push @setLinks, CGI::div({-class=>"dropdown ".($db->getGlobalSet($set))->assignment_type()},
 			CGI::div({-class=>"btn btn-default dropdown-toggle $setVisibility column-name", "data-toggle"=>"dropdown"}, $prettySetID),
 			CGI::ul({-class=>"dropdown-menu"},
 				CGI::li(CGI::a({-href=>$setProgressUrl},"Progress")),
@@ -316,13 +317,35 @@ sub index {
 		CGI::end_table(),
 	);
 
-	print CGI::div({-class=>"dropdown gradebook-menu"},
+	print CGI::div({-id=>"gradebook-menu", -class=>"dropdown gradebook-menu"},
 			CGI::div({-class=>"btn btn-default dropdown-toggle", "data-toggle"=>"dropdown"}, "Menu" ),
 			CGI::ul({-class=>"dropdown-menu"},			
 				CGI::li(CGI::a({-href=>"$root/$courseName/instructor/setmaker/?user=".$r->param("user")."&key=uEK5QI4vbvXsQX5r8sA6S1XlJ67TmC4z"},"Add assignment")),
-				CGI::li(CGI::a({-id=>"export", -href=>"#"},"Export to CSV"))
+				CGI::li(CGI::a({-id=>"export", -href=>"#"},"Export to CSV")),
+				# CGI::li({-class=>"dropdown-submenu"}, 
+				# 	CGI::a({-id=>"filterAssignments", -href=>"#"},"Filter"),
+				# 	CGI::ul({-class=>"dropdown-menu"},
+				# 		CGI::li({},"Homework"),
+				# 		CGI::li({},"Homework"),
+				# 		CGI::li({},"Homework"),
+				# 		CGI::li({},"Homework"),
+				# 		CGI::li({},"Homework"),
+				# 		CGI::li({},"Homework"),
+				# 		CGI::li({},"Homework")
+				# 		)
+				# 	)
 				)
 		  );
+
+
+	# print join("",
+	# 	CGI::start_table({-id=>"category_averages", -class=>"gradebook table-striped",-border=>2}),
+	# 	CGI::Tr({},
+	# 		CGI::th({-class=>"column-name"},'Category'),
+	# 		CGI::th({-class=>"column-name"},'Average')			
+	# 	),		
+	# 	CGI::end_table()
+	# );
 	
 }
 
