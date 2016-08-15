@@ -216,7 +216,7 @@ sub initialize {
 			$self->addbadmessage(CGI::p(join("",
 				  $r->maketext("The file [_1]/[_2] cannot be found.",$emailDirectory, $openfilename ) ,CGI::br(),
 							 $r->maketext("Check whether it exists and whether the directory [_1] can be read by the webserver.", $emailDirectory),CGI::br(),
-							 $r->maketext("Using contents of the default message $default_msg_file instead."),
+							 $r->maketext("Using contents of the default message [_1] instead.", $default_msg_file),
 			)));
 		}
 	} else {

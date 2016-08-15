@@ -313,7 +313,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "all",
                 default   => "0",
 		labels    => { '1' => "Yes", '0' =>"No", },
-                help_text => x("If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary"),
+                help_text => x("If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary."),
 	},
 
 	email_instructor  => {
@@ -323,7 +323,7 @@ use constant FIELD_PROPERTIES => {
 		override  => "any",
                 default   => "0",
 		labels    => { '1' => "Yes", '0' =>"No"},
-                help_text => x("If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%"),
+                help_text => x("If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%."),
 	},
 
 	# in addition to the set fields above, there are a number of things

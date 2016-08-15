@@ -280,7 +280,7 @@ sub body {
 	
 	########## print action forms
 	
-	print CGI::p(CGI::b("Any changes made below will be reflected in the achievement for ALL students.")) if $editMode;
+	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the achievement for ALL students."))) if $editMode;
 
 	print CGI::p($r->maketext("Select an action to perform").":");
 
@@ -700,14 +700,14 @@ sub create_form {
 			-width => "60",
 			-onchange => $onChange,
 		),
-		" as ",
+		" ".$r->maketext("as")." ",
 		CGI::popup_menu(
 			-name => "action.create.type",
 			-values => [qw(empty copy)],
 			-default => $actionParams{"action.create.type"}->[0] || "empty",
 			-labels => {
-				empty => "a new empty achievement.",
-				copy => "a duplicate of the first selected achievement.",
+				empty => $r->maketext("a new empty achievement."),
+				copy => $r->maketext("a duplicate of the first selected achievement."),
 			},
 			-onchange => $onChange,
 		);
