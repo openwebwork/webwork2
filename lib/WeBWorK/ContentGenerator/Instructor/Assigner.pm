@@ -181,7 +181,7 @@ sub body {
 						 -value => $r->maketext("Unassign selected sets from selected users"),
 						-style => "width: 45ex",
 					),
-					CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->makeext('Assignments only'), 1=>$r->maketext('Allow unassign')}),
+					CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->maketext('Assignments only'), 1=>$r->maketext('Allow unassign')}),
 				),
 			),
 		),
