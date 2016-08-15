@@ -365,8 +365,7 @@ sub authenticate {
     $ce->{LTIBasicToThisSiteURL} : $path;
 
   if ( $ce->{debug_lti_parameters} ) {
-      warn("The following path was reconstructed by WeBWorK.  It should 
-match the path in the LMS:");
+      warn("The following path was reconstructed by WeBWorK.  It should match the path in the LMS:");
       warn($path);
   }
   
