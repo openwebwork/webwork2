@@ -238,7 +238,8 @@ sub getStudentScores {
            )   = grade_set( $db, $set, $setName, $studentName, $setIsVersioned);
 	
 		my $percentCorrect = $total ? int($totalRight/$total*100 + 0.5)."%" : "0%";
-		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url, -class=>"cell ". $set->assignment_type()},$percentCorrect));
+		my $setVisibility = !($set->visible) ? "hidden-from-students" : "";
+		push @scores, CGI::td(CGI::a({-href=>$student_grade_cell_edit_url, -class=>"cell ". $set->assignment_type() . " " . $setVisibility},$percentCorrect));
 	
 	}
 
