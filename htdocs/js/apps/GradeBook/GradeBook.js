@@ -191,7 +191,7 @@ $(document).ready(function(){
             $('#gradebook td a:not(.'+className+')').parent().hide();            
             $('#gradebook th div.dropdown:not(.'+className+')').parent().hide()
             $('#gradebook td a.'+className).parent().show();            
-            $('#gradebook th '+ className).parent().show();     
+            $('#gradebook th .'+ className).parent().show();     
         }
     }
 
