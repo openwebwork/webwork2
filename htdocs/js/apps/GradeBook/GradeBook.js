@@ -40,7 +40,7 @@ $(document).ready(function(){
 				controlGrade = 0,
 				studentRecord = $(value);
 			$.each(gc, function(key, val){
-				var filteredScores = $.map($(studentRecord).find("."+key), function(value, index){
+				var filteredScores = $.map($(studentRecord).find("."+key+":not(.hidden-from-students)"), function(value, index){
 					return parseInt($(value).text());
 				});
 				
