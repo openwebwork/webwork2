@@ -308,6 +308,14 @@ sub index {
 				                                                     
 	}
 
+	print CGI::div({-id=>"gradebook-menu", -class=>"dropdown gradebook-menu"},
+			CGI::div({-class=>"btn btn-default dropdown-toggle", "data-toggle"=>"dropdown"}, "Menu" ),
+			CGI::ul({-class=>"dropdown-menu"},			
+				CGI::li(CGI::a({-href=>"$root/$courseName/instructor/setmaker/?user=".$r->param("user")."&key=uEK5QI4vbvXsQX5r8sA6S1XlJ67TmC4z"},"Add assignment")),
+				CGI::li(CGI::a({-id=>"export", -href=>"#"},"Export to CSV"))
+				)
+		  );
+		  	
 	print join("",
 		CGI::start_table({-id=>"gradebook", -class=>"gradebook table-striped",-border=>2}),
 		CGI::Tr({},
@@ -317,26 +325,6 @@ sub index {
 		@studentLinks,
 		CGI::end_table(),
 	);
-
-	print CGI::div({-id=>"gradebook-menu", -class=>"dropdown gradebook-menu"},
-			CGI::div({-class=>"btn btn-default dropdown-toggle", "data-toggle"=>"dropdown"}, "Menu" ),
-			CGI::ul({-class=>"dropdown-menu"},			
-				CGI::li(CGI::a({-href=>"$root/$courseName/instructor/setmaker/?user=".$r->param("user")."&key=uEK5QI4vbvXsQX5r8sA6S1XlJ67TmC4z"},"Add assignment")),
-				CGI::li(CGI::a({-id=>"export", -href=>"#"},"Export to CSV")),
-				# CGI::li({-class=>"dropdown-submenu"}, 
-				# 	CGI::a({-id=>"filterAssignments", -href=>"#"},"Filter"),
-				# 	CGI::ul({-class=>"dropdown-menu"},
-				# 		CGI::li({},"Homework"),
-				# 		CGI::li({},"Homework"),
-				# 		CGI::li({},"Homework"),
-				# 		CGI::li({},"Homework"),
-				# 		CGI::li({},"Homework"),
-				# 		CGI::li({},"Homework"),
-				# 		CGI::li({},"Homework")
-				# 		)
-				# 	)
-				)
-		  );
 
 
 	# print join("",
