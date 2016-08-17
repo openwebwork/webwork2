@@ -24,6 +24,7 @@ use File::Path;
 use File::Copy;
 use File::Spec;
 use String::ShellQuote;
+use IO::String;
 
 =head1 NAME
 
@@ -1274,7 +1275,7 @@ sub showHTML {
 sub isText {
 	my $string = shift;
 	#	return $string !~ m/[^\s\x20-\x7E]{4}/;
-	return utf8::valid($string);
+	return utf8::is_utf8($string);
 }
 
 ##################################################
