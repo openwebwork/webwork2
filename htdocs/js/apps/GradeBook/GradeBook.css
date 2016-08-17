@@ -20,6 +20,11 @@ th.column-set ul.dropdown-menu{
 	float: right;
 }
 
+#gradebook .column-name {
+	max-width: 50px;
+    word-wrap: break-word;
+}
+
 .grades-course-total td:nth-child(n+3){
 	border-bottom: 1px solid #dddddd;
 }
