@@ -49,7 +49,7 @@ sub body {
 	my $r          = $self->r;
 	my $ce         = $r->ce;
 	
-	if( $ce->{gradebookEnabled} ){
+	if( $ce->{gradebookEnabled} && $ce->{gradebookOnGradesPageEnabled}){
 		print CGI::div({-id=>"gradebook-config", -style=>"display:none;"}, $ce->{gradebookConfig});	
 	}
 	$self->displayStudentStats($self->{studentName});
@@ -90,7 +90,7 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	if( $ce->{gradebookEnabled} ){
+	if( $ce->{gradebookEnabled} && $ce->{gradebookOnGradesPageEnabled}){
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBookOnGrades.js"}), CGI::end_script();
 		print "<link href=\"$site_url/js/apps/GradeBook/GradeBook.css\" rel=\"stylesheet\" />";
 	}
@@ -505,7 +505,7 @@ sub displayStudentStats {
 	
 	print CGI::end_table();
 
-	if( $ce->{gradebookEnabled} ){
+	if( $ce->{gradebookEnabled} && $ce->{gradebookOnGradesPageEnabled}){
 		print join("",
 			CGI::start_table({-id=>"category_averages", -class=>"gradebook table-striped",-border=>2}),
 			CGI::Tr({},
