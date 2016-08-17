@@ -24,7 +24,6 @@ use File::Path;
 use File::Copy;
 use File::Spec;
 use String::ShellQuote;
-use IO::String;
 
 =head1 NAME
 
