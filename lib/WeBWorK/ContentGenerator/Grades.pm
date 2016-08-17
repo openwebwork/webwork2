@@ -49,7 +49,9 @@ sub body {
 	my $r          = $self->r;
 	my $ce         = $r->ce;
 	
-	print CGI::div({-id=>"gradebook-config", -style=>"display:none;"}, $ce->{gradebookConfig});	
+	if( $ce->{gradebookEnabled} ){
+		print CGI::div({-id=>"gradebook-config", -style=>"display:none;"}, $ce->{gradebookConfig});	
+	}
 	$self->displayStudentStats($self->{studentName});
 
 	print $self->scoring_info();
@@ -88,8 +90,10 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBookOnGrades.js"}), CGI::end_script();
-	print "<link href=\"$site_url/js/apps/GradeBook/GradeBook.css\" rel=\"stylesheet\" />";
+	if( $ce->{gradebookEnabled} ){
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBookOnGrades.js"}), CGI::end_script();
+		print "<link href=\"$site_url/js/apps/GradeBook/GradeBook.css\" rel=\"stylesheet\" />";
+	}
 	return "";
 }
 
@@ -501,14 +505,16 @@ sub displayStudentStats {
 	
 	print CGI::end_table();
 
-	print join("",
-		CGI::start_table({-id=>"category_averages", -class=>"gradebook table-striped",-border=>2}),
-		CGI::Tr({},
-			CGI::th({-class=>"column-name"},'Category'),
-			CGI::th({-class=>"column-name"},'Average')			
-		),		
-		CGI::end_table()
-	);	
+	if( $ce->{gradebookEnabled} ){
+		print join("",
+			CGI::start_table({-id=>"category_averages", -class=>"gradebook table-striped",-border=>2}),
+			CGI::Tr({},
+				CGI::th({-class=>"column-name"},'Category'),
+				CGI::th({-class=>"column-name"},'Average')			
+			),		
+			CGI::end_table()
+		);	
+	}
 			
 	return "";
 }
