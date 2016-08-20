@@ -1714,7 +1714,6 @@ sub initialize {
 		##################################################################
 
 		my %newProblemNumbers = ();
-		my $consecutive = $r->param('force_renumber') || 0;
 		my $prevNum = 0;
 		my @prevSeq = (0);
 
@@ -1733,36 +1732,63 @@ sub initialize {
 			    unshift @idSeq, $r->param('prob_num_'.$id);
 			}
 
-			if ($consecutive) {
-			    # we dont really care about the content of idSeq
-			    # in this case, just the length
-			    my $depth = $#idSeq;
-			    
-			    if ($depth <= $#prevSeq) {
-				@prevSeq = @prevSeq[ 0 .. $depth ];
-				$prevSeq[$#prevSeq]++;
-			    } else {
-				$prevSeq[$#prevSeq+1] = 1;
-			    }
-			    
-			    $newProblemNumbers{$jj} = seq_to_jitar_id(@prevSeq);
-			    
-			} else {
-			    $newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
-			}
-			
+			$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
+						
 		    } else {
-			if ($consecutive) {
-			    $prevNum++;
-			    $newProblemNumbers{$jj} = $prevNum;
-			} else {
-			    $newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
-			} 
+		      $newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
 		    }
-		}
+		  }
 		
 		handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+
 		
+		#####################################################################
+		# Make problem numbers consecutive if required
+		#####################################################################
+
+
+		if ($r->param('force_renumber')) {
+
+		  my %newProblemNumbers = ();
+		  my $prevNum = 0;
+		  my @prevSeq = (0);
+		
+		  for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
+		    
+		    if ($setRecord->assignment_type eq 'jitar') {
+		      my @idSeq;
+		      my $id = $jj;
+		      
+		      next unless $r->param('prob_num_'.$id);
+		      
+		      unshift @idSeq, $r->param('prob_num_'.$id);
+		      while (defined $r->param('prob_parent_id_'.$id)) {
+			$id = $r->param('prob_parent_id_'.$id);
+			unshift @idSeq, $r->param('prob_num_'.$id);
+		      }
+		      
+		      # we dont really care about the content of idSeq
+		      # in this case, just the length
+		      my $depth = $#idSeq;
+		      
+		      if ($depth <= $#prevSeq) {
+			@prevSeq = @prevSeq[ 0 .. $depth ];
+			$prevSeq[$#prevSeq]++;
+		      } else {
+			$prevSeq[$#prevSeq+1] = 1;
+		      }
+		      
+		      $newProblemNumbers{$jj} = seq_to_jitar_id(@prevSeq);
+						
+		    } else {
+		      $prevNum++;
+		      $newProblemNumbers{$jj} = $prevNum;
+		    }
+		  }
+		
+		  handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+
+		}
 
 		#####################################################################
 		# Add blank problem if needed
@@ -2282,7 +2308,7 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-	my @problemIDList = $db->listGlobalProblems($setID);
+        my @problemIDList = sort {$a <=> $b} $db->listGlobalProblems($setID);
 	
 	# DBFIXME use iterators instead of getting all at once
 	

@@ -360,10 +360,13 @@ sub authenticate {
 
   # We need to provide the request URL when verifying the OAuth request.
   # We use the url request by default, but also allow it to be overriden
-  my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
+  my $path = $ce->{server_root_url}.$ce->{webwork_url};
   $path = $ce->{LTIBasicToThisSiteURL} ? 
     $ce->{LTIBasicToThisSiteURL} : $path;
 
+  # append the path the the server url
+  $path = $path.$r->urlpath()->path;
+  
   # We also try a version without the trailing / in case that was not
   # included when the LMS user created the LMS link 
   my $altpath = $path;
@@ -396,9 +399,9 @@ sub authenticate {
       debug("OAuth verification Failed ");
       
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-      $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
+      $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL.";
       if ( $ce->{debug_lti_parameters} ) {
-	warn("OAuth verification failed.  Check the Consumer Secret.");
+	warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the LMS url then you have https in \$server_root_url in site.conf");
       }
       return 0;
     } else {
