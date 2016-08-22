@@ -580,10 +580,12 @@ sub maybe_update_user {
     # Create a temp user and run it through the create process
     my $tempUser = $db->newUser();
     $tempUser->user_id($userID);
-    $self->{last_name} =~ s/\+/ /g;
-    $tempUser->last_name($self->{last_name});
-    $self->{first_name} =~ s/\+/ /g;
-    $tempUser->first_name($self->{first_name});
+    my $last_name = $self->{last_name} // '';
+    $last_name =~ s/\+/ /g;
+    $tempUser->last_name($last_name);
+    my $first_name = $self->{first_name} // '';
+    $first_name =~ s/\+/ /g;
+    $tempUser->first_name($first_name);
     $tempUser->email_address($self->{email});
     $tempUser->status("C");
     $tempUser-> section($self->{section} // "");
