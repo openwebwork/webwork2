@@ -211,7 +211,7 @@ $(function(){
     //PG editor styling
     $('#editor').addClass('form-inline span9');
     $('#editor a').addClass('btn btn-small btn-info');
-    $('#editor div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
+    $('#editor > div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
 
     //Achievement Editor
     $('#achievement-list').addClass('form-inline user-list-form');
