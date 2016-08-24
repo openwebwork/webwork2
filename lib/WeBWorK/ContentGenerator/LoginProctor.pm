@@ -65,10 +65,10 @@ sub info {
 		if (-f $site_info) {
 			my $text = eval { readFile($site_info) };
 			if ($@) {
-				$result .= CGI::h2("Site Information");
+				$result .= CGI::h2($r->maketext("Site Information"));
 				$result .= CGI::div({class=>"ResultsWithError"}, $@);
 			} elsif ($text =~ /\S/) {
-				$result .= CGI::h2("Site Information");
+				$result .= CGI::h2($r->maketext("Site Information"));
 				$result .= $text;
 			}
 		}
@@ -200,7 +200,7 @@ sub body {
 	}
 
 	
-	print CGI::p(CGI::strong("Proctor authorization required."), "\n\n");
+	print CGI::p(CGI::strong($r->maketext("Proctor authorization required.")), "\n\n");
     # WeBWorK::Authen::verifyProctor will set the note "authen_error" 
     # if invalid authentication is found.  If this is done, it's a signal to
     # us to yell at the user for doing that, since Authen isn't a content-
@@ -221,17 +221,15 @@ sub body {
 
 	    if ( $dueTime + $ce->{gatewayGracePeriod} < $timeNow ) {
 		$color = "#ffffaa";
-		$msg = CGI::br() . "\nThe time limit on this assignment " .
-		    "was exceeded.\nThe assignment may be checked, but " .
-		    "the result will not be counted.\n";
+		$msg = CGI::br() . "\n".$r->maketext("The time limit on this assignment was exceeded. The assignment may be checked, but the result will not be counted.");
 	    }
 	    my $style = "background-color: $color; color: black; " .
 		"border: solid black 1px; padding: 2px;";
 	    print CGI::div({-style=>$style}, 
-			   CGI::strong("Grading assignment: ", CGI::br(), 
-				       "Submission time: ", 
+			   CGI::strong($r->maketext("Grading assignment:")." ", CGI::br(), 
+				       $r->maketext("Submission time:")." ", 
 				       scalar(localtime($timeNow)), CGI::br(),
-				       "Due: ",
+				       $r->maketext("Closes:")." ",
 				       scalar(localtime($dueTime)), $msg));
 	}
 
@@ -256,23 +254,21 @@ sub body {
 	     ( $UserSet->restricted_login_proctor eq '' ||
 	       $UserSet->restricted_login_proctor eq 'No' ) ) {
 		print CGI::div({style=>"background-color:#ddddff;"},
-			       CGI::p("User's username is: ", 
+			       CGI::p($r->maketext("User's username is:")." ", 
 				      CGI::strong("$effectiveUser"),"\n",
-				      CGI::br(),"User's name is: ", 
+				      CGI::br(),$r->maketext("User's name is:")." ", 
 				      CGI::strong("$effectiveUserFullName"),
 				      "\n")),"\n";
 		$userNameFields = CGI::td([
 		  CGI::label(
-					"Proctor username:",
-					CGI::input({-type=>"text", 
-						    -name=>"proctor_user", 
-						    -value=>""})),
-					]);
+			     $r->maketext("Proctor username:"),
+			     CGI::input({-type=>"text", 
+					 -name=>"proctor_user", 
+					 -value=>""})),
+					  ]);
 	} else {
 		print CGI::start_div({style=>"background-color:#ddddff;"});
-		print CGI::em("This set has a set-level proctor ",
-			      "password to authorize logins. ",
-			      "Enter the password below.");
+		print CGI::em($r->maketext("This set has a set-level proctor password to authorize logins. Enter the password below."));
 		print CGI::end_div();
 		print CGI::hidden(-name=>'proctor_user',
 				  -value=>"set_id:$setName");
@@ -284,7 +280,7 @@ sub body {
 	print CGI::Tr( $userNameFields ) if ( $userNameFields );
 	print CGI::Tr( CGI::td([
 			 CGI::label(
-				"Proctor password:",
+				    $r->maketext("Proctor password:"),
 				CGI::input({-type=>"password", 
 					    -name=>"proctor_passwd", 
 					    -value=>""})),
@@ -292,7 +288,7 @@ sub body {
 		       );
 	print CGI::end_table();
 	
-	print CGI::input({-type=>"submit", -value=>"Continue"});
+	print CGI::input({-type=>"submit", -value=>$r->maketext("Continue")});
 	print CGI::end_form();
 	
 	return "";

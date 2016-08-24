@@ -13,7 +13,7 @@ TEXT(MODES(TeX =>EV3(<<'EOT'), HTML=>"", Latex2HTML=>"" ));
 \hfill
 \noindent {\large \bf MAA Minicourse New Orleans January 2001}
 \par
-\noindent WeBWorK assignment number \{ protect_underbar($setNumber) \} due $formattedDueDate;.
+\noindent WeBWorK assignment number \{ protect_underbar($setNumber) \} closes $formattedDueDate;.
 \hrule
 EOT
 
@@ -71,7 +71,7 @@ END_TEXT
 BEGIN_TEXT
 The primary purpose of WeBWorK is to let you know if you are getting the right answer or to alert
 you if you get the wrong answer. Usually you can attempt a problem as many times as you want before
-the due date.  However, if you are having trouble figuring out your error, you should
+the close date.  However, if you are having trouble figuring out your error, you should
 consult the book, or ask a fellow student, one of the TA's or
 your professor for help.  Don't spend a lot of time guessing -- it's not very efficient or effective.
 The computer has NO CLUE about WHY your answer is wrong. Computers are good at checking,

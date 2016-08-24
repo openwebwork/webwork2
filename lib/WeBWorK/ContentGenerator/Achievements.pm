@@ -82,7 +82,7 @@ sub initialize {
 		    $self->addmessage(CGI::div({class=>"ResultsWithError"}, $error ));
 		} else {
 		    splice(@$items, $usedItem, 1);
-		    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, "Item Used Successfully!" ));
+		    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $r->maketext("Item Used Successfully!") ));
 		}	
 	    }
 	}
@@ -155,7 +155,7 @@ sub body {
 
 	#If they dont have a globalUserAchievements record then they dont have achievements
 	if (not defined($globalUserAchievements)) {
-	    print CGI::p("You don't have any Achievement data associated to you!");
+	    print CGI::p($r->maketext("You don't have any Achievement data associated to you!"));
 	    return "";
 	}
 
@@ -223,7 +223,7 @@ sub body {
 		$setProblemCount[$i] = WeBWorK::Utils::max($db->listUserProblems($userID,$sets[$i]->set_id));
 	    }
 
-	    print CGI::h2("Items");
+	    print CGI::h2($r->maketext("Items"));
 
 	    if (@items) {
 			    
@@ -231,12 +231,12 @@ sub body {
 		foreach my $item (@items) {
 		    # Print each items name and description 
 		    print CGI::start_div({class=>"achievement-item"});
-		    print CGI::h3($item->name());
-		    print CGI::p($item->description());
+		    print CGI::h3($r->maketext($item->name()));
+		    print CGI::p($r->maketext($item->description()));
 		    # Print a modal popup for each item which contains the form
 		    # necessary to get the data to use the item.  Print the 
 		    # form in the modal body.  
-		    print CGI::a({href=>"\#modal_".$item->id(), role=>"button", "data-toggle"=>"modal",class=>"btn",id=>"popup_".$item->id()},"Use Item");
+		    print CGI::a({href=>"\#modal_".$item->id(), role=>"button", "data-toggle"=>"modal",class=>"btn",id=>"popup_".$item->id()},$r->maketext("Use Item"));
 		    print CGI::start_div({id=>"modal_".$item->id(),class=>"modal hide fade"});
 		    print CGI::start_div({class=>'modal-header'});
 		    print CGI::a({href=>"#",class=>"close","data-dismiss"=>"modal", "aria-hidden"=>"true"},CGI::span({class=>"icon icon-remove"}),CGI::div({class=>"sr-only"},$r->maketext("close")));
@@ -251,7 +251,7 @@ sub body {
 		    print $self->hidden_authen_fields;
 		    print CGI::end_div();
 		    print CGI::start_div({-class=>"modal-footer"});
-		    print CGI::submit({value=>"Submit"});
+		    print CGI::submit({value=>$r->maketext("Submit")});
 		    print CGI::end_div();
 		    print CGI::end_form();
 		    print CGI::end_div();
@@ -260,10 +260,10 @@ sub body {
 		    $itemnumber++;
 		}
 	    } else {
-		print CGI::p("You don't have any items!");
+		print CGI::p($r->maketext("You don't have any items!"));
 	    }
 	    print CGI::br();
-	    print CGI::h2("Achievements");
+	    print CGI::h2($r->maketext("Achievements"));
 	}
 
 	#Get all the achievements
@@ -306,7 +306,7 @@ sub body {
 			print CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'});
 			print CGI::start_div({class=>'cheevotextbox'});
 			print CGI::h3($achievement->name);
-			print CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
+			print CGI::div(CGI::i($r->maketext("[_1] Points:", $achievement->{points})).' '.$achievement->{description});
 			
 			if ($achievement->max_counter and not $userAchievement->earned) {
 			my $userCounter = $userAchievement->counter;

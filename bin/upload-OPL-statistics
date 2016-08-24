@@ -30,9 +30,11 @@ use String::ShellQuote;
 my $ce = new WeBWorK::CourseEnvironment({
 					 webwork_dir => $ENV{WEBWORK_ROOT},});
 
-my ($dbi,$dbtype,$db,$host) = split(':',$ce->{database_dsn});
+my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
 
 $host = 'localhost' unless $host;
+
+$port = 3306 unless $port;
 
 my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
@@ -49,7 +51,7 @@ $db = shell_quote($db);
 
 my $mysqldump_command = $ce->{externalPrograms}->{mysqldump};  
 
-`$mysqldump_command --host=$host --user=$dbuser --password=$dbpass $db OPL_local_statistics > $output_file`;
+`$mysqldump_command --host=$host --port=$port --user=$dbuser --password=$dbpass $db OPL_local_statistics > $output_file`;
 
 print "Database File Created\n";
 

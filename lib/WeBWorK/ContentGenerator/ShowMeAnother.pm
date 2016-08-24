@@ -452,50 +452,43 @@ sub output_summary{
 	if ($will{checkAnswers}) {
 	    if ($showMeAnother{CheckAnswers} and $can{showMeAnother}){
 		# if the student is checking answers to a new problem, give them a reminder that they are doing so
-		print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these 
-                                                                     will not be recorded, and you should remember to return to your original 
-                                                                     problem once you are done here.")),CGI::br();
+		print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently checking answers to a different version of your problem - these will not be recorded, and you should remember to return to your original problem once you are done here.")),CGI::br();
 	    }
 	} elsif ($previewAnswers) {
 	    # if the student is previewing answers to a new problem, give them a reminder that they are doing so
         if($showMeAnother{Preview} and $can{showMeAnother}){
-          print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently previewing answers to a different version of your problem - these 
-                                                                 will not be recorded, and you should remember to return to your original 
-                                                                 problem once you are done here.")),CGI::br();
+          print CGI::div({class=>'showMeAnotherBox'},$r->maketext("You are currently previewing answers to a different version of your problem - these will not be recorded, and you should remember to return to your original problem once you are done here.")),CGI::br();
         }
 	} elsif ( $showMeAnother{IsPossible} and $will{showMeAnother}){
 	    # the feedback varies a little bit if Check Answers is available or not
 	    my $checkAnswersAvailable = ($showMeAnother{options}->{checkAnswers}) ?
-		"You may check your answers to this problem without affecting the maximum number of tries to your original problem." :"";
+	      $r->maketext("You may check your answers to this problem without affecting the maximum number of tries to your original problem.") :"";
 	    my $solutionShown;
 	    # if showMeAnother has been clicked and a new version has been found,
 	    # give some details of what the student is seeing
 	    if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
 		# check to see if a solution exists for this problem, and vary the feedback accordingly
-		if($pg->{flags}->{solutionExists}){
-		    $solutionShown = ($showMeAnother{options}->{showSolutions}) ? ", complete with solution" : "";
-		} else {
-		    my $viewCorrect = (($showMeAnother{options}->{showCorrect}) and ($showMeAnother{options}->{checkAnswers})) ?
-			", but you can still view the correct answer":"";
-		    $solutionShown = ($showMeAnother{options}->{showSolutions}) ?
-			". There is no walk-through solution available for this problem$viewCorrect" : "";
-		}
+		if($pg->{flags}->{solutionExists} && $showMeAnother{options}->{showSolutions}){
+		    $solutionShown = $r->maketext("There is a written solution available");
+		} elsif ($showMeAnother{options}->{showSolutions} and $showMeAnother{options}->{showCorrect} and $showMeAnother{options}->{checkAnswers}) {
+		    $solutionShown = $r->maketext("There is no written solution available for this problem, but you can still view the correct answers");
+		  } elsif ($showMeAnother{options}->{showSolutions}) {
+		    $solutionShown = $r->maketext("There is no written solution available for this problem.");
+		  }
 	    }
-	    print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem[_1]. [_2] ",$solutionShown,$checkAnswersAvailable)),CGI::br();
+	    print CGI::div({class=>'showMeAnotherBox'},$r->maketext("Here is a new version of your problem."), $solutionShown,$checkAnswersAvailable),CGI::br();
 	    print CGI::div({class=>'ResultsAlert'},$r->maketext("Remember to return to your original problem when you're finished here!")),CGI::br();
 	} elsif($showMeAnother{active} and $showMeAnother{IsPossible} and !$can{showMeAnother}) {
 	    if($showMeAnother{Count}>=$showMeAnother{MaxReps}){
-		my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? "The solution has been removed." : "";
-		print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem.
-                                                                         [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
+		my $solutionShown = ($showMeAnother{options}->{showSolutions} and $pg->{flags}->{solutionExists}) ? $r->maketext("The solution has been removed.") : "";
+		print CGI::div({class=>'ResultsAlert'},$r->maketext("You are only allowed to click on Show Me Another [quant,_1,time,times] per problem. [_2] Close this tab, and return to the original problem.",$showMeAnother{MaxReps},$solutionShown  )),CGI::br();
 	    } elsif ($showMeAnother{Count}<$showMeAnother{TriesNeeded}) {
 		print CGI::div({class=>'ResultsAlert'},$r->maketext("You must attempt this problem [quant,_1,time,times] before Show Me Another is available.",$showMeAnother{TriesNeeded})),CGI::br();
 	    }
 	} elsif ($can{showMeAnother} && !$showMeAnother{IsPossible}){
 	    # print this if showMeAnother has been clicked, but it is not possible to
 	    # find a new version of the problem
-	    print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem;
-                       close this tab, and return to the original problem.")),CGI::br();
+	    print CGI::div({class=>'ResultsAlert'},$r->maketext("WeBWorK was unable to generate a different version of this problem; close this tab, and return to the original problem.")),CGI::br();
 	}
 
 	if ($showMeAnother{IsPossible} and $will{showMeAnother}) {

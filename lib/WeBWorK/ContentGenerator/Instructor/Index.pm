@@ -408,7 +408,7 @@ sub body {
 						CGI::td(CGI::submit(-name=>"act_as_user", -label=>$r->maketext("Act as"))." ".$r->maketext("one <b>user</b> (on one <b>set</b>)")),
 						CGI::td(CGI::submit(-name=>"edit_set_for_users", -label=>$r->maketext("Edit")). " ".$r->maketext("one <b>set</b> for  <b>users</b>")),
 						CGI::td({-height=>4}),
-						CGI::td(CGI::submit(-name=>"email_users", -label=>"Email"). " ".$r->maketext("your students")),
+						CGI::td(CGI::submit(-name=>"email_users", -label=>$r->maketext("Email")). " ".$r->maketext("your students")),
 						($authz->hasPermissions($user, "manage_course_files")
 							? CGI::td(CGI::submit(-name=>"transfer_files", -label=>$r->maketext("Transfer")). " ".$r->maketext("course files"))
 							: ()

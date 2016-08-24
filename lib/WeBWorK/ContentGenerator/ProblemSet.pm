@@ -114,7 +114,7 @@ sub nav {
 	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
 	my $problemSetsPage = $urlpath->parent;
 	
-	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("navUp"));
+	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("Homework Sets"));
 	return $self->navMacro($args, '', @links);
 }
 
@@ -137,7 +137,7 @@ sub title {
 	         $self->formatDateTime($set->reduced_scoring_date,undef,
 				       $r->ce->{studentDateDisplayFormat}));
 	  } elsif ($set->due_date) {
-	    $title .= ' - '.$r->maketext("Due [_1]", 
+	    $title .= ' - '.$r->maketext("Closes [_1]", 
 	         $self->formatDateTime($set->due_date,undef,
 				       $r->ce->{studentDateDisplayFormat}));
 	  }
@@ -262,7 +262,7 @@ sub info {
 			$screenSetHeader = $r->param('sourceFilePath');
 			$screenSetHeader = $ce->{courseDirs}{templates}.'/'.$screenSetHeader unless $screenSetHeader =~ m!^/!;
 			die "sourceFilePath is unsafe!" unless path_is_subdir($screenSetHeader, $ce->{courseDirs}->{templates});
-			$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file").": ",
+			$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:")." ",
 			            $screenSetHeader));
 			$displayMode = $r->param("displayMode") if $r->param("displayMode");
 		}
@@ -305,7 +305,7 @@ sub info {
 	#print CGI::start_div({class=>"info-box", id=>"InfoPanel"});
 	
 	if ($editorURL) {
-		print CGI::h2({},$r->maketext("Set Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[edit~]")));
+		print CGI::h2({},$r->maketext("Set Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[Edit~]")));
 	} else {
 		print CGI::h2($r->maketext("Set Info"));
 	}
@@ -531,7 +531,7 @@ sub problemListRow($$$$$) {
 	my $graderLink = "";
 	if ($canScoreProblems && $self->{gradeableProblems}[$problemID]) {
 	    my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-	    $graderLink = CGI::td(CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem"));
+	    $graderLink = CGI::td(CGI::a({href => $self->systemLink($gradeProblemPage)}, $r->maketext("Grade Problem")));
 	} elsif ($canScoreProblems) {
 	    $graderLink = CGI::td('');
 	}
