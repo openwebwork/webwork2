@@ -1,7 +1,7 @@
 package Utils::Authentication;
 use base qw(Exporter);
+use v5.10;
 
-use Dancer2; 
 use WeBWorK::CourseEnvironment;
 use WeBWork::DB;
 use Data::Dump qw/dump/;
@@ -11,121 +11,101 @@ our @EXPORT_OK = qw/setCourseEnvironment buildSession checkPermissions setCookie
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
+###
+#
+# Note: this doesn't seem to work with use Dancer2, so the session needs
+# to be passed in.
 
-sub setCourseEnvironment {
-
-	my ($courseID) = @_;
-
-    debug "in setCourseEnvironment"; 
-    debug $courseID;
-    debug session;
-    
-	if (defined($courseID)) {
-      debug session;
-      debug "setting the course in the session";
-      session 'course' => $courseID;
-      
-	} else {
-		send_error("The course has not been defined.  You may need to authenticate again",401);	
-	}
-	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir},
-                                                courseName=> session('course')});
-    var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
-
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
-	$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
-}
 
 sub buildSession {
-	my ($userID,$sessKey) = @_;
-	if(! vars->{db}){ 
-		send_error("The database object DB is not defined.  Make sure that you call setCourseEnvironment first.",404);
-	}
-    
-	## need to check that the session hasn't expired. 
+	my ($session,$ce,$db) = @_;
 
-    if (!defined(session 'user')) {
+
+	if(! defined($db)){
+		return {error => "The database object DB is not defined.  Make sure that you call setCourseEnvironment first." };
+	}
+
+	## need to check that the session hasn't expired.
+
+    if (!defined($session->read('user'))) {
     	if (defined($userID)){
-	    	session user => $userID;
+				$session->write('user',$userID);
     	} else {
-    		send_error("The user is not defined. You may need to authenticate again",401);	
+    		return {error =>"The user is not defined. You may need to authenticate again"};
     	}
 	}
-    
-	my $key = vars->{db}->getKey(session 'user');
-	my $timeLastLoggedIn = 0; 
+
+	my $key = $db->getKey($session->read('user'));
+	my $timeLastLoggedIn = 0;
 
 	if(defined($key)){
 		$timeLastLoggedIn = $key->{timestamp};
 	} else {
-		debug "making a new key";
-		my $newKey = create_session(session 'user');
-		$key = vars->{db}->newKey(user_id=>(session 'user'), key=>$newKey);
+		my $newKey = create_session($session->read('user'),$key,$ce,$db);
+		$key = $db->newKey(user_id=>session->read('user'), key=>$newKey);
 	}
+	$session->write('key',$key->{key});
 
-	session 'key' => $key->{key};
-
-	if((session 'key') ne $sessKey){
-		session 'logged_in' => 0;
-		session 'timestamp' => 0;
+	if(($session->read('key')) ne $sessKey){
+		$session->write('logged_in',0);
+		$session->write('timestamp',0);
 		return;
 	}
 
 	# check to see if the user has timed out
 	if(time() - $timeLastLoggedIn > vars->{ce}->{sessionKeyTimeout}){
-		session 'logged_in' => 0;
-		session 'timestamp' => 0;
+		$session->write('logged_in',0);
+		$session->write('timestamp',0);
 		return;
 	}
 
 	# update the timestamp in the database so the user isn't logged out prematurely.
 	$key->{timestamp} = time();
-	session 'timestamp' => $key->{timestamp};
+	$session->write('timestamp',$key->{timestamp});
 
-	vars->{db}->putKey($key);
+	$db->putKey($key);
 
-	if (! defined(session 'permission')){
-		my $permission = vars->{db}->getPermissionLevel(session 'user');
-		session 'permission' => $permission->{permission};		
+	if (! defined(session->read('permission'))){
+		my $permission = vars->{db}->getPermissionLevel($session->('user'));
+		$session->write('permission',$permission->{permission});
 	}
 
-	session 'logged_in' => 1;
+	$session->write('logged_in',1);
 
 	setCookie();
 }
 
-# this checks if the session is current by seeing if course_id, user_id, key is set and the timestamp is within a standard time. 
+# this checks if the session is current by seeing if course_id, user_id, key is set and the timestamp is within a standard time.
 
 sub isSessionCurrent {
-	return "" unless (session 'course');
-	return "" unless (session 'user');
-	return "" unless (session 'key');
-	my $key = vars->{db}->getKey(session 'user');
-	if(time() - $key->{timestamp} > vars->{ce}->{sessionKeyTimeout}){
-		session 'logged_in' => 0;
-		session 'timestamp' => 0;
+	my ($session,$ce,$db) = @_;
+	return "" unless defined($session->read('course'));
+	return "" unless defined($session->read('user'));
+	return "" unless defined($session->read('key'));
+	my $key = vars->{db}->getKey($session->read('user'));
+	if(time() - $key->{timestamp} > $ce->{sessionKeyTimeout}){
+		$session->write('logged_in',0);
+		$session->write('timestamp',0);
 		return "";
 	} else {
 		# update the timestamp in the database so the user isn't logged out prematurely.
 		$key->{timestamp} = time();
-		session 'timestamp' => $key->{timestamp};
-		vars->{db}->putKey($key);
+		$session->write('timestamp',$key->{timestamp});
+		$db->putKey($key);
 	}
 	return 1;
 }
 
 
 sub checkPermissions {
-	my $permissionLevel = shift;
-	my $userID = session 'user';
-	my $key = session 'key';
+	my ($session,$permissionLevel) = shift;
 
-	buildSession($userID,$key);
-	if (! session 'logged_in'){
+	buildSession($session->read('user'),$session->read('key'));
+	if (! defined($session->read('logged_in')) && ! $session->read('logged_in')){
 		send_error('You are no longer logged in.  You may need to reauthenticate.',419);
 	}
 
-	if(session('permission') < $permissionLevel){send_error($PERMISSION_ERROR,403)}
+	if($session->read('permission') < $permissionLevel){send_error($PERMISSION_ERROR,403)}
 
 }
 
@@ -135,20 +115,20 @@ sub checkPermissions {
 # if $newKey is not specified, a random key is generated
 # the key is returned
 sub create_session {
-	my ($userID, $newKey) = @_;
+	my ($userID, $newKey, $ce, $db) = @_;
 	my $timestamp = time;
 	unless ($newKey) {
-		my @chars = @{ vars->{ce}->{sessionKeyChars} };
-		my $length = vars->{ce}->{sessionKeyLength};
-		
+		my @chars = @{ $ce->{sessionKeyChars} };
+		my $length = $ce->{sessionKeyLength};
+
 		srand;
 		$newKey = join ("", @chars[map rand(@chars), 1 .. $length]);
 	}
-	
-	my $Key = vars->{db}->newKey(user_id=>$userID, key=>$newKey, timestamp=>$timestamp);
+
+	my $Key = $db->newKey(user_id=>$userID, key=>$newKey, timestamp=>$timestamp);
 	# DBFIXME this should be a REPLACE
-	eval { vars->{db}->deleteKey($userID) };
-	vars->{db}->addKey($Key);
+	eval { $db->deleteKey($userID) };
+	$db->addKey($Key);
 
 	#if ($ce -> {session_management_via} eq "session_cookie"),
 	#    then the subroutine maybe_send_cookie should send a cookie.
@@ -160,21 +140,20 @@ sub create_session {
 
 ###
 #
-# This sets the cookie in the WW2 style to allow for seamless transfer back and forth. 
+# This sets the cookie in the WW2 style to allow for seamless transfer back and forth.
 
 sub setCookie {
-    debug "in setCookie\n";
-    my $cookieValue = session('user') . "\t". session('key') . "\t" . session ('timestamp');
+	my $session = shift;
+  my $cookie_value = $session->read('user') . "\t". $session->read('key') . "\t" . $session->read('timestamp');
 
-    my $hostname = vars->{ce}->{server_root_url};
-    $hostname =~ s/https?:\/\///;
+  my $hostname = vars->{ce}->{server_root_url};
+  $hostname =~ s/https?:\/\///;
+  my $cookie_name = "WeBWorK.CourseAuthen." . $session->read("course");
+	my $cookie = Dancer2::Core::Cookie->new(name => $cookie_name, value => $cookie_value);
 
-    if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
-        cookie "WeBWorK.CourseAuthen." . session("course") => $cookieValue, domain=>$hostname;
-    } else {
-        cookie "WeBWorK.CourseAuthen." . session("course") => $cookieValue;
-    }
-
+	if ($hostname eq "localhost" || $hostname eq "127.0.0.1"){
+		$cookie->domain($hostname);
+	}
 
 }
 

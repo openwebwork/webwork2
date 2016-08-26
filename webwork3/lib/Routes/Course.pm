@@ -20,19 +20,25 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 ###
 #
-#  list the names of all courses.  
+#  list the names of all courses.
 #
 #  returns an array of course names.
 #
 ###
- 
- 
+
+any ['get','put','post','delete'] => '/courses/*/**' => sub {
+	my ($courseID) = splat;
+
+  session 'course' => $courseID;
+  session 'webwork_dir' => config->{webwork_dir};
+  setCourseEnvironment(session);
+  pass;
+};
+
 
 get '/courses' => sub {
 
-    #debug 'in GET /courses/';
-
-    setCourseEnvironment("");
+  setCourseEnvironment(session);
 	my @courses = listCourses(vars->{ce});
 
 	return \@courses;
@@ -71,8 +77,8 @@ get '/courses/:course_id' => sub {
 		 	webwork_dir         => vars->{ce}->{webwork_dir},
 			courseName => params->{course_id},
 		});
-        
-        
+
+
 
 
 
@@ -85,7 +91,7 @@ get '/courses/:course_id' => sub {
 		} else {
             return {course_id => params->{course_id}, message=> "Course exists.", course_exists=> JSON::true};
         }
-		
+
 	} else {
 
 		my $session = {};
@@ -106,7 +112,7 @@ get '/courses/:course_id' => sub {
 #
 #  create a new course
 #
-#  the parameter new_userID must be sent to be an instructor for the course. 
+#  the parameter new_userID must be sent to be an instructor for the course.
 #
 #  returns the properties of the course
 #
@@ -114,23 +120,23 @@ get '/courses/:course_id' => sub {
 
 post '/courses/:new_course_id' => sub {
 
-    setCourseEnvironment("admin");  # this will make sure that the user is associated with the admin course. 
-    checkPermissions(10,session->{user});  ## maybe this should be at 15?  But is admin=15? 
-    
-    
-    
+    setCourseEnvironment("admin");  # this will make sure that the user is associated with the admin course.
+    checkPermissions(10,session->{user});  ## maybe this should be at 15?  But is admin=15?
+
+
+
     my $coursesDir = vars->{ce}->{webworkDirs}->{courses};
 	my $courseDir = "$coursesDir/" . params->{new_course_id};
 
-	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
+	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work.
 
 	my $ce2 = new WeBWorK::CourseEnvironment({
 	 	webwork_dir => vars->{ce}->{webwork_dir},
 		courseName => params->{new_course_id},
 	});
-    
-    
-    
+
+
+
 	# return an error if the course already exists
 
 	if (-e $courseDir) {
@@ -147,7 +153,7 @@ post '/courses/:new_course_id' => sub {
 	if ($userTableExists){
 	  	return {error=>"The databases for " . params->{new_course_id} . " already exists"};
 	}
-	
+
 
 	# fail if the course ID contains invalid characters
 
@@ -182,7 +188,7 @@ post '/courses/:new_course_id' => sub {
 		user_id    => params->{new_userID},
 		permission => "10",
 	);
-    
+
 	push @users, [ $User, $Password, $PermissionLevel ];
 
 	my %courseOptions = ( dbLayoutName => "sql_single" );
@@ -206,7 +212,7 @@ put '/courses/:course_id' => sub {
 setCourseEnvironment("admin");
 	checkPermissions(10,session->{user});
 
-	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
+	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work.
 
     my $ce2 = new WeBWorK::CourseEnvironment({
 	 	webwork_dir => vars->{ce}->{webwork_dir},
@@ -235,7 +241,7 @@ del '/courses/:course_id' => sub {
 	setCourseEnvironment("admin");
 	checkPermissions(10,session->{user});
 
-	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work. 
+	##  This is a hack to get a new CourseEnviromnet.  Use of %WeBWorK::SeedCE doesn't work.
 
     my $ce2 = new WeBWorK::CourseEnvironment({
 	 	webwork_dir => vars->{ce}->{webwork_dir},
@@ -250,35 +256,35 @@ del '/courses/:course_id' => sub {
 
 	deleteCourse(%{$options});
 
-	return {course_id => params->{course_id}, message => "Course deleted."}; 
+	return {course_id => params->{course_id}, message => "Course deleted."};
 
 };
 
-## 
+##
 #
-# get the current session 
+# get the current session
 #
 ##
 
 get '/courses/:course_id/session' => sub {
-	return convertObjectToHash(session); 
+	return convertObjectToHash(session);
 };
 
 post '/courses/:course_id/session' => sub {
 	session 'effectiveUser' => params->{effectiveUser};
 	return convertObjectToHash(session);
 };
- 
+
 
 
 ###
 #
-#  list the names of all archived courses.  
+#  list the names of all archived courses.
 #
 #  returns an array of course names.
 #
 ###
- 
+
 
 get '/courses/archives' => sub {
 
