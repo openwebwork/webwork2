@@ -101,7 +101,8 @@ sub can_showCorrectAnswers {
 #    so we should hide the correct answers if we aren not showing
 #    scores GG.
 
-	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	my $canShowScores = ($Set->hide_score_by_problem eq 'N' ||
+			     !$Set->hide_score_by_problem) &&
 	  ( $Set->hide_score eq 'N' ||
 	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
 	      after($tmplSet->answer_date) ) );
@@ -146,7 +147,8 @@ sub can_showSolutions {
 #    so we should hide the correct answers if we aren not showing
 #    scores GG.
 
-	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	my $canShowScores = ($Set->hide_score_by_problem eq 'N' ||
+			     !$Set->hide_score_by_problem) &&
 	  ( $Set->hide_score eq 'N' ||
 	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
 	      after($tmplSet->answer_date) ) );
@@ -260,8 +262,8 @@ sub can_checkAnswers {
 	#    showing correcrt answers but not showing scores doesn't make sense
 	#    so we should hide the correct answers if we aren not showing
 	#    scores GG.
-
-	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
+	my $canShowScores = ($Set->hide_score_by_problem eq 'N' ||
+			     !$Set->hide_score_by_problem) &&
 	  ( $Set->hide_score eq 'N' ||
 	    ( $Set->hide_score eq 'BeforeAnswerDate' &&
 	      after($tmplSet->answer_date) ) );
