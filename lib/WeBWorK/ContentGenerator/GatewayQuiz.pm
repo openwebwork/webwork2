@@ -108,8 +108,7 @@ sub can_showCorrectAnswers {
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $maxAttempts && 
-		       $maxAttempts != 0 &&
-		       $Set->due_date() == $Set->answer_date() ) ) ||
+		       $maxAttempts != 0 ) ) ||
 		   $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") ) &&
 		 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
@@ -154,8 +153,7 @@ sub can_showSolutions {
 
 	return ( ( ( after( $Set->answer_date ) || 
 		     ( $attemptsUsed >= $attempts_per_version &&
-		       $attempts_per_version != 0 &&
-		       $Set->due_date() == $Set->answer_date() ) ) ||
+		       $attempts_per_version != 0 ) ) ||
 		   $authz->hasPermissions($User->user_id, 
 				"show_correct_answers_before_answer_date") ) &&
 		 ( $authz->hasPermissions($User->user_id, "view_hidden_work") ||
