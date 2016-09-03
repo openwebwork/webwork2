@@ -16,7 +16,18 @@ $(function(){
 	    .addClass('hidden');
     });
 
-    if (CodeMirror) {
+    var codeMirrorDefined = true;
+
+    try { CodeMirror; }
+
+    catch (e) {
+
+	if (e.name == "ReferenceError") {
+	    codeMirrorDefined = false;
+	}
+    }
+    
+    if (codeMirrorDefined) {
 	cm = CodeMirror.fromTextArea(
 	    $("#problemContents")[0],
 	    {mode: "PG",
