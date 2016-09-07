@@ -623,7 +623,7 @@ sub checkPassword {
 	my $db = $self->{r}->db;
 	
 	my $Password = $db->getPassword($userID); # checked
-	if (defined $Password) {
+	if (defined $Password && $Password->password ne "" ) {
 		# check against WW password database
 		my $possibleCryptPassword = crypt $possibleClearPassword, $Password->password;
 		if ($possibleCryptPassword eq $Password->password) {
