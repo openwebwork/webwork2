@@ -346,7 +346,8 @@ sub get_credentials {
 
 	if (defined $cookieUser and defined $r->param("user") ) {
 		if ($cookieUser ne $r->param("user")) {
-			croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
+#			croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
+                        $self->maybe_kill_cookie; # use parameter "user" rather than cookie "user";
 		}
 # I don't understand this next segment.
 # If both key and $cookieKey exist then why not just ignore the cookieKey?
