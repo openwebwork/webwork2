@@ -32,6 +32,7 @@ use Data::Dumper;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use Mail::Sender;
+use Encode;
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
 use Text::Wrap qw(wrap);
 use WeBWorK::Utils qw/ decodeAnswers/;
@@ -240,7 +241,7 @@ sub body {
 		# bring up a mailer
 		my $mailer = Mail::Sender->new({
 			from => $ce->{mail}{smtpSender},
-			fake_from => $sender,
+			fake_from => decode("utf8", $sender),
 			to => join(",", @recipients),
 			smtp    => $ce->{mail}->{smtpServer},
 			subject => $subject,
