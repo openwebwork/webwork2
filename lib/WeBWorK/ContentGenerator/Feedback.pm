@@ -32,7 +32,7 @@ use Data::Dumper;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use Mail::Sender;
-use Encode;
+use Encode qw(decode encode);
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
 use Text::Wrap qw(wrap);
 use WeBWorK::Utils qw/ decodeAnswers/;
@@ -246,6 +246,7 @@ sub body {
 			smtp    => $ce->{mail}->{smtpServer},
 			subject => $subject,
 			headers => $headers,
+			charset => "utf8",
 		});
 		unless (ref $mailer) {
 			$self->feedbackForm($user, $returnURL,
