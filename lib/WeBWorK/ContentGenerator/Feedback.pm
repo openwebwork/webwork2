@@ -237,16 +237,16 @@ sub body {
 		}
 		$headers .= "X-WeBWorK-Set: ".$set->set_id."\n" if $set;
 		$headers .= "X-WeBWorK-Problem: ".$problem->problem_id."\n" if $problem;
-		
+	
+	
 		# bring up a mailer
 		my $mailer = Mail::Sender->new({
 			from => $ce->{mail}{smtpSender},
-			fake_from => decode("utf8", $sender),
+			fake_from => encode( "MIME-B", decode( "utf8" ,$sender) ),
 			to => join(",", @recipients),
 			smtp    => $ce->{mail}->{smtpServer},
 			subject => $subject,
 			headers => $headers,
-			charset => "utf8",
 		});
 		unless (ref $mailer) {
 			$self->feedbackForm($user, $returnURL,
