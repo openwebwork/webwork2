@@ -242,7 +242,7 @@ sub body {
 		# bring up a mailer
 		my $mailer = Mail::Sender->new({
 			from => $ce->{mail}{smtpSender},
-			fake_from => encode( "MIME-B", decode( "utf8" ,$sender) ),
+			fake_from => decode( "utf8" ,$sender),
 			to => join(",", @recipients),
 			smtp    => $ce->{mail}->{smtpServer},
 			subject => $subject,
