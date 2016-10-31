@@ -804,15 +804,16 @@ sub popup_set_form {
  		$setLabels{$sr->set_id} = $sr->set_id;
  		push(@setNames, $sr->set_id);  # reorder sets
 	}
- 	return 			CGI::popup_menu(-name=>'selectedSet',
- 							   -values=>\@setNames,
+ 	return 			
+
+#Use scrolling instead of popup_menu to unable multiple selection
+CGI::scrolling_list( -name=>'selectedSet',
+						           -values=>\@setNames,
  							   -labels=>\%setLabels,
  							   -size  => 10,
  							   -multiple => 1,
  							   #-default=>$user
- 					),
-
-
+			),
 }
 1;
 
