@@ -110,6 +110,7 @@ our @EXPORT_OK = qw(
         is_jitar_problem_closed
         jitar_problem_adjusted_status
         jitar_problem_finished
+	x
 );
 
 =head1 FUNCTIONS
@@ -1620,6 +1621,12 @@ sub jitar_problem_finished {
 
     # if we got here then the problem is finished
     return 1;
+}
+
+# This is a dummy function used to mark strings for localization
+
+sub x {
+  return @_;
 }
 
 1;
