@@ -54,8 +54,8 @@ function togglepaths() {
     $('#toggle_path_current').val('hide');
 	$("[id*=filepath]").each(function() {
 		// If showing, trigger
-		if(this.textContent.match('^Show')) {
-		  this.click();
+		if(this.textContent.match(show_string)) {	  
+		this.click();
 	    }
 	});
   } else {
@@ -63,7 +63,7 @@ function togglepaths() {
     $('#toggle_path_current').val('show');
 	$("[id*=filepath]").each(function() {
 		// If hidden, trigger
-		if(! this.textContent.match('^Show')) {
+		if(! this.textContent.match(show_string)) {
 		  this.click();
 		}
 	});
