@@ -235,7 +235,9 @@ sub _init {
 }
 
 sub maketext {
-	my $self = shift;
+        my $self = shift;
+#       Uncomment to check that strings are run through maketext
+#	return 'xXx'.&{$self->{maketext}}(@_).'xXx';
 	return &{$self->{maketext}}(@_);
 }
 sub formatAnswerRow {
@@ -267,7 +269,7 @@ sub formatAnswerRow {
 		# push @correct_ids,   $name if $answerScore == 1;
 	} elsif (($rh_answer->{type}//'') eq 'essay') {
 		$resultString =  $self->maketext("Ungraded"); 
-		# $self->{essayFlag} = 1;
+		$self->{essayFlag} = 1;
 	} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
 		# push @incorrect_ids, $name if $answerScore < 1;
 		$resultStringClass = "ResultsWithError";
@@ -318,7 +320,7 @@ sub answerTemplate {
     	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
     	push @correct_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) >= 1;
     	push @incorrect_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) < 1;
-    	$self->{essayFlag} = 1;
+    	#$self->{essayFlag} = 1;
     }
 	my $answerTemplate = CGI::h3($self->maketext("Results for this submission")) .
     	CGI::table({class=>"attemptResults"},@tableRows);
@@ -386,24 +388,28 @@ sub createSummary {
 	my $numCorrect = $self->{numCorrect};
 	my $numBlanks  = $self->{numBlanks};
 	my $numEssay   = $self->{numEssay};
-	my $fully = '';    #FIXME -- find out what this is used for in maketext.
+
 	unless (defined($self->summary) and $self->summary =~ /\S/) {
 		my @answerNames = @{$self->answerOrder()};
 		if (scalar @answerNames == 1) {  #default messages
 				if ($numCorrect == scalar @answerNames) {
 					$summary .= CGI::div({class=>"ResultsWithoutError"},$self->maketext("The answer above is correct."));
 				} elsif ($self->{essayFlag}) {
-				    $summary .= CGI::div($self->maketext("Some answers will be graded later.", $fully));
+				    $summary .= CGI::div($self->maketext("Some answers will be graded later."));
 				 } else {
-					 $summary .= CGI::div({class=>"ResultsWithError"},$self->maketext("The answer above is NOT [_1]correct.", $fully));
+					 $summary .= CGI::div({class=>"ResultsWithError"},$self->maketext("The answer above is NOT correct."));
 				 }
 		} else {
-				if ($numCorrect + $numEssay == scalar @answerNames) {
-					$summary .= CGI::div({class=>"ResultsWithoutError"},$self->maketext("All of the [_1] answers above are correct.",  $numEssay ? "gradeable":""));
+		  if ($numCorrect + $numEssay == scalar @answerNames) {
+		    if ($numEssay) {
+		      $summary .= CGI::div({class=>"ResultsWithoutError"},$self->maketext("All of the gradeable answers above are correct."));
+		    } else {
+		      $summary .= CGI::div({class=>"ResultsWithoutError"},$self->maketext("All of the answers above are correct."));
+		    }
 				 } 
 				 #unless ($numCorrect + $numBlanks == scalar( @answerNames)) { # this allowed you to figure out if you got one answer right.
 				 elsif ($numBlanks + $numEssay != scalar( @answerNames)) {
-					$summary .= CGI::div({class=>"ResultsWithError"},$self->maketext("At least one of the answers above is NOT [_1]correct.", $fully));
+					$summary .= CGI::div({class=>"ResultsWithError"},$self->maketext("At least one of the answers above is NOT correct."));
 				 }
 				 if ($numBlanks > $numEssay) {
 					my $s = ($numBlanks>1)?'':'s';

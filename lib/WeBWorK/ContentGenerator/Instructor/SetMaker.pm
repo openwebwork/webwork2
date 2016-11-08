@@ -41,6 +41,7 @@ use MIME::Base64 qw(encode_base64);
 
 require WeBWorK::Utils::ListingDB;
 
+# we use x to mark strings for maketext
 use constant SHOW_HINTS_DEFAULT => 0;
 use constant SHOW_SOLUTIONS_DEFAULT => 0;
 use constant MAX_SHOW_DEFAULT => 20;
@@ -49,7 +50,6 @@ use constant SELECT_SET_STRING => x('Select a Set from this Course');
 use constant SELECT_LOCAL_STRING => x('Select a Problem Collection');
 use constant MY_PROBLEMS => x('My Problems');
 use constant MAIN_PROBLEMS => x('Unclassified Problems');
-use constant CREATE_SET_BUTTON => 'Create New Set';
 use constant ALL_CHAPTERS => 'All Chapters';
 use constant ALL_SUBJECTS => 'All Subjects';
 use constant ALL_SECTIONS => 'All Sections';
@@ -289,7 +289,7 @@ sub read_set_def {
 		}
 	    }
 	} else {
-	    $self->addbadmessage("Cannot open $filePath");
+	    $self->addbadmessage($r->maketext("Cannot open [_1]",$filePath));
 	}
 	# This is where we would potentially munge the pg file paths
 	# One possibility
@@ -325,7 +325,7 @@ sub add_selected {
 	my @selected = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
 	# DBFIXME count would work just as well
-		my $addedcount=0;
+	my $addedcount=0;
 
 	for $selected (@selected) {
 		if($selected->[1] & ADDED) {
@@ -345,11 +345,12 @@ sub add_selected {
 ############# List of sets of problems in templates directory
 
 sub get_problem_directories {
-	my $ce = shift;
+        my $r = shift;
+        my $ce = $r->ce;
 	my $lib = shift;
 	my $source = $ce->{courseDirs}{templates};
-	my $main = MY_PROBLEMS; my $isTop = 1;
-	if ($lib) {$source .= "/$lib"; $main = MAIN_PROBLEMS; $isTop = 2}
+	my $main = $r->maketext(MY_PROBLEMS); my $isTop = 1;
+	if ($lib) {$source .= "/$lib"; $main = $r->maketext(MAIN_PROBLEMS); $isTop = 2}
 	my @all_problem_directories = get_library_sets($isTop, $source);
 	my $includetop = shift @all_problem_directories;
 	my $j;
@@ -366,7 +367,7 @@ sub view_problems_line {
 	my $internal_name = shift;
 	my $label = shift;
 	my $r = shift; # so we can get parameter values
-	my $result = CGI::submit(-name=>"$internal_name", -value=>$r->maketext($label));
+	my $result = CGI::submit(-name=>"$internal_name", -value=>$label);
 
 	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
 	my @active_modes = grep { exists $display_modes{$_} }
@@ -375,12 +376,12 @@ sub view_problems_line {
 	# We have our own displayMode since its value may be None, which is illegal
 	# in other modules.
 	my $mydisplayMode = $r->param('mydisplayMode') || $r->ce->{pg}->{options}->{displayMode};
-	$result .= $r->maketext(' Display Mode: ').CGI::popup_menu(-name=> 'mydisplayMode',
+	$result .= ' '.$r->maketext('Display Mode:').' '.CGI::popup_menu(-name=> 'mydisplayMode',
 	                                                            -values=>\@active_modes,
 	                                                            -default=> $mydisplayMode);
 	# Now we give a choice of the number of problems to show
 	my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
-	$result .= $r->maketext(' Max. Shown: ').
+	$result .= ' '.$r->maketext('Max. Shown:').' '.
 		CGI::popup_menu(-name=> 'max_shown',
 		                -values=>[5,10,15,20,25,30,50,'All'],
 		                -default=> $defaultMax);
@@ -404,7 +405,7 @@ sub browse_local_panel {
 	my $lib = shift || ''; $lib =~ s/^browse_//;
 	my $name = ($lib eq '')? $r->maketext('Local') : $problib{$lib};
     
-	my $list_of_prob_dirs= get_problem_directories($self->r->ce,$lib);
+	my $list_of_prob_dirs= get_problem_directories($r,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
 		$library_selected = $r->maketext("Found no directories containing problems");
 		unshift @{$list_of_prob_dirs}, $library_selected;
@@ -427,7 +428,7 @@ sub browse_local_panel {
 		my %labels = map { my($l)=$_=~/^$lib\/(.*)$/;$_=>$l } @$list_of_prob_dirs;
 		push @popup_menu_args, -labels => \%labels;
 	}
-	print CGI::Tr({}, CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("[_1] Problems: ", $name),
+	print CGI::Tr({}, CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("[_1] Problems:", $name).' ',
 		              CGI::popup_menu(@popup_menu_args),
 		              CGI::br(), 
 		              $view_problem_line,
@@ -451,7 +452,7 @@ sub browse_mysets_panel {
 
 	my $view_problem_line = view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r);
 	print CGI::Tr({},
-		CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from: "),
+		CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:").' ',
 		CGI::popup_menu(-name=> 'library_sets', 
 		                -values=>$list_of_local_sets, 
 		                -default=> $library_selected),
@@ -513,7 +514,7 @@ sub browse_library_panel1 {
 	my $ce = $r->ce;
 	
 	my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($r->{ce});
-	unshift @chaps, $r->maketext(LIB2_DATA->{dbchapter}{all});
+	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}->{all};
 
 	my @sects=();
@@ -555,14 +556,14 @@ sub browse_library_panel2 {
 	my $ce = $r->ce;
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
-	unshift @subjs, $r->maketext(LIB2_DATA->{dbsubject}{all});
+	unshift @subjs, LIB2_DATA->{dbsubject}{all};
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
-	unshift @chaps, $r->maketext(LIB2_DATA->{dbchapter}{all});
+	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 
 	my @sects=();
 	@sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
-	unshift @sects, $r->maketext(LIB2_DATA->{dbsection}{all});
+	unshift @sects, LIB2_DATA->{dbsection}{all};
 
 	my $subject_selected = $r->param('library_subjects') || LIB2_DATA->{dbsubject}{all};
 	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}{all};
@@ -626,19 +627,19 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_subjects') } @subjs) {
 		$r->param('library_subjects', '');
 	}
-	unshift @subjs, $r->maketext(LIB2_DATA->{dbsubject}{all});
+	unshift @subjs, LIB2_DATA->{dbsubject}{all};
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
 	if(! grep { $_ eq $r->param('library_chapters') } @chaps) {
 		$r->param('library_chapters', '');
 	}
-	unshift @chaps, $r->maketext(LIB2_DATA->{dbchapter}{all});
+	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 
 	my @sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
 	if(! grep { $_ eq $r->param('library_sections') } @sects) {
 		$r->param('library_sections', '');
 	}
-	unshift @sects, $r->maketext(LIB2_DATA->{dbsection}{all});
+	unshift @sects, LIB2_DATA->{dbsection}{all};
 
 	my $texts = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
 	my @textarray = map { $_->[0] }  @{$texts};
@@ -649,7 +650,7 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_textbook') } @textarray) {
 		$r->param('library_textbook', '');
 	}
-	unshift @textarray, $r->maketext(LIB2_DATA->{textbook}{all});
+	unshift @textarray, LIB2_DATA->{textbook}{all};
 	my $atb = LIB2_DATA->{textbook}{all}; $textlabels{$atb} = LIB2_DATA->{textbook}{all};
 
 	my $textchap_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textchapter');
@@ -657,14 +658,14 @@ sub browse_library_panel2adv {
 	if(! grep { $_ eq $r->param('library_textchapter') } @textchaps) {
 		$r->param('library_textchapter', '');
 	}
-	unshift @textchaps, $r->maketext(LIB2_DATA->{textchapter}{all});
+	unshift @textchaps, LIB2_DATA->{textchapter}{all};
 
 	my $textsec_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textsection');
 	my @textsecs = map { $_->[0] } @{$textsec_ref};
 	if(! grep { $_ eq $r->param('library_textsection') } @textsecs) {
 		$r->param('library_textsection', '');
 	}
-	unshift @textsecs, $r->maketext(LIB2_DATA->{textsection}{all});
+	unshift @textsecs, LIB2_DATA->{textsection}{all};
 
 	my %selected = ();
 	for my $j (qw( dbsection dbchapter dbsubject textbook textchapter textsection )) {
@@ -808,7 +809,7 @@ sub browse_setdef_panel {
 	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
 		$popupetc = "there are no set definition files in this course to look at."
 	}
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from: "),
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:")." ",
 		$popupetc
 	));
 }
@@ -851,8 +852,8 @@ sub make_top_row {
 	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
         my $courseID = $self->r->urlpath->arg("courseID");
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Add problems to "),
-		CGI::b($r->maketext("Target Set: ")),
+	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Add problems to").' ',
+		CGI::b($r->maketext("Target Set:").' '),
 		CGI::popup_menu(-name=> 'local_sets', 
 						-values=>$list_of_local_sets, 
 						-default=> $set_selected,
@@ -881,7 +882,7 @@ sub make_top_row {
 	}
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
-		$r->maketext("Browse "),
+		$r->maketext("Browse").' ',
 		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
@@ -1257,7 +1258,7 @@ sub pre_header_initialize {
 		my $checkset = $db->getGlobalSet($r->param('local_sets'));
 		if (not defined($checkset)) {
 			$self->{error} = 1;
-			$self->addbadmessage('You need to select a "Target Set" before you can edit it.');
+			$self->addbadmessage($r->maketext('You need to select a "Target Set" before you can edit it.'));
 		} else {
 			my $page = $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::ProblemSetDetail2',  $r, setID=>$r->param('local_sets'), courseID=>$urlpath->arg("courseID"));
 			my $url = $self->systemLink($page);
@@ -1351,14 +1352,14 @@ sub pre_header_initialize {
 	} elsif ($r->param('rerandomize')) {
 		$self->{problem_seed}= 1+$self->{problem_seed};
 		#$r->param('problem_seed', $problem_seed);
-		$self->addbadmessage('Changing the problem seed for display, but there are no problems showing.') if $none_shown;
+		$self->addbadmessage($r->maketext('Changing the problem seed for display, but there are no problems showing.')) if $none_shown;
 
 		##### Clear the display
 
 	} elsif ($r->param('cleardisplay')) {
 		@pg_files = ();
 		$use_previous_problems=0;
-		$self->addbadmessage('The display was already cleared.') if $none_shown;
+		$self->addbadmessage($r->maketext('The display was already cleared.')) if $none_shown;
 
 		##### View problems selected from the local list
 
@@ -1366,10 +1367,10 @@ sub pre_header_initialize {
 
 		my $set_to_display = $self->{current_library_set};
 		if (not defined($set_to_display) or $set_to_display eq $r->maketext(SELECT_LOCAL_STRING) or $set_to_display eq "Found no directories containing problems") {
-			$self->addbadmessage('You need to select a set to view.');
+			$self->addbadmessage($r->maketext('You need to select a set to view.'));
 		} else {
-			$set_to_display = '.' if $set_to_display eq MY_PROBLEMS;
-			$set_to_display = substr($browse_which,7) if $set_to_display eq MAIN_PROBLEMS;
+			$set_to_display = '.' if $set_to_display eq $r->maketext(MY_PROBLEMS);
+			$set_to_display = substr($browse_which,7) if $set_to_display eq $r->maketext(MAIN_PROBLEMS);
 			@pg_files = list_pg_files($ce->{courseDirs}->{templates},
 				"$set_to_display");
 			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
@@ -1385,7 +1386,7 @@ sub pre_header_initialize {
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Homework Set"
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
-			$self->addbadmessage("You need to select a set from this course to view.");
+			$self->addbadmessage($r->maketext("You need to select a set from this course to view."));
 		} else {
 			# DBFIXME don't use ID list, use an iterator
 			my @problemList = $db->listGlobalProblems($set_to_display);
@@ -1422,7 +1423,7 @@ sub pre_header_initialize {
 		if (not defined($set_to_display) 
 				or $set_to_display eq "Select a Set Definition File"
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
-			$self->addbadmessage("You need to select a set definition file to view.");
+			$self->addbadmessage($r->maketext("You need to select a set definition file to view."));
 		} else {
 			@pg_files= $self->read_set_def($set_to_display);
 			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
@@ -1440,7 +1441,7 @@ sub pre_header_initialize {
 
 	} elsif ($r->param('new_local_set')) {
 		if ($r->param('new_set_name') !~ /^[\w .-]*$/) {
-			$self->addbadmessage("The name ".$r->param('new_set_name')." is not a valid set name.  Use only letters, digits, -, _, and .");
+			$self->addbadmessage($r->maketext("The name '[_1]' is not a valid set name.  Use only letters, digits, -, _, and .",$r->param('new_set_name')));
 		} else {
 			my $newSetName = $r->param('new_set_name');
 			# if we want to munge the input set name, do it here
@@ -1450,10 +1451,9 @@ sub pre_header_initialize {
 			debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
 			if (! $newSetName) {
-			    $self->addbadmessage("You did not specify a new set name.  ");
+			    $self->addbadmessage($r->maketext("You did not specify a new set name."));
 			} elsif (defined($newSetRecord)) {
-			    $self->addbadmessage("The set name $newSetName is already in use.  
-	            Pick a different name if you would like to start a new set.");
+			    $self->addbadmessage($r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetName));
 			} else {			# Do it!
 				# DBFIXME use $db->newGlobalSet
 				$newSetRecord = $db->{set}->{record}->new();
@@ -1484,12 +1484,12 @@ sub pre_header_initialize {
 				if ($@) {
 					$self->addbadmessage("Problem creating set $newSetName<br> $@");
 				} else {
-					$self->addgoodmessage("Set $newSetName has been created.");
+					$self->addgoodmessage($r->maketext("Set [_1] has been created.", $newSetName));
 					my $selfassign = $r->param('selfassign') || "";
 					$selfassign = "" if($selfassign =~ /false/i); # deal with javascript false
 					if($selfassign) {
 						$self->assignSetToUser($userName, $newSetRecord);
-						$self->addgoodmessage("Set $newSetName was assigned to $userName.");
+						$self->addgoodmessage($r->maketext("Set [_1] was assigned to [_2]", $newSetName,$userName));
 					}
 				}
 			}
@@ -1761,6 +1761,15 @@ sub output_JS {
   if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
+	if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		my $taxo = '[]';
+		$taxo = join("", <TAXONOMY>); 
+		close TAXONOMY;
+		print qq!\n<script>var taxo = $taxo ;</script>!;
+	} else {
+		print qq!\n<script>var taxo = [] ;</script>!;
+		print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+	}
   }
   return '';
 

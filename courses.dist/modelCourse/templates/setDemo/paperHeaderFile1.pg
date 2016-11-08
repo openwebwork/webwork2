@@ -17,7 +17,7 @@ $BEGIN_ONE_COLUMN
 \hfill
 \noindent {\large \bf MAA Minicourse San Diego January 2002}
 \par
-\noindent{\large \bf Homework Set $setNumber  due $dateTime}\par
+\noindent{\large \bf Homework Set $setNumber  closes $dateTime}\par
 
 \noindent This is a demonstration set designed to show you some types of questions 
 that can be asked using WeBWorK. 

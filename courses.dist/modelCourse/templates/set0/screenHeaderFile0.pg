@@ -12,7 +12,7 @@ loadMacros(
 
 
 BEGIN_TEXT;
-WeBWorK assignment number $setNumber is due $formatedDueDate.
+WeBWorK assignment number $setNumber is closes $formatedDueDate.
  
 $PAR
 This first problem set (set 0) is designed to acquaint you with using WeBWorK.
@@ -23,7 +23,7 @@ problem set.  You probably won't need it for this problem set, but you may in th
 $PAR
 The primary purpose of WeBWorK is to let you know if you are getting the right answer or to alert
 you if you get the wrong answer. Usually you can attempt a problem as many times as you want before
-the due date.  However, if you are having trouble figuring out your error, you should
+the closes date.  However, if you are having trouble figuring out your error, you should
 consult the book, or ask a fellow student, one of the TA's or
 your professor for help.  Don't spend a lot of time guessing -- it's not very efficient or effective.
 $PAR

@@ -148,8 +148,7 @@ sub call_next_authen_method {
 	my $user_authen_module = WeBWorK::Authen::class($ce, "user_module");
 	#debug("user_authen_module = |$user_authen_module|");	
 	if (!defined($user_authen_module) or ($user_authen_module eq "")) {
-		$self->{error} = $r->maketext("No authentication method found for your request.  "
-			. "If this recurs, please speak with your instructor.");
+		$self->{error} = $r->maketext("No authentication method found for your request.  If this recurs, please speak with your instructor.");
 		$self->{log_error} .= "None of the specified authentication modules could handle the request.";
 		return(0);
 	} else {
@@ -235,8 +234,7 @@ sub verify {
 		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character. 
 
 			if (defined($r->param("user")) or defined($r->param("user_id"))) {
-				$error = $r->maketext("Your authentication failed.  Please try again."
-					. "  Please speak with your instructor if you need help.")
+				$error = $r->maketext("Your authentication failed.  Please try again. Please speak with your instructor if you need help.")
 			}
 
 		}

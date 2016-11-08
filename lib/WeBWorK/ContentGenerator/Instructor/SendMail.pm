@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ¬© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.64 2007/08/13 22:59:55 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -207,16 +207,16 @@ sub initialize {
 				$input_file = $openfilename;
 			} else {
 				$self->addbadmessage(CGI::p(join("",
-					"The file ${emailDirectory}/$openfilename is not readable by the webserver.",CGI::br(),
-					"Check that it's permissions are set correctly.",
+								 $r->maketext("The file [_1]/[_2] is not readable by the webserver.",$emailDirectory,$openfilename) ,CGI::br(),
+								 $r->maketext("Check that it's permissions are set correctly."),
 				)));
 			}
 		} else {
 			$input_file = $default_msg_file;
 			$self->addbadmessage(CGI::p(join("",
-				  "The file ${emailDirectory}/$openfilename cannot be found.",CGI::br(),
-				  "Check whether it exists and whether the directory $emailDirectory can be read by the webserver.",CGI::br(),
-				  "Using contents of the default message $default_msg_file instead.",
+				  $r->maketext("The file [_1]/[_2] cannot be found.",$emailDirectory, $openfilename ) ,CGI::br(),
+							 $r->maketext("Check whether it exists and whether the directory [_1] can be read by the webserver.", $emailDirectory),CGI::br(),
+							 $r->maketext("Using contents of the default message [_1] instead.", $default_msg_file),
 			)));
 		}
 	} else {
@@ -234,7 +234,7 @@ sub initialize {
 		if (defined($savefilename) and $savefilename ) {
 			$output_file  = $savefilename;
 		} else {
-			$self->addbadmessage(CGI::p("No filename was specified for saving!  The message was not saved."));
+			$self->addbadmessage(CGI::p($r->maketext("No filename was specified for saving!  The message was not saved.")));
 		}
 	} elsif ( defined($input_file) ) {
 		$output_file  = $input_file;
@@ -245,16 +245,10 @@ sub initialize {
 	#################################################################
 
 	if ($output_file =~ /^[~.]/ || $output_file =~ /\.\./) {
-		$self->addbadmessage(CGI::p("For security reasons, you cannot specify a message file from a directory", 
-						"higher than the email directory (you can't use ../blah/blah for example). ", 
-						"Please specify a different file or move the needed file to the email directory",));
+		$self->addbadmessage(CGI::p($r->maketext("For security reasons, you cannot specify a message file from a directory higher than the email directory (you can't use ../blah/blah for example). Please specify a different file or move the needed file to the email directory")));
 	} 
 	unless ($output_file =~ m|\.msg$| ) {
-		$self->addbadmessage(CGI::p("Invalid file name.", 
-		                        "The file name \"$output_file\" does not have a \".msg\" extension",
-								"All email file names must end in the extension \".msg\"",
-								"choose a file name with a \".msg\" extension.",
-								"The message was not saved.",));
+		$self->addbadmessage(CGI::p($r->maketext("Invalid file name. The file name \"[_1]\" does not have a \".msg\" extension All email file names must end in the extension \".msg\" choose a file name with a \".msg\" extension. The message was not saved.",$output_file)));
 	}
 
 	$self->{output_file} = $output_file;  # this is ok.  It will be put back in the text input box for re-editing.
@@ -287,7 +281,7 @@ sub initialize {
 		$subject           =    $r->param('subject');
 		my $body           =    $r->param('body');
 		# Sanity check: body must contain non-white space
-		$self->addbadmessage(CGI::p('You didn\'t enter any message.')) unless ($r->param('body') =~ /\S/);
+		$self->addbadmessage(CGI::p($r->maketext('You didn\'t enter any message.'))) unless ($r->param('body') =~ /\S/);
 		$r_text               =    \$body;
 		
 	}
@@ -387,16 +381,16 @@ sub initialize {
 		my $temp_body = ${ $r_text };
 		$temp_body =~ s/\r\n/\n/g;
 		$temp_body = join("",
-				   "From: $from \nReply-To: $replyTo\n" ,
-				   "Subject: $subject\n" ,
-				   "Message: \n    $temp_body");
+				  $r->maketext("From:")," $from \n",
+				  $r->maketext("Reply-To:")," $replyTo\n" ,
+				  $r->maketext("Subject:")," $subject\n" ,
+				  $r->maketext("Message:")," \n    $temp_body");
 		#warn "FIXME from $from | subject $subject |reply $replyTo|msg $temp_body";
 		#################################################################
 		# overwrite protection
 		#################################################################
 		if ($action eq 'saveAs' and -e "$emailDirectory/$output_file") {
-			$self->addbadmessage(CGI::p("The file $emailDirectory/$output_file already exists and cannot be overwritten",
-			                         "The message was not saved"));
+		  $self->addbadmessage(CGI::p($r->maketext("The file [_1]/[_2] already exists and cannot be overwritten. The message was not saved",$emailDirectory, $openfilename )));
 			return;
 		}
  
@@ -407,14 +401,14 @@ sub initialize {
 	    	rename("$emailDirectory/$default_msg_file","$emailDirectory/$old_default_msg_file") or 
 	    	       die "Can't rename $emailDirectory/$default_msg_file to $emailDirectory/$old_default_msg_file ",
 	    	           "Check permissions for webserver on directory $emailDirectory. $!";
-	    	$self->addgoodmessage(CGI::p("Backup file <code>$emailDirectory/$old_default_msg_file</code> created." . CGI::br()));
+	    	$self->addgoodmessage(CGI::p($r->maketext("Backup file <code>[_1]/[_2]</code> created.",$emailDirectory,$old_default_msg_file) . CGI::br()));
 	    }
 	    #################################################################
 	    # Save the message
 		#################################################################
 		$self->saveProblem($temp_body, "${emailDirectory}/$output_file" ) unless ($output_file =~ /^[~.]/ || $output_file =~ /\.\./ || not $output_file =~ m|\.msg$|);
 		unless ( $self->{submit_message} or not -w "${emailDirectory}/$output_file" )  {  # if there are no errors report success
-		  $self->addgoodmessage(CGI::p("Message saved to file <code>${emailDirectory}/$output_file</code>."));
+		  $self->addgoodmessage(CGI::p($r->maketext("Message saved to file <code>[_1]/[_2]</code>.",$emailDirectory, $output_file)));
 		  $self->{input_file} = $output_file;
 		  $db->setSettingValue("${user}_openfile",$output_file);
 		}    
@@ -426,7 +420,7 @@ sub initialize {
 		# verify format of From address (one valid rfc2822 address)
 		my @parsed_from_addrs = Email::Address->parse($self->{from});
 		unless (@parsed_from_addrs == 1) {
-			$self->addbadmessage("From field must contain one valid email address.");
+			$self->addbadmessage($r->maketext("From field must contain one valid email address."));
 			return;
 		}
 		
@@ -434,7 +428,7 @@ sub initialize {
 		if (defined $self->{replyTo} and $self->{replyTo} ne "") {
 			my @parsed_replyto_addrs = Email::Address->parse($self->{replyTo});
 			unless (@parsed_replyto_addrs > 0) {
-				$self->addbadmessage("Invalid Reply-to address.");
+				$self->addbadmessage($r->maketext("Invalid Reply-to address."));
 				return;
 			}
 		}
@@ -442,7 +436,7 @@ sub initialize {
 	    # check that recipients have been selected.
 		my @recipients            = @{$self->{ra_send_to}};
 		unless (@recipients) {
-			$self->addbadmessage(CGI::p("No recipients selected. Please select one or more recipients from the list below."));
+			$self->addbadmessage(CGI::p($r->maketext("No recipients selected. Please select one or more recipients from the list below.")));
 			return;
 		}
 		
@@ -451,8 +445,8 @@ sub initialize {
 		my $delimiter       = ',';
 		my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
 		unless (ref($rh_merge_data) ) {
-			$self->addbadmessage(CGI::p("No merge data file"));
-			$self->addbadmessage(CGI::p("Can't read merge file $merge_file. No message sent"));
+			$self->addbadmessage(CGI::p($r->maketext("No merge data file")));
+			$self->addbadmessage(CGI::p($r->maketext("Can't read merge file [_1]. No message sent",$merge_file)));
 			return;
 		} ;
 		$self->{rh_merge_data} = $rh_merge_data;
@@ -489,7 +483,7 @@ sub initialize {
 			$r->post_connection($post_connection_action, $r);
 		}
 	} else {
-		$self->addbadmessage(CGI::p("Didn't recognize action"));
+		$self->addbadmessage(CGI::p($r->maketext("Didn't recognize action")));
 	}
 
 
@@ -519,8 +513,7 @@ sub body {
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
 	} elsif ($response eq 'send_email' and $self->{ra_send_to} and @{$self->{ra_send_to}}){
-		my $message = CGI::i("Email is being sent to ".  scalar(@{$self->{ra_send_to}})." recipient(s). You will be notified"
-		             ." by email when the task is completed.  This may take several minutes if the class is large."
+		my $message = CGI::i($r->maketext("Email is being sent to [quant,_1,recipient]. You will be notified by email when the task is completed.  This may take several minutes if the class is large.",scalar(@{$self->{ra_send_to}}))
 		);
 		$self->addgoodmessage($message);
 		$self->{message} .= $message;
@@ -557,20 +550,20 @@ sub print_preview {
 	$msg = wrap("","",$msg);
 	
 	$msg = join("",
-	   $errorMessage,
-	   $preview_header,
-	   "To: "             , $ur->email_address,"\n",
-       "From: "           , $self->{from} , "\n" ,
-       "Reply-To: "       , $self->{replyTo} , "\n" ,
-       "Subject:  "       , $self->{subject} , "\n" ,"\n" , 
+		    $errorMessage,
+		    $preview_header,
+		    $r->maketext("To:")," ", $ur->email_address,"\n",
+		    $r->maketext("From:")," ", $self->{from} , "\n" ,
+		    $r->maketext("Reply-To:")," ", $self->{replyTo} , "\n" ,
+		    $r->maketext("Subject:"),"  ", $self->{subject} , "\n" ,"\n" , 
 	   $msg , "\n"
 	);
 
 #	return join("", '<pre>',wrap("","",$msg),"\n","\n",
 	return join("", '<pre>',$msg,"\n","\n",
 				   '</pre>', 
-				   CGI::p('Use browser back button to return from preview mode'),
-				   CGI::h3('Emails to be sent to the following:'), 
+				   CGI::p($r->maketext('Use browser back button to return from preview mode')),
+				   CGI::h3($r->maketext('Emails to be sent to the following:')), 
 				   $recipients, "\n",
 	               
 	);
@@ -653,16 +646,16 @@ sub print_form {
 	#############################################################################################	
 
 			 CGI::td({},
-			     CGI::strong($r->maketext("Message file: ")), $input_file,"\n",CGI::br(),
+			     CGI::strong($r->maketext("Message file:").' '), $input_file,"\n",CGI::br(),
 				 CGI::submit(-name=>'openMessage', -value=>$r->maketext('Open')), '&nbsp;&nbsp;&nbsp;&nbsp;',"\n",
 				 CGI::popup_menu(-name=>'openfilename', 
 				                 -values=>\@sorted_messages, 
 				                 -default=>$input_file
 				 ), 
 				 "\n",CGI::br(),
-				 CGI::strong($r->maketext("Save file to: ")), $output_file,
+				 CGI::strong($r->maketext("Save file to:").' '), $output_file,
 				 "\n",CGI::br(),
-				 CGI::strong($r->maketext('Merge file: ')), $merge_file, 
+				 CGI::strong($r->maketext('Merge file:').' '), $merge_file, 
 				 CGI::br(),
 				 CGI::popup_menu(-name=>'merge_file', 
 				                 -values=>\@sorted_merge_files, 
@@ -672,12 +665,12 @@ sub print_form {
 				 #CGI::hr(),
 				 CGI::div(
 					 "\n", $r->maketext('From:'),'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),    
-					 "\n", CGI::br(),$r->maketext('Reply-To: '), CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
-					 "\n", CGI::br(),$r->maketext('Subject:  '), CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
+					 "\n", CGI::br(),$r->maketext('Reply-To:'),' ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1), 
+					 "\n", CGI::br(),$r->maketext('Subject: ').' ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),  
 				),
 				#CGI::hr(),
-				$r->maketext("Editor rows: "), CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
-				$r->maketext(" columns: "), CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
+				$r->maketext("Editor rows:").' ', CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
+				' '.$r->maketext("columns:").' ', CGI::textfield(-name=>'columns', -size=>3, -value=>$columns),
 				CGI::br(),
 				CGI::submit(-name=>'updateSettings', -value=>$r->maketext("Update settings and refresh page")),
 				 
@@ -694,8 +687,8 @@ sub print_form {
 		                                   -labels=>{all_students=>$r->maketext('All students in course'),studentID => $r->maketext('Selected students')},
 		                                   -default=>'studentID', -linebreak=>0), 
 							CGI::br(),$scrolling_user_list,
-							CGI::i($r->maketext("Preview set to: ")), $preview_record->last_name,'(', $preview_record->user_id,')',
-							CGI::submit(-name=>'previewMessage', -value=>'preview',-label=>$r->maketext('Preview message')),'&nbsp;&nbsp;',
+							CGI::i($r->maketext("Preview set to:").' '), $preview_record->last_name,'(', $preview_record->user_id,')',
+							CGI::submit(-name=>'previewMessage', -value=>$r->maketext('Preview Message'),-label=>$r->maketext('Preview message')),'&nbsp;&nbsp;',
 					),
 	); # end Tr
 	
@@ -709,17 +702,17 @@ sub print_form {
 				CGI::popup_menu(
 						-name=>'dummyName',
 						-values=>['', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION','$STATUS', '$EMAIL', '$LOGIN', '$COL[n]', '$COL[-1]'],
-						-labels=>{''=>'list of insertable macros',
-							'$SID'=>'$SID - Student ID',
-							'$FN'=>'$FN - First name',
-							'$LN'=>'$LN - Last name',
-							'$SECTION'=>'$SECTION',
-							'$RECITATION'=>'$RECITATION',
-							'$STATUS'=>'$STATUS - Enrolled, Drop, etc.',
-							'$EMAIL'=>'$EMAIL - Email address',
-							'$LOGIN'=>'$LOGIN - Login',
-							'$COL[n]'=>'$COL[n] - nth colum of merge file',
-							'$COL[-1]'=>'$COL[-1] - Last column of merge file'
+						-labels=>{''=>$r->maketext('list of insertable macros'),
+							'$SID'=>'$SID - '.$r->maketext('Student ID'),
+							'$FN'=>'$FN - '.$r->maketext('First name'),
+							'$LN'=>'$LN - '.$r->maketext('Last name'),
+							'$SECTION'=>'$SECTION - '.$r->maketext('Section'),
+							'$RECITATION'=>'$RECITATION - '.$r->maketext('Recitation'),
+							'$STATUS'=>'$STATUS - '.$r->maketext('Enrolled, Drop, etc.'),
+							'$EMAIL'=>'$EMAIL - '.$r->maketext('Email address'),
+							'$LOGIN'=>'$LOGIN - '.$r->maketext('Login'),
+							'$COL[n]'=>'$COL[n] - '.$r->maketext('nth colum of merge file'),
+							'$COL[-1]'=>'$COL[-1] - '.$r->maketext('Last column of merge file')
 							}
 				), "\n",
 			),
@@ -753,8 +746,8 @@ sub print_form {
 	print    CGI::table( { -border=>2,-cellpadding=>4},
 				 CGI::Tr( {},
 					 CGI::td({}, CGI::submit(-name=>'sendEmail', -id=>"sendEmail_id", -value=>$r->maketext('Send Email')) ), "\n",
-					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save'))," to $output_file"), " \n",
-					 CGI::td({}, CGI::submit(-name=>'saveAs', -value=>$r->maketext('Save as:')),
+					 CGI::td({}, CGI::submit(-name=>'saveMessage', -value=>$r->maketext('Save')),' ',$r->maketext('to'),' ',$output_file), " \n",
+					 CGI::td({}, CGI::submit(-name=>'saveAs', -value=>$r->maketext('Save as').":"),
 					         CGI::textfield(-name=>'savefilename', -size => 20, -value=> "$output_file", -override=>1)
 					 ), "\n",
 					 CGI::td(CGI::submit(-name=>'saveDefault', -value=>$r->maketext('Save as Default'))),
@@ -787,12 +780,13 @@ sub saveProblem {
 sub read_input_file {
 	my $self         = shift;
 	my $filePath     = shift;
+	my $r = $self->r;
 	my ($text, @text);
 	my $header = '';
 	my ($subject, $from, $replyTo);
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
-		open FILE, "$filePath" || do { $self->addbadmessage(CGI::p("Can't open $filePath")); return};
+		open FILE, "$filePath" || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
 		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
 			$header .= <FILE>; 
 		}
@@ -880,7 +874,7 @@ sub mail_message_to_recipients {
 			close $MAIL                             || ($error_messages .= "$recipient: Couldn't close mail $MAIL -- possibly a badly formed address: ".$ur->email_address."\n");
 		    #warn "DEBUG: mailed to $recipient: ", $ur->email_address, " from $from subject $subject. Errors:\n $error_messages\n\n";
 		    #FIXME -- allow this list to be turned off with a "verbose" flag
-		    $result_message .= "Msg sent to $recipient at ".$ur->email_address."\n" unless $error_messages;
+		    $result_message .= $r->maketext("Msg sent to [_1] at [_2].", $recipient, $ur->email_address)."\n" unless $error_messages;
 		} continue { #update failed messages before continuing loop
 			if ($error_messages) {
 				$failed_messages++;
@@ -889,15 +883,7 @@ sub mail_message_to_recipients {
 		}
 		my $courseName = $self->r->urlpath->arg("courseID");
 		my $number_of_recipients = scalar(@recipients) - $failed_messages;
-		$result_message = <<EndText.$result_message;
-		
-			A message with the subject line 
-			             $subject 
-			has been sent to 
-			$number_of_recipients recipient(s) in the class $courseName. 
-			There were $failed_messages message(s) that could not be sent.\n 
-		
-EndText
+	        $result_message = $r->maketext("A message with the subject line \"[_1]\" has been sent to [quant,_2,recipient] in the class [_3].  There were [_4] message(s) that could not be sent.", $subject, $number_of_recipients, $courseName, $failed_messages)."\n\n".$result_message;
 
 }
 sub email_notification {
@@ -957,10 +943,11 @@ sub getRecord {
 }
 
 sub process_message {
-	my $self          = shift;
+        my $self          = shift;
 	my $ur            = shift;
 	my $rh_merge_data = shift;
 	my $for_preview   = shift;
+	my $r             = $self->r;
 	my $text          = defined($self->{r_text}) ? ${ $self->{r_text} }:
 	                        'FIXME no text was produced by initialization!!';	
 	my $merge_file      = ( defined($self->{merge_file}) ) ? $self->{merge_file} : 'None';  
@@ -1009,7 +996,7 @@ sub process_message {
 		my @preview_COL = @COL;
 		shift @preview_COL; ## shift back for preview
 		my $preview_header = 	CGI::p('',data_format(1..($#COL)),"<br>", data_format2(@preview_COL)).
-			                    CGI::h3( "This sample mail would be sent to $EMAIL");
+			                    CGI::h3( $r->maketext("This sample mail would be sent to [_1]", $EMAIL));
 		return $msg, $preview_header;
 	} else {
 		return $msg;
@@ -1017,9 +1004,9 @@ sub process_message {
 }
 
 
-# › sub data_format {
+# √ù sub data_format {
 # 
-# › › › › ›map {$_ =~s/\s/\./g;$_} › › map {sprintf('%-8.8s',$_);} ›@_;
+# √ù √ù √ù √ù √ùmap {$_ =~s/\s/\./g;$_} √ù √ù map {sprintf('%-8.8s',$_);} √ù@_;
  sub data_format {
  	    map {"COL[$_]".'&nbsp;'x(3-length($_));}  @_;  # problems if $_ has length bigger than 4
  }
