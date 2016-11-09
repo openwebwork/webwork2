@@ -345,13 +345,13 @@ my $ConfigStrings = [
 
 		{ var => 'pg{options}{displayMode}',
 		  doc => x('The default display mode'),
-		  doc2 => 'Enter one of the allowed display mode types above.  See \'display modes entry\' for descriptions.',
+		  doc2 => x('Enter one of the allowed display mode types above.  See \'display modes entry\' for descriptions.'),
 		  min  => 1,
 		  values => [qw(MathJax images plainText)],
 		  type => 'popuplist'
 		},
 	        { var  => 'pg{specialPGEnvironmentVars}{MathView}',
-                  doc  => 'Use MathView editor for answer entry',
+                  doc  => x('Use MathView editor for answer entry'),
                   doc2 => x('Set to true to display MathView equation editor icon next to each answer box'),
                   type => 'boolean'
                 }, 

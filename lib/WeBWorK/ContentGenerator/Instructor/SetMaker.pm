@@ -840,7 +840,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
-	my $these_widths = "width: 25ex";
+	my $these_widths = "width: 26ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -1001,7 +1001,7 @@ sub make_data_row {
 				problemSeed=> $problem_seed}
 		  ), 
 				id=> "editit$cnt",
-				target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
+				target=>"WW_Editor", title=>$r->maketext("Edit it")}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -1022,7 +1022,7 @@ sub make_data_row {
 				displayMode => $displayMode,
 			}
 		), target=>"WW_View", 
-			title=>"Try it",
+			title=>$r->maketext("Try it"),
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
@@ -1062,7 +1062,7 @@ sub make_data_row {
 
 	my $level =0;
 
-	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random"></i></span>';
+	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title='.$r->maketext("Randomize").'><i class="icon-random"></i></span>';
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
@@ -1117,7 +1117,7 @@ settoggle("filepath'.$cnt.'", "'.$r->maketext("Show path ...").'", "'.$r->makete
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
-				-title=>"Hide this problem",
+				-title=>$r->maketext("Hide this problem"),
 				-style=>"cursor: pointer",
 				   -onClick=>"return delrow($cnt)"}, "X")),
                          $problem_stats,
