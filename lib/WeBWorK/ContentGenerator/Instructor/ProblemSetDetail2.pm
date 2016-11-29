@@ -227,10 +227,10 @@ use constant FIELD_PROPERTIES => {
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( default gateway proctored_gateway jitar)],
-		labels    => {	default => "homework",
-				gateway => "gateway/quiz",
-				proctored_gateway => "proctored gateway/quiz",
-				jitar => "just-in-time"
+		labels    => {	default => x("homework"),
+				gateway => x("gateway/quiz"),
+				proctored_gateway => x("proctored gateway/quiz"),
+				jitar => x("just-in-time")
 		},
 	},
 	version_time_limit => {

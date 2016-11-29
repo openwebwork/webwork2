@@ -607,7 +607,7 @@ sub body {
 		course_info     => "course information",
 		options_info    => "options information",
 		''              => 'Unknown file type',
-		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $prettyProblemNumber"),
+		source_path_for_problem_file => $r->maketext(" unassigned problem file:  ").CGI::b($r->maketext("set [_1]/problem [_2]",$setName, $prettyProblemNumber)),
 	);
 	my $header = CGI::i($r->maketext("Editing [_1] in file '[_2]'",$titles{$file_type}, $self->shortPath($inputFilePath)));
 	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file

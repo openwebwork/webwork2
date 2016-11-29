@@ -48,6 +48,8 @@ use constant MAX_SHOW_DEFAULT => 20;
 use constant NO_LOCAL_SET_STRING => x('No sets in this course yet');
 use constant SELECT_SET_STRING => x('Select a Set from this Course');
 use constant SELECT_LOCAL_STRING => x('Select a Problem Collection');
+use constant SELECT_HMW_SET_STRING => x('Select a Homework Set');
+use constant SELECT_SETDEF_FILE_STRING => x('Select a Set Definition File');
 use constant MY_PROBLEMS => x('My Problems');
 use constant MAIN_PROBLEMS => x('Unclassified Problems');
 use constant ALL_CHAPTERS => 'All Chapters';
@@ -441,7 +443,7 @@ sub browse_mysets_panel {
 	my $r = $self->r;	
 	my $library_selected = shift;
 	my $list_of_local_sets = shift;
-	my $default_value = $r->maketext("Select a Homework Set");
+	my $default_value = $r->maketext(SELECT_HMW_SET_STRING);
 
 	if(scalar(@$list_of_local_sets) == 0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -789,7 +791,7 @@ sub browse_setdef_panel {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $library_selected = shift;
-	my $default_value = $r->maketext("Select a Set Definition File");
+	my $default_value = $r->maketext(SELECT_SETDEF_FILE_STRING);
 	# in the following line, the parens after sort are important. if they are
 	# omitted, sort will interpret get_set_defs as the name of the comparison
 	# function, and ($ce->{courseDirs}{templates}) as a single element list to
@@ -840,7 +842,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
-	my $these_widths = "width: 26ex";
+	my $these_widths = "width: 28ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -1384,7 +1386,7 @@ sub pre_header_initialize {
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
-				or $set_to_display eq "Select a Homework Set"
+				or $set_to_display eq $r->maketext(SELECT_HMW_SET_STRING)
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage($r->maketext("You need to select a set from this course to view."));
 		} else {
@@ -1421,7 +1423,7 @@ sub pre_header_initialize {
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
-				or $set_to_display eq "Select a Set Definition File"
+				or $set_to_display eq $r->maketext(SELECT_SETDEF_FILE_STRING)
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage($r->maketext("You need to select a set definition file to view."));
 		} else {

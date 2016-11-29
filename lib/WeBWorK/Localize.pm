@@ -253,6 +253,11 @@ my $ConfigStrings = [
 	   doc2 => x('Enables use of the Show Me Another button, which offers the student a newly-seeded version of the current problem, complete with solution (if it exists for that problem).'),
 	   type => 'boolean'
 	 },
+	 { var => 'pg{options}{showMeAnotherDefault}',
+	   doc => x('Default number of attempts before Show Me Another can be used (-1 => Never)'),
+	   doc2 => x('This is the default number of attempts before show me another becomes available to students.  It can be set to -1 to disable show me another by default.'),
+	   type => 'number'
+	 },
 	 { var => 'pg{options}{showMeAnotherMaxReps}',
 	   doc => x('Maximum times Show me Another can be used per problem (-1 => unlimited)'),
 	   doc2 => x('The Maximum number of times Show me Another can be used per problem by a student. If set to -1 then there is no limit to the number of times that Show Me Another can be used.'),
