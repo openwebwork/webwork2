@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2016-11-30 12:38-0500\n"
+"PO-Revision-Date: 2016-11-30 14:58-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -1507,7 +1507,7 @@ msgid ""
 "Click on a student's name to see the student's version of the homework set. "
 "Click heading to sort table."
 msgstr ""
-"Cliquer sur le nom de l'étudiant pour voir sa version du devoir. Cliquer sur "
+"Cliquer sur le nom d'un étudiant pour voir sa version du devoir. Cliquer sur "
 "le titre de la colonne pour trier le tableau."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:575
@@ -1516,7 +1516,7 @@ msgid ""
 "Click on the login name to edit individual problem set data, (e.g. due "
 "dates) for these students."
 msgstr ""
-"Cliquer sur le nom d'utilisateur pour modifier les informations générales "
+"Cliquer sur le nom d'un utilisateur pour modifier les informations générales "
 "(par ex. la date d'échéance) des devoirs qui lui sont attribués. "
 
 #. ($clientIP->ip()
@@ -2526,8 +2526,8 @@ msgstr "Activer le bouton <b>Montrer un autre problème</b>"
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:270
 msgid "Enable periodic re-randomization of problems"
 msgstr ""
-"Activer le bouton <b>Continuer avec une nouvelle version</b> d'un problème "
-"générée aléatoirement"
+"Activer le bouton <b>Obtenir une nouvelle version</b> d'un problème généré "
+"aléatoirement"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:358
 msgid ""
@@ -2548,8 +2548,8 @@ msgid ""
 msgstr ""
 "Activer cette fonction génère aléatoirement une nouvelle version du problème "
 "après un certain nombre de tentatives non réussies. L'étudiant devra ainsi "
-"cliquer sur le bouton <b>Continuer avec une nouvelle version</b> afin de "
-"continuer son travail sur le problème."
+"cliquer sur le bouton <b>Obtenir une nouvelle version</b> afin de l'obtenir "
+"et ainsi continuer son travail sur le problème."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:213
 msgid ""
@@ -4928,7 +4928,7 @@ msgstr "Rapport de la base de donnée du cours %1&#8239;:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1487
 msgid "Request New Version"
-msgstr "Continuer avec une nouvelle version"
+msgstr "Obtenir une nouvelle version"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2101
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2177
@@ -4937,7 +4937,7 @@ msgstr "Informations demandées"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1572
 msgid "Request new version now."
-msgstr "Continuer avec une nouvelle version maintenant."
+msgstr "Obtenir une nouvelle version maintenant."
 
 #. ($setName,$effectiveUserName)
 #. ($setName, $effectiveUserName)
@@ -6212,8 +6212,7 @@ msgid ""
 "=> never)"
 msgstr ""
 "La valeur par défaut qui définie le nombre d'essais qu'un étudiant dispose "
-"avant de devoir continuer avec une nouvelle version d'un problème. (0 => "
-"Jamais)"
+"avant d'obtenir une nouvelle version d'un problème. (0 => Jamais)"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:249
 msgid "The directory you specified doesn't exist"
@@ -7073,10 +7072,10 @@ msgid ""
 "comma separated list.  The minimum score required on the sets is specified "
 "in the following field."
 msgstr ""
-"Ce devoir ne sera pas disponible aux étudiants à moins qu'ils aient atteint "
-"une note minimale dans tous les devoirs spécifiés dans la case. Les devoirs, "
-"s'il y en a plusieurs, doivent être séparés par une virgule. La note "
-"minimale requise par les étudiants doit être entrée dans la case en-dessous."
+"Ce devoir ne sera pas disponible aux étudiants à moins qu'ils n'aient "
+"atteint une note minimale dans tous les devoirs spécifiés dans la case. Les "
+"devoirs, s'il y en a plusieurs, doivent être séparés par une virgule. "
+"Choisir la note minimale requise par les étudiants ci-dessous."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:218
 msgid ""
