@@ -385,7 +385,7 @@ sub view_problems_line {
 	my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
 	$result .= ' '.$r->maketext('Max. Shown:').' '.
 		CGI::popup_menu(-name=> 'max_shown',
-		                -values=>[5,10,15,20,25,30,50,'All'],
+		                -values=>[5,10,15,20,25,30,50,$r->maketext("All")],
 		                -default=> $defaultMax);
 	# Option of whether to show hints and solutions
 	my $defaultHints = $r->param('showHints') || SHOW_HINTS_DEFAULT;
@@ -1230,7 +1230,7 @@ sub pre_header_initialize {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $maxShown = $r->param('max_shown') || MAX_SHOW_DEFAULT;
-	$maxShown = 10000000 if($maxShown eq 'All'); # let's hope there aren't more
+	$maxShown = 10000000 if($maxShown eq $r->maketext("All")); # let's hope there aren't more
 	my $library_basic = $r->param('library_is_basic') || 1;
 	$self->{problem_seed} = $r->param('problem_seed') || 1234;
 	## Fix some parameters
