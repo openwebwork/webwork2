@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2016-11-30 14:58-0500\n"
+"PO-Revision-Date: 2016-12-05 16:56-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -5060,7 +5060,7 @@ msgstr "Restriction d'accès par devoir(s) "
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:386
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:312
 msgid "Result"
-msgstr "Exporter les résultats"
+msgstr "Résultat"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:384
 msgid "Result of last action performed"

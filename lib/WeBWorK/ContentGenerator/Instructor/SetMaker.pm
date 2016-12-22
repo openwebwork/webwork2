@@ -934,13 +934,14 @@ sub make_top_row {
 		$show_hide_path_button .= " ".CGI::hidden(-name=>"hidetext", -id=>"hidetext", -default=>$r->maketext("Hide all paths"));
 		$show_hide_path_button .= " ".CGI::hidden(-name=>"showtext", -id=>"showtext", -default=>$r->maketext("Show all paths"));
 	}
-
+	
+	my $stringalert = $r->maketext(SELECT_SET_STRING);
 	print CGI::Tr({},
 	        CGI::td({-class=>"InfoPanel", -align=>"center"},
 		      CGI::start_table({-border=>"0"}),
 		        CGI::Tr({}, CGI::td({ -align=>"center"},
 			       CGI::button(-name=>"select_all", -style=>$these_widths,
-                                    -onClick=>'return addme("", "all")',
+                                    -onClick=>"return addme(\"\", \'all\', \"$stringalert\" )",
 			            -value=>$r->maketext("Add All")),
 		           CGI::submit(-name=>"cleardisplay", 
 		                -style=>$these_widths,
@@ -1105,13 +1106,15 @@ sub make_data_row {
 
 
 	print $mltstart;
+	
 	# Print the cell
+	my $stringalert = $r->maketext(SELECT_SET_STRING);
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
 		CGI::div({-class=>"lb-problem-header"},
 		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
 		      -value=>$r->maketext("Add"),
 			-title=>"Add problem to target set",
-		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
+		      -onClick=>"return addme(\"$sourceFileName\", \'one\', \"$stringalert\")")),
 			"\n",CGI::span({-class=>"lb-problem-path"},CGI::span({id=>"filepath$cnt"},$r->maketext("Show path ..."))),"\n",
 			 '<script type="text/javascript">var show_string="'.$r->maketext("Show path ...").'";
 settoggle("filepath'.$cnt.'", "'.$r->maketext("Show path ...").'", "'.$r->maketext("Hide path:")." ".$sourceFileName.'")</script>',
