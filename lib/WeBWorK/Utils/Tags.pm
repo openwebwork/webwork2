@@ -203,7 +203,7 @@ sub new {
   my $textno;
   my $textinfo=[];
 
-  open(IN,"$name") or die "can not open $name: $!";
+  open(IN,'<:encoding(UTF-8)',"$name") or die "can not open $name: $!";
   if ($name !~ /pg$/ && $name !~ /\.pg\.[-a-zA-Z0-9_.@]*\.tmp$/) {
     warn "Not a pg file";  #print caused trouble with XMLRPC 
     $self->{file}= undef;
