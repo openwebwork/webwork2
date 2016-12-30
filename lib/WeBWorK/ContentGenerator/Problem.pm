@@ -228,6 +228,13 @@ sub can_useMathView {
 
     return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
 }
+
+sub can_useWirisEditor {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
+}
     
 
 sub can_showMeAnother {
@@ -600,6 +607,7 @@ sub pre_header_initialize {
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
         useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
+        useWirisEditor     => $ce->{pg}->{options}->{useWirisEditor},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -620,6 +628,7 @@ sub pre_header_initialize {
 		showMeAnother      => 0,
 		getSubmitButton    => 0,
 	    useMathView        => 0,
+	    useWirisEditor     => 0,
 	);
 	 
 	# does the user have permission to use certain options?
@@ -638,7 +647,8 @@ sub pre_header_initialize {
 		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
 		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
 		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-	    useMathView              => $self->can_useMathView(@args)
+	    useMathView              => $self->can_useMathView(@args),
+	    useWirisEditor           => $self->can_useWirisEditor(@args),
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -2156,6 +2166,12 @@ sub output_JS{
 	    } else {
 		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
 	    }
+	}
+
+	# WirisEditor 
+	if ($self->{will}->{useWirisEditor}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wirisquizzes.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
 	}
 	
 	# This is for knowls
