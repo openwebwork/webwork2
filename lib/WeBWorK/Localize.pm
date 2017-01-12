@@ -100,6 +100,8 @@ sub negquant {
 	    
 	    "_USER_TABLE_SUMMARY"    => x(q{A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user.}),
 
+            "_ANSWER_LOG_DESCRIPTION" => x(q{This is the past answer viewer.  Students can only see their answers, and they will not be able to see which parts are correct.  Instructors can view any users answers using the form below and the answers will be colored according to correctness.}),
+
 	    "_ONE_COLUMN" => x('One Column'),
 
 	    "_TWO_COLUMNS" => x('Two Columns'), 
