@@ -711,7 +711,7 @@ sub filter_handler {
 			} elsif ($field eq 'status') {
 			    $record->{status} = $ce->status_abbrev_to_name($record->{status});
 			}
-			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
+			push @userIDs, $record->user_id if $r->maketext($record->{$field}) =~ /^$regex/i;
 		}
 		$self->{visibleUserIDs} = \@userIDs;
 	} elsif ($scope eq "match_ids") {
