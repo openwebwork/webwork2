@@ -84,7 +84,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName jitar_id_to_seq seq_to_jitar_id x);
 
 use WeBWorK::Utils::DatePickerScripts;
 
@@ -276,7 +276,7 @@ sub pre_header_initialize {
 		my @setsToScore = ();
 	
 		if ($scope eq "none") { 
-			return $r->maketext("No sets selected for scoring".".");
+			return $r->maketext("No sets selected for scoring");
 		} elsif ($scope eq "all") {
 #			@setsToScore = @{ $r->param("allSetIDs") };
 		    @setsToScore = $db->listGlobalSets;
@@ -471,7 +471,7 @@ sub body {
 		$r->maketext("Hardcopy Header"), 
 		$r->maketext("Open Date"),
 	        $r->maketext("Reduced Scoring Date"),
-		$r->maketext("Due Date"), 
+		$r->maketext("Close Date"), 
 		$r->maketext("Answer Date"), 
 		$r->maketext("Visible"),
 	        $r->maketext("Reduced Scoring"), 
@@ -782,7 +782,7 @@ sub sort_form {
 					set_header 	=> $r->maketext("Set Header"),
 					hardcopy_header	=> $r->maketext("Hardcopy Header"),
 					open_date	=> $r->maketext("Open Date"),
-					due_date	=> $r->maketext("Due Date"),
+					due_date	=> $r->maketext("Close Date"),
 					answer_date	=> $r->maketext("Answer Date"),
 					visible	=> $r->maketext("Visibility"),
 				},
@@ -801,7 +801,7 @@ sub sort_form {
 				-labels => {
 					set_id		=> $r->maketext("Set Name"),
 					open_date	=> $r->maketext("Open Date"),
-					due_date	=> $r->maketext("Due Date"),
+					due_date	=> $r->maketext("Close Date"),
 					answer_date	=> $r->maketext("Answer Date"),
 					visible	=> $r->maketext("Visibility"),
 				},
@@ -824,7 +824,7 @@ sub sort_handler {
 	my %names = (
 		set_id		=> $r->maketext("Set Name"),
 		open_date	=> $r->maketext("Open Date"),
-		due_date	=> $r->maketext("Due Date"),
+		due_date	=> $r->maketext("Close Date"),
 		answer_date	=> $r->maketext("Answer Date"),
 		visible	=> $r->maketext("Visibility"),
 	);
@@ -936,17 +936,23 @@ sub publish_handler {
 	my @setIDs;
 	
 	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
-		@setIDs = ();
-		$result = CGI::div({class=>"ResultsWithError"},$r->maketext("No change made to any set"));
+	  @setIDs = ();
+	  $result = CGI::div({class=>"ResultsWithError"},$r->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
-		@setIDs = @{ $self->{allSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets [_1] all students", $verb));
+	  @setIDs = @{ $self->{allSetIDs} };
+	  $result = $value ?
+	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets made visible for all students")) :
+	      CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets hidden from all students")) ;
 	} elsif ($scope eq "visible") {
-		@setIDs = @{ $self->{visibleSetIDs} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible sets [_1] all students", $verb));
+	  @setIDs = @{ $self->{visibleSetIDs} };
+	  $result = $value ?
+	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible sets made visible for all students")) :
+		    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible hidden from all students")) ;
 	} elsif ($scope eq "selected") {
-		@setIDs = @{ $genericParams->{selected_sets} };
-		$result = CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets [_1] all students", $verb));
+	  @setIDs = @{ $genericParams->{selected_sets} };
+	  $result = $value ?
+	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets made visible for all students")) :
+	      CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets hidden from all students")) ;
 	}
 	
 	# can we use UPDATE here, instead of fetch/change/store?
@@ -1517,7 +1523,7 @@ sub saveEdit_handler {
 		my $cutoff = $curr_time + $seconds_per_year*10;
 		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->open_date > $cutoff;
-		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: due date cannot be more than 10 years from now in set [_1]", $setID))
+		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->due_date > $cutoff;
 		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->answer_date > $cutoff;
@@ -1525,10 +1531,10 @@ sub saveEdit_handler {
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
 		if ($Set->open_date > $Set->due_date)  {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Due date must come after open date in set [_1]", $setID));
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Close date must come after open date in set [_1]", $setID));
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after due date in set [_1]", $setID));
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after close date in set [_1]", $setID));
 		}
 		
 		# check that the reduced scoring date is in the right place
@@ -1542,7 +1548,7 @@ sub saveEdit_handler {
 		    $Set->reduced_scoring_date
 		    && ($Set->reduced_scoring_date > $Set->due_date 
 			|| $Set->reduced_scoring_date < $Set->open_date)) {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Reduced scoring date must come between the open date and due date in set [_1]", $setID));
+			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Reduced scoring date must come between the open date and close date in set [_1]", $setID));
 		}
 		
 		$db->putGlobalSet($Set);
@@ -1636,7 +1642,7 @@ sub byOpenDate      {
 sub byDueDate       { 
 					  my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };      
                       return $result unless $@;
-                      warn "Due date not correctly defined.";
+                      warn "Close date not correctly defined.";
                       return 0;
 }
 sub byAnswerDate    { 
@@ -1969,14 +1975,14 @@ sub readSetDef {
 		my ($time1, $time2, $time3) = map {  $self->parseDateTime($_);  }    ($openDate, $dueDate, $answerDate);
 	
 		unless ($time1 <= $time2 and $time2 <= $time3) {
-			warn $r->maketext("The open date: [_1], due date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
+			warn $r->maketext("The open date: [_1], close date: [_2], and answer date: [_3] must be defined and in chronological order.", $openDate, $dueDate, $answerDate);
 		}
 
 		# validate reduced credit date
 		$reducedScoringDate = $self->parseDateTime($reducedScoringDate) if ($reducedScoringDate);
 
 		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
-		    warn $r->maketext("The reduced credit date should be between the open date [_1] and due date [_2]", $openDate, $dueDate);
+		    warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
 		} elsif (!$reducedScoringDate) {
 		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}
@@ -1986,7 +1992,7 @@ sub readSetDef {
 		} elsif ($enableReducedScoring ne '' && $enableReducedScoring eq 'N') {
 		    $enableReducedScoring = 0;
 		} elsif ($enableReducedScoring ne '') {
-		    warn($r->maketext("The value [_1] for enableReducedScoring is not valid; it willb e replaced with 'N'.",$enableReducedScoring)."\n");
+		    warn($r->maketext("The value [_1] for enableReducedScoring is not valid; it will be replaced with 'N'.",$enableReducedScoring)."\n");
 		    $enableReducedScoring = 0;
 		} else {
 		    $enableReducedScoring = DEFAULT_ENABLED_REDUCED_SCORING_STATE;
@@ -2538,7 +2544,7 @@ sub recordEditHTML {
 	my $exportMode = $options{exportMode};
 	my $setSelected = $options{setSelected};
 
-	my $visibleClass = $Set->visible ? $r->maketext("font-visible") : $r->maketext("font-hidden");
+	my $visibleClass = $Set->visible ? "font-visible" : "font-hidden";
 	my $enable_reduced_scoringClass = $Set->enable_reduced_scoring ? $r->maketext('Reduced Scoring Enabled') : $r->maketext('Reduced Scoring Disabled');
 
 	my $users = $db->countSetUsers($Set->set_id);
@@ -2817,8 +2823,13 @@ sub output_JS{
 
 # Just tells template to output the stylesheet for Tabber
 sub output_tabber_CSS{
-	return "";
+  # capture names for maketext
+  x('Filter');
+  x('Sort');
+  x('Publish');
+  return "";
 }
+
 
 1;
 

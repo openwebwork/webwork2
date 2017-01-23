@@ -177,7 +177,7 @@ sub body {
 	);
 				        
 	print CGI::start_table({});
-        print CGI::Tr(CGI::th(["Assigned","&nbsp;&nbsp;","Set Name","&nbsp;&nbsp;","Due Date", "&nbsp;"]));
+        print CGI::Tr(CGI::th(["Assigned","&nbsp;&nbsp;","Set Name","&nbsp;&nbsp;","Close Date", "&nbsp;"]));
         print CGI::Tr(CGI::td([CGI::hr(),"",CGI::hr(),"",CGI::hr()]));
 	
 	foreach my $Set (@Sets) {

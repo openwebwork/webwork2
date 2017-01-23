@@ -17,7 +17,7 @@ $BEGIN_ONE_COLUMN
 \hfill
 {\large \bf {\{protect_underbar($courseName)\}}}
 \par
-\noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  due $formatedDueDate}}
+\noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  closes $formatedDueDate}}
 \par\noindent
 This first set (set 0) is designed to acquaint you with using WeBWorK. 
 {\bf Your score on this set will not be counted toward your final grade.}
