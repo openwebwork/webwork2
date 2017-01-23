@@ -301,7 +301,7 @@ sub displayStudentStats {
 				next;
 			} else {
 				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)), 
-						     CGI::td({colspan=>($max_problems+2)}, CGI::em("No versions of this assignment have been taken."))) );
+						     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("No versions of this assignment have been taken.")))) );
 				next;
 			}
 		}
