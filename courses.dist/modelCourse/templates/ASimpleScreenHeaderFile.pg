@@ -9,7 +9,7 @@ loadMacros(
 );
 
 BEGIN_TEXT
-$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
+$BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  closes :  $formattedDueDate. $EBOLD
 $PAR
 Here's the list of 
 \{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"functions and symbols") \}
