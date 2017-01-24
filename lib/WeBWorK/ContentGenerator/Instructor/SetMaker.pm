@@ -842,7 +842,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
-	my $these_widths = "width: 28ex";
+	my $these_widths = "width: 25ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -888,7 +888,7 @@ sub make_top_row {
 		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
-		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>$these_widths, @dis4),
+		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>"width: 30ex", @dis4),
 		$libs,
 	));
 
@@ -944,7 +944,7 @@ sub make_top_row {
                                     -onClick=>"return addme(\"\", \'all\', \"$stringalert\" )",
 			            -value=>$r->maketext("Add All")),
 		           CGI::submit(-name=>"cleardisplay", 
-		                -style=>$these_widths,
+		                -style=>"width: 30ex",
 		                -value=>$r->maketext("Clear Problem Display")),
 			$prev_button, " ", $next_button, " ", $show_hide_path_button
 		     )), 
@@ -1029,7 +1029,7 @@ sub make_data_row {
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?" (in target set)" : "&nbsp;";
+	my $inSet = ($self->{isInSet}{$sourceFileName})? " ".$r->maketext("(in target set)") : "&nbsp;";
 	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
@@ -1113,7 +1113,7 @@ sub make_data_row {
 		CGI::div({-class=>"lb-problem-header"},
 		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
 		      -value=>$r->maketext("Add"),
-			-title=>"Add problem to target set",
+			-title=>$r->maketext("Add problem to target set"),
 		      -onClick=>"return addme(\"$sourceFileName\", \'one\', \"$stringalert\")")),
 			"\n",CGI::span({-class=>"lb-problem-path"},CGI::span({id=>"filepath$cnt"},$r->maketext("Show path ..."))),"\n",
 			 '<script type="text/javascript">var show_string="'.$r->maketext("Show path ...").'";
@@ -1737,7 +1737,7 @@ sub body {
 		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1)).$r->maketext(" of ").CGI::span({-id=>'totalshown'}, $total_probs).
 			$r->maketext(" shown."), $prev_button, " ", $next_button,
 		);
-		print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
+		#print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
 	}
 	#	 }
 	print CGI::end_form(), "\n";

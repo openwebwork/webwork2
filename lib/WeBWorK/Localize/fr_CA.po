@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2017-01-22 18:53-0500\n"
+"PO-Revision-Date: 2017-01-24 12:42-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -179,10 +179,10 @@ msgid "Set Header for set %1"
 msgstr "Entête du devoir %1"
 
 msgid "Save Edit"
-msgstr "Sauvegarder la modification"
+msgstr "Sauvegarder"
 
 msgid "Cancel Edit"
-msgstr "Annuler la modification"
+msgstr "Annuler"
 
 msgid "Save Password"
 msgstr "Sauvegarder le mot de passe"
@@ -199,6 +199,14 @@ msgstr "Annuler l'exportation"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:304
 msgid "No versions of this assignment have been taken."
 msgstr "Aucune version de cette évaluation n'a été faite."
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1116
+msgid "Add problem to target set"
+msgstr "Ajouter ce problème au devoir choisi"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1032
+msgid "(in target set)"
+msgstr "(dans le devoir choisi)"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:477
 msgid "#corr"
@@ -1693,7 +1701,7 @@ msgid ""
 "dates) for these students."
 msgstr ""
 "Cliquer sur le nom d'un utilisateur pour modifier les informations générales "
-"(ex. : la date d'échéance) concernant les devoirs qui lui sont attribués"
+"(ex. : la date d'échéance) concernant les devoirs qui lui sont attribués."
 
 #. ($clientIP->ip()
 #: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:552
@@ -4905,7 +4913,7 @@ msgstr "Travaux pratiques"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:189
 msgid "Record Scores for Single Sets"
-msgstr "Créer des fichiers <b>.csv</b> pour chacun des devoirs sélectionnés"
+msgstr "Créer des fichiers .csv pour chacun des devoirs sélectionnés"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:477
 msgid "Reduced Scoring"
@@ -5539,7 +5547,7 @@ msgstr ""
 msgid "Select sets below to assign them to the newly-created users."
 msgstr ""
 "Choisir dans la liste de devoirs ceux qui seront attribués aux étudiants "
-"ajoutés. Pour sélectionner plusieurs devoirs, maintenez enfoncée la touche "
+"ajoutés. Pour sélectionner plusieurs devoirs, maintenir enfoncée la touche "
 "CTRL du clavier."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3015
