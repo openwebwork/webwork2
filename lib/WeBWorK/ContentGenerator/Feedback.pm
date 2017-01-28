@@ -343,16 +343,18 @@ sub body {
 
 sub feedbackNotAllowed {
 	my ($self, $returnURL) = @_;
+	my $r = $self->r;
 	
-	print CGI::p("You are not allowed to send e-mail.");
-	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel E-Mail")) if $returnURL;
+	print CGI::p($r->maketext("You are not allowed to send e-mail."));
+	print CGI::p(CGI::a({-href=>$returnURL}, $r->maketext("Cancel E-mail"))) if $returnURL;
 }
 
 sub noRecipientsAvailable {
 	my ($self, $returnURL) = @_;
+	my $r = $self->r;
 	
-	print CGI::p("No e-mail recipients are listed for this course.");
-	print CGI::p(CGI::a({-href=>$returnURL}, "Cancel E-Mail")) if $returnURL;
+	print CGI::p($r->maketext("No e-mail recipients are listed for this course."));
+	print CGI::p(CGI::a({-href=>$returnURL}, $r->maketext("Cancel E-mail"))) if $returnURL;
 }
 sub title {
 	my ($self, $user, $returnURL, $message) = @_;

@@ -1380,9 +1380,9 @@ sub add_problem_form {
 		$allSetNames[$j] =~ s|\.def||;
 	}
 	my $labels = {
-		problem         => 'problem',
-		set_header      => 'set header',
-		hardcopy_header => 'hardcopy header',
+		problem         => $r->maketext('problem'),
+		set_header      => $r->maketext('set header'),
+		hardcopy_header => $r->maketext('hardcopy header'),
 	};
 	return "" if $self->{file_type} eq 'course_info' || $self->{file_type} eq 'options_info';
 	return join(" ",

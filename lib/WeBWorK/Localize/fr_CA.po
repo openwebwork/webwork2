@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2017-01-24 12:42-0500\n"
+"PO-Revision-Date: 2017-01-25 17:15-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -67,6 +67,9 @@ msgid ""
 "Enter one of the allowed display mode types above. See 'display modes entry' "
 "for descriptions."
 msgstr ""
+"Choisir un mode d'affichage parmi ceux énumérés ci-dessus. Cliquer sur "
+"l'aide de la ligne précédente pour une description des différents modes "
+"d'affichage."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:359
 msgid "Use MathView editor for answer entry"
@@ -136,7 +139,7 @@ msgstr "fichier d'entête"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:606
 msgid "hardcopy header file"
-msgstr "fichier d'entête de la copie papier"
+msgstr "fichier d'entête de la copie imprimable"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:607
 msgid "course information"
@@ -167,7 +170,7 @@ msgstr "Informations sur le cours %1"
 #. ($setID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:440
 msgid "Hardcopy Header for set %1"
-msgstr "Entête de la copie papier du devoir %1"
+msgstr "Entête de la copie imprimable du devoir %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:439
 msgid "Options Information"
@@ -207,6 +210,33 @@ msgstr "Ajouter ce problème au devoir choisi"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1032
 msgid "(in target set)"
 msgstr "(dans le devoir choisi)"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1384
+msgid "set header"
+msgstr "entête"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1385
+msgid "hardcopy header"
+msgstr "entête de la copie imprimable"
+
+#. ($editForUserID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:291
+msgid "Edit set for %1"
+msgstr "Modifier le devoir pour %1"
+
+#. ($userName,$editForUserID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:286
+msgid "Sets assigned to %1 (%2)"
+msgstr "Devoirs attribués à %1 (%2)"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:348
+msgid "You are not allowed to send e-mail."
+msgstr "Vous n'êtes pas autorisé à envoyer un courriel."
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:356
+msgid "No e-mail recipients are listed for this course."
+msgstr ""
+"Il n'existe aucun destinataire pouvant recevoir un courriel dans ce cours."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:477
 msgid "#corr"
@@ -1332,7 +1362,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:537
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:537
 msgid "Author Info"
-msgstr "À propos de l'auteur"
+msgstr "Informations pour l'auteur"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:374
 msgid "Automatic"
@@ -1514,7 +1544,7 @@ msgstr "Annuler"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:383
 msgid "Cancel E-mail"
-msgstr "Annuler"
+msgstr "Annuler le courriel"
 
 #. ($filePath)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:292
@@ -3215,7 +3245,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2533
 msgid "Force problems to be numbered consecutively from one"
-msgstr "Numéroter les problèmes de manière consécutive en débutant par 1."
+msgstr "Numéroter les problèmes de manière consécutive en débutant par 1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2303
 msgid ""
@@ -4799,7 +4829,7 @@ msgstr "Numéro du problème"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:512
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:512
 msgid "Problem Techniques"
-msgstr ""
+msgstr "Modèles de problèmes"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:777
 msgid "Problem Viewer"
@@ -5344,7 +5374,7 @@ msgstr "Enregistrer sous %1 et afficher"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1194
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1248
 msgid "Saved to file '%1'"
-msgstr "Fichier '%1' enregistré"
+msgstr "Le fichier '%1' a été enregistré."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1065
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1814
@@ -6481,7 +6511,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1864
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1913
 msgid "The hardcopy header for set %1 has been renamed to '%2'."
-msgstr "L'entête de la copie papier du devoir %1 a été renommé sous '%2'."
+msgstr "L'entête de la copie imprimable du devoir %1 a été renommé sous '%2'."
 
 #. ($rename_oldCourseID, $rename_oldCourseInstitution,
 #. $rename_newCourseInstitution)
@@ -6848,17 +6878,17 @@ msgstr ""
 "ce bouton ou en décochant la case de l'étudiant, vous détruisez toutes les "
 "données relatives à cet étudiant pour $achievementID."
 
+#. ($setID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:212
 msgid ""
 "There is NO undo for this function.  Do not use it unless you know what you "
 "are doing!  When you unassign a student using this button, or by unchecking "
-"their name, you destroy all of the data for homework set $setID for this "
-"student."
+"their name, you destroy all of the data for homework set %1 for this student."
 msgstr ""
 "Cette action est irréversible. Ne pas cliquer à moins de bien s'y connaître! "
 "Lorsque vous retirez un étudiant d'un devoir en cliquant sur ce bouton ou en "
 "décochant la case de l'étudiant, vous détruisez toutes les données relatives "
-"à cet étudiant pour $setID."
+"à cet étudiant pour %1."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:276
 msgid "There is NO undo for unassigning a set."
@@ -7363,7 +7393,9 @@ msgstr ""
 msgid ""
 "To edit a specific student version of this set, edit (all of) her/his "
 "assigned sets."
-msgstr "à traduire"
+msgstr ""
+"Les changements effectués aux données de ce quiz affecteront toutes les "
+"versions de ce quiz attribuées à cet étudiant."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:389
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:390
@@ -7998,13 +8030,13 @@ msgid ""
 "ID<li> %p = problem ID<li> %x = section<li> %r = recitation<li> %% = literal "
 "percent sign</ul>"
 msgstr ""
-"Lorsque les étudiants cliquent sur le bouton <br>Envoyer un courriel au "
-"professeur</br>, le sujet du courriel est préétabli par WeBWorK. Vous "
-"pouvez, ici, choisir le format que prendra la ligne du sujet. Vous pouvez "
-"ainsi inclure plusieurs informations, dans l'ordre désiré, tirées des "
-"variables suivantes :<p><ul><li> %c = Nom du cours<li> %u = nom de "
-"l'utilisateur<li> %s = nom du devoir<li> %p = numéro du problème<li> %x = "
-"groupe<li> %r = travaux pratiques<li> %% = symbole du pourcentage</ul>"
+"Lorsque les étudiants cliquent sur le bouton <b>Envoyer un courriel au "
+"professeur</b>, le sujet du courriel est préétabli par WeBWorK. Vous pouvez, "
+"ici, choisir le format que prendra la ligne du sujet. Vous pouvez ainsi "
+"inclure plusieurs informations, dans l'ordre désiré, tirées des variables "
+"suivantes :<p><ul><li> %c = nom du cours<li> %u = nom de l'utilisateur<li> "
+"%s = nom du devoir<li> %p = numéro du problème<li> %x = groupe<li> %r = "
+"travaux pratiques<li> %% = symbole du pourcentage</ul>"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:167
 msgid ""
@@ -8352,7 +8384,7 @@ msgstr ""
 
 #. ($attempts)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1606
-msgid "You have attempted this problem %quant(%1,time,times)."
+msgid "You have attempted this problem %quant(%1,time,times,0 time)."
 msgstr "Vous avez essayé ce problème à %quant(%1,reprise,reprises,0 reprise)."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Logout.pm:158
@@ -8639,7 +8671,7 @@ msgstr "Votre nom de fichier contient des caractères illégaux."
 #. ($lastScore,$notCountedMessage)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1610
 msgid "Your overall recorded score is %1.  %2"
-msgstr "Votre résultat final est %1. %2."
+msgstr "Votre résultat final est %1. %2"
 
 #. ($versionNumber, wwRound(2,$recordedScore)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1927
@@ -8959,7 +8991,7 @@ msgstr "modifications sauvegardées"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:222
 msgid "class list data"
-msgstr " données générales"
+msgstr " les données générales"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:380
 msgid "class list data for selected <b>users</b>"

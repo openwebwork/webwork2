@@ -283,13 +283,13 @@ sub body {
 	
 	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
 	print CGI::Tr(
-		CGI::th({align=>'center',colspan=>3}, "Sets assigned to $userName ($editForUserID)")
+		CGI::th({align=>'center',colspan=>3}, $r->maketext("Sets assigned to [_1] ([_2])",$userName,$editForUserID))
 	),"\n";
 	print CGI::Tr(
 		CGI::th({ -align => "center"}, [
-			"Assigned",
-			"Edit set for $editForUserID",
-			"Dates",
+			$r->maketext("Assigned"),
+			$r->maketext("Edit set for [_1]",$editForUserID),
+			$r->maketext("Dates"),
 		])
 	),"\n";
 
