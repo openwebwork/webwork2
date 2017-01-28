@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2017-01-25 17:15-0500\n"
+"PO-Revision-Date: 2017-01-28 11:58-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -1228,9 +1228,8 @@ msgstr "Archiver"
 
 #. ($archive, $n)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:770
-msgid "Archive '%1' created successfully (%quant( %2, file))"
-msgstr ""
-"L'archive '%1' a été créée avec succès (%quant( %2, fichier, fichiers))."
+msgid "Archive '%1' created successfully (%quant(%2,file))"
+msgstr "L'archive '%1' a été créée avec succès (%quant(%2,fichier,fichiers))."
 
 #. ($name)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:938
@@ -3157,8 +3156,8 @@ msgstr "Le fichier '%1' a été supprimé avec succès"
 
 #. ($name)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:935
-msgid "File '%2' uploaded successfully"
-msgstr "Le fichier '%2' a été téléversé avec succès."
+msgid "File '%1' uploaded successfully"
+msgstr "Le fichier '%1' a été téléversé avec succès."
 
 #. ($name)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:904

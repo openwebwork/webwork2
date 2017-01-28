@@ -23,6 +23,7 @@ use File::Path;
 use File::Copy;
 use File::Spec;
 use String::ShellQuote;
+use utf8;
 
 =head1 NAME
 
@@ -160,7 +161,7 @@ sub body {
 	elsif($action eq "Rename" 	|| $action eq $r->maketext("Rename")) {$self->Rename;} 
 	elsif($action eq "Delete" 	|| $action eq $r->maketext("Delete")) {$self->Delete;} 
 	elsif($action eq "Make Archive" || $action eq $r->maketext("Make Archive")) {$self->MakeArchive;} 
-	elsif($action eq "Unpack" 	|| $action eq $r->maketext("Unpack")) {$self->UnpackArchive;} 
+	elsif($action eq "Unpack Archive" 	|| $action eq $r->maketext("Unpack Archive")) {$self->UnpackArchive;} 
 	elsif($action eq "New Folder"	|| $action eq $r->maketext("New Folder")) {$self->NewFolder;} 
 	elsif($action eq "New File" 	|| $action eq $r->maketext("New File")) {$self->NewFile;} 
 	elsif($action eq "Upload" 	|| $action eq $r->maketext("Upload")) {$self->Upload;} 
@@ -287,13 +288,27 @@ sub Refresh {
 		}
 		function checkArchive(files,disabled) {
 			var button = document.getElementById('MakeArchive');
-			//button.value = 'Make Archive';
+			button.value = _('Make Archive');
 			if (disabled) return;
-			if (!files.childNodes[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) return;
+			if (!files[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) 	
+				return;
 			for (var i = files.selectedIndex+1; i < files.length; i++)
-			  {if (files.childNodes[i].selected) return}
-			button.value = 'Unpack Archive';
+			  {if (files[i].selected) return;}
+			button.value = _('Unpack Archive');
 		}
+		
+		function _(s) {
+			var i18n = {
+ 		  		"Make Archive": 'Archiver',
+		  		"Unpack Archive": 'D' + String.fromCharCode(233) + 'compresser'
+			};
+
+  			if (typeof(i18n) != 'undefined' && i18n[s]) {
+    			return i18n[s];
+  			}
+  			return s;
+		}	
+		
 EOF
 
 	#
@@ -767,7 +782,7 @@ sub MakeArchive {
 	@files = readpipe $tar." 2>&1";
 	if ($? == 0) {
 		my $n = scalar(@files); 
-		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([quant, _2, file])",$archive, $n));
+		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([quant,_2,file])",$archive, $n));
 	} else {
 		$self->addbadmessage($r->maketext("Can't create archive '[_1]': command returned [_2]",$archive,systemError($?)));
 	}
@@ -932,7 +947,7 @@ sub Upload {
 	}
 
 	if (-e $file) {
-	  $self->addgoodmessage($r->maketext("File '[_2]' uploaded successfully",$name));
+	  $self->addgoodmessage($r->maketext("File '[_1]' uploaded successfully",$name));
 	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
 	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
 	      if (unlink($file)) {$self->addgoodmessage($r->maketext("Archive '[_1]' deleted", $name))}
