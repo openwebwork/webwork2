@@ -469,7 +469,7 @@ sub View {
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $self->{courseName});
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $filename, pwd => $pwd});
 	print CGI::div({style=>"float:right"},
-		 CGI::a({href=>$fileManagerURL},"Download"));
+		 CGI::a({href=>$fileManagerURL},$r->maketext("Download")));
 	print CGI::p(),CGI::b($name),CGI::p();
 	print CGI::hr();
 
@@ -484,7 +484,7 @@ sub View {
 		print CGI::img({src=>$fileManagerURL, border=>0});
 	} else {
 		print CGI::div({class=>"ResultsWithError"},
-			"The file does not appear to be a text file.");
+			$r->maketext("The file does not appear to be a text file."));
 	}
 }
 
@@ -525,7 +525,7 @@ sub Edit {
 	}
 	my $data = readFile($file);
 	if (!isText($data)) {
-		$self->addbadmessage($r->maketext("The file does not appear to be a text file"));
+		$self->addbadmessage($r->maketext("The file does not appear to be a text file."));
 		$self->Refresh; return;
 	}
 
