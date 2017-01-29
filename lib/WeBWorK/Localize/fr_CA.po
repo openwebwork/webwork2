@@ -6458,8 +6458,9 @@ msgstr "La source '%1' est un dossier!"
 msgid "The file '%1' is protected!"
 msgstr "Le fichier '%1' est protégé!"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:472
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:513
-msgid "The file does not appear to be a text file"
+msgid "The file does not appear to be a text file."
 msgstr "Ce fichier ne semble pas être un fichier texte."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:94
