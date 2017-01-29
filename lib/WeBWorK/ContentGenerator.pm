@@ -870,10 +870,7 @@ sub links {
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Stats
-<<<<<<< HEAD
-				
-=======
-				# old stats
+
 #				print CGI::start_li(); # Stats_old
 #				print &$makelink("${pfx}Stats_old", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 #				if ($userID ne $eUserID or defined $setID) {
@@ -897,8 +894,6 @@ sub links {
 				print &$makelink("${pfx}GradeBook", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				print CGI::end_li(); 
 			}
-								
->>>>>>> made changes to ContentGenerator.pm and URLPath.pm and added a new file GradeBook.pm
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {

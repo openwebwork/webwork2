@@ -356,7 +356,7 @@ our %pathTypes = (
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_preflight instructor_statistics instructor_statistics_old instructor_gradebook
+			instructor_preflight instructor_statistics instructor_gradebook
 			instructor_progress			
                         instructor_problem_grader
 		/ ],
