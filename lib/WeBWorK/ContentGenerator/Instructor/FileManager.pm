@@ -131,7 +131,9 @@ sub body {
 
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
+	print qq!<script src="$webwork_htdocs_url/js/apps-dev/Localize/localize.js"></script>!;
 	print CGI::start_form(
 		-method=>"POST",
 		-action=>$fileManagerURL,
@@ -299,9 +301,9 @@ sub Refresh {
 		
 		function _(s) {
 			var i18n = {
- 		  		"Make Archive": 'Archiver',
-		  		"Unpack Archive": 'D' + String.fromCharCode(233) + 'compresser'
-			};
+ 				"Make Archive": 'Archiver',
+				"Unpack Archive": 'D' + String.fromCharCode(233) + 'compresser'
+		};
 
   			if (typeof(i18n) != 'undefined' && i18n[s]) {
     			return i18n[s];
