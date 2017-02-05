@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2017-01-28 11:58-0500\n"
+"PO-Revision-Date: 2017-02-05 17:15-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -237,6 +237,48 @@ msgstr "Vous n'êtes pas autorisé à envoyer un courriel."
 msgid "No e-mail recipients are listed for this course."
 msgstr ""
 "Il n'existe aucun destinataire pouvant recevoir un courriel dans ce cours."
+
+#. ($setID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:415
+msgid ""
+"Answers cannot be made available until on or after the close date in set %1!"
+msgstr ""
+"Les réponses ne peuvent pas être disponibles avant la date d'échéance du "
+"devoir %1!"
+
+#. ($setID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:420
+msgid "Answers cannot be due until on or after the open date in set %1!"
+msgstr ""
+"Les réponses ne peuvent pas être dues avant la date d'ouverture du devoir %1!"
+
+#. ($setID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:451
+msgid "No date changes were saved!"
+msgstr "Aucun changement de date n'a été sauvegardé!"
+
+#. ($setID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:427
+msgid ""
+"The reduced scoring date should be between the open date and close date in "
+"set %1!"
+msgstr ""
+"La date de début de la période de grâce doit être postérieure à la date "
+"d'ouverture, mais précéder la date d'échéance dans le devoir %1!"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:384
+msgid ""
+"When numerical answers are checked, most test if the student's answer is "
+"close enough to the programmed answer be computing the error as a percentage "
+"of the correct answer.  This value controls the default for how close the "
+"student answer has to be in order to be marked correct.<p>A value such as "
+"0.1 means 0.1 percent error is allowed."
+msgstr ""
+"a traduire - When numerical answers are checked, most test if the student's "
+"answer is close enough to the programmed answer be computing the error as a "
+"percentage of the correct answer.  This value controls the default for how "
+"close the student answer has to be in order to be marked correct.<p>A value "
+"such as 0.1 means 0.1 percent error is allowed."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:477
 msgid "#corr"
@@ -569,8 +611,8 @@ msgstr ""
 "li><li><b>SMAshowHints</b> : montre les indices aux étudiants <i>pour le "
 "nouveau problème</i> (en supposant qu'il y en a).</li></ul>Note : il y a peu "
 "d'avantages à utiliser la fonction <b>Montrer un autre problème</b> à moins "
-"d'activer au moins des options ci-dessus. Si aucune option n'est cochée, les "
-"étudiants pourront voir le nouveau problème, mais ils ne pourront faire "
+"d'activer au moins une des options ci-dessus. Si aucune option n'est cochée, "
+"les étudiants pourront voir le nouveau problème, mais ils ne pourront faire "
 "aucune tentative pour le résoudre et apprendre de ce nouveau problème.</p>"
 
 #. ($add_courseID)
@@ -1064,7 +1106,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:291
 msgid "Allowed to <em>act as</em> another user"
-msgstr "Autorisé à <em>prendre le rôle</ em> d'un autre utilisateur"
+msgstr "Autorisés à <em>prendre le rôle</ em> d'un autre utilisateur"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:310
 msgid "Allowed to change their e-mail address"
@@ -1076,7 +1118,7 @@ msgstr "Autorisés à modifier leur mot de passe"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:282
 msgid "Allowed to login to the course"
-msgstr "Autorisé à se connecter au cours"
+msgstr "Autorisés à se connecter au cours"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:328
 msgid "Allowed to see solutions before the answer date"
@@ -1152,7 +1194,7 @@ msgstr "Réponses enregistrées :"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:38
 msgid "Answer:"
-msgstr "Réponse :"
+msgstr "Réponse&#8239;:"
 
 # Leave out spaces
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1339
@@ -1787,7 +1829,7 @@ msgstr "Prend fin le %1"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:37
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm:232
 msgid "Closes:"
-msgstr "Échéance :"
+msgstr "Échéance&#8239;:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2450
 msgid "Collapse"
@@ -4458,7 +4500,7 @@ msgstr "Disponible, la période de grâce d'évaluation débute le %1."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:35
 msgid "Open:"
-msgstr "Disponible :"
+msgstr "Disponible&#8239;:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:114
 msgid "Opens"

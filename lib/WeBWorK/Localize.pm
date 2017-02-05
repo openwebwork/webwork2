@@ -352,7 +352,7 @@ my $ConfigStrings = [
 
 		{ var => 'pg{options}{displayMode}',
 		  doc => x('The default display mode'),
-		  doc2 => x(q{Enter one of the allowed display mode types above. See 'display modes entry' for descriptions.}),
+		  doc2 => x('Enter one of the allowed display mode types above. See \'display modes entry\' for descriptions.'),
 		  min  => 1,
 		  values => [qw(MathJax images plainText)],
 		  type => 'popuplist'
@@ -381,7 +381,7 @@ my $ConfigStrings = [
 
 		{ var => 'pg{ansEvalDefaults}{numRelPercentTolDefault}',
 		  doc => x('Allowed error, as a percentage, for numerical comparisons'),
-		  doc2 => "When numerical answers are checked, most test if the student's answer is close enough to the programmed answer be computing the error as a percentage of the correct answer.  This value controls the default for how close the student answer has to be in order to be marked correct.<p>A value such as 0.1 means 0.1 percent error is allowed.",
+		  doc2 => x(q{When numerical answers are checked, most test if the student's answer is close enough to the programmed answer be computing the error as a percentage of the correct answer.  This value controls the default for how close the student answer has to be in order to be marked correct.<p>A value such as 0.1 means 0.1 percent error is allowed.}),
 		  type => 'number'
 		},
 	],

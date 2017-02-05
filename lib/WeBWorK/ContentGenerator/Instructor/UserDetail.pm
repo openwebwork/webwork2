@@ -412,19 +412,19 @@ sub checkDates {
 	}
 
 	if ($answer_date < $due_date || $answer_date < $open_date) {		
-		$self->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
+		$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the close date in set [_1]!",$setID));
 		$error = 1;
 	}
 	
 	if ($due_date < $open_date) {
-		$self->addbadmessage("Answers cannot be due until on or after the open date in set $setID!");
+		$self->addbadmessage($r->maketext("Answers cannot be due until on or after the open date in set [_1]!",$setID));
 		$error = 1;
 	}
 
 	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
 	    $setRecord->enable_reduced_scoring &&
 	    ($reduced_scoring_date < $open_date || $reduced_scoring_date > $due_date)) {
-    		$self->addbadmessage("The reduced scoring date should be between the open date and the due date in set $setID!");
+    		$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and close date in set [_1]!",$setID));
 		$error = 1;
 }
     
@@ -434,21 +434,21 @@ sub checkDates {
 	my $seconds_per_year = 31_556_926;
 	my $cutoff = $curr_time + $seconds_per_year*10;
 	if ($open_date > $cutoff) {
-		$self->addbadmessage("Error: open date cannot be more than 10 years from now in set $setID");
+		$self->addbadmessage($r->maketext("Error: open date cannot be more than 10 years from now in set [_1]",$setID));
 		$error = 1;
 	}
 	if ($due_date > $cutoff) {
-		$self->addbadmessage("Error: due date cannot be more than 10 years from now in set $setID");
+		$self->addbadmessage($r->maketext("Error: close date cannot be more than 10 years from now in set [_1]",$setID));
 		$error = 1;
 	}
 	if ($answer_date > $cutoff) {
-		$self->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
+		$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]",$setID));
 		$error = 1;
 	}
 	
 	
 	if ($error) {
-		$self->addbadmessage("No date changes were saved!");
+		$self->addbadmessage($r->maketext("No date changes were saved!"));
 	}
 	return {%dates,error=>$error};
 }

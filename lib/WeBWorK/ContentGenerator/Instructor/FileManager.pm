@@ -133,10 +133,6 @@ sub body {
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-	print CGI::start_script({type=>"text/javascript"});
-	print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
-	print CGI::end_script();
-	print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
 	print CGI::start_form(
 		-method=>"POST",
 		-action=>$fileManagerURL,
@@ -245,11 +241,13 @@ sub HiddenFlags {
 sub Refresh {
  	my $self = shift;
 	my $r = $self->r;
+	my $ce         = $r->ce;
 	my $pwd = shift || $self->{pwd};
 	my $isTop = $pwd eq '.' || $pwd eq '';
 
 	my ($dirs,$dirlabels) = directoryMenu($self->{courseName},$pwd);
 	my ($files,$filelabels) = directoryListing($self->{courseRoot},$pwd,$self->getFlag('dates'));
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
 	unless ($files) {
 		$self->addbadmessage($r->maketext("The directory you specified doesn't exist"));
@@ -401,6 +399,10 @@ EOF
 	# 
 	print CGI::end_table();
 	print CGI::script("checkFiles(); checkFile();");
+	print CGI::start_script({type=>"text/javascript"});
+	print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
+	print CGI::end_script();
+	print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
 }
 
 ##################################################
