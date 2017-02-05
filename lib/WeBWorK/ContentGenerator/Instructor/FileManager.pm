@@ -133,7 +133,10 @@ sub body {
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-	print qq!<script src="$webwork_htdocs_url/js/apps-dev/Localize/localize.js"></script>!;
+	print CGI::start_script({type=>"text/javascript"});
+	print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
+	print CGI::end_script();
+	print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
 	print CGI::start_form(
 		-method=>"POST",
 		-action=>$fileManagerURL,
@@ -290,26 +293,14 @@ sub Refresh {
 		}
 		function checkArchive(files,disabled) {
 			var button = document.getElementById('MakeArchive');
-			button.value = _('Make Archive');
+			button.value = maketext("Make Archive");
 			if (disabled) return;
 			if (!files[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) 	
 				return;
 			for (var i = files.selectedIndex+1; i < files.length; i++)
 			  {if (files[i].selected) return;}
-			button.value = _('Unpack Archive');
+			button.value = maketext("Unpack Archive");
 		}
-		
-		function _(s) {
-			var i18n = {
- 				"Make Archive": 'Archiver',
-				"Unpack Archive": 'D' + String.fromCharCode(233) + 'compresser'
-		};
-
-  			if (typeof(i18n) != 'undefined' && i18n[s]) {
-    			return i18n[s];
-  			}
-  			return s;
-		}	
 		
 EOF
 

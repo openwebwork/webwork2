@@ -1761,6 +1761,11 @@ sub output_JS {
   print "\n";
   print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
   print "\n";
+  print CGI::start_script({type=>"text/javascript"});
+  print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
+  print CGI::end_script();
+  print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
+  print "\n";
   print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
   print "\n";
   if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {

@@ -10,6 +10,13 @@
 
 var mathView_version = "1.2.0";
 var mathView_basepath;
+var localize_basepath;
+
+
+$.getScript(localize_basepath+"localize.js", function(){
+	  console.log("Localize script loaded.");
+});
+
 
 /* Makes escape key hide any visible popups */
 $(document).keydown(function(e){
@@ -19,6 +26,7 @@ $(document).keydown(function(e){
 
 /* load up and config mathview */
 $(document).ready(function() {
+
 
     MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
 	var AM = MathJax.InputJax.AsciiMath.AM;
@@ -168,7 +176,7 @@ function MathViewer(field,button,container,userOptions) {
 			.append($('<ul>', {class : "nav"})
 				.append($('<li>', {class : "dropdown"})
 					.append('<a href="#" id="menu'+viewerIndex+'" class="dropdown-toggle" data-toggle="dropdown" role="menuitem">'
-						+'Operations <b class="caret"></b></a>')
+						+ maketext("Operations")+' <b class="caret"></b></a>')
 					.append(dropdown)))
 			.append($('<ul>', {class : "nav pull-right"})
 				.append($('<li>', {role:"menuitem"})

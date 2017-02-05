@@ -139,9 +139,9 @@ function lib_update(who, what) {
 		       // console.log(response);
 		       var arr = response.result_data;
 		       arr = arr[0];
-		       var line = "There are "+ arr +" matching WeBWorK problems"
+		       var line = maketext("There are") + " " + arr + " " + maketext("matching WeBWorK problems")
 		       if(arr == "1") {
-			   line = "There is 1 matching WeBWorK problem"
+			   line = maketext("There is 1 matching WeBWorK problem")
 		       }
 		       $('#library_count_line').html(line);
 		       return true;
@@ -201,7 +201,7 @@ function addme(path, who, selectsetstring) {
   nomsg();
   var target = $('[name="local_sets"] option:selected').val();
   if(target == selectsetstring) {
-    alert('You need to pick a target set above so we know what set to which we should add this problem.');
+    alert(maketext("You need to pick a target set above so we know what set to which we should add this problem."));
     return true;
   }
   var mydefaultRequestObject = init_webservice('addProblem');
@@ -232,16 +232,16 @@ function addemcallback(wsURL, ro, probarray, count) {
 	    reportWWerror(data);
 	}
 	
-	var phrase = count+" problem";
-	if(count!=1) { phrase += "s";}
+	//var phrase = count+" problem";
+	//if(count!=1) { phrase += "s";}
 	// alert("Added "+phrase+" to "+ro.set);
 	markinset();
 
-	var prbs = "problems";
-	if(ro.total == 1) { 
-	    prbs = "problem";
-	}
-	goodmsg("Added "+ro.total+" "+prbs+" to set "+ro.set_id);
+	var prbs = pluralise("problem","problems",count);
+	//if(ro.total == 1) { 
+	 //   prbs = "problem";
+	//}
+	goodmsg(maketext("Added") + " "+ro.total+" "+prbs+" " + maketext("to set")+" "+ro.set_id);
 
 	return true;
     };
@@ -295,7 +295,7 @@ function markinset() {
 			   var num= shownprobs[i].name;
 			   num = num.replace("filetrial","");
 			   if(pathhash[shownprobs[i].value] ==1) {
-			       $('#inset'+num).html('<i><b>(in target set)</b></i>');
+			       $('#inset'+num).html('<i><b>(' + maketext("in target set") + ')</b></i>');
 			   } else {
 			       $('#inset'+num).html('<i><b></b></i>');
 			   }
