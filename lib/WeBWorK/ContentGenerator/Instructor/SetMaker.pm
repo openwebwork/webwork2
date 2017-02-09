@@ -1734,8 +1734,8 @@ sub body {
 						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)>0) {
-		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1)).$r->maketext(" of ").CGI::span({-id=>'totalshown'}, $total_probs).
-			$r->maketext(" shown."), $prev_button, " ", $next_button,
+		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." ".$r->maketext("of")." ".CGI::span({-id=>'totalshown'}, $total_probs).
+			" ".$r->maketext("shown").".", $prev_button, " ", $next_button,
 		);
 		#print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
 	}

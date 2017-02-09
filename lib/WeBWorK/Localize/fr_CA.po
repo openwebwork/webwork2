@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2017-02-07 17:07-0500\n"
+"PO-Revision-Date: 2017-02-09 13:19-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -93,8 +93,8 @@ msgid "just-in-time"
 msgstr "juste-à-temps"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker2.pm:1903
-msgid " of "
-msgstr " de "
+msgid "of"
+msgstr "de"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:232
 msgid "proctored gateway/quiz"
@@ -108,8 +108,8 @@ msgid "set %1/problem %2"
 msgstr "devoir %1/problème %2"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker2.pm:1903
-msgid " shown."
-msgstr " affiché(s)."
+msgid "shown"
+msgstr "affiché(s)"
 
 # Context is Save to _____
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:749

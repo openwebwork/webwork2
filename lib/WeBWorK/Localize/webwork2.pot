@@ -6836,7 +6836,7 @@ msgid "number of students not defined"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker2.pm:1903
-msgid " of "
+msgid "of"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:381
@@ -7067,7 +7067,7 @@ msgid "showing visible sets"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker2.pm:1903
-msgid " shown."
+msgid "shown"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:616
