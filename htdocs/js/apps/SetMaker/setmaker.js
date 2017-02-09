@@ -54,8 +54,8 @@ function togglepaths() {
     $('#toggle_path_current').val('hide');
 	$("[id*=filepath]").each(function() {
 		// If showing, trigger
-		if(this.textContent.match('^Show')) {
-		  this.click();
+		if(this.textContent.match(show_string)) {	  
+		this.click();
 	    }
 	});
   } else {
@@ -63,7 +63,7 @@ function togglepaths() {
     $('#toggle_path_current').val('show');
 	$("[id*=filepath]").each(function() {
 		// If hidden, trigger
-		if(! this.textContent.match('^Show')) {
+		if(! this.textContent.match(show_string)) {
 		  this.click();
 		}
 	});
@@ -197,11 +197,11 @@ function capFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function addme(path, who) {
+function addme(path, who, selectsetstring) {
   nomsg();
   var target = $('[name="local_sets"] option:selected').val();
-  if(target == 'Select a Set from this Course') {
-    alert('You need to pick a target set above so we know what set to which we should add this problem.');
+  if(target == selectsetstring) {
+    alert(maketext("You need to pick a target set above so we know what set to which we should add this problem."));
     return true;
   }
   var mydefaultRequestObject = init_webservice('addProblem');

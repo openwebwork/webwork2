@@ -209,7 +209,7 @@ sub body {
 	print CGI::submit({name=>"assignToSelected", value=>$r->maketext("Save")});
 	print CGI::p( CGI::hr(),
 				  CGI::div( {class=>'ResultsWithError'},
-					   $r->maketext("There is NO undo for this function.  Do not use it unless you know what you are doing!  When you unassign a student using this button, or by unchecking their name, you destroy all of the data for homework set $setID for this student."),
+					   $r->maketext("There is NO undo for this function.  Do not use it unless you know what you are doing!  When you unassign a student using this button, or by unchecking their name, you destroy all of the data for homework set [_1] for this student.",$setID),
 						CGI::br(),
 						CGI::submit({name=>"unassignFromAll", value=>$r->maketext("Unassign from All Users")}),
 						CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->maketext('Read only'), 1=>$r->maketext('Allow unassign')}),

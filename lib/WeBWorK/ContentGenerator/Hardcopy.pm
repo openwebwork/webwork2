@@ -468,7 +468,7 @@ sub display_form {
 	# we change the text a little bit depending on whether the user has multiuser privileges
 	my $ss = $perm_multiuser ? "s" : "";
 	my $aa = $perm_multiuser ? " " : " a ";
-	my $phrase_for_privileged_users = $perm_multiuser ? "to privileged users or" : "";
+	my $phrase_for_privileged_users = $perm_multiuser ? $r->maketext("to privileged users or") : "";
 	my $button_label = $perm_multiuser ? $r->maketext("Generate hardcopy for selected sets and selected users") : $r->maketext("Generate Hardcopy");
 	
 # 	print CGI::start_p();
