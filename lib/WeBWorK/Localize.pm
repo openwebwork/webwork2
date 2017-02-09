@@ -197,7 +197,7 @@ my $ConfigStrings = [
 	[x('Optional Modules'),
     	{ var => 'achievementsEnabled',
 		  doc => x('Enable Course Achievements'),
-		  doc2 => x('Activiating this will enable Mathchievements for webwork.  Mathchievements can be managed by using the Achievement Editor link.'),
+		  doc2 => x('Activating this will enable Mathchievements for webwork.  Mathchievements can be managed by using the Achievement Editor link.'),
 		  type => 'boolean'
 		  },                
 		 { var => 'achievementPointsPerProblem',
@@ -207,7 +207,7 @@ my $ConfigStrings = [
 		  },
      	 { var => 'achievementItemsEnabled',
 		  doc => x('Enable Achievement Items'),
-		  doc2 => x('Activiating this will enable achievement items. This features rewards students who earn achievements with items that allow them to affect their homework in a limited way.'),
+		  doc2 => x('Activating this will enable achievement items. This features rewards students who earn achievements with items that allow them to affect their homework in a limited way.'),
 		  type => 'boolean'
 	 },
 	         { var => 'options{enableConditionalRelease}',

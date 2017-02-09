@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2017-02-05 17:15-0500\n"
+"PO-Revision-Date: 2017-02-07 17:07-0500\n"
 "Last-Translator: Julie Tremblay <julie.tremblay@bdeb.qc.ca>\n"
 "Language-Team: French (Canada) (http://www.transifex.com/webwork/webwork2/"
 "language/fr_CA/)\n"
@@ -267,6 +267,7 @@ msgstr ""
 "d'ouverture, mais précéder la date d'échéance dans le devoir %1!"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:384
+#, fuzzy
 msgid ""
 "When numerical answers are checked, most test if the student's answer is "
 "close enough to the programmed answer be computing the error as a percentage "
@@ -274,11 +275,11 @@ msgid ""
 "student answer has to be in order to be marked correct.<p>A value such as "
 "0.1 means 0.1 percent error is allowed."
 msgstr ""
-"a traduire - When numerical answers are checked, most test if the student's "
-"answer is close enough to the programmed answer be computing the error as a "
-"percentage of the correct answer.  This value controls the default for how "
-"close the student answer has to be in order to be marked correct.<p>A value "
-"such as 0.1 means 0.1 percent error is allowed."
+"When numerical answers are checked, most test if the student's answer is "
+"close enough to the programmed answer be computing the error as a percentage "
+"of the correct answer.  This value controls the default for how close the "
+"student answer has to be in order to be marked correct.<p>A value such as "
+"0.1 means 0.1 percent error is allowed."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:477
 msgid "#corr"
@@ -689,6 +690,7 @@ msgstr ""
 
 # Leave symbol codes in place
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:173
+#, fuzzy
 msgid ""
 "A switch to govern the use of a Progress Bar for the student; this also "
 "enables/disables the highlighting of the current problem in the side bar, "
@@ -701,6 +703,7 @@ msgstr ""
 "(&#x2717;), or unattempted (no symbol)."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:101
+#, fuzzy
 msgid ""
 "A table showing all the current users along with several fields of user "
 "information. The fields from left to right are: Login Name, Login Status, "
@@ -854,17 +857,24 @@ msgid "Active"
 msgstr "Actif"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:198
+#, fuzzy
 msgid ""
-"Activiating this will enable Mathchievements for webwork.  Mathchievements "
+"Activating this will enable Mathchievements for webwork.  Mathchievements "
 "can be managed by using the Achievement Editor link."
 msgstr ""
+"Activating this will enable Mathchievements for webwork.  Mathchievements "
+"can be managed by using the Achievement Editor link."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:208
+#, fuzzy
 msgid ""
-"Activiating this will enable achievement items. This features rewards "
+"Activating this will enable achievement items. This features rewards "
 "students who earn achievements with items that allow them to affect their "
 "homework in a limited way."
 msgstr ""
+"Activating this will enable achievement items. This features rewards "
+"students who earn achievements with items that allow them to affect their "
+"homework in a limited way."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:395
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2314
@@ -2763,9 +2773,7 @@ msgstr "Activer le bouton <b>Montrer un autre problème</b>"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:270
 msgid "Enable periodic re-randomization of problems"
-msgstr ""
-"Activer le bouton <b>Obtenir une nouvelle version</b> d'un problème généré "
-"aléatoirement"
+msgstr "Activer la randomisation périodique des problèmes"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:358
 msgid ""
@@ -3603,6 +3611,7 @@ msgstr ""
 "sous-problèmes s'il y en a."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:88
+#, fuzzy
 msgid ""
 "If you check %1 your login information will be remembered by the browser you "
 "are using, allowing you to visit WeBWorK pages without typing your user name "
@@ -5782,6 +5791,7 @@ msgstr ""
 "coin droit de chacune des cases réponses.  "
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:360
+#, fuzzy
 msgid ""
 "Set to true to display the \"Entered\" column which automatically shows the "
 "evaluated student answer, e.g. 1 if student input is sin(pi/2). If this is "
@@ -5966,6 +5976,7 @@ msgstr ""
 "Sinon, vous pouvez endommager votre cours."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:147
+#, fuzzy
 msgid ""
 "Some servers handle courses taking place in different timezones.  If this "
 "course is not showing the correct timezone, enter the correct value here.  "
@@ -6432,6 +6443,7 @@ msgid "The display was already cleared."
 msgstr "L'affichage des problèmes était déjà vide."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:390
+#, fuzzy
 msgid ""
 "The e-mail verbosity level controls how much information is automatically "
 "added to feedback e-mails.  Levels are<ol><li value=\"Simple\"> Simple: send "
@@ -6533,6 +6545,7 @@ msgstr ""
 
 #. (join('.', @{$problemSeqs[$children_counts_indexs[0]]})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1662
+#, fuzzy
 msgid ""
 "The grade for this problem is the larger of the score for this problem, or "
 "the score of problem %1."
@@ -6542,6 +6555,7 @@ msgstr ""
 
 #. (join(', ', map({join('.', @{$problemSeqs[$_]})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1664
+#, fuzzy
 msgid ""
 "The grade for this problem is the larger of the score for this problem, or "
 "the weighted average of the problems: %1."
@@ -6588,6 +6602,7 @@ msgstr ""
 "lettres, des chiffres, -, _ et ."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:123
+#, fuzzy
 msgid ""
 "The name of course information file (located in the templates directory). "
 "Its contents are displayed in the right panel next to the list of homework "
@@ -7081,6 +7096,7 @@ msgstr ""
 "copie locale du fichier et l'ajouter à la liste des problèmes du devoir."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:99
+#, fuzzy
 msgid ""
 "This is a table showing the current Homework sets for this class.  The "
 "fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned "
@@ -7113,6 +7129,7 @@ msgid ""
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:91
+#, fuzzy
 msgid ""
 "This is the classlist editor page, where you can view and edit the records "
 "of all the students currently enrolled in this course.  The top of the page "
@@ -7135,6 +7152,7 @@ msgstr ""
 "page contains a table containing the student usernames and their information."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:90
+#, fuzzy
 msgid ""
 "This is the homework sets editor page where you can view and edit the "
 "homework sets that exist in this course and the problems that they contain. "
@@ -7206,6 +7224,7 @@ msgstr ""
 
 #. ($message_file, $merge_file)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:164
+#, fuzzy
 msgid ""
 "This scoring message is generated from [TMPL]/email/%1. It is merged with "
 "the file [Scoring]/%2. These files can be edited using the \"Email\" link "
@@ -7279,6 +7298,7 @@ msgstr ""
 "Choisir la note minimale requise par les étudiants ci-dessous."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:218
+#, fuzzy
 msgid ""
 "This sets whether the Reduced Scoring system will be enabled.  If enabled "
 "you will need to set the default length of the reduced scoring period and "
@@ -7333,6 +7353,7 @@ msgstr ""
 "entrer la valeur 0."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:257
+#, fuzzy
 msgid ""
 "This table lists out the available homework sets for this class, along with "
 "its current status. Click on the link on the name of the homework sets to "
@@ -7974,6 +7995,7 @@ msgstr ""
 "», « Turc tr », « Espagnol es » et « Français fr »."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:86
+#, fuzzy
 msgid ""
 "WeBWorK has encountered a software error while attempting to process this "
 "problem. It is likely that there is an error in the problem itself. If you "
@@ -7988,6 +8010,7 @@ msgstr ""
 "more information."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2174
+#, fuzzy
 msgid ""
 "WeBWorK has encountered warnings while processing your request. If this "
 "occured when viewing a problem, it was likely caused by an error or "
