@@ -842,7 +842,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
-	my $these_widths = "width: 24ex";
+	my $these_widths = "width: 25ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -888,7 +888,7 @@ sub make_top_row {
 		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
-		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>$these_widths, @dis4),
+		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>"width: 30ex", @dis4),
 		$libs,
 	));
 
@@ -926,7 +926,7 @@ sub make_top_row {
 						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)) {
-		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:25ex",
 		                         -value=>$r->maketext("Show all paths"),
 								 -id =>"toggle_paths",
 								 -onClick=>'return togglepaths()');
@@ -944,7 +944,7 @@ sub make_top_row {
                                     -onClick=>"return addme(\"\", \'all\', \"$stringalert\" )",
 			            -value=>$r->maketext("Add All")),
 		           CGI::submit(-name=>"cleardisplay", 
-		                -style=>$these_widths,
+		                -style=>"width: 30ex",
 		                -value=>$r->maketext("Clear Problem Display")),
 			$prev_button, " ", $next_button, " ", $show_hide_path_button
 		     )), 
@@ -1106,6 +1106,7 @@ sub make_data_row {
 
 
 	print $mltstart;
+	
 	# Print the cell
 	my $stringalert = $r->maketext(SELECT_SET_STRING);
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
@@ -1736,7 +1737,7 @@ sub body {
 		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." ".$r->maketext("of")." ".CGI::span({-id=>'totalshown'}, $total_probs).
 			" ".$r->maketext("shown").".", $prev_button, " ", $next_button,
 		);
-		print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
+		#print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
 	}
 	#	 }
 	print CGI::end_form(), "\n";
@@ -1759,6 +1760,11 @@ sub output_JS {
   print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
   print "\n";
   print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
+  print "\n";
+  print CGI::start_script({type=>"text/javascript"});
+  print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
+  print CGI::end_script();
+  print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
   print "\n";
   print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
   print "\n";

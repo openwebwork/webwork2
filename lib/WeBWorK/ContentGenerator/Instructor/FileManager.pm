@@ -131,6 +131,7 @@ sub body {
 
 	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, authen => 0);
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
 	print CGI::start_form(
 		-method=>"POST",
@@ -240,11 +241,13 @@ sub HiddenFlags {
 sub Refresh {
  	my $self = shift;
 	my $r = $self->r;
+	my $ce         = $r->ce;
 	my $pwd = shift || $self->{pwd};
 	my $isTop = $pwd eq '.' || $pwd eq '';
 
 	my ($dirs,$dirlabels) = directoryMenu($self->{courseName},$pwd);
 	my ($files,$filelabels) = directoryListing($self->{courseRoot},$pwd,$self->getFlag('dates'));
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
 	unless ($files) {
 		$self->addbadmessage($r->maketext("The directory you specified doesn't exist"));
@@ -288,14 +291,15 @@ sub Refresh {
 		}
 		function checkArchive(files,disabled) {
 			var button = document.getElementById('MakeArchive');
-			button.value = 'Make Archive';
+			button.value = maketext("Make Archive");
 			if (disabled) return;
 			if (!files[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) 	
 				return;
 			for (var i = files.selectedIndex+1; i < files.length; i++)
 			  {if (files[i].selected) return;}
-			button.value = 'Unpack Archive';
+			button.value = maketext("Unpack Archive");
 		}
+		
 EOF
 
 	#
@@ -395,6 +399,10 @@ EOF
 	# 
 	print CGI::end_table();
 	print CGI::script("checkFiles(); checkFile();");
+	print CGI::start_script({type=>"text/javascript"});
+	print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
+	print CGI::end_script();
+	print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
 }
 
 ##################################################
@@ -575,7 +583,7 @@ sub RefreshEdit {
 	my $pwd = shift || $self->{pwd};
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
-	my %button = (type=>"submit",name=>"action",style=>"width:6em");
+	my %button = (type=>"submit",name=>"action",style=>"width:8em");
 
 	print CGI::p();
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});

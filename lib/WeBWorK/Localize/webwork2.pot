@@ -7067,7 +7067,11 @@ msgid "showing visible sets"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker2.pm:1903
+<<<<<<< HEAD
 msgid "shown."
+=======
+msgid "shown"
+>>>>>>> e63ac499f9c8d4de80e4377af644e7f3064f0c4f
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:616

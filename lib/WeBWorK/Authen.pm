@@ -346,8 +346,8 @@ sub get_credentials {
 
 	if (defined $cookieUser and defined $r->param("user") ) {
 		if ($cookieUser ne $r->param("user")) {
-			#croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
-			$self->maybe_kill_cookie; # use parameter "user" rather than cookie "user";
+#			croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
+                        $self->maybe_kill_cookie; # use parameter "user" rather than cookie "user";
 		}
 # I don't understand this next segment.
 # If both key and $cookieKey exist then why not just ignore the cookieKey?
@@ -965,6 +965,8 @@ sub write_log_entry {
 
 		$user_agent = $r->headers_in->{"User-Agent"};
 	}
+	my $user_agent = $r->headers_in->{"User-Agent"};
+	
 	my $log_msg = "$message user_id=$user_id login_type=$login_type credential_source=$credential_source host=$remote_host port=$remote_port UA=$user_agent";
 	debug("Writing to login log: '$log_msg'.\n");
 	writeCourseLog($ce, "login_log", $log_msg);

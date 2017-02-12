@@ -498,7 +498,7 @@ sub header {
 	my $self = shift;
 	my $r = $self->r;
 	
-	$r->content_type("text/html; charset=utf-8");
+	$r->content_type("text/html; charset=UTF-8");
 	$r->send_http_header unless MP2;
 	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 }

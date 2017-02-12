@@ -102,7 +102,7 @@ $(function() {
 	if ($('#psr_render_area_'+id).html()) {
 	    $('#psr_render_area_'+id).html('');
 	} else {
-	    $('#psr_render_area_'+id).html('Loading Please Wait...');
+	    $('#psr_render_area_'+id).html(maketext("Loading Please Wait..."));
 	    render(id);	
 	}
     });
@@ -111,7 +111,7 @@ $(function() {
 	event.preventDefault();
 	$('.pdr_render').each(function () {
 	    var id = this.id.match(/^pdr_render_(\d+)/)[1];
-	    $('#psr_render_area_'+id).html('Loading Please Wait...');
+	    $('#psr_render_area_'+id).html(maketext("Loading Please Wait..."));
 	    render(id);
 	});
     });
