@@ -262,7 +262,7 @@ for my $tableinfo (@create_tables) {
 	my $tabinit = $tableinfo->[1];
 	my $query = "DROP TABLE IF EXISTS `$tabname`";
 	$dbh->do($query);
-	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
+	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine CHARACTER SET latin1";
 	$dbh->do($query);
 	if($lib eq 'OPL') {
 		$old_tabname = $tabname;
