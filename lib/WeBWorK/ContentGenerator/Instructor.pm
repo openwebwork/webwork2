@@ -676,7 +676,7 @@ sub getCSVList {
 	my ($self) = @_;
 	my $ce = $self->{ce};
 	my $dir = $ce->{courseDirs}->{templates};
-	return grep { not m/^\./ and m/\.lst$/ and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
+	return grep { not m/^\./ and (m/\.lst$/ or m/\.csv$/) and -f "$dir/$_" } WeBWorK::Utils::readDirectory($dir);
 }
 
 sub getDefList {

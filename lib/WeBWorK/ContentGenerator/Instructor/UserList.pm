@@ -27,7 +27,7 @@ data editing
 =for comment
 
 What do we want to be able to do here?
-
+'
 Filter what users are shown:
 	- none, all, selected
 	- matching user_id, matching section, matching recitation
@@ -67,10 +67,17 @@ Export users:
 use strict;
 use warnings;
 #use CGI qw(-nosticky );
+use base qw(WeBWorK::ContentGenerator::Instructor);
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
+use WeBWorK::ContentGenerator::Instructor::FileManager;	#Imports files.
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
+use WeBWorK::Upload;
+use File::Path;
+use File::Copy;
+use File::Spec;
+use String::ShellQuote;
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant PASSWORD_FORMS => [qw(cancelPassword savePassword)];
@@ -191,7 +198,9 @@ sub pre_header_initialize {
 	my $urlpath       = $r->urlpath;
 	my $authz         = $r->authz;
 	my $ce            = $r->ce;
-	my $courseName    = $urlpath->arg("courseID");
+	my $courseName    = $urlpath->arg('courseID');
+	my $courseRoot    = $ce->{courseDirs}{root};
+	my $db 		  = $r->db;
 	my $user          = $r->param('user');
 	# Handle redirects, if any.
 	##############################
@@ -1010,7 +1019,7 @@ sub import_form {
 	return join(" ",
 		"Import users from file",
 		CGI::popup_menu(
-			-name => "action.import.source",
+		-name => "action.import.source",
 			-values => [ $self->getCSVList() ],
 			-default => $actionParams{"action.import.source"}->[0] || "",
 			-onchange => $onChange,
