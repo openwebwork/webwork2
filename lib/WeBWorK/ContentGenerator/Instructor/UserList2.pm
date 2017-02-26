@@ -1031,6 +1031,19 @@ sub import_form {
 	my $r = $self->r;
 	
 	return join(" ",
+		WeBWorK::CGI_labeled_input(		#Calls file uploader.
+			-type => "file",
+			-id => "import_select_source",
+			-label_text => $r->maketext("Please select a file to be imported.").": ",
+			-input_attr => {
+				-name => 'action.import.source',
+				-default => 'starting value',
+				-size => 50,
+				-maxlength => 80,
+				-onchange => $onChange,
+			}
+		),
+		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_source",
