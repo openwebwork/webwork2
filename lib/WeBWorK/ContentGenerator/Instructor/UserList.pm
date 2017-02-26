@@ -70,11 +70,7 @@ use warnings;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
-<<<<<<< HEAD
-use WeBWorK::ContentGenerator::Instructor::FileManager;
-=======
 use WeBWorK::ContentGenerator::Instructor::FileManager;	#Imports files.
->>>>>>> 32696176b0b7cca8de99a8922779180eba5793aa
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use WeBWorK::Upload;
@@ -1024,17 +1020,10 @@ sub import_form {
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 	return join(" ",
 		"Import users from file",
-<<<<<<< HEAD
-		CGI::filefield(
-			-name => "uploaded_file",
-=======
 		CGI::popup_menu(
 		-name => "action.import.source",
 			-values => [ $self->getCSVList() ],
->>>>>>> 32696176b0b7cca8de99a8922779180eba5793aa
 			-default => $actionParams{"action.import.source"}->[0] || "",
-			-size => 50,
-			-maxlength => 80
 			-onchange => $onChange,
 		),
 		#CGI::popup_menu(
