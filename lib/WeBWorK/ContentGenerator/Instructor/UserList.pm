@@ -27,7 +27,7 @@ data editing
 =for comment
 
 What do we want to be able to do here?
-
+'
 Filter what users are shown:
 	- none, all, selected
 	- matching user_id, matching section, matching recitation
@@ -67,9 +67,14 @@ Export users:
 use strict;
 use warnings;
 #use CGI qw(-nosticky );
+use base qw(WeBWorK::ContentGenerator::Instructor);
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
+<<<<<<< HEAD
 use WeBWorK::ContentGenerator::Instructor::FileManager;
+=======
+use WeBWorK::ContentGenerator::Instructor::FileManager;	#Imports files.
+>>>>>>> 32696176b0b7cca8de99a8922779180eba5793aa
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
 use WeBWorK::Upload;
@@ -197,7 +202,9 @@ sub pre_header_initialize {
 	my $urlpath       = $r->urlpath;
 	my $authz         = $r->authz;
 	my $ce            = $r->ce;
-	my $courseName    = $urlpath->arg("courseID");
+	my $courseName    = $urlpath->arg('courseID');
+	my $courseRoot    = $ce->{courseDirs}{root};
+	my $db 		  = $r->db;
 	my $user          = $r->param('user');
 	# Handle redirects, if any.
 	##############################
@@ -1017,8 +1024,14 @@ sub import_form {
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 	return join(" ",
 		"Import users from file",
+<<<<<<< HEAD
 		CGI::filefield(
 			-name => "uploaded_file",
+=======
+		CGI::popup_menu(
+		-name => "action.import.source",
+			-values => [ $self->getCSVList() ],
+>>>>>>> 32696176b0b7cca8de99a8922779180eba5793aa
 			-default => $actionParams{"action.import.source"}->[0] || "",
 			-size => 50,
 			-maxlength => 80
