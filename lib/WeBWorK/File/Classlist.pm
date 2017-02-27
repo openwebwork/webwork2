@@ -52,7 +52,7 @@ sub parse_classlist($) {
 
 	
 	while (<$fh>) {			#<$fh> - reads in every file.
-		if ($count = 0) {	#Skip line 1.
+		if ($count == 0) {	#Skip line 1.
 			$count = $count + 1;
 			next;
 		}
