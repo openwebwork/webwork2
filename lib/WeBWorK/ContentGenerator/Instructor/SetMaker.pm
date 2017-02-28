@@ -407,7 +407,7 @@ sub browse_local_panel {
     
 	my $list_of_prob_dirs= get_problem_directories($r,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
-		$library_selected = "Found no directories containing problems";
+		$library_selected = $r->maketext("Found no directories containing problems");
 		unshift @{$list_of_prob_dirs}, $library_selected;
 	} else {
 		my $default_value = $r->maketext(SELECT_LOCAL_STRING);
@@ -441,7 +441,7 @@ sub browse_mysets_panel {
 	my $r = $self->r;	
 	my $library_selected = shift;
 	my $list_of_local_sets = shift;
-	my $default_value = "Select a Homework Set";
+	my $default_value = $r->maketext("Select a Homework Set");
 
 	if(scalar(@$list_of_local_sets) == 0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -807,7 +807,7 @@ sub browse_setdef_panel {
                                 -default=> $library_selected).
 		CGI::br().  $view_problem_line;
 	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
-		$popupetc = "there are no set definition files in this course to look at."
+		$popupetc = $r->maktext("there are no set definition files in this course to look at.")
 	}
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:")." ",
 		$popupetc
