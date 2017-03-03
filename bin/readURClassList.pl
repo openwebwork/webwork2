@@ -91,8 +91,10 @@ while (<REGLIST>) {
 	#	$email= " ";
 	#	$login = $id;
 	#}
-	my $id = $login;
-	my $email = "$login".'@duq.edu';
+    
+    # Remove the quotes from id before concatenating it with email.
+    my $id_without_quotes = substr $id, 1, length($id) - 2;
+    my $email = $id_without_quotes.'@duq.edu';
 	
 	$status = 'C' unless (defined $status and $status =~/\w/);
   ## dump it in our classArray format
