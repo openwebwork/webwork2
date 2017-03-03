@@ -1043,19 +1043,25 @@ sub import_form {
 				-onchange => $onChange,
 			}
 		),
+		# CGI::br(),
+		# WeBWorK::CGI_labeled_input(
+		# 	-type=>"select",
+		# 	-id=>"import_select_source",
+		# 	-label_text=>$r->maketext("Import users from what file?").": ",
+		# 	-input_attr=>{
+		# 		-name => "action.import.source",
+		# 		-values => [ $self->getCSVList() ],
+		# 		-default => $actionParams{"action.import.source"}->[0] || "",
+		# 		-onchange => $onChange,
+		# 	}
+		# ),
 		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"import_select_source",
-			-label_text=>$r->maketext("Import users from what file?").": ",
-			-input_attr=>{
-				-name => "action.import.source",
-				-values => [ $self->getCSVList() ],
-				-default => $actionParams{"action.import.source"}->[0] || "",
-				-onchange => $onChange,
-			}
+		CGI::checkbox(
+			-name=>'checkbox_name',
+			   -checked=>1,
+			   -value=>'Yes',
+			   -label=>'Randomize Passwords?: '
 		),
-		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_replace",
