@@ -264,6 +264,7 @@ sub body {
 	my $authz        = $r->authz;	
 	my $courseName   = $urlpath->arg("courseID");
 	my $setID        = $urlpath->arg("setID");       
+	my $courseRoot = $ce->{courseDirs}{root};
 	my $user         = $r->param('user');
 	
 	my $root = $ce->{webworkURLs}->{root};
@@ -639,72 +640,68 @@ EOF
 sub Upload {
 	my $self = shift;
 	my $r = $self->r;
-	my $dir = "$self->{courseroot}/$self->{pwd}";
-	my $fileidhash = $self->r->param('file');
-	unless ($fileidhash) {
-		$self->addbadmessage("you have not chosen a file to upload.");
-		$self->refresh;
+	my $dir = "$self->{courseRoot}/$self->{pwd}";
+	my $fileIDhash = $self->r->param('file');
+	unless ($fileIDhash) {
+		$self->addbadmessage("You have not chosen a file to upload.");
 		return;
 	}
 
-	my ($id,$hash) = split(/\s+/,$fileidhash);
-	my $upload = webwork::upload->retrieve($id,$hash,dir=>$self->{ce}{webworkdirs}{uploadcache});
+	my ($id,$hash) = split(/\s+/,$fileIDhash);
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 
-	my $name = checkname($upload->filename);
-	my $action = $self->r->param("formaction") || "cancel";
+	my $name = checkName($upload->filename);
+	my $action = $self->r->param("formAction") || "Cancel";
 	if ($self->r->param("confirmed")) {
-		if ($action eq "cancel") {
+		if ($action eq "Cancel") {
 			$upload->dispose;
-			$self->refresh;
 			return;
 		}
-		$name = checkname($self->r->param('name')) if ($action eq "rename");
+		$name = checkName($self->r->param('name')) if ($action eq "Rename");
 	}
 
 	if (-e "$dir/$name") {
-		unless ($self->r->param('overwrite') || $action eq "overwrite") {
+		unless ($self->r->param('overwrite') || $action eq "Overwrite") {
 			
-			$self->confirm($r->maketext("file <b>[_1]</b> already exists. overwrite it, or rename it as:",$name).cgi::p(),uniquename($dir,$name),"rename","overwrite");
-			#$self->confirm("file ".cgi::b($name)." already exists. overwrite it, or rename it as:".cgi::p(),uniquename($dir,$name),"rename","overwrite");
-			print cgi::hidden({name=>"action",value=>"upload"});
-			print cgi::hidden({name=>"file",value=>$fileidhash});
+			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			print CGI::hidden({name=>"action",value=>"Upload"});
+			print CGI::hidden({name=>"file",value=>$fileIDhash});
 			return;
 		}
 	}
-	$self->checkfilelocation($name,$self->{pwd});
+	$self->checkFileLocation($name,$self->{pwd});
 
 	my $file = "$dir/$name";
-	my $type = $self->getflag('format','automatic');
+	my $type = $self->getFlag('format','Automatic');
 	my $data;
 	
 	#
-	#  check if we need to convert linebreaks
+	#  Check if we need to convert linebreaks
 	#
-	if ($type ne 'binary') {
-		my $fh = $upload->filehandle;
+	if ($type ne 'Binary') {
+		my $fh = $upload->fileHandle;
 		my @lines = <$fh>; $data = join('',@lines);
-		if ($type eq 'automatic') {$type = istext($data) ? 'text' : 'binary'}
+		if ($type eq 'Automatic') {$type = isText($data) ? 'Text' : 'Binary'}
 	}
-	if ($type eq 'text') {
+	if ($type eq 'Text') {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
-		if (open(upload,">$file")) {print upload $data; close(upload)}
-		  else {$self->addbadmessage("can't create file '$name': $!")}
+		if (open(UPLOAD,">$file")) {print UPLOAD $data; close(UPLOAD)}
+		  else {$self->addbadmessage("Can't create file '$name': $!")}
 	} else {
-		$upload->disposeto($file);
+		$upload->disposeTo($file);
 	}
 
 	if (-e $file) {
 	  $self->addgoodmessage("$type file '$name' uploaded successfully");
-	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getflag('unpack')) {
-	    if ($self->unpack($name) && $self->getflag('autodelete')) {
-	      if (unlink($file)) {$self->addgoodmessage("archive '$name' deleted")}
-	        else {$self->addbadmessage("can't delete archive '$name': $!")}
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
 	    }
 	  }
 	}
-
-	$self->refresh;
 }
 
 sub getActionParams {
@@ -1138,8 +1135,6 @@ sub add_handler {
 	# This action is redirected to the addUser.pm module using ../instructor/add_user/...
 	return "Nothing done by add student handler";
 }
-
-
 
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
