@@ -535,6 +535,48 @@ sub body {
 	
 	print CGI::start_div({-class=>"tabber"});
 
+    print CGI::script(<<EOF);
+            function doForm(action) {
+                var form = window.document.getElementById('FileManager');
+                form.formAction.value = action;
+                form.submit();
+            }
+            function checkFiles() {
+                var files = window.document.getElementById('files');
+                var state = files.selectedIndex < 0;
+                checkArchive(files,state);
+            }
+            function checkFile() {
+                var file = window.document.getElementById('file');
+                if (navigator.vendor && navigator.vendorSub && navigator.vendor == "Netscape") {
+                  if (navigator.vendorSub.match(/(\\d+)\.(\\d+)/)) {
+                    if (RegExp.\$1 < 7 || (RegExp.\$1 == 7 && RegExp.\$2 < 2)) return;
+                  }
+                }
+                var state = (file.value == "");
+            }
+            function checkArchive(files,disabled) {
+                var button = document.getElementById('MakeArchive');
+                //button.value = 'Make Archive';
+                if (disabled) return;
+                if (!files.childNodes[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) return;
+                for (var i = files.selectedIndex+1; i < files.length; i++)
+                  {if (files.childNodes[i].selected) return}
+                button.value = 'Unpack Archive';
+            }
+EOF
+
+    my $fileManagerURL = "/tmp/";
+
+    print CGI::start_form(
+        -method => "POST",
+        -action => $fileManagerURL,
+        -id => "fileManager",
+        -enctype => 'multipart/form-data',
+        -name => "UploadCSV",
+        -style => "margin:0",
+    );
+
 	my $i = 0;
 	foreach my $actionID (@formsToShow) {
 
@@ -593,6 +635,77 @@ sub body {
 ################################################################################
 # extract particular params and put them in a hash (values are ARRAYREFs!)
 ################################################################################
+
+sub Upload {
+	my $self = shift;
+	my $r = $self->r;
+	my $dir = "$self->{courseroot}/$self->{pwd}";
+	my $fileidhash = $self->r->param('file');
+	unless ($fileidhash) {
+		$self->addbadmessage("you have not chosen a file to upload.");
+		$self->refresh;
+		return;
+	}
+
+	my ($id,$hash) = split(/\s+/,$fileidhash);
+	my $upload = webwork::upload->retrieve($id,$hash,dir=>$self->{ce}{webworkdirs}{uploadcache});
+
+	my $name = checkname($upload->filename);
+	my $action = $self->r->param("formaction") || "cancel";
+	if ($self->r->param("confirmed")) {
+		if ($action eq "cancel") {
+			$upload->dispose;
+			$self->refresh;
+			return;
+		}
+		$name = checkname($self->r->param('name')) if ($action eq "rename");
+	}
+
+	if (-e "$dir/$name") {
+		unless ($self->r->param('overwrite') || $action eq "overwrite") {
+			
+			$self->confirm($r->maketext("file <b>[_1]</b> already exists. overwrite it, or rename it as:",$name).cgi::p(),uniquename($dir,$name),"rename","overwrite");
+			#$self->confirm("file ".cgi::b($name)." already exists. overwrite it, or rename it as:".cgi::p(),uniquename($dir,$name),"rename","overwrite");
+			print cgi::hidden({name=>"action",value=>"upload"});
+			print cgi::hidden({name=>"file",value=>$fileidhash});
+			return;
+		}
+	}
+	$self->checkfilelocation($name,$self->{pwd});
+
+	my $file = "$dir/$name";
+	my $type = $self->getflag('format','automatic');
+	my $data;
+	
+	#
+	#  check if we need to convert linebreaks
+	#
+	if ($type ne 'binary') {
+		my $fh = $upload->filehandle;
+		my @lines = <$fh>; $data = join('',@lines);
+		if ($type eq 'automatic') {$type = istext($data) ? 'text' : 'binary'}
+	}
+	if ($type eq 'text') {
+		$upload->dispose;
+		$data =~ s/\r\n?/\n/g;
+		if (open(upload,">$file")) {print upload $data; close(upload)}
+		  else {$self->addbadmessage("can't create file '$name': $!")}
+	} else {
+		$upload->disposeto($file);
+	}
+
+	if (-e $file) {
+	  $self->addgoodmessage("$type file '$name' uploaded successfully");
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getflag('unpack')) {
+	    if ($self->unpack($name) && $self->getflag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("archive '$name' deleted")}
+	        else {$self->addbadmessage("can't delete archive '$name': $!")}
+	    }
+	  }
+	}
+
+	$self->refresh;
+}
 
 sub getActionParams {
 	my ($self, $actionID) = @_;
@@ -1026,21 +1139,24 @@ sub add_handler {
 	return "Nothing done by add student handler";
 }
 
+
+
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
+    my $upload = $self->Upload;
 	
 	return join(" ",
 		WeBWorK::CGI_labeled_input(		#Calls file uploader.
 			-type => "file",
-			-id => "import_select_source",
+			-id => "file", 
 			-label_text => $r->maketext("Please select a file to be imported.").": ",
 			-input_attr => {
-				-name => 'action.import.source',
+				-name => 'file',
 				-default => 'starting value',
 				-size => 50,
 				-maxlength => 80,
-				-onchange => $onChange,
+				-onchange => "checkFile()",
 			}
 		),
 		# CGI::br(),
