@@ -19,6 +19,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
+use WeBWorK::File::Classlist;
 use File::Path;
 use File::Copy;
 use File::Spec;
@@ -1352,6 +1353,7 @@ sub BBImport {
 
 	my $file = "$dir/$name";
 	my $type = $self->getFlag('format','Automatic');
+    system($^X, "readURClassList.pl", $file, $file);
 	my $data;
 	
 	#
@@ -1382,6 +1384,43 @@ sub BBImport {
 	}
 
 	$self->Refresh;
+}
+
+sub import_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r = $self->r;
+	
+	my $source = $actionParams->{"action.import.source"}->[0];
+	my $add = $actionParams->{"action.import.add"}->[0];
+	my $replace = $actionParams->{"action.import.replace"}->[0];
+	
+	my $fileName = $source;
+	my $createNew = $add eq "any";
+	my $replaceExisting;
+	my @replaceList;
+	if ($replace eq "any") {
+		$replaceExisting = "any";
+	} elsif ($replace eq "none") {
+		$replaceExisting = "none";
+	} elsif ($replace eq "visible") {
+		$replaceExisting = "listed";
+		@replaceList = @{ $self->{visibleUserIDs} };
+	} elsif ($replace eq "selected") {
+		$replaceExisting = "listed";
+		@replaceList = @{ $self->{selectedUserIDs} };
+	}
+	
+	my ($replaced, $added, $skipped)
+		= $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
+	
+	# make new users visible... do we really want to do this? probably.
+	push @{ $self->{visibleUserIDs} }, @$added;
+	
+	my $numReplaced = @$replaced;
+	my $numAdded = @$added;
+	my $numSkipped = @$skipped;
+	
+	return $r->maketext("[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])", $numReplaced, $numAdded, $numSkipped, join (", ", @$skipped));
 }
 
 ##################################################

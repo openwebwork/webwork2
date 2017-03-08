@@ -571,8 +571,8 @@ EOF
 
     print CGI::start_form(
         -method => "POST",
-        -action => $fileManagerURL,
-        -id => "fileManager",
+        -action => $self->systemLink($urlpath,authen=>0),
+        -id => "uploadcsv",
         -enctype => 'multipart/form-data',
         -name => "UploadCSV",
         -style => "margin:0",
@@ -1142,30 +1142,19 @@ sub import_form {
     my $upload = $self->Upload;
 	
 	return join(" ",
-		WeBWorK::CGI_labeled_input(		#Calls file uploader.
-			-type => "file",
-			-id => "file", 
-			-label_text => $r->maketext("Please select a file to be imported.").": ",
-			-input_attr => {
-				-name => 'file',
-				-default => 'starting value',
-				-size => 50,
-				-maxlength => 80,
-				-onchange => "checkFile()",
-			}
-		),
-		# CGI::br(),
-		# WeBWorK::CGI_labeled_input(
-		# 	-type=>"select",
-		# 	-id=>"import_select_source",
-		# 	-label_text=>$r->maketext("Import users from what file?").": ",
-		# 	-input_attr=>{
-		# 		-name => "action.import.source",
-		# 		-values => [ $self->getCSVList() ],
-		# 		-default => $actionParams{"action.import.source"}->[0] || "",
-		# 		-onchange => $onChange,
-		# 	}
-		# ),
+	   # WeBWorK::CGI_labeled_input(		#Calls file uploader.
+			#-type => "file",
+			#-id => "file", 
+			#-label_text => $r->maketext("Please select a file to be imported.").": ",
+			#-input_attr => {
+				#-name => 'file',
+				#-default => 'starting value',
+				#-size => 50,
+				#-maxlength => 80,
+				#-onchange => "checkFile()",
+			#}
+		#),
+		CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		CGI::br(),
 		CGI::checkbox(
 			-name=>'checkbox_name',
@@ -1173,6 +1162,7 @@ sub import_form {
 			   -value=>'Yes',
 			   -label=>'Randomize Passwords?: '
 		),
+        CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_replace",
