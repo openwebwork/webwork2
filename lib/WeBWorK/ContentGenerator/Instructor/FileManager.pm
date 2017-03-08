@@ -136,7 +136,7 @@ sub body {
 		-id=>"FileManager",
 		-enctype=> 'multipart/form-data',
 		-name=>"FileManager",
-         -style=>"margin:0",
+        -style=>"margin:0",
 	);
 	print $self->hidden_authen_fields;
 
