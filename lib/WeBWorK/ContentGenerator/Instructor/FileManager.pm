@@ -1353,7 +1353,7 @@ sub BBImport {
 
 	my $file = "$dir/$name";
 	my $type = $self->getFlag('format','Automatic');
-    system($^X, "readURClassList.pl", $file, $file);
+    system($^X, "readURClassList.pl", "$name", "$name", "");
 	my $data;
 	
 	#
