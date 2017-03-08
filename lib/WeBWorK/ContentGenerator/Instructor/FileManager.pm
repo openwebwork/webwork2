@@ -1350,10 +1350,10 @@ sub BBImport {
 		}
 	}
 	$self->checkFileLocation($name,$self->{pwd});
-
+	system($^X, "readURClassList.pl", "$name", "$name", "");
 	my $file = "$dir/$name";
 	my $type = $self->getFlag('format','Automatic');
-    system($^X, "readURClassList.pl", "$name", "$name", "");
+    
 	my $data;
 	
 	#
