@@ -167,6 +167,7 @@ sub body {
 	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
 	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
+	elsif($action eq "Import From Blackboard" 	|| $action eq $r->maketext("Import From Blackboard")) {$self->BBImport;} 
 	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
 	else {
 	  $self->addbadmessage("Unknown action");
@@ -299,7 +300,7 @@ EOF
 	# Start the table
 	#
 	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3, style=>"margin:1em 0 0 3em"});
-
+	
 	#
 	# Directory menu and date/size checkbox
 	#
@@ -355,6 +356,7 @@ EOF
 				CGI::td(CGI::input({%button,value=>$r->maketext("New File")})),
 				CGI::td(CGI::input({%button,value=>$r->maketext("New Folder")})),
 				CGI::td(CGI::input({%button,value=>$r->maketext("Refresh")})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Import From Blackboard")})),
 			]),
 			CGI::end_table(),
 		),
@@ -1305,6 +1307,81 @@ sub systemError {
   return "error: $!" if $status == 0xFF00;
   return "exit status ".($status >> 8) if ($status & 0xFF) == 0;
   return "signal ".($status &= ~0x80);
+}
+
+##################################################
+#
+#  Interpret command return errors
+#
+sub BBImport {
+  my $self = shift;
+	my $r = $self->r;
+	my $dir = "$self->{courseRoot}/$self->{pwd}";
+	my $fileIDhash = $self->r->param('file');
+	unless ($fileIDhash) {
+		$self->addbadmessage("You have not chosen a file to upload.");
+		$self->Refresh;
+		return;
+	}
+
+	my ($id,$hash) = split(/\s+/,$fileIDhash);
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+
+	my $name = checkName($upload->filename);
+	my $action = $self->r->param("formAction") || "Cancel";
+	if ($self->r->param("confirmed")) {
+		if ($action eq "Cancel") {
+			$upload->dispose;
+			$self->Refresh;
+			return;
+		}
+		$name = checkName($self->r->param('name')) if ($action eq "Rename");
+	}
+
+	if (-e "$dir/$name") {
+		unless ($self->r->param('overwrite') || $action eq "Overwrite") {
+			
+			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			print CGI::hidden({name=>"action",value=>"Upload"});
+			print CGI::hidden({name=>"file",value=>$fileIDhash});
+			return;
+		}
+	}
+	$self->checkFileLocation($name,$self->{pwd});
+
+	my $file = "$dir/$name";
+	my $type = $self->getFlag('format','Automatic');
+	my $data;
+	
+	#
+	#  Check if we need to convert linebreaks
+	#
+	if ($type ne 'Binary') {
+		my $fh = $upload->fileHandle;
+		my @lines = <$fh>; $data = join('',@lines);
+		if ($type eq 'Automatic') {$type = isText($data) ? 'Text' : 'Binary'}
+	}
+	if ($type eq 'Text') {
+		$upload->dispose;
+		$data =~ s/\r\n?/\n/g;
+		if (open(UPLOAD,">$file")) {print UPLOAD $data; close(UPLOAD)}
+		  else {$self->addbadmessage("Can't create file '$name': $!")}
+	} else {
+		$upload->disposeTo($file);
+	}
+
+	if (-e $file) {
+	  $self->addgoodmessage("$type file '$name' uploaded successfully");
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	    }
+	  }
+	}
+
+	$self->Refresh;
 }
 
 ##################################################
