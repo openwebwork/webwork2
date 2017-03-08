@@ -167,7 +167,7 @@ sub body {
 	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
 	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
-	elsif($action eq "Import From Blackboard" 	|| $action eq $r->maketext("Import From Blackboard")) {$self->BBImport;} 
+	elsif($action eq "Blackboard Import" 	|| $action eq $r->maketext("Blackboard Import")) {$self->BBImport;} 
 	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
 	else {
 	  $self->addbadmessage("Unknown action");
@@ -356,7 +356,7 @@ EOF
 				CGI::td(CGI::input({%button,value=>$r->maketext("New File")})),
 				CGI::td(CGI::input({%button,value=>$r->maketext("New Folder")})),
 				CGI::td(CGI::input({%button,value=>$r->maketext("Refresh")})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Import From Blackboard")})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Blackboard Import")})),
 			]),
 			CGI::end_table(),
 		),
@@ -1311,10 +1311,10 @@ sub systemError {
 
 ##################################################
 #
-#  Interpret command return errors
+#  Import classlist from Blackboard
 #
 sub BBImport {
-  my $self = shift;
+	my $self = shift;
 	my $r = $self->r;
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $fileIDhash = $self->r->param('file');
