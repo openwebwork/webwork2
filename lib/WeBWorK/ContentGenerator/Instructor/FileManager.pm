@@ -1320,7 +1320,7 @@ sub BBImport {
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
-		$self->addbadmessage("You have not chosen a file to upload.");
+		$self->addbadmessage("You have not chosen a file to import from Blackboard.");
 		$self->Refresh;
 		return;
 	}
