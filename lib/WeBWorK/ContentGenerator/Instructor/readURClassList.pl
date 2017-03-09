@@ -56,6 +56,7 @@ if (@ARGV != 3)  {
 my ($infile, $outfile, $section) = @ARGV;
 
 open(REGLIST, "$infile") || die "can't open $infile: $!\n";
+mkdir $outfile unless -d $outfile;
 open(OURLIST, ">$outfile")
     || die "can't write $outfile: $!\n";
 
