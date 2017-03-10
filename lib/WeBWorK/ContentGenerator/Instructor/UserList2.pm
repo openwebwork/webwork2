@@ -2335,5 +2335,36 @@ sub uniqueName {
 	return "${name}_$n$type";
 }
 
+##################################################
+##################################################
+#
+# Print a confirmation dialog box
+#
+sub Confirm {
+	my $self = shift;
+	my $message = shift; my $value = shift;
+	my $button = shift; my $button2 = shift;
+
+	print CGI::p();
+	print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 3em"});
+	print CGI::Tr(
+		CGI::td({align=>"CENTER"},
+		  $message,
+		  CGI::input({type=>"text",name=>"name",size=>50,value=>$value}),
+		  CGI::p(), CGI::center(
+		    CGI::div({style=>"float:right; padding-right:3ex"},
+		      CGI::input({type=>"submit",name=>"formAction",value=>$button})), # this will be the default
+		    CGI::div({style=>"float:left; padding-left:3ex"},
+		    CGI::input({type=>"submit",name=>"formAction",value=>"Cancel"})),
+		    ($button2 ? CGI::input({type=>"submit",name=>"formAction",value=>$button2}): ()),
+		  ),
+		),
+	      );
+	print CGI::end_table();
+	print CGI::hidden({name=>"confirmed", value=>$button});
+	$self->HiddenFlags;
+	print CGI::script("window.document.FileManager.name.focus()");
+}
+
 1;
 
