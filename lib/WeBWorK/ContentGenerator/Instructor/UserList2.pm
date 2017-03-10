@@ -2320,5 +2320,20 @@ sub output_tabber_CSS{
 sub output_jquery_ui_CSS{
 	return "";
 }
+
+##################################################
+#
+# Get a unique name (in case it already exists)
+#
+sub uniqueName {
+	my $dir = shift; my $name = shift;
+	return $name unless (-e "$dir/$name");
+	my $type = ""; my $n = 1;
+	$type = $1 if ($name =~ s/(\.[^.]*)$//);
+	$n = $1 if ($name =~ s/_(\d+)$/_/);
+	while (-e "$dir/${name}_$n$type") {$n++}
+	return "${name}_$n$type";
+}
+
 1;
 
