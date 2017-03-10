@@ -2366,5 +2366,15 @@ sub Confirm {
 	print CGI::script("window.document.FileManager.name.focus()");
 }
 
+sub HiddenFlags {
+	my $self = shift;
+	print CGI::hidden({name=>"dates",     value=>$self->getFlag('dates')});
+	print CGI::hidden({name=>"overwrite", value=>$self->getFlag('overwrite')});
+	print CGI::hidden({name=>"unpack",    value=>$self->getFlag('unpack')});
+	print CGI::hidden({name=>"autodelete",value=>$self->getFlag('autodelete')});
+	print CGI::hidden({name=>"format",    value=>$self->getFlag('format','Automatic')});
+}
+
+
 1;
 
