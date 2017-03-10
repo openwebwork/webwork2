@@ -93,6 +93,7 @@ sub parse_classlist($) {
 	}
 	
 	$fh->close;
+	unlink($fh) or die "Could not delete the file!\n";
 	
 	return @records;
 }
