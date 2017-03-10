@@ -844,7 +844,7 @@ sub body {
 
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 
-	print CGI::end_form();
+	#print CGI::end_form();
 
 	print CGI::end_div();
 	# print CGI::end_table();
@@ -1312,6 +1312,7 @@ sub add_handler {
 	return "Nothing done by add student handler";
 }
 
+# FIXME: remove all comments.
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
@@ -1324,30 +1325,30 @@ sub import_form {
 			-name=>"csvform",
 		),
 		CGI::input({type => "file",name => "file",id => "file",size => 40,maxlength => 80}),
+		#CGI::br(),
+		#CGI::submit(
+			#-value => 'Upload File',
+		#),
 		CGI::br(),
-		CGI::submit(
-			-value => 'Upload File',
-		),
-		CGI::br(),
-		CGI::end_form(),
+		#CGI::end_form(),
 		CGI::checkbox(
 			-name=>'checkbox_name',
 			-checked=>1,
 			-value=>'Yes',
 			-label=>'Randomize Passwords?: '
 		),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>"import_select_source",
-			-label_text=>$r->maketext("Import users from what file?").": ",
-			-input_attr=>{
-				-name => "action.import.source",
-				-values => [ $self->getCSVList() ],
-				-default => $actionParams{"action.import.source"}->[0] || "",
-				-onchange => $onChange,
-			}
-		),
+		#CGI::br(),
+		#WeBWorK::CGI_labeled_input(
+			#-type=>"select",
+			#-id=>"import_select_source",
+			#-label_text=>$r->maketext("Import users from what file?").": ",
+			#-input_attr=>{
+				#-name => "action.import.source",
+				#-values => [ $self->getCSVList() ],
+				#-default => $actionParams{"action.import.source"}->[0] || "",
+				#-onchange => $onChange,
+			#}
+		#),
 		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
