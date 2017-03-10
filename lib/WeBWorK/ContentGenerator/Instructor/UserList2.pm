@@ -542,7 +542,7 @@ sub body {
 	my $ce           = $r->ce;
 	my $authz        = $r->authz;	
 	my $courseName   = $urlpath->arg("courseID");
-	my $courseRoot = $ce->{courseDirs}{root};
+	my $courseRoot   = $ce->{courseDirs}{root};
 	my $setID        = $urlpath->arg("setID");       
 	my $user         = $r->param('user');
 
@@ -1408,7 +1408,6 @@ sub import_handler {
 
 	if (-e "$dir/$name") {
 		unless ($self->r->param('overwrite')) {
-			
 			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			print CGI::hidden({name=>"action",value=>"Upload"});
@@ -1455,11 +1454,12 @@ sub import_handler {
 
 	my ($genericParams, $actionParams, $tableParams) = @_;
 
-	my $source = $actionParams->{"action.import.source"}->[0];
+	#my $source = $actionParams->{"action.import.source"}->[0];
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
 
-	my $fileName = $source;
+	#my $fileName = $source;
+	my $fileName = $name;
 	my $createNew = $add eq "any";
 	my $replaceExisting;
 	my @replaceList;

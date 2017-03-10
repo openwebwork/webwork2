@@ -51,12 +51,12 @@ sub parse_classlist($) {
 	# binary for utf8 compat, allow_whitespace to strip all whitespace from start and end of each field
 
 	
-	while (<$fh>) {			#<$fh> - reads in every file.
-		if ($count == 0) {	#Skip line 1.
+	while (<$fh>) {			# <$fh> - reads in every file.
+		if ($count == 0) {	# Skip line 1.
 			$count = $count + 1;
 			next;
 		}
-		chomp;			#chomp - removes whitespace.
+		chomp;			# chomp - removes whitespace.
 		next if /^#/;
 		next unless /\S/;
 		s/^\s*//;
@@ -67,7 +67,9 @@ sub parse_classlist($) {
 			warn "Unable to parse line $. of classlist '$file' as CSV.";
 			next;
 		}
-		my @fields = $csv->fields;	#Returns out the split string.
+		my @tempfields = $csv->fields;	# Returns out the split string.
+
+		my @fields = ( '',$tempfields[0],$tempfields[1],'','','','',$tempfields[2].'@duq.edu',$tempfields[2],'12345',0 );
 
 		my $fields = @fields;
 		if ($fields < $MIN_FIELDS) {
