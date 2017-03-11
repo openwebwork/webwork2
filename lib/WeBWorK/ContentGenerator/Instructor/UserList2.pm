@@ -1765,6 +1765,7 @@ sub importUsersFromCSV {
 	my $db    = $r->db;
 	my $dir   = $ce->{courseDirs}->{templates};
 	my $user  = $r->param('user');
+	my $pwd   = $self->{pwd};
 
 	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 	die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
@@ -1849,6 +1850,11 @@ sub importUsersFromCSV {
 			push @added, $user_id;
 		}
 	}
+	
+	## Deletes the file after uploading.
+
+	if (unlink("$dir/$fileName")) {$self->addgoodmessage("File '$fileName' successfully removed")}
+	else {$self->addbadmessage("File '$fileName' not removed: $!")}
 
 	return \@replaced, \@added, \@skipped;
 }
