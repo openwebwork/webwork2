@@ -69,6 +69,7 @@ sub parse_classlist($) {
 		}
 		my @tempfields = $csv->fields;	# Returns out the split string.
 
+		# User_ID, LastName, FirstName, '', '', '', '', Email, Username, Password, Usertype
 		my @fields = ( '',$tempfields[0],$tempfields[1],'','','','',$tempfields[2].'@duq.edu',$tempfields[2],'12345',0 );
 
 		my $fields = @fields;
