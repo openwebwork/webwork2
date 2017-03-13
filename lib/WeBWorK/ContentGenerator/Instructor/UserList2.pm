@@ -265,7 +265,8 @@ sub checkFileLocation {
 	return if $dir =~ m/^$location$/;
 	$location =~ s!/\.\*!!;
 	return if $dir =~ m/^$location$/;
-	$self->addbadmessage("Files with extension '.$extension' usually belong in '$location'");
+	# Legacy warning.
+	#$self->addbadmessage("Files with extension '.$extension' usually belong in '$location'");
 }
 
 sub checkName {
@@ -310,19 +311,6 @@ sub isSymLink {
 }
 
 sub Refresh {
-# 	my $self = shift;
-	#my $r = $self->r;
-	#my $pwd = shift || $self->{pwd};
-	#my $isTop = $pwd eq '.' || $pwd eq '';
-
-	#my ($dirs,$dirlabels) = directoryMenu($self->{courseName},$pwd);
-	#my ($files,$filelabels) = directoryListing($self->{courseRoot},$pwd,$self->getFlag('dates'));
-
-	#unless ($files) {
-		#$self->addbadmessage("The directory you specified doesn't exist");
-		#$files = []; $filelabels = {};
-	#}
-
 	#
 	# Some JavaScript to make things easier for the user
 	#
@@ -1326,17 +1314,12 @@ sub import_form {
 		),
 		CGI::input({type => "file",name => "file",id => "file",size => 40,maxlength => 80}),
 		#CGI::br(),
-		#CGI::submit(
-			#-value => 'Upload File',
+		#CGI::checkbox(
+		#	-name=>'checkbox_name',
+		#	-checked=>1,
+		#	-value=>'Yes',
+		#	-label=>'Randomize Passwords?: '
 		#),
-		CGI::br(),
-		#CGI::end_form(),
-		CGI::checkbox(
-			-name=>'checkbox_name',
-			-checked=>1,
-			-value=>'Yes',
-			-label=>'Randomize Passwords?: '
-		),
 		#CGI::br(),
 		#WeBWorK::CGI_labeled_input(
 			#-type=>"select",
@@ -1395,22 +1378,25 @@ sub import_handler {
 
 
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
-	my $fileIDhash = $self->r->param('file');			#Sets $fileIDhash to be the file.
+
+	#Sets $fileIDhash to be the file.
+	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
 		$self->addbadmessage("You have not chosen a file to upload.");
 		$self->Refresh;
 		return;
 	}
 
-	my ($id,$hash) = split(/\s+/,$fileIDhash);			#Destroys spaces.
+	my ($id,$hash) = split(/\s+/,$fileIDhash);			
+	#Destroys spaces.
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 
 	my $name = checkName($upload->filename);			#Taint checker.
 
+	# FIXME: Add collision checking.
 	if (-e "$dir/$name") {
 		unless ($self->r->param('overwrite')) {
 			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
-			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			print CGI::hidden({name=>"action",value=>"Upload"});
 			print CGI::hidden({name=>"file",value=>$fileIDhash});
 			return;
@@ -1455,11 +1441,9 @@ sub import_handler {
 
 	my ($genericParams, $actionParams, $tableParams) = @_;
 
-	#my $source = $actionParams->{"action.import.source"}->[0];
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
 
-	#my $fileName = $source;
 	my $fileName = $name;
 	my $createNew = $add eq "any";
 	my $replaceExisting;
