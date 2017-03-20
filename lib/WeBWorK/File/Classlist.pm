@@ -28,39 +28,49 @@ use warnings;
 use IO::File;
 use Text::CSV;
 
-our $MIN_FIELDS = 9;
+our $MIN_FIELDS = 8;
 our $MAX_FIELDS = 11;
 
+#qw(foo bar foobar) - makes quick work of ' ', ' ' delimited words. 
 our @FIELD_ORDER = qw/student_id last_name first_name status comment
 section recitation email_address user_id password permission/;
 
 our @EXPORT = qw/parse_classlist write_classlist/;
 
 sub parse_classlist($) {
-	my ($file) = @_;
-	
+	my ($file) = @_;		#my($file) references a local version of $file.
+	my $count = 0;
+
 	use open qw( :encoding(UTF-8) :std ); # assume classlist is utf8 encoded
 	my $fh = new IO::File($file, "<")
 		or die "Failed to open classlist '$file' for reading: $!\n";
-	
+
 	my (@records);
 
-  my $csv = Text::CSV->new({ binary => 1, allow_whitespace => 1 });
-	   # binary for utf8 compat, allow_whitespace to strip all whitespace from start and end of each field
+	my $csv = Text::CSV->new({ binary => 1, allow_whitespace => 1 });
+	# binary for utf8 compat, allow_whitespace to strip all whitespace from start and end of each field
 
 	
-	while (<$fh>) {
-		chomp;
+	while (<$fh>) {			# <$fh> - reads in every file.
+		if ($count == 0) {	# Skip line 1.
+			$count = $count + 1;
+			next;
+		}
+		chomp;			# chomp - removes whitespace.
 		next if /^#/;
 		next unless /\S/;
 		s/^\s*//;
 		s/\s*$//;
+		s/"*//g;
 		
 		if (!$csv->parse($_)) {
 			warn "Unable to parse line $. of classlist '$file' as CSV.";
 			next;
 		}
-		my @fields = $csv->fields;
+		my @tempfields = $csv->fields;	# Returns out the split string.
+
+		# User_ID, LastName, FirstName, '', '', '', '', Email, Username, Password, Usertype
+		my @fields = ( '',$tempfields[0],$tempfields[1],'','','','',$tempfields[2].'@duq.edu',$tempfields[2],$tempfields[2],0 );
 
 		my $fields = @fields;
 		if ($fields < $MIN_FIELDS) {
