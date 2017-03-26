@@ -63,7 +63,7 @@ while (<REGLIST>) {
     chomp;
     next unless($_=~/\w/);	        ## skip blank lines
     s/;$/; /;				## make last field non empty
-    my @regArray=split(/,/);		## get fields from registrar's file
+    my @regArray=split(/;/);		## get fields from registrar's file
 
     foreach (@regArray) {		## clean 'em up!
 	($_) = m/^\s*(.*?)\s*$/;        ## (remove leading and trailing spaces)
@@ -71,9 +71,8 @@ while (<REGLIST>) {
 
   ## extract the relevant fields
 
-   #my($crn, $id, $grade, $name, $school, $gradyear,
-   #   $major, $degree, $hours, $status, $login )
-   my($lname, $fname, $id)
+   my($crn, $id, $grade, $name, $school, $gradyear,
+      $major, $degree, $hours, $status, $login )
      = @regArray;
 
 	## Hack.  The login comes as a complete email address.  Remove the @ and following sysbols.
@@ -83,19 +82,13 @@ while (<REGLIST>) {
 
   ## massage the data a bit
 
-    #my($lname, $fname) = ($name =~ /^(.*),\s*(.*)$/);
-	my($name) = "$lastName".', '."$firstName";
-    #if ($login =~/\w/) {$email = "$login".'@mail.rochester.edu';}
-    #else
-	#	{
-	#	$email= " ";
-	#	$login = $id;
-	#}
-    
-    # Remove the quotes from id before concatenating it with email.
-    my $id_without_quotes = substr $id, 1, length($id) - 2;
-    my $email = $id_without_quotes.'@duq.edu';
-	
+    my($lname, $fname) = ($name =~ /^(.*),\s*(.*)$/);
+    if ($login =~/\w/) {$email = "$login".'@mail.rochester.edu';}
+    else
+		{
+		$email= " ";
+		$login = $id;
+	}
 	$status = 'C' unless (defined $status and $status =~/\w/);
   ## dump it in our classArray format
   ## our format is: $id, $lname, $fname, $status, 'comment ', $dept, $course, $section,
@@ -104,8 +97,7 @@ while (<REGLIST>) {
   ## At the U of R 'comment' is blank
   ## At present only $id, $lname, $fname, $status, $email, $section, $recitation and $login are used by WeBWorK
 
-    #my @classArray=($id, $lname, $fname, $status, ' ', $section, ' ',$email, $login); #blanks are comment and recitation respecitvely
-    my @classArray=($id, $lname, $fname, $status, ' ', ' ', ' ',$email, $login); #blanks are comment, section, and recitation respecitvely
+    my @classArray=($id, $lname, $fname, $status, ' ', $section, ' ',$email, $login);
 
   ## and print that sucker!
 
