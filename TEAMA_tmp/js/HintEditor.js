@@ -15,207 +15,119 @@ function translateToPG(pgString, rawInput, urlDataArr, imgDataArr){
 	* pgToSaveD gets placed after: BEGIN_PGML
 	* pgToSaveE gets placed before: END_PGML
 	*/
+	
 	var urlName = urlDataArr[0];
 	var urlWidth = urlDataArr[1];
-
 	var urlHeight = urlDataArr[2];
 	
 	var imgFileName = imgDataArr[0];
-
 	var imgWidth = imgDataArr[1];
-
 	var imgHeight = imgDataArr[2];
 
 	var counter = 0;
 
-	if( urlWidth ) {} else {var urlWidth = "500"}
+	if(urlWidth){} 
+		else {var urlWidth = "500"}
+	if(urlHeight){} 
+		else {var urlHeight = "500"}
+	if(imgWidth){} 
+		else {var imgWidth = "500"}
+	if(imgHeight){} 
+		else {var imgHeight = "500"}
 
-	if( urlHeight ) {} else {var urlHeight = "500"}
-
-	if( imgWidth ) {} else {var imgWidth = "500"}
-
-	if( imgHeight ) {} else {var imgHeight = "500"}
-
-	if( imgFileName ) {
-
+	if(imgFileName) {
 		var pgToSaveB = "\\{ image( \""+imgFileName+"\",<br> width=>"+imgWidth+", height=>"+imgHeight+", tex_size=>700,<br> extra_html_tags=>'alt=\""+imgFileName+"\"' ) \\} $BR";
-
 		var pgToSaveD = "[@ image( \""+imgFileName+"\",<br> width=>"+imgWidth+", height=>"+imgHeight+", tex_size=>700,<br> extra_html_tags=>'alt=\""+imgFileName+"\"' ) @]*  ";
-
 	}
-
 	else{
-
 		var pgToSaveB = "";
-
 		var pgToSaveD = "";
-
 	}
 
-	if( rawInput ) {var counter = counter + 1;}
+	if(rawInput){var counter = counter + 1;}
+	if(urlName) {var counter = counter + 2;}
 
-	if ( urlName ) {var counter = counter + 2;}
+	if(counter == 1) {
+		var pgToSaveA = "HEADER_TEXT(&lt&ltEOF);" + "<br>" +
+				"&ltscript language=\"javascript\" type=\"text/javascript\"&gt" + "&lt!-- //" + "<br>" +
+				"var tempInput = \""+ rawInput +"\";" +
+				"function rawToText(words){" +
+				"url = \"\";" + "<br>" +
+				"var opt = \"height=600,width=600,location=no,\" +" +
+				"\"menubar=no,status=no,resizable=yes,\" +" +
+				"\"scrollbars=no,toolbar=no,\";" + "<br>" +
+				"newwindow=window.open(url,'examdata_info',opt);" +
+				"newdocument=newwindow.document;" +
+				"newdocument.write(words);" + "<br>" +
+				"newdocument.close();" + "}" + "// --&gt" +
+				"&lt/script&gt" + "<br>EOF";
 
-	if( counter == 1 ) {
-	var pgToSaveA = "HEADER_TEXT(&lt&ltEOF);" + "<br>" +
-
-	"&ltscript language=\"javascript\" type=\"text/javascript\"&gt" + "&lt!-- //" + "<br>" +
-
-	  "var tempInput = \""+rawInput+"\";" +
-
-	  "function rawToText(words){" +
-
-	    "url = \"\";" + "<br>" +
-
-	    "var opt = \"height=600,width=600,location=no,\" +" +
-
-	    "\"menubar=no,status=no,resizable=yes,\" +" +
-
-	    "\"scrollbars=no,toolbar=no,\";" + "<br>" +
-
-	    "newwindow=window.open(url,'examdata_info',opt);" +
-
-	    "newdocument=newwindow.document;" +
-
-	    "newdocument.write(words);" + "<br>" +
-
-	    "newdocument.close();" +
-
-	  "}" +
-
-	  "// --&gt" +
-
-	  "&lt/script&gt" + "<br>EOF";
-
-	var pgToSaveC = "$BR" +
-
-	"\\{ htmlLink( \"javascript:rawToText(tempInput)\", \"Need help?\" ) \\}";
-
-	var pgToSaveE = "<br>" + "[@ htmlLink(\"javascript:rawToText(tempInput)\",\"Need help?\") @]*";
-
+		var pgToSaveC = "$BR" +	"\\{ htmlLink( \"javascript:rawToText(tempInput)\", \"Need help?\" ) \\}";
+		
+		var pgToSaveE = "<br>" + "[@ htmlLink(\"javascript:rawToText(tempInput)\",\"Need help?\") @]*";
 	}
 
-	if( counter == 2 ) {
-	var pgToSaveA = "HEADER_TEXT(&lt&ltEOF);" + "<br>" +
+	if(counter == 2) {
+		var pgToSaveA = "HEADER_TEXT(&lt&ltEOF);" + "<br>" +
+				"&ltscript language=\"javascript\" type=\"text/javascript\"&gt" +
+				"&lt!-- //" + "<br>" +
+				"var tempInput = \""+ urlName +"\";" +
+				"var uheight = \""+ urlWidth +"\";" +
+				"var uwidth = \""+ urlHeight +"\";" + "<br>" +
+				"function rawToText(words, nerds, birds){" +
+				"url = \"\";" +
+				"var opt = \"height=600,width=600,location=no,\" +" +
+				"\"menubar=no,status=no,resizable=yes,\" +" +
+				"\"scrollbars=no,toolbar=no,\";" +
+				"newwindow=window.open(url,'examdata_info',opt);" +
+				"newdocument=newwindow.document;" + "<br>" +
+				"var iframe = newdocument.createElement('iframe');" +
+				"iframe.src = words;" +
+				"iframe.height = nerds;" +
+				"iframe.width = birds;" + "<br>" +
+				"newdocument.body.appendChild(iframe);" +
+				"newdocument.close();" + "}" + "// --&gt" +
+				"&lt/script&gt" + "<br>" + "EOF";
 
-	"&ltscript language=\"javascript\" type=\"text/javascript\"&gt" + "&lt!-- //" + "<br>" +
-
-	  "var tempInput = \""+urlName+"\";" +
-
-	  "var uheight = \""+urlWidth+"\";" +
-
-	  "var uwidth = \""+urlHeight+"\";" + "<br>" +
-
-	  "function rawToText(words, nerds, birds){" +
-
-	    "url = \"\";" +
-
-	    "var opt = \"height=600,width=600,location=no,\" +" +
-
-	    "\"menubar=no,status=no,resizable=yes,\" +" +
-
-	    "\"scrollbars=no,toolbar=no,\";" +
-
-	    "newwindow=window.open(url,'examdata_info',opt);" +
-
-	    "newdocument=newwindow.document;" + "<br>" +
-
-	    "var iframe = newdocument.createElement('iframe');" +
-
-	    "iframe.src = words;" +
-
-	    "iframe.height = nerds;" +
-
-	    "iframe.width = birds;" + "<br>" +
-
-	    "newdocument.body.appendChild(iframe);" +
-
-	    "newdocument.close();" +
-
-	  "}" +
-
-	  "// --&gt" +
-
-	  "&lt/script&gt" + "<br>" +
-
-	"EOF";
-
-	var pgToSaveC = "$BR" +
-
-	"\\{ htmlLink( \"javascript:rawToText(tempInput, uheight, uwidth)\", \"Need help?\" ) \\}";
-
-	var pgToSaveE = "<br>" + "[@ htmlLink(\"javascript:rawToText(tempInput, uheight, uwidth)\",\"Need help?\") @]*";
-
+		var pgToSaveC = "$BR" +	"\\{ htmlLink( \"javascript:rawToText(tempInput, uheight, uwidth)\", \"Need help?\" ) \\}";
+		
+		var pgToSaveE = "<br>" + "[@ htmlLink(\"javascript:rawToText(tempInput, uheight, uwidth)\",\"Need help?\") @]*";
 	}
 
-	if( counter == 3 ) {
-	var pgToSaveA = "<br>HEADER_TEXT(&lt&ltEOF);" + "<br>" +
+	if(counter == 3) {
+		var pgToSaveA = "<br>HEADER_TEXT(&lt&ltEOF);" + "<br>" +
+		    		"&ltscript language=\"javascript\" type=\"text/javascript\"&gt" + "&lt!-- //" + "<br>" +
+	  			"var tempInputA = \""+ rawInput +"\";" + "<br>" +
+				"var tempInputB = \""+ urlName +"\";" + "<br>" +
+				"var uheight = \""+ urlWidth +"\";" +
+				"var uwidth = \""+ urlHeight +"\";" + "<br>" +
+				"function rawToText(wordsA, wordsB, nerds, birds){" +
+				"url = \"\";" +
+				"var opt = \"height=600,width=600,location=no,\" +" + "<br>" +
+		  	        "\"menubar=no,status=no,resizable=yes,\" +" +
+	    			"\"scrollbars=no,toolbar=no,\";" + "<br>" +
+			        "newwindow=window.open(url,'examdata_info',opt);" +
+			        "newdocument=newwindow.document;" + "<br>" +
+			        "newdocument.writeln('&ltp&gt'+wordsA+'&lt/p&gt');" +
+			        "var iframe = newdocument.createElement('iframe');" + "<br>" +
+			        "iframe.src = wordsB;" + "iframe.height = nerds;" +
+			        "iframe.width = birds;" + "<br>" +
+			        "newdocument.body.appendChild(iframe);" +
+			        "newdocument.close();" +  "}" +  "// --&gt" +
+				"&lt/script&gt" + "<br>" + "EOF";
 
-	"&ltscript language=\"javascript\" type=\"text/javascript\"&gt" + "&lt!-- //" + "<br>" +
+		var pgToSaveC = "$BR" +	"\\{ htmlLink( \"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\", \"Need help?\" ) \\}";
 
-	  "var tempInputA = \""+rawInput+"\";" + "<br>" +
-
-	  "var tempInputB = \""+urlName+"\";" + "<br>" +
-
-	  "var uheight = \""+urlWidth+"\";" +
-
-	  "var uwidth = \""+urlHeight+"\";" + "<br>" +
-
-	  "function rawToText(wordsA, wordsB, nerds, birds){" +
-
-	    "url = \"\";" +
-
-	    "var opt = \"height=600,width=600,location=no,\" +" + "<br>" +
-
-	    "\"menubar=no,status=no,resizable=yes,\" +" +
-
-	    "\"scrollbars=no,toolbar=no,\";" + "<br>" +
-
-	    "newwindow=window.open(url,'examdata_info',opt);" +
-
-	    "newdocument=newwindow.document;" + "<br>" +
-
-	    "newdocument.writeln('&ltp&gt'+wordsA+'&lt/p&gt');" +
-
-	    "var iframe = newdocument.createElement('iframe');" + "<br>" +
-
-	    "iframe.src = wordsB;" +
-
-	    "iframe.height = nerds;" +
-
-	    "iframe.width = birds;" + "<br>" +
-
-	    "newdocument.body.appendChild(iframe);" +
-
-	    "newdocument.close();" +
-
-	  "}" +
-
-	  "// --&gt" +
-
-	  "&lt/script&gt" + "<br>" +
-
-	"EOF";
-
-	var pgToSaveC = "$BR" +
-
-	"\\{ htmlLink( \"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\", \"Need help?\" ) \\}";
-
-	var pgToSaveE = "<br>" + "[@ htmlLink(\"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\",\"Need help?\") @]*";
-
+		var pgToSaveE = "<br>" + "[@ htmlLink(\"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\",\"Need help?\") @]*";
 	}
 
-	if( counter == 0 ) {
-
+	if(counter == 0) {
 		var pgToSaveA = "";
-
 		var pgToSaveC = "";
-
 		var pgToSaveE = "";
-
 	}
+	
 	return insertHintToPG(pgString, pgToSaveA, pgToSaveB, pgToSaveC, pgToSaveD, pgToSaveE);
-
 }
 
 /*
