@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head> 
+<title>Fill in the Blanks</title> 
+<style>
+img
+{ 
+	float: left;
+} 
+
+header 
+{ 
+	background-color:#001455; 
+	height:110px;
+	border: 5px solid #333;
+} 
+
+header h1 
+{ 
+	color:#FFF;   
+}
+
+a : link
+{ 
+	decoration:none; 
+}
+
+button 
+{
+    background-color: #001456;
+    border: 2px solid #333; 
+    color: white;
+    padding: 2px 8px 2px 8px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin:0;
+    cursor: pointer;
+}
+
+#codeArea
+{
+	float: right;
+}
+
+
+#userInput
+{
+	position: static;
+	width: 63%
+}
+
+</style>
+</head> 
+<body>
+<script> 
+
+function sendQuestion() 
+{
+	var question = document.getElementById("question").value; 
+	if(question == "") 
+	{
+		alert("Ooops! You left the question blank. Please try again"); 
+	} 
+	var output = document.getElementById("outputQues"); 
+	output.innerHTML = "You asked : " +question; 
+}
+
+function sendAnswer() 
+{
+	var answer = document.getElementById("answer").value; 
+	if(answer == "") 
+	{
+		alert("Ooops! You left the answer blank. Please try again"); 
+	} 
+	var output = document.getElementById("outputAns"); 
+	output.innerHTML = "You answered : " +answer; 
+}
+
+function sendSolution() 
+{
+	var solution = document.getElementById("solution").value; 
+	var output = document.getElementById("outputSolution"); 
+	output.innerHTML = "Your solution is : "  +solution; 
+}
+
+function generatePerl()
+{
+	var question = document.getElementById("question").value;
+	var answer = document.getElementById("answer").value;
+	var solution = document.getElementById("solution").value;
+
+	var section1 = '<br><br>DOCUMENT();\n<br>\
+	\n<br>\
+	loadMacros(\n<br>\
+	"PGstandard.pl",\n<br>\
+	"MathObjects.pl",\n<br>\
+	);\n<br>\
+	\n<br>\
+	TEXT(beginproblem());\n<br>\
+	\n<br>\
+    	Context()->strings->add("';
+    
+   	var section2 = '"=>{});\n<br>\
+	$answer = String("';
+
+	var section3 ='");\n<br>\
+	\n<br>\
+	Context()->texStrings;\n<br>\
+	BEGIN_TEXT\n<br>';
+	
+	var section4 = "<br>$BR\n<br>\
+	$BR\n<br>\
+	\\{ ans_rule(20) \\}\n<br>\
+	END_TEXT\n<br>\
+	Context()->normalStrings;\n<br>\
+	\n<br>\
+	$showPartialCorrectAnswers = 1;\n<br>\
+	\n<br>\
+	ANS( $answer->cmp() );\n<br>\
+	\n<br>\
+	Context()->texStrings;\n<br>\
+	SOLUTION(EV3(<<'END_SOLUTION'));\n<br>\
+	$PAR SOLUTION $PAR\n<br>";
+	
+	var section5 = "\n<br>END_SOLUTION\n<br>\
+	Context()->normalStrings;\n<br>\
+	\n<br>\
+	ENDDOCUMENT();";
+
+	var output = document.getElementById("codeOutput"); 
+	output.innerHTML = "All the Perl code is : "  +section1 + answer + section2 + answer + section3 + question + section4 + solution + section5;
+}
+
+</script> 
+
+<header> 
+<h1> 
+	<img src = "mlogo.png" height = 70 width = 80 float: center>
+	Mathematical Association of America <br>
+	WeBWorK Question Creator
+</h1> 
+</header><br>
+<div id = "codeArea">
+<fieldset>
+	<legend> Click the button to see a preview of the Perl generated for this question </legend>
+	<button onclick = "generatePerl()" >Submit <br></button>
+	<br> 
+	<div id="codeOutput">
+	</div>
+</div>
+
+<div id = "userInput">
+<fieldset> 
+	<legend> Please type the question below : </legend> 
+	<p> <textarea id ="question" rows="5" cols="50">
+	</textarea><br>
+	<button onclick = "sendQuestion()" >Submit <br></button> 
+	<p> Question Preview </p>
+	<div id = "outputQues"> 
+	</div>
+</fieldset> 
+
+<fieldset>
+	<legend> The answer for this question is : </legend> <br> 
+	<textarea id ="answer" rows="1" cols="50">
+	</textarea><br>
+	<button onclick = "sendAnswer()" >Submit <br> </button> 
+	<p> Answer Preview </p> 
+	<div id = "outputAns"> 
+	</div>
+</fieldset>
+
+<fieldset> 
+	<legend> Enter an explanation of the solution below: </legend> 
+	<p> <textarea id ="solution" rows="5" cols="50">
+	</textarea><br>
+	<button onclick = "sendSolution()" >Submit <br></button> 
+	<p> Solution Preview </p>
+	<div id = "outputSolution"> 
+	</div>
+</fieldset> 
+</div>
+</body>
+</html>
