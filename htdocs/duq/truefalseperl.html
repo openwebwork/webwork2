@@ -1,6 +1,9 @@
 <!doctype html> 
 <html> 
 <head> 
+
+<script type="text/javascript" src="js/HintEditor.js"></script>
+
 <title> True False </title> 
 
 <style> 
@@ -96,6 +99,40 @@ function sendSolution()
 	output.innerHTML = "Your solution is : "  +solution; 
 }
 
+function sendImage(){
+	var output = document.getElementById("outputImage");
+	var width = 500;
+	var height = 500;
+	if(document.getElementById("imageWidth").value != ""){
+		width = document.getElementById("imageWidth").value;
+	}
+
+	if(document.getElementById("imageHeight").value != ""){
+		height = document.getElementById("imageHeight").value;
+	}
+	output.innerHTML = "<image src=" + document.getElementById("imageText").value + 
+				" width=" + width + "px" + 
+				" height=" + height + "px>";
+}
+
+function sendHint(){
+	var output = document.getElementById("outputHint");
+	var width = 500;
+	var height = 500;
+
+	if(document.getElementById("imageHintWidth").value != ""){
+		width = document.getElementById("imageHintWidth").value;
+	}
+
+	if(document.getElementById("imageHintHeight").value != ""){
+		height = document.getElementById("imageHintHeight").value;
+	}
+	output.innerHTML = "<div>" + document.getElementById("hintText").value + "</div><br>" +
+				"<image src=" + document.getElementById("imageHintText").value +
+				" width=" + width + "px" + 
+				" height=" + height + "px>";
+}
+	
 function generatePerl()
 {
 	var question = document.getElementById("question").value;
@@ -118,6 +155,7 @@ function generatePerl()
 		\"PGstandard.pl\",\n<br>\
 		\"parserRadioButtons.pl\",\n<br>\
 	);\n<br>\
+	TEXT(beginproblem());\n<br>\
 	\n<br>\
 	$mc = RadioButtons(\n<br>\
     	[ \"True\", \"False\"],\n<br>\"";
@@ -144,8 +182,21 @@ function generatePerl()
 	Context()->normalStrings;\n<br>\
 	\n<br>\
 	ENDDOCUMENT();";
+
+	var pgString = section1 + answer + section2 + question + section3 + solution + section4;
+	
+	//Insert hint/image PG code, if there is a hint or image
+	if(document.getElementById("hintText").value != "" || 
+		document.getElementById("imageHintText").value != ""
+			|| document.getElementById("imageText").value != ""){
+			pgString = translateToPG(pgString,
+				document.getElementById("hintText").value, 
+					[document.getElementById("imageHintText").value, document.getElementById("imageHintWidth").value, document.getElementById("imageHintHeight").value], 
+						[document.getElementById("imageText").value, document.getElementById("imageWidth").value, document.getElementById("imageHeight").value]);
+	}
+
 	var output = document.getElementById("outputCode");
-	output.innerHTML = "All the Perl Code is : "  +section1 + answer + section2 + question + section3 + solution + section4; 	
+	output.innerHTML = "All the Perl Code is : "  + pgString; 	
 }
 	 
 </script>
@@ -168,7 +219,7 @@ function generatePerl()
 
 <div id = "userInput">
 <fieldset> 
-	<legend> Please type the question below : </legend> 
+	<legend> Please type the question below : </legend> 	
 	<textarea id ="question" rows = "5" cols = "50">
 	</textarea> <br> 
 	<button class= "button" onclick = "sendQuestion()"> Submit </button>
@@ -192,11 +243,46 @@ function generatePerl()
 <textarea id ="solution" rows = "5" cols = "50">
 	</textarea> <br> 
 	<button class = "button" onclick = "sendSolution()"> Submit </button>
-	<p> Hint Preview </p>  
+	<p> Solution Preview </p>  
 	<div id = "outputSolution"> 
 </div> 
 </fieldset>
 
+<!--HINT FIELD-->
+<fieldset> 
+	<legend> Enter a hint below: </legend> 
+
+	<p>Enter text here:</p>
+	<textarea id ="hintText" rows = "5" cols = "50"></textarea>
+	<br>
+ 
+	<p>Enter a URL for an externally hosted image here:<br>(Default size is 500x500)</p>
+	<textarea id ="imageHintText" rows = "5" cols = "50"></textarea>
+	<textarea id = "imageHintWidth" placeholder = "width" rows = "1" cols = "7"></textarea>
+	<textarea id = "imageHintHeight" placeholder = "height" rows = "1" cols = "7"></textarea>
+	<br> 
+
+	<button class = "button" onclick = "sendHint()">Hint preview</button>
+	<p> Hint Preview </p>  
+	<div id = "outputHint"> 
+	</div> 
+</fieldset>
+
+
+<!--GRAPHICS FIELD-->
+<fieldset> 
+	<legend> Enter a URL for an externally hosted image to show in problem below: 
+		<br>(Default size is 500x500)
+	</legend> 
+	<textarea id ="imageText" rows = "5" cols = "50"></textarea>
+	<textarea id = "imageWidth" placeholder = "width" rows = "1" cols = "7"></textarea>
+	<textarea id = "imageHeight" placeholder = "height" rows = "1" cols = "7"></textarea>
+	<br> 
+	<button class = "button" onclick = "sendImage()">Image preview</button>
+	<p> Image Preview </p>  
+	<div id = "outputImage"> 
+	</div> 
+</fieldset>
 
 </body> 
 </html> 
