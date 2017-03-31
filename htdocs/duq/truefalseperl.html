@@ -2,6 +2,7 @@
 <html> 
 <head> 
 
+<script type="text/javascript" src="js/insertKnowl.js" ></script>
 <script type="text/javascript" src="js/HintEditor.js"></script>
 
 <title> True False </title> 
@@ -61,6 +62,7 @@ button
 
 function sendQuestion() 
 {
+	addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -135,7 +137,11 @@ function sendHint(){
 	
 function generatePerl()
 {
-	var question = document.getElementById("question").value;
+	addKnowlHelper();
+	var question = document.getElementById("knowlOutput").textContent;
+	//team B
+	//don't worry about this. knowlOutput return the same thing as question
+	//if there is not a knowl and return the string question with knowl if there is
 	var solution = document.getElementById("solution").value; 
  
 	if(document.getElementById("true").checked) 
@@ -222,6 +228,7 @@ function generatePerl()
 	<legend> Please type the question below : </legend> 	
 	<textarea id ="question" rows = "5" cols = "50">
 	</textarea> <br> 
+	<p hidden id="knowlOutput">must be changed after click</p>
 	<button class= "button" onclick = "sendQuestion()"> Submit </button>
 	<p> Question Preview </p>
 	<div id = "outputQues"> 
@@ -247,6 +254,19 @@ function generatePerl()
 	<div id = "outputSolution"> 
 </div> 
 </fieldset>
+
+<title> Knowls Creator </title>
+<fieldset>
+    <legend>Knowls Creator:</legend>
+    
+ Knowl keyword <br>
+  <textarea id="theWord" rows="1" cols="20">
+  </textarea><br>
+ Knowl Content: <br>
+  <textarea id="theDef" rows="4" cols="50">
+  </textarea><br> 
+</fieldset>
+
 
 <!--HINT FIELD-->
 <fieldset> 
