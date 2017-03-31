@@ -1280,7 +1280,18 @@ sub output_editorLink{
 		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-	    my $editorURL = "/webwork2_files/duq/frontpageperl.html";
+		# Create the link with parameters that will be utilized with the POST request to save state and update the problem
+	    my $setID = $self->r->urlpath->arg("setID");
+		my $problemID = $self->r->urlpath->arg("problemID");
+		my $effectiveUser = $self->r->param("effectiveUser");
+		my $problem = $self->r->db->getMergedProblem($effectiveUser, $setID, $problemID);
+		my $courseID = $self->r->urlpath->arg("courseID");
+		my $key = $self->r->param("key");
+		my $action_view_seed = $self->r->param("problemSeed");
+		my $action_save_as_target_file = $problem->source_file;
+		my $action_save_as_source_file = "/opt/webwork/courses/".$courseID."/templates/".$action_save_as_target_file;
+		my $action_add_problem_target_set = $setID;
+	    my $editorURL = "/webwork2_files/duq/frontpageperl.html?courseID=".$courseID."&setID=".$setID."&problemID=".$problemID."&user=".$user."&effectiveUser=".$effectiveUser."&key=".$key."&action.view.seed=".$action_view_seed."&action.save_as.target_file=".$action_save_as_target_file."&action.save_as.source_file=".$action_save_as_source_file."&action.add_problem.target_set=".$action_add_problem_target_set;
 	    $editorLink4 = CGI::span(CGI::a({href=>$editorURL}), $r->maketext("DuqEdit"));
 	}
 	    

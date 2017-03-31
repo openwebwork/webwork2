@@ -2,6 +2,8 @@
 <html>
 <head>
 
+<script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript" src="js/ProblemEditing.js"></script>
 <script type="text/javascript" src="js/HintEditor.js"></script> 
 <title>Fill in the Blanks</title> 
 <style>
@@ -54,7 +56,7 @@ button
 
 </style>
 </head> 
-<body>
+<body onload="restoreState()">
 <script> 
 
 function sendQuestion() 
@@ -178,7 +180,10 @@ function generatePerl()
 
 	
 	var output = document.getElementById("codeOutput"); 
-	output.innerHTML = "All the Perl code is : "  + pgString;
+	output.innerHTML = "All the Perl code is : <span id='code'>"  + pgString + "</span>";
+	
+	// Save the state and make the updates in WebWorK
+	saveState();
 }
 
 </script> 
@@ -202,7 +207,7 @@ function generatePerl()
 <div id = "userInput">
 <fieldset> 
 	<legend> Please type the question below : </legend> 
-	<p> <textarea id ="question" rows="5" cols="50">
+	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50">
 	</textarea><br>
 	<button onclick = "sendQuestion()" >Submit <br></button> 
 	<p> Question Preview </p>
@@ -212,7 +217,7 @@ function generatePerl()
 
 <fieldset>
 	<legend> The answer for this question is : </legend> <br> 
-	<textarea id ="answer" rows="1" cols="50">
+	<textarea id ="answer" class="DuqWorkSave" rows="1" cols="50">
 	</textarea><br>
 	<button onclick = "sendAnswer()" >Submit <br> </button> 
 	<p> Answer Preview </p> 
@@ -222,7 +227,7 @@ function generatePerl()
 
 <fieldset> 
 	<legend> Enter an explanation of the solution below: </legend> 
-	<p> <textarea id ="solution" rows="5" cols="50">
+	<p> <textarea id ="solution" class="DuqWorkSave" rows="5" cols="50">
 	</textarea><br>
 	<button onclick = "sendSolution()" >Submit <br></button> 
 	<p> Solution Preview </p>
@@ -235,13 +240,13 @@ function generatePerl()
         <legend> Enter a hint below: </legend>
 
         <p>Enter text here:</p>
-        <textarea id ="hintText" rows = "5" cols = "50"></textarea>
+        <textarea id ="hintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
         <br>
 
         <p>Enter a URL for an externally hosted image here:<br>(Default size is 500x500)</p>
-        <textarea id ="imageHintText" rows = "5" cols = "50"></textarea>
-        <textarea id = "imageHintWidth" placeholder = "width" rows = "1" cols = "7"></textarea>
-        <textarea id = "imageHintHeight" placeholder = "height" rows = "1" cols = "7"></textarea>
+        <textarea id ="imageHintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+        <textarea id = "imageHintWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+        <textarea id = "imageHintHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
         <br>
 
         <button class = "button" onclick = "sendHint()">Hint preview</button>
@@ -256,9 +261,9 @@ function generatePerl()
         <legend> Enter a URL for an externally hosted image to show in problem below:
                 <br>(Default size is 500x500)
         </legend>
-        <textarea id ="imageText" rows = "5" cols = "50"></textarea>
-        <textarea id = "imageWidth" placeholder = "width" rows = "1" cols = "7"></textarea>
-        <textarea id = "imageHeight" placeholder = "height" rows = "1" cols = "7"></textarea>
+        <textarea id ="imageText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+        <textarea id = "imageWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+        <textarea id = "imageHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
         <br>
         <button class = "button" onclick = "sendImage()">Image preview</button>
         <p> Image Preview </p>
