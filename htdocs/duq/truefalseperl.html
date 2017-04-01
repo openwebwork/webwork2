@@ -2,12 +2,9 @@
 <html> 
 <head> 
 
-<<<<<<< HEAD
-<script type="text/javascript" src="js/insertKnowl.js" ></script>
-=======
 <script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript" src="js/insertKnowl.js"></script>
 <script type="text/javascript" src="js/ProblemEditing.js"></script>
->>>>>>> origin/duq
 <script type="text/javascript" src="js/HintEditor.js"></script>
 
 <title> True False </title> 
@@ -67,7 +64,7 @@ button
 
 function sendQuestion() 
 {
-	addKnowlHelper();
+	//addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -268,10 +265,10 @@ function generatePerl()
     <legend>Knowls Creator:</legend>
     
  Knowl keyword <br>
-  <textarea id="theWord" rows="1" cols="20">
+  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20">
   </textarea><br>
  Knowl Content: <br>
-  <textarea id="theDef" rows="4" cols="50">
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50">
   </textarea><br> 
 </fieldset>
 
