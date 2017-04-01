@@ -47,7 +47,17 @@ a : link
   
 </style>
 </head> 
-<body> 
+<body onload="startup()"> 
+
+<script>
+function startup(){
+	var queryString = window.location.search.substring(1);
+	var buttonElem = document.getElementById("trueFalse");
+	buttonElem.setAttribute("onclick", "location.href = \"truefalseperl.html?" + queryString + "\"");
+	buttonElem = document.getElementById("fillBlank");
+	buttonElem.setAttribute("onclick", "location.href = \"fillintheblankperl.html?" + queryString + "\"");
+}
+</script>
 
 <header> 
 <h1> 
@@ -64,8 +74,8 @@ WeBWorK Question Creator
 
 <legend> Please choose what type of question you want to create : </legend><br> 	
 <button class ="button"> <!--onclick = "location.href = 'multiplechoiceperl.html' ; sendAns()"--> Multiple Choice Question  </button> 
-<button class ="button" onclick = "location.href = 'truefalseperl.html'"> True or False Question </button> 
-<button class ="button" onclick = "location.href = 'fillintheblankperl.html'">Fill in the blanks </button> 
+<button id="trueFalse" class ="button"> True or False Question </button> 
+<button id="fillBlank" class ="button">Fill in the blanks </button> 
 <button class ="button"> <!--onclick = "location.href = 'matching.html'"--> Matching problems  </button>
 
 <br> 

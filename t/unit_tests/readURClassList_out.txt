@@ -1,0 +1,5 @@
+"Username"  ,"Last Name" ,"First Name" ,C , , , ,Username@duq.edu  , 
+"adamsb2"   ,"Adams"     ,"Brian"      ,C , , , ,adamsb2@duq.edu   , 
+"chengk"    ,"Cheng"     ,"Ket-Meng"   ,C , , , ,chengk@duq.edu    , 
+"gilbertn"  ,"Gilbert"   ,"Natalie"    ,C , , , ,gilbertn@duq.edu  , 
+"messineob" ,"Messineo"  ,"Brandon"    ,C , , , ,messineob@duq.edu , 
