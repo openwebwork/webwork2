@@ -1156,6 +1156,9 @@ sub create_handler {
 		$newSetRecord->enable_reduced_scoring(DEFAULT_ENABLED_REDUCED_SCORING_STATE());
 		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
+		###################################################################################################################Make directory to store files uploaded by students
+		mkdir("Student Uploads");
+		###################################################################################################################
 	} elsif ($type eq "copy") {
 		return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: no set selected for duplication!")) unless $oldSetID =~ /\S/;
 		$newSetRecord = $db->getGlobalSet($oldSetID);
