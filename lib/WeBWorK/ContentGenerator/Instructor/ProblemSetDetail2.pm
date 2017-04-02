@@ -1829,9 +1829,7 @@ sub initialize {
 						#################################################
 						my $newFolderName         = "$setID"."_Problem_$targetProblemNumber"."_Student_Uploads";
 						my $workDir               =  WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},'/'."set$setID".'/'.$newFolderName);
-						local(*TEMPFILE);
-						open(TEMPFILE, ">$workDir") or warn $r->maketext("Can't write to file [_1]", $workDir);
-						close(TEMPFILE);
+						mkdir $workDir, 0750;
 						#################################################
 						# Update problem record
 						#################################################
