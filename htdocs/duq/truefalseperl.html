@@ -64,7 +64,7 @@ button
 
 function sendQuestion() 
 {
-	//addKnowlHelper();
+	addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -140,7 +140,7 @@ function sendHint(){
 function generatePerl()
 {
 	addKnowlHelper();
-	var question = document.getElementById("knowlOutput").textContent;
+	var question = document.getElementById("knowlOutput").innerHTML;
 	//team B
 	//don't worry about this. knowlOutput return the same thing as question
 	//if there is not a knowl and return the string question with knowl if there is
@@ -231,9 +231,8 @@ function generatePerl()
 <div id = "userInput">
 <fieldset> 
 	<legend> Please type the question below : </legend> 	
-	<textarea id ="question" class="DuqWorkSave" rows = "5" cols = "50">
-	</textarea> <br> 
-	<p hidden id="knowlOutput">must be changed after click</p>
+	<textarea id ="question" class="DuqWorkSave" rows = "5" cols = "50"></textarea> <br> 
+	<p id="knowlOutput" class="DuqWorkSave"></p>
 	<button class= "button" onclick = "sendQuestion()"> Submit </button>
 	<p> Question Preview </p>
 	<div id = "outputQues"> 
@@ -252,8 +251,7 @@ function generatePerl()
 </fieldset>
 <fieldset> 
 <legend> Enter the explanation of the solution below: </legend> 
-<textarea id ="solution" class="DuqWorkSave" rows = "5" cols = "50">
-	</textarea> <br> 
+<textarea id ="solution" class="DuqWorkSave" rows = "5" cols = "50"></textarea> <br> 
 	<button class = "button" onclick = "sendSolution()"> Submit </button>
 	<p> Solution Preview </p>  
 	<div id = "outputSolution"> 
@@ -265,11 +263,9 @@ function generatePerl()
     <legend>Knowls Creator:</legend>
     
  Knowl keyword <br>
-  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20">
-  </textarea><br>
+  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
  Knowl Content: <br>
-  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50">
-  </textarea><br> 
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br> 
 </fieldset>
 
 

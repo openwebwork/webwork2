@@ -62,7 +62,7 @@ button
 
 function sendQuestion() 
 {	
-	//addKnowlHelper();
+	addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -127,7 +127,7 @@ function sendHint(){
 function generatePerl()
 {
 	addKnowlHelper();
-	var question = document.getElementById("knowlOutput").textContent;
+	var question = document.getElementById("knowlOutput").innerHTML;
 	var answer = document.getElementById("answer").value;
 	var solution = document.getElementById("solution").value;
 
@@ -169,7 +169,7 @@ function generatePerl()
 	\n<br>\
 	ENDDOCUMENT();";
 
-	var pgString = section1 + answer + section2 + answer + section3 + answer + section4 + answer + solution + section5;
+	var pgString = section1 + answer + section2 + answer + section3 + question + section4 + answer + solution + section5;
 //Quan from Team Brandon: 
 //I think there is a bug in your code in the line above so I fixed it but not sure. 
 //Check it please
@@ -214,9 +214,8 @@ function generatePerl()
 <div id = "userInput">
 <fieldset> 
 	<legend> Please type the question below : </legend> 
-	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50">
-	</textarea><br>
-	<div id="knowlOutput"></div>
+	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
+	<p id="knowlOutput" class="DuqWorkSave"></p>
 	<button onclick = "sendQuestion()" >Submit <br></button> 
 	<p> Question Preview </p>
 	<div id = "outputQues"> 
@@ -225,8 +224,7 @@ function generatePerl()
 
 <fieldset>
 	<legend> The answer for this question is : </legend> <br> 
-	<textarea id ="answer" class="DuqWorkSave" rows="1" cols="50">
-	</textarea><br>
+	<textarea id ="answer" class="DuqWorkSave" rows="1" cols="50"></textarea><br>
 	<button onclick = "sendAnswer()" >Submit <br> </button> 
 	<p> Answer Preview </p> 
 	<div id = "outputAns"> 
@@ -235,8 +233,7 @@ function generatePerl()
 
 <fieldset> 
 	<legend> Enter an explanation of the solution below: </legend> 
-	<p> <textarea id ="solution" class="DuqWorkSave" rows="5" cols="50">
-	</textarea><br>
+	<p> <textarea id ="solution" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
 	<button onclick = "sendSolution()" >Submit <br></button> 
 	<p> Solution Preview </p>
 	<div id = "outputSolution"> 
@@ -248,11 +245,9 @@ function generatePerl()
     <legend>Knowls Creator:</legend>
     
  Knowl keyword <br>
-  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20">
-  </textarea><br>
+  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
  Knowl Content: <br>
-  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50">
-  </textarea><br> 
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br> 
 </fieldset>
 
 <!--HINT FIELD-->

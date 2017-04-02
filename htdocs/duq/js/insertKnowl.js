@@ -1,10 +1,10 @@
 ﻿function addKnowlHelper() {
-    var x = document.getElementById("theWord").textContent;
-    var y = document.getElementById("theDef").textContent;
+    var x = document.getElementById("theWord").value;
+    var y = document.getElementById("theDef").value;
     addKnowl(x, y);
 }
 function addKnowl(theWord, theDef) {
-    var x = document.getElementById("question").textContent;
+    var x = document.getElementById("question").value;
 
     var word = theWord;
     var definition = theDef;
