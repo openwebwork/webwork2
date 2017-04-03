@@ -1464,8 +1464,12 @@ sub output_submit_buttons{
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
-        }
-        if ($can{getSubmitButton}) {
+  	}
+        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csform",);
+	print CGI::input({type=>=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
+	print CGI::br();
+	print CGI::submit(-value=>'Upload File',);
+	if ($can{getSubmitButton}) {
         	if ($user ne $effectiveUser) {
         		# if acting as a student, make it clear that answer submissions will
         		# apply to the student's records, not the professor's.
