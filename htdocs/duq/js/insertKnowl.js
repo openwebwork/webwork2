@@ -1,3 +1,7 @@
+/*
+* @author Quan Tong
+* @author Jack Zhou
+*/
 function addKnowlHelper() {
     var x = document.getElementById("theWord").value;
     var y = document.getElementById("theDef").value;
@@ -14,14 +18,14 @@ function addKnowl(theWord, theDef, theQue) {
    
     var knowl1 = '\\\{ knowlLink("';
     var knowl2 = '",value=>';
-    var knowl3 = "'";
-    var knowl4 = "') \\\}";
+    var knowl3 = "escapeSolutionHTML(EV3P('";
+    var knowl4 = "')), base64=>1) \\\}";
     // could save these into array
     
-    var partsW = words.split("^");  //
+    var partsW = words.split("@");
     //word will be format as a,b,c
     var numW= partsW.length;
-    var partsD = definitions.split("^");
+    var partsD = definitions.split("@");
     //var numD= partsD.length;
     var knowlCode = new Array(numW);
     
@@ -62,16 +66,3 @@ function addKnowl(theWord, theDef, theQue) {
     }
     
 }
-
-//function addNewKnowl() {
-//  var div = document.createElement ('div');
-  //div.addAttribute();
-//        div.innerHTML = 'Knowl keyword <br>' +
-//        '<input id="theWord" type="text" name="knowlwords" ><br>' +
-//        'Knowl Content:'+ '<br>'
-//        + '<textarea id="theDef" rows="4" cols= "50">'
-//        + '</textarea><br>';
-//        document.getElementById("knowlButton").appendChild(div);
-//	
-//  }
-//doesn't work
