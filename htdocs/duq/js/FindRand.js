@@ -65,39 +65,20 @@ function findRand(PGString)
 	
 }
 	 //author James Murphy 	(Group C)
-function jamesfunction(randTagsIn) //rename
+function translateRand(randTagsIn)
 {
     //both min and max are inclusive
     var maxSlot = randTagsIn.length;
-    var minSlot = 2;					//im not sure what the values should be
+    var minSlot = 2;
+    addingString1 = "@Input1DArray"+randTagsIn[0]+ "" +randTagsIn[1]+ "(";
+    for (i = 0; i < maxSlot-1; i++){
+        addingString1 += randTagsIn[i] + ",";    //not sure if it needs qoutes (for strings)
+    }
+    addingString1 += randTagsIn[maxSlot-1] + ");";
+    var addingString2 = "$randNum = random("+minSlot+"," + (maxSlot -1) + ",1);";
+    var addingString3 = "$func" +randTagsIn[0]+ "" +randTagsIn[1]+ "Trig = Formula($Input1DArray[$randNum]);";
+    var addingString4 = "$func" +randTagsIn[0]+ "" +randTagsIn[1]+ "Deriv = func" +randTagsIn[0]+ "" +randTagsIn[1]+ "Trig->D();";
 
-	var addingString = "";
-	"@Input1DArray (0,0,"Choice01","Choice02","Choice03");"//works with numbers
-    addingString = "@Input1DArray(";
-
-	for (i = 0; i < 10; i++){
-
-	}
-
-
-
-
-    "$randNum = ranbom(2,5,1);"
-
-
-
-    //returns what the random slot is
-    //return randTags[Math.floor((maxSlot-minSlot+1) * Math.random()+ minSlot)];		//proubly works?
-}
-
-
-//------------------------------------------------------
-function jamesfunction(randTagsIn) //rename
-{
-    //both min and max are inclusive
-    var maxSlot = randTagsIn.length;
-    var minSlot = 2;					//im not sure what the values should be
-
-    //returns what the random slot is
-    return randTags[Math.floor((maxSlot-minSlot+1) * Math.random()+ minSlot)];		//proubly works?
+    return addingString1 +"\n" + addingString2 +"\n" + addingString3 +"\n" +addingString4; //\n should work fine
+		//returns 4 lines of PG code for creation of random then returns that
 }
