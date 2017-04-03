@@ -47,7 +47,7 @@ function findRand(PGString)
 		
 	for(var i = 0; i < randTags.length; i++)	
 	{
-		expectedArr.push(jamesfunction(randTags[i]));
+		expectedArr.push(translateRand(randTags[i]));
 	}
 	
 	var n = 0;
