@@ -64,3 +64,13 @@ function findRand(PGString)
 	return PGString;
 	
 }
+	 //author James Murphy 	(Group C)
+function jamesfunction(randTagsIn) //rename
+{
+    //both min and max are inclusive
+	var maxSlot = randTagsIn.length;
+	var minSlot = 2;					//im not sure what the values should be
+
+	//returns what the random slot is
+    return randTags[Math.floor((maxSlot-minSlot+1) * Math.random()+ minSlot)];		//proubly works?
+}
