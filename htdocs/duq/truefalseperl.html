@@ -55,7 +55,8 @@ button
 {
 	position: static;
 	width: 63%
-}
+}
+
 </style>
 
 </head> 
@@ -226,7 +227,8 @@ function generatePerl()
 	<br><br> 
 	<div id="outputCode">
 	</div>
-</div>
+</div>
+
 
 <div id = "userInput">
 <fieldset> 
@@ -262,10 +264,11 @@ function generatePerl()
 <fieldset>
     <legend>Knowls Creator:</legend>
     
- Knowl keyword <br>
-  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
- Knowl Content: <br>
-  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br> 
+    Knowl keyword(use ^ as separator for multiple knowls)<br>
+    <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
+    Knowl Content: <br>
+    <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br>
+    <button onclick="addKnowlHelper()"> Add a knowl!</button>
 </fieldset>
 
 

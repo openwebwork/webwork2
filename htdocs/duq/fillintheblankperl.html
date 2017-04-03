@@ -62,7 +62,7 @@ button
 
 function sendQuestion() 
 {	
-	addKnowlHelper();
+	//addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -167,7 +167,8 @@ function generatePerl()
 	var section5 = "\n<br>END_SOLUTION\n<br>\
 	Context()->normalStrings;\n<br>\
 	\n<br>\
-	ENDDOCUMENT();";
+	ENDDOCUMENT();";
+
 
 	var pgString = section1 + answer + section2 + answer + section3 + question + section4 + answer + solution + section5;
 //Quan from Team Brandon: 
@@ -244,10 +245,11 @@ function generatePerl()
 <fieldset>
     <legend>Knowls Creator:</legend>
     
- Knowl keyword <br>
+ Knowl keyword(use ^ as separator for multiple knowls)<br>
   <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
  Knowl Content: <br>
-  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br> 
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br>
+  <button onclick="addKnowlHelper()"> Add a knowl!</button>
 </fieldset>
 
 <!--HINT FIELD-->
