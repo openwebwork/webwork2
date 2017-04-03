@@ -68,9 +68,36 @@ function findRand(PGString)
 function jamesfunction(randTagsIn) //rename
 {
     //both min and max are inclusive
-	var maxSlot = randTagsIn.length;
-	var minSlot = 2;					//im not sure what the values should be
+    var maxSlot = randTagsIn.length;
+    var minSlot = 2;					//im not sure what the values should be
 
-	//returns what the random slot is
+	var addingString = "";
+	"@Input1DArray (0,0,"Choice01","Choice02","Choice03");"//works with numbers
+    addingString = "@Input1DArray(";
+
+	for (i = 0; i < 10; i++){
+
+	}
+
+
+
+
+    "$randNum = ranbom(2,5,1);"
+
+
+
+    //returns what the random slot is
+    //return randTags[Math.floor((maxSlot-minSlot+1) * Math.random()+ minSlot)];		//proubly works?
+}
+
+
+//------------------------------------------------------
+function jamesfunction(randTagsIn) //rename
+{
+    //both min and max are inclusive
+    var maxSlot = randTagsIn.length;
+    var minSlot = 2;					//im not sure what the values should be
+
+    //returns what the random slot is
     return randTags[Math.floor((maxSlot-minSlot+1) * Math.random()+ minSlot)];		//proubly works?
 }
