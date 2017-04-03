@@ -265,8 +265,7 @@ sub checkFileLocation {
 	return if $dir =~ m/^$location$/;
 	$location =~ s!/\.\*!!;
 	return if $dir =~ m/^$location$/;
-	# Legacy warning.
-	#$self->addbadmessage("Files with extension '.$extension' usually belong in '$location'");
+	$self->addbadmessage("Files with extension '.$extension' usually belong in '$location'");
 }
 
 sub checkName {
@@ -311,6 +310,19 @@ sub isSymLink {
 }
 
 sub Refresh {
+# 	my $self = shift;
+	#my $r = $self->r;
+	#my $pwd = shift || $self->{pwd};
+	#my $isTop = $pwd eq '.' || $pwd eq '';
+
+	#my ($dirs,$dirlabels) = directoryMenu($self->{courseName},$pwd);
+	#my ($files,$filelabels) = directoryListing($self->{courseRoot},$pwd,$self->getFlag('dates'));
+
+	#unless ($files) {
+		#$self->addbadmessage("The directory you specified doesn't exist");
+		#$files = []; $filelabels = {};
+	#}
+
 	#
 	# Some JavaScript to make things easier for the user
 	#
@@ -530,7 +542,7 @@ sub body {
 	my $ce           = $r->ce;
 	my $authz        = $r->authz;	
 	my $courseName   = $urlpath->arg("courseID");
-	my $courseRoot   = $ce->{courseDirs}{root};
+	my $courseRoot = $ce->{courseDirs}{root};
 	my $setID        = $urlpath->arg("setID");       
 	my $user         = $r->param('user');
 
@@ -832,7 +844,7 @@ sub body {
 
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 
-	#print CGI::end_form();
+	print CGI::end_form();
 
 	print CGI::end_div();
 	# print CGI::end_table();
@@ -1300,7 +1312,6 @@ sub add_handler {
 	return "Nothing done by add student handler";
 }
 
-# FIXME: remove all comments.
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
@@ -1313,25 +1324,30 @@ sub import_form {
 			-name=>"csvform",
 		),
 		CGI::input({type => "file",name => "file",id => "file",size => 40,maxlength => 80}),
-		#CGI::br(),
-		#CGI::checkbox(
-		#	-name=>'checkbox_name',
-		#	-checked=>1,
-		#	-value=>'Yes',
-		#	-label=>'Randomize Passwords?: '
-		#),
-		#CGI::br(),
-		#WeBWorK::CGI_labeled_input(
-			#-type=>"select",
-			#-id=>"import_select_source",
-			#-label_text=>$r->maketext("Import users from what file?").": ",
-			#-input_attr=>{
-				#-name => "action.import.source",
-				#-values => [ $self->getCSVList() ],
-				#-default => $actionParams{"action.import.source"}->[0] || "",
-				#-onchange => $onChange,
-			#}
-		#),
+		CGI::br(),
+		CGI::submit(
+			-value => 'Upload File',
+		),
+		CGI::br(),
+		CGI::end_form(),
+		CGI::checkbox(
+			-name=>'checkbox_name',
+			-checked=>1,
+			-value=>'Yes',
+			-label=>'Randomize Passwords?: '
+		),
+		CGI::br(),
+		WeBWorK::CGI_labeled_input(
+			-type=>"select",
+			-id=>"import_select_source",
+			-label_text=>$r->maketext("Import users from what file?").": ",
+			-input_attr=>{
+				-name => "action.import.source",
+				-values => [ $self->getCSVList() ],
+				-default => $actionParams{"action.import.source"}->[0] || "",
+				-onchange => $onChange,
+			}
+		),
 		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1378,25 +1394,23 @@ sub import_handler {
 
 
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
-
-	#Sets $fileIDhash to be the file.
-	my $fileIDhash = $self->r->param('file');
+	my $fileIDhash = $self->r->param('file');			#Sets $fileIDhash to be the file.
 	unless ($fileIDhash) {
 		$self->addbadmessage("You have not chosen a file to upload.");
 		$self->Refresh;
 		return;
 	}
 
-	my ($id,$hash) = split(/\s+/,$fileIDhash);			
-	#Destroys spaces.
+	my ($id,$hash) = split(/\s+/,$fileIDhash);			#Destroys spaces.
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 
 	my $name = checkName($upload->filename);			#Taint checker.
 
-	# FIXME: Add collision checking.
 	if (-e "$dir/$name") {
 		unless ($self->r->param('overwrite')) {
+			
 			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			print CGI::hidden({name=>"action",value=>"Upload"});
 			print CGI::hidden({name=>"file",value=>$fileIDhash});
 			return;
@@ -1441,10 +1455,11 @@ sub import_handler {
 
 	my ($genericParams, $actionParams, $tableParams) = @_;
 
+	my $source = $actionParams->{"action.import.source"}->[0];
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
 
-	my $fileName = $name;
+	my $fileName = $source;
 	my $createNew = $add eq "any";
 	my $replaceExisting;
 	my @replaceList;
@@ -1749,7 +1764,6 @@ sub importUsersFromCSV {
 	my $db    = $r->db;
 	my $dir   = $ce->{courseDirs}->{templates};
 	my $user  = $r->param('user');
-	my $pwd   = $self->{pwd};
 
 	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 	die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
@@ -1834,11 +1848,6 @@ sub importUsersFromCSV {
 			push @added, $user_id;
 		}
 	}
-	
-	## Deletes the file after uploading.
-
-	if (unlink("$dir/$fileName")) {$self->addgoodmessage("File '$fileName' successfully removed")}
-	else {$self->addbadmessage("File '$fileName' not removed: $!")}
 
 	return \@replaced, \@added, \@skipped;
 }

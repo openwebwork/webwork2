@@ -19,6 +19,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
+use WeBWorK::File::Classlist;
 use File::Path;
 use File::Copy;
 use File::Spec;
@@ -136,7 +137,7 @@ sub body {
 		-id=>"FileManager",
 		-enctype=> 'multipart/form-data',
 		-name=>"FileManager",
-         -style=>"margin:0",
+        -style=>"margin:0",
 	);
 	print $self->hidden_authen_fields;
 
@@ -167,6 +168,7 @@ sub body {
 	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
 	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
+	elsif($action eq "Blackboard Import" 	|| $action eq $r->maketext("Blackboard Import")) {$self->BBImport;} 
 	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
 	else {
 	  $self->addbadmessage("Unknown action");
@@ -299,7 +301,7 @@ EOF
 	# Start the table
 	#
 	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3, style=>"margin:1em 0 0 3em"});
-
+	
 	#
 	# Directory menu and date/size checkbox
 	#
@@ -355,6 +357,7 @@ EOF
 				CGI::td(CGI::input({%button,value=>$r->maketext("New File")})),
 				CGI::td(CGI::input({%button,value=>$r->maketext("New Folder")})),
 				CGI::td(CGI::input({%button,value=>$r->maketext("Refresh")})),
+				CGI::td(CGI::input({%button,value=>$r->maketext("Blackboard Import")})),
 			]),
 			CGI::end_table(),
 		),
@@ -1305,6 +1308,120 @@ sub systemError {
   return "error: $!" if $status == 0xFF00;
   return "exit status ".($status >> 8) if ($status & 0xFF) == 0;
   return "signal ".($status &= ~0x80);
+}
+
+##################################################
+#
+#  Import classlist from Blackboard
+#
+sub BBImport {
+	my $self = shift;
+	my $r = $self->r;
+	my $dir = "$self->{courseRoot}/$self->{pwd}";
+	my $fileIDhash = $self->r->param('file');
+	unless ($fileIDhash) {
+		$self->addbadmessage("You have not chosen a file to import from Blackboard.");
+		$self->Refresh;
+		return;
+	}
+
+	my ($id,$hash) = split(/\s+/,$fileIDhash);
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+
+	my $name = checkName($upload->filename);
+	my $action = $self->r->param("formAction") || "Cancel";
+	if ($self->r->param("confirmed")) {
+		if ($action eq "Cancel") {
+			$upload->dispose;
+			$self->Refresh;
+			return;
+		}
+		$name = checkName($self->r->param('name')) if ($action eq "Rename");
+	}
+
+	if (-e "$dir/$name") {
+		unless ($self->r->param('overwrite') || $action eq "Overwrite") {
+			
+			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			print CGI::hidden({name=>"action",value=>"Upload"});
+			print CGI::hidden({name=>"file",value=>$fileIDhash});
+			return;
+		}
+	}
+	$self->checkFileLocation($name,$self->{pwd});
+	my $outfile = substr($name,0,-4).".lst";
+	system($^X, "readURClassList.pl", "$name", "$outfile", "");
+	my $file = "$dir/$name";
+	my $type = $self->getFlag('format','Automatic');
+    
+	my $data;
+	
+	#
+	#  Check if we need to convert linebreaks
+	#
+	if ($type ne 'Binary') {
+		my $fh = $upload->fileHandle;
+		my @lines = <$fh>; $data = join('',@lines);
+		if ($type eq 'Automatic') {$type = isText($data) ? 'Text' : 'Binary'}
+	}
+	if ($type eq 'Text') {
+		$upload->dispose;
+		$data =~ s/\r\n?/\n/g;
+		if (open(UPLOAD,">$file")) {print UPLOAD $data; close(UPLOAD)}
+		  else {$self->addbadmessage("Can't create file '$name': $!")}
+	} else {
+		$upload->disposeTo($file);
+	}
+
+	if (-e $file) {
+	  $self->addgoodmessage("$type file '$name' uploaded successfully");
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	    }
+	  }
+	}
+
+	$self->Refresh;
+}
+
+sub import_handler {
+	my ($self, $genericParams, $actionParams, $tableParams) = @_;
+	my $r = $self->r;
+	
+	my $source = $actionParams->{"action.import.source"}->[0];
+	my $add = $actionParams->{"action.import.add"}->[0];
+	my $replace = $actionParams->{"action.import.replace"}->[0];
+	
+	my $fileName = $source;
+	my $createNew = $add eq "any";
+	my $replaceExisting;
+	my @replaceList;
+	if ($replace eq "any") {
+		$replaceExisting = "any";
+	} elsif ($replace eq "none") {
+		$replaceExisting = "none";
+	} elsif ($replace eq "visible") {
+		$replaceExisting = "listed";
+		@replaceList = @{ $self->{visibleUserIDs} };
+	} elsif ($replace eq "selected") {
+		$replaceExisting = "listed";
+		@replaceList = @{ $self->{selectedUserIDs} };
+	}
+	
+	my ($replaced, $added, $skipped)
+		= $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
+	
+	# make new users visible... do we really want to do this? probably.
+	push @{ $self->{visibleUserIDs} }, @$added;
+	
+	my $numReplaced = @$replaced;
+	my $numAdded = @$added;
+	my $numSkipped = @$skipped;
+	
+	return $r->maketext("[_1] users replaced, [_2] users added, [_3] users skipped. Skipped users: ([_4])", $numReplaced, $numAdded, $numSkipped, join (", ", @$skipped));
 }
 
 ##################################################
