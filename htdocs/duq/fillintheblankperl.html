@@ -6,6 +6,8 @@
 <script type="text/javascript" src="js/insertKnowl.js"></script>
 <script type="text/javascript" src="js/ProblemEditing.js"></script>
 <script type="text/javascript" src="js/HintEditor.js"></script> 
+<script type="text/javascript" src="js/toleranceEditor.js"></script> 
+
 <title>Fill in the Blanks</title> 
 <style>
 img
@@ -124,6 +126,42 @@ function sendHint(){
                                 " height=" + height + "px>";
 }
 
+function sendTolerance(selection){
+        var output = document.getElementById("outputTolerance");
+	var tolVal = document.getElementById("toleranceText").value;
+
+	//They didn't want a tolerance, and have kept the input box blank.
+	if(selection == "none" && tolVal == ""){
+		output.innerHTML = "";
+	}
+
+	//They didn't want a tolerance, but inputed something and submitted.
+	else if(selection == "none" && tolVal != ""){
+	        output.innerHTML = "<br>You said you didn't want any tolerance, yet you entered a value!";    	
+	}
+
+	//They want a tolerance, but d	idn't input anything.
+	else if(selection !="none" && tolVal == ""){
+		output.innerHTML ="<br>You said you wanted tolerance, but you left the tolerance field blank!";
+	}
+
+	//They want a tolerance, and inputed a value then submitted.
+	else{ 
+		output.innerHTML = "<br>You submitted a tolerance level of: " + tolVal;
+	}
+}
+
+function getSelectedType(){
+	var selectedType = document.getElementsByName('tolType');
+	var selectedType_value;
+	for(var i = 0; i < selectedType.length; i++){
+   		if(selectedType[i].checked){
+     		   selectedType_value = selectedType[i].value;
+    		}
+	}
+	return selectedType_value;
+}
+
 function generatePerl()
 {
 	addKnowlHelper();
@@ -142,8 +180,11 @@ function generatePerl()
 	\n<br>\
     	Context()->strings->add("';
     
-   	var section2 = '"=>{});\n<br>\
-	$answer = String("';
+   	var section2 = '"=>{});\n<br>';
+	//$answer = String("';
+	var section2_String = '$answer = String("';
+	var section2_Real ='$answer = Real("';
+
 
 	var section3 ='");\n<br>\
 	\n<br>\
@@ -158,7 +199,7 @@ function generatePerl()
 	\n<br>\
 	$showPartialCorrectAnswers = 1;\n<br>\
 	\n<br>\
-	ANS( $answer->cmp() );\n<br>\
+	ANS( $answer-> cmp() );\n<br>\
 	\n<br>\
 	Context()->texStrings;\n<br>\
 	SOLUTION(EV3(<<'END_SOLUTION'));\n<br>\
@@ -169,10 +210,28 @@ function generatePerl()
 	\n<br>\
 	ENDDOCUMENT();";
 
-	var pgString = section1 + answer + section2 + answer + section3 + question + section4 + answer + solution + section5;
+	var pgString = section1 + answer + section2 + section2_String + answer + section3 + question + section4 + answer + solution + section5;
 //Quan from Team Brandon: 
 //I think there is a bug in your code in the line above so I fixed it but not sure. 
 //Check it please
+
+	/*Tolerance requires a numeric input.  Currently, the code is always a 		 *string, which is problematic.  Therefore, as long as there is
+
+	 */
+
+	if(usingPGML(pgString)){}
+
+	else{	
+		if(getSelectedType() == "none"){
+			pgString = section1 + answer + section2 +
+				section2_String + answer + section3 +
+				question + section4 + solution + section5;
+		}	
+		else{ 
+			pgString = section1 + answer + section2 + section2_Real + answer + section3 + 					question + section4 + solution + section5;
+		}
+	}
+	
 	//Insert hint/image PG code, if there is a hint or image
         if(document.getElementById("hintText").value != "" || 
                 document.getElementById("imageHintText").value != ""
@@ -183,7 +242,14 @@ function generatePerl()
                                                 [document.getElementById("imageText").value, document.getElementById("imageWidth").value, document.getElementById("imageHeight").value]);
         }
 
-	
+	if(getSelectedType() != "none" && 
+		document.getElementById("toleranceText").value != ""){
+
+		pgString = checkPGorPGML(pgString, 
+			document.getElementById("toleranceText").value,
+			getSelectedType());
+	}
+
 	var output = document.getElementById("codeOutput"); 
 	output.innerHTML = "All the Perl code is : <span id='code'>"  + pgString + "</span>";
 	
@@ -229,6 +295,29 @@ function generatePerl()
 	<p> Answer Preview </p> 
 	<div id = "outputAns"> 
 	</div>
+</fieldset>
+
+<!--TOLERANCE FIELD-->
+<fieldset>
+        <legend> Do you want to include a tolerance value? </legend>
+	<div>
+	  <input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
+	  <label for="tolNone">No Tolerance </label><br>
+	</div>
+	<div>
+	  <input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
+	  <label for="tolNumeric">Numeric Value </label>
+	</div>
+	<div>
+	  <input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
+	  <label for="tolPercent">Percentage </label>
+	</div>
+	<p>If you want a tolerance, enter a value below.  If not, leave it blank!</p>
+	<p>Note: If you want a percentage, enter the number as a decimal (i.e. 15% -> 0.15)</p>
+        <textarea id ="toleranceText" rows = "1" cols = "50"></textarea>
+        <br>
+        <button class = "button" onclick = "sendTolerance(getSelectedType())">Submit <br></button>
+        <div id = "outputTolerance"></div>
 </fieldset>
 
 <fieldset> 

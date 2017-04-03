@@ -1,0 +1,27 @@
+/* @author Dave Kelly */
+
+.tooltip {
+	position: relative;
+	display: inline-block;
+	border-bottom: 1px dotted black;
+	transition: 0s background-color;
+}
+.tooltip .tooltiptext {
+	visibility: hidden;
+	width: 150px;
+	text-align: center;
+	background-color: black;
+	color: #fff;
+	border-radius: 6px;
+	padding: 5px 0;
+	font-size: .75em;
+	top: 15px;
+	transition-delay: .5s;
+	
+	/* Position the tooltip */
+	position: absolute;
+	z-index: 1;
+}
+.tooltip:hover .tooltiptext {
+	visibility: visible;
+}
