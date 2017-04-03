@@ -47,7 +47,7 @@ function findRand(PGString)
 		
 	for(var i = 0; i < randTags.length; i++)	
 	{
-		expectedArr.push(jamesfunction(randTags[i]));
+		recievedArr.push(translateRand(randTags[i]));
 	}
 	
 	var n = 0;
@@ -56,7 +56,7 @@ function findRand(PGString)
 		beginString = PGString.indexOf("[rand]", startIndex);
 		endString = PGString.indexOf("[/rand]", beginString) + 7;
 		
-		var newstring = splitAndInsertModified(PGString, beginString, endString, expectedArr[n]);
+		var newstring = splitAndInsertModified(PGString, beginString, endString, recievedArr[n]);
 		PGString = newstring;
 		n++;
 		startIndex = 0;
