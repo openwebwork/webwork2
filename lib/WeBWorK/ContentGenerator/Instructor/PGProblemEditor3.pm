@@ -1164,7 +1164,48 @@ sub saveFileChanges {
 
 		$writeFileErrors = $@ if $@;
 	} 
- 
+
+	###########################################################
+	# Save the state of the form as a JSON file in htdocs/JSON directory
+	###########################################################
+
+	#Parsing and formatting the outputFilePath into a json filepath for the state
+	my $filePath = $outputFilePath;
+	my $find = '/courses/';
+	my $replace = '/webwork2/htdocs/JSON/';
+	$filePath =~ s/\Q$find\E/$replace/g;
+	#Replaces .pg file extension with .json
+	$filePath =~ s{\.[^.]*(?:\.pg)?$}{.json};
+			
+	# Make the directory structure for the JSON file if it does not exist yet
+	my @folderNamesSplit = split(/\//, $filePath);
+	my $folderNamesBuild = ".";
+		
+	#Create the JSON directory and it's sub-directories if they do not exist
+	for(my $i = 0; $i < @folderNamesSplit - 1; $i++){
+		if(-d $filePath){
+		}
+		else{
+			$folderNamesBuild = $folderNamesBuild."/".$folderNamesSplit[$i];
+			mkdir $folderNamesBuild;
+		}
+	}
+		
+	# Get the JSON string and split it into an array, which will be printed into the JSON file
+	my $JSONString = $r->param("JSON");
+	my @parts = split(/``/, $JSONString);
+	open(OUTFILE, ">", $filePath) or die "JSON file does not exist!";
+	print OUTFILE "{";
+	for(my $i = 0; $i < @parts; $i++){
+		if($i != 0){
+			print OUTFILE ", ";
+		}
+		my @pair = split(/~~/, $parts[$i]);
+		print OUTFILE "\"".$pair[0]."\": \"".$pair[1]."\"";
+	}
+	print OUTFILE "}";
+	close(OUTFILE);
+	
 	###########################################################
 	# Catch errors in saving files,  clean up temp files
 	###########################################################
