@@ -7,7 +7,7 @@
 <script type="text/javascript" src="js/ProblemEditing.js"></script>
 <script type="text/javascript" src="js/HintEditor.js"></script> 
 <script type="text/javascript" src="js/toleranceEditor.js"></script> 
-<link rel="stylesheet" type="text/css" src="tooltips.css">
+<link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title>Fill in the Blanks</title> 
 <style>
@@ -302,32 +302,46 @@ function generatePerl()
 <!--TOLERANCE FIELD-->
 <fieldset>
         <legend> Do you want to include a tolerance value? </legend>
-	<div>
-	  <input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
-	  <label for="tolNone">No Tolerance </label><br>
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to set a tolerance value of "none", "numeric", or "percentage”.</span>
+		<div>
+			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
+			<label for="tolNone">No Tolerance </label><br>
+		</div>
+		<div>
+			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
+			<label for="tolNumeric">Numeric Value </label>
+		</div>
+		<div>
+			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
+			<label for="tolPercent">Percentage </label>
+		</div>
+		<p>If you want a tolerance, enter a value below.  If not, leave it blank!</p>
+		<p>Note: If you want a percentage, enter the number as a decimal (i.e. 15% -> 0.15)</p>
+	        <textarea id ="toleranceText" rows = "1" cols = "50"></textarea>
+		<br>
 	</div>
-	<div>
-	  <input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
-	  <label for="tolNumeric">Numeric Value </label>
-	</div>
-	<div>
-	  <input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
-	  <label for="tolPercent">Percentage </label>
-	</div>
-	<p>If you want a tolerance, enter a value below.  If not, leave it blank!</p>
-	<p>Note: If you want a percentage, enter the number as a decimal (i.e. 15% -> 0.15)</p>
-        <textarea id ="toleranceText" rows = "1" cols = "50"></textarea>
         <br>
-        <button class = "button" onclick = "sendTolerance(getSelectedType())">Submit <br></button>
-        <div id = "outputTolerance"></div>
+	<div class="tooltip">
+		<span class="tooltiptext">This will submit the tolerance you wish to have.</span>
+	        <button class = "button" onclick = "sendTolerance(getSelectedType())">Submit <br></button>
+	        <div id = "outputTolerance"></div>
+	</div>
 </fieldset>
 
 <fieldset> 
 	<legend> Enter an explanation of the solution below: </legend> 
-	<p> <textarea id ="solution" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
-	<button onclick = "sendSolution()" >Submit <br></button> 
-	<p> Solution Preview </p>
-	<div id = "outputSolution"> 
+	<div class="tooltip">
+		<span class="tooltiptext">This is what the student will see for a solution</span>
+		<p> <textarea id ="solution" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
+	</div>
+	<br>
+	<div class="tooltip">
+		<span class="tooltiptext">This will submit the solution.</span>
+		<button onclick = "sendSolution()" >Submit <br></button> 
+		<p> Solution Preview </p>
+		<div id = "outputSolution"> 
+		</div>
 	</div>
 </fieldset> 
 
@@ -349,18 +363,25 @@ function generatePerl()
         <legend> Enter a hint below: </legend>
 
         <p>Enter text here:</p>
-        <textarea id ="hintText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
+	<div class="tooltip">
+        	<span class="tooltiptext">This is what the student will see when they click on "Need Help".</span>
+	        <textarea id ="hintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+	</div>
         <br>
 
         <p>Enter a URL for an externally hosted image here:<br>(Default size is 500x500)</p>
-        <textarea id ="imageHintText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
-        <textarea id = "imageHintWidth" class="DuqWorkSave tooltip" placeholder = "width" rows = "1" cols = "7"></textarea>
-        <textarea id = "imageHintHeight" class="DuqWorkSave tooltip" placeholder = "height" rows = "1" cols = "7"></textarea>
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that will appear when the student clicks on "Need Help".</span>
+		<textarea id ="imageHintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+	        <textarea id = "imageHintWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+	        <textarea id = "imageHintHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
         <br>
-
-        <button class = "button tooltip" onclick = "sendHint()">Hint preview</button>
-        <p> Hint Preview </p>
-        <div id = "outputHint">
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the hint.</span>
+	        <button class = "button" onclick = "sendHint()">Hint preview</button>
+	        <p> Hint Preview </p>
+		<div id = "outputHint"></div>
         </div>
 </fieldset>
 
@@ -370,13 +391,18 @@ function generatePerl()
         <legend> Enter a URL for an externally hosted image to show in problem below:
                 <br>(Default size is 500x500)
         </legend>
-        <textarea id ="imageText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
-        <textarea id = "imageWidth" class="DuqWorkSave tooltip" placeholder = "width" rows = "1" cols = "7"></textarea>
-        <textarea id = "imageHeight" class="DuqWorkSave tooltip" placeholder = "height" rows = "1" cols = "7"></textarea>
-        <br>
-        <button class = "button tooltip" onclick = "sendImage()">Image preview</button>
-        <p> Image Preview </p>
-        <div id = "outputImage">
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that the student will see inside of the problem. Height and width are represented in pixels.</span>
+	        <textarea id ="imageText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+	        <textarea id = "imageWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+	        <textarea id = "imageHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
+	<br>
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the image.</span>
+	        <button class = "button" onclick = "sendImage()">Image preview</button>
+	        <p> Image Preview </p>
+		<div id = "outputImage"></div>
         </div>
 </fieldset>
 
