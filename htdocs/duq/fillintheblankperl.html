@@ -65,7 +65,7 @@ button
 
 function sendQuestion() 
 {	
-	addKnowlHelper();
+	//addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -334,11 +334,14 @@ function generatePerl()
 <title> Knowls Creator </title>
 <fieldset>
     <legend>Knowls Creator:</legend>
-    
- Knowl keyword <br>
+		<p><small>*Use @ as separator for multiple knowl keyword and content</small></p> 
+ Knowl keyword:<br>
   <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
- Knowl Content: <br>
-  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br> 
+ Knowl Content:<br>
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br>
+  <button onclick="addKnowlHelper()"> Add a knowl!</button><br>
+		<p><small>*Use \\(math\\) or \\[displaymath\\] for Latex Expression<br>
+		*For example: \\(sin(x)\\)</small></p>
 </fieldset>
 
 <!--HINT FIELD-->
