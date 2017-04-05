@@ -2,7 +2,7 @@
 <html> 
 <head> 
 
-<link rel="stylesheet" type="text/css" src="tooltips.css">
+<link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title> True False </title> 
 
@@ -275,18 +275,25 @@ function generatePerl()
 	<legend> Enter a hint below: </legend> 
 
 	<p>Enter text here:</p>
-	<textarea id ="hintText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
+	<div class="tooltip">
+        	<span class="tooltiptext">This is what the student will see when they click on "Need Help".</span>
+		<textarea id ="hintText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
+	</div>
 	<br>
  
 	<p>Enter a URL for an externally hosted image here:<br>(Default size is 500x500)</p>
-	<textarea id ="imageHintText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
-	<textarea id = "imageHintWidth" class="DuqWorkSave tooltip" placeholder = "width" rows = "1" cols = "7"></textarea>
-	<textarea id = "imageHintHeight" class="DuqWorkSave tooltip" placeholder = "height" rows = "1" cols = "7"></textarea>
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that will appear when the student clicks on "Need Help".</span>
+		<textarea id ="imageHintText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
+		<textarea id = "imageHintWidth" class="DuqWorkSave tooltip" placeholder = "width" rows = "1" cols = "7"></textarea>
+		<textarea id = "imageHintHeight" class="DuqWorkSave tooltip" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
 	<br> 
-
-	<button class = "button tooltip" onclick = "sendHint()">Hint preview</button>
-	<p> Hint Preview </p>  
-	<div id = "outputHint"> 
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the hint.</span>
+		<button class = "button tooltip" onclick = "sendHint()">Hint preview</button>
+		<p> Hint Preview </p>  
+		<div id = "outputHint"></div>
 	</div> 
 </fieldset>
 
@@ -296,13 +303,18 @@ function generatePerl()
 	<legend> Enter a URL for an externally hosted image to show in problem below: 
 		<br>(Default size is 500x500)
 	</legend> 
-	<textarea id ="imageText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
-	<textarea id = "imageWidth" class="DuqWorkSave tooltip" placeholder = "width" rows = "1" cols = "7"></textarea>
-	<textarea id = "imageHeight" class="DuqWorkSave tooltip" placeholder = "height" rows = "1" cols = "7"></textarea>
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that the student will see inside of the problem. Height and width are represented in pixels.</span>
+		<textarea id ="imageText" class="DuqWorkSave tooltip" rows = "5" cols = "50"></textarea>
+		<textarea id = "imageWidth" class="DuqWorkSave tooltip" placeholder = "width" rows = "1" cols = "7"></textarea>
+		<textarea id = "imageHeight" class="DuqWorkSave tooltip" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
 	<br> 
-	<button class = "button tooltip" onclick = "sendImage()">Image preview</button>
-	<p> Image Preview </p>  
-	<div id = "outputImage"> 
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the image.</span>
+		<button class = "button tooltip" onclick = "sendImage()">Image preview</button>
+		<p> Image Preview </p>  
+		<div id = "outputImage"></div>
 	</div> 
 </fieldset>
 
@@ -316,4 +328,4 @@ function generatePerl()
 <script type="text/javascript" src="js/insertKnowl.js"></script>
 <script type="text/javascript" src="js/ProblemEditing.js"></script>
 
-</html> 
+</html>
