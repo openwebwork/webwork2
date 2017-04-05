@@ -21,10 +21,12 @@ function getParam(parameterName){
 
 // Restore the state from the JSON file into the form (This method is called automatically when the page loads)
 function restoreState(){
-	// Get the JSON filepath by using the same filepath as the pg file, with a different extension
-	var myFileURL = getParam("action.save_as.source_file").replace(/\.pg$/g, ".json");
+	// Get the JSON filepath by manipulating the pg file path
+	var pgFileURL = getParam("action.save_as.source_file");
+	var hostName = "165.190.174.225";
+	var JSONFileURL = "http://" + hostName + "/webwork2_files/JSON/" + pgFileURL.substring(pgFileURL.indexOf("/courses/") + 9).replace(/\.pg$/g, ".json");
 	// Parse the JSON file into a JSON object
-	$.getJSON(myFileURL, function(JSONObject){
+	$.getJSON(JSONFileURL, function(JSONObject){
 		// Replace the fields in the form with the ones saved in the JSON object
 		for(var elementId in JSONObject){
 			var formElement = $("#" + elementId);
@@ -58,10 +60,11 @@ function restoreState(){
 	});
 }
 
-// Initiate the saving of the state and update the problem by collecting all of the information and sending it to the perl file to save the state (Currently supports saving values for input-text, input-radio, and input-checkbox elements with the class "DuqWorkSave" and belong in the "userInput" container in HTML)
+// Initiate the saving of the state and update the problem by collecting all of the information and sending a POST request to update the problem (Currently supports saving values for input-text, input-radio, and input-checkbox elements with the class "DuqWorkSave" and belong in the "userInput" container in HTML)
 function saveState(){
 	// The link to send the POST request to
-	var postHREF = "http://" + window.location.hostname + "/webwork2/" + getParam("courseID") +"/instructor/pgProblemEditor3/" + getParam("setID") +"/" + getParam("problemID") + "/";
+	var hostName = "165.190.174.225";
+	var postHREF = "http://" + hostName +"/webwork2/" + getParam("courseID") +"/instructor/pgProblemEditor3/" + getParam("setID") +"/" + getParam("problemID") + "/";
 	// Attach each form value to the JSON string (Which gets encapculated inside of the POST request)
 	var JSONString = "";
 	var formElements = $("#userInput").find(".DuqWorkSave");
