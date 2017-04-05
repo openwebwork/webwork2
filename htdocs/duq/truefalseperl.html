@@ -2,10 +2,6 @@
 <html> 
 <head> 
 
-<script type="text/javascript" src="../js/jquery.js"></script>
-<script type="text/javascript" src="js/insertKnowl.js"></script>
-<script type="text/javascript" src="js/ProblemEditing.js"></script>
-<script type="text/javascript" src="js/HintEditor.js"></script>
 <link rel="stylesheet" type="text/css" src="tooltips.css">
 
 <title> True False </title> 
@@ -224,12 +220,11 @@ function generatePerl()
 <div id = "codeArea">
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
-	<button onclick = "generatePerl()" >Submit <br></button>
+	<button id="submitButton">Submit <br></button>
 	<br><br> 
 	<div id="outputCode">
 	</div>
 </div>
-
 
 <div id = "userInput">
 <fieldset> 
@@ -308,5 +303,14 @@ function generatePerl()
 	</div> 
 </fieldset>
 
-</body> 
+</body>
+
+<script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript" src="../js/vendor/codemirror/codemirror.js"></script>
+
+<script type="text/javascript" src="js/HintEditor.js"></script>
+<script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
+<script type="text/javascript" src="js/insertKnowl.js"></script>
+<script type="text/javascript" src="js/ProblemEditing.js"></script>
+
 </html> 
