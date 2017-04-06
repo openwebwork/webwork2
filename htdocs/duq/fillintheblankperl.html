@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript" src="js/insertKnowl.js"></script>
+<script type="text/javascript" src="js/ProblemEditing.js"></script>
+<script type="text/javascript" src="js/HintEditor.js"></script> 
+<script type="text/javascript" src="js/toleranceEditor.js"></script> 
+<link rel="stylesheet" type="text/css" href="tooltips.css">
+
+<title>Fill in the Blanks</title> 
+<style>
+img
+{ 
+	float: left;
+} 
+
+header 
+{ 
+	background-color:#001455; 
+	height:110px;
+	border: 5px solid #333;
+} 
+
+header h1 
+{ 
+	color:#FFF;   
+}
+
+a : link
+{ 
+	decoration:none; 
+}
+
+button 
+{
+    background-color: #001456;
+    border: 2px solid #333; 
+    color: white;
+    padding: 2px 8px 2px 8px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin:0;
+    cursor: pointer;
+}
+
+#codeArea
+{
+	float: right;
+}
+
+
+#userInput
+{
+	position: static;
+	width: 63%
+}
+
+</style>
+</head> 
+<body onload="restoreState()">
+<script> 
+
+function sendQuestion() 
+{	
+	//addKnowlHelper();
+	var question = document.getElementById("question").value; 
+	if(question == "") 
+	{
+		alert("Ooops! You left the question blank. Please try again"); 
+	} 
+	var output = document.getElementById("outputQues"); 
+	output.innerHTML = "You asked : " +question; 
+}
+
+function sendAnswer() 
+{
+	var answer = document.getElementById("answer").value; 
+	if(answer == "") 
+	{
+		alert("Ooops! You left the answer blank. Please try again"); 
+	} 
+	var output = document.getElementById("outputAns"); 
+	output.innerHTML = "You answered : " +answer; 
+}
+
+function sendSolution() 
+{
+	var solution = document.getElementById("solution").value; 
+	var output = document.getElementById("outputSolution"); 
+	output.innerHTML = "Your solution is : "  +solution; 
+}
+
+function sendImage(){
+        var output = document.getElementById("outputImage");
+        var width = 500;
+        var height = 500;
+        if(document.getElementById("imageWidth").value != ""){
+                width = document.getElementById("imageWidth").value;
+        }
+
+        if(document.getElementById("imageHeight").value != ""){
+                height = document.getElementById("imageHeight").value;
+        }
+        output.innerHTML = "<image src=" + document.getElementById("imageText").value + 
+                                " width=" + width + "px" + 
+                                " height=" + height + "px>";
+}
+
+function sendHint(){
+        var output = document.getElementById("outputHint");
+        var width = 500;
+        var height = 500;
+
+        if(document.getElementById("imageHintWidth").value != ""){
+                width = document.getElementById("imageHintWidth").value;
+        }
+
+        if(document.getElementById("imageHintHeight").value != ""){
+                height = document.getElementById("imageHintHeight").value;
+        }
+        output.innerHTML = "<div>" + document.getElementById("hintText").value + "</div><br>" +
+                                "<image src=" + document.getElementById("imageHintText").value +
+                                " width=" + width + "px" + 
+                                " height=" + height + "px>";
+}
+
+function sendTolerance(selection){
+        var output = document.getElementById("outputTolerance");
+	var tolVal = document.getElementById("toleranceText").value;
+
+	//They didn't want a tolerance, and have kept the input box blank.
+	if(selection == "none" && tolVal == ""){
+		output.innerHTML = "";
+	}
+
+	//They didn't want a tolerance, but inputed something and submitted.
+	else if(selection == "none" && tolVal != ""){
+	        output.innerHTML = "<br>You said you didn't want any tolerance, yet you entered a value!";    	
+	}
+
+	//They want a tolerance, but d	idn't input anything.
+	else if(selection !="none" && tolVal == ""){
+		output.innerHTML ="<br>You said you wanted tolerance, but you left the tolerance field blank!";
+	}
+
+	//They want a tolerance, and inputed a value then submitted.
+	else{ 
+		output.innerHTML = "<br>You submitted a tolerance level of: " + tolVal;
+	}
+}
+
+function getSelectedType(){
+	var selectedType = document.getElementsByName('tolType');
+	var selectedType_value;
+	for(var i = 0; i < selectedType.length; i++){
+   		if(selectedType[i].checked){
+     		   selectedType_value = selectedType[i].value;
+    		}
+	}
+	return selectedType_value;
+}
+
+function generatePerl()
+{
+	addKnowlHelper();
+	var question = document.getElementById("knowlOutput").innerHTML;
+	var answer = document.getElementById("answer").value;
+	var solution = document.getElementById("solution").value;
+
+	var section1 = '<br><br>DOCUMENT();\n<br>\
+	\n<br>\
+	loadMacros(\n<br>\
+	"PGstandard.pl",\n<br>\
+	"MathObjects.pl",\n<br>\
+	);\n<br>\
+	\n<br>\
+	TEXT(beginproblem());\n<br>\
+	\n<br>\
+    	Context()->strings->add("';
+    
+   	var section2 = '"=>{});\n<br>';
+	//$answer = String("';
+	var section2_String = '$answer = String("';
+	var section2_Real ='$answer = Real("';
+
+
+	var section3 ='");\n<br>\
+	\n<br>\
+	Context()->texStrings;\n<br>\
+	BEGIN_TEXT\n<br>';
+	
+	var section4 = "<br>$BR\n<br>\
+	$BR\n<br>\
+	\\{ ans_rule(20) \\}\n<br>\
+	END_TEXT\n<br>\
+	Context()->normalStrings;\n<br>\
+	\n<br>\
+	$showPartialCorrectAnswers = 1;\n<br>\
+	\n<br>\
+	ANS( $answer-> cmp() );\n<br>\
+	\n<br>\
+	Context()->texStrings;\n<br>\
+	SOLUTION(EV3(<<'END_SOLUTION'));\n<br>\
+	$PAR SOLUTION $PAR\n<br>";
+	
+	var section5 = "\n<br>END_SOLUTION\n<br>\
+	Context()->normalStrings;\n<br>\
+	\n<br>\
+	ENDDOCUMENT();";
+
+
+	var pgString = section1 + answer + section2 + section2_String + answer + section3 + question + section4 + answer + solution + section5;
+//Quan from Team Brandon: 
+//I think there is a bug in your code in the line above so I fixed it but not sure. 
+//Check it please
+
+	/*Tolerance requires a numeric input.  Currently, the code is always a 		 *string, which is problematic.  Therefore, as long as there is
+
+	 */
+
+	if(usingPGML(pgString)){}
+
+	else{	
+		if(getSelectedType() == "none"){
+			pgString = section1 + answer + section2 +
+				section2_String + answer + section3 +
+				question + section4 + solution + section5;
+		}	
+		else{ 
+			pgString = section1 + answer + section2 + section2_Real + answer + section3 + 					question + section4 + solution + section5;
+		}
+	}
+	
+	//Insert hint/image PG code, if there is a hint or image
+        if(document.getElementById("hintText").value != "" || 
+                document.getElementById("imageHintText").value != ""
+                        || document.getElementById("imageText").value != ""){
+                        pgString = translateToPG(pgString,
+                                document.getElementById("hintText").value, 
+                                        [document.getElementById("imageHintText").value, document.getElementById("imageHintWidth").value, document.getElementById("imageHintHeight").value], 
+                                                [document.getElementById("imageText").value, document.getElementById("imageWidth").value, document.getElementById("imageHeight").value]);
+        }
+
+	if(getSelectedType() != "none" && 
+		document.getElementById("toleranceText").value != ""){
+
+		pgString = checkPGorPGML(pgString, 
+			document.getElementById("toleranceText").value,
+			getSelectedType());
+	}
+
+	var output = document.getElementById("codeOutput"); 
+	output.innerHTML = "All the Perl code is : <span id='code'>"  + pgString + "</span>";
+	
+	// Save the state and make the updates in WebWorK
+	saveState();
+}
+
+</script> 
+
+
+
+<header> 
+<h1> 
+	<img src = "mlogo.png" height = 70 width = 80 float: center>
+	Mathematical Association of America <br>
+	WeBWorK Question Creator
+</h1> 
+</header><br>
+<div id = "codeArea">
+<fieldset>
+	<legend> Click the button to see a preview of the Perl generated for this question </legend>
+	<button onclick = "generatePerl()" >Submit <br></button>
+	<br> 
+	<div id="codeOutput">
+	</div>
+</div>
+
+<div id = "userInput">
+<fieldset> 
+	<legend> Please type the question below : </legend> 
+	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
+	<p id="knowlOutput" class="DuqWorkSave"></p>
+	<button onclick = "sendQuestion()" >Submit <br></button> 
+	<p> Question Preview </p>
+	<div id = "outputQues"> 
+	</div>
+</fieldset> 
+
+<fieldset>
+	<legend> The answer for this question is : </legend> <br> 
+	<textarea id ="answer" class="DuqWorkSave" rows="1" cols="50"></textarea><br>
+	<button onclick = "sendAnswer()" >Submit <br> </button> 
+	<p> Answer Preview </p> 
+	<div id = "outputAns"> 
+	</div>
+</fieldset>
+
+<!--TOLERANCE FIELD-->
+<fieldset>
+        <legend> Do you want to include a tolerance value? </legend>
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to set a tolerance value of "none", "numeric", or "percentage”.</span>
+		<div>
+			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
+			<label for="tolNone">No Tolerance </label><br>
+		</div>
+		<div>
+			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
+			<label for="tolNumeric">Numeric Value </label>
+		</div>
+		<div>
+			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
+			<label for="tolPercent">Percentage </label>
+		</div>
+		<p>If you want a tolerance, enter a value below.  If not, leave it blank!</p>
+		<p>Note: If you want a percentage, enter the number as a decimal (i.e. 15% -> 0.15)</p>
+	        <textarea id ="toleranceText" rows = "1" cols = "50"></textarea>
+		<br>
+	</div>
+        <br>
+	<div class="tooltip">
+		<span class="tooltiptext">This will submit the tolerance you wish to have.</span>
+	        <button class = "button" onclick = "sendTolerance(getSelectedType())">Submit <br></button>
+	        <div id = "outputTolerance"></div>
+	</div>
+</fieldset>
+
+<fieldset> 
+	<legend> Enter an explanation of the solution below: </legend> 
+	<div class="tooltip">
+		<span class="tooltiptext">This is what the student will see for a solution</span>
+		<p> <textarea id ="solution" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
+	</div>
+	<br>
+	<div class="tooltip">
+		<span class="tooltiptext">This will submit the solution.</span>
+		<button onclick = "sendSolution()" >Submit <br></button> 
+		<p> Solution Preview </p>
+		<div id = "outputSolution"> 
+		</div>
+	</div>
+</fieldset> 
+
+<title> Knowls Creator </title>
+<fieldset>
+    <legend>Knowls Creator:</legend>
+		<p><small>*Use @ as separator for multiple knowl keyword and content</small></p> 
+ Knowl keyword:<br>
+  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
+ Knowl Content:<br>
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br>
+  <button onclick="addKnowlHelper()"> Add a knowl!</button><br>
+		<p><small>*Use \\(math\\) or \\[displaymath\\] for Latex Expression<br>
+		*For example: \\(sin(x)\\)</small></p>
+</fieldset>
+
+<!--HINT FIELD-->
+<fieldset>
+        <legend> Enter a hint below: </legend>
+
+        <p>Enter text here:</p>
+	<div class="tooltip">
+        	<span class="tooltiptext">This is what the student will see when they click on "Need Help".</span>
+	        <textarea id ="hintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+	</div>
+        <br>
+
+        <p>Enter a URL for an externally hosted image here:<br>(Default size is 500x500)</p>
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that will appear when the student clicks on "Need Help".</span>
+		<textarea id ="imageHintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+	        <textarea id = "imageHintWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+	        <textarea id = "imageHintHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
+        <br>
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the hint.</span>
+	        <button class = "button" onclick = "sendHint()">Hint preview</button>
+	        <p> Hint Preview </p>
+		<div id = "outputHint"></div>
+        </div>
+</fieldset>
+
+
+<!--GRAPHICS FIELD-->
+<fieldset>
+        <legend> Enter a URL for an externally hosted image to show in problem below:
+                <br>(Default size is 500x500)
+        </legend>
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that the student will see inside of the problem. Height and width are represented in pixels.</span>
+	        <textarea id ="imageText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+	        <textarea id = "imageWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+	        <textarea id = "imageHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
+	<br>
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the image.</span>
+	        <button class = "button" onclick = "sendImage()">Image preview</button>
+	        <p> Image Preview </p>
+		<div id = "outputImage"></div>
+        </div>
+</fieldset>
+
+</div>
+</body>
+</html>

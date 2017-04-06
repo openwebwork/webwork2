@@ -2,7 +2,7 @@
 <html> 
 <head> 
 
-<script type="text/javascript" src="js/HintEditor.js"></script>
+<link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title> True False </title> 
 
@@ -52,15 +52,17 @@ button
 {
 	position: static;
 	width: 63%
-}
+}
+
 </style>
 
 </head> 
-<body>
+<body onload="restoreState()">
 <script> 
 
 function sendQuestion() 
 {
+	addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -135,7 +137,11 @@ function sendHint(){
 	
 function generatePerl()
 {
-	var question = document.getElementById("question").value;
+	addKnowlHelper();
+	var question = document.getElementById("knowlOutput").innerHTML;
+	//team B
+	//don't worry about this. knowlOutput return the same thing as question
+	//if there is not a knowl and return the string question with knowl if there is
 	var solution = document.getElementById("solution").value; 
  
 	if(document.getElementById("true").checked) 
@@ -175,7 +181,7 @@ function generatePerl()
 	ANS( $mc->cmp() );\n<br>\
 	\n<br>\
 	Context()->texStrings;\n<br>\
-	SOLUTION(EV3(<<'END_SOLUTION'));<br>\
+	SOLUTION(EV3(<<'END_SOLUTION'));\n<br>\
 	$PAR SOLUTION $PAR\n<br>";
 	
 	var section4 = "\n<br>END_SOLUTION\n<br>\
@@ -196,7 +202,10 @@ function generatePerl()
 	}
 
 	var output = document.getElementById("outputCode");
-	output.innerHTML = "All the Perl Code is : "  + pgString; 	
+	output.innerHTML = "All the Perl Code is : <span id='code'>"  + pgString + "</span>"; 	
+	
+	// Save the state and make the updates in WebWorK
+	saveState();
 }
 	 
 </script>
@@ -211,17 +220,17 @@ function generatePerl()
 <div id = "codeArea">
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
-	<button onclick = "generatePerl()" >Submit <br></button>
+	<button id="submitButton">Submit <br></button>
 	<br><br> 
 	<div id="outputCode">
 	</div>
-</div>
+</div>
 
 <div id = "userInput">
 <fieldset> 
 	<legend> Please type the question below : </legend> 	
-	<textarea id ="question" rows = "5" cols = "50">
-	</textarea> <br> 
+	<textarea id ="question" class="DuqWorkSave" rows = "5" cols = "50"></textarea> <br> 
+	<p id="knowlOutput" class="DuqWorkSave"></p>
 	<button class= "button" onclick = "sendQuestion()"> Submit </button>
 	<p> Question Preview </p>
 	<div id = "outputQues"> 
@@ -229,8 +238,8 @@ function generatePerl()
 </fieldset>
 <fieldset>
 <legend> The answer for this question is : </legend> <br> 
-<input type = "radio" name="option" id="true"> True <br> 
-<input type = "radio" name="option" id="false"> False <br> 
+<input type = "radio" name="option" id="true" class="DuqWorkSave"> True <br> 
+<input type = "radio" name="option" id="false" class="DuqWorkSave"> False <br> 
 
 <button class ="button" onclick = "sendAns()"> Submit </button> 
 
@@ -240,31 +249,51 @@ function generatePerl()
 </fieldset>
 <fieldset> 
 <legend> Enter the explanation of the solution below: </legend> 
-<textarea id ="solution" rows = "5" cols = "50">
-	</textarea> <br> 
+<textarea id ="solution" class="DuqWorkSave" rows = "5" cols = "50"></textarea> <br> 
 	<button class = "button" onclick = "sendSolution()"> Submit </button>
 	<p> Solution Preview </p>  
 	<div id = "outputSolution"> 
 </div> 
 </fieldset>
 
+<title> Knowls Creator </title>
+<fieldset>
+    <legend>Knowls Creator:</legend>
+		<p><small>*Use @ as separator for multiple knowl keyword and content</small></p> 
+ Knowl keyword:<br>
+  <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
+ Knowl Content:<br>
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br>
+  <button onclick="addKnowlHelper()"> Add a knowl!</button><br>
+		<p><small>*Use \\(math\\) or \\[displaymath\\] for Latex Expression<br>
+		*For example: \\(sin(x)\\)</small></p>
+</fieldset>
+
+
 <!--HINT FIELD-->
 <fieldset> 
 	<legend> Enter a hint below: </legend> 
 
 	<p>Enter text here:</p>
-	<textarea id ="hintText" rows = "5" cols = "50"></textarea>
+	<div class="tooltip">
+        	<span class="tooltiptext">This is what the student will see when they click on "Need Help".</span>
+		<textarea id ="hintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+	</div>
 	<br>
  
 	<p>Enter a URL for an externally hosted image here:<br>(Default size is 500x500)</p>
-	<textarea id ="imageHintText" rows = "5" cols = "50"></textarea>
-	<textarea id = "imageHintWidth" placeholder = "width" rows = "1" cols = "7"></textarea>
-	<textarea id = "imageHintHeight" placeholder = "height" rows = "1" cols = "7"></textarea>
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that will appear when the student clicks on "Need Help".</span>
+		<textarea id ="imageHintText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+		<textarea id = "imageHintWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+		<textarea id = "imageHintHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
 	<br> 
-
-	<button class = "button" onclick = "sendHint()">Hint preview</button>
-	<p> Hint Preview </p>  
-	<div id = "outputHint"> 
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the hint.</span>
+		<button class = "button" onclick = "sendHint()">Hint preview</button>
+		<p> Hint Preview </p>  
+		<div id = "outputHint"></div>
 	</div> 
 </fieldset>
 
@@ -274,15 +303,29 @@ function generatePerl()
 	<legend> Enter a URL for an externally hosted image to show in problem below: 
 		<br>(Default size is 500x500)
 	</legend> 
-	<textarea id ="imageText" rows = "5" cols = "50"></textarea>
-	<textarea id = "imageWidth" placeholder = "width" rows = "1" cols = "7"></textarea>
-	<textarea id = "imageHeight" placeholder = "height" rows = "1" cols = "7"></textarea>
+	<div class="tooltip">
+		<span class="tooltiptext">This is the image that the student will see inside of the problem. Height and width are represented in pixels.</span>
+		<textarea id ="imageText" class="DuqWorkSave" rows = "5" cols = "50"></textarea>
+		<textarea id = "imageWidth" class="DuqWorkSave" placeholder = "width" rows = "1" cols = "7"></textarea>
+		<textarea id = "imageHeight" class="DuqWorkSave" placeholder = "height" rows = "1" cols = "7"></textarea>
+	</div>
 	<br> 
-	<button class = "button" onclick = "sendImage()">Image preview</button>
-	<p> Image Preview </p>  
-	<div id = "outputImage"> 
+	<div class="tooltip">
+		<span class="tooltiptext">This will allow you to preview the image.</span>
+		<button class = "button" onclick = "sendImage()">Image preview</button>
+		<p> Image Preview </p>  
+		<div id = "outputImage"></div>
 	</div> 
 </fieldset>
 
-</body> 
-</html> 
+</body>
+
+<script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript" src="../js/vendor/codemirror/codemirror.js"></script>
+
+<script type="text/javascript" src="js/HintEditor.js"></script>
+<script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
+<script type="text/javascript" src="js/insertKnowl.js"></script>
+<script type="text/javascript" src="js/ProblemEditing.js"></script>
+
+</html>
