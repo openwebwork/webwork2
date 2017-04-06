@@ -1544,6 +1544,7 @@ sub output_score_summary{
 	my $effectiveUser = $r->param('effectiveUser') || $r->param('user');
 	my $scoreRecordedMessage = $self->{scoreRecordedMessage};
 	my $submitAnswers = $self->{submitAnswers};
+	my $noGradeFeedback = $self->{pg}{flags}{noGradeFeedback}; # 4/4/17 Gets current value, from PG code, for flag for hiding % feedback 									   # in problem output summary
 	my %will = %{ $self->{will} };
 
 	my $prEnabled = $ce->{pg}->{options}->{enablePeriodicRandomization} // 0;
@@ -1601,7 +1602,11 @@ sub output_score_summary{
 	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
 
 		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
-		print join("",
+		
+		# 4/4/17 If the flag is defined as zero (default or within the problem) or is undefined, output the prior summary after
+		# submitting the problem. Otherwise, if the noGradeFeedback flag is positive, output the abbreviated summary which removes 			# the rows giving out grading information.
+		if((defined ($noGradeFeedback) && ($noGradeFeedback == 0)) || (!defined ($noGradeFeedback))){
+			print join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), $prMessage, CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
@@ -1610,7 +1615,13 @@ sub output_score_summary{
 		? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
 			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
-		);
+		);}
+		elsif($noGradeFeedback > 0){
+		print join("",
+			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
+			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), $prMessage, CGI::br(),
+			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
+		);}
 	}else {
 	  print $pg->{state}->{state_summary_msg};
 	}
