@@ -23,7 +23,7 @@ function getParam(parameterName){
 function restoreState(){
 	// Get the JSON filepath by manipulating the pg file path
 	var pgFileURL = getParam("action.save_as.source_file");
-	var hostName = "165.190.174.225";
+	var hostName = window.location.hostname;
 	var JSONFileURL = "http://" + hostName + "/webwork2_files/JSON/" + pgFileURL.substring(pgFileURL.indexOf("/courses/") + 9).replace(/\.pg$/g, ".json");
 	// Parse the JSON file into a JSON object
 	$.getJSON(JSONFileURL, function(JSONObject){
@@ -63,7 +63,7 @@ function restoreState(){
 // Initiate the saving of the state and update the problem by collecting all of the information and sending a POST request to update the problem (Currently supports saving values for input-text, input-radio, and input-checkbox elements with the class "DuqWorkSave" and belong in the "userInput" container in HTML)
 function saveState(){
 	// The link to send the POST request to
-	var hostName = "165.190.174.225";
+	var hostName = window.location.hostname;
 	var postHREF = "http://" + hostName +"/webwork2/" + getParam("courseID") +"/instructor/pgProblemEditor3/" + getParam("setID") +"/" + getParam("problemID") + "/";
 	// Attach each form value to the JSON string (Which gets encapculated inside of the POST request)
 	var JSONString = "";
