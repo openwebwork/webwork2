@@ -53,7 +53,6 @@ sub content{
 			}
 			my @pair = split(/~~/, $parts[$i]);
 			print OUTFILE "\"".$pair[0]."\": \"".$pair[1]."\"";
-			print OUTFILE $pair[1];
 		}
 		print OUTFILE "}";
 		close(OUTFILE);

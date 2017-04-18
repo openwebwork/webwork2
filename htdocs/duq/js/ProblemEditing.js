@@ -22,10 +22,9 @@ function getParam(parameterName){
 // Restore the state from the JSON file into the form (This method is called automatically when the page loads)
 function restoreState(){
 	// Get the JSON filepath by manipulating the pg file path
-	var pgFileURL = getParam("action.save_as.source_file");
 	var problemPart = "1";
 	var hostName = window.location.hostname;
-	var JSONFileURL = "http://" + hostName + "/webwork2/problemEdit/?isSearch=no&fileName=" + pgFileURL.replace(/\.pg$/g, problemPart + ".json");
+	var JSONFileURL = "http://" + hostName + "/webwork2/problemEdit/?isSave=no&problemPart=" + problemPart + "&filePath=" + getParam("action.save_as.source_file");
 	// Parse the JSON file into a JSON object
 	$.getJSON(JSONFileURL, function(JSONObject){
 		// Replace the fields in the form with the ones saved in the JSON object
