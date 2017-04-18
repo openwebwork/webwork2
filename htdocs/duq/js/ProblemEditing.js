@@ -23,37 +23,40 @@ function getParam(parameterName){
 function restoreState(){
 	// Get the JSON filepath by manipulating the pg file path
 	var pgFileURL = getParam("action.save_as.source_file");
+	var problemPart = "1";
 	var hostName = window.location.hostname;
-	var JSONFileURL = "http://" + hostName + "/webwork2_files/JSON/" + pgFileURL.substring(pgFileURL.indexOf("/courses/") + 9).replace(/\.pg$/g, ".json");
+	var JSONFileURL = "http://" + hostName + "/webwork2/problemEdit/?isSearch=no&fileName=" + pgFileURL.replace(/\.pg$/g, problemPart + ".json");
 	// Parse the JSON file into a JSON object
 	$.getJSON(JSONFileURL, function(JSONObject){
 		// Replace the fields in the form with the ones saved in the JSON object
 		for(var elementId in JSONObject){
 			var formElement = $("#" + elementId);
 			var tagName = $(formElement).prop("tagName");
-			var formElementType = formElement.attr("type");
-			var formElementValue = JSONObject[elementId];
-			// Restore the value of the textarea in HTML form
-			if(tagName.toUpperCase() == "TEXTAREA"){
-				formElement.val(formElementValue);
-			}
-			// Restore the value of the input in HTML form
-			else{
-				// Restore the value of the test input in HTML form
-				if(formElementType == "text"){
+			if(tagName){
+				var formElementType = formElement.attr("type");
+				var formElementValue = JSONObject[elementId];
+				// Restore the value of the textarea in HTML form
+				if(tagName.toUpperCase() == "TEXTAREA"){
 					formElement.val(formElementValue);
 				}
-				// Restore the value of the radio button in HTML form
-				else if(formElementType == "radio"){
-					if(formElementValue == "true")
-						formElement.prop("checked", true);
-				}
-				// Restore the value of the checkbos in HTML form
-				else if(formElementType == "checkbox"){
-					if(formElementValue == "true")
-						formElement.prop("checked", true);
-					else
-						formElement.prop("checked", false);
+				// Restore the value of the input in HTML form
+				else{
+					// Restore the value of the test input in HTML form
+					if(formElementType == "text"){
+						formElement.val(formElementValue);
+					}
+					// Restore the value of the radio button in HTML form
+					else if(formElementType == "radio"){
+						if(formElementValue == "true")
+							formElement.prop("checked", true);
+					}
+					// Restore the value of the checkbos in HTML form
+					else if(formElementType == "checkbox"){
+						if(formElementValue == "true")
+							formElement.prop("checked", true);
+						else
+							formElement.prop("checked", false);
+					}
 				}
 			}
 		}
@@ -64,7 +67,7 @@ function restoreState(){
 function saveState(){
 	// The link to send the POST request to
 	var hostName = window.location.hostname;
-	var postHREF = "http://" + hostName +"/webwork2/" + getParam("courseID") +"/instructor/pgProblemEditor3/" + getParam("setID") +"/" + getParam("problemID") + "/";
+	var postHREF = "http://" + hostName +"/webwork2/problemEdit/";
 	// Attach each form value to the JSON string (Which gets encapculated inside of the POST request)
 	var JSONString = "";
 	var formElements = $("#userInput").find(".DuqWorkSave");
@@ -90,24 +93,12 @@ function saveState(){
 				JSONString += id + "~~" + formElement.checked + "``";
 		}
 	}
-	// Build the POST request that WeBWorK makes when a prolem is updated
+	// Build the POST request to save the state of the form
 	var POSTParameters = {
+		"isSave": "yes",
 		"JSON": JSONString,
-		"user": getParam("user"),
-		"effectiveUser": getParam("user"),
-		"key": getParam("key"),
-		"file_type": "problem",
-		"problemContents": $("#code").text().replace(/<br>/g, ""),
-		"action": "save",
-		"action.view.seed": getParam("action.view.seed"),
-		"action.view.displayMode": "MathJax",
-		"action.save_as.target_file": getParam("action.save_as.target_file"),
-		"action.save_as.source_file": getParam("action.save_as.source_file"),
-		"action.save_as.file_type": "problem",
-		"action.save_as.saveMode": "rename", 
-		"action.add_problem.target_set": getParam("action.add_problem.target_set"), 
-		"action.add_problem.file_type": "problem",
-		"submit": "Take+Action!"
+		"problemPart": 1,
+		"filePath": getParam("action.save_as.source_file")
 	};
 	// Send a POST request with all of the information passed in the query string, this should first update the problem in WeBWorK and then save the state of the form
 	$.post(postHREF, POSTParameters, function(data){
