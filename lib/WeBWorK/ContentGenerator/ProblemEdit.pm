@@ -59,7 +59,6 @@ sub content{
 	}
 	# Get the state for restoring
 	else{
-		print "{";
 		# Print the JSON for the form
 		if(-e $filePath){
 			open(my $fileHandler, "<", $filePath) or die "Could not open file '".$filePath."'";
@@ -70,8 +69,8 @@ sub content{
 			close($fileHandler);
 		}
 		else{
+			print "{}";
 		}
-		print "}";
 	}
 }
 
