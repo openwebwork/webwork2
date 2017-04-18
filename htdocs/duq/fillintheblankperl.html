@@ -2,11 +2,6 @@
 <html>
 <head>
 
-<script type="text/javascript" src="../js/jquery.js"></script>
-<script type="text/javascript" src="js/insertKnowl.js"></script>
-<script type="text/javascript" src="js/ProblemEditing.js"></script>
-<script type="text/javascript" src="js/HintEditor.js"></script> 
-<script type="text/javascript" src="js/toleranceEditor.js"></script> 
 <link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title>Fill in the Blanks</title> 
@@ -270,10 +265,11 @@ function generatePerl()
 	WeBWorK Question Creator
 </h1> 
 </header><br>
+<!-- When clicked this button will call the function in sendProblemToWebwork.js. If you need to change the generatePerl function, do it in that file. !-->
 <div id = "codeArea">
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
-	<button onclick = "generatePerl()" >Submit <br></button>
+	<button id="submitButton" class="fillinblanks" >Submit <br></button>
 	<br> 
 	<div id="codeOutput">
 	</div>
@@ -408,4 +404,14 @@ function generatePerl()
 
 </div>
 </body>
+
+<script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript" src="../js/vendor/codemirror/codemirror.js"></script>
+
+<script type="text/javascript" src="js/insertKnowl.js"></script>
+<script type="text/javascript" src="js/ProblemEditing.js"></script>
+<script type="text/javascript" src="js/HintEditor.js"></script> 
+<script type="text/javascript" src="js/toleranceEditor.js"></script>
+<script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
+
 </html>
