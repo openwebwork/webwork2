@@ -44,7 +44,9 @@ function getURLParams(url) {
 
 function generateTrueFalse()
 {
-    var question = document.getElementById("question").value;
+    var question = document.getElementById("knowlOutput").innerHTML;
+	//from team B to team A: please get knowlOutput.innerHTML instead of question.value
+	//in order to make the knowl function work
     var solution = document.getElementById("solution").value; 
     
     if(document.getElementById("true").checked) 
