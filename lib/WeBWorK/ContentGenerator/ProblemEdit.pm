@@ -51,6 +51,10 @@ sub content{
 			if($i != 0){
 				print OUTFILE ", ";
 			}
+			# Escape the backslash
+			$parts[$i] =~ s/\\/\\\\/g;
+			# Escape the double-quote
+			$parts[$i] =~ s/\"/\\\"/g;
 			my @pair = split(/~~/, $parts[$i]);
 			print OUTFILE "\"".$pair[0]."\": \"".$pair[1]."\"";
 		}

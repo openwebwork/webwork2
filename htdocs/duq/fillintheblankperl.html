@@ -301,20 +301,20 @@ function generatePerl()
 	<div class="tooltip">
 		<span class="tooltiptext">This will allow you to set a tolerance value of "none", "numeric", or "percentage”.</span>
 		<div>
-			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
+			<input id="noTolerance" class="DuqWorkSave" type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
 			<label for="tolNone">No Tolerance </label><br>
 		</div>
 		<div>
-			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
+			<input id="numericTolerance" class="DuqWorkSave" type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
 			<label for="tolNumeric">Numeric Value </label>
 		</div>
 		<div>
-			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
+			<input id="percentTolerance" class="DuqWorkSave" type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
 			<label for="tolPercent">Percentage </label>
 		</div>
 		<p>If you want a tolerance, enter a value below.  If not, leave it blank!</p>
 		<p>Note: If you want a percentage, enter the number as a decimal (i.e. 15% -> 0.15)</p>
-	        <textarea id ="toleranceText" rows = "1" cols = "50"></textarea>
+	        <textarea id ="toleranceText" class="DuqWorkSave" rows = "1" cols = "50"></textarea>
 		<br>
 	</div>
         <br>
