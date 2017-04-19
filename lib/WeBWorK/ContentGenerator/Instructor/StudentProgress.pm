@@ -34,6 +34,7 @@ use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status wwRound);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
 use WeBWorK::DB::Record::UserSet;  #FIXME -- this is only used in one spot.
+use constant HOME => 'templates';
 
 # Check that the user is authorized, and then
 # see if there is a download to perform.
