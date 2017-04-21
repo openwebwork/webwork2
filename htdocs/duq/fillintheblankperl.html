@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -163,6 +163,7 @@ function getSelectedType(){
 	return selectedType_value;
 }
 
+
 function generatePerl()
 {
 	addKnowlHelper();
@@ -270,6 +271,8 @@ function generatePerl()
 	WeBWorK Question Creator
 </h1> 
 </header><br>
+
+
 <div id = "codeArea">
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
@@ -281,7 +284,130 @@ function generatePerl()
 
 <div id = "userInput">
 <fieldset> 
-	<legend> Please type the question below : </legend> 
+	<legend> Please type the question below : </legend>
+<p> Search for a latex command here
+<input name="city" list="commands" />
+<!--List of possible latex commands to search for-->
+<datalist id="commands">
+    <option value="alpha Î±" /><option value="beta Î²" /><option value="chi Ï‡" />
+    <option value="delta Î´" /><option value="Delta âˆ†" />
+    <option value="epsilon Îµ" />
+    <option value="gamma Î³" /><option value="Gamma Î“" />
+    <option value="eta Î·" /><option value="iota Î¹"/>
+    <option value="kappa Îº"/>
+    <option value="lambda Î»" /><option value="Lambda Î›" />
+    <option value="nu Î½" />
+    <option value="o o" />
+    <option value="omega Ï‰" /><option value="Omega Î©" />
+    <option value="phi Ï†" /><option value="Phi Î¦" />
+    <option value="pi Ï€" /><option value="Pi Î " />
+    <option value="psi Ïˆ" /><option value="Psi Î¨" />
+    <option value="rho Ï" />
+    <option value="sigma Ïƒ" /><option value="Sigma Î£" />
+    <option value="tau Ï„" />
+    <option value="theta Î¸" /><option value="Theta Î˜" />
+    <option value="upsilon Ï…" /><option value="Upsilon Î¥" />
+    <option value="xi Î¾" /><option value="Xi Îž" />
+    <option value="zeta Î¶" />
+    <option value="csc" />
+    <option value="sin" /><option value="arcsin" /><option value="sinh" />
+    <option value="cos" /><option value="arccos" /><option value="cosh" />
+    <option value="tan" /><option value="tanh" /><option value="arctan" />
+    <option value="cot" /><option value="coth" />
+    <option value="sec" />
+    <option value="max" /><option value="min" />
+    <option value="inf" />
+    <option value="digamma Ïœ" />
+    <option value="varepsilon Îµ" />
+    <option value="varkappa Îº" /><option value="varphi Ï†" />
+    <option value="varpi Ï€" /><option value="varrho Ï" />
+    <option value="varsigma Ï‚" /><option value="vartheta Î¸" />
+    <option value="aleph ×" /><option value="beth ×‘" /><option value="daleth ×“" />
+    <option value="gimel ×’" />
+    <option value="Uparrow â‡‘" /><option value="uparrow â†‘" />    <option value="Updownarrow â‡•" />
+    <option value="Downarrow â‡“" /><option value="downarrow â†“" /><option value="updownarrow â†•" />
+    <option value="bigoplus âŠ•" /><option value="bigotimes âŠ—" /><option value="bigodot âŠ™" />
+    <option value="bigsqcup â¨†" /><option value="bigcap â‹‚" /><option value="bigcup â‹ƒ" />
+    <option value="log" /><option value="lim" />
+    <option value="forall âˆ€" />
+    <option value="exists âˆƒ" />
+    <option value="emptyset âˆ…" />
+    <option value="varnothing âˆ…" />
+    <option value="ell l" />
+    <option value="bigstar â‹†" />
+    <option value="surd âˆš" />
+    <option value="angle âˆ " />
+    <option value="ss ÃŸ" />
+    <option value="pounds Â£" />
+    <option value="s Â§" />
+    <option value="int âˆ«" /><option value="iint âˆ¬ " />
+    <option value="oint âˆ®" />
+    <option value="sum âˆ‘" />
+    <option value="prod âˆ" />
+    <option value="ln" /><option value="lg" /><option value="limsup" />
+    <option value="exp" />
+    <option value="ker" />
+    <option value="deg" />
+    <option value="gcd" />
+    <option value="sup" />
+    <option value="Pr" />
+    <option value="det" />
+    <option value="hom" />
+    <option value="liminf" />
+    <option value="arg" />
+    <option value="dim" />
+    <option value="ast âˆ—" />
+    <option value="star â‹†" />
+    <option value="cdot Â·" />
+    <option value="circ â—¦" /><option value="bigcirc âƒ" />
+    <option value="bullet â€¢" />
+    <option value="diamond â‹„" />
+    <option value="times Ã—" />
+    <option value="div Ã·" />
+    <option value="pm Â±" />
+    <option value="mp âˆ“" />
+    <option value="amalg â¨¿" />
+    <option value="odot âŠ™" /><option value="ominus âŠ–" /><option value="oplus âŠ•" />
+    <option value="oslash âŠ˜" /><option value="otimes âŠ—" />
+    <option value="wr â‰€" />
+    <option value="Box â‡¤" />
+    <option value="lhd â–¹" /><option value="rhd â—ƒ" />
+    <option value="triangleleft â–¹" /><option value="triangleright â—ƒ" />
+    <option value="bigtriangledown â–½" /><option value="bigtriangleup â–³" />
+    <option value="equiv â‰¡" />
+    <option value="cong =" />
+    <option value="neq â‰ " />
+    <option value="sim âˆ¼" /><option value="simeq â‰ƒ" />
+    <option value="approx â‰ˆ" /><option value="asymp â‰" />
+    <option value="propto âˆ" />
+    <option value="leq â‰¤" />
+    <option value="prec â‰º" /><option value="preceq â‰¼" />
+    <option value="ll â‰ª" />
+    <option value="subset âŠ‚" /><option value="subseteq âŠ†" />
+    <option value="in âˆˆ" />
+    <option value="geq â‰¥" />
+    <option value="succ â‰»" /><option value="succeq â‰½" />
+    <option value="gg â‰«" />
+    <option value="supset âŠƒ" /><option value="supseteq âŠ‡" />
+    <option value="ni âˆ‹" />
+    <option value="perp âŠ¥" />
+    <option value="mid |" />
+    <option value="parallel âˆ¥" />
+    <option value="notin âˆ‰" />
+    <option value="therefore âˆ´" />
+    <option value="because âˆµ" />
+    <option value="Leftrightarrow â‡”" /><option value="Longleftrightarrow â‡â‡’" />
+    <option value="longleftrightarrow â†â†’" />
+    <option value="nearrow â†—" />
+    <option value="searrow â†˜" /><option value="swarrow â†™" />
+    <option value="nwarrow â†–" />
+    <option value="nifty âˆž" />
+    <option value="nabla âˆ‡" />
+    <option value="clubsuit â™£" />
+    <option value="diamondsuit â™¦" />
+    <option value="heartsuit â™¥" />
+    <option value="spadesuit â™ " />
+</datalist>
 	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
 	<p id="knowlOutput" class="DuqWorkSave"></p>
 	<button onclick = "sendQuestion()" >Submit <br></button> 
