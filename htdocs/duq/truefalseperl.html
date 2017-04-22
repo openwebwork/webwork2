@@ -231,8 +231,9 @@ function generatePerl()
 <div id = "userInput">
 <fieldset> 
 	<legend> Please type the question below : </legend>
+<form>
 <p> Search for a latex command here
-<input name="city" list="commands" />
+<input name="commands" list="commands" onchange="command()"/>
 <!--List of possible latex commands to search for-->
 <datalist id="commands">
     <option value="alpha α" /><option value="beta β" /><option value="chi χ" />
@@ -242,8 +243,7 @@ function generatePerl()
     <option value="eta η" /><option value="iota ι"/>
     <option value="kappa κ"/>
     <option value="lambda λ" /><option value="Lambda Λ" />
-    <option value="nu ν" />
-    <option value="o o" />
+    <option value="nu ν" /><option value="o o" />
     <option value="omega ω" /><option value="Omega Ω" />
     <option value="phi φ" /><option value="Phi Φ" />
     <option value="pi π" /><option value="Pi � " />
@@ -263,8 +263,7 @@ function generatePerl()
     <option value="sec" />
     <option value="max" /><option value="min" />
     <option value="inf" />
-    <option value="digamma Ϝ" />
-    <option value="varepsilon ε" />
+    <option value="digamma Ϝ" /><option value="varepsilon ε" />
     <option value="varkappa κ" /><option value="varphi φ" />
     <option value="varpi π" /><option value="varrho ρ" />
     <option value="varsigma ς" /><option value="vartheta θ" />
@@ -275,9 +274,7 @@ function generatePerl()
     <option value="bigoplus ⊕" /><option value="bigotimes ⊗" /><option value="bigodot ⊙" />
     <option value="bigsqcup ⨆" /><option value="bigcap ⋂" /><option value="bigcup ⋃" />
     <option value="log" /><option value="lim" />
-    <option value="forall ∀" />
-    <option value="exists ∃" />
-    <option value="emptyset ∅" />
+    <option value="forall ∀" /><option value="exists ∃" /><option value="emptyset ∅" />
     <option value="varnothing ∅" />
     <option value="ell l" />
     <option value="bigstar ⋆" />
@@ -288,30 +285,19 @@ function generatePerl()
     <option value="s §" />
     <option value="int ∫" /><option value="iint ∬ " />
     <option value="oint ∮" />
-    <option value="sum ∑" />
-    <option value="prod ∏" />
-    <option value="ln" /><option value="lg" /><option value="limsup" />
+    <option value="sum ∑" /><option value="prod ∏" />
+    <option value="ln" /><option value="lg" /><option value="limsup" /><option value="liminf" />
     <option value="exp" />
     <option value="ker" />
-    <option value="deg" />
-    <option value="gcd" />
-    <option value="sup" />
-    <option value="Pr" />
-    <option value="det" />
-    <option value="hom" />
-    <option value="liminf" />
-    <option value="arg" />
-    <option value="dim" />
-    <option value="ast ∗" />
-    <option value="star ⋆" />
-    <option value="cdot ·" />
-    <option value="circ ◦" /><option value="bigcirc ⃝" />
+    <option value="deg" /><option value="gcd" /><option value="sup" />
+    <option value="Pr" /><option value="det" /><option value="hom" />
+    <option value="arg" /><option value="dim" />
+    <option value="ast ∗" /><option value="star ⋆" />
+    <option value="cdot ·" /><option value="circ ◦" /><option value="bigcirc ⃝" />
     <option value="bullet •" />
     <option value="diamond ⋄" />
-    <option value="times ×" />
-    <option value="div ÷" />
-    <option value="pm ±" />
-    <option value="mp ∓" />
+    <option value="times ×" /><option value="div ÷" />
+    <option value="pm ±" /><option value="mp ∓" />
     <option value="amalg ⨿" />
     <option value="odot ⊙" /><option value="ominus ⊖" /><option value="oplus ⊕" />
     <option value="oslash ⊘" /><option value="otimes ⊗" />
@@ -320,9 +306,7 @@ function generatePerl()
     <option value="lhd ▹" /><option value="rhd ◃" />
     <option value="triangleleft ▹" /><option value="triangleright ◃" />
     <option value="bigtriangledown ▽" /><option value="bigtriangleup △" />
-    <option value="equiv ≡" />
-    <option value="cong =" />
-    <option value="neq � " />
+    <option value="equiv ≡" /><option value="cong =" /><option value="neq � " />
     <option value="sim ∼" /><option value="simeq ≃" />
     <option value="approx ≈" /><option value="asymp ≍" />
     <option value="propto ∝" />
@@ -337,23 +321,17 @@ function generatePerl()
     <option value="supset ⊃" /><option value="supseteq ⊇" />
     <option value="ni ∋" />
     <option value="perp ⊥" />
-    <option value="mid |" />
-    <option value="parallel ∥" />
+    <option value="mid |" /><option value="parallel ∥" />
     <option value="notin ∉" />
-    <option value="therefore ∴" />
-    <option value="because ∵" />
+    <option value="therefore ∴" /><option value="because ∵" />
     <option value="Leftrightarrow ⇔" /><option value="Longleftrightarrow ⇐⇒" />
     <option value="longleftrightarrow ←→" />
     <option value="nearrow ↗" />
     <option value="searrow ↘" /><option value="swarrow ↙" />
     <option value="nwarrow ↖" />
-    <option value="nifty ∞" />
-    <option value="nabla ∇" />
+    <option value="nifty ∞" /><option value="nabla ∇" />
     <option value="clubsuit ♣" />
-    <option value="diamondsuit ♦" />
-    <option value="heartsuit ♥" />
-    <option value="spadesuit � " />
-
+    <option value="diamondsuit ♦" /><option value="heartsuit ♥" /><option value="spadesuit � " />
 
 </datalist></p>
 <br>
@@ -364,6 +342,8 @@ function generatePerl()
 	<div id = "outputQues"> 
 </div> 
 </fieldset>
+</form>
+
 <fieldset>
 <legend> The answer for this question is : </legend> <br> 
 <input type = "radio" name="option" id="true" class="DuqWorkSave"> True <br> 
