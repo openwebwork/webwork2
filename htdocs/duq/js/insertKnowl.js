@@ -83,7 +83,9 @@ function addKnowl(theWord, theDef, theQue) {
     else{
         for(var i=0;i< numW;i++){
             var word= partsW[i];
+	    word = word.replace(/\\/g, "\\\\");
             var definition=partsD[i];
+	    definition = definition.replace(/\\/g, "\\\\");
     if(question.search("\\b"+word+"\\b") != -1) {
         //searching for the word
         var wordPosition = question.search("\\b"+word+"\\b");
