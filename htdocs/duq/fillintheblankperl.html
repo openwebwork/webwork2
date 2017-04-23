@@ -68,7 +68,7 @@ function sendQuestion()
 	} 
 	question = checkDollarSigns("question");//calls the function to check for $ in the input
 	var output = document.getElementById("outputQues"); 
-	output.innerHTML = "You asked : " +question; 
+	output.innerHTML = "You asked : " + question; 
 }
 
 function sendAnswer() 
@@ -85,6 +85,7 @@ function sendAnswer()
 function sendSolution() 
 {
 	var solution = document.getElementById("solution").value; 
+	solution = checkDollarSigns("solution");
 	var output = document.getElementById("outputSolution"); 
 	output.innerHTML = "Your solution is : "  +solution; 
 }
@@ -164,8 +165,8 @@ function generatePerl()
 	addKnowlHelper();
 	var question = document.getElementById("knowlOutput").innerHTML;
 	var answer = document.getElementById("answer").value;
-	answer = checkDollarSigns("answer");
 	var solution = document.getElementById("solution").value;
+	solution = checkDollarSigns("solution");
 
 	var section1 = '<br><br>DOCUMENT();\n<br>\
 	\n<br>\
