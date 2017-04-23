@@ -44,9 +44,7 @@ function getURLParams(url) {
 
 function generateTrueFalse()
 {
-    var question = document.getElementById("knowlOutput").innerHTML;
-	//from team B to team A: please get knowlOutput.innerHTML instead of question.value
-	//in order to make the knowl function work
+    var question = document.getElementById("knowlOutput").textContent;
     var solution = document.getElementById("solution").value; 
     
     if(document.getElementById("true").checked) 
@@ -114,7 +112,7 @@ ENDDOCUMENT();";
 function generateFillInBlanks()
 {
 	addKnowlHelper();
-	var question = document.getElementById("knowlOutput").innerHTML;
+	var question = document.getElementById("knowlOutput").textContent;
 	var answer = document.getElementById("answer").value;
 	var solution = document.getElementById("solution").value;
 
