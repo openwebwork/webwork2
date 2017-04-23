@@ -609,7 +609,10 @@ sub body {
 		''              => 'Unknown file type',
 		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $prettyProblemNumber"),
 	);
-	my $header = CGI::i($r->maketext("Editing [_1] in file '[_2]'",$titles{$file_type}, $self->shortPath($inputFilePath)));
+	my $JSONFilePath = $editFilePath;
+	$JSONFilePath  =~ s{\.[^.]*(?:\.pg)?$}{xx1xx.json};
+	my $problemEditDisclaimer = -e $JSONFilePath ? CGI::br().CGI::i($r->maketext("NOTE: Editing this file outside of the edit form causes inconsistencies with future editing with the form")) : "";
+	my $header = CGI::i($r->maketext("Editing [_1] in file '[_2]'",$titles{$file_type}, $self->shortPath($inputFilePath))).$problemEditDisclaimer;
 	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
 	
 	#########################################################################
