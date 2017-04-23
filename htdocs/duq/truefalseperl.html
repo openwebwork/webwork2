@@ -71,6 +71,7 @@ function sendQuestion()
 	else
 	{
 		var output = document.getElementById("outputQues"); 
+		question = checkDollarSigns("question");
 		output.innerHTML = "You asked : " +question; 
 	}
 }
@@ -328,5 +329,6 @@ function generatePerl()
 <script type="text/javascript" src="js/HintEditor.js"></script>
 <script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
 <script type="text/javascript" src="js/ProblemEditing.js"></script>
+<script type="text/javascript" src="js/problemSyntaxSimplification.js"></script>
 
 </html>

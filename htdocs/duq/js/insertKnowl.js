@@ -6,6 +6,7 @@ function addKnowlHelper() {
     var x = document.getElementById("theWord").value;
     var y = document.getElementById("theDef").value;
     var z = document.getElementById("question").value;
+	z = checkDollarSigns("question");
     var searchWord = document.getElementById("theSearch").value;
     // Add the created knowls to the database for the user and get the search from the database
     postKnowl(x, y, searchWord, z);

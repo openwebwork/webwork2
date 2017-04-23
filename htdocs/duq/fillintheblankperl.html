@@ -66,6 +66,7 @@ function sendQuestion()
 	{
 		alert("Ooops! You left the question blank. Please try again"); 
 	} 
+	question = checkDollarSigns("question");//calls the function to check for $ in the input
 	var output = document.getElementById("outputQues"); 
 	output.innerHTML = "You asked : " +question; 
 }
@@ -163,6 +164,7 @@ function generatePerl()
 	addKnowlHelper();
 	var question = document.getElementById("knowlOutput").innerHTML;
 	var answer = document.getElementById("answer").value;
+	answer = checkDollarSigns("answer");
 	var solution = document.getElementById("solution").value;
 
 	var section1 = '<br><br>DOCUMENT();\n<br>\
@@ -415,5 +417,6 @@ function generatePerl()
 <script type="text/javascript" src="js/HintEditor.js"></script> 
 <script type="text/javascript" src="js/toleranceEditor.js"></script>
 <script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
+<script type="text/javascript" src="js/problemSyntaxSimplification.js"></script>
 
 </html>
