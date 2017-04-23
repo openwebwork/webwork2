@@ -12,7 +12,7 @@ function addKnowlHelper() {
     // Remove the previous knowls from the creation fields for edit
     document.getElementById("theWord").value = "";
     document.getElementById("theDef").value = "";
-    if(searchWord != "")
+    if(searchWord != "" && x != "")
 	document.getElementById("theSearch").value = document.getElementById("theSearch").value + "@";
     document.getElementById("theSearch").value = document.getElementById("theSearch").value + x;
 }
