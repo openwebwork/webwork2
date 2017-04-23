@@ -44,7 +44,7 @@ function getURLParams(url) {
 
 function generateTrueFalse()
 {
-    var question = document.getElementById("knowlOutput").textContent;
+    var question = $("#knowlOutput").text();
     var solution = document.getElementById("solution").value; 
     
     if(document.getElementById("true").checked) 
