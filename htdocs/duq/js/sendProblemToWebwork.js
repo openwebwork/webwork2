@@ -112,7 +112,7 @@ ENDDOCUMENT();";
 function generateFillInBlanks()
 {
 	addKnowlHelper();
-	var question = document.getElementById("knowlOutput").textContent;
+	var question = $("#knowlOutput").text();
 	var answer = document.getElementById("answer").value;
 	var solution = document.getElementById("solution").value;
 
