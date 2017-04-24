@@ -84,7 +84,7 @@ $showPartialCorrectAnswers = 0;\n<br>\
 ANS( $mc->cmp() );\n<br>\
 \n<br>\
 Context()->texStrings;\n<br>\
-SOLUTION(EV3(<<'END_SOLUTION'));<br>\
+SOLUTION(EV3(<<'END_SOLUTION'));\n<br>\
 $PAR SOLUTION $PAR\n<br>";
     
     var section4 = "\n<br>END_SOLUTION\n<br>\
