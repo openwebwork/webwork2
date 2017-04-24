@@ -106,6 +106,9 @@ ENDDOCUMENT();";
 
     var output = document.getElementById("outputCode");
     output.innerHTML = "All the Perl Code is : "  + pgString;
+      
+    // Save the state of the form
+    saveState();
     return pgString;
 }
 
