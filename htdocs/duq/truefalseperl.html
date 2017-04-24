@@ -62,7 +62,7 @@ button
 
 function sendQuestion() 
 {
-	addKnowlHelper();
+	//addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -71,7 +71,8 @@ function sendQuestion()
 	else
 	{
 		var output = document.getElementById("outputQues"); 
-		output.innerHTML = "You asked : " +question; 
+		question = checkDollarSigns("question");
+		output.innerHTML = "You asked : " + question; 
 	}
 }
 
@@ -97,8 +98,9 @@ function sendAns()
 function sendSolution() 
 {
 	var solution = document.getElementById("solution").value; 
+	solution = checkDollarSigns("solution");
 	var output = document.getElementById("outputSolution"); 
-	output.innerHTML = "Your solution is : "  +solution; 
+	output.innerHTML = "Your solution is : "  + solution; 
 }
 
 function sendImage(){
@@ -143,6 +145,7 @@ function generatePerl()
 	//don't worry about this. knowlOutput return the same thing as question
 	//if there is not a knowl and return the string question with knowl if there is
 	var solution = document.getElementById("solution").value; 
+	solution = checkDollarSigns("solution");
  
 	if(document.getElementById("true").checked) 
 	{
@@ -220,7 +223,7 @@ function generatePerl()
 <div id = "codeArea">
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
-	<button id="submitButton">Submit <br></button>
+	<button id="submitButton" class="truefalse">Submit <br></button>
 	<br><br> 
 	<div id="outputCode">
 	</div>
@@ -256,14 +259,16 @@ function generatePerl()
 </div> 
 </fieldset>
 
-<title> Knowls Creator </title>
+<title> Knowl Creator </title>
 <fieldset>
-    <legend>Knowls Creator:</legend>
-		<p><small>*Use @ as separator for multiple knowl keyword and content</small></p> 
- Knowl keyword:<br>
+    <legend>Knowl Creator/Searcher:</legend>
+		<p><small>*Use @ as separator for multiple knowl keyword, content, and search fields</small></p> 
+ Knowl creation keyword:<br>
   <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
- Knowl Content:<br>
-  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br>
+ Knowl creation content:<br>
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br><br>
+ Knowl search keyword:<br>
+  <textarea id="theSearch" class="DuqWorkSave" rows="1" cols="20"></textarea><br><br>
   <button onclick="addKnowlHelper()"> Add a knowl!</button><br>
 		<p><small>*Use \\(math\\) or \\[displaymath\\] for Latex Expression<br>
 		*For example: \\(sin(x)\\)</small></p>
@@ -322,10 +327,10 @@ function generatePerl()
 
 <script type="text/javascript" src="../js/jquery.js"></script>
 <script type="text/javascript" src="../js/vendor/codemirror/codemirror.js"></script>
-
+<script type="text/javascript" src="js/insertKnowl.js"></script>
 <script type="text/javascript" src="js/HintEditor.js"></script>
 <script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
-<script type="text/javascript" src="js/insertKnowl.js"></script>
 <script type="text/javascript" src="js/ProblemEditing.js"></script>
+<script type="text/javascript" src="js/problemSyntaxSimplification.js"></script>
 
 </html>

@@ -2,11 +2,6 @@
 <html>
 <head>
 
-<script type="text/javascript" src="../js/jquery.js"></script>
-<script type="text/javascript" src="js/insertKnowl.js"></script>
-<script type="text/javascript" src="js/ProblemEditing.js"></script>
-<script type="text/javascript" src="js/HintEditor.js"></script> 
-<script type="text/javascript" src="js/toleranceEditor.js"></script> 
 <link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title>Fill in the Blanks</title> 
@@ -71,8 +66,9 @@ function sendQuestion()
 	{
 		alert("Ooops! You left the question blank. Please try again"); 
 	} 
+	question = checkDollarSigns("question");//calls the function to check for $ in the input
 	var output = document.getElementById("outputQues"); 
-	output.innerHTML = "You asked : " +question; 
+	output.innerHTML = "You asked : " + question; 
 }
 
 function sendAnswer() 
@@ -89,6 +85,7 @@ function sendAnswer()
 function sendSolution() 
 {
 	var solution = document.getElementById("solution").value; 
+	solution = checkDollarSigns("solution");
 	var output = document.getElementById("outputSolution"); 
 	output.innerHTML = "Your solution is : "  +solution; 
 }
@@ -169,6 +166,7 @@ function generatePerl()
 	var question = document.getElementById("knowlOutput").innerHTML;
 	var answer = document.getElementById("answer").value;
 	var solution = document.getElementById("solution").value;
+	solution = checkDollarSigns("solution");
 
 	var section1 = '<br><br>DOCUMENT();\n<br>\
 	\n<br>\
@@ -270,10 +268,11 @@ function generatePerl()
 	WeBWorK Question Creator
 </h1> 
 </header><br>
+<!-- When clicked this button will call the function in sendProblemToWebwork.js. If you need to change the generatePerl function, do it in that file. !-->
 <div id = "codeArea">
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
-	<button onclick = "generatePerl()" >Submit <br></button>
+	<button id="submitButton" class="fillinblanks" >Submit <br></button>
 	<br> 
 	<div id="codeOutput">
 	</div>
@@ -305,20 +304,20 @@ function generatePerl()
 	<div class="tooltip">
 		<span class="tooltiptext">This will allow you to set a tolerance value of "none", "numeric", or "percentage”.</span>
 		<div>
-			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
+			<input id="noTolerance" class="DuqWorkSave" type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="none" checked>
 			<label for="tolNone">No Tolerance </label><br>
 		</div>
 		<div>
-			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
+			<input id="numericTolerance" class="DuqWorkSave" type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="num">
 			<label for="tolNumeric">Numeric Value </label>
 		</div>
 		<div>
-			<input type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
+			<input id="percentTolerance" class="DuqWorkSave" type="radio" name="tolType" onclick = "sendTolerance(this.value)" value="perc">
 			<label for="tolPercent">Percentage </label>
 		</div>
 		<p>If you want a tolerance, enter a value below.  If not, leave it blank!</p>
 		<p>Note: If you want a percentage, enter the number as a decimal (i.e. 15% -> 0.15)</p>
-	        <textarea id ="toleranceText" rows = "1" cols = "50"></textarea>
+	        <textarea id ="toleranceText" class="DuqWorkSave" rows = "1" cols = "50"></textarea>
 		<br>
 	</div>
         <br>
@@ -345,14 +344,16 @@ function generatePerl()
 	</div>
 </fieldset> 
 
-<title> Knowls Creator </title>
+<title> Knowl Creator </title>
 <fieldset>
-    <legend>Knowls Creator:</legend>
-		<p><small>*Use @ as separator for multiple knowl keyword and content</small></p> 
- Knowl keyword:<br>
+    <legend>Knowl Creator/Searcher:</legend>
+		<p><small>*Use @ as separator for multiple knowl keyword, content, and search fields</small></p> 
+ Knowl creation keyword:<br>
   <textarea id="theWord" class="DuqWorkSave" rows="1" cols="20"></textarea><br>
- Knowl Content:<br>
-  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br>
+ Knowl creation content:<br>
+  <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br><br>
+ Knowl search keyword:<br>
+  <textarea id="theSearch" class="DuqWorkSave" rows="1" cols="20"></textarea><br><br>
   <button onclick="addKnowlHelper()"> Add a knowl!</button><br>
 		<p><small>*Use \\(math\\) or \\[displaymath\\] for Latex Expression<br>
 		*For example: \\(sin(x)\\)</small></p>
@@ -408,4 +409,15 @@ function generatePerl()
 
 </div>
 </body>
+
+<script type="text/javascript" src="../js/jquery.js"></script>
+<script type="text/javascript" src="../js/vendor/codemirror/codemirror.js"></script>
+
+<script type="text/javascript" src="js/insertKnowl.js"></script>
+<script type="text/javascript" src="js/ProblemEditing.js"></script>
+<script type="text/javascript" src="js/HintEditor.js"></script> 
+<script type="text/javascript" src="js/toleranceEditor.js"></script>
+<script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
+<script type="text/javascript" src="js/problemSyntaxSimplification.js"></script>
+
 </html>

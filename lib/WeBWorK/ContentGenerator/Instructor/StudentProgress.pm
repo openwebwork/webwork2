@@ -34,6 +34,178 @@ use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status wwRound);
 use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
 use WeBWorK::DB::Record::UserSet;  #FIXME -- this is only used in one spot.
+use constant HOME => 'templates';
+
+# Check that the user is authorized, and then
+# see if there is a download to perform.
+sub pre_header_initialize {
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	
+	# we don't need to return an error here, because body() will print an error for us :)
+	return unless $authz->hasPermissions($user, "manage_course_files");
+	
+	my $action = $r->param('action');
+	$self->Download if ($action && ($action eq 'Download' || $action eq $r->maketext("Download")));
+	my $file = $r->param('download');
+	$self->downloadFile($file) if (defined $file);
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
+	my $courseID = $r->urlpath->arg("courseID");
+	# removed archived_course_ prefix -- it is important that path matches the $courseID for consitency with the database dump
+	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID/templates/$courseID.tar.gz";
+	my %options = (courseID => $courseID, archive_path => $archive_path, ce=>$ce );
+	$self->{archive_options}= \%options;
+
+}
+
+# Download a given file
+sub downloadFile {
+	my $self = shift;
+	my $file = checkName(shift);
+	my $pwd = $self->checkPWD(shift || $self->r->param('pwd') || HOME);
+	return unless $pwd;
+	$pwd = $self->{ce}{courseDirs}{root} . '/' . $pwd;
+	unless (-e "$pwd/$file") {
+		$self->addbadmessage("The file you are trying to download doesn't exist");
+		return;
+	}
+	unless (-f "$pwd/$file") {
+		$self->addbadmessage("You can only download regular files.");
+		return;
+	}
+	my $type = "application/octet-stream";
+	$type = "text/plain" if $file =~ m/\.(pg|pl|pm|txt|def|csv|lst)/;
+	$type = "image/gif"  if $file =~ m/\.gif/;
+	$type = "image/jpeg" if $file =~ m/\.(jpg|jpeg)/;
+	$type = "image/png"  if $file =~ m/\.png/;
+	$self->reply_with_file($type, "$pwd/$file", $file, 0);
+}
+
+# Download a file
+sub Download {
+	my $self = shift;
+	my $r = $self->r;	
+	my $pwd = $self->checkPWD($self->r->param('pwd') || HOME);
+	return unless $pwd;
+	my $filename = $self->getFile("download"); return unless $filename;
+	my $file = $self->{ce}{courseDirs}{root}.'/'.$pwd.'/'.$filename;
+
+	if (-d $file) {$self->addbadmessage("You can't download directories"); return}
+	unless (-f $file) {$self->addbadmessage("You can't download files of that type"); return}
+
+	$self->r->param('download',$filename);
+}
+
+#  Check if a file is a symbolic link that we
+#  are not allowed to follow.
+sub isSymLink {
+	my $self = shift; my $file = shift;
+	return 0 unless -l $file;
+
+	my $courseRoot = $self->{ce}{courseDirs}{root};
+	$courseRoot = readlink($courseRoot) if -l $courseRoot;
+	my $pwd = $self->{pwd} || $self->r->param('pwd') || HOME;
+	my $link = File::Spec->rel2abs(readlink($file),"$courseRoot/$pwd");
+	#
+	# Remove /./ and dir/../ constructs
+	#
+	$link =~ s!(^|/)(\.(/|$))+!$1!g;
+	while ($link =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+
+	#
+	# Link is OK if it is in the course directory
+	#
+	return 0 if substr($link,0,length($courseRoot)) eq $courseRoot;
+
+	#
+	# Look through the list of valid paths to see if this link is OK
+	#
+	my $valid = $self->{ce}{webworkDirs}{valid_symlinks};
+	if (defined $valid && $valid) {
+		foreach my $path (@{$valid}) {
+			return 0 if substr($link,0,length($path)) eq $path;
+		}
+	}
+
+	return 1;
+}
+
+# Normalize the working directory and check if it is OK.
+#
+sub checkPWD {
+	my $self = shift;
+	my $pwd = shift;
+	my $renameError = shift;
+
+	$pwd =~ s!//+!/!g;               # remove duplicate slashes
+	$pwd =~ s!(^|/)~!$1_!g;          # remove ~user references
+	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;  # remove dot directories
+	
+	# remove dir/.. constructions
+	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+	
+	$pwd =~ s!/$!!;                        # remove trailing /
+	return if ($pwd =~ m!(^|/)\.\.(/|$)!); # Error if outside the root
+
+	# check for bad symbolic links
+	my @dirs = split('/',$pwd);
+	pop(@dirs) if $renameError;      # don't check file iteself in this case
+	my @path = ($self->{ce}{courseDirs}{root});
+	foreach my $dir (@dirs) {
+		push @path,$dir;
+		return if ($self->isSymLink(join('/',@path)));
+	}
+
+	my $original = $pwd;
+	$pwd =~ s!(^|/)\.!$1_!g;         # don't enter hidden directories
+	$pwd =~ s!^/!!;                  # remove leading /
+	$pwd =~ s![^-_./A-Z0-9~, ]!_!gi; # no illegal characters
+	return if $renameError && $original ne $pwd;
+
+	$pwd = '.' if $pwd eq '';
+	return $pwd;
+}
+
+# Check that there is exactly one valid file
+sub getFile {
+	my $self = shift; my $action = shift;
+	my @files = $self->r->param("files");
+	if (scalar(@files) > 1) {
+		$self->addbadmessage("You can only $action one file at a time.");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	if (scalar(@files) == 0 || $files[0] eq "") {
+		$self->addbadmessage("You need to select a file to $action.");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || HOME) || '.';
+	if ($self->isSymLink($pwd.'/'.$files[0])) {
+		$self->addbadmessage("That symbolic link takes you outside your course directory");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	unless ($self->checkPWD($pwd.'/'.$files[0],1)) {
+		$self->addbadmessage("You have specified an illegal file");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	return $files[0];
+}
+
+# Check a name for bad characters, etc.
+sub checkName {
+	my $file = shift;
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file =~ s/^\./_/;                  # no initial dot
+	$file = "newfile.txt" unless $file; # no blank names
+	return $file;
+}
 
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
@@ -631,9 +803,36 @@ sub displaySets {
 			# change to give better output for gateways with; 
 			# only one attempt per version: just reports the 
 			# result for each problem, not the number of attempts.
+
+ 			# Include a download link for each problem
+            my $filename = $studentRecord->user_id;
+            my $r = $self->r;
+            my $ce = $r->ce;
+            my $user_upload_file = '';
+			my @file_exts = qw(.png .jpg .pdf .txt);
+
+            for (my $work_i = 1; $work_i < $num_of_problems + 1; $work_i = $work_i + 1){
+				my $file_found = 0;
+                my $pwd = 'templates/set' . $setName . '/' . $setName . '_Problem_' . $work_i . '_Student_Uploads';
+                my $file = $ce->{webworkDirs}{courses} . '/' . $courseName . "/$pwd/$filename";$urlpath = $self->r->urlpath;
+
+				foreach my $file_ext (@file_exts){
+					if (-e ("$file" . "$file_ext")) {
+                    	my $fileManagerPage = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
+                    	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $filename . $file_ext, pwd => $pwd});
+                    	$user_upload_file = $user_upload_file . '<a href="' . $fileManagerURL . '">' . 'w' . '</a>   ';
+						$file_found = 1;
+						last;
+					}
+				}
+				if ($file_found == 0){ 
+					$user_upload_file = $user_upload_file . '    '; 
+				}
+            }
+
 			my $longtwo = ($setIsVersioned && 
 				       $userSet->attempts_per_version == 1) ? 
-				       $string : "$string\n$twoString";
+				       $string : "$string\n$twoString\n$user_upload_file";
 		
 			my $avg_num_attempts = ($num_of_problems) ? $total_num_of_attempts_for_set/$num_of_problems : 0;
 			my $successIndicator = ($avg_num_attempts && $total) ? ($totalRight/$total)**2/$avg_num_attempts : 0 ;
@@ -810,7 +1009,7 @@ sub displaySets {
 	print
 #		CGI::br(),
 		CGI::br(),
-		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, and a number from 0 to 100 indicates the grade earned. The number on the second line gives the number of incorrect attempts.'),
+		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, and a number from 0 to 100 indicates the grade earned. The number on the second line gives the number of incorrect attempts. A "w" is added on the third line a student uploads work for a problem. Click the "w" to download a students work.'),
 		),
 		CGI::br(),
 		$r->maketext("Click on a student's name to see the student's version of the homework set. Click heading to sort table."),

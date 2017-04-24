@@ -54,6 +54,8 @@ Note:  Only database keyfield values can be used as path parameters.
  html2xml                            /html2xml/
  pgtotex                             /pgtotex/
  instructorXMLHandler     			     /instructorXMLHandler/
+ problemEdit                         /problemEdit/
+ knowl                               /knowl/
  set_list                            /$courseID/
  
  equation_display                    /$courseID/equation/
@@ -159,7 +161,7 @@ our %pathTypes = (
 	root => {
 		name    => 'WeBWorK',
 		parent  => '',
-		kids    => [ qw/course_admin  html2xml pgtotex instructorXMLHandler set_list / ],
+		kids    => [ qw/course_admin  html2xml pgtotex instructorXMLHandler knowl problemEdit set_list / ],
 		match   => qr|^/|,
 		capture => [ qw// ],
 		produce => '/',
@@ -202,6 +204,24 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'instructorXMLHandler/',
 		display => 'WeBWorK::ContentGenerator::instructorXMLHandler',
+	},
+        knowl => {
+		name    => 'knowl',
+		parent  => 'root',
+		kids    => [ qw// ],
+		match   => qr|^knowl/|,
+		capture => [ qw// ],
+		produce => 'knowl/',
+		display => 'WeBWorK::ContentGenerator::Knowl',
+	},
+        problemEdit => {
+		name    => 'problemEdit',
+		parent  => 'root',
+		kids    => [ qw// ],
+		match   => qr|^problemEdit/|,
+		capture => [ qw// ],
+		produce => 'problemEdit/',
+		display => 'WeBWorK::ContentGenerator::ProblemEdit',
 	},
 	set_list => {
 		name    => '[_4]',

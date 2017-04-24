@@ -609,7 +609,10 @@ sub body {
 		''              => 'Unknown file type',
 		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $prettyProblemNumber"),
 	);
-	my $header = CGI::i($r->maketext("Editing [_1] in file '[_2]'",$titles{$file_type}, $self->shortPath($inputFilePath)));
+	my $JSONFilePath = $editFilePath;
+	$JSONFilePath  =~ s{\.[^.]*(?:\.pg)?$}{xx1xx.json};
+	my $problemEditDisclaimer = -e $JSONFilePath ? CGI::br().CGI::i($r->maketext("NOTE: Editing this file outside of the edit form causes inconsistencies with future editing with the form")) : "";
+	my $header = CGI::i($r->maketext("Editing [_1] in file '[_2]'",$titles{$file_type}, $self->shortPath($inputFilePath))).$problemEditDisclaimer;
 	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
 	
 	#########################################################################
@@ -1164,47 +1167,6 @@ sub saveFileChanges {
 
 		$writeFileErrors = $@ if $@;
 	} 
-
-	###########################################################
-	# Save the state of the form as a JSON file in htdocs/JSON directory
-	###########################################################
-
-	#Parsing and formatting the outputFilePath into a json filepath for the state
-	my $filePath = $outputFilePath;
-	my $find = '/courses/';
-	my $replace = '/webwork2/htdocs/JSON/';
-	$filePath =~ s/\Q$find\E/$replace/g;
-	#Replaces .pg file extension with .json
-	$filePath =~ s{\.[^.]*(?:\.pg)?$}{.json};
-			
-	# Make the directory structure for the JSON file if it does not exist yet
-	my @folderNamesSplit = split(/\//, $filePath);
-	my $folderNamesBuild = ".";
-		
-	#Create the JSON directory and it's sub-directories if they do not exist
-	for(my $i = 0; $i < @folderNamesSplit - 1; $i++){
-		if(-d $filePath){
-		}
-		else{
-			$folderNamesBuild = $folderNamesBuild."/".$folderNamesSplit[$i];
-			mkdir $folderNamesBuild;
-		}
-	}
-		
-	# Get the JSON string and split it into an array, which will be printed into the JSON file
-	my $JSONString = $r->param("JSON");
-	my @parts = split(/``/, $JSONString);
-	open(OUTFILE, ">", $filePath) or die "JSON file does not exist!";
-	print OUTFILE "{";
-	for(my $i = 0; $i < @parts; $i++){
-		if($i != 0){
-			print OUTFILE ", ";
-		}
-		my @pair = split(/~~/, $parts[$i]);
-		print OUTFILE "\"".$pair[0]."\": \"".$pair[1]."\"";
-	}
-	print OUTFILE "}";
-	close(OUTFILE);
 	
 	###########################################################
 	# Catch errors in saving files,  clean up temp files

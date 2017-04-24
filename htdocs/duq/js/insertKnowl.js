@@ -6,7 +6,53 @@ function addKnowlHelper() {
     var x = document.getElementById("theWord").value;
     var y = document.getElementById("theDef").value;
     var z = document.getElementById("question").value;
-    addKnowl(x, y, z);
+	z = checkDollarSigns("question");
+    var searchWord = document.getElementById("theSearch").value;
+    // Add the created knowls to the database for the user and get the search from the database
+    postKnowl(x, y, searchWord, z);
+    // Remove the previous knowls from the creation fields for edit
+    document.getElementById("theWord").value = "";
+    document.getElementById("theDef").value = "";
+    if(searchWord != "" && x != "")
+	document.getElementById("theSearch").value = document.getElementById("theSearch").value + "@";
+    document.getElementById("theSearch").value = document.getElementById("theSearch").value + x;
+}
+
+// Send a POST request to set the knowl keywords and definitions and additionally return the values
+function postKnowl(theWord, theDef, theSearch, theQuestion){
+	// The link to send the POST request to
+	var hostName = window.location.hostname;
+	var postHREF = "http://" + hostName + "/webwork2/knowl/";
+	// Build the POST request that WeBWorK makes when a prolem is updated
+	var POSTParameters = {
+		"search": theSearch,
+		"word": theWord,
+		"definition": theDef,
+		"effectiveUser": getParam("user")
+	};
+	// Send a POST request which will add the knowls to the database and return the search from the database
+	$.getJSON(postHREF, POSTParameters, function(JSONObject){
+		var searchDef = "";
+		var searchWord = "";
+		// Get the values from the search
+		for(var propertyName in JSONObject){
+			if(searchDef != ""){
+				searchDef = searchDef + "@";
+				searchWord = searchWord + "@";
+			}
+			searchWord = searchWord + propertyName;
+			searchDef = searchDef + JSONObject[propertyName];
+		}
+		if(searchWord != ""){
+			if(theWord != "")
+				theWord = theWord + "@";
+			if(theDef != "")
+				theDef = theDef + "@";
+         		theWord = theWord + searchWord;
+         		theDef = theDef + searchDef;
+    		}
+    		addKnowl(theWord, theDef, theQuestion);
+	});
 }
 
 function addKnowl(theWord, theDef, theQue) {
@@ -38,7 +84,9 @@ function addKnowl(theWord, theDef, theQue) {
     else{
         for(var i=0;i< numW;i++){
             var word= partsW[i];
+	    word = word.replace(/\\/g, "\\\\");
             var definition=partsD[i];
+	    definition = definition.replace(/\\/g, "\\\\");
     if(question.search("\\b"+word+"\\b") != -1) {
         //searching for the word
         var wordPosition = question.search("\\b"+word+"\\b");
