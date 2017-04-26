@@ -618,7 +618,7 @@ sub browse_library_panel2 {
 }
 
 sub browse_library_panel2adv {
-	my $self = shift;
+        my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $right_button_style = "width: 18ex";
@@ -707,8 +707,8 @@ sub browse_library_panel2adv {
 	$mylevelline .= "<td>".$self->helpMacro("Levels")."</td>";
 	$mylevelline .= '</tr></table>';
 
-#	my $rootwordsearch .= "<td>".$selfroot->helpMacro("rootsearch")."</td>";
-
+	my $rootsearchhelp = $self->helpMacro("Root_Word_Search");
+	
 	print CGI::Tr({},
 	  CGI::td({-class=>"InfoPanel", -align=>"left"},
 		CGI::hidden(-name=>"library_is_basic", -default=>2,-override=>1),
@@ -776,15 +776,12 @@ sub browse_library_panel2adv {
 							-default=>$library_keywords,
 							-override=>1,
 					-size=>40))),
-####  Input of root word search. grep code 12345
+
 		 CGI::Tr({},
 		     CGI::td($r->maketext("Root Word:")),CGI::td({-colspan=>2},
 								 CGI::checkbox(-name=>'root_serach',
- -checked=>0, 
--default=>'OFF', 
-									       -label=>'I want to also do a root word search.'))
-			# CGI::td($r->maketext("")),
-			# "<td>$rootwordsearch</td>"
+									       -checked=>0,
+-label=>'&nbsp;')."$rootsearchhelp")
 ),
 		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
 		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
