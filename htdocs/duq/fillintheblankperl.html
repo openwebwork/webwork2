@@ -76,7 +76,6 @@ function updateMathHint() {
 
 function sendQuestion() 
 {	
-	//addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -84,7 +83,9 @@ function sendQuestion()
 	} 
 	question = checkDollarSigns("question");//calls the function to check for $ in the input
 	var output = document.getElementById("outputQues"); 
-	output.innerHTML = "You asked : " + question; 
+	output.innerHTML = "You asked : " + question;
+	// Present the question in latex style
+	updateMathQues();
 }
 
 function sendAnswer() 
@@ -289,6 +290,7 @@ function generatePerl()
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
 	<button id="submitButton" class="fillinblanks" >Submit <br></button>
+	<p>NOTE: Make sure to close all other webwork tabs before you<br/> click the submit button or else your changes will not be saved.</p> 
 	<br> 
 	<div id="codeOutput">
 	</div>
@@ -299,7 +301,7 @@ function generatePerl()
 	<legend> Please type the question below : </legend> 
 	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
 	<p id="knowlOutput" class="DuqWorkSave"></p>
-	<button onclick = "sendQuestion(),updateMathQues()" >Submit <br></button> 
+	<button onclick = "sendQuestion()" >Submit <br></button>
 	<p> Question Preview </p>
 	<div id = "outputQues"> 
 	</div>
@@ -370,7 +372,6 @@ function generatePerl()
   <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br><br>
  Knowl search keyword:<br>
   <textarea id="theSearch" class="DuqWorkSave" rows="1" cols="20"></textarea><br><br>
-  <button onclick="addKnowlHelper()"> Add a knowl!</button><br>
 		<p><small>*Use \\(math\\) or \\[displaymath\\] for Latex Expression<br>
 		*For example: \\(sin(x)\\)</small></p>
 </fieldset>

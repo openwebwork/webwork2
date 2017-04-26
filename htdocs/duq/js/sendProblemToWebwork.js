@@ -1,11 +1,20 @@
 var submitButton = document.getElementById("submitButton");
 submitButton.onclick = function() {
+    var question = $("#question").val();
+    // Add the knowl handler (Gets the knowl from the database)
+    addKnowlHelper();
+    // Once the knowl request is made and the response is received, it will then call sendToWebwork (This prevents it from sending a blank question)
+    // NOTE: sendToWebwork will probably not be called if you test it outside of webwork so please just try it on webwork when developing
+    
+}
+
+function sendToWebwork(question){
     var pgString;
     if (submitButton.classList.contains("truefalse")) {
-	pgString = generateTrueFalse();
+	pgString = generateTrueFalse(question);
     }
     else if (submitButton.classList.contains("fillinblanks")) {
-	pgString = generateFillInBlanks();
+	pgString = generateFillInBlanks(question);
     }
     // Remove line breaks.
     pgString = pgString.replace(/<br>/g, '');
@@ -42,10 +51,8 @@ function getURLParams(url) {
     return paramMap;
 }
 
-function generateTrueFalse()
+function generateTrueFalse(question)
 {
-    addKnowlHelper();
-    var question = $("#knowlOutput").text();
     var solution = document.getElementById("solution").value; 
     
     if(document.getElementById("true").checked) 
@@ -113,10 +120,8 @@ ENDDOCUMENT();";
     return pgString;
 }
 
-function generateFillInBlanks()
+function generateFillInBlanks(question)
 {
-	addKnowlHelper();
-	var question = $("#knowlOutput").text();
 	var answer = document.getElementById("answer").value;
 	var solution = document.getElementById("solution").value;
 
