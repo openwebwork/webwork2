@@ -503,6 +503,9 @@ sub CGI_labeled_input
 		return CGI::label($param{-label_attr},$param{-label_text}).CGI::popup_menu($param{-input_attr});
 	    }
 	}
+	elsif($param{-type} eq "file"){
+	    	return CGI::label($param{-label_attr},$param{-label_text}).CGI::filefield($param{-input_attr});
+	}
 	elsif($param{-type} eq "textarea"){
 		return CGI::label($param{-label_attr},$param{-label_text}).CGI::br().CGI::br().CGI::textarea($param{-input_attr});
 	}

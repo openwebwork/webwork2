@@ -44,6 +44,7 @@ function getURLParams(url) {
 
 function generateTrueFalse()
 {
+    addKnowlHelper();
     var question = $("#knowlOutput").text();
     var solution = document.getElementById("solution").value; 
     
@@ -84,7 +85,7 @@ $showPartialCorrectAnswers = 0;\n<br>\
 ANS( $mc->cmp() );\n<br>\
 \n<br>\
 Context()->texStrings;\n<br>\
-SOLUTION(EV3(<<'END_SOLUTION'));<br>\
+SOLUTION(EV3(<<'END_SOLUTION'));\n<br>\
 $PAR SOLUTION $PAR\n<br>";
     
     var section4 = "\n<br>END_SOLUTION\n<br>\
@@ -106,6 +107,9 @@ ENDDOCUMENT();";
 
     var output = document.getElementById("outputCode");
     output.innerHTML = "All the Perl Code is : "  + pgString;
+      
+    // Save the state of the form
+    saveState();
     return pgString;
 }
 
