@@ -1,0 +1,90 @@
+<!doctype html> 
+<html> 
+<head> 
+<title> Front Page</title> 
+<style>
+.button 
+{
+    background-color: #001456;
+    border: 2px solid #333; 
+    color: white;
+    padding: 8px 8px ;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin:0;
+    cursor: pointer;
+}
+
+img
+{ 
+	float: left;
+} 
+
+header 
+{ 
+	background-color:#001455; 
+	height:110px;
+	border: 5px solid #333;
+} 
+
+header h1 
+{ 
+	color:#FFF;   
+}
+
+a : link
+{ 
+	decoration:none; 
+}
+
+#pos
+{ 
+	position: fixed;
+	top: 50%;
+	left: 25%;
+}
+  
+</style>
+</head> 
+<body onload="startup()"> 
+
+<script>
+function startup(){
+	var queryString = window.location.search.substring(1);
+	var buttonElem = document.getElementById("trueFalse");
+	buttonElem.setAttribute("onclick", "location.href = \"truefalseperl.html?" + queryString + "\"");
+	buttonElem = document.getElementById("fillBlank");
+	buttonElem.setAttribute("onclick", "location.href = \"fillintheblankperl.html?" + queryString + "\"");
+}
+</script>
+
+<header> 
+<h1> 
+<img src = "mlogo.png" height = 70 width = 80 float: center>
+Mathematical Association of America <br>
+WeBWorK Question Creator
+</h1> 
+</header>
+<br> 
+<br> 
+<div id = "pos">
+<center>
+<fieldset> 
+
+<legend> Please choose what type of question you want to create : </legend><br> 	
+<button class ="button"> <!--onclick = "location.href = 'multiplechoiceperl.html' ; sendAns()"--> Multiple Choice Question  </button> 
+<button id="trueFalse" class ="button"> True or False Question </button> 
+<button id="fillBlank" class ="button">Fill in the blanks </button> 
+<button class ="button"> <!--onclick = "location.href = 'matching.html'"--> Matching problems  </button>
+
+<br> 
+<legend> <br> or: </legend><br>
+<button class = "button" onclick = "location.href = 'http://165.190.174.225/webwork2/DrHaenschCourse/instructor/setmaker/'"> Add a textbook problem </button> 
+<br> 
+<legend> <br>When the next screen opens, enter your username and password.<br> Then, select advanced search and enter your textbook name, chapter, problems, etc.</legebd><br>
+</fieldset>
+</div> 
+
+</body> 
+</html> 

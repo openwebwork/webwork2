@@ -116,7 +116,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	due_date => {
-		name      => "Answers Due",
+		name      => "Closes",
 		type      => "edit",
 		size      => "25",
 		override  => "any",
@@ -228,7 +228,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	version_time_limit => {
-		name      => "Test Time Limit (min; 0=Due Date)",
+		name      => "Test Time Limit (min; 0=Close Date)",
 		type      => "edit",
 		size      => "4",
 		override  => "any",
@@ -237,7 +237,7 @@ use constant FIELD_PROPERTIES => {
 		convertby => 60,
 	},
 	time_limit_cap => {
-		name      => "Cap Test Time at Set Due Date?",
+		name      => "Cap Test Time at Set Close Date?",
 		type      => "choose",
 		override  => "all",
 		choices   => [qw(0 1)],
@@ -1047,7 +1047,7 @@ sub initialize {
 		# make sure dates are numeric by using ||0
         
 		if ($answer_date < $due_date || $answer_date < $open_date) {		
-			$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the due date!"));
+			$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the close date!"));
 			$error = $r->param('submit_changes');
 		}
 		
@@ -1066,7 +1066,7 @@ sub initialize {
 		    $reduced_scoring_date 
 		    && ($reduced_scoring_date > $due_date 
 			|| $reduced_scoring_date < $open_date)) {
-			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
+			$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and close date."));
 			$error = $r->param('submit_changes');
 		}
 		
@@ -1079,7 +1079,7 @@ sub initialize {
 			$error = $r->param('submit_changes');
 		}
 		if ($due_date > $cutoff) {
-			$self->addbadmessage($r->maketext("Error: due date cannot be more than 10 years from now in set [_1]", $setID));
+			$self->addbadmessage($r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
 		if ($answer_date > $cutoff) {
@@ -1855,7 +1855,7 @@ sub body {
 				CGI::a({-href=>"mailto:$email_address"},"email "). $u->user_id .
 				"). ";
 			if ( ! $editingSetVersion ) {
-				$line .= $r->maketext("Assigned to ");
+				$line .= $r->maketext("Assigned to").' ';
 				my $editSetsAssignedToUserURL = $self->systemLink(
 					$urlpath->newFromModule(
 						"WeBWorK::ContentGenerator::Instructor::UserDetail", $r,

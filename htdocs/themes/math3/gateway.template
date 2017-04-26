@@ -28,6 +28,9 @@
 <!-- Minimal bootstrap for newer features -->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap/js/bootstrap.js"></script>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
+<!--#if can="output_achievement_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
+<!--#endif-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/gateway.css"/>

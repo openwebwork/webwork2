@@ -76,14 +76,13 @@ sub title {
 	return "" unless $authz->hasPermissions($user, "access_instructor_tools");
 	
 	my $type                = $self->{type};
-	my $string              = $r->maketext("Statistics for")." ".$self->{ce}->{courseName}." ";
-	
+	my $string = '';
 	if ($type eq 'student') {
-		$string             .= $r->maketext("student")." ".$self->{studentName};
+	  $string = $r->maketext("Statistics for [_1] student [_2]", $self->{ce}->{courseName}, $self->{studentName});
 	} elsif ($type eq 'set' ) {
-		$string             .= $r->maketext("set")." ".$self->{setName};
-		$string             .= ".&nbsp;&nbsp;&nbsp; ".$r->maketext("Due")." ". $self->formatDateTime($self->{set_due_date});
+	  $string = $r->maketext("Statistics for [_1] set [_2]. Closes [_3]", $self->{ce}->{courseName}, $self->{setName}, $self->formatDateTime($self->{set_due_date}));
 	}
+	
 	return $string;
 }
 sub siblings {
@@ -105,7 +104,7 @@ sub siblings {
 	                                        courseID => $courseID);
 	
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2("Statistics");
+	print CGI::h2($r->maketext("Statistics"));
 	#print CGI::start_ul({class=>"LinksMenu"});
 	#print CGI::start_li();
 	#print CGI::span({style=>"font-size:larger"}, CGI::a({href=>$self->systemLink($stats)}, 'Statistics'));
@@ -149,8 +148,8 @@ sub body {
 		my $email = $studentRecord->email_address;
 		
 		print CGI::a({-href=>"mailto:$email"}, $email), CGI::br(),
-			$r->maketext("Section:")." ", $studentRecord->section, CGI::br(),
-			$r->maketext("Recitation:")." ", $studentRecord->recitation, CGI::br();
+			$r->maketext("Section").": ", $studentRecord->section, CGI::br(),
+			$r->maketext("Recitation").": ", $studentRecord->recitation, CGI::br();
 		
 		if ($authz->hasPermissions($user, "become_student")) {
 			my $act_as_student_url = $self->systemLink($courseHomePage,
@@ -686,13 +685,13 @@ print  CGI::p($r->maketext('The percentage of active students with correct answe
 	my @setUsers = $db->listSetUsers($setName);
 	my @GradeableRows;
 	my $showGradeRow = 0;
-	unshift (@GradeableRows, CGI::td({}, "manual grader"));
+	unshift (@GradeableRows, CGI::td({}, $r->maketext("Manual Grader")));
 	foreach my $problemID (@problemIDs) {
 	    my $globalProblem = $db->getGlobalProblem($setName,$problemID);
 	    if ($globalProblem->flags =~ /essay/) {
 		$showGradeRow = 1;
 		my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseName, setID => $setName, problemID => $problemID });
-		push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, "Grade Problem")));
+		push (@GradeableRows, CGI::td({}, CGI::a({href => $self->systemLink($gradeProblemPage)}, $r->maketext("Grade Problem"))));
 		
 	    }  else {
 		push (@GradeableRows, CGI::td());
@@ -762,7 +761,7 @@ print  CGI::p($r->maketext('The percentage of active students with correct answe
 	foreach my $probID (@problemIDs) {
 		print	CGI::Tr(
 					CGI::td( [
-						CGI::a({ href=>$self->systemLink($problemPage{$probID}) },"Prob ".$prettyProblemIDs{$probID}),
+						CGI::a({ href=>$self->systemLink($problemPage{$probID}) },$r->maketext("Problem [_1]",$prettyProblemIDs{$probID})),
 						( prevent_repeats reverse map { sprintf("%0.0f",$attempts_percentiles_for_problem{$probID}->{$_})   } @brackets2),
 
 						]

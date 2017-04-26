@@ -311,9 +311,17 @@ sub displayStudentStats {
 		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
 		       ( $set->hide_score eq 'Y' || 
 			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
+			
+			# 4/4/17 check if the set is versioned (i.e. a gateway quiz) if so update the version, otherwise, update the text for 				# the set based on the hide_score variable previously available to gateway quizzes.
+			if(defined( $set->assignment_type() ) && 
+		     		$set->assignment_type() =~ /gateway/ ){ 
 			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(test_" . $set->version_id . ")")), 
-					     CGI::td({colspan=>($max_problems+2)}, CGI::em("Display of scores for this set is not allowed."))) );
+					     CGI::td({colspan=>($max_problems+3)}, CGI::em("Display of scores for this set is not allowed."))) ); 			# 4/4/17 updated the text to span the full grades table.
+			next;} else {
+				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)), 
+					     CGI::td({colspan=>($max_problems+3)}, CGI::em("Display of scores for this set is not allowed."))) ); 			# 4/4/17 updated the text to span the full grades table.
 			next;
+			}
 		}
 
 		# otherwise, if it's a gateway, adjust the act-as url
@@ -434,7 +442,7 @@ sub displayStudentStats {
 		}
 		
 		push @rows, CGI::Tr({},
-			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
+			CGI::th({scope=>"row"},CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
 			CGI::td(CGI::span({-class=>$class},$totalRightPercent.'%')),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 

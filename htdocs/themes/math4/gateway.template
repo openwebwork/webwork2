@@ -28,6 +28,9 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
+<!--#if can="output_achievement_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
+<!--#endif-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/gateway.css"/>
 <!--#if exists="math4-coloring.css"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>

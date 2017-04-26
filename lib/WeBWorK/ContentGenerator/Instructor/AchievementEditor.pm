@@ -29,7 +29,7 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir);
+use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir x);
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
@@ -40,6 +40,12 @@ use Fcntl;
 
 
 use constant ACTION_FORMS => [qw(save save_as)]; 
+use constant ACTION_FORM_TITLES => {  
+save        => x("Save"),
+save_as     => x("Save As"),
+};
+
+
 use constant DEFAULT_ICON => "defaulticon.png";
 
 
@@ -147,7 +153,7 @@ sub path {
 	# For this page the bread crum path leads back to the problem being edited, not to the Instructor tool.
 	my @path = ( 'WeBWork', $r->location,
 	          "$courseName", $r->location."/$courseName",
-		  'Achievement', $r->location."/$courseName/instructor/achievement_list",
+		  $r->maketext('Achievement'), $r->location."/$courseName/instructor/achievement_list",
 	          "$achievementName",    $r->location."/$courseName/instructor/achievement_list",
 	);
 	
@@ -164,7 +170,7 @@ sub title {
 	my $courseName    = $r->urlpath->arg("courseID");
 	my $achievementID  = $r->urlpath->arg("achievementID");
 
-	return "Achievement Evaluator for achievement $achievementID";
+	return $r->maketext("Achievement Evaluator for achievement [_1]", $achievementID);
 
 }
 
@@ -203,7 +209,7 @@ sub body {
 	    #warn "obtaining input from r_problemContents";
 	}
 
-	my $header = CGI::i("Editing achievement in file '".$self->shortPath($sourceFilePath)."'");
+	my $header = CGI::i($r->maketext("Editing achievement in file '[_1]'", $self->shortPath($sourceFilePath)));
 	
 	#########################################################################
 	# Format the page
@@ -234,7 +240,8 @@ EOF
 		$force_field,
 
 		CGI::p(
-			CGI::textarea(
+		       CGI::textarea(
+				 -id => 'achievementContents',
 				-name => 'achievementContents', -default => $achievementContents,
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
@@ -245,6 +252,7 @@ EOF
 ######### print action forms
 		
 	my @formsToShow = @{ ACTION_FORMS() };
+	my %actionFormTitles = %{ ACTION_FORM_TITLES() };
 	my $default_choice = $formsToShow[0];
 	my $i = 0;
 	my @divArr = ();
@@ -258,9 +266,8 @@ EOF
 	    $radio_params->{checked}="checked" if ($actionID eq $default_choice) ;
 
 	    if($line_contents){
-		my @titleArr = split(" ", ucfirst(WeBWorK::underscore_to_whitespace($actionForm)));
-		pop @titleArr;
-		my $title = join(" ", @titleArr);
+
+	      my $title = $r->maketext($actionFormTitles{$actionID});
 
 		push @divArr, join("",
 				   CGI::h3($title),
@@ -278,8 +285,8 @@ EOF
 		       CGI::div({-class=>"tabbertab"},$divArrRef)
 	    );
 	
-	print CGI::div("Select above then:",
-				  CGI::submit(-name=>'submit', -value=>"Take Action!"),
+	print CGI::div($r->maketext("Select above then:"),
+				  CGI::submit(-name=>'submit', -value=>$r->maketext("Take Action!")),
 				  );
 	
 	print  CGI::end_form();
@@ -337,7 +344,7 @@ sub saveFileChanges {
 	
 
 	unless (not_blank($outputFilePath) ) {
-	    $self->addbadmessage("You must specify an file name in order to save a new file.");
+	    $self->addbadmessage($r->maketext("You must specify an file name in order to save a new file."));
 	    return "";
 	}
 	my $do_not_save    = 0 ;       # flag to prevent saving of file
@@ -384,13 +391,13 @@ sub saveFileChanges {
 	    my $errorMessage;
 	    # check why we failed to give better error messages
 	    if ( not -w $ce->{courseDirs}->{achievements} ) {
-		$errorMessage = "Write permissions have not been enabled in the templates directory.  No changes can be made.";
+		$errorMessage = $r->maketext("Write permissions have not been enabled in the templates directory.  No changes can be made.");
 	    } elsif ( not -w $currentDirectory ) {
-		$errorMessage = "Write permissions have not been enabled in '".$self->shortPath($currentDirectory)."'.  Changes must be saved to a different directory for viewing.";
+		$errorMessage = $r->maketext("Write permissions have not been enabled in '[_1]'.  Changes must be saved to a different directory for viewing.", $self->shortPath($currentDirectory));
 	    } elsif ( -e $outputFilePath and not -w $outputFilePath ) {
-		$errorMessage = "Write permissions have not been enabled for '".$self->shortPath($outputFilePath)."'.  Changes must be saved to another file for viewing.";
+		$errorMessage = $r->maketext("Write permissions have not been enabled for '[_1]'.  Changes must be saved to another file for viewing.", $self->shortPath($outputFilePath));
 	    } else {
-		$errorMessage = "Unable to write to '".$self->shortPath($outputFilePath)."': $writeFileErrors";
+		$errorMessage = $r->maketext("Unable to write to '[_1]': [_2]", $self->shortPath($outputFilePath),$writeFileErrors);
 	    }
 	    
 	    $self->{failure} = 1;
@@ -402,7 +409,7 @@ sub saveFileChanges {
 
 		if ( defined($outputFilePath) and ! $self->{failure} ) {  
 		            # don't announce saving of temporary editing files
-			my $msg = "Saved to file '".$self->shortPath($outputFilePath)."'.";
+			my $msg = $r->maketext("Saved to file '[_1]'", $self->shortPath($outputFilePath));
 
 			$self->addgoodmessage($msg);
 		}
@@ -441,11 +448,11 @@ sub fixAchievementContents {
 
 sub save_form {
     	my ($self, %actionParams) = @_;
-	my $r => $self->r;
+	my $r = $self->r;
 
 	if (-w $self->{sourceFilePath}) {
 
-		return "Save ".CGI::b($self->shortPath($self->{sourceFilePath}));	
+		return $r->maketext("Save [_1]", CGI::b($self->shortPath($self->{sourceFilePath})));	
 
 	} else {
 		return ""; #"Can't save -- No write permission";
@@ -478,6 +485,7 @@ sub save_handler {
 
 sub save_as_form {  # calls the save_as_handler 
 	my ($self, %actionParams) = @_;
+	my $r = $self->r;
 	my $sourceFilePath  = $self->{sourceFilePath};
 	my $achievementsDir  =  $self->r->ce->{courseDirs}->{achievements};
 	my $achievementID    = $self->{achievementID};	
@@ -490,7 +498,7 @@ sub save_as_form {  # calls the save_as_handler
 		-type      => 'radio',
 		-name      => "action.save_as.saveMode",
 		-value     => "use_in_current",
-		       })."and use in achievement ".CGI::b("$achievementID");
+		       }).$r->maketext("Use in achievement [_1]",CGI::b("$achievementID"));
 		       
 	#Use can use it in a new achievement
 	my $create_new_achievement      =
@@ -498,7 +506,7 @@ sub save_as_form {  # calls the save_as_handler
 		-type      => 'radio',
 		-name      => "action.save_as.saveMode",
 		-value     => 'use_in_new',
-		       })."and use in new achievement ".CGI::textfield(
+		       }).$r->maketext("Use in new achievement:").CGI::textfield(
 		-name => "action.save_as.id",
 		-value => "",
 #		-width => "50",
@@ -510,12 +518,12 @@ sub save_as_form {  # calls the save_as_handler
 		-type      => 'radio',
 		-name      => "action.save_as.saveMode",
 		-value     => "dont_use",
-		       })."and don't use in an achievement";
+		       }).$r->maketext("Don't use in an achievement");
 	
 	my $andRelink = CGI::br(). $use_in_current_achievement.CGI::br().
 	    $create_new_achievement.CGI::br().$dont_use_in_achievement;
 	    
-	return 'Save as '.
+	return $r->maketext('Save As').
 	    CGI::textfield(
 		-name=>'action.save_as.target_file', -size=>40, -value=>"$sourceFileName",  
 	    ).
@@ -546,7 +554,7 @@ sub save_as_handler {
 	if ( $new_file_name !~ /\S/) { # need a non-blank file name
 		# setting $self->{failure} stops saving and any redirects
 		$do_not_save = 1;
-		$self->addbadmessage(CGI::p("Please specify a file to save to."));
+		$self->addbadmessage(CGI::p($r->maketext("Please specify a file to save to.")));
 	}
 	
 	#################################################
@@ -571,14 +579,13 @@ sub save_as_handler {
 	if (defined $outputFilePath and -e $outputFilePath) {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;
-		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
-		File not saved. No changes have been made."));
+		$self->addbadmessage(CGI::p($r->maketext("File '[_1]' exists.  File not saved.  No changes have been made.", $self->shortPath($outputFilePath))));
 	} elsif ($saveMode eq 'use_in_new' && not $targetAchievementID) {
-	    $self->addbadmessage("No new Achievement ID specified.  No new achievement created.  File not saved.");
+	    $self->addbadmessage($r->maketext("No new Achievement ID specified.  No new achievement created.  File not saved."));
 	    $do_not_save = 1;
 	    
 	} elsif ($saveMode eq 'use_in_new' && $db->existsAchievement($targetAchievementID)) {
-	    $self->addbadmessage("Achievement ID exists!  No new achievement created.  File not saved.");
+	    $self->addbadmessage($r->maketext("Achievement ID exists!  No new achievement created.  File not saved."));
 	    $do_not_save = 1;
 	} else {
 	    $self->{editFilePath} = $outputFilePath;
@@ -598,9 +605,9 @@ sub save_as_handler {
 	    my $achievement = $self->r->db->getAchievement($achievementName);
 	    $achievement->test($new_file_name);
 	    if ($self->r->db->putAchievement($achievement)) {
-		$self->addgoodmessage("The evaluator for $achievementName has been renamed to '".$self->shortPath($outputFilePath)."'.") ;
+		$self->addgoodmessage($r->maketext("The evaluator for [_1] has been renamed to '[_2]'.", $achievementName, $self->shortPath($outputFilePath))) ;
 	    } else {
-		$self->addbadmessage("Unable to change the evaluator for set $achievementName. Unknown error.");
+		$self->addbadmessage($r->maketext("Unable to change the evaluator for set [_1]. Unknown error.",$achievementName));
 	    }
 	    
 	} elsif ($saveMode eq 'use_in_new') {
@@ -611,15 +618,15 @@ sub save_as_handler {
 	    $achievement->icon(DEFAULT_ICON());
 	    
 	    $self->r->db->addAchievement($achievement);
-	    $self->addgoodmessage("Achievement $targetAchievementID created with evaluator '".$self->shortPath($outputFilePath)."'.") ;			    
+	    $self->addgoodmessage($r->maketext("Achievement [_1] created with evaluator '[_2]'.", $targetAchievementID, $self->shortPath($outputFilePath))) ;			    
 	    
 	} elsif ($saveMode eq 'dont_use') {
 	    #################################################
 	    # Don't change any achievements - just report 
 	    #################################################
-	    $self->addgoodmessage("A new file has been created at '".$self->shortPath($outputFilePath)."'");
+	    $self->addgoodmessage($r->maketext("A new file has been created at '[_1]'", $self->shortPath($outputFilePath)));
 	} else {
-	    $self->addbadmessage("Don't recognize saveMode: |$saveMode|. Unknown error.");
+	    $self->addbadmessage($r->maketext("Don't recognize saveMode: |[_1]|. Unknown error.", $saveMode));
 	}
 	
       
@@ -673,6 +680,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+
+	if ($ce->{options}->{PGCodeMirror}) {
+	  
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PGaddons.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PG.js"}), CGI::end_script();
+	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
+	  
+	}
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AchievementEditor/achievementeditor.js"}), CGI::end_script();
+
+
 	
 	return "";
 }
