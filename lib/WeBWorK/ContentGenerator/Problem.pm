@@ -1599,6 +1599,46 @@ sub output_submit_buttons{
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
         }
+
+    #javascript for displaying video or downloading video
+print CGI::script(<<EOF);
+function play(){
+	if (document.getElementById("video-hint").style.display == "none"){
+		document.getElementById("video-hint").style.display = "block";
+	}
+	else{ 
+		document.getElementById("video-hint").style.display = "none";	
+	}
+	
+}
+function download_video(video){
+	window.open(video);
+}
+EOF
+	# button when clicked will download video uploaded by the professor
+	my $vid_filename = 'video';
+	my @file_exts = qw(.mp4 .mov .qt .ogg .wav .webm);
+	my $vid_dir = 'templates/set' . $setID . '/' . $setID . '_Problem_' . $problemNumber . '_Student_Uploads';
+        my $vid_file = $ce->{webworkDirs}{courses} . '/' . $courseID . "/$vid_dir/$vid_filename";$urlpath = $self->r->urlpath;
+	#check if file exists, if it does then either play video in browser or download
+	foreach my $file_ext (@file_exts){
+		if (-e ("$vid_file" . "$file_ext")) {
+			my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Grades", $r, courseID => $courseID);
+       			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
+			my $video_html = ' <video width="320" height="240" controls="true" style="padding-bottom:4em;"><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg">Your browser does not support the video tag.</video>';
+			#check compatability with html5 video tag
+			if ($file_ext == '.mp4' || $file_ext == '.ogg' || $file_ext == '.webm'){			
+				print CGI::button({onclick => "play()", value => 'Video Hint'});
+				print CGI::div({id=>"video-hint", style=>"display:none;"},
+				CGI::pre($video_html));
+			}
+			else{
+				print CGI::button({onclick => "download_video('$fileManagerURL')", value => 'Video Hint'});
+			}
+			last;
+		}
+	}
+
 	print CGI::br();
 	print CGI::br();
 	print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
@@ -1615,6 +1655,9 @@ sub output_submit_buttons{
 	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
+	#get file exstension and then set file name to the user's id 
+	my ($ext) = $name =~ /(\.[^.]+)$/;
+    $name = $user . $ext;
 	my $file = "$dir/$name";
 
 	$upload->disposeTo($file);
