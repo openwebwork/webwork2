@@ -1741,7 +1741,6 @@ sub initialize {
 		  }
 		
 		handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
-
 		
 		#####################################################################
 		# Make problem numbers consecutive if required
@@ -1786,7 +1785,7 @@ sub initialize {
 		      $newProblemNumbers{$jj} = $prevNum;
 		    }
 		  }
-		
+
 		  handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
 
 		}
@@ -1825,7 +1824,12 @@ sub initialize {
 						open(TEMPFILE, ">$fullPath") or warn $r->maketext("Can't write to file [_1]", $fullPath);
 						print TEMPFILE $problemContents;
 						close(TEMPFILE);
-						
+						#################################################
+						# make local directory for student uploads
+						#################################################
+						my $newFolderName         = "$setID"."_Problem_$targetProblemNumber"."_Student_Uploads";
+						my $workDir               =  WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates},'/'."set$setID".'/'.$newFolderName);
+						mkdir $workDir, 0750;
 						#################################################
 						# Update problem record
 						#################################################

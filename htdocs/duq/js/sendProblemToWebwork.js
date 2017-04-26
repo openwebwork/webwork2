@@ -44,6 +44,7 @@ function getURLParams(url) {
 
 function generateTrueFalse()
 {
+    addKnowlHelper();
     var question = $("#knowlOutput").text();
     var solution = document.getElementById("solution").value; 
     

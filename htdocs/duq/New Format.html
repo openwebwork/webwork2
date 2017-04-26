@@ -1,0 +1,3185 @@
+<!DOCTYPE html>
+<html>
+<head> 
+<title>Problem Creator</title> 
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<link rel = "stylesheet"  type ="text/css" href ="style.css">
+<script>
+	window.onload = sendQuestion();
+
+	function sendToWW() 
+	{
+    		var pgString = sendCode();
+		
+		// Remove line breaks.
+		pgString = pgString.replace(/<br>/g, '');
+		var paramMap = getURLParams(window.location.href);
+		
+		var url = "/webwork2/" + paramMap["courseID"] + "/instructor/pgProblemEditor3/"
+		+ paramMap["setID"] + "/" + paramMap["problemID"] + "/?key=" + paramMap["key"]
+		+ "&user=" + paramMap["user"] + "&effectiveUser=" + paramMap["effectiveUser"];
+		var windowName = "WeBWorK : " + paramMap["courseID"] + " : " + paramMap["setID"]
+		+ " : " + paramMap["problemID"] + " : Editor";
+
+		var newWindow = window.open(url, windowName);
+
+ 		$(newWindow).on("load", function() {
+		setCodeMirrorText(newWindow, pgString);
+		});
+	}
+
+	function setCodeMirrorText(wnd, pgString) 
+	{
+		var textArea = wnd.document.getElementById("problemContents");
+		// Get a handle to the CodeMirror instance.
+		var editor = textArea.nextSibling.CodeMirror;
+		var doc = editor.getDoc();
+		doc.setValue(pgString);
+	}
+
+// Returns an object with parameter names as keys and parameter values as values.
+	function getURLParams(url) 
+	{
+		var params = url.split('?')[1].split('&');
+		var paramMap = {};
+		params.forEach(function (elt) {
+		var pair = elt.split('='); 
+		paramMap[pair[0]] = pair[1];
+ 		});
+		return paramMap;
+	}
+
+	function genPart1(choice) 
+	{
+		var output = document.getElementById("PartOneUserInput");
+		while(output.hasChildNodes())
+		{
+			output.removeChild(output.lastChild);
+		}
+		if(choice=="NA") return; 
+		else if(choice=="TorF")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id',"q1");
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atrue = document.createElement('Input');
+			var afalse = document.createElement('Input');
+			var at = document.createTextNode("Please select the answer below:");
+			var at2 = document.createTextNode("True");
+			var at3 = document.createTextNode("False");			
+
+			aset.appendChild(atrue);
+			aset.appendChild(at2);
+			aset.appendChild(afalse);
+			aset.appendChild(at3);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atrue.setAttribute('id',"t1");
+			atrue.setAttribute('type','radio');
+			afalse.setAttribute('id',"f1");
+			afalse.setAttribute('type','radio');		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id',"s1");
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="FinB")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q1');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atext = document.createElement('TEXTAREA');
+			var at = document.createTextNode("Please type the answer below:");			
+
+			
+			aset.appendChild(atext);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atext.setAttribute('id','a1');
+			atext.setAttribute('cols','50');
+			atext.setAttribute('rows','1');		
+
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s1');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="Match")
+		{ 
+			output.innerHTML = '<object type ="text/html" data ="Match1.html" width = 67% height = 800></object>';
+		}
+		else
+		{  
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q1');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var at = document.createTextNode("Please enter the choices below and select the correct one:");			
+
+			var atext1 = document.createElement('TEXTAREA');
+			var aradio1 = document.createElement('INPUT');
+			var atext2 = document.createElement('TEXTAREA');
+			var aradio2 = document.createElement('INPUT');
+			var atext3 = document.createElement('TEXTAREA');
+			var aradio3 = document.createElement('INPUT');
+			var atext4 = document.createElement('TEXTAREA');
+			var aradio4 = document.createElement('INPUT');
+			var atext5 = document.createElement('TEXTAREA');
+			var aradio5 = document.createElement('INPUT');		
+			
+			atext1.setAttribute('id','at11');
+			atext1.setAttribute('cols','50');
+			atext1.setAttribute('rows','1');	
+			atext2.setAttribute('id','at21');
+			atext2.setAttribute('cols','50');
+			atext2.setAttribute('rows','1');	
+			atext3.setAttribute('id','at31');
+			atext3.setAttribute('cols','50');
+			atext3.setAttribute('rows','1');		
+			atext4.setAttribute('id','at41');
+			atext4.setAttribute('cols','50');
+			atext4.setAttribute('rows','1');	
+			atext5.setAttribute('id','at51');
+			atext5.setAttribute('cols','50');
+			atext5.setAttribute('rows','1');	
+
+			aradio1.setAttribute('id','ar11');
+			aradio1.setAttribute('type','radio');
+			aradio2.setAttribute('id','ar21');
+			aradio2.setAttribute('type','radio');
+			aradio3.setAttribute('id','ar31');
+			aradio3.setAttribute('type','radio');	
+			aradio4.setAttribute('id','ar41');
+			aradio4.setAttribute('type','radio');
+			aradio5.setAttribute('id','ar51');
+			aradio5.setAttribute('type','radio');
+
+			aset.appendChild(aradio1);
+			aset.appendChild(atext1);
+			aset.appendChild(aradio2);
+			aset.appendChild(atext2);
+			aset.appendChild(aradio3);
+			aset.appendChild(atext3);
+			aset.appendChild(aradio4);
+			aset.appendChild(atext4);
+			aset.appendChild(aradio5);
+			aset.appendChild(atext5);			
+
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s1');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+	}
+
+	function genPart2(choice) 
+	{
+		var output = document.getElementById("PartTwoUserInput");
+		while(output.hasChildNodes())
+		{
+			output.removeChild(output.lastChild);
+		}
+		if(choice=="NA") return; 
+		else if(choice=="TorF")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q2');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atrue = document.createElement('Input');
+			var afalse = document.createElement('Input');
+			var at = document.createTextNode("Please select the answer below:");
+			var at2 = document.createTextNode("True");
+			var at3 = document.createTextNode("False");			
+
+			aset.appendChild(atrue);
+			aset.appendChild(at2);
+			aset.appendChild(afalse);
+			aset.appendChild(at3);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atrue.setAttribute('id','t2');
+			atrue.setAttribute('type','radio');
+			afalse.setAttribute('id','f2');
+			afalse.setAttribute('type','radio');		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s2');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="FinB")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q2');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atext = document.createElement('TEXTAREA');
+			var at = document.createTextNode("Please type the answer below:");			
+
+			
+			aset.appendChild(atext);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atext.setAttribute('id','a2');
+			atext.setAttribute('cols','50');
+			atext.setAttribute('rows','1');		
+
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s2');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="Match")
+		{ 
+			output.innerHTML = '<object type ="text/html" data ="Match1.html" width = 67% height = 800></object>';
+		}
+		else
+		{  
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q2');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var at = document.createTextNode("Please enter the choices below and select the correct one:");			
+
+			var atext1 = document.createElement('TEXTAREA');
+			var aradio1 = document.createElement('INPUT');
+			var atext2 = document.createElement('TEXTAREA');
+			var aradio2 = document.createElement('INPUT');
+			var atext3 = document.createElement('TEXTAREA');
+			var aradio3 = document.createElement('INPUT');
+			var atext4 = document.createElement('TEXTAREA');
+			var aradio4 = document.createElement('INPUT');
+			var atext5 = document.createElement('TEXTAREA');
+			var aradio5 = document.createElement('INPUT');		
+			
+			atext1.setAttribute('id','at12');
+			atext1.setAttribute('cols','50');
+			atext1.setAttribute('rows','1');	
+			atext2.setAttribute('id','at22');
+			atext2.setAttribute('cols','50');
+			atext2.setAttribute('rows','1');	
+			atext3.setAttribute('id','at32');
+			atext3.setAttribute('cols','50');
+			atext3.setAttribute('rows','1');		
+			atext4.setAttribute('id','at42');
+			atext4.setAttribute('cols','50');
+			atext4.setAttribute('rows','1');	
+			atext5.setAttribute('id','at52');
+			atext5.setAttribute('cols','50');
+			atext5.setAttribute('rows','1');	
+
+			aradio1.setAttribute('id','ar12');
+			aradio1.setAttribute('type','radio');
+			aradio2.setAttribute('id','ar22');
+			aradio2.setAttribute('type','radio');
+			aradio3.setAttribute('id','ar32');
+			aradio3.setAttribute('type','radio');	
+			aradio4.setAttribute('id','ar42');
+			aradio4.setAttribute('type','radio');
+			aradio5.setAttribute('id','ar52');
+			aradio5.setAttribute('type','radio');
+
+			aset.appendChild(aradio1);
+			aset.appendChild(atext1);
+			aset.appendChild(aradio2);
+			aset.appendChild(atext2);
+			aset.appendChild(aradio3);
+			aset.appendChild(atext3);
+			aset.appendChild(aradio4);
+			aset.appendChild(atext4);
+			aset.appendChild(aradio5);
+			aset.appendChild(atext5);			
+
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s2');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+	}
+
+	function genPart3(choice) 
+	{
+		var output = document.getElementById("PartThreeUserInput");
+		while(output.hasChildNodes())
+		{
+			output.removeChild(output.lastChild);
+		}
+		if(choice=="NA") return; 
+		else if(choice=="TorF")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q3');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atrue = document.createElement('Input');
+			var afalse = document.createElement('Input');
+			var at = document.createTextNode("Please select the answer below:");
+			var at2 = document.createTextNode("True");
+			var at3 = document.createTextNode("False");			
+
+			aset.appendChild(atrue);
+			aset.appendChild(at2);
+			aset.appendChild(afalse);
+			aset.appendChild(at3);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atrue.setAttribute('id','t3');
+			atrue.setAttribute('type','radio');
+			afalse.setAttribute('id','f3');
+			afalse.setAttribute('type','radio');		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s3');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="FinB")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q3');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atext = document.createElement('TEXTAREA');
+			var at = document.createTextNode("Please type the answer below:");			
+
+			
+			aset.appendChild(atext);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atext.setAttribute('id','a3');
+			atext.setAttribute('cols','50');
+			atext.setAttribute('rows','1');		
+
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s3');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="Match")
+		{ 
+			output.innerHTML = '<object type ="text/html" data ="Match1.html" width = 67% height = 800></object>';
+		}
+		else
+		{  
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q3');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var at = document.createTextNode("Please enter the choices below and select the correct one:");			
+
+			var atext1 = document.createElement('TEXTAREA');
+			var aradio1 = document.createElement('INPUT');
+			var atext2 = document.createElement('TEXTAREA');
+			var aradio2 = document.createElement('INPUT');
+			var atext3 = document.createElement('TEXTAREA');
+			var aradio3 = document.createElement('INPUT');
+			var atext4 = document.createElement('TEXTAREA');
+			var aradio4 = document.createElement('INPUT');
+			var atext5 = document.createElement('TEXTAREA');
+			var aradio5 = document.createElement('INPUT');		
+			
+			atext1.setAttribute('id','at13');
+			atext1.setAttribute('cols','50');
+			atext1.setAttribute('rows','1');	
+			atext2.setAttribute('id','at23');
+			atext2.setAttribute('cols','50');
+			atext2.setAttribute('rows','1');	
+			atext3.setAttribute('id','at33');
+			atext3.setAttribute('cols','50');
+			atext3.setAttribute('rows','1');		
+			atext4.setAttribute('id','at43');
+			atext4.setAttribute('cols','50');
+			atext4.setAttribute('rows','1');	
+			atext5.setAttribute('id','at53');
+			atext5.setAttribute('cols','50');
+			atext5.setAttribute('rows','1');	
+
+			aradio1.setAttribute('id','ar13');
+			aradio1.setAttribute('type','radio');
+			aradio2.setAttribute('id','ar23');
+			aradio2.setAttribute('type','radio');
+			aradio3.setAttribute('id','ar33');
+			aradio3.setAttribute('type','radio');	
+			aradio4.setAttribute('id','ar43');
+			aradio4.setAttribute('type','radio');
+			aradio5.setAttribute('id','ar53');
+			aradio5.setAttribute('type','radio');
+
+			aset.appendChild(aradio1);
+			aset.appendChild(atext1);
+			aset.appendChild(aradio2);
+			aset.appendChild(atext2);
+			aset.appendChild(aradio3);
+			aset.appendChild(atext3);
+			aset.appendChild(aradio4);
+			aset.appendChild(atext4);
+			aset.appendChild(aradio5);
+			aset.appendChild(atext5);			
+
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s3');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+	}
+
+	function genPart4(choice) 
+	{
+		var output = document.getElementById("PartFourUserInput");
+		while(output.hasChildNodes())
+		{
+			output.removeChild(output.lastChild);
+		}
+		if(choice=="NA") return; 
+		else if(choice=="TorF")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q4');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atrue = document.createElement('Input');
+			var afalse = document.createElement('Input');
+			var at = document.createTextNode("Please select the answer below:");
+			var at2 = document.createTextNode("True");
+			var at3 = document.createTextNode("False");			
+
+			aset.appendChild(atrue);
+			aset.appendChild(at2);
+			aset.appendChild(afalse);
+			aset.appendChild(at3);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atrue.setAttribute('id','t4');
+			atrue.setAttribute('type','radio');
+			afalse.setAttribute('id','f4');
+			afalse.setAttribute('type','radio');		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s4');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="FinB")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q4');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atext = document.createElement('TEXTAREA');
+			var at = document.createTextNode("Please type the answer below:");			
+
+			
+			aset.appendChild(atext);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atext.setAttribute('id','a4');
+			atext.setAttribute('cols','50');
+			atext.setAttribute('rows','1');		
+
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s4');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="Match")
+		{ 
+			output.innerHTML = '<object type ="text/html" data ="Match1.html" width = 67% height = 800></object>';
+		}
+		else
+		{  
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q4');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var at = document.createTextNode("Please enter the choices below and select the correct one:");			
+
+			var atext1 = document.createElement('TEXTAREA');
+			var aradio1 = document.createElement('INPUT');
+			var atext2 = document.createElement('TEXTAREA');
+			var aradio2 = document.createElement('INPUT');
+			var atext3 = document.createElement('TEXTAREA');
+			var aradio3 = document.createElement('INPUT');
+			var atext4 = document.createElement('TEXTAREA');
+			var aradio4 = document.createElement('INPUT');
+			var atext5 = document.createElement('TEXTAREA');
+			var aradio5 = document.createElement('INPUT');		
+			
+			atext1.setAttribute('id','at14');
+			atext1.setAttribute('cols','50');
+			atext1.setAttribute('rows','1');	
+			atext2.setAttribute('id','at24');
+			atext2.setAttribute('cols','50');
+			atext2.setAttribute('rows','1');	
+			atext3.setAttribute('id','at34');
+			atext3.setAttribute('cols','50');
+			atext3.setAttribute('rows','1');		
+			atext4.setAttribute('id','at44');
+			atext4.setAttribute('cols','50');
+			atext4.setAttribute('rows','1');	
+			atext5.setAttribute('id','at54');
+			atext5.setAttribute('cols','50');
+			atext5.setAttribute('rows','1');	
+
+			aradio1.setAttribute('id','ar14');
+			aradio1.setAttribute('type','radio');
+			aradio2.setAttribute('id','ar24');
+			aradio2.setAttribute('type','radio');
+			aradio3.setAttribute('id','ar34');
+			aradio3.setAttribute('type','radio');	
+			aradio4.setAttribute('id','ar44');
+			aradio4.setAttribute('type','radio');
+			aradio5.setAttribute('id','ar54');
+			aradio5.setAttribute('type','radio');
+
+			aset.appendChild(aradio1);
+			aset.appendChild(atext1);
+			aset.appendChild(aradio2);
+			aset.appendChild(atext2);
+			aset.appendChild(aradio3);
+			aset.appendChild(atext3);
+			aset.appendChild(aradio4);
+			aset.appendChild(atext4);
+			aset.appendChild(aradio5);
+			aset.appendChild(atext5);			
+
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s4');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+	}
+
+	function genPart5(choice) 
+	{
+		var output = document.getElementById("PartFiveUserInput");
+		while(output.hasChildNodes())
+		{
+			output.removeChild(output.lastChild);
+		}
+		if(choice=="NA") return; 
+		else if(choice=="TorF")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q5');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atrue = document.createElement('Input');
+			var afalse = document.createElement('Input');
+			var at = document.createTextNode("Please select the answer below:");
+			var at2 = document.createTextNode("True");
+			var at3 = document.createTextNode("False");			
+
+			aset.appendChild(atrue);
+			aset.appendChild(at2);
+			aset.appendChild(afalse);
+			aset.appendChild(at3);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atrue.setAttribute('id','t5');
+			atrue.setAttribute('type','radio');
+			afalse.setAttribute('id','f5');
+			afalse.setAttribute('type','radio');		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s5');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="FinB")
+		{
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q5');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var atext = document.createElement('TEXTAREA');
+			var at = document.createTextNode("Please type the answer below:");			
+
+			
+			aset.appendChild(atext);
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+			atext.setAttribute('id','a5');
+			atext.setAttribute('cols','50');
+			atext.setAttribute('rows','1');		
+
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s5');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+		else if(choice=="Match")
+		{ 
+			output.innerHTML = '<object type ="text/html" data ="Match1.html" width = 67% height = 800></object>';
+		}
+		else
+		{  
+			var qset = document.createElement('FIELDSET');
+			var qleg = document.createElement('LEGEND');
+			var qtext = document.createElement('TEXTAREA');
+			var qt = document.createTextNode("Please type the question below:");
+			
+			qset.appendChild(qtext);
+			qleg.appendChild(qt);
+			qset.appendChild(qleg);
+			qtext.setAttribute('id','q5');
+			qtext.setAttribute('rows','5');
+			qtext.setAttribute('cols','50');		
+			output.appendChild(qset);
+
+			var aset = document.createElement('FIELDSET');
+			var aleg = document.createElement('LEGEND');
+			var at = document.createTextNode("Please enter the choices below and select the correct one:");			
+
+			var atext1 = document.createElement('TEXTAREA');
+			var aradio1 = document.createElement('INPUT');
+			var atext2 = document.createElement('TEXTAREA');
+			var aradio2 = document.createElement('INPUT');
+			var atext3 = document.createElement('TEXTAREA');
+			var aradio3 = document.createElement('INPUT');
+			var atext4 = document.createElement('TEXTAREA');
+			var aradio4 = document.createElement('INPUT');
+			var atext5 = document.createElement('TEXTAREA');
+			var aradio5 = document.createElement('INPUT');		
+			
+			atext1.setAttribute('id','at15');
+			atext1.setAttribute('cols','50');
+			atext1.setAttribute('rows','1');	
+			atext2.setAttribute('id','at25');
+			atext2.setAttribute('cols','50');
+			atext2.setAttribute('rows','1');	
+			atext3.setAttribute('id','at35');
+			atext3.setAttribute('cols','50');
+			atext3.setAttribute('rows','1');		
+			atext4.setAttribute('id','at45');
+			atext4.setAttribute('cols','50');
+			atext4.setAttribute('rows','1');	
+			atext5.setAttribute('id','at55');
+			atext5.setAttribute('cols','50');
+			atext5.setAttribute('rows','1');	
+
+			aradio1.setAttribute('id','ar15');
+			aradio1.setAttribute('type','radio');
+			aradio2.setAttribute('id','ar25');
+			aradio2.setAttribute('type','radio');
+			aradio3.setAttribute('id','ar35');
+			aradio3.setAttribute('type','radio');	
+			aradio4.setAttribute('id','ar45');
+			aradio4.setAttribute('type','radio');
+			aradio5.setAttribute('id','ar55');
+			aradio5.setAttribute('type','radio');
+
+			aset.appendChild(aradio1);
+			aset.appendChild(atext1);
+			aset.appendChild(aradio2);
+			aset.appendChild(atext2);
+			aset.appendChild(aradio3);
+			aset.appendChild(atext3);
+			aset.appendChild(aradio4);
+			aset.appendChild(atext4);
+			aset.appendChild(aradio5);
+			aset.appendChild(atext5);			
+
+			aleg.appendChild(at);
+			aset.appendChild(aleg);
+		
+			output.appendChild(aset);
+			
+			var sset = document.createElement('FIELDSET');
+			var sleg = document.createElement('LEGEND');
+			var stext = document.createElement('TEXTAREA');
+			var st = document.createTextNode("Please type the explanation of the solution below:");
+			
+			sset.appendChild(stext);
+			sleg.appendChild(st);
+			sset.appendChild(sleg);
+			stext.setAttribute('id','s5');
+			stext.setAttribute('rows','5');
+			stext.setAttribute('cols','50');		
+			output.appendChild(sset);
+		}
+	}
+
+	function sendTF1()
+	{
+		var question = document.getElementById("q1").value;
+		var solution = document.getElementById("s1").value;
+		answer = "";
+		if(document.getElementById("t1").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f1").checked)
+		{
+			answer="False";
+		}
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+		
+		return "<br><b>Part One</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendTF2()
+	{
+		var question = document.getElementById("q2").value;
+		var solution = document.getElementById("s2").value;
+		answer = "";
+		if(document.getElementById("t2").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f2").checked)
+		{
+			answer="False";
+		}
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Two</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendTF3()
+	{
+		var question = document.getElementById("q3").value;
+		var solution = document.getElementById("s3").value;
+		answer = "";
+		if(document.getElementById("t3").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f3").checked)
+		{
+			answer="False";
+		}
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Three</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendTF4()
+	{
+		var question = document.getElementById("q4").value;
+		var solution = document.getElementById("s4").value;
+		answer = "";
+		if(document.getElementById("t4").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f4").checked)
+		{
+			answer="False";
+		}
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Four</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendTF5()
+	{
+		var question = document.getElementById("q5").value;
+		var solution = document.getElementById("s5").value;
+		answer = "";
+		if(document.getElementById("t5").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f5").checked)
+		{
+			answer="False";
+		}
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Five</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendFB1()
+	{
+		var question = document.getElementById("q1").value;
+		var solution = document.getElementById("s1").value;
+		var answer = document.getElementById("a1").value;
+		
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part One</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendFB2()
+	{
+		var question = document.getElementById("q2").value;
+		var solution = document.getElementById("s2").value;
+		var answer = document.getElementById("a2").value;
+		
+		return "<br><b>Part Two</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendFB3()
+	{
+		var question = document.getElementById("q3").value;
+		var solution = document.getElementById("s3").value;
+		var answer = document.getElementById("a3").value;
+		
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Three</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendFB4()
+	{
+		var question = document.getElementById("q4").value;
+		var solution = document.getElementById("s4").value;
+		var answer = document.getElementById("a4").value;
+		
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Four</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendFB5()
+	{
+		var question = document.getElementById("q5").value;
+		var solution = document.getElementById("s5").value;
+		var answer = document.getElementById("a5").value;
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Five</b><br>You asked: " +question+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendMC1()
+	{
+		var question = document.getElementById("q1").value;
+		var solution = document.getElementById("s1").value;
+		var answer = "";
+		var option1 = document.getElementById("at11").value;
+		var option2 = document.getElementById("at21").value;
+		var option3 = document.getElementById("at31").value;
+		var option4 = document.getElementById("at41").value;
+		var option5 = document.getElementById("at51").value;
+
+		
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option1]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option2]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option3]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option4]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option5]);
+
+		var options = option1+ " " +option2+ " " +option3+ " " +option4+ " " +option5;
+		
+		if(document.getElementById("ar11").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar21").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar31").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar41").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar51").checked)
+		{
+			answer=option5;
+		}
+		
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part One</b><br>You asked: " +question+ "<br>The options are: " +options+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+	
+	function sendMC2()
+	{
+		var question = document.getElementById("q2").value;
+		var solution = document.getElementById("s2").value;
+		var answer = "";
+		var option1 = document.getElementById("at12").value;
+		var option2 = document.getElementById("at22").value;
+		var option3 = document.getElementById("at32").value;
+		var option4 = document.getElementById("at42").value;
+		var option5 = document.getElementById("at52").value;
+		var options = option1+ " " +option2+ " " +option3+ " " +option4+ " " +option5;
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option1]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option2]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option3]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option4]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option5]);
+		
+		if(document.getElementById("ar12").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar22").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar32").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar42").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar52").checked)
+		{
+			answer=option5;
+		}
+		
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Two</b><br>You asked: " +question+ "<br>The options are: " +options+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendMC3()
+	{
+		var question = document.getElementById("q3").value;
+		var solution = document.getElementById("s3").value;
+		var answer = "";
+		var option1 = document.getElementById("at13").value;
+		var option2 = document.getElementById("at23").value;
+		var option3 = document.getElementById("at33").value;
+		var option4 = document.getElementById("at43").value;
+		var option5 = document.getElementById("at53").value;
+		var options = option1+ " " +option2+ " " +option3+ " " +option4+ " " +option5;
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option1]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option2]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option3]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option4]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option5]);
+		
+		if(document.getElementById("ar13").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar23").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar33").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar43").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar53").checked)
+		{
+			answer=option5;
+		}
+
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Three</b><br>You asked: " +question+ "<br>The options are: " +options+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendMC4()
+	{
+		var question = document.getElementById("q4").value;
+		var solution = document.getElementById("s4").value;
+		var answer = "";
+		var option1 = document.getElementById("at14").value;
+		var option2 = document.getElementById("at24").value;
+		var option3 = document.getElementById("at34").value;
+		var option4 = document.getElementById("at44").value;
+		var option5 = document.getElementById("at54").value;
+		var options = option1+ " " +option2+ " " +option3+ " " +option4+ " " +option5;
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option1]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option2]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option3]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option4]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option5]);
+		
+		if(document.getElementById("ar14").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar24").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar34").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar44").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar54").checked)
+		{
+			answer=option5;
+		}
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Four</b><br>You asked: " +question+ "<br>The options are: " +options+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+
+	function sendMC5()
+	{
+		var question = document.getElementById("q5").value;
+		var solution = document.getElementById("s5").value;
+		var answer = "";
+		var option1 = document.getElementById("at15").value;
+		var option2 = document.getElementById("at25").value;
+		var option3 = document.getElementById("at35").value;
+		var option4 = document.getElementById("at45").value;
+		var option5 = document.getElementById("at55").value;
+		var options = option1+ " " +option2+ " " +option3+ " " +option4+ " " +option5;
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,question]);
+
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option1]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option2]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option3]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option4]);
+		    MathJax.Hub.Queue(["Typeset",MathJax.Hub,option5]);
+		
+		if(document.getElementById("ar15").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar25").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar35").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar45").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar55").checked)
+		{
+			answer=option5;
+		}
+
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,answer]);
+		MathJax.Hub.Queue(["Typeset",MathJax.Hub,solution]);
+
+		return "<br><b>Part Five</b><br>You asked: " +question+ "<br>The options are: " +options+ "<br>The answer is: " +answer+ "<br>The explanation is: " +solution+ "<br>";				
+	}
+	
+	function sendQuestion()
+	{
+		var output=document.getElementById("po");
+		var part1="";
+		var part2="";
+		var part3="";
+		var part4="";
+		var part5="";
+
+		if(document.getElementById("PartOneSelect").value=="TorF")
+		{
+			part1=sendTF1();
+		}
+		else if(document.getElementById("PartOneSelect").value=="FinB")
+		{
+			part1=sendFB1();
+		}
+		else if(document.getElementById("PartOneSelect").value=="Mult")
+		{
+			part1=sendMC1();
+		}
+		
+		if(document.getElementById("PartTwoSelect").value=="TorF")
+		{
+			part2=sendTF2();
+		}
+		else if(document.getElementById("PartTwoSelect").value=="FinB")
+		{
+			part2=sendFB2();
+		}
+		else if(document.getElementById("PartTwoSelect").value=="Mult")
+		{
+			part2=sendMC2();
+		}
+
+		if(document.getElementById("PartThreeSelect").value=="TorF")
+		{
+			part3=sendTF3();
+		}
+		else if(document.getElementById("PartThreeSelect").value=="FinB")
+		{
+			part3=sendFB3();
+		}
+		else if(document.getElementById("PartThreeSelect").value=="Mult")
+		{
+			part3=sendMC3();
+		}
+
+		if(document.getElementById("PartFourSelect").value=="TorF")
+		{
+			part4=sendTF4();
+		}
+		else if(document.getElementById("PartFourSelect").value=="FinB")
+		{
+			part4=sendFB4();
+		}
+		else if(document.getElementById("PartFourSelect").value=="Mult")
+		{
+			part4=sendMC4();
+		}
+
+		if(document.getElementById("PartFiveSelect").value=="TorF")
+		{
+			part5=sendTF5();
+		}
+		else if(document.getElementById("PartFiveSelect").value=="FinB")
+		{
+			part5=sendFB5();
+		}
+		else if(document.getElementById("PartFiveSelect").value=="Mult")
+		{
+			part5=sendMC5();
+		}
+		
+		output.innerHTML=part1+part2+part3+part4+part5;
+	}
+
+	function genTF1()
+	{
+		var question = document.getElementById("q1").value;
+		var solution = document.getElementById("s1").value;
+		answer = "";
+		if(document.getElementById("t1").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f1").checked)
+		{
+			answer="False";
+		}
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+
+		var section1 = '$mc = RadioButtons(\n<br>\
+    		["True", "False"],\n<br>"';
+
+	    	var section2='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part One\*\n<br>\
+		\n<br>';
+
+
+		var section3 = "\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp);\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+		
+		var section4 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + answer + section2 + question + section3 + solution + section4;
+	}
+
+	function genTF2()
+	{
+		var question = document.getElementById("q2").value;
+		var solution = document.getElementById("s2").value;
+		answer = "";
+		if(document.getElementById("t2").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f2").checked)
+		{
+			answer="False";
+		}
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+
+		var section1 = '$mc = RadioButtons(\n<br>\
+    		["True", "False"],\n<br>"';
+
+	    	var section2='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Two\*\n<br>\
+		\n<br>';
+
+
+		var section3 = "\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp);\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+		
+		var section4 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + answer + section2 + question + section3 + solution + section4;
+	}
+
+	function genTF3()
+	{
+		var question = document.getElementById("q3").value;
+		var solution = document.getElementById("s3").value;
+		answer = "";
+		if(document.getElementById("t3").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f3").checked)
+		{
+			answer="False";
+		}
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+
+		var section1 = '$mc = RadioButtons(\n<br>\
+    		["True", "False"],\n<br>"';
+
+	    	var section2='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Three\*\n<br>\
+		\n<br>';
+
+
+		var section3 = "\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp);\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+		
+		var section4 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + answer + section2 + question + section3 + solution + section4;
+	}
+
+	function genTF4()
+	{
+		var question = document.getElementById("q4").value;
+		var solution = document.getElementById("s4").value;
+		answer = "";
+		if(document.getElementById("t4").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f4").checked)
+		{
+			answer="False";
+		}
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+
+		var section1 = '$mc = RadioButtons(\n<br>\
+    		["True", "False"],\n<br>"';
+
+	    	var section2='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Four\*\n<br>\
+		\n<br>';
+
+
+		var section3 = "\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp);\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+		
+		var section4 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + answer + section2 + question + section3 + solution + section4;
+	}
+
+	function genTF5()
+	{
+		var question = document.getElementById("q5").value;
+		var solution = document.getElementById("s5").value;
+		answer = "";
+		if(document.getElementById("t5").checked)
+		{
+			answer="True";
+		}
+		else if(document.getElementById("f5").checked)
+		{
+			answer="False";
+		}
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+		var section1 = '$mc = RadioButtons(\n<br>\
+    		["True", "False"],\n<br>"';
+
+	    	var section2='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Five\*\n<br>\
+		\n<br>';
+
+
+		var section3 = "\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp);\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+		
+		var section4 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + answer + section2 + question + section3 + solution + section4;
+	}
+
+	function genFB1()
+	{
+		var question = document.getElementById("q1").value;
+		var solution = document.getElementById("s1").value;
+		var answer = document.getElementById("a1").value;;
+		
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+		var characterCounta1 = (answer.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounta1; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$$","<br><br>[`\\");
+			else
+				answer = answer.replace("$$","`]<br><br>");
+		}
+		var characterCounta2 = (answer.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounta2; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$","[`\\");
+			else
+				answer = answer.replace("$","`]");
+		}		
+
+		var section1 = '\n<br>\
+		Context("Numeric");\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>';
+
+		var section2 = 'BEGIN_PGML\n<br>\
+		\n<br>\
+		\*Part One\*\n<br>';
+	
+		var section3 = "<br>\n<br>\
+		\n<br>\
+		[______________________]{";
+
+		var section4 = "}\n<br>\
+		END_PGML\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 1;\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		\n<br>\
+		*SOLUTION*\n<br>\
+		\n<br>";
+		
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>";
+		
+		return section1 + section2 + question + section3 + answer + section4 + solution + section5;
+	}
+
+	function genFB2()
+	{
+		var question = document.getElementById("q2").value;
+		var solution = document.getElementById("s2").value;
+		var answer = document.getElementById("a2").value;;
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+		var characterCounta1 = (answer.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounta1; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$$","<br><br>[`\\");
+			else
+				answer = answer.replace("$$","`]<br><br>");
+		}
+		var characterCounta2 = (answer.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounta2; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$","[`\\");
+			else
+				answer = answer.replace("$","`]");
+		}
+		
+		var section1 = '\n<br>\
+		Context("Numeric");\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>';
+
+		var section2 = 'BEGIN_PGML\n<br>\
+		\n<br>\
+		\*Part Two\*\n<br>';
+	
+		var section3 = "<br>\n<br>\
+		\n<br>\
+		[______________________]{";
+
+		var section4 = "}\n<br>\
+		END_PGML\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 1;\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		\n<br>\
+		*SOLUTION*\n<br>\
+		\n<br>";
+		
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>";
+		
+		return section1 + section2 + question + section3 + answer + section4 + solution + section5;
+	}
+
+	function genFB3()
+	{
+		var question = document.getElementById("q3").value;
+		var solution = document.getElementById("s3").value;
+		var answer = document.getElementById("a3").value;;
+		
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+		var characterCounta1 = (answer.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounta1; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$$","<br><br>[`\\");
+			else
+				answer = answer.replace("$$","`]<br><br>");
+		}
+		var characterCounta2 = (answer.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounta2; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$","[`\\");
+			else
+				answer = answer.replace("$","`]");
+		}
+
+		var section1 = '\n<br>\
+		Context("Numeric");\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>';
+
+		var section2 = 'BEGIN_PGML\n<br>\
+		\n<br>\
+		\*Part Three\*\n<br>';
+	
+		var section3 = "<br>\n<br>\
+		\n<br>\
+		[______________________]{";
+
+		var section4 = "}\n<br>\
+		END_PGML\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 1;\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		\n<br>\
+		*SOLUTION*\n<br>\
+		\n<br>";
+		
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>";
+		
+		return section1 + section2 + question + section3 + answer + section4 + solution + section5;
+	}
+
+	function genFB4()
+	{
+		var question = document.getElementById("q4").value;
+		var solution = document.getElementById("s4").value;
+		var answer = document.getElementById("a4").value;;
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+		var characterCounta1 = (answer.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounta1; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$$","<br><br>[`\\");
+			else
+				answer = answer.replace("$$","`]<br><br>");
+		}
+		var characterCounta2 = (answer.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounta2; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$","[`\\");
+			else
+				answer = answer.replace("$","`]");
+		}
+
+		var section1 = '\n<br>\
+		Context("Numeric");\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>';
+
+		var section2 = 'BEGIN_PGML\n<br>\
+		\n<br>\
+		\*Part Four\*\n<br>';
+	
+		var section3 = "<br>\n<br>\
+		\n<br>\
+		[______________________]{";
+
+		var section4 = "}\n<br>\
+		END_PGML\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 1;\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		\n<br>\
+		*SOLUTION*\n<br>\
+		\n<br>";
+		
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>";
+		
+		return section1 + section2 + question + section3 + answer + section4 + solution + section5;
+	}
+
+	function genFB5()
+	{
+		var question = document.getElementById("q5").value;
+		var solution = document.getElementById("s5").value;
+		var answer = document.getElementById("a5").value;;
+		
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+		var characterCounta1 = (answer.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounta1; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$$","<br><br>[`\\");
+			else
+				answer = answer.replace("$$","`]<br><br>");
+		}
+		var characterCounta2 = (answer.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounta2; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$","[`\\");
+			else
+				answer = answer.replace("$","`]");
+		}
+
+		var section1 = '\n<br>\
+		Context("Numeric");\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>';
+
+		var section2 = 'BEGIN_PGML\n<br>\
+		\n<br>\
+		\*Part Five\*\n<br>';
+	
+		var section3 = "<br>\n<br>\
+		\n<br>\
+		[______________________]{";
+
+		var section4 = "}\n<br>\
+		END_PGML\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 1;\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		\n<br>\
+		*SOLUTION*\n<br>\
+		\n<br>";
+		
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>\
+		\n<br>";
+		
+		return section1 + section2 + question + section3 + answer + section4 + solution + section5;
+	}
+
+	function genMC1()
+	{
+		var option1 = document.getElementById("at11").value;
+		var option2 = document.getElementById("at21").value;	
+		var option3 = document.getElementById("at31").value;
+		var option4 = document.getElementById("at41").value;
+		var option5 = document.getElementById("at51").value;
+		
+				var characterCounto11 = (option1.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounto11; i++)
+		{	
+			if(i%2 == 0)
+				option1 = option1.replace("$$","<br><br>[`\\");
+			else
+				option1 = option1.replace("$$","`]<br><br>");
+		}
+		var characterCounto12 = (option1.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounto12; i++)
+		{	
+			if(i%2 == 0)
+				option1 = option1.replace("$","[`\\");
+			else
+				option1 = option1.replace("$","`]");
+		}
+		var characterCounto21 = (option2.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounto21; i++)
+		{	
+			if(i%2 == 0)
+				option2 = option2.replace("$$","<br><br>[`\\");
+			else
+				option2 = option2.replace("$$","`]<br><br>");
+		}
+		var characterCounto22 = (option2.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounto22; i++)
+		{	
+			if(i%2 == 0)
+				option2 = option2.replace("$","[`\\");
+			else
+				option2 = option2.replace("$","`]");
+		}
+		var characterCounto31 = (option3.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounto31; i++)
+		{	
+			if(i%2 == 0)
+				option3 = option3.replace("$$","<br><br>[`\\");
+			else
+				option3 = option3.replace("$$","`]<br><br>");
+		}
+		var characterCounto32 = (option3.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounto32; i++)
+		{	
+			if(i%2 == 0)
+				option3 = option3.replace("$","[`\\");
+			else
+				option3 = option3.replace("$","`]");
+		}
+		var characterCounto41 = (option4.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounto41; i++)
+		{	
+			if(i%2 == 0)
+				option4 = option4.replace("$$","<br><br>[`\\");
+			else
+				option4 = option4.replace("$$","`]<br><br>");
+		}
+		var characterCounto42 = (option4.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounto42; i++)
+		{	
+			if(i%2 == 0)
+				option4 = option4.replace("$","[`\\");
+			else
+				option4 = option4.replace("$","`]");
+		}
+		var characterCounto51 = (option5.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounto51; i++)
+		{	
+			if(i%2 == 0)
+				option5 = option5.replace("$$","<br><br>[`\\");
+			else
+				option5 = option5.replace("$$","`]<br><br>");
+		}
+		var characterCounto52 = (option5.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounto52; i++)
+		{	
+			if(i%2 == 0)
+				option5 = option5.replace("$","[`\\");
+			else
+				option5 = option5.replace("$","`]");
+		}
+
+		var optionArray = new Array;
+		if(option1 != ""){
+			optionArray[0] = '"' + option1 + '"';}
+		if(option2 != ""){
+			optionArray[1] = '"' + option2 + '"';}
+		if(option3 != ""){
+			optionArray[2] = '"' + option3 + '"';}
+		if(option4 != ""){
+			optionArray[3] = '"' + option4 + '"';}
+		if(option5 != ""){
+			optionArray[4] = '"' + option5 + '"';}
+
+		var question = document.getElementById("q1").value;
+		var solution = document.getElementById("s1").value;
+		var answer = "";
+
+		if(document.getElementById("ar11").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar21").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar31").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar41").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar51").checked)
+		{
+			answer=option5;
+		}
+
+		var characterCountq1 = (question.match(/$$/g) || []).length;
+		var characterCounts1 = (solution.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCountq1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCountq2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCountq2; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		for(i = 0; i <= characterCounts1; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$$","<br><br>[`\\");
+			else
+				solution = solution.replace("$$","`]<br><br>");
+		}
+		
+		var characterCounts2 = (solution.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounts2; i++)
+		{	
+			if(i%2 == 0)
+				solution = solution.replace("$","[`\\");
+			else
+				solution = solution.replace("$","`]");
+		}
+		var characterCounta1 = (answer.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCounta1; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$$","<br><br>[`\\");
+			else
+				answer = answer.replace("$$","`]<br><br>");
+		}
+		var characterCounta2 = (answer.match(/$/g) || []).length;
+		for(i = 0; i <= characterCounta2; i++)
+		{	
+			if(i%2 == 0)
+				answer = answer.replace("$","[`\\");
+			else
+				answer = answer.replace("$","`]");
+		}		
+
+		var section1 = '\n<br>\
+		$mc = RadioButtons(\n<br>[';
+
+		var section2 = '],\n<br>"';
+
+	    	var section3='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part One\*\n<br>\
+		\n<br>';
+
+
+		var section4 = "\n<br>\
+		\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp());\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+	
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + optionArray + section2 + answer + section3 + question + section4 + solution + section5;
+	}
+
+	function genMC2()
+	{
+		var option1 = document.getElementById("at12").value;
+		var option2 = document.getElementById("at22").value;	
+		var option3 = document.getElementById("at32").value;
+		var option4 = document.getElementById("at42").value;
+		var option5 = document.getElementById("at52").value;
+
+		var optionArray = new Array;
+		if(option1 != ""){
+			optionArray[0] = '"' + option1 + '"';}
+		if(option2 != ""){
+			optionArray[1] = '"' + option2 + '"';}
+		if(option3 != ""){
+			optionArray[2] = '"' + option3 + '"';}
+		if(option4 != ""){
+			optionArray[3] = '"' + option4 + '"';}
+		if(option5 != ""){
+			optionArray[4] = '"' + option5 + '"';}
+
+		var question = document.getElementById("q2").value;
+		var solution = document.getElementById("s2").value;
+		var answer = "";
+		
+		if(document.getElementById("ar12").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar22").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar32").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar42").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar52").checked)
+		{
+			answer=option5;
+		}
+
+		var characterCount1 = (question.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCount2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		var section1 = '\n<br>\
+		$mc = RadioButtons(\n<br>[';
+
+		var section2 = '],\n<br>"';
+
+	    	var section3='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Two\*\n<br>\
+		\n<br>';
+
+
+		var section4 = "\n<br>\
+		\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp());\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+	
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + optionArray + section2 + answer + section3 + question + section4 + solution + section5;
+	}
+
+	function genMC3()
+	{
+		var option1 = document.getElementById("at13").value;
+		var option2 = document.getElementById("at23").value;	
+		var option3 = document.getElementById("at33").value;
+		var option4 = document.getElementById("at43").value;
+		var option5 = document.getElementById("at53").value;
+
+		var optionArray = new Array;
+		if(option1 != ""){
+			optionArray[0] = '"' + option1 + '"';}
+		if(option2 != ""){
+			optionArray[1] = '"' + option2 + '"';}
+		if(option3 != ""){
+			optionArray[2] = '"' + option3 + '"';}
+		if(option4 != ""){
+			optionArray[3] = '"' + option4 + '"';}
+		if(option5 != ""){
+			optionArray[4] = '"' + option5 + '"';}
+
+		var question = document.getElementById("q3").value;
+		var solution = document.getElementById("s3").value;
+		var answer = "";
+		
+		if(document.getElementById("ar13").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar23").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar33").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar43").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar53").checked)
+		{
+			answer=option5;
+		}
+
+		var characterCount1 = (question.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCount2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		var section1 = '\n<br>\
+		$mc = RadioButtons(\n<br>[';
+
+		var section2 = '],\n<br>"';
+
+	    	var section3='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Three\*\n<br>\
+		\n<br>';
+
+
+		var section4 = "\n<br>\
+		\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp());\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+	
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + optionArray + section2 + answer + section3 + question + section4 + solution + section5;
+	}
+
+	function genMC4()
+	{
+		var option1 = document.getElementById("at14").value;
+		var option2 = document.getElementById("at24").value;	
+		var option3 = document.getElementById("at34").value;
+		var option4 = document.getElementById("at44").value;
+		var option5 = document.getElementById("at54").value;
+
+		var optionArray = new Array;
+		if(option1 != ""){
+			optionArray[0] = '"' + option1 + '"';}
+		if(option2 != ""){
+			optionArray[1] = '"' + option2 + '"';}
+		if(option3 != ""){
+			optionArray[2] = '"' + option3 + '"';}
+		if(option4 != ""){
+			optionArray[3] = '"' + option4 + '"';}
+		if(option5 != ""){
+			optionArray[4] = '"' + option5 + '"';}
+
+		var question = document.getElementById("q4").value;
+		var solution = document.getElementById("s4").value;
+		var answer = "";
+		
+		if(document.getElementById("ar14").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar24").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar34").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar44").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar54").checked)
+		{
+			answer=option5;
+		}
+
+		var characterCount1 = (question.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCount2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		var section1 = '\n<br>\
+		$mc = RadioButtons(\n<br>[';
+
+		var section2 = '],\n<br>"';
+
+	    	var section3='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Four\*\n<br>\
+		\n<br>';
+
+
+		var section4 = "\n<br>\
+		\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp());\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+	
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + optionArray + section2 + answer + section3 + question + section4 + solution + section5;
+	}
+	
+	function genMC5()
+	{
+		var option1 = document.getElementById("at15").value;
+		var option2 = document.getElementById("at25").value;	
+		var option3 = document.getElementById("at35").value;
+		var option4 = document.getElementById("at45").value;
+		var option5 = document.getElementById("at55").value;
+
+		var optionArray = new Array;
+		if(option1 != ""){
+			optionArray[0] = '"' + option1 + '"';}
+		if(option2 != ""){
+			optionArray[1] = '"' + option2 + '"';}
+		if(option3 != ""){
+			optionArray[2] = '"' + option3 + '"';}
+		if(option4 != ""){
+			optionArray[3] = '"' + option4 + '"';}
+		if(option5 != ""){
+			optionArray[4] = '"' + option5 + '"';}
+
+		var question = document.getElementById("q5").value;
+		var solution = document.getElementById("s5").value;
+		var answer = "";
+		
+		if(document.getElementById("ar15").checked)
+		{
+			answer=option1;
+		}
+		else if(document.getElementById("ar25").checked)
+		{
+			answer=option2;
+		}
+		else if(document.getElementById("ar35").checked)
+		{
+			answer=option3;
+		}
+		else if(document.getElementById("ar45").checked)
+		{
+			answer=option4;
+		}
+		else if(document.getElementById("ar55").checked)
+		{
+			answer=option5;
+		}
+
+		var characterCount1 = (question.match(/$$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$$","<br><br>[`\\");
+			else
+				question = question.replace("$$","`]<br><br>");
+		}
+		
+		var characterCount2 = (question.match(/$/g) || []).length;
+		for(i = 0; i <= characterCount1; i++)
+		{	
+			if(i%2 == 0)
+				question = question.replace("$","[`\\");
+			else
+				question = question.replace("$","`]");
+		}
+
+		var section1 = '\n<br>\
+		$mc = RadioButtons(\n<br>[';
+
+		var section2 = '],\n<br>"';
+
+	    	var section3='");\n<br>\
+		\n<br>\
+		TEXT(beginproblem());\n<br>\
+		\n<br>\
+		BEGIN_PGML\n<br>\
+		\*Part Five\*\n<br>\
+		\n<br>';
+
+
+		var section4 = "\n<br>\
+		\n<br>\
+		\n<br>\
+		[@$mc->buttons()@]*\n<br>\
+		[@'\\ $mc->print_a() \\'@]\n<br>\
+		END_PGML\n<br>\
+		\n<br>\
+		$showPartialCorrectAnswers = 0;\n<br>\
+		\n<br>\
+		ANS($mc->cmp());\n<br>\
+		\n<br>\
+		Context()->texStrings;\n<br>\
+		\n<br>\
+		BEGIN_PGML_SOLUTION;\n<br>\
+		SOLUTION\n<br>\
+		\n<br>";
+	
+		var section5 = "\n<br>END_PGML_SOLUTION\n<br>\
+		Context()->normalStrings;\n<br>";
+
+		return section1 + optionArray + section2 + answer + section3 + question + section4 + solution + section5;
+	}
+
+	function sendCode()
+	{
+		output = document.getElementById("codeOutput");
+		
+		part1="";
+		part2="";
+		part3="";
+		part4="";
+		part5="";
+
+		var section1 = '<br><br>\
+		DOCUMENT();\n<br>\
+		\n<br>\
+		loadMacros\n<br>\
+		(\n<br>\
+			"PGstandard.pl",\n<br>\
+			"parserRadioButtons.pl",\n<br>\
+			"PGchoicemacros.pl",\n<br>\
+			"PGML.pl"\n<br>\
+		);\n<br>\
+		\n<br>';
+
+		var section2 = "\n<br>\
+		ENDDOCUMENT()";
+
+		if(document.getElementById("PartOneSelect").value=="TorF")
+		{
+			part1=genTF1();
+		}
+		else if(document.getElementById("PartOneSelect").value=="FinB")
+		{
+			part1=genFB1();
+		}
+		else if(document.getElementById("PartOneSelect").value=="Mult")
+		{
+			part1=genMC1();
+		}
+
+		if(document.getElementById("PartTwoSelect").value=="TorF")
+		{
+			part2=genTF2();
+		}
+		else if(document.getElementById("PartTwoSelect").value=="FinB")
+		{
+			part2=genFB2();
+		}
+		else if(document.getElementById("PartTwoSelect").value=="Mult")
+		{
+			part2=genMC2();
+		}
+
+		if(document.getElementById("PartThreeSelect").value=="TorF")
+		{
+			part3=genTF3();
+		}
+		else if(document.getElementById("PartThreeSelect").value=="FinB")
+		{
+			part3=genFB3();
+		}
+		else if(document.getElementById("PartThreeSelect").value=="Mult")
+		{
+			part3=genMC3();
+		}
+
+		if(document.getElementById("PartFourSelect").value=="TorF")
+		{
+			part4=genTF4();
+		}
+		else if(document.getElementById("PartFourSelect").value=="FinB")
+		{
+			part4=genFB4();
+		}
+		else if(document.getElementById("PartFourSelect").value=="Mult")
+		{
+			part4=genMC4();
+		}
+
+		if(document.getElementById("PartFiveSelect").value=="TorF")
+		{
+			part5=genTF5();
+		}
+		else if(document.getElementById("PartFiveSelect").value=="FinB")
+		{
+			part5=genFB5();
+		}
+		else if(document.getElementById("PartFiveSelect").value=="Mult")
+		{
+			part5=genMC5();
+		}
+
+		output.innerHTML=section1+part1+part2+part3+part4+part5+section2;
+		return section1+part1+part2+part3+part4+part5+section2;
+	}
+
+</script>
+</head> 
+<body>
+<header> 
+<h1> 
+	<img src = "mlogo.png" height = 70 width = 80 float: center>
+	Mathematical Association of America <br>
+	WeBWorK Question Creator
+</h1> 
+</header><br>
+<div id = "codeArea">
+<fieldset>
+	<legend> Click the button to see a preview of the Perl generated for this question </legend>
+	<button onclick = "sendToWW()" >Generate<br></button>
+	<br> 
+	<div id="codeOutput">
+	</div>
+</div>
+	
+<div id = "questionPreview">
+<fieldset> 
+		<legend>Question Preview:</legend>
+		<button onclick="sendQuestion()">Preview<br></button>
+		<br>
+		<div id="po"></div>
+</fieldset>
+</div>
+
+<div id="userInput">
+	<div id = "PartOne">
+	<b>Part One:&nbsp&nbsp&nbsp&nbsp</b> 
+
+	<select id="PartOneSelect" onchange="genPart1(this.value)"> 
+		<option value ="NA">Select a Question Type</option>
+		<option value ="TorF">True and False</option>
+		<option value ="FinB">Fill in the Blank</option>
+		<option value ="Match">Matching</option>
+		<option value ="Mult">Multiple Choice</option>
+	</select>
+	<br>
+	<div id = "PartOneUserInput"></div>
+	</div>
+
+	<br>
+
+	<div id = "PartTwo">
+	<b>Part Two:&nbsp&nbsp&nbsp&nbsp</b> 
+
+	<select id="PartTwoSelect" onchange="genPart2(this.value)"> 
+		<option value ="NA">Select a Question Type</option>
+		<option value ="TorF">True and False</option>
+		<option value ="FinB">Fill in the Blank</option>
+		<option value ="Match">Matching</option>
+		<option value ="Mult">Multiple Choice</option>
+	</select>
+	<div id = "PartTwoUserInput"></div>
+	</div>
+
+	<br>
+
+	<div id = "PartThree">
+	<b>Part Three:&nbsp</b> 
+
+	<select id="PartThreeSelect" onchange="genPart3(this.value)"> 
+		<option value ="NA">Select a Question Type</option>
+		<option value ="TorF">True and False</option>
+		<option value ="FinB">Fill in the Blank</option>
+		<option value ="Match">Matching</option>
+		<option value ="Mult">Multiple Choice</option>
+	</select>
+	<div id = "PartThreeUserInput"></div>
+	</div>
+
+	<br>
+
+	<div id = "PartFour">
+	<b>Part Four:&nbsp&nbsp&nbsp</b> 
+
+	<select id="PartFourSelect" onchange="genPart4(this.value)"> 
+		<option value ="NA">Select a Question Type</option>
+		<option value ="TorF">True and False</option>
+		<option value ="FinB">Fill in the Blank</option>
+		<option value ="Match">Matching</option>
+		<option value ="Mult">Multiple Choice</option>
+	</select>
+	<div id = "PartFourUserInput"></div>
+	</div>
+
+	<br>
+
+	<div id = "PartFive">
+	<b>Part Five:&nbsp&nbsp&nbsp&nbsp</b>
+ 
+	<select id="PartFiveSelect" onchange="genPart5(this.value)"> 
+		<option value ="NA">Select a Question Type</option>
+		<option value ="TorF">True and False</option>
+		<option value ="FinB">Fill in the Blank</option>
+		<option value ="Match">Matching</option>
+		<option value ="Mult">Multiple Choice</option>
+	</select>
+	<div id = "PartFiveUserInput"></div>
+	</div>
+	<br>
+	<center> or:<br><br>
+	<button class = "button" onclick = "location.href = 'http://165.190.174.225/webwork2/DrHaenschCourse/instructor/setmaker/'"> Add a textbook problem </button> 
+	<br> 
+	<br>When the next screen opens, enter your username and password.
+	<br> Then, select advanced search and enter your textbook name, chapter, problems, etc.</center><br>
+</div>
+
+
+
+</body>
+</html>

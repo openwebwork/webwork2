@@ -5,6 +5,12 @@
 <link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title> True False </title> 
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
 
 <style> 
 img
@@ -59,6 +65,16 @@ button
 </head> 
 <body onload="restoreState()">
 <script> 
+
+function updateMathQues() {
+    var TeX = document.getElementById("question").value;
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub,TeX]);
+}
+
+function updateMathHint() {
+    var TeX2 = document.getElementById("solution").value;
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub,TeX2]);
+}
 
 function sendQuestion() 
 {
@@ -340,7 +356,7 @@ function generatePerl()
 <br>
 	<textarea id ="question" class="DuqWorkSave" rows = "5" cols = "50"></textarea> <br> 
 	<p id="knowlOutput" class="DuqWorkSave"></p>
-	<button class= "button" onclick = "sendQuestion()"> Submit </button>
+	<button class= "button" onclick = "sendQuestion(),updateMathQues()"> Submit </button>
 	<p> Question Preview </p>
 	<div id = "outputQues"> 
 </div> 
@@ -361,7 +377,7 @@ function generatePerl()
 <fieldset> 
 <legend> Enter the explanation of the solution below: </legend> 
 <textarea id ="solution" class="DuqWorkSave" rows = "5" cols = "50"></textarea> <br> 
-	<button class = "button" onclick = "sendSolution()"> Submit </button>
+	<button class = "button" onclick = "sendSolution(),updateMathHint()"> Submit </button>
 	<p> Solution Preview </p>  
 	<div id = "outputSolution"> 
 </div> 
