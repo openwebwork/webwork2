@@ -5,6 +5,12 @@
 <link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title>Fill in the Blanks</title> 
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
 <style>
 img
 { 
@@ -57,6 +63,16 @@ button
 </head> 
 <body onload="restoreState()">
 <script> 
+
+function updateMathQues() {
+    var TeX = document.getElementById("question").value;
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub,TeX]);
+}
+
+function updateMathHint() {
+    var TeX2 = document.getElementById("solution").value;
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub,TeX2]);
+}
 
 function sendQuestion() 
 {	
@@ -283,7 +299,7 @@ function generatePerl()
 	<legend> Please type the question below : </legend> 
 	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
 	<p id="knowlOutput" class="DuqWorkSave"></p>
-	<button onclick = "sendQuestion()" >Submit <br></button> 
+	<button onclick = "sendQuestion(),updateMathQues()" >Submit <br></button> 
 	<p> Question Preview </p>
 	<div id = "outputQues"> 
 	</div>
@@ -337,7 +353,7 @@ function generatePerl()
 	<br>
 	<div class="tooltip">
 		<span class="tooltiptext">This will submit the solution.</span>
-		<button onclick = "sendSolution()" >Submit <br></button> 
+		<button onclick = "sendSolution(),updateMathHint()" >Submit <br></button> 
 		<p> Solution Preview </p>
 		<div id = "outputSolution"> 
 		</div>
