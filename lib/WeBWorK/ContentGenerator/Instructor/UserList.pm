@@ -27,7 +27,7 @@ data editing
 =for comment
 
 What do we want to be able to do here?
-
+'
 Filter what users are shown:
 	- none, all, selected
 	- matching user_id, matching section, matching recitation
@@ -67,10 +67,17 @@ Export users:
 use strict;
 use warnings;
 #use CGI qw(-nosticky );
+use base qw(WeBWorK::ContentGenerator::Instructor);
 use WeBWorK::CGI;
 use WeBWorK::File::Classlist;
+use WeBWorK::ContentGenerator::Instructor::FileManager;	#Imports files.
 use WeBWorK::DB qw(check_user_id);
 use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
+use WeBWorK::Upload;
+use File::Path;
+use File::Copy;
+use File::Spec;
+use String::ShellQuote;
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(cancelEdit saveEdit)];
 use constant PASSWORD_FORMS => [qw(cancelPassword savePassword)];
@@ -191,7 +198,9 @@ sub pre_header_initialize {
 	my $urlpath       = $r->urlpath;
 	my $authz         = $r->authz;
 	my $ce            = $r->ce;
-	my $courseName    = $urlpath->arg("courseID");
+	my $courseName    = $urlpath->arg('courseID');
+	my $courseRoot    = $ce->{courseDirs}{root};
+	my $db 		  = $r->db;
 	my $user          = $r->param('user');
 	# Handle redirects, if any.
 	##############################
@@ -256,6 +265,7 @@ sub body {
 	my $db           = $r->db;
 	my $ce           = $r->ce;
 	my $authz        = $r->authz;	
+	my $courseRoot   = $r->{courseDirs}{root};
 	my $courseName   = $urlpath->arg("courseID");
 	my $setID        = $urlpath->arg("setID");       
 	my $user         = $r->param('user');
@@ -1007,14 +1017,21 @@ sub add_handler {
 sub import_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
+	my $dir = "$self->{courseRoot}/$self->{pwd}";
 	return join(" ",
 		"Import users from file",
 		CGI::popup_menu(
-			-name => "action.import.source",
+		-name => "action.import.source",
 			-values => [ $self->getCSVList() ],
 			-default => $actionParams{"action.import.source"}->[0] || "",
 			-onchange => $onChange,
 		),
+		#CGI::popup_menu(
+			#-name => "action.import.source",
+			#-values => [ $self->getCSVList() ],
+			#-default => $actionParams{"action.import.source"}->[0] || "",
+			#-onchange => $onChange,
+		#),
 		"replacing",
 		CGI::popup_menu(
 			-name => "action.import.replace",
@@ -1045,11 +1062,11 @@ sub import_form {
 
 sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	
+
 	my $source = $actionParams->{"action.import.source"}->[0];
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
-	
+
 	my $fileName = $source;
 	my $createNew = $add eq "any";
 	my $replaceExisting;
@@ -1065,21 +1082,21 @@ sub import_handler {
 		$replaceExisting = "listed";
 		@replaceList = @{ $self->{selectedUserIDs} };
 	}
-	
+
 	my ($replaced, $added, $skipped)
-		= $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
-	
+	= $self->importUsersFromCSV($fileName, $createNew, $replaceExisting, @replaceList);
+
 	# make new users visible... do we really want to do this? probably.
 	push @{ $self->{visibleUserIDs} }, @$added;
-	
+
 	my $numReplaced = @$replaced;
 	my $numAdded = @$added;
 	my $numSkipped = @$skipped;
-	
+
 	return $numReplaced . " user" . ($numReplaced == 1 ? "" : "s") . " replaced, "
-		. $numAdded . " user" . ($numAdded == 1 ? "" : "s") . " added, "
-		. $numSkipped . " user" . ($numSkipped == 1 ? "" : "s") . " skipped"
-		. " (" . join (", ", @$skipped) . ") ";
+	. $numAdded . " user" . ($numAdded == 1 ? "" : "s") . " added, "
+	. $numSkipped . " user" . ($numSkipped == 1 ? "" : "s") . " skipped"
+	. " (" . join (", ", @$skipped) . ") ";
 }
 
 sub export_form {

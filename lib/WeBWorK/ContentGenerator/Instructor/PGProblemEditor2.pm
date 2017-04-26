@@ -732,10 +732,58 @@ EOF
 	
 	print  CGI::end_form();
 
+
+	print CGI::br();		
+	print CGI::br();		
+	print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
+	print CGI::br();
+	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
+
+	my $setID = $r->urlpath->arg("setID");
+	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
+
+	my $fileIDhash = $self->r->param('file');
+	unless ($fileIDhash) {
+		$self->addbadmessage("You have not chosen a file to upload.");
+		return;
+	}
+	my ($id,$hash) = split(/\s+/,$fileIDhash);			
+	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+	my $name = checkName($upload->filename);			#Taint checker.
+	#get file exstension and then set file name to the user's id 
+	my ($ext) = $name =~ /(\.[^.]+)$/;
+        $name = $user . $ext;
+	my $file = "$dir/$name";
+
+	$upload->disposeTo($file);
+
+	if (-e $file) {
+	  $self->addgoodmessage("File '$name' uploaded successfully");
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	    }
+	  }
+	}
+
+	print CGI::end_form();
+
 	print CGI::script("updateTarget()");
 	return "";
 
 
+}
+
+sub checkName {
+	my $file = shift;
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file =~ s/^\./_/;                  # no initial dot
+	$file = "newfile.txt" unless $file; # no blank names
+	return $file;
 }
 
 #

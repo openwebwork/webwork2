@@ -1599,9 +1599,9 @@ sub output_submit_buttons{
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
         }
-    #print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
 	print CGI::br();
-    print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	print CGI::br();
+	print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
 	print CGI::br();
 	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
@@ -1609,17 +1609,12 @@ sub output_submit_buttons{
 	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
 		$self->addbadmessage("You have not chosen a file to upload.");
-		#$self->Refresh;
 		return;
 	}
 	my ($id,$hash) = split(/\s+/,$fileIDhash);			
 	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
-	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
-	#get file exstension and then set file name to the user's id 
-	my ($ext) = $name =~ /(\.[^.]+)$/;
-    $name = $user . $ext;
 	my $file = "$dir/$name";
 
 	$upload->disposeTo($file);

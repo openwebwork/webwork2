@@ -19,6 +19,7 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
+use WeBWorK::File::Classlist;
 use File::Path;
 use File::Copy;
 use File::Spec;
@@ -137,7 +138,7 @@ sub body {
 		-id=>"FileManager",
 		-enctype=> 'multipart/form-data',
 		-name=>"FileManager",
-         -style=>"margin:0",
+        -style=>"margin:0",
 	);
 	print $self->hidden_authen_fields;
 
@@ -300,7 +301,7 @@ EOF
 	# Start the table
 	#
 	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3, style=>"margin:1em 0 0 3em"});
-
+	
 	#
 	# Directory menu and date/size checkbox
 	#
@@ -523,7 +524,7 @@ sub Edit {
 #
 sub Save {
 	my $self = shift; my $filename = shift;
-	my $r=$self->r;
+	my $r = $self->r;
 	my $pwd = $self->{pwd};
 	if ($filename) {
 		$pwd = substr($filename,length($self->{courseRoot})+1);

@@ -13,6 +13,7 @@ ok(scalar(@records) == 4, 'The number of records is correct.');
 
 # Expecting each record to be a reference to a hash.
 for my $hash_ref (@records) {
+    
     my $multipass = ${$hash_ref}{'student_id'};
     my $email = ${$hash_ref}{'email_address'};
     

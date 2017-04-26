@@ -516,8 +516,8 @@ sub problemListRow($$$$$) {
 	my $status = eval{ wwRound(0, $rawStatus * 100).'%'}; # round to whole number
 	
 	# 4/24/2017 if the set was set to "hide_score" then the following if statement hides the current grade progress for each question in a homework set. The status column will just show "In Progress" for all questions.
-	if(defined( $set->hide_score ) && ( $set->hide_score eq 'Y' || 
-			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date))){
+	if(defined( $set->hide_score_by_problem ) && defined( $set->hide_score ) && ( $set->hide_score_by_problem eq 'Y' || 
+			 ($set->hide_score eq 'BeforeAnswerDate' && $set->hide_score_by_problem eq 'Y'&& time < $set->answer_date))){
 		$status = 'In Progress';		
 	}
 
