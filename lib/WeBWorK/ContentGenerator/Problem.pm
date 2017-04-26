@@ -1302,7 +1302,7 @@ sub output_editorLink{
 		my $key = $self->r->param("key");
 		my $action_save_as_source_file = "/opt/webwork/courses/".$courseID."/templates/".$problem->source_file;
 	    my $editorURL = "/webwork2_files/duq/frontpageperl.html?courseID=".$courseID."&setID=".$setID."&problemID=".$problemID."&user=".$user."&effectiveUser=".$effectiveUser."&key=".$key."&action.save_as.source_file=".$action_save_as_source_file;
-	    $editorLink4 = CGI::span(CGI::a({href=>$editorURL}), $r->maketext("DuqEdit"));
+	    $editorLink4 = CGI::span(CGI::a({href=>$editorURL}, $r->maketext("DuqEdit")));
 	}
 	    
 	##### translation errors? #####
