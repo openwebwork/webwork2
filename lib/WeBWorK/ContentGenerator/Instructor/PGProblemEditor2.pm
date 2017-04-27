@@ -31,12 +31,13 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(readFile surePathToFile path_is_subdir jitar_id_to_seq seq_to_jitar_id x);
 use HTML::Entities;
 use URI::Escape;
-use WeBWorK::Utils qw(has_aux_files not_blank);
+use WeBWorK::Utils qw(x surePathToFile has_aux_files not_blank readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
+	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished);
 use File::Copy;
 use File::Basename qw(dirname);
+use File::Path qw(rmtree);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set renderProblems);
 use Data::Dumper;
 use Fcntl;
@@ -125,7 +126,7 @@ use Fcntl;
 # save_to_new_file
 # 
 
-use constant ACTION_FORMS => [qw(view  save save_as add_problem revert)]; 
+use constant ACTION_FORMS => [qw(view save save_as add_problem revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
 view        => x("View"),
 add_problem => x("Append"),
@@ -386,7 +387,7 @@ sub initialize  {
 		$self->addbadmessage($r->maketext("The file '[_1]' cannot be found.", $self->shortPath($inputFilePath)));
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
-		$self->addbadmessage($r->maketext("The file '[_1]' is protected!", $self->shortPath($inputFilePath)).CGI::br().
+		$self->addbadmessage($r->maketext("The file '[_1]' is protected!", $self->shortPath($inputFilePath)).CGI::br(),
 		$r->maketext("To edit this text you must first make a copy of this file using the 'NewVersion' action below."));
 
 	}
@@ -733,15 +734,16 @@ EOF
 	print  CGI::end_form();
 
 
-	print CGI::br();		
-	print CGI::br();		
-	print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	#Uploads a file, saving the extension and naming it "video.(extensionname)"
+	my $setID = $r->urlpath->arg("setID");
+	my $problemNumber = $r->urlpath->arg("problemID");
+	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
+	print CGI::br();
+    print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
 	print CGI::br();
 	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
-
-	my $setID = $r->urlpath->arg("setID");
-	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
+	print CGI::end_form();
 
 	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
@@ -753,9 +755,9 @@ EOF
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
 	#get file exstension and then set file name to the user's id 
-	my ($ext) = $name =~ /(\.[^.]+)$/;
-        $name = $user . $ext;
-	my $file = "$dir/$name";
+	my $ext = $name;
+	$ext =~ s/^(.[^.]+)//;
+	my $file = "$dir/video$ext";
 
 	$upload->disposeTo($file);
 
@@ -769,7 +771,6 @@ EOF
 	  }
 	}
 
-	print CGI::end_form();
 
 	print CGI::script("updateTarget()");
 	return "";
@@ -777,14 +778,6 @@ EOF
 
 }
 
-sub checkName {
-	my $file = shift;
-	$file =~ s!.*[/\\]!!;               # remove directory
-	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
-	$file =~ s/^\./_/;                  # no initial dot
-	$file = "newfile.txt" unless $file; # no blank names
-	return $file;
-}
 
 #
 #  Convert long paths to [TMPL], etc.
@@ -2018,6 +2011,14 @@ sub revert_handler {
 	$self->{r_problemContents} = \$problemContents;
 	$self->addgoodmessage("Reverting to original file '".$self->shortPath($editFilePath)."'");
 	# no redirect is needed
+}
+sub checkName {
+	my $file = shift;
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file =~ s/^\./_/;                  # no initial dot
+	$file = "newfile.txt" unless $file; # no blank names
+	return $file;
 }
 
 sub output_JS{
