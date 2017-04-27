@@ -1625,7 +1625,7 @@ EOF
 		if (-e ("$vid_file" . "$file_ext")) {
 			my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Grades", $r, courseID => $courseID);
        			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
-			my $video_html = ' <video width="320" height="240" controls="true" style="padding-bottom:4em;"><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg">Your browser does not support the video tag.</video>';
+			my $video_html = ' <video width="320" height="240" controls="true" style="padding-bottom:4em;"><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg"><source src="' . $fileManagerURL . '" type="video/webm">Your browser does not support the video tag.</video>';
 			#check compatability with html5 video tag
 			if ($file_ext == '.mp4' || $file_ext == '.ogg' || $file_ext == '.webm'){			
 				print CGI::button({onclick => "play()", value => 'Video Hint'});
