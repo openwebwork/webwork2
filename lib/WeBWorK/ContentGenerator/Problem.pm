@@ -1627,7 +1627,7 @@ EOF
        			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
 			my $video_html = ' <video width="320" height="240" controls="true" style="padding-bottom:4em;"><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg"><source src="' . $fileManagerURL . '" type="video/webm">Your browser does not support the video tag.</video>';
 			#check compatability with html5 video tag
-			if ($file_ext == '.mp4' || $file_ext == '.ogg' || $file_ext == '.webm'){			
+			if ($file_ext eq '.mp4' || $file_ext eq '.ogg' || $file_ext eq '.webm'){
 				print CGI::button({onclick => "play()", value => 'Video Hint'});
 				print CGI::div({id=>"video-hint", style=>"display:none;"},
 				CGI::pre($video_html));
