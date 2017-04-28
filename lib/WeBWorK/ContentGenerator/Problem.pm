@@ -1617,7 +1617,7 @@ function download_video(video){
 EOF
 	# button when clicked will download video uploaded by the professor
 	my $vid_filename = 'video';
-	my @file_exts = qw(.mp4 .mov .qt .ogg .wav .webm);
+	my @file_exts = qw(.mp4 .mov .qt .ogg .wav .webm .MOV);
 	my $vid_dir = 'templates/set' . $setID . '/' . $setID . '_Problem_' . $problemNumber . '_Student_Uploads';
         my $vid_file = $ce->{webworkDirs}{courses} . '/' . $courseID . "/$vid_dir/$vid_filename";$urlpath = $self->r->urlpath;
 	#check if file exists, if it does then either play video in browser or download
