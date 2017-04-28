@@ -125,7 +125,7 @@ function randTrig(paramNum, trigs){
     var init = "@trigs" + paramNum + " = (";
 
     // Expects array[6] of booleans with labeled pointers
-    var functions;
+    var functions = new Array();
     if (trigs.Sin){
         functions.push("\"sin\"");
     }

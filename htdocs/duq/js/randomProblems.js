@@ -299,8 +299,10 @@ function insertRandInits(pgString, initArr){
 
 function escapeRands(answer){
 	var rands = answer.match(/\$rand[0-9]+/g);
-	for(var i = 0; i < rands.length; i ++){
-		answer = answer.replace(rands[i], "'." + rands[i] + ".'");
+	if(rands != null){
+		for(var i = 0; i < rands.length; i ++){
+			answer = answer.replace(rands[i], "'." + rands[i] + ".'");
+		}
 	}
 	return answer;
 }
