@@ -3,8 +3,7 @@ submitButton.onclick = function() {
     var question = $("#question").val();
     // Add the knowl handler (Gets the knowl from the database)
 
-    //addKnowlHelper();
-    sendToWebwork("$rand3($rand1) $rand5 $rand4($rand2)");
+    addKnowlHelper();
     // Once the knowl request is made and the response is received, it will then call sendToWebwork (This prevents it from sending a blank question)
     // NOTE: sendToWebwork will probably not be called if you test it outside of webwork so please just try it on webwork when developing
     
@@ -18,7 +17,6 @@ function sendToWebwork(question){
     else if (submitButton.classList.contains("fillinblanks")) {
 	pgString = generateFillInBlanks(question);
     }
-	window.alert(pgString);
     // Remove line breaks.
     pgString = pgString.replace(/<br>/g, '');
     var paramMap = getURLParams(window.location.href);
