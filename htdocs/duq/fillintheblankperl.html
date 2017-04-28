@@ -297,6 +297,162 @@ function generatePerl()
 </div>
 
 <div id = "userInput">
+
+
+
+<!--Random Field-->
+<fieldset>
+        <legend> Do you want to add randomization to this problem? </legend>
+        <!-- yes/no radio buttons -->
+        <input type="radio" name="randType" value="YesRand" 
+                onclick = "showRandom()" id = "randYes">
+                <label for="randYes">Yes</label>
+        <input type="radio" name="randType" value="NoRand" checked                      onclick="hideRandom()" id = "randNo">
+                <label for="randNo">No</label><br>
+        <!-- Variable Checkboxes -->
+        <div id = "acceptRandoms" style = "display:none;">
+                <br>Check the type of randomizations you want:<br>
+                <input type="checkbox" name="randomType" id="numValue" 
+                        value="numRand" onclick="showNumValRand()">
+                        <label for="numValue">Numerical Values</label><br>
+                <input type="checkbox" name="randomType" id="trigValue" 
+                        value="trigRand" onclick="showTrigRand()">
+                        <label for="trigValue">Trigometric Functions</label><br>
+                <input type="checkbox" name="randomType" id="reOpValue" 
+                        value="ReRand" onclick="showReOpRand()">
+                        <label for ="reOpValue">Relational Operator</label><br>
+        </div>
+        <!-- Numerical Value Section -->
+        <div id = "randNumValues" style = display:none;">
+        <table id = "numTable">
+                <tr id = "numRow">
+                <td>
+                <br>Enter the range in which the random numbers should be                               pulled from.<br>
+                <div class = "tooltip">
+                        <span class = "tooltiptext">Enter the lowest number in                                  the range</span>
+                        <textarea name = "randRangeStart" placeholder = "Start"                                         rows = "1" cols = "15"></textarea>
+                </div>
+                <div class = "tooltip">
+                        <span class = "tooltiptext">Enter the highest number in                                 the range</span>
+                        <textarea name = "randRangeEnd" placeholder = "End" rows =                                      "1" cols = "15"></textarea> 
+                </div>
+                <br>
+                <div class="tooltip">
+                        Enter the value you would like to increment the                                         randomization by.<br>
+                        <span class = "tooltiptext">For example: in a range of                                  (1,5) with an increment value of 0.5, you could                                 get randomized values such as 1, 1.5, 2, 2.5,                                   etc. The default value is 1.</span>
+                        <textarea name="randIncrement" placeholder="Increments"                                 rows = "1" cols = "30">1</textarea><br>
+                </div>
+                <br>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Add another random
+                                numerical value.</span>
+                        <button class="button" 
+                                onclick="addNewRow('numTable','numRow')">
+                               +</button>
+                </div>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Remove the most recently                                    added random numerical value.</span>
+                        <button class="button" 
+                                onclick="deleteLastRow('numTable')">
+                                -</button>
+                </div>
+                </td>
+                </tr>
+        </table>
+        </div>
+        <!-- Trigometric Section -->
+        <div id = "randTrig" style = display:none;">
+        <br>Check the trig variables you would like to have randomized.
+        <table id = "trigTable">
+                <tr id = "trigRow">
+                <td><br>
+                <input type="checkbox" name="trigType"
+                        value="sin" id="sinRand" checked>
+                        <label for="sinRand">Sin </label>
+                <input type="checkbox" name="trigType"
+                        value="cos" id="cosRand" checked>
+                        <label for="cosRand">Cos </label>
+                <input type="checkbox" name="trigType"
+                        value="tan" id="tanRand" checked>
+                        <label for="tanRand">Tan </label><br>
+                <input type="checkbox" name="trigType"
+                        value="csc" id="cscRand">
+                        <label for="cscRand">Csc </label>
+                <input type="checkbox" name="trigType"
+                        value="sec" id="secRand">
+                        <label for="secRand">Sec </label>
+                <input type="checkbox" name="trigType"
+                        value="cot" id="cotRand">
+                        <label for="cotRand">Cot </label><br><br>
+
+                <div class="tooltip">
+                        <span class = "tooltiptext">Add another random
+                                trig variable.</span>
+                        <button class="button" 
+                                onclick="addNewRow('trigTable','trigRow')">
+                                +</button>
+                </div>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Remove the most recently                                    added random trig variable.</span>
+                        <button class="button" 
+                                onclick="deleteLastRow('trigTable')">
+                                -</button>
+                </div>
+                 </td>
+                </tr>
+        </table>
+        </div>
+        <!-- Relational Operator Section -->
+        <div id = "randRegOp" style = display:none;">
+        <br>Choose the relational operators you would like to possibly                  have in your problem.<br>
+        <table id = "reOpTable">
+                <tr id = "reOpRow">
+                <td><br>
+                <input type="checkbox" name="roType"
+                        value="<" id="lessRand">
+                        <label for="lessRand">< </label>
+                <input type="checkbox" name="roType"
+                        value="<=" id="lessEqRand">
+                        <label for="lessRand">&#8804 </label><br>
+                <input type="checkbox" name="roType"
+                        value=">" id="greatRand">
+                        <label for="greatRand">> </label>
+                <input type="checkbox" name="roType"
+                        value=">=" id="greatEqRand">
+                        <label for="greatEqRand">&#8805 </label><br>
+                <input type="checkbox" name="roType"
+                        value="=" id="equalRand">
+                        <label for="EqualRand">= </label>
+                <input type="checkbox" name="roType"
+                        value="!=" id="notEqualRand">
+                        <label for="notEqualRand">&#8800 </label><br><br>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Add another random
+                                relational operator.</span>
+                        <button class="button" 
+                                onclick="addNewRow('reOpTable','reOpRow')">
+                                +</button>
+                </div>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Remove the most recently                                    added random relational operator.</span>
+                        <button class="button" 
+                                onclick="deleteLastRow('reOpTable')">
+                                -</button><br>
+                </div>
+                </td>
+                </tr>
+        </table>
+        </div>
+        <div id = "finalRandField" style = "display:none;">
+                <br><button class = "button"
+                        onclick = "createRandomOutput()">Finish</button>
+                <br>
+                <div id = "randomResults"></div>
+        </div>
+</fieldset>
+
+
+
 <fieldset> 
 	<legend> Please type the question below : </legend> 
 	<p> <textarea id ="question" class="DuqWorkSave" rows="5" cols="50"></textarea><br>
@@ -436,5 +592,7 @@ function generatePerl()
 <script type="text/javascript" src="js/toleranceEditor.js"></script>
 <script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
 <script type="text/javascript" src="js/problemSyntaxSimplification.js"></script>
+<script type="text/javascript" src="js/randomProblems.js"></script>
+<script type="text/javascript" src="js/randParam.js"></script>
 
 </html>
