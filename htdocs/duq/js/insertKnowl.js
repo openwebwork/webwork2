@@ -51,7 +51,8 @@ function postKnowl(theWord, theDef, theSearch, theQuestion){
          		theWord = theWord + searchWord;
          		theDef = theDef + searchDef;
     		}
-    		addKnowl(theWord, theDef, theQuestion);
+    		question = addKnowl(theWord, theDef, theQuestion);
+		sendToWebwork(question);
 	});
 }
 
@@ -76,12 +77,8 @@ function addKnowl(theWord, theDef, theQue) {
     var knowlCode = new Array(numW);
     
     var temp = ["#1","#2", "#3", "#4", "#5", "#6", "#7", "#8","#9", "#10"];
-    
-    if(words == "") {
-        document.getElementById("knowlOutput").innerHTML = question;
-    }
-    
-    else{
+ 
+    if(words != ""){
         for(var i=0;i< numW;i++){
             var word= partsW[i];
 	    word = word.replace(/\\/g, "\\\\");
@@ -99,18 +96,14 @@ function addKnowl(theWord, theDef, theQue) {
        var tempKnowl = question.slice(0, wordPosition) + temp[i]+question.slice(wordLastPos);
        // sub
        question = tempKnowl;
-        //document.getElementById("knowlOutput").innerHTML = finalKnowl;
-        // replace knowlOutput for changing perl file
-    }
-    else {
-        document.getElementById("knowlOutput").innerHTML = question;
+        
     }
     }
     for(var j=0;j< numW;j++){
         question= question.replace(temp[j], knowlCode[j]);
     }
-        document.getElementById("knowlOutput").innerHTML = question;
     
     }
+    return question;
     
 }

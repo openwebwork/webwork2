@@ -31,6 +31,177 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status wwRound);
 use WeBWorK::Localize;
+use constant HOME => 'templates';
+
+# Check that the user is authorized, and then
+# see if there is a download to perform.
+# added code here for downlaoding video hint if video format cannot be displayed in browser
+sub pre_header_initialize {
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $user = $r->param('user');
+	
+	my $action = $r->param('action');
+	$self->Download if ($action && ($action eq 'Download' || $action eq $r->maketext("Download")));
+	my $file = $r->param('download');
+	$self->downloadFile($file) if (defined $file);
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
+	my $courseID = $r->urlpath->arg("courseID");
+	# removed archived_course_ prefix -- it is important that path matches the $courseID for consitency with the database dump
+	my $archive_path = $ce->{webworkDirs}{courses} . "/$courseID/templates/$courseID.tar.gz";
+	my %options = (courseID => $courseID, archive_path => $archive_path, ce=>$ce );
+	$self->{archive_options}= \%options;
+
+}
+
+# Download a given file
+sub downloadFile {
+	my $self = shift;
+	my $file = checkName(shift);
+	my $pwd = $self->checkPWD(shift || $self->r->param('pwd') || HOME);
+	return unless $pwd;
+	$pwd = $self->{ce}{courseDirs}{root} . '/' . $pwd;
+	unless (-e "$pwd/$file") {
+		$self->addbadmessage("The file you are trying to download doesn't exist");
+		return;
+	}
+	unless (-f "$pwd/$file") {
+		$self->addbadmessage("You can only download regular files.");
+		return;
+	}
+	my $type = "application/octet-stream";
+	$type = "text/plain" if $file =~ m/\.(pg|pl|pm|txt|def|csv|lst)/;
+	$type = "image/gif"  if $file =~ m/\.gif/;
+	$type = "image/jpeg" if $file =~ m/\.(jpg|jpeg)/;
+	$type = "image/png"  if $file =~ m/\.png/;
+	$self->reply_with_file($type, "$pwd/$file", $file, 0);
+}
+
+# Download a file
+sub Download {
+	my $self = shift;
+	my $r = $self->r;	
+	my $pwd = $self->checkPWD($self->r->param('pwd') || HOME);
+	return unless $pwd;
+	my $filename = $self->getFile("download"); return unless $filename;
+	my $file = $self->{ce}{courseDirs}{root}.'/'.$pwd.'/'.$filename;
+
+	if (-d $file) {$self->addbadmessage("You can't download directories"); return}
+	unless (-f $file) {$self->addbadmessage("You can't download files of that type"); return}
+
+	$self->r->param('download',$filename);
+}
+
+#  Check if a file is a symbolic link that we
+#  are not allowed to follow.
+sub isSymLink {
+	my $self = shift; my $file = shift;
+	return 0 unless -l $file;
+
+	my $courseRoot = $self->{ce}{courseDirs}{root};
+	$courseRoot = readlink($courseRoot) if -l $courseRoot;
+	my $pwd = $self->{pwd} || $self->r->param('pwd') || HOME;
+	my $link = File::Spec->rel2abs(readlink($file),"$courseRoot/$pwd");
+	#
+	# Remove /./ and dir/../ constructs
+	#
+	$link =~ s!(^|/)(\.(/|$))+!$1!g;
+	while ($link =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+
+	#
+	# Link is OK if it is in the course directory
+	#
+	return 0 if substr($link,0,length($courseRoot)) eq $courseRoot;
+
+	#
+	# Look through the list of valid paths to see if this link is OK
+	#
+	my $valid = $self->{ce}{webworkDirs}{valid_symlinks};
+	if (defined $valid && $valid) {
+		foreach my $path (@{$valid}) {
+			return 0 if substr($link,0,length($path)) eq $path;
+		}
+	}
+
+	return 1;
+}
+
+# Normalize the working directory and check if it is OK.
+#
+sub checkPWD {
+	my $self = shift;
+	my $pwd = shift;
+	my $renameError = shift;
+
+	$pwd =~ s!//+!/!g;               # remove duplicate slashes
+	$pwd =~ s!(^|/)~!$1_!g;          # remove ~user references
+	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;  # remove dot directories
+	
+	# remove dir/.. constructions
+	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+	
+	$pwd =~ s!/$!!;                        # remove trailing /
+	return if ($pwd =~ m!(^|/)\.\.(/|$)!); # Error if outside the root
+
+	# check for bad symbolic links
+	my @dirs = split('/',$pwd);
+	pop(@dirs) if $renameError;      # don't check file iteself in this case
+	my @path = ($self->{ce}{courseDirs}{root});
+	foreach my $dir (@dirs) {
+		push @path,$dir;
+		return if ($self->isSymLink(join('/',@path)));
+	}
+
+	my $original = $pwd;
+	$pwd =~ s!(^|/)\.!$1_!g;         # don't enter hidden directories
+	$pwd =~ s!^/!!;                  # remove leading /
+	$pwd =~ s![^-_./A-Z0-9~, ]!_!gi; # no illegal characters
+	return if $renameError && $original ne $pwd;
+
+	$pwd = '.' if $pwd eq '';
+	return $pwd;
+}
+
+# Check that there is exactly one valid file
+sub getFile {
+	my $self = shift; my $action = shift;
+	my @files = $self->r->param("files");
+	if (scalar(@files) > 1) {
+		$self->addbadmessage("You can only $action one file at a time.");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	if (scalar(@files) == 0 || $files[0] eq "") {
+		$self->addbadmessage("You need to select a file to $action.");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || HOME) || '.';
+	if ($self->isSymLink($pwd.'/'.$files[0])) {
+		$self->addbadmessage("That symbolic link takes you outside your course directory");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	unless ($self->checkPWD($pwd.'/'.$files[0],1)) {
+		$self->addbadmessage("You have specified an illegal file");
+		$self->Refresh unless $action eq 'download';
+		return;
+	}
+	return $files[0];
+}
+
+# Check a name for bad characters, etc.
+sub checkName {
+	my $file = shift;
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file =~ s/^\./_/;                  # no initial dot
+	$file = "newfile.txt" unless $file; # no blank names
+	return $file;
+}
+
 sub initialize {
 	my ($self) = @_;
 	my $r = $self->r;

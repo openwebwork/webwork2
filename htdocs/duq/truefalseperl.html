@@ -5,6 +5,12 @@
 <link rel="stylesheet" type="text/css" href="tooltips.css">
 
 <title> True False </title> 
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
 
 <style> 
 img
@@ -60,9 +66,18 @@ button
 <body onload="restoreState()">
 <script> 
 
+function updateMathQues() {
+    var TeX = document.getElementById("question").value;
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub,TeX]);
+}
+
+function updateMathHint() {
+    var TeX2 = document.getElementById("solution").value;
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub,TeX2]);
+}
+
 function sendQuestion() 
 {
-	//addKnowlHelper();
 	var question = document.getElementById("question").value; 
 	if(question == "") 
 	{
@@ -74,6 +89,8 @@ function sendQuestion()
 		question = checkDollarSigns("question");
 		output.innerHTML = "You asked : " + question; 
 	}
+	// Presents the question in latex style
+	updateMathQues();
 }
 
 function sendAns()
@@ -136,80 +153,6 @@ function sendHint(){
 				" width=" + width + "px" + 
 				" height=" + height + "px>";
 }
-	
-function generatePerl()
-{
-	addKnowlHelper();
-	var question = document.getElementById("knowlOutput").innerHTML;
-	//team B
-	//don't worry about this. knowlOutput return the same thing as question
-	//if there is not a knowl and return the string question with knowl if there is
-	var solution = document.getElementById("solution").value; 
-	solution = checkDollarSigns("solution");
- 
-	if(document.getElementById("true").checked) 
-	{
-		var answer = "True"; 
-  	}
-	else if(document.getElementById("false").checked) 
-	{
-		var answer = "False"; 
-	}
-
-	var section1 = "<br><br>\
-	DOCUMENT();\n<br>\
-	\n<br>\
-	loadMacros\n<br>\
-	(\n<br>\
-		\"PGstandard.pl\",\n<br>\
-		\"parserRadioButtons.pl\",\n<br>\
-	);\n<br>\
-	TEXT(beginproblem());\n<br>\
-	\n<br>\
-	$mc = RadioButtons(\n<br>\
-    	[ \"True\", \"False\"],\n<br>\"";
-
-    	var section2="\");\n<br>\
-	\n<br>\
-	BEGIN_TEXT\n<br>";
-
-
-	var section3 = "\n<br>\
-		$BR\n<br>\
-		\\{ $mc->buttons() \\}\n<br>\
-	END_TEXT\n<br>\
-	\n<br>\
-	$showPartialCorrectAnswers = 0;\n<br>\
-	\n<br>\
-	ANS( $mc->cmp() );\n<br>\
-	\n<br>\
-	Context()->texStrings;\n<br>\
-	SOLUTION(EV3(<<'END_SOLUTION'));\n<br>\
-	$PAR SOLUTION $PAR\n<br>";
-	
-	var section4 = "\n<br>END_SOLUTION\n<br>\
-	Context()->normalStrings;\n<br>\
-	\n<br>\
-	ENDDOCUMENT();";
-
-	var pgString = section1 + answer + section2 + question + section3 + solution + section4;
-	
-	//Insert hint/image PG code, if there is a hint or image
-	if(document.getElementById("hintText").value != "" || 
-		document.getElementById("imageHintText").value != ""
-			|| document.getElementById("imageText").value != ""){
-			pgString = translateToPG(pgString,
-				document.getElementById("hintText").value, 
-					[document.getElementById("imageHintText").value, document.getElementById("imageHintWidth").value, document.getElementById("imageHintHeight").value], 
-						[document.getElementById("imageText").value, document.getElementById("imageWidth").value, document.getElementById("imageHeight").value]);
-	}
-
-	var output = document.getElementById("outputCode");
-	output.innerHTML = "All the Perl Code is : <span id='code'>"  + pgString + "</span>"; 	
-	
-	// Save the state and make the updates in WebWorK
-	saveState();
-}
 	 
 </script>
 
@@ -224,12 +167,172 @@ function generatePerl()
 <fieldset>
 	<legend> Click the button to see a preview of the Perl generated for this question </legend>
 	<button id="submitButton" class="truefalse">Submit <br></button>
+	<p>NOTE: Make sure to close all other webwork tabs before you<br/> click the submit button or else your changes will not be saved.</p>
 	<br><br> 
 	<div id="outputCode">
 	</div>
 </div>
 
 <div id = "userInput">
+
+<!--Random Field-->
+<fieldset>
+        <legend> Do you want to add randomization to this problem? </legend>
+        <!-- yes/no radio buttons -->
+        <input type="radio" name="randType" value="YesRand" 
+                onclick = "showRandom()" id = "randYes">
+                <label for="randYes">Yes</label>
+        <input type="radio" name="randType" value="NoRand" checked                      onclick="hideRandom()" id = "randNo">
+                <label for="randNo">No</label><br>
+        <!-- Variable Checkboxes -->
+        <div id = "acceptRandoms" style = "display:none;">
+                <br>Check the type of randomizations you want:<br>
+                <input type="checkbox" name="randomType" id="numValue" 
+                        value="numRand" onclick="showNumValRand()">
+                        <label for="numValue">Numerical Values</label><br>
+                <input type="checkbox" name="randomType" id="trigValue" 
+                        value="trigRand" onclick="showTrigRand()">
+                        <label for="trigValue">Trigometric Functions</label><br>
+                <input type="checkbox" name="randomType" id="reOpValue" 
+                        value="ReRand" onclick="showReOpRand()">
+                        <label for ="reOpValue">Relational Operator</label><br>
+        </div>
+        <!-- Numerical Value Section -->
+        <div id = "randNumValues" style = display:none;">
+        <table id = "numTable">
+                <tr id = "numRow">
+                <td>
+                <br>Enter the range in which the random numbers should be                               pulled from.<br>
+                <div class = "tooltip">
+                        <span class = "tooltiptext">Enter the lowest number in                                  the range</span>
+                        <textarea name = "randRangeStart" placeholder = "Start"                                         rows = "1" cols = "15"></textarea>
+                </div>
+                <div class = "tooltip">
+                        <span class = "tooltiptext">Enter the highest number in                                 the range</span>
+                        <textarea name = "randRangeEnd" placeholder = "End" rows =                                      "1" cols = "15"></textarea>
+                </div>
+                <br>
+                <div class="tooltip">
+                        Enter the value you would like to increment the                                         randomization by.<br>
+                        <span class = "tooltiptext">For example: in a range of                                  (1,5) with an increment value of 0.5, you could                                 get randomized values such as 1, 1.5, 2, 2.5,                                   etc. The default value is 1.</span>
+                        <textarea name="randIncrement" placeholder="Increments"                                 rows = "1" cols = "30">1</textarea><br>
+                </div>
+                <br>
+<div class="tooltip">
+                        <span class = "tooltiptext">Add another random
+                                numerical value.</span>
+                        <button class="button" 
+                                onclick="addNewRow('numTable','numRow')">
+                                +</button>
+                </div>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Remove the most recently                                    added random numerical value.</span>
+                        <button class="button" 
+                                onclick="deleteLastRow('numTable')">
+                                -</button>
+                </div>
+                </td>
+                </tr>
+        </table>
+        </div>
+        <!-- Trigometric Section -->
+        <div id = "randTrig" style = display:none;">
+        <br>Check the trig variables you would like to have randomized.
+        <table id = "trigTable">
+                <tr id = "trigRow">
+                <td><br>
+                <input type="checkbox" name="trigType"
+                        value="sin" id="sinRand" checked>
+                        <label for="sinRand">Sin </label>
+                <input type="checkbox" name="trigType"
+                        value="cos" id="cosRand" checked>
+                        <label for="cosRand">Cos </label>
+                <input type="checkbox" name="trigType"
+                        value="tan" id="tanRand" checked>
+                        <label for="tanRand">Tan </label><br>
+                <input type="checkbox" name="trigType"
+                        value="csc" id="cscRand">
+                        <label for="cscRand">Csc </label>
+                <input type="checkbox" name="trigType"
+                        value="sec" id="secRand">
+                        <label for="secRand">Sec </label>
+                <input type="checkbox" name="trigType"
+                        value="cot" id="cotRand">
+                        <label for="cotRand">Cot </label><br><br>
+
+                <div class="tooltip">
+                        <span class = "tooltiptext">Add another random
+                                trig variable.</span>
+                        <button class="button" 
+                                onclick="addNewRow('trigTable','trigRow')">
+                                +</button>
+                </div>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Remove the most recently                                    added random trig variable.</span>
+                        <button class="button" 
+                                onclick="deleteLastRow('trigTable')">
+                                -</button>
+                </div>
+</td>
+                </tr>
+        </table>
+        </div>
+        <!-- Relational Operator Section -->
+        <div id = "randRegOp" style = display:none;">
+        <br>Choose the relational operators you would like to possibly                  have in your problem.<br>
+        <table id = "reOpTable">
+                <tr id = "reOpRow">
+                <td><br>
+                <input type="checkbox" name="roType"
+                        value="<" id="lessRand">
+                        <label for="lessRand">< </label>
+                <input type="checkbox" name="roType"
+                        value="<=" id="lessEqRand">
+                        <label for="lessRand">&#8804 </label><br>
+                <input type="checkbox" name="roType"
+                        value=">" id="greatRand">
+                        <label for="greatRand">> </label>
+                <input type="checkbox" name="roType"
+                        value=">=" id="greatEqRand">
+                        <label for="greatEqRand">&#8805 </label><br>
+                <input type="checkbox" name="roType"
+                        value="=" id="equalRand">
+                        <label for="EqualRand">= </label>
+                <input type="checkbox" name="roType"
+                        value="!=" id="notEqualRand">
+                        <label for="notEqualRand">&#8800 </label><br><br>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Add another random
+                                relational operator.</span>
+                        <button class="button" 
+                                onclick="addNewRow('reOpTable','reOpRow')">
+                                +</button>
+                </div>
+                <div class="tooltip">
+                        <span class = "tooltiptext">Remove the most recently                                    added random relational operator.</span>
+                        <button class="button" 
+                                onclick="deleteLastRow('reOpTable')">
+                                -</button><br>
+                </div>
+                </td>
+                </tr>
+        </table>
+        </div>
+
+        <div id = "finalRandField" style = "display:none;">
+                <div id="randAnswer">
+                        <br>
+                        <legend> Type in a solution that can be generated as True/False using the $rand variables below</legend>
+                        <textarea id="randAnswerContents" rows="1" cols = "50"></textarea>
+                </div>
+		 <br><button class = "button"
+			onclick = "createRandomOutput()">Finish</button>
+		<br>
+		<div id = "randomResults"></div>
+	</div>
+</fieldset>
+
+
 <fieldset> 
 	<legend> Please type the question below : </legend> 	
 	<textarea id ="question" class="DuqWorkSave" rows = "5" cols = "50"></textarea> <br> 
@@ -269,7 +372,6 @@ function generatePerl()
   <textarea id="theDef" class="DuqWorkSave" rows="4" cols="50"></textarea><br><br>
  Knowl search keyword:<br>
   <textarea id="theSearch" class="DuqWorkSave" rows="1" cols="20"></textarea><br><br>
-  <button onclick="addKnowlHelper()"> Add a knowl!</button><br>
 		<p><small>*Use \\(math\\) or \\[displaymath\\] for Latex Expression<br>
 		*For example: \\(sin(x)\\)</small></p>
 </fieldset>
@@ -332,5 +434,7 @@ function generatePerl()
 <script type="text/javascript" src="js/sendProblemToWebwork.js"></script>
 <script type="text/javascript" src="js/ProblemEditing.js"></script>
 <script type="text/javascript" src="js/problemSyntaxSimplification.js"></script>
+<script type="text/javascript" src="js/randomProblems.js"></script>
+<script type="text/javascript" src="js/randParam.js"></script>
 
 </html>

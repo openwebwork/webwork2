@@ -1,11 +1,21 @@
 var submitButton = document.getElementById("submitButton");
 submitButton.onclick = function() {
+    var question = $("#question").val();
+    // Add the knowl handler (Gets the knowl from the database)
+
+    addKnowlHelper();
+    // Once the knowl request is made and the response is received, it will then call sendToWebwork (This prevents it from sending a blank question)
+    // NOTE: sendToWebwork will probably not be called if you test it outside of webwork so please just try it on webwork when developing
+    
+}
+
+function sendToWebwork(question){
     var pgString;
     if (submitButton.classList.contains("truefalse")) {
-	pgString = generateTrueFalse();
+	pgString = generateTrueFalse(question);
     }
     else if (submitButton.classList.contains("fillinblanks")) {
-	pgString = generateFillInBlanks();
+	pgString = generateFillInBlanks(question);
     }
     // Remove line breaks.
     pgString = pgString.replace(/<br>/g, '');
@@ -42,10 +52,8 @@ function getURLParams(url) {
     return paramMap;
 }
 
-function generateTrueFalse()
+function generateTrueFalse(question)
 {
-    addKnowlHelper();
-    var question = $("#knowlOutput").text();
     var solution = document.getElementById("solution").value; 
     
     if(document.getElementById("true").checked) 
@@ -66,8 +74,9 @@ loadMacros\n<br>\
 \"parserRadioButtons.pl\",\n<br>\
 );\n<br>\
 TEXT(beginproblem());\n<br>\
-\n<br>\
-$mc = RadioButtons(\n<br>\
+\n<br>";
+
+var section1_5 = "$mc = RadioButtons(\n<br>\
 [ \"True\", \"False\"],\n<br>\"";
 
     var section2="\");\n<br>\
@@ -93,8 +102,23 @@ Context()->normalStrings;\n<br>\
 \n<br>\
 ENDDOCUMENT();";
 
-    var pgString = section1 + answer + section2 + question + section3 + solution + section4;
+    var pgString = section1 + section1_5 + answer + section2 + question + section3 + solution + section4;
     
+
+        if(document.getElementById('reOpValue').checked && document.getElementsByName('randType')[0].checked){
+                        answer = document.getElementById("randAnswerContents").value;
+                        var section1_1 ='Context()->strings->add("True"=>{});<br>' +
+                                        'Context()->strings->add("False"=>{});<br>';
+
+                        var section1_2 = '\n<br>'+
+                                        '\n<br>'+
+                                        '$answer = String("False");' +
+                                        "PG_restricted_eval('if(" + escapeRands(answer) + "){$answer=String(\"True\");}');<br><br>";
+
+                        pgString = section1 + section1_1 + section1_2 + section1_5 + "$answer"+ section2 + question + section3 + solution + section4;
+        }
+
+
     //Insert hint/image PG code, if there is a hint or image
     if(document.getElementById("hintText").value != "" || 
        document.getElementById("imageHintText").value != ""
@@ -105,6 +129,9 @@ ENDDOCUMENT();";
 				 [document.getElementById("imageText").value, document.getElementById("imageWidth").value, document.getElementById("imageHeight").value]);
     }
 
+   if(document.getElementsByName('randType')[0].checked)
+         pgString = createRandomObjects(pgString);
+
     var output = document.getElementById("outputCode");
     output.innerHTML = "All the Perl Code is : "  + pgString;
       
@@ -113,10 +140,8 @@ ENDDOCUMENT();";
     return pgString;
 }
 
-function generateFillInBlanks()
+function generateFillInBlanks(question)
 {
-	addKnowlHelper();
-	var question = $("#knowlOutput").text();
 	var answer = document.getElementById("answer").value;
 	var solution = document.getElementById("solution").value;
 
@@ -134,7 +159,7 @@ function generateFillInBlanks()
    	var section2 = '"=>{});\n<br>';
 	//$answer = String("';
 	var section2_String = '$answer = String("';
-	var section2_Real ='$answer = Real("';
+	var section2_Real ='$answer = Compute("';
 
 
 	var section3 ='");\n<br>\
@@ -174,7 +199,7 @@ function generateFillInBlanks()
 	if(usingPGML(pgString)){}
 
 	else{	
-		if(getSelectedType() == "none"){
+		if(getSelectedType() == "none" && !document.getElementsByName('randType')[0].checked){
 			pgString = section1 + answer + section2 +
 				section2_String + answer + section3 +
 				question + section4 + solution + section5;
@@ -182,8 +207,39 @@ function generateFillInBlanks()
 		else{ 
 			pgString = section1 + answer + section2 + section2_Real + answer + section3 + 					question + section4 + solution + section5;
 		}
+
+		if(document.getElementById('trigValue').checked && document.getElementsByName('randType')[0].checked && !document.getElementById('reOpValue').checked){
+                        section3 = '\n<br>'+   
+                                        '\n<br>'+
+                                        "PG_restricted_eval('$answer=Real(" + escapeRands(answer) + ")');<br><br>" +
+
+                                        'Context()->texStrings;\n<br>' +
+                                        'BEGIN_TEXT\n<br>';
+
+                        pgString = section1 + answer + section2 + section3 + question + section4 + solution + section5;
+                }
+
+
+
+		if(document.getElementById('reOpValue').checked && document.getElementsByName('randType')[0].checked){
+                        section3 = '");\n<br>'+
+                                        '\n<br>'+
+                                        "PG_restricted_eval('if(" + escapeRands(answer) + "){$answer=String(\"True\");}');<br><br>" +
+
+                                        'Context()->texStrings;\n<br>' +
+                                        'BEGIN_TEXT\n<br>';
+
+                        pgString = section1 + answer + section2 +
+                                        'Context()->strings->add("True"=>{});<br>' +
+                                        'Context()->strings->add("False"=>{});<br>' +
+                                        section2_String + "False" + section3 + question +
+                                        section4 + solution + section5;
+                }
 	}
 	
+
+
+
 	//Insert hint/image PG code, if there is a hint or image
         if(document.getElementById("hintText").value != "" || 
                 document.getElementById("imageHintText").value != ""
@@ -201,6 +257,10 @@ function generateFillInBlanks()
 			document.getElementById("toleranceText").value,
 			getSelectedType());
 	}
+
+
+	if(document.getElementsByName('randType')[0].checked)
+                pgString = createRandomObjects(pgString);
 
     //var output = document.getElementById("codeOutput"); 
     //output.innerHTML = "All the Perl code is : <span id='code'>"  + pgString + "</span>";

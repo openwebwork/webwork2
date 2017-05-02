@@ -6,49 +6,58 @@ function checkDollarSigns(requestedID)
 	var inputString = document.getElementById(requestedID).value;
 	var countSingle = 0;
 	var countDouble = 0;
-	if(inputString.match(/[\$]{2}/g))//need if to check or else it will throw null error
-	{
-		countDouble = inputString.match(/[\$]{2}/g).length;
-	}
-	if(inputString.match(/\$/g))//need if to check or else it will throw null error
-	{
-		countSingle = inputString.match(/\$/g).length;
-		if(countDouble > 0)
-		{
-			countSingle -= countDouble*2;//removes the counted $$, so sub the counted $$
-		}
-	}
 	
-	if(countDouble > 0)//contains $$
-	{
-		while(countDouble > 0)
+	var rands = inputString.match(/\$rand[0-9]+/g);
+	if(rands != null){
+		return inputString;			
+	}
+
+	else{
+		if(inputString.match(/[\$]{2}/g))//need if to check or else it will throw null error
 		{
-			if((countDouble % 2) == 0)//even
+			countDouble = inputString.match(/[\$]{2}/g).length;
+		}
+		if(inputString.match(/\$/g))//need if to check or else it will throw null error
+		{
+			countSingle = inputString.match(/\$/g).length;
+			if(countDouble > 0)
 			{
-				inputString = inputString.replace("$$", "\\[");
-				countDouble--;
-			}
-			else//odd
-			{
-				inputString = inputString.replace("$$", "\\]");
-				countDouble--;
+				countSingle -= countDouble*2;//removes the counted $$, so sub the counted $$
 			}
 		}
-	}
-	if(countSingle > 0)//contains $
-	{
-		while(countSingle > 0)
+		
+		if(countDouble > 0)//contains $$
 		{
-			if((countSingle % 2) == 0)//even
+			while(countDouble > 0)
 			{
-				inputString = inputString.replace("$", "\\(");
-				countSingle--;
+				if((countDouble % 2) == 0)//even
+				{
+					inputString = inputString.replace("$$", "\\[");
+					countDouble--;
+				}
+				else//odd
+				{
+					inputString = inputString.replace("$$", "\\]");
+					countDouble--;
+				}
 			}
-			else//odd
+		}
+		if(countSingle > 0)//contains $
+		{
+			while(countSingle > 0)
 			{
-				inputString = inputString.replace("$", "\\)");
-				countSingle--;
+				if((countSingle % 2) == 0)//even
+				{
+					inputString = inputString.replace("$", "\\(");
+					countSingle--;
+				}
+				else//odd
+				{
+					inputString = inputString.replace("$", "\\)");
+					countSingle--;
+				}
 			}
+			
 		}
 	}
 	return inputString;

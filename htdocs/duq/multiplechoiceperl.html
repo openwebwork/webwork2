@@ -1,0 +1,73 @@
+<!doctype html> 
+<html> 
+<head> 
+<title> Multiple Choice  </title>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<link rel = "stylesheet"  type ="text/css" href ="style.css">
+ <script src="js_multiplechoice.js"></script>
+</head> 
+<body> 
+<header> 
+<h1> 
+	<img src = "mlogo.png" height = 70 width = 80 float: center>
+	Mathematical Association of America <br>
+	WeBWorK Question Creator
+</h1> 
+</header><br>
+<div id = "codeArea">
+<fieldset>
+	<legend> Click the button to see a preview of the Perl generated for this question </legend>
+	<button onclick = "generatePerl()" >Submit <br></button>
+	<br> 
+	<div id="outputCode">
+	</div>
+</div>
+
+
+<div id = "userInput">
+<fieldset> 
+	<legend> Please type the question below : </legend> 
+	<textarea  id ="question" rows = "5" cols = "50"></textarea> <br> 
+	<button onclick = "sendQuestion(),updateMathQues()"> Submit </button>
+	<p> Question Preview </p> 
+	<div id = "outputQues"> 
+	</div>  
+</fieldset>
+
+
+<fieldset> 
+<legend> Please enter the choices below and select the right answer: </legend> 
+<input type = "radio" name="option" id="one">  <textarea  id ="optionOne" rows = "1" cols = "50"></textarea> <br> 
+<input type = "radio" name="option" id="two"> <textarea  id ="optionTwo" rows = "1" cols = "50"></textarea> <br> 
+<input type = "radio" name="option" id="three"> <textarea  id ="optionThree" rows = "1" cols = "50"></textarea> <br> 
+<input type = "radio" name="option" id="four"> <textarea  id ="optionFour" rows = "1" cols = "50"></textarea> <br>  
+<input type = "radio" name="option" id="five"> <textarea  id ="optionFive" rows = "1" cols = "50"></textarea> <br> 
+	<button onclick = "sendAns(),myFunction1(),updateMathChoices()"> Submit </button> 
+	<p> Choices Preview </p> 
+	<div id = "option1"> 
+	</div>
+	<p> Answer preview </p>
+	<div id = "outputAns"> 
+</div> 
+</fieldset> 
+
+
+
+
+<fieldset> 
+	<legend> Please enter an explanation of the solution below: </legend> 
+	<textarea  id ="solution" rows = "5" cols = "50"></textarea> <br> 
+	<button onclick = "sendSolution(),updateMathHint()"> Submit </button>
+	<p> Solution Preview </p> 
+	<div id = "outputSolution"> 
+	</div>  
+</fieldset>
+</div>
+</body> 
+</html> 
