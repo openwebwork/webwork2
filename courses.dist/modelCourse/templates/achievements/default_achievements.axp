@@ -42,12 +42,12 @@ challenge_nine,"Challenge Nine Complete",609,challenge,default,"Finish the ninth
 challenge_ten,"Challenge Ten Complete",610,challenge,default,"Finish the tenth challenge problem.",10,,challenge_ten.at,challenge_ten.png
 challenger,Challenger,611,challenge,default,"Finish all of the challenge problems.",10,20,challenger.at,challenger.png
 level_one,"Level 1 Initiate",9901,level,"default,gateway,jitar","You have been awarded a Lesser Rod of Revelation",,,level_one.at,level_one.png
-level_two,"Level 2 Novice",9902,level,"default,gateway,jitar","You have been awarded a Potion of Forgetfullness",,,level_two.at,level_two.png
+level_two,"Level 2 Novice",9902,level,"default,gateway,jitar","You have been awarded a Potion of Forgetfulness",,,level_two.at,level_two.png
 level_three,"Level 3 Apprentice",9903,level,"default,gateway,jitar","You have been awarded a Tunic of Extension",,,level_three.at,level_three.png
 level_four,"Level 4 Journeyman",9904,level,"default,gateway,jitar","You have been awarded a Cupcake of Enlargement",,,level_four.at,level_four.png
 level_five,"Level 5 Fellowcraft",9905,level,"default,gateway,jitar","You have been awarded a Box of Transmogrification",,,level_five.at,level_five.png
 level_six,"Level 6 Adept",9906,level,"default,gateway,jitar","You have been awarded a Greater Rod of Revelation",,,level_six.at,level_six.png
 level_seven,"Level 7 Craftsman",9907,level,"default,gateway,jitar","You have been awarded a Robe of Longevity",,,level_seven.at,level_seven.png
 level_eight,"Level 8 Artesian",9908,level,"default,gateway,jitar","You have been awarded a Cake of Enlargement",,,level_eight.at,level_eight.png
-level_nine,"Level 9 Specialist",9909,level,"default,gateway,jitar","You have been awarded a Scroll of Ressurection",,,level_nine.at,level_nine.png
+level_nine,"Level 9 Specialist",9909,level,"default,gateway,jitar","You have been awarded a Scroll of Resurrection",,,level_nine.at,level_nine.png
 level_ten,"Level 10 Professor",9910,level,"default,gateway,jitar","You have been awarded a Greater Tome of Enlightenment",,,level_ten.at,level_ten.png
