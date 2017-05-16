@@ -1,0 +1,4 @@
+
+# Field order: student_id,last_name,first_name,status,comment,section,recitation,email_address,user_id,password,permission
+ccdmdadmin,CCDMD,Administrateur,C,Administrateur,,,,ccdmdadmin,oAD71qrn1OIRE,20
+bdebadmin,Tremblay,Julie,C,,,,,bdebadmin,kPPAFCDPc1d/2,20
