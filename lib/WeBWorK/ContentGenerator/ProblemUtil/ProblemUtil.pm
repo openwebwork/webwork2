@@ -80,6 +80,7 @@ sub process_and_log_answer{
 		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
 		        my $answerString = ""; my $scores = "";
 			my %answerHash = %{ $pg->{answers} };
+			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 			# FIXME  this is the line 552 error.  make sure original student ans is defined.
 			# The fact that it is not defined is probably due to an error in some answer evaluator.
 			# But I think it is useful to suppress this error message in the log.
@@ -96,6 +97,33 @@ sub process_and_log_answer{
 
 			$answerString = '' unless defined($answerString); # insure string is defined.
 			
+			# experimental fix for past answers 
+			my %answersToStore2;
+			my @answer_order2;
+			my $scores2='';
+			my $isEssay2=0;
+			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+   			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+   				$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+   				$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+   				foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
+   					$answersToStore2{$response_id} = $self->{formFields}->{$response_id}; 
+   				    push @answer_order2, $response_id;
+   				 }	
+   			}
+   			my $answerString2 = '';
+   			foreach my $response_id (@answer_order2) {
+   				$answerString2.=$answersToStore2{$response_id}."\t";
+   			}
+   			$answerString2=~s/\t$//; # remove last tab
+   			warn "answerString1: $answerString";
+			warn "answerString2: $answerString2";
+			warn "scores1: $scores";
+			warn "scores2: $scores2";
+			warn "isEssay1: $isEssay";
+			warn "isEssay2: $isEssay2";
+
+            # end experimental fix for past answers
 			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
 			        join("",
@@ -158,10 +186,12 @@ sub process_and_log_answer{
 			#my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]}, @extra_answer_names);
 			# %answerToStore and @answer_order are passed as references
 			# because of profile for encodeAnswers
+			
+			# encodeAnswers creates a hash and uses Storage::nfreeze to serialize it
 			my $answerString = encodeAnswers(%answersToStore,
 							 @answer_order);
 			
-			# store last answer to database
+			# store last answer to database for use in "sticky" answers
 			$problem->last_answer($answerString);
 			$pureProblem->last_answer($answerString);
 			$db->putUserProblem($pureProblem);
