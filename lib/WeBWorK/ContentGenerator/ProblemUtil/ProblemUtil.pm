@@ -66,42 +66,26 @@ sub process_and_log_answer{
 	my $set = $self->{set};
 	my $urlpath = $r->urlpath;
 	my $courseID = $urlpath->arg("courseID");
-	
-	my $scoreRecordedMessage = "";
-	my $pureProblem;
-	my $isEssay = 0;
 
-	$pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
-	
-	# logging student answers
-
+	# logging student answers	
+	my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
 	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
+	
+	# my $isEssay = 0;
+	my $scores2='';
+	my $isEssay2=0;
+
+	my %answersToStore2;
+	my @answer_order2;
+	my $scoreRecordedMessage = "";
+
 	if ( defined($answer_log ) and defined($pureProblem)) {
 		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
-		        my $answerString = ""; my $scores = "";
-			my %answerHash = %{ $pg->{answers} };
-			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
-			# FIXME  this is the line 552 error.  make sure original student ans is defined.
-			# The fact that it is not defined is probably due to an error in some answer evaluator.
-			# But I think it is useful to suppress this error message in the log.
-			foreach (sortByName(undef, keys %answerHash)) {
-				my $orig_ans = $answerHash{$_}->{original_student_ans};
-				my $student_ans = defined $orig_ans ? $orig_ans : '';
-				$answerString  .= $student_ans."\t";
-				# answer score *could* actually be a float, and this doesnt
-				# allow for fractional answers :(
-				$scores .= ($answerHash{$_}->{score}//0) >= 1 ? "1" : "0";
-				$isEssay = 1 if ($answerHash{$_}->{type}//'') eq 'essay';
+		
+################################################################
+# new code
+#########################################
 
-			}
-
-			$answerString = '' unless defined($answerString); # insure string is defined.
-			
-			# experimental fix for past answers 
-			my %answersToStore2;
-			my @answer_order2;
-			my $scores2='';
-			my $isEssay2=0;
 			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
    			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
    				$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
@@ -116,35 +100,64 @@ sub process_and_log_answer{
    				$answerString2.=$answersToStore2{$response_id}."\t";
    			}
    			$answerString2=~s/\t$//; # remove last tab
-   			warn "answerString1: $answerString";
-			warn "answerString2: $answerString2";
-			warn "scores1: $scores";
-			warn "scores2: $scores2";
-			warn "isEssay1: $isEssay";
-			warn "isEssay2: $isEssay2";
+# end new code
+################################################################
+# 		    my $answerString = ""; my $scores = "";
+# 			my %answerHash = %{ $pg->{answers} };
+# 			# FIXME  this is the line 552 error.  make sure original student ans is defined.
+# 			# The fact that it is not defined is probably due to an error in some answer evaluator.
+# 			# But I think it is useful to suppress this error message in the log.
+# 			foreach (sortByName(undef, keys %answerHash)) {
+# 				my $orig_ans = $answerHash{$_}->{original_student_ans};
+# 				my $student_ans = defined $orig_ans ? $orig_ans : '';
+# 				$answerString  .= $student_ans."\t";
+# 				# answer score *could* actually be a float, and this doesnt
+# 				# allow for fractional answers :(
+# 				$scores .= ($answerHash{$_}->{score}//0) >= 1 ? "1" : "0";
+# 				$isEssay = 1 if ($answerHash{$_}->{type}//'') eq 'essay';
+# 
+# 			}
+# 
+# 			$answerString = '' unless defined($answerString); # insure string is defined.
+			
+##############################################################################
+# check new code
+			# experimental fix for past answers 
+			# notice that it grabs the student response from the html form fields rather than
+			# from "original_student_ans" in the answerHash
+			# The answer hash is inside ans_id.ans_eval.rh_ans
+			#
+#    			warn "answerString1: $answerString";
+# 			warn "answerString2: $answerString2";
+# 			warn "scores1: $scores";
+# 			warn "scores2: $scores2";
+# 			warn "isEssay1: $isEssay";
+# 			warn "isEssay2: $isEssay2";
 
             # end experimental fix for past answers
+##############################################################################
+# store in answer_log   past answers file
 			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
 			        join("",
 						'|', $problem->user_id,
 						'|', $problem->set_id,
 						'|', $problem->problem_id,
-						'|', $scores, "\t",
+						'|', $scores2, "\t",
 						$timestamp,"\t",
-						$answerString,
+						$answerString2,
 					),
 			);
 
-			#add to PastAnswer db
+# add to PastAnswer db
 			my $pastAnswer = $db->newPastAnswer();
 			$pastAnswer->course_id($courseID);
 			$pastAnswer->user_id($problem->user_id);
 			$pastAnswer->set_id($problem->set_id);
 			$pastAnswer->problem_id($problem->problem_id);
 			$pastAnswer->timestamp($timestamp);
-			$pastAnswer->scores($scores);
-			$pastAnswer->answer_string($answerString);
+			$pastAnswer->scores($scores2);
+			$pastAnswer->answer_string($answerString2);
 			$pastAnswer->source_file($problem->source_file);
 
 			$db->addPastAnswer($pastAnswer);
@@ -153,6 +166,9 @@ sub process_and_log_answer{
 		}
 	}
 
+######################################################################
+# this stores previous answers to the problem to 
+# provide "sticky answers"
 
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
@@ -188,12 +204,12 @@ sub process_and_log_answer{
 			# because of profile for encodeAnswers
 			
 			# encodeAnswers creates a hash and uses Storage::nfreeze to serialize it
-			my $answerString = encodeAnswers(%answersToStore,
-							 @answer_order);
+			my $answerString3 = encodeAnswers(%answersToStore2,
+							 @answer_order2);
 			
 			# store last answer to database for use in "sticky" answers
-			$problem->last_answer($answerString);
-			$pureProblem->last_answer($answerString);
+			$problem->last_answer($answerString3);
+			$pureProblem->last_answer($answerString3);
 			$db->putUserProblem($pureProblem);
 			
 			# store state in DB if it makes sense
@@ -214,16 +230,16 @@ sub process_and_log_answer{
 				# be flaged as needing grading
 				# we shoudl also check for the appropriate flag in the global problem and set it 
 
-				if ($isEssay && $pureProblem->{flags} !~ /needs_grading/) {
+				if ($isEssay2 && $pureProblem->{flags} !~ /needs_grading/) {
 				    $pureProblem->{flags} =~ s/graded,//;
 				    $pureProblem->{flags} .= "needs_grading,";
 				}
 				
 				my $globalProblem = $db->getGlobalProblem($problem->set_id, $problem->problem_id);		
-				if ($isEssay && $globalProblem->{flags} !~ /essay/) {
+				if ($isEssay2 && $globalProblem->{flags} !~ /essay/) {
 				    $globalProblem->{flags} .= "essay,";
 				    $db->putGlobalProblem($globalProblem);
-				} elsif (!$isEssay && $globalProblem->{flags} =~ /essay/) {
+				} elsif (!$isEssay2 && $globalProblem->{flags} =~ /essay/) {
 				    $globalProblem->{flags} =~ s/essay,//;
 				    $db->putGlobalProblem($globalProblem);
 				}
