@@ -106,7 +106,7 @@ sub process_and_log_answer{
 	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 	      $self, $pg
 	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
-	        # ref($pg) eq "PGcore";
+	        # ref($pg) eq "WeBWorK::PG::Local";
 # end new code (output is answerString2, $scores, $isEssay)
 ################################################################
 # 		    my $answerString = ""; my $scores = "";
