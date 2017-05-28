@@ -47,12 +47,12 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 # process_and_log_answer subroutine.
 
-# performs functions of processing and recording the answer given in the page. Also returns the appropriate scoreRecordedMessage.
+# performs functions of processing and recording the answer given in the page. 
+# Also returns the appropriate scoreRecordedMessage.
 
 sub process_and_log_answer{
 
-	my $self = shift;
-	
+	my $self = shift;  #type is ref($self) eq 'WeBWorK::ContentGenerator::Problem'
 	my $r = $self->r;
 	my $db = $r->db;
 	my $effectiveUser = $r->param('effectiveUser');
@@ -71,36 +71,43 @@ sub process_and_log_answer{
 	my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
 	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
 	
-	# my $isEssay = 0;
-	my $scores2='';
-	my $isEssay2=0;
-
-	my %answersToStore2;
-	my @answer_order2;
+# 	my $isEssay = 0;
+# 	my $scores2='';
+# 	my $isEssay2=0;
+# 
+# 	my %answersToStore2;
+# 	my @answer_order2;
+    my ($encoded_answer_string, $scores2, $isEssay2);
 	my $scoreRecordedMessage = "";
 
 	if ( defined($answer_log ) and defined($pureProblem)) {
 		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
 		
 ################################################################
-# new code
+# new code (input is $pg)
 #########################################
-
-			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
-   			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-   				$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
-   				$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
-   				foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
-   					$answersToStore2{$response_id} = $self->{formFields}->{$response_id}; 
-   				    push @answer_order2, $response_id;
-   				 }	
-   			}
-   			my $answerString2 = '';
-   			foreach my $response_id (@answer_order2) {
-   				$answerString2.=$answersToStore2{$response_id}."\t";
-   			}
-   			$answerString2=~s/\t$//; # remove last tab
-# end new code
+# 
+# 			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+#    			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+#    				$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+#    				$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+#    				foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
+#    					$answersToStore2{$response_id} = $self->{formFields}->{$response_id}; 
+#    				    push @answer_order2, $response_id;
+#    				 }	
+#    			}
+#    			my $answerString2 = '';
+#    			foreach my $response_id (@answer_order2) {
+#    				$answerString2.=($answersToStore2{$response_id}//'')."\t";
+#    			}
+#    			$answerString2=~s/\t$//; # remove last tab
+	my ($answerString2);
+	($answerString2,$encoded_answer_string, $scores2, $isEssay2) = 
+	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
+	      $self, $pg
+	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
+	        # ref($pg) eq "PGcore";
+# end new code (output is answerString2, $scores, $isEssay)
 ################################################################
 # 		    my $answerString = ""; my $scores = "";
 # 			my %answerHash = %{ $pg->{answers} };
@@ -136,7 +143,7 @@ sub process_and_log_answer{
 
             # end experimental fix for past answers
 ##############################################################################
-# store in answer_log   past answers file
+# store in answer_log   past answers file (user_id,set_id,problem_id,courseID,answerString,scores,source_file)
 			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
 			        join("",
@@ -159,7 +166,6 @@ sub process_and_log_answer{
 			$pastAnswer->scores($scores2);
 			$pastAnswer->answer_string($answerString2);
 			$pastAnswer->source_file($problem->source_file);
-
 			$db->addPastAnswer($pastAnswer);
 
 			
@@ -183,15 +189,15 @@ sub process_and_log_answer{
 			# $answersToStore{$_} = $self->{formFields}->{$_} foreach (keys %answerHash);
 			# $answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  
 			# Don't use it!!
-			my @answer_order;
-			my %answerHash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
-   			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-   				foreach my $response_id ($answerHash{$ans_id}->response_obj->response_labels) {
-   					$answersToStore{$response_id} = $self->{formFields}->{$response_id}; 
-   				    push @answer_order, $response_id;
-   				 }	
-   			}
-			
+# 			my @answer_order;
+# 			my %answerHash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+#    			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+#    				foreach my $response_id ($answerHash{$ans_id}->response_obj->response_labels) {
+#    					$answersToStore{$response_id} = $self->{formFields}->{$response_id}; 
+#    				    push @answer_order, $response_id;
+#    				 }	
+#    			}
+# 			
 			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
 			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
 			# however we need to store them.  Fortunately they are still in the input form.
@@ -204,12 +210,13 @@ sub process_and_log_answer{
 			# because of profile for encodeAnswers
 			
 			# encodeAnswers creates a hash and uses Storage::nfreeze to serialize it
-			my $answerString3 = encodeAnswers(%answersToStore2,
-							 @answer_order2);
+			# replaced by $encoded_answer_string
+# 			my $answerString3 = encodeAnswers(%answersToStore2,
+# 							 @answer_order2);
 			
 			# store last answer to database for use in "sticky" answers
-			$problem->last_answer($answerString3);
-			$pureProblem->last_answer($answerString3);
+			$problem->last_answer($encoded_answer_string);
+			$pureProblem->last_answer($encoded_answer_string);
 			$db->putUserProblem($pureProblem);
 			
 			# store state in DB if it makes sense
@@ -300,6 +307,44 @@ sub process_and_log_answer{
 	
 	$self->{scoreRecordedMessage} = $scoreRecordedMessage;
 	return $scoreRecordedMessage;
+}
+
+# create answer string from responses hash
+# ($ansString, $encoded_ans_string, $scores, $isEssay) = create_ans_str_from_responses($problem, $pg)
+# 
+# input: ref($pg)eq 'WeBWorK::PG::Local'
+#        ref($problem)eq 'WeBWorK::ContentGenerator::Problem
+# output:  (str, str, str)
+
+sub create_ans_str_from_responses {
+	my $problem = shift;  #  ref($problem) eq 'WeBWorK::ContentGenerator::Problem'
+	                   	  #  must contain $self->{formFields}->{$response_id}
+	my $pg = shift;       # ref($pg) eq 'WeBWorK::PG::Local'
+	#warn "create_ans_str_from_responses pg has type ", ref($pg);
+	my $scores2='';
+	my $isEssay2=0;
+	my %answersToStore2;
+	my @answer_order2;
+
+	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+		$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+		$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
+			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id}; 
+			push @answer_order2, $response_id;
+		 }	
+	}
+	my $answerString2 = '';
+	foreach my $response_id (@answer_order2) {
+		$answerString2.=($answersToStore2{$response_id}//'')."\t";
+	}
+	$answerString2=~s/\t$//; # remove last tab
+   	
+   	my $encoded_answer_string = encodeAnswers(%answersToStore2,
+							 @answer_order2);
+
+	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
 }
 
 # process_editorLink subroutine
