@@ -49,10 +49,18 @@ exported from WeBWorK.
 Each I<USERID>, if it is present in the new course's user list, will be granted
 professor privileges (i.e. a permission level of 10). Requires B<--users>.
 
-=item B<--templates-from>=I<COURSEID>
+=item B<--templates-from>=I<TEMPLATES-FROM>
 
 If specified, the contents of the specified course's templates directory are
 used to populate the new course's templates directory.
+
+=item B<--courseTitle>=I<COURSETITLE>
+
+If specified, set the course title the new course.
+
+=item B<--courseInstitution>=I<COURSEINSTITUTION>
+
+If specified, set the institution of the new course.
 
 =item I<COURSEID>
 
@@ -161,6 +169,8 @@ my $globalUserID = "";
 my $users = "";
 my @professors = ();
 my $templates_from = "";
+my $courseTitle = "";
+my $courseInstitution = "";
 
 ##### get command-line options #####
 
@@ -176,6 +186,8 @@ GetOptions(
 	"users=s" => \$users,
 	"professors=s" => \@professors,
 	"templates-from=s" => \$templates_from,
+	"courseTitle=s" => \$courseTitle,
+	"courseInstitution=s" =>\$courseInstitution,
 );
 my %professors = map { $_ => 1 } map { split /,/ } @professors;
 my $courseID = shift;
@@ -287,6 +299,14 @@ if ($templates_from ne "") {
 	$optional_arguments{templatesFrom} = $templates_from;
 }
 
+if ($courseTitle ne "") {
+	$optional_arguments{courseTitle} = $courseTitle;
+}
+
+if ($courseInstitution ne "") {
+	$optional_arguments{courseInstitution} = $courseInstitution;
+}
+
 ##### call addCourse(), handle errors #####
 
 eval {
@@ -299,6 +319,14 @@ eval {
 		%optional_arguments,
 	);
 };
+
+#my $url_course = "$ce->{webwork_courses_dir}/$courseID/";
+#my $uid = getpwnam($ce->{server_userID});
+#my $gid = getgrnam($ce->{server_groupID});
+#eval {
+#	system("chown -R $uid:$gid $url_course");
+#        system ("chmod -R 775 $url_course"); 
+#};
 
 if ($@) {
 	my $error = $@;

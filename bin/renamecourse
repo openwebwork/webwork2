@@ -17,15 +17,15 @@
 
 =head1 NAME
 
-delcourse - delete a course
+renamecourse - rename a course
 
 =head1 SYNOPSIS
 
- delcourse [options] COURSEID
+ renamecourse [options] COURSEID NEWCOURSEID
 
 =head1 DESCRIPTION
 
-Delete a course, including its database and course directory.
+Rename a course, including its database and course directory.
 
 =head1 OPTIONS
 
@@ -33,7 +33,11 @@ Delete a course, including its database and course directory.
 
 =item I<COURSEID>
 
-The name of the course to delete.
+The name of the course to rename.
+
+=item I<NEWCOURSEID>
+
+The new name of the course.
 
 =back
 
@@ -63,9 +67,17 @@ Specifies the password to use when connecting to the SQL server.
 
 =item B<--sql-db>=I<DBNAME>
 
-Specifies the name of the database to delete. (This is usually
+Specifies the name of the database to rename. (This is usually
 "webwork_COURSENAME", but can be overridden by changing the database layout in
 F<localOverrides.conf>.)
+
+=item B<--courseTitle>=I<COURSETITLE>
+
+If specified, set the course title the new course.
+
+=item B<--courseInstitution>=I<COURSEINSTITUTION>
+
+If specified, set the institution of the new course.
 
 =back
 
@@ -83,36 +95,36 @@ use Getopt::Long;
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n"
 		unless exists $ENV{WEBWORK_ROOT};
+	  my $webwork_dir = $ENV{WEBWORK_ROOT};
+	  print "renamecourse:  WeBWorK root directory set to $webwork_dir\n";
 
-	die "PG_ROOT not found in environment.\n"
-		unless exists $ENV{PG_ROOT};
-
-      	my $webwork_dir = $ENV{WEBWORK_ROOT};
-	
 	# link to WeBWorK code libraries
-      	eval "use lib '$webwork_dir/lib'"; die $@ if $@;
-      	eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+      eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+      eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 }
 
 our $webwork_dir = $ENV{WEBWORK_ROOT};
 
+
 BEGIN { $main::VERSION = "2.4"; }  #hack to set version
 
+
+
 # link to WeBWorK code libraries
-eval "use lib '$webwork_dir/lib'"; die $@ if $@;
-eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+#eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+#eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 
 #################################################################
 # The folloinwg code reads defaults.config and extracts the remaining configuration
 # variables. There is no need to modify it.
 #################################################################
 
+# link to WeBWorK code libraries
+eval "use lib '$webwork_dir/lib'"; die $@ if $@;
+eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
+
 # grab course environment (by reading webwork2/conf/defaults.config)
-my $courseID = shift;
-my $ce = new WeBWorK::CourseEnvironment({ 
-	webwork_dir => $webwork_dir,
-	courseName => $courseID,
-});
+my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 
 #  set important configuration variables (from defaults.config)
 
@@ -128,12 +140,12 @@ use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::File::Classlist;
 use WeBWorK::Utils qw(runtime_use readFile cryptPassword);
-use WeBWorK::Utils::CourseManagement qw(deleteCourse listCourses);
+use WeBWorK::Utils::CourseManagement qw(renameCourse retitleCourse);
 }; die $@ if $@;
 
 
 sub usage {
-	print STDERR "usage: $0 [options] COURSEID\n";
+	print STDERR "usage: $0 [options] COURSEID NEWCOURSEID\n";
 	print STDERR "Options:\n";
 	print STDERR "  for \"sql\" database layout:\n";
 	print STDERR "    [--sql-host=HOST] [--sql-port=port]\n";
@@ -152,6 +164,8 @@ my $sql_port = "";
 my $sql_user = "";
 my $sql_pass = "";
 my $sql_db = "";
+my $courseTitle = "";
+my $courseInstitution = "";
 
 ##### get command-line options #####
 
@@ -161,13 +175,24 @@ GetOptions(
 	"sql-user=s" => \$sql_user,
 	"sql-pass=s" => \$sql_pass,
 	"sql-db=s" => \$sql_db,
+	"courseTitle=s" => \$courseTitle,
+	"courseInstitution=s" =>\$courseInstitution,
 );
+my $courseID = shift;
+my $newCourseID = shift;
 
 ##### perform sanity checks #####
 
 usage_error("must specify COURSEID.") unless $courseID;
+usage_error("must specify NEWCOURSEID.") unless $newCourseID;
 
-my $dbLayout = $ce->{dbLayoutName};
+# bring up a minimal course environment
+my $oldCE = WeBWorK::CourseEnvironment->new({
+	webwork_dir => $ENV{WEBWORK_ROOT},
+	courseName => $courseID,
+});
+
+my $dbLayout = $oldCE->{dbLayoutName};
 
 if ($dbLayout eq "sql") {
 	usage_error("must specify --sql-user.")   unless $sql_user;
@@ -175,7 +200,7 @@ if ($dbLayout eq "sql") {
 	usage_error("must specify --sql-db.")     unless $sql_db;
 }
 
-##### set up parameters to pass to deleteCourse() #####
+##### set up parameters to pass to renameCourse() #####
 
 my %dbOptions;
 if ($dbLayout eq "sql") {
@@ -186,21 +211,43 @@ if ($dbLayout eq "sql") {
 	$dbOptions{database} = $sql_db;
 }
 
-##### call deleteCourse(), handle errors #####
 
-eval {
-	deleteCourse(
-		courseID      => $courseID,
-		ce            => $ce,
-		dbOptions     => \%dbOptions,
-	);
-};
+my %optional_arguments;
+if ($courseTitle ne "") {
+	$optional_arguments{courseTitle} = $courseTitle;
+}
+
+if ($courseInstitution ne "") {
+	$optional_arguments{courseInstitution} = $courseInstitution;
+}
+
+##### call renameCourse(), handle errors #####
+
+if ($newCourseID ne $courseID) { 
+	eval {
+		renameCourse(
+			courseID      => $courseID,
+			ce            => $oldCE,
+			dbOptions     => \%dbOptions,
+			newCourseID   => $newCourseID,
+			%optional_arguments,
+		);
+	};
+} elsif ($courseTitle ne "") {
+   	my $db = new WeBWorK::DB($oldCE->{dbLayouts}{$dbLayout});
+	eval {
+		$db->setSettingValue('courseTitle',$courseTitle);
+	};
+}
 
 if ($@) {
 	my $error = $@;
 	print STDERR "$error\n";
 	exit;
 }
+
+
+
 
 =head1 AUTHOR
 
