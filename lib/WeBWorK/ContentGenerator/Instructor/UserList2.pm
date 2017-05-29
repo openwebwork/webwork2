@@ -1589,7 +1589,7 @@ sub fieldEditHTML {
 			next unless $val <= $editorUserPermission;
 			push(@values, $val);
 			$labels{$val} = $r->maketext($role);
-			$default = $val if ( $value eq $role );
+			$default = $val if ( $value eq $r->maketext($role) );
 		}
 		
 		return CGI::popup_menu({
