@@ -12,7 +12,7 @@ var translate = {
 	"in target set" : "dans le devoir choisi",
 	"Operations" : "Opérations",
 	"Problem Set" : "Les problèmes du devoir",
-	"was reordered" : "ont été renuméroter",
+	"was reordered" : "ont été renumérotés",
 	"Loading Please Wait..." : "Chargement en cours, veuillez patienter...",
 	"Remaining time :" : "Temps restant :",
 	"* You are out of time! *\n" : "* Vous avez dépassé la limite de temps!     *\n",

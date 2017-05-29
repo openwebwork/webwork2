@@ -397,10 +397,14 @@ EOF
 	#
 	# End the table
 	# 
+
+	# This is for translation of js files
+	my $lang = $ce->{language};
 	print CGI::end_table();
 	print CGI::script("checkFiles(); checkFile();");
 	print CGI::start_script({type=>"text/javascript"});
 	print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
+	print "lang = \"$lang\";";
 	print CGI::end_script();
 	print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
 }

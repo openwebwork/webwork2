@@ -1,6 +1,6 @@
 var localize_basepath;
-
-var lang = 'fr_CA';
+/*var lang = 'fr_CA';*/
+var lang;
 
 $.getScript(localize_basepath + lang + ".js", function(){
 

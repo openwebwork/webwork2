@@ -2347,8 +2347,10 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 
 	# This is for translation of js files
+	my $lang = $ce->{language};
 	print CGI::start_script({type=>"text/javascript"});
 	print "localize_basepath = \"$site_url/js/i18n/\";";
+	print "lang = \"$lang\";";
 	print CGI::end_script();
 	print qq!<script src="$site_url/js/i18n/localize.js"></script>!;
 
