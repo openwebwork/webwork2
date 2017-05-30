@@ -1,8 +1,9 @@
 var localize_basepath;
 /*var lang = 'fr_CA';*/
 var lang;
+var defaultLang = "en";
 
-$.getScript(localize_basepath + lang + ".js", function(){
+$.getScript(localize_basepath + lang + ".js", localize_basepath + defaultLang + ".js", function(){
 
 	  console.log("Script loaded but not necessarily executed.");
 
