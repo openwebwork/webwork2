@@ -210,6 +210,8 @@ sub submit_grade {
 </imsx_POXEnvelopeRequest>
 EOS
 
+  chomp($replaceResultXML);
+  
   my $bodyhash = sha1_base64($replaceResultXML);
 
   # since sha1_base64 doesn't pad we have to do so manually 
