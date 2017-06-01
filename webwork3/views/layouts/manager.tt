@@ -2,10 +2,10 @@
 <html>
 <head>
 <title>WeBWorK 3</title>
-<link rel='stylesheet' href='/webwork3/js/bower_components/jquery-ui/themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
-<link rel="stylesheet" type="text/css" href="/webwork3/js/bower_components/bootstrap/dist/css/bootstrap.css">
-<link rel='stylesheet' href='/webwork3/js/bower_components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
-<link rel='stylesheet' type="text/css" href="/webwork3/css/course-manager.css">
+<link rel='stylesheet' href='[% top_dir %]/js/bower_components/jquery-ui/themes/smoothness/jquery-ui.css' type='text/css' media='screen'>
+<link rel="stylesheet" type="text/css" href="[% top_dir %]/js/bower_components/bootstrap/dist/css/bootstrap.css">
+<link rel='stylesheet' href='[% top_dir %]/js/bower_components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
+<link rel='stylesheet' type="text/css" href="[% top_dir %]/css/course-manager.css">
 </head>
 <body>
   <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -57,7 +57,7 @@ Powered by <a href="#" onclick="return false" href="http://perldancer.org/">Danc
       <li class="dropdown">
         <a href="#" onclick="return false" class="dropdown-toggle" data-toggle="dropdown">MENU<b class="caret"></b></a>
       <ul class="dropdown-menu manager-menu">
-      </ul>        
+      </ul>
     </li>
 
         <li>

@@ -1,11 +1,15 @@
-package Routes::Login {
+package Routes::Login;
+
+
+
 use Dancer2;
 
-use Routes::Templates;
+#use Routes::Templates;
 
 set serializer => 'JSON';
 
-use Utils::Authentication qw/setCookie buildSession/;
+use Dancer2::Plugin::Auth::Extensible;
+use Routes::Common qw/setCourseEnvironment setCookie/;
 use WeBWorK3::Authen;
 use Data::Dump qw/dump/;
 
@@ -17,61 +21,44 @@ use Data::Dump qw/dump/;
 #  Note: for this to match before others, make sure this package is loaded before others.
 #
 
-#hook after => sub {
-#  my $info = shift;
-#
-#  debug "in after hook";
-#  debug $info;
-#
-#
-#};
-
 any ['get','put','post','delete'] => '/courses/*/**' => sub {
 	my ($courseID) = splat;
 
-  session 'course' => $courseID;
+	#debug "in uber route";
+  setCourseEnvironment($courseID);
   session 'webwork_dir' => config->{webwork_dir};
-  my $info = setCourseEnvironment(session);
-	var ce => $info->{ce};
-	var db => $info->{db};
 	pass;
 };
 
 any ['get','post'] => '/renderer/courses/*/**' => sub {
 	my ($courseID) = splat;
 	setCourseEnvironment($courseID);
+	session 'webwork_dir' => config->{webwork_dir};
 	pass;
 };
 
+###
+#
+# This is the main login route.  It validates the login and sets
+# the session variable.
+#
+##
+
 post '/courses/:course_id/login' => sub {
 
-	my $authen = new WeBWorK3::Authen(vars->{ce});
+	#debug "in post /login";
+  my $username = query_parameters->{username} || body_parameters->{username};
+	my $password = query_parameters->{password} || body_parameters->{password};
 
-	$authen->set_params({
-			user => body_parameters->get('user'),
-			password => body_parameters->get('password'),
-			key => body_parameters->get('session_key')
-		});
+	#set_course_environment("hi");
+	my ($success, $realm) = authenticate_user($username,$password);
 
-	my $result = $authen->verify();
+	if($success){
+		my $key = vars->{db}->getKey($username)->{key};
+		session key => $key;
+		session user_id => $username; 
 
-	if($result){
-
-		my $key = $authen->create_session(body_parameters->{user});
-		buildSession(session,vars->{ce},vars->{db});
-
-		# session user => body_parameters->{user};
-		# session key => $key;
-		# my $permission = vars->{db}->getPermissionLevel(session("user"));
-		# debug "yeah";
-		# session permission => $permission->{permission};
-		# session timestamp => time();
-		#
-    # debug "calling setCookie";
-		#
-		# setCookie(session);
-
-		return {session_key=>$key, user=>params->{user},logged_in=>1};
+		return {session_key=>$key, user_id=>$username,logged_in=>1};
 
 	} else {
 		return {logged_in=>0};
@@ -87,7 +74,7 @@ post '/courses/:course_id/logout' => sub {
 	my $hostname = vars->{ce}->{server_root_url};
 	$hostname =~ s/https?:\/\///;
 
-	if ($hostname ne "localhost" && $hostname ne "127.0.0.1") {
+	if ($hostname ne "localhost" || $hostname ne "127.0.0.1") {
 		cookie "WeBWorKCourseAuthen." . params->{course_id} => "", domain=>$hostname, expires => "-1 hour";
 	} else {
 		cookie "WeBWorKCourseAuthen." . params->{course_id} => "", expires => "-1 hour";
@@ -96,6 +83,15 @@ post '/courses/:course_id/logout' => sub {
 	return {logged_in=>0};
 };
 
+##
+#
+## This is for testing to see if the require_login works.
+#
+##
+
+get '/courses/:course_id/test-login' => requires_login sub {
+		return {success => 1};
+};
 
 
 
@@ -120,7 +116,9 @@ get '/app-info' => sub {
 
 get '/courses/:course_id/info' => sub {
 
-	setCourseEnvironment(params->{course_id});
+	#debug "in /courses/" . route_parameters->{course_id} . "/info";
+
+	setCourseEnvironment(route_parameters->{course_id});
 
 	return {
 		course_id => params->{course_id},
@@ -131,34 +129,6 @@ get '/courses/:course_id/info' => sub {
 
 };
 
-sub setCourseEnvironment {
-
-	debug "in setCourseEnvironment";
-
-	send_error("The course has not been defined.  You may need to authenticate again",401)
-		unless (defined(session 'course'));
-
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
-	$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
-
-  var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir},
-                                                courseName=> session 'course'});
-  var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
-}
 
 
-sub checkCourse {
-	if (! defined(session->{course})) {
-		if (defined(params->{course_id})) {
-			session->{course} = params->{course_id};
-		} else {
-			send_error("The course has not been defined.  You may need to authenticate again",401);
-		}
-
-	}
-
-	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir}, courseName=> session->{course}});
-
-}
-}
 true

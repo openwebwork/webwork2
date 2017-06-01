@@ -7,12 +7,14 @@
 package Routes::Course;
 use Dancer2;
 
-use Dancer::FileUtils qw /read_file_content path/;
+set serializer => "JSON";
+
+use Dancer2::FileUtils qw /read_file_content path/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
-use Utils::Authentication qw/buildSession checkPermissions setCookie setCourseEnvironment/;
+use Routes::Common qw/setCourseEnvironment setCookie/;
 
 
 
@@ -26,87 +28,26 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 #
 ###
 
-any ['get','put','post','delete'] => '/courses/*/**' => sub {
-	my ($courseID) = splat;
-
-  session 'course' => $courseID;
-  session 'webwork_dir' => config->{webwork_dir};
-  setCourseEnvironment(session);
-  pass;
-};
+# any ['get','put','post','delete'] => '/courses/*/**' => sub {
+# 	my ($courseID) = splat;
+#
+#   session 'course' => $courseID;
+#   session 'webwork_dir' => config->{webwork_dir};
+#   setCourseEnvironment(session);
+#   pass;
+# };
 
 
 get '/courses' => sub {
 
-  setCourseEnvironment(session);
+  setCourseEnvironment('test');
 	my @courses = listCourses(vars->{ce});
 
 	return \@courses;
 
 };
 
-###
-#
-#  Get the properties of the course *course_id*
-#
-#  Permission >= Instructor
-#
-#  set checkCourseTables to 1 to check the course database and directory status
-#
-#  Returns properties of the course including the status of the course directory and databases.
-#
-###
 
-
-get '/courses/:course_id' => sub {
-
-	# template 'course_home.tt', {course_id=>params->{course_id}};
-	if(request->is_ajax){
-
-        setCourseEnvironment(params->{course_id});
-
-        my $coursePath = path(vars->{ce}->{webworkDirs}->{courses},params->{course_id});
-
-		if (! -e $coursePath) {
-			return {course_id => params->{course_id}, message=> "Course doesn't exist", course_exists=> JSON::false};
-		}
-
-
-
-		my $ce2 = new WeBWorK::CourseEnvironment({
-		 	webwork_dir         => vars->{ce}->{webwork_dir},
-			courseName => params->{course_id},
-		});
-
-
-
-
-
-		my ($tables_ok,$dbStatus);
-	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
-	    if (params->{checkCourseTables}){
-			($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
-            return { coursePath => $coursePath, tables_ok => $tables_ok, dbStatus => $dbStatus,
-                        message => "Course exists."};
-		} else {
-            return {course_id => params->{course_id}, message=> "Course exists.", course_exists=> JSON::true};
-        }
-
-	} else {
-
-		my $session = {};
-		for my $key (qw/course key permission user/){
-			$session->{$key} = session->{$key} if defined(session->{$key});
-		}
-		$session->{logged_in} = 1 if ($session->{user} && $session->{key});
-
-	    template 'course_home.tt', {course_id=> params->{course_id}, user=> session->{user_id},
-	        pagename=>"Course Home for " . params->{course_id},theSession=>to_json($session)},
-	        {layout=>"student.tt"};
-	}
-
-
-};
 
 ###
 #

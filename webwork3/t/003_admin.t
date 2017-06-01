@@ -1,9 +1,6 @@
-#!/usr/bin/env perl
-
 use strict;
 use warnings;
-use FindBin;
-use Plack::Builder;
+
 
 my $webwork_dir = "";
 my $pg_dir = "";
@@ -19,20 +16,34 @@ BEGIN {
 
   die "The directory $webwork_dir does not exist" if (not -d $webwork_dir);
   die "The directory $pg_dir does not exist" if (not -d $pg_dir);
+
 }
 
 use lib "$webwork_dir/lib";
 use lib "$webwork_dir/webwork3/lib";
 use lib "$pg_dir/lib";
 
-use Routes::Templates;
-use Routes::Login;
-use Routes::Course;
-use Routes::ProblemSets;
+use Routes::Admin;
 
-builder {
-    mount '/'    => Routes::Templates->to_app;
-    mount '/api' => Routes::Login->to_app;
-    mount '/api' => Routes::Course->to_app;
-    mount '/api' => Routes::ProblemSets->to_app;
-};
+use Test::More;
+use Plack::Test;
+use JSON;
+use HTTP::Request::Common;
+use HTTP::Cookies;
+
+use Data::Dump qw/dd dump/;
+
+my $app = Routes::Course->to_app;
+is( ref $app, 'CODE', 'Got app' );
+
+my $url  = 'http://localhost';
+my $test = Plack::Test->create($app);
+
+my $jar  = HTTP::Cookies->new();
+
+my $res  = $test->request( GET '/courses' );
+ok( $res->is_success, '[GET /courses] successful' );
+
+dd decode_json($res->content);
+
+done_testing();

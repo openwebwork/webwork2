@@ -1,5 +1,5 @@
 
-<script src="/webwork3/js/apps/require-config.js"></script>
+<script src="[% top_dir %]/js/apps/require-config.js"></script>
 
 <!-- The follow script sets up the MainViewList, which contains all of the main views for the application.
    This allows to load a configuration file instead of hard coding each of the views and sidebars. -->
@@ -7,19 +7,19 @@
 var main_view_paths = [%main_view_paths%];
 main_view_paths.unshift("module","backbone");
 </script>
-<script type='text/javascript'> 
-	require.config = { 'CourseManager': { session: [%theSession%], course_id: "[% course_id %]", 
+<script type='text/javascript'>
+	require.config = { 'CourseManager': { session: [%theSession%], course_id: "[% course_id %]",
 		sets: [%sets%], users: [%users%], settings: [% theSettings %]},
     'views/MainViewList': {main_views: [%main_views%]}
   };
 </script>
 
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-<script data-main="/webwork3/js/apps/CourseManager/CourseManager" src="/webwork3/js/bower_components/requirejs/require.js">
+<script data-main="[% top_dir %]/js/apps/CourseManager/CourseManager" src="/webwork3/js/bower_components/requirejs/require.js">
 </script>
 
 <div id="mainDiv" class="container">
-  <div class="row" id="main-row">  
+  <div class="row" id="main-row">
     <div class="col-md-9" id="main-view">
     </div>
     <div class="col-md-3 well" id="sidebar-container">
@@ -33,7 +33,7 @@ main_view_paths.unshift("module","backbone");
     </div>
     <div class="sidebar-content">
     </div>
-    </div>  
+    </div>
   </div>
 </div>
 
@@ -50,8 +50,8 @@ main_view_paths.unshift("module","backbone");
 
 <script type="text/template" id="help-text">
 <h3>Help for the Homework Manager</h3>
-   <p>The Homework Manager is where all creating and editing of homwork sets takes place.  The right side of the 
-   page is a list of the homework sets.  The rest of the page is a set of different views.  The Calendar View is default on opening.  There are also a Problem Set View, a Library Browser, Manage Problem Sets, Importing/Exporting Problem Sets and a Settings editor.  Here are a number of the common features. 
+   <p>The Homework Manager is where all creating and editing of homwork sets takes place.  The right side of the
+   page is a list of the homework sets.  The rest of the page is a set of different views.  The Calendar View is default on opening.  There are also a Problem Set View, a Library Browser, Manage Problem Sets, Importing/Exporting Problem Sets and a Settings editor.  Here are a number of the common features.
 
    <ul>
     <li>General Features:
@@ -65,7 +65,7 @@ main_view_paths.unshift("module","backbone");
         <li>The calendar shows open dates (green), due dates (red) and answer dates (blue) of homework sets.  Drag any to a new day and you will change that particular date.</li>
         <li>Click on a homework set will show additional information about the set.</li>
 
-       <li>To change the due date of a homework set, you can drag the set from the left column to the day on the calendar.  
+       <li>To change the due date of a homework set, you can drag the set from the left column to the day on the calendar.
    The open date and information about reduced credit will be set automatically based on the settings (for example, the reduced credit time is 3 days and the open date is 10 days before the due date.)</li>
    </ul>
    <li>Problem Set Editor:
@@ -110,31 +110,31 @@ main_view_paths.unshift("module","backbone");
         </li>
       </ul
     </li>
-    <li>Library Browser: 
+    <li>Library Browser:
       <ul>
         <li>The Library Browser is used to browse or search the library and add problems to sets.</li>
         <li>You can view problems by subject/chapter/section, as directories, in textbooks, local problems, within set defintion files and searching.</li>
         <li>Within a problem you have many of the same options as viewing a problem set (see above).</li>
-        <li>To add a problem to a set, click and hold the <button class="btn btn-default"><i class="fa fa-move"></i></button> 
+        <li>To add a problem to a set, click and hold the <button class="btn btn-default"><i class="fa fa-move"></i></button>
         button and drag the problem on top of the problem set on the left. </li>
         <li>Addiitonal, you can add a problem to a set by selecting the target set, then clicking the + button. </li>
         <li>There is additional help on searching by clicking the Help button next to the search button</li>
       </ul>
     </li>
     <li>Manager Problem Sets:
-      <ul>  
+      <ul>
         <li>This view shows details of all of the problem sets.  You can change the dates, visibility and reduced credit for each set here by clicking or change the appropriate item. </li>
         <li>To add a new set, click the "Add Problem Set" button at the top of the page. </li>
         <li>To delete a set click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. </li>
         <li>If there are more that 10 sets, you can view the remainder by click the forward page button at the bottom. </li>
         <li>You can sort by any aspect of the sets, by clicking the header column. </li>
       </ul>
-    </li>  
+    </li>
     <li>Import/Export Sets:</li>
     <li>Settings</li>
    </ul>
 </p>
-    
+
 </script>
 
 
@@ -152,13 +152,13 @@ main_view_paths.unshift("module","backbone");
     hide_prob_set: function() { return "Hide Problem Sets";},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
                   ". Click OK to confirm this."},
-    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
-      + "reenter your username and password to continue. ";},    
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please "
+      + "reenter your username and password to continue. ";},
     bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."},
     loading_data: function(){ return "The page is now loading...";}
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
-  
+
 %>
 
 </script>

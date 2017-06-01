@@ -1,51 +1,11 @@
 package Dancer2::Plugin::Auth::Extensible::Provider::WeBWorK;
 
+#use Carp qw/croak/;
 use Moo;
 with "Dancer2::Plugin::Auth::Extensible::Role::Provider";
 
 use WeBWorK3::Authen;
-
-#our $VERSION = '0.600';
-
-has course_environment => (is => 'rw');
-
-#plugin_keywords 'set_course_environment';
-
-
-sub set_course_environment {
-    my ($self,$ce) = @_;
-    $self->course_environment($ce);
-}
-
-
-# sub users {
-#
-#
-#
-# }
-
-# A more sensible provider would be likely to get this information from e.g. a
-# database (or LDAP, or...) rather than hardcoding it.  This, however, is an
-# example.
-sub users {
-    return {
-        'dave' => {
-            name     => 'David Precious',
-            password => 'beer',
-            roles    => [ qw(Motorcyclist BeerDrinker) ],
-        },
-        'bob' => {
-            name     => 'Bob The Builder',
-            password => 'canhefixit',
-            roles    => [ qw(Fixer) ],
-        },
-        'profa' => {
-            name => 'Professor A',
-            password => 'profa',
-            roles => [qw/Professor/]
-        }
-    };
-}
+use Data::Dump qw(dump);
 
 ##
 #
@@ -53,30 +13,25 @@ sub users {
 
 
 sub authenticate_user {
-    my ($self, $username_course, $password) = @_;
+  my ($self, $username, $password) = @_;
+  #$self->plugin->dsl->debug("In authenticate_user");
 
-    #  this is a hack to pass the course information into this method;
-    my ($username,$course) = split(";",$username_course);
+  my $course_id = $self->plugin->dsl->session->data->{course};
+  die "The course parameter must be set in the session" unless defined($course_id);
+  my $ce = WeBWorK::CourseEnvironment->new({
+               webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY,
+               courseName=> $course_id});
 
+  my $authen = WeBWorK3::Authen->new($ce);
+  my $session_key = $self->plugin->dsl->session->data->{session_key};
+  $authen->set_params({
+  		user => $username
+      ,password => $password
+      , key => $session_key
+  	});
 
-    my $ce = WeBWorK::CourseEnvironment->new({
-                webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY,
-                courseName=> $course});
-    my $authen = WeBWorK3::Authen->new($ce);
-
-    ## make a new WW session key
-
-    my $newKey = $authen->create_session($username);
-
-  	$authen->set_params({
-  			user => $username,
-  			password => $password, key => $newKey
-  		});
-
-   return  $authen->verify();
-
-    # my $user_details = $self->get_user_details($username) or return;
-    # return $self->match_password($password, $user_details->{password});
+  #$self->plugin->dsl->debug($authen->verify());
+  return $authen->verify()->{result};
 }
 
 =item get_user_details

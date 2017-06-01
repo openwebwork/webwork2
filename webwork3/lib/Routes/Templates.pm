@@ -6,22 +6,19 @@ use Dancer2::FileUtils qw/path read_file_content/;
 use Dancer2::Plugin::Auth::Extensible;  ## this handles the users and roles.  See the configuration file for setup.
 
 
-use Utils::Authentication qw/buildSession/;
+#use Utils::Authentication qw/buildSession/;
 use Utils::Convert qw/convertObjectToHash/;
 use Utils::CourseUtils qw/getCourseSettings getAllSets getAllUsers/;
 
 use Data::Dump qw/dump/;
 
-# This sets that if there is a template in the view direction a route is automatically generated.
-
-set auto_page => 0;
-
 any ['get','put','post','delete'] => '/courses/*/**' => sub {
 
   my ($course_id) = splat;
 
+  session course => $course_id;
   debug "in /courses/*/**";
-  debug session; 
+  debug session;
   # send_error("The course has not been defined.  You may need to authenticate again",401)
 	# 	unless (defined(session 'course'));
 
@@ -62,33 +59,43 @@ get '/' => sub {
 get '/courses/:course_id/login' => sub {
   debug 'in GET /courses/:course_id/login';
 
-  my $params = {course_id => route_parameters->{course_id},
-                  return_url => query_parameters->{return_url}};
+  debug config;
+
+  my $params = {
+    top_dir=>config->{top_dir},
+    course_id => route_parameters->{course_id},
+    return_url => query_parameters->{return_url}
+  };
+
   if (params->{msg}){
     $params->{msg} =params->{msg};
   }
-  template 'login.tt', $params, {layout=> undef};
+  template 'login.tt', $params, {layout=> 'general'};
 };
 
 post '/courses/:course_id/login' => sub {
 
-  ## check that the password/username was correct.
-  my ($success, $realm) = authenticate_user(
-       body_parameters->{username}.';' . route_parameters->{course_id},  # hack to pass the course into this method
-       body_parameters->{password}
-   );
-   if ($success) {
-       session logged_in_user => body_parameters->{username};
-       session logged_in_user_realm => $realm;
-       # other code here
-       debug "YEAH!!";
-       debug query_parameters->{return_url};
-       debug session;
-       forward query_parameters->{return_url}, {}, {method => 'GET'};
-   } else {  # authentication failed
-     forward '/courses/' . route_parameters->{course_id} . '/login',
-        {msg => 'login_failed'}, {method => 'GET'};
-   }
+  #debug "in post /login";
+  my $username = query_parameters->{username} || body_parameters->{username};
+  my $password = query_parameters->{password} || body_parameters->{password};
+
+  #set_course_environment("hi");
+  my ($success, $realm) = authenticate_user($username,$password);
+
+  if($success){
+    my $key = vars->{db}->getKey($username)->{key};
+    session key => $key;
+    session user_id => $username;
+    session logged_in => true;
+    debug session;
+
+    forward '/courses/' . route_parameters->{course_id} . '/manager',
+      {},{method=>'GET'};
+
+  } else {
+    forward '/courses/' . route_parameters->{course_id} . '/login',
+       {msg => 'login_failed'}, {method => 'GET'};
+  }
 
 };
 
@@ -107,6 +114,7 @@ get '/courses/:course_id/hi' => require_login sub {
 
 get '/courses/:course_id/manager' =>  sub {
 
+  debug 'in /courses/:course_id/manager';
 
 	# read the course manager configuration file to set up the main and side panes
 
@@ -170,7 +178,7 @@ get '/courses/:course_id/manager' =>  sub {
 			app->destroy_session;
 		}
 	} elsif ($userID ne '') {
-		session 'user' => $userID;
+		session 'user_id' => $userID;
 	} else {
 		app->destroy_session;
 	}
@@ -202,9 +210,9 @@ get '/courses/:course_id/manager' =>  sub {
 	my $users = [];
 
 	# case 6)
-	if(session 'user') {
+	if(session 'user_id') {
 
-		buildSession(session,vars->{ce},vars->{db});
+		#buildSession(session,vars->{ce},vars->{db});
 		if(session 'logged_in'){
 			$settings = getCourseSettings(vars->{ce});
 			$sets = getAllSets(vars->{db},vars->{ce});
@@ -219,15 +227,108 @@ get '/courses/:course_id/manager' =>  sub {
 
 	# set the ww2 style cookie to save session info for work in both ww2 and ww3.
 
-	if(session && session 'user'){
+	if(session && session 'user_id'){
 		setCookie(session);
 	}
 
-	template 'course_manager.tt', {course_id=> params->{course_id},theSession=>to_json(convertObjectToHash(session)),
-		theSettings=>to_json($settings), sets=>to_json($sets), users=>to_json($users), main_view_paths => to_json(\@view_paths),
-		main_views=>to_json($config),pagename=>"Course Manager"},
-		{layout=>'manager.tt'};
+  my $params = {
+    top_dir => config->{top_dir},
+    course_id=> params->{course_id},
+    theSession=>to_json(convertObjectToHash(session->{data})),
+  	theSettings=>to_json($settings),
+    sets=>to_json($sets),
+    users=>to_json($users),
+    main_view_paths => to_json(\@view_paths),
+  	main_views=>to_json($config),
+    pagename=>"Course Manager"
+  };
+
+
+	template 'course_manager.tt', $params,{layout=>'manager.tt'};
 };
+
+###
+#
+#  Get the properties of the course *course_id*
+#
+#  Permission >= Instructor
+#
+#  set checkCourseTables to 1 to check the course database and directory status
+#
+#  Returns properties of the course including the status of the course directory and databases.
+#
+###
+
+
+get '/courses/:course_id' => sub {
+
+	# template 'course_home.tt', {course_id=>params->{course_id}};
+	if(request->is_ajax){
+
+        setCourseEnvironment(params->{course_id});
+
+        my $coursePath = path(vars->{ce}->{webworkDirs}->{courses},params->{course_id});
+
+		if (! -e $coursePath) {
+			return {course_id => params->{course_id}, message=> "Course doesn't exist", course_exists=> JSON::false};
+		}
+
+
+
+		my $ce2 = new WeBWorK::CourseEnvironment({
+		 	webwork_dir         => vars->{ce}->{webwork_dir},
+			courseName => params->{course_id},
+		});
+
+
+
+
+
+		my ($tables_ok,$dbStatus);
+	    my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(ce=>$ce2);
+	    if (params->{checkCourseTables}){
+			($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
+            return { coursePath => $coursePath, tables_ok => $tables_ok, dbStatus => $dbStatus,
+                        message => "Course exists."};
+		} else {
+            return {course_id => params->{course_id}, message=> "Course exists.", course_exists=> JSON::true};
+        }
+
+	} else {
+
+		my $session = {};
+		for my $key (qw/course key permission user/){
+			$session->{$key} = session->{$key} if defined(session->{$key});
+		}
+		$session->{logged_in} = 1 if ($session->{user} && $session->{key});
+
+	    template 'course_home.tt', {course_id=> params->{course_id}, user=> session->{user_id},
+	        pagename=>"Course Home for " . params->{course_id},theSession=>to_json($session)},
+	        {layout=>"student.tt"};
+	}
+
+
+};
+
+###
+#
+# This sets the cookie in the WW2 style to allow for seamless transfer back and forth.
+
+sub setCookie {
+	my $session = shift;
+  my $cookie_value = $session->read('user') . "\t". $session->read('key') . "\t" . $session->read('timestamp');
+
+  my $hostname = vars->{ce}->{server_root_url};
+  $hostname =~ s/https?:\/\///;
+  my $cookie_name = "WeBWorK.CourseAuthen." . $session->read("course");
+	my $cookie = Dancer2::Core::Cookie->new(name => $cookie_name, value => $cookie_value);
+
+	if ($hostname eq "localhost" || $hostname eq "127.0.0.1"){
+		$cookie->domain($hostname);
+	}
+
+}
+
 
 
 true;

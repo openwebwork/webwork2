@@ -185,8 +185,6 @@ sub verify {
 
 	my $self = shift;
 
-  debug "in Authen::verify";
-
 	if (! ($self-> request_has_data_for_this_verification_module)) {
 		return ( $self -> call_next_authen_method());
 	}
@@ -220,14 +218,26 @@ sub verify {
 			}
 
 		}
-
-		$self->maybe_kill_cookie;
-		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character.
-			return $error;
-			# MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
-		}
 	}
-	return $result;
+
+   return {result => $result, error=>$error};
+
+	# 		debug $result;
+	# 		debug $error;
+	# 		debug $log_error;
+	#
+	# 	#$self->maybe_kill_cookie;
+	# 	if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character.
+	# 		return $error;
+	# 		# MP2 ? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
+	# 	}
+	# }
+	#
+	# debug $result;
+	# debug $error;
+	# debug $log_error;
+	#
+	# return $result;
 }
 
 #
@@ -305,6 +315,7 @@ sub verify_normal_user {
 
 	my $user_id = $self->{user_id};
 	my $session_key = $self->{session_key};
+
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 1);
 	#debug("sessionExists='". $sessionExists. "' keyMatches='".$keyMatches. "' timestampValid='". $timestampValid. "'");
 
@@ -359,7 +370,6 @@ sub get_credentials {
 				$self->{session_key} = $newKey;
 				$self->{login_type} = "guest";
 				$self->{credential_source} = "none";
-				debug("guest user '", $userID. "' key '", $newKey. "'");
 				return 1;
 			}
 		}
@@ -376,7 +386,7 @@ sub get_credentials {
 			$self->{password} = $self->{params}->{password};
 			$self->{login_type} = "normal";
 			$self->{credential_source} = "params";
-			debug("params user '", $self->{user_id}, "' password '", $self->{password}, "' key '", $self->{session_key}, "'");
+			#debug("params user '", $self->{user_id}, "' password '", $self->{password}, "' key '", $self->{session_key}, "'");
 			return 1;
 		}
 
