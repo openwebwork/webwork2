@@ -1,0 +1,67 @@
+<script src="[% top_dir %]/js/apps/require-config.js"></script>
+
+<!-- The follow script sets up the MainViewList, which contains all of the main views for the application.
+   This allows to load a configuration file instead of hard coding each of the views and sidebars. -->
+<script type="text/javascript">
+//var main_view_paths = [%main_view_paths%];
+//main_view_paths.unshift("module","backbone");
+</script>
+<script type='text/javascript'>
+	require.config = { 'Admin': { session: [%theSession%], course_id: "[% course_id %]",
+		sets: [%sets%], users: [%users%], settings: [% theSettings %]},
+    'views/MainViewList': {main_views: [%main_views%]}
+  };
+</script>
+
+<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script data-main="[% top_dir %]/js/apps/Admin/Admin" src="/webwork3/js/bower_components/requirejs/require.js">
+</script>
+
+
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="navbar-header">
+    <a class="navbar-brand" href="#" onclick="return false">WeBWorK</a>
+  </div>
+
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <ul class="nav navbar-nav">
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+        aria-haspopup="true" aria-expanded="false">Menu <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Add Course</a></li>
+          <li><a href="#">Rename Course</a></li>
+          <li><a href="#">Delete Course</a></li>
+          <li><a href="#">Archive Course</a></li>
+          <li><a href="#">Unarchive Course</a></li>
+          <li><a href="#">Upgrade Course</a></li>
+          <li><a href="#">Manage Locations</a></li>
+          <li><a href="#">Hide Inactive Courses</a></li>
+
+        </ul>
+      </li>
+    </ul>
+
+  <ul class="nav navbar-nav navbar-right">
+    <li><p class="navbar-text">
+      Welcome <span class="logged-in-as">[% user_id %]</span>
+      <span class="act-as-user"></span>
+    </p><li>
+      <li><button class="btn btn-default btn-sm navbar-btn logout-button" data-toggle="dropdown">
+        <span class="glyphicon glyphicon-log-out"></span></button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a class="logout-link" href="[% top_dir %]/courses/admin/logout"  onclick="return false">Logout</a></li>
+          <li class="stop-acting-li disabled"><a class="stop-acting-link" href="#"  onclick="return false">Stop Acting as User</a></li>
+        </ul>
+      </li>
+      <li><a href="https://github.com/openwebwork/webwork2/issues/new" target="_blank">Bugs!</a></li>
+      <li><a href="#" onclick="return false" class="main-help-button">Help</a></li>
+    </ul>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2>Admin View</h2>
+  </div>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WeBWorK 3</title>
+  <link rel="stylesheet" type="text/css" href="[% top_dir %]/js/bower_components/bootstrap/dist/css/bootstrap.css">
+  <link rel='stylesheet' href='[% top_dir %]/js/bower_components/font-awesome/css/font-awesome.css' type='text/css' media='screen'>
+  <link rel='stylesheet' href='[% top_dir %]/css/webwork.css' type='text/css' media='screen'>
+  <script src="[% top_dir %]/js/bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="[% top_dir %]/js/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+
+
+[% content %]
+
+<nav class="navbar-fixed-bottom navbar navbar-other" id="footer">
+<div class="container">
+<p id="footer" class="navbar-text">
+<a href="http://webwork.maa.org">WeBWorK</a> &copy; 1996-2017,
+  ww_version: [% ww_version %] | pg_version [% pg_version %]|
+  <span style="margin-left:4ex;">Powered</span> by <a href="http://perldancer.org/">Dancer</a> [% dancer_version %]
+</div>
+</nav>
+
+</body>
+</html>

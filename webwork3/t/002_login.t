@@ -26,6 +26,7 @@ use lib "$pg_dir/lib";
 use Routes::Login;
 
 use Test::More;
+use Test::Deep;
 use Plack::Test;
 use JSON;
 use HTTP::Request::Common;
@@ -34,47 +35,122 @@ use HTTP::Cookies;
 use Data::Dump qw/dd dump/;
 
 my $app = Routes::Login->to_app;
-is( ref $app, 'CODE', 'Got app' );
-
 my $url  = 'http://localhost';
 my $test = Plack::Test->create($app);
-
 my $jar  = HTTP::Cookies->new();
 
-my $res  = $test->request( GET '/courses/test/info' );
+
+## test if it is actually an app
+
+subtest 'Check for app' => sub {
+  is( ref $app, 'CODE', 'Got app' );
+
+};
+my $req =  GET "$url/courses/test/info";
+
+my $res  = $test->request($req);
 ok( $res->is_success, '[GET /courses/test/info] successful' );
 
-#dd decode_json($res->content);
-
-
-## test login as student
-
-$res = $test->request(POST "$url/courses/test/login?username=dave&password=dave");
-my $res_as_obj =  decode_json($res->content);
-#dd $res_as_obj;
-ok($res_as_obj->{logged_in}, '[POST /courses/test/login] using query params successful');
+## store the cookies from the first request
 $jar->extract_cookies($res);
 
-my $params = {username => "dave",  password=> "dave"};
-$res = $test->request(POST "$url/courses/test/login",'Content-Type' => 'application/html', Content => encode_json($params));
-$res_as_obj =  decode_json($res->content);
-#dd $res;
-#dd $res_as_obj;
-ok($res_as_obj->{logged_in}, '[POST] /courses/test/login] using body params successful');
+## Check if the login works with query parameters
 
-#dd $jar->as_string;
+subtest 'Check login using query parameters' => sub {
+  $req =  POST "$url/courses/test/login?username=dave&password=dave";
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+  my $res_as_obj =  decode_json($res->content);
 
-my $req = GET "$url/courses/test/test-login";
+  ok($res_as_obj->{logged_in}, '[POST /courses/test/login] using query params successful');
+
+  ### check if still logged in
 
 
+  $req = GET "$url/courses/test/logged-in";
+  $jar->add_cookie_header($req);
 
-# add cookies to the request
-$jar->add_cookie_header($req);
+  $res = $test->request($req);
+  $res_as_obj = decode_json($res->content);
+  ok($res_as_obj->{logged_in}, "[GET /courses/test/logged-in]");
 
-#dd $req;
-#
-$res = $test->request($req);
-#dd $res;
-ok($res->is_success,'Session is working');
+};
+
+subtest 'Check logout ' => sub {
+
+  my $req =  POST "$url/courses/test/logout";
+  $jar->add_cookie_header($req);
+  my $res = $test->request($req);
+  my $res_as_obj =  decode_json($res->content);
+
+  ok($res->is_success, '[POST /courses/test/logout] route exists');
+  ok(! $res_as_obj->{logged_in}, '[POST /courses/test/logout] logged out successfully');
+
+};
+
+## Check if the login works with body parameters
+
+subtest 'Check login with body parameters' => sub {
+
+  my $params = {username => "dave",  password=> "dave"};
+  my $res = $test->request(POST "$url/courses/test/login",'Content-Type' => 'application/json', Content => encode_json($params));
+  my $res_as_obj =  decode_json($res->content);
+
+  ok($res_as_obj->{logged_in}, '[POST] /courses/test/login] using body params successful');
+
+  $jar->extract_cookies($res);
+
+  ### check if still logged in
+
+  $req = GET "$url/courses/test/logged-in";
+  $jar->add_cookie_header($req);
+
+  $res = $test->request($req);
+  $res_as_obj = decode_json($res->content);
+  ok($res_as_obj->{logged_in}, "[GET /courses/test/logged-in]");
+
+};
+
+subtest 'Check the user roles' => sub {
+
+
+  ## test the user_roles
+  my $req = GET "$url/courses/test/users/dave/roles";
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+  my $res_as_obj =  decode_json($res->content);
+
+  ok($res->is_success, '[GET /courses/test/users/:user_id/roles]');
+
+  cmp_deeply($res_as_obj,["student"],"The user roles returned correctly. ");
+};
+
+subtest 'Check the require_login' => sub {
+
+  my $req = GET "$url/courses/test/test-login";
+  $jar->add_cookie_header($req);
+  my $res = $test->request($req);
+
+  ok($res->is_success,'require_login is working');
+
+  $req = GET "$url/courses/test/test-for-student";
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+
+  ok($res->is_success,'require_role student is working');
+
+  $res = $test->request(POST "$url/courses/test/login?username=peter&password=peter");
+  my $jar2  = HTTP::Cookies->new();
+  $jar2->extract_cookies($res);
+
+  $req = GET "$url/courses/test/test-for-professor";
+  $jar2->add_cookie_header($req);
+  $res = $test->request($req);
+
+  ok($res->is_success, 'require_role professor is working');
+
+};
+
+
 
 done_testing();

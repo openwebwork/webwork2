@@ -33,7 +33,7 @@ use HTTP::Cookies;
 
 use Data::Dump qw/dd dump/;
 
-my $app = Routes::Course->to_app;
+my $app = Routes::Admin->to_app;
 is( ref $app, 'CODE', 'Got app' );
 
 my $url  = 'http://localhost';

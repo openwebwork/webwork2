@@ -27,6 +27,7 @@ any ['get','put','post','delete'] => '/courses/*/**' => sub {
 	#debug "in uber route";
   setCourseEnvironment($courseID);
   session 'webwork_dir' => config->{webwork_dir};
+
 	pass;
 };
 
@@ -46,30 +47,32 @@ any ['get','post'] => '/renderer/courses/*/**' => sub {
 
 post '/courses/:course_id/login' => sub {
 
-	#debug "in post /login";
+	#debug "in POST /courses/:course_id/login";
   my $username = query_parameters->{username} || body_parameters->{username};
 	my $password = query_parameters->{password} || body_parameters->{password};
 
-	#set_course_environment("hi");
 	my ($success, $realm) = authenticate_user($username,$password);
 
 	if($success){
 		my $key = vars->{db}->getKey($username)->{key};
 		session key => $key;
-		session user_id => $username; 
+		session logged_in_user => $username;
+		session logged_in_user_realm => $realm;
+		session logged_in => true;
 
 		return {session_key=>$key, user_id=>$username,logged_in=>1};
 
 	} else {
-		return {logged_in=>0};
+		app->destroy_session;
+		return {logged_in=>false};
 	}
 };
 
 
 post '/courses/:course_id/logout' => sub {
 
-	my $deleteKey = vars->{db}->deleteKey(session 'user');
-	my $sessionDestroy = session->destroy;
+	my $deleteKey = vars->{db}->deleteKey(session 'user_id');
+	app->destroy_session;
 
 	my $hostname = vars->{ce}->{server_root_url};
 	$hostname =~ s/https?:\/\///;
@@ -80,7 +83,7 @@ post '/courses/:course_id/logout' => sub {
 		cookie "WeBWorKCourseAuthen." . params->{course_id} => "", expires => "-1 hour";
 	}
 
-	return {logged_in=>0};
+	return {logged_in=>false};
 };
 
 ##
@@ -89,8 +92,48 @@ post '/courses/:course_id/logout' => sub {
 #
 ##
 
-get '/courses/:course_id/test-login' => requires_login sub {
-		return {success => 1};
+get '/courses/:course_id/logged-in' => sub {
+		return session->{data};
+};
+
+###
+#
+#  This is for testing if the require_login works
+#
+###
+
+get '/courses/:course_id/test-login' => require_login sub {
+   return {msg=>"success"};
+};
+
+###
+#
+# This is for testing restricting user roles
+#
+##
+
+get '/courses/:course_id/test-for-student' => require_role student => sub {
+	return {msg=>"success"};
+};
+
+get '/courses/:course_id/test-for-professor' => require_role professor => sub {
+	return {msg=>"success"};
+};
+
+
+###
+#
+#  returns a list of the user roles for the user :user_id in course :course_id
+#
+###
+
+get '/courses/:course_id/users/:user_id/roles' => sub {
+
+	my $user = get_user_details(route_parameters->{user_id});
+
+	send_error("The user " . route_parameters->{user_id} . " must be a member of the course",424)
+		unless defined($user) && defined($user->{user_id});
+	return user_roles(route_parameters->{user_id});
 };
 
 

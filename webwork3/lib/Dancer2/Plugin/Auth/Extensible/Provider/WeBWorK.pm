@@ -5,6 +5,7 @@ use Moo;
 with "Dancer2::Plugin::Auth::Extensible::Role::Provider";
 
 use WeBWorK3::Authen;
+use Utils::Convert qw/convertObjectToHash/;
 use Data::Dump qw(dump);
 
 ##
@@ -16,7 +17,7 @@ sub authenticate_user {
   my ($self, $username, $password) = @_;
   #$self->plugin->dsl->debug("In authenticate_user");
 
-  my $course_id = $self->plugin->dsl->session->data->{course};
+  my $course_id = $self->plugin->dsl->session->data->{course_id};
   die "The course parameter must be set in the session" unless defined($course_id);
   my $ce = WeBWorK::CourseEnvironment->new({
                webwork_dir => $WeBWorK::Constants::WEBWORK_DIRECTORY,
@@ -47,7 +48,8 @@ Details should be returned as a hashref.
 sub get_user_details {
     my ($self, $username) = @_;
 
-    return $self->users->{lc $username};
+    my $user = $self->plugin->dsl->vars->{db}->getUser($username);
+    return convertObjectToHash($user);
 }
 
 =item get_user_roles
@@ -61,8 +63,11 @@ Given a username, return a list of roles that user has.
 sub get_user_roles {
     my ($self, $username) = @_;
 
-    my $user_details = $self->get_user_details($username) or return;
-    return $user_details->{roles};
+    my %roles = reverse %{$self->plugin->dsl->vars->{ce}->{userRoles}};
+  	my $db = $self->plugin->dsl->vars->{db};
+  	my $permission = $db->getPermissionLevel($username);
+  	return [$roles{$permission->{permission}}];
+
 }
 
 

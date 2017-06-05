@@ -4,7 +4,7 @@
 #
 ##
 
-package Routes::Course;
+package Routes::Admin;
 use Dancer2;
 
 set serializer => "JSON";

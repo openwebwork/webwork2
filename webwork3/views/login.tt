@@ -1,7 +1,30 @@
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="navbar-header">
+    <a class="navbar-brand" href="#" onclick="return false">WeBWorK</a>
+  </div>
 
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <ul class="nav navbar-nav">
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+            aria-haspopup="true" aria-expanded="false">Login to [% course_id %] <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a href="[% top_dir %]/courses">Switch Course</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
 <div class="content">
-<div class="message"> [% message %]</div>
-<form class="form-horizontal" role="form" method="post">
+  [% IF msg && msg == 'login_failed' %]
+  <div class="row">
+    <div class="alert alert-danger col-md-4 col-md-offset-2" role="alert">You
+      have entered in an incorrect username and password.</div>
+  </div>
+  [% END %]
+<form class="form-horizontal" role="form" method="post" action="[% top_dir %]/courses/[% course_id %]/login">
   <div class="form-group">
     <label for="inputEmail3" class="col-sm-2 control-label">Login Name:</label>
     <div class="col-sm-4">
