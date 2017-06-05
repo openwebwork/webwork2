@@ -24,7 +24,7 @@ $(function () {
 	     matchBrackets: true,
 	     
 	    });
-	cm.setSize(700,400);
+	cm.setSize('auto',400);
     }
     
 });

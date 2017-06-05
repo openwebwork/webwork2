@@ -711,7 +711,7 @@ sub filter_handler {
 			} elsif ($field eq 'status') {
 			    $record->{status} = $ce->status_abbrev_to_name($record->{status});
 			}
-			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
+			push @userIDs, $record->user_id if $r->maketext($record->{$field}) =~ /^$regex/i;
 		}
 		$self->{visibleUserIDs} = \@userIDs;
 	} elsif ($scope eq "match_ids") {
@@ -1589,7 +1589,7 @@ sub fieldEditHTML {
 			next unless $val <= $editorUserPermission;
 			push(@values, $val);
 			$labels{$val} = $r->maketext($role);
-			$default = $val if ( $value eq $role );
+			$default = $val if ( $value eq $r->maketext($role) );
 		}
 		
 		return CGI::popup_menu({

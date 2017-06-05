@@ -227,10 +227,10 @@ use constant FIELD_PROPERTIES => {
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( default gateway proctored_gateway jitar)],
-		labels    => {	default => "homework",
-				gateway => "gateway/quiz",
-				proctored_gateway => "proctored gateway/quiz",
-				jitar => "just-in-time"
+		labels    => {	default => x("homework"),
+				gateway => x("gateway/quiz"),
+				proctored_gateway => x("proctored gateway/quiz"),
+				jitar => x("just-in-time")
 		},
 	},
 	version_time_limit => {
@@ -2614,6 +2614,7 @@ sub output_JS {
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-fr.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
   print "\n";
@@ -2624,6 +2625,15 @@ sub output_JS {
            <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
 	print "\n";
     	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.nestedSortable.js"}), CGI::end_script();
+
+	# This is for translation of js files
+	my $lang = $ce->{language};
+	print CGI::start_script({type=>"text/javascript"});
+ 	print "localize_basepath = \"$site_url/js/i18n/\";";
+	print "lang = \"$lang\";";
+  	print CGI::end_script();
+  	print qq!<script src="$site_url/js/i18n/localize.js"></script>!;
+
     	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
 
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";

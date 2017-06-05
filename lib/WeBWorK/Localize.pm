@@ -15,7 +15,7 @@ use WeBWorK::Utils qw(x);
 
 my $path = "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib/WeBWorK/Localize";
 my   $pattern = File::Spec->catfile($path, '*.[pm]o');
-my   $decode = 1;
+my   $decode = 0;
 my   $encoding = undef;
 
 # For some reason this next stanza needs to be evaluated 
@@ -87,8 +87,8 @@ sub negquant {
 	    
 	    '_LOGIN_MESSAGE' => x(q{If you check [_1] your login information will be remembered by the browser you are using, allowing you to visit WeBWorK pages without typing your user name and password (until your session expires). This feature is not safe for public workstations, untrusted machines, and machines over which you do not have direct control.}),
 	    
-	    '_HMWKSETS_EDITOR_DESCRIPTION' => x(q{This is the homework sets editor page where you can view and edit the homework sets that exist in this course and the problems that they contain. The top of the page contains forms which allow you to filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, publish homework sets, import/export sets from/to an external file, score sets, or create/delete sets.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table displaying the sets and several pieces of relevant information.}),
-	    "_CLASSLIST_EDITOR_DESCRIPTION" => x(q{This is the classlist editor page, where you can view and edit the records of all the students currently enrolled in this course.  The top of the page contains forms which allow you to filter which students to view, sort your students in a chosen order, edit student records, give new passwords to students, import/export student records from/to external files, or add/delete students.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table containing the student usernames and their information.}),
+	    '_HMWKSETS_EDITOR_DESCRIPTION' => x(q{This is the homework sets editor page where you can view and edit the homework sets that exist in this course and the problems that they contain. The top of the page contains forms which allow you to filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, publish homework sets, import/export sets from/to an external file, score sets, or create/delete sets.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the "Take Action!" button at the bottom of the form.  The bottom of the page contains a table displaying the sets and several pieces of relevant information.}),
+	    "_CLASSLIST_EDITOR_DESCRIPTION" => x(q{This is the classlist editor page, where you can view and edit the records of all the students currently enrolled in this course.  The top of the page contains forms which allow you to filter which students to view, sort your students in a chosen order, edit student records, give new passwords to students, import/export student records from/to external files, or add/delete students.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the "Take Action!" button at the bottom of the form.  The bottom of the page contains a table containing the student usernames and their information.}),
 
 	    "_ACHIEVEMENTS_EDITOR_DESCRIPTION" => x(q{This is the Achievement Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts: Achievments are displayed, and evaluated, in the order they are listed. The "secret" category creates achievements which are not visible to students until they are earned.  The "level" category is used for the achievements associated to a users level.}),
 	    
@@ -99,6 +99,8 @@ sub negquant {
 	    "_PROBLEM_SET_SUMMARY"   => x(q{This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to.}),
 	    
 	    "_USER_TABLE_SUMMARY"    => x(q{A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user.}),
+
+            "_ANSWER_LOG_DESCRIPTION" => x(q{This is the past answer viewer.  Students can only see their answers, and they will not be able to see which parts are correct.  Instructors can view any users answers using the form below and the answers will be colored according to correctness.}),
 
 	    "_ONE_COLUMN" => x('One Column'),
 
@@ -195,7 +197,7 @@ my $ConfigStrings = [
 	[x('Optional Modules'),
     	{ var => 'achievementsEnabled',
 		  doc => x('Enable Course Achievements'),
-		  doc2 => x('Activiating this will enable Mathchievements for webwork.  Mathchievements can be managed by using the Achievement Editor link.'),
+		  doc2 => x('Activating this will enable Mathchievements for webwork.  Mathchievements can be managed by using the Achievement Editor link.'),
 		  type => 'boolean'
 		  },                
 		 { var => 'achievementPointsPerProblem',
@@ -205,7 +207,7 @@ my $ConfigStrings = [
 		  },
      	 { var => 'achievementItemsEnabled',
 		  doc => x('Enable Achievement Items'),
-		  doc2 => x('Activiating this will enable achievement items. This features rewards students who earn achievements with items that allow them to affect their homework in a limited way.'),
+		  doc2 => x('Activating this will enable achievement items. This features rewards students who earn achievements with items that allow them to affect their homework in a limited way.'),
 		  type => 'boolean'
 	 },
 	         { var => 'options{enableConditionalRelease}',
@@ -252,6 +254,11 @@ my $ConfigStrings = [
 	   doc => x('Enable Show Me Another button'),
 	   doc2 => x('Enables use of the Show Me Another button, which offers the student a newly-seeded version of the current problem, complete with solution (if it exists for that problem).'),
 	   type => 'boolean'
+	 },
+	 { var => 'pg{options}{showMeAnotherDefault}',
+	   doc => x('Default number of attempts before Show Me Another can be used (-1 => Never)'),
+	   doc2 => x('This is the default number of attempts before show me another becomes available to students.  It can be set to -1 to disable show me another by default.'),
+	   type => 'number'
 	 },
 	 { var => 'pg{options}{showMeAnotherMaxReps}',
 	   doc => x('Maximum times Show me Another can be used per problem (-1 => unlimited)'),
@@ -345,13 +352,13 @@ my $ConfigStrings = [
 
 		{ var => 'pg{options}{displayMode}',
 		  doc => x('The default display mode'),
-		  doc2 => 'Enter one of the allowed display mode types above.  See \'display modes entry\' for descriptions.',
+		  doc2 => x('Enter one of the allowed display mode types above. See \'display modes entry\' for descriptions.'),
 		  min  => 1,
 		  values => [qw(MathJax images plainText)],
 		  type => 'popuplist'
 		},
 	        { var  => 'pg{specialPGEnvironmentVars}{MathView}',
-                  doc  => 'Use MathView editor for answer entry',
+                  doc  => x('Use MathView editor for answer entry'),
                   doc2 => x('Set to true to display MathView equation editor icon next to each answer box'),
                   type => 'boolean'
                 }, 
@@ -374,7 +381,7 @@ my $ConfigStrings = [
 
 		{ var => 'pg{ansEvalDefaults}{numRelPercentTolDefault}',
 		  doc => x('Allowed error, as a percentage, for numerical comparisons'),
-		  doc2 => "When numerical answers are checked, most test if the student's answer is close enough to the programmed answer be computing the error as a percentage of the correct answer.  This value controls the default for how close the student answer has to be in order to be marked correct.<p>A value such as 0.1 means 0.1 percent error is allowed.",
+		  doc2 => x(q{When numerical answers are checked, most test if the student's answer is close enough to the programmed answer be computing the error as a percentage of the correct answer.  This value controls the default for how close the student answer has to be in order to be marked correct.<p>A value such as 0.1 means 0.1 percent error is allowed.}),
 		  type => 'number'
 		},
 	],

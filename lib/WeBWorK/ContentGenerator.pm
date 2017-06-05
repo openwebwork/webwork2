@@ -498,7 +498,7 @@ sub header {
 	my $self = shift;
 	my $r = $self->r;
 	
-	$r->content_type("text/html; charset=utf-8");
+	$r->content_type("text/html; charset=UTF-8");
 	$r->send_http_header unless MP2;
 	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 }
@@ -654,11 +654,12 @@ sub links {
 	# experimental subroutine for generating links, to clean up the rest of the
 	# code. ignore for now. (this is a closure over $self.)
 	my $makelink = sub {
+		use utf8;
 		my ($module, %options) = @_;
 		
 		my $urlpath_args = $options{urlpath_args} || {};
 		my $systemlink_args = $options{systemlink_args} || {};
-		my $text = HTML::Entities::encode_entities($options{text});
+		my $text = HTML::Entities::encode_entities($options{text},"<>&");
 		my $active = $options{active};
 		my %target = ($options{target} ? (target => $options{target}) : ());
 		
@@ -768,7 +769,7 @@ sub links {
 			}
 
 			
-				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}Options", text=>$r->maketext("User Settings"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 					
 			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 			

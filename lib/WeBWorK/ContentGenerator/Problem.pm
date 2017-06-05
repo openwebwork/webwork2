@@ -22,7 +22,6 @@ use base qw(WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil);  # not needed?
 =head1 NAME
  
 WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
-
 =cut
 
 use strict;
@@ -1603,7 +1602,7 @@ sub output_score_summary{
 		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
 		print join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
-			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), $prMessage, CGI::br(),
+			$r->maketext("You have attempted this problem [quant,_1,time,times,0 time].",$attempts), $prMessage, CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
 			$problem->attempted
 		
@@ -2152,6 +2151,15 @@ sub output_JS{
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
+
+		# This is for translation of js files
+		my $lang = $ce->{language};
+		print CGI::start_script({type=>"text/javascript"});
+		print "localize_basepath = \"$site_url/js/i18n/\";";
+  		print "lang = \"$lang\";";
+		print CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/i18n/localize.js"}), CGI::end_script();
+
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
 	    } else {
 		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");

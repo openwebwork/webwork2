@@ -11,6 +11,12 @@
  *
  ***********************************************************/
 
+var localize_basepath;
+
+$.getScript(localize_basepath+"localize.js", function(){
+	  console.log("Localize script loaded.");
+});
+
 function jumpTo(ref) {  // scrolling javascript function
     if ( ref ) {
         var pn = ref - 1; // we start anchors at 1, not zero
@@ -45,11 +51,11 @@ function runtimer() {
 	var remainingTime = serverDueTime - browserTime + 1.*timeDelta;
 
 	if ( remainingTime >= 0 ) {
-	    theTimer.innerHTML = "Remaining time: " + toMinSec(remainingTime) + " (min:sec)";
+	    theTimer.innerHTML = maketext("Remaining time :")+" " + toMinSec(remainingTime) + " (min:sec)";
 	    setTimeout("updateTimer();", 1000);
 	    setTimeout("checkAlert();", 1000);
 	} else {
-	    theTimer.innerHTML = "Remaining time: 0 min";
+	    theTimer.innerHTML = maketext("Remaining time :")+ " 0 min";
 	}
     }
 }
@@ -60,7 +66,7 @@ function updateTimer() {
     browserTime = Math.round(dateNow.getTime()/1000);
     var remainingTime = serverDueTime - browserTime + 1.*timeDelta;
     if ( remainingTime >= 0 ) {
-	theTimer.innerHTML = "Remaining time: " + toMinSec(remainingTime) + " (min:sec)";
+	theTimer.innerHTML = maketext("Remaining time :")+" " + toMinSec(remainingTime) + " (min:sec)";
 	setTimeout("updateTimer();", 1000);
     }
 }
@@ -72,14 +78,14 @@ function checkAlert() {
     var timeRemaining = serverDueTime - browserTime + 1.*timeDelta;
 
     if ( timeRemaining <= 0 ) {
-        alert("* You are out of time! *\n" + 
-	      "* Press grade now!     *");
+        alert(maketext("* You are out of time! *\n") + 
+	      maketext("* Press grade now!     *"));
     } else if ( timeRemaining <= 45 && timeRemaining > 40 ) {
-	alert("* You have less than 45 seconds left! *\n" + 
-	      "*      Press Grade very soon!         *");
+	alert(maketext("* You have less than 45 seconds left! *\n") + 
+	      maketext("*      Press Grade very soon!         *"));
     } else if ( timeRemaining <= 90 && timeRemaining > 85 ) {
-	alert("* You only have less than 90 sec left to complete  *\n" + 
-	      "* this assignment. You should finish it very soon! *");
+	alert(maketext("* You only have less than 90 sec left to complete  *\n") + 
+	      maketext("* this assignment. You should finish it very soon! *"));
     }
     if ( timeRemaining > 0 ) {
 	setTimeout("checkAlert();", 5000);

@@ -48,6 +48,8 @@ use constant MAX_SHOW_DEFAULT => 20;
 use constant NO_LOCAL_SET_STRING => x('No sets in this course yet');
 use constant SELECT_SET_STRING => x('Select a Set from this Course');
 use constant SELECT_LOCAL_STRING => x('Select a Problem Collection');
+use constant SELECT_HMW_SET_STRING => x('Select a Homework Set');
+use constant SELECT_SETDEF_FILE_STRING => x('Select a Set Definition File');
 use constant MY_PROBLEMS => x('My Problems');
 use constant MAIN_PROBLEMS => x('Unclassified Problems');
 use constant ALL_CHAPTERS => 'All Chapters';
@@ -383,7 +385,7 @@ sub view_problems_line {
 	my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
 	$result .= ' '.$r->maketext('Max. Shown:').' '.
 		CGI::popup_menu(-name=> 'max_shown',
-		                -values=>[5,10,15,20,25,30,50,'All'],
+		                -values=>[5,10,15,20,25,30,50,$r->maketext("All")],
 		                -default=> $defaultMax);
 	# Option of whether to show hints and solutions
 	my $defaultHints = $r->param('showHints') || SHOW_HINTS_DEFAULT;
@@ -407,7 +409,7 @@ sub browse_local_panel {
     
 	my $list_of_prob_dirs= get_problem_directories($r,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
-		$library_selected = "Found no directories containing problems";
+		$library_selected = $r->maketext("Found no directories containing problems");
 		unshift @{$list_of_prob_dirs}, $library_selected;
 	} else {
 		my $default_value = $r->maketext(SELECT_LOCAL_STRING);
@@ -441,7 +443,7 @@ sub browse_mysets_panel {
 	my $r = $self->r;	
 	my $library_selected = shift;
 	my $list_of_local_sets = shift;
-	my $default_value = "Select a Homework Set";
+	my $default_value = $r->maketext(SELECT_HMW_SET_STRING);
 
 	if(scalar(@$list_of_local_sets) == 0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -685,9 +687,9 @@ sub browse_library_panel2adv {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching WeBWorK problems";
+		$count_line = $r->maketext("There are no matching WeBWorK problems");
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problems";
+		$count_line = $r->maketext("There are [_1] matching WeBWorK problems", $count_line);
 	}
 
 	# Formatting level checkboxes by hand
@@ -789,7 +791,7 @@ sub browse_setdef_panel {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $library_selected = shift;
-	my $default_value = "Select a Set Definition File";
+	my $default_value = $r->maketext(SELECT_SETDEF_FILE_STRING);
 	# in the following line, the parens after sort are important. if they are
 	# omitted, sort will interpret get_set_defs as the name of the comparison
 	# function, and ($ce->{courseDirs}{templates}) as a single element list to
@@ -840,7 +842,7 @@ sub make_top_row {
 	}
 	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
 
-	my $these_widths = "width: 24ex";
+	my $these_widths = "width: 25ex";
 
 	if($have_local_sets ==0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
@@ -886,7 +888,7 @@ sub make_top_row {
 		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
-		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>$these_widths, @dis4),
+		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>"width: 30ex", @dis4),
 		$libs,
 	));
 
@@ -924,7 +926,7 @@ sub make_top_row {
 						 -value=>$r->maketext("Next page"));
 	}
 	if (scalar(@pg_files)) {
-		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
+		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:25ex",
 		                         -value=>$r->maketext("Show all paths"),
 								 -id =>"toggle_paths",
 								 -onClick=>'return togglepaths()');
@@ -932,16 +934,17 @@ sub make_top_row {
 		$show_hide_path_button .= " ".CGI::hidden(-name=>"hidetext", -id=>"hidetext", -default=>$r->maketext("Hide all paths"));
 		$show_hide_path_button .= " ".CGI::hidden(-name=>"showtext", -id=>"showtext", -default=>$r->maketext("Show all paths"));
 	}
-
+	
+	my $stringalert = $r->maketext(SELECT_SET_STRING);
 	print CGI::Tr({},
 	        CGI::td({-class=>"InfoPanel", -align=>"center"},
 		      CGI::start_table({-border=>"0"}),
 		        CGI::Tr({}, CGI::td({ -align=>"center"},
 			       CGI::button(-name=>"select_all", -style=>$these_widths,
-                                    -onClick=>'return addme("", "all")',
+                                    -onClick=>"return addme(\"\", \'all\', \"$stringalert\" )",
 			            -value=>$r->maketext("Add All")),
 		           CGI::submit(-name=>"cleardisplay", 
-		                -style=>$these_widths,
+		                -style=>"width: 30ex",
 		                -value=>$r->maketext("Clear Problem Display")),
 			$prev_button, " ", $next_button, " ", $show_hide_path_button
 		     )), 
@@ -1001,7 +1004,7 @@ sub make_data_row {
 				problemSeed=> $problem_seed}
 		  ), 
 				id=> "editit$cnt",
-				target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
+				target=>"WW_Editor", title=>$r->maketext("Edit it")}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -1022,11 +1025,11 @@ sub make_data_row {
 				displayMode => $displayMode,
 			}
 		), target=>"WW_View", 
-			title=>"Try it",
+			title=>$r->maketext("Try it"),
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?" (in target set)" : "&nbsp;";
+	my $inSet = ($self->{isInSet}{$sourceFileName})? " ".$r->maketext("(in target set)") : "&nbsp;";
 	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
@@ -1062,7 +1065,7 @@ sub make_data_row {
 
 	my $level =0;
 
-	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random"></i></span>';
+	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title='.$r->maketext("Randomize").'><i class="icon-random"></i></span>';
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
@@ -1103,20 +1106,23 @@ sub make_data_row {
 
 
 	print $mltstart;
+	
 	# Print the cell
+	my $stringalert = $r->maketext(SELECT_SET_STRING);
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
 		CGI::div({-class=>"lb-problem-header"},
 		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
 		      -value=>$r->maketext("Add"),
-			-title=>"Add problem to target set",
-		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
+			-title=>$r->maketext("Add problem to target set"),
+		      -onClick=>"return addme(\"$sourceFileName\", \'one\', \"$stringalert\")")),
 			"\n",CGI::span({-class=>"lb-problem-path"},CGI::span({id=>"filepath$cnt"},$r->maketext("Show path ..."))),"\n",
-			 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "'.$r->maketext("Show path ...").'", "'.$r->maketext("Hide path:")." $sourceFileName.".'")</script>',
+			 '<script type="text/javascript">var show_string="'.$r->maketext("Show path ...").'";
+settoggle("filepath'.$cnt.'", "'.$r->maketext("Show path ...").'", "'.$r->maketext("Hide path:")." ".$sourceFileName.'")</script>',
 			CGI::span({-class=>"lb-problem-icons"}, 
 				$inSet, $MOtag, $mlt, $rerand,
                         $edit_link, " ", $try_link,
 			CGI::span({-name=>"dont_show", 
-				-title=>"Hide this problem",
+				-title=>$r->maketext("Hide this problem"),
 				-style=>"cursor: pointer",
 				   -onClick=>"return delrow($cnt)"}, "X")),
                          $problem_stats,
@@ -1227,7 +1233,7 @@ sub pre_header_initialize {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $maxShown = $r->param('max_shown') || MAX_SHOW_DEFAULT;
-	$maxShown = 10000000 if($maxShown eq 'All'); # let's hope there aren't more
+	$maxShown = 10000000 if($maxShown eq $r->maketext("All")); # let's hope there aren't more
 	my $library_basic = $r->param('library_is_basic') || 1;
 	$self->{problem_seed} = $r->param('problem_seed') || 1234;
 	## Fix some parameters
@@ -1383,7 +1389,7 @@ sub pre_header_initialize {
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
-				or $set_to_display eq "Select a Homework Set"
+				or $set_to_display eq $r->maketext(SELECT_HMW_SET_STRING)
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage($r->maketext("You need to select a set from this course to view."));
 		} else {
@@ -1420,7 +1426,7 @@ sub pre_header_initialize {
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
 		if (not defined($set_to_display) 
-				or $set_to_display eq "Select a Set Definition File"
+				or $set_to_display eq $r->maketext(SELECT_SETDEF_FILE_STRING)
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage($r->maketext("You need to select a set definition file to view."));
 		} else {
@@ -1731,7 +1737,7 @@ sub body {
 		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." ".$r->maketext("of")." ".CGI::span({-id=>'totalshown'}, $total_probs).
 			" ".$r->maketext("shown").".", $prev_button, " ", $next_button,
 		);
-		print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
+		#print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
 	}
 	#	 }
 	print CGI::end_form(), "\n";
@@ -1755,6 +1761,16 @@ sub output_JS {
   print "\n";
   print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
   print "\n";
+
+  # This is for translation of js files
+  my $lang = $ce->{language};
+  print CGI::start_script({type=>"text/javascript"});
+  print "localize_basepath = \"$webwork_htdocs_url/js/i18n/\";";
+  print "lang = \"$lang\";";
+  print CGI::end_script();
+  print qq!<script src="$webwork_htdocs_url/js/i18n/localize.js"></script>!;
+  print "\n";
+
   print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
   print "\n";
   if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {

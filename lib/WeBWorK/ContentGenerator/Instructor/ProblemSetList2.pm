@@ -1197,7 +1197,7 @@ sub create_handler {
     #  Assign set to current active user
      my $userName = $r->param('user'); # FIXME possible security risk
      $self->assignSetToUser($userName, $newSetRecord); # cures weird date error when no-one assigned to set
-	 $self->addgoodmessage("Set $newSetID was assigned to $userName."); # not currently used
+	 $self->addgoodmessage($r->maketext("Set [_1] was assigned to [_2].", $newSetID,$userName)); # not currently used
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;
 	push @{ $self->{allSetIds} }, $newSetID;
@@ -2810,6 +2810,7 @@ sub output_JS{
 	# jquery ui printed seperately
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-fr.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();

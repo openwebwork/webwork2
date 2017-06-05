@@ -1,9 +1,0 @@
-<!-- For production servers you should consider replacing this file with one 
-  that is not tracked by git and setting and setting the variable
-  $webworkFiles{site_info} in localOverrides.conf.  This will prevent the file 
-  from being overwritten when you switch branches or by upgrades.  
- -->
-
-This file is at htdocs/site_info.txt.  Use it to display information for the entire WeBWorK site which will be viewed at login time.
-
-

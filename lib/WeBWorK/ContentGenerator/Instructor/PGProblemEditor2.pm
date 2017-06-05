@@ -436,10 +436,10 @@ sub title {
 	my $problemNumber = $r->urlpath->arg("problemID");
 	my $file_type = $self->{'file_type'} || '';
 
-	return "Set Header for  set $setID" if ($file_type eq 'set_header');
-	return "Hardcopy Header for set $setID" if ($file_type eq 'hardcopy_header');
-	return "Course Information for course $courseName" if ($file_type eq 'course_info');
-	return "Options Information" if ($file_type eq 'options_info');
+	return $r->maketext("Set Header for set [_1]", $setID) if ($file_type eq 'set_header');
+	return $r->maketext("Hardcopy Header for set [_1]", $setID) if ($file_type eq 'hardcopy_header');
+	return $r->maketext("Course Information for course [_1]", $courseName) if ($file_type eq 'course_info');
+	return $r->maketext("Options Information") if ($file_type eq 'options_info');
 
 	if ($setID) {
 	    my $set = $r->db->getGlobalSet($setID);
@@ -600,14 +600,14 @@ sub body {
 
 	my $file_type = $self->{file_type};
 	my %titles = (
-		problem         => CGI::b("set $fullSetName/problem $prettyProblemNumber"),
-		blank_problem   => "blank problem",
-		set_header      => "header file",
-		hardcopy_header => "hardcopy header file",
-		course_info     => "course information",
-		options_info    => "options information",
-		''              => 'Unknown file type',
-		source_path_for_problem_file => " unassigned problem file:  ".CGI::b("set $setName/problem $prettyProblemNumber"),
+		problem         => CGI::b($r->maketext("set [_1]/problem [_2]", $fullSetName, $prettyProblemNumber)),
+		blank_problem   => $r->maketext("blank problem"),
+		set_header      => $r->maketext("header file"),
+		hardcopy_header => $r->maketext("hardcopy header file"),
+		course_info     => $r->maketext("course information"),
+		options_info    => $r->maketext("options information"),
+		''              => $r->maketext("Unknown file type"),
+		source_path_for_problem_file => $r->maketext(" unassigned problem file:  ").CGI::b($r->maketext("set [_1]/problem [_2]",$setName, $prettyProblemNumber)),
 	);
 	my $header = CGI::i($r->maketext("Editing [_1] in file '[_2]'",$titles{$file_type}, $self->shortPath($inputFilePath)));
 	$header = ($self->isTempEditFilePath($inputFilePath)  ) ? CGI::div({class=>'temporaryFile'},$header) : $header;  # use colors if temporary file
@@ -1380,9 +1380,9 @@ sub add_problem_form {
 		$allSetNames[$j] =~ s|\.def||;
 	}
 	my $labels = {
-		problem         => 'problem',
-		set_header      => 'set header',
-		hardcopy_header => 'hardcopy header',
+		problem         => $r->maketext('problem'),
+		set_header      => $r->maketext('set header'),
+		hardcopy_header => $r->maketext('hardcopy header'),
 	};
 	return "" if $self->{file_type} eq 'course_info' || $self->{file_type} eq 'options_info';
 	return join(" ",
