@@ -397,12 +397,12 @@ sub attemptResults {
 
 	    @row = ();
 	    my $answerResult  = $pg->{answers}->{$name};
-	    my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+	    my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
 	    my $preview       = ($showAttemptPreview
 				 ? $self->previewAnswer($answerResult, $imgGen)
 				 : "");
 	    my $correctAnswer = $answerResult->{correct_ans};
-	    $answerScore = $answerResult->{score};
+	    $answerScore = $answerResult->{score}//0;
 	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 	    $numCorrect += $answerScore > 0;
 	    $numEssay += ($answerResult->{type}//'') eq 'essay';
