@@ -5,20 +5,15 @@
 ##
 
 package Routes::Admin;
-use Dancer2;
-
-set serializer => "JSON";
+use Dancer2 appname => "Routes::Login";
 
 use Dancer2::FileUtils qw /read_file_content path/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
-use Routes::Common qw/setCourseEnvironment setCookie/;
+#use Routes::Common qw/setCourseEnvironment setCookie/;
 
-
-
-our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 ###
 #
@@ -28,16 +23,6 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 #
 ###
 
-# any ['get','put','post','delete'] => '/courses/*/**' => sub {
-# 	my ($courseID) = splat;
-#
-#   session 'course' => $courseID;
-#   session 'webwork_dir' => config->{webwork_dir};
-#   setCourseEnvironment(session);
-#   pass;
-# };
-
-
 get '/courses' => sub {
 
   setCourseEnvironment('test');
@@ -46,6 +31,7 @@ get '/courses' => sub {
 	return \@courses;
 
 };
+
 
 
 

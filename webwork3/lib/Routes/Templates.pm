@@ -2,56 +2,22 @@
 package Routes::Templates;
 
 use Dancer2;
-use Dancer2::FileUtils qw/path read_file_content/;
+use Dancer2::FileUtils qw/read_file_content/;
 use Dancer2::Plugin::Auth::Extensible;  ## this handles the users and roles.  See the configuration file for setup.
 
 
 #use Utils::Authentication qw/buildSession/;
 use Utils::Convert qw/convertObjectToHash/;
 use Utils::CourseUtils qw/getCourseSettings getAllSets getAllUsers/;
+use Routes::Login qw/setCourseEnvironment setCookie/;
 
 use Data::Dump qw/dump/;
 
 any ['get','put','post','delete'] => '/courses/*/**' => sub {
 
-  my ($course_id) = splat;
-
-  session course_id => $course_id;
-  debug "in /courses/*/**";
-  debug session;
-  # send_error("The course has not been defined.  You may need to authenticate again",401)
-	# 	unless (defined(session 'course'));
-
-	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
-	$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
-
-  var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir},
-                                                courseName=> $course_id});
-  var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
-  if (! session 'logged_in'){
-     debug "checking ww2 cookie";
-
-     my $cookieValue = cookie "WeBWorK.CourseAuthen." . $course_id;
-
-     my ($user_id,$session_key,$timestamp) = split(/\t/,$cookieValue) if defined($cookieValue);
-
-     # get the key from the database;
-     if (defined $user_id){
-       my $key = vars->{db}->getKey($user_id);
-
-       if ($key->{key} eq $session_key && $key->{timestamp} == $timestamp){
-         session user_id => $user_id;
-         session key => $key->{key};
-         session logged_in_user => $user_id;
-         session logged_in => true;
-         session logged_in_user_realm => 'webwork';  # this shouldn't be hard coded.
-       }
-     }
-   }
-
-   setCookie(session) if (session 'logged_in');
-
-	  pass;
+  my ($courseID) = splat;
+  setCourseEnvironment($courseID);
+	pass;
 };
 
 
@@ -97,7 +63,7 @@ post '/courses/:course_id/login' => sub {
 
   debug $username;
   debug $password;
-  debug session; 
+  debug session;
 
   #set_course_environment("hi");
   my ($success, $realm) = authenticate_user($username,$password);
@@ -355,15 +321,71 @@ get '/courses/:course_id' => sub {
 
 };
 
+####
+#
+#  get /courses/:course_id/pgeditor
+#
+#  returns the html for the simple pg editor
+#
+###
+
+get '/courses/:course_id/pgeditor' => sub {
+
+    template 'simple-editor.tt', {course_id=> params->{course_id},theSetting => to_json(getCourseSettings),
+        pagename=>"Simple Editor",user=>session->{user}};
+};
+
+sub setCourseEnvironment {
+	my ($course_id) = @_;
+
+	#debug "in setCourseEnvironment";
+	#debug session;
+	session course_id => $course_id if defined($course_id);
+
+	send_error("The course has not been defined.  You may need to authenticate again",401)
+		unless (defined(session 'course_id'));
+
+	$WeBWorK::Constants::WEBWORK_DIRECTORY = config->{webwork_dir};
+	$WeBWorK::Debug::Logfile = config->{webwork_dir} . "/logs/debug.log";
+
+	var ce => WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir},
+																								courseName=> $course_id});
+	var db => new WeBWorK::DB(vars->{ce}->{dbLayout});
+
+	if (! session 'logged_in'){
+		# debug "checking ww2 cookie";
+
+		 my $cookieValue = cookie "WeBWorK.CourseAuthen." . $course_id;
+
+		 my ($user_id,$session_key,$timestamp) = split(/\t/,$cookieValue) if defined($cookieValue);
+
+		 # get the key from the database;
+		 if (defined $user_id){
+			 my $key = vars->{db}->getKey($user_id);
+
+			 if ($key->{key} eq $session_key && $key->{timestamp} == $timestamp){
+				session key => $key->{key};
+				session logged_in_user => $user_id;
+				session logged_in => true;
+				session logged_in_user_realm => 'webwork';  # this shouldn't be hard coded.
+			 }
+		 }
+	 }
+
+	 setCookie(session) if (session 'logged_in');
+}
+
 ###
 #
 # This sets the cookie in the WW2 style to allow for seamless transfer back and forth.
 
 sub setCookie {
+  #debug "in setCookie";
 	my $session = shift;
-
-  debug $session;
-  my $cookie_value = $session->read('user_id') . "\t". $session->read('key') . "\t" . time;
+	my $user_id = $session->read("logged_in_user") || "";
+	my $key = $session->read("key") || "";
+	my $timestamp = $session->read("timestamp") || "";
+  my $cookie_value = $user_id . "\t". $key . "\t" . $timestamp;
 
   my $hostname = vars->{ce}->{server_root_url};
   $hostname =~ s/https?:\/\///;
@@ -375,7 +397,6 @@ sub setCookie {
 	}
 
 }
-
 
 
 true;

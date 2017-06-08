@@ -6,12 +6,10 @@
 
 package Routes::ProblemSets;
 
-use Dancer2;
+use Dancer2 appname => "Routes::Login";
 
-set serializer => 'JSON';
-
-use Routes::Common qw/checkPermissions/;
-use Dancer2::FileUtils qw/read_file_content dirname path/;
+use Dancer2::Plugin::Auth::Extensible;
+use Dancer2::FileUtils qw/read_file_content dirname/;
 use File::Slurp qw/write_file/;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
 use Utils::LibraryUtils qw/render/;
@@ -23,10 +21,8 @@ use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserPr
 use WeBWorK::Utils qw/parseDateTime decodeAnswers/;
 use Array::Utils qw/array_minus/;
 use List::MoreUtils qw/first_value/;
-#use Utils::Authentication qw/checkPermissions setCourseEnvironment/;
+
 use Utils::CourseUtils qw/getCourseSettings/;
-use Dancer::Plugin::Database;
-use Dancer::Plugin::Ajax;
 use List::Util qw/first max/;
 
 
@@ -41,7 +37,7 @@ use List::Util qw/first max/;
 
 get '/courses/:course_id/sets' => sub {
 
-    checkPermissions(session,10);
+    # checkPermissions(session,10);
     my @globalSetNames = vars->{db}->listGlobalSets;
     my @allGlobalSets = map { getGlobalSet(vars->{db},vars->{ce},$_)} @globalSetNames;
 
@@ -58,7 +54,7 @@ get '/courses/:course_id/sets' => sub {
 
 get '/courses/:course_id/sets/:set_id' => sub {
 
-    checkPermissions(10,session->{user});
+    # checkPermissions(10,session->{user});
 
     my $globalSet = getGlobalSet(vars->{db},vars->{ce},params->{set_id});
 
@@ -80,7 +76,9 @@ get '/courses/:course_id/sets/:set_id' => sub {
 any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
     debug 'in put or post /courses/:course_id/sets/:set_id';
-    checkPermissions(10,session->{user});
+
+    debug session; 
+    #checkPermissions(10,session->{user});
 
     # set all of the new parameters sent from the client
     my %allparams = params;
@@ -162,9 +160,9 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 #  permission > Student
 ##
 
-del '/courses/:course_id/sets/:set_id' => sub {
+del '/courses/:course_id/sets/:set_id' => require_role professor => sub {
 
-    checkPermissions(10,session->{user});
+    # checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
@@ -194,9 +192,9 @@ del '/courses/:course_id/sets/:set_id' => sub {
 ##
 
 
-get '/courses/:course_id/sets/:set_id/users' => sub {
+get '/courses/:course_id/sets/:set_id/users' => require_role professor => sub {
 
-    checkPermissions(10,session->{user});
+    # checkPermissions(10,session->{user});
 
     my @userIDs = vars->{db}->listSetUsers(params->{set_id});
 
@@ -216,9 +214,9 @@ get '/courses/:course_id/sets/:set_id/users' => sub {
 #
 #####
 
-post '/courses/:course_id/sets/:set_id/users' => sub {
+post '/courses/:course_id/sets/:set_id/users' => require_role professor => sub {
 
-    checkPermissions(10,session->{user});
+    # checkPermissions(10,session->{user});
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
     my @usersAdded = ();
@@ -258,9 +256,7 @@ post '/courses/:course_id/sets/:set_id/users' => sub {
 #
 #####
 
-del '/courses/:course_id/sets/:set_id/users' => sub {
-
-    checkPermissions(10,session->{user});
+del '/courses/:course_id/sets/:set_id/users' => require_role professor => sub {
 
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
@@ -293,9 +289,7 @@ del '/courses/:course_id/sets/:set_id/users' => sub {
 #
 #####
 
-put '/courses/:course_id/sets/:set_id/users' => sub {
-
-    checkPermissions(10,session->{user});
+put '/courses/:course_id/sets/:set_id/users' => require_role professor => sub {
 
     send_error("The parameter: assigned_users has not been declared",404) unless param('assigned_users');
 
@@ -375,9 +369,7 @@ put '/courses/:course_id/sets/:set_id/users' => sub {
 ##
 
 
-get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-
-    checkPermissions(10,session->{user});
+get '/courses/:course_id/users/:user_id/sets/:set_id' => require_role professor => sub {
 
     my $userSet = convertObjectToHash(vars->{db}->getUserSet(param('user_id'),param('set_id')),\@boolean_set_props);
     $userSet->{_id} = params->{set_id}; # tells Backbone on the client that the data has been sent from the server.
@@ -394,9 +386,7 @@ get '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 ##
 
 
-post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-
-    checkPermissions(10,session->{user});
+post '/courses/:course_id/users/:user_id/sets/:set_id' => require_role professor => sub {
 
     # check to make sure that the user is assigned to the course
     send_error("The user " . params->{user_id} . " is not enrolled in the course " . param("course_id"),404)
@@ -426,10 +416,7 @@ post '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 ##
 
 
-put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-
-    checkPermissions(10,session->{user});
-
+put '/courses/:course_id/users/:user_id/sets/:set_id' => require_role professor => sub {
 
     # check to make sure that the user is assigned to the course
     send_error("The user " . params->{user_id} . " is not enrolled in the course " . param("course_id"),404)
@@ -451,8 +438,7 @@ put '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 ##
 
 
-del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
-    checkPermissions(10,session->{user});
+del '/courses/:course_id/users/:user_id/sets/:set_id' => require_role professor => sub {
 
     # check to make sure that the user is assigned to the course
     send_error("The user " . params->{user_id} . " is not enrolled in the course " . param("course_id"),404)
@@ -489,7 +475,8 @@ del '/courses/:course_id/users/:user_id/sets/:set_id' => sub {
 ##
 
 any '/courses/:course_id/sets/:set_id/users/:user_id' => sub {
-    forward '/courses/' . params->{course_id} . '/users/' . params->{user_id} . '/sets/' . params->{set_id};
+    forward '/courses/' . route_parameters->{course_id} . '/users/' .
+      route_parameters->{user_id} . '/sets/' . route_parameters->{set_id};
 };
 
 
@@ -505,10 +492,7 @@ any '/courses/:course_id/sets/:set_id/users/:user_id' => sub {
 
 
 
-get '/courses/:course_id/users/:user_id/sets' => sub {
-
-    checkPermissions(10,session->{user});
-
+get '/courses/:course_id/users/:user_id/sets' => require_role professor => sub {
     my @setIDs = vars->{db}->listUserSets(param('user_id'));
     my @userSets = map { getUserSet(vars->{db},vars->{ce},params->{user_id},$_) } @setIDs;
 
@@ -523,9 +507,7 @@ get '/courses/:course_id/users/:user_id/sets' => sub {
 #
 ####
 
-get '/courses/:course_id/sets/:set_id/problems' => sub {
-
-    checkPermissions(10,session->{user});
+get '/courses/:course_id/sets/:set_id/problems' => require_role professor => sub {
 
     my @problems = vars->{db}->getAllGlobalProblems(params->{set_id});
 
@@ -548,9 +530,7 @@ get '/courses/:course_id/sets/:set_id/problems' => sub {
 #
 ###
 
-put '/courses/:course_id/sets/:set_id/problems' => sub {
-
-    checkPermissions(10,session->{user});
+put '/courses/:course_id/sets/:set_id/problems' => require_role professor => sub {
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404);
@@ -572,9 +552,7 @@ put '/courses/:course_id/sets/:set_id/problems' => sub {
 #
 ####
 
-get '/courses/:course_id/sets/:set_id/users/all/problems' => sub {
-
-    checkPermissions(0,session->{user});  ## need to figure out a way to handle effective users also
+get '/courses/:course_id/sets/:set_id/users/all/problems' => require_role professor => sub {
 
     send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404)
         unless vars->{db}->existsGlobalSet(params->{set_id});
@@ -604,9 +582,7 @@ get '/courses/:course_id/sets/:set_id/users/all/problems' => sub {
 #
 ####
 
-get '/courses/:course_id/users/:user_id/sets/all/problems' => sub {
-
-    checkPermissions(0,session->{user});  ## need to figure out a way to handle effective users also
+get '/courses/:course_id/users/:user_id/sets/all/problems' => require_role professor => sub {
 
     send_error("The user " . params->{user_id} . " isn't enrolled the the course " . param("course_id"),404)
         unless vars->{db}->existsUser(params->{user_id});
@@ -641,8 +617,6 @@ get '/courses/:course_id/users/:user_id/sets/all/problems' => sub {
 ####
 
 get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
-
-    checkPermissions(0,session->{user});  ## need to figure out a way to handle effective users also
 
     send_error("The set " . param('set_id'). " doesn't exist for course " . param("course_id"),404)
         if !vars->{db}->existsGlobalSet(params->{set_id});
@@ -684,7 +658,7 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 
 get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 
-    checkPermissions(10,session->{user});
+    # checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
@@ -695,12 +669,8 @@ get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
     }
 
     my $problem = vars->{db}->getGlobalProblem(params->{set_id},params->{problem_id});
-    if(request->is_ajax){
-        return convertObjectToHash($problem);
-    } else {  # a webpage has requested this
-        my $theProblem = convertObjectToHash($problem);
-        template 'problem.tt', { problem => to_json($theProblem) };
-    }
+    return convertObjectToHash($problem);
+
 };
 
 ###
@@ -713,9 +683,7 @@ get '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 #
 ####
 
-put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
-
-    checkPermissions(10,session->{user});
+put '/courses/:course_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
@@ -750,9 +718,7 @@ put '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 #
 ####
 
-post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
-
-    checkPermissions(10,session->{user});
+post '/courses/:course_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);
@@ -800,9 +766,7 @@ post '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 #
 ####
 
-del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
-
-    checkPermissions(10,session->{user});
+del '/courses/:course_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
 
     send_error("The problem set with name: " . param('set_id'). " does not exist.",404)
         unless vars->{db}->existsGlobalSet(param('set_id'));
@@ -833,9 +797,7 @@ del '/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
 #
 ###
 
-get '/courses/:course_id/status/usersets' => sub {
-
-    checkPermissions(10,session->{user});
+get '/courses/:course_id/status/usersets' => require_role professor => sub {
 
     my @setNames = vars->{db}->listGlobalSets;
 
@@ -880,9 +842,7 @@ get '/courses/:course_id/status/usersets' => sub {
 #
 ###
 
-post '/courses/:course_id/fix/usersets' => sub {
-
-    checkPermissions(10,session->{user});
+post '/courses/:course_id/fix/usersets' => require_role professor => sub {
 
     my $p = vars->{db}->getUserProblem("profa","HW5.2",6);
 
@@ -936,9 +896,7 @@ post '/courses/:course_id/fix/usersets' => sub {
 #
 ###
 
-get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => sub {
-
-    checkPermissions(10,session->{user});
+get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
 
     send_error("The problem set with name: " . params->{set_id} . " does not exist.",404)
         unless vars->{db}->existsGlobalSet(params->{set_id});
@@ -963,8 +921,8 @@ get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => su
 #
 ###
 
-put '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => sub {
-    checkPermissions(10,session->{user});
+put '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
+
     send_error("The problem set with name: " . params->{set_id} . " does not exist.",404)
         unless vars->{db}->existsGlobalSet(params->{set_id});
 
@@ -1002,9 +960,7 @@ put '/courses/:course_id/sets/:set_id/users/:user_id/problems/:problem_id' => su
 #
 ###
 
-get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers' => sub {
-
-    checkPermissions(0,session->{user});  ## need to figure out a way to check for user or prof with sufficient effective user
+get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers' => require_role professor => sub {
 
     send_error("The problem set with name: " . params->{set_id} . " does not exist.",404)
         unless vars->{db}->existsGlobalSet(params->{set_id});
@@ -1030,9 +986,7 @@ get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastan
 #
 ###
 
-get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers/latest' => sub {
-
-    checkPermissions(0,session->{user});  ## need to figure out a way to check for user or prof with sufficient effective user
+get '/courses/:course_id/users/:user_id/sets/:set_id/problems/:problem_id/pastanswers/latest' => require_role professor => sub {
 
     send_error("The problem set with name: " . params->{set_id} . " does not exist.",404)
         unless vars->{db}->existsGlobalSet(params->{set_id});
@@ -1061,10 +1015,8 @@ post '/utils/dates' => sub {
 
     ##  need to change this later.  Why do we need a course_id for a general renderer?
     setCourseEnvironment("_fake_course");
-    #checkPermissions(10,session->{user});  ## not needed but students shouldn't need to access this.
 
     my $unixDates = {};
-
     for my $key (qw/open_date answer_date due_date/){
         $unixDates->{$key} = parseDateTime(params->{$key},params->{timeZone});
     }
@@ -1095,9 +1047,7 @@ get '/courses/:course_id/pgeditor' => sub {
 #
 ####
 
-get '/courses/:course_id/headers' => sub {
-
-    checkPermissions(10,session->{user});
+get '/courses/:course_id/headers' => require_role professor => sub {
 
     my $templateDir = vars->{ce}->{courseDirs}->{templates};
     my $include = qr/header.*\.pg$/i;
@@ -1124,7 +1074,7 @@ get '/courses/:course_id/headers' => sub {
 ####
 
 any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
-     checkPermissions(10,session->{user});
+     #checkPermissions(10,session->{user});
 
     if (!vars->{db}->existsGlobalSet(param('set_id'))){
         send_error("The problem set with name: " . param('set_id'). " does not exist.",404);

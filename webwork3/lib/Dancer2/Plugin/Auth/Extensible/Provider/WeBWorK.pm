@@ -47,7 +47,7 @@ Details should be returned as a hashref.
 
 sub get_user_details {
     my ($self, $username) = @_;
-
+    $self->plugin->dsl->debug($self->plugin->dsl->session);
     my $user = $self->plugin->dsl->vars->{db}->getUser($username);
     return convertObjectToHash($user);
 }
@@ -66,6 +66,10 @@ sub get_user_roles {
     my %roles = reverse %{$self->plugin->dsl->vars->{ce}->{userRoles}};
   	my $db = $self->plugin->dsl->vars->{db};
   	my $permission = $db->getPermissionLevel($username);
+    # $self->plugin->dsl->debug(%roles);
+    # $self->plugin->dsl->debug($username);
+    # $self->plugin->dsl->debug($permission);
+    # $self->plugin->dsl->debug($roles{$permission->{permission}});
   	return [$roles{$permission->{permission}}];
 
 }

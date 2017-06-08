@@ -27,12 +27,9 @@ use lib "$pg_dir/lib";
 
 use Routes::Templates;
 use Routes::Login;
-use Routes::Admin;
-use Routes::ProblemSets;
+# use Routes::ProblemSets;
 
 builder {
     mount '/'    => Routes::Templates->to_app;
     mount '/api' => Routes::Login->to_app;
-    mount '/api' => Routes::Admin->to_app;
-    mount '/api' => Routes::ProblemSets->to_app;
 };

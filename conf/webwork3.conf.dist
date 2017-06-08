@@ -1,26 +1,30 @@
 # configuration file for WeBWorK 3.  This is a YAML formatted file, not Perl
-# formatted like the other configuration files.  The webwork_dir, pg_dir, 
-# and database information needs to be set for WeBWorK 3 to work.  
+# formatted like the other configuration files.  The webwork_dir, pg_dir,
+# and database information needs to be set for WeBWorK 3 to work.
 #
 #  The webwork directory needs to be set
 
 webwork_dir: "/opt/webwork/webwork2"
 pg_dir: "/opt/webwork/pg"
 
+## the following is the top directory of the path to access webwork3.
+
+top_dir: "/webwork3"
+
 # the logger engine to use
 # console: log messages to STDOUT (your console where you started the
 #          application server)
 # file:    log message to a file in logs/
-# Note: If you are running through apache and not a stand alone server you 
-# wont be able to see the log information.  To see the log information you 
+# Note: If you are running through apache and not a stand alone server you
+# wont be able to see the log information.  To see the log information you
 # need to change this to file and then make sure that webwork2/webwork3/logs
-# is owned, readable and writable by the wwdata group.  
+# is owned, readable and writable by the wwdata group.
 logger: "file"
 
 # the log level for this environment
 # core is the lowest, it shows Dancer's core log messages as well as yours
 # (debug, info, warning and error)
-log: "warning"
+log: "debug"
 
 # should Dancer consider warnings as critical errors?
 warnings: 1
@@ -29,26 +33,33 @@ warnings: 1
 show_errors: 1
 
 # use the simple session
-#session: "Simple"
-
-# use the YAML session
-session: "YAML"
-session_dir: "/tmp/dancer-sessions"
 
 # templating parameters
 
-template: template_toolkit
+template: "template_toolkit"
+
+# use a simple YAML session
+
+session: YAML
 engines:
+  session:
+    YAML:
+      session_dir: /tmp/dancer-sessions
+  serializer:
+    JSON:
+      allow_blessed: 1
+      convert_blessed: 1
+  template:
     template_toolkit:
-        start_tag: "[%"
-        stop_tag: "%]"
+      start_tag: '[%'
+      stop_tag: '%]'
 
 # auto_reload is a development and experimental feature
 # you should enable it by yourself if you want it
-# Module::Refresh is needed 
-# 
+# Module::Refresh is needed
+#
 # Be aware it's unstable and may cause a memory leak.
-# DO NOT EVER USE THIS FEATURE IN PRODUCTION 
+# DO NOT EVER USE THIS FEATURE IN PRODUCTION
 # OR TINY KITTENS SHALL DIE WITH LOTS OF SUFFERING
 auto_reload: 0
 
@@ -57,20 +68,38 @@ auto_reload: 0
 #
 #  Change the username/password to reflect your database user and password
 #
-##  
+##
 
 plugins:
-    Database:
-        driver: 'mysql'
-        database: 'webwork'
-        host: 'localhost'
-        port: 3306
-        username: 'webworkWrite'
-        password: 'password'
-        connection_check_threshold: 10
-        dbi_params:
-            RaiseError: 1
-            AutoCommit: 1
-        on_connect_do: ["SET NAMES 'utf8'", "SET CHARACTER SET 'utf8'" ]
-        log_queries: 1
+  Email:
+    transport:
+      SMTP:
+        host: localhost # change to local smtp server
+  Auth::Extensible:
+    no_default_pages: 0
+    login_page_handler: 'Routes::Templates::login_page'
+    # Set to 1 to use the no-redirect login functionality
+    #no_login_handler: 1
+    login_without_redirect: 0
+    #permission_denied_page_handler: 'Routes::Templates::permission_denied_page_handler'
+    # Set the view name for a custom login page, defaults to 'login'
+    #denied_page: '/login/denied'
+    # After /logout: If no return_url is given: land here (no default)
+    exit_page: '/test'
+    realms:
+      webwork:
+        provider: WeBWorK
 
+  Database:
+    driver: 'mysql'
+    database: 'webwork'
+    host: 'localhost'
+    port: 3306
+    username: 'webworkWrite'  # change this to reflect your SQL server
+    password: 'password'      # change this to reflect your SQL server
+    connection_check_threshold: 10
+    dbi_params:
+      RaiseError: 1
+      AutoCommit: 1
+    on_connect_do: ["SET NAMES 'utf8'", "SET CHARACTER SET 'utf8'" ]
+    log_queries: 1
