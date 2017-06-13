@@ -1,4 +1,4 @@
-define(['backbone','views/MessageListView','views/ModalView','config','views/NavigationBar','views/Sidebar'], 
+define(['backbone','views/MessageListView','views/ModalView','config','views/NavigationBar','views/Sidebar'],
 function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
 	var WebPage = Backbone.View.extend({
     tagName: "div",
@@ -52,9 +52,9 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             ul.append(menuItemTemplate({name: _view.info.name, id: _view.info.id,icon: _view.info.icon}));
         });
 
-        // this ensures that the rerender call on resizing the window only occurs once every 250 ms.  
+        // this ensures that the rerender call on resizing the window only occurs once every 250 ms.
 
-        var renderMainPane = _.debounce(function(evt){ 
+        var renderMainPane = _.debounce(function(evt){
             self.currentView.render();
             if(self.currentSidebar){
                 self.currentSidebar.render();
@@ -76,12 +76,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             "forward-page": function() {self.goForward()},
             "back-page": function() {self.goBack()},
         });
-        
+
     },
     render: function () {
-    	var self = this; 
+    	var self = this;
 
-        // I don't think we're using this anymore. 
+        // I don't think we're using this anymore.
         //this.$el.prepend(this.messagePane.render().el);
         this.navigationBar = new NavigationBar({el: $(".navbar-fixed-top")}).render();
         this.loginPane.setElement($(".login-container"));
@@ -100,7 +100,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     openSidebar: function (){
         if(! this.currentSidebar){
             var otherSidebars = this.mainViewList.getOtherSidebars(this.currentView.info.id);
-            if(otherSidebars[0]){ 
+            if(otherSidebars[0]){
                 this.changeSidebar(otherSidebars[0]);
             } else {
                 this.changeSidebar("help",{is_open: true});
@@ -116,10 +116,10 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     },
     closeSidebar: function (){
         if(this.currentSidebar){
-            this.currentSidebar.state.set("is_open",false);    
+            this.currentSidebar.state.set("is_open",false);
         }
         $("#sidebar-container").addClass("hidden");
-        $("#main-view").removeClass("col-md-9").addClass("col-md-12"); 
+        $("#main-view").removeClass("col-md-9").addClass("col-md-12");
         this.$(".open-view-button").removeClass("hidden");
         this.$(".close-view-button").addClass("hidden");
 
@@ -130,7 +130,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             this.currentSidebar.remove();
         }
 
-        if(_.isString(arg)) { 
+        if(_.isString(arg)) {
             id = arg;
         } else if(arg instanceof Sidebar){
             id = arg.info.id;
@@ -159,7 +159,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         _(this.currentView.sidebarEvents).chain().keys().each(function(event){
             self.currentView.listenTo(self.currentSidebar,event,self.currentView.sidebarEvents[event]);
         });
-        
+
 
         this.currentSidebar.mainView = this.currentView;
 
@@ -184,12 +184,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         this.currentView.sidebar = this.currentSidebar;
 
         if(this.currentSidebar.state.get("is_open") || set_sidebar_to_open){
-            this.openSidebar();            
+            this.openSidebar();
         } else {
             this.closeSidebar();
         }
     },
-    changeView: function (_id,state){ 
+    changeView: function (_id,state){
         if(_id){
             // destroy any popovers on the view
             $('[data-toggle="popover"]').popover("destroy")
@@ -202,12 +202,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         }
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(this.currentView.info.name);
-        
+
         this.currentView.setElement(this.$(".main")).setState(state).render();
         this.eventDispatcher.trigger("change-view",_id);
     },
     /***
-     * 
+     *
      * The following save the current state of the interface
      *
      *  {
@@ -217,19 +217,19 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
      *      sidebar_state: {}  an object returned from the sidebar
      *  }
      *
-     *  The entire state corresponds to an array of states as described above and an index on 
-     *  the current state that you are in.  
+     *  The entire state corresponds to an array of states as described above and an index on
+     *  the current state that you are in.
      *
-     *  Traveling forward and backwards in the array is how the forward/back works. 
+     *  Traveling forward and backwards in the array is how the forward/back works.
      *
      ***/
     saveState: function() {
         if(!this.currentView){
             return;
         }
-        
+
         var state = {
-            main_view: this.currentView.info.id, 
+            main_view: this.currentView.info.id,
             main_view_state: this.currentView.getState(),
             sidebar: this.currentSidebar ? this.currentSidebar.info.id: "",
             sidebar_state: this.currentSidebar? this.currentSidebar.getState() : {},
@@ -243,7 +243,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
             } else {
                 this.appState.index++;
                 this.appState.states[this.appState.index]=state;
-                this.appState.states.splice(this.appState.index+1,Number.MAX_VALUE); // delete the end of the states array. 
+                this.appState.states.splice(this.appState.index+1,Number.MAX_VALUE); // delete the end of the states array.
             }
         } else {
             this.appState.index = 0;
@@ -279,18 +279,19 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         this.changeSidebar(currentState.sidebar,_.extend(currentState.sidebar_state,{is_open: currentState.sidebar_open}));
         this.currentView.sidebar = this.currentSidebar;
         if(options.save_state){
-            this.saveState();            
+            this.saveState();
         }
     },
     logout: function(){
         var self = this;
         var conf = confirm("Do you want to log out?");
         if(conf){
-            $.ajax({method: "POST", 
-                url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/logout", 
+            $.ajax({method: "POST",
+                url: config.urlPrefix+"courses/"+config.courseSettings.course_id+"/logout",
                 success: function (data) {
                     self.session.logged_in = data.logged_in;
-                    location.href="/webwork2";
+                    location.href=config.urlPrefix.replace("api/","")+"courses/"
+														+config.courseSettings.course_id+"/logout";
                 }
             });
         }

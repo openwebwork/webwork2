@@ -7,8 +7,10 @@ use Dancer2::Plugin::Auth::Extensible;  ## this handles the users and roles.  Se
 
 use Utils::Convert qw/convertObjectToHash/;
 use Utils::CourseUtils qw/getCourseSettings getAllSets getAllUsers/;
+use WeBWorK::Utils::CourseManagement qw/listCourses/;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
+use Array::Utils qw/array_minus/;
 # use Routes::Common qw/setCookie/;
 
 use Data::Dump qw/dump/;
@@ -51,6 +53,13 @@ sub login_page {
 
   template 'login.tt', $params, {layout=> 'main'};
 }
+
+###
+#
+# Route that is used to get username/password and redirect to appropriate
+# page
+#
+###
 
 post '/courses/:course_id/login' => sub {
 
@@ -97,10 +106,28 @@ post '/courses/:course_id/login' => sub {
 
 };
 
-post '/courses/:course_id/logout' => sub {
+any ['post','get'] => '/courses/:course_id/logout' => sub {
   app->destroy_session;
 
-  ## what to return or to move to other route?
+  my $params = {
+    top_dir => config->{top_dir},
+    course_id => route_parameters->{course_id}
+  };
+
+  template 'logout.tt', $params , {layout => "main.tt"};
+};
+
+get '/courses' => sub {
+  my $ce = WeBWorK::CourseEnvironment->new({webwork_dir => config->{webwork_dir},
+                                                courseName=> "admin"});
+  my @all_courses = listCourses($ce);
+
+  ## remove the "modelCourse" course.
+
+  my @to_remove = qw/modelCourse/;
+  my @courses = array_minus(@all_courses,@to_remove);
+
+  template 'course_list.tt', {top_dir => config->{top_dir},courses => \@courses}, {layout=>'main.tt'};
 };
 
 get '/courses/:course_id/manager' =>  require_role professor => sub {
@@ -167,6 +194,7 @@ get '/admin' => sub {
 
 
 
+
 ###
 #
 # return the main course page (generally a student view).
@@ -178,7 +206,7 @@ get '/courses/:course_id' => sub {
 
  template 'course_home.tt', {
       course_id=> route_parameters->{course_id},
-      user=> (session 'logged_in_user'),
+      user_id=> (session 'logged_in_user'),
       pagename=>"Course Home for " . route_parameters->{course_id},
       theSession=>to_json(convertObjectToHash(session)),
       top_dir => config->{top_dir}

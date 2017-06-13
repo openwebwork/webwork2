@@ -1,9 +1,9 @@
-define(['module','backbone', 'underscore','models/UserSetListOfSets', 'views/WebPage','UserSetView', 'models/UserSet',
-    'models/UserProblemList', 'StudentCalendarView','models/AssignmentDateList','models/AssignmentDate','models/Settings', 'config'], 
-function(module,Backbone, _, UserSetListOfSets, WebPage, UserSetView, UserSet, UserProblemList, StudentCalendarView, 
-            AssignmentDateList,AssignmentDate,Settings,config){
+define(['module','backbone', 'underscore','models/UserSetList', 'views/WebPage','UserSetView', 'models/UserSet',
+    'models/UserProblemList', 'StudentCalendarView','models/AssignmentDateList','models/AssignmentDate', 'config'],
+function(module,Backbone, _, UserSetList, WebPage, UserSetView, UserSet, UserProblemList, StudentCalendarView,
+            AssignmentDateList,AssignmentDate,config){
 
-var FrontPage = WebPage.extend({
+var StudentView = WebPage.extend({
     tagName: "div",
     initialize: function(){
         this.constructor.__super__.initialize.apply(this, {el: this.el});
@@ -27,7 +27,7 @@ var FrontPage = WebPage.extend({
 
         Backbone.Stickit.addHandler({
             selector: ".problems",
-            onGet: function(probs){ 
+            onGet: function(probs){
                 if(probs) {
                     return probs.length;
                 }}});
@@ -45,13 +45,13 @@ var FrontPage = WebPage.extend({
             }}});
     },
     render: function(){
-        this.constructor.__super__.render.apply(this);  // Call  WebPage.render(); 
+        this.constructor.__super__.render.apply(this);  // Call  WebPage.render();
 
         this.$el.html($("#home-page-template").html());
         this.setInfoView = new SetInfoView({el: $("#problem-set-info-container")});
 
         $("ul.nav a").on("click",this.changeView);
-        
+
     },
     changeView: function(evt){
         $("ul.navbar-nav > li").removeClass("active");
@@ -88,7 +88,7 @@ var FrontPage = WebPage.extend({
         config.settings = new Settings();
         config.settings.fetch({success: function(){
         }});
-        this.userSetList = new UserSetListOfSets([],{user: config.courseSettings.user});
+        this.userSetList = new UserSetList([],{user: config.courseSettings.user});
         this.userSetList.fetch({success: this.buildProblemSetPulldown});
         var tmpl = _.template($("#logged-in-template").html());
         $(".login-container").html(tmpl({user: config.courseSettings.user}));
@@ -105,7 +105,7 @@ var FrontPage = WebPage.extend({
     buildProblemSetPulldown: function (){
         var self = this;
         var ul = $(".problem-set-dropdown");
-        var template =_.template($("#problem-set-template").html()); 
+        var template =_.template($("#problem-set-template").html());
         this.userSetList.each(function(_set){
             ul.append(template(_set.attributes));
         });
@@ -115,7 +115,7 @@ var FrontPage = WebPage.extend({
     },
     showProblemSets: function() {
         var self = this;
-        this.userSetListView = new UserSetListView({el: this.$(".problem-set-container"), 
+        this.userSetListView = new UserSetListView({el: this.$(".problem-set-container"),
             userSetList: this.userSetList}).render();
         this.userSetList.each(function(_set,i){
             _set.problems = new UserProblemList([],{set_id: _set.get("set_id"),user_id: _set.get("user_id")});
@@ -185,7 +185,7 @@ var UserSetRowView = Backbone.View.extend({
     },
 //    events: { "click .setname": "showSet"},
     bindings: {".setname": {observe: "set_id" , update: function($el,val,model,options){
-        var tmpl = _.template($("#problem-set-name-template").html()); 
+        var tmpl = _.template($("#problem-set-name-template").html());
         $el.html(tmpl({set_id: val}));
         }},
         ".due-date": "due_date",
@@ -225,5 +225,5 @@ var SetInfoView = Backbone.View.extend({
 });
 
 
-var App = new FrontPage({el: $("#main")});
+var App = new StudentView({el: $("#main")});
 });
