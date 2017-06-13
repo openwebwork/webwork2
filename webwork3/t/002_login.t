@@ -106,6 +106,7 @@ subtest 'Check login with body parameters' => sub {
   $jar->add_cookie_header($req);
 
   $res = $test->request($req);
+
   $res_as_obj = decode_json($res->content);
   ok($res_as_obj->{logged_in}, "[GET /courses/test/logged-in]");
 

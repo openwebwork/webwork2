@@ -28,37 +28,41 @@ use lib "$pg_dir/lib";
 
 
 use Routes::Templates;
-use Routes::Login;
-use Test::More tests => 4;
+#use Routes::Login;
+use Test::More;
 use Plack::Test;
 use JSON;
 use Data::Dump qw/dd dump/;
 use HTTP::Request::Common;
+use HTTP::Cookies;
 
 my $app = Routes::Templates->to_app;
-is( ref $app, 'CODE', 'Got app' );
-
+my $url  = 'http://localhost';
 my $test = Plack::Test->create($app);
-my $res  = $test->request( GET '/' );
+my $jar  = HTTP::Cookies->new();
 
-ok( $res->is_success, '[GET /] successful' );
+subtest 'testing basic routes' => sub {
 
-$res = $test->request(GET '/courses/test/manager');
-ok($res->is_success, ' [GET /courses/test/manager ] successful');
+  is( ref $app, 'CODE', 'Got app' );
+  my $res  = $test->request( GET "$url" );
 
+  ok( $res->is_success, '[GET /] successful' );
 
-### check the login route
-my $test_login_app = Plack::Test->create(Routes::Login->to_app);
+  $res = $test->request(GET "$url/courses/test/login");
 
-$res = $test_login_app->request(POST '/courses/test/login');
-ok($res->is_success, '[POST /courses/test/login] successful');
+  ok($res->is_success, ' [GET /courses/test/login ] returned');
 
+};
 
+subtest 'Check the login route' => sub {
+  ### check the login route
+  my $req = POST "$url/courses/test/login?username=dave&password=dave";
+  my $res = $test->request($req);
+  $jar->extract_cookies($res);
+  ok($res->is_success, '[POST /courses/test/login] successful');
 
-my $params = {user => "profa", password => "profa"};
-#dd encode_json($params);
-$res = $test->request(POST '/courses/test/login',
-            'Content-Type' => 'application/json',
-            Content => encode_json($params));
+  dd $res;
 
-dd $res->content;
+};
+
+done_testing();

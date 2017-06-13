@@ -23,9 +23,10 @@ use lib "$webwork_dir/lib";
 use lib "$webwork_dir/webwork3/lib";
 use lib "$pg_dir/lib";
 
-use Routes::Admin;
+use Routes::Login;
 
 use Test::More;
+use Test::Deep;
 use Plack::Test;
 use JSON;
 use HTTP::Request::Common;
@@ -41,9 +42,90 @@ my $test = Plack::Test->create($app);
 
 my $jar  = HTTP::Cookies->new();
 
-my $res  = $test->request( GET '/courses' );
-ok( $res->is_success, '[GET /courses] successful' );
+subtest 'GET /courses' => sub {
+  my $res  = $test->request( GET '/courses' );
+  $jar->extract_cookies($res);
+  ok( $res->is_success, '[GET /courses] successful' );
+  my $courses = decode_json($res->content);
 
-dd decode_json($res->content);
+  ok(ref $courses eq 'ARRAY', '[GET /courses] returns an array');
+};
+
+subtest 'login to admin course' => sub {
+  my $req =  POST "$url/courses/admin/login?username=admin&password=admin";
+
+  my $res = $test->request($req);
+  $jar->extract_cookies($res);
+  my $res_as_obj =  decode_json($res->content);
+
+  ok($res_as_obj->{logged_in}, '[POST /courses/admin/login] using query params successful');
+
+  # check that is logged in as an admin.
+
+  ## test the user_roles
+  $req = GET "$url/courses/admin/users/admin/roles";
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+
+  $res_as_obj =  decode_json($res->content);
+
+  ok($res->is_success, '[GET /courses/admin/users/:user_id/roles]');
+
+  cmp_deeply($res_as_obj,["admin"],"The user roles returned correctly. ");
+
+  ## check that a restricted route is accesible.
+
+  $req = GET "$url/courses/admin/test-for-admin";
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+  ok($res->is_success, '[GET /admin/courses/admin/test-for-admin] is successful');
+};
+
+subtest 'create a course' => sub {
+  my $params = {
+    new_user_id=>"profa",
+    new_user_first_name =>"Professor",
+    new_user_last_name =>"A",
+    initial_password =>"profa"
+  };
+  # my $req = POST "$url/courses/new_course_xyz";
+  # $req->header('Content-Type' => 'application/json');
+  # $req->content(encode_json($params));
+  my $req = HTTP::Request->new(
+    "POST","$url/admin/courses/new_course_xyz",
+    HTTP::Headers->new('Content-Type' => 'application/json'),
+    encode_json($params)
+  );
+  $jar->add_cookie_header($req);
+
+  my $res = $test->request($req);
+  ok($res->is_success, '[POST /admin/courses/new_course_id] successfully created a new course');
+};
+
+subtest 'rename a course' => sub {
+  my $params = {
+    new_course_id=>"course_zyx",
+  };
+  # my $req = POST "$url/admin/courses/new_course_xyz";
+  # $req->header('Content-Type' => 'application/json');
+  # $req->content(encode_json($params));
+  my $req = HTTP::Request->new(
+    "PUT","$url/admin/courses/new_course_xyz",
+    HTTP::Headers->new('Content-Type' => 'application/json'),
+    encode_json($params)
+  );
+  $jar->add_cookie_header($req);
+  #dd $req;
+  my $res = $test->request($req);
+  ok($res->is_success, '[PUT /admin/courses/new_course_id] successfully renamed the course');
+};
+
+
+subtest 'delete a course' => sub {
+  my $req =  HTTP::Request->new("DELETE","$url/admin/courses/course_zyx");
+  $jar->add_cookie_header($req);
+  my $res = $test->request($req);
+  ok($res->is_success, '[DELETE /admin/courses/new_course_id] successfully deleted the course');
+};
 
 done_testing();

@@ -6,11 +6,17 @@ set serializer => 'JSON';
 
 
 use Dancer2::Plugin::Auth::Extensible;
-#use Routes::Common qw/setCourseEnvironment setCookie/;
-
 use Data::Dump qw/dump/;
+
+#use Routes::Common qw/setCookie setCourseEnvironment/;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
+
+## the remaining routes are in the following packages
+
+use Routes::Admin;
+use Routes::ProblemSets;
+use Routes::Test; # this should be not accessible except when running tests
 
 
 
@@ -24,25 +30,19 @@ use WeBWorK::DB;
 ## the following routes is called before any other /api route.   It is used to load the
 #  CourseEnvironment
 #
-#  Note: for this to match before others, make sure this package is loaded before others.
-#
-
-# any ['get','put','post','delete'] => '/courses/*/**' => sub {
-# 	my ($courseID) = splat;
-# 	debug "in /courses/*/**";
-# 	setCourseEnvironment($courseID);
-# 	session 'webwork_dir' => config->{webwork_dir};
-# 	pass;
-# };
-
 
 hook before => sub {
-  debug "in before";
-  setCourseEnvironment(session 'course_id' || '');
+  #debug "in before";
+	if (! defined(session 'course_id')){
+		if (request->request_uri =~ /courses\/(\w+)/ ){
+			session course_id => $1;
+		}
+	}
+	setCourseEnvironment(session 'course_id') if defined (session 'course_id');
+	#debug session;
+
 };
 
-use Routes::Admin;
-use Routes::ProblemSets;
 
 
 
@@ -53,7 +53,16 @@ post '/courses/:course_id/login' => sub {
   my $username = query_parameters->{username} || body_parameters->{username};
 	my $password = query_parameters->{password} || body_parameters->{password};
 
+	# debug $username;
+	# debug $password;
+	# debug session;
+
 	my ($success, $realm) = authenticate_user($username,$password);
+
+
+	# debug "trying to authenticate";
+	# debug $success;
+	# debug session;
 
 	if($success){
 		my $key = vars->{db}->getKey($username)->{key};
@@ -89,56 +98,6 @@ post '/courses/:course_id/logout' => sub {
 	return {logged_in=>false};
 };
 
-##
-#
-## This is for testing to see if the require_login works.
-#
-##
-
-get '/courses/:course_id/logged-in' => sub {
-	#debug session;
-	return session->{data};
-};
-
-###
-#
-#  This is for testing if the require_login works
-#
-###
-
-get '/courses/:course_id/test-login' => require_login sub {
-   return {msg=>"success"};
-};
-
-###
-#
-# This is for testing restricting user roles
-#
-##
-
-get '/courses/:course_id/test-for-student' => require_role student => sub {
-	return {msg=>"success"};
-};
-
-get '/courses/:course_id/test-for-professor' => require_role professor => sub {
-	return {msg=>"success"};
-};
-
-
-###
-#
-#  returns a list of the user roles for the user :user_id in course :course_id
-#
-###
-
-get '/courses/:course_id/users/:user_id/roles' => sub {
-
-	my $user = get_user_details(route_parameters->{user_id});
-
-	send_error("The user " . route_parameters->{user_id} . " must be a member of the course",424)
-		unless defined($user) && defined($user->{user_id});
-	return user_roles(route_parameters->{user_id});
-};
 
 
 
@@ -163,10 +122,6 @@ get '/app-info' => sub {
 
 get '/courses/:course_id/info' => sub {
 
-	#debug "in /courses/" . route_parameters->{course_id} . "/info";
-
-	setCourseEnvironment(route_parameters->{course_id});
-
 	return {
 		course_id => params->{course_id},
 		webwork_dir => vars->{ce}->{webwork_dir},
@@ -180,7 +135,8 @@ sub setCourseEnvironment {
 	my ($course_id) = @_;
 
 	#debug "in setCourseEnvironment";
-	#debug session;
+	# debug session;
+	# debug $course_id;
 	session course_id => $course_id if defined($course_id);
 
 	send_error("The course has not been defined.  You may need to authenticate again",401)

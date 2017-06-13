@@ -16,7 +16,7 @@ use Data::Dump qw(dump);
 sub authenticate_user {
   my ($self, $username, $password) = @_;
   #$self->plugin->dsl->debug("In authenticate_user");
-
+  #$self->plugin->dsl->debug(dump $self->plugin->dsl->request);
   my $course_id = $self->plugin->dsl->session->data->{course_id};
   die "The course parameter must be set in the session" unless defined($course_id);
   my $ce = WeBWorK::CourseEnvironment->new({
@@ -47,7 +47,8 @@ Details should be returned as a hashref.
 
 sub get_user_details {
     my ($self, $username) = @_;
-    $self->plugin->dsl->debug($self->plugin->dsl->session);
+    #$self->plugin->dsl->debug($self->plugin->dsl->session);
+    #$self->plugin->dsl->debug($username);
     my $user = $self->plugin->dsl->vars->{db}->getUser($username);
     return convertObjectToHash($user);
 }
@@ -63,6 +64,8 @@ Given a username, return a list of roles that user has.
 sub get_user_roles {
     my ($self, $username) = @_;
 
+    #$self->plugin->dsl->debug("in get_user_roles");
+    #$self->plugin->dsl->debug($username);
     my %roles = reverse %{$self->plugin->dsl->vars->{ce}->{userRoles}};
   	my $db = $self->plugin->dsl->vars->{db};
   	my $permission = $db->getPermissionLevel($username);
