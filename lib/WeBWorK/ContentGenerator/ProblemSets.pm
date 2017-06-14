@@ -54,7 +54,7 @@ sub if_can {
     
     my $course_info_path = $ce->{courseDirs}->{templates} . "/"
       . $ce->{courseFiles}->{course_info};
-    my $text;
+    my $text = DEFAULT_COURSE_INFO_TXT;
 
     if (-f $course_info_path) { #check that it's a plain  file
       $text = eval { readFile($course_info_path) };
