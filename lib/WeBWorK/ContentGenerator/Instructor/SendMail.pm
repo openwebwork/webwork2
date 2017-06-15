@@ -864,28 +864,39 @@ sub mail_message_to_recipients {
 			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 			#warn "message is ok";
 			my $transport = Email::Sender::Transport::SMTP->new({
-  			host => $self->{smtpServer},
-				ssl => $ce->{tls_allowed}//1 ## turn on ssl security
+				host => $ce->{mail}->{smtpServer},
+				ssl => $ce->{tls_allowed}//1, ## turn on ssl security
+				timeout => $ce->{mail}->{smtpTimeout}
 			});
-			
-			debug dump $transport;
 
+			debug dump $transport;
+			debug $ur->email_address;
+			debug $from;
+
+			# my $email = Email::Simple->create(
+  		# 	header => [
+    	# 		To => $ur->email_address,
+    	# 		From => $from,
+    	# 		Subject => $subject,
+  		# 	],
+  		# 	body => $msg,
+			# );
 			my $email = Email::Simple->create(
-  			header => [
-    			To => $ur->email_address,
-    			From => $from,
-    			Subject => $subject,
-  			],
-  			body => $msg,
+				header => [
+					From => $ur->email_address,
+					To => $from, Subject => $subject ],
+				body => $msg
 			);
+			$email->header_set("X-Remote-Host",$self->{remote_host});
 
 			debug dump $email;
 
 			try {
-				my $result = sendmail($email,{transport => $transport});
-				debug dump $result;
+				sendmail($email,{transport => $transport});
 
 			} catch {
+				  debug "error sending email: $_";
+				  debug dump $@;
 					$error_messages .= "Error sending email: $_";
 					next;
 			};
@@ -930,6 +941,8 @@ sub mail_message_to_recipients {
 }
 sub email_notification {
 	my $self = shift;
+	my $r  = $self->r;
+	my $ce = $r->ce;
 	my $result_message = shift;
 	# find info on mailer and sender
 	# use the defaultFrom address.
@@ -962,16 +975,24 @@ sub email_notification {
 	# close $MAIL;
 
 	my $transport = Email::Sender::Transport::SMTP->new({
-		host => $self->{smtpServer},
+		host => $ce->{mail}->{smtpServer},
+		ssl => $ce->{tls_allowed}//1, ## turn on ssl security
+		timeout => $ce->{mail}->{smtpTimeout}
 	});
+
 	my $email = Email::Simple->create(
 		header => [
-			To => $self->{defaultFrom},
-			From => $self->{defaultFrom},
+			To => "\"Peter Staab\" <pstaab\@fitchburgstate.edu>",
+			From => "peter.staab\@gmail.com",
 			Subject => $subject,
 		],
 		body => $result_message,
 	);
+	$email->header_set("X-Remote-Host",$self->{remote_host});
+
+  debug $self->{remote_host};
+	debug dump $transport;
+	debug dump $email;
 
 	try {
 		sendmail($email,{transport => $transport});
