@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-BEGIN { 
+BEGIN {
   $ENV{DANCER_APPHANDLER} = 'PSGI';
 }
 use Dancer2;
@@ -13,14 +13,12 @@ use Data::Dump qw/dump/;
 set apphandler => 'PSGI';
 set environment => 'development';
 
-$ENV{WEBWORK_ROOT} = config->{webwork_dir}; 
+$ENV{WEBWORK_ROOT} = config->{webwork_dir};
+$ENV{PG_ROOT} = config->{pg_dir} || config->{webwork_dir} . "../pg";
 
 my $psgi = path($RealBin, '..', 'bin', 'app.psgi');
 my $app = do($psgi);
 die "Unable to read startup script: $@" if $@;
 my $server = Plack::Handler::FCGI->new(nproc => 5, detach => 1);
 
-warn dump $server; 
-
 $server->run($app);
-

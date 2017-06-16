@@ -6,7 +6,6 @@ environments/production.yml
 views/index.tt
 views/layouts/main.tt
 MANIFEST.SKIP
-lib/webwork3.pm
 public/css/style.css
 public/css/error.css
 public/images/perldancer-bg.jpg

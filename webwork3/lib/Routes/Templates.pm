@@ -1,12 +1,6 @@
 ## This contains all of the html templates for the app
 package Routes::Templates;
 
-BEGIN {
-
-  warn "In Routes::Templates"; 
-  warn $WeBWorK::Constants::WEBWORK_DIRECTORY;
-
-}
 use Dancer2;
 use Dancer2::FileUtils qw/read_file_content/;
 use Dancer2::Plugin::Auth::Extensible;  ## this handles the users and roles.  See the configuration file for setup.
@@ -70,19 +64,25 @@ sub login_page {
 post '/courses/:course_id/login' => sub {
 
   debug "in post /login";
+
+  ## delete any fields from other users
+
+  session->delete("logged_in_user");
+  session->delete("logged_in_user_realm");
+  session->delete("logged_in");
+
   my $username = query_parameters->{username} || body_parameters->{username};
   my $password = query_parameters->{password} || body_parameters->{password};
 
-  # debug $username;
-  # debug $password;
-  # debug session;
+  debug $username;
+  debug $password;
+  debug session;
 
-  #set_course_environment("hi");
   my ($success, $realm) = authenticate_user($username,$password);
 
-  # debug "trying to authenticate";
-  # debug $success;
-  # debug session;
+  debug "trying to authenticate";
+  debug $success;
+  debug session;
 
   if($success){
     my $key = vars->{db}->getKey($username)->{key};
@@ -239,13 +239,6 @@ get '/courses/:course_id/pgeditor' => sub {
 sub setCourseEnvironment {
 	my ($course_id) = @_;
 
-  warn "in setCourseEnvironment";
-  warn config->{webwork_dir};
-
-  debug dump config; 
-
-	#debug "in setCourseEnvironment";
-	#debug session;
 	session course_id => $course_id if defined($course_id);
 
 	send_error("The course has not been defined.  You may need to authenticate again",401)
