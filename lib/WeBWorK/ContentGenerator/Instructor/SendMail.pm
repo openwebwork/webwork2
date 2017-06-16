@@ -869,31 +869,18 @@ sub mail_message_to_recipients {
 				timeout => $ce->{mail}->{smtpTimeout}
 			});
 
-			debug dump $transport;
-			debug $ur->email_address;
-			debug $from;
-
-			# my $email = Email::Simple->create(
-  		# 	header => [
-    	# 		To => $ur->email_address,
-    	# 		From => $from,
-    	# 		Subject => $subject,
-  		# 	],
-  		# 	body => $msg,
-			# );
 			my $email = Email::Simple->create(
 				header => [
-					From => $ur->email_address,
-					To => $from, Subject => $subject ],
+					To => $ur->email_address,
+					From => $from, Subject => $subject ],
 				body => $msg
 			);
 			$email->header_set("X-Remote-Host",$self->{remote_host});
 
-			debug dump $email;
 
 			try {
 				sendmail($email,{transport => $transport});
-
+				debug "email sent successfully to " . $ur->email_address;
 			} catch {
 				  debug "error sending email: $_";
 				  debug dump $@;
@@ -901,33 +888,7 @@ sub mail_message_to_recipients {
 					next;
 			};
 
-
-			# my $mailer = eval{ Mail::Sender->new({
-			# 		tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
-			# 		from      => $ce->{mail}{smtpSender},
-			# 		fake_from => $from,
-			# 		to        => $ur->email_address,
-			# 		smtp      => $self->{smtpServer},
-			# 		subject   => $subject,
-			# 		headers   => "X-Remote-Host: ".$self->{remote_host},
-			# 	})
-			# };
-			# if ($@) {
-			# 	$error_messages .= "Failed to create a mailer for user $recipient: $Mail::Sender::Error\n$@\n";
-			# 	next;
-			# }
-			# #warn "DEBUG: mailer created as $mailer\n";
-			# unless (ref($mailer) and $mailer->Open()) {
-			# 	$error_messages .= "Failed to open the mailer for user $recipient: $@\n $Mail::Sender::Error\n";
-			# 	next;
-			# }
-			# #warn "DEBUG: mailer opened\n";
-			# my $MAIL         = $mailer->GetHandle() || ($error_messages .= "$recipient: Couldn't get mailer handle \n");
-			# print $MAIL        $msg                 || ($error_messages .= "$recipient: Couldn't print to mail $MAIL\n");
-			# close $MAIL                             || ($error_messages .= "$recipient: Couldn't close mail $MAIL -- possibly a badly formed address: ".$ur->email_address."\n");
-		  #   #warn "DEBUG: mailed to $recipient: ", $ur->email_address, " from $from subject $subject. Errors:\n $error_messages\n\n";
-		  #   #FIXME -- allow this list to be turned off with a "verbose" flag
-		    $result_message .= $r->maketext("Msg sent to [_1] at [_2].", $recipient, $ur->email_address)."\n" unless $error_messages;
+		  $result_message .= $r->maketext("Msg sent to [_1] at [_2].", $recipient, $ur->email_address)."\n" unless $error_messages;
 		} continue { #update failed messages before continuing loop
 			if ($error_messages) {
 				$failed_messages++;
@@ -951,28 +912,6 @@ sub email_notification {
 	my $subject="WeBWorK email sent";
 
 	my $mailing_errors = "";
-	# open MAIL handle
-	# my $mailer = Mail::Sender->new({
-	# 	tls_allowed => $self->r->ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
-	# 	from => $self->{defaultFrom},
-	# 	to   => $self->{defaultFrom},
-	# 	smtp    => $self->{smtpServer},
-	# 	subject => $subject,
-	# 	headers => "X-Remote-Host: ".$self->{remote_host},
-	# });
-	# unless (ref $mailer) {
-	# 	$mailing_errors .= "Failed to create a mailer: $Mail::Sender::Error";
-	# 	return "";
-	# }
-	# unless (ref $mailer->Open()) {
-	# 	$mailing_errors .= "Failed to open the mailer: $Mail::Sender::Error";
-	# 	return "";
-	# }
-	# my $MAIL = $mailer->GetHandle();
-	# # print message
-	# print $MAIL $result_message;
-	# # clean up
-	# close $MAIL;
 
 	my $transport = Email::Sender::Transport::SMTP->new({
 		host => $ce->{mail}->{smtpServer},
@@ -989,10 +928,6 @@ sub email_notification {
 		body => $result_message,
 	);
 	$email->header_set("X-Remote-Host",$self->{remote_host});
-
-  debug $self->{remote_host};
-	debug dump $transport;
-	debug dump $email;
 
 	try {
 		sendmail($email,{transport => $transport});
