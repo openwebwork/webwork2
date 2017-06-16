@@ -17,7 +17,7 @@ use WeBWorK::DB;
 use Routes::Admin;
 use Routes::ProblemSets;
 use Routes::Test; # this should be not accessible except when running tests
-
+use Routes::Library; 
 
 
 ###
