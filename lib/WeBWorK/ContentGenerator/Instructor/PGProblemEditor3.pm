@@ -36,6 +36,7 @@ use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
+use File::Basename qw(dirname);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set renderProblems);
 use Data::Dumper;
 use Fcntl;
@@ -676,7 +677,7 @@ EOF
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
 		CGI::div({},$PG_Editor_Reference_String),
 		CGI::p(
-			CGI::textarea(
+			CGI::textarea( -id => "problemContents", 
 				-name => 'problemContents', 
 			        -class => 'latexentryfield',
 			        -default => $problemContents,
@@ -1761,12 +1762,11 @@ sub save_as_form {  # calls the save_as_handler
 	my $setID         = $self->{setID};
 	my $fullSetID     = $self->{fullSetID};
 	
-	
+	my $fileDir = dirname($editFilePath);
 	my $shortFilePath =  $editFilePath;
 	$shortFilePath   =~ s|^$templatesDir/||;
 	$shortFilePath   =  'local/'.$shortFilePath
-	  unless( $shortFilePath =~m|^local/| ||
-		  $shortFilePath =~m|^set$setID|);  # suggest that modifications be saved to the "local" subdirectory
+	  if (! -w $fileDir );  # suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
 	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
    
 
@@ -2056,7 +2056,6 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
 
 	if ($ce->{options}->{PGMathView}) {
 	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
@@ -2064,6 +2063,17 @@ sub output_JS{
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
 	}
+
+	if ($ce->{options}->{PGCodeMirror}) {
+	  
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PGaddons.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PG.js"}), CGI::end_script();
+	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
+
+	}
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
 	
 	return "";
 }
