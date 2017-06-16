@@ -1,6 +1,12 @@
 ## This contains all of the html templates for the app
 package Routes::Templates;
 
+BEGIN {
+
+  warn "In Routes::Templates"; 
+  warn $WeBWorK::Constants::WEBWORK_DIRECTORY;
+
+}
 use Dancer2;
 use Dancer2::FileUtils qw/read_file_content/;
 use Dancer2::Plugin::Auth::Extensible;  ## this handles the users and roles.  See the configuration file for setup.
@@ -232,6 +238,11 @@ get '/courses/:course_id/pgeditor' => sub {
 
 sub setCourseEnvironment {
 	my ($course_id) = @_;
+
+  warn "in setCourseEnvironment";
+  warn config->{webwork_dir};
+
+  debug dump config; 
 
 	#debug "in setCourseEnvironment";
 	#debug session;
