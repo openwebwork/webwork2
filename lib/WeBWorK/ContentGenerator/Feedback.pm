@@ -46,12 +46,6 @@ use WeBWorK::Utils qw/ decodeAnswers/;
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-$WeBWorK::Debug::Enabled = 1;
-
-# Log to a file instead of STDERR
-$WeBWorK::Debug::Logfile = "/opt/webwork/webwork2/logs/debug.log";
-
-
 # request paramaters used
 #
 # user

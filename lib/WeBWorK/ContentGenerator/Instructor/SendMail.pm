@@ -38,12 +38,6 @@ use Try::Tiny;
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
 
-$WeBWorK::Debug::Enabled = 1;
-
-# Log to a file instead of STDERR
-$WeBWorK::Debug::Logfile = "/opt/webwork/webwork2/logs/debug.log";
-
-
 use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
 use Text::Wrap qw(wrap);
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
