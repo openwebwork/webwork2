@@ -393,23 +393,30 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 
 	debug "in /renderer/courses/:course_id/problems/:problem_id";
 
-	debug dump query_parameters;
-
-	debug dump params;
-
-	my $renderParams = {};
-
-  $renderParams->{displayMode} = query_parameters->{displayMode} || vars->{ce}->{pg}{options}{displayMode};
-	$renderParams->{problemSeed} = query_parameters->{problemSeed} || 1;
-	$renderParams->{showHints} = 0;
-	$renderParams->{showSolutions} = 0;
-	$renderParams->{showAnswers} = 0;
-
-	$renderParams->{user} = fake_user(vars->{db});
-	$renderParams->{set} =  fake_set(vars->{db});
-	$renderParams->{problem} = fake_problem(vars->{db});
-	$renderParams->{problem}->{problem_seed} = query_parameters->{problem_seed} || 0;
-	$renderParams->{problem}->{problem_id} = query_parameters->{problem_id} || 1;
+	my $renderParams = {
+		displayMode => query_parameters->get('displayMode') || body_parameters->get('displayMode')
+			|| vars->{ce}->{pg}{options}{displayMode},
+		problemSeed => query_parameters->get('problemSeed') || body_parameters->get('problemSeed') || 1,
+		showHints => query_parameters->get('showHints') || body_parameters->get('showHints') || 0,
+	  showSolutions => query_parameters->get('showSolutions') || body_parameters->get('showSolutions') || 0,
+		showAnswers => query_parameters->get('showAnswers') || body_parameters->get('showAnswers') || 0,
+	  problem => {
+			problemSeed => query_parameters->get('problemSeed') || body_parameters->get('problemSeed') || 1,
+			problem_id => query_parameters->get('problem_id') || body_parameters->get('problem_id') || 1
+		},
+	};
+	#
+  # $renderParams->{displayMode} =
+	# $renderParams->{problemSeed} = ;
+	# $renderParams->{showHints} = 0;
+	# $renderParams->{showSolutions} = 0;
+	# $renderParams->{showAnswers} = 0;
+	#
+	# $renderParams->{user} = fake_user(vars->{db});
+	# $renderParams->{set} =  fake_set(vars->{db});
+	# $renderParams->{problem} = fake_problem(vars->{db});
+	# $renderParams->{problem}->{problem_seed} = query_parameters->{problem_seed} || 0;
+	# $renderParams->{problem}->{problem_id} = query_parameters->{problem_id} || 1;
 
 	# check to see if the problem_path is defined
 

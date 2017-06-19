@@ -8,9 +8,8 @@ use Dancer2::Plugin::Database;
 use WeBWorK::Utils qw(readDirectory);
 use WeBWorK3::PG::Local;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
-use Data::Dump;
+use Data::Dump qw/dump/;
 
-#use Data::Dump qw/dd/;
 our @EXPORT    = ();
 our @EXPORT_OK = qw(list_pg_files searchLibrary getProblemTags render render2);
 our @answerFields = qw/preview_latex_string done original_student_ans preview_text_string ans_message
@@ -439,29 +438,26 @@ sub munge_pg_file_path {
 
 sub render {
 
-    my ($ce,$db,$renderParams) = @_;
+  my ($ce,$db,$renderParams) = @_;
 
+  my $problemFile = '';
 
-    my $problemFile = '';
+  my $form_data = {
+  	displayMode => 'MathJax',
+  	outputformat => 'standard',
+  	problemSeed => 1234,
+  };
 
-    my $form_data = {
-    	displayMode => 'MathJax',
-    	outputformat => 'standard',
-    	problemSeed => 1234,
-    };
-
-    my @anskeys = split(";",params->{answer_fields} || "");
-    for my $key (@anskeys){
-		$form_data->{$key} = params->{$key};
+  my @anskeys = split(";",$renderParams->{answer_fields} || "");
+  for my $key (@anskeys){
+		$form_data->{$key} = $renderParams->{$key};
 	}
-    $form_data->{user} = session->{user};
-    $form_data->{effectiveUser} = params->{effectiveUser} || session->{user};
-
-	my $key = '3211234567654321';
+  $form_data->{user} = $renderParams->{user} || fake_user($db);
+  $form_data->{effectiveUser} = $renderParams->{effectiveUser} || session->{user};
 
 	my $user          = $renderParams->{user} || fake_user($db);
 	my $set           = $renderParams->{'this_set'} || fake_set($db);
-	my $problem_seed  = $renderParams->{'problem_seed'} || 0; #$r->param('problem_seed') || 0;
+	my $problem_seed  = $renderParams->{'problem_seed'} || 1; #$r->param('problem_seed') || 0;
 	my $showHints     = $renderParams->{showHints} || 0;
 	my $showSolutions = $renderParams->{showSolutions} || 0;
 	my $problemNumber = $renderParams->{'problem_number'} || 1;
@@ -526,11 +522,10 @@ my $pg = new WeBWorK::PG(
 
   #debug dump $pg;
 
-	my $out2   = {
+	my $out =  {
 		text 						=> $pg->{body_text},
 		header_text 				=> $pg->{head_text},
 		answers 					=> $pg->{answers},
-
 		errors         				=> $pg->{errors},
 		WARNINGS	   				=> "WARNINGS\n".$warning_messages."\n<br/>More<br/>\n".$pg->{warnings},
 		PG_ANSWERS_HASH             => $pg->{pgcore}->{PG_ANSWERS_HASH},
@@ -542,7 +537,16 @@ my $pg = new WeBWorK::PG(
 		internal_debug_messages     => $internal_debug_messages,
 	};
 
-	return $out2->{text};
+	delete $out->{PG_ANSWERS_HASH};
+	delete $out->{flags}->{PROBLEM_GRADER_TO_USE};
+
+	warn dump $out;
+
+	return $out; 
+
+	return {text => $out->{text}};
+
+	#return {text => $out->{text}};
 }
 
 ###

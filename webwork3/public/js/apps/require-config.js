@@ -1,4 +1,4 @@
-/*  This is the configuration for the require.js loading.  See requirejs.org for more info. 
+/*  This is the configuration for the require.js loading.  See requirejs.org for more info.
 
   It should be loaded directly before the require.js is loaded in a page.  */
 
@@ -20,6 +20,7 @@ var require = {
         "eventie":              "/webwork3/js/bower_components/eventie",
         "eventEmitter":         "/webwork3/js/bower_components/eventEmitter",
         "knowl":                "/webwork2_files/js/vendor/other/knowl",
+        "Base64":               "/webwork2_files/js/apps/Base64/Base64",
         "jquery-csv":           "/webwork3/js/bower_components/jquery-csv/src/jquery.csv",
         "views":                "/webwork3/js/views",
         "models":               "/webwork3/js/models",
@@ -43,6 +44,6 @@ var require = {
         'editablegrid': {deps: ['jquery'], exports: 'EditableGrid'},
         'blob': {exports : 'Blob'},
         'imagesloaded': ['jquery'],
-        'knowl': ['jquery']
+        'knowl': ['Base64','jquery']
     }
 };
