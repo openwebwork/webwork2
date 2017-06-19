@@ -4,7 +4,7 @@
 package Utils::LibraryUtils;
 use base qw(Exporter);
 use Path::Class qw/file dir/;
-use Dancer2::Plugin::Database;
+
 use WeBWorK::Utils qw(readDirectory);
 use WeBWorK3::PG::Local;
 use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
@@ -126,7 +126,7 @@ sub get_section_problems {
 ###
 
 sub searchLibrary {
-	my $p = shift;
+	my ($db,$p) = @_;
 
 	my $param = {};
 
@@ -251,7 +251,7 @@ sub searchLibrary {
 
 	#debug $selectClause,$whereClause.$groupClause;
 
-	my $results = database->selectall_arrayref($selectClause . $whereClause . $groupClause . ";");
+	my $results = $db->selectall_arrayref($selectClause . $whereClause . $groupClause . ";");
 
 	my @problems = map { {source_file => "Library/" . $_->[0], pgfile_id=>$_->[1] } } @{$results};
 
@@ -540,9 +540,7 @@ my $pg = new WeBWorK::PG(
 	delete $out->{PG_ANSWERS_HASH};
 	delete $out->{flags}->{PROBLEM_GRADER_TO_USE};
 
-	warn dump $out;
-
-	return $out; 
+	return $out;
 
 	return {text => $out->{text}};
 

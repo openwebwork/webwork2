@@ -32,8 +32,7 @@ get '/Library/subjects' => sub {
 	    local $/;
 	    <$json_fh>
 	};
-
-	return $json_text;
+	return decode_json($json_text);
 
 };
 
@@ -52,7 +51,7 @@ get qr{\/Library\/subjects\/(.+)\/chapters\/(.+)\/sections\/(.+)\/problems} => s
 
 	my ($subj,$chap,$sect) = splat;
 
-	return searchLibrary({subject=>$subj,chapter=>$chap,section=>$sect});
+	return searchLibrary(database,{subject=>$subj,chapter=>$chap,section=>$sect});
 };
 
 
@@ -70,7 +69,7 @@ get qr{\/Library\/subjects\/(.+)\/chapters\/(.+)\/problems} => sub {
 
 	my ($subj,$chap) = splat;
 
-	return searchLibrary({subject=>$subj,chapter=>$chap});
+	return searchLibrary(database,{subject=>$subj,chapter=>$chap});
 };
 
 
@@ -89,7 +88,7 @@ get qr{\/Library\/subjects\/(.+)\/problems} => sub {
 
 	my ($subj) = splat;
 
-	return searchLibrary({subject=>$subj});
+	return searchLibrary(database,{subject=>$subj});
 };
 
 
@@ -282,7 +281,7 @@ get '/Library/textbooks' => sub {
 
 get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id/problems' => sub {
 
-	return searchLibrary({section_id=>params->{section_id},textbook_id=>params->{textbook_id},
+	return searchLibrary(database,{section_id=>params->{section_id},textbook_id=>params->{textbook_id},
 			chapter_id=>params->{chapter_id}});
 
 };
@@ -297,7 +296,7 @@ get '/Library/textbooks/:textbook_id/chapters/:chapter_id/sections/:section_id/p
 
 get '/Library/textbooks/:textbook_id/chapters/:chapter_id/problems' => sub {
 
-	return searchLibrary({textbook_id=>params->{textbook_id},chapter_id=>params->{chapter_id}});
+	return searchLibrary(database,{textbook_id=>params->{textbook_id},chapter_id=>params->{chapter_id}});
 
 };
 
@@ -311,7 +310,7 @@ get '/Library/textbooks/:textbook_id/chapters/:chapter_id/problems' => sub {
 
 get '/Library/textbooks/:textbook_id/problems' => sub {
 
-	return searchLibrary({textbook_id=>params->{textbook_id}});
+	return searchLibrary(database,{textbook_id=>params->{textbook_id}});
 
 };
 
@@ -323,20 +322,20 @@ get '/Library/textbooks/:textbook_id/problems' => sub {
 
 get '/textbooks/author/:author_name/title/:title/problems' => sub {
 
-	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title}});
+	return searchLibrary(database,{textbook_author=>params->{author_name},textbook_title=>params->{title}});
 
 };
 
 get '/textbooks/author/:author_name/title/:title/chapter/:chapter/problems' => sub {
 
-	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title},
+	return searchLibrary(database,{textbook_author=>params->{author_name},textbook_title=>params->{title},
 			textbook_chapter=>params->{chapter}});
 
 };
 
 get '/textbooks/author/:author_name/title/:title/chapter/:chapter/section/:section/problems' => sub {
 
-	return searchLibrary({textbook_author=>params->{author_name},textbook_title=>params->{title},
+	return searchLibrary(database,{textbook_author=>params->{author_name},textbook_title=>params->{title},
 			textbook_chapter=>params->{chapter},textbook_section=>params->{section}});
 
 };
@@ -361,7 +360,7 @@ get '/library/problems' => sub {
 		$searchParams->{$key} = params->{$key} if defined(params->{$key});
 	}
 
-	return searchLibrary($searchParams);
+	return searchLibrary(database,$searchParams);
 
 };
 

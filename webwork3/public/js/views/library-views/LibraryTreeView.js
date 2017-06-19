@@ -1,15 +1,15 @@
 /**
-*  This view is the interface to the Library Tree and allows the user to more easier navigate the Library. 
+*  This view is the interface to the Library Tree and allows the user to more easier navigate the Library.
 *
 *  To use the LibraryTreeView the following parameters are needed:
 *  type:  the type of library needed which is passed to the Library Tree
-*  
+*
 *
 */
 
-define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-validation'], 
+define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-validation'],
     function(Backbone, _,LibraryTree){
-	
+
     var LibraryTreeView = Backbone.View.extend({
     	initialize: function (options){
     		_.bindAll(this,"render","loadProblems","changeLibrary");
@@ -23,7 +23,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             this.bindings = {};
             for(var i = 0; i<4;i++) {
                 this.bindings[".library-level-"+i+ " select"]= {observe: "level"+i,
-                    selectOptions: {collection: function (view,opts) { 
+                    selectOptions: {collection: function (view,opts) {
                         return self.libraryLevel[opts.observe.split("level")[1]||""]},
                     defaultOption: {label: options.topLevelNames[i], value: ""}}};
             }
@@ -32,15 +32,18 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             var i,branch,numFiles = null;
             this.$el.html($("#library-tree-template").html());
             if (!this.libraryTree.get("tree")) {
-                this.libraryTree.fetch({success: this.render});
+                this.libraryTree.fetch({success: this.render,
+                  error: function(model, response, options){
+                    console.log(options.errorThrown)
+                  }});
 
             } else {
                 this.$(".throbber").remove();
                 this.$(".library-tree-left").html($("#library-select-template").html());
                 this.changeLibrary(this.fields);
             }
-            
-            return this; 
+
+            return this;
     	},
         events: { "click .load-library-button": "selectLibrary"},
         changeLibrary: function(model){
@@ -73,7 +76,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
             }
 
             for(i=0;i<4;i++){
-                this.$(".library-level-"+i).addClass("hidden");  // hide all levels. 
+                this.$(".library-level-"+i).addClass("hidden");  // hide all levels.
             }
             for(i=0;i<level+1;i++){
                 this.$(".library-level-"+i).removeClass("hidden");  // show needed levels.
@@ -82,7 +85,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
                 this.$(".library-level-"+level).addClass("hidden");
             }
 
-            this.$(".load-library-button").text(numFiles? "Load " + numFiles + " problems": "Load");  
+            this.$(".load-library-button").text(numFiles? "Load " + numFiles + " problems": "Load");
             this.unstickit(this.fields);
             this.stickit(this.fields,this.bindings);
         },
@@ -97,7 +100,7 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
         branchOfTree: function(path){
             var tree = this.libraryTree.get("tree");
             if(_(path).compact().length ===0){
-                return {branches: _(tree).pluck("name"), 
+                return {branches: _(tree).pluck("name"),
                         num_files: _(tree).reduce(function(i,j) { return i+parseInt(j.num_files);},0) };
             }
             var currentBranch=tree;
@@ -109,13 +112,13 @@ define(['backbone', 'underscore','models/LibraryTree','stickit','backbone-valida
                     numFiles = branch.num_files;
                 }
             });
-            return {branches: _(currentBranch).map(function(s) { return {label: s.name, value: s.name};}), 
+            return {branches: _(currentBranch).map(function(s) { return {label: s.name, value: s.name};}),
                 num_files: numFiles};
         }
     });
 
     var LibraryLevels = Backbone.Model.extend({
-        defaults:  { 
+        defaults:  {
             level0: "",
             level1: "",
             level2: "",
