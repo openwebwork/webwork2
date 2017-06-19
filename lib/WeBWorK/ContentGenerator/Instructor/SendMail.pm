@@ -915,8 +915,8 @@ sub email_notification {
 
 	my $email = Email::Simple->create(
 		header => [
-			To => "\"Peter Staab\" <pstaab\@fitchburgstate.edu>",
-			From => "peter.staab\@gmail.com",
+			To => $ur->email_address,
+			From => $from,
 			Subject => $subject,
 		],
 		body => $result_message,
