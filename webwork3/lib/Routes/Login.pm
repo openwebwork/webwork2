@@ -8,7 +8,6 @@ set serializer => 'JSON';
 use Dancer2::Plugin::Auth::Extensible;
 use Data::Dump qw/dump/;
 
-#use Routes::Common qw/setCookie setCourseEnvironment/;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 
@@ -17,8 +16,9 @@ use WeBWorK::DB;
 use Routes::Admin;
 use Routes::ProblemSets;
 use Routes::Test; # this should be not accessible except when running tests
-use Routes::Library; 
-
+use Routes::Library;
+use Routes::Settings;
+use Routes::User;
 
 ###
 #
@@ -39,8 +39,6 @@ hook before => sub {
 		}
 	}
 	setCourseEnvironment(session 'course_id') if defined (session 'course_id');
-	#debug session;
-
 };
 
 
@@ -53,16 +51,7 @@ post '/courses/:course_id/login' => sub {
   my $username = query_parameters->{username} || body_parameters->{username};
 	my $password = query_parameters->{password} || body_parameters->{password};
 
-	# debug $username;
-	# debug $password;
-	# debug session;
-
 	my ($success, $realm) = authenticate_user($username,$password);
-
-
-	# debug "trying to authenticate";
-	# debug $success;
-	# debug session;
 
 	if($success){
 		my $key = vars->{db}->getKey($username)->{key};

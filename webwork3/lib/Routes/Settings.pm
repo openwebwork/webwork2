@@ -8,12 +8,10 @@ package Routes::Settings;
 
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
-use strict;
-use warnings;
 use Utils::CourseUtils qw/getCourseSettings/;
-use Utils::Authentication qw/checkPermissions/;
 use Utils::GeneralUtils qw/writeConfigToFile getCourseSettingsWW2/;
-use Dancer ':syntax';
+use Dancer2 appname => "Routes::Login";
+use Dancer2::Plugin::Auth::Extensible;
 
 ####
 #
@@ -23,9 +21,7 @@ use Dancer ':syntax';
 #
 ###
 
-get '/courses/:course_id/settings' => sub {
-
-	checkPermissions(10,session->{user});
+get '/courses/:course_id/settings' => require_role professor => sub {
 
 	return getCourseSettings;
 
@@ -39,9 +35,7 @@ get '/courses/:course_id/settings' => sub {
 #
 ###
 
-get '/courses/:course_id/settings/:setting_id' => sub {
-
-	checkPermissions(10,session->{user});
+get '/courses/:course_id/settings/:setting_id' => require_role professor => sub {
 
 	my $ConfigValues = getConfigValues(vars->{ce});
 
@@ -63,12 +57,8 @@ get '/courses/:course_id/settings/:setting_id' => sub {
 
 ## save the setting
 
-put '/courses/:course_id/settings/:setting_id' => sub {
+put '/courses/:course_id/settings/:setting_id' => require_role professor => sub {
 
-	checkPermissions(10,session->{user});
-
-	#debug "in PUT /course/:course_id/settings/:setting_id";
-	
 	my $ConfigValues = getCourseSettingsWW2(vars->{ce});
 	foreach my $oneConfig (@$ConfigValues) {
 		foreach my $hash (@$oneConfig) {

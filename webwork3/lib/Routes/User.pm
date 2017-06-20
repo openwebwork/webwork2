@@ -6,14 +6,12 @@
 
 package Routes::User;
 
-use strict;
-use warnings;
-use Dancer ':syntax';
+use Dancer2 appname => "Routes::Login";
+use Dancer2::Plugin::Auth::Extensible;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
-use Utils::Authentication qw/checkPermissions/;
 use WeBWorK::Utils qw/cryptPassword/;
 
-our @user_props = qw/first_name last_name student_id user_id email_address permission status 
+our @user_props = qw/first_name last_name student_id user_id email_address permission status
                     section recitation comment displayMode showOldAnswers useMathView/;
 our @boolean_user_props = qw/showOldAnswers useMathView/;
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
@@ -26,9 +24,7 @@ our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 #
 ##
 
-get '/courses/:course/users' => sub {
-
-	checkPermissions(10,session->{user});
+get '/courses/:course/users' => require_role professor => sub {
 
     my @allUsers = vars->{db}->getUsers(vars->{db}->listUsers);
     my %permissionsHash =  reverse %{vars->{ce}->{userRoles}};
@@ -38,10 +34,10 @@ get '/courses/:course/users' => sub {
         $u->{'permission'} = $PermissionLevel->{'permission'};
 
 		my $studid= $u->{'student_id'};
-		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string. 
-		
+		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string.
+
     }
-    
+
     return convertArrayOfObjectsToHash(\@allUsers);
 };
 
@@ -54,9 +50,7 @@ get '/courses/:course/users' => sub {
 ###
 
 
-post '/courses/:course_id/users/:user_id' => sub {
-
-	checkPermissions(10,session->{user});
+post '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
 	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
 	my $user = vars->{db}->getUser(param('user_id'));
@@ -64,12 +58,12 @@ post '/courses/:course_id/users/:user_id' => sub {
 	$user = vars->{db}->newUser();
 
 	# update the standard user properties
-	
+
 	for my $key (@user_props) {
         $user->{$key} = params->{$key} if (defined(params->{$key}));
     }
-    $user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
-	
+    $user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
+
 	# password record
 
 	my $password = vars->{db}->newPassword();
@@ -83,23 +77,23 @@ post '/courses/:course_id/users/:user_id' => sub {
 	}
 	$password->password($cryptedpassword);
 
-	
-	
+
+
 	# permission record
-	
+
 	my $permission = vars->{db}->newPermissionLevel();
 	$permission->{user_id} = params->{user_id};
-	$permission->{permission} = params->{permission};	
+	$permission->{permission} = params->{permission};
 
 	vars->{db}->addUser($user);
 	vars->{db}->addPassword($password);
 	vars->{db}->addPermissionLevel($permission);
 
 	my $u =convertObjectToHash($user);
-	$u->{_id} = $u->{user_id}; 
+	$u->{_id} = $u->{user_id};
 
 	return $u;
-	
+
 };
 
 ##
@@ -108,32 +102,32 @@ post '/courses/:course_id/users/:user_id' => sub {
 #
 ##
 
-put '/courses/:course_id/users/:user_id' => sub { 
+put '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
-	my $user = vars->{db}->getUser(param('user_id'));	
+	my $user = vars->{db}->getUser(param('user_id'));
 	send_error("The user with login " . param('user_id') . " does not exist",404) unless $user;
 
 	# update the standard user properties
-	
+
     my %allparams = params;
     my $setFromClient = convertBooleans(\%allparams,\@boolean_user_props);
 	for my $key (@user_props) {
         $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
     }
-    
+
 	vars->{db}->putUser($user);
-	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing. 
+	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
 
     my $permission = vars->{db}->getPermissionLevel(params->{user_id});
-	
+
 	if(params->{permission} != $permission->{permission}){
 		$permission->{permission} = params->{permission};
 		vars->{db}->putPermissionLevel($permission);
 	}
 
 	my $u =convertObjectToHash($user, \@boolean_user_props);
-    
-    $u->{_id} = $u->{user_id}; 
+
+    $u->{_id} = $u->{user_id};
 
 	return $u;
 
@@ -147,10 +141,8 @@ put '/courses/:course_id/users/:user_id' => sub {
 ###
 
 
-del '/courses/:course_id/users/:user_id' => sub {
+del '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
-	checkPermissions(10,session->{user});
-	
 	# check to see if the user exists
 
 	my $user = vars->{db}->getUser(param('user_id')); # checked
@@ -159,10 +151,10 @@ del '/courses/:course_id/users/:user_id' => sub {
 	if (param('user_id') eq session('user') )
 	{
 		send_error("You can't delete yourself from the course.",404);
-	} 
+	}
 
 	my $del = vars->{db}->deleteUser(param('user_id'));
-		
+
 	if($del) {
 		return convertObjectToHash($user);
 	} else {
@@ -176,13 +168,12 @@ del '/courses/:course_id/users/:user_id' => sub {
 #
 ####
 
-get '/courses/:course_id/users/loginstatus' => sub {
-	checkPermissions(10,session->{user});
+get '/courses/:course_id/users/loginstatus' => require_role professor => sub {
 
 	my @users = vars->{db}->listUsers();
 	my @status = map {
 		my $key = vars->{db}->getKey($_);
-		{ user_id=>$_, 
+		{ user_id=>$_,
 			logged_in => ($key and time <= $key->timestamp()+vars->{ce}->{sessionKeyTimeout}) ? JSON::true : JSON::false}
 	} @users;
 
@@ -196,7 +187,7 @@ post '/courses/:course_id/users/:user_id/password' => sub {
 	#
 	# if the user is not a professor, check that the current password is correct.
 	#
-    
+
 	if(session->{permission} < 10 and session->{user} ne params->{user_id}){
 		send_error("You don't have the permission to change another password");
 	}
@@ -220,33 +211,29 @@ post '/courses/:course_id/users/:user_id/password' => sub {
 #
 ####
 
-get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
+get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => require_role professor => sub {
 
-	checkPermissions(10,session->{user});
+  if (! vars->{db}->existsGlobalSet(params->{set_id})){
+  	send_error("The set " . params->{set_id} . " does not exist in course " . params->{course_id},404);
+  }
 
-	debug 'in /courses/sets/users/problems';
+  if (! vars->{db}->existsUserSet(params->{user_id}, params->{set_id})){
+  	send_error("The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id}
+  				. " in course " . params->{course_id},404);
+  }
 
-    if (! vars->{db}->existsGlobalSet(params->{set_id})){
-    	send_error("The set " . params->{set_id} . " does not exist in course " . params->{course_id},404);
-    }
+  my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
 
-    if (! vars->{db}->existsUserSet(params->{user_id}, params->{set_id})){
-    	send_error("The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id} 
-    				. " in course " . params->{course_id},404);
-    }
+  my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
 
-    my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
-
-    my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
-
-    if(request->is_ajax){
-        return convertArrayOfObjectsToHash(\@problems);
-    } else {  # a webpage has requested this
-        template 'problem.tt', {course_id=> params->{course_id}, set_id=>params->{set_id}, user=>params->{user_id},
-                                    problem_id=>params->{problem_id}, pagename=>"Problem Viewer",
-                                    problems => to_json(convertArrayOfObjectsToHash(\@problems)),
-                                 	user_set => to_json(convertObjectToHash($userSet))}; 
-    }
+  if(request->is_ajax){
+      return convertArrayOfObjectsToHash(\@problems);
+  } else {  # a webpage has requested this
+      template 'problem.tt', {course_id=> params->{course_id}, set_id=>params->{set_id}, user=>params->{user_id},
+                                  problem_id=>params->{problem_id}, pagename=>"Problem Viewer",
+                                  problems => to_json(convertArrayOfObjectsToHash(\@problems)),
+                               	user_set => to_json(convertObjectToHash($userSet))};
+  }
 };
 
 
@@ -256,27 +243,21 @@ get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => sub {
 #
 ####
 
-get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
+get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
 
-	checkPermissions(10,session->{user});
-
-  	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
-
-    return convertObjectToHash($problem);
+  my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
+  return convertObjectToHash($problem);
 };
 
-put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => sub {
-
-	checkPermissions(10,session->{user});
-    
+put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
 
 	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
 
-    for my $key (keys (%{$problem})){
-    	if(param($key)){
-			    $problem->{$key} = param($key);    		
-    	}
-    }
+  for my $key (keys (%{$problem})){
+  	if(param($key)){
+		    $problem->{$key} = param($key);
+  	}
+  }
 
     vars->{db}->putUserProblem($problem);
 
