@@ -11,7 +11,7 @@ use Dancer2 appname => "Routes::Login";
 use Dancer2::Plugin::Auth::Extensible;
 use Dancer2::FileUtils qw/read_file_content dirname/;
 use File::Slurp qw/write_file/;
-use WeBWorK::Utils::Tasks qw(fake_user fake_set fake_problem);
+use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use Utils::LibraryUtils qw/render/;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use Utils::ProblemSets qw/reorderProblems addGlobalProblems addUserSet addUserProblems deleteProblems createNewUserProblem
@@ -25,6 +25,7 @@ use List::MoreUtils qw/first_value/;
 use Utils::CourseUtils qw/getCourseSettings/;
 use List::Util qw/first max/;
 
+use Data::Dump qw/dump/;
 
 
 
@@ -77,7 +78,7 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
     debug 'in put or post /courses/:course_id/sets/:set_id';
 
-    debug session; 
+    debug session;
     #checkPermissions(10,session->{user});
 
     # set all of the new parameters sent from the client
@@ -1092,8 +1093,6 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
         $setHeaderFile = path(dirname($templateDir),'templates',$setHeader);
     }
 
-    debug $setHeaderFile;
-
     my $hardcopyHeader = $globalSet->{hardcopy_header};
     my $hardcopyHeaderFile;
     if(! defined($hardcopyHeader) || $hardcopyHeader eq ''){
@@ -1119,27 +1118,33 @@ any ['get', 'put'] => '/courses/:course_id/sets/:set_id/setheader' => sub {
     $headerContent = read_file_content($setHeaderFile);
     $hardcopyHeaderContent = read_file_content($hardcopyHeaderFile);
 
-    my $mergedSet = vars->{db}->getMergedSet(session->{user},params->{set_id});
+    my $user_id = session 'logged_in_user';
+    debug route_parameters->{set_id};
+    my $mergedSet = vars->{db}->getMergedSet($user_id,route_parameters->{set_id});
 
     my $renderParams = {
         displayMode => param('displayMode') || vars->{ce}->{pg}{options}{displayMode},
-        problemSeed => defined(params->{problemSeed}) ? params->{problemSeed} : 1,
+        problemSeed => 1,
         showHints=> 0,
         showSolutions=>0,
         showAnswers=>0,
-        user=>vars->{db}->getUser(session->{user}),
+        user=>vars->{db}->getUser($user_id),
         set=>$mergedSet,
-        problem=>fake_problem(vars->{db}) };
+        problem=>fake_problem(vars->{db})
+      };
+
 
 
 
 	# check to see if the problem_path is defined
     $renderParams->{problem}->{source_file} = $setHeaderFile;
 
-    my $ren = render(vars->{ce},$renderParams);
+    debug dump $renderParams;
+
+    my $ren = render(vars->{ce},vars->{db},$renderParams);
     my $setHeaderHTML = $ren->{text};
     $renderParams->{problem}->{source_file} = $hardcopyHeaderFile;
-    $ren = render(vars->{ce},$renderParams);
+    $ren = render(vars->{ce},vars->{db},$renderParams);
     my $hardcopyHeaderHTML = $ren->{text};
 
     return {_id=>params->{set_id},set_header=>$setHeader,hardcopy_header=>$hardcopyHeader,

@@ -44,7 +44,7 @@ sub getFilePaths {
 ## this returns all problems in the library that matches the given subject
 
 sub get_subject_problems {
-	my ($subject) = @_;
+	my ($db,$subject) = @_;
 
 	my $queryString = "select CONCAT(path.path,'/',pg.filename) AS fullpath,pg.morelt_id "
 					. "from OPL_DBsubject AS sub "
@@ -54,7 +54,7 @@ sub get_subject_problems {
 					. "JOIN OPL_path AS path ON pg.path_id = path.path_id "
 					. "WHERE sub.name='" . $subject . "';";
 
-	my $results = database->selectall_arrayref($queryString);
+	my $results = $db->selectall_arrayref($queryString);
 
 	my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
 
@@ -67,7 +67,7 @@ sub get_subject_problems {
 
 
 sub get_chapter_problems {
-	my ($subject,$chapter) = @_;
+	my ($db,$subject,$chapter) = @_;
 
 	my $queryString = "select CONCAT(path.path,'/',pg.filename) AS fullpath,pg.morelt_id "
 					. "from OPL_DBsection AS sect "
@@ -77,7 +77,7 @@ sub get_chapter_problems {
 					. "JOIN OPL_path AS path ON pg.path_id = path.path_id "
 					. "WHERE ch.name='" . $chapter . "' and sub.name='" . $subject . "';";
 
-	my $results = database->selectall_arrayref($queryString);
+	my $results = $db->selectall_arrayref($queryString);
 
 	my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
 
@@ -91,7 +91,7 @@ sub get_chapter_problems {
 
 
 sub get_section_problems {
-	my ($subject,$chapter,$section) = @_;
+	my ($db,$subject,$chapter,$section) = @_;
 
 	my $queryString = "select CONCAT(path.path,'/',pg.filename) AS fullpath,pg.morelt_id "
 					. "from OPL_DBsection AS sect "
@@ -101,7 +101,7 @@ sub get_section_problems {
 					. "WHERE sect.name='" . $section . "' AND ch.name='" . $chapter . "'"
 					. "and sub.name='" . $subject . "';";
 
-	my $results = database->selectall_arrayref($queryString);
+	my $results = $db->selectall_arrayref($queryString);
 
 	my @problems=  map {{source_file=>"Library/" .$_->[0], morelt=>$_[1]} } @{$results};
 
@@ -440,8 +440,6 @@ sub render {
 
   my ($ce,$db,$renderParams) = @_;
 
-  my $problemFile = '';
-
   my $form_data = {
   	displayMode => 'MathJax',
   	outputformat => 'standard',
@@ -464,8 +462,6 @@ sub render {
   my $displayMode   = $renderParams->{displayMode}//
                        $ce->{pg}->{options}->{displayMode};
 
-
-
 	my $translationOptions = {
 		displayMode     => $displayMode,
 		showHints       => $showHints,
@@ -476,7 +472,7 @@ sub render {
 		use_site_prefix => $ce->{server_root_url},
 		use_opaque_prefix => 1,
 	};
-	$translationOptions->{permissionLevel} = 20;
+	$translationOptions->{permissionLevel} = 20;  ## pull this from the user
 
 	my $extras = {};   # Check what this is used for.
 
@@ -484,10 +480,8 @@ sub render {
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''};
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''};
 	my $problem = fake_problem($db, 'problem_seed'=>$problem_seed);
-	$problem->{value} = -1;
+	$problem->{value} = $renderParams->{problemValue} || -1;
 
-
-    #FIXME temporary hack
 	$set->set_id('this set') unless $set->set_id();
 	$problem->problem_id('1') unless $problem->problem_id();
 
@@ -537,6 +531,18 @@ my $pg = new WeBWorK::PG(
 		internal_debug_messages     => $internal_debug_messages,
 	};
 
+  # make the errors a bit easier to read.
+
+	if($problem_hash->{errors}){
+			my $text = qq|<div><em>An error occurred while processing this problem.</em>
+									Click <a href="#" onclick='\$(this).parent().find(".bg-danger").removeClass("hidden"); return false'>here</a>
+									to show details of the error. <p class='bg-danger hidden'>|;
+			$text .= $problem_hash->{errors} . "</p></div>";
+
+			$problem_hash->{text} = $text;
+	}
+
+  # the following contain subroutines, so remove them before serializing.
 	delete $out->{PG_ANSWERS_HASH};
 	delete $out->{flags}->{PROBLEM_GRADER_TO_USE};
 

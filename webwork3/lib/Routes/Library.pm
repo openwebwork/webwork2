@@ -115,7 +115,7 @@ get '/Library/directories' => sub {
 
 
 
-	return $json_text;
+	return decode_json $json_text;
 
 };
 
