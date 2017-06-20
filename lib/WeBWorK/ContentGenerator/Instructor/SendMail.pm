@@ -869,7 +869,7 @@ sub mail_message_to_recipients {
 					From => $from, Subject => $subject ],
 				body => $msg
 			);
-			$email->header_set("X-Remote-Host",$self->{remote_host});
+			$email->header_set("X-Remote-Host: ",$self->{remote_host});
 
 
 			try {
@@ -915,13 +915,13 @@ sub email_notification {
 
 	my $email = Email::Simple->create(
 		header => [
-			To => $ur->email_address,
-			From => $from,
+			To => $self->{defaultFrom},
+			From => $self->{defaultFrom},
 			Subject => $subject,
 		],
 		body => $result_message,
 	);
-	$email->header_set("X-Remote-Host",$self->{remote_host});
+	$email->header_set("X-Remote-Host: ",$self->{remote_host});
 
 	try {
 		sendmail($email,{transport => $transport});
@@ -931,7 +931,8 @@ sub email_notification {
 	};
 
 
-    warn "\ninstructor message \"". $self->{subject}."\" sent to ", $self->{defaultFrom},"\n";
+    warn "\nWW::Instructor::SendMail:: instructor message ". $self->{subject}
+					." sent from ", $self->{defaultFrom},"\n";
 
 }
 sub getRecord {
