@@ -18,6 +18,7 @@ $(function () {
 	     indentUnit: 4,
 	     tabMode: "spaces",
              lineNumbers: true,
+	     lineWrapping: true,
              extraKeys:
              {Tab: function(cm) {cm.execCommand('insertSoftTab')}},
 	     highlightSelectionMatches: true,
