@@ -13,7 +13,7 @@ use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash/;
 use WeBWorK::Utils::CourseManagement qw(listCourses listArchivedCourses addCourse deleteCourse renameCourse);
 use WeBWorK::Utils::CourseIntegrityCheck qw(checkCourseTables);
 use Utils::CourseUtils qw/getAllUsers getCourseSettings getAllSets/;
-#use Routes::Common qw/setCourseEnvironment setCookie/;
+use Data::Dump qw/dump/;
 
 
 ###
@@ -131,8 +131,14 @@ post '/admin/courses/:new_course_id' => require_role admin => sub {
 
 get '/admin/courses/:course_id' => require_role admin => sub {
 
-  my $coursePath = path(config->{webwork_dir},route_parameters->{course_id}); 
+  debug "in /admin/courses/:course_id";
+  my $coursePath = path(config->{webwork_dir},route_parameters->{course_id});
+  if (! -e $coursePath){
+    return {course_id => route_parameters->{course_id}, message=> "Course does not exist.",
+      course_exists=> false};
+  }
   my $CIchecker = new WeBWorK::Utils::CourseIntegrityCheck(vars->{ce});
+
   if (body_parameters->{checkCourseTables}){
     my ($tables_ok,$dbStatus) = $CIchecker->checkCourseTables(params->{course_id});
     return { coursePath => $coursePath, tables_ok => $tables_ok, dbStatus => $dbStatus,

@@ -23,12 +23,12 @@ our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_dat
                             version_creation_time problem_randorder version_last_attempt_time problems_per_page
                             hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip
                             restricted_login_proctor hide_hint/;
-our @problem_props = qw/problem_id flags value max_attempts status source_file/;
+our @problem_props = qw/problem_id flags value max_attempts status source_file prPeriod prCount/;
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
 
 our @user_problem_props = qw/user_id set_id problem_id source_file value max_attempts showMeAnother
                 showMeAnotherCount flags problem_seed status attempted last_answer num_correct num_incorrect
-                sub_status flags/;
+                sub_status flags prPeriod prCount/;
 
 
 our @EXPORT    = ();
@@ -263,9 +263,9 @@ sub updateProblems {
 ###
 
 sub createNewUserProblem {
-    my ($userID,$setID,$problemID) = @_;
+    my ($db,$userID,$setID,$problemID) = @_;
 
-    my $userProblem = vars->{db}->newUserProblem();
+    my $userProblem = $db->newUserProblem();
     $userProblem->{user_id}=$userID;
     $userProblem->{set_id}=$setID;
     $userProblem->{problem_id}=$problemID;
@@ -288,27 +288,22 @@ sub createNewUserProblem {
 ##
 
 sub addGlobalProblems {
-	my ($setID,$problems)=@_;
+  my ($db,$setID,$problems)=@_;
 
-
-	my @oldProblems = vars->{db}->getAllGlobalProblems($setID);
-	for my $p (@{$problems}){
-        if(! vars->{db}->existsGlobalProblem($setID,$p->{problem_id})){
-
-        	my $prob = vars->{db}->newGlobalProblem();
-
-        	$prob->{problem_id} = $p->{problem_id};
-        	$prob->{source_file} = $p->{source_file};
-            $prob->{value} = $p->{value};
-            $prob->{max_attempts} = $p->{max_attempts};
-        	$prob->{set_id} = $setID;
-            $prob->{_id} = $prob->{set_id} . ":" . $prob->{problem_id};  # this helps backbone on the client side
-            vars->{db}->addGlobalProblem($prob) unless vars->{db}->existsGlobalProblem($setID,$prob->{problem_id});
-        }
+  my @oldProblems = $db->getAllGlobalProblems($setID);
+  for my $p (@{$problems}){
+    unless($db->existsGlobalProblem($setID,$p->{problem_id})){
+      my $prob = $db->newGlobalProblem();
+      for my $key (@problem_props){
+        $prob->{$key} = $p->{$key};
+      }
+      $prob->{set_id} = $setID;
+      $prob->{_id} = $prob->{set_id} . ":" . $prob->{problem_id};  # this helps backbone on the client side
+      $db->addGlobalProblem($prob) unless $db->existsGlobalProblem($setID,$prob->{problem_id});
     }
+  }
 
-
-    return vars->{db}->getAllGlobalProblems($setID);
+  return $db->getAllGlobalProblems($setID);
 }
 
 ####
@@ -328,7 +323,7 @@ sub addUserProblems {
     for my $p (@{$problems}){
         for my $userID (@{$users}){
             $db->addUserProblem(createNewUserProblem($userID,$setID,$p->{problem_id}))
-                unless vars->{db}->existsUserProblem($userID,$setID,$p->{problem_id});
+                unless $db->existsUserProblem($userID,$setID,$p->{problem_id});
         }
     }
 }
@@ -439,7 +434,7 @@ sub record_results {
     my ($renderParams,$results) = @_;
 
     my $scoreRecordedMessage = "";
-    my $pureProblem  = vars->{db}->getUserProblem($renderParams->{problem}->user_id, $renderParams->{problem}->set_id,
+    my $pureProblem  = $db->getUserProblem($renderParams->{problem}->user_id, $renderParams->{problem}->set_id,
                                                      $renderParams->{problem}->problem_id); # checked
     my $isEssay = 0;
 
@@ -480,7 +475,7 @@ sub record_results {
             );
 
             #add to PastAnswer db
-            my $pastAnswer = vars->{db}->newPastAnswer();
+            my $pastAnswer = $db->newPastAnswer();
             $pastAnswer->course_id(session->{course});
             $pastAnswer->user_id($renderParams->{problem}->{user_id});
             $pastAnswer->set_id($renderParams->{problem}->{set_id});
@@ -490,7 +485,7 @@ sub record_results {
             $pastAnswer->answer_string($answerString);
             $pastAnswer->source_file($renderParams->{problem}->{source_file});
 
-            vars->{db}->addPastAnswer($pastAnswer);
+            $db->addPastAnswer($pastAnswer);
 
 
         #}
@@ -521,7 +516,7 @@ sub record_results {
         # store last answer to database
         $renderParams->{problem}->last_answer($answerString);
         $pureProblem->last_answer($answerString);
-        vars->{db}->putUserProblem($pureProblem);
+        $db->putUserProblem($pureProblem);
 
 
         # store state in DB if it makes sense
@@ -546,7 +541,7 @@ sub record_results {
                 $pureProblem->{flags} .= "needs_grading,";
             }
 
-            if (vars->{db}->putUserProblem($pureProblem)) {
+            if ($db->putUserProblem($pureProblem)) {
                 $scoreRecordedMessage = "Your score was recorded.";
             } else {
                 $scoreRecordedMessage = "Your score was not recorded because there was a failure in storing the problem record to the database.";

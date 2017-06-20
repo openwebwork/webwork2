@@ -78,26 +78,24 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
     debug 'in put or post /courses/:course_id/sets/:set_id';
 
-    debug session;
-    #checkPermissions(10,session->{user});
-
     # set all of the new parameters sent from the client
     my %allparams = params;
 
     my $problems_from_client = params->{problems};
 
     if(request->is_post()){
-        if (params->{set_id} !~ /^[\w\_.-]+$/) {
-            send_error("The set name must only contain A-Za-z0-9_-.",403);
-        }
+      send_error("The set name must only contain A-Za-z0-9_-.",403)
+        unless (params->{set_id} =~ /^[\w\_.-]+$/);
 
-        send_error("The set name: " . param('set_id'). " already exists.",404) if (vars->{db}->existsGlobalSet(param('set_id')));
-        my $set = vars->{db}->newGlobalSet();
-        $set->{set_id} = params->{set_id};
-        vars->{db}->addGlobalSet($set);
+      send_error("The set name: " . param('set_id'). " already exists.",404)
+        if (vars->{db}->existsGlobalSet(param('set_id')));
+
+      my $set = vars->{db}->newGlobalSet();
+      $set->{set_id} = params->{set_id};
+      vars->{db}->addGlobalSet($set);
     } else {
         send_error("The set name: " . param('set_id'). " does not exist.",404)
-        if (! vars->{db}->existsGlobalSet(params->{set_id}));
+          unless vars->{db}->existsGlobalSet(params->{set_id});
     }
 
     putGlobalSet(vars->{db},vars->{ce},\%allparams);
@@ -127,7 +125,7 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
         debug "the problems are being reordered";
         reorderProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } elsif (scalar(@problemsFromDB) < scalar(@{params->{problems}})) { # problems have been added
-        addGlobalProblems(params->{set_id},params->{problems});
+        addGlobalProblems(vars->{db},params->{set_id},params->{problems});
         addUserProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users});
     } elsif(params->{_delete_problem_id}) { # problems have been deleted.
         deleteProblems(vars->{db},params->{set_id},params->{problems},params->{assigned_users},
@@ -148,7 +146,7 @@ any ['post', 'put'] => '/courses/:course_id/sets/:set_id' => sub {
 
     $returnSet->{pg_password} = $allparams{pg_password} if defined($allparams{pg_password});
 
-    return convertObjectToHash($returnSet);
+    return convertObjectToHash($returnSet,\@boolean_set_props);
 
 };
 

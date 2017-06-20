@@ -50,7 +50,6 @@ sub get_local_packages {
       push @packages,$1;
     }
   }
-  say dump \@packages;
   return @packages;
 
 }
