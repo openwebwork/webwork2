@@ -24,7 +24,7 @@ my @applicationsList = qw(
 
 my @apache1ModulesList = qw(
 	Apache
-	Apache::Constants 
+	Apache::Constants
 	Apache::Cookie
 	Apache::Log
 	Apache::Request
@@ -47,7 +47,7 @@ my @modulesList = qw(
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dumper
-	Data::UUID 
+	Data::UUID
 	Date::Format
 	Date::Parse
 	DateTime
@@ -56,6 +56,9 @@ my @modulesList = qw(
 	Digest::MD5
         Digest::SHA
 	Email::Address
+  Email::Simple;
+  Email::Sender::Simple
+  Email::Sender::Transport::SMTP
 	Errno
 	Exception::Class
 	File::Copy
@@ -93,7 +96,7 @@ my @modulesList = qw(
 	Pod::WSDL
 	Safe
 	Scalar::Util
-	SOAP::Lite 
+	SOAP::Lite
 	Socket
 	SQL::Abstract
 	String::ShellQuote
@@ -146,7 +149,7 @@ sub check_apps {
 #	print "\$PATH=", shift @PATH, "\n";    # this throws away the first item -- usually /bin
         print "\$PATH=";
 	print join ("\n", map("      $_", @PATH)), "\n\n";
-	
+
 	foreach my $app (@applicationsList)  {
 		my $found = which($app);
 		if ($found) {
@@ -166,14 +169,14 @@ sub which {
 
 sub check_modules {
 	my @modulesList = @_;
-	
+
 	print "\nChecking your \@INC for modules required by WeBWorK...\n";
 	my @inc = @INC;
 	print "\@INC=";
 	print join ("\n", map("     $_", @inc)), "\n\n";
-	
+
 	no strict 'refs';
-	
+
 	foreach my $module (@modulesList)  {
 		eval "use $module";
 		if ($@) {
@@ -186,9 +189,9 @@ sub check_modules {
 				print "** $module found, but failed to load: $@";
 			}
 		} elsif (defined($moduleVersion{$module}) &&
-			 version->parse(${$module.'::VERSION'}) < 
+			 version->parse(${$module.'::VERSION'}) <
 			 version->parse($moduleVersion{$module})) {
-		    print "** $module found, but not version $moduleVersion{$module} or better\n";		    
+		    print "** $module found, but not version $moduleVersion{$module} or better\n";
 		} else {
 			print "   $module found and loaded\n";
 		}
