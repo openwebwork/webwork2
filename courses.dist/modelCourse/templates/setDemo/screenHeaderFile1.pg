@@ -46,13 +46,13 @@ $HR
 Use this box  to give information about this problem
 set.  Typical information might include some of these facts:
 $PAR
-WeBWorK assignment number $setNumber is due on : $formatedDueDate.
+WeBWorK assignment number $setNumber closes on : $formatedDueDate.
 
 
 $PAR
 The primary purpose of WeBWorK is to let you know if you are getting the right answer or to alert
 you if you get the wrong answer. Usually you can attempt a problem as many times as you want before
-the due date.  However, if you are having trouble figuring out your error, you should
+the close date.  However, if you are having trouble figuring out your error, you should
 consult the book, or ask a fellow student, one of the TA's or
 your professor for help.  Don't spend a lot of time guessing -- it's not very efficient or effective.
 $PAR

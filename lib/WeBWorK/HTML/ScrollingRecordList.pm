@@ -81,7 +81,7 @@ sub scrollingRecordList {
 	my @ids = ();
 	my %labels = ();
 	
-	my $refresh_button_name    = defined($options{refresh_button_name}) ? $options{refresh_button_name}:"Change Display Settings";
+	my $refresh_button_name    = defined($options{refresh_button_name}) ? $options{refresh_button_name}:$r->maketext("Change Display Settings");
 	
 	my @selected_records = $r->param("$name");
 
@@ -158,13 +158,13 @@ sub scrollingRecordList {
 	return CGI::div({-class=>"ScrollingRecordList"},
 	       CGI::table({-border=>0, -cellspacing=>0, -cellpadding=>0},
 			  CGI::Tr({valign=>"top"},[
-		   CGI::td({-align=>"right"},"Sort:&nbsp;").
+		   CGI::td({-align=>"right"},$r->maketext("Sort:")."&nbsp;").
 		   CGI::td(CGI::popup_menu(%sort_popup_options)),
 
-		   CGI::td({-align=>"right"},"Format:&nbsp;").
+		   CGI::td({-align=>"right"},$r->maketext("Format:")."&nbsp;").
 		   CGI::td(CGI::popup_menu(%format_popup_options)),
 
-		   CGI::td({-align=>"right"},"Filter:&nbsp;").
+		   CGI::td({-align=>"right"},$r->maketext("Filter:")."&nbsp;").
 		   CGI::td(CGI::scrolling_list(%filter_options)),
 		 ]),
 	       ),

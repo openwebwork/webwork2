@@ -47,12 +47,12 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
 # process_and_log_answer subroutine.
 
-# performs functions of processing and recording the answer given in the page. Also returns the appropriate scoreRecordedMessage.
+# performs functions of processing and recording the answer given in the page. 
+# Also returns the appropriate scoreRecordedMessage.
 
 sub process_and_log_answer{
 
-	my $self = shift;
-	
+	my $self = shift;  #type is ref($self) eq 'WeBWorK::ContentGenerator::Problem'
 	my $r = $self->r;
 	my $db = $r->db;
 	my $effectiveUser = $r->param('effectiveUser');
@@ -66,65 +66,115 @@ sub process_and_log_answer{
 	my $set = $self->{set};
 	my $urlpath = $r->urlpath;
 	my $courseID = $urlpath->arg("courseID");
-	
-	my $scoreRecordedMessage = "";
-	my $pureProblem;
-	my $isEssay = 0;
 
-	$pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
-	
-	# logging student answers
-
+	# logging student answers	
+	my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
 	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
+	
+# 	my $isEssay = 0;
+# 	my $scores2='';
+# 	my $isEssay2=0;
+# 
+# 	my %answersToStore2;
+# 	my @answer_order2;
+    my ($encoded_answer_string, $scores2, $isEssay2);
+	my $scoreRecordedMessage = "";
+
 	if ( defined($answer_log ) and defined($pureProblem)) {
 		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
-		        my $answerString = ""; my $scores = "";
-			my %answerHash = %{ $pg->{answers} };
-			# FIXME  this is the line 552 error.  make sure original student ans is defined.
-			# The fact that it is not defined is probably due to an error in some answer evaluator.
-			# But I think it is useful to suppress this error message in the log.
-			foreach (sortByName(undef, keys %answerHash)) {
-				my $orig_ans = $answerHash{$_}->{original_student_ans};
-				my $student_ans = defined $orig_ans ? $orig_ans : '';
-				$answerString  .= $student_ans."\t";
-				# answer score *could* actually be a float, and this doesnt
-				# allow for fractional answers :(
-				$scores .= ($answerHash{$_}->{score}//0) >= 1 ? "1" : "0";
-				$isEssay = 1 if ($answerHash{$_}->{type}//'') eq 'essay';
-
-			}
-
-			$answerString = '' unless defined($answerString); # insure string is defined.
+		
+################################################################
+# new code (input is $pg)
+#########################################
+# 
+# 			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+#    			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+#    				$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+#    				$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+#    				foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
+#    					$answersToStore2{$response_id} = $self->{formFields}->{$response_id}; 
+#    				    push @answer_order2, $response_id;
+#    				 }	
+#    			}
+#    			my $answerString2 = '';
+#    			foreach my $response_id (@answer_order2) {
+#    				$answerString2.=($answersToStore2{$response_id}//'')."\t";
+#    			}
+#    			$answerString2=~s/\t$//; # remove last tab
+	my ($answerString2);
+	($answerString2,$encoded_answer_string, $scores2, $isEssay2) = 
+	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
+	      $self, $pg
+	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
+	        # ref($pg) eq "WeBWorK::PG::Local";
+# end new code (output is answerString2, $scores, $isEssay)
+################################################################
+# 		    my $answerString = ""; my $scores = "";
+# 			my %answerHash = %{ $pg->{answers} };
+# 			# FIXME  this is the line 552 error.  make sure original student ans is defined.
+# 			# The fact that it is not defined is probably due to an error in some answer evaluator.
+# 			# But I think it is useful to suppress this error message in the log.
+# 			foreach (sortByName(undef, keys %answerHash)) {
+# 				my $orig_ans = $answerHash{$_}->{original_student_ans};
+# 				my $student_ans = defined $orig_ans ? $orig_ans : '';
+# 				$answerString  .= $student_ans."\t";
+# 				# answer score *could* actually be a float, and this doesnt
+# 				# allow for fractional answers :(
+# 				$scores .= ($answerHash{$_}->{score}//0) >= 1 ? "1" : "0";
+# 				$isEssay = 1 if ($answerHash{$_}->{type}//'') eq 'essay';
+# 
+# 			}
+# 
+# 			$answerString = '' unless defined($answerString); # insure string is defined.
 			
+##############################################################################
+# check new code
+			# experimental fix for past answers 
+			# notice that it grabs the student response from the html form fields rather than
+			# from "original_student_ans" in the answerHash
+			# The answer hash is inside ans_id.ans_eval.rh_ans
+			#
+#    			warn "answerString1: $answerString";
+# 			warn "answerString2: $answerString2";
+# 			warn "scores1: $scores";
+# 			warn "scores2: $scores2";
+# 			warn "isEssay1: $isEssay";
+# 			warn "isEssay2: $isEssay2";
+
+            # end experimental fix for past answers
+##############################################################################
+# store in answer_log   past answers file (user_id,set_id,problem_id,courseID,answerString,scores,source_file)
 			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
 			        join("",
 						'|', $problem->user_id,
 						'|', $problem->set_id,
 						'|', $problem->problem_id,
-						'|', $scores, "\t",
+						'|', $scores2, "\t",
 						$timestamp,"\t",
-						$answerString,
+						$answerString2,
 					),
 			);
 
-			#add to PastAnswer db
+# add to PastAnswer db
 			my $pastAnswer = $db->newPastAnswer();
 			$pastAnswer->course_id($courseID);
 			$pastAnswer->user_id($problem->user_id);
 			$pastAnswer->set_id($problem->set_id);
 			$pastAnswer->problem_id($problem->problem_id);
 			$pastAnswer->timestamp($timestamp);
-			$pastAnswer->scores($scores);
-			$pastAnswer->answer_string($answerString);
+			$pastAnswer->scores($scores2);
+			$pastAnswer->answer_string($answerString2);
 			$pastAnswer->source_file($problem->source_file);
-
 			$db->addPastAnswer($pastAnswer);
 
 			
 		}
 	}
 
+######################################################################
+# this stores previous answers to the problem to 
+# provide "sticky answers"
 
 	if ($submitAnswers) {
 		# get a "pure" (unmerged) UserProblem to modify
@@ -139,15 +189,15 @@ sub process_and_log_answer{
 			# $answersToStore{$_} = $self->{formFields}->{$_} foreach (keys %answerHash);
 			# $answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.  
 			# Don't use it!!
-			my @answer_order;
-			my %answerHash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
-   			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-   				foreach my $response_id ($answerHash{$ans_id}->response_obj->response_labels) {
-   					$answersToStore{$response_id} = $self->{formFields}->{$response_id}; 
-   				    push @answer_order, $response_id;
-   				 }	
-   			}
-			
+# 			my @answer_order;
+# 			my %answerHash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+#    			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+#    				foreach my $response_id ($answerHash{$ans_id}->response_obj->response_labels) {
+#    					$answersToStore{$response_id} = $self->{formFields}->{$response_id}; 
+#    				    push @answer_order, $response_id;
+#    				 }	
+#    			}
+# 			
 			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
 			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
 			# however we need to store them.  Fortunately they are still in the input form.
@@ -158,12 +208,15 @@ sub process_and_log_answer{
 			#my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]}, @extra_answer_names);
 			# %answerToStore and @answer_order are passed as references
 			# because of profile for encodeAnswers
-			my $answerString = encodeAnswers(%answersToStore,
-							 @answer_order);
 			
-			# store last answer to database
-			$problem->last_answer($answerString);
-			$pureProblem->last_answer($answerString);
+			# encodeAnswers creates a hash and uses Storage::nfreeze to serialize it
+			# replaced by $encoded_answer_string
+# 			my $answerString3 = encodeAnswers(%answersToStore2,
+# 							 @answer_order2);
+			
+			# store last answer to database for use in "sticky" answers
+			$problem->last_answer($encoded_answer_string);
+			$pureProblem->last_answer($encoded_answer_string);
 			$db->putUserProblem($pureProblem);
 			
 			# store state in DB if it makes sense
@@ -184,16 +237,16 @@ sub process_and_log_answer{
 				# be flaged as needing grading
 				# we shoudl also check for the appropriate flag in the global problem and set it 
 
-				if ($isEssay && $pureProblem->{flags} !~ /needs_grading/) {
+				if ($isEssay2 && $pureProblem->{flags} !~ /needs_grading/) {
 				    $pureProblem->{flags} =~ s/graded,//;
 				    $pureProblem->{flags} .= "needs_grading,";
 				}
 				
 				my $globalProblem = $db->getGlobalProblem($problem->set_id, $problem->problem_id);		
-				if ($isEssay && $globalProblem->{flags} !~ /essay/) {
+				if ($isEssay2 && $globalProblem->{flags} !~ /essay/) {
 				    $globalProblem->{flags} .= "essay,";
 				    $db->putGlobalProblem($globalProblem);
-				} elsif (!$isEssay && $globalProblem->{flags} =~ /essay/) {
+				} elsif (!$isEssay2 && $globalProblem->{flags} =~ /essay/) {
 				    $globalProblem->{flags} =~ s/essay,//;
 				    $db->putGlobalProblem($globalProblem);
 				}
@@ -254,6 +307,44 @@ sub process_and_log_answer{
 	
 	$self->{scoreRecordedMessage} = $scoreRecordedMessage;
 	return $scoreRecordedMessage;
+}
+
+# create answer string from responses hash
+# ($ansString, $encoded_ans_string, $scores, $isEssay) = create_ans_str_from_responses($problem, $pg)
+# 
+# input: ref($pg)eq 'WeBWorK::PG::Local'
+#        ref($problem)eq 'WeBWorK::ContentGenerator::Problem
+# output:  (str, str, str)
+
+sub create_ans_str_from_responses {
+	my $problem = shift;  #  ref($problem) eq 'WeBWorK::ContentGenerator::Problem'
+	                   	  #  must contain $self->{formFields}->{$response_id}
+	my $pg = shift;       # ref($pg) eq 'WeBWorK::PG::Local'
+	#warn "create_ans_str_from_responses pg has type ", ref($pg);
+	my $scores2='';
+	my $isEssay2=0;
+	my %answersToStore2;
+	my @answer_order2;
+
+	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
+		$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+		$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
+			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id}; 
+			push @answer_order2, $response_id;
+		 }	
+	}
+	my $answerString2 = '';
+	foreach my $response_id (@answer_order2) {
+		$answerString2.=($answersToStore2{$response_id}//'')."\t";
+	}
+	$answerString2=~s/\t$//; # remove last tab
+   	
+   	my $encoded_answer_string = encodeAnswers(%answersToStore2,
+							 @answer_order2);
+
+	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
 }
 
 # process_editorLink subroutine
@@ -431,192 +522,6 @@ sub output_main_form{
 	print "\n";
 	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
-	# print "\n";
-	# print CGI::start_div({class=>"problem"});
-	# print CGI::p($pg->{body_text});
-	# print CGI::p(CGI::b("Note: "). CGI::i($pg->{result}->{msg})) if $pg->{result}->{msg};
-	# print $editorLink; # this is empty unless it is appropriate to have an editor link.
-	# print CGI::end_div();
-	
-	# print CGI::start_p();
-	
-	# if ($can{showCorrectAnswers}) {
-		# print WeBWorK::CGI_labeled_input(
-			# -type	 => "checkbox",
-			# -id		 => "showCorrectAnswers_id",
-			# -label_text => "Show correct answers",
-			# -input_attr => $will{showCorrectAnswers} ?
-			# {
-				# -name    => "showCorrectAnswers",
-				# -checked => "checked",
-				# -value   => 1,
-			# }
-			# :
-			# {
-				# -name    => "showCorrectAnswers",
-				# -value   => 1,
-			# }
-		# );
-	# }
-	# if ($can{showHints}) {
-		# print CGI::div({style=>"color:red"},
-			# WeBWorK::CGI_labeled_input(
-				# -type	 => "checkbox",
-				# -id		 => "showHints_id",
-				# -label_text => "Show Hints",
-				# -input_attr => $will{showHints} ?
-				# {
-					# -name    => "showHints",
-					# -checked => "checked",
-					# -value   => 1,
-				# }
-				# :
-				# {
-					# -name    => "showCorrectAnswers",
-					# -value   => 1,
-				# }
-			# )
-		# );
-	# }
-	# if ($can{showSolutions}) {
-		# print WeBWorK::CGI_labeled_input(
-			# -type	 => "checkbox",
-			# -id		 => "showSolutions_id",
-			# -label_text => "Show Solutions",
-			# -input_attr => $will{showSolutions} ?
-			# {
-				# -name    => "showSolutions",
-				# -checked => "checked",
-				# -value   => 1,
-			# }
-			# :
-			# {
-				# -name    => "showCorrectAnswers",
-				# -value   => 1,
-			# }
-		# );
-	# }
-	
-	# if ($can{showCorrectAnswers} or $can{showHints} or $can{showSolutions}) {
-		# print CGI::br();
-	# }
-		
-	# print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-name=>"previewAnswers", -value=>"Preview Answers"});
-	# if ($can{checkAnswers}) {
-		# print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-name=>"checkAnswers", -value=>"Check Answers"});
-	# }
-	# if ($can{getSubmitButton}) {
-		# if ($user ne $effectiveUser) {
-			# # if acting as a student, make it clear that answer submissions will
-			# # apply to the student's records, not the professor's.
-			# print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>"Submit Answers for $effectiveUser"});
-		# } else {
-			# #print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
-			# print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>""});
-			# # FIXME  for unknown reasons the -onclick label seems to have to be there in order to allow the forms onsubmit to trigger
-			# # WFT???
-		# }
-	# }
-	
-	# print CGI::end_p();
-	
-	# print CGI::start_div({class=>"scoreSummary"});
-	
-	# # score summary
-	# my $attempts = $problem->num_correct + $problem->num_incorrect;
-	# my $attemptsNoun = $attempts != 1 ? "times" : "time";
-	# my $problem_status    = $problem->status || 0;
-	# my $lastScore = sprintf("%.0f%%", $problem_status * 100); # Round to whole number
-	# my ($attemptsLeft, $attemptsLeftNoun);
-	# if ($problem->max_attempts == -1) {
-		# # unlimited attempts
-		# $attemptsLeft = "unlimited";
-		# $attemptsLeftNoun = "attempts";
-	# } else {
-		# $attemptsLeft = $problem->max_attempts - $attempts;
-		# $attemptsLeftNoun = $attemptsLeft == 1 ? "attempt" : "attempts";
-	# }
-	
-	# my $setClosed = 0;
-	# my $setClosedMessage;
-	# if (before($set->open_date) or after($set->due_date)) {
-		# $setClosed = 1;
-		# if (before($set->open_date)) {
-			# $setClosedMessage = "This homework set is not yet open.";
-		# } elsif (after($set->due_date)) {
-			# $setClosedMessage = "This homework set is closed.";
-		# }
-	# }
-	# #if (before($set->open_date) or after($set->due_date)) {
-	# #	$setClosed = 1;
-	# #	$setClosedMessage = "This homework set is closed.";
-	# #	if ($authz->hasPermissions($user, "view_answers")) {
-	# #		$setClosedMessage .= " However, since you are a privileged user, additional attempts will be recorded.";
-	# #	} else {
-	# #		$setClosedMessage .= " Additional attempts will not be recorded.";
-	# #	}
-	# #}
-	# unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
-		# my $notCountedMessage = ($problem->value) ? "" : "(This problem will not count towards your grade.)";
-		# print CGI::p(join("",
-			# $submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
-			# "You have attempted this problem $attempts $attemptsNoun.", CGI::br(),
-			# $submitAnswers ?"You received a score of ".sprintf("%.0f%%", $pg->{result}->{score} * 100)." for this attempt.".CGI::br():'',
-			# $problem->attempted
-				# ? "Your overall recorded score is $lastScore.  $notCountedMessage" . CGI::br()
-				# : "",
-			# $setClosed ? $setClosedMessage : "You have $attemptsLeft $attemptsLeftNoun remaining."
-		# ));
-	# }else {
-		# print CGI::p($pg->{state}->{state_summary_msg});
-	# }
-
-	# print CGI::end_div();
-	# print CGI::start_div();
-	
-	# my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{flags}->{DEBUG_messages}} );
-	# my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{flags}->{WARNING_messages}} );
-	# my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
-	# my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
-	
-	# print CGI::p({style=>"color:red;"}, "Checking additional error messages") if $pgerrordiv  ;
- 	# print CGI::p("pg debug<br/> $pgdebug"                   ) if $pgdebug ;
-	# print CGI::p("pg warning<br/>$pgwarning"                ) if $pgwarning ;	
-	# print CGI::p("pg internal errors<br/> $pginternalerrors") if $pginternalerrors;
-	# print CGI::end_div()                                      if $pgerrordiv ;
-	
-	# # save state for viewOptions
-	# print  CGI::hidden(
-			   # -name  => "showOldAnswers",
-			   # -value => $will{showOldAnswers}
-		   # ),
-
-		   # CGI::hidden(
-			   # -name  => "displayMode",
-			   # -value => $self->{displayMode}
-		   # );
-	# print( CGI::hidden(
-			   # -name    => 'editMode',
-			   # -value   => $self->{editMode},
-		   # )
-	# ) if defined($self->{editMode}) and $self->{editMode} eq 'temporaryFile';
-	
-	# # this is a security risk -- students can use this to find the source code for the problem
-
-	# my $permissionLevel = $db->getPermissionLevel($user)->permission;
-	# my $professorPermissionLevel = $ce->{userRoles}->{professor};
-	# print( CGI::hidden(
-		   		# -name   => 'sourceFilePath',
-		   		# -value  =>  $self->{problem}->{source_file}
-	# ))  if defined($self->{problem}->{source_file}) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-
-	# print( CGI::hidden(
-		   		# -name   => 'problemSeed',
-		   		# -value  =>  $r->param("problemSeed")
-	# ))  if defined($r->param("problemSeed")) and $permissionLevel>= $professorPermissionLevel; # only allow this for professors
-
-			
-	# end of main form
 	print CGI::end_form();
 }
 

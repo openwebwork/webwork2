@@ -1,14 +1,14 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Utils.pm,v 1.83 2009/07/12 23:48:00 gage Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -39,7 +39,7 @@ use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
-use Mail::Sender;
+#use Mail::Sender;
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -108,6 +108,7 @@ our @EXPORT_OK = qw(
         is_jitar_problem_closed
         jitar_problem_adjusted_status
         jitar_problem_finished
+	x
 );
 
 =head1 FUNCTIONS
@@ -121,7 +122,7 @@ our @EXPORT_OK = qw(
 # This is like use, except it happens at runtime. You have to quote the module name and put a
 # comma after it if you're specifying an import list. Also, to specify an empty import list (as
 # opposed to no import list) use an empty arrayref instead of an empty array.
-# 
+#
 #   use Xyzzy;               =>    runtime_use "Xyzzy";
 #   use Foo qw/pine elm/;    =>    runtime_use "Foo", qw/pine elm/;
 #   use Foo::Bar ();         =>    runtime_use "Foo::Bar", [];
@@ -129,7 +130,7 @@ our @EXPORT_OK = qw(
 sub runtime_use($;@) {
 	my ($module, @import_list) = @_;
 	my $package = (caller)[0]; # import into caller's namespace
-	
+
 	my $import_string;
 	if (@import_list == 1 and ref $import_list[0] eq "ARRAY" and @{$import_list[0]} == 0) {
 		$import_string = "";
@@ -217,17 +218,17 @@ sub listFilesRecursive($;$$$$) {
 
 sub listFilesRecursiveHelper($$$$$$) {
 	my ($base_dir, $curr_dir, $match_qr, $prune_qr, $match_full, $prune_full) = @_;
-	
+
 	my $full_dir = "$base_dir/$curr_dir";
-	
+
 	my @dir_contents = readDirectory($full_dir);
-	
+
 	my @matches;
-	
+
 	foreach my $dir_entry (@dir_contents) {
 		my $full_path = "$full_dir/$dir_entry";
-		
-		# determine whether the entry is a directory or a file, taking into account the 
+
+		# determine whether the entry is a directory or a file, taking into account the
 		my $is_dir;
 		my $is_file;
 		if (-l $full_path) {
@@ -242,25 +243,25 @@ sub listFilesRecursiveHelper($$$$$$) {
 			$is_dir = -d $full_path;
 			$is_file = !$is_dir && -f $full_path || -p $full_path || -S $full_path;
 		}
-		
+
 		if ($is_dir) {
 			# standard things to skip
 			next if $dir_entry eq ".";
 			next if $dir_entry eq "..";
-			
+
 			# skip unreadable directories (and broken symlinks, incidentally)
 			unless (-r $full_path) {
 				warn "Directory/symlink $full_path not readable";
 				next;
 			}
-			
+
 			# check $prune_qr
 			my $subdir = ($curr_dir eq "") ? $dir_entry : "$curr_dir/$dir_entry";
 			if (defined $prune_qr) {
 				my $prune_string = $prune_full ? $subdir : $dir_entry;
 				next if $prune_string =~ m/$prune_qr/;
 			}
-			
+
 			# everything looks good, time to recurse!
 			push @matches, listFilesRecursiveHelper($base_dir, $subdir, $match_qr, $prune_qr, $match_full, $prune_full);
 		} elsif ($is_file) {
@@ -274,18 +275,18 @@ sub listFilesRecursiveHelper($$$$$$) {
 			# suppose we want anything to do with those ;-)
 		}
 	}
-	
+
 	return @matches;
 }
 
 # A very useful macro for making sure that all of the directories to a file have
 # been constructed.
 sub surePathToFile($$) {
-	# constructs intermediate directories enroute to the file 
+	# constructs intermediate directories enroute to the file
 	# the input path must be the path relative to this starting directory
 	my $start_directory = shift;
 	my $path = shift;
-	my $delim = "/"; 
+	my $delim = "/";
 	unless ($start_directory and $path ) {
 		warn "missing directory<br> surePathToFile  start_directory   path ";
 		return '';
@@ -293,17 +294,17 @@ sub surePathToFile($$) {
 	# use the permissions/group on the start directory itself as a template
 	my ($perms, $groupID) = (stat $start_directory)[2,5];
 	# warn "&urePathToTmpFile: perms=$perms groupID=$groupID\n";
-	
+
 	# if the path starts with $start_directory (which is permitted but optional) remove this initial segment
 	$path =~ s|^$start_directory|| if $path =~ m|^$start_directory|;
 
-	
+
 	# find the nodes on the given path
         my @nodes = split("$delim",$path);
-	
+
 	# create new path
 	$path = $start_directory; #convertPath("$tmpDirectory");
-	
+
 	while (@nodes>1) {  # the last node is the file name
 		$path = $path . shift (@nodes) . "/"; #convertPath($path . shift (@nodes) . "/");
 		#FIXME  this make directory command may not be fool proof.
@@ -313,7 +314,7 @@ sub surePathToFile($$) {
 		}
 
 	}
-	
+
 	$path = $path . shift(@nodes); #convertPath($path . shift(@nodes));
 	return $path;
 }
@@ -355,7 +356,7 @@ value is returned.
 
 sub path_is_subdir($$;$) {
 	my ($path, $dir, $allow_relative) = @_;
-	
+
 	unless ($path =~ /^\//) {
 		if ($allow_relative) {
 			$path = "$dir/$path";
@@ -363,15 +364,15 @@ sub path_is_subdir($$;$) {
 			return 0;
 		}
 	}
-	
+
 	$path = canonpath($path);
 	$path .= "/" unless $path =~ m|/$|;
 	return 0 if $path =~ m#(^\.\.$|^\.\./|/\.\./|/\.\.$)#;
-	
+
 	$dir = canonpath($dir);
 	$dir .= "/" unless $dir =~ m|/$|;
 	return 0 unless $path =~ m|^$dir|;
-	
+
 	return 1;
 }
 
@@ -400,36 +401,36 @@ $dateTime, is an integer UNIX datetime (epoch) in the server's timezone.
 # zones. The time zone specification must appear at the end of the string and be
 # preceded by whitespace. The return value is a list consisting of the following
 # elements:
-# 
+#
 #     ($second, $minute, $hour, $day, $month, $year, $zone)
-# 
+#
 # $second, $minute, $hour, $day, and $month are zero-indexed. $year is the
 # number of years since 1900. $zone is a string (hopefully) representing the
 # time zone.
-# 
+#
 # Error handling has also been improved. Exceptions are now thrown for errors,
 # and more information is given about the nature of errors.
-# 
+#
 sub unformatDateAndTime {
 	my ($string) = @_;
 	my $orgString = $string;
-	
+
 	$string =~ s|^\s+||;
 	$string =~ s|\s+$||;
 	$string =~ s|at| at |i; ## OK if forget to enter spaces or use wrong case
 	$string =~ s|AM| AM|i;	## OK if forget to enter spaces or use wrong case
 	$string =~ s|PM| PM|i;	## OK if forget to enter spaces or use wrong case
 	$string =~ s|,| at |;	## start translating old form of date/time to new form
-	
+
 	# case where the at is missing: MM/DD/YYYY at HH:MM AMPM ZONE
 	unformatDateAndTime_error($orgString, "The 'at' appears to be missing.")
 		if $string =~ m|^\s*[\/\d]+\s+[:\d]+|;
-	
+
 	my ($date, $at, $time, $AMPM, $TZ) = split /\s+/, $string;
-	
+
 	unformatDateAndTime_error($orgString, "The date and/or time appear to be missing.", $date, $time, $AMPM, $TZ)
 		unless defined $date and defined $at and defined $time;
-	
+
 	# deal with military time
 	unless ($time =~ /:/) {
 		{  ##bare block for 'case" structure
@@ -447,10 +448,10 @@ sub unformatDateAndTime {
 		}  ##end of bare block for 'case" structure
 
 	}
-	
+
 	# default value for $AMPM
 	$AMPM = "AM" unless defined $AMPM;
- 	
+
 	my ($mday, $mon, $year, $wday, $yday, $sec, $pm, $min, $hour);
 	$sec=0;
 	$time =~ /^([0-9]+)\s*\:\s*([0-9]*)/;
@@ -478,7 +479,7 @@ sub unformatDateAndTime {
 }
 
 sub unformatDateAndTime_error {
-	
+
 	if (@_ > 2) {
 		my ($orgString, $error, $date, $time, $AMPM, $TZ) = @_;
 		$date = "(undefined)" unless defined $date;
@@ -509,10 +510,10 @@ sub parseDateTime($;$) {
 	my ($second, $minute, $hour, $day, $month, $year, $zone) = unformatDateAndTime($string);
 	my $zone_str = defined $zone ? $zone : "UNDEF";
 	#warn "\tunformatDateAndTime: $second $minute $hour $day $month $year $zone_str\n";
-	
+
 	# DateTime expects month 1-12, not 0-11
 	$month++;
-	
+
 	# Do what Time::Local does to ambiguous years
 	{
 		my $ThisYear     = (localtime())[5]; # FIXME: should be relative to $string's timezone
@@ -521,7 +522,7 @@ sub parseDateTime($;$) {
 		   $NextCentury += 100 if $Breakpoint < 50;
 		my $Century      = $NextCentury - 100;
 		my $SecOff       = 0;
-		
+
 		if ($year >= 1000) {
 			# leave alone
 		} elsif ($year < 100 and $year >= 0) {
@@ -531,13 +532,13 @@ sub parseDateTime($;$) {
 			$year += 1900;
 		}
 	}
-	
+
 	my $epoch;
-	
+
 	if (defined $zone and $zone ne "") {
 		if (DateTime::TimeZone->is_valid_name($zone)) {
 			#warn "\t\$zone is valid according to DateTime::TimeZone\n";
-			
+
 			my $dt = new DateTime(
 				year      => $year,
 				month     => $month,
@@ -548,12 +549,12 @@ sub parseDateTime($;$) {
 				time_zone => $zone,
 			);
 			#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-			
+
 			$epoch = $dt->epoch;
 			#warn "\t\$dt->epoch = $epoch\n";
 		} else {
 			#warn "\t\$zone is invalid according to DateTime::TimeZone, so we ask Time::Zone\n";
-			
+
 			# treat the date/time as UTC
 			my $dt = new DateTime(
 				year      => $year,
@@ -565,28 +566,28 @@ sub parseDateTime($;$) {
 				time_zone => "UTC",
 			);
 			#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-			
+
 			# convert to an epoch value
 			my $utc_epoch = $dt->epoch
 				or die "Date/time '$string' not representable as an epoch. Get more bits!\n";
 			#warn "\t\$utc_epoch = $utc_epoch\n";
-			
+
 			# get offset for supplied timezone and utc_epoch
 			my $offset = tz_offset($zone, $utc_epoch) or die "Time zone '$zone' not recognized.\n";
 			#warn "\t\$zone is valid according to Time::Zone (\$offset = $offset)\n";
-			
+
 			#$epoch = $utc_epoch + $offset;
 			##warn "\t\$epoch = \$utc_epoch + \$offset = $epoch\n";
-			
+
 			$dt->subtract(seconds => $offset);
 			#warn "\t\$dt - \$offset = ", $dt->strftime(DATE_FORMAT), "\n";
-			
+
 			$epoch = $dt->epoch;
 			#warn "\t\$epoch = $epoch\n";
 		}
 	} else {
 		#warn "\t\$zone not supplied, using \$display_tz\n";
-		
+
 		my $dt = new DateTime(
 			year      => $year,
 			month     => $month,
@@ -597,11 +598,11 @@ sub parseDateTime($;$) {
 			time_zone => $display_tz,
 		);
 		#warn "\t\$dt = ", $dt->strftime(DATE_FORMAT), "\n";
-		
+
 		$epoch = $dt->epoch;
 		#warn "\t\$epoch = $epoch\n";
 	}
-	
+
 	return $epoch;
 }
 
@@ -674,7 +675,7 @@ If $display_tz is not a legal time zone then replace it with America/New_York an
 sub verify_timezone($) {
 		my $display_tz = shift;
 	    return $display_tz if (DateTime::TimeZone->is_valid_name($display_tz) );
-	    warn qq! $display_tz is not a legal time zone name. Fix it on the Course Configuration page. 
+	    warn qq! $display_tz is not a legal time zone name. Fix it on the Course Configuration page.
 	      <a href="http://en.wikipedia.org/wiki/List_of_zoneinfo_time_zones">View list of time zones.</a> \n!;
 	    return "America/New_York";
 }
@@ -682,8 +683,8 @@ sub verify_timezone($) {
 
 =item $timeinsec = timeToSec($time)
 
-Makes a stab at converting a time (with a possible unit) into a number of 
-seconds.  
+Makes a stab at converting a time (with a possible unit) into a number of
+seconds.
 
 =cut
 
@@ -867,9 +868,9 @@ sub ref2string($;$) {
 		$result .= "</table>"
 	} else {
 		$result .= defined $ref ? $ref : '<font color="red">undef</font>';
-	}	
+	}
 }
-our $BASE64_ENCODED = 'base64_encoded:';  
+our $BASE64_ENCODED = 'base64_encoded:';
 #  use constant BASE64_ENCODED = 'base64_encoded;
 #  was not evaluated in the matching and substitution
 #  statements
@@ -930,7 +931,7 @@ sub pretty_print_rh($) {
 
 sub cryptPassword($) {
 	my ($clearPassword) = @_;
-	#Use an SHA512 salt with 16 digits 
+	#Use an SHA512 salt with 16 digits
 	my $salt = '$6$';
 	for (my $i=0; $i<16; $i++) {
 	    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
@@ -985,8 +986,8 @@ sub constituency_hash {
 # right operand, 0 if they are equal, and +1 if the left operand is greater
 # than the right operand.
 #
-# FIXME: I've added the ability to do multiple field sorts, below; I'm 
-#    leaving this code, commented out, in case there's a good reason to 
+# FIXME: I've added the ability to do multiple field sorts, below; I'm
+#    leaving this code, commented out, in case there's a good reason to
 #    revert to this and do multiple field sorts differently.  -glr 2007/03/05
 # sub sortByName($@) {
 # 	my ($field, @items) = @_;
@@ -1025,7 +1026,7 @@ sub sortByName($@) {
 		foreach my $item ( @items ) {
 			my $key = '';
 			foreach ( @$field ) {
-		    		$key .= $item->$_;  # in this case we assume 
+		    		$key .= $item->$_;  # in this case we assume
 			}                           #    all entries in @$field
 			$itemsByIndex{$key} = $item;  #  are defined.
 	    	}
@@ -1065,31 +1066,37 @@ sub sortByName($@) {
 
 
 ################################################################################
-# Sort Achievements by category and id
+# Sort Achievements by number and then by id
 ################################################################################
+
 
 sub sortAchievements {
 	my @Achievements = @_;
-	
+
 	# First sort by achievement id
 
 	@Achievements = sort {uc($a->{achievement_id}) cmp uc($b->{achievement_id})}  @Achievements;
 
-	# Next sort by categoyr, but secret comes first and level last
+	# Next sort by number if there are numbers, otherwise sort by
+	# category.
+
+	@Achievements = sort {($a->number || 0) <=> ($b->number || 0)} @Achievements;
 
 	@Achievements = sort {
-	    if ($a->{category} eq $b->{category}) {
-		return 0; 
-	    } elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
-		return -1;
-	    } elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
-		return 1;
-	    } else {
-		return $a->{category} cmp $b->{category};
-	    } } @Achievements;
+	  if ($a->number && $b->number) {
+	    return $a->number <=> $b->number;
+	  } elsif ($a->{category} eq $b->{category}) {
+	    return 0;
+	  } elsif ($a->{category} eq "secret" or $b->{category} eq "level") {
+	    return -1;
+	  } elsif ($a->{category} eq "level" or $b->{category} eq "secret") {
+	    return 1;
+	  } else {
+	    return $a->{category} cmp $b->{category};
+	  } } @Achievements;
 
 	return @Achievements;
-       
+
 }
 
 ################################################################################
@@ -1103,7 +1110,7 @@ sub not_blank ($) {     # check that a string exists and is not blank
 
 ###########################################################
     # If things have worked so far determine if the file might be accompanied by auxiliary files
-    
+
     #
 sub has_aux_files ($) { #  determine whether a question has auxiliary files
                         # a path ending in    foo/foo.pg  is assumed to contain auxilliary files
@@ -1120,7 +1127,7 @@ sub has_aux_files ($) { #  determine whether a question has auxiliary files
 
 sub is_restricted {
         my ($db, $set, $studentName) = @_;
-	
+
 	# all sets open after the due date
 	return () if after($set->due_date());
 
@@ -1135,7 +1142,7 @@ sub is_restricted {
 		}
 		foreach(@good_sets) {
 	  	  my $restrictor =  $db->getGlobalSet($_);
-		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0); 
+		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0);
 		  if($r_score < $restriction) {
 	  	    push @needed,$_;
 		  }
@@ -1149,30 +1156,30 @@ sub is_restricted {
 # and returns ($totalCorrect,$total) or the percentage correct
 
 sub grade_set {
-        
+
   my ($db, $set, $setName, $studentName, $setIsVersioned) = @_;
-  
+
   my $setID = $set->set_id();  #FIXME   setName and setID should be the same
-  
+
   my $status = 0;
   my $totalRight = 0;
   my $total      = 0;
-  
-  
-  # DBFIXME: to collect the problem records, we have to know 
-  #    which merge routines to call.  Should this really be an 
-  #    issue here?  That is, shouldn't the database deal with 
-  #    it invisibly by detecting what the problem types are?  
+
+
+  # DBFIXME: to collect the problem records, we have to know
+  #    which merge routines to call.  Should this really be an
+  #    issue here?  That is, shouldn't the database deal with
+  #    it invisibly by detecting what the problem types are?
   #    oh well.
-  
+
   my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
   my $num_of_problems  = @problemRecords || 0;
-  my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0; 
-  
+  my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0;
+
   if ( $setIsVersioned ) {
     @problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
   }   # use versioned problems instead (assume that each version has the same number of problems.
-  
+
   # for jitar sets we only use the top level problems
   if ($set->assignment_type eq 'jitar') {
     my @topLevelProblems;
@@ -1180,41 +1187,41 @@ sub grade_set {
       my @seq = jitar_id_to_seq($problem->problem_id);
       push @topLevelProblems, $problem if ($#seq == 0);
     }
-    
+
     @problemRecords = @topLevelProblems;
   }
-  
+
   foreach my $problemRecord (@problemRecords) {
     my $prob = $problemRecord->problem_id;
-    
+
     unless (defined($problemRecord) ){
       # warn "Can't find record for problem $prob in set $setName for $student";
       next;
     }
-    
+
     $status           = $problemRecord->status || 0;
 
     # we need to get the adjusted jitar grade for our
-    # top level problems. 
+    # top level problems.
     if ($set->assignment_type eq 'jitar') {
       $status = jitar_problem_adjusted_status($problemRecord,$db);
     }
-    
-    # sanity check that the status (score) is 
+
+    # sanity check that the status (score) is
     # between 0 and 1
     my $valid_status = ($status>=0 && $status<=1)?1:0;
-    
+
     my $probValue     = $problemRecord->value;
     $probValue        = 1 unless defined($probValue) and $probValue ne "";  # FIXME?? set defaults here?
     $total           += $probValue;
     $totalRight      += $status*$probValue if $valid_status;
-    
+
   }  # end of problem record loop
-  
+
   if (wantarray) {
     return ($totalRight,$total);
   } else {
-    
+
     return 0 unless $total;
     return $totalRight/$total;
   }
@@ -1288,23 +1295,23 @@ sub grade_all_sets {
   }
 
 }
-  
-   
+
+
 
 #takes a tree sequence and returns the jitar id
 #  This id is specially crafted signed 32 bit integer of the form, in binary
 #  SAAAAAAABBBBBBCCCCCCDDDDEEEEFFFF
-#  Here A is the level 1 index, B is the level 2 index, and 
-#  C, D, E and F are the indexes for levels 3 through 6.  
-#  
-#  Note:  Level 1 can contain indexes up to 125.  Levels 2 and 3 can contain 
+#  Here A is the level 1 index, B is the level 2 index, and
+#  C, D, E and F are the indexes for levels 3 through 6.
+#
+#  Note:  Level 1 can contain indexes up to 125.  Levels 2 and 3 can contain
 #         indxes up to 63.  For levels 4 through
-#         six you are limited to 15. 
+#         six you are limited to 15.
 
 sub seq_to_jitar_id {
     my @seq = @_;
 
-    die("Jitar index 1 must be between 1 and 125") unless 
+    die("Jitar index 1 must be between 1 and 125") unless
 	(defined($seq[0]) && $seq[0] < 126);
 
     my $id = $seq[0];
@@ -1313,15 +1320,15 @@ sub seq_to_jitar_id {
     my @JITAR_SHIFT = @{JITAR_SHIFT()};
 
     #shift first index to first two bytes
-    $id = $id << $JITAR_SHIFT[0]; 
- 
+    $id = $id << $JITAR_SHIFT[0];
+
     #look for second and third index
     for (my $i=1; $i<3; $i++) {
 	if (defined($seq[$i])) {
-	    $ind = $seq[$i];	
-	    die("Jitar index ".($i+1)." must be less than 63") 
+	    $ind = $seq[$i];
+	    die("Jitar index ".($i+1)." must be less than 63")
 		unless $ind < 63;
-	    
+
 	    #shift index and or it with id to put it in right place
 	    $ind = $ind << $JITAR_SHIFT[$i];
 	    $id = $id | $ind;
@@ -1331,10 +1338,10 @@ sub seq_to_jitar_id {
     #look for remaining 3 index's
     for (my $i=3; $i<6; $i++) {
 	if (defined($seq[$i])) {
-	    $ind = $seq[$i];	
-	    die("Jitar index ".($i+1)." must be less than 16") 
+	    $ind = $seq[$i];
+	    die("Jitar index ".($i+1)." must be less than 16")
 		unless $ind < 16;
-	    
+
 	    #shift index and or it with id to put it in right place
 	    $ind = $ind << $JITAR_SHIFT[$i];
 	    $id = $id | $ind;
@@ -1361,26 +1368,26 @@ sub jitar_id_to_seq {
 	$ind = $ind & $JITAR_MASK[$i];
 	$ind = $ind >> $JITAR_SHIFT[$i];
 
-	#quit if we dont have a nonzero index 
+	#quit if we dont have a nonzero index
 	last unless $ind;
-	
+
 	$seq[$i] = $ind;
     }
 
     return @seq;
 }
 
-# Takes in ($db, $userID, $setID, $problemID) and returns 1 if the 
+# Takes in ($db, $userID, $setID, $problemID) and returns 1 if the
 # problem is hidden.  The problem is hidden if the number of attempts
 # on the parent problem is greater than att_to_open_children, or if the user
 # has run out of attempts.  Everything is opened up after the due date
 
 sub is_jitar_problem_hidden {
     my ($db, $userID, $setID, $problemID) = @_;
-    
+
     die "Not enough arguments.  Use is_jitar_problem_hidden(db,userID,setID,problemID)" unless ($db && $userID && $setID && $problemID);
 
-    my $mergedSet = $db->getMergedSet($userID,$setID); 
+    my $mergedSet = $db->getMergedSet($userID,$setID);
 
     unless ($mergedSet) {
 	warn "Couldn't get set $setID for user $userID from the database";
@@ -1390,7 +1397,7 @@ sub is_jitar_problem_hidden {
     # only makes sense for jitar sets
     return 0 unless ($mergedSet->assignment_type eq 'jitar');
 
-    # the set opens everything up after the due date. 
+    # the set opens everything up after the due date.
     return 0 if (after($mergedSet->due_date));
 
     my @idSeq = jitar_id_to_seq($problemID);
@@ -1405,42 +1412,42 @@ sub is_jitar_problem_hidden {
     while (@parentIDSeq) {
 
 	my $parentProbID = seq_to_jitar_id(@parentIDSeq);
-	
+
 	my $userParentProb = $db->getMergedProblem($userID,$setID,$parentProbID);
-	
+
 	unless ($userParentProb) {
 	    warn "Couldn't get problem $parentProbID for user $userID and set $setID from the database";
 	    return 0;
 	}
-	
-	# the child problems are closed unless the number of incorrect attempts is above the 
+
+	# the child problems are closed unless the number of incorrect attempts is above the
 	# attempts to open children, or if they have exausted their max_attempts
 	# if att_to_open_children is -1 we just use max attempts
 	# if max_attempts is -1 then they are always less than max attempts
 	if (($userParentProb->att_to_open_children == -1 ||
-	      $userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) && 
+	      $userParentProb->num_incorrect() < $userParentProb->att_to_open_children()) &&
 	    ($userParentProb->max_attempts == -1 || $userParentProb->num_incorrect() < $userParentProb->max_attempts())) {
 	    return 1;
 	}
 	pop @parentIDSeq;
     }
-    
+
     # if we get here then all of the parents are open so the problem is open.
     return 0;
 }
-    
+
 
 # takes in ($db, $ce, $userID, $setID, $problemID) and returns 1 if the jitar problem is closed
 # jitar problems are closed if the restrict_prob_progression variable is set on the set
-# and if the previous problem is closed, or hasn't been finished yet.  
-# The first problem in a level is always open. 
+# and if the previous problem is closed, or hasn't been finished yet.
+# The first problem in a level is always open.
 
 sub is_jitar_problem_closed {
     my ($db, $ce, $userID, $setID, $problemID) = @_;
 
     die "Not enough arguments.  Use is_jitar_problem_closed(db,userID,setID,problemID)" unless ($db && $ce && $userID && $setID && $problemID);
 
-    my $mergedSet = $db->getMergedSet($userID,$setID); 
+    my $mergedSet = $db->getMergedSet($userID,$setID);
 
     unless ($mergedSet) {
 	warn "Couldn't get set $setID for user $userID from the database";
@@ -1451,7 +1458,7 @@ sub is_jitar_problem_closed {
     return 0 unless ($mergedSet->assignment_type eq 'jitar' && $
 		     mergedSet->restrict_prob_progression());
 
-    # the set opens everything up after the due date. 
+    # the set opens everything up after the due date.
     return 0 if (after($mergedSet->due_date));
 
 
@@ -1463,69 +1470,69 @@ sub is_jitar_problem_closed {
     # problems are automatically closed if their parents are closed
     #this means we cant find a previous problem to test against so we are open as long as the parent is open
     pop(@parentSeq);
-    
+
     #if we can't get a parent problem then this is a top level problem and we
-    # we just check the previous. 
+    # we just check the previous.
     if (@parentSeq) {
 	$id = seq_to_jitar_id(@parentSeq);
 	if (is_jitar_problem_closed($db,$ce,$userID,$setID,$id)) {
 	    return 1;
 	}
     }
-    
+
     # if the parent is open then we are open if the previous
     # problem has been "completed" or, if we are the first problem in this level
-    
-    do {	
+
+    do {
 	$idSeq[$#idSeq]--;
-	    
+
 	# in this case we are the first problem in the level
 	if ($idSeq[$#idSeq] == 0) {
 	    return 0;
 	}
-	
+
 	$id = seq_to_jitar_id(@idSeq);
     } until ($db->existsUserProblem($userID,$setID,$id));
 
     $prob = $db->getMergedProblem($userID,$setID,$id);
-    
+
     # we have to test against the target status in case the student
     # is working in the reduced scoring period
     my $targetStatus = 1;
     if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-	$mergedSet->enable_reduced_scoring && 
+	$mergedSet->enable_reduced_scoring &&
 	after($mergedSet->reduced_scoring_date)) {
 	$targetStatus = $ce->{pg}{ansEvalDefaults}{reducedScoringValue};
-    }	
-    
+    }
+
     if (abs(jitar_problem_adjusted_status($prob,$db) - $targetStatus) < .001 ||
 	jitar_problem_finished($prob,$db)) {
-	
+
 	# either the previous problem is 100% or is finished
 	return 0;
     } else {
-	
+
 	#in this case the previous problem is hidden
 	return 1
     }
-    
+
 }
 
-# returns the adjusted status for a jitar problem. 
-# this is either the problems status or it is the greater of the 
+# returns the adjusted status for a jitar problem.
+# this is either the problems status or it is the greater of the
 # status and the score generated by taking the weighted average of all
 # child problems that have the "counts_parent_grade" flag set
 
 sub jitar_problem_adjusted_status {
     my ($userProblem,  $db) = @_;
-    
+
     #this is goign to happen often enough that the check saves time
     return 1 if $userProblem->status == 1;
-    
+
     my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
 
     my @problemIDs = $db->listUserProblems($userProblem->user_id,$userProblem->set_id);
-    
+
     my @weights;
     my @scores;
 
@@ -1535,7 +1542,7 @@ sub jitar_problem_adjusted_status {
 	#check and see if this is a child
 	# it has to be one level deper
 	next unless $#seq == $#problemSeq+1;
-	
+
 	# and it has to equal @seq up to the penultimate index
 	for (my $i = 0; $i<=$#problemSeq; $i++) {
 	    next ID unless $seq[$i] == $problemSeq[$i];
@@ -1557,7 +1564,7 @@ sub jitar_problem_adjusted_status {
     # if no children count towards the problem grade return status
     return $userProblem->status unless (@weights && @scores);
 
-    # if children do count then return the larger of the two (?) 
+    # if children do count then return the larger of the two (?)
     my $childScore = 0;
     my $totalWeight = 0;
     for (my $i=0; $i<=$#scores; $i++) {
@@ -1576,7 +1583,7 @@ sub jitar_problem_adjusted_status {
 
 
 # returns 1 if the given problem is "finished"  This happens when the problem attempts have
-# been maxed out, and the attempts of any children with the "counts_to_parent_grade" also 
+# been maxed out, and the attempts of any children with the "counts_to_parent_grade" also
 # have their attemtps maxed out.  (In other words if the grade can't be raised any more)
 
 sub jitar_problem_finished {
@@ -1585,10 +1592,10 @@ sub jitar_problem_finished {
     # the problem is open if you can still make attempts and you dont have a 100%
     return 0 if ($userProblem->status < 1 &&
 		 ($userProblem->max_attempts == -1 ||
-	$userProblem->max_attempts > ($userProblem->num_correct + 
+	$userProblem->max_attempts > ($userProblem->num_correct +
 				      $userProblem->num_incorrect)));
 
-    # find children 
+    # find children
     my @problemSeq = jitar_id_to_seq($userProblem->problem_id);
 
     my @problemIDs = $db->listUserProblems($userProblem->user_id,$userProblem->set_id);
@@ -1611,13 +1618,19 @@ sub jitar_problem_finished {
 	next unless $problem->counts_parent_grade();
 
 	#if it does then see if the problem is finished
-	# if it isn't then the parent isnt finished either. 
+	# if it isn't then the parent isnt finished either.
 	return 0 unless jitar_problem_finished($problem,$db);
 
     }
 
     # if we got here then the problem is finished
     return 1;
+}
+
+# This is a dummy function used to mark strings for localization
+
+sub x {
+  return @_;
 }
 
 1;

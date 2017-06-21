@@ -834,7 +834,8 @@ EOS
 	$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
 	$localStorageMessages .= CGI::end_div();
 		
-#	my $pretty_print_self  = pretty_print($self);
+	# my $pretty_print_self  = pretty_print($self);
+
 ######################################################
 # Return interpolated problem template
 ######################################################

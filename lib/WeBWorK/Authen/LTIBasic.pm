@@ -339,7 +339,7 @@ sub check_user {
 			return 1;  #This may be a new user coming in from a LMS via LTI.
 		} else {
 		$self->{log_error} .= " $user_id - user unknown";
-		$self->{error} = $r->maketext("Username presented:  " . $user_id . "<br />" . $GENERIC_UNKNOWN_USER_ERROR_MESSAGE);
+		$self->{error} = $r->maketext("Username presented:  [_1]",$user_id)."<br/>". $r->maketext($GENERIC_UNKNOWN_USER_ERROR_MESSAGE);
 		return 0;
 		}
 	}
@@ -438,11 +438,9 @@ sub authenticate
 	my $nonce = WeBWorK::Authen::LTIBasic::Nonce -> new($r, $self -> {oauth_nonce}, $self -> {oauth_timestamp}); 
 	if (!($nonce -> ok ) )
 		{
-		#croak ($r->maketext("Bad Nonce for user " . $self->{user_id} . ": Nonce = " . $self -> {oauth_nonce} . ", Nonce_timestamp = " . $self -> {oauth_timestamp} .  ", at time " . time()));
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
 		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
-				. ":  Something was wrong with your Nonce LTI parameters.  "
-				. "If this recurs, please speak with your instructor");
+				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor");
 		return 0;
 		}
 	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
@@ -483,8 +481,7 @@ sub authenticate
 		#debug("construction of Net::OAuth object failed: $@");
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
 		$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
-		$self -> {error} .= $r->maketext("Something was wrong with your LTI parameters.  "
-				. "If this recurs, please speak with your instructor");
+		$self -> {error} .= $r->maketext("Something was wrong with your LTI parameters.  If this recurs, please speak with your instructor");
 		$self -> {log_error} .= "Construction of OAuth request record failed";
 		return 0;
 		}
@@ -495,8 +492,7 @@ sub authenticate
 			#debug("LTIBasic::authenticate request-> verify failed");
 			#debug("<h2> OAuth verification Failed</h2> "; print_keys($r));
 			$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
-			$self -> {error} .= $r->maketext("Your LTI OAuth verification failed.  "
-				. "If this recurs, please speak with your instructor");
+			$self -> {error} .= $r->maketext("Your LTI OAuth verification failed.  If this recurs, please speak with your instructor");
 			$self -> {log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
 			return 0;
 			}
@@ -564,8 +560,8 @@ sub authenticate
 				warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel. 
 				      Only new users with permission levels less than or equal to 'ta = 5' can be created." if ( $ce->{debug_lti_parameters} );
 				if ($LTI_webwork_permissionLevel > $ce ->{userRoles} -> {"ta"}) {
-				    $self->{log_error}.= "userID: $userID -- ". $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE;
-					croak $r->maketext("userID: $userID -- ". $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
+				    $self->{log_error}.= "userID: $userID --".' '. $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE;
+					croak $r->maketext("userID: [_1] --", $userID).$r->maketext($GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE);
 				}
 				my $newUser = $db -> newUser();
 					$newUser -> user_id($userID);

@@ -85,16 +85,17 @@ sub pre_header_initialize {
 #
 sub downloadFile {
 	my $self = shift;
+	my $r = $self->r;
 	my $file = checkName(shift);
 	my $pwd = $self->checkPWD(shift || $self->r->param('pwd') || HOME);
 	return unless $pwd;
 	$pwd = $self->{ce}{courseDirs}{root} . '/' . $pwd;
 	unless (-e "$pwd/$file") {
-		$self->addbadmessage("The file you are trying to download doesn't exist");
+		$self->addbadmessage($r->maketext("The file you are trying to download doesn't exist"));
 		return;
 	}
 	unless (-f "$pwd/$file") {
-		$self->addbadmessage("You can only download regular files.");
+		$self->addbadmessage($r->maketext("You can only download regular files."));
 		return;
 	}
 	my $type = "application/octet-stream";
@@ -167,7 +168,7 @@ sub body {
 	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
 	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
 	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
-	elsif($action eq "^"        || $action eq $r->maketext("\\")) {$self->ParentDir;} 
+	elsif($action eq "^"        || $action eq "\\") {$self->ParentDir;} 
 	else {
 	  $self->addbadmessage("Unknown action");
 	  $self->Refresh;
@@ -197,9 +198,9 @@ sub body {
     if ($r->param('archiveCourse') ) {
          my %options = %{$self->{archive_options}};
         my $courseID = $options{courseID};
-        $self->addgoodmessage("Archiving course as $courseID.tar.gz. Reload FileManager to see it.");
+        $self->addgoodmessage($r->maketext("Archiving course as [_1].tar.gz. Reload FileManager to see it.",$courseID));
     	WeBWorK::Utils::CourseManagement::archiveCourse(%options);
-    	$self->addgoodmessage("Course archived.");
+    	$self->addgoodmessage($r->maketext("Course archived."));
     	
     }
 	print CGI::hidden({name=>'pwd',value=>$self->{pwd}});
@@ -245,7 +246,7 @@ sub Refresh {
 	my ($files,$filelabels) = directoryListing($self->{courseRoot},$pwd,$self->getFlag('dates'));
 
 	unless ($files) {
-		$self->addbadmessage("The directory you specified doesn't exist");
+		$self->addbadmessage($r->maketext("The directory you specified doesn't exist"));
 		$files = []; $filelabels = {};
 	}
 
@@ -369,7 +370,7 @@ EOF
 		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>$r->maketext("Upload"),id=>"Upload"}),
 		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
 		  CGI::br(),
-		  CGI::small(join(' &nbsp; ',"Format:",
+		  CGI::small(join(' &nbsp; ',$r->maketext('Format').':',
 		    CGI::radio_group(-name=>'format', -value=>[$r->maketext('Text'),$r->maketext('Binary'),$r->maketext('Automatic')],
 				     -default=>$self->getFlag('format','Automatic')))),
 		),
@@ -429,7 +430,7 @@ sub View {
 	# Don't follow symbolic links
 	#
 	if ($self->isSymLink($file)) {
-	  $self->addbadmessage("That symbolic link takes you outside your course directory");
+	  $self->addbadmessage($r->maketext("That symbolic link takes you outside your course directory"));
 	  $self->Refresh; return;
 	}
 
@@ -442,7 +443,7 @@ sub View {
 	}
 
 	unless (-f $file) {
-		$self->addbadmessage("You can't view files of that type");
+		$self->addbadmessage($r->maketext("You can't view files of that type"));
 		$self->Refresh; return;
 	}
 
@@ -491,25 +492,25 @@ sub Edit {
 	    if (File::Spec->canonpath($file) eq
 		File::Spec->canonpath("$self->{courseRoot}/$restrictedFile") &&
 		!$authz->hasPermissions($userID, "edit_restricted_files") ) {
-		    $self->addbadmessage("You do not have permission to edit this file.");
+		    $self->addbadmessage($r->maketext("You do not have permission to edit this file."));
 		    $self->Refresh; return;
 	    }
 	}
 
 	if (-d $file) {
-		$self->addbadmessage("You can't edit a directory");
+		$self->addbadmessage($r->maketext("You can't edit a directory"));
 		$self->Refresh; return;
 	}
 
 	
 
 	unless (-f $file) {
-		$self->addbadmessage("You can only edit text files");
+		$self->addbadmessage($r->maketext("You can only edit text files"));
 		$self->Refresh; return;
 	}
 	my $data = readFile($file);
 	if (!isText($data)) {
-		$self->addbadmessage("The file does not appear to be a text file");
+		$self->addbadmessage($r->maketext("The file does not appear to be a text file"));
 		$self->Refresh; return;
 	}
 
@@ -522,6 +523,7 @@ sub Edit {
 #
 sub Save {
 	my $self = shift; my $filename = shift;
+	my $r=$self->r;
 	my $pwd = $self->{pwd};
 	if ($filename) {
 		$pwd = substr($filename,length($self->{courseRoot})+1);
@@ -538,10 +540,10 @@ sub Save {
 		local (*OUTFILE);
 		if (open(OUTFILE,">$file")) {
 			eval {print OUTFILE $data; close(OUTFILE)};
-			if ($@) {$self->addbadmessage("Failed to save: $@")}
-			   else {$self->addgoodmessage("File saved")}
-		} else {$self->addbadmessage("Can't write to file: $!")}
-	} else {$data = ""; $self->addbadmessage("Error: no file data was submitted!")}
+			if ($@) {$self->addbadmessage($r->maketext("Failed to save: [_1]",$@))}
+			   else {$self->addgoodmessage($r->maketext("File saved"))}
+		} else {$self->addbadmessage($r->maketext("Can't write to file [_1]", $!))}
+	} else {$data = ""; $self->addbadmessage($r->maketext("Error: no file data was submitted!"))}
 
 	$self->{pwd} = $pwd;
 	$self->RefreshEdit($data,$filename);
@@ -567,6 +569,7 @@ sub SaveAs {
 #
 sub RefreshEdit {
 	my $self = shift; my $data = shift; my $file = shift;
+	my $r = $self->r;
 	my $pwd = shift || $self->{pwd};
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
@@ -579,10 +582,10 @@ sub RefreshEdit {
 		CGI::td(CGI::textarea(-name=>"data",-default=>$data,-override=>1,-rows=>30,-columns=>80,
 				-style=>"width:100%")), ## can't seem to get variable height to work
 		CGI::td({align=>"center", nowrap=>1},
-			CGI::input({%button,value=>"Cancel"}),"&nbsp;",
-			CGI::input({%button,value=>"Revert"}),"&nbsp;",
-			CGI::input({%button,value=>"Save"}),,"&nbsp;",
-			CGI::input({%button,value=>"Save As"}),
+			CGI::input({%button,value=>$r->maketext("Cancel")}),"&nbsp;",
+			CGI::input({%button,value=>$r->maketext("Revert")}),"&nbsp;",
+			CGI::input({%button,value=>$r->maketext("Save")}),,"&nbsp;",
+			CGI::input({%button,value=>$r->maketext("Save As")}),
 			CGI::input({type=>"text",name=>"name",size=>20,style=>"width:50%"}),
 		),
 	]);
@@ -613,13 +616,13 @@ sub Copy {
 		my $newfile = $self->r->param('name');
 		if ($newfile = $self->verifyPath($newfile,$original)) {
 			if (copy($oldfile, $newfile)) {
-				$self->addgoodmessage("File successfully copied");
+				$self->addgoodmessage($r->maketext("File successfully copied"));
 				$self->Refresh; return;
-			} else {$self->addbadmessage("Can't copy file: $!")}
+			} else {$self->addbadmessage($r->maketext("Can't copy file: [_1]", $!))}
 		}
 	}
 
-	$self->Confirm($r->maketext("Copy file as:"),uniqueName($dir,$original),"Copy");
+	$self->Confirm($r->maketext("Copy file as:"),uniqueName($dir,$original),$r->maketext("Copy"));
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -638,13 +641,13 @@ sub Rename {
 		my $newfile = $self->r->param('name');
 		if ($newfile = $self->verifyPath($newfile,$original)) {
 			if (rename $oldfile, $newfile) {
-				$self->addgoodmessage("File successfully renamed");
+				$self->addgoodmessage($r->maketext("File successfully renamed"));
 				$self->Refresh; return;
-			} else {$self->addbadmessage("Can't rename file: $!")}
+			} else {$self->addbadmessage($r->maketext("Can't rename file: [_1]", $!))}
 		}
 	}
 
-	$self->Confirm($r->maketext("Rename file as:"),$original,"Rename");
+	$self->Confirm($r->maketext("Rename file as:"),$original,$r->maketext("Rename"));
 	print CGI::hidden({name=>"files",value=>$original});
 }
 
@@ -657,7 +660,7 @@ sub Delete {
 	my $r = $self->r;	
 	my @files = $self->r->param('files');
 	if (scalar(@files) == 0) {
-		$self->addbadmessage("You must select at least one file to delete");
+		$self->addbadmessage($r->maketext("You must select at least one file to delete"));
 		$self->Refresh; return;
 	}
 
@@ -672,13 +675,13 @@ sub Delete {
 			if (defined $self->checkPWD("$pwd/$file",1)) {
 				if (-d "$dir/$file" && !-l "$dir/$file") {
 					my $removed = eval {rmtree("$dir/$file",0,1)};
-					if ($removed) {$self->addgoodmessage("Directory '$file' removed (items deleted: $removed)")}
-					else {$self->addbadmessage("Directory '$file' not removed: $!")}
+					if ($removed) {$self->addgoodmessage($r->maketext("Directory '[_1]' removed (items deleted: [_2])",$file, $removed))}
+					else {$self->addbadmessage($r->maketext("Directory '[_1]' not removed: [_2]",$file, $!))}
 				} else {
-					if (unlink("$dir/$file")) {$self->addgoodmessage("File '$file' successfully removed")}
-					else {$self->addbadmessage("File '$file' not removed: $!")}
+					if (unlink("$dir/$file")) {$self->addgoodmessage($r->maketext("File '[_1]' successfully removed",$file))}
+					else {$self->addbadmessage($r->maketext("File '[_1]' not removed: [_2]",$file,$!))}
 				}
-			} else {$self->addbadmessage("Illegal file '$file' specified"); last}
+			} else {$self->addbadmessage($r->maketext("Illegal file '[_1]' specified",$file)); last}
 		}
 		$self->Refresh;
 
@@ -724,12 +727,10 @@ sub Delete {
 		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
 		print CGI::Tr(
 			CGI::td(
-			  CGI::b($r->maketext("Warning:")),$r->maketext(" You have requested that the following items be deleted"),
+			  CGI::b($r->maketext("Warning").': '),$r->maketext("You have requested that the following items be deleted"),
 			  CGI::ul(CGI::li(\@filelist)),
 			    ((grep { -d "$dir/$_" } @files)?
-					 CGI::p({style=>"width:500"},$r->maketext("Some of these files are directories. ",
-									"Only delete directories if you really know what you are doing. ",
-									"You can seriously damage your course if you delete the wrong thing.")): ""),
+					 CGI::p({style=>"width:500"},$r->maketext("Some of these files are directories. Only delete directories if you really know what you are doing. You can seriously damage your course if you delete the wrong thing.")): ""),
 			  CGI::p({style=>"color:red"},$r->maketext("There is no undo for deleting files or directories!")),
 			  CGI::p($r->maketext("Really delete the items listed above?")),
 			  CGI::div({style=>"float:left; padding-left:3ex"},
@@ -755,7 +756,7 @@ sub MakeArchive {
 	my $r = $self->r;
 	my @files = $self->r->param('files');
 	if (scalar(@files) == 0) {
-		$self->addbadmessage("You must select at least one file for the archive");
+		$self->addbadmessage($r->maketext("You must select at least one file for the archive"));
 		$self->Refresh; return;
 	}
 
@@ -765,11 +766,10 @@ sub MakeArchive {
 	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -cvzf ".shell_quote($archive,@files);
 	@files = readpipe $tar." 2>&1";
 	if ($? == 0) {
-		my $n = scalar(@files); my $s = ($n == 1? "": "s");
-		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([_2] file[_3])",$archive, $n, $s));
-		#$self->addgoodmessage("Archive '$archive' created successfully ($n file$s)");
+		my $n = scalar(@files); 
+		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([quant, _2, file])",$archive, $n));
 	} else {
-		$self->addbadmessage("Can't create archive '$archive': command returned ".systemError($?));
+		$self->addbadmessage($r->maketext("Can't create archive '[_1]': command returned [_2]",$archive,systemError($?)));
 	}
 	$self->Refresh;
 }
@@ -780,9 +780,10 @@ sub MakeArchive {
 #
 sub UnpackArchive {
 	my $self = shift;
+	my $r = $self->r;
 	my $archive = $self->getFile("unpack"); return unless $archive;
 	if ($archive !~ m/\.(tar|tar\.gz|tgz)$/) {
-		$self->addbadmessage("You can only unpack files ending in '.tgz', '.tar' or '.tar.gz'");
+		$self->addbadmessage($r->maketext("You can only unpack files ending in '.tgz', '.tar' or '.tar.gz'"));
 	} else {
 		$self->unpack($archive);
 	}
@@ -791,16 +792,17 @@ sub UnpackArchive {
 
 sub unpack {
 	my $self = shift;
+	my $r = $self->r;
 	my $archive = shift; my $z = 'z'; $z = '' if $archive =~ m/\.tar$/;
 	my $dir = $self->{courseRoot}.'/'.$self->{pwd};
 	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -vx${z}f ".shell_quote($archive);
 	my @files = readpipe $tar." 2>&1";
 	if ($? == 0) {
-		my $n = scalar(@files); my $s = ($n == 1? "": "s");
-		$self->addgoodmessage("$n file$s unpacked successfully");
+		my $n = scalar(@files); 
+		$self->addgoodmessage($r->maketext("[quant,_1,file] unpacked successfully",$n));
 		return 1;
 	} else {
-		$self->addbadmessage("Can't unpack '$archive': command returned ".systemError($?));
+		$self->addbadmessage($r->maketext("Can't unpack '[_1]': command returned [_2]",$archive,systemError($?)));
 		return 0;
 	}
 }
@@ -821,11 +823,11 @@ sub NewFile {
 				close(NEWFILE);
 				$self->RefreshEdit("",$name);
 				return;
-			} else {$self->addbadmessage("Can't create file: $!")}
+			} else {$self->addbadmessage($r->maketext("Can't create file: [_1]",$!))}
 		}
 	}
 
-	$self->Confirm($r->maketext("New file name:"),"","New File");
+	$self->Confirm($r->maketext("New file name:"),"",$r->maketext("New File"));
 }
 
 ##################################################
@@ -842,11 +844,11 @@ sub NewFolder {
 			if (mkdir $dir, 0750) {
 				$self->{pwd} .= '/'.$name;
 				$self->Refresh; return;
-			} else {$self->addbadmessage("Can't create directory: $!")}
+			} else {$self->addbadmessage($r->maketext("Can't create directory: [_1]",$!))}
 		}
 	}
 
-	$self->Confirm($r->maketext("New folder name:"),"","New Folder");
+	$self->Confirm($r->maketext("New folder name:"),"",$r->maketext("New Folder"));
 }
 
 ##################################################
@@ -861,8 +863,8 @@ sub Download {
 	my $filename = $self->getFile("download"); return unless $filename;
 	my $file = $self->{ce}{courseDirs}{root}.'/'.$pwd.'/'.$filename;
 
-	if (-d $file) {$self->addbadmessage("You can't download directories"); return}
-	unless (-f $file) {$self->addbadmessage("You can't download files of that type"); return}
+	if (-d $file) {$self->addbadmessage($r->maketext("You can't download directories")); return}
+	unless (-f $file) {$self->addbadmessage($r->maketext("You can't download files of that type")); return}
 
 	$self->r->param('download',$filename);
 }
@@ -877,7 +879,7 @@ sub Upload {
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
-		$self->addbadmessage("You have not chosen a file to upload.");
+		$self->addbadmessage($r->maketext("You have not chosen a file to upload."));
 		$self->Refresh;
 		return;
 	}
@@ -888,18 +890,18 @@ sub Upload {
 	my $name = checkName($upload->filename);
 	my $action = $self->r->param("formAction") || "Cancel";
 	if ($self->r->param("confirmed")) {
-		if ($action eq "Cancel") {
+		if ($action eq "Cancel" || $action eq $r->maketext("Cancel")) {
 			$upload->dispose;
 			$self->Refresh;
 			return;
 		}
-		$name = checkName($self->r->param('name')) if ($action eq "Rename");
+		$name = checkName($self->r->param('name')) if ($action eq "Rename" || $action eq $r->maketext("Rename"));
 	}
 
 	if (-e "$dir/$name") {
-		unless ($self->r->param('overwrite') || $action eq "Overwrite") {
+		unless ($self->r->param('overwrite') || $action eq "Overwrite" || $action eq $r->maketext("Overwrite")) {
 			
-			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
+			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),$r->maketext("Rename"),$r->maketext("Overwrite"));
 			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			print CGI::hidden({name=>"action",value=>"Upload"});
 			print CGI::hidden({name=>"file",value=>$fileIDhash});
@@ -924,17 +926,17 @@ sub Upload {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
 		if (open(UPLOAD,">$file")) {print UPLOAD $data; close(UPLOAD)}
-		  else {$self->addbadmessage("Can't create file '$name': $!")}
+		  else {$self->addbadmessage($r->maketext("Can't create file '[_1]': [_2]", $name, $!))}
 	} else {
 		$upload->disposeTo($file);
 	}
 
 	if (-e $file) {
-	  $self->addgoodmessage("$type file '$name' uploaded successfully");
+	  $self->addgoodmessage($r->maketext("File '[_2]' uploaded successfully",$name));
 	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
 	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
-	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
-	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	      if (unlink($file)) {$self->addgoodmessage($r->maketext("Archive '[_1]' deleted", $name))}
+	        else {$self->addbadmessage($r->maketext("Can't delete archive '[_1]': [_2]", $name, $!))}
 	    }
 	  }
 	}
@@ -949,6 +951,7 @@ sub Upload {
 #
 sub Confirm {
 	my $self = shift;
+	my $r = $self->r;
 	my $message = shift; my $value = shift;
 	my $button = shift; my $button2 = shift;
 
@@ -962,7 +965,7 @@ sub Confirm {
 		    CGI::div({style=>"float:right; padding-right:3ex"},
 		      CGI::input({type=>"submit",name=>"formAction",value=>$button})), # this will be the default
 		    CGI::div({style=>"float:left; padding-left:3ex"},
-		    CGI::input({type=>"submit",name=>"formAction",value=>"Cancel"})),
+		    CGI::input({type=>"submit",name=>"formAction",value=>$r->maketext("Cancel")})),
 		    ($button2 ? CGI::input({type=>"submit",name=>"formAction",value=>$button2}): ()),
 		  ),
 		),
@@ -980,26 +983,27 @@ sub Confirm {
 #
 sub getFile {
 	my $self = shift; my $action = shift;
+	my $r = $self->r;
 	my @files = $self->r->param("files");
 	if (scalar(@files) > 1) {
-		$self->addbadmessage("You can only $action one file at a time.");
-		$self->Refresh unless $action eq 'download';
+		$self->addbadmessage($r->maketext("You can only [_1] one file at a time.",$action));
+		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
 		return;
 	}
 	if (scalar(@files) == 0 || $files[0] eq "") {
-		$self->addbadmessage("You need to select a file to $action.");
-		$self->Refresh unless $action eq 'download';
+		$self->addbadmessage($r->maketext("You need to select a file to [_1].",$action));
+		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
 		return;
 	}
 	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || HOME) || '.';
 	if ($self->isSymLink($pwd.'/'.$files[0])) {
-		$self->addbadmessage("That symbolic link takes you outside your course directory");
-		$self->Refresh unless $action eq 'download';
+		$self->addbadmessage($r->maketext("That symbolic link takes you outside your course directory"));
+		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
 		return;
 	}
 	unless ($self->checkPWD($pwd.'/'.$files[0],1)) {
-		$self->addbadmessage("You have specified an illegal file");
-		$self->Refresh unless $action eq 'download';
+		$self->addbadmessage($r->maketext("You have specified an illegal file"));
+		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
 		return;
 	}
 	return $files[0];
@@ -1154,13 +1158,14 @@ sub checkPWD {
 #
 sub checkFileLocation {
   	my $self = shift;
+	my $r = $self->r;
 	my $extension = shift; $extension =~ s/.*\.//;
 	my $dir = shift; my $location = $uploadDir{$extension};
 	return unless defined($location);
 	return if $dir =~ m/^$location$/;
 	$location =~ s!/\.\*!!;
 	return if $dir =~ m/^$location$/;
-	$self->addbadmessage("Files with extension '.$extension' usually belong in '$location'");
+	$self->addbadmessage($r->maketext("Files with extension '.[_1]' usually belong in '[_2]'",$extension,$location));
 }
 
 ##################################################
@@ -1197,17 +1202,18 @@ sub uniqueName {
 #
 sub verifyName {
 	my $self = shift; my $name = shift; my $object = shift;
+	my $r = $self->r;
 	if ($name) {
 		unless ($name =~ m!/!) {
 			unless ($name =~ m!^\.!) {
 				unless ($name =~ m![^-_.a-zA-Z0-9 ]!) {
 					my $file = "$self->{courseRoot}/$self->{pwd}/$name";
 					return $file unless (-e $file);
-					$self->addbadmessage("A file with that name already exists");
-				} else {$self->addbadmessage("Your $object name contains illegal characters")}
-			} else {$self->addbadmessage("Your $object name may not begin with a dot")}
-		} else {$self->addbadmessage("Your $object name may not contain a path component")}
-	} else {$self->addbadmessage("You must specify a $object name")}
+					$self->addbadmessage($r->maketext("A file with that name already exists"));
+				} else {$self->addbadmessage($r->maketext("Your [_1] name contains illegal characters",$object))}
+			} else {$self->addbadmessage($r->maketext("Your [_1] name may not begin with a dot",$object))}
+		} else {$self->addbadmessage($r->maketext("Your [_1] name may not contain a path component",$object))}
+	} else {$self->addbadmessage($r->maktext("You must specify a [_1] name",$object))}
 	return
 }
 
@@ -1217,7 +1223,8 @@ sub verifyName {
 #
 sub verifyPath {
 	my $self = shift; my $path = shift; my $name = shift;
-
+	my $r = $self->r;
+	
 	if ($path) {
 		unless ($path =~ m![^-_.a-zA-Z0-9 /]!) {
 			unless ($path =~ m!^/!) {
@@ -1226,11 +1233,11 @@ sub verifyPath {
 					$path = $self->{courseRoot}.'/'.$path;
 					$path .= '/'.$name if -d $path && $name;
 					return $path unless (-e $path);
-					$self->addbadmessage("A file with that name already exists");
-				} else {$self->addbadmessage("You have specified an illegal path")}
-			} else {$self->addbadmessage("You can not specify an absolute path")}
-		} else {$self->addbadmessage("Your file name contains illegal characters")}
-	} else {$self->addbadmessage("You must specify a file name")}
+					$self->addbadmessage($r->maketext("A file with that name already exists"));
+				} else {$self->addbadmessage($r->maketext("You have specified an illegal path"))}
+			} else {$self->addbadmessage($r->maketext("You can not specify an absolute path"))}
+		} else {$self->addbadmessage($r->maketext("Your file name contains illegal characters"))}
+	} else {$self->addbadmessage($r->maketext("You must specify a file name"))}
 	return
 }
 

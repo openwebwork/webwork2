@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::HTML::ComboBox qw/comboBox/;
-use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id);
+use WeBWorK::Utils qw(after readDirectory list2hash sortByName listFilesRecursive max cryptPassword jitar_id_to_seq seq_to_jitar_id x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
@@ -85,10 +85,11 @@ use constant JITAR_SET_FIELD_ORDER => [qw(restrict_prob_progression email_instru
 
 use constant BLANKPROBLEM => 'blankProblem.pg';
 
+# We use the x function to mark strings for localizaton 
 use constant FIELD_PROPERTIES => {
 	# Set information
 	set_header => {
-		name      => "Set Header",
+		name      => x("Set Header"),
 		type      => "edit",
 		size      => "50",
 		override  => "all",
@@ -96,7 +97,7 @@ use constant FIELD_PROPERTIES => {
 		default   => "",
 	},
 	hardcopy_header => {
-		name      => "Hardcopy Header",
+		name      => x("Hardcopy Header"),
 		type      => "edit",
 		size      => "50",
 		override  => "all",
@@ -104,84 +105,84 @@ use constant FIELD_PROPERTIES => {
 		default   => "",		
 	},
 	description => {
-		name      => "Description",
+		name      => x("Description"),
 		type      => "edit",
 		override  => "all",
 		default   => "",
 	},
 	open_date => {
-		name      => "Opens",
+		name      => x("Opens"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	due_date => {
-		name      => "Answers Due",
+		name      => x("Closes"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	answer_date => {
-		name      => "Answers Available",
+		name      => x("Answers Available"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	visible => {
-		name      => "Visible to Students",
+		name      => x("Visible to Students"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => "Yes",
-				0 => "No",
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 	},
 	enable_reduced_scoring => {
-		name      => "Reduced Scoring Enabled",
+		name      => x("Reduced Scoring Enabled"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => "Yes",
-				0 => "No",
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 	},
 	reduced_scoring_date => {
-		name      => "Reduced Scoring Date",
+		name      => x("Reduced Scoring Date"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
 	},
 	restricted_release => {
-		name      => "Restrict release by set(s)",
+		name      => x("Restrict release by set(s)"),
 		type      => "edit",
 		size      => "30",
 		override  => "any",
 		labels    => {
 				#0 => "None Specified",
-				"" => "None Specified",
+				"" => x("None Specified"),
 		},
-                help_text => "This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field."
+                help_text => x("This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field.")
 	},
 	restricted_status => {
-		name      => "Score required for release",
+		name      => x("Score required for release"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 )],
@@ -198,31 +199,31 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	restrict_ip => {
-		name      => "Restrict Access by IP",
+		name      => x("Restrict Access by IP"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( No RestrictTo DenyFrom )],
 		labels    => {
-				No => "No",
-				RestrictTo => "Restrict To",
-				DenyFrom => "Deny From",
+				No => x("No"),
+				RestrictTo => x("Restrict To"),
+				DenyFrom => x("Deny From"),
 		},
 		default   => 'No',
 	},
 	relax_restrict_ip => { 
-		name      => "Relax IP restrictions when?",
+		name      => x("Relax IP restrictions when?"),
 		type      => "choose",
 		override  => "any",
 		choices   => [qw( No AfterAnswerDate AfterVersionAnswerDate )],
 		labels    => {
-				No => "Never",
-				AfterAnswerDate => "After set answer date",
-				AfterVersionAnswerDate => "(gw/quiz) After version answer date",
+				No => x("Never"),
+				AfterAnswerDate => x("After set answer date"),
+				AfterVersionAnswerDate => x("(gw/quiz) After version answer date"),
 		},
 		default   => 'No',
 	},
 	assignment_type => {
-		name      => "Assignment type",
+		name      => x("Assignment type"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( default gateway proctored_gateway jitar)],
@@ -233,7 +234,7 @@ use constant FIELD_PROPERTIES => {
 		},
 	},
 	version_time_limit => {
-		name      => "Test Time Limit (min; 0=Due Date)",
+		name      => x("Test Time Limit (min; 0=Close Date)"),
 		type      => "edit",
 		size      => "4",
 		override  => "any",
@@ -242,14 +243,14 @@ use constant FIELD_PROPERTIES => {
 		convertby => 60,
 	},
 	time_limit_cap => {
-		name      => "Cap Test Time at Set Due Date?",
+		name      => x("Cap Test Time at Set Close Date?"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw(0 1)],
-		labels    => { '0' => 'No', '1' => 'Yes' },
+		labels    => { '0' => 'No', '1' =>'Yes' },
 	},
 	attempts_per_version => {
-		name      => "Number of Graded Submissions per Test (0=infty)",
+		name      => x("Number of Graded Submissions per Test (0=infty)"),
 		type      => "edit",
 		size      => "3",
 		override  => "any",
@@ -257,7 +258,7 @@ use constant FIELD_PROPERTIES => {
 #		labels    => {	"" => 1 },
 	},
 	time_interval => {
-		name      => "Time Interval for New Test Versions (min; 0=infty)",
+		name      => x("Time Interval for New Test Versions (min; 0=infty)"),
 		type      => "edit",
                 size      => "5",
 		override  => "any",
@@ -266,7 +267,7 @@ use constant FIELD_PROPERTIES => {
 		convertby => 60,
 	},
 	versions_per_interval => {
-		name      => "Number of Tests per Time Interval (0=infty)",
+		name      => x("Number of Tests per Time Interval (0=infty)"),
 		type      => "edit",
                 size      => "3",
 		override  => "any",
@@ -276,14 +277,14 @@ use constant FIELD_PROPERTIES => {
 #		labels    => {	"" => 1 },
 	},
 	problem_randorder => {
-		name      => "Order Problems Randomly",
+		name      => x("Order Problems Randomly"),
 		type      => "choose",
 		choices   => [qw( 0 1 )],
 		override  => "any",
-		labels    => {	0 => "No", 1 => "Yes" },
+		labels    => {	0 => "No", 1 =>"Yes" },
 	},
 	problems_per_page => {
-	        name      => "Number of Problems per Page (0=all)",
+	        name      => x("Number of Problems per Page (0=all)"),
 		type      => "edit",
 		size      => "3",
 		override  => "any",
@@ -291,38 +292,38 @@ use constant FIELD_PROPERTIES => {
 #		labels    => { "" => 0 },
 	},
 	'hide_score:hide_score_by_problem' => {
-		name      => "Show Scores on Finished Assignments?",
+		name      => x("Show Scores on Finished Assignments?"),
 		type      => "choose",
 		choices   => [ qw( N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y ) ],
 		override  => "any",
-		labels    => { 'N:N' => 'Yes', 'Y:Y' => 'No', 'BeforeAnswerDate:N' => 'Only after set answer date', 'N:Y' => 'Totals only (not problem scores)', 'BeforeAnswerDate:Y' => 'Totals only, only after answer date' },
+		labels    => { 'N:N' => 'Yes', 'Y:Y' => 'No', 'BeforeAnswerDate:N' => x('Only after set answer date'), 'N:Y' => x('Totals only (not problem scores)'), 'BeforeAnswerDate:Y' => x('Totals only, only after answer date') },
 	},
 	hide_work         => {
-		name      => "Show Problems on Finished Tests",
+		name      => x("Show Problems on Finished Tests"),
 		type      => "choose",
 		choices   => [ qw(N Y BeforeAnswerDate) ],
 		override  => "any",
-		labels    => { 'N' => "Yes", 'Y' => "No", 'BeforeAnswerDate' => 'Only after set answer date' },
+		labels    => { 'N' => "Yes", 'Y' =>"No", 'BeforeAnswerDate' =>x('Only after set answer date') },
 	},
 
 	restrict_prob_progression => {
-		name      => "Restrict Problem Progression",
+		name      => x("Restrict Problem Progression"),
 		type      => "choose",
 		choices   => [ qw(0 1) ],
 		override  => "all",
                 default   => "0",
-		labels    => { '1' => "Yes", '0' => "No", },
-                help_text => "If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary",
+		labels    => { '1' => "Yes", '0' =>"No", },
+                help_text => x("If this is enabled then students will be unable to attempt a problem until they have completed all of the previous problems, and their child problems if necessary."),
 	},
 
 	email_instructor  => {
-		name      => "Email Instructor On Failed Attempt",
+		name      => x("Email Instructor On Failed Attempt"),
 		type      => "choose",
 		choices   => [ qw(0 1) ],
 		override  => "any",
                 default   => "0",
-		labels    => { '1' => "Yes", '0' => "No"},
-                help_text => "If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%",
+		labels    => { '1' => "Yes", '0' =>"No"},
+                help_text => x("If this is enabled then instructors with the ability to receive feedback emails will be notified whenever a student runs out of attempts on a problem and its children without receiving an adjusted status of 100%."),
 	},
 
 	# in addition to the set fields above, there are a number of things
@@ -333,124 +334,124 @@ use constant FIELD_PROPERTIES => {
 	#
 	# Problem information
 	source_file => {
-		name      => "Source File",
+		name      => x("Source File"),
 		type      => "edit",
 		size      => 50,
 		override  => "any",
 		default   => "",
 	},
 	value => {
-		name      => "Weight",
+		name      => x("Weight"),
 		type      => "edit",
 		size      => 6,
 		override  => "any",
                 default => "1",
 	},
 	max_attempts => {
-		name      => "Max attempts",
+		name      => x("Max attempts"),
 		type      => "edit",
 		size      => 6,
 		override  => "any",
-                default => "unlimited",
+                default => "-1",
 		labels    => {
-				"-1" => "unlimited",
+				"-1" => x("unlimited"),
 		},
 	},
         showMeAnother => {
-                 name => "Show me another",
+                 name => x("Show me another"),
                  type => "edit",
                  size => "6",
                  override  => "any",
                  default=>"-1",
                  labels    => {
-			       "-1" => "Never",
-			       "-2" => "Default",
+			       "-1" => x("Never"),
+			       "-2" => x("Default"),
                  },
-                 help_text => "When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used."
+                 help_text => x("When a student has more attempts than is specified here they will be able to view another version of this problem.  If set to -1 the feature is disabled and if set to -2 the course default is used.")
         },
 	prPeriod => {
-		name => "Rerandomize after",
+		name => x("Rerandomize after"),
 		type => "edit",
 		size => "6",
 		override => "any",
 		default=>"-1",
 		labels => {
-			"-1" => "Default",
-			"0" => "Never",
+			"-1" => x("Default"),
+			"0" => x("Never"),
 		},
-		help_text => "This specifies the rerandomization period: the number of attempts before a new version of the problem is generated by changing the Seed value. The value of -1 uses the default from course configuration. The value of 0 disables rerandomization.",
+		help_text => x("This specifies the rerandomization period: the number of attempts before a new version of the problem is generated by changing the Seed value. The value of -1 uses the default from course configuration. The value of 0 disables rerandomization."),
 	},
 	problem_seed => {
-		name      => "Seed",
+		name      => x("Seed"),
 		type      => "edit",
 		size      => 6,
 		override  => "one",
 		
 	},
 	status => {
-		name      => "Status",
+		name      => x("Status"),
 		type      => "edit",
 		size      => 6,
 		override  => "one",
 		default   => "0",
 	},
 	attempted => {
-		name      => "Attempted",
+		name      => x("Attempted"),
 		type      => "hidden",
 		override  => "none",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => "Yes",
-				0 => "No",
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 		default   => "0",
 	},
 	last_answer => {
-		name      => "Last Answer",
+		name      => x("Last Answer"),
 		type      => "hidden",
 		override  => "none",
 	},
 	num_correct => {
-		name      => "Correct",
+		name      => x("Correct"),
 		type      => "hidden",
 		override  => "none",
 		default   => "0",
 	},
 	num_incorrect => {
-		name      => "Incorrect",
+		name      => x("Incorrect"),
 		type      => "hidden",
 		override  => "none",
 		default   => "0",
 	},
 	hide_hint => {
-		name      => "Hide Hints from Students",
+		name      => x("Hide Hints from Students"),
 		type      => "choose",
 		override  => "all",
 		choices   => [qw( 0 1 )],
 		labels    => {
-				1 => "Yes",
-				0 => "No",
+				1 => x("Yes"),
+				0 => x("No"),
 		},
 	},
 	att_to_open_children  => {
-		name      => "Att. to Open Children",
+		name      => x("Att. to Open Children"),
 		type      => "edit",
 		size      => 6,
 		override  => "any",
                 default => "0",
 		labels    => {
-				"-1" => "max",
+				"-1" => x("max"),
 		},
-                help_text => "The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max\" is specified here then child problems will only be available after a student runs out of attempts.",
+                help_text => x("The child problems for this problem will become visible to the student when they either have more incorrect attempts than is specified here, or when they run out of attempts, whichever comes first.  If \"max\" is specified here then child problems will only be available after a student runs out of attempts."),
 	},
 	counts_parent_grade  => {
-		name      => "Counts for Parent",
+		name      => x("Counts for Parent"),
 		type      => "choose",
 		choices   => [ qw(0 1) ],
 		override  => "any",
                 default   => "0",
-		labels    => { '1' => "Yes", '0' => "No", },
-                help_text => "If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled.",
+		labels    => { '1' => "Yes", '0' =>"No", },
+                help_text => x("If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled."),
 	},
 
 
@@ -626,6 +627,10 @@ sub FieldHTML {
 	my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	my %labels = %{ $properties{labels} };
 
+	foreach my $key (keys %labels) {
+	  $labels{$key} = $r->maketext($labels{$key});
+	}
+
 	return "" if $properties{type} eq "hidden";
 	return "" if $properties{override} eq "one" && not $forOneUser;
 	return "" if $properties{override} eq "none" && not $forOneUser;
@@ -734,10 +739,6 @@ sub FieldHTML {
 			$value = ($forUsers && $userRecord->$field ne '' ? $userRecord->$field : $globalRecord->$field);
 		}
 		
-		foreach my $l (keys %labels){
-			$labels{$l} = $r->maketext($labels{$l});
-		}
-
 		$inputType = CGI::popup_menu({
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
@@ -748,21 +749,21 @@ sub FieldHTML {
 		});
 	}
 	
-	my $gDisplVal = defined($properties{labels}) && defined($properties{labels}->{$globalValue}) ? $properties{labels}->{$globalValue} : $globalValue;
+	my $gDisplVal = defined($properties{labels}) && defined($properties{labels}->{$globalValue}) ? $r->maketext($properties{labels}->{$globalValue}) : $globalValue;
 
 	# FIXME: adding ":" in the checked => allows for multiple fields to be set by one selector
-#	return (($forUsers && $edit && $check) ? CGI::checkbox({
+
 	return (($forUsers && $check) ? CGI::checkbox({
 				type => "checkbox",
 				name => "$recordType.$recordID.$field.override",
 				id => "$recordType.$recordID.$field.override_id",
 				label => "",
 				value => $field,
-				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} || $blankfield) ? 1 : 0),
+				checked => $r->param("$recordType.$recordID.$field.override") || ($userValue ne ($labels{""} // '') || $blankfield) ? 1 : 0,
 		}) : "",
 		$r->maketext($properties{name}).
 		($properties{help_text} ? "&nbsp;".CGI::a({class=>'help-popup',href=>'#',
-						  'data-content'=>$properties{help_text},'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
+						  'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);
@@ -1085,7 +1086,7 @@ sub initialize {
 	# takes a hash of hashes and inverts it
 	my %undoLabels;
 	foreach my $key (keys %properties) {
-		%{ $undoLabels{$key} } = map { $properties{$key}->{labels}->{$_} => $_ } keys %{ $properties{$key}->{labels} };
+		%{ $undoLabels{$key} } = map { $r->maketext($properties{$key}->{labels}->{$_}) => $_ } keys %{ $properties{$key}->{labels} };
 	}
 
 	# Unfortunately not everyone uses Javascript enabled browsers so
@@ -1119,7 +1120,7 @@ sub initialize {
 		# make sure dates are numeric by using ||0
         
 		if ($answer_date < $due_date || $answer_date < $open_date) {		
-			$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the due date!"));
+			$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the close date!"));
 			$error = $r->param('submit_changes');
 		}
 		
@@ -1138,7 +1139,7 @@ sub initialize {
 		    $reduced_scoring_date
 		    && ($reduced_scoring_date > $due_date 
 			|| $reduced_scoring_date < $open_date)) {
-		    $self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and due date."));
+		    $self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and close date."));
 		    $error = $r->param('submit_changes');
 		}
 
@@ -1151,7 +1152,7 @@ sub initialize {
 			$error = $r->param('submit_changes');
 		}
 		if ($due_date > $cutoff) {
-			$self->addbadmessage($r->maketext("Error: due date cannot be more than 10 years from now in set [_1]", $setID));
+			$self->addbadmessage($r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID));
 			$error = $r->param('submit_changes');
 		}
 		if ($answer_date > $cutoff) {
@@ -1713,7 +1714,6 @@ sub initialize {
 		##################################################################
 
 		my %newProblemNumbers = ();
-		my $consecutive = $r->param('force_renumber') || 0;
 		my $prevNum = 0;
 		my @prevSeq = (0);
 
@@ -1732,36 +1732,63 @@ sub initialize {
 			    unshift @idSeq, $r->param('prob_num_'.$id);
 			}
 
-			if ($consecutive) {
-			    # we dont really care about the content of idSeq
-			    # in this case, just the length
-			    my $depth = $#idSeq;
-			    
-			    if ($depth <= $#prevSeq) {
-				@prevSeq = @prevSeq[ 0 .. $depth ];
-				$prevSeq[$#prevSeq]++;
-			    } else {
-				$prevSeq[$#prevSeq+1] = 1;
-			    }
-			    
-			    $newProblemNumbers{$jj} = seq_to_jitar_id(@prevSeq);
-			    
-			} else {
-			    $newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
-			}
-			
+			$newProblemNumbers{$jj} = seq_to_jitar_id(@idSeq);
+						
 		    } else {
-			if ($consecutive) {
-			    $prevNum++;
-			    $newProblemNumbers{$jj} = $prevNum;
-			} else {
-			    $newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
-			} 
+		      $newProblemNumbers{$jj} = $r->param('prob_num_' . $jj);
 		    }
-		}
+		  }
 		
 		handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+
 		
+		#####################################################################
+		# Make problem numbers consecutive if required
+		#####################################################################
+
+
+		if ($r->param('force_renumber')) {
+
+		  my %newProblemNumbers = ();
+		  my $prevNum = 0;
+		  my @prevSeq = (0);
+		
+		  for my $jj (sort { $a <=> $b } $db->listGlobalProblems($setID)) {
+		    
+		    if ($setRecord->assignment_type eq 'jitar') {
+		      my @idSeq;
+		      my $id = $jj;
+		      
+		      next unless $r->param('prob_num_'.$id);
+		      
+		      unshift @idSeq, $r->param('prob_num_'.$id);
+		      while (defined $r->param('prob_parent_id_'.$id)) {
+			$id = $r->param('prob_parent_id_'.$id);
+			unshift @idSeq, $r->param('prob_num_'.$id);
+		      }
+		      
+		      # we dont really care about the content of idSeq
+		      # in this case, just the length
+		      my $depth = $#idSeq;
+		      
+		      if ($depth <= $#prevSeq) {
+			@prevSeq = @prevSeq[ 0 .. $depth ];
+			$prevSeq[$#prevSeq]++;
+		      } else {
+			$prevSeq[$#prevSeq+1] = 1;
+		      }
+		      
+		      $newProblemNumbers{$jj} = seq_to_jitar_id(@prevSeq);
+						
+		    } else {
+		      $prevNum++;
+		      $newProblemNumbers{$jj} = $prevNum;
+		    }
+		  }
+		
+		  handle_problem_numbers($self,\%newProblemNumbers, $db, $setID) unless defined $r->param('undo_changes');
+
+		}
 
 		#####################################################################
 		# Add blank problem if needed
@@ -2038,7 +2065,7 @@ sub body {
 				CGI::a({-href=>"mailto:$email_address"},"email "). $u->user_id .
 				"). ";
 			if ( ! $editingSetVersion ) {
-				$line .= $r->maketext("Assigned to ");
+				$line .= $r->maketext("Assigned to").' ';
 				my $editSetsAssignedToUserURL = $self->systemLink(
 					$urlpath->newFromModule(
 						"WeBWorK::ContentGenerator::Instructor::UserDetail", $r,
@@ -2281,7 +2308,7 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-	my @problemIDList = $db->listGlobalProblems($setID);
+        my @problemIDList = sort {$a <=> $b} $db->listGlobalProblems($setID);
 	
 	# DBFIXME use iterators instead of getting all at once
 	
@@ -2537,7 +2564,7 @@ sub body {
 	}
 	# always allow one to add a new problem, unless we're editing a set version
 	if ( ! $editingSetVersion ) {
-	    print 	CGI::checkbox({ label=> $r->maketext("Add "),
+	    print 	CGI::checkbox({ label=> $r->maketext("Add").' ',
 					name=>"add_blank_problem", value=>"1"}
 		),CGI::input({
 		    name=>"add_n_problems",
@@ -2602,8 +2629,6 @@ sub output_JS {
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
-
-
 
 1;
 

@@ -15,9 +15,9 @@
 ################################################################################
 
 package WeBWorK::ContentGenerator::Problem;
-use base qw(WeBWorK);
-#use base qw(WeBWorK::ContentGenerator);
-use base qw(WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil);  # not needed?
+#use base qw(WeBWorK);
+use base qw(WeBWorK::ContentGenerator);
+use  WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;  # not needed?
 
 =head1 NAME
  
@@ -515,7 +515,7 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
         }	
 
-		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
+		my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
 		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText))));
 
@@ -954,7 +954,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"correct-progress set-id-tooltip",-style=>"width:$progress_bar_correct_width%",
 					   "aria-label"=>"correct progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Correct: $total_correct/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Correct: [_1]/[_2]",$total_correct,$num_of_problems)
 					  });
 		# perfect scores deserve some stars (&#9733;)
 		$progress_bar .= ($total_correct == $num_of_problems)?"&#9733;Perfect&#9733;":"";
@@ -964,7 +964,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"inprogress-progress set-id-tooltip",-style=>"width:$progress_bar_inprogress_width%",
 					   "aria-label"=>"in progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("In progress: $total_inprogress/$num_of_problems")
+					   "data-original-title"=>$r->maketext("In progress: [_1]/[_2]",$total_inprogress, $num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -972,7 +972,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"incorrect-progress set-id-tooltip",-style=>"width:$progress_bar_incorrect_width%",
 					   "aria-label"=>"incorrect progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Incorrect: $total_incorrect/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Incorrect: [_1]/[_2]",$total_incorrect,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -980,7 +980,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"unattempted-progress set-id-tooltip",-style=>"width:$progress_bar_unattempted_width%",
 					   "aria-label"=>"unattempted progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Unattempted: $unattempted/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Unattempted: [_1]/[_2]",$unattempted,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -1059,23 +1059,23 @@ sub nav {
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $prevID);
-		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("navPrev");
+		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("Previous Problem");
 	} else {
-		push @links, $r->maketext("Previous Problem"), "", $r->maketext("navPrevGrey");
+		push @links, $r->maketext("Previous Problem"), "", $r->maketext("Previous Problem");
 	}
 
 	if (defined($setID) && $setID ne 'Undefined_Set') {
-		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("navProbList");
+		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("Problem List");
 	} else {
-		push @links, $r->maketext("Problem List"), "", $r->maketext("navProbListGrey");
+		push @links, $r->maketext("Problem List"), "", $r->maketext("Problem List");
 	}
 
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $nextID);
-		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("navNext");
+		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("Next Problem");
 	} else {
-		push @links, $r->maketext("Next Problem"), "", $r->maketext("navNextGrey");
+		push @links, $r->maketext("Next Problem"), "", $r->maketext("Next Problem");
 	}
 
 	my $tail = "";
@@ -1084,6 +1084,33 @@ sub nav {
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
 	return $self->navMacro($args, $tail, @links);
+}
+
+sub path {
+	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $courseName    = $urlpath->arg("courseID");
+	my $setName       = $urlpath->arg("setID") || '';
+	my $problemNumber = $urlpath->arg("problemID") || '';
+	my $prettyProblemNumber = $problemNumber;
+	
+	if ($setName) {
+	    my $set = $r->db->getGlobalSet($setName);
+	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
+		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
+	    }
+	}
+
+	my @path = ( 'WeBWorK', $r->location,
+	          "$courseName", $r->location."/$courseName",
+	          "$setName",    $r->location."/$courseName/$setName",
+	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	);
+	
+	print $self->pathMacro($args, @path);
+	
+	return "";
 }
 
 sub title {
@@ -1285,7 +1312,7 @@ sub output_checkboxes{
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
-		print "Show: &nbsp;&nbsp;";
+		print $r->maketext("Show:")."&nbsp;&nbsp;";
 	}
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
@@ -1469,7 +1496,7 @@ sub output_submit_buttons{
         	if ($user ne $effectiveUser) {
         		# if acting as a student, make it clear that answer submissions will
         		# apply to the student's records, not the professor's.
-        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
         	} else {
         		#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
         		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
@@ -1536,13 +1563,13 @@ sub output_score_summary{
 	if ($prEnabled){
 		my $attempts_before_rr = ($rerandomizePeriod) - ($attempts ) % ($rerandomizePeriod);
 		$attempts_before_rr = 0 if ( (defined $will{requestNewSeed}) and $will{requestNewSeed});
-		$prMessage =
+		$prMessage = " ".
 			$r->maketext(
-				" You have [quant,_1,attempt,attempts] left before new version will be requested.",
+				"You have [quant,_1,attempt,attempts] left before new version will be requested.",
 				$attempts_before_rr)
 			if ($attempts_before_rr > 0);
-		$prMessage =
-			$r->maketext(" Request new version now.")
+		$prMessage = " ".
+			$r->maketext("Request new version now.")
 			if ($attempts_before_rr == 0);
 	}
 	$prMessage = "" if ( after($set->due_date) or before($set->open_date) );
@@ -1935,7 +1962,7 @@ sub output_achievement_message{
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
 	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
-	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
+	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $r);
 	    print $achievementMessage;
 	}
 	
@@ -1979,7 +2006,7 @@ sub output_custom_edit_message{
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $problem->source_file));
+			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:").' ', $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
 			# taken care of in the initialization phase
 		}
@@ -2139,6 +2166,15 @@ sub output_JS{
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
+		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+			my $taxo = '[]';
+			$taxo = join("", <TAXONOMY>);
+			close TAXONOMY;
+			print qq!\n<script>var taxo = $taxo ;</script>!;
+		} else {
+			print qq!\n<script>var taxo = [] ;</script>!;
+			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+		}
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 	}
 
