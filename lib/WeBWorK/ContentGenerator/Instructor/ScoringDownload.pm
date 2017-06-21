@@ -40,6 +40,8 @@ sub pre_header_initialize {
 	if ($authz->hasPermissions($user, "score_sets")) {
 		if ($file =~ m!/!) {  #
 			$self->addbadmessage("Your file name may not contain a path component");
+		} elsif (($file =~ m!~!)){
+			$self->addbadmessage("Your file name may not contain a tilde. ");
 		} else {
 			$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0); 
 			# 0==don't delete file after downloading
