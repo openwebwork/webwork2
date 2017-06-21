@@ -1,0 +1,34 @@
+.cell {
+	float: right;
+	color: white;
+}
+
+.hidden-from-students {
+	font-style: italic;
+}
+
+.gradebook-menu{
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+th.column-set ul.dropdown-menu{
+	text-align: left;
+}
+
+.course-grade {
+	float: right;
+}
+
+#gradebook .column-name {
+	max-width: 50px;
+    word-wrap: break-word;
+}
+
+.grades-course-total td:nth-child(n+3){
+	border-bottom: 1px solid #dddddd;
+}
+
+#course-average {
+	border-right: 1px solid #dddddd;	
+}

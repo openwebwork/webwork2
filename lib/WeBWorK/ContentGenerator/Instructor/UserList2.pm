@@ -225,6 +225,25 @@ sub pre_header_initialize {
 		$self->reply_with_redirect($uri);
 		return;
 	};
+
+	defined($r->param('action')) && $r->param('action') eq 'edit' && do {
+		# fix url and redirect
+		my $root              = $ce->{webworkURLs}->{root};
+		
+		my $numberOfStudents  = $r->param('number_of_students');
+		warn $r->maketext("number of students not defined") unless defined $numberOfStudents;
+
+		my $uri=$self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::AddUsers', $r, courseID=>$courseName),
+		                           params=>{
+		                          			number_of_students=>$numberOfStudents,
+		                                   }
+		);
+		#FIXME  does the display mode need to be defined?
+		#FIXME  url_authen_args also includes an effective user, so the new one must come first.
+		# even that might not work with every browser since there are two effective User assignments.
+		$self->reply_with_redirect($uri);
+		return;
+	};	
 }
 
 sub initialize {
