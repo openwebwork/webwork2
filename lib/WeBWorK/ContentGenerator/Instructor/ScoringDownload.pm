@@ -34,9 +34,18 @@ sub pre_header_initialize {
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $file       = $r->param('getFile');
 	my $user       = $r->param('user');
-	
+ 
+# the parameter 'getFile" needs to be sanitized. (see bug #3793 )
+# See checkName in FileManager.pm for a more complete sanitization.
 	if ($authz->hasPermissions($user, "score_sets")) {
-		$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0); # 0==don't delete file after downloading
+		if ($file =~ m!/!) {  #
+			$self->addbadmessage("Your file name may not contain a path component");
+		} elsif (($file =~ m!~!)){
+			$self->addbadmessage("Your file name may not contain a tilde. ");
+		} else {
+			$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0); 
+			# 0==don't delete file after downloading
+		}
 	} else {
 		$self->addbadmessage("You do not have permission to access scoring data.");
 	}
