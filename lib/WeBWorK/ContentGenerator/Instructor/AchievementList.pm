@@ -1279,7 +1279,7 @@ sub recordEditHTML {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly";
 		$fieldValue =~ s/ /&nbsp;/g;
-		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enabled/;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enabled/;
 		if ($field =~ /achievement_id/) {
 		    $fieldValue .= $imageLink;
 		    $fieldValue = CGI::div({class=>'label-with-edit-icon'},$fieldValue);
