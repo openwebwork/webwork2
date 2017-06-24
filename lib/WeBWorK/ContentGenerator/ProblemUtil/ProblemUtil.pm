@@ -45,6 +45,12 @@ use URI::Escape;
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 
+use Email::Simple;
+use Email::Sender::Simple qw(sendmail);
+use Email::Sender::Transport::SMTP qw();
+use Try::Tiny;
+
+
 # process_and_log_answer subroutine.
 
 # performs functions of processing and recording the answer given in the page.
@@ -690,7 +696,7 @@ sub jitar_send_warning_email {
 			timeout => $ce->{mail}->{smtpTimeout}
 		});
 
-		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
+		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort};
 
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
