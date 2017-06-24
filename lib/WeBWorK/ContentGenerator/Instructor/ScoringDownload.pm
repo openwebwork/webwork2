@@ -41,10 +41,10 @@ sub pre_header_initialize {
  # See checkName in FileManager.pm for a more complete sanitization.
   	if ($authz->hasPermissions($user, "score_sets")) {
  		unless ( $file eq  WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file) ) {  #
- 			$self->addbadmessage("Your file name is not valid. ".
- 			 "A file name cannot begin with a dot, it cannot be empty, it cannot contain a " .
- 			 "directory path component and only the characters [^-_.a-zA-Z0-9 ]  are allowed."
- 			 );
+			$self->addbadmessage($r->maketext("Your file name is not valid! "));
+		    $self->addbadmessage($r->maketext("A file name cannot begin with a dot, it cannot be empty, it cannot contain a " .
+				 "directory path component and only the characters -_.a-zA-Z0-9 and space are allowed.")
+			); 
  		} else {
  			$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0); 
  			# 0==don't delete file after downloading

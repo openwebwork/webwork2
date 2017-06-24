@@ -122,8 +122,8 @@ sub initialize {
 		if (!$scoringFileNameOK) { # fileName is not properly formed
 			$self->addbadmessage($r->maketext("Your file name is not valid! "));
 		    $self->addbadmessage($r->maketext("A file name cannot begin with a dot, it cannot be empty, it cannot contain a " .
-				 "directory path component and only the characters ~[-_.a-zA-Z0-9 ~]  are allowed.")
-			); # ~ is needed to escape [ and ] within maketext
+				 "directory path component and only the characters -_.a-zA-Z0-9 and space  are allowed.")
+			); 
 		}
 	}
 	
