@@ -859,7 +859,7 @@ sub mail_message_to_recipients {
 			#warn "message is ok";
 			my $transport = Email::Sender::Transport::SMTP->new({
 				host => $ce->{mail}->{smtpServer},
-				ssl => $ce->{tls_allowed}//1, ## turn on ssl security
+				ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 				timeout => $ce->{mail}->{smtpTimeout}
 			});
 
@@ -909,9 +909,11 @@ sub email_notification {
 
 	my $transport = Email::Sender::Transport::SMTP->new({
 		host => $ce->{mail}->{smtpServer},
-		ssl => $ce->{tls_allowed}//1, ## turn on ssl security
+		ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 		timeout => $ce->{mail}->{smtpTimeout}
 	});
+
+	$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
 
 	my $email = Email::Simple->create(
 		header => [

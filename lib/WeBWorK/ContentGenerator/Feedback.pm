@@ -245,8 +245,11 @@ sub body {
 
 		my $transport = Email::Sender::Transport::SMTP->new({
 			host => $ce->{mail}->{smtpServer},
-			ssl => $ce->{tls_allowed}//1 ## turn on ssl security
+			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
+			timeout => $ce->{mail}->{smtpTimeout}
 		});
+
+		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
 
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
@@ -311,13 +314,6 @@ $emailableURL
 		}
 
     $email->body_set($msg);
-		# my $email = Email::Simple->create(
-		# 	body => $msg,
-		# );
-		# $email->header_obj_set($header);
-
-		debug dump $transport;
-		debug dump $email;
 
 		try {
 			sendmail($email,{transport => $transport});
