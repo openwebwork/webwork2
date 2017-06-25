@@ -81,7 +81,7 @@ my @modulesList = qw(
 	JSON
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
-        LWP::Protocol::https
+    LWP::Protocol::https
 	Mail::Sender
 	MIME::Base64
 	Net::IP
@@ -99,6 +99,7 @@ my @modulesList = qw(
 	SOAP::Lite
 	Socket
 	SQL::Abstract
+	Statistics::R::IO
 	String::ShellQuote
 	Template
 	Text::CSV
