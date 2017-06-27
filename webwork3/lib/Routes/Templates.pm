@@ -35,8 +35,8 @@ get '/courses/:course_id/login' => sub {
 
 sub login_page {
   my ($self,$course_id) = @_;
-
   debug 'in Routes::Templates::login_page';
+  debug session;
   my $url = query_parameters->{return_url};
   $url = request->uri unless defined($url);
   if (! defined($course_id) && $url && $url =~ /\/courses\/(\w+)\/(\w+)/){
@@ -49,9 +49,23 @@ sub login_page {
     course_id => $course_id
   };
 
-  $params->{msg} = params->{msg} if defined params->{msg};
+  $params->{msg} = "login_failed" if defined session 'login_failed';
+  session->delete('login_failed');
 
   template 'login.tt', $params, {layout=> 'main'};
+}
+
+###
+#
+# this is called when the user cannot access a given page
+#
+###
+
+sub permission_denied_page_handler {
+  	debug "oops";
+
+  	debug session;
+
 }
 
 ###
@@ -105,9 +119,10 @@ post '/courses/:course_id/login' => sub {
 
 
   } else {
+    session login_failed => true;
     redirect '/courses/'. route_parameters->{course_id} . '/login';
-    #redirect '/courses/' . route_parameters->{course_id} . '/login',
-       {msg => 'login_failed'}, {method => 'GET'};
+    # redirect '/courses/' . route_parameters->{course_id} . '/login',
+    #    {msg => 'login_failed'}, {method => 'GET'};
   }
 
 };
@@ -157,7 +172,8 @@ get '/courses/:course_id/manager' =>  require_role professor => sub {
 	my $settings = getCourseSettings(vars->{ce});
 	my $sets = getAllSets(vars->{db},vars->{ce});
 	my $users = getAllUsers(vars->{db},vars->{ce});
-
+  my $user_info = get_user_details(session 'logged_in_user');
+  $user_info->{_id} = $user_info->{user_id};
 
 	my $session = convertObjectToHash(session->{data});
 	$session->{effectiveUser} = session 'logged_in_user';
@@ -170,6 +186,7 @@ get '/courses/:course_id/manager' =>  require_role professor => sub {
   	theSettings=>to_json($settings),
     sets=>to_json($sets),
     users=>to_json($users),
+    user_info => to_json($user_info),
     main_view_paths => to_json(\@view_paths),
   	main_views=>to_json($config),
     pagename=>"Course Manager"

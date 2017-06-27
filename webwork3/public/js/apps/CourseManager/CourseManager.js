@@ -2,11 +2,14 @@
    This is the base javascript code for the Homework Manager.  This sets up the View and ....
 
 */
-define(['module','backbone','views/Sidebar', 'underscore','models/UserList','models/ProblemSetList','models/SettingList',
-    'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList','views/WebPage', 'moment',
+define(['module','backbone','views/Sidebar', 'underscore','views/WebPage',
+    'models/UserList','models/ProblemSetList','models/SettingList',
+    'views/MainViewList', 'models/AssignmentDate','models/AssignmentDateList',
+    'models/User', 'moment',
     'config','apps/util','jquery-ui','bootstrap'],
-function(module, Backbone, Sidebar, _, UserList, ProblemSetList, SettingList,MainViewList,
-    AssignmentDate,AssignmentDateList,WebPage,moment,config,util){
+function(module, Backbone, Sidebar, _,WebPage, UserList, ProblemSetList,
+    SettingList,MainViewList,AssignmentDate,AssignmentDateList,User,
+    moment,config,util){
 var CourseManager = WebPage.extend({
     messageTemplate: _.template($("#course-manager-messages-template").html()),
     initialize: function(){
@@ -18,6 +21,7 @@ var CourseManager = WebPage.extend({
         this.session = (module.config().session)? module.config().session : {};
         this.settings = (module.config().settings)? new SettingList(module.config().settings, {parse: true}) : null;
         this.users = (module.config().users) ? new UserList(module.config().users) : null;
+        this.user_info = (module.config().user_info) ? new User(module.config().user_info): null;
         // We need to pass the standard date settings to the problemSets.
         var dateSettings = util.pluckDateSettings(this.settings);
         this.problemSets = (module.config().sets) ? new ProblemSetList(module.config().sets,{parse: true,
@@ -94,7 +98,7 @@ var CourseManager = WebPage.extend({
             .on("calendar-change",self.updateCalendar);
 
         this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
-        this.mainViewList.getView("userSettings").set({user_id: this.session.user});
+        this.mainViewList.getView("userSettings").set({user_info: this.user_info});
         this.mainViewList.getSidebar("allMessages").set({messages: this.messagePane.messages});
         this.mainViewList.getSidebar("help").parent = this;
 

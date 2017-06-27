@@ -181,9 +181,10 @@ sub keywordCleaner {
 sub makeKeywordWhere {
 	my $kwstring = shift;
 	my @kwlist = keywordCleaner($kwstring);
-	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
+#	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
+	@kwlist = map { "kw.keyword = ? " } @kwlist;
 	my $where = join(" OR ", @kwlist);
-	return "AND ( $where )";
+	return "AND ( $where )", @kwlist;
 }
 
 =item getDBextras($path)
@@ -237,25 +238,30 @@ sub getDBTextbooks {
 	my %tables = getTables($r->ce);
 	my $extrawhere = '';
 	# Handle DB* restrictions
+	my @search_params=();
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
 	if($subj) {
 		$subj =~ s/'/\\'/g;
-		$extrawhere .= " AND t.name = \'$subj\'\n";
+		$extrawhere .= " AND t.name = ?\n";
+		push @search_params, $subj;
 	}
 	if($chap) {
 		$chap =~ s/'/\\'/g;
-		$extrawhere .= " AND c.name = \'$chap\' AND c.DBsubject_id=t.DBsubject_id\n";
+		$extrawhere .= " AND c.name = ? AND c.DBsubject_id=t.DBsubject_id\n";
+		push @search_params, $chap;
 	}
 	if($sec) {
 		$sec =~ s/'/\\'/g;
-		$extrawhere .= " AND s.name = \'$sec\' AND s.DBchapter_id = c.DBchapter_id AND s.DBsection_id=pgf.DBsection_id";
+		$extrawhere .= " AND s.name = ? AND s.DBchapter_id = c.DBchapter_id AND s.DBsection_id=pgf.DBsection_id";
+		push @search_params, $sec;
 	}
 	my $textextrawhere = '';
 	my $textid = $r->param('library_textbook') || '';
 	if($textid and $thing ne 'textbook') {
-		$textextrawhere .= " AND tbk.textbook_id=\"$textid\" ";
+		$textextrawhere .= " AND tbk.textbook_id= ? ";
+		push @search_params, $textid;
 	} else {
 		return([]) if($thing ne 'textbook');
 	}
@@ -263,13 +269,28 @@ sub getDBTextbooks {
 	my $textchap = $r->param('library_textchapter') || '';
 	$textchap =~ s/^\s*\d+\.\s*//;
 	if($textchap and $thing eq 'textsection') {
-		$textextrawhere .= " AND tc.name=\"$textchap\" ";
+		$textextrawhere .= " AND tc.name= ? ";
+		push @search_params, $textchap;
 	} else {
 		return([]) if($thing eq 'textsection');
 	}
 
 	my $selectwhat = LIBRARY_STRUCTURE->{$thing}{select};
 	
+# 	my $query = "SELECT DISTINCT $selectwhat
+#           FROM `$tables{textbook}` tbk, `$tables{problem}` prob, 
+# 			`$tables{pgfile_problem}` pg, `$tables{pgfile}` pgf,
+#             `$tables{dbsection}` s, `$tables{dbchapter}` c, `$tables{dbsubject}` t,
+# 			`$tables{chapter}` tc, `$tables{section}` ts
+#           WHERE ts.section_id=prob.section_id AND 
+#             prob.problem_id=pg.problem_id AND
+#             s.DBchapter_id=c.DBchapter_id AND 
+#             c.DBsubject_id=t.DBsubject_id AND
+#             pgf.DBsection_id=s.DBsection_id AND
+#             pgf.pgfile_id=pg.pgfile_id AND
+#             ts.chapter_id=tc.chapter_id AND
+#             tc.textbook_id=tbk.textbook_id
+#             $extrawhere $textextrawhere ";
 	my $query = "SELECT DISTINCT $selectwhat
           FROM `$tables{textbook}` tbk, `$tables{problem}` prob, 
 			`$tables{pgfile_problem}` pg, `$tables{pgfile}` pgf,
@@ -283,10 +304,14 @@ sub getDBTextbooks {
             pgf.pgfile_id=pg.pgfile_id AND
             ts.chapter_id=tc.chapter_id AND
             tc.textbook_id=tbk.textbook_id
-            $extrawhere $textextrawhere ";
+            $extrawhere $textextrawhere  ";
+
 #$query =~ s/\n/ /g;
-#warn $query;
-	my $text_ref = $dbh->selectall_arrayref($query);
+#warn "query:", $query;
+#warn "params:", join(" | ", @search_params);
+#	my $text_ref = $dbh->selectall_arrayref($query);
+    my $text_ref = $dbh->selectall_arrayref($query,{},@search_params);  #FIXME
+
 	my @texts = @{$text_ref};
 	if( $thing eq 'textbook') {
 		@texts = grep { $_->[1] =~ /\S/ } @texts;
@@ -340,13 +365,20 @@ sub getAllDBchapters {
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
+# 	my $query = "SELECT DISTINCT c.name, c.DBchapter_id 
+#                                 FROM `$tables{dbchapter}` c, 
+# 				`$tables{dbsubject}` t
+#                  WHERE c.DBsubject_id = t.DBsubject_id AND
+#                  t.name = \"$subject\" ORDER BY c.DBchapter_id";
+# 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
 	my $query = "SELECT DISTINCT c.name, c.DBchapter_id 
                                 FROM `$tables{dbchapter}` c, 
 				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
-                 t.name = \"$subject\" ORDER BY c.DBchapter_id";
-	my $all_chaps_ref = $dbh->selectall_arrayref($query);
-	my @results = map { $_->[0] } @{$all_chaps_ref};
+                 t.name = ? ORDER BY c.DBchapter_id";
+	my $all_chaps_ref = $dbh->selectall_arrayref($query, {},$subject);
+ 
+ 	my @results = map { $_->[0] } @{$all_chaps_ref};
 	#@results = sortByName(undef, @results);
 	return @results;
 }
@@ -366,13 +398,21 @@ sub getAllDBsections {
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
+# 	my $query = "SELECT DISTINCT s.name, s.DBsection_id 
+#                  FROM `$tables{dbsection}` s,
+#                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
+#                  WHERE s.DBchapter_id = c.DBchapter_id AND
+#                  c.DBsubject_id = t.DBsubject_id AND
+#                  t.name = \"$subject\" AND c.name = \"$chapter\" ORDER BY s.DBsection_id";
+# 	my $all_sections_ref = $dbh->selectall_arrayref($query);
 	my $query = "SELECT DISTINCT s.name, s.DBsection_id 
                  FROM `$tables{dbsection}` s,
                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
                  c.DBsubject_id = t.DBsubject_id AND
-                 t.name = \"$subject\" AND c.name = \"$chapter\" ORDER BY s.DBsection_id";
-	my $all_sections_ref = $dbh->selectall_arrayref($query);
+                 t.name = ? AND c.name = ? ORDER BY s.DBsection_id";
+	my $all_sections_ref = $dbh->selectall_arrayref($query, {},$subject, $chapter);
+
 	my @results = map { $_->[0] } @{$all_sections_ref};
 	#@results = sortByName(undef, @results);
 	return @results;
@@ -407,80 +447,121 @@ sub getDBListings {
 	}
 	@levels = grep { defined($_) && m/\S/ } @levels;
 	my ($kw1, $kw2) = ('','');
+	my $keywordstring;
+	my @keyword_params;
 	if($keywords) {
+		($keywordstring, @keyword_params) = makeKeywordWhere($keywords) ;
 		$kw1 = ", `$tables{keyword}` kw, `$tables{pgfile_keyword}` pgkey";
 		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
-			 pgkey.pgfile_id=pgf.pgfile_id ". 
-			makeKeywordWhere($keywords) ;
+			 pgkey.pgfile_id=pgf.pgfile_id $keywordstring"; 
+#			makeKeywordWhere($keywords) ;
 	}
 
 	my $dbh = getDB($ce);
 
 	my $extrawhere = '';
+	my @select_parameters=();
 	if($subj) {
 		$subj =~ s/'/\\'/g;
-		$extrawhere .= " AND dbsj.name=\"$subj\" ";
+#		$extrawhere .= " AND dbsj.name=\"$subj\" ";
+		$extrawhere .= " AND dbsj.name= ? ";
+		push @select_parameters, $subj;
 	}
 	if($chap) {
 		$chap =~ s/'/\\'/g;
-		$extrawhere .= " AND dbc.name=\"$chap\" ";
+#		$extrawhere .= " AND dbc.name=\"$chap\" ";
+		$extrawhere .= " AND dbc.name= ? ";
+		push @select_parameters, $chap;
 	}
 	if($sec) {
 		$sec =~ s/'/\\'/g;
-		$extrawhere .= " AND dbsc.name=\"$sec\" ";
+#		$extrawhere .= " AND dbsc.name=\"$sec\" ";
+		$extrawhere .= " AND dbsc.name= ? ";
+		push @select_parameters, $sec;
 	}
 	if(scalar(@levels)) {
-		$extrawhere .= " AND pgf.level IN (".join(',', @levels).") ";
+#		$extrawhere .= " AND pgf.level IN (".join(',', @levels).") ";
+		$extrawhere .= " AND pgf.level IN ( ? ) ";
+		push @select_parameters, join(',', @levels);
 	}
 	my $textextrawhere = '';
     my $haveTextInfo=0;
+    my @textInfo_parameters=();
 	for my $j (qw( textbook textchapter textsection )) {
 		my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
 		$foo =~ s/^\s*\d+\.\s*//;
 		if($foo) {
             $haveTextInfo=1;
 			$foo =~ s/'/\\'/g;
-			$textextrawhere .= " AND ".LIBRARY_STRUCTURE->{$j}{where}."=\"$foo\" ";
+			$textextrawhere .= " AND ".LIBRARY_STRUCTURE->{$j}{where}."= ? ";
+			push @textInfo_parameters, $foo;
 		}
 	}
 
 	my $selectwhat = 'DISTINCT pgf.pgfile_id';
 	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
 
-	my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
-         `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
-        WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
-              dbc.DBchapter_id = dbsc.DBchapter_id AND
-              dbsc.DBsection_id = pgf.DBsection_id 
-              \n $extrawhere 
-              $kw2";
+# 	my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+#          `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
+#         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+#               dbc.DBchapter_id = dbsc.DBchapter_id AND
+#               dbsc.DBsection_id = pgf.DBsection_id 
+#               \n $extrawhere 
+#               $kw2";
+
+	my $pg_id_ref;
 	if($haveTextInfo) {
-      $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
-        `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
-		`$tables{pgfile_problem}` pgp, `$tables{problem}` prob, `$tables{textbook}` tbk ,
-		`$tables{chapter}` tc, `$tables{section}` ts $kw1
-        WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
-              dbc.DBchapter_id = dbsc.DBchapter_id AND
-              dbsc.DBsection_id = pgf.DBsection_id AND
-              pgf.pgfile_id = pgp.pgfile_id AND
-              pgp.problem_id = prob.problem_id AND
-              tc.textbook_id = tbk.textbook_id AND
-              ts.chapter_id = tc.chapter_id AND
-              prob.section_id = ts.section_id \n $extrawhere \n $textextrawhere
-              $kw2";
+		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
+			`$tables{pgfile_problem}` pgp, `$tables{problem}` prob, `$tables{textbook}` tbk ,
+			`$tables{chapter}` tc, `$tables{section}` ts $kw1
+			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+				  dbc.DBchapter_id = dbsc.DBchapter_id AND
+				  dbsc.DBsection_id = pgf.DBsection_id AND
+				  pgf.pgfile_id = pgp.pgfile_id AND
+				  pgp.problem_id = prob.problem_id AND
+				  tc.textbook_id = tbk.textbook_id AND
+				  ts.chapter_id = tc.chapter_id AND
+				  prob.section_id = ts.section_id \n $extrawhere \n $textextrawhere
+				  $kw2";
+				  
+		#$query =~ s/\n/ /g;
+		#warn "text info: ", $query;
+		#warn "params: ", join(" | ",@select_parameters, @textInfo_parameters,@keyword_params);
+		
+		$pg_id_ref = $dbh->selectall_arrayref($query, {},@select_parameters, @textInfo_parameters, @keyword_params);
+
+     } else {
+		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+			 `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
+			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
+				  dbc.DBchapter_id = dbsc.DBchapter_id AND
+				  dbsc.DBsection_id = pgf.DBsection_id 
+				  \n $extrawhere 
+				  $kw2";
+				  
+		#$query =~ s/\n/ /g;
+		#warn "no text info: ", $query;
+		#warn "params: ", join(" | ",@select_parameters,@keyword_params);
+
+     	$pg_id_ref = $dbh->selectall_arrayref($query,{},@select_parameters,@keyword_params);
+     	#$query =~ s/\n/ /g;
+
      }
-#$query =~ s/\n/ /g;
-#warn $query;
-	my $pg_id_ref = $dbh->selectall_arrayref($query);
+
 	my @pg_ids = map { $_->[0] } @{$pg_id_ref};
 	if($amcounter) {
 		return(@pg_ids[0]);
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-		$query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p 
-          WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
-		my $row = $dbh->selectrow_arrayref($query);
+# 		$query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p 
+#           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
+# 		my $row = $dbh->selectrow_arrayref($query);
+		my $query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p 
+          WHERE p.path_id = pgf.path_id AND pgf.pgfile_id= ? ";
+		my $row = $dbh->selectrow_arrayref($query,{},$pgid);
+
 		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3], 'static' => $row->[4], 'MO' => $row->[5] };
 		
 	}
@@ -509,52 +590,52 @@ sub getMLTleader {
 # Warning - this function is out of date (but currently unused)
 #
 
-sub createListing {
-	my $ce = shift;
-	my %tables = getTables($ce);
-	my %listing_data = @_; 
-	my $classify_id;
-	my $dbh = getDB($ce);
-	#	my $dbh = WeBWorK::ProblemLibrary::DB::getDB();
-	my $query = "INSERT INTO classify
-		(filename,chapter,section,keywords)
-		VALUES
-		($listing_data{filename},$listing_data{chapter},$listing_data{section},$listing_data{keywords})";
-	$dbh->do($query);	 #TODO: watch out for comma delimited keywords, sections, chapters!
-
-	$query = "SELECT id FROM classify WHERE filename = $listing_data{filename}";
-	my $sth = $dbh->prepare($query);
-	$sth->execute();
-	if ($sth->rows())
-	{
-		($classify_id) = $sth->fetchrow_array;
-	}
-	else
-	{
-		#print STDERR "ListingDB::createListingPGfiles: $listing_data{filename} failed insert into classify table";
-		return 0;
-	};
-
-	$query = "INSERT INTO pgfiles
-   (
-   classify_id,
-   path,
-   author,
-   institution,
-   history
-   )
-   VALUES
-  (
-   $classify_id,
-   $listing_data{path},
-   $listing_data{author},
-   $listing_data{institution},
-   $listing_data{history}
-   )";
-	
-	$dbh->do($query);
-	return 1;
-}
+# sub createListing {
+# 	my $ce = shift;
+# 	my %tables = getTables($ce);
+# 	my %listing_data = @_; 
+# 	my $classify_id;
+# 	my $dbh = getDB($ce);
+# 	#	my $dbh = WeBWorK::ProblemLibrary::DB::getDB();
+# 	my $query = "INSERT INTO classify
+# 		(filename,chapter,section,keywords)
+# 		VALUES
+# 		($listing_data{filename},$listing_data{chapter},$listing_data{section},$listing_data{keywords})";
+# 	$dbh->do($query);	 #TODO: watch out for comma delimited keywords, sections, chapters!
+# 
+# 	$query = "SELECT id FROM classify WHERE filename = $listing_data{filename}";
+# 	my $sth = $dbh->prepare($query);
+# 	$sth->execute();
+# 	if ($sth->rows())
+# 	{
+# 		($classify_id) = $sth->fetchrow_array;
+# 	}
+# 	else
+# 	{
+# 		#print STDERR "ListingDB::createListingPGfiles: $listing_data{filename} failed insert into classify table";
+# 		return 0;
+# 	};
+# 
+# 	$query = "INSERT INTO pgfiles
+#    (
+#    classify_id,
+#    path,
+#    author,
+#    institution,
+#    history
+#    )
+#    VALUES
+#   (
+#    $classify_id,
+#    $listing_data{path},
+#    $listing_data{author},
+#    $listing_data{institution},
+#    $listing_data{history}
+#    )";
+# 	
+# 	$dbh->do($query);
+# 	return 1;
+# }
 
 ##############################################################################
 # input expected any pair of: keywords,<keywords data>,chapter,<chapter data>,section,<section data>,filename,<filename data>,author,<author data>,instituition,<instituition data>
@@ -563,73 +644,73 @@ sub createListing {
 # Warning - out of date (and unusued)
 #
 
-sub searchListings {
-	my $ce = shift;
-	my %tables = getTables($ce);
-	my %searchterms = @_;
-	#print STDERR "ListingDB::searchListings  input array @_\n";
-	my @results;
-	my ($row,$key);
-	my $dbh = getDB($ce);
-	my $query = "SELECT c.filename, p.path
-		FROM classify c, pgfiles p
-		WHERE c.id = p.classify_id";
-	foreach $key (keys %searchterms) {
-		$query .= " AND c.$key = $searchterms{$key}";
-	};
-	my $sth = $dbh->prepare($query);
-	$sth->execute();
-	if ($sth->rows())
-	{
-		while (1)
-		{
-			$row = $sth->fetchrow_hashref();
-			if (!defined($row))
-			{
-				last;
-			}
-			else
-			{
-				#print STDERR "ListingDB::searchListings(): found $row->{id}\n";
-				my $listing = $row;
-				push @results, $listing;
-			}
-		}
-	}
-	return @results;
-}
+# sub searchListings {
+# 	my $ce = shift;
+# 	my %tables = getTables($ce);
+# 	my %searchterms = @_;
+# 	#print STDERR "ListingDB::searchListings  input array @_\n";
+# 	my @results;
+# 	my ($row,$key);
+# 	my $dbh = getDB($ce);
+# 	my $query = "SELECT c.filename, p.path
+# 		FROM classify c, pgfiles p
+# 		WHERE c.id = p.classify_id";
+# 	foreach $key (keys %searchterms) {
+# 		$query .= " AND c.$key = $searchterms{$key}";
+# 	};
+# 	my $sth = $dbh->prepare($query);
+# 	$sth->execute();
+# 	if ($sth->rows())
+# 	{
+# 		while (1)
+# 		{
+# 			$row = $sth->fetchrow_hashref();
+# 			if (!defined($row))
+# 			{
+# 				last;
+# 			}
+# 			else
+# 			{
+# 				#print STDERR "ListingDB::searchListings(): found $row->{id}\n";
+# 				my $listing = $row;
+# 				push @results, $listing;
+# 			}
+# 		}
+# 	}
+# 	return @results;
+# }
 ##############################################################################
 # returns a list of chapters
 #
 # Warning - out of date
 #
 
-sub getAllChapters {
-	#print STDERR "ListingDB::getAllChapters\n";
-	my $ce = shift;
-	my %tables = getTables($ce);
-	my @results=();
-	my ($row,$listing);
-	my $query = "SELECT DISTINCT chapter FROM classify";
-	my $dbh = getDB($ce);
-	my $sth = $dbh->prepare($query);
-	$sth->execute();
-	while (1)
-	{
-		$row = $sth->fetchrow_array;
-		if (!defined($row))
-		{
-			last;
-		}
-		else
-		{
-			my $listing = $row;
-			push @results, $listing;
-			#print STDERR "ListingDB::getAllChapters $listing\n";
-		}
-	}
-	return @results;
-}
+# sub getAllChapters {
+# 	#print STDERR "ListingDB::getAllChapters\n";
+# 	my $ce = shift;
+# 	my %tables = getTables($ce);
+# 	my @results=();
+# 	my ($row,$listing);
+# 	my $query = "SELECT DISTINCT chapter FROM classify";
+# 	my $dbh = getDB($ce);
+# 	my $sth = $dbh->prepare($query);
+# 	$sth->execute();
+# 	while (1)
+# 	{
+# 		$row = $sth->fetchrow_array;
+# 		if (!defined($row))
+# 		{
+# 			last;
+# 		}
+# 		else
+# 		{
+# 			my $listing = $row;
+# 			push @results, $listing;
+# 			#print STDERR "ListingDB::getAllChapters $listing\n";
+# 		}
+# 	}
+# 	return @results;
+# }
 ##############################################################################
 # input chapter
 # returns a list of sections
@@ -637,34 +718,38 @@ sub getAllChapters {
 # Warning - out of date (and unused)
 #
 
-sub getAllSections {
-	#print STDERR "ListingDB::getAllSections\n";
-	my $ce = shift;
-	my %tables = getTables($ce);
-	my $chapter = shift;
-	my @results=();
-	my ($row,$listing);
-	my $query = "SELECT DISTINCT section FROM classify
-				WHERE chapter = \'$chapter\'";
-	my $dbh = getDB($ce);
-	my $sth = $dbh->prepare($query);
-	$sth->execute();
-	while (1)
-	{
-		$row = $sth->fetchrow_array;
-		if (!defined($row))
-		{
-			last;
-		}
-		else
-		{
-			my $listing = $row;
-			push @results, $listing;
-			#print STDERR "ListingDB::getAllSections $listing\n";
-		}
-	}
-	return @results;
-}
+# sub getAllSections {
+# 	#print STDERR "ListingDB::getAllSections\n";
+# 	my $ce = shift;
+# 	my %tables = getTables($ce);
+# 	my $chapter = shift;
+# 	my @results=();
+# 	my ($row,$listing);
+# # 	my $query = "SELECT DISTINCT section FROM classify
+# # 				WHERE chapter = \'$chapter\'";
+# 	my $query = "SELECT DISTINCT section FROM classify
+# 				WHERE chapter = ? ";
+# 	my $dbh = getDB($ce);
+# #	my $sth = $dbh->prepare($query);
+# 	my $sth = $dbh->prepare($query, $chapter);
+# 
+# 	$sth->execute();
+# 	while (1)
+# 	{
+# 		$row = $sth->fetchrow_array;
+# 		if (!defined($row))
+# 		{
+# 			last;
+# 		}
+# 		else
+# 		{
+# 			my $listing = $row;
+# 			push @results, $listing;
+# 			#print STDERR "ListingDB::getAllSections $listing\n";
+# 		}
+# 	}
+# 	return @results;
+# }
 
 ##############################################################################
 # returns an array of hash references
@@ -672,28 +757,28 @@ sub getAllSections {
 # Warning - out of date (and unused)
 #
 
-sub getAllListings {
-	#print STDERR "ListingDB::getAllListings\n";
-	my $ce = shift;
-	my @results;
-	my ($row,$key);
-	my $dbh = getDB($ce);
-	my %tables = getTables($ce);
-	my $query = "SELECT c.*, p.path
-			FROM classify c, pgfiles p
-			WHERE c.pgfiles_id = p.pgfiles_id";
-	my $sth = $dbh->prepare($query);
-	$sth->execute();
-	while (1)
-	{
-		$row = $sth->fetchrow_hashref();
-		last if (!defined($row));
-		my $listing = $row;
-		push @results, $listing;
-		#print STDERR "ListingDB::getAllListings $listing\n";
-	}
-	return @results;
-}
+# sub getAllListings {
+# 	#print STDERR "ListingDB::getAllListings\n";
+# 	my $ce = shift;
+# 	my @results;
+# 	my ($row,$key);
+# 	my $dbh = getDB($ce);
+# 	my %tables = getTables($ce);
+# 	my $query = "SELECT c.*, p.path
+# 			FROM classify c, pgfiles p
+# 			WHERE c.pgfiles_id = p.pgfiles_id";
+# 	my $sth = $dbh->prepare($query);
+# 	$sth->execute();
+# 	while (1)
+# 	{
+# 		$row = $sth->fetchrow_hashref();
+# 		last if (!defined($row));
+# 		my $listing = $row;
+# 		push @results, $listing;
+# 		#print STDERR "ListingDB::getAllListings $listing\n";
+# 	}
+# 	return @results;
+# }
 
 ##############################################################################
 # input chapter, section
@@ -721,14 +806,23 @@ sub getSectionListings	{
 	}
 
 	my @results; #returned
-	my $query = "SELECT c.*, p.path
+# 	my $query = "SELECT c.*, p.path
+# 	FROM classify c, pgfiles p
+# 	WHERE $chapstring $secstring c.pgfiles_id = p.pgfiles_id";
+# 	my $dbh = getDB($ce);
+# 	my %tables = getTables($ce);
+# 	my $sth = $dbh->prepare($query);
+# 	
+# 	$sth->execute();
+    my $query = "SELECT c.*, p.path
 	FROM classify c, pgfiles p
-	WHERE $chapstring $secstring c.pgfiles_id = p.pgfiles_id";
+	WHERE ? ? c.pgfiles_id = p.pgfiles_id";
 	my $dbh = getDB($ce);
 	my %tables = getTables($ce);
 	my $sth = $dbh->prepare($query);
 	
-	$sth->execute();
+	$sth->execute($chapstring,$secstring);
+
 	while (1)
 	{
 		my $row = $sth->fetchrow_hashref();

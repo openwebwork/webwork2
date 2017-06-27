@@ -1,7 +1,8 @@
 <script type="text/template" id="user-settings-template">
  <table class="table">
 <tbody>
-<tr><td class="header">User Name</td><td id="user-id"></td><td class="error-cell"></td></tr>
+<tr><td class="header">Name</td><td id="name"></td></tr>
+<tr><td class="header">User Name</td><td id="user-id"></td></tr>
 <tr><td class="header">Email</td><td><input type="text" id="email" class="form-control"></td>
   <td class="error-cell"></td></tr>
 <tr><td class="header">Password</td>

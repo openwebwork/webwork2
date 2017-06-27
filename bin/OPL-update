@@ -159,7 +159,7 @@ if($libraryVersion eq '2.5') {
 	lastname varchar (255) NOT NULL,
 	firstname varchar (255) NOT NULL,
 	email varchar (255),
-	KEY author (lastname, firstname),
+	KEY author (lastname(100), firstname(100)),
 	PRIMARY KEY (author_id)
 '],
 [$tables{path}, '

@@ -397,12 +397,12 @@ sub attemptResults {
 
 	    @row = ();
 	    my $answerResult  = $pg->{answers}->{$name};
-	    my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+	    my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
 	    my $preview       = ($showAttemptPreview
 				 ? $self->previewAnswer($answerResult, $imgGen)
 				 : "");
 	    my $correctAnswer = $answerResult->{correct_ans};
-	    $answerScore = $answerResult->{score};
+	    $answerScore = $answerResult->{score}//0;
 	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 	    $numCorrect += $answerScore > 0;
 	    $numEssay += ($answerResult->{type}//'') eq 'essay';
@@ -1476,16 +1476,28 @@ sub body {
 			}
 
 		}
-
+		
+		# The following arrays cache results obtained in the two passes through 
+		# the collection of problems in the quiz
+		# This might save some time.
+		# This refactoring hasn't taken place yet
+		# because I don't yet understand why the ordering 
+		# for creating past answers was chosen as it is, different from creating sticky answers
+#		my @answerString = (); 
+#		my @encoded_ans_string = ();
+#		my @scores = ();
+#		my @isEssay = ();
+		
 		my @pureProblems = $db->getAllProblemVersions($effectiveUser,
 							      $setName,
 							      $versionNumber);
 		foreach my $i ( 0 .. $#problems ) {  # process each problem
 			# this code is essentially that from Problem.pm
+# begin problem loop for sticky answers
 			my $pureProblem = $pureProblems[$i];
 
 			# store answers in problem for sticky answers later
-			my %answersToStore;
+			# my %answersToStore;
 
 			# we have to be a little careful about getting the
 			#    answers that we're saving, because we don't have
@@ -1493,31 +1505,42 @@ sub body {
 			#    submitting
 			my %answerHash = ();
 			my @answer_order = ();
+			my $encoded_ans_string;
 			if ( ref( $pg_results[$i] ) ) {
-				%answerHash = %{$pg_results[$i]->{answers}};
-				$answersToStore{$_} = $self->{formFields}->{$_} 
-					foreach (keys %answerHash);
-				# check for extra answers that slipped 
-				#    by---e.g. for matrices, and get them 
-				#    from the original input form
-				my @extra_answer_names = 
-				    @{ $pg_results[$i]->{flags}->{KEPT_EXTRA_ANSWERS} };
-				$answersToStore{$_} = 
-				    $self->{formFields}->{$_} foreach (@extra_answer_names);
-				@answer_order = 
-				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
-				      @extra_answer_names );
+# 				%answerHash = %{$pg_results[$i]->{answers}};
+# 				$answersToStore{$_} = $self->{formFields}->{$_} 
+# 					foreach (keys %answerHash);
+# 				# check for extra answers that slipped 
+# 				#    by---e.g. for matrices, and get them 
+# 				#    from the original input form
+# 				my @extra_answer_names = 
+# 				    @{ $pg_results[$i]->{flags}->{KEPT_EXTRA_ANSWERS} };
+# 				$answersToStore{$_} = 
+# 				    $self->{formFields}->{$_} foreach (@extra_answer_names);
+# 				@answer_order = 
+# 				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
+# 				      @extra_answer_names );
+                my ($answerString, $scores,$isEssay); #not used here
+				($answerString,$encoded_ans_string,$scores,$isEssay) =
+				WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
+					$self, $pg_results[$i]
+				);  # ref($self) eq WeBWorK::ContentGenerator::Problem
+					# ref($pg) eq "WeBWorK::PG::Local";
 			} else {
 				my $prefix = sprintf('Q%04d_',$i+1);
 				my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
-				%answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
-				@answer_order = @fields;
+				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
+				my @answer_order = @fields;
+				$encoded_ans_string = encodeAnswers( %answersToStore, 
+ 							  @answer_order );
+ 						
 			}
-			my $answerString = encodeAnswers( %answersToStore, 
-							  @answer_order );
+# 				my $answerString = encodeAnswers( %answersToStore, 
+# 							  @answer_order );
+# 			
 			# and get the last answer 
-			$problems[$i]->last_answer( $answerString );
-			$pureProblem->last_answer( $answerString );
+			$problems[$i]->last_answer( $encoded_ans_string );
+			$pureProblem->last_answer( $encoded_ans_string );
 
 			# next, store the state in the database if that makes 
 			#    sense
@@ -1584,7 +1607,7 @@ sub body {
 				$db->putProblemVersion( $pureProblem );
 			}
 		} # end loop through problems
-
+# end loop through problems for sticky answer 
 
 		#Try to update the student score on the LMS
 		# if that option is enabled.
@@ -1611,18 +1634,27 @@ sub body {
 		# this is carried over from Problem.pm
 		if ( defined( $answer_log ) ) {
 			foreach my $i ( 0 .. $#problems ) {
+# begin problem loop for passed answers
 				my $answerString = '';
 				my $scores = '';
+				my $isEssay = 0;
 				# note that we store these answers in the 
 				#    order that they are presented, not the 
 				#    actual problem order
 				if ( ref( $pg_results[$probOrder[$i]] ) ) {
 					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
-					foreach ( sortByName(undef, keys %answerHash) ) {
-						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
-						$answerString .= $sAns . "\t";
-						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
-					}
+# 					foreach ( sortByName(undef, keys %answerHash) ) {
+# 						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
+# 						$answerString .= $sAns . "\t";
+# 						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
+# 					}
+                   	my ($encoded_ans_string, ); #not used here
+					($answerString,$encoded_ans_string,$scores,$isEssay) =
+					WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
+						$self, $pg_results[$probOrder[$i]]
+					);  # ref($self) eq WeBWorK::ContentGenerator::Problem
+						# ref($pg) eq "WeBWorK::PG::Local";
+					$answerString =~ s/\t+$/\t/;
 				} else {
 					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
 					my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
@@ -1630,9 +1662,11 @@ sub body {
 						$answerString .= $self->{formFields}->{$_} . "\t";
 						$scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
 					}
+					$answerString =~ s/\t+$/\t/;
 				}
-				$answerString =~ s/\t+$/\t/;
-
+				
+				
+		# Prefix answer string with submission type
 				my $answerPrefix;
 				if ( $submitAnswers ) { 
 					$answerPrefix = "[submit] ";  
@@ -1650,7 +1684,8 @@ sub body {
 					$answerString = "$answerPrefix" .
 						"$answerString";
 				}
-
+				
+		#Write to courseLog
 				writeCourseLog( $self->{ce}, "answer_log",
 						join("", '|', 
 						     $problems[$i]->user_id,
@@ -1659,7 +1694,7 @@ sub body {
 						     "\t$timeNow\t",
 						     "$answerString"), 
 						);
-				#add to PastAnswer db
+		#add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
 				$pastAnswer->course_id($courseID);
 				$pastAnswer->user_id($problems[$i]->user_id);
@@ -1676,7 +1711,7 @@ sub body {
 		}
 	}
 	debug("end answer processing");
-
+# end problem loop
 	# additional set-level database manipulation: we want to save the time 
 	#    that a set was submitted, and for proctored tests we want to reset 
 	#    the assignment type after a set is submitted for the last time so 

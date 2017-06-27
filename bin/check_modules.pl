@@ -59,6 +59,9 @@ my @modulesList = qw(
 	Digest::MD5
   Digest::SHA
 	Email::Address
+  Email::Simple;
+  Email::Sender::Simple
+  Email::Sender::Transport::SMTP
 	Errno
 	Exception::Class
 	File::Copy

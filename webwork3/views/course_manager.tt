@@ -9,6 +9,7 @@ main_view_paths.unshift("module","backbone");
 </script>
 <script type='text/javascript'>
 	require.config = { 'CourseManager': { session: [%theSession%], course_id: "[% course_id %]",
+	  user_info : [% user_info %],
 		sets: [%sets%], users: [%users%], settings: [% theSettings %]},
     'views/MainViewList': {main_views: [%main_views%]}
   };

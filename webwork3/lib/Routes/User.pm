@@ -102,18 +102,26 @@ post '/courses/:course_id/users/:user_id' => require_role professor => sub {
 #
 ##
 
-put '/courses/:course_id/users/:user_id' => require_role professor => sub {
+put '/courses/:course_id/users/:user_id' => require_any_role [qw/professor student/] => sub {
 
-	my $user = vars->{db}->getUser(param('user_id'));
-	send_error("The user with login " . param('user_id') . " does not exist",404) unless $user;
+  ## if the user is a student, they can only change their own information.
+
+  if (user_has_role('student') && (session 'logged_in_user') ne route_parameters->{user_id}){
+    send_error("A user with the role of student can only change his/her own information", 403);
+  }
+
+	my $user = vars->{db}->getUser(route_parameters->{user_id});
+	send_error("The user with login " . route_parameters->{user_id} . " does not exist",404) unless $user;
+
+
 
 	# update the standard user properties
 
-    my %allparams = params;
-    my $setFromClient = convertBooleans(\%allparams,\@boolean_user_props);
-	for my $key (@user_props) {
-        $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
-    }
+  my %allparams = params;
+  my $setFromClient = convertBooleans(\%allparams,\@boolean_user_props);
+  for my $key (@user_props) {
+    $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
+  }
 
 	vars->{db}->putUser($user);
 	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
@@ -127,11 +135,14 @@ put '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
 	my $u =convertObjectToHash($user, \@boolean_user_props);
 
-    $u->{_id} = $u->{user_id};
+  debug $u; 
+
+  $u->{_id} = $u->{user_id};  # helps Backbone on client-side to know the object is not new.
 
 	return $u;
 
 };
+
 
 
 ###

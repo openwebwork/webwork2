@@ -87,7 +87,13 @@ post '/courses/:course_id/logout' => sub {
 	return {logged_in=>false};
 };
 
+get '/login/denied' => sub {
 
+	debug "oops";
+
+	debug session; 
+
+};
 
 
 get '/app-info' => sub {
