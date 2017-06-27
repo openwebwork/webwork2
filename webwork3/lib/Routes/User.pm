@@ -5,6 +5,7 @@
 ##
 
 package Routes::User;
+use base qw(Exporter);
 
 use Dancer2 appname => "Routes::Login";
 use Dancer2::Plugin::Auth::Extensible;
@@ -16,6 +17,8 @@ our @user_props = qw/first_name last_name student_id user_id email_address permi
 our @boolean_user_props = qw/showOldAnswers useMathView/;
 our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
+our @EXPORT    = ();
+our @EXPORT_OK = qw(@boolean_user_props);
 
 ###
 #  return all users for course :course
@@ -117,25 +120,37 @@ put '/courses/:course_id/users/:user_id' => require_any_role [qw/professor stude
 
 	# update the standard user properties
 
+
   my %allparams = params;
   my $setFromClient = convertBooleans(\%allparams,\@boolean_user_props);
-  for my $key (@user_props) {
-    $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
+
+
+  # if the user is a student, only allow changes to a few properties:
+
+  if (user_has_role('professor')){
+    for my $key (@user_props) {
+      $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
+    }
+  } else {
+    for my $key (qw/email_address displayMode showOldAnswers userMathView/){
+      $user->{key} = $setFromClient->{$key} if (defined(params->{$key}));
+    }
   }
 
 	vars->{db}->putUser($user);
 	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
 
+  if (user_has_role('professor')){
     my $permission = vars->{db}->getPermissionLevel(params->{user_id});
 
-	if(params->{permission} != $permission->{permission}){
-		$permission->{permission} = params->{permission};
-		vars->{db}->putPermissionLevel($permission);
-	}
+    if(params->{permission} != $permission->{permission}){
+      $permission->{permission} = params->{permission};
+      vars->{db}->putPermissionLevel($permission);
+    }
+  }
+
 
 	my $u =convertObjectToHash($user, \@boolean_user_props);
-
-  debug $u; 
 
   $u->{_id} = $u->{user_id};  # helps Backbone on client-side to know the object is not new.
 
@@ -194,14 +209,17 @@ get '/courses/:course_id/users/loginstatus' => require_role professor => sub {
 
 # set a new password for user :user_id in course :course_id
 
-post '/courses/:course_id/users/:user_id/password' => sub {
-	#
-	# if the user is not a professor, check that the current password is correct.
-	#
+post '/courses/:course_id/users/:user_id/password' => require_any_role [qw/professor student/] => sub {
 
-	if(session->{permission} < 10 and session->{user} ne params->{user_id}){
-		send_error("You don't have the permission to change another password");
-	}
+  ## if the user is a student, they can only change their own information.
+
+  if (user_has_role('student') && (session 'logged_in_user') ne route_parameters->{user_id}){
+    send_error("A user with the role of student can only change his/her own password", 403);
+  }
+
+	my $user = vars->{db}->getUser(route_parameters->{user_id});
+	send_error("The user with login " . route_parameters->{user_id} . " does not exist",404) unless $user;
+
 
 	my $password = vars->{db}->getPassword(params->{user_id});
 	if(crypt(params->{old_password}, $password->password) eq $password->password){

@@ -64,6 +64,8 @@ Given a username, return a list of roles that user has.
 sub get_user_roles {
     my ($self, $username) = @_;
 
+    $username = $self->plugin->dsl->session("logged_in_user") unless (defined $username);
+
     #$self->plugin->dsl->debug("in get_user_roles");
     #$self->plugin->dsl->debug($username);
     my %roles = reverse %{$self->plugin->dsl->vars->{ce}->{userRoles}};

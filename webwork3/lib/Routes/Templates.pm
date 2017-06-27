@@ -11,7 +11,7 @@ use WeBWorK::Utils::CourseManagement qw/listCourses/;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use Array::Utils qw/array_minus/;
-# use Routes::Common qw/setCookie/;
+#use Routes::User qw/@boolean_user_props/;
 
 use Data::Dump qw/dump/;
 
@@ -65,8 +65,16 @@ sub permission_denied_page_handler {
   	debug "oops";
 
   	debug session;
-
+    template 'index';
 }
+
+get '/login/denied' => sub {
+  debug "in /login/denied";
+
+  debug session;
+
+  template 'index';
+};
 
 ###
 #
@@ -92,11 +100,13 @@ post '/courses/:course_id/login' => sub {
   debug $password;
   debug session;
 
+
   my ($success, $realm) = authenticate_user($username,$password);
 
   debug "trying to authenticate";
   debug $success;
   debug session;
+
 
   if($success){
     my $key = vars->{db}->getKey($username)->{key};
@@ -104,8 +114,6 @@ post '/courses/:course_id/login' => sub {
 		session logged_in_user => $username;
 		session logged_in_user_realm => $realm;
 		session logged_in => true;
-
-    #debug session;
 
     if (route_parameters->{course_id} eq 'admin'){
       redirect '/admin';
@@ -121,8 +129,6 @@ post '/courses/:course_id/login' => sub {
   } else {
     session login_failed => true;
     redirect '/courses/'. route_parameters->{course_id} . '/login';
-    # redirect '/courses/' . route_parameters->{course_id} . '/login',
-    #    {msg => 'login_failed'}, {method => 'GET'};
   }
 
 };
@@ -172,8 +178,18 @@ get '/courses/:course_id/manager' =>  require_role professor => sub {
 	my $settings = getCourseSettings(vars->{ce});
 	my $sets = getAllSets(vars->{db},vars->{ce});
 	my $users = getAllUsers(vars->{db},vars->{ce});
-  my $user_info = get_user_details(session 'logged_in_user');
+
+  # get information on the logged in user:
+
+  # hack: not sure why this isn't loading from Routes::User;
+
+  my @boolean_user_props = qw/showOldAnswers useMathView/;
+
+  my $user_info = convertObjectToHash(get_user_details(session 'logged_in_user'),
+                                      \@boolean_user_props);
   $user_info->{_id} = $user_info->{user_id};
+  my $permission = vars->{db}->getPermissionLevel($user_info->{user_id});
+  $user_info->{permission} = $permission->{permission};
 
 	my $session = convertObjectToHash(session->{data});
 	$session->{effectiveUser} = session 'logged_in_user';

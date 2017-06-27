@@ -77,7 +77,7 @@ var UserSettingsView = MainView.extend({
 
         this.$(".error-cell").removeClass("bg-danger").html("");
 		if(this.model.isValid(true)){
-			this.user.savePassword(this.model.pick("new_password","old_password"),{
+			this.model.savePassword(this.model.pick("new_password","old_password"),{
 				success: this.parseResponse});
 		}
 	},
@@ -99,8 +99,8 @@ var UserSettingsView = MainView.extend({
             return;
         }
 		this.eventDispatcher.trigger("add-message",{type: "success",
-                short: this.messageTemplate({type:"password_saved",opts:{user_id: this.user.get("user_id")}}),
-                text: this.messageTemplate({type:"password_saved",opts:{user_id: this.user.get("user_id")}})});
+                short: this.messageTemplate({type:"password_saved",opts:{user_id: this.model.get("user_id")}}),
+                text: this.messageTemplate({type:"password_saved",opts:{user_id: this.model.get("user_id")}})});
         this.$(".old-password").parent().removeClass("has-error");
         this.$(".old-password").popover("hide");
         this.changePassword(false);

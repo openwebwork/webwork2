@@ -17,12 +17,13 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
             logged_in: false,
             displayMode: "",
             showOldAnswers: false,
-            useMathView: false
+            useMathView: false,
+            lis_source_did: ""
         },
-        validation: { 
+        validation: {
             user_id: "checkLogin",
             email_address: {pattern: "email", required: false}
-        }, 
+        },
         idAttribute: "_id",
         initialize: function(attrs,opts){
             this.set(this.parse(attrs));
@@ -35,14 +36,14 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
             return (config.userProps.map(function(prop){return util.csvEscape(self.get(prop.shortName));})).join(",") + "\n";
         },
         parse: function(response){
-            // check the response.  Perhaps an error should be thrown a valid value isn't sent from the server. 
+            // check the response.  Perhaps an error should be thrown a valid value isn't sent from the server.
             if(response && response.status){
                 _(config.enrollment_statuses).each(function(enr){
                     if(_(enr.abbrs).contains(response.status)){
-                        response.status = enr.value;        
+                        response.status = enr.value;
                     }
                 })
-                
+
             }
             return response;
         },
@@ -56,10 +57,10 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
                 return "The user with login " + this.get("user_id") + " already exists in this course.";
             }
         },
-        // this is separate from the user fields so information is not saved. 
+        // this is separate from the user fields so information is not saved.
         savePassword: function(passwords,options){
             $.ajax({
-                url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id") 
+                url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id")
                         + "/password",
                 type: "POST",
                 data: passwords,
