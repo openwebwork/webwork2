@@ -46,6 +46,7 @@ my @modulesList = qw(
         Crypt::SSLeay
 	Dancer
 	Dancer::Plugin::Database
+	Data::Dump
 	Data::Dumper
 	Data::UUID 
 	Date::Format
