@@ -11,19 +11,19 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             alert("It doesn't appear that Dancer is running. See the installation guide at http://webwork.maa.org to fix this.");
         }
     });
-    
+
     var config = {
         urlPrefix: "/webwork3/api/",
 
-        // This is temporary to get the handshaking set up to dancer. 
+        // This is temporary to get the handshaking set up to dancer.
         // in the future this should be taken care of with dancer
         courseSettings: {
             "session_key": $("#hidden_key").val(),
             "user": $("#hidden_user").val(),
-        },   
-    
-    // Note: these are in the order given in the classlist format for LST files.  
-    
+        },
+
+    // Note: these are in the order given in the classlist format for LST files.
+
         userProps: [{shortName: "student_id", longName: "Student ID", regexp: "student"},
                      {shortName: "last_name", longName: "Last Name", regexp: "last"},
                      {shortName: "first_name", longName: "First Name", regexp: "first"},
@@ -36,7 +36,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                      {shortName: "userpassword", longName: "Password", regexp: "pass"},
                      {shortName: "permission", longName: "Permission Level", regexp: "permission"}
                      ],
-    
+
 
         permissions : [{value: "-5", label: "guest"},{value: "0", label: "student"},{value: "2", label: "login proctor"},
                        {value: "3", label: "grade proctor"},{value: "5", label: "T.A."},
@@ -46,7 +46,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         enrollment_statuses: [
                     {value: "A", label: "Audit", abbrs: ["A","a","audit"]},
                     {value: "C", label: "Enrolled", abbrs: ["C","c","enrolled","current"]},
-                    {value: "P", label: "Proctor", abbrs: ["P","p","proctor"]}, 
+                    {value: "P", label: "Proctor", abbrs: ["P","p","proctor"]},
                     {value: "D", label: "Drop", abbrs: ["D","d","drop","withdraw"]}],
 
         regexp : {
@@ -62,16 +62,16 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             var newDate = moment(evt.data.$el.children(".wwdate").val(),"MM/DD/YYYY");
             var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
             theDate.year(newDate.year()).month(newDate.month()).date(newDate.date());
-            evt.data.model.set(evt.data.options.observe,theDate.unix()); 
+            evt.data.model.set(evt.data.options.observe,theDate.unix());
         },
         setTime: function(evt,timeStr){
             var time = timeStr || evt.data.$el.find(".wwtime").text();
             var timeParse = config.regexp.time12.exec(time);
             if(timeParse){
                 var theDate = moment.unix(evt.data.model.get(evt.data.options.observe));
-                var newDate = moment(time,"hh:mmA");             
+                var newDate = moment(time,"hh:mmA");
                 theDate.hours(newDate.hours()).minutes(newDate.minutes());
-                evt.data.model.set(evt.data.options.observe,theDate.unix()); 
+                evt.data.model.set(evt.data.options.observe,theDate.unix());
                 evt.data.$el.popover("destroy");
                 evt.data.$el.removeAttr("style");
             } else {
@@ -79,7 +79,6 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 var errorMessage = config.messageTemplate({type: "time_error"})
                 evt.data.$el.popover({title: "Error", content: errorMessage, placement: "left"}).popover("show");
             }
-            console.log(theDate);
         },
         sortIcons: {
             "string1": "fa fa-sort-alpha-asc",
@@ -87,18 +86,18 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             "integer1": "fa fa-sort-numeric-asc",
             "integer-1": "fa fa-sort-numeric-desc",
             "boolean1": "fa fa-sort-amount-asc",
-            "boolean-1": "fa fa-sort-amount-desc", 
+            "boolean-1": "fa fa-sort-amount-desc",
             "none1": "fa fa-sort-amount-asc",
             "none-1": "fa fa-sort-amount-desc"
         }
 
-    } 
+    }
 
     config.messageTemplate= _.template($("#general-messages").html());
 
     // These are additional validation patterns to be available to Backbone Validation
 
-    _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate}); 
+    _.extend(Backbone.Validation.patterns, { "wwdate": config.regexp.wwDate});
     _.extend(Backbone.Validation.patterns, { "setname": /^[\w\d\_\.]+$/});
     _.extend(Backbone.Validation.patterns, { "loginname": config.regexp.loginname});
     //_.extend(Backbone.Validation.patterns, { "loginname": /^[\w\d\_]+$/});
@@ -108,17 +107,17 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                 return config.messageTemplate({type:"set_name_error"});
             }
         });
-    
+
     _.extend(Backbone.Validation.messages, {
         loginname: "The login name is not valid (you can only use the characters a-z,A-Z, 1-9, . and _)"
     });
 
-    _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);  
+    _.extend(Backbone.Model.prototype, Backbone.Validation.mixin);
 
     // This implements a stickit handler for elements of type wwdate
     // see https://github.com/NYTimes/backbone.stickit for more info.
     //
-    // This takes a webwork date-time (for open_date, due-date, etc.) and creates a pair of html spans to handle 
+    // This takes a webwork date-time (for open_date, due-date, etc.) and creates a pair of html spans to handle
     // the date and time separately
     //
     // note, pstaab: I think the Handler ".edit-datetime" is better.  Need to check where .ww-datetime is used
@@ -133,19 +132,19 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             var timeZone = config.parseWWDate(evt.data.model.get(evt.data.options.observe)).time_zone;
 
             evt.data.model.set(evt.data.options.observe,datePart + " at " + timePart + " " + timeZone);
-            
-        }; 
+
+        };
         $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, setModel);
         $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, setModel);
         $el.children(".wwdate").datepicker();
 
       },
       updateMethod: 'html',
-      onGet: function(val) { 
+      onGet: function(val) {
 
         var theDate = config.parseWWDate(val);
         return '<input class="wwdate" size="12" value="' + theDate.date.format("MM/DD/YYYY") + '"> at ' +
-                '<span class="wwtime" contenteditable="true"> ' + theDate.date.format("hh:mmA") + '</span>'; 
+                '<span class="wwtime" contenteditable="true"> ' + theDate.date.format("hh:mmA") + '</span>';
         }
     });
 
@@ -170,27 +169,37 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime',
         update: function($el, val,model, options){
-            
-            // hide this for sets in which the reduced_scoring date should not be shown. 
-            if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring") 
-                    && ! model.show_reduced_scoring){ 
+
+            // hide this for sets in which the reduced_scoring date should not be shown.
+            if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring")
+                    && ! model.show_reduced_scoring){
                 $el.html("");
             } else {
                 var tmpl = _.template($("#edit-date-time-template").html());
-                $el.html(tmpl({date: moment.unix(model.get(options.observe)).format("MM/DD/YYYY")}));        
+                $el.html(tmpl({date: moment.unix(model.get(options.observe)).format("MM/DD/YYYY")}));
             }
-            
+
             var tmpl = _.template($("#time-popover-template").html());
             var popoverHTML = tmpl({time : moment.unix(model.get(options.observe)).format("h:mm a")});
             var timeIcon = $el.children(".open-time-editor");
             timeIcon.popover({title: "Change Time:", html: true, content: popoverHTML,
                 trigger: "manual"});
+            // set time when the "Set Time" button is clicked.
             timeIcon.parent().delegate(".save-time-button","click",{$el:$el.closest(".edit-datetime"),
                              model: model, options: options},
                 function (evt) {
                     config.setTime(evt,$(this).siblings(".wwtime").val());
             });
             timeIcon.parent().delegate(".cancel-time-button","click",{},function(){timeIcon.popover("hide");});
+            timeIcon.parent().delegate(".wwtime","keyup",{$el:$el.closest(".edit-datetime"),
+                             model: model, options: options},function(evt){
+              if(evt.keyCode==13){
+                  evt.preventDefault();
+                  config.setTime(evt,$(this).val());
+                  $(evt.target).blur();
+                  timeIcon.popover("hide");
+              }
+            });
             $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, config.setDate);
             $el.children(".wwtime").on("blur",{"$el": $el, "model": model, "options": options}, config.setTime);
             timeIcon.parent().on("click",".open-time-editor", function() {
@@ -204,13 +213,13 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
     Backbone.Stickit.addHandler({
         selector: '.edit-datetime-showtime',
         update: function($el, val, model, options){
-            // hide this for sets in which the reduced_scoring date should not be shown. 
-            if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring") 
+            // hide this for sets in which the reduced_scoring date should not be shown.
+            if(options.observe==="reduced_scoring_date" && ! model.get("enable_reduced_scoring")
                     && ! model.show_reduced_scoring){
                 $el.html("");
             } else {
                 var tmpl = _.template($("#edit-date-time2-template").html());
-                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));        
+                $el.html(tmpl({date: moment.unix(val).format("MM/DD/YYYY")}));
             }
             $el.children(".wwdate").on("change",{"$el": $el, "model": model, "options": options}, config.setDate);
             $el.children(".wwtime").text(moment.unix(model.get(options.observe)).format("h:mm a"))
@@ -232,7 +241,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             var tz = (theDate.toDate() + "").match(/\((.*)\)/)[1];
             return theDate.format("MM/DD/YYYY") + " at " + theDate.format("hh:mmA") + " " + tz;
         }
-      
+
     });
 
     Backbone.Stickit.addHandler({
@@ -247,9 +256,9 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                         model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
                 })
             }).on("click",function(){
-              // this seems to be needed to get the popover to work, but it takes two clicks now to get working. 
-              // maybe a bug in bootstrap.js? 
-              $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true, 
+              // this seems to be needed to get the popover to work, but it takes two clicks now to get working.
+              // maybe a bug in bootstrap.js?
+              $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true,
                         content: popoverHTML, container: "body", trigger: "click"});
             });
             var info = "";
@@ -275,11 +284,11 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
 
     Backbone.Stickit.addHandler({
         selector: '.select-with-disables',
-        getVal: function($el) { 
-                return $el.val(); 
-        }, 
+        getVal: function($el) {
+                return $el.val();
+        },
 
-        update: function($el, val, model, options) { 
+        update: function($el, val, model, options) {
             $el.html("");
 
             var disabledOptions  = eval(options.selectOptions.disabledCollection);
@@ -293,7 +302,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             })
 
             _(val).each(function(user){
-              $el.children("option[value='" + user + "']").prop("selected",true);  
+              $el.children("option[value='" + user + "']").prop("selected",true);
             })
 
 
@@ -323,18 +332,18 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
             return val==="yes";
         }
     })
-    
+
     Backbone.Stickit.addHandler({
         selector: ".input-blur",
         events: ["blur"],
-        
+
     });
-    
+
     Backbone.Stickit.addHandler({
         selector: ".integer-input",
         onSet: function(value) {
             return parseInt(value);
-        }}); 
+        }});
 
     return config;
 });
