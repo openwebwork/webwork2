@@ -73,7 +73,7 @@ RUN apt-get update \
        git \
        mysql-client \
     && curl -Lk https://cpanmin.us | perl - App::cpanminus \
-    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template XMLRPC::Lite Mail::Sender \
+    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template XMLRPC::Lite Mail::Sender Email::Sender::Simple Data::Dump \
     && rm -fr /var/lib/apt/lists/* ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
