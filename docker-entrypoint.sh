@@ -34,7 +34,7 @@ if [ "$1" = 'apache2' ]; then
         umask 2
         cd $APP_ROOT/courses
         WEBWORK_ROOT=$APP_ROOT/webwork2 $APP_ROOT/webwork2/bin/addcourse admin --db-layout=sql_single --users=$APP_ROOT/webwork2/courses.dist/adminClasslist.lst --professors=admin
-        chown root:www-data -R $APP_ROOT/courses/admin
+        chown www-data:root -R $APP_ROOT/courses
         echo "Admin course is created."
     fi
     # generate apache2 reload config if needed
