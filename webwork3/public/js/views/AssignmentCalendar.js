@@ -12,46 +12,46 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         template: this.$("#calendar-date-bar").html(),
         popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
     	initialize: function (options) {
-            var self = this;
-            CalendarView.prototype.initialize.call(this,options);
+        var self = this;
+        CalendarView.prototype.initialize.call(this,options);
     		_.bindAll(this,"render","renderDay","update","showHideAssigns");
-            _(this).extend(_(options).pick("problemSets","settings","users","eventDispatcher"));
+        _(this).extend(_(options).pick("problemSets","settings","users","eventDispatcher"));
 
-            this.assignmentDates = util.buildAssignmentDates(this.problemSets);
-            this.problemSets.on({sync: self.render,
-                     remove: function(_set){
-                  // update the assignmentDates to delete the proper assignments
+        this.assignmentDates = util.buildAssignmentDates(this.problemSets);
+        this.problemSets.on({sync: self.render,
+                 remove: function(_set){
+              // update the assignmentDates to delete the proper assignments
 
-                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) {
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
-                }}).on("change:due_date change:open_date change:answer_date change:reduced_scoring_date",
-                        function(_set){
-                            _set.adjustDates();
-                            self.assignmentDates.chain().filter(function(assign) {
-                                    return assign.get("problemSet").get("set_id")===_set.get("set_id");})
-                                .each(function(assign){
-                                    assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")
-                                                                        .replace("-","_")+"_date"))
-                                .format("YYYY-MM-DD"));
-                    })
-                }).on("sync",function(_set) {
-                    _(_set._network).chain().keys().each(function(key){
-                        switch(key){
-                            case "add":
-                                self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
-                                    date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
-                                self.assignmentDates.add(new AssignmentDate({type: "due", problemSet: _set,
-                                    date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
-                                self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
-                                    date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
-                                self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
-                                    date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}));
-                                delete _set._network;
-                                break;
-                        }
-                    });
+                self.assignmentDates.remove(self.assignmentDates.filter(function(assign) {
+                    return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
+            }}).on("change:due_date change:open_date change:answer_date change:reduced_scoring_date",
+                    function(_set){
+                        _set.adjustDates();
+                        self.assignmentDates.chain().filter(function(assign) {
+                                return assign.get("problemSet").get("set_id")===_set.get("set_id");})
+                            .each(function(assign){
+                                assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")
+                                                                    .replace("-","_")+"_date"))
+                            .format("YYYY-MM-DD"));
+                })
+            }).on("sync",function(_set) {
+                _(_set._network).chain().keys().each(function(key){
+                    switch(key){
+                        case "add":
+                            self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
+                                date: moment.unix(_set.get("open_date")).format("YYYY-MM-DD")}));
+                            self.assignmentDates.add(new AssignmentDate({type: "due", problemSet: _set,
+                                date: moment.unix(_set.get("due_date")).format("YYYY-MM-DD")}));
+                            self.assignmentDates.add(new AssignmentDate({type: "answer", problemSet: _set,
+                                date: moment.unix(_set.get("answer_date")).format("YYYY-MM-DD")}));
+                            self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
+                                date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}));
+                            delete _set._network;
+                            break;
+                    }
                 });
-            return this;
+            });
+        return this;
     	},
       render: function (){
         CalendarView.prototype.render.apply(this);
