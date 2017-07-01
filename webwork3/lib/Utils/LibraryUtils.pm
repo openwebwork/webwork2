@@ -443,7 +443,7 @@ sub render {
   my $form_data = {
   	displayMode => 'MathJax',
   	outputformat => 'standard',
-  	problemSeed => 1234,
+  	problemSeed => $renderParams->{problem}->{problem_seed} || 1,
   };
 
   my @anskeys = split(";",$renderParams->{answer_fields} || "");
@@ -455,10 +455,10 @@ sub render {
 
 	my $user          = $renderParams->{user} || fake_user($db);
 	my $set           = $renderParams->{'this_set'} || fake_set($db);
-	my $problem_seed  = $renderParams->{'problem_seed'} || 1; #$r->param('problem_seed') || 0;
-	my $showHints     = $renderParams->{showHints} || 0;
-	my $showSolutions = $renderParams->{showSolutions} || 0;
-	my $problemNumber = $renderParams->{'problem_number'} || 1;
+	my $problem_seed  = $renderParams->{problem}->{'problem_seed'} || 1; #$r->param('problem_seed') || 0;
+	my $showHints     = $renderParams->{show_hints} || 0;
+	my $showSolutions = $renderParams->{show_solutions} || 0;
+	my $problemNumber = $renderParams->{problem}->{'problem_number'} || 1;
   my $displayMode   = $renderParams->{displayMode}//
                        $ce->{pg}->{options}->{displayMode};
 
