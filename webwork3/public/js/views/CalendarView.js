@@ -1,22 +1,22 @@
 /**
- * This is a base class for a calendar view.  This should be extended (subclassed) to use. 
+ * This is a base class for a calendar view.  This should be extended (subclassed) to use.
  *
  *  options:
  *     calendarType: "month" or "week"  to display a full month or week (which is two weeks)
- */ 
+ */
 
-define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','bootstrap'], 
+define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','bootstrap'],
     function(Backbone, _,MainView, moment) {
-	
+
     var CalendarView = Backbone.View.extend({
         className: "calendar",
         initialize: function (options){
             var self = this;
             _.bindAll(this, 'render','showWeekView','showMonthView','viewPreviousWeek','viewNextWeek');
-            
+
             var defaults = {num_of_weeks: 6, first_day: ""};
             this.state = new Backbone.Model(_.extend({},defaults,_(options).pick("num_of_weeks","first_day")));
-            
+
             if (! this.date){
                 this.date = moment();  // today!
             }
@@ -28,14 +28,14 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
             return this;
         },
         render: function () {
-            var self = this;            
+            var self = this;
 
             this.weekViews = [];
             for(var i = 0; i<this.state.get("num_of_weeks"); i++){
                 this.weekViews[i] = new WeekView({first_day: moment(this.state.get("first_day")).add(7*i,"days"),
                     calendar: this});
             }
-            
+
 
             this.$el.html($("#calendar-template").html());
             var calendarHead = this.$("#calendar-table thead");
@@ -47,16 +47,14 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
 
             _(this.weekViews).each(function(_week){
                 calendarTable.append(_week.render().el);
-            });                        
-            this.$(".month-name").text(moment(this.firstDay).format("MMMM YYYY"));
-            //this.$el.append(calendarTable.el);
-            //this.delegateEvents(this.events());
-            return this;   
+            });
+            this.$(".month-name").text(moment(this.state.get("first_day")).format("MMMM YYYY"));
+            return this;
         },
         events: function () {
-          return this.calendarChangeEvents;  
+          return this.calendarChangeEvents;
         },
-        calendarChangeEvents: { 
+        calendarChangeEvents: {
             "click .previous-week": "viewPreviousWeek",
             "click .next-week": "viewNextWeek",
             "click .view-week": "showWeekView",
@@ -80,13 +78,14 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         showMonthView: function () {
             this.state.set("num_of_weeks",6);
             this.render();
-        }, 
+        },
         gotoToday: function () {
             var firstOfMonth = moment().date(1);
             var firstDay = this.state.get("calendar_type")==="month"?
-                moment(firstOfMonth).date(1).subtract(firstOfMonth.date(1).day(),"days"):
-                moment().subtract(moment().day(),"days");
+            moment(firstOfMonth).date(1).subtract(firstOfMonth.date(1).day(),"days"):
+            moment().subtract(moment().day(),"days");
             this.state.set("first_day",firstDay);
+            this.render();
         },
         renderDay: function(){
             // this is called from the CalendarDayView.render() to be useful, this should be overridden in the subclass
@@ -101,7 +100,7 @@ define(['backbone', 'underscore','views/MainView', 'moment','jquery-truncate','b
         tagName: "tr",
         className: "calendar-row",
         initialize: function (options){
-            this.first_day = options.first_day;  // the first day of the week.  
+            this.first_day = options.first_day;  // the first day of the week.
             this.days = []; // an array of DayViews;
             var i;
             for(i=0;i<7;i++){

@@ -1,13 +1,13 @@
 /**
-  * This is the assignment calendar view. 
+  * This is the assignment calendar view.
   *
   */
 
 
 define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView',
-        'models/AssignmentDate','models/AssignmentDateList','config','apps/util'], 
+        'models/AssignmentDate','models/AssignmentDateList','config','apps/util'],
     function(Backbone, _, moment,MainView, CalendarView,AssignmentDate,AssignmentDateList,config,util) {
-	
+
     var AssignmentCalendar = CalendarView.extend({
         template: this.$("#calendar-date-bar").html(),
         popupTemplate: _.template(this.$("#calendar-date-popup-bar").html()),
@@ -16,18 +16,18 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             CalendarView.prototype.initialize.call(this,options);
     		_.bindAll(this,"render","renderDay","update","showHideAssigns");
             _(this).extend(_(options).pick("problemSets","settings","users","eventDispatcher"));
-  
+
             this.assignmentDates = util.buildAssignmentDates(this.problemSets);
-            this.problemSets.on({sync: self.render,                
+            this.problemSets.on({sync: self.render,
                      remove: function(_set){
                   // update the assignmentDates to delete the proper assignments
 
-                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) { 
-                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));  
+                    self.assignmentDates.remove(self.assignmentDates.filter(function(assign) {
+                        return assign.get("problemSet").get("set_id")===_set.get("set_id");}));
                 }}).on("change:due_date change:open_date change:answer_date change:reduced_scoring_date",
                         function(_set){
                             _set.adjustDates();
-                            self.assignmentDates.chain().filter(function(assign) { 
+                            self.assignmentDates.chain().filter(function(assign) {
                                     return assign.get("problemSet").get("set_id")===_set.get("set_id");})
                                 .each(function(assign){
                                     assign.set("date",moment.unix(assign.get("problemSet").get(assign.get("type")
@@ -35,7 +35,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                                 .format("YYYY-MM-DD"));
                     })
                 }).on("sync",function(_set) {
-                    _(_set._network).chain().keys().each(function(key){ 
+                    _(_set._network).chain().keys().each(function(key){
                         switch(key){
                             case "add":
                                 self.assignmentDates.add(new AssignmentDate({type: "open", problemSet: _set,
@@ -47,43 +47,38 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                                 self.assignmentDates.add(new AssignmentDate({type: "reduced-scoring", problemSet: _set,
                                     date: moment.unix(_set.get("reduced_scoring_date")).format("YYYY-MM-DD")}));
                                 delete _set._network;
-                                break;    
+                                break;
                         }
                     });
-                }); 
-            return this;
-    	},
-    	render: function (){
-    		CalendarView.prototype.render.apply(this);
-            MainView.prototype.render.apply(this);
-            
-            // remove any popups that exist already.  
-            this.$(".show-set-popup-info").popover("destroy")
-
-            $('.show-date-types input, .show-date-types label').click(function(e) {
-                e.stopPropagation();
-            });
-
-
-            
-
-            // hides any popover clicked outside.
-            $('body').on('click', function (e) {
-                $('[data-toggle="popover"]').each(function () {
-                    //the 'is' for buttons that trigger popups
-                    //the 'has' for icons within a button that triggers a popup
-                    if (!$(this).is(e.target) && $(this).has(e.target).length === 0 
-                                && $('.popover').has(e.target).length === 0) {
-                        $(this).popover('hide');
-                    }
                 });
-            });
-            this.update();
-            this.stickit(this.state,this.bindings);
-            this.showHideAssigns(this.state);
-            
             return this;
     	},
+      render: function (){
+        CalendarView.prototype.render.apply(this);
+        // remove any popups that exist already.
+        this.$(".show-set-popup-info").popover("destroy")
+
+        $('.show-date-types input, .show-date-types label').click(function(e) {
+          e.stopPropagation();
+        });
+
+        // hides any popover clicked outside.
+        $('body').on('click', function (e) {
+          $('[data-toggle="popover"]').each(function () {
+            //the 'is' for buttons that trigger popups
+            //the 'has' for icons within a button that triggers a popup
+            if (!$(this).is(e.target) && $(this).has(e.target).length === 0
+            && $('.popover').has(e.target).length === 0) {
+              $(this).popover('hide');
+            }
+          });
+        });
+        this.update();
+        this.stickit(this.state,this.bindings);
+        this.showHideAssigns(this.state);
+
+        return this;
+      },
         bindings: {
             ".show-open-date": "open_date",
             ".show-due-date": "due_date",
@@ -91,7 +86,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
             ".show-answer-date": "answer_date"
         },
         additionalEvents: function() {
-            return CalendarView.prototype.events.call(this);   
+            return CalendarView.prototype.events.call(this);
         },
     	renderDay: function (day){
     		var self = this;
@@ -105,7 +100,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
 
     	},
         set: function(opts){
-            if(opts.assignmentDates)this.assignmentDates = opts.assignmentDates; 
+            if(opts.assignmentDates)this.assignmentDates = opts.assignmentDates;
             return CalendarView.prototype.set.apply(this,[opts]);
         },
         getHelpTemplate: function (){
@@ -113,8 +108,8 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         },
         update:  function (){
             var self = this;
-            // The following allows each day in the calendar to allow a problem set to be dropped on. 
-                 
+            // The following allows each day in the calendar to allow a problem set to be dropped on.
+
             this.$(".calendar-day").droppable({
                 hoverClass: "highlight-day",
                 accept: ".sidebar-problem-set, .assign",
@@ -147,7 +142,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         },
         showHideAssigns: function(model){
             var self = this;
-            // define the mapping between fields in the model and assignment classes. 
+            // define the mapping between fields in the model and assignment classes.
             var obj = {
                 reduced_scoring_date: "assign-reduced-scoring",
                 due_date: "assign-due",
@@ -155,27 +150,27 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 answer_date: "assign-answer"
             }
 
-            
-            
+
+
             var keys = _(obj).keys();
             if(! this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")){
                 keys = _(keys).without("reduced_scoring_date");
             }
 
-            // show/hide the sets according to those selected in the "Date Types" dropdown.  
+            // show/hide the sets according to those selected in the "Date Types" dropdown.
             _(keys).each(function(key){
                 util.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
             });
 
-          
-            // hide the reduced credit dates for those that are disabled.  
-            this.problemSets.chain().each(function(_set) { 
-                util.changeClass({state: _set.get("enable_reduced_scoring") &&            
+
+            // hide the reduced credit dates for those that are disabled.
+            this.problemSets.chain().each(function(_set) {
+                util.changeClass({state: _set.get("enable_reduced_scoring") &&
                                   self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")
                                   , remove_class: "hidden", els: self.$(".assign-reduced-scoring[data-setname='"+_set.get("set_id")+"']")});
             });
-  
-        
+
+
             // hide the check box in the Assignment types dropdown if needed:
             util.changeClass({state: !this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
                               add_class: "hidden", els: $(".checkbox.assign-reduced-scoring")});
@@ -210,7 +205,7 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
         },
         bindings: {
             ".assign-calendar-name": "set_id",
-            ".assign-info": "set_id"  // this seems to be a hack to get stickit to add the handler. 
+            ".assign-info": "set_id"  // this seems to be a hack to get stickit to add the handler.
         }
     });
 
