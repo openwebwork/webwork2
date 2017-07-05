@@ -23,3 +23,7 @@ services:
       - "8080:80"
     environment:
       DEV: 0
+  r:
+    image: ubcctlt/rserve
+    ports:
+      - "6311:6311"
