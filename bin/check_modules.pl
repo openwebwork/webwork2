@@ -74,6 +74,7 @@ my @modulesList = qw(
 	HTML::Tagset
 	HTML::Template
 	IO::File
+	IO::Socket::SSL
 	Iterator
 	Iterator::Util
 	JSON
@@ -86,6 +87,7 @@ my @modulesList = qw(
 	Net::LDAPS
 	Net::OAuth
 	Net::SMTP
+	Net::SSLeay
 	Opcode
 	PadWalker
 	Path::Class
@@ -114,7 +116,9 @@ my @modulesList = qw(
 );
 
 my %moduleVersion = (
-    'LWP::Protocol::https' => 6.06
+    'LWP::Protocol::https' => 6.06,
+    'Net::SSLeay' => 1.46,
+    'IO::Socket::SSL' => 2.007
 );
 
 # modules used by disabled code
