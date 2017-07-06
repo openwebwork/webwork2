@@ -857,12 +857,15 @@ sub mail_message_to_recipients {
 			my $msg = eval { $self->process_message($ur,$rh_merge_data) };
 			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 			#warn "message is ok";
-			my $transport = Email::Sender::Transport::SMTP->new({
-				host => $ce->{mail}->{smtpServer},
-				ssl => $ce->{tls_allowed}//1, ## turn on ssl security
-				timeout => $ce->{mail}->{smtpTimeout}
-			});
+# 			my $transport = Email::Sender::Transport::SMTP->new({
+# 				host => $ce->{mail}->{smtpServer},
+# 				ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
+# 				timeout => $ce->{mail}->{smtpTimeout}
+# 			});
+# 
 
+#           createEmailSenderTransportSMTP is defined in ContentGenerator
+			my $transport = $self->createEmailSenderTransportSMTP();
 			my $email = Email::Simple->create(
 				header => [
 					To => $ur->email_address,
@@ -909,9 +912,11 @@ sub email_notification {
 
 	my $transport = Email::Sender::Transport::SMTP->new({
 		host => $ce->{mail}->{smtpServer},
-		ssl => $ce->{tls_allowed}//1, ## turn on ssl security
+		ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 		timeout => $ce->{mail}->{smtpTimeout}
 	});
+
+	$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
 
 	my $email = Email::Simple->create(
 		header => [
