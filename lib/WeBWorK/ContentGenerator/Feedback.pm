@@ -243,14 +243,16 @@ sub body {
 			$remote_port = "UNKNOWN" unless defined $remote_port;
 		}
 
-		my $transport = Email::Sender::Transport::SMTP->new({
-			host => $ce->{mail}->{smtpServer},
-			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
-			timeout => $ce->{mail}->{smtpTimeout}
-		});
+# 		my $transport = Email::Sender::Transport::SMTP->new({
+# 			host => $ce->{mail}->{smtpServer},
+# 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
+# 			timeout => $ce->{mail}->{smtpTimeout}
+# 		});
+# 
+# 		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
 
-		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
-
+#           createEmailSenderTransportSMTP is defined in ContentGenerator
+		my $transport = $self->createEmailSenderTransportSMTP();
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
 			"From" => $user->email_address,

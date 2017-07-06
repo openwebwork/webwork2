@@ -3,12 +3,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/conf/site.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
-#
+# 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-#
+# 
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -26,7 +26,7 @@
 # This file is used to set up the basic paths and URLs specific to your
 # installation of WeBWorK, with the exception of the $webwork_dir variable which
 # is set in the WeBWorK Apache configuration file (webwork.apache2-config).
-# Any customization of global WeBWorK settings should be done in localOverrides.conf.
+# Any customization of global WeBWorK settings should be done in localOverrides.conf. 
 
 ################################################################################
 # site.conf  -- this file
@@ -211,13 +211,11 @@ $mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
 $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 
 # Seconds to wait before timing out when connecting to the SMTP server.
-#  the default is 120 seconds.  Change it by uncommenting the following line
+#  the default is 120 seconds.  
+# Change it by uncommenting the following line
+# set it to 5 for testing, 30 or larger for production
+
 $mail{smtpTimeout}           = 30;
-
-# change the SMTP port.  Typically this does not need to be done it will use
-# port 25 if no SSL is on and 465 if ssl is on
-
-# $mail{smtpPort} = 25;
 
 
 # TLS is a method for providing secure connections to the smtp server.
@@ -226,7 +224,23 @@ $mail{smtpTimeout}           = 30;
 # Set this value to 0 to avoid checking certificates.
 # Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
 
-$mail{tls_allowed} = 1;
+$mail{tls_allowed} = 0;  
+#$tls_alowed=0;  #old method -- this variable no longer works.
+
+# errors of the form
+#  unable to establish SMTP connection to smtp-gw.rochester.edu port 465
+# indicate that there is a mismatch between the port number and the use of ssl
+# use port 25 when ssl is off and use port 465 when ssl is on (tls_allowed=1)
+
+
+# Set the SMTP port manually.  Typically this does not need to be done it will use
+# port 25 if no SSL is on and 465 if ssl is on
+
+#$mail{smtpPort} = 25;
+
+# Debugging tutorial for sending email using ssl/tls
+# https://maulwuff.de/research/ssl-debugging.html
+
 
 
 ################################################################################

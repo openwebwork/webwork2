@@ -690,14 +690,15 @@ sub jitar_send_warning_email {
     || "WeBWorK question from %c: %u set %s/prob %p"; # default if not entered
     $subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
 
-		my $transport = Email::Sender::Transport::SMTP->new({
-			host => $ce->{mail}->{smtpServer},
-			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
-			timeout => $ce->{mail}->{smtpTimeout}
-		});
+# 		my $transport = Email::Sender::Transport::SMTP->new({
+# 			host => $ce->{mail}->{smtpServer},
+# 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
+# 			timeout => $ce->{mail}->{smtpTimeout}
+# 		});
+# 
 
-		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort};
-
+#           createEmailSenderTransportSMTP is defined in ContentGenerator
+		my $transport = $self->createEmailSenderTransportSMTP();
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
 			"From" => $sender,
