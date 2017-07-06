@@ -2267,10 +2267,10 @@ sub createEmailSenderTransportSMTP {
 			# debug => 1,
 		});
 	}
-		warn "port is ", $transport->port(); 
-		warn "ssl is ", $transport->ssl(); 
-		warn "tls_allowed is ", $ce->{mail}->{tls_allowed}//'';
-        warn " smtpPort is set to ", $ce->{mail}->{smtpPort}//'';
+# 		warn "port is ", $transport->port(); 
+# 		warn "ssl is ", $transport->ssl(); 
+# 		warn "tls_allowed is ", $ce->{mail}->{tls_allowed}//'';
+#         warn " smtpPort is set to ", $ce->{mail}->{smtpPort}//'';
     
     return $transport;
 }
