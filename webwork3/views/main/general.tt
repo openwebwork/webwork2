@@ -4,7 +4,7 @@
 <div><input class='wwtime' value='<%=time%>'><br>
 <button class='btn btn-default save-time-button'>Save</button>
 <button class='btn btn-default cancel-time-button'>Cancel</button>
-</div> 
+</div>
 </script>
 
 <script type="text/template" id="edit-date-time-template">
@@ -69,7 +69,7 @@
 <!-- Some problem set and problem templates -->
 
 <script type="text/template" id="problem-list-template">
-<div class="row">
+<div class="row problems-top-row">
   <div class="problem-paginator col-md-8"></div>
   <div class="col-md-3 num-problems"></div>
   <%if(show_undo||false) {%>
@@ -94,14 +94,15 @@
     <div class="col-md-1 pull-right"> <a class="drag-handle btn btn-default btn-sm" href="#"><i class="fa fa-arrows"></i></a></div>
   <%}%>
   <%if(showPoints || showMaxAttempts){%>
-  <div class="col-md-4 form-horizontal">
+  <div class="col-md-5 form-horizontal">
+      <span class="problem-id"></span>
       <%if(showPoints){%>
-      <label class="control-label">Value: 
+      <label class="control-label">Value:
         <input type="text" class="prob-value input-small"></label>
         <%}%>
       <%if(showMaxAttempts){%>
-      <label class="control-label">Max Attempts: 
-        <input type="text" class="max-attempts" style="width: 60px"></label>  
+      <label class="control-label">Max Att.:
+        <input type="text" class="max-attempts" style="width: 60px"></label>
       <%}%>
     </div>
   <%}%>
@@ -114,9 +115,9 @@
     <%if(showRefreshTool){%>
       <a onclick="return false;" href="#"  class="btn btn-default refresh-problem" title="randomize">
       <i class="fa fa-refresh"></i></a>
-    <%}%>    
+    <%}%>
     <%if(showViewTool){%><a onclick="return false;" class="btn btn-default" target="WW_view" href='#' title="view problem">
-      <i class="fa fa-eye"></i></a><%}%>    
+      <i class="fa fa-eye"></i></a><%}%>
     <%if(showHideTool){%>
       <a href="#" onclick="return false;" class="btn btn-default hide-problem link" title="hide problem">
       <i class="fa fa-times"></i></a>
@@ -129,7 +130,7 @@
       <a href="#" onclick="return false;" class="mark-correct-btn btn btn-default" title="Mark this problem correct for all assigned users.">
         <i class="fa fa-check"></i></a>
     <%}%>
-    
+
   <a href="#" onclick="return false;" class="btn btn-default tags-button" title="show/hide tags"><i class="fa fa-tags"></i></a>
   <a href="#" onclick="return false;" class="btn btn-default path-button" title="show/hide path"><i class="fa fa-file"></i></a>
   </div>
@@ -177,8 +178,8 @@
 <script type="text/template" id="general-messages">
 <%
   var messages = {
-    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please " 
-      + "reenter your username and password to continue. ";},    
+    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please "
+      + "reenter your username and password to continue. ";},
     bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."},
     loading_data: function(){ return "The page is now loading...";},
     openDate_after_dueDate: function(){return "The open date must come before the due date";},
@@ -188,7 +189,6 @@
     time_error: function () { return "The time must be in 12-hour format, like 12:34pm"}
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
-  
+
 %>
 </script>
-

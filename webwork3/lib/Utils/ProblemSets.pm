@@ -6,6 +6,7 @@ use base qw(Exporter);
 
 use List::Util qw(first);
 use List::MoreUtils qw/first_index indexes/;
+use Data::Dump qw/dump/;
 
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog cryptPassword/;
@@ -226,10 +227,10 @@ sub reorderProblems {
             my $user_prob = first {$_->{problem_id} eq $new_problems->[$i]->{_old_problem_id} } @$user_probs;
 
             ## need to make a new User Problem.  Reusing the old one results in a problem.
-            my $newUserProblem = createNewUserProblem($user_id,$setID,$new_problems->[$i]->{problem_id});
+            my $newUserProblem = createNewUserProblem($db,$user_id,$setID,$new_problems->[$i]->{problem_id});
 
-            debug to_dumper $newUserProblem;
-            debug to_dumper $user_prob;
+            warn dump $newUserProblem;
+            warn dump $user_prob;
             for my $prop (@user_problem_props) {
                 $newUserProblem->{$prop} = $user_prob->{$prop};
             }

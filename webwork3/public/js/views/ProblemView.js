@@ -1,4 +1,4 @@
-define(['backbone', 'underscore','config','models/Problem','apps/util','imagesloaded','knowl','bootstrap'], 
+define(['backbone', 'underscore','config','models/Problem','apps/util','imagesloaded','knowl','bootstrap'],
        function(Backbone, _,config,Problem,util){
     //##The problem View
 
@@ -6,16 +6,16 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
     //There's no reason this same view couldn't be used in other pages almost as is.
 
     /* the view attributes are as follows:
-    
+
         reorderable (boolean): whether the reorder arrow should be shown
         showPoints (boolean): whether the # of points should be shown
-        showMaxAttemptes (boolean): whether the maximum number of attempts is shown. 
+        showMaxAttemptes (boolean): whether the maximum number of attempts is shown.
         showAddTool (boolean): whether the + should be shown to be added to a problemSet
         showEditTool (boolean): whether the edit button should be shown
         showViewTool (boolean): whether the show button should be shown (to be taken to the userSetView )
         showRefreshTool (boolean): whether the refresh button should be shown (for getting a new random problem)
         showHideTool (boolean): whether the hide button (X) should be shown to hide the problem
-        deletable (boolean): is the problem deletable from the list its in.       
+        deletable (boolean): is the problem deletable from the list its in.
         draggable (boolean): can the problem be dragged and show the drag arrow (for library problems)
         displayMode (string): the PG display mode for the problem (images, MathJax, none)
 
@@ -43,7 +43,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
 
             this.state = new Backbone.Model(
                 _.extend({tags_loaded: false, tags_shown: false, path_shown: false},options.viewAttrs));
-            
+
             this.state.on("change:show_tags",function(){
                     self.showTags(self.state.get("show_tags"));
                 }).on("change:show_path",function(){
@@ -55,23 +55,25 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                 if(isValid){
                     self.problem_set_view.model.trigger("change:problems",self.problem_set_view.model,self.model);
             }}).on('change:source_file', function(){
-                self.model.set("data",""); 
+                self.model.set("data","");
                 self.render();
-            }); 
+            }).on('change:problem_id',function(model){
+              console.log(model._changed);
+            })
            this.invBindings = util.invBindings(this.bindings);
         },
 
         render:function () {
             var self = this;
-            var group_name; 
+            var group_name;
             if(this.model.get('data') || this.state.get("displayMode")=="None"){
-                
+
                 if(this.state.get("displayMode")=="None"){
                     this.model.attributes.data="";
                 }
 
                 this.$el.html(this.template(_.extend({},this.model.attributes,this.state.attributes)));
-                
+
                 this.$el.imagesLoaded(function() {
                     self.$el.removeAttr("style");
                     self.$(".problem").removeAttr("style");
@@ -85,11 +87,11 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                         revert:true,
                         handle:'.drag-handle',
                         appendTo:'body',
-                    }); 
+                    });
 
-                } 
+                }
 
-                this.el.id = this.model.cid; // why do we need this? 
+                this.el.id = this.model.cid; // why do we need this?
                 this.$el.attr('data-path', this.model.get('source_file'));
                 this.$el.attr('data-id', this.model.get('set_id')+":"+this.model.get("problem_id"));
                 this.$el.attr('data-source', this.state.get("type"));
@@ -107,11 +109,11 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
                         view.$(self.invBindings[attr]).popover({title: "Error", content: error,container: view.$el}).popover("show");
                     }
                 });
-                
-                 
-                // send rendered signal after MathJax 
+
+
+                // send rendered signal after MathJax
                 if(MathJax){
-                    MathJax.Hub.Register.MessageHook("End Math", function (message) { 
+                    MathJax.Hub.Register.MessageHook("End Math", function (message) {
                         self.model.trigger("rendered",this);
                         self.state.set("rendered",true);
                     })
@@ -149,16 +151,17 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             "click .tags-button": function () {this.state.set("show_tags",!this.state.get("show_tags"))},
             "click .mark-correct-btn": "markCorrect",
             "keyup .prob-value,.max-attempts": function (evt){
-                if(evt.keyCode == 13){ $(evt.target).blur() }   
-            }, 
+                if(evt.keyCode == 13){ $(evt.target).blur() }
+            },
             "blur .max-attempts": function(evt){
                 if($(evt.target).val()==-1){
                     //I18N
-                    $(evt.target).val("unlimited");   
+                    $(evt.target).val("unlimited");
                 }
             }
         },
         bindings: {
+            ".problem-id": "problem_id",
             ".prob-value": {observe: "value", events: ['blur']},
             ".max-attempts": {observe: "max_attempts", events: ['blur'] , onSet: function(val) {
                     return (val=="unlimited")?-1:val;
@@ -192,7 +195,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
         showTags: function (_show){
             var self = this;
             if(_show && ! this.state.get("tags_loaded")){
-                this.model.loadTags({success: function (){ 
+                this.model.loadTags({success: function (){
                         self.$(".loading-row").addClass("hidden");
                         self.$(".tag-row").removeClass("hidden");
                         self.state.set('tags_loaded',true);
@@ -206,12 +209,12 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
         markCorrect: function () {
             var conf = confirm(this.problem_set_view.messageTemplate({type:"mark_all_correct"}));
             if(conf){
-                this.problem_set_view.markAllCorrect(this.model.get("problem_id"));   
+                this.problem_set_view.markAllCorrect(this.model.get("problem_id"));
             }
         },
         addProblem: function (evt){
             if(this.libraryView){
-                this.libraryView.addProblem(this.model);  
+                this.libraryView.addProblem(this.model);
             } else {
                 console.error("This is not an addable problem.")
             }
@@ -227,9 +230,9 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             this.$el.addClass("hidden");
         },
         removeProblem: function(){
-            this.problem_set_view.deleteProblem(this.model); 
-            
-        }, 
+            this.problem_set_view.deleteProblem(this.model);
+
+        },
         set: function(opts){
             this.state.set(_(opts).pick("show_path","show_tags","tags_loaded"));
         }

@@ -143,3 +143,9 @@ border-top: solid 1px rgb(220, 220, 220);}
 	padding: 0px 2px;
 	float: right;
 }
+
+/* Make the Problem # large and bold */
+
+.problem-id {
+  font-size: 140%; font-weight: bold; margin-right: 2ex; 
+}

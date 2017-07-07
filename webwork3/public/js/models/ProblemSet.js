@@ -1,9 +1,9 @@
 /*
- * The core model for a ProblemSet.  A problem set has its own properties (such as due dates), but is also a collection 
- * of problems.  More specifially, it also contains a Problem List of type "Problem Set".  
+ * The core model for a ProblemSet.  A problem set has its own properties (such as due dates), but is also a collection
+ * of problems.  More specifially, it also contains a Problem List of type "Problem Set".
  *
  * */
-define(['backbone', 'underscore','moment','./ProblemList','./Problem','config','apps/util'], 
+define(['backbone', 'underscore','moment','./ProblemList','./Problem','config','apps/util'],
     function(Backbone, _,moment,ProblemList,Problem,config,util){
 
 
@@ -45,7 +45,7 @@ var ProblemSet = Backbone.Model.extend({
         due_date: "checkDates",
         answer_date: "checkDates",
         reduced_scoring_date: "checkDates",
-        set_id: {  
+        set_id: {
             setNameValidator: 1 // uses a custom validator
         }
     },
@@ -54,34 +54,38 @@ var ProblemSet = Backbone.Model.extend({
                     "problems_per_page","versions_per_interval","version_last_attempt_time","time_interval"],
     idAttribute: "_id",
     initialize: function (opts,dateSettings) {
+        var self = this;
         _.bindAll(this,"addProblem");
         this.dateSettings = dateSettings;
         opts.problems = opts.problems || [];
-        this.set(this.parse(opts),{silent: true}); 
+        this.set(this.parse(opts),{silent: true});
+        this.problems.on("change",function(){
+          self.trigger("change",self);
+        })
     },
     parse: function (response) {
         if (response.problems){
             if (typeof(this.problems)=="undefined"){
-                this.problems = new ProblemList();   
+                this.problems = new ProblemList();
             }
             this.problems.set(response.problems,{silent: true});
             this.attributes.problems = this.problems;
         }
-        response.assignment_type = response.assignment_type || "default"; 
+        response.assignment_type = response.assignment_type || "default";
         response = util.parseAsIntegers(response,this.integerFields);
         return _.omit(response, 'problems');
     },
     url: function () {
         return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;
     },
-    setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined) 
+    setDefaultDates: function (theDueDate){   // sets the dates based on the _dueDate (or today if undefined)
                                             // as a moment object and defined settings.
 
         var _dueDate = theDueDate? moment(theDueDate): moment()
         , timeAssignDue = moment(this.dateSettings["pg{timeAssignDue}"],"hh:mmA")
         , assignOpenPriorToDue = this.dateSettings["pg{assignOpenPriorToDue}"]
         , answerAfterDueDate = this.dateSettings["pg{answersOpenAfterDueDate}"]
-        , reducedScoringPeriod = this.dateSettings["pg{ansEvalDefaults}{reducedScoringPeriod}"]; 
+        , reducedScoringPeriod = this.dateSettings["pg{ansEvalDefaults}{reducedScoringPeriod}"];
 
         _dueDate.hours(timeAssignDue.hours()).minutes(timeAssignDue.minutes());
         var _openDate = moment(_dueDate).subtract(parseInt(assignOpenPriorToDue),"minutes")
@@ -91,11 +95,11 @@ var ProblemSet = Backbone.Model.extend({
                     reduced_scoring_date: _reducedScoringDate.unix()});
         return this;
     },
-    addProblem: function (prob) {  
-        var self = this; 
+    addProblem: function (prob) {
+        var self = this;
         var lastProblem = this.get("problems").last();
         //var prob = new Problem();
-        var attrs = _.extend({},prob.attributes, 
+        var attrs = _.extend({},prob.attributes,
                                     { problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1});
         this.get("problems").add(_(attrs).omit("_id"));;
         this.set("_add_problem",true);
@@ -104,11 +108,11 @@ var ProblemSet = Backbone.Model.extend({
     },
     // delete the problem _prob and if successfull remove the view _view
     deleteProblem: function(_prob,_view){
-        var self = this; 
+        var self = this;
         this.set("_delete_problem_id",_prob.get("problem_id"));
         this.save();
         this.unset("_delete_problem_id",{silent: true});
-        this.get("problems").remove(_prob); 
+        this.get("problems").remove(_prob);
     },
     setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
         var currentDate = moment.unix(this.get(attr))
@@ -124,13 +128,13 @@ var ProblemSet = Backbone.Model.extend({
             , answerDate = moment.unix(computedState.answer_date)
             , reducedScoringDate = moment.unix(computedState.reduced_scoring_date);
 
-        // the following prevents the rest of the code from checking more than once per validation. 
-        // since there are 4 fields that use this method for validation, it gets called 4 times.     
+        // the following prevents the rest of the code from checking more than once per validation.
+        // since there are 4 fields that use this method for validation, it gets called 4 times.
         this.numChecks = this.numChecks? this.numChecks+=1: 1;
         if(this.numChecks==4){ delete this.numChecks;}
         if(this.numChecks>1) { return;}
 
-        if(openDate.isAfter(dueDate)){ 
+        if(openDate.isAfter(dueDate)){
             this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "open date",
                     date2: "due date"},this);
             return "open date is after due date";
@@ -142,14 +146,14 @@ var ProblemSet = Backbone.Model.extend({
         }
         if(computedState.enable_reduced_scoring==1){
             if(reducedScoringDate.isAfter(dueDate)){
-                this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), 
+                this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"),
                     date1: "reduced scoring date", date2: "due date"},this);
-                    return "reduced scoring date is after due date";       
+                    return "reduced scoring date is after due date";
             }
             if(openDate.isAfter(reducedScoringDate)){
                 this.trigger("set_date_error",{type: "date_error", set_id: this.get("set_id"), date1: "open date",
                     date2: "reduced scoring date"},this);
-                    return "due date is after reduced scoring date";       
+                    return "due date is after reduced scoring date";
             }
         }
     },
@@ -160,22 +164,22 @@ var ProblemSet = Backbone.Model.extend({
             , now = moment();
         return now.isBefore(dueDate) && now.isAfter(openDate);
     },
-    // this adjusts all of the dates to make sure that they don't trigger an error. 
+    // this adjusts all of the dates to make sure that they don't trigger an error.
     adjustDates: function (){
         var self = this;
 
-        // this only works in a single date is changed. 
+        // this only works in a single date is changed.
         if(_(this.changed).keys().length!=1){
             return;
         }
         var prevAttr = _.object([[_(this.changed).keys()[0],moment.unix(this._previousAttributes[_(this.changed).keys()[0]])]])
 
-        
+
         var prevDates = _(util.parseAsIntegers(this._previousAttributes,this.integerFields))
                                              .pick("answer_date","due_date","reduced_scoring_date","open_date");
-        // convert all of the dates to Moment objects. 
+        // convert all of the dates to Moment objects.
         // dates1 is the moment objects of the previous dates
-        // dates2 is the moment objects of the new dates. 
+        // dates2 is the moment objects of the new dates.
         var dates1 = _(prevDates).mapObject(function(val,key) { return moment.unix(val);});
         var dates2 = _(this.pick("answer_date","due_date","reduced_scoring_date","open_date")).chain()
                         .mapObject(function(val,key) { return moment.unix(val);}).value();
@@ -193,7 +197,7 @@ var ProblemSet = Backbone.Model.extend({
             }
             if(dates2.due_date.isBefore(dates2.reduced_scoring_date)){
                 dates2.reduced_scoring_date = moment(dates2.due_date).subtract(mins_d_r,"minutes");
-            } 
+            }
             if(dates2.reduced_scoring_date.isBefore(dates2.open_date)){
                 dates2.open_date = moment(dates2.reduced_scoring_date).subtract(mins_r_o,"minutes");
             }
@@ -206,7 +210,7 @@ var ProblemSet = Backbone.Model.extend({
             }
             if(dates2.reduced_scoring_date.isBefore(dates2.open_date)){
                 dates2.open_date = moment(dates2.reduced_scoring_date).subtract(mins_r_o,"minutes");
-            }    
+            }
         } else if(this.changed.reduced_scoring_date) {
             if(dates2.reduced_scoring_date.isAfter(dates2.due_date)){
                 dates2.due_date = moment(dates2.reduced_scoring_date).add(mins_d_r,"minutes");
@@ -216,7 +220,7 @@ var ProblemSet = Backbone.Model.extend({
             }
             if(dates2.reduced_scoring_date.isBefore(dates2.open_date)){
                 dates2.open_date = moment(dates2.reduced_scoring_date).subtract(mins_r_o,"minutes");
-            }    
+            }
         } else if(this.changed.open_date){
             if(dates2.open_date.isAfter(dates2.reduced_scoring_date)){
                 dates2.reduced_scoring_date = moment(dates2.open_date).add(mins_r_o,"minutes");
@@ -228,21 +232,19 @@ var ProblemSet = Backbone.Model.extend({
                 dates2.answer_date = moment(dates2.due_date).add(mins_a_d,"minutes");
             }
         }
-        
-        var changedKeys = _(dates1).chain().keys().filter(function(key) 
+
+        var changedKeys = _(dates1).chain().keys().filter(function(key)
                                                 {return !dates1[key].isSame(dates2[key]);}).value();
-        // get the unix dates of the dates that have changed.  
+        // get the unix dates of the dates that have changed.
         var newUnixDates =  _(dates2).chain().pick(changedKeys)
                                 .mapObject(function(val,key) { return val.unix();}).value();
-        
+
         this.set(newUnixDates);
     }
 
 });
- 
+
 
 
 return ProblemSet;
 });
-    
-    

@@ -13,9 +13,11 @@ define(['backbone'],function(Backbone){
 			return this;
 		},
 		render: function() {
-			// this makes sure that the content fits vertically in the sidebar. 
-			var h = $(window).height()-$("#menu-navbar-collapse").height()-$("#sidebar-container .sidebar-name").height() - 110; 
+			// this makes sure that the content fits vertically in the sidebar.
+			var h = $(window).height()-$(".navbar-fixed-top").height()-$("#sidebar-container .sidebar-name").height()
+					- $(".navbar-fixed-bottom").height()-75;
 			this.$el.height(h);
+			console.log(h);
 			$(this.$el.children().get(0)).height(h).css("overflow-y","auto");
 			return this;
 		},

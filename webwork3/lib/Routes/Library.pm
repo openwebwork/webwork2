@@ -395,14 +395,13 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 	my $renderParams = {
 		displayMode => query_parameters->get('displayMode') || body_parameters->get('displayMode')
 			|| vars->{ce}->{pg}{options}{displayMode},
-		problemSeed => query_parameters->get('problemSeed') || body_parameters->get('problemSeed') || 1,
-		showHints => query_parameters->get('showHints') || body_parameters->get('showHints') || 0,
-	  showSolutions => query_parameters->get('showSolutions') || body_parameters->get('showSolutions') || 0,
-		showAnswers => query_parameters->get('showAnswers') || body_parameters->get('showAnswers') || 0,
-	  problem => {
-			problemSeed => query_parameters->get('problemSeed') || body_parameters->get('problemSeed') || 1,
+		show_hints => query_parameters->get('showHints') || body_parameters->get('showHints') || 0,
+	  show_solutions => query_parameters->get('showSolutions') || body_parameters->get('showSolutions') || 0,
+		show_answers => query_parameters->get('showAnswers') || body_parameters->get('showAnswers') || 0,
+		problem => {
+			problem_seed => query_parameters->get('problem_seed') || body_parameters->get('problem_seed') || 1,
 			problem_id => query_parameters->get('problem_id') || body_parameters->get('problem_id') || 1
-		},
+		}
 	};
 	#
   # $renderParams->{displayMode} =
@@ -431,6 +430,8 @@ any ['get', 'post'] => '/renderer/courses/:course_id/problems/:problem_id' => su
 		my $path_header = database->quick_select('OPL_path',{path_id=>$path_id})->{path};
 		$renderParams->{problem}->{source_file} = "Library/" . $path_header . "/" . $problem_info->{filename};
 	}
+
+	debug $renderParams;
 
 	return render(vars->{ce},vars->{db},$renderParams);
 
