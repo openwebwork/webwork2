@@ -2243,6 +2243,42 @@ sub read_scoring_file {
 
 =back
 
+=item createEmailSenderTransportSMTP
+
+Wrapper that creates an Email::Sender::Transport::SMTP object
+
+=cut
+
+# this function abstracts the process of creating a transport layer for SendMail
+# it is used in Feedback.pm, SendMail.pm and ProblemUtil.pm (for JITAR messages)
+
+sub createEmailSenderTransportSMTP {
+	my $self = shift;
+	my $ce = $self->r->ce;
+	my $transport;
+	if (defined $ce->{mail}->{smtpPort} ) {
+		$transport = Email::Sender::Transport::SMTP->new({
+			host => $ce->{mail}->{smtpServer},
+			ssl => $ce->{mail}->{tls_allowed}//0, ## turn off ssl security by default
+			port => $ce->{mail}->{smtpPort},
+			timeout => $ce->{mail}->{smtpTimeout},
+			# debug => 1,
+		});
+	} else {
+		$transport = Email::Sender::Transport::SMTP->new({
+			host => $ce->{mail}->{smtpServer},
+			ssl => $ce->{mail}->{tls_allowed}//0, ## turn off ssl security by default
+			timeout => $ce->{mail}->{smtpTimeout},
+			# debug => 1,
+		});
+	}
+# 		warn "port is ", $transport->port(); 
+# 		warn "ssl is ", $transport->ssl(); 
+# 		warn "tls_allowed is ", $ce->{mail}->{tls_allowed}//'';
+#         warn " smtpPort is set to ", $ce->{mail}->{smtpPort}//'';
+    
+    return $transport;
+}
 =head1 AUTHOR
 
 Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu and Sam Hathaway,

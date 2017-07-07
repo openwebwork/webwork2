@@ -97,6 +97,24 @@ print "webwork.apache2-config:  PG root directory set to $pg_dir\n";
 print "webwork.apache2-config:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
 print "webwork.apache2-config:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
 print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
+print "webwork.apache2-config:  The webwork smtp server address is ", $ce->{mail}{smtpServer},"\n";
+print "webwork.apache2-config:     The webwork smtp server port is $ce->{mail}->{smtpPort}\n";
+print "webwork.apache2-config:     The webwork smtp server protocol is ", ($ce->{mail}->{tls_allow})?"'ssl'":"'not ssl'","\n";
+
+# check compatibility of sendmail protocols and ports
+if (exists(($ce->{mail}->{smtpPort})) )  { # port not chosen automatically
+   # check port and protocol for compatibility
+	unless ( 
+			(($ce->{mail}->{smtpPort} == 25)  # 'not ssl mode'
+			  and ($ce->{mail}->{tls_allow} == 0)) 
+			or 
+			(($ce->{mail}->{smtpPort} == 465) # 'ssl mode'
+			  and ($ce->{mail}->{tls_allow} == 1) ) 
+			) {
+		warn "WARNING:: The smtp port and the smtp protocol do not appear to be compatible";
+	}
+
+}
 
 # link to PG code libraries
 eval "use lib '$pg_dir/lib'"; die $@ if $@;

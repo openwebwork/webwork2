@@ -43,7 +43,7 @@
 # recommended to change any of the settings in this file once your
 # web server has been initially configured.
 
-# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note 
+# URL of WeBWorK handler. If WeBWorK is to be on the web server root, use "". Note
 # that using "" may not work so we suggest sticking with "/webwork2".
 $webwork_url       = '/webwork2';
 $server_root_url   = '';   # e.g.  'https://webwork.yourschool.edu' or 'http://localhost'
@@ -66,25 +66,25 @@ $server_groupID    = 'wwdata';
 
 #$server_apache_version = ''; # e.g. '2.22.1'
 
-# The following variable is the address that will be listed in server error 
-# messages that come from WeBWorK: 
-#	 "An error occured while processing your request. 
-#	 For help, please send mail to this site's webmaster 
-# 	(mail link to <webwork_server_admin_email>), including all of the following 
+# The following variable is the address that will be listed in server error
+# messages that come from WeBWorK:
+#	 "An error occured while processing your request.
+#	 For help, please send mail to this site's webmaster
+# 	(mail link to <webwork_server_admin_email>), including all of the following
 #	 information as well as what what you were doing when the error occurred... etc..."
-# Make sure that your webwork.apacheX-config file is up to date with the distributed version 
+# Make sure that your webwork.apacheX-config file is up to date with the distributed version
 # and that the line $ENV{WEBWORK_SERVER_ADMIN} = $ce->{webwork_server_admin_email};
-# is present in the file. 
-# If $webwork_server_admin_email is not defined then the 
+# is present in the file.
+# If $webwork_server_admin_email is not defined then the
 # ServerAdmin address defined in httpd.conf is used.
 
- 
+
 $webwork_server_admin_email ='';
 ################################################################################
-# Paths to external programs 
+# Paths to external programs
 ################################################################################
 
-# These applications are often found in /bin, but sometimes in /usr/bin 
+# These applications are often found in /bin, but sometimes in /usr/bin
 # or even in /opt/local/bin.
 # You can use "which tar"  for example to find out where the "tar" program is located
 
@@ -172,7 +172,7 @@ $database_storage_engine = 'myisam';
 
 # The following two variables must match the GRANT statement run on the mysql server as described above.
 $database_username ="webworkWrite";
-$database_password ="passwordRW";  
+$database_password ="passwordRW";
 
 #################################################################################
 # These variables describe the locations of various components of WeBWorK on your
@@ -211,6 +211,10 @@ $mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
 $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 
 # Seconds to wait before timing out when connecting to the SMTP server.
+#  the default is 120 seconds.  
+# Change it by uncommenting the following line
+# set it to 5 for testing, 30 or larger for production
+
 $mail{smtpTimeout}           = 30;
 
 
@@ -220,20 +224,36 @@ $mail{smtpTimeout}           = 30;
 # Set this value to 0 to avoid checking certificates.
 # Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
 
-$tls_allowed = 1;  
+$mail{tls_allowed} = 0;  
+#$tls_alowed=0;  #old method -- this variable no longer works.
+
+# errors of the form
+#  unable to establish SMTP connection to smtp-gw.rochester.edu port 465
+# indicate that there is a mismatch between the port number and the use of ssl
+# use port 25 when ssl is off and use port 465 when ssl is on (tls_allowed=1)
+
+
+# Set the SMTP port manually.  Typically this does not need to be done it will use
+# port 25 if no SSL is on and 465 if ssl is on
+
+#$mail{smtpPort} = 25;
+
+# Debugging tutorial for sending email using ssl/tls
+# https://maulwuff.de/research/ssl-debugging.html
+
 
 
 ################################################################################
 # Problem library options
 ################################################################################
-# 
+#
 # The problemLibrary configuration data should now be set in localOverrides.conf
 
 # For configuration instructions, see:
 # http://webwork.maa.org/wiki/National_Problem_Library
-# The directory containing the natinal problem library files. 
+# The directory containing the natinal problem library files.
 # Set the root to "" if no problem
-# library is installed. Use version 2.0 for the NPL and use the version 2.5  for the OPL. 
+# library is installed. Use version 2.0 for the NPL and use the version 2.5  for the OPL.
 # When changing from the NPL to the OPL it is important to change the version number
 # because the names of the tables in the database have changed.
 
@@ -248,18 +268,18 @@ $problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-libra
 
 # Set the default timezone of courses on this server. To get a list of valid
 # timezones, run:
-# 
+#
 #     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::all_names'
-# 
+#
 # To get a list of valid timezone "links" (deprecated names), run:
-# 
+#
 #     perl -MDateTime::TimeZone -e 'print join "\n", DateTime::TimeZone::links'
-# 
+#
 # If left blank, the system timezone will be used. This is usually what you
 # want. You might want to set this if your server is NOT in the same timezone as
 # your school. If just a few courses are in a different timezone, set this in
 # course.conf for the affected courses instead.
-# 
+#
 $siteDefaults{timezone} = "America/New_York";
 
 # Locale for time format localization

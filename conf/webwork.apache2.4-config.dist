@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright ï¿½ 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -35,7 +35,7 @@
 # The "show source" button is most useful for webwork "courses" used to train new authors
 # It is not desirable to expose the code of regular homework questions to students
 
-#ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
+ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwork/courses/$1/html/show-source.cgi/$2
 
 PerlChildInitHandler "sub { srand }"
 
@@ -93,13 +93,31 @@ $ENV{PG_ROOT} = $pg_dir;
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
-print "webwork.apache2.4-config:  WeBWorK server is starting\n";
-print "webwork.apache2.4-config:  WeBWorK root directory set to $webwork_dir in webwork2/conf/webwork.apache2-config\n";
-print "webwork.apache2.4-config:  The following locations and urls are set in webwork2/conf/site.conf\n";
-print "webwork.apache2.4-config:  PG root directory set to $pg_dir\n";
-print "webwork.apache2.4-config:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
-print "webwork.apache2.4-config:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
-print "webwork.apache2.4-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
+print "webwork.apache2-config:  WeBWorK server is starting\n";
+print "webwork.apache2-config:  WeBWorK root directory set to $webwork_dir in webwork2/conf/webwork.apache2-config\n";
+print "webwork.apache2-config:  The following locations and urls are set in webwork2/conf/site.conf\n";
+print "webwork.apache2-config:  PG root directory set to $pg_dir\n";
+print "webwork.apache2-config:  WeBWorK server userID is ", $ce->{server_userID}, "\n";
+print "webwork.apache2-config:  WeBWorK server groupID is ", $ce->{server_groupID}, "\n";
+print "webwork.apache2-config:  The webwork url on this site is ", $ce->{server_root_url},"$webwork_url\n";
+print "webwork.apache2-config:  The webwork smtp server address is ", $ce->{mail}{smtpServer},"\n";
+print "webwork.apache2-config:     The webwork smtp server port is $ce->{mail}->{smtpPort}\n";
+print "webwork.apache2-config:     The webwork smtp server protocol is ", ($ce->{mail}->{tls_allow})?"'ssl'":"'not ssl'","\n";
+
+# check compatibility of sendmail protocols and ports
+if (exists(($ce->{mail}->{smtpPort})) )  { # port not chosen automatically
+   # check port and protocol for compatibility
+	unless ( 
+			(($ce->{mail}->{smtpPort} == 25)  # 'not ssl mode'
+			  and ($ce->{mail}->{tls_allow} == 0)) 
+			or 
+			(($ce->{mail}->{smtpPort} == 465) # 'ssl mode'
+			  and ($ce->{mail}->{tls_allow} == 1) ) 
+			) {
+		warn "WARNING:: The smtp port and the smtp protocol do not appear to be compatible";
+	}
+
+}
 
 
 
@@ -153,34 +171,7 @@ if ($webwork_url eq "") {
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
 
-##########################################################################
-# WeBWork 3
-# This sets up webwork 3 to be served via dancer via cgi
-# If you want to serve webwork 3 directly through dancer comment
-# out the following block, and then uncomment the proxy pass lines below
-# You will need to start dancer manually, or set it up as service
-##########################################################################
-
-my $webwork3_htdocs_dir = $webwork_dir."/webwork3/public";
-# Set up /webwork3 to point to the dispatch cgi
-push @Alias, [ "/webwork3/js" => "$webwork3_htdocs_dir/js"];
-push @Alias, [ "/webwork3/css" => "$webwork3_htdocs_dir/css"];
-push @Alias, [ "/webwork3/images" => "$webwork3_htdocs_dir/images"];
-push @PerlConfig, "ScriptAlias /webwork3 $webwork3_htdocs_dir/dispatch.fcgi";
-
-# Allow cgi to run in the webwork3 dir
-$Directory{"$webwork3_htdocs_dir"} = {
-    AllowOverride => "None",
-    Options => "+ExecCGI -MultiViews +SymLinksIfOwnerMatch",
-    Require => "all granted",    
-    AddHandler => "fcgid-script .fcgi",
-};
-
 </Perl>
-
-# These lines are for service WeBWork 3 through dancer directly.  
-#ProxyPass /webwork3 http://localhost:3000
-#ProxyPassReverse /webwork3 http://localhost:3000
 
 ####################################################################
 # WebworkSOAP handlers (for integration with moodle)
