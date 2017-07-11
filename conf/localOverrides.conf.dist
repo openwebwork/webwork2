@@ -372,6 +372,15 @@ $showeditors{simplepgeditor}   = 0;
 # "strftime patterns".
 # $studentDateDisplayFormat="%a %b %d at %l:%M%P";
 
+################################################################################
+# Using R with WeBWorK
+################################################################################
+
+# To enable Rserve (the R statistical server) in WeBWorK, uncomment the
+# following line.  The R server needs to be installed and running in order for
+# this to work.  See http://webwork.maa.org/wiki/R_in_WeBWorK for more info.
+
+# $pg{specialPGEnvironmentVars}{Rserve} = {host => "localhost"};
 
 ################################################################################
 # Authentication Methods
