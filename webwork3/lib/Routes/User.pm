@@ -12,10 +12,11 @@ use Dancer2::Plugin::Auth::Extensible;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/cryptPassword/;
 
+use Data::Dump qw/dump/;
+
 our @user_props = qw/first_name last_name student_id user_id email_address permission status
                     section recitation comment displayMode showOldAnswers useMathView/;
 our @boolean_user_props = qw/showOldAnswers useMathView/;
-our $PERMISSION_ERROR = "You don't have the necessary permissions.";
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(@boolean_user_props);
@@ -23,28 +24,24 @@ our @EXPORT_OK = qw(@boolean_user_props);
 ###
 #  return all users for course :course
 #
-#  User user_id must have at least permissions>=10
-#
 ##
 
 get '/courses/:course/users' => require_role professor => sub {
 
-    my @allUsers = vars->{db}->getUsers(vars->{db}->listUsers);
-    my %permissionsHash =  reverse %{vars->{ce}->{userRoles}};
-    foreach my $u (@allUsers)
-    {
-        my $PermissionLevel = vars->{db}->getPermissionLevel($u->{'user_id'});
-        $u->{'permission'} = $PermissionLevel->{'permission'};
-
-		my $studid= $u->{'student_id'};
-		$u->{'student_id'} = "$studid";  # make sure that the student_id is returned as a string.
-
-    }
-
-    return convertArrayOfObjectsToHash(\@allUsers);
+  my @user_ids = vars->{db}->listUsers;
+  my @users = map { get_one_user(vars->{db},$_);} @user_ids;
+  return convertArrayOfObjectsToHash(\@users);
 };
 
+###
+#
+# get a single user
+#
+###
 
+get 'courses/:course_id/users/:user_id' => require_role professor => sub {
+  return get_one_user(vars->{db},route_parameters->{user_id});
+};
 
 ###
 #
@@ -55,49 +52,38 @@ get '/courses/:course/users' => require_role professor => sub {
 
 post '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
-	my $enrolled = vars->{ce}->{statuses}->{Enrolled}->{abbrevs}->[0];
-	my $user = vars->{db}->getUser(param('user_id'));
-	send_error("The user with login " . param('user_id') . " already exists",404) if $user;
-	$user = vars->{db}->newUser();
-
-	# update the standard user properties
-
-	for my $key (@user_props) {
-        $user->{$key} = params->{$key} if (defined(params->{$key}));
-    }
-    $user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
-
-	# password record
-
-	my $password = vars->{db}->newPassword();
-	$password->{user_id}=params->{user_id};
-	my $cryptedpassword = "";
-	if (defined(params->{password})) {
-		$cryptedpassword = cryptPassword(params->{password});
-	}
-	elsif (defined(params->{student_id})) {
-		$cryptedpassword = cryptPassword(params->{student_id});
-	}
-	$password->password($cryptedpassword);
+  my $user_id = route_parameters->{user_id};
+	my $user = vars->{db}->getUser($user_id);
+	send_error("The user with login $user_id already exists",404) if $user;
 
 
+  my $properties = body_parameters->as_hashref;
 
-	# permission record
-
-	my $permission = vars->{db}->newPermissionLevel();
-	$permission->{user_id} = params->{user_id};
-	$permission->{permission} = params->{permission};
-
-	vars->{db}->addUser($user);
-	vars->{db}->addPassword($password);
-	vars->{db}->addPermissionLevel($permission);
-
-	my $u =convertObjectToHash($user);
-	$u->{_id} = $u->{user_id};
-
-	return $u;
+  return addOneUser(vars->{db},$properties);
 
 };
+
+###
+#
+#  Add multiple users to the course using a single route_parameters
+#
+##
+
+post '/courses/:course_id/users' => require_role professor => sub {
+
+  debug "in POST /courses/:course_id/users";
+  my $users = body_parameters->multi->{users};
+
+  my @users_to_add;
+  for my $user (@$users){
+    push(@users_to_add,addOneUser(vars->{db},$user));
+  }
+
+  return \@users_to_add;
+};
+
+
+
 
 ##
 #
@@ -116,45 +102,34 @@ put '/courses/:course_id/users/:user_id' => require_any_role [qw/professor stude
 	my $user = vars->{db}->getUser(route_parameters->{user_id});
 	send_error("The user with login " . route_parameters->{user_id} . " does not exist",404) unless $user;
 
-
-
 	# update the standard user properties
 
-
-  my %allparams = params;
-  my $setFromClient = convertBooleans(\%allparams,\@boolean_user_props);
-
+  my $params_to_update = convertBooleans(body_parameters->as_hashref,\@boolean_user_props);
 
   # if the user is a student, only allow changes to a few properties:
 
   if (user_has_role('professor')){
     for my $key (@user_props) {
-      $user->{$key} = $setFromClient->{$key} if (defined(params->{$key}));
+      $user->{$key} = $params_to_update->{$key} if (defined $params_to_update->{$key});
     }
   } else {
     for my $key (qw/email_address displayMode showOldAnswers userMathView/){
-      $user->{key} = $setFromClient->{$key} if (defined(params->{$key}));
+      $user->{$key} = $params_to_update->{$key} if (defined $params_to_update->{$key});
     }
   }
 
 	vars->{db}->putUser($user);
-	$user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
 
+  my $permission = vars->{db}->getPermissionLevel(params->{user_id});
   if (user_has_role('professor')){
-    my $permission = vars->{db}->getPermissionLevel(params->{user_id});
+    if (defined $params_to_update->{permission}){
 
-    if(params->{permission} != $permission->{permission}){
-      $permission->{permission} = params->{permission};
+      $permission->{permission} = $params_to_update->{permission};
       vars->{db}->putPermissionLevel($permission);
     }
   }
 
-
-	my $u =convertObjectToHash($user, \@boolean_user_props);
-
-  $u->{_id} = $u->{user_id};  # helps Backbone on client-side to know the object is not new.
-
-	return $u;
+	return get_one_user(vars->{db},$user->{user_id});
 
 };
 
@@ -171,20 +146,21 @@ del '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
 	# check to see if the user exists
 
-	my $user = vars->{db}->getUser(param('user_id')); # checked
-	send_error("Record for visible user " . param('user_id') . ' not found.',404) unless $user;
+  my $user_id = route_parameters->{user_id};
+	my $user = vars->{db}->getUser($user_id); # checked
+	send_error("Record for visible user $user_id not found.",404) unless $user;
 
-	if (param('user_id') eq session('user') )
+	if ($user_id eq session('logged_in_user') )
 	{
 		send_error("You can't delete yourself from the course.",404);
 	}
 
-	my $del = vars->{db}->deleteUser(param('user_id'));
+	my $del = vars->{db}->deleteUser($user);
 
 	if($del) {
 		return convertObjectToHash($user);
 	} else {
-		send_error("User with login " . param('user_id') . ' could not be deleted.',400);
+		send_error("User with login $user_id could not be deleted.",400);
 	}
 };
 
@@ -194,9 +170,12 @@ del '/courses/:course_id/users/:user_id' => require_role professor => sub {
 #
 ####
 
-get '/courses/:course_id/users/loginstatus' => require_role professor => sub {
+get '/courses/:course_id/users/status/login' => sub { #require_role professor => sub {
+
+  debug "in /courses/:course_id/users/status/login";
 
 	my @users = vars->{db}->listUsers();
+
 	my @status = map {
 		my $key = vars->{db}->getKey($_);
 		{ user_id=>$_,
@@ -217,7 +196,7 @@ post '/courses/:course_id/users/:user_id/password' => require_any_role [qw/profe
     send_error("A user with the role of student can only change his/her own password", 403);
   }
 
-	my $user = vars->{db}->getUser(route_parameters->{user_id});
+	my $user = vars->{db}->get_one_user(route_parameters->{user_id});
 	send_error("The user with login " . route_parameters->{user_id} . " does not exist",404) unless $user;
 
 
@@ -231,67 +210,69 @@ post '/courses/:course_id/users/:user_id/password' => require_any_role [qw/profe
 	}
 };
 
-
-####
+###
 #
-#  Get problems in set set_id for user user_id for course course_id
+#  get a single user
 #
-#  returns a UserSet
+###
+
+sub get_one_user {
+  my ($db,$user_id) = @_;
+  my $user = $db->getUser($user_id);
+  my $permission = $db->getPermissionLevel($user_id);
+  my $user_props = convertObjectToHash($user,\@boolean_user_props);
+  $user_props->{permission} = $permission->{permission};
+  $user_props->{_id} = $user->{user_id};
+
+  return $user_props;
+}
+
+###
 #
-####
+#  add one user to the course.
+#
+###
 
-get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => require_role professor => sub {
+sub addOneUser {
+  my ($db,$props) = @_;
 
-  if (! vars->{db}->existsGlobalSet(params->{set_id})){
-  	send_error("The set " . params->{set_id} . " does not exist in course " . params->{course_id},404);
+  # update the standard user properties
+
+  my $user = vars->{db}->newUser();
+
+  for my $key (@user_props) {
+    $user->{$key} = $props->{$key} if (defined($props->{$key}));
   }
+  $user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
 
-  if (! vars->{db}->existsUserSet(params->{user_id}, params->{set_id})){
-  	send_error("The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id}
-  				. " in course " . params->{course_id},404);
+  # password record
+
+  my $password = $db->newPassword();
+  $password->{user_id} = $user->{user_id};
+  my $cryptedpassword = "";
+  if (defined($props->{password})) {
+    $cryptedpassword = cryptPassword($props->{password});
   }
-
-  my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
-
-  my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
-
-  if(request->is_ajax){
-      return convertArrayOfObjectsToHash(\@problems);
-  } else {  # a webpage has requested this
-      template 'problem.tt', {course_id=> params->{course_id}, set_id=>params->{set_id}, user=>params->{user_id},
-                                  problem_id=>params->{problem_id}, pagename=>"Problem Viewer",
-                                  problems => to_json(convertArrayOfObjectsToHash(\@problems)),
-                               	user_set => to_json(convertObjectToHash($userSet))};
+  elsif (defined($props->{student_id})) {
+    $cryptedpassword = cryptPassword($props->{student_id});
   }
-};
+  $password->password($cryptedpassword);
 
 
-####
-#
-#  Get/update problem problem_id in set set_id for user user_id for course course_id
-#
-####
 
-get '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
+  # permission record
 
-  my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
-  return convertObjectToHash($problem);
-};
+  my $permission = $db->newPermissionLevel();
+  $permission->{user_id} = $props->{user_id};
+  $permission->{permission} = $props->{permission} || 0;
 
-put '/users/:user_id/courses/:course_id/sets/:set_id/problems/:problem_id' => require_role professor => sub {
+  $db->addUser($user);
+  $db->addPassword($password);
+  $db->addPermissionLevel($permission);
 
-	my $problem = vars->{db}->getUserProblem(param('user_id'),param('set_id'),param('problem_id'));
+  return get_one_user($db,$user->{user_id});
 
-  for my $key (keys (%{$problem})){
-  	if(param($key)){
-		    $problem->{$key} = param($key);
-  	}
-  }
-
-    vars->{db}->putUserProblem($problem);
-
-    return convertObjectToHash($problem);
-};
+}
 
 
 return 1;

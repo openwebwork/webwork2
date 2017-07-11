@@ -17,7 +17,6 @@ define(['backbone'],function(Backbone){
 			var h = $(window).height()-$(".navbar-fixed-top").height()-$("#sidebar-container .sidebar-name").height()
 					- $(".navbar-fixed-bottom").height()-75;
 			this.$el.height(h);
-			console.log(h);
 			$(this.$el.children().get(0)).height(h).css("overflow-y","auto");
 			return this;
 		},

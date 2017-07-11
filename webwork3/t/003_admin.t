@@ -56,9 +56,9 @@ subtest 'login to admin course' => sub {
 
   my $res = $test->request($req);
   $jar->extract_cookies($res);
-  my $res_as_obj =  decode_json($res->content);
+  my $result_hash =  decode_json($res->content);
 
-  ok($res_as_obj->{logged_in}, '[POST /courses/admin/login] using query params successful');
+  ok($result_hash->{logged_in}, '[POST /courses/admin/login] using query params successful');
 
   # check that is logged in as an admin.
 
@@ -67,11 +67,11 @@ subtest 'login to admin course' => sub {
   $jar->add_cookie_header($req);
   $res = $test->request($req);
 
-  $res_as_obj =  decode_json($res->content);
+  $result_hash =  decode_json($res->content);
 
   ok($res->is_success, '[GET /courses/admin/users/:user_id/roles]');
 
-  cmp_deeply($res_as_obj,["admin"],"The user roles returned correctly. ");
+  cmp_deeply($result_hash,["admin"],"The user roles returned correctly. ");
 
   ## check that a restricted route is accesible.
 

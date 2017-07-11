@@ -60,9 +60,9 @@ subtest 'Check login using query parameters' => sub {
   $req =  POST "$url/courses/test/login?username=dave&password=dave";
   $jar->add_cookie_header($req);
   $res = $test->request($req);
-  my $res_as_obj =  decode_json($res->content);
+  my $result_hash =  decode_json($res->content);
 
-  ok($res_as_obj->{logged_in}, '[POST /courses/test/login] using query params successful');
+  ok($result_hash->{logged_in}, '[POST /courses/test/login] using query params successful');
 
   ### check if still logged in
 
@@ -71,8 +71,8 @@ subtest 'Check login using query parameters' => sub {
   $jar->add_cookie_header($req);
 
   $res = $test->request($req);
-  $res_as_obj = decode_json($res->content);
-  ok($res_as_obj->{logged_in}, "[GET /courses/test/logged-in]");
+  $result_hash = decode_json($res->content);
+  ok($result_hash->{logged_in}, "[GET /courses/test/logged-in]");
 
 };
 
@@ -81,10 +81,10 @@ subtest 'Check logout ' => sub {
   my $req =  POST "$url/courses/test/logout";
   $jar->add_cookie_header($req);
   my $res = $test->request($req);
-  my $res_as_obj =  decode_json($res->content);
+  my $result_hash =  decode_json($res->content);
 
   ok($res->is_success, '[POST /courses/test/logout] route exists');
-  ok(! $res_as_obj->{logged_in}, '[POST /courses/test/logout] logged out successfully');
+  ok(! $result_hash->{logged_in}, '[POST /courses/test/logout] logged out successfully');
 
 };
 
@@ -94,9 +94,9 @@ subtest 'Check login with body parameters' => sub {
 
   my $params = {username => "dave",  password=> "dave"};
   my $res = $test->request(POST "$url/courses/test/login",'Content-Type' => 'application/json', Content => encode_json($params));
-  my $res_as_obj =  decode_json($res->content);
+  my $result_hash =  decode_json($res->content);
 
-  ok($res_as_obj->{logged_in}, '[POST] /courses/test/login] using body params successful');
+  ok($result_hash->{logged_in}, '[POST] /courses/test/login] using body params successful');
 
   $jar->extract_cookies($res);
 
@@ -107,8 +107,8 @@ subtest 'Check login with body parameters' => sub {
 
   $res = $test->request($req);
 
-  $res_as_obj = decode_json($res->content);
-  ok($res_as_obj->{logged_in}, "[GET /courses/test/logged-in]");
+  $result_hash = decode_json($res->content);
+  ok($result_hash->{logged_in}, "[GET /courses/test/logged-in]");
 
 };
 
@@ -119,11 +119,11 @@ subtest 'Check the user roles' => sub {
   my $req = GET "$url/courses/test/users/dave/roles";
   $jar->add_cookie_header($req);
   $res = $test->request($req);
-  my $res_as_obj =  decode_json($res->content);
+  my $result_hash =  decode_json($res->content);
 
   ok($res->is_success, '[GET /courses/test/users/:user_id/roles]');
 
-  cmp_deeply($res_as_obj,["student"],"The user roles returned correctly. ");
+  cmp_deeply($result_hash,["student"],"The user roles returned correctly. ");
 };
 
 subtest 'Check the require_login' => sub {

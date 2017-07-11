@@ -257,6 +257,39 @@ get '/courses/:course_id' => sub {
 
 ####
 #
+#  Get problems in set set_id for user user_id for course course_id
+#
+#  returns a UserSet
+#
+####
+
+get '/courses/:course_id/sets/:set_id/users/:user_id/problems' => require_role professor => sub {
+
+  if (! vars->{db}->existsGlobalSet(params->{set_id})){
+  	send_error("The set " . params->{set_id} . " does not exist in course " . params->{course_id},404);
+  }
+
+  if (! vars->{db}->existsUserSet(params->{user_id}, params->{set_id})){
+  	send_error("The user " . params->{user_id} . " has not been assigned to the set " . params->{set_id}
+  				. " in course " . params->{course_id},404);
+  }
+
+  my $userSet = vars->{db}->getUserSet(params->{user_id},params->{set_id});
+
+  my @problems = vars->{db}->getAllMergedUserProblems(params->{user_id},params->{set_id});
+
+  if(request->is_ajax){
+      return convertArrayOfObjectsToHash(\@problems);
+  } else {  # a webpage has requested this
+      template 'problem.tt', {course_id=> params->{course_id}, set_id=>params->{set_id}, user=>params->{user_id},
+                                  problem_id=>params->{problem_id}, pagename=>"Problem Viewer",
+                                  problems => to_json(convertArrayOfObjectsToHash(\@problems)),
+                               	user_set => to_json(convertObjectToHash($userSet))};
+  }
+};
+
+####
+#
 #  get /courses/:course_id/pgeditor
 #
 #  returns the html for the simple pg editor

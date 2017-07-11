@@ -19,13 +19,11 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
         render: function () {
           ProblemListView.prototype.render.apply(this);
 
-
+          // size the view appropriately. 
           var ht1 = $(".header-set-name").parent().height();
           var ht2 = $(".problems-top-row").height();  // this isn't rendered yet.
           var ht3 = $(".navbar-fixed-top").height();
-          console.log([ht1,ht2,ht3]);
           this.$(".prob-list-container").height($(window).height()-ht1-ht2-ht3-110);
-          console.log(this.$(".prob-list-container").height());
         },
         // this is a method that will mark the problem with id problem_id as correct (status=1)
         //for all assigned users.

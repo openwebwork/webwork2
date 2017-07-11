@@ -1,11 +1,11 @@
 /*  ClasslistManager.js:
    This is the base javascript code for the UserList3.pm (Classlist Manager).  This sets up the View and the classlist object.
-  
+
 */
 
 define(['backbone','views/MainView','models/UserList','models/User','config','views/CollectionTableView',
 			'models/ProblemSetList','views/ModalView',
-			'views/ChangePasswordView','views/EmailStudentsView','config','apps/util','moment','bootstrap','jquery-csv'], 
+			'views/ChangePasswordView','views/EmailStudentsView','config','apps/util','moment','bootstrap','jquery-csv'],
 function(Backbone,MainView,UserList,User,config,CollectionTableView,
 				ProblemSetList,ModalView,ChangePasswordView,EmailStudentsView,config,util,moment){
 var ClasslistView = MainView.extend({
@@ -14,27 +14,27 @@ var ClasslistView = MainView.extend({
 		MainView.prototype.initialize.call(this,options);
         _.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
 		var self = this;
-    	
+
 		this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
 	    this.addStudentManView.on("modal-opened",function (){
             self.state.set("man_user_modal_open",true);
         }).on("modal-closed",function(){
             self.state.set("man_user_modal_open",false);
-            self.render(); // for some reason the checkboxes don't stay checked. 
+            self.render(); // for some reason the checkboxes don't stay checked.
         })
         this.addStudentFileView.on("modal-closed",this.render);
 
-        
+
         this.tableSetup();
-            
+
         this.users.on({"add": this.addUser,"change": this.changeUser,"sync": this.syncUserMessage,
     					"remove": this.removeUser});
 	    this.userTable = new CollectionTableView({columnInfo: this.cols, collection: this.users, row_id_field: "user_id",
                             paginator: {page_size: 10, button_class: "btn btn-default", row_class: "btn-group"}});
 
 	    this.userTable.on({
-            "page-changed": function(num){ 
+            "page-changed": function(num){
                 self.state.set("current_page",num);
                 self.update();
             },
@@ -54,29 +54,29 @@ var ClasslistView = MainView.extend({
             self.userTable.set(self.state.pick("filter_string","current_page"));
             self.userTable.updateTable();
         });
-    
+
 	    $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
 					    width: (0.95*window.innerWidth), height: (0.95*window.innerHeight) });
-	      
 
-	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation	  
+
+	    // bind the collection to the Validation.  See Backbone.Validation at https://github.com/thedersen/backbone.validation
 	    this.users.each(function(model){
 	    	model.bind('validated:invalid', function(_model, errors) {
-              
-                // if the classlist view isn't the main view, ignore the error.  
+
+                // if the classlist view isn't the main view, ignore the error.
                 // pstaab:  perhaps there is a better way of handling the errors on a global basis.
-              
+
                 if(self.parent.currentView.info.id!=="classlist"){
                   return;
                 }
-              
-			    var row; 
+
+			    var row;
 			    self.$("td.user-id").each(function(i,v){
 			    	if($(v).text()===_model.get("user_id")){
 			    		row = i;
 			    	}
 			    })
-			    
+
 			    _(_.keys(errors)).each(function(key){
 			    	var obj = _(self.userTable.columnInfo).findWhere({key: key});
 			    	var col = _(self.userTable.columnInfo).indexOf(obj);
@@ -85,10 +85,10 @@ var ClasslistView = MainView.extend({
 				    	.css("background-color","rgba(255,0,0,0.25)");
 				});
 	        });
-	    }); 
+	    });
 
         this.passwordPane = new ChangePasswordView({users: this.users});
-        this.emailPane = new EmailStudentsView({users: this.users}); 
+        this.emailPane = new EmailStudentsView({users: this.users});
 
         // query the server every 15 seconds (parameter?) for login status only when the View is visible
         this.eventDispatcher.on("change-view",function(viewID){
@@ -106,7 +106,7 @@ var ClasslistView = MainView.extend({
         // set up some styling
         this.userTable.$(".paginator-row td").css("text-align","center");
         this.userTable.$(".paginator-page").addClass("btn");
-        
+
         var opts = this.state.pick("page_size","filter_string","current_page","selected_rows");
         if(this.state.get("sort_class")&&this.state.get("sort_direction")){
             _.extend(opts,{sort_info: this.state.pick("sort_direction","sort_class")});
@@ -123,7 +123,7 @@ var ClasslistView = MainView.extend({
         this.update();
 
 	    return this;
-    },  
+    },
     bindings: { ".filter-text": "filter_string"},
     getDefaultState: function () {
         return {filter_string: "", current_page: 0, page_size: this.settings.getSettingValue("ww3{pageSize}") || 10,
@@ -135,13 +135,13 @@ var ClasslistView = MainView.extend({
     },
     changeUser: function(_user){
 
-    	if((_user.changingAttributes && _(_user.changingAttributes).has("user_added")) 
+    	if((_user.changingAttributes && _(_user.changingAttributes).has("user_added"))
               || _.keys(_user.changed)[0]==="action"){
     		return;
     	}
     	_user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
     	if(!_(_.keys(_user.changed)).contains("logged_in")){
-	    	_user.save();    		
+	    	_user.save();
     	}
     },
     removeUser: function(_user){
@@ -163,8 +163,8 @@ var ClasslistView = MainView.extend({
                 		text: self.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
                 	self.userTable.render();
                 	break;
-                default:    
-		    	 	self.eventDispatcher.trigger("add-message",{type: "success", 
+                default:
+		    	 	self.eventDispatcher.trigger("add-message",{type: "success",
 		                short: self.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
 		                text: self.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
 		                	key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});
@@ -179,7 +179,7 @@ var ClasslistView = MainView.extend({
 	    "click a.email-selected": "emailSelected",
 	    "click a.password-selected": "changedPasswordSelected",
 	    "click a.delete-selected": "deleteUsers",
-	    "click a.show-rows": function(evt){ 
+	    "click a.show-rows": function(evt){
             this.showRows(evt);
             this.userTable.updateTable();
         }
@@ -192,7 +192,7 @@ var ClasslistView = MainView.extend({
 	},
 	exportStudents: function () {
 	    var textFileContent = _(config.userProps).map(function (prop) { return "\"" + prop.longName + "\"";}).join(",") + "\n";
-	    
+
         // Write out the user Props
         this.users.each(function(user){
         	textFileContent += user.toCSVString();
@@ -211,7 +211,7 @@ var ClasslistView = MainView.extend({
             modal_body: body});
         this.$el.append(modalView.render().el);
         //modalView.render().open();
-	},	
+	},
     clearFilterText: function () {
         this.state.set("filter_string","");
     },
@@ -236,9 +236,9 @@ var ClasslistView = MainView.extend({
                 }}
             },
             {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
-                searchable: false, 
+                searchable: false,
             	value: function(model){
-            		return self.problemSets.filter(function(_set) { 
+            		return self.problemSets.filter(function(_set) {
             				return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
            		},
                 display: function(val){
@@ -308,7 +308,7 @@ var ClasslistView = MainView.extend({
 		}
         var usersToDelete = this.users.filter(function(u){ return _(userIDs).contains(u.get("user_id"));});
 		var self = this
-	    	, str = "Do you wish to delete the following students: " + 
+	    	, str = "Do you wish to delete the following students: " +
 	    			_(usersToDelete).map(function (user) {
                         return user.get("first_name") + " "+ user.get("last_name")}).join(", ")
 		    , del = confirm(str);
@@ -321,7 +321,7 @@ var ClasslistView = MainView.extend({
 	checkLoginStatus: function () {
 		var self = this;
 		this.loginStatusTimer = window.setInterval(function(){
-	        $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/loginstatus",
+	        $.ajax({url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/status/login",
                 type: "GET",
                 success: function(data){
                 	_(data).each(function(st){
@@ -343,7 +343,7 @@ var ClasslistView = MainView.extend({
 	changePassword: function(rows){
 		this.passwordPane.users=this.getUsersByRows(rows);
 	    this.passwordPane.render();
-	    this.passwordPane.$el.dialog("open"); 
+	    this.passwordPane.$el.dialog("open");
 	    },
 	emailSelected: function(){
 		alert("Emailing students is not implemented yet");
@@ -352,7 +352,7 @@ var ClasslistView = MainView.extend({
 	    this.emailPane.users = this.state.get("selected_rows")
 	    this.emailPane.render();
 	    this.emailPane.$el.dialog("open");
-    }, 
+    },
     getHelpTemplate: function (){
     	return $("#classlist-help-template").html();
     }
@@ -397,9 +397,9 @@ var AddStudentManView = ModalView.extend({
         ModalView.prototype.render.apply(this);
         this.stickit();
     },
-    bindings : { 
+    bindings : {
         ".student-id": "student_id",
-        ".last-name": "last_name",          
+        ".last-name": "last_name",
         ".first-name": "first_name",
         ".status": "status",
         ".comment": "comment",
@@ -408,21 +408,21 @@ var AddStudentManView = ModalView.extend({
         ".email": {observe: "email_address",events: ["blur"]},
         ".user-id": {observe: "user_id",events: ["blur"]},
         ".password": "password",
-        ".permission": { 
+        ".permission": {
             observe: "permission",
             selectOptions: { collection: function() { return config.permissions;}}
         }
     },
 
-    saveAndClose: function(){ 
+    saveAndClose: function(){
         var save = this.saveAndAddStudent();
         if(save){
             this.users.add(this.collection.models);
             this.collection.reset();
-            this.close();               
+            this.close();
         }
     },
-    saveAndAddStudent: function (){ 
+    saveAndAddStudent: function (){
         var userExists = this.model.userExists(this.users);
         if(userExists){
             this.$(".message-pane").addClass("alert-danger").html(this.messageTemplate({type:"user_already_exists",
@@ -433,7 +433,7 @@ var AddStudentManView = ModalView.extend({
             this.collection.add(new User(this.model.attributes));
             this.$(".message-pane").addClass("alert-info").html(this.messageTemplate({type: "man_user_added",
                             opts: {users: this.collection.pluck("user_id")}}));
-            
+
             this.model.set(this.model.defaults);
             return true;
         }
@@ -447,7 +447,7 @@ var AddStudentFileView = ModalView.extend({
             _(this).extend(_(options).pick("users","messageTemplate"));
             this.collection = new UserList();
             this.model = new User();
-            this.model.collection = this.collection; // helps with the validation. 
+            this.model.collection = this.collection; // helps with the validation.
             Backbone.Validation.bind(this);
 
             _(options).extend({
@@ -487,24 +487,24 @@ var AddStudentFileView = ModalView.extend({
         },
         render: function(){
             ModalView.prototype.render.apply(this);
-            return this; 
+            return this;
         },
         readFile: function(evt){
-            var self = this; 
+            var self = this;
             $("li#step1").css("display","none");  // Hide the first step of the Wizard
             $("li#step2").css("display","block");  // And show the next step.
             $("button#importStudFromFileButton").css("display","block");
-            
+
             this.loadFile();
         },
-        
+
         loadFile: function (event) {
             var self = this;
             this.file = $("#files").get(0).files[0];
             $('#list').html('<em>' + escape(this.file.name) + '</em>');
-        
+
             // Need to test if the browser can handle this new object.  If not, find alternative route.
-        
+
 
             if (!(this.file.name.match(/\.(lst|csv)$/))){
                 this.showError(this.messageTemplate({type: "csv_file_needed"}));
@@ -513,27 +513,27 @@ var AddStudentFileView = ModalView.extend({
             this.reader = new FileReader();
 
             this.reader.readAsText(this.file);
-            this.reader.onload = function (evt) {           
+            this.reader.onload = function (evt) {
                 var content = evt.target.result
                     , headers = _(config.userProps).pluck("longName");
                 headers.splice(0,0,"");
                 // Parse the CSV file
-                
+
                 //var str = util.CSVToHTMLTable(content,headers);
                 //var arr = util.CSVToHTMLTable(content,headers);
                 var arr = $.csv.toArrays(content);
-                                
+
                 var tmpl = _.template($("#imported-from-file-table").html());
                 $("#studentTable").html(tmpl({array: arr, headers: headers}));
 
-                // build the table and set it up to scroll nicely.      
+                // build the table and set it up to scroll nicely.
                 //$("#studentTable").html(str);
                 $("div.inner").width(25+($("#studentTable table thead td").length)*125);
                 $("#inner-table td").width($("#studentTable table thead td:nth-child(2)").width()+4)
                 $("#inner-table td:nth-child(1)").width($("#studentTable table thead td:nth-child(1)").width())
 
                 // test if it is a classlist file and then set the headers appropriately
-                
+
                 var re=new RegExp("\.lst$","i");
                 if (re.test(self.file.name)){self.setHeadersForLST();}
 
@@ -558,7 +558,7 @@ var AddStudentFileView = ModalView.extend({
             var tmp = $("select.colHeader").map(function(i,v){return {header: $(v).val(), position: i};});
             var headers = _(tmp).filter(function(h) { return h.header!=="";})
             _(headers).each(function(h){ h.shortName = _(config.userProps).findWhere({longName: h.header}).shortName;});
-            
+
 
             // check that the heads are unique
 
@@ -582,10 +582,10 @@ var AddStudentFileView = ModalView.extend({
                 this.$(".error-pane").show("slow");
                 return;
             }
-            
+
 
             // Determine the rows that have been selected.
-            
+
             var rows = _.map($("input.selRow:checked"),function(val,i) {return parseInt(val.id.split("row")[1]);});
             _(rows).each(function(row){
                 var props = {};
@@ -595,18 +595,18 @@ var AddStudentFileView = ModalView.extend({
                 var user = new User(props);
                 user.id = void 0;  // make sure that the new users will be added with a POST instead of a PUT
                 self.users.add(user);
-            
+
             });
             this.close();
         },
         useFirstRow: function (){
-            var self = this;        
-            // If the useFirstRow checkbox is selected, try to match the first row to the headers. 
-            
+            var self = this;
+            // If the useFirstRow checkbox is selected, try to match the first row to the headers.
+
             if ($("input#useFirst").is(":checked")) {
                 _(config.userProps).each(function(user,j){
                 var re = new RegExp(user.regexp,"i");
-                
+
                 $("#studentTable thead td").each(function (i,head){
                     if (re.test($("#inner-table tr:nth-child(1) td:nth-child(" + (i+1) + ")").html())) {
                         $(".colHeader",head).val(user.longName);
@@ -614,12 +614,12 @@ var AddStudentFileView = ModalView.extend({
                     }
                 });
                 });
-            } else {  // set the headers to blank. 
+            } else {  // set the headers to blank.
                 $("#studentTable thead td").each(function (i,head){ $(".colheader",head).val("");});
                 $("#inner-table tr").css("background-color","none");
             }
         },
-        validateColumn: function(arg) {  
+        validateColumn: function(arg) {
             var headerName = _.isString(arg) ? arg : $(arg.target).val()
                 , self = this
                 , headers = this.$(".colHeader").map(function (i,col) { return $(col).val();})
@@ -627,33 +627,33 @@ var AddStudentFileView = ModalView.extend({
                 , changedProperty = _(config.userProps).findWhere({longName: headerName})
                 , colNumber = _(this.$(".colHeader option:selected").map(function(i,v) { return $(v).val()})).indexOf(headerName);
             if(typeof(changedProperty)==="undefined"){
-                return; 
+                return;
             }
 
-            // Detect where the Login Name column is in the table and show duplicate entries of users.           
-            if (loginCol < 0 ) { 
+            // Detect where the Login Name column is in the table and show duplicate entries of users.
+            if (loginCol < 0 ) {
                 $("#inner-table tr#row").css("background","white");  // if Login Name is not a header turn off the color of the rows
             } else {
-                var impUsers = $(".column" + loginCol).map(function (i,cell) { 
-                            return $.trim($(cell).html());});  
-            
+                var impUsers = $(".column" + loginCol).map(function (i,cell) {
+                            return $.trim($(cell).html());});
+
                 var userIDs = this.users.pluck("user_id");
                 var duplicateUsers = _.intersection(impUsers,userIDs);
-            
-                // highlight where the duplicates users are and notify that there are duplicates.  
 
-                $(".column" + loginCol).each(function (i,cell) {    
-                   if (_(duplicateUsers).any(function (user) { 
+                // highlight where the duplicates users are and notify that there are duplicates.
+
+                $(".column" + loginCol).each(function (i,cell) {
+                   if (_(duplicateUsers).any(function (user) {
                         return user.toLowerCase() == $.trim($(cell).html()).toLowerCase();}
                         )){
-                        $("#inner-table tr#row" + i).css("background-color","rgba(255,128,0,0.5)"); 
+                        $("#inner-table tr#row" + i).css("background-color","rgba(255,128,0,0.5)");
                     }
                 });
 
             }
-             
+
              // Validate the user property in the changed Header
-             
+
             this.$("input.selRow:checked").map(function(i,v) { return $(v).closest("tr").children(".column" + colNumber);}).each(function(i,cell){
                 var value = $(cell).html().trim(),
                     errorMessage = self.model.preValidate(changedProperty,value);
@@ -666,7 +666,7 @@ var AddStudentFileView = ModalView.extend({
                     self.$(".error-pane").addClass("hidden")
                 }
             });
-             
+
         },
         setHeadersForLST: function(){
             var self = this;
@@ -677,10 +677,8 @@ var AddStudentFileView = ModalView.extend({
             });
         }
     });
-   
+
 
 return ClasslistView;
-    
+
 });
-
-
