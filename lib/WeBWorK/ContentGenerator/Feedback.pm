@@ -256,7 +256,7 @@ sub body {
 		my $transport = $self->createEmailSenderTransportSMTP();
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
-			"From" => "\"$sender\" <$email_address>",
+			"From" => $sender,
 			"Subject" => $subject
 		]);
 
