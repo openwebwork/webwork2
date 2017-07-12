@@ -248,14 +248,15 @@ sub body {
 # 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 # 			timeout => $ce->{mail}->{smtpTimeout}
 # 		});
-# 
-# 		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
+#
+# 		$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort};
 
 #           createEmailSenderTransportSMTP is defined in ContentGenerator
+		my $email_address = $user->email_address;
 		my $transport = $self->createEmailSenderTransportSMTP();
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
-			"From" => $user->email_address,
+			"From" => "\"$sender\" <$email_address>",
 			"Subject" => $subject
 		]);
 
