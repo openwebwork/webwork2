@@ -19,7 +19,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
         render: function () {
           ProblemListView.prototype.render.apply(this);
 
-          // size the view appropriately. 
+          // size the view appropriately.
           var ht1 = $(".header-set-name").parent().height();
           var ht2 = $(".problems-top-row").height();  // this isn't rendered yet.
           var ht3 = $(".navbar-fixed-top").height();
@@ -66,21 +66,31 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                     return;
                 }
             }
-
-            this.problemSet.changingAttributes =
-                {"problem_deleted": {setname: this.problemSet.get("set_id"),
-                                     problem_id: _prob.get("problem_id")}};
-            this.deletedProblems.push(_(_prob.attributes).omit("_id"));
-
-            var index = _(this.problemViews).findIndex(function(pv){
+            _prob.destroy({success: function(model){
+              console.log("yeah!");
+              var index = _(self.problemViews).findIndex(function(pv){
                 return pv.model.get("problem_id") == _prob.get("problem_id")});
-            var viewToRemove = this.problemViews.splice(index,1);
-            this.problemSet.deleteProblem(_prob);
-            viewToRemove[0].remove();
-            /*_(this.problemViews).each(function(pv,i){
-                    pv.model.set({problem_id: (i+1), _id: self.problemSet.get("set_id")+":"+(i+1)});
-                    pv.$el.data("id",self.problemSet.get("set_id")+":"+(i+1));
-                }); */
+              var viewToRemove = self.problemViews.splice(index,1);
+              viewToRemove[0].remove();
+            }})
+            //
+            //
+            // this.problemSet.changingAttributes =
+            //     {"problem_deleted": {setname: this.problemSet.get("set_id"),
+            //                          problem_id: _prob.get("problem_id")}};
+            // this.deletedProblems.push(_(_prob.attributes).omit("_id"));
+            //
+            // var index = _(this.problemViews).findIndex(function(pv){
+            //     return pv.model.get("problem_id") == _prob.get("problem_id")});
+            // var viewToRemove = this.problemViews.splice(index,1);
+            // this.problemSet.deleteProblem(_prob,viewToRemove,function(opt1,opt2,opt3){
+            //   _(self.problemViews).each(function(view,i){
+            //     if(view){  // if a problem has been deleted the view may not exist.
+            //       view.render();
+            //     }
+            //   });
+            // });
+            // viewToRemove[0].remove();
         },
         undoDelete: function(){
             if (this.deletedProblems.length>0){

@@ -283,3 +283,5 @@ sub get_multiple_users {
   }
   return \@users;
 }
+
+1;

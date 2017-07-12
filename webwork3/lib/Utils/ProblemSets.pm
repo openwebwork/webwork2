@@ -13,30 +13,30 @@ use WeBWorK::Utils qw/writeCourseLog encodeAnswers writeLog cryptPassword/;
 use Array::Utils qw/array_minus/;
 
 our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_date due_date answer_date visible
-enable_reduced_scoring assignment_type description attempts_per_version time_interval
-versions_per_interval version_time_limit version_creation_time version_last_attempt_time
-problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip
-relax_restrict_ip restricted_login_proctor hide_hint/;
+          enable_reduced_scoring assignment_type description attempts_per_version time_interval
+          versions_per_interval version_time_limit version_creation_time version_last_attempt_time
+          problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip
+          relax_restrict_ip restricted_login_proctor hide_hint/;
 
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date
-answer_date visible enable_reduced_scoring assignment_type description restricted_release
-restricted_status attempts_per_version time_interval versions_per_interval version_time_limit
-version_creation_time problem_randorder version_last_attempt_time problems_per_page
-hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip
-restricted_login_proctor hide_hint/;
+          answer_date visible enable_reduced_scoring assignment_type description restricted_release
+          restricted_status attempts_per_version time_interval versions_per_interval version_time_limit
+          version_creation_time problem_randorder version_last_attempt_time problems_per_page
+          hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip
+          restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts status source_file prPeriod prCount/;
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
 
 our @user_problem_props = qw/user_id set_id problem_id source_file value max_attempts showMeAnother
-showMeAnotherCount flags problem_seed status attempted last_answer num_correct num_incorrect
-sub_status flags prPeriod prCount/;
+        showMeAnotherCount flags problem_seed status attempted last_answer num_correct num_incorrect
+        sub_status flags prPeriod prCount/;
 
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(reorderProblems addGlobalProblems deleteProblems addUserProblems addUserSet
-createNewUserProblem getGlobalSet record_results renumber_problems updateProblems shiftTime
-unshiftTime putGlobalSet putUserSet getUserSet putUserProblem
-@time_props @set_props @user_set_props @problem_props @boolean_set_props);
+        createNewUserProblem getGlobalSet record_results updateProblems shiftTime
+        unshiftTime putGlobalSet putUserSet getUserSet putUserProblem
+        @time_props @set_props @user_set_props @problem_props @boolean_set_props);
 
 sub getGlobalSet {
   my ($db,$ce,$setName) = @_;
@@ -205,49 +205,40 @@ sub reorderProblems {
 
   warn "in reorderProblems\n";
 
-  warn dump $new_problems;
+  ###
+  #
+  # 1) each reordered problem is given a problem_id starting at 1001
+  # 2) then each user problem is also assign the same.
+  # 3) the old problems are then deleted.
+  # 4) then the problems ordered 1001,1002, ... are rebuilt with the ordering 1,2,...
+  #
+  ###
 
-  for my $i (0..(scalar(@$new_problems)-1)){
+  for my $i (0..scalar(@$new_problems)-1){
+    warn dump $new_problems->[$i];
+    my $prob = $db->getGlobalProblem($set_id,$new_problems->[$i]->{_old_problem_id});
+    warn dump $prob; 
+    $prob->{problem_id} = $i+1001; # assume there is no problem greater than 1000.
+    $db->addGlobalProblem($prob);
 
-    my $prob;
-    if($db->existsGlobalProblem($set_id,$new_problems->[$i]->{problem_id})){
-      $prob = $db->getGlobalProblem($set_id,$new_problems->[$i]->{problem_id});
-    } else {
-      $prob = $db->newGlobalProblem();
-      $prob->{set_id} = $set_id;
-      $prob->{problem_id} = $new_problems->[$i]->{problem_id};
+    for my $user_id (@$assigned_users){
+      my $userProblem = $db->getUserProblem($user_id,$set_id,$new_problems->[$i]->{_old_problem_id});
+      $userProblem->{problem_id} = $i+1001;
+      $db->addUserProblem($userProblem);
     }
-
-    for my $key (@problem_props){
-      $prob->{$key} = $new_problems->[$i]->{$key};
-    }
-    if($db->existsGlobalProblem($set_id,$new_problems->[$i]->{problem_id})){
-      $db->putGlobalProblem($prob);
-    } else {
-      $db->addGlobalProblem($prob);
-    }
+    $db->deleteGlobalProblem($set_id,$new_problems->[$i]->{_old_problem_id});
   }
 
-  warn "here\n\n";
-
-  ## update the user problems
-
-  for my $user_id (@$assigned_users){
-    my $user_probs = [$db->getAllUserProblems($user_id,$set_id)];
-    for my $i (0..(scalar(@$new_problems)-1)){
-
-      my $user_prob = first {$_->{problem_id} eq $new_problems->[$i]->{_old_problem_id} } @$user_probs;
-
-      ## need to make a new User Problem.  Reusing the old one results in a problem.
-      my $newUserProblem = createNewUserProblem($db,$user_id,$set_id,$new_problems->[$i]->{problem_id});
-
-      warn dump $newUserProblem;
-      warn dump $user_prob;
-      for my $prop (@user_problem_props) {
-        $newUserProblem->{$prop} = $user_prob->{$prop};
-      }
-      $db->putUserProblem($newUserProblem);
+  for my $prob_id ($db->listGlobalProblems($set_id)){
+    my $prob = $db->getGlobalProblem($set_id,$prob_id);
+    $prob->{problem_id} = $prob_id-1000;
+    $db->addGlobalProblem($prob);
+    for my $user_id (@$assigned_users){
+      my $userProblem = $db->getUserProblem($user_id,$set_id,$prob_id);
+      $userProblem->{problem_id} = $prob_id-1000;
+      $db->addUserProblem($userProblem);
     }
+    $db->deleteGlobalProblem($set_id,$prob_id);
   }
 }
 
@@ -335,80 +326,10 @@ sub addUserProblems {
 
   for my $p (@{$problems}){
     for my $userID (@{$users}){
-      $db->addUserProblem(createNewUserProblem($userID,$setID,$p->{problem_id}))
+      $db->addUserProblem(createNewUserProblem($db,$userID,$setID,$p->{problem_id}))
       unless $db->existsUserProblem($userID,$setID,$p->{problem_id});
     }
   }
-}
-
-
-###
-#
-# This deletes a problem.  The variable $problems is a reference to an array of problems and
-# the subroutine checks if any of the given problems are not in the database
-#
-#  Note:  the calls to $db->deleteGlobalProblem also deletes any user problem associated with it.
-#
-##
-
-sub deleteProblems {
-  my ($db,$setID,$problems,$assigned_users,$problem_id_to_delete)=@_;
-
-  $db->deleteGlobalProblem($setID,$problem_id_to_delete);
-
-  # renumber_problems($db,$setID,$assigned_users);
-
-  return $db->getAllGlobalProblems($setID);
-}
-
-###
-#
-# The following renumbers problems.  If they come in as 2,4,9,11,13 they leave as 1,2,3,4,5
-#
-#  pstaab: It appears that there is a lot of overlap between this and reorder_problems at the top
-#  of this file.  They should be combined or clarified how.
-###
-
-sub renumber_problems {
-  my ($db,$setID,$assigned_users) = @_;
-
-  my @probs = $db->getAllGlobalProblems($setID);
-
-  my @prob_ids = ();
-  my %userprobs = ();
-  my $j=1;
-  for my $prob (@probs) {
-    push(@prob_ids, $prob->{problem_id});
-    $prob->{problem_id} = $j++;
-  }
-
-  for my $user_id (@{$assigned_users}){
-    $j=1;
-    my $userproblems = [$db->getAllUserProblems($user_id,$setID)];
-    for my $prob (@$userproblems) {
-      $prob->{problem_id} = $j++;
-    }
-    $userprobs{$user_id} = $userproblems;
-  }
-
-  ## delete all old problems;
-
-  for my $prob_id (@prob_ids){
-    $db->deleteGlobalProblem($setID,$prob_id);
-  }
-
-  ## add in all of the global and user problems:
-  for my $prob (@probs) {
-    $db->addGlobalProblem($prob);
-  }
-
-  for my $user_id (@{$assigned_users}){
-    for my $user_problem (@{$userprobs{$user_id}}){
-      $db->addUserProblem($user_problem);
-    }
-  }
-
-  return;
 }
 
 

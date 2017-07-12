@@ -59,16 +59,29 @@ var ProblemSet = Backbone.Model.extend({
         this.dateSettings = dateSettings;
         opts.problems = opts.problems || [];
         this.set(this.parse(opts),{silent: true});
-        this.problems.on("change",function(){
-          self.trigger("change",self);
-        })
+    },
+    save: function(attrs, options) {
+      options || (options = {});
+      attrs || (attrs = _(this.attributes).clone());
+      delete attrs.problems;
+
+      console.log("in ProblemSet.save");
+
+      // this prevents all of the rendered problems to be sent back to the server
+      var probs = this.problems.clone();
+      probs.each(function(p){
+        p.unset("data",{silent: true});
+      });
+      attrs.problems=probs.models;
+
+      return  Backbone.Model.prototype.save.call(this, attrs, options);
     },
     parse: function (response) {
         if (response.problems){
             if (typeof(this.problems)=="undefined"){
                 this.problems = new ProblemList();
             }
-            this.problems.set(response.problems,{silent: true});
+            this.problems.set(response.problems);
             this.attributes.problems = this.problems;
         }
         response.assignment_type = response.assignment_type || "default";
@@ -105,14 +118,6 @@ var ProblemSet = Backbone.Model.extend({
         this.set("_add_problem",true);
         this.save();
         this.unset("_add_problem",{silent: true});
-    },
-    // delete the problem _prob and if successfull remove the view _view
-    deleteProblem: function(_prob,_view){
-        var self = this;
-        this.set("_delete_problem_id",_prob.get("problem_id"));
-        this.save();
-        this.unset("_delete_problem_id",{silent: true});
-        this.get("problems").remove(_prob);
     },
     setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
         var currentDate = moment.unix(this.get(attr))

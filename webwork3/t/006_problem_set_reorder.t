@@ -13,6 +13,7 @@ my $webwork_dir = "";
 my $pg_dir = "";
 
 BEGIN {
+  #$ENV{PLACK_ENV}='testing';
   $ENV{MOD_PERL_API_VERSION}=2;  # ensure that mod_perl2 is used.
   $webwork_dir = $ENV{WEBWORK_ROOT} || die "The environment variable WEBWORK_ROOT needs to be defined.";
   $pg_dir = $ENV{PG_ROOT};
@@ -85,7 +86,7 @@ subtest 'login to admin course and create a new course_zyx and add some users' =
   ok($res->is_success, '[POST /admin/courses/new_course_id] successfully created a new course');
 };
 
-subtest 'Login to new course as profa' => sub {
+subtest 'Login to new course as profa and add users' => sub {
   my $req =  POST "$url/courses/new_course_xyz/login?username=profa&password=profa";
   my $res = $test->request($req);
   $jar->extract_cookies($res);
@@ -93,6 +94,24 @@ subtest 'Login to new course as profa' => sub {
 
   ok($result_hash->{logged_in}, '[POST /courses/new_course_xyz/login] successfully logged in');
 
+  my $users = get_multiple_users();
+
+  $req = HTTP::Request->new(
+      "POST","$url/courses/new_course_xyz/users",
+      HTTP::Headers->new('Content-Type' => 'application/json'),
+      encode_json({ users => $users})
+      );
+  $jar->add_cookie_header($req);
+
+  $res = $test->request($req);
+  ok($res->is_success,'[POST /courses/new_course_xyz/users] successful.');
+  my $returned_users =  decode_json($res->content);
+
+  for my $i (0..$#{$users}){
+     $users->[$i]->{_id} = $users->[$i]->{user_id};
+  }
+
+  cmp_deeply($users,$returned_users,'Creating multiple users was successful.');
 };
 
 my $set;
@@ -108,10 +127,19 @@ subtest 'Create a new problem set' => sub {
   my $due_date = $reduced_scoring_date->clone()->add(days=>2);
   my $answer_date = $due_date->clone()->add(days=>3);
 
+  ## get all of the users currently assigned to the course.
+
+  my $req = GET "$url/courses/new_course_xyz/users";
+  $jar->add_cookie_header($req);
+  my $res = $test->request($req);
+  my $result_hash = decode_json $res->content;
+
+  my @users = map {$_->{user_id}} @$result_hash;
+
   $set = { set_id => "set1", open_date => $open_date->epoch(),
                 reduced_scoring_date => $reduced_scoring_date->epoch(),
                  due_date => $due_date->epoch(), answer_date => $answer_date->epoch(),
-                 assigned_users => [], problems => [],hide_hint => JSON::false,
+                 assigned_users => \@users, problems => [],hide_hint => JSON::false,
                  problems_per_page => '', versions_per_interval => '',
                  time_interval => '', hide_score => '', attempts_per_version => '',
                  restricted_login_proctor => '', version_creation_time => '', _id => "set1",
@@ -123,16 +151,16 @@ subtest 'Create a new problem set' => sub {
                  time_limit_cap => JSON::false, assignment_type => "default",
                  email_instructor => '', restrict_prob_progression => ''};
 
-  my $req = HTTP::Request->new(
+  $req = HTTP::Request->new(
       "POST","$url/courses/new_course_xyz/sets/set1",
       HTTP::Headers->new('Content-Type' => 'application/json'),
       encode_json($set)
       );
   $jar->add_cookie_header($req);
 
-  my $res = $test->request($req);
+  $res = $test->request($req);
 
-  my $result_hash = decode_json($res->content);
+  $result_hash = decode_json($res->content);
 
   cmp_deeply($result_hash,$set,"A set with id set1 has successfully been created.");
 
@@ -197,13 +225,9 @@ subtest 'reorder problems' => sub {
   ## set the problem with id=4 to id=1 and shift all others by one
 
 
-  my @order = (2,3,4,1,5);
+  my @order = (1,2,4,3,5);
   my @probs = @{$set->{problems}};
   $set->{_reorder} = JSON::true;
-
-  # for my $p (@probs){
-  #   dd $p->{problem_id} . ":::" . $p->{source_file};
-  # }
 
   for my $index (0..$#probs){
      $probs[$index]->{_old_problem_id} = $index+1;
@@ -213,6 +237,10 @@ subtest 'reorder problems' => sub {
 
   my @problems_in_new_order =  sort { $a->{problem_id} <=> $b->{problem_id} } @probs;
   $set->{problems} = \@problems_in_new_order;
+  # for my $p (@{$set->{problems}}){
+  #    dd $p->{problem_id} . ":::" . $p->{source_file};
+  #  }
+
   my $req = HTTP::Request->new(
       "PUT","$url/courses/new_course_xyz/sets/set1",
       HTTP::Headers->new('Content-Type' => 'application/json'),
@@ -222,11 +250,6 @@ subtest 'reorder problems' => sub {
   my $res = $test->request($req);
 
   my $result_hash = decode_json($res->content);
-
-  # for my $p (@{$result_hash->{problems}}){
-  #   dd $p->{problem_id} . ":::" . $p->{source_file};
-  # }
-
 
   for my $prob (@{$set->{problems}}){
     delete $prob->{_old_problem_id};
@@ -243,9 +266,80 @@ subtest 'reorder problems' => sub {
 
 subtest 'delete a problem' => sub {
   my @probs = @{$set->{problems}};
-  $set->{_delete_problem_id} = int(rand($#probs))+1;
+  my $problem_to_delete  = int(rand($#probs))+1;
+  my $deleted_problem = $probs[$problem_to_delete-1];
 
+  my $req = HTTP::Request->new(
+      "DELETE","$url/courses/new_course_xyz/sets/set1/problems/$problem_to_delete",
+  );
+  $jar->add_cookie_header($req);
+  my $res = $test->request($req);
 
+  my $result_hash = decode_json($res->content);
+
+  delete $deleted_problem->{problem_seed};
+  delete $deleted_problem->{data};
+  delete $deleted_problem->{_id};
+
+  cmp_deeply($result_hash,$deleted_problem  ,"The set set1 had a problem successfully deleted.");
+
+};
+
+subtest 'reorder from odd config' => sub {
+
+  ## add more problems.
+  my @probSources = qw! Library/SDSU/Discrete/Logic/formallogicA19.pg
+                          Library/SDSU/Discrete/Logic/formallogicB16.pg
+                          Library/SDSU/Discrete/Logic/formallogicB3.pg
+                          Library/SDSU/Discrete/Logic/ttcontratautB2.pg
+                          Library/SDSU/Discrete/Logic/ttlogicequivA5.pg!;
+  my $i=6;
+  my @problems = map { createProblem("set1",$i++, $_);} @probSources;
+  push(@{$set->{problems}},@problems);
+
+  #dd $set->{problems};
+
+  my $req = HTTP::Request->new(
+      "PUT","$url/courses/new_course_xyz/sets/set1",
+      HTTP::Headers->new('Content-Type' => 'application/json'),
+      encode_json($set)
+      );
+  $jar->add_cookie_header($req);
+  my $res = $test->request($req);
+  ok($res->is_success,'Added more problems to the set');
+  my $result_hash = decode_json($res->content);
+
+  $req = HTTP::Request->new("DELETE","$url/courses/new_course_xyz/sets/set1/problems/1");
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+
+  $req = HTTP::Request->new("DELETE","$url/courses/new_course_xyz/sets/set1/problems/2");
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+
+  $req = HTTP::Request->new("DELETE","$url/courses/new_course_xyz/sets/set1/problems/3");
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+
+  $req = GET "$url/courses/new_course_xyz/sets/set1";
+  $jar->add_cookie_header($req);
+  $res = $test->request($req);
+
+  $result_hash = decode_json $res->content;
+
+  my @probs = @{$result_hash->{problems}};
+
+  my $num_probs = scalar(@probs);
+
+  ok($num_probs > 0,"There are now $num_probs problems in the set.");
+
+  for my $index (0..$#probs){
+     $probs[$index]->{_old_problem_id} = $probs[$index]->{problem_id};
+     $probs[$index]->{problem_id} = $index+1;
+  }
+
+  $set->{problems} = \@probs;
+  $set->{_reorder} = JSON::true; 
 
   my $req = HTTP::Request->new(
       "PUT","$url/courses/new_course_xyz/sets/set1",
@@ -255,17 +349,12 @@ subtest 'delete a problem' => sub {
   $jar->add_cookie_header($req);
   my $res = $test->request($req);
 
-  my $result_hash = decode_json($res->content);
+  $result_hash = decode_json($res->content);
 
-  #dd $result_hash;
 
-  splice @probs, ($set->{_delete_problem_id} -1), 1;
-  $set->{problems} =\@probs;
-  delete $set->{_delete_problem_id};
-  cmp_deeply($result_hash,$set,"The set set1 had a problem successfully deleted.");
+
 
 };
-
 
 ### change parameters on a problem.
 
@@ -288,18 +377,6 @@ subtest 'delete a course' => sub {
 
 done_testing();
 
-
-
-
-
-
-
-
-
-
-
-
-
 sub createProblem {
     my ($setID, $problemID, $sourceFile) = @_;
 
@@ -309,3 +386,33 @@ sub createProblem {
       showMeAnotherCount => "", source_file => $sourceFile, value => 1,
       prPeriod => -1, prCount => 0};
 }
+
+sub get_multiple_users {
+  my $user_names = [
+    {first_name => "Aaron", last_name => "Judge", student_id => 1730, user_id => "ajudge"},
+    {first_name => "George", last_name => "Springer", student_id => 1729, user_id => "gspringer"},
+    {first_name => "Joey", last_name => "Votto", student_id => 1728, user_id => "jvotto"},
+    {first_name => "Giancarlo", last_name => "Stanton", student_id => 1727, user_id => "gstanton"},
+    {first_name => "Mike", last_name => "Moustakas", student_id => 1726, user_id => "mmoustakas"},
+    {first_name => "Cody", last_name => "Bellinger", student_id => 1725, user_id => "cbellinger"},
+  ];
+
+  my @users;
+  for my $user (@$user_names){
+    $user->{email_address} = $user->{user_id} . "\@localhost";
+    $user->{comment} = "";
+    $user->{permission} = 0;
+    $user->{displayMode} = "";
+    $user->{lis_source_did} = "";
+    $user->{recitation} = "";
+    $user->{section} = "";
+    $user->{showOldAnswers} = JSON::false;
+    $user->{status} = "";
+    $user->{useMathView} = JSON::false;
+
+    push(@users,$user);
+  }
+  return \@users;
+}
+
+1;

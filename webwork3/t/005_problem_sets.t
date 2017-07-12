@@ -6,6 +6,7 @@ my $webwork_dir = "";
 my $pg_dir = "";
 
 BEGIN {
+  $ENV{PLACK_ENV}='testing';
   $ENV{MOD_PERL_API_VERSION}=2;  # ensure that mod_perl2 is used.
   $webwork_dir = $ENV{WEBWORK_ROOT} || die "The environment variable WEBWORK_ROOT needs to be defined.";
   $pg_dir = $ENV{PG_ROOT};

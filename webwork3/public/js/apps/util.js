@@ -1,25 +1,25 @@
-             
+
 /* This is a function that parses a CSV file or a classlist (LST) file and fills an HTML table for viewing.
  * The part of the code that parses the CSV file was found (and is documented well) at http://stackoverflow.com/questions/1293147/javascript-code-to-parse-csv-data
- * 
+ *
  */
-             
+
 define(['underscore','config','models/AssignmentDateList','models/AssignmentDate','moment'], function(_,config,AssignmentDateList,AssignmentDate,moment){
-var util = {             
-    // as of 2015-01-02, this function is no longer used in lieu of a library.  To delete after some testing. 
+var util = {
+    // as of 2015-01-02, this function is no longer used in lieu of a library.  To delete after some testing.
     CSVToHTMLTable: function( strData,headers, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
-        
-        // First strip out any lines that begin with #.  This is to allow the legacy .lst (classlist) files to be easily imported.  
-        
+
+        // First strip out any lines that begin with #.  This is to allow the legacy .lst (classlist) files to be easily imported.
+
         var lines = strData.split("\n");
         var newData = [];
         var poundPattern = /^\s*#/;
         _(lines).each(function(line) {if (! (poundPattern.test(line))) {newData.push(line);}});
-        
+
         var updatedData = newData.join("\n");
-        
-        
+
+
         var objPattern = new RegExp(("(\\" + strDelimiter + "|\\r?\\n|\\r|^)(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
                         "([^\"\\" + strDelimiter + "\\r\\n]*))"),"gi");
         var arr = [[]];
@@ -35,14 +35,14 @@ var util = {
                 } else {
                         var strMatchedValue = arrMatches[ 3 ];
                 }
-                // the following is a hack in that if the file starts with , then it doesn't read the first line correctly. 
+                // the following is a hack in that if the file starts with , then it doesn't read the first line correctly.
                 if(arr[0].length===0 && arrMatches.input.indexOf(strDelimiter)===0){
                     arr[arr.length-1].push("");
                 }
                 arr[ arr.length - 1 ].push( strMatchedValue );
         }
 
-        return arr; 
+        return arr;
      },
      // this function escapes both commas and double quotes (")
      csvEscape: function(str){
@@ -79,10 +79,10 @@ var util = {
                         case "openDate":
                             problemSet.open_date = matches[2];
                             break;
-                        case "dueDate": 
+                        case "dueDate":
                             problemSet.due_date = matches[2];
                             break;
-                        case "answerDate": 
+                        case "answerDate":
                             problemSet.answer_date = matches[2];
                             break;
                         case "paperHeaderFile":
@@ -107,14 +107,15 @@ var util = {
     },
 
     getInverseBindings: function(bindings){
-        return _.object(_(_(bindings).values()).map(function(v) { 
-            return _(v).isObject() ? v.observe : v ;}),_(bindings).keys()) 
+        return _.object(_(_(bindings).values()).map(function(v) {
+            return _(v).isObject() ? v.observe : v ;}),_(bindings).keys())
     },
 
         // this parses the fields in obj as integers.
     parseAsIntegers: function(obj,fields){
-        var values = _(obj).chain().pick(fields).values().map(function(d) {return d?parseInt(d):d;}).value();
-        _.extend(obj,_.object(fields,values));
+        ifields = _(_(obj).keys()).intersection(fields); // only select the fields in obj.  
+        var values = _(obj).chain().pick(ifields).values().map(function(d) {return d?parseInt(d):d;}).value();
+        _.extend(obj,_.object(ifields,values));
         return obj;
     },
     // this returns the object for a Backbone.Stickit bindings object.  This is useful for error reporting.
