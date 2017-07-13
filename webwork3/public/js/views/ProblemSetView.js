@@ -8,13 +8,19 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                               showViewTool: false, showHideTool: false, deletable: true,
                               draggable: false, show_undo: true, markCorrect: true};
             _(this).extend(_(options).pick("problemSet","eventDispatcher"));
-            _(this).bindAll("reorder","deleteProblem");
+            _(this).bindAll("reorder","deleteProblem","updateAfterSave");
             options.type = "problem_set";
             ProblemListView.prototype.initialize.apply(this,[options]);
 
             // this is where problems are placed upon delete, so the delete can be undone.
             this.deletedProblems = new ProblemList();
             this.set({problem_set_view: this, page_size: -1});
+        },
+        events: function(){
+          var evs =_(ProblemListView.prototype.events).extend({
+            "click .renumber-button": "renumberProblems"
+          });
+          return evs;
         },
         render: function () {
           ProblemListView.prototype.render.apply(this);
@@ -52,9 +58,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                 self.eventDispatcher.trigger("add-message",{type: "success",
                     short: self.messageTemplate(msg),
                     text:self.messageTemplate(msg)});
-                //console.log(self);
-
-            }});
+                }});
         },
         // this removes the problem _prob from the problemSet.
         deleteProblem: function (_prob){
@@ -72,25 +76,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                 return pv.model.get("problem_id") == _prob.get("problem_id")});
               var viewToRemove = self.problemViews.splice(index,1);
               viewToRemove[0].remove();
-            }})
-            //
-            //
-            // this.problemSet.changingAttributes =
-            //     {"problem_deleted": {setname: this.problemSet.get("set_id"),
-            //                          problem_id: _prob.get("problem_id")}};
-            // this.deletedProblems.push(_(_prob.attributes).omit("_id"));
-            //
-            // var index = _(this.problemViews).findIndex(function(pv){
-            //     return pv.model.get("problem_id") == _prob.get("problem_id")});
-            // var viewToRemove = this.problemViews.splice(index,1);
-            // this.problemSet.deleteProblem(_prob,viewToRemove,function(opt1,opt2,opt3){
-            //   _(self.problemViews).each(function(view,i){
-            //     if(view){  // if a problem has been deleted the view may not exist.
-            //       view.render();
-            //     }
-            //   });
-            // });
-            // viewToRemove[0].remove();
+            }});
         },
         undoDelete: function(){
             if (this.deletedProblems.length>0){
@@ -112,32 +98,35 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                 return;
             }
             var oldProblems = this.problemSet.problems.map(function(p) { return _.clone(p.attributes); });
-            var newProblemViews = [];
 
             this.$(".problem").each(function (i) {
                 // this determines which model the ith one is.
                 var id = $(this).data("id").split(":")[1];  // id is the ith problem_id in the reshuffled list.
                 var prob = _(oldProblems).find(function(p) {return p.problem_id == id; });
                 var attrs = _.extend({},prob,{problem_id: (i+1),
-                                              _id: self.model.get("set_id") + ":" + (i+1),
+                                              //_id: self.model.get("set_id") + ":" + (i+1),
                                              _old_problem_id: id});
-                newProblemViews[i] = _(self.problemViews).find(function(pv) { return pv.model.get("problem_id")==id});
-                newProblemViews[i].model.set(attrs,{silent: true}); // this is silent to prevent firing a sync for every problem
-                newProblemViews[i].$el.data("id",self.problemSet.get("set_id")+":"+(i+1));
+                self.problemSet.problems.at(i).set(attrs,{silent: true});
             });
-            this.problemViews = newProblemViews;
 
-            this.problemSet.problems.reset(_(this.problemViews).map(function(pv) { return pv.model.attributes;}));
-
-            this.problemSet.save({_reorder: true},{success: function(model,response,opts){
-              _(response.problems).each(function(prob,i){
-                if(self.problemViews[i]){  // if a problem has been deleted the view may not exist.
-                  self.problemViews[i].render();
-                }
-              });
-            }});
-            this.problemSet.unset("_reorder");
+            this.problemSet.save({_reorder: true},{success: this.updateAfterSave});
+            this.problemSet.unset("_reorder",{silent: true});
         },
+        renumberProblems: function(){
+          this.problemSet.problems.each(function(prob,i){
+            var id = prob.get("problem_id");
+            prob.set({problem_id: (i+1),_old_problem_id: id},{silent: true});
+          });
+          this.problemSet.save({_reorder: true},{success: this.updateAfterSave});
+          this.problemSet.unset("_reorder",{silent: true});
+        },
+        updateAfterSave: function(model,response){
+          this.problemSet.problems.reset(response.problems);
+          // this works, but is very blunt.  it should be able to update just
+          // the problem_id, but other attempts haven't worked.
+          // TODO: refine this.
+          this.render();
+        }
     });
 
     return ProblemSetView;

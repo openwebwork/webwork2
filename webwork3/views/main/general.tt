@@ -70,11 +70,12 @@
 
 <script type="text/template" id="problem-list-template">
 <div class="row problems-top-row">
-  <div class="problem-paginator col-md-8"></div>
-  <div class="col-md-3 num-problems"></div>
+  <div class="problem-paginator col-md-4"></div>
+  <div class="col-md-8 num-problems"></div>
   <%if(show_undo||false) {%>
-  <div class="pull-right">
-    <button class="btn btn-default undo-delete-button btn-sm" disabled="disabled"><i class="fa fa-undo"></i></button></div>
+  <div class="pull-right btn-group">
+    <button class="btn btn-default renumber-button btn-sm">Renumber Problems</button>
+    <button class="btn btn-default undo-delete-button btn-sm" disabled="disabled">Undo Delete Problem</button></div>
   <%}%>
 </div>
 <div class="prob-list-container">

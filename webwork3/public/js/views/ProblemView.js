@@ -57,9 +57,7 @@ define(['backbone', 'underscore','config','models/Problem','apps/util','imageslo
             }}).on('change:source_file', function(){
                 self.model.set("data","");
                 self.render();
-            }).on('change:problem_id',function(model){
-              console.log(model._changed);
-            })
+            });
            this.invBindings = util.invBindings(this.bindings);
         },
 
