@@ -234,6 +234,8 @@ sub renderProblem {
 	if ($UNIT_TESTS_ON) {
 		print STDERR "RenderProblem.pm:  user = $user\n";
 		print STDERR "RenderProblem.pm:  courseName = $courseName\n";
+		print STDERR "RenderProblem.pm:  effectiveUser = ",$rh->{effectiveUser},"\n";
+		print STDERR "RenderProblem.pm:  studentLogin = ",$rh->{envir}->{studentLogin},"\n";
 		print STDERR "RenderProblem.pm:  effectiveUserName = $effectiveUserName\n";
 		print STDERR "environment fileName", $rh->{envir}->{fileName},"\n";
 	}
