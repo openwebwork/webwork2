@@ -1,4 +1,4 @@
-#README
+# README
 
 * The client directory contains software which shows how WeBWorK  PG questions can be accessed from outside the WeBWorK2 framework via a webserver. 
 
