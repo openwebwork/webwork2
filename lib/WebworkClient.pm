@@ -555,8 +555,8 @@ sub environment {
 		numZeroLevelDefault =>0.000001,
 		numZeroLevelTolDefault =>0.000001,
 		openDate=> '3014438528',
-		permissionLevel =>10,
-		PRINT_FILE_NAMES_FOR => [ 'gage'],
+		permissionLevel =>undef,
+		PRINT_FILE_NAMES_FOR => [ ],
 		probFileName => 'WebworkClient.pm:: define probFileName in environment',
 		problemSeed  => $self->{inputs_ref}->{problemSeed}//3333,
 		problemValue =>1,
@@ -564,13 +564,13 @@ sub environment {
 		psvn => 54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
-		sectionName => 'Gage',
+		sectionName => '',
 		sectionNumber => 1,
 		server_root_url =>"foobarfoobar", 
 		sessionKey=> 'Not defined',
 		setNumber =>'not defined',
-		studentLogin =>'gage',
-		studentName => 'Mike Gage',
+		studentLogin =>'',
+		studentName => '',
 		tempDirectory => 'not defined',
 		templateDirectory=>'not defined',
 		tempURL=>'not defined',
@@ -834,6 +834,7 @@ EOS
 	$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
 	$localStorageMessages .= CGI::end_div();
 		
+
 	# my $pretty_print_self  = pretty_print($self);
 
 ######################################################
