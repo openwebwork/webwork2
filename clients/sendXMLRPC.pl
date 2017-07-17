@@ -2,8 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/clients/renderProblem.pl,v 1.4 2010/05/11 15:44:05 gage Exp $
+# Copyright © 2000-2017 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,6 +21,14 @@ webwork2/clients/sendXMLRPC.pl
 
 =head1 DESCRIPTION
 
+
+This module provides functions for rendering html from files outside the normal
+context of providing a webwork homework set user  an existing problem set.
+
+It can be used to create a live version of a single problem, one that is not
+part of any set, and can facilitate editing these problems outside of the 
+context of WeBWorK2. 
+
 This script will take a list of files or directories
 and send it to a WeBWorK daemon webservice
 to have it rendered.  For directories each .pg file under that 
@@ -35,6 +42,9 @@ problem was correctly rendered can be sent to a log file (use -c or C switches).
 The capital letter switches, -B, -H, and -C render the question twice.  The first
 time returns an answer hash which contains the correct answers. The question is
 then resubmitted to the renderer with the correct answers filled in and displayed.  
+
+IMPORTANT: Remember to configure the local output file and display command near the 
+top of this script. !!!!!!!!
 
 IMPORTANT: Create a valid credentials file.
 
@@ -130,6 +140,10 @@ IMPORTANT: Create a valid credentials file.
 =item   -e
 	Open the source file in an editor. 
 	
+=item   --tex
+	Process question in TeX mode and output to the command line
+
+	
 =item   
 
 	The single letter options can be "bundled" e.g.  -vcCbB
@@ -197,14 +211,18 @@ BEGIN {
 
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
+use Carp;
 use Crypt::SSLeay;  # needed for https
-use WebworkClient;
 use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
 use File::Find;
 use FileHandle;
 use Cwd 'abs_path';
+use WebworkClient;
+use FormatRenderedProblem;
+use 5.10.0;
+$Carp::Verbose = 1;
 
 #############################################
 # Configure displays for local operating system
@@ -217,7 +235,7 @@ use Cwd 'abs_path';
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
 #use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
 
-### Path to a temporary file for storing the output of renderProblem.pl
+### Path to a temporary file for storing the output of sendXMLRPC.pl
  use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
  die "You must make the directory ".TEMPOUTPUTDIR().
      " writeable " unless -w TEMPOUTPUTDIR();
@@ -225,6 +243,12 @@ use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS comm
     
 ### Default path to a temporary file for storing the output of sendXMLRPC.pl
 use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/xmlrpc_results.log";
+
+### Command for editing the pg source file in the browswer
+use constant EDIT_COMMAND =>"bbedit";   # for Mac BBedit editor (used as `EDIT_COMMAND() . " $file_path")
+
+### Command for editing and viewing the tex output of the pg question.
+use constant TEX_DISPLAY_COMMAND =>"open -a 'TeXShop'";
 
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
@@ -250,6 +274,7 @@ my $verbose = '';
 my $credentials_path;
 my $format = 'standard';
 my $edit_source_file = '';
+my $display_tex_output='';
 my $print_answer_hash;
 my $print_answer_group;
 my $print_pg_hash;
@@ -267,6 +292,7 @@ GetOptions(
 	'C' => \$record_ok2,
 	'v' => \$verbose,
 	'e' => \$edit_source_file, 
+	'tex' => \$display_tex_output,
 	'list=s' =>\$read_list_from_this_file,   # read file containing list of full file paths
 	'pg' 			=> \$print_pg_hash,
 	'anshash' 		=> \$print_answer_hash,
@@ -307,16 +333,28 @@ The credentials file should contain this:
 1;
 EOF
 
-foreach my $path ($credentials_path, @path_list) { # look in specified credentials first
-	next unless defined $path;
-	if (-r $path ) {
-		$credentials_path = $path;
-		last;
+if (defined $credentials_path and (-r $credentials_path) ) {
+		# we're all set
+} elsif(defined $credentials_path) { #can't find credentials
+		die "Can't find credentials file $credentials_path searching\n";
+}
+
+# if credentials_path not set explicitly go look for a credentials file.
+unless (defined $credentials_path) {
+	foreach my $path ( @path_list) { 
+		print "looking for credentials file $path. Found =".(-r $path)."\n" if $verbose;
+		next unless defined $path;
+		if (-r $path ) {
+			$credentials_path = $path;
+			last;
+		}
 	}
 }
+
+# verify that a credentials file has been found
 if  ( $credentials_path ) { 
 	print "Credentials taken from file $credentials_path\n" if $verbose;
-} else {
+} else {  #failed to find credentials file
 	die <<EOF;
 Can't find path for credentials. Looked in @path_list.
 $credentials_string
@@ -340,27 +378,18 @@ if ($verbose) {
 }
 
 #allow credentials to overrride the default displayMode and the browser display
-our $HTML_DISPLAY_COMMAND = $credentials{html_display_command}//HTML_DISPLAY_COMMAND();
-#our $HASH_DISPLAY_COMMAND = $credentials{hashdisplayCommand}//HASH_DISPLAY_COMMAND();
-
-our $DISPLAYMODE          = $credentials{ww_display_mode}//DISPLAYMODE();
-$path_to_log_file         = $path_to_log_file //$credentials{path_to_log_file}//LOG_FILE();  #set log file path.
-
-eval { # attempt to create log file
-	local(*FH);
-	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
-	close(FH);	
-};
-die "You must first create an output file at $path_to_log_file
-     with permissions 777 " unless -w $path_to_log_file;
+our $HTML_DISPLAY_COMMAND = $credentials{HTMLdisplayCommand}//HTML_DISPLAY_COMMAND();
+our $DISPLAYMODE          = $credentials{WWdisplayMode}//DISPLAYMODE();
+our $TEX_DISPLAY_COMMAND  = $credentials{TeXdisplayCommand}//TEX_DISPLAY_COMMAND();
 
 ##################################################
 #  END gathering credentials for client
 ##################################################
 
-############################################
-# Build  client defaults
-############################################
+
+##################################################
+#  set default inputs for the problem
+##################################################
  
 my $default_input = { 
 		userID      			=> $credentials{userID}//'',
@@ -372,7 +401,8 @@ my $default_input = {
 
 my $default_form_data = { 
 		displayMode				=> $DISPLAYMODE,
-		outputformat 			=> $format,
+		outputformat 			=> $format//'standard',
+		problemSeed             => PROBLEMSEED(),
 };
 
 ##################################################
@@ -443,8 +473,17 @@ sub process_pg_file {
 	my $problemSeed1 = 1112;
 	my $form_data1 = { %$default_form_data,
 					  problemSeed => $problemSeed1};
-
-	my ($error_flag, $xmlrpc_client, $error_string) = 
+	if ($display_tex_output) {
+		my $form_data2 = {
+			%$form_data1,
+			displayMode  =>'tex',
+			outputformat => 'tex',
+		};
+		my ($error_flag, $formatter, $error_string) = 
+	    	process_problem($file_path, $default_input, $form_data2);
+	    display_tex_output($file_path, $formatter)  if $display_tex_output;
+	}
+	my ($error_flag, $formatter, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
 	# extract and display result
 		#print "display $file_path\n";
@@ -697,11 +736,25 @@ sub process_problem {
 	return $error_flag, $xmlrpc_client, $error_string;
 }
 
-##################################################
-# print the output (or the error message)  and display
-#FIXME -- possibly refactor these two into display_output()??
-##################################################
+sub display_tex_output {
+	my $file_path = shift;
+	my $xmlrpc_client = shift;
+	my $output_text = $xmlrpc_client->formatRenderedProblem;
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.tex/;    # replace extension with html
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	local(*FH);
+	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	print FH $output_text;
+	close(FH);
+	# restore values
+	system($TEX_DISPLAY_COMMAND." ".$output_file);
+#	sleep 5;   #wait 5 seconds
+#	unlink($output_file);
 
+}
 sub	display_html_output {  #display the problem in a browser
 	my $file_path = shift;
 	my $output_text = shift;
@@ -722,7 +775,8 @@ sub	display_html_output {  #display the problem in a browser
 
 sub display_hash_output {   # print the entire hash output to the command line
 	my $file_path = shift;
-	my $output_text = shift;	
+	my $formatter = shift;
+	my $output_text = $formatter->formatRenderedProblem;
 	$file_path =~s|/$||;   # remove final /
 	$file_path =~ m|/?([^/]+)$|;
 	my $file_name = $1;
@@ -919,8 +973,12 @@ DETAILS
     -e
 				Open the source file in an editor. 
 
+	
                 The single letter options can be "bundled" e.g.  -vcCbB
-                
+   
+   	--tex    
+				Process question in TeX mode and output to the command line
+             
 	--list   pg_list
 				Read and process a list of .pg files contained in the file C<pg_list>.  C<pg_list>
 				consists of a sequence of lines each of which contains the full path to a pg

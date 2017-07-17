@@ -121,7 +121,9 @@ credentials file
 The single letter options can be "bundled" e.g.  -vcCbB
 
 ```
-                
+    --tex    
+				Process question in TeX mode and output to the command line
+            
     --list   pg_list
 				Read and process a list of .pg files contained in
 				the file `pg_list`.  `pg_list` consists of a 
