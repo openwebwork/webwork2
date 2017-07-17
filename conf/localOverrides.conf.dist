@@ -428,4 +428,14 @@ $showeditors{simplepgeditor}   = 0;
 $options{setDefSearchDepth}=4; #search down 4 levels
 $options{useOPLdefFiles}=1;
 
+################################################################################
+# Permission overrides (e.g. "admin", "professor", "ta", "student", "guest"
+################################################################################
+
+# $permissionLevels{show_resource_info} 				= "admin";
+# $permissionLevels{show_pg_info_checkbox}            = "admin";
+# $permissionLevels{show_answer_hash_info_checkbox}	= "admin";
+# $permissionLevels{show_answer_group_info_checkbox}	= "admin";
+
+# $permissionLevels{modify_tags} = "undef";
 1; #final line of the file to reassure perl that it was read properly.
