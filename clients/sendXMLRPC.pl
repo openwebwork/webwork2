@@ -48,6 +48,11 @@ top of this script. !!!!!!!!
 
 IMPORTANT: Create a valid credentials file.
 
+This script is similar to
+standalonePGproblemRenderer.pl. It does not require a local WeBWorK site
+on the same computer but does require an internet connection to 
+a remote WeBWorK site.
+
 =cut
 
 =head1    SYNOPSIS
@@ -247,7 +252,7 @@ $Carp::Verbose = 1;
   
 #Default display commands.
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
-#use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
+use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
 
 ### Path to a temporary file for storing the output of sendXMLRPC.pl
  use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
@@ -402,10 +407,11 @@ if ($verbose) {
 }
 
 #allow credentials to overrride the default displayMode and the browser display
-our $HTML_DISPLAY_COMMAND = $credentials{HTMLdisplayCommand}//HTML_DISPLAY_COMMAND();
-our $DISPLAYMODE          = $credentials{WWdisplayMode}//DISPLAYMODE();
-our $TEX_DISPLAY_COMMAND  = $credentials{TeXdisplayCommand}//TEX_DISPLAY_COMMAND();
-
+our $HTML_DISPLAY_COMMAND = $credentials{html_display_command}//HTML_DISPLAY_COMMAND();
+our $HASH_DISPLAY_COMMAND = $credentials{hash_display_command}//HASH_DISPLAY_COMMAND();
+our $DISPLAYMODE          = $credentials{ww_display_mode}//DISPLAYMODE();
+our $TEX_DISPLAY_COMMAND  = $credentials{tex_display_command}TEX_DISPLAY_COMMAND();
+our $PDF_DISPLAY_COMMAND  = $credentials{pdf_display_command}PDF_DISPLAY_COMMAND();
 ##################################################
 #  END gathering credentials for client
 ##################################################
@@ -414,7 +420,7 @@ our $TEX_DISPLAY_COMMAND  = $credentials{TeXdisplayCommand}//TEX_DISPLAY_COMMAND
 ##################################################
 #  set default inputs for the problem
 ##################################################
- 
+
 my $default_input = { 
 		userID      			=> $credentials{userID}//'',
 		session_key	 			=> $credentials{session_key}//'',
