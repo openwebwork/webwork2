@@ -157,10 +157,6 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                 keys = _(keys).without("reduced_scoring_date");
             }
 
-            // show/hide the sets according to those selected in the "Date Types" dropdown.
-            _(keys).each(function(key){
-                util.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
-            });
 
 
             // hide the reduced credit dates for those that are disabled.
@@ -169,6 +165,12 @@ define(['backbone', 'underscore', 'moment','views/MainView', 'views/CalendarView
                                   self.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}")
                                   , remove_class: "hidden", els: self.$(".assign-reduced-scoring[data-setname='"+_set.get("set_id")+"']")});
             });
+
+            // show/hide the sets according to those selected in the "Date Types" dropdown.
+            _(keys).each(function(key){
+                util.changeClass({state: model.get(key), remove_class: "hidden", els: this.$(".assign." + obj[key]) });
+            });
+
 
 
             // hide the check box in the Assignment types dropdown if needed:
