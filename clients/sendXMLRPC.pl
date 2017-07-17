@@ -172,6 +172,11 @@ IMPORTANT: Create a valid credentials file.
     the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
     This contains more information than printing the answer hash. (perhaps too much). 
 
+=item   --resource
+
+	Prints the resources used by the question. The information appears in 
+    the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
+
 =item	--credentials=s
 
  	Specifies a file s where the  credential information can be found.
@@ -193,6 +198,15 @@ use warnings;
 #######################################################
 # Find the webwork2 root directory
 #######################################################
+BEGIN {
+	use File::Basename;
+	$main::dirname = dirname(__FILE__);
+}
+$ENV{MOD_PERL_API_VERSION} = 2;
+use lib "$main::dirname";
+# some files such as FormatRenderedProblem.pm may need to be in the same directory
+
+
 BEGIN {
         die "WEBWORK_ROOT not found in environment. \n
              WEBWORK_ROOT can be defined in your .cshrc or .bashrc file\n
@@ -250,12 +264,15 @@ use constant EDIT_COMMAND =>"bbedit";   # for Mac BBedit editor (used as `EDIT_C
 ### Command for editing and viewing the tex output of the pg question.
 use constant TEX_DISPLAY_COMMAND =>"open -a 'TeXShop'";
 
+### Command for editing and viewing the tex output of the pg question.
+use constant PDF_DISPLAY_COMMAND =>"open -a 'Preview'";
+
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax'; 
 use constant PROBLEMSEED   => '987654321'; 
 
 ############################################################
-# End configure
+# End configure displays for local operating system
 ############################################################
  
 ############################################################
@@ -275,28 +292,32 @@ my $credentials_path;
 my $format = 'standard';
 my $edit_source_file = '';
 my $display_tex_output='';
+my $display_pdf_output='';
 my $print_answer_hash;
 my $print_answer_group;
 my $print_pg_hash;
+my $print_resource_hash;
 my $print_help_message;
 my $read_list_from_this_file;
 my $path_to_log_file;
 GetOptions(
-	'a' => \$display_ans_output1,
-	'A' => \$display_ans_output2,
-	'b' => \$display_html_output1,
-	'B' => \$display_html_output2,
-	'h' => \$display_hash_output1,
-	'H' => \$display_hash_output2,
-	'c' => \$record_ok1, # record_problem_ok1 needs to be written
-	'C' => \$record_ok2,
-	'v' => \$verbose,
-	'e' => \$edit_source_file, 
-	'tex' => \$display_tex_output,
-	'list=s' =>\$read_list_from_this_file,   # read file containing list of full file paths
+	'a' 			=> \$display_ans_output1,
+	'A' 			=> \$display_ans_output2,
+	'b' 			=> \$display_html_output1,
+	'B' 			=> \$display_html_output2,
+	'h' 			=> \$display_hash_output1,
+	'H' 			=> \$display_hash_output2,
+	'c' 			=> \$record_ok1, # record_problem_ok1 needs to be written
+	'C' 			=> \$record_ok2,
+	'v' 			=> \$verbose,
+	'e' 			=> \$edit_source_file, 
+	'tex' 			=> \$display_tex_output,
+	'pdf' 			=> \$display_pdf_output,
+	'list=s' 		=>\$read_list_from_this_file,   # read file containing list of full file paths
 	'pg' 			=> \$print_pg_hash,
 	'anshash' 		=> \$print_answer_hash,
 	'ansgrp'  		=> \$print_answer_group,
+	'resource'      => \$print_resource_hash,
 	'f=s' 			=> \$format,
 	'credentials=s' => \$credentials_path,
 	'help'          => \$print_help_message,
@@ -306,6 +327,9 @@ GetOptions(
 
 print_help_message() if $print_help_message;
 
+############################################################
+# End Read command line options
+############################################################
 
 ####################################################
 # get credentials
@@ -412,6 +436,7 @@ my $default_form_data = {
 ##################################################
 #  MAIN SECTION gather and process problem template files
 ##################################################
+my $cg_start = time; # this is Time::HiRes's time, which gives floating point values
 
 our @files_and_directories = @ARGV;
 # print "files ", join("|", @files_and_directories), "\n";
@@ -462,6 +487,11 @@ sub wanted {
 }
 
 
+
+##########################################################
+#  Subroutines
+##########################################################
+
 #######################################################################
 # Process the pg file
 #######################################################################
@@ -473,13 +503,14 @@ sub process_pg_file {
 	my $problemSeed1 = 1112;
 	my $form_data1 = { %$default_form_data,
 					  problemSeed => $problemSeed1};
-	if ($display_tex_output) {
+	if ($display_tex_output or $display_pdf_output) {
 		my $form_data2 = {
 			%$form_data1,
 			displayMode  =>'tex',
 			outputformat => 'tex',
 		};
-		my ($error_flag, $formatter, $error_string) = 
+		print "process tex files\n";
+		my ($error_flag, $xmlrpc_client, $error_string) = 
 	    	process_problem($file_path, $default_input, $form_data2);
 	    display_tex_output($file_path, $formatter)  if $display_tex_output;
 	}
@@ -571,6 +602,11 @@ sub process_pg_file {
 				   WWcorrectAns          => 1, # show correct answers
 				   %correct_answers
 				};
+
+	my $pg_start = time; # this is Time::HiRes's time, which gives floating point values
+
+				
+				
 	($error_flag, $xmlrpc_client, $error_string)=();
 	($error_flag, $xmlrpc_client, $error_string) = 
 			process_problem($file_path, $default_input, $form_data2);
@@ -711,6 +747,11 @@ sub process_problem {
 	our($output, $return_string, $result, $error_flag, $error_string);
 	$error_flag=0; $error_string='';    
 	$result = $xmlrpc_client->xmlrpcCall('renderProblem', $updated_input);
+	
+	#######################################################################
+	# Handle errors
+	#######################################################################
+	
 	unless ( $xmlrpc_client->fault  )    {
 		print "\n\n Result of renderProblem \n\n" if $UNIT_TESTS_ON;
 		print pretty_print_rh($result) if $UNIT_TESTS_ON;
@@ -733,6 +774,11 @@ sub process_problem {
 	my $cg_end = time;
 	my $cg_duration = $cg_end - $cg_start;
 	WebworkClient::writeRenderLogEntry("", "{script:$scriptName; file:$file_path; ". sprintf("duration: %.3f sec;", $cg_duration)." url: $credentials{site_url}; }",'');
+	
+	#######################################################################
+	# End processing of the pg file
+	#######################################################################
+	
 	return $error_flag, $xmlrpc_client, $error_string;
 }
 
@@ -743,14 +789,27 @@ sub display_tex_output {
 	$file_path =~s|/$||;   # remove final /
 	$file_path =~ m|/?([^/]+)$|;
 	my $file_name = $1;
-	$file_name =~ s/\.\w+$/\.tex/;    # replace extension with html
+	$file_name =~ s/\.\w+$/\.tex/;    # replace extension with tex
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	local(*FH);
 	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
 	print FH $output_text;
 	close(FH);
-	# restore values
-	system($TEX_DISPLAY_COMMAND." ".$output_file);
+	print "tex result to $output_file\n";
+	if ($display_pdf_output) {
+		print "pdf mode\n";
+		my $pdf_file_name = $file_name;
+		$pdf_file_name =~ s/\.\w+$/\.pdf/;    # replace extension with pdf
+		my $pdf_path = TEMPOUTPUTDIR().$pdf_file_name;
+		print "pdflatex $output_file\n";
+		system("pdflatex $output_file");
+		print "pdflatex to $pdf_path DONE\n";
+		# this is doable but will require changing directories
+		# look at the solution done using hardcopy
+		system("open -a Preview ". $pdf_path);
+	} else {
+		system($TEX_DISPLAY_COMMAND." ".$output_file);
+	}
 #	sleep 5;   #wait 5 seconds
 #	unlink($output_file);
 
@@ -784,6 +843,7 @@ sub display_hash_output {   # print the entire hash output to the command line
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	my $output_text2 = pretty_print_rh($output_text);
 	print STDOUT $output_text2;
+
 # 	local(*FH);
 # 	open(FH, '>', $output_file) or die "Can't open file $output_file writing";
 # 	print FH $output_text2;
@@ -999,6 +1059,11 @@ DETAILS
                 Prints the PGanswergroup for each answer evaluator. The information appears in 
                 the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
                 This contains more information than printing the answer hash. (perhaps too much).
+	
+	--resource
+
+	Prints the resources used by the question. The information appears in 
+    the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
 
     --credentials=s
                 Specifies a file s where the  credential information can be found.
