@@ -2664,6 +2664,7 @@ com.wiris.chartparsing.GrammarInverseBuilder.prototype = {
 		}
 		m.setRules(rules);
 		m.packRules();
+		m.showRightRecursion();
 		return m;
 	}
 	,grammar: null
@@ -5907,6 +5908,9 @@ com.wiris.util.type.Arrays.clear = function(a) {
 		i--;
 	}
 }
+com.wiris.util.type.Arrays.sort = function(elements,comparator) {
+	com.wiris.util.type.Arrays.quicksort(elements,0,elements.length - 1,comparator);
+}
 com.wiris.util.type.Arrays.insertSorted = function(a,e) {
 	com.wiris.util.type.Arrays.insertSortedImpl(a,e,false);
 }
@@ -5938,8 +5942,41 @@ com.wiris.util.type.Arrays.addAll = function(baseArray,additionArray) {
 	var i = HxOverrides.iter(additionArray);
 	while(i.hasNext()) baseArray.push(i.next());
 }
+com.wiris.util.type.Arrays.quicksort = function(elements,lower,higher,comparator) {
+	if(lower < higher) {
+		var p = com.wiris.util.type.Arrays.partition(elements,lower,higher,comparator);
+		com.wiris.util.type.Arrays.quicksort(elements,lower,p - 1,comparator);
+		com.wiris.util.type.Arrays.quicksort(elements,p,higher,comparator);
+	}
+}
+com.wiris.util.type.Arrays.partition = function(elements,lower,higher,comparator) {
+	var pivot = elements[higher];
+	var i = lower - 1;
+	var j = lower;
+	while(j < higher) {
+		if(comparator.compare(pivot,elements[j]) == 1) {
+			i++;
+			if(i != j) {
+				var swapper = elements[i];
+				elements[i] = elements[j];
+				elements[j] = swapper;
+			}
+		}
+		j++;
+	}
+	var finalSwap = elements[i + 1];
+	elements[i + 1] = elements[higher];
+	elements[higher] = finalSwap;
+	return i + 1;
+}
 com.wiris.util.type.Arrays.prototype = {
 	__class__: com.wiris.util.type.Arrays
+}
+com.wiris.util.type.Comparator = $hxClasses["com.wiris.util.type.Comparator"] = function() { }
+com.wiris.util.type.Comparator.__name__ = ["com","wiris","util","type","Comparator"];
+com.wiris.util.type.Comparator.prototype = {
+	compare: null
+	,__class__: com.wiris.util.type.Comparator
 }
 com.wiris.util.type.IntegerTools = $hxClasses["com.wiris.util.type.IntegerTools"] = function() { }
 com.wiris.util.type.IntegerTools.__name__ = ["com","wiris","util","type","IntegerTools"];
@@ -7038,6 +7075,13 @@ com.wiris.util.xml.WXmlUtils.getText = function(xml) {
 	while(iter.hasNext()) r += com.wiris.util.xml.WXmlUtils.getText(iter.next());
 	return r;
 }
+com.wiris.util.xml.WXmlUtils.getInnerText = function(xml) {
+	if(xml.nodeType == Xml.PCData || xml.nodeType == Xml.CData) return com.wiris.util.xml.WXmlUtils.getNodeValue(xml);
+	var r = "";
+	var iter = xml.iterator();
+	while(iter.hasNext()) r += com.wiris.util.xml.WXmlUtils.getInnerText(iter.next());
+	return r;
+}
 com.wiris.util.xml.WXmlUtils.setText = function(xml,text) {
 	if(xml.nodeType != Xml.Element) return;
 	var it = xml.iterator();
@@ -7170,7 +7214,7 @@ com.wiris.webwork.MathML2Webwork.__name__ = ["com","wiris","webwork","MathML2Web
 com.wiris.webwork.MathML2Webwork.main = function() {
 	var args = [];
 	var m2w = new com.wiris.webwork.MathML2Webwork();
-	var s1 = "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mfenced open=\"{\" close=\"}\"><mn>3</mn></mfenced></math>";
+	var s1 = "<math/>";
 	try {
 		var s2 = m2w.mathML2Webwork(s1);
 		console.log(s2);
@@ -7183,7 +7227,20 @@ com.wiris.webwork.MathML2Webwork.main = function() {
 	}
 }
 com.wiris.webwork.MathML2Webwork.prototype = {
-	mathMLTokensToString: function(v) {
+	stripAnnotations: function(mathml) {
+		var formula = com.wiris.util.xml.WXmlUtils.parseXML(mathml);
+		var semantics = formula.firstChild();
+		while(semantics != null && !(semantics.getNodeName() == "semantics")) semantics = semantics.firstChild();
+		if(semantics != null) {
+			var content = semantics.firstChild();
+			if(content.getNodeName() == "annotation" || content.getNodeName() == "annotation-xml") content = null;
+			var parent = semantics.getParent();
+			if(content != null) parent.insertChild(content,0);
+			parent.removeChild(semantics);
+		}
+		return formula.toString();
+	}
+	,mathMLTokensToString: function(v) {
 		var sb = new StringBuf();
 		var i = HxOverrides.iter(v);
 		var attribute = false;
@@ -7301,6 +7358,7 @@ com.wiris.webwork.MathML2Webwork.prototype = {
 	}
 	,mathML2Webwork: function(mathml) {
 		var webwork;
+		if(mathml.indexOf("semantics") > -1) mathml = this.stripAnnotations(mathml);
 		if(this.isMathMLEmpty(mathml)) webwork = ""; else {
 			this.loadM2W();
 			var t;
