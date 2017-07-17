@@ -256,10 +256,11 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                         model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
                 })
             }).on("click",function(){
-              // this seems to be needed to get the popover to work, but it takes two clicks now to get working.
-              // maybe a bug in bootstrap.js?
+              // store whether or not the popup is shown in the element's data attribute. 
+              var show_hide = $el.data("show_hide") || "show";
               $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true,
-                        content: popoverHTML, container: "body", trigger: "click"});
+                        content: popoverHTML, container: "body", trigger: "manual"}).popover(show_hide);
+              $el.data("show_hide",show_hide=="show"?"hide":"show");
             });
             var info = "";
             switch (model.get("assign_type")){

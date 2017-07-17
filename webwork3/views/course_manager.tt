@@ -153,9 +153,9 @@ main_view_paths.unshift("module","backbone");
     hide_prob_set: function() { return "Hide Problem Sets";},
     unassign_users: function(opt) {return "You have selected to unassign the following users: "+ opt.users +
                   ". Click OK to confirm this."},
-    relogin: function(opt){ return "You're login status is no longer valid.  You're session probably expired.  Please "
+    relogin: function(opt){ return "Your login status is no longer valid.  Your session probably expired.  Please "
       + "reenter your username and password to continue. ";},
-    bad_password: function(){ return "You're login name and password do not match your credentials.  Please try again."},
+    bad_password: function(){ return "Your login name and password do not match your credentials.  Please try again."},
     loading_data: function(){ return "The page is now loading...";}
   };
   print(messages[type](typeof(opts)=="undefined"?{}:opts))
