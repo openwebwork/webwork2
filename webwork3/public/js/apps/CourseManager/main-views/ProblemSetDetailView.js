@@ -223,27 +223,61 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             "keyup .input-blur": function(evt){
                 if(evt.keyCode == 13) { $(evt.target).blur()}
             },
+            "hidden.bs.popover .restricted-release": function(evt){
+              $(".restricted-release").popover("destroy");
+            }
         },
         assignAllUsers: function(){
             this.model.set({assigned_users: this.users.pluck("user_id")});
         },
         setProblemSet: function(_set) {
-            if(_.isUndefined(_set)){
-                this.model = undefined;
-                return;
+          var self = this;
+          if(_.isUndefined(_set)){
+              this.model = undefined;
+              return;
+          }
+
+          this.model = _set;
+          this.tabState.set("set_id",this.model.get("set_id"));
+          if(this.model){
+              this.model.on("change:enable_reduced_scoring",this.render);
+          }
+          // this checks that the sets in the restricted release are valid sets
+          this.model.validation.restricted_release = function(value, attr, computedState) {
+              var _all_sets = self.problemSets.pluck("set_id");
+              var _restricted_sets = _(value.split(",")).map(function(_set){
+                     return _set.replace(/\s/,"")
+                  });
+              if (_(_restricted_sets).contains(self.model.get("set_id"))){
+                return "The set cannot be restricted by itself.";
+              }
+              var _diff = _(_restricted_sets).difference(_all_sets)
+              if(! _.isEmpty(_diff)){
+                if (_diff.length == 1){
+                  return "The set " + _diff[0] + " is not a valid set"; // I18N  change to script.
+                } else {
+                  return "The sets " + _diff.join(",") + " are not valid sets."; // I18N  change to script.
+                }
+
+              }
+
+            };
+
+          // alert the user of the invalid set
+          this.model.bind('validated:invalid', function(model, errors) {
+            if (_(errors).has("restricted_release")){
+              $(".restricted-release").popover({
+                content: errors.restricted_release
+              }).popover("show");
             }
-            var self = this;
-            this.model = _set;
-            this.tabState.set("set_id",this.model.get("set_id"));
-            if(this.model){
-                this.model.on("change:enable_reduced_scoring",this.render);
-            }
-            this.model.on("sync",function(){  // pstaab: can we integrate this into the stickit handler code in config.js ?
-                // gets rid of the line break for showing the time in this view.
-                self.$('span.time-span').children('br').attr("hidden",true);
-                _.delay(self.showHideReducedScoringDate,100); // hack to get reduced scoring to be hidden.
-            });
-            return this;
+          });
+
+          this.model.on("sync",function(){  // pstaab: can we integrate this into the stickit handler code in config.js ?
+              // gets rid of the line break for showing the time in this view.
+              self.$('span.time-span').children('br').attr("hidden",true);
+              _.delay(self.showHideReducedScoringDate,100); // hack to get reduced scoring to be hidden.
+          });
+          return this;
         },
         bindings: {
             ".set-name" : "set_id",
@@ -253,6 +287,16 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             ".prob-set-visible": "visible",
             ".reduced-scoring": "enable_reduced_scoring",
             ".reduced-scoring-date": "reduced_scoring_date",
+            ".restricted-release": {
+                observe: "restricted_release",
+                events: ["blur"]
+              },
+            ".restricted-status" : { observe: "restricted_status",
+                selectOptions: {collection: function() {
+                  return _(_.range(10,0,-1)).map(function(val){
+                    return {label: (val*10)+"%", value: val/10}
+                  });
+                }}},
             ".hide-hint": "hide_hint",
             ".num-problems": { observe: "problems", onGet:function(value,options) {
                 return value.length;
@@ -352,7 +396,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 .setElement(this.$(".calendar-cell")).render();
 
             // hide the dropdown that allows the user to show/hide dates--revisit this choice later
-            this.$(".show-date-types").parent().addClass("hidden"); 
+            this.$(".show-date-types").parent().addClass("hidden");
             this.problemSets.on("change",function(m){
                 self.calendarProblemSets.findWhere({set_id: m.get("set_id")}).set(m.changed);
                 self.calendar.render();

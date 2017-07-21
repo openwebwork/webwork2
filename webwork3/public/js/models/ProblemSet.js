@@ -27,6 +27,8 @@ var ProblemSet = Backbone.Model.extend({
         problem_randorder: false,
         version_last_attempt_time: 0,
         problems_per_page: 0,
+        restricted_release: "",
+        restricted_status: 1.0,
         hide_score: "N",
         hide_score_by_problem: "N",
         hide_work: "N",
@@ -64,9 +66,6 @@ var ProblemSet = Backbone.Model.extend({
       options || (options = {});
       attrs || (attrs = _(this.attributes).clone());
       delete attrs.problems;
-
-      console.log("in ProblemSet.save");
-
       // this prevents all of the rendered problems to be sent back to the server
       var probs = this.problems.clone();
       probs.each(function(p){

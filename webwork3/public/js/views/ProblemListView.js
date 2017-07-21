@@ -39,9 +39,6 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
                 if(opts.problemSet){
                     this.problemSet = opts.problemSet;
                     this.problems.problemSet = opts.problemSet;
-                    this.problemSet.on("change",function(model){
-                      console.log(model.changed); 
-                    })
                 }
             }
             _(this).extend(_(opts).pick("problem_set_view","show_path","show_tags","page_size"));

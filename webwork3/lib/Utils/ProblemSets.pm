@@ -16,7 +16,7 @@ our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_
           enable_reduced_scoring assignment_type description attempts_per_version time_interval
           versions_per_interval version_time_limit version_creation_time version_last_attempt_time
           problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip
-          relax_restrict_ip restricted_login_proctor hide_hint/;
+          relax_restrict_ip restricted_login_proctor hide_hint restricted_release restricted_status/;
 
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date
           answer_date visible enable_reduced_scoring assignment_type description restricted_release
@@ -217,7 +217,7 @@ sub reorderProblems {
   for my $i (0..scalar(@$new_problems)-1){
     warn dump $new_problems->[$i];
     my $prob = $db->getGlobalProblem($set_id,$new_problems->[$i]->{_old_problem_id});
-    warn dump $prob; 
+    warn dump $prob;
     $prob->{problem_id} = $i+1001; # assume there is no problem greater than 1000.
     $db->addGlobalProblem($prob);
 

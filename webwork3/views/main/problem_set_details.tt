@@ -28,7 +28,7 @@
          <td rowspan="2"><select size="20" class="form-control unassigned-user-list" multiple="multiple"></select></td></tr>
          <tr><td align='right'><button class="btn btn-default assign-users-btn"><i class="fa fa-chevron-left"></i>Assign</button>
          </td></tr>
-    </tbody> 
+    </tbody>
   </table>
 </script>
 
@@ -56,7 +56,7 @@
 <% if (page_start>0) {print ("<li><a href=''> ...</a> </li>");} %>
 <% for(i=page_start;i<page_stop;i++){
     if(current_page==i){
-      print("<li class='active'><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");  
+      print("<li class='active'><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");
     } else {
       print("<li><a href='#'' class='page-button' data-page='" + i + "'>" + (i+1) + "</a></li>");
     }
@@ -183,6 +183,8 @@ Loading sets for users...<i class='fa fa-spinner fa-spin'></i>
 <tr class="calendar-row hidden"><td class="calendar-cell" colspan="3"> Calendar Goes Here</td></tr>
 <tr><td class="header">Problem Set Visible to Users</td><td><input type='checkbox' class='prob-set-visible'></td></tr>
 <tr><td class="header">Reduced Scoring Enabled</td><td><input type='checkbox' class='reduced-scoring'></select></td></tr>
+<tr><td class="header">Restrict Release on sets:</td><td><input class="form-control restricted-release" type='input'></td></tr>
+<tr><td class="header">Score Required for Release</td><td><select class="restricted-status form-control input-sm"></select></td></tr>
 <tr><td class="header">Hide Hints from Users</td><td><input type='checkbox' class='hide-hint'></td></tr>
 <tr><td class="header">Set Type</td><td><select id='set-type' class='form-control input-sm'></select></tr>
 <tr><td class="header">Number of Problems in Set</td><td class="num-problems"></td></tr>
@@ -223,14 +225,14 @@ Proctored tests require proctor authorization to start and to grade. Provide a p
 
 <script type="text/template" id="customize-assignment-help-template">
 <h4>Student Overrides</h4>
-<p>The students listed are only those that are assigned to this set.  To change an individual date/time, click on 
+<p>The students listed are only those that are assigned to this set.  To change an individual date/time, click on
 the desired date and change it.  To make changes to two or more students:
 <ul><li> select the checkboxes of the students</li>
 <li> change the date/time at the bottom of the screen </li>
 <li> click "Save Changes".  </li>
 </ul>
 
-You can filter down the results by typing in the "search" box.  
+You can filter down the results by typing in the "search" box.
 The results will be dispayed below.  To search for section 2 type "section:2" or type "recitation:3" to find all students in recitation 3.</p>
 </script>
 
@@ -264,7 +266,7 @@ The results will be dispayed below.  To search for section 2 type "section:2" or
 
 </script>
 
-<script type="text/template" id="set-headers-template"> 
+<script type="text/template" id="set-headers-template">
 <h4>Set Headers and Description for <%=set_id%></h4>
 
 <div class="form-horizontal">
@@ -290,7 +292,7 @@ The results will be dispayed below.  To search for section 2 type "section:2" or
           </div>
     </div>
   </div>
-</div> 
+</div>
   <div class="btn-group view-options" data-toggle="buttons">
     <label class="btn btn-primary active">
       <input type="radio" name="options" id="view-header-button" autocomplete="off" checked>View Set Header
@@ -343,6 +345,6 @@ print(messages[type](typeof(opts)=="undefined"?{}:opts))
 </script>
 
 <script type="text/template" id="assign-type-not-supported">
-<div class="alert alert-info col-md-4 col-md-offset-4" style="margin-top: 25px"  role="alert"> This Assignment type is not supported. 
+<div class="alert alert-info col-md-4 col-md-offset-4" style="margin-top: 25px"  role="alert"> This Assignment type is not supported.
 </div>
 </script>
