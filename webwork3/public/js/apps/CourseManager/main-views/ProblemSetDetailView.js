@@ -200,7 +200,10 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.showHideGateway();
                 util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
                 util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
-
+                //hide conditional release fields 
+                if(!this.settings.findWhere({var: "options{enableConditionalRelease}"}).get("value")){
+                  $(".restricted-release,.restricted-status").closest("tr").addClass("hidden")
+                }
                 this.showHideReducedScoringDate();
                 this.stickit();
                 // gets rid of the line break for showing the time in this view.
@@ -244,6 +247,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
           }
           // this checks that the sets in the restricted release are valid sets
           this.model.validation.restricted_release = function(value, attr, computedState) {
+              if(_.isEmpty(value)){
+                return;
+              }
               var _all_sets = self.problemSets.pluck("set_id");
               var _restricted_sets = _(value.split(",")).map(function(_set){
                      return _set.replace(/\s/,"")
