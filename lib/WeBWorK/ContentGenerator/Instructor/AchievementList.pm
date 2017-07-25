@@ -53,6 +53,7 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortAchievements);
 use DateTime;
+use Text::CSV;
 
 #constants for forms and the various handlers
 use constant BLANK_ACHIEVEMENT => "blankachievement.at";
@@ -62,11 +63,19 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(edit assign import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
-use constant VIEW_FIELD_ORDER => [ qw( select enabled achievement_id category name users ) ];
-use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name category enabled points max_counter description icon_file test_file) ];
+use constant VIEW_FIELD_ORDER => [ qw( enabled achievement_id name number category ) ];
+use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name number assignment_type category enabled points max_counter description icon_file test_file) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select achievement_id name) ];
 
 use constant STATE_PARAMS => [qw(user effectiveUser key editMode exportMode)];
+
+use constant ASSIGNMENT_TYPES => [qw(default gateway jitar)];
+
+use constant ASSIGNMENT_NAMES => {
+    default => 'homework',
+    gateway => 'gateways',
+    jitar => 'just-in-time',
+};
 
 #properites for the fields shown in the tables
 use constant  FIELD_PROPERTIES => {
@@ -80,9 +89,19 @@ use constant  FIELD_PROPERTIES => {
 		size => 30,
 		access => "readwrite",
 	},
+	assignment_type => {
+		type => "assignment_type",
+		size => 30,
+		access => "readwrite",
+	},
 	category => {
 		type => "text",
 		size => 30,
+		access => "readwrite",
+	},
+	number => {
+		type => "text",
+		size => 8,
 		access => "readwrite",
 	},
 	icon => {
@@ -142,10 +161,28 @@ sub initialize {
 	
 	########## set initial values for state fields
 	my @allAchievementIDs = $db->listAchievements;
-	# DBFIXME count would suffice here :P
+
+	#### Temporary Transition Code ####
+	# If an achievement doesn't have either a number or an assignment_type
+	# then its probably an old achievement in which case we should
+	# update its assignment_type to include 'default'.
+	# This whole block of code can be removed once people have had time
+	# to transition over.  (I.E. around 2017)
+	
+	foreach my $achievementID (@allAchievementIDs) {
+	    my $achievement = $db->getAchievement($achievementID);
+	    unless ($achievement->assignment_type || $achievement->number) {
+		$achievement->assignment_type('default');
+		$db->putAchievement($achievement);
+	    }
+	}
+	### End Transition Code.  ###
+	
+	
 	my @users = $db->listUsers;
 	$self->{allAchievementIDs} = \@allAchievementIDs;
 	$self->{totalUsers} = scalar @users;
+
 	
 	if (defined $r->param("selected_achievements")) {
 		$self->{selectedAchievementIDs} = [ $r->param("selected_achievements") ];
@@ -173,7 +210,7 @@ sub initialize {
 		}
 		my %actionParams = $self->getActionParams($actionID);
 		my %tableParams = $self->getTableParams();
-		$self->addmessage( CGI::div("Results of last action performed: "));
+		$self->addmessage( CGI::div($r->maketext("Results of last action performed: ")));
 		$self->addmessage(
 		       $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams), 
 			       CGI::hr()
@@ -181,7 +218,7 @@ sub initialize {
 		
 	} else {
 	    
-	    $self->addgoodmessage("Please select action to be performed.");
+	    $self->addgoodmessage($r->maketext("Please select action to be performed."));
 	}
 		
 	
@@ -243,7 +280,7 @@ sub body {
 	
 	########## print action forms
 	
-	print CGI::p(CGI::b("Any changes made below will be reflected in the achievement for ALL students.")) if $editMode;
+	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the achievement for ALL students."))) if $editMode;
 
 	print CGI::p($r->maketext("Select an action to perform").":");
 
@@ -340,7 +377,7 @@ sub edit_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	return join("",
-		$r->maketext("Edit "),
+		$r->maketext("Edit")." ",
 		CGI::popup_menu(
 			-name => "action.edit.scope",
 			-values => [qw(all selected)],
@@ -357,15 +394,15 @@ sub edit_form {
 #handler for editing achievements.  Just changes the view mode
 sub edit_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
+	my $r = $self->r;
 	my $result;
 	
 	my $scope = $actionParams->{"action.edit.scope"}->[0];
 	if ($scope eq "all") {
 	        $self->{selectedAchievementIDs} = $self->{allAchievementIDs};
-		$result = "editing all achievements";
+		$result = $r->maketext("editing all achievements");
 	} elsif ($scope eq "selected") {
-		$result = "editing selected achievements";
+		$result = $r->maketext("editing selected achievements");
 	}
 	$self->{editMode} = 1;
 	
@@ -377,8 +414,7 @@ sub assign_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 
-	return join("",
-		    $r->maketext("Assign "),
+	return $r->maketext("Assign [_1] to all users, create global data, and [_2].",
 		CGI::popup_menu(
 			-name => "action.assign.scope",
 			-values => [qw(all selected)],
@@ -389,7 +425,6 @@ sub assign_form {
 			},
 			-onchange => $onChange,
 		),
-		    $r->maketext(" to all users, create global data, and "),
    		CGI::popup_menu(
 			-name => "action.assign.overwrite",
 			-values => [qw(everything new_only)],
@@ -399,8 +434,7 @@ sub assign_form {
 				new_only => $r->maketext("preserve existing data"),
 			},
 			-onchange => $onChange,
-		),
-
+		)
 	);
 }
 
@@ -467,7 +501,7 @@ sub assign_handler {
 	}
      
 
-	return "Assigned $scope achievements to users";
+	return $r->maketext("Assigned achievements to users");
 }
 
 #form for scoring
@@ -476,15 +510,15 @@ sub score_form {
 	my $r = $self->r;
 
 	return join ("",
-		$r->maketext("Score "),
+		$r->maketext("Score")." ",
 		CGI::popup_menu(
 			-name => "action.score.scope",
 			-values => [qw(none all selected)],
 			-default => $actionParams{"action.score.scope"}->[0] || "none",
 			-labels => {
-				none => $r->maketext("no achievements."),
-				all => $r->maketext("all achievements."),
-				selected => $r->maketext("selected achievements."),
+				none => $r->maketext("no achievements"),
+				all => $r->maketext("all achievements"),
+				selected => $r->maketext("selected achievements"),
 			},
 			-onchange => $onChange,
 		),
@@ -528,10 +562,10 @@ sub score_handler {
 	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{scoring}, $scoreFilePath);
 
 	local *SCORE;
-	open SCORE, ">$scoreFilePath" or return CGI::div({class=>"ResultsWithError"}, "Failed to open $scoreFilePath");
+	open SCORE, ">$scoreFilePath" or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]", $scoreFilePath));
 
 	#print out header info
-	print SCORE "username, last name, first name, section, achievement level, achievement score, ";
+	print SCORE $r->maketext("username, last name, first name, section, achievement level, achievement score,");
 	
 	my @achievements = $db->getAchievements(@achievementsToScore);
 	@achievements = sortAchievements(@achievements);
@@ -589,7 +623,7 @@ sub score_handler {
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {action=>"View", files => "${courseName}_achievement_scores.csv", pwd=>"scoring"});
 	
 	
-	return CGI::div({class=>"ResultsWithoutError"},  "Achievement scores saved to ".CGI::a({href=>$fileManagerURL},$scoreFileName));
+	return CGI::div({class=>"ResultsWithoutError"},  $r->maketext("Achievement scores saved to [_1]",CGI::a({href=>$fileManagerURL},$scoreFileName)));
 }
 
 
@@ -599,7 +633,7 @@ sub delete_form {
 	my $r = $self->r;
 	return join("",
 		CGI::div({class=>"ResultsWithError"}, 
-			$r->maketext("Delete "),
+			$r->maketext("Delete")," ",
 			CGI::popup_menu(
 				-name => "action.delete.scope",
 				-values => [qw(none selected)],
@@ -609,8 +643,8 @@ sub delete_form {
 					selected => $r->maketext("selected achievements."),
 				},
 				-onchange => $onChange,
-			),
-			CGI::em($r->maketext(" Deletion destroys all achievement-related data and is not undoable!")),
+			),' ',
+			CGI::em($r->maketext("Deletion destroys all achievement-related data and is not undoable!")),
 		)
 	);
 }
@@ -647,9 +681,7 @@ sub delete_handler {
 	$self->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 	
 	my $num = @achievementIDsToDelete;
-	 return CGI::div({class=>"ResultsWithoutError"},  "deleted $num achievement" .
-	                                           ($num == 1 ? "" : "s")
-	);
+	return CGI::div({class=>"ResultsWithoutError"},  $r->maketext("Deleted [quant,_1,achievement]", $num));
 }
 
 #form for creating achievement
@@ -665,14 +697,14 @@ sub create_form {
 			-width => "60",
 			-onchange => $onChange,
 		),
-		" as ",
+		" ".$r->maketext("as")." ",
 		CGI::popup_menu(
 			-name => "action.create.type",
 			-values => [qw(empty copy)],
 			-default => $actionParams{"action.create.type"}->[0] || "empty",
 			-labels => {
-				empty => "a new empty achievement.",
-				copy => "a duplicate of the first selected achievement.",
+				empty => $r->maketext("a new empty achievement."),
+				copy => $r->maketext("a duplicate of the first selected achievement."),
 			},
 			-onchange => $onChange,
 		);
@@ -686,11 +718,12 @@ sub create_handler {
 	my $r      = $self->r;
 	my $db     = $r->db;
 	my $ce     = $r->ce;
-	
+	my $user         = $r->param('user');
+
 	#create achievement
 	my $newAchievementID = $actionParams->{"action.create.id"}->[0];
-	return CGI::div({class => "ResultsWithError"}, "Failed to create new achievement: no achievement ID specified!") unless $newAchievementID =~ /\S/;
-	return CGI::div({class => "ResultsWithError"}, "Achievement $newAchievementID exists.  No achievement created") if $db->existsAchievement($newAchievementID);
+	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new achievement: no achievement ID specified!")) unless $newAchievementID =~ /\S/;
+	return CGI::div({class => "ResultsWithError"}, $r->maketext("Achievement [_1] exists.  No achievement created",$newAchievementID)) if $db->existsAchievement($newAchievementID);
 	my $newAchievementRecord = $db->newAchievement;
 	my $oldAchievementID = $self->{selectedAchievementIDs}->[0];
 
@@ -700,22 +733,29 @@ sub create_handler {
 	if ($type eq "empty") {
 		$newAchievementRecord->achievement_id($newAchievementID);
 		$newAchievementRecord->enabled(0);
+		$newAchievementRecord->assignment_type('default');
 		$newAchievementRecord->test(BLANK_ACHIEVEMENT());
 		$db->addAchievement($newAchievementRecord);
 	} elsif ($type eq "copy") {
-		return CGI::div({class => "ResultsWithError"}, "Failed to duplicate achievement: no achievement selected for duplication!") unless $oldAchievementID =~ /\S/;
+		return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate achievement: no achievement selected for duplication!")) unless $oldAchievementID =~ /\S/;
 		$newAchievementRecord = $db->getAchievement($oldAchievementID);
 		$newAchievementRecord->achievement_id($newAchievementID);
 		$db->addAchievement($newAchievementRecord);
 
 	}
 
+	# assign achievement to current user
+	my $userAchievement = $db->newUserAchievement();
+	$userAchievement->user_id($user);
+	$userAchievement->achievement_id($newAchievementID);
+	$db->addUserAchievement($userAchievement);
+
 	#add to local list of achievements
 	push @{ $self->{allAchievementIDs} }, $newAchievementID;
 	
-	return CGI::div({class => "ResultsWithError"}, "Failed to create new achievement: $@") if $@;
+	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new achievement: [_1]",$@)) if $@;
 	
-	return CGI::div({class=>"ResultsWithoutError"},"Successfully created new achievement $newAchievementID" );
+	return CGI::div({class=>"ResultsWithoutError"},$r->maketext("Successfully created new achievement [_1]", $newAchievementID) );
 	
 }
 
@@ -727,8 +767,7 @@ sub import_form {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 
-	return join(" ",
-		$r->maketext("Import achievements from "),
+	return $r->maketext("Import achievements from [_1] assigning the achievements to [_2].",
 		CGI::popup_menu(
 			-name => "action.import.source",
 			-values => [ "", $self->getAxpList() ],
@@ -736,17 +775,17 @@ sub import_form {
 			-default => $actionParams{"action.import.source"}->[0] || "",
 		        -onchange => $onChange,
 		),
-		    $r->maketext("assigning the achievements to ") .
 		    CGI::popup_menu(
 			-name => "action.import.assign",
 			-value => [qw(none all)],
 			-default => $actionParams{"action.import.assign"}->[0] || "none",
 			-labels => {
-			    all => $r->maketext("all current users."),
-			    none => $r->maketext("no users."),
+			    all => $r->maketext("all current users"),
+			    none => $r->maketext("no users"),
 			},
 			-onchange => $onChange,
-		   ) );
+		   )
+	);
 }
 
 # handler for importing achievements
@@ -763,30 +802,54 @@ sub import_handler {
 	my $filePath = $ce->{courseDirs}->{achievements}.'/'.$fileName;
 	
 	#open file name
-	local *IMPORT;
-	open EXPORT, "$filePath" or return CGI::div({class=>"ResultsWithError"}, "Failed to open $filePath");
+	my $fh;
+	open $fh, "$filePath" or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]",$filePath));
 
 	#read in lines from file
 	my $count = 0;
-	while (my $line = <EXPORT>) {
-	    chomp $line;
-	    my @data = split(', ',$line);
-	    my $achievement_id = $data[0];
+	my $csv = Text::CSV->new();
+	while (my $data = $csv->getline($fh)) {
+
+	    my $achievement_id = $$data[0];
 	    #skip achievements that already exist
 	    next if $db->existsAchievement($achievement_id);
 
 	    #write achievement data.  The "format" for this isn't written down anywhere (!)
 	    my $achievement = $db->newAchievement();
+
 	    $achievement->achievement_id($achievement_id);
-	    $data[1] =~ s/\;/,/;
-	    $achievement->name($data[1]);
-	    $achievement->category($data[2]);
-	    $data[3] =~ s/\;/,/;
-	    $achievement->description($data[3]);
-	    $achievement->points($data[4]);
-	    $achievement->max_counter($data[5]);
-	    $achievement->test($data[6]);
-	    $achievement->icon($data[7]);
+
+	    # fall back for importing an old list without the number
+	    # or assignment_type fields
+	    if (scalar(@$data) == 9) {
+		# old lists tend to have an extraneous space at the front. 
+		for (my $i=1; $i<=7; $i++) {
+		    $$data[$i] =~ s/^\s+//;
+		}
+
+		$$data[1] =~ s/\;/,/;
+		$achievement->name($$data[1]);
+		$achievement->category($$data[2]);
+		$$data[3] =~ s/\;/,/;
+		$achievement->description($$data[3]);
+		$achievement->points($$data[4]);
+		$achievement->max_counter($$data[5]);
+		$achievement->test($$data[6]);
+		$achievement->icon($$data[7]);
+		$achievement->assignment_type('default');
+		$achievement->number($count+1);
+	    } else {
+		$achievement->name($$data[1]);
+		$achievement->number($$data[2]);
+		$achievement->category($$data[3]);
+		$achievement->assignment_type($$data[4]);
+		$achievement->description($$data[5]);
+		$achievement->points($$data[6]);
+		$achievement->max_counter($$data[7]);
+		$achievement->test($$data[8]);
+		$achievement->icon($$data[9]);
+	    }
+
 	    $achievement->enabled($assign eq "all"?1:0);
 	    
 	    #add achievement
@@ -813,7 +876,7 @@ sub import_handler {
 	$self->{allAchievementIDs} = [ keys %allAchievementIDs ];
 		    
 	return CGI::div(
-	    {class=>"ResultsWithoutError"}, "Imported $count achievement".(($count >1 || $count == 0)?"s":""));
+	    {class=>"ResultsWithoutError"}, $r->maketext("Imported [quant,_1,achievement]", $count));
 }
 
 #form for exporting 
@@ -821,7 +884,7 @@ sub export_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 	return join("",
-		$r->maketext("Export "),
+		$r->maketext("Export").' ',
 		CGI::popup_menu(
 			-name => "action.export.scope",
 			-values => [qw(all selected)],
@@ -839,15 +902,15 @@ sub export_form {
 # this does not actually export any files, rather it sends us to a new page in order to export the files
 sub export_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
+	my $r = $self->r;
 	my $result;
 	
 	my $scope = $actionParams->{"action.export.scope"}->[0];
 	if ($scope eq "all") {
-		$result = "exporting all achievements";
+		$result = $r->maketext("exporting all achievements");
 		$self->{selectedAchievementIDs} = $self->{allAchievementIDs};
 	} elsif ($scope eq "selected") {
-		$result = "exporting selected achievements";
+		$result = $r->maketext("exporting selected achievements");
 		$self->{selectedAchievementIDs} = $genericParams->{selected_achievements}; # an arrayref
 	}
 	$self->{exportMode} = 1;
@@ -868,7 +931,7 @@ sub cancelExport_handler {
 	
 	$self->{exportMode} = 0;
 	
-	return CGI::div({class=>"ResultsWithError"},  "export abandoned");
+	return CGI::div({class=>"ResultsWithError"},  $r->maketext("export abandoned"));
 }
 
 #handler and form for actually exporting
@@ -899,32 +962,33 @@ sub saveExport_handler {
 
 	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{achievements}, $FilePath);
 	#open file
-	local *EXPORT;
-	open EXPORT, ">$FilePath" or return CGI::div({class=>"ResultsWithError"}, "Failed to open $FilePath");
+	my $fh;
+	open $fh, ">$FilePath" or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]", $FilePath));
 
+	my $csv = Text::CSV->new({eol=>"\n"});
 	my @achievements = $db->getAchievements(@achievementIDsToExport);
 	#run through achievements outputing data as csv list.  This format is not documented anywhere
 	foreach my $achievement (@achievements) {
-	    print EXPORT $achievement->achievement_id.", ";
-	    my $name = $achievement->name;
-	    $name =~ s/,/\;/;
-	    print EXPORT $name.", ";
-	    print EXPORT $achievement->category.", ";
-	    my $description = $achievement->description;
-	    $description =~ s/,/\;/;
-	    print EXPORT $description.", ";
-	    print EXPORT $achievement->points.", ";
-	    print EXPORT $achievement->max_counter.", ";
-	    print EXPORT $achievement->test.", ";
-	    print EXPORT $achievement->icon.", ";
-	    print EXPORT "\n";
+	    my $line = [$achievement->achievement_id,
+			$achievement->name,
+			$achievement->number,
+			$achievement->category,
+			$achievement->assignment_type,
+			$achievement->description,
+			$achievement->points,
+			$achievement->max_counter,
+			$achievement->test,
+			$achievement->icon,];
+
+	    warn("Error Exporting Achievement ".$achievement->achievement_id)
+		unless $csv->print($fh, $line);
 	}
 
 	close EXPORT;
 	
 	$self->{exportMode} = 0;
 	
-	return 	CGI::div( {class=>"resultsWithoutError"}, "Exported achievements to $FileName");
+	return 	CGI::div( {class=>"resultsWithoutError"}, $r->maketext("Exported achievements to [_1]", $FileName));
 
 }
 
@@ -940,7 +1004,7 @@ sub cancelEdit_handler {
 	
 	$self->{editMode} = 0;
 	
-	return CGI::div({class=>"ResultsWithError"}, "changes abandoned");
+	return CGI::div({class=>"ResultsWithError"}, $r->maketext("changes abandoned"));
 }
 
 #form and handler for saving edits
@@ -965,8 +1029,23 @@ sub saveEdit_handler {
 		#update fields
 		foreach my $field ($Achievement->NONKEYFIELDS()) {
 			my $param = "achievement.${achievementID}.${field}";
-			if (defined $tableParams->{$param}->[0]) {
-			    $Achievement->$field($tableParams->{$param}->[0]);
+
+			if ($field eq 'assignment_type') {
+			    my @types = ();
+			    my $i = 0;
+
+			    while (defined ($tableParams->{$param}->[$i])) {
+				push @types,  $tableParams->{$param}->[$i];
+				$i++;
+			    }
+
+			    $Achievement->assignment_type(join(',',@types));
+
+			} else {
+
+			    if (defined $tableParams->{$param}->[0]) {
+				$Achievement->$field($tableParams->{$param}->[0]);
+			    }
 			}
 		}
 		
@@ -975,7 +1054,7 @@ sub saveEdit_handler {
 	
 	$self->{editMode} = 0;
 	
-	return CGI::div({class=>"ResultsWithoutError"}, "changes saved" );
+	return CGI::div({class=>"ResultsWithoutError"}, $r->maketext("changes saved" ));
 }
 
 ################################################################################
@@ -1013,6 +1092,17 @@ sub fieldEditHTML {
 		) . CGI::hidden(
 			-name => $fieldName,
 			-value => 0
+		);
+	}
+
+	if ($type eq "assignment_type") {
+	    my @allowedTypes = split(',',$value);
+
+	    return CGI::checkbox_group(-name=> $fieldName,
+				       -values=> ASSIGNMENT_TYPES,
+				       -labels=> ASSIGNMENT_NAMES,
+				       -default=> \@allowedTypes,
+				       -linebreaks=>'false'
 		);
 	}
 }
@@ -1082,7 +1172,6 @@ sub recordEditHTML {
 		$tableCell = CGI::img({-src=>$ce->{webworkURLs}->{htdocs}."/images/defaulticon.png"
 					   ,-alt=>"Achievement Icon",-height=>60,-vspace=>10});
 	    }
-	    $tableCell = $tableCell.CGI::br().CGI::center(CGI::a({href=>$editorURL},"Edit"));
 
 	    push @tableCells, $tableCell;
 
@@ -1116,11 +1205,17 @@ sub recordEditHTML {
 
 	    push @tableCells, $tableCell;
 
-	    $field = "enabled";
+	    $field = "number";
 	    $fieldName = "achievement.".$achievement_id.".".$field;
 	    $fieldValue = $Achievement->$field;
 	    %properties = %{ FIELD_PROPERTIES()->{$field} };
 	    $tableCell=CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties)).CGI::br();
+
+	    $field = "enabled";
+	    $fieldName = "achievement.".$achievement_id.".".$field;
+	    $fieldValue = $Achievement->$field;
+	    %properties = %{ FIELD_PROPERTIES()->{$field} };
+	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties)).CGI::br();
 
 	    $field = "points";
 	    $fieldName = "achievement.".$achievement_id.".".$field;
@@ -1152,6 +1247,12 @@ sub recordEditHTML {
 	    $fieldName = "achievement.".$achievement_id.".".$field;
 	    $fieldValue = $Achievement->$field;
 	    %properties = %{ FIELD_PROPERTIES()->{$field} };
+	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties)).CGI::br();
+
+	    $field = "assignment_type";
+	    $fieldName = "achievement.".$achievement_id.".".$field;
+	    $fieldValue = $Achievement->$field;
+	    %properties = %{ FIELD_PROPERTIES()->{$field} };
 	    $tableCell=$tableCell.CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 
 	    push @tableCells, $tableCell;
@@ -1167,20 +1268,18 @@ sub recordEditHTML {
 		label => "",
 		});
 	    
-	    my @fields = ("enabled", "achievement_id", "category", "name");
 	    my $AchievementEditURL = $self->systemLink($urlpath->new(type=>'instructor_achievement_list', args=>{courseID => $courseName})) . "&editMode=1&selected_achievements=" . $achievement_id;
 	    my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
 	    my $imageLink = CGI::a({href => $AchievementEditURL}, CGI::img({src=>$imageURL, border=>0}));
 
-
+            my @fields = @{VIEW_FIELD_ORDER()};
 	    foreach my $field (@fields) {
-		
 		my $fieldName = "achievement.".$achievement_id.".".$field;
 		my $fieldValue = $Achievement->$field;
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly";
 		$fieldValue =~ s/ /&nbsp;/g;
-		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enabled/;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enabled/;
 		if ($field =~ /achievement_id/) {
 		    $fieldValue .= $imageLink;
 		    $fieldValue = CGI::div({class=>'label-with-edit-icon'},$fieldValue);
@@ -1237,19 +1336,22 @@ sub printTableHTML {
 			      $r->maketext("Achievement ID").CGI::br().
 			      $r->maketext("Name").CGI::br().
 			      $r->maketext("Category"),
+			      $r->maketext("Number").CGI::br().
 			      $r->maketext("Enabled").CGI::br().
 			      $r->maketext("Points").CGI::br().
 			      $r->maketext("Counter"),
 			      $r->maketext("Description").CGI::br().
 			      $r->maketext("Evaluator File").CGI::br().
-			      $r->maketext("Icon File")
+			      $r->maketext("Icon File").CGI::br().
+			      $r->maketext("Type")
 		);
 	} else {
 	    @tableHeadings = ($selectBox,
 			      $r->maketext("Enabled"),
 			      $r->maketext("Achievement ID"),
-			      $r->maketext("Category"),
 			      $r->maketext("Name"),
+			      $r->maketext("Number"),
+			      $r->maketext("Category"),
 			      $r->maketext("Edit").CGI::br().$r->maketext("Users"),
 			      $r->maketext("Edit").CGI::br().$r->maketext("Evaluator")
 		);
@@ -1283,7 +1385,7 @@ sub printTableHTML {
 	##########################################
 	
 	print CGI::p(
-                      CGI::i("No achievements shown.  Create an achievement!")
+                      CGI::i($r->maketext("No achievements shown.  Create an achievement!"))
 	    ) unless @Achievements;
 }
 

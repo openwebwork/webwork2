@@ -159,7 +159,7 @@ if($libraryVersion eq '2.5') {
 	lastname varchar (255) NOT NULL,
 	firstname varchar (255) NOT NULL,
 	email varchar (255),
-	KEY author (lastname, firstname),
+	KEY author (lastname(100), firstname(100)),
 	PRIMARY KEY (author_id)
 '],
 [$tables{path}, '
@@ -186,7 +186,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{keyword}, '
 	keyword_id int(15) NOT NULL auto_increment,
-	keyword varchar(255) NOT NULL,
+	keyword varchar(256) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (keyword_id)
 '],

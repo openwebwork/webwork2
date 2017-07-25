@@ -169,7 +169,9 @@ sub defineProblemEnvir {
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};
 	$envir{enable_reduced_scoring} = $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
+	
 	$envir{language}            = $ce->{language};
+	$envir{language_subroutine} = WeBWorK::Localize::getLoc($envir{language}); 
 	$envir{reducedScoringDate} = $set->reduced_scoring_date;
 	
 	# Student Information
@@ -202,7 +204,7 @@ sub defineProblemEnvir {
 	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
 	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
 	$envir{externalCheckUrl}     = $ce->{externalPrograms}->{checkurl};
-	$envir{externalCurlCommand}          = $ce->{externalPrograms}->{curlCommand};
+	$envir{externalCurlCommand}  = $ce->{externalPrograms}->{curlCommand};
 	# Directories and URLs
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir

@@ -16,6 +16,7 @@
 
 package WeBWorK::ContentGenerator::Instructor::ScoringDownload;
 use base qw(WeBWorK::ContentGenerator::Instructor);
+use WeBWorK::ContentGenerator::Instructor::FileManager;
 
 =head1 NAME
  
@@ -34,19 +35,21 @@ sub pre_header_initialize {
 	my $scoringDir = $ce->{courseDirs}->{scoring};
 	my $file       = $r->param('getFile');
 	my $user       = $r->param('user');
- 
-# the parameter 'getFile" needs to be sanitized. (see bug #3793 )
-# See checkName in FileManager.pm for a more complete sanitization.
-	if ($authz->hasPermissions($user, "score_sets")) {
-		if ($file =~ m!/!) {  #
-			$self->addbadmessage("Your file name may not contain a path component");
-		} elsif (($file =~ m!~!)){
-			$self->addbadmessage("Your file name may not contain a tilde. ");
-		} else {
-			$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0); 
-			# 0==don't delete file after downloading
-		}
-	} else {
+	
+
+ # the parameter 'getFile" needs to be sanitized. (see bug #3793 )
+ # See checkName in FileManager.pm for a more complete sanitization.
+  	if ($authz->hasPermissions($user, "score_sets")) {
+ 		unless ( $file eq  WeBWorK::ContentGenerator::Instructor::FileManager::checkName($file) ) {  #
+			$self->addbadmessage($r->maketext("Your file name is not valid! "));
+		    $self->addbadmessage($r->maketext("A file name cannot begin with a dot, it cannot be empty, it cannot contain a " .
+				 "directory path component and only the characters -_.a-zA-Z0-9 and space are allowed.")
+			); 
+ 		} else {
+ 			$self->reply_with_file("text/comma-separated-values", "$scoringDir/$file", $file, 0); 
+ 			# 0==don't delete file after downloading
+ 		}	
+ 	} else {
 		$self->addbadmessage("You do not have permission to access scoring data.");
 	}
 }

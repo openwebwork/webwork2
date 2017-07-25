@@ -434,7 +434,7 @@ sub displayStudentStats {
 		}
 		
 		push @rows, CGI::Tr({},
-			CGI::td(CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
+			CGI::th({scope=>"row"},CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
 			CGI::td(CGI::span({-class=>$class},$totalRightPercent.'%')),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 

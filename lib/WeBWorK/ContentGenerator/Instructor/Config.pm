@@ -195,27 +195,31 @@ package configboolean;
 @configboolean::ISA = qw(configobject);
 
 sub display_value {
-	my ($self, $val) = @_;
-	return 'True' if $val;
-	return 'False';
+  my ($self, $val) = @_;
+  my $r = $self->{Module}->r;
+  return $r->maketext('True') if $val;
+  return $r->maketext('False');
 }
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
+	my $r = $self->{Module}->r;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
 	my $displayoldval = $self->comparison_value($oldval);
 	return '' if($displayoldval eq $newval);
-	return('$'. $varname . " = " . ($newval eq 'True' ? 1 : 0) .";\n");
+	return('$'. $varname . " = " . ($newval eq $r->maketext("True") ? 1 : 0) .";\n");
 }
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
-	
+	my $r = $self->{Module}->r;
+	my $true = $r->maketext('True');
+	my $false = $r->maketext('False');
 	return CGI::popup_menu(
 		-name => $name,
-		-default => ($default ? 'True' : 'False'),
-		-values => ['True', 'False'],
+		-default => ($default ? $true: $false),
+		-values => [$true,$false],
 	);
 }
 
@@ -227,12 +231,13 @@ package configpermission;
 # This tries to produce a string from a permission number.  If you feed it
 # a string, that's what you get back.
 sub display_value {
-	my ($self, $val) = @_;
-	return 'nobody' if not defined($val);
-	my %userRoles = %{$self->{Module}->{r}->{ce}->{userRoles}};
-	my %reverseUserRoles = reverse %userRoles;
-	return $reverseUserRoles{$val} if defined($reverseUserRoles{$val});
-	return $val;
+  my ($self, $val) = @_;
+  my $r = $self->{Module}->r;
+  return $r->maketext('nobody') if not defined($val);
+  my %userRoles = %{$self->{Module}->{r}->{ce}->{userRoles}};
+  my %reverseUserRoles = reverse %userRoles;
+  return $r->maketext($reverseUserRoles{$val}) if defined($reverseUserRoles{$val});
+  return $r->maketext($val);
 }
 
 sub save_string {
@@ -249,6 +254,7 @@ sub save_string {
 sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $ce = $self->{Module}->{r}->{ce};
+	my $r = $self->{Module}->r;
 	my $permHash = {};
 	my %userRoles = %{$ce->{userRoles}};
 	$userRoles{nobody} = 99999999; # insure that nobody comes at the end #FIXME? this is set in defaults.config
@@ -261,8 +267,10 @@ sub entry_widget {
 	}
 
 	my @values = sort { $userRoles{$a} <=> $userRoles{$b} } keys %userRoles;
+
+	my %labels = map {$_ => $r->maketext($_)} @values;
 	return CGI::popup_menu(-name=>$name, -values => \@values,
-		-default=>$default);
+		-default=>$default, -labels => \%labels);
 }
 
 ########################### configlist
@@ -391,11 +399,12 @@ package configpopuplist;
 @configpopuplist::ISA = qw(configobject);
 
 sub display_value {
-	my ($self, $val) = @_;
+        my ($self, $val) = @_;
+  	my $r = $self->{Module}->r;
 	$val = 'ur' if not defined($val);
 
 	if ($self->{labels}->{$val}) {
-	    return join(CGI::br(), $self->{labels}->{$val});
+	    return join(CGI::br(), $r->maketext($self->{labels}->{$val}));
 	}
 
 	return join(CGI::br(), $val);
@@ -430,12 +439,14 @@ sub save_string {
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
-
+	my $r = $self->{Module}->r;
+	my %labels = map {$_ => $r->maketext($self->{labels}->{$_} // $_)} @{$self->{values}};
+	
 	return CGI::popup_menu(
 		-name => $name,
 		-values => $self->{values},
 		-default => $default,
-	        -labels => $self->{labels},
+	        -labels => \%labels,
 
 	);
 }
@@ -511,9 +522,9 @@ sub print_navigation_tabs {
 	my $str = '';
 	for my $tab (0..(scalar(@tab_names)-1)) {
 		if($current_tab eq "tab$tab") {
-			$tab_names[$tab] = $tab_names[$tab];
+			$tab_names[$tab] = $r->maketext($tab_names[$tab]);
 		} else {
-			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $tab_names[$tab]);
+			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]));
 		}
 	}
 	print CGI::p() .
@@ -615,7 +626,7 @@ sub pre_header_initialize {
 		if ($write_result) {
 			$self->addbadmessage($write_result);
 		} else {
-			$self->addgoodmessage($r->maketext("Changes saved."));
+			$self->addgoodmessage($r->maketext("Changes saved"));
 		}
 	}
 }
@@ -653,7 +664,7 @@ sub body {
 					if($con->{var} eq $r->param('var_name'));
 			}
 		}
-		print CGI::h2($r->maketext("Variable Documentation: "). CGI::code('$'.$r->param('var_name'))),
+		print CGI::h2($r->maketext("Variable Documentation:").' '. CGI::code('$'.$r->param('var_name'))),
 			CGI::p(),
 			CGI::blockquote( $r->maketext($docstring) );
 		return "";
@@ -687,10 +698,10 @@ sub body {
 	$tabnumber =~ s/tab//;
 	my @configSectionArray = @{$ConfigValues->[$tabnumber]};
 	my $configTitle = shift @configSectionArray;
-	print CGI::p(CGI::div({-align=>'center'}, CGI::b($configTitle)));
+	print CGI::p(CGI::div({-align=>'center'}, CGI::b($r->maketext($configTitle))));
 
 	print CGI::start_table({-border=>"1"});
-	print '<tr>'.CGI::th($r->maketext('What')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
+	print '<tr>'.CGI::th($r->maketext('Setting')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
 	for my $con (@configSectionArray) {
 		my $conobject = $self->objectify($con);
 		print "\n<tr>";

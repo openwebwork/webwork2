@@ -1,4 +1,4 @@
- This folder contains achievement evaluatiors.  Their job is to test
+ This folder contains achievement evaluators.  Their job is to test
  whether or not an achievement has been earned.  The code is run every time a
  student submits an answer to a homework question as long as the achievement 
  is unearned.  

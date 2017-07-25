@@ -1,53 +1,53 @@
-01_night_owl, Night Owl, secret, Finish a homework set between 12PM and 2AM., 10, , night_owl.at, night_owl.png, 
-02_crack_o_dawn, Crack O' Dawn, secret, Finish a homework set between 5AM and 7AM., 10, , crack_o_dawn.at, crack_o_dawn.png, 
-03_on_the_hour, Watching the Clock, secret, Finish a problem at the top of the hour., 10, , on_the_hour.at, on_the_hour.png, 
-04_last_minute, Last Minute Math, secret, Complete a homework within 30 minutes of the due date., 10, , last_minute.at, last_minute.png, 
-05_still_not_right, It's Still Not Right, secret, Input the exact same (incorrect) answer 10 times in a row., 5, , still_not_right.at, still_not_right.png, 
-06_persistance, Persistence is not Futile, secret, Solve a problem after 20 incorrect submissions., 10, , persistance.at, persistance.png, 
-07_super_persistance, Green Never Looked So Good, secret, Solve a problem after 100 incorrect submissions., 10, , super_persistance.at, super_persistance.png, 
-08_super_speed_math, Careful Planning and Quick Fingers, secret, Spend less than 10 minutes entering answers to a homework set., 20, , super_speed_math.at, super_speed_math.png, 
-09_hows_your_finger, Hows Your Finger?, secret, Have more than 250 submissions on a homework problem.  , 10, , hows_your_finger.at, hows_your_finger.png, 
-10_third_time, Third Times the Charm, secret, Solve a problem on the third submission, 10, , third_time.at, third_time.png, 
-01_one_click, One Click Is All I Need, 01_one_timer, Earn 100% on a problem in one attempt., 10, , one_click.at, one_click.png, 
-02_on_one_hand, On One Hand, 01_one_timer, Finish a homework set with less than 5 incorrect submissions., 10, , on_one_hand.at, on_one_hand.png, 
-03_seeing_green, Seeing Green, 01_one_timer, Finish a homework set with no incorrect submissions., 20, , seeing_green.at, seeing_green.png, 
-04_early_bird, The Early Bird, 01_one_timer, Finish a homework set within 24 hours of it opening., 10, , early_bird.at, early_bird.png, 
-05_really_early_bird, The Really Early Bird, 01_one_timer, Finish a homework set within 2 hours of it opening., 20, , really_early_bird.at, really_early_bird.png, 
-06_back_for_more, Back For More, 01_one_timer, Retry a problem after a 8 hour break., 10, , back_for_more.at, back_for_more.png, 
-07_chipping_away, Just Keep Chipping Away, 01_one_timer, Work on a single homework set over the course of 48 hours., 10, , chipping_away.at, chipping_away.png, 
-08_speed_mather, Go Speed Math-er, 01_one_timer, Spend less than 1 hour working on a homework set., 10, , speed_mather.at, speed_mather.png, 
-09_three_in_a_row, Three in a Row, 01_one_timer, Complete 3 problems in a row with no incorrect answers., 10, 3, three_in_a_row.at, three_in_a_row.png, 
-10_on_fire, You're on Fire!, 01_one_timer, Complete 10 problems in a row with no incorrect answers., 20, 10, on_fire.at, on_fire.png, 
-01_complete_one_set, One Set Wonder, 03_complete_sets, Get 100% on one homework set., 10, , complete_one_set.at, complete_one_set.png, 
-02_complete_five_sets, High Five, 03_complete_sets, Get 100% on five homework sets., 10, 5, complete_five_sets.at, complete_five_sets.png, 
-03_complete_ten_sets, One For Each Finger, 03_complete_sets, Get 100% on ten homework sets., 10, 10, complete_ten_sets.at, complete_ten_sets.png, 
-04_complete_twenty_sets, Mathbox Twenty, 03_complete_sets, Get 100% on twenty homework sets., 20, 20, complete_twenty_sets.at, complete_twenty_sets.png, 
-05_complete_thirty_sets, The Long Road, 03_complete_sets, Get 100% on thirty homework sets., 20, 30, complete_thirty_sets.at, complete_thirty_sets.png, 
-06_complete_all_sets, Perfection, 03_complete_sets, Get 100% on all homework sets., 30, 35, complete_all_sets.at, complete_all_sets.png, 
-01_challenge_one, Challenge One Complete, 04_challenge, Finish the first challenge problem., 10, , challenge_one.at, challenge_one.png, 
-02_challenge_two, Challenge Two Complete, 04_challenge, Finish the second challenge problem., 10, , challenge_two.at, challenge_two.png, 
-03_challenge_three, Challenge Three Complete, 04_challenge, Finish the third challenge problem., 10, , challenge_three.at, challenge_three.png, 
-04_challenge_four, Challenge Four Complete, 04_challenge, Finish the fourth challenge problem., 10, , challenge_four.at, challenge_four.png, 
-05_challenge_five, Challenge Five Complete, 04_challenge, Finish the fifth challenge problem., 10, , challenge_five.at, challenge_five.png, 
-06_challenge_six, Challenge Six Complete, 04_challenge, Finish the sixth challenge problem., 10, , challenge_six.at, challenge_six.png, 
-07_challenge_seven, Challenge Seven Complete, 04_challenge, Finish the seventh challenge problem., 10, , challenge_seven.at, challenge_seven.png, 
-08_challenge_eight, Challenge Eight Complete, 04_challenge, Finish the eighth challenge problem., 10, , challenge_eight.at, challenge_eight.png, 
-09_challenge_nine, Challenge Nine Complete, 04_challenge, Finish the ninth challenge problem., 10, , challenge_nine.at, challenge_nine.png, 
-10_challenge_ten, Challenge Ten Complete, 04_challenge, Finish the tenth challenge problem., 10, , challenge_ten.at, challenge_ten.png, 
-11_challenger, Challenger, 04_challenge, Finish all of the challenge problems., 10, 20, challenger.at, challenger.png, 
-01_complete_one_problem, The First Step, 05_complete_problems, Earn 100% on a homework problem., 10, , complete_one_problem.at, complete_one_problem.png, 
-02_complete_10_problems, Perfect 10, 05_complete_problems, Earn 100% on 10 homework problems., 10, 10, complete_10_problems.at, complete_10_problems.png, 
-03_complete_25_problems, Twenty-Five Questions, 05_complete_problems, Earn 100% on 25 homework problems., 10, 25, complete_25_problems.at, complete_25_problems.png, 
-04_complete_50_problems, 50 Ways to Solve a Math Problem, 05_complete_problems, Earn 100% on 50 homework problems., 10, 50, complete_50_problems.at, complete_50_problems.png, 
-05_complete_100_problems, Seeing Benjamins, 05_complete_problems, Earn 100% on 100 homework problems., 20, 100, complete_100_problems.at, complete_100_problems.png, 
-06_complete_150_problems, Sesqui-Centeni-Problems, 05_complete_problems, Earn 100% on 150 homework problems., 20, 150, complete_150_problems.at, complete_150_problems.png, 
-01_level_one, Level 1 Initiate, level, You have been awarded a Lesser Rod of Revelation, , , level_one.at, level_one.png, 
-02_level_two, Level 2 Novice, level, You have been awarded a Potion of Forgetfullness, , , level_two.at, level_two.png, 
-03_level_three, Level 3 Apprentice, level, You have been awarded a Tunic of Extension, , , level_three.at, level_three.png, 
-04_level_four, Level 4 Journeyman, level, You have been awarded a Cupcake of Enlargement, , , level_four.at, level_four.png, 
-05_level_five, Level 5 Fellowcraft, level, You have been awarded a Box of Transmogrification, , , level_five.at, level_five.png, 
-06_level_six, Level 6 Adept, level, You have been awarded a Greater Rod of Revelation, , , level_six.at, level_six.png, 
-07_level_seven, Level 7 Craftsman, level, You have been awarded a Robe of Longevity, , , level_seven.at, level_seven.png, 
-08_level_eight, Level 8 Artesian, level, You have been awarded a Cake of Enlargement, , , level_eight.at, level_eight.png, 
-09_level_nine, Level 9 Specialist, level, You have been awarded a Scroll of Ressurection, , , level_nine.at, level_nine.png, 
-10_level_ten, Level 10 Professor, level, You have been awarded a Greater Tome of Enlightenment, , , level_ten.at, level_ten.png, 
+night_owl,"Night Owl",101,secret,default,"Finish a homework set between 12PM and 2AM.",10,,night_owl.at,night_owl.png
+crack_o_dawn,"Crack O' Dawn",102,secret,default,"Finish a homework set between 5AM and 7AM.",10,,crack_o_dawn.at,crack_o_dawn.png
+on_the_hour,"Watching the Clock",103,secret,"default,jitar","Finish a problem at the top of the hour.",10,,on_the_hour.at,on_the_hour.png
+last_minute,"Last Minute Math",104,secret,default,"Complete a homework within 30 minutes of the due date.",10,,last_minute.at,last_minute.png
+still_not_right,"It's Still Not Right",105,secret,"default,jitar","Input the exact same (incorrect) answer 10 times in a row.",5,,still_not_right.at,still_not_right.png
+persistance,"Persistence is not Futile",106,secret,"default,jitar","Solve a problem after 20 incorrect submissions.",10,,persistance.at,persistance.png
+super_persistance,"Green Never Looked So Good",107,secret,"default,jitar","Solve a problem after 100 incorrect submissions.",10,,super_persistance.at,super_persistance.png
+super_speed_math,"Careful Planning and Quick Fingers",108,secret,default,"Spend less than 10 minutes entering answers to a homework set.",20,,super_speed_math.at,super_speed_math.png
+hows_your_finger,"Hows Your Finger?",109,secret,"default,jitar","Have more than 250 submissions on a homework problem.  ",10,,hows_your_finger.at,hows_your_finger.png
+third_time,"Third Times the Charm",110,secret,"default,jitar","Solve a problem on the third submission",10,,third_time.at,third_time.png
+one_click,"One Click Is All I Need",201,one_timer,"default,jitar","Earn 100% on a problem in one attempt.",10,,one_click.at,one_click.png
+on_one_hand,"On One Hand",202,one_timer,default,"Finish a homework set with less than 5 incorrect submissions.",10,,on_one_hand.at,on_one_hand.png
+seeing_green,"Seeing Green",203,one_timer,default,"Finish a homework set with no incorrect submissions.",20,,seeing_green.at,seeing_green.png
+early_bird,"The Early Bird",204,one_timer,default,"Finish a homework set within 24 hours of it opening.",10,,early_bird.at,early_bird.png
+really_early_bird,"The Really Early Bird",205,one_timer,default,"Finish a homework set within 2 hours of it opening.",20,,really_early_bird.at,really_early_bird.png
+back_for_more,"Back For More",206,one_timer,"default,jitar","Retry a problem after a 8 hour break.",10,,back_for_more.at,back_for_more.png
+chipping_away,"Just Keep Chipping Away",207,one_timer,"default,jitar","Work on a single homework set over the course of 48 hours.",10,,chipping_away.at,chipping_away.png
+speed_mather,"Go Speed Math-er",208,one_timer,default,"Spend less than 1 hour working on a homework set.",10,,speed_mather.at,speed_mather.png
+three_in_a_row,"Three in a Row",209,one_timer,"default,jitar","Complete 3 problems in a row with no incorrect answers.",10,3,three_in_a_row.at,three_in_a_row.png
+on_fire,"You're on Fire!",210,one_timer,"default,jitar","Complete 10 problems in a row with no incorrect answers.",20,10,on_fire.at,on_fire.png
+complete_one_set,"One Set Wonder",401,complete_sets,default,"Get 100% on one homework set.",10,,complete_one_set.at,complete_one_set.png
+complete_five_sets,"High Five",402,complete_sets,default,"Get 100% on five homework sets.",10,5,complete_five_sets.at,complete_five_sets.png
+complete_ten_sets,"One For Each Finger",403,complete_sets,default,"Get 100% on ten homework sets.",10,10,complete_ten_sets.at,complete_ten_sets.png
+complete_twenty_sets,"Mathbox Twenty",403,complete_sets,default,"Get 100% on twenty homework sets.",20,20,complete_twenty_sets.at,complete_twenty_sets.png
+complete_thirty_sets,"The Long Road",405,complete_sets,default,"Get 100% on thirty homework sets.",20,30,complete_thirty_sets.at,complete_thirty_sets.png
+complete_all_sets,Perfection,406,complete_sets,default,"Get 100% on all homework sets.",30,35,complete_all_sets.at,complete_all_sets.png
+complete_one_problem,"The First Step",501,complete_problems,"default,jitar","Earn 100% on a homework problem.",10,,complete_one_problem.at,complete_one_problem.png
+complete_10_problems,"Perfect 10",502,complete_problems,"default,jitar","Earn 100% on 10 homework problems.",10,10,complete_10_problems.at,complete_10_problems.png
+complete_25_problems,"Twenty-Five Questions",503,complete_problems,"default,jitar","Earn 100% on 25 homework problems.",10,25,complete_25_problems.at,complete_25_problems.png
+complete_50_problems,"50 Ways to Solve a Math Problem",504,complete_problems,"default,jitar","Earn 100% on 50 homework problems.",10,50,complete_50_problems.at,complete_50_problems.png
+complete_100_problems,"Seeing Benjamins",505,complete_problems,"default,jitar","Earn 100% on 100 homework problems.",20,100,complete_100_problems.at,complete_100_problems.png
+complete_150_problems,Sesqui-Centeni-Problems,506,complete_problems,"default,jitar","Earn 100% on 150 homework problems.",20,150,complete_150_problems.at,complete_150_problems.png
+challenge_one,"Challenge One Complete",601,challenge,default,"Finish the first challenge problem.",10,,challenge_one.at,challenge_one.png
+challenge_two,"Challenge Two Complete",602,challenge,default,"Finish the second challenge problem.",10,,challenge_two.at,challenge_two.png
+challenge_three,"Challenge Three Complete",603,challenge,default,"Finish the third challenge problem.",10,,challenge_three.at,challenge_three.png
+challenge_four,"Challenge Four Complete",604,challenge,default,"Finish the fourth challenge problem.",10,,challenge_four.at,challenge_four.png
+challenge_five,"Challenge Five Complete",605,challenge,default,"Finish the fifth challenge problem.",10,,challenge_five.at,challenge_five.png
+challenge_six,"Challenge Six Complete",606,challenge,default,"Finish the sixth challenge problem.",10,,challenge_six.at,challenge_six.png
+challenge_seven,"Challenge Seven Complete",607,challenge,default,"Finish the seventh challenge problem.",10,,challenge_seven.at,challenge_seven.png
+challenge_eight,"Challenge Eight Complete",608,challenge,default,"Finish the eighth challenge problem.",10,,challenge_eight.at,challenge_eight.png
+challenge_nine,"Challenge Nine Complete",609,challenge,default,"Finish the ninth challenge problem.",10,,challenge_nine.at,challenge_nine.png
+challenge_ten,"Challenge Ten Complete",610,challenge,default,"Finish the tenth challenge problem.",10,,challenge_ten.at,challenge_ten.png
+challenger,Challenger,611,challenge,default,"Finish all of the challenge problems.",10,20,challenger.at,challenger.png
+level_one,"Level 1 Initiate",9901,level,"default,gateway,jitar","You have been awarded a Lesser Rod of Revelation",,,level_one.at,level_one.png
+level_two,"Level 2 Novice",9902,level,"default,gateway,jitar","You have been awarded a Potion of Forgetfullness",,,level_two.at,level_two.png
+level_three,"Level 3 Apprentice",9903,level,"default,gateway,jitar","You have been awarded a Tunic of Extension",,,level_three.at,level_three.png
+level_four,"Level 4 Journeyman",9904,level,"default,gateway,jitar","You have been awarded a Cupcake of Enlargement",,,level_four.at,level_four.png
+level_five,"Level 5 Fellowcraft",9905,level,"default,gateway,jitar","You have been awarded a Box of Transmogrification",,,level_five.at,level_five.png
+level_six,"Level 6 Adept",9906,level,"default,gateway,jitar","You have been awarded a Greater Rod of Revelation",,,level_six.at,level_six.png
+level_seven,"Level 7 Craftsman",9907,level,"default,gateway,jitar","You have been awarded a Robe of Longevity",,,level_seven.at,level_seven.png
+level_eight,"Level 8 Artesian",9908,level,"default,gateway,jitar","You have been awarded a Cake of Enlargement",,,level_eight.at,level_eight.png
+level_nine,"Level 9 Specialist",9909,level,"default,gateway,jitar","You have been awarded a Scroll of Ressurection",,,level_nine.at,level_nine.png
+level_ten,"Level 10 Professor",9910,level,"default,gateway,jitar","You have been awarded a Greater Tome of Enlightenment",,,level_ten.at,level_ten.png

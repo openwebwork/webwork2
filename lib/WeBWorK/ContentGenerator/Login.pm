@@ -202,7 +202,7 @@ sub body {
 		    print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
 		} 
 	} else {
-		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($r->maketext($course))));
+		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
 		if ($ce -> {session_management_via} ne "session_cookie") {
 			print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
 		}

@@ -28,9 +28,10 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readFile seq_to_jitar_id jitar_id_to_seq jitar_problem_adjusted_status wwRound);
+use WeBWorK::Utils qw(readFile seq_to_jitar_id jitar_id_to_seq jitar_problem_adjusted_status wwRound x);
+use WeBWorK::ContentGenerator::Instructor::FileManager;
 
-our @userInfoColumnHeadings = ("STUDENT ID", "login ID", "LAST NAME", "FIRST NAME", "SECTION", "RECITATION");
+our @userInfoColumnHeadings = (x("STUDENT ID"), x("login ID"), x("LAST NAME"), x("FIRST NAME"), x("SECTION"), x("RECITATION"));
 our @userInfoFields = ("student_id", "user_id","last_name", "first_name", "section", "recitation");
 
 sub initialize {
@@ -52,11 +53,14 @@ sub initialize {
 	my $scoreSelected = $r->param('scoreSelected');
 	my $scoringFileName = $r->param('scoringFileName') || "${courseName}_totals";
 	$scoringFileName =~ s/\.csv\s*$//; $scoringFileName .='.csv';  # must end in .csv
+	my $scoringFileNameOK = (
+		$scoringFileName eq  WeBWorK::ContentGenerator::Instructor::FileManager::checkName($scoringFileName)
+	);
 	$self->{scoringFileName}=$scoringFileName;
 	
 	$self->{padFields}  = defined($r->param('padFields') ) ? 1 : 0; 
 	
-	if (defined $scoreSelected && @selected) {
+	if (defined $scoreSelected && @selected && $scoringFileNameOK) {
 
 		my @totals                 = ();
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
@@ -111,9 +115,17 @@ sub initialize {
 		$self->appendColumns( \@totals,\@sum_scores);
 		$self->writeCSV("$scoringDir/$scoringFileName", @totals);
 
-	} elsif (defined $scoreSelected) {
-		$self->addbadmessage("You must select one or more sets for scoring");
-	} 
+	} else {
+		if (!@selected) {  # nothing selected for scoring
+			$self->addbadmessage($r->maketext("You must select one or more sets for scoring!"));
+		}
+		if (!$scoringFileNameOK) { # fileName is not properly formed
+			$self->addbadmessage($r->maketext("Your file name is not valid! "));
+		    $self->addbadmessage($r->maketext("A file name cannot begin with a dot, it cannot be empty, it cannot contain a " .
+				 "directory path component and only the characters -_.a-zA-Z0-9 and space  are allowed.")
+			); 
+		}
+	}
 	
 	# Obtaining list of sets:
 	my @setNames =  $db->listGlobalSets();
@@ -202,7 +214,7 @@ sub body {
 					),
 				),
 				CGI::Tr(CGI::td({colspan =>2,align=>'center'},
-					CGI::input({type=>'submit',value=>'Score selected set(s) and save to: ',name=>'score-sets'}),
+					CGI::input({type=>'submit',value=>$r->maketext('Score selected set(s) and save to:'),name=>'score-sets'}),
 					CGI::input({type=>'text', name=>'scoringFileName', size=>'40',value=>"$scoringFileName"})
 				)),
 			
@@ -355,8 +367,8 @@ sub scoreSet {
 		$scoringData[0][0] = $r->maketext("NO OF FIELDS");
 		$scoringData[1][0] = $r->maketext("SET NAME");
 		$scoringData[2][0] = $r->maketext("PROB NUMBER");
-		$scoringData[3][0] = $r->maketext("DUE DATE");
-		$scoringData[4][0] = $r->maketext("DUE TIME");
+		$scoringData[3][0] = $r->maketext("CLOSE DATE");
+		$scoringData[4][0] = $r->maketext("CLOSE TIME");
 		$scoringData[5][0] = $r->maketext("PROB VALUE");
 
 	
@@ -369,7 +381,7 @@ sub scoreSet {
 					$scoringData[$i][$field] = "";
 				}
 			}
-			$scoringData[6][$field] = $userInfoColumnHeadings[$field];
+			$scoringData[6][$field] = $r->maketext($userInfoColumnHeadings[$field]);
 			for (my $user = 0; $user < @sortedUserIDs; $user++) {
 				my $fieldName = $userInfoFields[$field];
 				$scoringData[$user + 7][$field] = $Users{$sortedUserIDs[$user]}->$fieldName;
@@ -627,7 +639,7 @@ sub sumScores {    # Create a totals column for each student
 		$scoringData[$i][1] = ($totalPoints) ?wwRound(2,100*$studentTotal/$totalPoints) : 0;
     }
     $scoringData[0]      = ['',''];
-    $scoringData[1]      = ['summary', '%score'];
+    $scoringData[1]      = [$r->maketext('summary'), $r->maketext('%score')];
 	$scoringData[2]      = ['',''];
 	$scoringData[3]      = ['',''];
 	$scoringData[4]      = ['',''];

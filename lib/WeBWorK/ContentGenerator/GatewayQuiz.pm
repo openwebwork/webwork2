@@ -397,12 +397,12 @@ sub attemptResults {
 
 	    @row = ();
 	    my $answerResult  = $pg->{answers}->{$name};
-	    my $studentAnswer = $answerResult->{student_ans}; # original_student_ans
+	    my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
 	    my $preview       = ($showAttemptPreview
 				 ? $self->previewAnswer($answerResult, $imgGen)
 				 : "");
 	    my $correctAnswer = $answerResult->{correct_ans};
-	    $answerScore = $answerResult->{score};
+	    $answerScore = $answerResult->{score}//0;
 	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
 	    $numCorrect += $answerScore > 0;
 	    $numEssay += ($answerResult->{type}//'') eq 'essay';
@@ -1476,16 +1476,28 @@ sub body {
 			}
 
 		}
-
+		
+		# The following arrays cache results obtained in the two passes through 
+		# the collection of problems in the quiz
+		# This might save some time.
+		# This refactoring hasn't taken place yet
+		# because I don't yet understand why the ordering 
+		# for creating past answers was chosen as it is, different from creating sticky answers
+#		my @answerString = (); 
+#		my @encoded_ans_string = ();
+#		my @scores = ();
+#		my @isEssay = ();
+		
 		my @pureProblems = $db->getAllProblemVersions($effectiveUser,
 							      $setName,
 							      $versionNumber);
 		foreach my $i ( 0 .. $#problems ) {  # process each problem
 			# this code is essentially that from Problem.pm
+# begin problem loop for sticky answers
 			my $pureProblem = $pureProblems[$i];
 
 			# store answers in problem for sticky answers later
-			my %answersToStore;
+			# my %answersToStore;
 
 			# we have to be a little careful about getting the
 			#    answers that we're saving, because we don't have
@@ -1493,31 +1505,42 @@ sub body {
 			#    submitting
 			my %answerHash = ();
 			my @answer_order = ();
+			my $encoded_ans_string;
 			if ( ref( $pg_results[$i] ) ) {
-				%answerHash = %{$pg_results[$i]->{answers}};
-				$answersToStore{$_} = $self->{formFields}->{$_} 
-					foreach (keys %answerHash);
-				# check for extra answers that slipped 
-				#    by---e.g. for matrices, and get them 
-				#    from the original input form
-				my @extra_answer_names = 
-				    @{ $pg_results[$i]->{flags}->{KEPT_EXTRA_ANSWERS} };
-				$answersToStore{$_} = 
-				    $self->{formFields}->{$_} foreach (@extra_answer_names);
-				@answer_order = 
-				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
-				      @extra_answer_names );
+# 				%answerHash = %{$pg_results[$i]->{answers}};
+# 				$answersToStore{$_} = $self->{formFields}->{$_} 
+# 					foreach (keys %answerHash);
+# 				# check for extra answers that slipped 
+# 				#    by---e.g. for matrices, and get them 
+# 				#    from the original input form
+# 				my @extra_answer_names = 
+# 				    @{ $pg_results[$i]->{flags}->{KEPT_EXTRA_ANSWERS} };
+# 				$answersToStore{$_} = 
+# 				    $self->{formFields}->{$_} foreach (@extra_answer_names);
+# 				@answer_order = 
+# 				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
+# 				      @extra_answer_names );
+                my ($answerString, $scores,$isEssay); #not used here
+				($answerString,$encoded_ans_string,$scores,$isEssay) =
+				WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
+					$self, $pg_results[$i]
+				);  # ref($self) eq WeBWorK::ContentGenerator::Problem
+					# ref($pg) eq "WeBWorK::PG::Local";
 			} else {
 				my $prefix = sprintf('Q%04d_',$i+1);
 				my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
-				%answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
-				@answer_order = @fields;
+				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
+				my @answer_order = @fields;
+				$encoded_ans_string = encodeAnswers( %answersToStore, 
+ 							  @answer_order );
+ 						
 			}
-			my $answerString = encodeAnswers( %answersToStore, 
-							  @answer_order );
+# 				my $answerString = encodeAnswers( %answersToStore, 
+# 							  @answer_order );
+# 			
 			# and get the last answer 
-			$problems[$i]->last_answer( $answerString );
-			$pureProblem->last_answer( $answerString );
+			$problems[$i]->last_answer( $encoded_ans_string );
+			$pureProblem->last_answer( $encoded_ans_string );
 
 			# next, store the state in the database if that makes 
 			#    sense
@@ -1584,7 +1607,7 @@ sub body {
 				$db->putProblemVersion( $pureProblem );
 			}
 		} # end loop through problems
-
+# end loop through problems for sticky answer 
 
 		#Try to update the student score on the LMS
 		# if that option is enabled.
@@ -1611,18 +1634,27 @@ sub body {
 		# this is carried over from Problem.pm
 		if ( defined( $answer_log ) ) {
 			foreach my $i ( 0 .. $#problems ) {
+# begin problem loop for passed answers
 				my $answerString = '';
 				my $scores = '';
+				my $isEssay = 0;
 				# note that we store these answers in the 
 				#    order that they are presented, not the 
 				#    actual problem order
 				if ( ref( $pg_results[$probOrder[$i]] ) ) {
 					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
-					foreach ( sortByName(undef, keys %answerHash) ) {
-						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
-						$answerString .= $sAns . "\t";
-						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
-					}
+# 					foreach ( sortByName(undef, keys %answerHash) ) {
+# 						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
+# 						$answerString .= $sAns . "\t";
+# 						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
+# 					}
+                   	my ($encoded_ans_string, ); #not used here
+					($answerString,$encoded_ans_string,$scores,$isEssay) =
+					WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
+						$self, $pg_results[$probOrder[$i]]
+					);  # ref($self) eq WeBWorK::ContentGenerator::Problem
+						# ref($pg) eq "WeBWorK::PG::Local";
+					$answerString =~ s/\t+$/\t/;
 				} else {
 					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
 					my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
@@ -1630,9 +1662,11 @@ sub body {
 						$answerString .= $self->{formFields}->{$_} . "\t";
 						$scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
 					}
+					$answerString =~ s/\t+$/\t/;
 				}
-				$answerString =~ s/\t+$/\t/;
-
+				
+				
+		# Prefix answer string with submission type
 				my $answerPrefix;
 				if ( $submitAnswers ) { 
 					$answerPrefix = "[submit] ";  
@@ -1650,7 +1684,8 @@ sub body {
 					$answerString = "$answerPrefix" .
 						"$answerString";
 				}
-
+				
+		#Write to courseLog
 				writeCourseLog( $self->{ce}, "answer_log",
 						join("", '|', 
 						     $problems[$i]->user_id,
@@ -1659,7 +1694,7 @@ sub body {
 						     "\t$timeNow\t",
 						     "$answerString"), 
 						);
-				#add to PastAnswer db
+		#add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
 				$pastAnswer->course_id($courseID);
 				$pastAnswer->user_id($problems[$i]->user_id);
@@ -1676,7 +1711,7 @@ sub body {
 		}
 	}
 	debug("end answer processing");
-
+# end problem loop
 	# additional set-level database manipulation: we want to save the time 
 	#    that a set was submitted, and for proctored tests we want to reset 
 	#    the assignment type after a set is submitted for the last time so 
@@ -1798,7 +1833,7 @@ sub body {
 	# a handy noun for when referring to a test
 	my $testNoun = (( $set->attempts_per_version || 0 ) > 1) ? $r->maketext("submission") : $r->maketext("test");
 	my $testNounNum = ( ( $set->attempts_per_version ||0 ) > 1 ) ? 
-		$r->maketext("submission (test ") : $r->maketext("test (");
+		$r->maketext("submission (test [_1])",$versionNumber) : $r->maketext("test ([_1])",$versionNumber);
 
 	##### start output of test headers: 
 	##### display information about recorded and checked scores
@@ -1819,22 +1854,22 @@ sub body {
 
 		if ( $recdMsg ) {
 			# then there was an error when saving the results
-			print CGI::strong($r->maketext("Your score on this [_1][_2]) was NOT recorded.",$testNounNum,$versionNumber),
+			print CGI::strong($r->maketext("Your score on this [_1] was NOT recorded.",$testNounNum),
 					  $recdMsg), CGI::br();
 		} else {
 			# no error; print recorded message
-			print CGI::strong($r->maketext("Your score on this [_1][_2]) WAS recorded.",$testNounNum,$versionNumber)), 
+			print CGI::strong($r->maketext("Your score on this [_1] WAS recorded.",$testNounNum)), 
 			  CGI::br();
 
 			# and show the score if we're allowed to do that
 			if ( $can{showScore} ) {
 			  print CGI::strong($r->maketext("Your score on this [_1] is [_2]/[_3].", $testNoun,$attemptScore,$totPossible));
 			} else {
-				my $when = 
-					($set->hide_score eq 'BeforeAnswerDate')
-					? ' until ' . ($self->formatDateTime($set->answer_date) )
-					: '';
-				print $r->maketext("(Your score on this [_1] is not available[_2].)",$testNoun,$when);
+			  if ($set->hide_score eq 'BeforeAnswerDate') {
+			    print $r->maketext("(Your score on this [_1] is not available until [_2].)",$testNoun, $self->formatDateTime($set->answer_date));
+			  } else {
+			    print $r->maketext("(Your score on this [_1] is not available.)",$testNoun);
+			  }
 			}
 
 			
@@ -1866,7 +1901,7 @@ sub body {
 			print CGI::strong($r->maketext("Your score on this (checked, not recorded) submission is [_1]/[_2].",$attemptScore,$totPossible)), 
 				CGI::br();
 			my $recScore = wwRound(2,$recordedScore);
-			print $r->maketext("The recorded score for this test is [_1]/[_2]. ",$recScore, $totPossible);
+			print $r->maketext("The recorded score for this test is [_1]/[_2].",$recScore, $totPossible);
 			print CGI::end_div();
 		}
 	}
@@ -1924,10 +1959,10 @@ sub body {
 			if ( $can{showScore} ) {
 			    print CGI::start_div({class=>'gwMessage'});
 			    
-			    my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3]", $versionNumber, wwRound(2,$recordedScore), $totPossible);
+			    my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3].", $versionNumber, wwRound(2,$recordedScore), $totPossible);
 			    if ( $exceededAllowedTime && 
 				 $recordedScore == 0 ) {
-				$scMsg .= $r->maketext(", because you exceeded the allowed time.");
+				$scMsg .= $r->maketext("You exceeded the allowed time.");
 			    } else {
 				$scMsg .= ".  ";
 			    }
@@ -1947,8 +1982,8 @@ sub body {
 		}
 
 		if ( $canShowWork && $set->set_id ne "Undefined_Set" ) {
-			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade",$versionNumber);
-			print "" . (($can{showScore}) ? $r->maketext(", but you may still check your answers.") : ".") ;
+			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade.",$versionNumber);
+			print "" . (($can{showScore}) ? $r->maketext("You may still check your answers.") : ".") ;
 
 			# print a "printme" link if we're allowed to see our 
 			#    work
@@ -1979,11 +2014,12 @@ sub body {
 	# now, we print out the rest of the page if we're not hiding submitted
 	#    answers
 	if ( ! $can{recordAnswersNextTime} && ! $canShowWork ) {
-		my $when = ( $set->hide_work eq 'BeforeAnswerDate' ) 
-			? $r->maketext(' until ') . ($self->formatDateTime($set->answer_date))
-			: '';
 		print CGI::start_div({class=>"gwProblem"});
-		print CGI::strong($r->maketext("Completed results for this assignment are not available[_1].",$when));
+		if ( $set->hide_work eq 'BeforeAnswerDate' ) {
+		  print CGI::strong($r->maketext("Completed results for this assignment are not available until [_1]",$self->formatDateTime($set->answer_date)));
+		} else {
+		  print CGI::strong($r->maketext("Completed results for this assignment are not available."));
+		}
 		print CGI::end_div();
 
 	# else: we're not hiding answers
@@ -2030,7 +2066,7 @@ sub body {
 			}
 		}
 		if ( $numProbPerPage && $numPages > 1 ) {
-			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page: '))),
+			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page:'))),
 					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 
@@ -2119,7 +2155,7 @@ sub body {
 					$recordMessage;
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 				CGI::p($pg->{result}->{msg} ? 
-				       CGI::b($r->maketext("Note: ")) : "", 
+				       CGI::b($r->maketext("Note")).': ' : "", 
 				       CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 
@@ -2224,11 +2260,20 @@ sub body {
 	    }
 
 	    print CGI::p(
-				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+				CGI::submit(-name => 'action',  -value=>$r->maketext('Show Past Answers'))
 				), "\n",
 			CGI::end_form();
 	}
 
+	# prints the achievement message if there is one
+	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them.  
+	#Gateways are special.  We only provide the first problem just to seed the data, but all of the problems from the gateway will be provided to the achievement evaluator
+	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
+	    && $submitAnswers && $set->set_id ne 'Undefined_Set') {
+	    print  WeBWorK::AchievementEvaluator::checkForAchievements($problems[0], $pg_results[0], $r, setVersion=>$versionNumber);
+	    
+	}
+	
 	return "";
 
 }
@@ -2357,6 +2402,10 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 	
 	return "";
+}
+
+sub output_achievement_CSS {
+    return "";
 }
 
 1;

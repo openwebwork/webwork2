@@ -73,9 +73,7 @@ sub initialize {
 	  $selectedUsers = [$user];
 	}
 
-	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide
-			    a student ID, a set ID, and a problem number.'))
-	    unless $selectedUsers  && $selectedSets && $selectedProblems;
+	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide a student ID, a set ID, and a problem number.')) unless $selectedUsers  && $selectedSets && $selectedProblems;
 	
 	my %records;
 	my %prettyProblemNumbers;
@@ -481,7 +479,18 @@ sub body {
 		}
 			
 		my $num_ans = $#scores;
-	
+		my $num_ans_blanks=$#answers;
+		my $upper_limit = ($num_ans > $num_ans_blanks)? $num_ans: $num_ans_blanks;
+		
+		#FIXME -- $num_ans is no longer the value needed -- $num_ans is the number of 
+		# answer evaluators (or answer groups) each of which might have several
+		# answer blanks. On the other hand sometimes an answer blank has been left blank
+		# and there is no answer, but the score is zero. 
+		# In other words sometimes number of scores is greater than the number of answers
+		# and sometimes it is less. 
+		
+		#warn "checking number of answers ", scalar(@answers), " vs number of scores ",scalar(@scores), " and limit is $upper_limit";
+		#warn "answers are ", join(" ", @answers);
 		if ($record{time} - $previousTime > $ce->{sessionKeyTimeout}) {
 		  $rowOptions->{'class'} = 'table-rule';
 		} else {
@@ -491,7 +500,7 @@ sub body {
 		@row = (CGI::td({width=>10}),CGI::td({style=>"color:#808080"},CGI::small($time)));
 
 		
-		for (my $i = 0; $i <= $num_ans; $i++) {
+		for (my $i = 0; $i <= $upper_limit; $i++) {
 		  my $td;
 		  my $answer = $answers[$i] // '';
 		  my $answerType = defined($answerTypes[$i]) ? $answerTypes[$i] : '';
@@ -504,7 +513,7 @@ sub body {
 		  
 		  my $answerstring;
 		  if ($answer eq '') {		    
-		    $answerstring  = CGI::small(CGI::i("empty")) if ($answer eq "");
+		    $answerstring  = CGI::small(CGI::i($r->maketext("empty"))) if ($answer eq "");
 		  } elsif (!$renderAnswers) {
 		    $answerstring = PGcore::encode_pg_and_html($answer);
 		  } elsif ($answerType eq 'essay') {
@@ -518,7 +527,7 @@ sub body {
 		}
 		
 		if ($record{comment}) {
-		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},"Comment: ".PGcore::encode_pg_and_html($record{comment})));
+		  push(@row,CGI::td({width=>20}),CGI::td({class=>'comment'},$r->maketext("Comment").": ".PGcore::encode_pg_and_html($record{comment})));
 		}
 		
 		print CGI::Tr($rowOptions,@row);
