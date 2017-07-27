@@ -412,7 +412,7 @@ $showeditors{simplepgeditor}   = 0;
 ## Key database, see the   Session Managment section
 ## of defaults.config.dist
 
-## For session management using the key databasse table, uncomment the following line,
+## For session management using the key database table, uncomment the following line,
 ## which will override the setting  $session_management_via = "session_cookie"
 ## set in defaults.config.
 
