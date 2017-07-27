@@ -910,13 +910,15 @@ sub email_notification {
 
 	my $mailing_errors = "";
 
-	my $transport = Email::Sender::Transport::SMTP->new({
-		host => $ce->{mail}->{smtpServer},
-		ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
-		timeout => $ce->{mail}->{smtpTimeout}
-	});
-
-	$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
+# 	my $transport = Email::Sender::Transport::SMTP->new({
+# 		host => $ce->{mail}->{smtpServer},
+# 		ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
+# 		timeout => $ce->{mail}->{smtpTimeout}
+# 	});
+# 
+# 	$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
+#           createEmailSenderTransportSMTP is defined in ContentGenerator
+	my $transport = $self->createEmailSenderTransportSMTP();
 
 	my $email = Email::Simple->create(
 		header => [
