@@ -77,6 +77,7 @@ $server_groupID    = 'wwdata';
 # is present in the file.
 # If $webwork_server_admin_email is not defined then the
 # ServerAdmin address defined in httpd.conf is used.
+# Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
 
 
 $webwork_server_admin_email ='';
@@ -210,6 +211,8 @@ $mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
 # a valid mail domain, or at least be well-formed.
 $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 
+# Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
+
 # Seconds to wait before timing out when connecting to the SMTP server.
 #  the default is 120 seconds.  
 # Change it by uncommenting the following line
@@ -241,8 +244,6 @@ $mail{tls_allowed} = 0;
 # Debugging tutorial for sending email using ssl/tls
 # https://maulwuff.de/research/ssl-debugging.html
 
-
-
 ################################################################################
 # Problem library options
 ################################################################################
@@ -251,7 +252,7 @@ $mail{tls_allowed} = 0;
 
 # For configuration instructions, see:
 # http://webwork.maa.org/wiki/National_Problem_Library
-# The directory containing the natinal problem library files.
+# The directory containing the Open Problem Library files.
 # Set the root to "" if no problem
 # library is installed. Use version 2.0 for the NPL and use the version 2.5  for the OPL.
 # When changing from the NPL to the OPL it is important to change the version number
