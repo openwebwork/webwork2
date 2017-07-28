@@ -25,12 +25,13 @@ our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_dat
           version_creation_time problem_randorder version_last_attempt_time
           hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip
           restricted_login_proctor hide_hint/;
-our @problem_props = qw/problem_id flags value max_attempts status source_file prPeriod prCount/;
+our @problem_props = qw/set_id problem_id flags value max_attempts status source_file prPeriod prCount
+          att_to_open_children counts_parent_grade showMeAnother showMeAnotherCount/;
 our @boolean_set_props = qw/visible enable_reduced_scoring hide_hint time_limit_cap problem_randorder/;
 
 our @user_problem_props = qw/user_id set_id problem_id source_file value max_attempts showMeAnother
         showMeAnotherCount flags problem_seed status attempted last_answer num_correct num_incorrect
-        sub_status flags prPeriod prCount/;
+        sub_status flags prPeriod prCount att_to_open_children counts_parent_grade/;
 
 
 our @EXPORT    = ();
@@ -215,34 +216,105 @@ sub reorderProblems {
   #
   ###
 
-  for my $i (0..scalar(@$new_problems)-1){
-    warn dump $new_problems->[$i];
-    my $prob = $db->getGlobalProblem($set_id,$new_problems->[$i]->{_old_problem_id});
-    warn dump $prob;
-    $prob->{problem_id} = $i+1001; # assume there is no problem greater than 1000.
-    $db->addGlobalProblem($prob);
+  my @globalProblems = $db->getAllGlobalProblems($set_id);
 
-    for my $user_id (@$assigned_users){
-      my $userProblem = $db->getUserProblem($user_id,$set_id,$new_problems->[$i]->{_old_problem_id});
-      $userProblem->{problem_id} = $i+1001;
-      $db->addUserProblem($userProblem);
+  my @old_problem_ids = map {$_->{_old_problem_id}} @$new_problems;
+  my @new_problem_ids = map {$_->{problem_id}} @$new_problems;
+
+  # warn dump \@old_problem_ids;
+  # warn dump \@new_problem_ids;
+  # warn dump
+  # warn dump
+  my @problems_to_delete = array_minus(@old_problem_ids,@new_problem_ids);
+
+
+  # now go through and move problems around
+	# because of the way the geting works with the draggable
+	# js handler we cant have any conflicts or holes
+  for my $j (0..scalar(@$new_problems)-1){
+      #warn dump $new_problems->[$j];
+	    next if ( $new_problems->[$j]->{problem_id} == $new_problems->[$j]->{_old_problem_id});
+
+
+	    if ($db->existsGlobalProblem($set_id, $new_problems->[$j]->{problem_id})) {
+        my $globalProblem = first { $_->{problem_id} == $new_problems->[$j]->{_old_problem_id} } @globalProblems;
+
+        $globalProblem->{problem_id} = $new_problems->[$j]->{problem_id};
+        $db->putGlobalProblem($globalProblem);
+	    } else {
+    		addGlobalProblem($db,$new_problems->[$j]);
+	    }
+
+	    # now deal with the user sets
+
+	    for my $user_id (@$assigned_users){
+        my @userProblems = $db->getAllUserProblems($user_id,$set_id);
+        if ($db->existsUserProblem($user_id, $set_id, $new_problems->[$j]->{problem_id})) {
+          my $userProblem = first { $_->{problem_id} == $new_problems->[$j]->{_old_problem_id} } @userProblems;
+      		$userProblem->problem_id($new_problems->[$j]->{problem_id});
+  		    $db->putUserProblem($userProblem);
+  		  } else {
+          my $params = $new_problems->[$j];
+          $params->{user_id} = $user_id;
+          addUserProblem($db,$params);
+  		  }
+
+	    }
     }
-    $db->deleteGlobalProblem($set_id,$new_problems->[$i]->{_old_problem_id});
+
+
+  # now we need to delete "orphan" problems that were not overwritten by something else
+
+  for my $index (@problems_to_delete) {
+    $db->deleteGlobalProblem($set_id,$index);
   }
 
-  for my $prob_id ($db->listGlobalProblems($set_id)){
-    my $prob = $db->getGlobalProblem($set_id,$prob_id);
-    $prob->{problem_id} = $prob_id-1000;
-    $db->addGlobalProblem($prob);
-    for my $user_id (@$assigned_users){
-      my $userProblem = $db->getUserProblem($user_id,$set_id,$prob_id);
-      $userProblem->{problem_id} = $prob_id-1000;
-      $db->addUserProblem($userProblem);
-    }
-    $db->deleteGlobalProblem($set_id,$prob_id);
-  }
+
+
 }
 
+###
+#
+#  This adds a GlobalProblem with the given parameters in params
+#
+###
+
+sub updateProblem {
+  my ($db,$prob,$params) = @_;
+  for my $key (@set_props){
+    $prob->{$key} = $params->{$key} if defined($params->{$key});
+  }
+  $db->putGlobalProblem($prob);
+}
+
+###
+#
+#  This adds a GlobalProblem with the given parameters in params
+#
+###
+
+sub addGlobalProblem {
+  my ($db,$params) = @_;
+  my $prob = $db->newGlobalProblem();
+
+
+  for my $key (@problem_props){
+    $prob->{$key} = $params->{$key} if defined($params->{$key});
+  }
+
+
+  $db->addGlobalProblem($prob);
+}
+
+
+sub addUserProblem {
+  my ($db,$params) = @_;
+  my $prob = $db->newUserProblem();
+  for my $key (@user_problem_props){
+    $prob->{$key} = $params->{$key} if defined($params->{$key});
+  }
+  $db->addUserProblem($prob);
+}
 
 ####
 #

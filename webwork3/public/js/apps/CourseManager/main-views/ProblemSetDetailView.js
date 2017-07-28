@@ -200,7 +200,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
                 this.showHideGateway();
                 util.changeClass({state: this.tabState.get("show_calendar"), add_class: "hidden",els: this.$(".hideable")});
                 util.changeClass({state: this.tabState.get("show_calendar"), remove_class: "hidden", els: this.$(".calendar-row")});
-                //hide conditional release fields 
+                //hide conditional release fields
                 if(!this.settings.findWhere({var: "options{enableConditionalRelease}"}).get("value")){
                   $(".restricted-release,.restricted-status").closest("tr").addClass("hidden")
                 }
@@ -570,6 +570,9 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         setProblemSet: function(_set){
             this.problemSetView.setProblemSet(_set);
+            _set.get("problems").on("change:value change:max_attempts change:source_file",function(_prob){
+              _set.save();
+            })
             return this;
         },
         // set a parameter.
