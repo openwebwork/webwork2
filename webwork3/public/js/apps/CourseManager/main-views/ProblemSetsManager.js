@@ -148,7 +148,7 @@ var ProblemSetsManager = MainView.extend({
     },
     addProblemSet: function (){
         var self = this;
-        var problemSetView = new AddProblemSetView(_(this).pick("settings","users","problemSets"))
+        var problemSetView = new AddProblemSetView(_(this).pick("session","settings","users","problemSets"))
                     .setElement(this.$(".modal-container")).render()
                     .on("modal-closed",function(){
                         self.update();
@@ -270,60 +270,61 @@ var ProblemSetsManager = MainView.extend({
                     _set.changed : _(_set.previousAttributes()).pick(keys);
             },
             sync: function(_set){
+                if(_set._new_set){
+                  self.eventDispatcher.trigger("add-message",{type: "success",
+                      short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
+                      text: self.messageTemplate({type: "set_added",opts:{setname: _set.get("set_id")}})});
+                  delete _set._new_set;
+                }
                 _(_set.changingAttributes||{}).chain().keys().each(function(key){
                     switch(key){
-                        case "problems":
-                            self.eventDispatcher.trigger("add-message",{type: "success",
-                                short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}})});
-                            break;
-                        case "_add_problem":
-                            self.eventDispatcher.trigger("add-message",{type: "success",
-                                short: self.messageTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type:"problem_added_details",
-                                                            opts:{setname: _set.get("set_id")}})});
-                            _set.changingAttributes = _(_set.changingAttributes).omit("_add_problem");
-                            break;
-                        case "_reorder":
-                            self.eventDispatcher.trigger("add-message",{type: "success",
-                                short: self.messageTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type:"problems_reordered_details",
-                                                            opts:{setname: _set.get("set_id")}})});
-                            _set.changingAttributes = _(_set.changingAttributes).omit("_reorder");
-                            break;
-                        case "_delete_problem_id":
-                            self.eventDispatcher.trigger("add-message",{type: "success",
-                                short: self.messageTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type: "problem_deleted_details",
-                                                    opts: {setname: _set.get("set_id"),
-                                                           problem_id: _set.changingAttributes["_delete_problem_id"]}})});
-                            _set.changingAttributes = _(_set.changingAttributes).omit("_delete_problem_id");
-                            break;
-                        case "assigned_users":
-                            self.eventDispatcher.trigger("add-message",{type: "success",
-                                short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
-                                text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})});
-                            _set.changingAttributes = _(_set.changingAttributes).omit(key);
-                            break;
-                       case "problem_changed":
-                            self.eventDispatcher.trigger("add-message",{type: "success",
-                                short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
-                                text: self.messageTemplate({type: "problems_values_details",
-                                    opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
-                            _set.changingAttributes = _(_set.changingAttributes).omit("problem_changed");
-                            break;
-                        default:
-                            var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
-                                         : _set.changingAttributes[key];
-                            var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
-                            self.eventDispatcher.trigger("add-message",{type: "success",
-                                short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
-                                text: self.messageTemplate({type:"set_saved_details",
-                                                            opts:{setname:_set.get("set_id"),
-                                                                    key: key,
-                                                                    oldValue: _old,
-                                                                    newValue: _new}})});
-                               _set.changingAttributes = _(_set.changingAttributes).omit(key);
+                      case "_add_problem":
+                          self.eventDispatcher.trigger("add-message",{type: "success",
+                              short: self.messageTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
+                              text: self.messageTemplate({type:"problem_added_details",
+                                                          opts:{setname: _set.get("set_id")}})});
+                          _set.changingAttributes = _(_set.changingAttributes).omit("_add_problem");
+                          break;
+                      case "_reorder":
+                          self.eventDispatcher.trigger("add-message",{type: "success",
+                              short: self.messageTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
+                              text: self.messageTemplate({type:"problems_reordered_details",
+                                                          opts:{setname: _set.get("set_id")}})});
+                          _set.changingAttributes = _(_set.changingAttributes).omit("_reorder");
+                          break;
+                      case "_delete_problem_id":
+                          self.eventDispatcher.trigger("add-message",{type: "success",
+                              short: self.messageTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
+                              text: self.messageTemplate({type: "problem_deleted_details",
+                                                  opts: {setname: _set.get("set_id"),
+                                                         problem_id: _set.changingAttributes["_delete_problem_id"]}})});
+                          _set.changingAttributes = _(_set.changingAttributes).omit("_delete_problem_id");
+                          break;
+                      case "assigned_users":
+                          self.eventDispatcher.trigger("add-message",{type: "success",
+                              short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
+                              text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})});
+                          _set.changingAttributes = _(_set.changingAttributes).omit(key);
+                          break;
+                     case "problem_changed":
+                          self.eventDispatcher.trigger("add-message",{type: "success",
+                              short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
+                              text: self.messageTemplate({type: "problems_values_details",
+                                  opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
+                          _set.changingAttributes = _(_set.changingAttributes).omit("problem_changed");
+                          break;
+                     default:
+                        var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
+                                     : _set.changingAttributes[key];
+                        var _new = key.match(/date$/) ? moment.unix(_set.get(key)).format("MM/DD/YYYY [at] hh:mmA") : _set.get(key);
+                        self.eventDispatcher.trigger("add-message",{type: "success",
+                            short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
+                            text: self.messageTemplate({type:"set_saved_details",
+                                                        opts:{setname:_set.get("set_id"),
+                                                                key: key,
+                                                                oldValue: _old,
+                                                                newValue: _new}})});
+                           _set.changingAttributes = _(_set.changingAttributes).omit(key);
                     } // switch
                 });
 
@@ -450,17 +451,16 @@ var ChangeSetPropertiesView = ModalView.extend({
 */
 
 var AddProblemSetView = ModalView.extend({
+    modal_template : _.template($("#add-hw-set-template").html()),
     initialize: function (options) {
         _.bindAll(this,"render","addNewSet","validateName");
-        _(this).extend(_(options).pick("settings","problemSets","users"))
+        _(this).extend(_(options).pick("session","settings","problemSets","users"))
         this.model = new ProblemSet({},util.pluckDateSettings(options.settings));
+        this.model._new_set= true;
         this.model.problemSets = options.problemSets;
-
-        var tmpl = _.template($("#add-hw-set-template").html());
-
         _(options).extend({
             modal_header: "Add Problem Set to Course",
-            modal_body:  tmpl({users: [config.courseSettings.user]}),
+            modal_body:  this.modal_template({users: [this.session.user_id]}),
             modal_action_button_text: "Add New Set"
         })
 
@@ -507,7 +507,7 @@ var AddProblemSetView = ModalView.extend({
         var valid = this.validateName();
         if(valid){
             var users = this.$(".assign-to-all-users").prop("checked") ?
-                this.users.pluck("user_id") : [config.courseSettings.user];
+                this.users.pluck("user_id") : [this.session.user_id];
             this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",users);
             this.problemSets.add(this.model);
             this.close();

@@ -3,7 +3,7 @@ define(['backbone'],function(Backbone){
 		initialize: function(options){
 			var self = this;
             _(this).bindAll("setState");
-			_(this).extend(_(options).pick("settings","users","problemSets","eventDispatcher","info"));
+			_(this).extend(_(options).pick("session","settings","users","problemSets","eventDispatcher","info"));
 			this.state = new Backbone.Model({});
 			this.state.on("change",function(){
 				self.eventDispatcher.trigger("save-state");
@@ -15,12 +15,12 @@ define(['backbone'],function(Backbone){
 			this.$el.prepend($("#open-close-view-template").html());
 
 			//If any modals exist, remove the backdrops.
-			
-			$(".modal-backdrop").remove()
-			// I think the following just needs to work with the parent-child backbone events via the 
-			// additionalEvents, originalEvents below. 
 
-			// since this won't happen automatically in Backbone's delegate events, call the click event directly. 
+			$(".modal-backdrop").remove()
+			// I think the following just needs to work with the parent-child backbone events via the
+			// additionalEvents, originalEvents below.
+
+			// since this won't happen automatically in Backbone's delegate events, call the click event directly.
 			this.$(".open-view-button").off("click").on("click", function(){
 				self.eventDispatcher.trigger("open-sidebar");
 			});
@@ -29,8 +29,8 @@ define(['backbone'],function(Backbone){
 			});
 			return this;
 		},
-		// returns a defualt help template. This should be overriden to return a more helpful template. 
-		getHelpTemplate: function () { 
+		// returns a defualt help template. This should be overriden to return a more helpful template.
+		getHelpTemplate: function () {
 			return $("#help-sidebar-template").html();
 		},
 		// the follow can be overridden if the state is not stored in a Backbone Model called this.state.
@@ -44,12 +44,12 @@ define(['backbone'],function(Backbone){
             }
             return this;
         },
-        // this is how events are handled with children.  Any events defined in the 
-        // child of this view should be in "additionalEvents".  
+        // this is how events are handled with children.  Any events defined in the
+        // child of this view should be in "additionalEvents".
 		additionalEvents: {},
 		originalEvents: {},
 		events : function() {
-            var evts = _.isFunction(this.additionalEvents)? this.additionalEvents.call(this) : this.additionalEvents; 
+            var evts = _.isFunction(this.additionalEvents)? this.additionalEvents.call(this) : this.additionalEvents;
 	      	return _.extend({},this.originalEvents,evts);
 	    },
 	    getDefaultState: function () {

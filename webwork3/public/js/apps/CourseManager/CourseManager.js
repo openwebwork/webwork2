@@ -89,7 +89,8 @@ var CourseManager = WebPage.extend({
         this.navigationBar.setLoginName(this.session.user);
 
         this.setMainViewList(new MainViewList({settings: this.settings, users: this.users,
-                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher}));
+                problemSets: this.problemSets, eventDispatcher: this.eventDispatcher,
+                session: this.session}));
 
 
         // set up some of the main views with additional information.

@@ -16,12 +16,13 @@ our @set_props = qw/set_id set_header hardcopy_header open_date reduced_scoring_
           enable_reduced_scoring assignment_type description attempts_per_version time_interval
           versions_per_interval version_time_limit version_creation_time version_last_attempt_time
           problem_randorder hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip
-          relax_restrict_ip restricted_login_proctor hide_hint restricted_release restricted_status/;
+          relax_restrict_ip restricted_login_proctor hide_hint restricted_release restricted_status
+          problems_per_page restrict_prob_progression email_instructor/;
 
 our @user_set_props = qw/user_id set_id psvn set_header hardcopy_header open_date reduced_scoring_date due_date
           answer_date visible enable_reduced_scoring assignment_type description restricted_release
           restricted_status attempts_per_version time_interval versions_per_interval version_time_limit
-          version_creation_time problem_randorder version_last_attempt_time problems_per_page
+          version_creation_time problem_randorder version_last_attempt_time
           hide_score hide_score_by_problem hide_work time_limit_cap restrict_ip relax_restrict_ip
           restricted_login_proctor hide_hint/;
 our @problem_props = qw/problem_id flags value max_attempts status source_file prPeriod prCount/;

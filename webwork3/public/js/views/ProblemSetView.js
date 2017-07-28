@@ -103,9 +103,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                 // this determines which model the ith one is.
                 var id = $(this).data("id").split(":")[1];  // id is the ith problem_id in the reshuffled list.
                 var prob = _(oldProblems).find(function(p) {return p.problem_id == id; });
-                var attrs = _.extend({},prob,{problem_id: (i+1),
-                                              //_id: self.model.get("set_id") + ":" + (i+1),
-                                             _old_problem_id: id});
+                var attrs = _.extend({},prob,{problem_id: (i+1), _old_problem_id: id});
                 self.problemSet.problems.at(i).set(attrs,{silent: true});
             });
 

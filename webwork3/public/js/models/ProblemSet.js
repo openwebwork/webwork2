@@ -41,6 +41,8 @@ var ProblemSet = Backbone.Model.extend({
         problems: null,
         description: "",
         pg_password: "",
+        restrict_prob_progression: 0,
+        email_instructor: 0,
     },
     validation: {
        open_date: "checkDates",
