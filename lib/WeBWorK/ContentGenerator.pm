@@ -61,7 +61,8 @@ use HTML::Entities;
 use HTML::Scrubber;
 use WeBWorK::Utils qw(jitar_id_to_seq);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
-  
+use Encode; 
+
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
 
@@ -1211,6 +1212,7 @@ sub warnings {
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
+	$warnings = Encode::decode_utf8($warnings);
 	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 	
@@ -2158,7 +2160,6 @@ sub warningOutput($$) {
 	
 	foreach my $warning (@warnings) {
             # Since these warnings have html they look better scrubbed
-
 	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);
 	    $warning = CGI::li(CGI::code($warning));

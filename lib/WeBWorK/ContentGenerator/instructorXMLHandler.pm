@@ -25,7 +25,6 @@ use warnings;
 
 package WeBWorK::ContentGenerator::instructorXMLHandler;
 use base qw(WeBWorK::ContentGenerator);
-use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile);
 use PGUtil qw(not_null);
@@ -34,8 +33,6 @@ our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
 #use Crypt::SSLeay;
 #use XMLRPC::Lite;
-#use MIME::Base64 qw( encode_base64 decode_base64);
-
 
 use strict;
 use warnings;
@@ -438,7 +435,8 @@ sub content {
 		# it behaves differently when re-randomization in the library takes place
 		# then during the initial rendering. 
 		# print only the text field (not the ra_out field)
-		# and print the text directly without formatting.
+	        # and print the text directly without formatting.
+	    
 		if ($xmlrpc_client->return_object->{problem_out}->{text}) {
 			print $xmlrpc_client->return_object->{problem_out}->{text};
 		} else {
