@@ -1,8 +1,5 @@
 define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, config,util){
     var User = Backbone.Model.extend({
-        initialize: function (model){
-            this.changingAttributes = {};
-        },
         defaults:{
             first_name: "",
             last_name: "",
@@ -22,7 +19,8 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
         },
         validation: {
             user_id: "checkLogin",
-            email_address: {pattern: "email", required: false}
+            email_address: {pattern: "email", required: false},
+            student_id: {required: true}
         },
         idAttribute: "_id",
         initialize: function(attrs,opts){
@@ -43,7 +41,11 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
                         response.status = enr.value;
                     }
                 })
+            }
 
+            // the permission need to be stored as strings.
+            if(response && ! _.isUndefined(response.permission)){
+              response.permission = "" + response.permission;
             }
             return response;
         },

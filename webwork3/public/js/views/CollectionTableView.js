@@ -371,7 +371,6 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
 		},
 		getRowCount: function () {
 			return this.rowViews.length;
-			//return (this.filter_string.length>0)? this.filteredCollection.length : this.collection.length;
 		},
 		events: {
 			"click th": "headerClicked",
@@ -440,17 +439,22 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
 			}
 
 			var comp = _.isFunction(sort.search_value) ? sort.search_value : sort.key;
+      var ignore_case_comp; // stores the function for ignoring the case.
+      if(sort.datatype=="string" && sort.sort_ignore_case) {
+        ignore_case_comp = function(_model) {
+          return _model.get(comp).toLowerCase(); 
+        };
+      }
 
 			if(this.filter_string.length>0){
-				this.filteredCollection.comparator = comp;
+				this.filteredCollection.comparator = ignore_case_comp || comp;
 				this.filteredCollection.sort();
 				if(self.sortInfo.direction<0){
 					this.filteredCollection.models = this.filteredCollection.models.reverse();
 				}
 
 			} else {
-				//this.collection.comparator = comparator;
-				this.collection.comparator = comp;
+				this.collection.comparator = ignore_case_comp || comp;
 				this.collection.sort();
 				if(self.sortInfo.direction<0){
 					this.collection.models = this.collection.models.reverse();
