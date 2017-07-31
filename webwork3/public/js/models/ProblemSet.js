@@ -3,8 +3,9 @@
  * of problems.  More specifially, it also contains a Problem List of type "Problem Set".
  *
  * */
-define(['backbone', 'underscore','moment','./ProblemList','./Problem','config','apps/util'],
-    function(Backbone, _,moment,ProblemList,Problem,config,util){
+define(['backbone', 'underscore','moment','./ProblemList','./Problem',
+          'models/UserList','config','apps/util'],
+    function(Backbone, _,moment,ProblemList,Problem,UserList,config,util){
 
 
 var ProblemSet = Backbone.Model.extend({
@@ -37,7 +38,7 @@ var ProblemSet = Backbone.Model.extend({
         restrict_ip: "No",
         relax_restrict_ip: "No",
         restricted_login_proctor: "No",
-        assigned_users: [],
+        assigned_users: null,
         problems: null,
         description: "",
         pg_password: "",
@@ -75,6 +76,13 @@ var ProblemSet = Backbone.Model.extend({
       });
       attrs.problems=probs.models;
 
+      // change the assigned users from a UserList to an array of user_ids
+      if(this.get("assigned_users") instanceof UserList){
+        attrs.assigned_users = this.get("assigned_users").map(function(_user){
+            return _user.get("user_id");
+        });
+      }
+
       return  Backbone.Model.prototype.save.call(this, attrs, options);
     },
     parse: function (response) {
@@ -85,9 +93,14 @@ var ProblemSet = Backbone.Model.extend({
             this.problems.set(response.problems);
             this.attributes.problems = this.problems;
         }
+        // turn the assigned users into a UserList;
+        this.attributes.assigned_users = new UserList(_(response.assigned_users).map(function(_user){
+          return {user_id: _user,_id: _user};
+        }));
+
         response.assignment_type = response.assignment_type || "default";
         response = util.parseAsIntegers(response,this.integerFields);
-        return _.omit(response, 'problems');
+        return _.omit(response, 'problems',"assigned_users");
     },
     url: function () {
         return config.urlPrefix + "courses/" + config.courseSettings.course_id + "/sets/" + this.get("set_id") ;

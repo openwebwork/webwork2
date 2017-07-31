@@ -88,7 +88,6 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment,util) 
         setProblemSet: function(_set){
             var self = this;
             this.problemSet = _set;
-            console.log("in ProblemSetView.setProblemSet");
             this.problemSet.problems.on("add",self.addProblemView).on("add remove",function(_prob){
               util.changeClass({els: self.$(".undo-delete-button"),
                     state: self.problemSet.problems.size()>0,remove_class: "disabled"});
@@ -120,7 +119,7 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment,util) 
             var id = prob.get("problem_id");
             prob.set({problem_id: (i+1),_old_problem_id: id},{silent: true});
           });
-          this.problemSet._reorder = true; 
+          this.problemSet._reorder = true;
           this.problemSet.set({_reorder: true},{silent: true})
                           .save({_reorder: true},{success: this.updateAfterSave});
           this.problemSet.unset("_reorder",{silent: true});

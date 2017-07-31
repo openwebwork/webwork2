@@ -18,7 +18,7 @@
     <div class="pull-right btn-group">
 
       <div class="btn-group">
-        <button class="btn btn-default dropdown-toggle" onclick="return false" data-toggle="dropdown" 
+        <button class="btn btn-default dropdown-toggle" onclick="return false" data-toggle="dropdown"
             href="#">Action on Selected
           <span class="caret"></span>
         </button>
@@ -65,14 +65,14 @@
 
 <script type="text/template" id="add-hw-set-template">
   <div class="add-problem-set-dialog-content">
-  <p>A new homework set with the name below will be created.  In addition, it will be assigned to you 
+  <p>A new homework set with the name below will be created.  In addition, it will be assigned to you
   (user: <%= users %>).  To assign it to other users, use the <em>Set Properties</em> tab.</p>
   <table style="table-layout-fixed; width: 100%"><tr>
     <td>Homework Set Name:</td>
     <td><input type='text' size='20' class='problem-set-name'></td>
     </tr>
     <tr><td  colspan="2" class="problem-set-name-error" style="color: red"></td></tr>
-    <tr> 
+    <tr>
     <td>Assign to All Users</td><td><input type='checkbox' class="assign-to-all-users"></td>
     </tr>
     </table>
@@ -83,7 +83,7 @@
 
 <script type="text/template" id="problem-sets-manager-help-template">
 <h4>Manager Problem Sets:</h4>
-      <ul>  
+      <ul>
         <li>This view shows details of all of the problem sets.  You can change the dates, visibility and reduced credit for each set here by clicking or change the appropriate item. </li>
         <li>To add a new set, click the "Add Problem Set" button at the top of the page. </li>
         <li>To delete a set click the <button class="btn btn-default btn-sm"><i class="fa fa-trash-o"></i></button> button. </li>
@@ -95,14 +95,14 @@
 <script type="text/template" id="problem-sets-manager-messages-template">
 <%
 var messages = {
-    openDate_after_dueDate: function(opt){return "Error saving problem set " + opt.set_id 
+    openDate_after_dueDate: function(opt){return "Error saving problem set " + opt.set_id
       + ". The open date must come before the due date";},
-    dueDate_after_answerDate: function(opt){return "Error saving problem set " + opt.set_id 
+    dueDate_after_answerDate: function(opt){return "Error saving problem set " + opt.set_id
       + ". The due date must come before the answer date";},
-    date_set_error: function(opt) { return "The " + opt.date1 + " comes after " + opt.date2 + " for set " 
+    date_set_error: function(opt) { return "The " + opt.date1 + " comes after " + opt.date2 + " for set "
       + opt.set_id + "."},
     set_saved: function(opt){ return "Set " + opt.setname + " saved.";},
-    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set " 
+    set_saved_details: function(opt){return "The value of " + opt.key + " in problem set "
       + opt.setname + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
     set_added: function(opt){ return "Set " + opt.setname + " added.";},
     set_added_details: function(opt){ return "The set " + opt.setname + " was added to the course."},
@@ -110,19 +110,19 @@ var messages = {
     set_removed_details: function(opt){ return "The set " + opt.setname + " was removed to the course."},
     set_error: function(opt){ return "Error saving set " + opt.setname + " .";},
     set_error_details: function(opt){ return "The set " + opt.setname + " had an error."},
-    set_assigned_users_saved: function(opt){ 
+    set_assigned_users_saved: function(opt){
       return "The assigned users for set " + opt.setname + " was updated."},
     mark_all_correct: function (opt) {return "Would you like to mark this problem correct for all assigned students?  This can not be undone.";},
     problem_added: function(opt){ return "A problem was added to " + opt.setname},
     problem_added_details: function(opt){ return "A problem was added to " + opt.setname},
     problems_reordered: function(opt){ return "The problems were reordered in " + opt.setname},
     problems_reordered_details: function(opt){ return "The problems were reordered in " + opt.setname},
-    problems_values_details: function(opt) { return "The attribute " + opt.attribute + "  for problem " 
+    problems_values_details: function(opt) { return "The attribute " + opt.attribute + "  for problem "
         + opt.problem_id + " of set " + opt.set_id +
         " was changed from "+ opt.oldValue + " to " + opt.newValue + "."},
     problem_deleted: function(opt) { return "A problem was deleted from set " + opt.setname},
-    problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id 
-        + " was deleted from set " + opt.setname},  
+    problem_deleted_details: function(opt) { return "The problem with problem_id " + opt.problem_id
+        + " was deleted from set " + opt.setname},
     problems_shown: function(opt) {return opt.probFrom + " to " + opt.probTo + " of " + opt.total + " shown";},
     setting_saved: function(opt){ return "The setting " + opt.varname + " was saved.";},
     setting_saved_details: function(opt) { return "The setting " + opt.varname + " has changed from " +
@@ -131,7 +131,13 @@ var messages = {
     problem_updated: function(opt) { return "Problem # " + opt.problem_id + " for set " + opt.set_id +
                                         " and user " + opt.user_id + " has been updated.";},
     problem_deleted_warning: function () { return "This set has been opened.  It is not advised to delete a " +
-                                                "problem that has been open. Click OK to continue deleting this problem or Cancel.";}
+                                                "problem that has been open. Click OK to continue deleting this problem or Cancel.";},
+    users_added: function(opt) { return "Users have been added to the set " + opt.set_id; },
+    users_added_details: function(opt) { return "To the set " + opt.set_id
+          + " the following user(s) have been added: " + opt.added.join(", ");},
+    users_removed: function(opt) { return "Users have been removed from the set " + opt.set_id; },
+    users_removed_details: function(opt) { return "To the set " + opt.set_id
+          + " the following user(s) have been removed: " + opt.removed.join(", ");}
 }
 print(messages[type](typeof(opts)=="undefined"?{}:opts))
 %>

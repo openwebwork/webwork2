@@ -11,10 +11,11 @@
 define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/TabView',
         'views/ProblemSetView', 'models/ProblemList','views/CollectionTableView','models/ProblemSet',
         'models/UserSetList','sidebars/ProblemListOptionsSidebar','views/AssignmentCalendar',
-        'models/ProblemSetList','models/SetHeader','models/Problem',
+        'models/ProblemSetList','models/SetHeader','models/Problem','models/User',
         'apps/util','config','moment','bootstrap'],
-    function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,CollectionTableView,ProblemSet,
-        UserSetList,ProblemListOptionsSidebar, AssignmentCalendar,ProblemSetList,SetHeader,Problem,util,config,moment){
+    function(Backbone, _,TabbedMainView,MainView,TabView,ProblemSetView,ProblemList,
+          CollectionTableView,ProblemSet,UserSetList,ProblemListOptionsSidebar,
+          AssignmentCalendar,ProblemSetList,SetHeader,Problem,User,util,config,moment){
 	var ProblemSetDetailsView = TabbedMainView.extend({
         className: "set-detail-view",
         messageTemplate: _.template($("#problem-sets-manager-messages-template").html()),
@@ -41,7 +42,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             this.state.on("change:set_id", function() {
                 self.changeProblemSet(self.state.get("set_id"));
             });
-
+            this.setMessages();
         },
         bindings: {
             ".problem-set-name": {observe: "set_id", selectOptions: {
@@ -231,7 +232,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             }
         },
         assignAllUsers: function(){
-            this.model.set({assigned_users: this.users.pluck("user_id")});
+            this.model.set({assigned_users: this.users});
         },
         setProblemSet: function(_set) {
           var self = this;
@@ -595,6 +596,7 @@ var AssignUsersView = Backbone.View.extend({
         initialize: function (options) {
             this.users = options.users;
             TabView.prototype.initialize.apply(this,[options]);
+            _(this).bindAll("update");
         },
         render: function() {
             if(this.problemSet && this.problemSet.get("assignment_type") == "jitar"){
@@ -615,7 +617,7 @@ var AssignUsersView = Backbone.View.extend({
             if(typeof(this.problemSet)==="undefined"){
                 return;
             }
-            var assignedUsers = this.problemSet.get("assigned_users");
+            var assignedUsers = this.problemSet.get("assigned_users").pluck("user_id");
             var unassignedUsers = _(this.users.pluck("user_id")).difference(assignedUsers);
             var assignedSelect = this.$(".assigned-user-list").empty();
             var unassignedSelect = this.$(".unassigned-user-list").empty();
@@ -640,18 +642,25 @@ var AssignUsersView = Backbone.View.extend({
                             this.originalUnassignedUsers: []);
         },
         assignUsers: function(){
-            var selectedUnassignedUsers = this.$(".unassigned-user-list").val();
-            this.problemSet.set("assigned_users", _(this.problemSet.get("assigned_users")).union(selectedUnassignedUsers));
-            this.update();
+          var user_ids_to_assign = this.$(".unassigned-user-list").val();
+          var usersToAssign = _(user_ids_to_assign).map(function(_user){
+                    return new User({user_id: _user, _id: _user});
+                  });
+          this.problemSet.get("assigned_users").add(usersToAssign);
+          this.problemSet._assigned_users = {added: user_ids_to_assign};
+          this.problemSet.save({},{success: this.update});
+          //this.update();
         },
         unassignUsers: function(){
-            var selectedAssignedUsers = this.$(".assigned-user-list").val();
-            var conf = confirm("Do you want to unassign the users: " + selectedAssignedUsers.join(", ") + "?"
-                + " All data will be removed and this cannot be undone.");
-            if(conf){
-                this.problemSet.set("assigned_users",_(this.problemSet.get("assigned_users")).difference(selectedAssignedUsers));
-                this.update();
-            }
+          var user_ids_to_remove = this.$(".assigned-user-list").val();
+          var conf = confirm("Do you want to unassign the users: " + user_ids_to_remove.join(", ") + "?"
+              + " All data will be removed and this cannot be undone.");
+          if(conf){
+              this.problemSet.get("assigned_users").remove(user_ids_to_remove);
+              this.problemSet._assigned_users = {removed: user_ids_to_remove};
+              this.problemSet.save({},{success: this.update});
+              //this.update();
+          }
         },
         getDefaultState: function () {
             return {assigned_users: [], unassigned_users: []};

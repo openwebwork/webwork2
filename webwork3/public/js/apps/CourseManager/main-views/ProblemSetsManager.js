@@ -59,8 +59,9 @@ var ProblemSetsManager = MainView.extend({
 
         // builds the "change:set_id ... "
         var _set = new ProblemSet({});
-        var changeableFields = _(_set.defaults).chain().keys().without("problems").map(function(key){
-            return "change:" + key}).value().join(" ");
+        var changeableFields = _(_set.defaults).chain().keys()
+              .without("problems","assigned_users").map(function(key){
+                  return "change:" + key}).value().join(" ");
 
         this.problemSets.on(changeableFields,function(_set){
             _set.save(_set.changed);
@@ -298,14 +299,22 @@ var ProblemSetsManager = MainView.extend({
                       text: self.messageTemplate({type: "problem_added_details", opts: _opts})});
                   delete _set._add_problem;
                 }
+                if(_set._assigned_users){
+                  var _opts = _({set_id: _set.get("set_id")}).extend(_set._assigned_users);
+                  if(_set._assigned_users.removed){
+                    self.eventDispatcher.trigger("add-message",{type: "success",
+                        short: self.messageTemplate({type:"users_removed",opts:_opts}),
+                        text: self.messageTemplate({type: "users_removed_details", opts: _opts})});
+                  }
+                  if(_set._assigned_users.added){
+                    self.eventDispatcher.trigger("add-message",{type: "success",
+                        short: self.messageTemplate({type:"users_added",opts:_opts}),
+                        text: self.messageTemplate({type: "users_added_details", opts: _opts})});
+                  }
+                  delete _set._assigned_users;
+                }
                 _(_set.changingAttributes||{}).chain().keys().each(function(key){
                     switch(key){
-                      case "assigned_users":
-                          self.eventDispatcher.trigger("add-message",{type: "success",
-                              short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
-                              text: self.messageTemplate({type:"set_assigned_users_saved",opts:{setname:_set.get("set_id")}})});
-                          _set.changingAttributes = _(_set.changingAttributes).omit(key);
-                          break;
                      case "problem_changed":
                           self.eventDispatcher.trigger("add-message",{type: "success",
                               short: self.messageTemplate({type:"set_saved",opts:{setname: _set.get("set_id")}}),
@@ -315,6 +324,7 @@ var ProblemSetsManager = MainView.extend({
                           break;
 
                     case "problems":
+                    case "assigned_users":
                     // don't handle here
                         break;
 
