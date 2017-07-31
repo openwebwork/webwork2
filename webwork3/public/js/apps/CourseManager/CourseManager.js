@@ -100,7 +100,7 @@ var CourseManager = WebPage.extend({
 
         this.mainViewList.getView("problemSetsManager").set({assignmentDates: this.assignmentDateList});
         this.mainViewList.getView("userSettings").set({user_info: this.user_info});
-        this.mainViewList.getSidebar("allMessages").set({messages: this.messagePane.messages});
+        this.mainViewList.getSidebar("allMessages").set({messages: this.navigationBar.messagePane.messages});
         this.mainViewList.getSidebar("help").parent = this;
 
         this.postInitialize();

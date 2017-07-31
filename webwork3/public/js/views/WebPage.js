@@ -11,18 +11,17 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         this.currentView = void 0;
         this.currentSidebar = void 0;
 
-        this.messagePane = new MessageListView();
+
         this.loginPane = new LoginView({messageTemplate: this.messageTemplate});
 
         this.eventDispatcher = _.clone(Backbone.Events);
         this.eventDispatcher.on({
             "save-state": this.saveState,
-            "add-message": this.messagePane.addMessage,
             "open-sidebar": this.openSidebar,
             "close-sidebar": this.closeSidebar,
             "show-help": function() { self.changeSidebar("help")},
         });
-
+        this.navigationBar = new NavigationBar({eventDispatcher: this.eventDispatcher});
     },
     setMainViewList: function(_list){
         this.mainViewList = _list;
@@ -64,7 +63,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         $(window).on("resize",renderMainPane);
 
 
-        this.navigationBar.on({
+        this.eventDispatcher.on({
             "change-view": function(id) {
                 self.changeView(id,self.mainViewList.getView(id).getDefaultState());
                 self.changeSidebar(self.mainViewList.getView(id).info.default_sidebar,{is_open: true});
@@ -80,10 +79,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     },
     render: function () {
     	var self = this;
-
-        // I don't think we're using this anymore.
-        //this.$el.prepend(this.messagePane.render().el);
-        this.navigationBar = new NavigationBar({el: $(".navbar-fixed-top")}).render();
+        this.navigationBar.setElement($(".navbar-fixed-top")).render();
         this.loginPane.setElement($(".login-container"));
     },
     closeLogin: function () {
