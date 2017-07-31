@@ -1,5 +1,6 @@
-define(['backbone', 'views/ProblemListView', 'models/UserProblemList', 'models/ProblemList','moment'],
-function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
+define(['backbone', 'views/ProblemListView', 'models/UserProblemList', 'models/ProblemList',
+        'moment','apps/util'],
+function (Backbone, ProblemListView, UserProblemList, ProblemList, moment,util) {
     var ProblemSetView = ProblemListView.extend({
         viewName: "Problems",
         initialize: function (options) {
@@ -18,7 +19,8 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
         },
         events: function(){
           var evs =_(ProblemListView.prototype.events).extend({
-            "click .renumber-button": "renumberProblems"
+            "click .renumber-button": "renumberProblems",
+            "click .undo-delete-button" : "undoDelete"
           });
           return evs;
         },
@@ -71,11 +73,11 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                 }
             }
             _prob.destroy({success: function(model){
-              console.log("yeah!");
               var index = _(self.problemViews).findIndex(function(pv){
                 return pv.model.get("problem_id") == _prob.get("problem_id")});
               var viewToRemove = self.problemViews.splice(index,1);
               viewToRemove[0].remove();
+              self.deletedProblems.add(_prob);
             }});
         },
         undoDelete: function(){
@@ -86,8 +88,10 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
         setProblemSet: function(_set){
             var self = this;
             this.problemSet = _set;
-            this.problemSet.problems.on("add",function(_prob){
-                self.addProblemView(_prob);
+            console.log("in ProblemSetView.setProblemSet");
+            this.problemSet.problems.on("add",self.addProblemView).on("add remove",function(_prob){
+              util.changeClass({els: self.$(".undo-delete-button"),
+                    state: self.problemSet.problems.size()>0,remove_class: "disabled"});
             });
             ProblemListView.prototype.setProblemSet.call(this,_set);
             return this;
@@ -106,8 +110,9 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
                 var attrs = _.extend({},prob,{problem_id: (i+1), _old_problem_id: id});
                 self.problemSet.problems.at(i).set(attrs,{silent: true});
             });
-
-            this.problemSet.save({_reorder: true},{success: this.updateAfterSave});
+            this.problemSet._reorder = true;
+            this.problemSet.set({_reorder: true},{silent: true})
+                            .save({},{success: this.updateAfterSave});
             this.problemSet.unset("_reorder",{silent: true});
         },
         renumberProblems: function(){
@@ -115,7 +120,9 @@ function (Backbone, ProblemListView, UserProblemList, ProblemList, moment) {
             var id = prob.get("problem_id");
             prob.set({problem_id: (i+1),_old_problem_id: id},{silent: true});
           });
-          this.problemSet.save({_reorder: true},{success: this.updateAfterSave});
+          this.problemSet._reorder = true; 
+          this.problemSet.set({_reorder: true},{silent: true})
+                          .save({_reorder: true},{success: this.updateAfterSave});
           this.problemSet.unset("_reorder",{silent: true});
         },
         updateAfterSave: function(model,response){

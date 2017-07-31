@@ -140,7 +140,7 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             }
             return this;
         },
-        events: {"click .undo-delete-button": "undoDelete",
+        events: {
             "change .display-mode-options": "changeDisplayMode",
             "click #create-new-problem": "openSimpleEditor",
             "click .show-hide-tags-btn": "toggleTags",
@@ -195,17 +195,24 @@ define(['backbone', 'underscore', 'views/ProblemView','config','models/ProblemLi
             return this;
         },
         addProblemView: function (prob){
-            if(this.pageRange.length < this.page_size){
-                var probView = new ProblemView({model: prob, problem_set_view: this.problem_set_view,
-                                                type: this.type, viewAttrs: this.viewAttrs});
-                var numViews = this.problemViews.length;
-                probView.render().$el.data("id",this.model.get("set_id")+":"+(numViews+1));
-                probView.model.set("_id", this.model.get("set_id")+":"+(numViews+1));
-                this.$(".prob-list").append(probView.el);
-                this.problemViews.push(probView);
-                this.pageRange.push(_(this.pageRange).last() +1);
-            }
-            this.updateNumProblems();
+          // check to see if the problem has already been added
+          var pv = _(this.problemViews).filter(function(_pv){
+            return _pv.model.get("problem_id") == prob.get("problem_id")
+          });
+          if(pv.length>0){
+            return;
+          }
+          if((!_.isUndefined(this.viewAttrs.type) && this.viewAttrs.type === "set") || this.pageRange.length < this.page_size){
+              var probView = new ProblemView({model: prob, problem_set_view: this.problem_set_view,
+                                              type: this.type, viewAttrs: this.viewAttrs});
+              var numViews = this.problemViews.length;
+              probView.render().$el.data("id",this.model.get("set_id")+":"+(numViews+1));
+              probView.model.set("_id", this.model.get("set_id")+":"+(numViews+1));
+              this.$(".prob-list").append(probView.el);
+              this.problemViews.push(probView);
+              this.pageRange.push(_(this.pageRange).last() +1);
+          }
+          this.updateNumProblems();
         },
     });
 	return ProblemListView;

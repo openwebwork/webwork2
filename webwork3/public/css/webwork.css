@@ -63,6 +63,11 @@ body {  /* needed for the navigation bars top and bottom*/
 #short-message {margin-top: 5px; padding:5px; display: none; border-radius:5px; width: 300px; height: 40px;
 }
 
+.message-time {
+  text-align: right;
+  border-bottom: 1px solid;
+}
+
 /* Styling for the sidepane */
 
 .sidepane-menu h3 {margin-top: 0px;}
@@ -147,5 +152,5 @@ border-top: solid 1px rgb(220, 220, 220);}
 /* Make the Problem # large and bold */
 
 .problem-id {
-  font-size: 140%; font-weight: bold; margin-right: 2ex; 
+  font-size: 140%; font-weight: bold; margin-right: 2ex;
 }

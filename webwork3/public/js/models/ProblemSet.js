@@ -115,10 +115,9 @@ var ProblemSet = Backbone.Model.extend({
         //var prob = new Problem();
         var attrs = _.extend({},prob.attributes,
                                     { problem_id: lastProblem ? parseInt(lastProblem.get("problem_id"))+1:1});
-        this.get("problems").add(_(attrs).omit("_id"));;
-        this.set("_add_problem",true);
+        this.get("problems").add(_(attrs).omit("_id"));
+        this._add_problem = true;
         this.save();
-        this.unset("_add_problem",{silent: true});
     },
     setDate: function(attr,_date){ // sets the date of open_date, answer_date or due_date without changing the time
         var currentDate = moment.unix(this.get(attr))

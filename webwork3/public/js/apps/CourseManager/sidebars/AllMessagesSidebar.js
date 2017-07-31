@@ -28,9 +28,12 @@ define(['backbone','views/Sidebar', 'config'],function(Backbone,Sidebar,config){
 
 	var MessageView = Backbone.View.extend({
 		tagName: "li",
+    longMessageTemplate: _.template($("#long-message-template").html()),
 		render: function(){
-			this.$el.html(this.model.get("text")).addClass("text-" + this.model.get("type"));
-			return this; 
+      this.$el.addClass("text-" + this.model.get("type"));
+			this.$el.html(this.longMessageTemplate({text: this.model.get("text"),
+              time: this.model.get("date_created").format("h:mm a")}));
+			return this;
 		},
 
 

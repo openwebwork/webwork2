@@ -271,35 +271,35 @@ var ProblemSetsManager = MainView.extend({
             },
             sync: function(_set){
                 if(_set._new_set){
+                  var _opts = {setname: _set.get("set_id")};
                   self.eventDispatcher.trigger("add-message",{type: "success",
-                      short: self.messageTemplate({type:"set_added",opts:{setname: _set.get("set_id")}}),
-                      text: self.messageTemplate({type: "set_added",opts:{setname: _set.get("set_id")}})});
+                      short: self.messageTemplate({type:"set_added",opts: _opts}),
+                      text: self.messageTemplate({type: "set_added",opts: _opts})});
                   delete _set._new_set;
+                }
+                if(_set._delete_problem_id){
+                  var _opts = {setname: _set.get("set_id"), problem_id: _set._delete_problem_id};
+                  self.eventDispatcher.trigger("add-message",{type: "success",
+                      short: self.messageTemplate({type:"problem_deleted",opts:_opts}),
+                      text: self.messageTemplate({type: "problem_deleted_details", opts: _opts})});
+                  delete _set._delete_problem_id;
+                }
+                if(_set._reorder){
+                  var _opts = {setname: _set.get("set_id")};
+                  self.eventDispatcher.trigger("add-message",{type: "success",
+                      short: self.messageTemplate({type:"problems_reordered",opts:_opts}),
+                      text: self.messageTemplate({type: "problems_reordered_details", opts: _opts})});
+                  delete _set._reorder;
+                }
+                if(_set._add_problem){
+                  var _opts = {setname: _set.get("set_id")};
+                  self.eventDispatcher.trigger("add-message",{type: "success",
+                      short: self.messageTemplate({type:"problem_added",opts:_opts}),
+                      text: self.messageTemplate({type: "problem_added_details", opts: _opts})});
+                  delete _set._add_problem;
                 }
                 _(_set.changingAttributes||{}).chain().keys().each(function(key){
                     switch(key){
-                      case "_add_problem":
-                          self.eventDispatcher.trigger("add-message",{type: "success",
-                              short: self.messageTemplate({type:"problem_added",opts:{setname: _set.get("set_id")}}),
-                              text: self.messageTemplate({type:"problem_added_details",
-                                                          opts:{setname: _set.get("set_id")}})});
-                          _set.changingAttributes = _(_set.changingAttributes).omit("_add_problem");
-                          break;
-                      case "_reorder":
-                          self.eventDispatcher.trigger("add-message",{type: "success",
-                              short: self.messageTemplate({type:"problems_reordered",opts:{setname: _set.get("set_id")}}),
-                              text: self.messageTemplate({type:"problems_reordered_details",
-                                                          opts:{setname: _set.get("set_id")}})});
-                          _set.changingAttributes = _(_set.changingAttributes).omit("_reorder");
-                          break;
-                      case "_delete_problem_id":
-                          self.eventDispatcher.trigger("add-message",{type: "success",
-                              short: self.messageTemplate({type:"problem_deleted",opts:{setname: _set.get("set_id")}}),
-                              text: self.messageTemplate({type: "problem_deleted_details",
-                                                  opts: {setname: _set.get("set_id"),
-                                                         problem_id: _set.changingAttributes["_delete_problem_id"]}})});
-                          _set.changingAttributes = _(_set.changingAttributes).omit("_delete_problem_id");
-                          break;
                       case "assigned_users":
                           self.eventDispatcher.trigger("add-message",{type: "success",
                               short: self.messageTemplate({type:"set_saved",opts:{setname:_set.get("set_id")}}),
@@ -313,6 +313,11 @@ var ProblemSetsManager = MainView.extend({
                                   opts: _.extend({set_id:_set.get("set_id")},_set.changingAttributes[key])})});
                           _set.changingAttributes = _(_set.changingAttributes).omit("problem_changed");
                           break;
+
+                    case "problems":
+                    // don't handle here
+                        break;
+
                      default:
                         var _old = key.match(/date$/) ? moment.unix(_set.changingAttributes[key]).format("MM/DD/YYYY [at] hh:mmA")
                                      : _set.changingAttributes[key];
@@ -342,8 +347,12 @@ var ProblemSetsManager = MainView.extend({
 
         this.problemSets.each(function(_set) {
             _set.get("problems")
-                .on("change:value change:max_attempts change:source_file",function(prob){ self.changeProblemValueEvent(_set,prob);});
+                .on("change:value change:max_attempts change:source_file",function(prob){ self.changeProblemValueEvent(_set,prob);})
+                .on("add",function(_prob){
+                  self.problemSets._add_problem = true;
+                });
         });
+
     }, // setMessages
     changeProblemValueEvent: function (_set,prob){
         var attr = _(prob.changed).keys()[0];

@@ -75,7 +75,7 @@
   <%if(show_undo||false) {%>
   <div class="pull-right btn-group">
     <button class="btn btn-default renumber-button btn-sm">Renumber Problems</button>
-    <button class="btn btn-default undo-delete-button btn-sm" disabled="disabled">Undo Delete Problem</button></div>
+    <button class="btn btn-default undo-delete-button btn-sm disabled">Undo Delete Problem</button></div>
   <%}%>
 </div>
 <div class="prob-list-container">
@@ -175,6 +175,10 @@
 </div>
 </script>
 
+<script type="text/template" id="long-message-template">
+<div class="message-time"><%=time%></div>
+<div><%=text%>
+</script>
 
 <script type="text/template" id="general-messages">
 <%
