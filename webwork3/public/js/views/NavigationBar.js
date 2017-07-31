@@ -25,7 +25,7 @@ define(['backbone','underscore','views/MessageListView'],
                 if(typeof(id)==="undefined"){
                     id = $(evt.target).parent().data("id");
                 }
-                this.trigger("change-view",id)
+                this.eventDispatcher.trigger("change-view",id)
             },
 			"click .main-help-button": function(evt){
         this.eventDispatcher.trigger("show-help")},
