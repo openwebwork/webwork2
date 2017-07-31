@@ -1098,7 +1098,7 @@ sub footer(){
 	my $ww_version = $ce->{WW_VERSION}||"unknown -- set ww version VERSION";
 	my $pg_version = $ce->{PG_VERSION}||"unknown -- set pg version PG_VERSION link to ../pg/VERSION";
 	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
-	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
+	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2017";
 	print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
 	print CGI::div({-id=>"copyright"}, $r->maketext("WeBWorK &#169; [_1]| theme: [_2] | ww_version: [_3] | pg_version [_4]|", 
 	                $copyright_years,$theme, $ww_version, $pg_version), 

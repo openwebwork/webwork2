@@ -45,6 +45,9 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
 
+use utf8;
+#use open ':encoding(utf8)';
+binmode(STDOUT, ":utf8");
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
 ################################################################################
@@ -1222,7 +1225,8 @@ sub output_problem_body{
 	my %will = %{ $self->{will} };
 
 	print "\n";
-	print CGI::div($pg->{body_text});
+	print STDOUT "output problem body -- more bulgarian еаожщиеуяЧ"; #FIXME
+	print CGI::div(" again еаожщиеуяЧ".($pg->{body_text}));
 
 	return "";
 }
@@ -2183,7 +2187,7 @@ sub output_JS{
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		if (open(TAXONOMY, ">:encoding(utf8)", $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
 			my $taxo = '[]';
 			$taxo = join("", <TAXONOMY>);
 			close TAXONOMY;

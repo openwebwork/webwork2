@@ -1155,7 +1155,7 @@ sub saveFileChanges {
 
 		eval {
 		    local *OUTPUTFILE;
-		    open OUTPUTFILE,  ">$outputFilePath"
+		    open (OUTPUTFILE,  ">:encoding(UTF-8)",$outputFilePath)
 					or die "Failed to open $outputFilePath";
 			print OUTPUTFILE $problemContents;
 			close OUTPUTFILE;		
