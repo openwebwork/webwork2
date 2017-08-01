@@ -53,6 +53,7 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           self.state.set("current_page",0);
           self.userTable.set(self.state.pick("filter_string","current_page"));
           self.userTable.updateTable();
+          self.colorFilterBox();
         });
 
         $("div#addStudFromFile").dialog({autoOpen: false, modal: true, title: "Add Student from a File",
@@ -99,6 +100,13 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           }
         })
       },
+      colorFilterBox: function(){
+        if(this.state.get("filter_string").length==0){
+          this.$(".filter-text").removeAttr("style");
+        } else {
+          this.$(".filter-text").css("background-color","lightyellow");
+        }
+      },
       render: function(){
         this.$el.html($("#classlist-manager-template").html());
         this.userTable.render().$el.addClass("table table-bordered table-condensed");
@@ -121,7 +129,7 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           this.addStudentManView.setElement(this.$(".modal-container")).render();
         }
         this.update();
-
+        this.colorFilterBox();
         return this;
       },
       bindings: { ".filter-text": "filter_string"},
@@ -239,7 +247,7 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
                 searchable: false,
                 value: function(model){
                   return self.problemSets.filter(function(_set) {
-                    return _(_set.get("assigned_users")).indexOf(model.get("user_id"))>-1;}).length;
+                    return _set.get("assigned_users").get(model.get("user_id"))}).length;
                   },
                 display: function(val){
                   return val + "/" + self.problemSets.length;

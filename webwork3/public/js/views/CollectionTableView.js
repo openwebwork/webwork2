@@ -226,8 +226,7 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
 			var self = this;
 			this.rowViews = [];
 
-      this.pageRange = this.page_size > 0 ?  _.range(this.page_size) : _.range(this.original_collection.length) ;
-      this.currentPage = 0;
+      //this.pageRange = this.page_size > 0 ?  _.range(this.page_size) : _.range(this.original_collection.length) ;
 
 			_(this.pageRange).each(function(i,j){
 				if(self.filter_string.length>0){
@@ -442,7 +441,7 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
       var ignore_case_comp; // stores the function for ignoring the case.
       if(sort.datatype=="string" && sort.sort_ignore_case) {
         ignore_case_comp = function(_model) {
-          return _model.get(comp).toLowerCase(); 
+          return _model.get(comp).toLowerCase();
         };
       }
 

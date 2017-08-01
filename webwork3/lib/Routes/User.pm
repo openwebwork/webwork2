@@ -146,6 +146,8 @@ del '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
 	# check to see if the user exists
 
+  debug "in /courses/:course_id/users/:user_id";
+
   my $user_id = route_parameters->{user_id};
 	my $user = vars->{db}->getUser($user_id); # checked
 	send_error("Record for visible user $user_id not found.",404) unless $user;
@@ -155,7 +157,8 @@ del '/courses/:course_id/users/:user_id' => require_role professor => sub {
 		send_error("You can't delete yourself from the course.",404);
 	}
 
-	my $del = vars->{db}->deleteUser($user);
+	my $del = vars->{db}->deleteUser($user_id);
+
 
 	if($del) {
 		return convertObjectToHash($user);
