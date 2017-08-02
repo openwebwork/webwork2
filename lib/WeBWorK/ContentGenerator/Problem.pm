@@ -1225,8 +1225,7 @@ sub output_problem_body{
 	my %will = %{ $self->{will} };
 
 	print "\n";
-	print STDOUT "output problem body -- more bulgarian еаожщиеуяЧ"; #FIXME
-	print CGI::div(" again еаожщиеуяЧ".($pg->{body_text}));
+	print CGI::div(($pg->{body_text}));
 
 	return "";
 }

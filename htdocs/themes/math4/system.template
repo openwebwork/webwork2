@@ -210,7 +210,6 @@ var tabberOptions = {manualStartup:true};
 		<!--#output_tag_info-->
 	</div></div>
 	<!--#endif-->
-       This is a bulgarian character test in the system template йрпктупфхрэожг test!!!! FIXME
 	 <!--#if can="output_problem_body"--> 
 	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
 		  <div id="problem_body" class="Body span12">
