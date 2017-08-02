@@ -89,7 +89,7 @@ sub content {
 		print "You do not have permission to access scoring data";
 	} else {
 		my $file = $r->param('getFile');
-		open my $fh, "<", "$scoringDir/$file";
+		open my $fh, "<:utf8", "$scoringDir/$file";
 		print while (<$fh>);
 		close $fh;
 	}

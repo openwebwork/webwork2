@@ -303,7 +303,7 @@ sub body {
 			$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 			}
 	
-			print CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'});
+			print CGI::div(CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'}));
 			print CGI::start_div({class=>'cheevotextbox'});
 			print CGI::h3($achievement->name);
 			print CGI::div(CGI::i($r->maketext("[_1] Points:", $achievement->{points})).' '.$achievement->{description});
@@ -322,7 +322,7 @@ sub body {
 			
 			}	   
 		} else { # no achievements 
-		print CGI::p("No achievements have been assigned yet");
+		print CGI::p($r->maketext("No achievements have been assigned yet"));
 		}
 
 	return "";

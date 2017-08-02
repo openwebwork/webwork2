@@ -210,7 +210,6 @@ var tabberOptions = {manualStartup:true};
 		<!--#output_tag_info-->
 	</div></div>
 	<!--#endif-->
-
 	 <!--#if can="output_problem_body"--> 
 	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
 		  <div id="problem_body" class="Body span12">

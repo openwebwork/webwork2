@@ -23,12 +23,11 @@ use sigtrap;
 use Carp;
 use WWSafe;
 #use Apache;
-use WeBWorK::Utils qw(readDirectory sortByName);
+use WeBWorK::Utils qw(readDirectory sortByName encode_utf8_base64 decode_utf8_base64);
 use WeBWorK::CourseEnvironment;
 use WeBWorK::PG::Translator;
 use WeBWorK::PG::IO;
 use Benchmark;
-use MIME::Base64 qw( encode_base64 decode_base64);
 
 ##############################################
 #   Obtain basic information about directories, course name and host 
@@ -87,7 +86,7 @@ sub listLibraries {  # list the problem libraries that are available.
 	my @outListLib = sort keys %libraries;
 	my $out = {};
 	$out->{ra_out} = \@outListLib;
-	$out->{text} = encode_base64("success");
+	$out->{text} = encode_utf8_base64("success");
 	return $out;
 }
 
@@ -120,7 +119,7 @@ sub readFile {
 		open IN, "<$filePath";
 		local($/)=undef;
 		my $text = <IN>;
-		$out->{text}= encode_base64($text);
+		$out->{text}= encode_utf8_base64($text);
 		my $sb=stat($filePath);
 		$out->{size}=$sb->size;
 		$out->{path}=$filePath;
@@ -208,7 +207,7 @@ sub listLib {
 									find({wanted=>$wanted,follow_fast=>1 }, $dirPath);
 									@outListLib = sort @outListLib;
 									$out->{ra_out} = \@outListLib;
-									$out->{text} = encode_base64( join("\n", @outListLib) );
+									$out->{text} = encode_utf8_base64( join("\n", @outListLib) );
 									return($out);
 		};
 		$command eq 'dirOnly' &&   do {
@@ -225,7 +224,7 @@ sub listLib {
 										warn "result: ", join(" ", %libDirectoryList);
 										delete $libDirectoryList{""};
 										$out->{ra_out} = \%libDirectoryList;
-										$out->{text} = encode_base64("Loaded libraries");
+										$out->{text} = encode_utf8_base64("Loaded libraries");
 										return($out);
 									} else {
 									   warn "Can't open directory  $dirPath2";
@@ -238,7 +237,7 @@ sub listLib {
 # 			$command eq 'dirOnly' && do {
 # 				my @subdirs = File::Find::Rule->directory->in( ($dirPath) );
 # 				$out->{ra_out} = \@subdirs;
-# 				$out->{text} = encode_base64("Loaded libraries".$dirPath);
+# 				$out->{text} = encode_utf8_base64("Loaded libraries".$dirPath);
 # 				return($out);			
 # 			};
 		$command eq 'buildtree' &&   do {
@@ -248,7 +247,7 @@ sub listLib {
 									#@outListLib = sort keys %libDirectoryList;
 									$out->{ra_out} = $tree;
 									warn "output of build_tree is ", %$tree;
-									$out->{text} = encode_base64("Loaded libraries");
+									$out->{text} = encode_utf8_base64("Loaded libraries");
 									return($out);
 		};
 		
@@ -260,8 +259,8 @@ sub listLib {
 									 if ( -e $dirPath2 and $dirPath2 !~ m|//| ) {
 										 find($wanted, $dirPath2);
 										 @outListLib = sort @outListLib;
-										 #$out ->{text} = encode_base64( join("", @outListLib ) );
-										 $out ->{text} = encode_base64( "Problems loaded" );
+										 #$out ->{text} = encode_utf8_base64( join("", @outListLib ) );
+										 $out ->{text} = encode_utf8_base64( "Problems loaded" );
 										 $out->{ra_out} = \@outListLib;
 									 } else {
 									   warn "Can't open directory  $dirPath2 in listLib files";
@@ -296,14 +295,14 @@ sub searchLib {    #API for searching the NPL database
 	'getAllDBsubjects' eq $subcommand && do {
 		my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
 		$out->{ra_out} = \@subjects;
-		$out->{text} = encode_base64("Subjects loaded.");
+		$out->{text} = encode_utf8_base64("Subjects loaded.");
 		return($out);		
 	};
 	'getAllDBchapters' eq $subcommand && do {
 		$self->{library_subjects} = $rh->{library_subjects};
 		my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
 		$out->{ra_out} = \@chaps;
-        $out->{text} = encode_base64("Chapters loaded.");
+        $out->{text} = encode_utf8_base64("Chapters loaded.");
 
 		return($out);		
 	};
@@ -331,7 +330,7 @@ sub searchLib {    #API for searching the NPL database
 
 		my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
 		$out->{ra_out} = \@section_listings;
-        $out->{text} = encode_base64("Sections loaded.");
+        $out->{text} = encode_utf8_base64("Sections loaded.");
 
 		return($out);
 	};
@@ -345,7 +344,7 @@ sub searchLib {    #API for searching the NPL database
 		$self->{library_textchapter} = $rh->{library_textchapter};
 		$self->{library_textsection} = $rh->{library_textsection};
 		my $count = WeBWorK::Utils::ListingDB::countDBListings($self);
-					$out->{text} = encode_base64("Count done.");
+					$out->{text} = encode_utf8_base64("Count done.");
 		$out->{ra_out} = [$count];
 		return($out);
 	};
@@ -407,7 +406,7 @@ sub getProblemDirectories {
 	unshift @all_problem_directories, $main if($includetop);
 
 	$out->{ra_out} = \@all_problem_directories;
-    $out->{text} = encode_base64("Problem Directories loaded.");
+    $out->{text} = encode_utf8_base64("Problem Directories loaded.");
 
 	return($out);
 }
@@ -439,7 +438,7 @@ sub buildBrowseTree {
 		}
 	}
 	$out->{ra_out} = \@tree;
-	$out->{text} = encode_base64("Subjects, Chapters and Sections loaded.");
+	$out->{text} = encode_utf8_base64("Subjects, Chapters and Sections loaded.");
 	return($out);
 }
 
@@ -451,7 +450,7 @@ sub getProblemTags {
         # Get a pointer to a hash of DBchapter, ..., DBsection
 	my $tags = WeBWorK::Utils::ListingDB::getProblemTags($path);
 	$out->{ra_out} = $tags;
-	$out->{text} = encode_base64("Tags loaded.");
+	$out->{text} = encode_utf8_base64("Tags loaded.");
 	
 	return($out);
 }
@@ -468,7 +467,7 @@ sub setProblemTags {
 	# result is [success, message] with success = 0 or 1
 	my $result = WeBWorK::Utils::ListingDB::setProblemTags($path, $dbsubj, $dbchap, $dbsect, $level, $stat);
 	my $out = {};
-	$out->{text} = encode_base64($result->[1]);
+	$out->{text} = encode_utf8_base64($result->[1]);
 	return($out);
 }
 

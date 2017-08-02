@@ -31,15 +31,17 @@ use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
+use Encode qw(encode_utf8 decode_utf8);
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
 use Time::Zone;
-use MIME::Base64;
+use MIME::Base64 qw(encode_base64 decode_base64);
 use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
-#use Mail::Sender;
+use Mail::Sender;
+use Storable qw(nfreeze thaw);
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -68,8 +70,10 @@ our @EXPORT_OK = qw(
 	constituency_hash
 	cryptPassword
 	decodeAnswers
+        decode_utf8_base64
 	dequote
 	encodeAnswers
+        encode_utf8_base64
 	fisher_yates_shuffle
 	formatDateTime
 	has_aux_files
@@ -78,6 +82,7 @@ our @EXPORT_OK = qw(
 	listFilesRecursive
 	makeTempDirectory
 	max
+        nfreeze_base64
 	not_blank
 	parseDateTime
 	path_is_subdir
@@ -93,6 +98,7 @@ our @EXPORT_OK = qw(
 	textDateTime
 	timeToSec
 	trim_spaces
+        thaw_base64
 	undefstr
 	writeCourseLog
 	writeLog
@@ -180,7 +186,7 @@ sub force_eoln($) {
 sub readFile($) {
 	my $fileName = shift;
 	local $/ = undef; # slurp the whole thing into one string
-	open my $dh, "<", $fileName
+	open my $dh, "<utf8:", $fileName
 		or croak "failed to read file $fileName: $!";
 	my $result = <$dh>;
 	close $dh;
@@ -777,7 +783,7 @@ sub writeCourseLog($$@) {
 	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
 	surePathToFile($ce->{courseDirs}->{root}, $logFile);
 	local *LOG;
-	if (open LOG, ">>", $logFile) {
+	if (open LOG, ">>:utf8", $logFile) {
 		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
 		close LOG;
 	} else {
@@ -889,6 +895,10 @@ sub decodeAnswers($) {
 	}
 }
 
+sub decode_utf8_base64 {
+    return decode_utf8(decode_base64(shift));
+}
+
 sub encodeAnswers(\%\@) {
 	my %hash = %{shift()};
 	my @order = @{shift()};
@@ -900,8 +910,30 @@ sub encodeAnswers(\%\@) {
 
 }
 
+sub encode_utf8_base64 {
+    return encode_base64(encode_utf8(shift));
+}
 
+sub nfreeze_base64 {
+    return encode_base64(nfreeze(shift));
+}
 
+sub thaw_base64 {
+    my $string = shift;
+    my $result;
+
+    eval {
+	$result = thaw(decode_base64($string));
+    };
+
+    if ($@) {
+	warn("Deleting corrupted achievement data.");
+	return {};
+    } else {
+	return $result;
+    }
+
+}
 sub max(@) {
 	my $soFar;
 	foreach my $item (@_) {
