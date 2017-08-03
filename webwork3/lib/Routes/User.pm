@@ -78,7 +78,6 @@ post '/courses/:course_id/users' => require_role professor => sub {
   for my $user (@$users){
     push(@users_to_add,addOneUser(vars->{db},$user));
   }
-
   return \@users_to_add;
 };
 
@@ -239,6 +238,11 @@ sub get_one_user {
 sub addOneUser {
   my ($db,$props) = @_;
 
+  # ensure that some default properties are set
+
+  $props->{status} = 'C' unless defined $props->{status};
+  
+
   # update the standard user properties
 
   my $user = vars->{db}->newUser();
@@ -246,7 +250,7 @@ sub addOneUser {
   for my $key (@user_props) {
     $user->{$key} = $props->{$key} if (defined($props->{$key}));
   }
-  $user->{_id} = $user->{user_id}; # this will help Backbone on the client end to know if a user is new or existing.
+
 
   # password record
 
@@ -272,6 +276,10 @@ sub addOneUser {
   $db->addUser($user);
   $db->addPassword($password);
   $db->addPermissionLevel($permission);
+
+  # my $user_to_return = $db->getUser($user->{user_id});
+  # $user_to_return->{_id} = $user_to_return->{user_id};  # this will help Backbone on the client end to know if a user is new or existing.
+  # $user_to_return->{permission} = $permission->{permission};
 
   return get_one_user($db,$user->{user_id});
 

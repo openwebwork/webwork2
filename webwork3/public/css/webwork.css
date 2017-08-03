@@ -154,3 +154,10 @@ border-top: solid 1px rgb(220, 220, 220);}
 .problem-id {
   font-size: 140%; font-weight: bold; margin-right: 2ex;
 }
+
+
+/* Classlist Manager */
+
+.duplicate-users {
+  background-color: rgba(255,128,0,0.5)
+}

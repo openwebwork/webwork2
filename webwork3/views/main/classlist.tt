@@ -12,7 +12,7 @@
         </div><!-- /input-group -->
       </div><!-- /.col-md-4 -->
     <div class="col-md-3 num-users"></div>
-    
+
     <div class="col-md-5 btn-group btn-sm">
     <div class="btn-group">
       <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
@@ -51,7 +51,7 @@
       </ul>
     </div>
     </div>
-        
+
 </div>
 <div class="users-table-container table-responsive"></div>
 <div class="modal-container"></div>
@@ -87,20 +87,36 @@
           <li>Click the <em>Import Students</em> button.  This will add the selected students to this class.</li>
         </ol>
       </li>
-        
+
     </ol>
     </div>
   </div> <!-- div.help-pane -->
-  <table>
-    <tbody>
-      <tr><td class="header">Select File:</td><td><input class="btn" type="file" id="files" name="files"></td>
-      <td><label><input type="checkbox" id="useFirst">Use First Row for Headers</label></td></tr>
-      <tr><td><label><input type="checkbox" id="create-email">Create Email from Login Name</label></td>
-        <td><input type="text" id="email-suffix"></td>
-        <td><label><input type="checkbox" id="create-username">Create Login Name from Email</label></td></tr>
-    
-      </tbody>
-  </table>
+  <div class="form-inline row">
+    <div class="form-group col-sm-5">
+      <label for="files">File:</label>
+      <input class="btn form-control" type="file" id="files" name="files">
+    </div>
+    <div class="form-group col-sm-3">
+      <label class="checkbox-inline" for="useFirst">
+        <input class="file-input-to-disable" type="checkbox" id="useFirst" disabled="disabled">
+      Use First Row for Headers</label>
+    </div>
+    <div class="col-sm-2">
+      <select class="file-input-to-disable form-control input-sm" disabled="disabled">
+        <option value="none">Don't create Email/Login</option>
+        <option value="fromlogin">Create Email from Login Name</option>
+        <option value="fromemail">Create Login Name from Email</option>
+      </select>
+    </div>
+  </div>
+  <div class="row form-horizontal">
+    <div class="form-group">
+      <label for="createEmail" class="col-sm-4 control-label">Email Suffix (e.g. @gmail.com)</label>
+      <div class="col-sm-7">
+        <input type="email" class="form-control file-input-to-disable disabled" id="createEmail" placeholder="Email">
+      </div>
+      </div>
+  </div>
   <div id="studentTable"></div>
   </div>
 </script>
@@ -195,7 +211,7 @@
     <table id="userPassTable">
     <thead>
     <tr><th>First Name</th><th>Last Name </th><th> Login Name </th> <th> New Password </th> </tr>
-    <tbody> 
+    <tbody>
 </tbody>
 </table>
 </script>
@@ -204,7 +220,7 @@
     Send email to the following students:  (Note: this is not currently functional.) <br/>
     <span id="emailStudentList"></span><br/>
     <textarea id="emailText" cols="40" rows="10"></textarea>
-    
+
 </script>
 
 <script type="text/template" id="change-password-row-template">
@@ -216,16 +232,22 @@
 <%
 var messages = {
 	    user_saved: function(opt){ return "User " + opt.username + " saved.";},
-    user_saved_details: function(opt){return "The value of " + opt.key + " in the user " 
+    user_saved_details: function(opt){return "The value of " + opt.key + " in the user "
       + opt.username + " has changed from " + opt.oldValue + " to " + opt.newValue + ".";},
     user_added: function(opt){ return "User " + opt.username + " was added.";},
     user_added_details: function(opt){ return "A user with login name " + opt.username + " was added to the course.";},
     user_removed: function(opt){ return "User " + opt.username + " was removed.";},
     user_removed_details: function(opt){ return "The user with login name " + opt.username + " was removed from the course.";},
     csv_file_needed: function() { return "You must upload a csv or lst (classlist) file."},
-    man_user_added: function(opt){ return "The users with login names " + opt.users.join(", ") + " will be added "
-    "to the course when you close this dialog."},
-    user_already_exists: function (opt) { return "The user with login name " + opt.user_id + " is already enrolled in the course."}
+    man_user_added: function(opt){ return "The users with login names " + opt.users.join(", ") + " will be added " +
+      "to the course when you close this dialog."},
+    user_already_exists: function (opt) { return "The user(s) with login name(s): " + opt.users.join(", ")
+        + " is/are already enrolled in the course.  If you import these users, they will be skipped."},
+    unique_header: function() { return "Each column header must be unique."},
+    required_headers: function(opt) { return "There must be the following fields imported: " + opt.headers.join(", ")},
+    duplicate_headers: function(opt) { return "You have the following headers listed more than once: " + opt.headers.join(", ")},
+    input_error: function(opt) { return "The property " + opt.prop + " with value " + opt.val + " has the following error:"
+          + opt.msg;}
 };
 print(messages[type](typeof(opts)=="undefined"?{}:opts));
 %>
@@ -235,11 +257,11 @@ print(messages[type](typeof(opts)=="undefined"?{}:opts));
 <h4>Classlist Manager Help</h4>
    <p>The Classlist Manager allows you to edit student information as well as perform actions
 (delete, email, act as user) on individuals or a group of students.  Here is a list of features and helpful hints:
-   
+
    <ul>
-   <li>The students are displayed in pages (default of 10, but this can be changed under "Settings").  To sort by a column, 
+   <li>The students are displayed in pages (default of 10, but this can be changed under "Settings").  To sort by a column,
    click on the column header and the results will be displayed in ascending order.  Click again, and the results will be
-   shown in descending order.  
+   shown in descending order.
    <li> To edit a student&apos;s information (name, email, section, recitation,
    comment or permission),click on the appropriate property to change and retype or select the correct information. The changes will be saved and you will receive a message in the navigation bar.  Note: the columns <em>Login Name</em> and <em>Assigned Sets</em> cannot be changed. </li>
    <li> There are a number of actions (email, change password, delete user, act as user) that you can perform:  To perform an action on an individual student, click on the "select" popup list in the <em>Action</em> column. </li>
@@ -255,4 +277,3 @@ all rows in the table.  </li>
 
 </p>
 </script>
-

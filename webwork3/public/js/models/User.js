@@ -49,10 +49,11 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
             }
             return response;
         },
-        checkLogin: function(){
-            if(!this.get("user_id").match(config.regexp.loginname)){
-                return "The login name is not valid (you can only use the characters a-z,A-Z, 1-9, . and _)"; // add to messageTemplate
-            }
+        checkLogin: function(opt){
+          var user_id = this.get("user_id") || opt;
+          if(!user_id.match(config.regexp.loginname)){
+              return "The login name is not valid (you can only use the characters a-z,A-Z, 1-9, . and _)"; // add to messageTemplate
+          }
         },
         userExists: function(users){
             if(users.findWhere({user_id: this.get("user_id")})){

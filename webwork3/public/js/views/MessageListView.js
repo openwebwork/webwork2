@@ -51,7 +51,6 @@ define(['backbone','underscore','models/MessageList','models/Message'], function
       var self = this;
       var msgPane = $("#short-message");
       var msg = this.messageQueue.shift();
-      console.log(new Date());
       if(msg){
         msgPane.fadeOut(500,function(){
           msgPane
@@ -60,7 +59,6 @@ define(['backbone','underscore','models/MessageList','models/Message'], function
             .text(msg.short)
             .fadeIn(500,function(){
               this.queueTimer = setTimeout(self.changeQueue,2000);
-              console.log(msg.short);
           });
         });
       } else {

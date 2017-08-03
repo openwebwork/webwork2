@@ -52,7 +52,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
         regexp : {
             wwDate:  /^((\d?\d)\/(\d?\d)\/(\d{4}))\sat\s((0?[1-9]|1[0-2]):([0-5]\d)([aApP][mM]))\s([a-zA-Z]{3})/,
             number: /^\d*(\.\d*)?$/,
-            loginname: /^[\w\d\_]+$/,
+            loginname: /^[\w\d\_\.]+$/,
             time12: /^(0?[1-9]|1[0-2]):([0-5]\d)\s*([aApP])[mM]$/
         },
         displayFloat: function(val,digits){
@@ -256,7 +256,7 @@ define(['backbone','underscore','moment','backbone-validation','stickit','jquery
                         model.get("eventDispatcher").trigger("show-problem-set",$(evt.target).data("setname"));
                 })
             }).on("click",function(){
-              // store whether or not the popup is shown in the element's data attribute. 
+              // store whether or not the popup is shown in the element's data attribute.
               var show_hide = $el.data("show_hide") || "show";
               $el.popover({title: _title.charAt(0).toUpperCase() + _title.slice(1), html: true,
                         content: popoverHTML, container: "body", trigger: "manual"}).popover(show_hide);
