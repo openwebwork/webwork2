@@ -97,23 +97,23 @@
       <input class="btn form-control" type="file" id="files" name="files">
     </div>
     <div class="form-group col-sm-3">
-      <label class="checkbox-inline" for="useFirst">
-        <input class="file-input-to-disable" type="checkbox" id="useFirst" disabled="disabled">
+      <label class="checkbox-inline" for="use-first">
+        <input class="file-input-to-disable" type="checkbox" id="use-first" disabled="disabled">
       Use First Row for Headers</label>
     </div>
     <div class="col-sm-2">
-      <select class="file-input-to-disable form-control input-sm" disabled="disabled">
+      <select class="file-input-to-disable form-control input-sm" id="create-email" disabled="disabled">
         <option value="none">Don't create Email/Login</option>
-        <option value="fromlogin">Create Email from Login Name</option>
-        <option value="fromemail">Create Login Name from Email</option>
+        <option value="create_email">Create Email from Login Name</option>
+        <option value="create_login">Create Login Name from Email</option>
       </select>
     </div>
   </div>
-  <div class="row form-horizontal">
+  <div class="row form-horizontal hidden">
     <div class="form-group">
       <label for="createEmail" class="col-sm-4 control-label">Email Suffix (e.g. @gmail.com)</label>
       <div class="col-sm-7">
-        <input type="email" class="form-control file-input-to-disable disabled" id="createEmail" placeholder="Email">
+        <input type="email" class="form-control file-input-to-disable disabled" id="email-suffix" placeholder="Email">
       </div>
       </div>
   </div>

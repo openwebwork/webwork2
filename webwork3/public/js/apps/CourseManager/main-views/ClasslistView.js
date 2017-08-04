@@ -452,8 +452,12 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
       initialize: function(options){
         _.bindAll(this, 'render','importStudents','validate'); // every function that uses 'this' as the current object should be in here
         _(this).extend(_(options).pick("users","messageTemplate"));
+        _(this).bindAll("useFirstRow","hideShowEmail");
         this.collection = new UserList(); // this stores the users that will be added.
         Backbone.Validation.bind(this);
+        this.model = new Backbone.Model({use_first_row: false, create_email: "none", email_suffix: ""});
+        this.model.on("change:use_first_row",this.useFirstRow)
+                .on("change:create_email",this.hideShowEmail);
 
         _(options).extend({
           modal_size: "modal-lg",
@@ -465,21 +469,21 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
       },
       childEvents: {
         "click .import-students-button": "importStudents",
-        "change input#files": "readFile",
         "change input#useLST" : "setHeadersForLST",
-        "change input#useFirst" : "useFirstRow",
         "click  .reload-file": "loadFile",
+        "change #files": "loadFile",
         "change select.colHeader": "validate",
         "change #selectAllASW":  "selectAll",
         "change input.selRow":   "validate",
-        "click  .close-button": function () {
-          this.$(".help-pane").hide("slow");
-        },
+        "click  .close-button": function () { this.$(".help-pane").hide("slow");},
         "click  .cancel-button": "close",
-        "click  .import-help-button": function () {
-          this.$(".help-pane").removeClass("hidden").show("slow");
-        },
+        "click  .import-help-button": function () {this.$(".help-pane").removeClass("hidden").show("slow");},
         "click  .help-pane button": "closeHelpPane"
+      },
+      bindings: {
+        "#use-first": "use_first_row",
+        "#create-email": "create_email",
+        "#email-suffix": "email_suffix",
       },
       closeErrorPane: function () {
         this.$(".error-pane").hide("slow");
@@ -490,17 +494,9 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
       },
       render: function(){
         ModalView.prototype.render.apply(this);
+        this.stickit();
         return this;
       },
-      readFile: function(evt){
-        var self = this;
-        $("li#step1").css("display","none");  // Hide the first step of the Wizard
-        $("li#step2").css("display","block");  // And show the next step.
-        //$("button#importStudFromFileButton").css("display","block");
-        $(".file-input-to-disable").removeAttr("disabled");
-        this.loadFile();
-      },
-
       loadFile: function (event) {
         var self = this;
         this.file = $("#files").get(0).files[0];
@@ -521,18 +517,15 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           , headers = _(config.userProps).pluck("longName");
           headers.splice(0,0,"");
           // Parse the CSV file
-
-          //var str = util.CSVToHTMLTable(content,headers);
-          //var arr = util.CSVToHTMLTable(content,headers);
           var arr = $.csv.toArrays(content);
 
           var tmpl = _.template($("#imported-from-file-table").html());
           $("#studentTable").html(tmpl({array: arr, headers: headers}));
 
           // build the table and set it up to scroll nicely.
-          //$("#studentTable").html(str);
           $("div.inner").width(25+($("#studentTable table thead td").length)*125);
-          $("#inner-table td").width($("#studentTable table thead td:nth-child(2)").width()+4)
+          var w = $("#studentTable table thead td:nth-child(2)").width();
+          $("#inner-table td").width(w+4).truncate({width: w-10});
           $("#inner-table td:nth-child(1)").width($("#studentTable table thead td:nth-child(1)").width())
 
           // test if it is a classlist file and then set the headers appropriately
@@ -542,18 +535,17 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
 
           self.$(".import-students-button").removeClass("disabled");
           self.$(".reload-file").removeClass("disabled");
+          $(".file-input-to-disable").removeAttr("disabled");
           self.delegateEvents();
         }
       },
       selectAll: function () {
         var self = this;
         this.$(".selRow").prop("checked",this.$("#selectAllASW").is(":checked"));
-        if(this.$("#useFirst").prop("checked")){
+        if(this.model.get("use_first_row")){
           this.$("#cbrow0").prop("checked",false);
         }
-        _($.makeArray($(".colHeader").map(function(i,v) { return $(v).val();}))).chain().compact().each(function(col){
-          self.validate(col);
-        })
+        this.validate();
       },
       importStudents: function () {
         var self = this;
@@ -564,11 +556,16 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           this.close();
         }
       },
+      hideShowEmail: function() {
+        util.changeClass({els: this.$("#email-suffix").closest(".row"),
+                          state: this.model.get("create_email")=="create_email",
+                          remove_class: "hidden"});
+      },
       useFirstRow: function (){
         var self = this;
         // If the useFirstRow checkbox is selected, try to match the first row to the headers.
 
-        if ($("input#useFirst").is(":checked")) {
+        if (this.model.get("use_first_row")) {
           _(config.userProps).each(function(user,j){
             var re = new RegExp(user.regexp,"i");
 
@@ -616,7 +613,9 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
 
         // Determine the rows that have been selected.
 
-        var colObj = _.object($(".colHeader").map(function(i,v){ var x = _(config.userProps).findWhere({longName: $(v).val()}); return x.shortName;}),
+        var colObj = _.object($(".colHeader").map(function(i,v){
+            var x = _(config.userProps).findWhere({longName: $(v).val()});
+            return _.isUndefined(x)?"":x.shortName;}),
           $(".colHeader").map(function(i,v){ return $(v).attr("id").split(/col/)[1]}));
 
         var rows = _.map($("input.selRow:checked"),function(val,i) {return parseInt(val.id.split("row")[1]);});
@@ -626,8 +625,18 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
             if(!_.isUndefined(colObj[obj.shortName])){
               props[obj.shortName] = $.trim($("tr#row"+row+" td.column" + colObj[obj.shortName]).html());
             }
+            // create email or login/user_id if desired
+            if(self.model.get("create_email") == "create_email"){
+              props.email_address = props.user_id + self.model.get("email_suffix");
+            } else if (self.model.get("create_email") == "create_login"){
+              var email_parts = props.email.split("@");
+              if (email_parts.length==2){
+                props.user_id = email_parts[1];
+              }
+            }
           });
-          // check that it is validate.
+
+          // check that it is valid.
           var user = new User(props);
           delete user.id;  // make sure that the new users will be added with a POST instead of a PUT
           var errors = user.preValidate(props);
