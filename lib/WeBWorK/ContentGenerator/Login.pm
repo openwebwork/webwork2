@@ -32,6 +32,8 @@ use WeBWorK::Utils qw(readFile dequote jitar_id_to_seq);
 
 use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+use Encode;
+
 
 # This content generator is NOT logged in.
 # BUT one must return a 1 so that error messages can be displayed.
@@ -185,6 +187,8 @@ sub body {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	my $authen_error = MP2 ? $r->notes->get("authen_error") : $r->notes("authen_error");
+	$authen_error = Encode::decode_utf8($authen_error);
+
 	if ($authen_error) {
 		print CGI::div({class=>"ResultsWithError", tabindex=>'0'},
 			CGI::p($authen_error)
