@@ -47,8 +47,8 @@ Powered by <a href="#" onclick="return false" href="http://perldancer.org/">Danc
       <ul class="nav navbar-nav">
       <li>
         <div class="btn-group">
-        <button class="back-button btn btn-default navbar-btn" disabled><i class="fa fa-arrow-left"></i></button>
-        <button class="forward-button btn btn-default navbar-btn" disabled><i class="fa fa-arrow-right"></i></button>
+        <button class="back-button btn btn-default navbar-btn disabled"><i class="fa fa-arrow-left"></i></button>
+        <button class="forward-button btn btn-default navbar-btn disabled"><i class="fa fa-arrow-right"></i></button>
         </div>
       </li>
       <li>

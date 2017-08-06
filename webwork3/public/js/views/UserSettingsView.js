@@ -42,7 +42,10 @@ var UserSettingsView = MainView.extend({
 
   },
 	events: {
-		"click #reset-history-button": function () { localStorage.removeItem("ww3_cm_state");},
+		"click #reset-history-button": function () {
+      localStorage.removeItem("ww3_cm_state");
+      this.appState = {index: 0, states:[this.getState()]};
+    },
 		"click #change-password-button": function() { this.changePassword(!this.state.get("show_password"));},
 		"click #submit-password-button": "submitPassword",
         "keyup #email": function(evt){

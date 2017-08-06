@@ -1,5 +1,6 @@
-define(['backbone','views/MessageListView','views/ModalView','config','views/NavigationBar','views/Sidebar'],
-function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
+define(['backbone','views/MessageListView','views/ModalView','config',
+          'views/NavigationBar','views/Sidebar','apps/util'],
+function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar,util){
 	var WebPage = Backbone.View.extend({
     tagName: "div",
     className: "webwork-container",
@@ -7,7 +8,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     initialize: function (options) {
         var self = this;
     	_.bindAll(this,"closeLogin","openSidebar","closeSidebar","changeSidebar","changeView"
-                        ,"saveState");
+                        ,"saveState","goBack","goForward");
         this.currentView = void 0;
         this.currentSidebar = void 0;
 
@@ -30,19 +31,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         var self = this;
         // load the previous state of the app or set it to the first main_view
 
-        try {
-            this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
-            this.updateViewAndSidebar({save_state: false});
-        } catch(err) {
-            console.log(err);
-            this.appState = {index: void 0, states: []};
-            this.changeView(this.mainViewList.views[0].info.id,{});
-            var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
-            this.changeSidebar(_sidebarID,{is_open: true});
-            this.saveState();
-        }
-        this.enableBackForwardButtons();
-
         // build the menu
 
         var menuItemTemplate = _.template($("#main-menu-item-template").html());
@@ -64,17 +52,40 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
 
 
         this.eventDispatcher.on({
-            "change-view": function(id) {
-                self.changeView(id,self.mainViewList.getView(id).getDefaultState());
-                self.changeSidebar(self.mainViewList.getView(id).info.default_sidebar,{is_open: true});
-                self.currentView.sidebar = self.currentSidebar;
-                self.saveState();
+            "change-view": function(id,state) {
+              var sidebar;
+
+              self.changeView(id,state || self.mainViewList.getView(id).getDefaultState());
+              if(!_.isUndefined(state) && !_.isUndefined(state.sidebar)){
+                sidebar = state.sidebar;
+              } else {
+                sidebar = self.mainViewList.getView(id).info.default_sidebar;
+              }
+              self.changeSidebar(sidebar,{is_open: true});
+              self.currentView.sidebar = self.currentSidebar;
+              self.saveState();
             },
             "logout": this.logout,
             "show-help": function() { self.changeSidebar("help",{is_open: true})},
-            "forward-page": function() {self.goForward()},
-            "back-page": function() {self.goBack()},
+            "forward-page": self.goForward,
+            "back-page": self.goBack
         });
+
+        try { // load the states from the local storage and switch to the existing view.
+            this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
+            this.eventDispatcher.trigger("change-view",this.appState.states[this.appState.index].main_view,
+                                                        this.appState.states[this.appState.index]);
+        } catch(err) {
+            console.log(err);
+            this.appState = {index: void 0, states: []};
+            this.changeView(this.mainViewList.views[0].info.id,{});
+            var _sidebarID = this.mainViewList.getDefaultSidebar(this.currentView.info.id);
+            this.changeSidebar(_sidebarID,{is_open: true});
+            this.saveState();
+        }
+        this.enableBackForwardButtons();
+
+
 
     },
     render: function () {
@@ -88,7 +99,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
     requestLogin: function (opts){
         this.loginPane.loginOptions = opts;
         this.loginPane.render().open();
-
     },
     setLoginTemplate: function(opts){
         this.loginPane.set(opts);
@@ -199,7 +209,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         $("#main-view").html("<div class='main'></div>");
         this.navigationBar.setPaneName(this.currentView.info.name);
 
-        this.currentView.setElement(this.$(".main")).setState(state).render();
+        this.currentView.setElement(this.$(".main")).setState(state.main_view_state).render();
         //this.eventDispatcher.trigger("change-view",_id);
     },
     /***
@@ -250,33 +260,22 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar){
         this.enableBackForwardButtons();
     },
     enableBackForwardButtons: function () {  // change the navigation button states
-        if(this.appState.index>0){
-            this.navigationBar.$(".back-button").removeAttr("disabled")
-        } else {
-            this.navigationBar.$(".back-button").attr("disabled","disabled");
-        }
-        if(this.appState.index<this.appState.states.length-1){
-            this.navigationBar.$(".forward-button").removeAttr("disabled")
-        } else {
-            this.navigationBar.$(".forward-button").attr("disabled","disabled");
-        }
+      util.changeClass({state: this.appState.index>0,
+                          els: this.navigationBar.$(".back-button"),
+                          remove_class: "disabled"});
+      util.changeClass({state: this.appState.index<this.appState.states.length-1,
+                          els: this.navigationBar.$(".forward-button"),
+                          remove_class: "disabled"});
     },
     goBack: function () {
         this.appState.index--;
-        this.updateViewAndSidebar({save_state: true});
+        this.eventDispatcher.trigger("change-view",this.appState.states[this.appState.index].main_view,
+                                                    this.appState.states[this.appState.index]);
     },
     goForward: function () {
         this.appState.index++;
-        this.updateViewAndSidebar({save_state: true});
-    },
-    updateViewAndSidebar: function (options) {
-        var currentState = this.appState.states[this.appState.index];
-        this.changeView(currentState.main_view,currentState.main_view_state);
-        this.changeSidebar(currentState.sidebar,_.extend(currentState.sidebar_state,{is_open: currentState.sidebar_open}));
-        this.currentView.sidebar = this.currentSidebar;
-        if(options.save_state){
-            this.saveState();
-        }
+        this.eventDispatcher.trigger("change-view",this.appState.states[this.appState.index].main_view,
+                                                    this.appState.states[this.appState.index]);
     },
     logout: function(){
         var self = this;
