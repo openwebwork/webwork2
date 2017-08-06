@@ -659,7 +659,7 @@ sub save_as_handler {
 	my $viewURL = $self->systemLink($problemPage, 
 					params=>{
 					    sourceFilePath     => $relativeOutputFilePath,
-					    status_message     => uri_escape($self->{status_message})}
+					    status_message     => uri_escape_utf8($self->{status_message})}
 					
 	    );
 	

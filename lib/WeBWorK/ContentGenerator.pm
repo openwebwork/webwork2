@@ -1804,7 +1804,7 @@ sub url_args {
 	foreach my $param (@fields) {
 		my @values = $r->param($param);
 		foreach my $value (@values) {
-			push @pairs, uri_escape($param) . "=" . uri_escape($value);
+			push @pairs, uri_escape_utf8($param) . "=" . uri_escape($value);
 		}
 	}
 	
