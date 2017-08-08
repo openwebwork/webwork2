@@ -62,13 +62,17 @@ define(['backbone', 'underscore','config','apps/util'], function(Backbone, _, co
         },
         // this is separate from the user fields so information is not saved.
         savePassword: function(passwords,options){
+          var success = _.isUndefined(options)? function () {} : (options.success) || function () {};
+          var error = _.isUndefined(options)? function () {} : (options.error) || function () {};
+          console.log(passwords); 
             $.ajax({
                 url: config.urlPrefix + "courses/" + config.courseSettings.course_id + "/users/" + this.get("user_id")
                         + "/password",
-                type: "POST",
+                method: "POST",
+                type: "json",
                 data: passwords,
-                success: options.success,
-                error: options.error
+                success: success,
+                error: error
             })
         }
     });

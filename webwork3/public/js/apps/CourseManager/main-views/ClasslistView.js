@@ -88,7 +88,7 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           });
         });
 
-        this.passwordPane = new ChangePasswordView({users: this.users});
+        this.passwordPane = new ChangePasswordView({msgTemplate: this.msgTemplate});
         this.emailPane = new EmailStudentsView({users: this.users});
 
         // query the server every 15 seconds (parameter?) for login status only when the View is visible
@@ -148,7 +148,7 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           return;
         }
         _user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
-        if(!_(_.keys(_user.changed)).contains("logged_in")){
+        if(_.intersection(_.keys(_user.changed),_.keys(_user.defaults)).length >0 ){ // only save default attributes 
           _user.save();
         }
       },
@@ -166,16 +166,16 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
         _(_user.changingAttributes).chain().keys().each(function(key){
           switch(key){
             case "user_added":
-            self.eventDispatcher.trigger("add-message",{type: "success",
-            short: self.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
-            text: self.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
-            self.userTable.render();
-            break;
+              self.eventDispatcher.trigger("add-message",{type: "success",
+                short: self.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
+                text: self.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
+              self.userTable.render();
+              break;
             default:
-            self.eventDispatcher.trigger("add-message",{type: "success",
-            short: self.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
-            text: self.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
-            key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});
+              self.eventDispatcher.trigger("add-message",{type: "success",
+                short: self.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
+                text: self.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
+                key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});
           }
         });
       },
@@ -345,11 +345,11 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
         window.clearTimeout(this.loginStatusTimer);
       },
       changedPasswordSelected: function(){
-        alert("Changing Passwords isn't implemented yet.")
+        var user_ids = $.makeArray($("._select_row:checked").map(function(i,v) { return $(v).closest("tr").data("rowId");}))
+        this.passwordPane.users=new UserList(this.users.filter(function(_user){return _(user_ids).contains(_user.get("user_id"));}));
+        this.passwordPane.setElement(this.$(".modal-container")).render();
       },
       changePassword: function(rows){
-        this.passwordPane.users=this.getUsersByRows(rows);
-        this.passwordPane.render();
         this.passwordPane.$el.dialog("open");
       },
       emailSelected: function(){

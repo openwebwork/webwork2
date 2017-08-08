@@ -85,6 +85,7 @@ get '/login/denied' => sub {
 
 post '/courses/:course_id/login' => sub {
 
+  my $course_id = route_parameters->{course_id};
   debug "in post /login";
 
   ## delete any fields from other users
@@ -95,18 +96,7 @@ post '/courses/:course_id/login' => sub {
 
   my $username = query_parameters->{username} || body_parameters->{username};
   my $password = query_parameters->{password} || body_parameters->{password};
-
-  debug $username;
-  debug $password;
-  debug session;
-
-
   my ($success, $realm) = authenticate_user($username,$password);
-
-  debug "trying to authenticate";
-  debug $success;
-  debug session;
-
 
   if($success){
     my $key = vars->{db}->getKey($username)->{key};
@@ -115,20 +105,20 @@ post '/courses/:course_id/login' => sub {
 		session logged_in_user_realm => $realm;
 		session logged_in => true;
 
-    if (route_parameters->{course_id} eq 'admin'){
+    if ($course_id eq 'admin' && user_has_role("admin")){
       redirect '/admin';
     }
     if (user_has_role("professor")){
-        redirect '/courses/' . route_parameters->{course_id} . '/manager';
+        redirect "/courses/$course_id/manager";
     }
 
-    redirect '/courses/' . route_parameters->{course_id};
+    redirect "/courses/$course_id";
 
 
 
   } else {
     session login_failed => true;
-    redirect '/courses/'. route_parameters->{course_id} . '/login';
+    redirect "/courses/$course_id/login";;
   }
 
 };

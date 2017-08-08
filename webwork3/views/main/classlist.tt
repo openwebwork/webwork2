@@ -206,15 +206,27 @@
 <button class="btn btn-primary cancel-import-button" data-dismiss="modal">Close</button>
 </script>
 
-<script type="text/template" id="passwordDialogText">
+<!-- Password Change templates -->
+
+<script type="text/template" id="change-user-password-template">
     Change the password of the users below:
-    <table id="userPassTable">
+    <table id="user-password-table" class="table">
     <thead>
     <tr><th>First Name</th><th>Last Name </th><th> Login Name </th> <th> New Password </th> </tr>
     <tbody>
 </tbody>
 </table>
 </script>
+<script type="text/template" id="change-user-password-buttons">
+    <button class="btn btn-default cancel-import-button" data-dismiss="modal">Cancel Change</button>
+    <button class="btn btn-primary action-button">Save Changes</button>
+</script>
+
+<script type="text/template" id="change-password-row-template">
+  <td class="first-name"></td><td class="last-name"></td><td class="user-id"></td>
+  <td><input type='text' class='new-password form-control'></input></td>
+</script>
+
 
 <script type="text/template" id="emailStudentTemplate">
     Send email to the following students:  (Note: this is not currently functional.) <br/>
@@ -223,10 +235,7 @@
 
 </script>
 
-<script type="text/template" id="change-password-row-template">
-  <td class="first-name"></td><td class="last-name"></td><td class="user-id"></td>
-  <td><input type='text' size='10' class='new-password'></input></td>
-</script>
+
 
 <script type="text/template" id="classlist-messages">
 <%
@@ -247,7 +256,8 @@ var messages = {
     required_headers: function(opt) { return "There must be the following fields imported: " + opt.headers.join(", ")},
     duplicate_headers: function(opt) { return "You have the following headers listed more than once: " + opt.headers.join(", ")},
     input_error: function(opt) { return "The property " + opt.prop + " with value " + opt.val + " has the following error:"
-          + opt.msg;}
+          + opt.msg;},
+    short_pass: function () { return "The new password should not be less than 6 characters";}
 };
 print(messages[type](typeof(opts)=="undefined"?{}:opts));
 %>

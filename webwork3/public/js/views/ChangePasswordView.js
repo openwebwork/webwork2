@@ -1,64 +1,84 @@
-define(['backbone', 'underscore','config'], 
-  function(Backbone, _, config){
+define(['backbone', 'underscore','config','apps/util','views/ModalView'],
+function(Backbone, _, config,util,ModalView){
 
-  var ChangePasswordView = Backbone.View.extend({
-      tagName: "div",
-      className: "passwordDialog",
-      initialize: function(options) {
-         _.bindAll(this,"render");
-         this.users = options.users;
-      },
-       render: function ()
-       {
-          var self = this; 
-           var tmpl = _.template($("#passwordDialogText").html());
-          this.$el.html(tmpl(this.model));
-          _(this.users).each(function (user) {
-              var tableRow = new ChangePasswordRowView({model: user});
-              $("table tbody",self.$el).append(tableRow.el);
+  var ChangePasswordView = ModalView.extend({
+    initialize: function(opts) {
+      _(this).extend(_(opts).pick("users","msgTemplate"));
+      _(opts).extend({
+        modal_size: "modal-lg",
+        modal_header: "Change User Passwords", // I18N
+        modal_body: $("#change-user-password-template").html(),
+        modal_buttons: $("#change-user-password-buttons").html()
+      })
+      _(this).bindAll("checkResult");
+      ModalView.prototype.initialize.apply(this,[opts]);
+    },
+    render: function(){
+      var self = this;
+      ModalView.prototype.render.apply(this);
+      var table = this.$("#user-password-table tbody");
+      this.users.each(function (user) {
+            var tableRow = new ChangePasswordRowView({model: user,msgTemplate: self.msgTemplate});
+            table.append(tableRow.render().el);
           });
-          
-          this.$el.dialog({autoOpen: false, modal: true, title: config.msgTemplate({type: "password_changes"}),
-  			                    width: (0.5*window.innerWidth), height: (0.5*window.innerHeight),
-                            buttons: {"Save New Passwords": function () {self.savePasswords(); self.$el.dialog("close")},
-                                    "Cancel": function () {self.$el.dialog("close");}}
-                          });
-          return this;
-     },
-     savePasswords: function () {
-          _(this.users).each(function(user) {user.save();});
-     }
-     
-     
-  });
-
-  var ChangePasswordRowView = Backbone.View.extend({
-    tagName: "tr",
-    className: "CPuserRow",
-    initialize: function(){
-        _.bindAll(this, 'render','updatePassword'); // every function that uses 'this' as the current object should be in here
-        this.render();
-              return this;
+      return this;
     },
     events: {
-        'change input': 'updatePassword'
+      "click .action-button": "savePasswords"
     },
-    bindings: {".first-name": "first_name",
-                ".last-name": "last_name",
-                ".user-id": "user_id",
-                ".new-password": "new_password"},
-    render: function(){
-        this.$el.html($("#change-password-row-template").html());
-        this.stickit();
-        return this; // for chainable calls, like .render().el
+    savePasswords: function () {
+      var self = this;
+      this.password_result = {};
+      this.users.each(function(_user){
+        self.password_result[_user.get("user_id")] = false;
+        _user.savePassword(_user.pick("new_password"),{success:self.checkResult});
+      })
     },
-    updatePassword: function(evt){  
-        var changedAttr = evt.target.className.split("for-")[1];
-        this.model.set("new_password",evt.target.value, {silent: true}); // so a server hit is not made at this moment.  
-        console.log("new password: " + evt.target.value);
+    checkResult: function(data){ // if all of the passwords are correct then close.
+      this.password_result[data.user_id] = data.success == 1;
+      if(_(this.password_result).chain().values().all().value()){
+        this.close();
+      }
     }
-    });
 
-  return ChangePasswordView;
+
+});
+
+var ChangePasswordRowView = Backbone.View.extend({
+  tagName: "tr",
+  initialize: function(opts){
+    var self = this;
+    this.msgTemplate = opts.msgTemplate;
+    if(this.model){
+      this.model.on("change:new_password",function(){
+        var el = self.$(".new-password");
+        util.changeClass({els: el.parent(),
+                          state: self.model.get("new_password").length<6,
+                          add_class: "has-error" });
+
+        if(self.model.get("new_password").length<6){
+            el.popover({content: self.msgTemplate({type: "short_pass"}),
+                        trigger: "manual"}).popover("show");
+        } else {
+          el.popover("hide");
+        }
+      })
+    }
+
+  },
+  bindings: {
+    ".first-name": "first_name",
+    ".last-name": "last_name",
+    ".user-id": "user_id",
+    ".new-password": {observe: "new_password", events: ["blur"]}
+  },
+  render: function(){
+    this.$el.html($("#change-password-row-template").html());
+    this.stickit();
+    return this; // for chainable calls, like .render().el
+  },
+});
+
+return ChangePasswordView;
 
 })

@@ -192,24 +192,33 @@ get '/courses/:course_id/users/status/login' => sub { #require_role professor =>
 
 post '/courses/:course_id/users/:user_id/password' => require_any_role [qw/professor student/] => sub {
 
+  my $user_id = route_parameters->{user_id};
   ## if the user is a student, they can only change their own information.
 
-  if (user_has_role('student') && (session 'logged_in_user') ne route_parameters->{user_id}){
+  if (user_has_role('student') && (session 'logged_in_user') ne $user_id){
     send_error("A user with the role of student can only change his/her own password", 403);
   }
 
-	my $user = vars->{db}->get_one_user(route_parameters->{user_id});
-	send_error("The user with login " . route_parameters->{user_id} . " does not exist",404) unless $user;
+	my $user = vars->{db}->getUser($user_id);
+	send_error("The user with login $user_id  does not exist",404) unless $user;
 
+  debug body_parameters;
 
-	my $password = vars->{db}->getPassword(params->{user_id});
-	if(crypt(params->{old_password}, $password->password) eq $password->password){
-    	$password->{password} = cryptPassword(params->{new_password});
-    	vars->{db}->putPassword($password);
-        return {message => "password changed", success => 1}
-	} else {
-        return {message => "orig password not correct", success => 0}
-	}
+	my $password = vars->{db}->getPassword($user_id);
+  if (user_has_role('student')){
+  	if(crypt(params->{old_password}, $password->password) eq $password->password){
+      	$password->{password} = cryptPassword(body_parameters->{new_password});
+      	vars->{db}->putPassword($password);
+        return {message => "password changed", success => 1, user_id => $user_id};
+  	} else {
+        return {message => "orig password not correct", success => 0, user_id => $user_id};
+	  }
+  } else { ## professor has permission to change without old password.
+    debug body_parameters->{new_password};
+    $password->{password} = cryptPassword(body_parameters->{new_password});
+    vars->{db}->putPassword($password);
+    return {message => "password changed", success => 1, user_id => $user_id};
+  }
 };
 
 ###
@@ -241,7 +250,7 @@ sub addOneUser {
   # ensure that some default properties are set
 
   $props->{status} = 'C' unless defined $props->{status};
-  
+
 
   # update the standard user properties
 
