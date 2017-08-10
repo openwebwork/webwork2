@@ -574,9 +574,9 @@ sub browse_library_panel2 {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = $r->maketext("There are no matching WeBWorK problems");
+		$count_line = $r->maketext("There are no matching WeBWorK problems (panel2)");
 	} else {
-		$count_line = $r->maketext("There are [_1] matching WeBWorK problems", $count_line);
+		$count_line = $r->maketext("There are [_1] matching WeBWorK problems (panel2)", $count_line);
 	}
 
 	print CGI::Tr({},
@@ -686,9 +686,9 @@ sub browse_library_panel2adv {
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	if($count_line==0) {
-		$count_line = "There are no matching WeBWorK problems";
+		$count_line = "There are no matching WeBWorK problems (panel2adv)";
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problems";
+		$count_line = "There are $count_line matching WeBWorK problems (panel2adv)";
 	}
 
 	# Formatting level checkboxes by hand
