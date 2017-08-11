@@ -527,7 +527,8 @@ var AddProblemSetView = ModalView.extend({
         if(valid){
             var users = this.$(".assign-to-all-users").prop("checked") ?
                 this.users.pluck("user_id") : [this.session.user_id];
-            this.model.setDefaultDates(moment().add(10,"days")).set("assigned_users",users);
+            this.model.setDefaultDates(moment().add(10,"days"))
+                  .set("assigned_users",_(users).map(function(_u){return new User({user_id: _u, _id: _u})}));
             this.problemSets.add(this.model);
             this.close();
         }

@@ -15,7 +15,8 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
         _.bindAll(this, 'render','deleteUsers','changePassword','syncUserMessage','removeUser');  // include all functions that need the this object
         var self = this;
 
-        this.addStudentManView = new AddStudentManView({users: this.users,messageTemplate: this.msgTemplate});
+        this.addStudentManView = new AddStudentManView({users: this.users,
+              messageTemplate: this.msgTemplate, problemSets: this.problemSets});
         this.addStudentFileView = new AddStudentFileView({users: this.users,messageTemplate: this.msgTemplate});
         this.addStudentManView.on("modal-opened",function (){
           self.state.set("man_user_modal_open",true);
@@ -138,7 +139,7 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
         sort_class: "", sort_direction: "", selected_rows: []};
       },
       addUser: function (_user){
-        _user.changingAttributes = {user_added: ""};
+        _user._user_added = true;
         _user.save();
       },
       changeUser: function(_user){
@@ -148,36 +149,47 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           return;
         }
         _user.changingAttributes=_.pick(_user._previousAttributes,_.keys(_user.changed));
-        if(_.intersection(_.keys(_user.changed),_.keys(_user.defaults)).length >0 ){ // only save default attributes 
+        if(_.intersection(_.keys(_user.changed),_.keys(_user.defaults)).length >0 ){ // only save default attributes
           _user.save();
         }
       },
       removeUser: function(_user){
         var self = this;
-        _user.destroy({success: function(model){
-          self.eventDispatcher.trigger("add-message",{type: "success",
-          short: self.msgTemplate({type: "user_removed", opts:{username:_user.get("user_id")}}),
-          text: self.msgTemplate({type: "user_removed_details", opts: {username: _user.get("user_id")}})});
-          self.render();
-        }});
+        _user._user_removed = true;
+        // remove the user from all problem sets and save the set.
+        self.problemSets.chain().filter(function(_set){
+            return _set.get("assigned_users").findWhere({user_id: _user.get("user_id")}) })
+                  .each(function(_set){
+                    _set.get("assigned_users").remove(_user.get("user_id")).save();
+                  });
+        _user.destroy();
+        // _user.destroy({success: function(model){
+        //
+        //   self.render();
+        // }});
       },
       syncUserMessage: function(_user){
         var self = this;
+        if(_user._user_removed){
+          this.eventDispatcher.trigger("add-message",{type: "success",
+          short: this.msgTemplate({type: "user_removed", opts:{username:_user.get("user_id")}}),
+          text: this.msgTemplate({type: "user_removed_details", opts: {username: _user.get("user_id")}})});
+          //self.render();
+          delete _user._user_removed;
+        }
+        if(_user._user_added){
+          this.eventDispatcher.trigger("add-message",{type: "success",
+            short: this.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
+            text: this.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
+          this.userTable.refreshTable();
+          delete _user._user_added;
+        }
         _(_user.changingAttributes).chain().keys().each(function(key){
-          switch(key){
-            case "user_added":
-              self.eventDispatcher.trigger("add-message",{type: "success",
-                short: self.msgTemplate({type: "user_added", opts:{username:_user.get("user_id")}}),
-                text: self.msgTemplate({type: "user_added_details", opts: {username: _user.get("user_id")}})});
-              self.userTable.render();
-              break;
-            default:
               self.eventDispatcher.trigger("add-message",{type: "success",
                 short: self.msgTemplate({type:"user_saved",opts:{username:_user.get("user_id")}}),
                 text: self.msgTemplate({type:"user_saved_details",opts:{username:_user.get("user_id"),
                 key: key, oldValue: _user.changingAttributes[key], newValue: _user.get(key)}})});
-          }
-        });
+          });
       },
       events: {
         "click .add-students-file-option": "addStudentsByFile",
@@ -246,8 +258,9 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
             {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
                 searchable: false,
                 value: function(model){
-                  return self.problemSets.filter(function(_set) {
-                    return _set.get("assigned_users").get(model.get("user_id"))}).length;
+                  console.log(self.problemSets.map(function(_set){ return _set.get("assigned_users").pluck("user_id")}));
+                  return self.problemSets.filter(function(_set){
+                      return _set.get("assigned_users").findWhere({user_id: model.get("user_id")}) }).length
                   },
                 display: function(val){
                   return val + "/" + self.problemSets.length;
@@ -369,14 +382,14 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
       initialize: function(options){
         var self=this;
         _.bindAll(this, 'render','saveAndClose','saveAndAddStudent'); // every function that uses 'this' as the current object should be in here
-        _(this).extend(_(options).pick("users","messageTemplate"));
+        _(this).extend(_(options).pick("users","messageTemplate","problemSets"));
         this.collection = new UserList();
         this.model = new User();
         this.invBindings = _.extend(_.invert(_.omit(this.bindings,".permission")),
         {"user_id": ".user-id", "email_address": ".email"});
         _(options).extend({
           modal_size: "modal-lg",
-          modal_header: "Add Users to Course",
+          modal_header: "Add Users to Course", // I18N
           modal_body: $("#manual-import-template").html(),
           modal_buttons: $("#manual-import-buttons").html()
         })
@@ -384,8 +397,9 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
         ModalView.prototype.initialize.apply(this,[options]);
       },
       childEvents: {
-        "click .action-button": "saveAndClose",
+        "click .action-button": "saveAndAssign",
         "click .add-more-button": "saveAndAddStudent",
+        "click .save-button": "saveAndClose"
       },
       setValidation: function (){
         var self = this;
@@ -421,19 +435,31 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
         }
       },
 
-      saveAndClose: function(){
+      saveAndAssign: function(){
         var save = this.saveAndAddStudent();
-        if(save){
-          this.users.add(this.collection.models);
-          this.collection.reset();
-          this.close();
+        if(save) {  // show the problem sets to assign to the users
+          var user_ids = this.collection.pluck("user_id");
+          var template = _.template($("#assign-to-users-template").html());
+          this.$(".modal-body").html(template({user_ids: user_ids}));
+          this.assignedSets = new Backbone.Model({sets: []})
+
+          var bindings = {"#assign-to-users-select": {
+              observe: "sets",
+              selectOptions: {
+                collection : this.problemSets.pluck("set_id"),
+              }
+          }}
+          this.stickit(this.assignedSets,bindings);
+          this.$(".action-button").addClass("hidden");
+          this.$(".add-more-button").addClass("hidden");
+          this.$(".save-button").removeClass("hidden");
         }
       },
       saveAndAddStudent: function (){
         var userExists = this.model.userExists(this.users);
         if(userExists){
           this.$(".message-pane").addClass("alert-danger").html(this.messageTemplate({type:"user_already_exists",
-          opts: {user_id: this.model.get("user_id")}}));
+          opts: {users: [this.model.get("user_id")]}}));
           return false;
         }
         if(this.model.isValid(true)){
@@ -445,6 +471,22 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
           return true;
         }
         return false;
+      },
+      saveAndClose: function(){
+        var self = this;
+        var assignedSets = _(self.assignedSets.get("sets"));
+        this.users.add(this.collection.models);
+        this.collection.each(function(_user){_user.set("_id",_user.get("user_id"))});
+        var sets = this.problemSets.chain().filter(function(_set){
+          return assignedSets.contains(_set.get("set_id"))
+        }).each(function(_set){
+          _set.get("assigned_users").add(self.collection.models);
+          _set.save();
+        });
+
+        this.collection.reset();
+
+        this.close();
       }
     });
 

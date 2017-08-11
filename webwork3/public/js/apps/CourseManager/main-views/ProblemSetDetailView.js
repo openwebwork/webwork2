@@ -232,7 +232,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             }
         },
         assignAllUsers: function(){
-            this.model.set({assigned_users: this.users});
+            this.model.set({assigned_users: this.users});  // this may not work?
         },
         setProblemSet: function(_set) {
           var self = this;

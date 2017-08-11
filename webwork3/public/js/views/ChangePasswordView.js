@@ -36,6 +36,10 @@ function(Backbone, _, config,util,ModalView){
     },
     checkResult: function(data){ // if all of the passwords are correct then close.
       this.password_result[data.user_id] = data.success == 1;
+      var user = this.users.findWhere({user_id: data.user_id});
+      if(user){
+          user.unset("new_password",{silent: true});
+      }
       if(_(this.password_result).chain().values().all().value()){
         this.close();
       }

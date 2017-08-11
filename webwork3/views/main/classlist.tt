@@ -200,10 +200,21 @@
 <script type="text/template" id="manual-import-buttons">
     <button class="btn btn-default add-more-button">Save Student and Add Another</button>
     <button class="btn btn-default cancel-import-button" data-dismiss="modal">Cancel Import</button>
-    <button class="btn btn-primary action-button">Save Student and Close</button>
+    <button class="btn btn-primary action-button">Save Student and Assign Sets</button>
+    <button class="btn btn-primary save-button hidden">Save Students</button>
 </script>
 <script type="text/template" id="close-button-template">
 <button class="btn btn-primary cancel-import-button" data-dismiss="modal">Close</button>
+</script>
+
+<script type="text/template" id="assign-to-users-template">
+<h3>Assign problem sets</h3>
+<p>Assign problem sets to the following users: <%= user_ids.join(", ")%></p>
+<div class="row">
+<div class="col-sm-3">
+  <select class="form-control" multiple="true" size="10" id="assign-to-users-select"></select>
+</div>
+</div>
 </script>
 
 <!-- Password Change templates -->
