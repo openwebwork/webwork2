@@ -205,11 +205,12 @@ $permissionLevels{dont_log_past_answers} = undef;   #controls logging of the res
 ################################################################################
 
 # This sets if the PG editor should use a js based "codemirror" editor or
-# just a textarea
+# just a textarea		
 $options{PGCodeMirror} = 1;
 
 # This sets if mathview is available on the PG editor for use as a minimal latex equation editor
 $options{PGMathView} = 0;
+$options{PGWirisEditor} = 0;
 
 ################################################################################
 # PG subsystem options
