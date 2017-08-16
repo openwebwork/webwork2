@@ -7,6 +7,7 @@ $(document).ready(function() {
 			id += (j);
 			return id;
 		}
+		var m2w = new com.wiris.webwork.MathML2Webwork();
 		function quizzesReady() {
 			if (typeof 'com.wiris.quizzes' != 'undefined') {
 				// Get WIRIS quizzes builders.
@@ -37,6 +38,7 @@ $(document).ready(function() {
 								'</tab></toolbar>',
 						});
 						var elem = answerField.getElement();
+						answerField.setValue(m2w.webwork2MathML(input.value));
 						input.style.display = "none";
 						input.parentNode.insertBefore(elem, input);
 						addAnswerFieldEvents(answerField, input, instanceObject);
@@ -50,7 +52,6 @@ $(document).ready(function() {
 
 		}
 		quizzesReady();
-		var m2w = new com.wiris.webwork.MathML2Webwork();
 
 		function addAnswerFieldEvents(answerField, inputField, instanceObject) {
 			answerField.addQuizzesFieldListener({
@@ -65,7 +66,6 @@ $(document).ready(function() {
 					inputField.value = output;
 				},
 				contentChangeStarted: function(source) {
-
 				}
 			});
 		}
