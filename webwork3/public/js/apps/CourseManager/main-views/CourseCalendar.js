@@ -15,14 +15,14 @@ var CourseCalendar = MainView.extend({
             self.state.set(self.calendar.state.changed);
         });
     },
-    render: function(){
+    render: function(){      
+      this.calendar.setElement(this.$el).render();
+      // set up the calendar to scroll correctly
+      var navbarHeight = $(".navbar-fixed-top").outerHeight(true);
+      var footerHeight = $(".navbar-fixed-bottom").outerHeight(true);
+      var buttonRow = $(".calendar-button-row").outerHeight(true);
+      this.$(".calendar-container").height($(window).height()-navbarHeight - buttonRow-footerHeight);
       MainView.prototype.render.call(this);
-        this.calendar.setElement(this.$el).render();
-        // set up the calendar to scroll correctly
-        var navbarHeight = $(".navbar-fixed-top").outerHeight(true);
-        var footerHeight = $(".navbar-fixed-bottom").outerHeight(true);
-        var buttonRow = $(".calendar-button-row").outerHeight(true);
-        this.$(".calendar-container").height($(window).height()-navbarHeight - buttonRow-footerHeight);
     },
     getDefaultState: function () {
         var firstOfMonth = moment(this.date||moment()).date(1)
