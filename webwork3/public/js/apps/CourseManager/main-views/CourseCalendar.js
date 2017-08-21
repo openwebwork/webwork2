@@ -2,7 +2,7 @@ define(['backbone','views/MainView','views/AssignmentCalendar','moment'],
     function(Backbone,MainView,AssignmentCalendar,moment){
 var CourseCalendar = MainView.extend({
     initialize: function (options) {
-        var self = this; 
+        var self = this;
         _(this).bindAll("render");
 
         MainView.prototype.initialize.call(this,options);
@@ -16,11 +16,12 @@ var CourseCalendar = MainView.extend({
         });
     },
     render: function(){
-        this.calendar.setElement(this.$el).render(); 
+      MainView.prototype.render.call(this);
+        this.calendar.setElement(this.$el).render();
         // set up the calendar to scroll correctly
         var navbarHeight = $(".navbar-fixed-top").outerHeight(true);
         var footerHeight = $(".navbar-fixed-bottom").outerHeight(true);
-        var buttonRow = $(".calendar-button-row").outerHeight(true); 
+        var buttonRow = $(".calendar-button-row").outerHeight(true);
         this.$(".calendar-container").height($(window).height()-navbarHeight - buttonRow-footerHeight);
     },
     getDefaultState: function () {
@@ -41,14 +42,14 @@ var CourseCalendar = MainView.extend({
     },
     events: function(){
         if(this.calendar){
-            return this.calendar.events();   
+            return this.calendar.events();
         }
     }
 
-    
 
-    
+
+
 });
-    
+
 return CourseCalendar;
 });

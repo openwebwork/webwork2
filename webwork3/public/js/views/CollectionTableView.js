@@ -116,28 +116,20 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
 
 
       this.sortInfo = {};  //stores the sort column and sort direction
-    },
+    }, // this updates the row in a table.  the model passed is the actual model and the _model is its clone
+    // in the table collection.
     updateRow: function(_model){
-      var _model = this.collection.findWhere(_.object([[this.row_id_field,model.get(this.row_id_field)]]));
-      _model.set(model.attributes,{silent: true});
-      _(this.columnInfo).each(function(col){
-        if(_.isFunction(col.value)){
-          _model._values[col.key] = col.value(_model);
-        } else if(_model.get(col.key)){
-          _model._values[col.key] = _model.get(col.key);
-        }
-      });
-      var _row = _(this.rowViews).findWhere({rowID: _model.get(this.row_id_field)});
+      var model = this.collection.findWhere(_.object([[this.row_id_field,_model.get(this.row_id_field)]]));
+      this.updateModelValues(model,_model);
+      var _row = _(this.rowViews).findWhere({rowID: model.get(this.row_id_field)});
       if(_row){
         _row.refresh();
       }
     },
-    addRow: function(_model){
-      var model = new Backbone.Model();
-      model._values = {};
+    // this updates the values in model (in the table collection) from that in _model (actual model)
+    updateModelValues: function(model,_model){
+      model.set(_model.attributes,{silent: true});
       _(this.columnInfo).each(function(col){
-
-
         if(_.isFunction(col.value)){
           model.set(col.key+"_value",col.value(_model),{silent: true});
         } else if(_model.get(col.key)){
@@ -147,26 +139,32 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
           var v = _.isFunction(col.search_value) ? col.search_value(_model) : model.get(col.key+"_value");
           if(typeof(v)!=="undefined"){
             model.set("_searchable_fields",
-            typeof(model.get("_searchable_fields"))==="undefined"? v :
-            model.get("_searchable_fields")+";" + v);
+              typeof(model.get("_searchable_fields"))==="undefined"? v :
+              model.get("_searchable_fields")+";" + v,{silent: true});
           }
         }
+        var value;
         if(col.nested){
-          model.set(col.key,_model.get(col.key));
+          value = _model.get(col.key);
         } else {
           switch(col.datatype){
             case "integer":
-              model.set(col.key,parseInt(model.get(col.key+"_value")));
+              value = parseInt(model.get(col.key+"_value"));
               break;
             case "string":
-              model.set(col.key,(typeof(model.get(col.key+"_value"))==="undefined") ? "" : ""+model.get(col.key+"_value"));
+              value = typeof(model.get(col.key+"_value"))==="undefined" ? "" : ""+model.get(col.key+"_value");
               break;
             case "boolean":
             default:
-              model.set(col.key,typeof(model.get(col.key+"_value"))==="undefined" ? "" : model.get(col.key+"_value"));
+              value = typeof(model.get(col.key+"_value"))==="undefined" ? "" : model.get(col.key+"_value");
           }
         }
+        model.set(col.key,value,{silent: true});
       });
+    },
+    addRow: function(_model){
+      var model = new Backbone.Model();
+      this.updateModelValues(model,_model);
       this.collection.add(model);
 
       //this.trigger("table-changed");
@@ -557,7 +555,8 @@ define(['backbone', 'underscore', 'config', 'stickit'], function (Backbone, _, c
             }
           },
           refresh: function(){
-            this.stickit();
+            this.$el.html("");
+            this.render();
           },
           events: {
             "keypress td[contenteditable='true']": "returnHit"

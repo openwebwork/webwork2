@@ -258,7 +258,6 @@ function(Backbone,MainView,UserList,User,config,CollectionTableView,
             {name: "Assigned Sets", key: "assigned_sets", classname: "assigned-sets", datatype: "integer",
                 searchable: false,
                 value: function(model){
-                  console.log(self.problemSets.map(function(_set){ return _set.get("assigned_users").pluck("user_id")}));
                   return self.problemSets.filter(function(_set){
                       return _set.get("assigned_users").findWhere({user_id: model.get("user_id")}) }).length
                   },
