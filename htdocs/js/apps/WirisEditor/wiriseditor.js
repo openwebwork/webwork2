@@ -58,6 +58,20 @@ $(document).ready(function() {
 		quizzesReady();
 
 		function addAnswerFieldEvents(answerField, inputField, instanceObject) {
+
+			// In some scenarios page could be submited but the inputtext preserves the focus
+			// for example inserting raw data in the input test and click in submit buton directly.
+			// To send data to original input fields we need to listen WIRIS input fields input event
+			// when raw data (i.e without mathml) is edited directly on the input text and copy it
+			// to the original input field.
+			answerField.getInputField().getElement().oninput = function(e) {
+				if (!e.target.value.startsWith("<math")) {
+					inputField.value = e.target.value;
+				}
+			};
+
+			// Standard listeners onChange event copy the data from the WIRIS input field
+			// to the original input field converting  - if necessary - to WebWork spec.
 			answerField.addQuizzesFieldListener({
 				contentChanged: function(source) {
 					var input = source.getValue();
