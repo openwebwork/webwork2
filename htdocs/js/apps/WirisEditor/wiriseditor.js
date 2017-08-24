@@ -16,7 +16,9 @@ $(document).ready(function() {
 				questionObject = builder.newQuestion();
 				questionObject.setAnswerFieldType("popupEditor");
 				instanceObject = builder.newQuestionInstance(questionObject);
-				var i = 0;				
+				//Add the constraints for Wiris Hand
+				instanceObject.setProperty("handwritingConstraints","{'symbols': ['sin','cos','tan','log',true','false'], 'structure': ['General','BigOperator','Fraction','Radical','Matrix']}");
+				var i = 0;
 				while ((document.getElementById(answerId(i + 1))) != null) {
 					var input = document.getElementById(answerId(i + 1));
 					if (input.getAttribute("type") == "text") {
@@ -24,7 +26,7 @@ $(document).ready(function() {
 						//Configure underlying editor. We put the parameters in order to get a toolbar compatible with the options of WebWork.
 						//See http://www.wiris.com/en/editor/docs/reference/parameters for the full list of available parameters.
 						answerField.setEditorInitialParams({
-							'toolbar':	'<toolbar><tab rows="1" name="Basic">'+
+							'toolbar': '<toolbar><tab rows="1" name="Basic">'+
 								'<section extraRows="1"><item ref="+"/><item ref="&#xB7;"/><item ref="-"/><item ref="fraction"/><item ref="verticalBar"/><item ref="superscript"/><item ref="angleBrackets"/></section>'+
 								'<section extraRows="1"><item ref="numberPi"/><item ref="&#8734;"/><item ref="numberE" extra="true"/><item ref="imaginaryI" extra="true"/></section>'+
 								'<section><item ref="undo"/><item ref="redo"/></section></tab>'+
@@ -36,6 +38,8 @@ $(document).ready(function() {
 								'<section extraRows="1"><item ref="openInterval"/><item ref="closedInterval"/><item ref="openClosedInterval"/><item ref="closedOpenInterval"/><item ref="curlyBracket"/></section>'+
 								'<section><item ref="reals"/><item ref="&#8746;"/></section>'+
 								'</tab></toolbar>',
+							//Disable automatic syntax checking.
+							'checkSyntax': 'false',
 						});
 						var elem = answerField.getElement();
 						answerField.setValue(m2w.webwork2MathML(input.value));
