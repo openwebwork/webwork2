@@ -222,9 +222,10 @@ sub create_course {
      };
     my $course_name = $class->{course_name};
     my $addCoursePath = $overall_ce->{webworkDirs}->{bin} . "/addcourse";
-    dd $addCoursePath;
-    my $out = `perl $addCoursePath $course_name`;
-    dd $out;
+    my $opts = '';
+    $opts = "--templates-from " . $class->{previous_course} if ($class->{previous_course});
+    dd "Adding the course: $addCoursePath $opts";
+    my $out = `perl $addCoursePath $opts $course_name`;
     ## add the admin user to the course
     my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir,courseName=> $course_name });
     my $db = new WeBWorK::DB($ce->{dbLayout});
