@@ -4,6 +4,9 @@
 package Utils::Users;
 use base qw(Exporter);
 
+use WeBWorK::Utils qw/cryptPassword/;
+use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
+
 our @user_props = qw/first_name last_name student_id user_id email_address permission status
                     section recitation comment displayMode showOldAnswers useMathView/;
 our @boolean_user_props = qw/showOldAnswers useMathView/;
@@ -47,7 +50,7 @@ sub add_one_user {
 
   # update the standard user properties
 
-  my $user = vars->{db}->newUser();
+  my $user = $db->newUser();
 
   for my $key (@user_props) {
     $user->{$key} = $props->{$key} if (defined($props->{$key}));

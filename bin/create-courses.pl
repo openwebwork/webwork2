@@ -76,6 +76,16 @@ use Utils::Users qw/add_one_user/;
 
 my $webwork_dir = $ENV{WEBWORK_ROOT};
 
+my $overall_ce = WeBWorK::CourseEnvironment->new({webwork_dir => $webwork_dir});
+my $admince = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir,courseName=> "admin"});
+my $admindb = WeBWorK::DB->new($admince->{dbLayout});
+my $adminPerm = $admindb->newPermissionLevel();
+$adminPerm->user_id("admin");
+$adminPerm->permission($admince->{userRoles}->{admin});
+my $adminUser            = $admindb->getUser("admin");
+my $adminPassword        = $admindb->getPassword("admin");
+
+
 
 option 'input_file' => (is => 'ro', format=>'s', short => 'i',
         repeatable => "", required => "", doc => "Input File (classlist from banner)");
@@ -158,14 +168,22 @@ sub check {
 
     my $classes = LoadFile($classes_file);
 
-    dd $classes;
-
     ## check that each of the class list files in the $classes_files exists and is readable;
     for my $class (@{$classes}){
-      my @classlists = $class->{classlists} || [];
-      for my $cl (@classlists){
-        warn "The file $cl does not exist" unless (-e $cl);
+
+      my $classlists = $class->{classlists} || [];
+      # dd $classlists;
+      for my $cl (@$classlists){
+        #dd $cl;
+        warn "The file $cl does not exist" unless (-e $input_dir ."/".$cl);
         my $cl_file = File::Spec->catfile($input_dir,$cl);
+      }
+
+      ## check that if a previous course is indicated that the course exists.
+
+      if($class->{previous_course}){
+        my $prev_course_path = $overall_ce->{webworkDirs}->{courses} . "/" . $class->{previous_course};
+        warn "The course $prev_course_path does not exist." unless ( -d $prev_course_path);
       }
     }
   }
@@ -199,25 +217,21 @@ sub create_course {
        user_id => $class->{prof},
        last_name => $class->{prof_last_name},
        first_name => $class->{prof_first_name},
-       student_id => $class->{prof_id},
+       password => $class->{prof_password},
        permission => 10
-     }
-
-
+     };
+    my $course_name = $class->{course_name};
+    my $addCoursePath = $overall_ce->{webworkDirs}->{bin} . "/addcourse";
+    dd $addCoursePath;
+    my $out = `perl $addCoursePath $course_name`;
+    dd $out;
     ## add the admin user to the course
-    my $admince = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir,courseName=> "admin"});
-    my $admindb = WeBWorK::DB->new($admince->{dbLayout});
     my $ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir,courseName=> $course_name });
     my $db = new WeBWorK::DB($ce->{dbLayout});
 
     add_one_user($db,$params);
-    my $PermissionLevel = $db->newPermissionLevel();
-    $PermissionLevel->user_id("admin");
-    $PermissionLevel->permission($ce->{userRoles}->{admin});
-    my $User            = $admindb->getUser("admin");
-    my $Password        = $admindb->getPassword("admin");
-    $db->addUser($User);
-    $db->addPassword($Password);
+    $db->addUser($adminUser);
+    $db->addPassword($adminPassword);
    }
 }
 
@@ -226,8 +240,6 @@ sub run {
     my ($self) = @_;
 
     $self->check;
-
-    die "oops";
 
     if($self->create_courses){
       $self->create_course;
