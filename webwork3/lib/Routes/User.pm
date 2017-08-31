@@ -5,21 +5,14 @@
 ##
 
 package Routes::User;
-use base qw(Exporter);
 
 use Dancer2 appname => "Routes::Login";
 use Dancer2::Plugin::Auth::Extensible;
 use Utils::Convert qw/convertObjectToHash convertArrayOfObjectsToHash convertBooleans/;
 use WeBWorK::Utils qw/cryptPassword/;
+use Utils::Users qw/add_one_user get_one_user @user_props @boolean_user_props/;
 
 use Data::Dump qw/dump/;
-
-our @user_props = qw/first_name last_name student_id user_id email_address permission status
-                    section recitation comment displayMode showOldAnswers useMathView/;
-our @boolean_user_props = qw/showOldAnswers useMathView/;
-
-our @EXPORT    = ();
-our @EXPORT_OK = qw(@boolean_user_props);
 
 ###
 #  return all users for course :course
@@ -59,7 +52,7 @@ post '/courses/:course_id/users/:user_id' => require_role professor => sub {
 
   my $properties = body_parameters->as_hashref;
 
-  return addOneUser(vars->{db},$properties);
+  return add_one_user(vars->{db},$properties);
 
 };
 
@@ -76,7 +69,7 @@ post '/courses/:course_id/users' => require_role professor => sub {
 
   my @users_to_add;
   for my $user (@$users){
-    push(@users_to_add,addOneUser(vars->{db},$user));
+    push(@users_to_add,add_one_user(vars->{db},$user));
   }
   return \@users_to_add;
 };
@@ -221,78 +214,7 @@ post '/courses/:course_id/users/:user_id/password' => require_any_role [qw/profe
   }
 };
 
-###
-#
-#  get a single user
-#
-###
 
-sub get_one_user {
-  my ($db,$user_id) = @_;
-  my $user = $db->getUser($user_id);
-  my $permission = $db->getPermissionLevel($user_id);
-  my $user_props = convertObjectToHash($user,\@boolean_user_props);
-  $user_props->{permission} = $permission->{permission};
-  $user_props->{_id} = $user->{user_id};
-
-  return $user_props;
-}
-
-###
-#
-#  add one user to the course.
-#
-###
-
-sub addOneUser {
-  my ($db,$props) = @_;
-
-  # ensure that some default properties are set
-
-  $props->{status} = 'C' unless defined $props->{status};
-
-
-  # update the standard user properties
-
-  my $user = vars->{db}->newUser();
-
-  for my $key (@user_props) {
-    $user->{$key} = $props->{$key} if (defined($props->{$key}));
-  }
-
-
-  # password record
-
-  my $password = $db->newPassword();
-  $password->{user_id} = $user->{user_id};
-  my $cryptedpassword = "";
-  if (defined($props->{password})) {
-    $cryptedpassword = cryptPassword($props->{password});
-  }
-  elsif (defined($props->{student_id})) {
-    $cryptedpassword = cryptPassword($props->{student_id});
-  }
-  $password->password($cryptedpassword);
-
-
-
-  # permission record
-
-  my $permission = $db->newPermissionLevel();
-  $permission->{user_id} = $props->{user_id};
-  $permission->{permission} = $props->{permission} || 0;
-
-  $db->addUser($user);
-  $db->addPassword($password);
-  $db->addPermissionLevel($permission);
-
-  # my $user_to_return = $db->getUser($user->{user_id});
-  # $user_to_return->{_id} = $user_to_return->{user_id};  # this will help Backbone on the client end to know if a user is new or existing.
-  # $user_to_return->{permission} = $permission->{permission};
-
-  return get_one_user($db,$user->{user_id});
-
-}
 
 
 return 1;
