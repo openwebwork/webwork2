@@ -232,7 +232,15 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
             }
         },
         assignAllUsers: function(){
-            this.model.set({assigned_users: this.users});  // this may not work?
+          var current_users = this.model.get("assigned_users").pluck("user_id");
+          //console.log(current_users);
+          var user_ids_to_assign = _(this.users.pluck("user_id")).difference(current_users);
+          //console.log(user_ids_to_assign);
+          this.model.set({assigned_users: this.users});  // this may not work?
+
+          this.model._assigned_users = {added: user_ids_to_assign};
+          this.model.save(); 
+
         },
         setProblemSet: function(_set) {
           var self = this;
