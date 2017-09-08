@@ -90,14 +90,8 @@ my $adminPassword        = $admindb->getPassword("admin");
 option 'input_file' => (is => 'ro', format=>'s', short => 'i',
         repeatable => "", required => "", doc => "Input File (classlist from banner)");
 
-option 'output_file' => (is => 'ro', format=>'s',short => 'o',
-      repeatable => "", required => "", doc => "output file (webwork classlist file)");
-
 option 'input_dir' => (is => 'ro', format=>'s', short => 'd', repeatable=> "",
       doc => "Input Directory");
-
-option 'output_dir' => (is => 'ro', format=>'s', short => 'D', repeatable=> "",
-      doc => "Output Directory");
 
 option 'class_file' => (is => 'ro', format=>'s', short => 'f', repeatable=> "", required=>1,
             doc => "YAML file containing a list of all courses.");
@@ -110,42 +104,44 @@ option 'create_courses' => (is=>'ro', short => 'c', repeatable => "",
 # This takes a classlist from Banner and creates a classlist file (ww format).
 ##
 
-sub create_classlist_file {
-
-  my ($self) = @_;
-
-  my $verbose =1;
-  my $input_dir = $self->input_dir;
-  my $output_dir = $self->output_dir;
-  my $classes_file = $self->class_file;
-
-  my $classes = LoadFile($classes_file);
-  ## check that each of the class list files in the $classes_files exists and is readable;
-  for my $class (@{$classes}){
-    my $text_file = File::Spec->catfile($input_dir,$class->{text_file});
-
-    my($filename, $dirs, $suffix) = fileparse($text_file,".txt");
-    my $cl_file = File::Spec->catfile($output_dir,$filename.".lst");
-    open  FILE, "<", $text_file or die $!;
-    say "successfully read from $text_file" if $verbose;
-    open FILE1, ">", $cl_file or die $!;
-    #
-    while (<FILE>) {
-      $_ =~ s/^\s+|\s+$//g;
-      my @fields = split(/\s\s+/, $_);
-      if (scalar @fields == 4){
-        my ($id,$last,$first,$email) = @fields;
-        my ($login) = split(/@/,$email);
-        print FILE1 $id . "," . $last . "," . $first . ",,,,," . $email . "," . $login . ",,0\n";
-      }
-    }
-
-    close FILE;
-    close FILE1;
-    say "Wrote the results to $cl_file" if $verbose;
-
-  }
-}
+# sub create_classlist_file {
+#
+#   my ($self) = @_;
+#
+#   my $verbose =1;
+#   my $input_dir = $self->input_dir;
+#   my $classes_file = $self->class_file;
+#
+#   my $classes = LoadFile($classes_file);
+#   ## check that each of the class list files in the $classes_files exists and is readable;
+#   for my $class (@{$classes}){
+#     dd $class;
+#     say "Adding students for " . $class->{course_name};
+#     for my $cl_file (@{$class->{classlists}}){
+#       my $text_file = File::Spec->catfile($input_dir,$cl_file);
+#
+#       my($filename, $dirs, $suffix) = fileparse($text_file);
+#       my $lst_file = File::Spec->catfile($output_dir,$filename.".lst");
+#       open  FILE, "<", $text_file or die $!;
+#       say "successfully read from $text_file" if $verbose;
+#       open FILE1, ">", $lst_file or die $!;
+#
+#       while (<FILE>) {
+#         $_ =~ s/^\s+|\s+$//g;
+#         my @fields = split(/\s\s+/, $_);
+#         if (scalar @fields == 4){
+#          my ($id,$last,$first,$email) = @fields;
+#          my ($login) = split(/@/,$email);
+#          print FILE1 $id . "," . $last . "," . $first . ",,,,," . $email . "," . $login . ",,0\n";
+#        }
+#      }
+#
+#      close FILE;
+#      close FILE1;
+#      say "Wrote the results to $lst_file" if $verbose;
+#     }
+#   }
+# }
 
 ###
 #
@@ -157,11 +153,9 @@ sub check {
   my ($self) = @_;
   # check if the directories exist
   my $input_dir = $self->input_dir // "";
-  my $output_dir = $self->output_dir // "";
   my $classes_file = $self->class_file // "";
 
   warn "The input directory $input_dir does not exist" unless (-d $input_dir);
-  warn "The output directory $output_dir does not exist" unless (-d $output_dir);
 
   if ($classes_file) {
     warn "The classlist file $classes_file does not exist" unless (-e $classes_file);
@@ -193,26 +187,69 @@ sub check {
 sub add_users_to_courses {
   my ($self)=@_;
 
+  my $verbose = 1;
   my $classes = LoadFile($self->class_file);
+ 
   ## check that each of the class list files in the $classes_files exists and is readable;
   for my $class (@{$classes}){
-    my $text_file = File::Spec->catfile($self->input_dir,$class->{text_file});
-    my($filename, $dirs, $suffix) = fileparse($text_file,".txt");
-    my $cl_file = File::Spec->catfile($self->output_dir,$filename.".lst");
-    my $ww_course = $class->{ww_course};
-    my $out = `perl /opt/webwork/webwork2/bin/addusers --users=$cl_file $ww_course`;
-    say $out;
+    my $classlists = $class->{classlists} || [];
+    say "creatings a CourseEnv";
+    my $ce = WeBWorK::CourseEnvironment->new({ webwork_dir => $webwork_dir,courseName=> $class->{course_name}});
+    say "create a DB obj";
+    my $db = WeBWorK::DB->new($ce->{dbLayout});
+
+    say "Adding students to " . $class->{course_name};
+    dd $classlists; 
+    
+    for my $cl (@$classlists){
+      my $text_file = File::Spec->catfile($self->input_dir,$cl);
+      my($filename, $dirs, $suffix) = fileparse($text_file);
+      # say $filename;
+      # say $dirs;
+      # say $suffix;
+
+      open  FILE, "<", $text_file or die $!;
+      say "successfully read from $text_file" if $verbose;
+
+      while (<FILE>) {
+        $_ =~ s/^\s+|\s+$//g;
+        my @fields = split(/\s\s+/, $_);
+        if (scalar @fields == 4){
+         my ($id,$last,$first,$email) = @fields;
+         my ($login) = split(/@/,$email);
+         my $params = {
+           student_id => $id,
+           last_name => $last,
+           first_name => $first,
+           email_address => $email,
+           user_id => $login,
+           permission => 0
+         };
+         say "trying to add a student";
+         if($db->existsUser($login)){
+           say "user $login already exists.";
+         } else {
+           add_one_user($db,$params);
+           say "user $login added to the course " . $class->{course_name};
+        }
+       }
+     }
+
+     close FILE;
+   }
   }
 }
 
 sub create_course {
   my ($self) = @_;
+  say "in create_course";
   die "The file " . $self->class_file . " does not exist" unless (defined($self->class_file) && -e $self->class_file);
 
   my $classes = LoadFile($self->class_file);
   ## check that each of the class list files in the $classes_files exists and is readable;
   for my $class (@{$classes}){
-     ## create a temporary file that makes a classlist for just the single professor
+     
+     unless( -d $overall_ce->{webworkDirs}->{courses} . "/" . $class->{course_name}) {
      my $params = {
        user_id => $class->{prof},
        last_name => $class->{prof_last_name},
@@ -233,6 +270,8 @@ sub create_course {
     add_one_user($db,$params);
     $db->addUser($adminUser);
     $db->addPassword($adminPassword);
+    $db->addPermissionLevel($adminPerm);
+   }
    }
 }
 
@@ -244,17 +283,14 @@ sub run {
 
     if($self->create_courses){
       $self->create_course;
-    } else {
-
-
-    $self->create_classlist_file;
-
+    }
     if ($self->add_users){
+      #$self->create_classlist_file;
       $self->add_users_to_courses
     }
-  }
 }
 
 main->new_with_options->run;
 
 1;
+
