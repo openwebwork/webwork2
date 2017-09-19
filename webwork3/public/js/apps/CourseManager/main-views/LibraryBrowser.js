@@ -8,9 +8,10 @@
 define(['backbone', 'underscore','views/TabbedMainView',
         'views/library-views/LibrarySubjectView','views/library-views/LibraryDirectoryView',
         'views/library-views/LibrarySearchView','views/library-views/LocalLibraryView',
-        'views/library-views/LibraryTextbookView','models/ProblemSet','moment','config','apps/util'],
+        'views/library-views/LibraryTextbookView','models/ProblemSet',
+        'models/User','moment','config','apps/util'],
 function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, LibrarySearchView,LocalLibraryView,
-    LibraryTextbookView,ProblemSet,moment,config,util){
+    LibraryTextbookView,ProblemSet,User,moment,config,util){
     var LibraryBrowser = TabbedMainView.extend({
         messageTemplate: _.template($("#library-messages-template").html()),
     	initialize: function (options){
@@ -49,7 +50,7 @@ function(Backbone, _,TabbedMainView,LibrarySubjectView,LibraryDirectoryView, Lib
             "add-problem-set": function(_set_name){
                 var _set = new ProblemSet({set_id: _set_name},this.dateSettings);
                 _set.setDefaultDates(moment().add(10,"days"))
-                  .get("assigned_users").add(new User({user_id: config.courseSettings.user}));
+                  .get("assigned_users").add(new User({user_id: this.session.logged_in_user}));
                this.views[this.state.get("tab_name")].problemSets.add(_set);
             },
             "show-hide-tags": function(_show) {

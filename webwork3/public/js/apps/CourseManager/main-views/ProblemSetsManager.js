@@ -215,8 +215,7 @@ var ProblemSetsManager = MainView.extend({
                   return model.get("assigned_users").length;
                 },
                 display: function(val){
-                  console.log(val);
-                    return val+ "/" + self.users.length;}
+                  return val+ "/" + self.users.length;}
                 },
             {name: "Num. of Probs.", key: "problems", classname: "num-problems", editable: false, datatype: "integer",
                 value: function(model){

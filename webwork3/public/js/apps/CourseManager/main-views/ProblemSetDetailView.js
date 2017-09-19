@@ -239,7 +239,7 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
           this.model.set({assigned_users: this.users});  // this may not work?
 
           this.model._assigned_users = {added: user_ids_to_assign};
-          this.model.save(); 
+          this.model.save();
 
         },
         setProblemSet: function(_set) {
@@ -732,9 +732,20 @@ var AssignUsersView = Backbone.View.extend({
                     ".show-recitation": "show_recitation",
                     ".show-time": "show_time"
                 });
+                this.showHideTableColumns();
             } else {
                 this.userSetList.fetch({success: function () {self.buildCollection().render();}});
             }
+        },
+        showHideTableColumns: function(){
+          var reduced_scoring = this.model.get("enable_reduced_scoring") &&
+                      this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}");
+          util.changeClass({state: reduced_scoring, els: this.$(".reduced-scoring-date"),
+                            remove_class: "hidden"});
+          util.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"),
+                            remove_class: "hidden"});
+          util.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"),
+                            remove_class: "hidden"});
         },
         events: {
             "click .save-changes": "saveChanges",
@@ -819,6 +830,7 @@ var AssignUsersView = Backbone.View.extend({
                 this.render();
                 return;
             }
+            this.showHideTableColumns();
             // color the changed dates blue
             _([".open-date",".due-date",".reduced-scoring-date",".answer-date"]).each(function(date){
                 var val = $("#customize-problem-set-controls " + date + " .wwdate").val()
