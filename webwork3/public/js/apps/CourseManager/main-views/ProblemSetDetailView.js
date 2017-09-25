@@ -763,10 +763,11 @@ var AssignUsersView = Backbone.View.extend({
         saveChanges: function (){
             var self = this;
             _(this.userSetTable.getVisibleSelectedRows()).chain().map(function(_userID) {
-                    return self.userSetList.findWhere({user_id: _userID});
-                }).each(function(_model){
-                    _model.set(self.model.pick("open_date","due_date","answer_date","reduced_scoring_date"));
-                });
+                return self.userSetList.findWhere({user_id: _userID});
+            }).each(function(_model){
+                _model.set(self.model.pick("open_date","due_date","answer_date","reduced_scoring_date"));
+            });
+            this.showHideTableColumns();
         },
         setProblemSet: function(_set) {
             var self = this;
