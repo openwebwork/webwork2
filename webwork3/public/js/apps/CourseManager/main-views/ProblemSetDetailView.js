@@ -92,23 +92,23 @@ define(['backbone','underscore','views/TabbedMainView','views/MainView', 'views/
         },
         changeProblemSet: function (setName)
         {
-            var self = this;
-            if(_.isUndefined(setName) || setName == ""){
-                this.views.propertiesView.setProblemSet();
-                return;
-            }
-            this.state.set("set_id",setName);
+          var self = this;
+          if(_.isUndefined(setName) || setName == ""){
+              this.views.propertiesView.setProblemSet();
+              return;
+          }
+          this.state.set("set_id",setName);
         	this.problemSet = this.problemSets.findWhere({set_id: setName});
-            _(this.views).chain().keys().each(function(view){
-                self.views[view].unstickit();
-                if(! _.isUndefined(self.problemSet)){
-                    self.views[view].setProblemSet(self.problemSet);
-                }
-            });
-            this.views.problemsView.currentPage = 0; // make sure that the problems start on a new page.
-            this.loadProblems();
-            this.views[this.state.get("tab_name")].render();
-            return this;
+          _(this.views).chain().keys().each(function(view){
+              self.views[view].unstickit();
+              if(! _.isUndefined(self.problemSet)){
+                  self.views[view].setProblemSet(self.problemSet);
+              }
+          });
+          this.views.problemsView.currentPage = 0; // make sure that the problems start on a new page.
+          this.loadProblems();
+          this.views[this.state.get("tab_name")].render();
+          return this;
         },
         loadProblems: function () {
             var self = this;
@@ -640,6 +640,7 @@ var AssignUsersView = Backbone.View.extend({
         setProblemSet: function(_set) {
             var self = this;
             this.problemSet = _set;
+            this.tabState.set({set_id: _set.get("set_id")});
             if(_set){
                 this.render();
             }
@@ -771,6 +772,7 @@ var AssignUsersView = Backbone.View.extend({
         },
         setProblemSet: function(_set) {
             var self = this;
+            this.tabState.set({set_id: _set.get("set_id")});
             this.problemSet = _set;  // this is the globalSet
             if(_set){
                 // this is used to pull properties for the userSets.  We don't want to overwrite the properties in this.problemSet

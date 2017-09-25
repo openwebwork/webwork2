@@ -74,7 +74,7 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar,util){
         try { // load the states from the local storage and switch to the existing view.
             this.appState = JSON.parse(window.localStorage.getItem("ww3_cm_state"));
             this.eventDispatcher.trigger("change-view",this.appState.states[this.appState.index].main_view,
-                                                        this.appState.states[this.appState.index]);
+                                                        this.appState.states[this.appState.index].main_view_state);
         } catch(err) {
             console.log(err);
             this.appState = {index: void 0, states: []};
@@ -210,7 +210,6 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar,util){
         this.navigationBar.setPaneName(this.currentView.info.name);
 
         this.currentView.setElement(this.$(".main")).setState(state || state.main_view_state).render();
-        //this.eventDispatcher.trigger("change-view",_id);
     },
     /***
      *
@@ -270,12 +269,12 @@ function(Backbone,MessageListView,ModalView,config,NavigationBar,Sidebar,util){
     goBack: function () {
         this.appState.index--;
         this.eventDispatcher.trigger("change-view",this.appState.states[this.appState.index].main_view,
-                                                    this.appState.states[this.appState.index]);
+                                                    this.appState.states[this.appState.index].main_view_state);
     },
     goForward: function () {
         this.appState.index++;
         this.eventDispatcher.trigger("change-view",this.appState.states[this.appState.index].main_view,
-                                                    this.appState.states[this.appState.index]);
+                                                    this.appState.states[this.appState.index].main_view_state);
     },
     logout: function(){
         var self = this;

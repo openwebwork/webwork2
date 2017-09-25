@@ -6,6 +6,7 @@ define(['backbone'],function(Backbone){
       _(this).extend(_(options).pick("session","settings","users","problemSets","eventDispatcher","info"));
       this.state = new Backbone.Model({});
       this.state.on("change",function(_state){
+        console.log(_state.changed);
         self.eventDispatcher.trigger("save-state");
       });
       this.state.set(this.getDefaultState(), {silent: true});
