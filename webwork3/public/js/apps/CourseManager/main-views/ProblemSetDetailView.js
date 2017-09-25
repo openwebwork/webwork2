@@ -768,7 +768,6 @@ var AssignUsersView = Backbone.View.extend({
             }).each(function(_model){
                 _model.set(self.model.pick("open_date","due_date","answer_date","reduced_scoring_date"));
             });
-            this.showHideTableColumns();
         },
         setProblemSet: function(_set) {
             var self = this;
@@ -783,12 +782,13 @@ var AssignUsersView = Backbone.View.extend({
                                     + "change:open_date", function(model){
                             model.adjustDates();
                             model.save();
+                }).on("sync",function(_userSet){
+                    self.showHideTableColumns(); 
                 });
             }
             if(this.problemSet){
                 this.problemSet.on("change",function(_m){
                     self.collection = new Backbone.Collection(); // reset the collection so data is refetched.
-                }).on("change",function(_model){
                     self.model.set(_model.changed);
                 });
             }
