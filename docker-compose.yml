@@ -18,6 +18,7 @@ services:
     volumes:
       - ".:/opt/webwork/webwork2"
       - "./.data/courses:/opt/webwork/courses"
+      #- "../opl:/opt/webwork/libraries/webwork-open-problem-library"
     ports:
       - "8080:80"
     environment:
