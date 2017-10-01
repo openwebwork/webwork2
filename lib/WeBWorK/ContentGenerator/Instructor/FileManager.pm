@@ -1213,7 +1213,7 @@ sub verifyName {
 				} else {$self->addbadmessage($r->maketext("Your [_1] name contains illegal characters",$object))}
 			} else {$self->addbadmessage($r->maketext("Your [_1] name may not begin with a dot",$object))}
 		} else {$self->addbadmessage($r->maketext("Your [_1] name may not contain a path component",$object))}
-	} else {$self->addbadmessage($r->maktext("You must specify a [_1] name",$object))}
+	} else {$self->addbadmessage($r->maketext("You must specify a [_1] name",$object))}
 	return
 }
 

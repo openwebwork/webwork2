@@ -807,7 +807,7 @@ sub browse_setdef_panel {
                                 -default=> $library_selected).
 		CGI::br().  $view_problem_line;
 	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
-		$popupetc = $r->maktext("there are no set definition files in this course to look at.")
+		$popupetc = $r->maketext("there are no set definition files in this course to look at.")
 	}
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:")." ",
 		$popupetc
