@@ -167,6 +167,7 @@ sub get_credentials {
 	 ['oauth_timestamp', 'oauth_timestamp'],
 	 ['section', 'custom_section'],
 	 ['recitation', 'custom_recitation'],
+	 ['student_id', 'custom_student_id'],
 	);
 
       # Some LMS's misspell the lis_person_sourcedid parameter name
@@ -199,6 +200,13 @@ sub get_credentials {
 	$self->{user_id} =~ s/@.*$// if
 	  $ce->{strip_address_from_email};
       }
+
+     if (!defined($self->{student_id})
+         and defined($r->param("ext_d2l_orgdefinedid"))) {
+         $self->{student_id} = $r->param("ext_d2l_orgdefinedid");
+     } else {
+        undef($self ->{student_id});
+     }
       
       # For setting up its helpful to print out what the system think the
       # User id and address is at this point 
@@ -206,6 +214,7 @@ sub get_credentials {
 	warn "=========== summary ============";
 	warn "User id is |$self->{user_id}|\n";
 	warn "User mail address is |$self->{email}|\n";
+	warn "Student id is |$self->{student_id}|\n";
 	warn "preferred_source_of_username is |", $ce->{preferred_source_of_username}//'undefined',"|\n";
 	warn "================================\n";
       }
@@ -518,6 +527,7 @@ sub create_user {
   $newUser-> section($self->{section} // "");
   $newUser->recitation($self->{recitation} // "");
   $newUser->comment(formatDateTime(time, "local"));
+  $newUser->student_id($self->{student_id} // "");
 
   # Allow sites to customize the user
   if (defined($ce->{LTI_modify_user})) {
@@ -593,6 +603,7 @@ sub maybe_update_user {
     $tempUser->status("C");
     $tempUser-> section($self->{section} // "");
     $tempUser->recitation($self->{recitation} // "");
+    $tempUser->student_id($self->{student_id} // "");
     
     # Allow sites to customize the temp user
     if (defined($ce->{LTI_modify_user})) {
@@ -601,7 +612,7 @@ sub maybe_update_user {
 
     my @elements = qw(last_name first_name 
 		      email_address status 
-		      section recitation);
+		      section recitation student_id);
 
     my $change_made = 0;
 
