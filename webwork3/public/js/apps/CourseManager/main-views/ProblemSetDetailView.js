@@ -783,11 +783,11 @@ var AssignUsersView = Backbone.View.extend({
                             model.adjustDates();
                             model.save();
                 }).on("sync",function(_userSet){
-                    self.showHideTableColumns(); 
+                    self.showHideTableColumns();
                 });
             }
             if(this.problemSet){
-                this.problemSet.on("change",function(_m){
+                this.problemSet.on("change",function(_model){
                     self.collection = new Backbone.Collection(); // reset the collection so data is refetched.
                     self.model.set(_model.changed);
                 });
@@ -818,14 +818,9 @@ var AssignUsersView = Backbone.View.extend({
             if(typeof(this.problemSet) === "undefined"){
                 return;
             }
-
-            util.changeClass({state: this.tabState.get("show_section"), els: this.$(".section"), remove_class: "hidden"})
-            util.changeClass({state: this.tabState.get("show_recitation"), els: this.$(".recitation"), remove_class: "hidden"})
-            util.changeClass({state: this.problemSet.get("enable_reduced_scoring")
-                              && this.settings.getSettingValue("pg{ansEvalDefaults}{enableReducedScoring}"),
-                els: this.$(".reduced-scoring-date,.reduced-scoring-header"), remove_class: "hidden"});
             util.changeClass({state: this.tabState.get("show_time"), remove_class: "edit-datetime", add_class: "edit-datetime-showtime",
-                els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")})
+                els: this.$(".open-date,.due-date,.reduced-scoring-date,.answer-date")});
+
             if(this.userSetTable && this.model){
                 this.userSetTable.refreshTable();
                 this.stickit();
@@ -833,6 +828,7 @@ var AssignUsersView = Backbone.View.extend({
                 this.render();
                 return;
             }
+
             this.showHideTableColumns();
             // color the changed dates blue
             _([".open-date",".due-date",".reduced-scoring-date",".answer-date"]).each(function(date){
