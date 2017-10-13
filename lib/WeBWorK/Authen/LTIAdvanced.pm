@@ -213,7 +213,7 @@ sub get_credentials {
 	warn "=========== summary ============";
 	warn "User id is |$self->{user_id}|\n";
 	warn "User mail address is |$self->{email}|\n";
-	warn "Student id is |$self->{student_id}|\n";
+	warn "Student id is |", $self->{student_id}//'undefined',"|\n";
 	warn "preferred_source_of_username is |", $ce->{preferred_source_of_username}//'undefined',"|\n";
 	warn "preferred_source_of_student_id is |", $ce->{preferred_source_of_student_id}//'undefined',"|\n";
 	warn "================================\n";
