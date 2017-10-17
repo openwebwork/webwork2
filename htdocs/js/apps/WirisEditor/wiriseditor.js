@@ -17,7 +17,7 @@ $(document).ready(function() {
 				questionObject.setAnswerFieldType("popupEditor");
 				instanceObject = builder.newQuestionInstance(questionObject);
 				//Add the constraints for Wiris Hand
-				instanceObject.setProperty("handwritingConstraints","{'symbols': ['sin','cos','tan','log',true','false'], 'structure': ['General','BigOperator','Fraction','Radical','Matrix']}");
+				instanceObject.setProperty("handwritingConstraints","{'symbols': ['sin','cos','tan','log','true','false'], 'structure': ['General','BigOperator','Fraction','Radical','Matrix']}");
 				var i = 0;
 				while ((document.getElementById(answerId(i + 1))) != null) {
 					var input = document.getElementById(answerId(i + 1));
