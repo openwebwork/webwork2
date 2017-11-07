@@ -2664,7 +2664,6 @@ com.wiris.chartparsing.GrammarInverseBuilder.prototype = {
 		}
 		m.setRules(rules);
 		m.packRules();
-		m.showRightRecursion();
 		return m;
 	}
 	,grammar: null
@@ -5932,6 +5931,16 @@ com.wiris.util.type.Arrays.insertSortedImpl = function(a,e,set) {
 	}
 	a.splice(imin,0,e);
 }
+com.wiris.util.type.Arrays.binarySearch = function(array,key) {
+	var imin = 0;
+	var imax = array.length;
+	while(imin < imax) {
+		var imid = Math.floor((imin + imax) / 2);
+		var cmp = Reflect.compare(array[imid],key);
+		if(cmp == 0) return imid; else if(cmp < 0) imin = imid + 1; else imax = imid;
+	}
+	return -1;
+}
 com.wiris.util.type.Arrays.copyArray = function(a) {
 	var b = new Array();
 	var i = HxOverrides.iter(a);
@@ -5946,7 +5955,7 @@ com.wiris.util.type.Arrays.quicksort = function(elements,lower,higher,comparator
 	if(lower < higher) {
 		var p = com.wiris.util.type.Arrays.partition(elements,lower,higher,comparator);
 		com.wiris.util.type.Arrays.quicksort(elements,lower,p - 1,comparator);
-		com.wiris.util.type.Arrays.quicksort(elements,p,higher,comparator);
+		com.wiris.util.type.Arrays.quicksort(elements,p + 1,higher,comparator);
 	}
 }
 com.wiris.util.type.Arrays.partition = function(elements,lower,higher,comparator) {
@@ -5954,7 +5963,7 @@ com.wiris.util.type.Arrays.partition = function(elements,lower,higher,comparator
 	var i = lower - 1;
 	var j = lower;
 	while(j < higher) {
-		if(comparator.compare(pivot,elements[j]) == 1) {
+		if(comparator.compare(pivot,elements[j]) > 0) {
 			i++;
 			if(i != j) {
 				var swapper = elements[i];
@@ -5964,10 +5973,18 @@ com.wiris.util.type.Arrays.partition = function(elements,lower,higher,comparator
 		}
 		j++;
 	}
-	var finalSwap = elements[i + 1];
-	elements[i + 1] = elements[higher];
-	elements[higher] = finalSwap;
+	if(comparator.compare(elements[i + 1],elements[higher]) > 0) {
+		var finalSwap = elements[i + 1];
+		elements[i + 1] = elements[higher];
+		elements[higher] = finalSwap;
+	}
 	return i + 1;
+}
+com.wiris.util.type.Arrays.firstElement = function(elements) {
+	return elements[0];
+}
+com.wiris.util.type.Arrays.lastElement = function(elements) {
+	return elements[elements.length - 1];
 }
 com.wiris.util.type.Arrays.prototype = {
 	__class__: com.wiris.util.type.Arrays
@@ -9463,6 +9480,7 @@ com.wiris.util.xml.WCharacterBase.ROOT_NO_TAIL = 61728;
 com.wiris.util.xml.WCharacterBase.ROOT_NO_TAIL_VERTICAL = 61759;
 com.wiris.util.xml.WCharacterBase.ROOT_LEFT_TAIL = 61760;
 com.wiris.util.xml.WCharacterBase.ROOT_VERTICAL_LINE = 61761;
+com.wiris.util.xml.WCharacterBase.LINE_FEED = 10;
 com.wiris.util.xml.WCharacterBase.ROUND_BRACKET_LEFT = 40;
 com.wiris.util.xml.WCharacterBase.ROUND_BRACKET_RIGHT = 41;
 com.wiris.util.xml.WCharacterBase.COMMA = 44;

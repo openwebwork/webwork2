@@ -89,12 +89,20 @@ div.wiristabs div.wiriscasbottomwrapper {
 }
 div.wiriseditorwrapper {
     height: 200px;
-    width: 450px;
+    width: auto;
+    max-width: 450px; 
     margin-bottom: 5px;
+	transition-duration: 0.3s;
+	transition-timing-function: ease-in-out;
 }
-div.wirispopupsimplecontent.wiriseditorwrapper{
+
+div.wiriseditorwrapper.wrs_handOpen {
+	max-width: 800px;
+}
+div.wiriseditorwrapper.wirispopupsimplecontent{
 	height: auto;
 	width: auto;
+	max-width: 100%;
 }
 div.wirishandwrapper {
     height: 300px;
@@ -371,29 +379,43 @@ div.wiristabs ul.wirisactionslist li a:hover {
     background-color: #fff;
 }
 
-div.wiristabs div.wirisjnlp {
-	position: absolute;
-	top: 0;
-	bottom: 0;
+div.wirisjnlp div.wiriscalclauncher {
+	margin-top: 15px;
+    margin-bottom: 15px;
+    margin-right: 20px;
+    margin-left: 20px;
 }
 
-div.wirisjnlp {
+div.wiriscaswrapper {
     border: solid 1px #999;
     border-radius: 8px;
-    padding: 20px 15px;
+	padding: 20px 15px
+}
+div.wiristabs div.wiriscaswrapper {
+	overflow: auto;
 }
 
 div.wirisjnlptext {
 	margin-bottom: 10px;
+	font-size: 10pt;	
+}
+
+.wiriscalclaunchertext {
+	font-size: 10pt;
 }
 div.wirisjnlpform {
 	margin-bottom: 10px;
+	display: inline-block;
 }
-div.wirisjnlpnotes span{
+div.wirisjnlpnotes {
 	font-size: 10pt;
-	vertical-align: top;
+	display: inline-block;
+	margin: 0 0 10px 10px;
+}
+div.wirisjnlpnotes span {
 	margin-right: 5px;
 }
+
 /**
  *  Styles for new JsComponent model HTML
  **/
@@ -625,6 +647,7 @@ img.wirisembeddedauthoringfield {
     font-size: 11pt;
 	vertical-align: middle;
     margin: 4px 0;
+	box-sizing: content-box;
 }
 input.wirisembeddedtextinput{
 	border: solid 1px #bbb;
@@ -633,8 +656,9 @@ input.wirisembeddedtextinput{
 	font-size: 11pt;
 	vertical-align: middle;
 	height: 16px;
-    width: 100px;
+    /* width: 100px; set dinamically */
 	margin: 4px 0;
+	box-sizing: content-box;
 }
 
 /*
@@ -669,12 +693,16 @@ span.wirisembeddedstudioinput {
 input.wirisembeddedmathinput,
 input.wirisembeddedauthoringfield {
 	height: 16px;
-    width: 100px;
-	background-position: 105px 3px;
+    /*
+	Set dinamically.
+	width: 100px;
+	background-position: 105px 3px;*/
 }
+/*
+Moodle hack no longer needed.
 .formulation input.wirisembeddedmathinput[type="text"] {
 	width: 100px;
-}
+}*/
 input.wirisembeddedstudioinput {
 	height: 24px;
 }
@@ -686,7 +714,8 @@ input.wirisembeddedstudioinput {
     border-radius: 3px;
     line-height: 15pt;
     margin: 10px 0px;
-    width: 428px;
+    width: auto;
+	max-width: 428px;
 }
 /*override assertion feedback design in studio*/
 div.wiristabs .wirisassertionfeedback {
@@ -720,38 +749,47 @@ div.wiristabs .wirisassertionfeedback {
 	vertical-align: text-top;
 }
 
-div.wirisanswerfielddecoration {
-	margin: 0;
-	padding: 0 19px 0 0;
+div.wirisanswerfielddecoration.wirisembeddeddecoration,
+div.wirisanswerfielddecoration.wiriseditordecoration div.wiriseditorwrapper {
+	padding-right: 19px;
 	background: no-repeat right;
 }
 div.wirisanswerfielddecoration.wirisembeddeddecoration {
 	display: inline-block;
 }
+div.wirisanswerfielddecoration.wiriseditordecoration div.wiriseditorwrapper {
+	max-width: 450px;
+}
+div.wirisanswerfielddecoration.wiriseditordecoration div.wiriseditorwrapper.wrs_handOpen {
+	max-width: 800px;
+}
 
-div.wirisanswerfielddecoration.wiriscorrect {
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wiriscorrect,
+div.wirisanswerfielddecoration.wiriseditordecoration.wiriscorrect div.wiriseditorwrapper {
 	background-image: url("correct.gif");
 }
-div.wirisanswerfielddecoration.wiriscorrect input[type="text"],
-div.wirisanswerfielddecoration.wiriscorrect img.wirisembeddedmathinput {
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wiriscorrect input[type="text"],
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wiriscorrect img.wirisembeddedmathinput {
 	border-color: #b0cbc4;
 	background-color: #e9f2c4;
 }
 
-div.wirisanswerfielddecoration.wirisincorrect {
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wirisincorrect,
+div.wirisanswerfielddecoration.wiriseditordecoration.wirisincorrect div.wiriseditorwrapper {
 	background-image: url("incorrect.gif");
 }
-div.wirisanswerfielddecoration.wirisincorrect input[type="text"],
-div.wirisanswerfielddecoration.wirisincorrect img.wirisembeddedmathinput {
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wirisincorrect input[type="text"],
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wirisincorrect img.wirisembeddedmathinput {
 	border-color: #e69885;
 	background-color: #ffe8e3;
 }
 
-div.wirisanswerfielddecoration.wirispartiallycorrect {
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wirispartiallycorrect,
+div.wirisanswerfielddecoration.wiriseditordecoration.wirispartiallycorrect div.wiriseditorwrapper {
 	background-image: url("percent.gif");
 }
-div.wirisanswerfielddecoration.wirispartiallycorrect input[type="text"],
-div.wirisanswerfielddecoration.wirispartiallycorrect img.wirisembeddedmathinput {
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wirispartiallycorrect input[type="text"],
+div.wirisanswerfielddecoration.wirisembeddeddecoration.wirispartiallycorrect img.wirisembeddedmathinput {
 	border-color: #cfbb76;
 	background-color: #f7f3bc;
 }
@@ -770,6 +808,7 @@ table.wiristable td, th {
 	border-color: rgba(0,0,0,0.15);
     padding: 5px;
     text-align: center;
+	vertical-align: baseline;
 }
 
 #wirisclicktesttoevaluate {
@@ -832,6 +871,43 @@ div.wirisembeddedstudio div.wiristabs {
 	display: inline-block;
 }
 
+a.wirisrevealcalclauncher {
+	text-decoration: underline;
+	cursor: pointer;
+	color: -webkit-link;
+}
+
+div.wiriscalcquizzescontainer {
+	position: absolute;
+    bottom: 0;
+    top: 48px;
+    width: 100%;
+	background: url('loading.gif') no-repeat center center;
+}
+
+div.wiriscalcquizzestitle {
+	background-color: #e0e0e0;
+	top: 0;
+	height: 48px;
+	position: absolute;
+	width: 100%;
+	color: #333333;
+	font-size: 22px;
+	font-weight: 400;
+	padding-top: 8px;
+}
+
+.wirisbacktostudiobutton {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+p.wiriscalcquizzesbeta {
+	display: inline;
+	font-style: italic;
+	margin-left: 5px;
+	font-size: 14px;
+}
 
 /***
 Some CSS specially for moodle 2 standard theme.
@@ -840,8 +916,4 @@ Some CSS specially for moodle 2 standard theme.
 .mform div.fitem {
     overflow: visible;
 	clear: left; /* Issue WQFM-153*/
-}
-
-div.wirisstudentanswer {
-    display: inline;
 }
