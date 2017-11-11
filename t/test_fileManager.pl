@@ -8,7 +8,7 @@ BEGIN {
         eval "use lib '$WebworkBase::RootWebwork2Dir/lib'"; die $@ if $@;
 }
 
-use Test::More tests => 12;
+use Test::More tests => 14;
 use WeBWorK::ContentGenerator::Instructor::FileManager qw/isText/;
 
 ok WeBWorK::ContentGenerator::Instructor::FileManager::isText("abcdghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"), 'ordinary string is text';
@@ -23,3 +23,5 @@ ok WeBWorK::ContentGenerator::Instructor::FileManager::isText("abc\r\n\r\ndef\r\
 ok WeBWorK::ContentGenerator::Instructor::FileManager::isText("                 "), 'string of all spaces is text';
 ok WeBWorK::ContentGenerator::Instructor::FileManager::isText("      \r\n\t\r\n\t        "), 'string of all spaces, tabs, CRs and newlines is text';
 ok WeBWorK::ContentGenerator::Instructor::FileManager::isText("abcdef\t\t\t\tasdfjka"), 'string with multiple consecutive tabs is text';
+ok WeBWorK::ContentGenerator::Instructor::FileManager::isText("abc\x00\ndef"), 'control character before newline surrounded by ASCII chars is text';
+ok WeBWorK::ContentGenerator::Instructor::FileManager::isText("abc\n\x00def"), 'newline before control character surrounded by ASCII chars is text';
