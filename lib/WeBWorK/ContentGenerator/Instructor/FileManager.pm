@@ -1274,7 +1274,7 @@ sub showHTML {
 #
 sub isText {
 	my $string = shift;
-	return $string !~ m/[^\s\x20-\x7E]{4}/;
+	return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
 
 ##################################################
