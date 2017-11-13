@@ -437,9 +437,14 @@ sub getDBListings {
 	my $ce = $r->ce;
 	my %tables = getTables($ce);
 	my $subj = $r->param('library_subjects') || "";
-
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
+	
+	# Make sure these strings are internally encoded in UTF-8
+	utf8::upgrade($subj);
+	utf8::upgrade($chap);
+	utf8::upgrade($sec);
+
 	my $keywords = $r->param('library_keywords') || "";
 	# Next could be an array, an array reference, or nothing
 	my @levels = $r->param('level');
