@@ -437,6 +437,7 @@ sub getDBListings {
 	my $ce = $r->ce;
 	my %tables = getTables($ce);
 	my $subj = $r->param('library_subjects') || "";
+
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
 	my $keywords = $r->param('library_keywords') || "";
@@ -510,6 +511,7 @@ sub getDBListings {
 #               $kw2";
 
 	my $pg_id_ref;
+	$dbh->do(qq{SET NAMES 'utf8';});
 	if($haveTextInfo) {
 		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
 			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
