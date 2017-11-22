@@ -77,7 +77,12 @@ $(document).ready(function() {
 					var input = source.getValue();
 					var output = "";
 					if (input.startsWith("<math") && input.endsWith("</math>")) {
-						output = m2w.mathML2Webwork(input);
+						try {
+							output = m2w.mathML2Webwork(input);
+						}
+						catch( e ) {
+							console.log("There was an error converting from WIRIS MathML to plain text:\n" + e.getMessage());
+						}
 					} else {
 						output = input;
 					}
