@@ -18,7 +18,10 @@ services:
     volumes:
       - ".:/opt/webwork/webwork2"
       - "./.data/courses:/opt/webwork/courses"
+      # Uncomment the line below to use local OPL for development
       #- "../opl:/opt/webwork/libraries/webwork-open-problem-library"
+      # Uncomment the line below to use local PG for development
+      #- "../pg:/opt/webwork/pg"
     ports:
       - "8080:80"
     environment:
