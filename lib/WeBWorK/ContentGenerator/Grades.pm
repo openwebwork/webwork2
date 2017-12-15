@@ -301,7 +301,7 @@ sub displayStudentStats {
 				next;
 			} else {
 				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)), 
-						     CGI::td({colspan=>($max_problems+2)}, CGI::em("No versions of this assignment have been taken."))) );
+						     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("No versions of this assignment have been taken.")))) );
 				next;
 			}
 		}
@@ -312,7 +312,7 @@ sub displayStudentStats {
 		       ( $set->hide_score eq 'Y' || 
 			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
 			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(test_" . $set->version_id . ")")), 
-					     CGI::td({colspan=>($max_problems+2)}, CGI::em("Display of scores for this set is not allowed."))) );
+					     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("Display of scores for this set is not allowed.")))) );
 			next;
 		}
 
