@@ -680,7 +680,7 @@ print  CGI::p($r->maketext('The percentage of active students with correct answe
 			]
 			)),
 		CGI::Tr(CGI::td(
-			[ $r->maketext('number of active students'), map {($number_of_students_attempting_problem{$_})
+			[ $r->maketext('&#35; of active students'), map {($number_of_students_attempting_problem{$_})
 			                      ? $number_of_students_attempting_problem{$_}
 			                      : '-'}
 			                       @problemIDs
