@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Grades.pm,v 1.35 2007/07/10 14:41:54 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -46,9 +46,14 @@ sub initialize {
 
 sub body {
 	my ($self) = @_;
+	my $r          = $self->r;
+	my $ce         = $r->ce;
 	
+	if( $ce->{gradebookEnabled} && $ce->{gradebookOnGradesPageEnabled}){
+		print CGI::div({-id=>"gradebook-config", -style=>"display:none;"}, $ce->{gradebookConfig});	
+	}
 	$self->displayStudentStats($self->{studentName});
-	
+
 	print $self->scoring_info();
 	
 	return '';
@@ -77,6 +82,19 @@ sub getRecord {
         @lineArray = split(/\s*${delimiter}\s*/,$line);
         $lineArray[0] =~s/^\s*// if defined($lineArray[0]);                       # remove white space from first element
         @lineArray;
+}
+
+sub output_JS{
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+	if( $ce->{gradebookEnabled} && $ce->{gradebookOnGradesPageEnabled}){
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GradeBook/GradeBookOnGrades.js"}), CGI::end_script();
+		print "<link href=\"$site_url/js/apps/GradeBook/GradeBook.css\" rel=\"stylesheet\" />";
+	}
+	return "";
 }
 
 sub scoring_info {
@@ -434,8 +452,8 @@ sub displayStudentStats {
 		}
 		
 		push @rows, CGI::Tr({},
-			CGI::th({scope=>"row"},CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
-			CGI::td(CGI::span({-class=>$class},$totalRightPercent.'%')),
+			CGI::td({scope=>"row"},CGI::a({-href=>$act_as_student_set_url}, WeBWorK::ContentGenerator::underscore2sp($setName))),
+			CGI::td(CGI::span({-class=>$class." grade-cell ". $set->assignment_type},$totalRightPercent.'%')),
 			CGI::td(sprintf("%0.2f",$totalRight)), # score
 			CGI::td($total), # out of 
 			@cgi_prob_scores     # problems
@@ -486,6 +504,17 @@ sub displayStudentStats {
 	}
 	
 	print CGI::end_table();
+
+	if( $ce->{gradebookEnabled} && $ce->{gradebookOnGradesPageEnabled}){
+		print join("",
+			CGI::start_table({-id=>"category_averages", -class=>"gradebook table-striped",-border=>2}),
+			CGI::Tr({},
+				CGI::th({-class=>"column-name"},'Category'),
+				CGI::th({-class=>"column-name"},'Average')			
+			),		
+			CGI::end_table()
+		);	
+	}
 			
 	return "";
 }
