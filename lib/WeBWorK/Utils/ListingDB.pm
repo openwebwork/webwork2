@@ -182,8 +182,8 @@ sub makeKeywordWhere {
 	my $kwstring = shift;
 	my @kwlist = keywordCleaner($kwstring);
 #	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
-	@kwlist = map { "kw.keyword = ? " } @kwlist;
-	my $where = join(" OR ", @kwlist);
+	my @kwlistqm = map { "kw.keyword = ? " } @kwlist;
+	my $where = join(" OR ", @kwlistqm);
 	return "AND ( $where )", @kwlist;
 }
 
