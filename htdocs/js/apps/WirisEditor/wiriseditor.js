@@ -25,10 +25,12 @@ $(document).ready(function() {
 						answerField = uibuilder.newAnswerField(questionObject, instanceObject, i);
 						//Configure underlying editor. We put the parameters in order to get a toolbar compatible with the options of WebWork.
 						//See http://www.wiris.com/en/editor/docs/reference/parameters for the full list of available parameters.
+						//See http://www.wiris.net/demo/editor/docs/toolbar/ for a list of items that can be put in the toolbar.
 						answerField.setEditorInitialParams({
 							'toolbar': '<toolbar><tab rows="1" name="Basic">'+
 								'<section extraRows="1"><item ref="+"/><item ref="&#xB7;"/><item ref="-"/><item ref="fraction"/><item ref="verticalBar"/><item ref="superscript"/><item ref="angleBrackets"/></section>'+
 								'<section extraRows="1"><item ref="numberPi"/><item ref="&#8734;"/><item ref="numberE" extra="true"/><item ref="imaginaryI" extra="true"/></section>'+
+								'<section><item ref="squareTable"/></section>'+
 								'<section><item ref="undo"/><item ref="redo"/></section></tab>'+
 								'<tab rows="1" name="Functions">'+
 								'<section><item ref="squareRoot"/><item ref="nRoot"/><item ref="exponential"/></section>'+
