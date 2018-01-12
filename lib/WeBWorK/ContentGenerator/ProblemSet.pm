@@ -133,9 +133,11 @@ sub title {
 	  my $enable_reduced_scoring =  $r->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
 	  if ($enable_reduced_scoring && 
 	      before($set->reduced_scoring_date)) {
-	    $title .= ' - '.$r->maketext("Reduced Scoring Starts [_1]", 
+	    $title .= ' - '.$r->maketext("Due [_1], after which reduced scoring is available until [_2]", 
 	         $self->formatDateTime($set->reduced_scoring_date,undef,
-				       $r->ce->{studentDateDisplayFormat}));
+				       $r->ce->{studentDateDisplayFormat}),
+			 $self->formatDateTime($set->due_date, undef, 
+			           $r->ce->{studentDateDisplayFormat}));
 	  } elsif ($set->due_date) {
 	    $title .= ' - '.$r->maketext("Closes [_1]", 
 	         $self->formatDateTime($set->due_date,undef,
