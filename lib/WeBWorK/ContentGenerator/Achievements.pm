@@ -322,7 +322,7 @@ sub body {
 			
 			}	   
 		} else { # no achievements 
-		print CGI::p("No achievements have been assigned yet");
+		print CGI::p($r->maketext("No achievements have been assigned yet"));
 		}
 
 	return "";

@@ -208,6 +208,7 @@ $LTIMassUpdateInterval = 86400; #in seconds
 			   "Designer" => "professor",
 			   "instructor" => "professor",
 			   "Instructor" => "professor",
+			   "Faculty" => "professor",
 			   "Teacher" => "professor",
 			   "Student" => "student",
 			   "Learner" => "student",

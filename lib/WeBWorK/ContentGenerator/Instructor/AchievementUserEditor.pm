@@ -56,7 +56,7 @@ sub initialize {
 		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Achievement has been unassigned to all students.")));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maktext("Achievement has been assigned to selected users.")));
+	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Achievement has been assigned to selected users.")));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param("unassignFromAll")) {
 	   # no action taken

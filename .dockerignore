@@ -1,0 +1,6 @@
+Dockerfile
+logs/*
+tmp/*
+.git
+.data
+.idea

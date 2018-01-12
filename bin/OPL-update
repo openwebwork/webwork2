@@ -297,6 +297,9 @@ sub safe_get_id {
 	my $addifnew = shift;
 	my @insertvalues = @_;
 #print "\nCalled with $tablename, $idname, $whereclause, [".join(',', @$wherevalues)."], (".join(',', @insertvalues).")\n";
+	for my $j (0..$#insertvalues) {
+		$insertvalues[$j] =~ s/"/\\\"/g;
+	}
 
 	my $query = "SELECT $idname FROM `$tablename` ".$whereclause;
 	my $sth = $dbh->prepare($query);
@@ -312,7 +315,6 @@ sub safe_get_id {
 				$insertvalues[$j] = NULL;
 			}
 		}
-		#print "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$dbh->do("INSERT INTO `$tablename` VALUES(". join(',',@insertvalues) .")");
 		dbug "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$sth = $dbh->prepare($query);
