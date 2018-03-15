@@ -59,9 +59,9 @@ my @modulesList = qw(
 	Digest::MD5
   Digest::SHA
 	Email::Address
-  Email::Simple;
-  Email::Sender::Simple
-  Email::Sender::Transport::SMTP
+	Email::Simple
+	Email::Sender::Simple
+	Email::Sender::Transport::SMTP
 	Errno
 	Exception::Class
 	File::Copy
@@ -85,8 +85,7 @@ my @modulesList = qw(
 	JSON
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
-    LWP::Protocol::https
-	Mail::Sender
+	LWP::Protocol::https
 	MIME::Base64
 	Net::IP
 	Net::LDAPS

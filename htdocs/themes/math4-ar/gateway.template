@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- This encourages IE to *not* use compatibility view, which breaks math4 -->
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+
+<link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
+<!--#if can="output_achievement_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
+<!--#endif-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/gateway.css"/>
+<!--#if exists="math4-coloring.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
+<!--#endif-->
+<!--#if exists="math4-overrides.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
+<!--#endif-->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<!--#if exists="math4-overrides.js"-->
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
+<!--#endif-->
+<!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
+
+<title><!--#path style="text" text=" : " textonly="1"--></title>
+<!--#head-->
+<!--#output_JS-->
+</head>
+<body>
+<a href="#content" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
+<div class="container-fluid">
+<!-- Header -->
+<div id = "masthead" class="row-fluid">
+	<div class="span2 webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" />WeBWorK</a>
+	</div>
+	<div class="span4 maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	</div>
+	<div id="loginstatus" class="offset3 span3">
+		<!--#loginstatus-->
+	</div>
+</div>
+	<!-- Breadcrumb -->
+	<div class="row-fluid"><div class="span12">
+	<ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
+	</ul>
+	</div></div>
+
+<div class="row-fluid">
+
+<!-- Run masthead class js because it gets rendered early -->
+<script type="text/javascript">
+  // Changes links in masthead
+  $('#loginstatus a').addClass('btn btn-small');
+  $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>'); 
+</script>
+
+  <div id="content" class="span12">
+		
+	<!--#if can="info"-->
+	<!--<div id="page-info">-->
+		<!--<div class="info-box" id="fisheye">-->
+			<!--#info-->
+		<!--</div>-->
+	<!--</div>-->
+	<!--#endif-->
+	
+	<!-- [gateway] removed nav button to go up -->
+	
+	<!--#if can="title"-->
+	<h1 id="content"><!--#title--></h1>
+	<!--#endif-->
+	
+	<!--#if can="message"-->
+		<div class="Message"><!--#message--></div>
+	<!--#endif-->
+
+	<!--#if can="body"-->
+	<div class="Body">
+		<!--#body-->
+	</div>
+	<!--#endif-->
+	
+	<!--#if warnings="1"-->
+	<div class="Warnings">
+		<!--#warnings-->
+	</div>
+	<!--#endif-->
+	
+</div> <!-- content -->
+
+<!-- Footer -->
+<div id="footer">
+	<!--#footer-->
+</div>
+
+</div></div> <!-- big-wrapper -->
+
+</body>
+</html>
+
+
