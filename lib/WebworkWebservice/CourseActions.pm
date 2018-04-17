@@ -671,7 +671,8 @@ sub updateSetting {
 
 
 ##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
-## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
+## way that WW sends mail is a bit archaic.  
+## The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
 ## bit more.  
 
 
@@ -699,7 +700,7 @@ sub sendEmail {
 	debug("smtpServer: " . $smtpServer);
 	
 	
-	my $mailer = Mail::Sender->new({
+	my $mailer = Email::Sender->new({
 				tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
 				from      => $smtpServer,
 				fake_from => "pstaab\@fitchburgstate.edu",

@@ -148,6 +148,8 @@ a remote WeBWorK site.
 =item   --tex
 	Process question in TeX mode and output to the command line
 
+=item   --pdf 
+	Process question in TeX mode, convert to PDF and display.
 	
 =item   
 
