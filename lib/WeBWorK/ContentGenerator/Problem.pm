@@ -1222,7 +1222,7 @@ sub output_problem_body{
 	my %will = %{ $self->{will} };
 
 	print "\n";
-	print CGI::div($pg->{body_text});
+	print CGI::div({id=>'output_problem_body'},$pg->{body_text});
 
 	return "";
 }
