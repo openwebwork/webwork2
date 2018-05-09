@@ -152,7 +152,7 @@ var tabberOptions = {manualStartup:true};
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
 						<!--#if can="output_problem_body"-->
-						<div class="problem-content">
+						<div id="problem_body" class="problem-content" <!--#output_problem_lang_and_dir--> >
 							<!--#output_problem_body-->
 						</div>
 						<!--#endif-->
