@@ -12,7 +12,14 @@
  * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
  * Artistic License for more details.
  */
+
+/* CodeMirror overrides */
  
+.CodeMirror-code {
+  outline: none;
+  direction: ltr !important;
+}
+
 /* Bootstrap overrides */
 a:focus {
     outline-style:solid;
