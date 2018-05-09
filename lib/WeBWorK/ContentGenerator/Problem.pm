@@ -1212,6 +1212,75 @@ sub output_form_start{
 	return "";
 }
 
+# output_problem_lang_and_dir subroutine
+
+# adds a lang and maybe also a dir setting to the DIV tag attributes, if
+# needed by the PROBLEM language
+
+# TO DO - should check course setting to decide if this should be bypassed or value forced.
+
+sub output_problem_lang_and_dir {
+	my $self = shift;
+	my $pg = $self->{pg};
+
+	my $ce_lang = $self->r->ce->{language}; # Course wide setting
+	my $ce_dir = "ltr"; # default
+
+	if ( $ce_lang =~ /^he/i ) { # supports also the current "heb" option
+	  # Hebrew - requires RTL direction
+          $ce_lang = "he";  # Hebrew - standard form
+          $ce_dir  = "rtl"; # RTL
+	} elsif ( $ce_lang =~ /^ar/i ) {
+          # Arabic - requires RTL direction
+	  $ce_lang = "ar";  # Arabic
+	  $ce_dir  = "rtl"; # RTL
+	}
+
+	my $pg_lang = "en-US"; # default
+	my $pg_dir  = "ltr";   # default
+
+	if ( defined( $pg->{flags}->{language} ) ) {
+	  $pg_lang = $pg->{flags}->{language};
+	}
+
+	if ( defined( $pg->{flags}->{textdirection} ) ) {
+	  $pg_dir =  $pg->{flags}->{textdirection};
+	} elsif ( defined( $pg->{flags}->{language} ) ) {
+	  # Try to guess the direction, as the language was set
+	  if ( ( $pg->{flags}->{language} =~ /^he/i ) ||
+	       ( $pg->{flags}->{language} =~ /^ar/i )    ) {
+	    $pg_dir  = "rtl"; # should be correct for these languages
+	  }
+	}
+
+# FIXME - make these variables case insensitive...
+
+	my $to_set = "";
+	if ( $pg_lang ne $ce_lang ) {
+	  $to_set = "lang=\"${pg_lang}\""; # override to problem language
+	}
+
+	if ( $pg_dir ne $ce_dir ) {
+	  # difference - so override
+	  $to_set .= " dir=\"${pg_dir}\""; # override to $pg_dir
+	} elsif ( ( $ce_dir eq "rtl" ) && 				# May need to override for RTL course when a
+                  ( ! defined( $pg->{flags}->{textdirection} ) ) && 	# problem does not set the language or the textdirection
+                  ( $pg_lang ne "he" ) && 				# and the problem language is not declared to a known
+	          ( $pg_lang ne "ar" ) 				# RTL language.
+                ) {
+	  $to_set .= " dir=\"ltr\""; # override to problem textdirection or "expected" LTR textdirection
+	}
+
+
+	# DEBUG CODE: 
+	# $to_set = " ce_lang $ce_lang ce_dir $ce_dir pg_lang $pg_lang pg_dir $pg_dir ";
+
+	print "$to_set";
+	return "";
+}
+
+
+
 # output_problem_body subroutine
 
 # prints out the body of the current problem
