@@ -42,6 +42,7 @@ require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
 
@@ -1217,142 +1218,25 @@ sub output_form_start{
 # adds a lang and maybe also a dir setting to the DIV tag attributes, if
 # needed by the PROBLEM language
 
-# TO DO - should check course setting to decide if this should be bypassed or value forced.
-
 sub output_problem_lang_and_dir {
     my $self = shift;
-
-    my $ce_requested_mode = $self->r->ce->{perProblemLangAndDirSettingMode}; # Mode requested
-
-    if ( $ce_requested_mode eq "none" ) {
-	# Requested mode is "none" so no output should be made.
-	print " "; # No LANG or DIR attribute should be added to the DIV
-	return "";
-    }
-
-    # Get course-wide language setting
-    my $ce_lang = $self->r->ce->{language}; # Course wide setting
-    my $ce_dir = "ltr"; # default
-
-    if ( $ce_lang =~ /^he/i ) { # supports also the current "heb" option
-	# Hebrew - requires RTL direction
-	$ce_lang = "he";  # Hebrew - standard form
-	$ce_dir  = "rtl"; # RTL
-    } elsif ( $ce_lang =~ /^ar/i ) {
-	# Arabic - requires RTL direction
-	$ce_lang = "ar";  # Arabic
-	$ce_dir  = "rtl"; # RTL
-    }
-
-    my @tmp1 = split(':',$ce_requested_mode);
-    my $reqMode = $tmp1[0];
-    my $reqLang = $tmp1[1];
-    my $reqDir  = $tmp1[2];
-
-    # String with the HTML attributes to add
-    my $to_set = "";
-
-    if ( $reqMode eq "force" ) {
-	# Requested mode is to force the LANG and DIR attributes regardless of lang data from problem PG code.
-	if ( $reqLang ne "" ) {
-	    $to_set = "lang=\"${reqLang}\" "; # forced setting		
-	}
-	$to_set .= " dir=\"${reqDir}\""; # forced setting
-
-	# DEBUG:
-	# $to_set .= " IN FORCED mode $ce_requested_mode ";
-	
-	print "$to_set";
-	return "";
-    }
-
-    if ( $reqMode ne "auto" ) {
-	# The mode setting is not valid, treat like none
-	print " "; # No LANG or DIR attribute should be added to the DIV
-	return "";
-    }
-	
-    # We are not handling an "auto" setting, so want to handle data from PG
     my $pg = $self->{pg};
 
-    my $pg_lang = "en-US"; # system default
-    my $pg_dir  = "ltr";   # system default
+    my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
+    my $to_set_tag;
+    my $to_set_val;
 
-    # Determine the language code to use
-    if ( defined( $pg->{flags}->{language} ) ) {
-	# Language set by PG
-	$pg_lang = $pg->{flags}->{language};
-    } else {
-	# Language not set by PG, use provided default language (if set) or fall back to the system default
-	if ( $reqLang ne "" ) {
-	    $pg_lang = $reqLang;
+    # String with the HTML attributes to add
+    my $to_set = " ";
+
+    # Put the requested tags and values into the string format
+    while ( scalar(@to_set_lang_dir) > 0 ) {
+	$to_set_tag = shift( @to_set_lang_dir );
+	$to_set_val = shift( @to_set_lang_dir );
+	if ( defined( $to_set_val ) ) {
+	    $to_set .= " ${to_set_tag}=\"${to_set_val}\"";
 	}
     }
-
-    # Determine the direction code to use
-    if ( defined( $pg->{flags}->{textdirection} ) ) {
-	# Direction set by PG
-	$pg_dir =  $pg->{flags}->{textdirection};
-    } elsif ( $reqDir ne "" ) {
-	# We have a request for a direction when PG did not set it
-	$pg_dir = $reqDir;
-    } elsif ( defined( $pg->{flags}->{language} ) ) {
-	# Direction not set by PG, nor was a default setting provided
-	# but PG did set the language.
-	# Fallback is to use LTR, except for Hebrew and Arabic.
-	$pg_dir  = "ltr"; # correct for most languages
-	if ( ( $pg->{flags}->{language} =~ /^he/i ) ||
-	     ( $pg->{flags}->{language} =~ /^ar/i )    ) {
-	    $pg_dir  = "rtl"; # should be correct for these languages
-	}
-    } else {
-	# Direction not set by PG, nor was a default setting provided
-	# and PG did NOT set the language.
-	# Fallback is to use LTR, except for Hebrew and Arabic
-	#   as either the course language or the requested fallback language.
-	$pg_dir  = "ltr"; # correct for most languages
-	# PG did not set the language, so make a guess to change to RTL
-	if ( ( $ce_lang =~ /^he/i ) ||
-	     ( $ce_lang =~ /^ar/i )    ) {
-	    $pg_dir  = "rtl";
-	} elsif ( ( $reqLang =~ /^he/i ) ||
-		  ( $reqLang =~ /^ar/i )    ) {
-	    $pg_dir  = "rtl";
-	}
-    }
-
-    # Make these string all lowercase (just in case)
-    $pg_lang = lc( $pg_lang );
-    $pg_dir  = lc( $pg_dir );
-    $ce_lang = lc( $ce_lang );
-    $ce_dir  = lc( $ce_dir );
-
-    if ( $pg_lang ne $ce_lang ) {
-	$to_set = "lang=\"${pg_lang}\""; # override to problem language
-    }
-
-    if ( ( $ce_dir eq "rtl" ) && # Possible hack for RTL direction courses and OPL problems
-	 ( $reqDir eq "rtl" ) &&
-	 ! defined( $pg->{flags}->{textdirection} ) && 	   # problem does not set the language or
-	 ! defined( $pg->{flags}->{language} )         ) { #                      the text direction
-	     # In a RTL language course, we may really want to force LTR use for unknown problems.
-	     # that would best be handled by always including the language setting in RTL language
-	     # problems, and using a setting which falls back to LTR when there is no setting from
-	     # the problem (expected on OPL problems).
-	
-	     # May want to issue a warning
-
-	     # Right now - we are not trying to do the following
-	     # $to_set .= " dir=\"ltr\""; # override to problem textdirection or "expected" LTR textdirection
-    }
-
-    if ( $pg_dir ne $ce_dir ) {
-	# difference - so override
-	$to_set .= " dir=\"${pg_dir}\""; # override to $pg_dir
-    }
-
-    # DEBUG CODE:
-    # $to_set = " ce_lang $ce_lang ce_dir $ce_dir reqMain $reqMain reqLang $reqLand reqDir $reqDir result_lang $pg_lang result_dir $pg_dir ";
 
     print "$to_set";
     return "";
