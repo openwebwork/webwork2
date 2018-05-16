@@ -424,13 +424,18 @@ sub displayStudentStats {
 		    # If its the last version then add the max to the course
 		    # totals and reset variables;
 		  if ($currentVersion == $numGatewayVersions) {
-		    $courseTotal += $total;
-		    $courseTotalRight += $bestGatewayScore;
-		    $bestGatewayScore = 0;
+		  } else {
+		      if (after($set->open_date())) {
+			  $courseTotal += $total;
+			  $courseTotalRight += $bestGatewayScore;
+		      }
+		      $bestGatewayScore = 0;
 		  }
 		} else {		
-		  $courseTotal += $total;
-		  $courseTotalRight += $totalRight;
+		    if (after($set->open_date())) {
+			$courseTotal += $total;
+			$courseTotalRight += $totalRight;
+		    }
 		}
 		
 		push @rows, CGI::Tr({},
