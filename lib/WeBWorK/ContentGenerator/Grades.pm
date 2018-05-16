@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status wwRound);
+use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status wwRound after);
 use WeBWorK::Localize;
 sub initialize {
 	my ($self) = @_;
@@ -424,7 +424,6 @@ sub displayStudentStats {
 		    # If its the last version then add the max to the course
 		    # totals and reset variables;
 		  if ($currentVersion == $numGatewayVersions) {
-		  } else {
 		      if (after($set->open_date())) {
 			  $courseTotal += $total;
 			  $courseTotalRight += $bestGatewayScore;
