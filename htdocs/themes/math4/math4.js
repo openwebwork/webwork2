@@ -85,8 +85,9 @@ $(function(){
     $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
 
     // Turn summaries and help boxes into popovers
-    $('a.table-summary').popover().click(function (event) {
-	event.preventDefault();
+    // Not sure there are any table-summary classes
+    $('a.table-summary').popover({trigger : 'click'}).click(function (event) {
+		event.preventDefault();
     });
     $('a.help-popup').popover({trigger : 'click'}).click(function (event) {
 	event.preventDefault();
