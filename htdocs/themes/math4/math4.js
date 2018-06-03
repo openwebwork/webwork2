@@ -86,12 +86,13 @@ $(function(){
 
     // Turn summaries and help boxes into popovers
     // Not sure there are any table-summary classes
-    $('a.table-summary').popover({trigger : 'click'}).click(function (event) {
-		event.preventDefault();
-    });
-    $('a.help-popup').popover({trigger : 'click'}).click(function (event) {
-	event.preventDefault();
-    }).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
+    // Also not sure why it didn't work before I added  {trigger : 'click'}
+    // $('a.table-summary').popover({trigger : 'click'}).click(function (event) {
+	//	event.preventDefault();
+    //});
+    //$('a.help-popup').popover({trigger : 'click'}).click(function (event) {
+	//event.preventDefault();
+    //}).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 
     // Sets login form input to bigger size
     $('#login_form input').addClass('input-large');    
@@ -124,17 +125,29 @@ $(function(){
     $('.answerComments').addClass('well');
     $('#SMA_button').addClass('btn btn-primary');
     
-    $("table.attemptResults td[onmouseover*='Tip']").each(function () {
-	var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
-	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
-	//on the presentation of a matrix  and then causes errors throughout the rest of the script
-	$(this).attr('onmouseover','');
-	if (data) {
-	    $(this).wrapInner('<div class="results-popover" />');
-
-	    var popdiv = $('div', this);
-	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',content:data});	
-	} 
+    console.log("hi there");
+    // this finds the wztooltips object entries
+    $("table.attemptResults td[onmouseover*='Tip']").each(function(index,elem) {
+    //$("table.attemptResults td[onmouseover]").each(function(index, elem) {
+		console.log("index: "+index+" element: "+elem);
+		var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);
+		console.log("data: "+ data);
+ 	
+// 	if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
+// 	//on the presentation of a matrix  and then causes errors throughout the rest of the script
+// 	$(this).attr('onmouseover','');
+// 	console.log("data1 "+data);
+ 	if (data) {
+ 	    $(this).wrapInner(function() {
+ 	    console.log("wrappInner: ",this)
+ 	    return '<div class="results-popover" />'});
+        console.log("children:",$(this).children('div'));
+ 	    var popdiv = $(this).children('div'); // find the first div under 'this'
+ 	    console.log('this: ', this);
+ 	    console.log("popdiv: ", popdiv);
+ 	    console.log("can callpopover: " ,  $.isFunction(popdiv.popover));
+// 	    popdiv.popover({placement:'bottom', html:'true', trigger:'click',content:data});	
+ 	} 
 	    
     });
 
