@@ -177,7 +177,7 @@ sub go {
 	    my $grader = shift;
 	    
 	    # catch exceptions generated during the sending process
-	    my $result_message = eval { $grader->mass_update() };
+	    my $result_message = eval { $grader->mass_update($self) };
 	    if ($@) {
 	      # add the die message to the result message
 	      $result_message .= "An error occurred while trying to update grades via LTI.\n"
