@@ -10,6 +10,9 @@
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
 $debug_lti_parameters = 0; 
+$debug_lti_grade_passback = 0;
+#FIXME -- these parameters should be merged with the debug mechanism in 
+# WeBWorK::Debug
 
 # This first section enables LTI authentication.
 # Failover to Basic_TheLastOption is necessary to authenticate with
@@ -31,7 +34,7 @@ $authen{user_module} = [
 # will display a screen directing the user
 # back to an external authentication system.
 
-$external_auth=1;
+#$external_auth=1;
 
 # NOTE:  If external authentication is disabled
 # then you should probably also prevent students
@@ -208,6 +211,7 @@ $LTIMassUpdateInterval = 86400; #in seconds
 			   "Designer" => "professor",
 			   "instructor" => "professor",
 			   "Instructor" => "professor",
+			   "Faculty" => "professor",
 			   "Teacher" => "professor",
 			   "Student" => "student",
 			   "Learner" => "student",

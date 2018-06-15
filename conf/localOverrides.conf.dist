@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright  2000-2015 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/conf/localOverrides.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -49,6 +49,12 @@ $mail{feedbackRecipients}    = [
 	#'prof2@yourserver.yourdomain.edu',
 ];
 
+### additional mail overrides
+# Use this to customize the text of the feedback button.
+$feedback_button_name = "Email WeBWorK TA";
+
+
+
 ################################################################################
 # Repository Information
 ###############################################################################
@@ -91,7 +97,7 @@ $language = "en";
 
 # This is the site_info file.  You should consider changing this to point
 # to a file which is not tracked by git
-$webworkFiles{site_info} = "$webworkDirs{htdocs}/site_info.txt";
+$webworkFiles{site_info} = "$webworkDirs{htdocs}/our_site_info.txt";
 
 
 # The setHeader preceeds each set in hardcopy output. It is a PG file.
@@ -395,6 +401,9 @@ $showeditors{simplepgeditor}   = 0;
 # and then edit that file to fill in the settings for your installation.
 
 #include("conf/authen_LTI.conf");
+# default settings
+#$debug_lti_parameters = 0; 
+#$debug_lti_grade_passback = 0;
 
 
 # LDAP Authentication
