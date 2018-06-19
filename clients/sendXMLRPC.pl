@@ -233,7 +233,8 @@ BEGIN {
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use Carp;
-use Crypt::SSLeay;  # needed for https
+#use Crypt::SSLeay;  # needed for https
+use LWP::Protocol::https;
 use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
@@ -412,8 +413,8 @@ if ($verbose) {
 our $HTML_DISPLAY_COMMAND = $credentials{html_display_command}//HTML_DISPLAY_COMMAND();
 our $HASH_DISPLAY_COMMAND = $credentials{hash_display_command}//HASH_DISPLAY_COMMAND();
 our $DISPLAYMODE          = $credentials{ww_display_mode}//DISPLAYMODE();
-our $TEX_DISPLAY_COMMAND  = $credentials{tex_display_command}TEX_DISPLAY_COMMAND();
-our $PDF_DISPLAY_COMMAND  = $credentials{pdf_display_command}PDF_DISPLAY_COMMAND();
+our $TEX_DISPLAY_COMMAND  = $credentials{tex_display_command}//TEX_DISPLAY_COMMAND();
+our $PDF_DISPLAY_COMMAND  = $credentials{pdf_display_command}//PDF_DISPLAY_COMMAND();
 ##################################################
 #  END gathering credentials for client
 ##################################################
@@ -520,9 +521,9 @@ sub process_pg_file {
 		print "process tex files\n";
 		my ($error_flag, $xmlrpc_client, $error_string) = 
 	    	process_problem($file_path, $default_input, $form_data2);
-	    display_tex_output($file_path, $formatter)  if $display_tex_output;
+	    display_tex_output($file_path, $xmlrpc_client)  if $display_tex_output;
 	}
-	my ($error_flag, $formatter, $error_string) = 
+	my ($error_flag, $xmlrpc_client, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
 	# extract and display result
 		#print "display $file_path\n";
