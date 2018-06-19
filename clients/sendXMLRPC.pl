@@ -197,8 +197,11 @@ BEGIN {
 
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
-use Crypt::SSLeay;  # needed for https
+
+use Carp;
+#use Crypt::SSLeay;  # needed for https
 use WebworkClient;
+use LWP::Protocol::https;
 use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
 use Getopt::Long qw[:config no_ignore_case bundling];
@@ -344,7 +347,15 @@ our $HTML_DISPLAY_COMMAND = $credentials{html_display_command}//HTML_DISPLAY_COM
 #our $HASH_DISPLAY_COMMAND = $credentials{hashdisplayCommand}//HASH_DISPLAY_COMMAND();
 
 our $DISPLAYMODE          = $credentials{ww_display_mode}//DISPLAYMODE();
+<<<<<<< HEAD
 $path_to_log_file         = $path_to_log_file //$credentials{path_to_log_file}//LOG_FILE();  #set log file path.
+=======
+our $TEX_DISPLAY_COMMAND  = $credentials{tex_display_command}//TEX_DISPLAY_COMMAND();
+our $PDF_DISPLAY_COMMAND  = $credentials{pdf_display_command}//PDF_DISPLAY_COMMAND();
+##################################################
+#  END gathering credentials for client
+##################################################
+>>>>>>> 427a21cba... Fix compile time errors in sendXMLRPC.pl
 
 eval { # attempt to create log file
 	local(*FH);
@@ -443,7 +454,21 @@ sub process_pg_file {
 	my $problemSeed1 = 1112;
 	my $form_data1 = { %$default_form_data,
 					  problemSeed => $problemSeed1};
+<<<<<<< HEAD
 
+=======
+	if ($display_tex_output or $display_pdf_output) {
+		my $form_data2 = {
+			%$form_data1,
+			displayMode  =>'tex',
+			outputformat => 'tex',
+		};
+		print "process tex files\n";
+		my ($error_flag, $xmlrpc_client, $error_string) = 
+	    	process_problem($file_path, $default_input, $form_data2);
+	    display_tex_output($file_path, $xmlrpc_client)  if $display_tex_output;
+	}
+>>>>>>> 427a21cba... Fix compile time errors in sendXMLRPC.pl
 	my ($error_flag, $xmlrpc_client, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
 	# extract and display result
