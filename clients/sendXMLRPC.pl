@@ -260,7 +260,7 @@ $Carp::Verbose = 1;
 #############################################
 
 ### verbose output when UNIT_TESTS_ON =1;
- our $UNIT_TESTS_ON             = 0;
+our $UNIT_TESTS_ON             = 0;
 
 #Default display commands.
 use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
@@ -554,7 +554,7 @@ sub process_pg_file {
 			displayMode  =>'tex',
 			outputformat => 'tex',
 		};
-		print "process tex files\n";
+		print "process tex files\n" if $UNIT_TESTS_ON;
 		my ($error_flag, $formatter, $error_string) = 
 	    	process_problem($file_path, $default_input, $form_data2);
 	    	
@@ -852,7 +852,7 @@ sub create_pdf_output {
 	
 	my $tex_file_path = $dest_path;
 	my $pdf_path = "$working_dir_path/$pdf_file_name";
-	print "pdflatex $tex_file_path\n";
+	print "pdflatex $tex_file_path\n" if $UNIT_TESTS_ON;
 	
 	# call pdflatex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
@@ -925,7 +925,7 @@ sub create_pdf_output {
 	
 	
 	# return path to pdf file
-	print "pdflatex to $final_pdf_path DONE\n";
+	print "pdflatex to $final_pdf_path DONE\n" if $UNIT_TESTS_ON;
 	# this is doable but will require changing directories
 	# look at the solution done using hardcopy
 	return $final_pdf_path;}
