@@ -559,12 +559,12 @@ sub process_pg_file {
 	    	process_problem($file_path, $default_input, $form_data2);
 	    	
 	    # create tex file for both and tex and pdf output
-	    my $tex_file_name = display_tex_output($file_path, $formatter);
+	    my $tex_file_name = create_tex_output($file_path, $formatter);
 	    # display tex file if --tex option is set 
 	    if ($display_tex_output) {	    
 	    	system($TEX_DISPLAY_COMMAND." ".TEMPOUTPUTDIR().$tex_file_name);
 	    } elsif($display_pdf_output) { # process tex file to create pdf file and display if --pdf option
-	    	my $pdf_path = display_pdf_output($tex_file_name); 	    
+	    	my $pdf_path = create_pdf_output($tex_file_name); 	    
 	    	system("open -a Preview ".$pdf_path );
 	    }
 	}
@@ -788,10 +788,13 @@ sub process_problem {
 	my $formatter = $xmlrpc_client; ## for compatibility with standalonePGproblemRenderer
 	return $error_flag, $formatter, $error_string;
 }
-sub display_pdf_output {
+
+
+
+sub create_pdf_output {
 	my $tex_file_name = shift;
-	my @errors=();   # should this be global?
-	print "pdf mode\n";
+	my @errors=();   
+	print "pdf mode\n" if $UNIT_TESTS_ON;
 	my $pdf_file_name = $tex_file_name;
 	$pdf_file_name =~ s/\.\w+$/\.pdf/;    # replace extension with pdf
 	
@@ -828,7 +831,7 @@ sub display_pdf_output {
 	
 	
 	########################################
-	# try to mv the tex file into the directory
+	# try to mv the tex file into the working directory
 	########################################
 
 	my $src_path = TEMPOUTPUTDIR().$tex_file_name;
@@ -845,7 +848,7 @@ sub display_pdf_output {
 	##########################################
 	# process tex file to pdf  (if working directory was created)
 	##########################################
-	@errors =();  # reset Errors
+	@errors =();  # reset errors
 	
 	my $tex_file_path = $dest_path;
 	my $pdf_path = "$working_dir_path/$pdf_file_name";
@@ -913,10 +916,10 @@ sub display_pdf_output {
 		print "Errors in converting the tex file to pdf: ".join("\n", @errors);
 		return 0;
 	}
+	
 	unless (@errors or $UNIT_TESTS_ON) {
-		print "Deleted working directory $working_dir_path\n";
 		delete_temp_dir($working_dir_path);
-	}
+	} 
 	
  
 	
@@ -940,7 +943,9 @@ sub delete_temp_dir {
 		return 1;
 	}
 }
-sub display_tex_output {
+
+
+sub create_tex_output {
 	my $file_path = shift;
 	my $formatter = shift;
 	my $output_text = $formatter->formatRenderedProblem;
