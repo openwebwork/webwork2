@@ -137,19 +137,19 @@ sub formatRenderedProblem {
 
 
 	$self->{outputformats}={};
-	my $XML_URL      	 =  $self->url;
-	my $FORM_ACTION_URL  =  $self->{form_action_url};
-	my $courseID         =  $self->{courseID};
-	my $userID           =  $self->{userID};
-	my $course_password  =  $self->{course_password};
+	my $XML_URL      	 =  $self->url//'';
+	my $FORM_ACTION_URL  =  $self->{form_action_url}//'';
+	my $courseID         =  $self->{courseID}//'';
+	my $userID           =  $self->{userID}//'';
+	my $course_password  =  $self->{course_password}//'';
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//6666;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode}//'foobar';
 	
-	my $previewMode      =  defined($self->{inputs_ref}->{preview});
-	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck});
-	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit});
-	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWcorrectAns});
+	my $previewMode      =  defined($self->{inputs_ref}->{preview})||0;
+	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck})||0;
+	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit})||0;
+	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWcorrectAns})||0;
         # problemIdentifierPrefix can be added to the request as a parameter.  
         # It adds a prefix to the 
         # identifier used by the  format so that several different problems
@@ -207,7 +207,7 @@ sub formatRenderedProblem {
 	$localStorageMessages.= CGI::p('Your overall score for this problem is'.'&nbsp;'.CGI::span({id=>'problem-overall-score'},''));
 	$localStorageMessages .= CGI::end_div();
 		
-	my $pretty_print_self  = pretty_print($self);
+	#my $pretty_print_self  = pretty_print($self);
 ######################################################
 # Return interpolated problem template
 ######################################################
