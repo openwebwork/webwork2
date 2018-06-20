@@ -88,7 +88,7 @@ use constant PROBLEMSEED   => '32145';
 my $use_site;  
  #$use_site = 'test_webwork';    # select a rendering site 
  #$use_site = 'local';           # select a rendering site 
- #$use_site = 'hosted2';        # select a rendering site 
+ #$use_site = 'demo';        # select a rendering site 
  $use_site ="credentials";
  
 # credentials file location -- search for one of these files 
@@ -216,10 +216,10 @@ if ($use_site eq 'local') {
 	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
 	$XML_PASSWORD     =  'xmlwebwork';    #matches site_password in renderViaXMLRPC.pm
 	$XML_COURSE       =  'daemon_course';
-} elsif ($use_site eq 'hosted2') {  
+} elsif ($use_site eq 'demo') {  
 	
-	$XML_URL          =  'https://hosted2.webwork.rochester.edu';
-	$FORM_ACTION_URL  =  'https://hosted2.webwork.rochester.edu/webwork2/html2xml';
+	$XML_URL          =  'https://demo.webwork.rochester.edu';
+	$FORM_ACTION_URL  =  'https://demo.webwork.rochester.edu/webwork2/html2xml';
  	$XML_PASSWORD     = 'xmlwebwork';
  	$XML_COURSE       = 'daemon_course';
 	
