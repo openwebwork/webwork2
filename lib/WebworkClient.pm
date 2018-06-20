@@ -104,6 +104,8 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 
 package WebworkClient;
 
+use base qw(FormatRenderedProblem);
+
 use Crypt::SSLeay;  # needed for https
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
@@ -600,7 +602,7 @@ sub formatRenderedLibraries {
 
 =item formatRenderedProblem
 
-=cut
+now defined in superclass FormatRenderedProblem.pm
 
 sub formatRenderedProblem {
 	my $self 			  = shift;
