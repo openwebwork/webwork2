@@ -247,7 +247,11 @@ use 5.10.0;
 $Carp::Verbose = 1;
 
 #############################################
+# CONFIGURE
+#
 # Configure displays for local operating system
+# This section will differ from on operating system to another
+# The default code is for the macOS and  applications commonly available on macOS.
 #############################################
 
 ### verbose output when UNIT_TESTS_ON =1;
