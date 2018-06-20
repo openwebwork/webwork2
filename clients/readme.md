@@ -49,7 +49,7 @@ SYNOPSIS
 
 DETAILS
 
-credentials file
+* credentials file
   
 * These locations are searched, in order,  for the credentials file.
         `("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');`
@@ -128,7 +128,9 @@ The single letter options can be "bundled" e.g.  -vcCbB
 
 ```
     --tex    
-				Process question in TeX mode and output to the command line
+				Process question in TeX mode and output the TeX file to the default temp directory (webwork2/DATA)
+				
+	--pdf    Process a question in TeX mode and output the pdf file to the default temp directory
             
     --list   pg_list
 				Read and process a list of .pg files contained in
@@ -169,4 +171,6 @@ The single letter options can be "bundled" e.g.  -vcCbB
 	--log 
 		       Sets path to log file
 ```
-
+* Defaults:
+	* There several default addresses set near the top of the file `sendXMLRPC.pl`.  The most important of these sets the default temporary directory (where output files are placed) to `webwork2/DATA`
+	* The default commands for automatically displaying html, pdf and tex files have settings that work with macOS.  They will need to be adjusted for other platforms. 
