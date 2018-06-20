@@ -2,18 +2,24 @@
 
 * The client directory contains software which shows how WeBWorK  PG questions can be accessed from outside the WeBWorK2 framework via a webserver. 
 
-* For immediate testing copy `TestWW.html.dist` to `TestWW.html` and `Second_semester_calculus_topics.html.dist` to `Second_semester_calculus_topics.html`.  Open these files in an internet connected browser to see PG questions displayed in an ordinary webpage.
-* These files illustrate the technology that is used to embed WeBWorK questions into the textbooks using [Mathbook\_XML](https://mathbook.pugetsound.edu/) (now PreTeXt).
-* An earlier version of this technology embedding WeBWorK problems into HTML pages is described in this [blog post](http://michaelgage.blogspot.com/2015/06/whether-writing-full-text-book-or-just.html)
+* For immediate testing copy `t/TestWW.html.dist` to `TestWW.html` and `t/Second_semester_calculus_topics.html.dist` to `Second_semester_calculus_topics.html`. 
+ Open these files in an internet connected browser to see PG questions displayed in an ordinary webpage.
+* These files illustrate the technology that is used to embed WeBWorK questions into the 
+textbooks using [Mathbook\_XML](https://mathbook.pugetsound.edu/) (now PreTeXt).
+* An earlier version of this technology embedding WeBWorK problems into HTML pages is described in this 
+[blog post](http://michaelgage.blogspot.com/2015/06/whether-writing-full-text-book-or-just.html)
 * To view this technology in action  from the command line one can use this command.
  
 ```
 cd /opt/webwork/webwork2/clients
 sendXMLRPC.pl -b t/input.pg
 ```
-* `sendXMLRPC.pl` accepts a number of options that determine the information returned including HTML or PDF presentation, correct answers, and so forth.
+* `sendXMLRPC.pl` accepts a number of options that determine the information 
+returned including HTML or PDF presentation, correct answers, and so forth.
 
-* Many editors can be set up to send the text being edited through a command line program for display.  The file `sendxmlrpc_bbedit.pl` is an example of a connecting script that works with the Mac's BBedit.
+* Many editors can be set up to send the text being edited through a command 
+line program for display.  The file `sendxmlrpc_bbedit.pl` is 
+an example of a connecting script that works with the Mac's BBedit.
 
 -------------------------
 
@@ -52,10 +58,10 @@ credentials file
         or create a file with this information and specify it with the --credentials option.
     
             %credentials = (
-                            userID                 => "my login name for the webwork course",
-                            course_password        => "my password ",
-                            courseID               => "the name of the webwork course",
-                  XML_URL                  => my_site_edu/webwork2
+                  userID                 => "my login name for the webwork course",
+                  course_password        => "my password ",
+                  courseID               => "the name of the webwork course",
+                  XML_URL                => my_site_edu/webwork2
                   XML_PASSWORD          => "site password" # preliminary access to site (often 123456789)
                   $FORM_ACTION_URL      =  'https://my_site_edu/webwork2/html2xml'; #action url for form
             );
