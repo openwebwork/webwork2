@@ -6,10 +6,28 @@
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
-# set this to 1 to have LTI calling parameters printed to HTML page for
+# set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
 $debug_lti_parameters = 0; 
+
+# To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
+# to one.  And set the LTIMassUpdateInterval to 60 (seconds).
+$debug_lti_grade_passback = 0;
+
+# This will print into the apache log the success or failure of updating each user/set.
+# If the set has "no lis_source_did" then that set hasn't been assigned, or the user is an instructor
+# and not a student.
+
+# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and 
+# response between the LMS and WW to be printed into apache error log file for each
+# user/set  update of the grade.
+
+# The switches above can be set in course.conf to enable debugging for just one course.
+
+# If you want even more information enable the debug facility for SubmitGrade.pm in 
+# the WeBWorK::Constants file.  
+# This will print extensive debug messages for all courses.
 
 # This first section enables LTI authentication.
 # Failover to Basic_TheLastOption is necessary to authenticate with
