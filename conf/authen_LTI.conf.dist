@@ -6,10 +6,10 @@
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
-# set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
+# Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
-$debug_lti_parameters = 0; 
+$debug_lti_parameters = 1; 
 
 # To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
 # to one.  And set the LTIMassUpdateInterval to 60 (seconds).
@@ -48,8 +48,9 @@ $authen{user_module} = [
 # Basic_TheLastOption, then WeBWorK::Login
 # will display a screen directing the user
 # back to an external authentication system.
+# This prevents you from attempting to login in to WeBWorK directly.
 
-$external_auth=1;
+#$external_auth=1;
 
 # NOTE:  If external authentication is disabled
 # then you should probably also prevent students
