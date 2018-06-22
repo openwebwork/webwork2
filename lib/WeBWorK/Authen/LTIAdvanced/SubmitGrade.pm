@@ -174,8 +174,8 @@ sub submit_set_grade {
   }
   # make debug prettier
   my $message_string = '';
-  $message_string .= "performing mass_update: " if $self->{post_processing_mode};
-  $message_string .= "\nsubmitting grade for user: $userID set $setID ";
+  $message_string .= "\nmass_update: " if $self->{post_processing_mode};
+  $message_string .= "submitting grade for user: $userID set $setID ";
   $message_string .= "-- lis_source_did is not available " unless ($userSet->lis_source_did);
   warn($message_string."\n") if $ce->{debug_lti_grade_passback};
   return $self->submit_grade($userSet->lis_source_did,$score);
@@ -253,8 +253,10 @@ EOS
   while (length($bodyhash) % 4) {
     $bodyhash .= '=';
   }
-
-  warn("Submitting grade using sourcedid: $sourcedid and score: $score\n") if    $ce->{debug_lti_grade_passback};
+  my $message2='';
+  $message2 .= "mass_update: " if $self->{post_processing_mode};
+  $message2 .= "Submitting grade using sourcedid: $sourcedid and score: $score\n";
+  warn($message2) if $ce->{debug_lti_grade_passback};
   
   my $request_url = $db->getSettingValue('lis_outcome_service_url');
   
@@ -274,11 +276,11 @@ EOS
     warn("Cannot submit grades to LMS, no signature_method");
     return 0;
   }
-  #warn "found data required for submitting grades to LMS" if $ce->{debug_lti_grade_passback};
+  debug("found data required for submitting grades to LMS");
   my $requestGen = Net::OAuth->request("consumer");
-  #warn "obtained requestGen $requestGen" if $ce->{debug_lti_grade_passback};
+  debug( "obtained requestGen $requestGen");
   $requestGen->add_required_message_params('body_hash');
-  #warn "add required message params" if $ce->{debug_lti_grade_passback};
+  debug("add required message params"); 
   my $gradeRequest = $requestGen->new(
 		  request_url => $request_url,
 		  request_method => "POST",
@@ -289,9 +291,9 @@ EOS
 		  timestamp => time(),
 		  body_hash => $bodyhash
 							 );
-	#warn "created grade request ". $gradeRequest if $ce->{debug_lti_grade_passback};
+	debug("created grade request "). $gradeRequest;
   $gradeRequest->sign();
-	#warn "signed grade request" if $ce->{debug_lti_grade_passback};
+	debug("signed grade request"); 
   my $HTTPRequest = HTTP::Request->new(
 	       $gradeRequest->request_method,
 	       $gradeRequest->request_url,
@@ -301,7 +303,7 @@ EOS
 	       ],
 	       $replaceResultXML,
 		);
-    #warn "posting grade request: $HTTPRequest"if $ce->{debug_lti_grade_passback};
+    debug ("posting grade request: $HTTPRequest");
  
 my $response = eval {   
    LWP::UserAgent->new->request($HTTPRequest);
@@ -313,23 +315,17 @@ my $response = eval {
 # debug section
 
 
-	if ($ce->{debug_lti_grade_passback}){
+	if ($ce->{debug_lti_grade_passback} and $ce->{debug_lti_parameters}){
 	  warn "The response is:\n ". ($self->local_escape_html(join(" ", %$response )));  
 	  warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest))); 
 	}
-# 	if ($self->{post_processing_mode}) { 
-# 	  warn "The response is:\n ". join(" ", %$response )  if $ce->{debug_lti_grade_passback};
-# 	  warn "The request was:\n ". join(" ",%$HTTPRequest) if $ce->{debug_lti_grade_passback};
-# 	} else {
-# 	  warn "The response is:\n ". CGI::escapeHTML( join(" ", %$response ) )  if $ce->{debug_lti_grade_passback};
-# 	  warn "The request was:\n ". CGI::escapeHTML( join(" ",%$HTTPRequest)) if $ce->{debug_lti_grade_passback};
-# 	}
-#   
-  
+
+
 # end debug section 
   if ($response->is_success) {
     $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
     my $message = $1;
+    warn ("result is: $message\n") if $ce->{debug_lti_grade_passback};
     if ($message ne 'success') {
       debug("Unable to update LMS grade $sourcedid . LMS responded with message: ". $message) ;
       return 0;
