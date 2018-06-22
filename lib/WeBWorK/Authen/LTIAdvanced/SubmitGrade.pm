@@ -291,7 +291,7 @@ EOS
 		  timestamp => time(),
 		  body_hash => $bodyhash
 							 );
-	debug("created grade request "). $gradeRequest;
+	debug("created grade request ". $gradeRequest);
   $gradeRequest->sign();
 	debug("signed grade request"); 
   my $HTTPRequest = HTTP::Request->new(
