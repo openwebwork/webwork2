@@ -671,7 +671,8 @@ sub updateSetting {
 
 
 ##  pstaabp: This is currently not working.  We need to look into a nice robust way to send email.  It looks like the current
-## way that WW sends mail is a bit archaic.  The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
+## way that WW sends mail is a bit archaic.  
+## The MIME::Lite looks fairly straightforward, but we may need to look into smtp settings a
 ## bit more.  
 
 
