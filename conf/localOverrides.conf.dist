@@ -152,6 +152,10 @@ $problemLibrary{showLibraryGlobalStats} = 1;
  
 $courseFiles{problibs}    = {
 	Library          => "OPL Directory",
+    capaLibrary      => "CAPA",
+    Contrib          => "Contrib",
+# the following are not really needed but you can 
+# create links to your own private libraries this way. 
 # 	rochesterLibrary => "Rochester",
 # 	unionLibrary     => "Union",
 # 	asuLibrary       => "Arizona State",
@@ -159,7 +163,7 @@ $courseFiles{problibs}    = {
 # 	dartmouthLibrary => "Dartmouth",
 # 	indianaLibrary   => "Indiana",
 # 	osuLibrary       => "Ohio State",	
-#       capaLibrary      => "CAPA",
+
 };
 
 
@@ -382,6 +386,9 @@ $showeditors{simplepgeditor}   = 0;
 # this to work.  See http://webwork.maa.org/wiki/R_in_WeBWorK for more info.
 
 # $pg{specialPGEnvironmentVars}{Rserve} = {host => "localhost"};
+
+# use this setting when running in a docker container.
+# $pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};
 
 ################################################################################
 # Authentication Methods

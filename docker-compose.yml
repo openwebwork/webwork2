@@ -15,6 +15,7 @@ services:
     image: webwork
     depends_on:
       - db
+      - r
     volumes:
       - ".:/opt/webwork/webwork2"
       - "./.data/courses:/opt/webwork/courses"
