@@ -211,6 +211,8 @@ BEGIN {
 }
 $ENV{MOD_PERL_API_VERSION} = 2;
 use lib "$main::dirname";
+#use lib "."; # is this needed?
+
 # some files such as FormatRenderedProblem.pm may need to be in the same directory
 
 
@@ -229,6 +231,7 @@ BEGIN {
 		die "Cannot read webwork pg directory at $WeBWorK::Constants::PG_DIRECTORY";
 	}
 }
+
 
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
@@ -375,7 +378,6 @@ The credentials file should contain this:
                                                       # for Mac: have Chrome read html output file
                                                       # modify this for other platforms or browsers
 	);
-1;
 EOF
 
 if (defined $credentials_path and (-r $credentials_path) ) {
@@ -387,7 +389,7 @@ if (defined $credentials_path and (-r $credentials_path) ) {
 # if credentials_path not set explicitly go look for a credentials file.
 unless (defined $credentials_path) {
 	foreach my $path ( @path_list) { 
-		print "looking for credentials file $path. Found =".(-r $path)."\n" if $verbose;
+		print "looking for credentials file: $path. -- ".((-r $path)?'found!':'(not found)')."\n" if $verbose;
 		next unless defined $path;
 		if (-r $path ) {
 			$credentials_path = $path;
@@ -419,7 +421,7 @@ if ($@  or not  %credentials) {
 }
 
 if ($verbose) {
-	foreach (keys %credentials){print "$_ =>$credentials{$_} \n";} 
+	foreach (sort keys %credentials){print "$_ =>$credentials{$_} \n";} 
 }
 
 #allow credentials to overrride the default displayMode 
