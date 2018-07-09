@@ -369,7 +369,7 @@ The credentials file should contain this:
 			userID              => "my login name for the webwork course",
 			course_password     => "my password ",
 			courseID            => "the name of the webwork course",
-            site_url	        => "url of rendering site",
+            site_url	        => 'http://localhost:80' # "url of rendering site",
             site_password       => "site password", # preliminary access to site
             form_action_url     =>  'http://localhost:80/webwork2/html2xml', #action url for form
             ww_display_mode       =>  'MathJax', # optional 
@@ -566,8 +566,8 @@ sub process_pg_file {
 	    if ($display_tex_output) {	    
 	    	system($TEX_DISPLAY_COMMAND." ".TEMPOUTPUTDIR().$tex_file_name);
 	    } elsif($display_pdf_output) { # process tex file to create pdf file and display if --pdf option
-	    	my $pdf_path = create_pdf_output($tex_file_name); 	    
-	    	system("open -a Preview ".$pdf_path );
+	    	my $pdf_path = create_pdf_output($tex_file_name); 
+	    	system(PDF_DISPLAY_COMMAND." ".$pdf_path);	    
 	    }
 	}
 	my ($error_flag, $formatter, $error_string) = 
