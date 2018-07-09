@@ -126,9 +126,11 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # http://webwork.maa.org/wiki/National_Problem_Library
 # The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
+# NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
 #$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
 #$problemLibrary{version}     = "2";
 # uncomment these lines below and comment out the line above if using OPL instead of NPL
+
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
 $problemLibrary{version}    = "2.5";  
@@ -236,6 +238,10 @@ $pg{displayModes} = [
 
 # Default display mode. Should be an uncommented item listed above.
 $pg{options}{displayMode}        = "MathJax";
+$webworkURLs{MathJax} = "$server_root_url/$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
+#$webworkURLs{MathJax} = "https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
+#$webworkURLs{MathJax} = "https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS_CHTML-full";
+
  
 ################################################################################
 #  Adding to the macro file search path. (Check with entries in defaults.config before overriding)
@@ -316,12 +322,12 @@ $pg{options}{periodicRandomizationPeriod} = 5;
 ################################################################################
 
  $pg{specialPGEnvironmentVars}{DragMath} = 0;
- #$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
- #$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
- #$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{templates}/Contrib/CAPA/CAPA_Graphics/",
- #push @{$pg{directories}{macrosPath}},  
- #  "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools",
- #  "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools";
+ $pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
+ $pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
+ $pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{templates}/Contrib/CAPA/CAPA_Graphics/",
+ push @{$pg{directories}{macrosPath}},  
+   "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools",
+   "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools";
 
  # The link Contrib in the course templates directory should point to ../webwork-open-problem-library/Contrib 
 
@@ -372,6 +378,11 @@ $showeditors{simplepgeditor}   = 0;
 #$courseDirs{html_temp}  =  "/var/www/wwtmp/$courseName";
 #$courseURLs{html_temp}   = "/wwtmp/$courseName";
 
+#####################
+# Additional PG modules
+#####################
+
+#push (@{${pg}{modules}}, [qw(TikZ_Image2)]);
 ################################################################################ 
 # Student Date Format
 ################################################################################
@@ -393,8 +404,27 @@ $showeditors{simplepgeditor}   = 0;
 
 # $pg{specialPGEnvironmentVars}{Rserve} = {host => "localhost"};
 
-# use this setting when running in a docker container.
+# use this setting when running Rserve in a docker container.
 # $pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};
+
+
+################################################################################
+# Serving Opaque client questions to moodle
+################################################################################
+
+
+# this snippet checks to see if Moodle has already called MathJax
+# $pg{specialPGEnvironmentVars}{problemPreamble} = { TeX => '', HTML=> <<END_PREAMBLE };
+# 
+# 	<script type="text/x-mathjax-config">
+# 	if (MathJax.Hub.Startup.params.config && MathJax.Hub.config.config.length) {
+# 	    MathJax.Hub.Config({
+# 	      config: [],
+# 	      skipStartupTypeset: false
+# 	    });
+# 	  }
+# 	</script>
+# END_PREAMBLE
 
 ################################################################################
 # Authentication Methods
