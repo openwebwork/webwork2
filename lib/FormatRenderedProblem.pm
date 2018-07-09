@@ -184,6 +184,8 @@ sub formatRenderedProblem {
 	my $color_input_blanks_script = $tbl->color_answer_blanks;
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
+
+	# FIXME -- can we avoid using imgGenerator here?
 	# warn "imgGen is ", $tbl->imgGen;
 	#warn "answerOrder ", $tbl->answerOrder;
 	#warn "answersSubmitted ", $tbl->answersSubmitted;
