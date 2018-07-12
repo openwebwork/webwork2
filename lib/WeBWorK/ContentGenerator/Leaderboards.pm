@@ -171,7 +171,8 @@ sub body {
 	
 	#return "<a href='http://localhost/webwork2/MAT1275EN-S18-Parker/Leaderboards.html'>Leaderboards</a>";
 
-	my $template = HTML::Template->new(filename => '/opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/test.tmpl');	
+
+	my $template = HTML::Template->new(filename => '/opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Leaderboards/test.tmpl');	
 	 return $template->output;
 }
 1;
