@@ -1001,7 +1001,7 @@ sub display_hash_output {   # print the entire hash output to the command line
 # 	print FH $output_text2;
 # 	close(FH);
 # 
-# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+# 	system($HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
 	#sleep 1; #wait 1 seconds
 	#unlink($output_file);
 }
@@ -1022,7 +1022,7 @@ sub display_ans_output {  # print the collection of answer hashes to the command
 # 	print FH $output_text;
 # 	close(FH);
 # 
-# 	system(HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
+# 	system($HASH_DISPLAY_COMMAND().$output_file."; rm $output_file;");
 # 	sleep 1; #wait 1 seconds
 # 	unlink($output_file);
 }
