@@ -567,7 +567,7 @@ sub process_pg_file {
 	    	system($TEX_DISPLAY_COMMAND." ".TEMPOUTPUTDIR().$tex_file_name);
 	    } elsif($display_pdf_output) { # process tex file to create pdf file and display if --pdf option
 	    	my $pdf_path = create_pdf_output($tex_file_name); 
-	    	system(PDF_DISPLAY_COMMAND." ".$pdf_path);	    
+	    	system($PDF_DISPLAY_COMMAND." ".$pdf_path);	    
 	    }
 	}
 	my ($error_flag, $formatter, $error_string) = 
