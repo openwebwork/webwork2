@@ -43,15 +43,23 @@ The capital letter switches, -B, -H, and -C render the question twice.  The firs
 time returns an answer hash which contains the correct answers. The question is
 then resubmitted to the renderer with the correct answers filled in and displayed.  
 
-IMPORTANT: Remember to configure the local output file and display command near the 
-top of this script. !!!!!!!!
+IMPORTANT: Create a valid credentials file (a sample file ww_credentials.dist is provided).
+	(See below.)
+	Locations where this file can be located:
+		"$ENV{HOME}/.ww_credentials"
+		"$ENV{HOME}/ww_session_credentials"
+		'ww_credentials'
+		'ww_credentials.dist'
+	The file sets the remove server and the local display/edit commands.
 
-IMPORTANT: Create a valid credentials file.
+IMPORTANT: Remember to configure:
+	1. the local output file (near the top of this script)
+	2. the display commands (in the ww_credentials file)
+	3. the remote server to contact (in the ww_credentials file)
+   Things will NOT work until the configuration is done.
 
-This script is similar to
-standalonePGproblemRenderer.pl. It does not require a local WeBWorK site
-on the same computer but does require an internet connection to 
-a remote WeBWorK site.
+This script is similar to standalonePGproblemRenderer.pl. It does not require a local WeBWorK site
+on the same computer but does require an internet connection to a remote WeBWorK site.
 
 =cut
 
@@ -68,20 +76,59 @@ a remote WeBWorK site.
     
     Place a credential file containing the following information at one of the locations above 
     or create a file with this information and specify it with the --credentials option.
+
+  # Cut here - top =============================================
+
+  # The sample settings below should be customized for your server and local system
+
+  %credentials = (
+    # Set the URLs of the remote site and the site password
+
+	# Test settings for the demo.webwork.rochester.edu site
+        site_url        => 'https://demo.webwork.rochester.edu',
+	form_action_url => 'https://demo.webwork.rochester.edu/webwork2/html2xml',
+        site_password   => 'xmlrpc',
+
+	# Settings for use with a local webwork system (ex. via Docker)
+	# site_url        => 'http://localhost:80',
+	# form_action_url => 'http://localhost:80/webwork2/html2xml',
+	# site_password   => 'xmlrpc',
+
+    # Set the identification credential used by the "daemon_course" on the remote site
+        courseID        => "daemon_course",
+        userID          => "daemon",
+        course_password => "daemon",
+    # Set the display mode to use
+        ww_display_mode   => "MathJax",
+    # Set the path to the LOCAL log file (make sure to create an empty file)
+	# when commented out - no file is needed
+	# path_to_log_file =>"",
+    # Set the display commands which work on the machine on which you are
+    # running sendXMLRPC.pl
+	# Sample settings for Mac:
+
+        # html_display_command   => "open -a 'Google Chrome' ", # A web browser
+	# html_display_command   => "open -a Firefox ",
+	# tex_display_command    => "open -a 'TeXShop'",	# Editor or TeX editor
+	# pdf_display_command    => "open -a 'Preview'",	# PDF viewer
+	# hash_display_command   => "cat ", 			# to diplay file to STDOUT
+
+	# ==============================
+
+	# Sample settings for Linux:
+
+	# html_display_command => "firefox", 			# A web browser
+	# html_display_command => "google-chrome",
+	# tex_display_command  => "vim",				# Editor or TeX editor
+	# tex_display_command  => "emacs",
+	# pdf_display_command  => "xpdf",				# PDF viewer
+	# pdf_display_command  => "evince",
+	# pdf_display_command  => "acroread",			# PDF viewer
+	# hash_display_command => "cat ",			# to diplay file to STDOUT
+  );
+
+  # Cut here - bottom =============================================
     
-    	%credentials = (
-    			userID                 => "my login name for the webwork course",
-    			course_password        => "my password ",
-    			courseID               => "the name of the webwork course",
-                site_url	           => "url of rendering site
-                site_password          => "site password" # preliminary access to site
-                form_action_url        =>  'http://localhost:80/webwork2/html2xml'; #action url for form
-                ww_display_mode        =>  'MathJax', # optional 
-                                          # --  'MathJax' and 'images' are the possible values           
-                html_display_command   =>  "open -a 'Google Chrome' "  # optional
-                                                      # for Mac: have Chrome read html output file
-                                                      # modify this for other platforms or browsers  
-    	);
 
 =cut
 
@@ -364,20 +411,54 @@ print_help_message() if $print_help_message;
 our @path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
 
 my $credentials_string = <<EOF;
-The credentials file should contain this:
-	%credentials = (
-			userID              => "my login name for the webwork course",
-			course_password     => "my password ",
-			courseID            => "the name of the webwork course",
-            site_url	        => 'http://localhost:80' # "url of rendering site",
-            site_password       => "site password", # preliminary access to site
-            form_action_url     =>  'http://localhost:80/webwork2/html2xml', #action url for form
-            ww_display_mode       =>  'MathJax', # optional 
-                                               # --  'MathJax' and 'images' are the possible values
-            html_display_command  =>  "open -a 'Google Chrome' "  # optional
-                                                      # for Mac: have Chrome read html output file
-                                                      # modify this for other platforms or browsers
-	);
+The credentials file should contain something like this:
+
+  %credentials = (
+    # Set the URLs of the remote site and the site password
+
+	# Test settings for the demo.webwork.rochester.edu site
+        site_url        => 'https://demo.webwork.rochester.edu',
+	form_action_url => 'https://demo.webwork.rochester.edu/webwork2/html2xml',
+        site_password   => 'xmlrpc',
+
+	# Settings for use with a local webwork system (ex. via Docker)
+	# site_url        => 'http://localhost:80',
+	# form_action_url => 'http://localhost:80/webwork2/html2xml',
+	# site_password   => 'xmlrpc',
+
+    # Set the identification credential used by the "daemon_course" on the remote site
+        courseID        => "daemon_course",
+        userID          => "daemon",
+        course_password => "daemon",
+    # Set the display mode to use
+        ww_display_mode   => "MathJax",
+    # Set the path to the LOCAL log file (make sure to create an empty file)
+	# when commented out - no file is needed
+	# path_to_log_file =>"",
+    # Set the display commands which work on the machine on which you are
+    # running sendXMLRPC.pl
+	# Sample settings for Mac:
+
+        # html_display_command   => "open -a 'Google Chrome' ", # A web browser
+	# html_display_command   => "open -a Firefox ",
+	# tex_display_command    => "open -a 'TeXShop'",	# Editor or TeX editor
+	# pdf_display_command    => "open -a 'Preview'",	# PDF viewer
+	# hash_display_command   => "cat ", 			# to diplay file to STDOUT
+
+	# ==============================
+
+	# Sample settings for Linux:
+
+	# html_display_command => "firefox", 			# A web browser
+	# html_display_command => "google-chrome",
+	# tex_display_command  => "vim",				# Editor or TeX editor
+	# tex_display_command  => "emacs",
+	# pdf_display_command  => "xpdf",				# PDF viewer
+	# pdf_display_command  => "evince",
+	# pdf_display_command  => "acroread",			# PDF viewer
+	# hash_display_command => "cat ",			# to diplay file to STDOUT
+  );
+  
 EOF
 
 if (defined $credentials_path and (-r $credentials_path) ) {
