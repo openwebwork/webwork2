@@ -277,6 +277,10 @@ BEGIN {
 	unless (-r $WeBWorK::Constants::PG_DIRECTORY ) {
 		die "Cannot read webwork pg directory at $WeBWorK::Constants::PG_DIRECTORY";
 	}
+
+	# Warn about missing environment variables:
+	print "\n\n\nSetting the environment variable WEBWORK_URL will avoid warning messages.\n\n\n" unless exists $ENV{WEBWORK_URL};
+
 }
 
 
