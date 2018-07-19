@@ -484,7 +484,7 @@ if  ( $credentials_path ) {
 	print "Credentials taken from file $credentials_path\n" if $verbose;
 } else {  #failed to find credentials file
 	die <<EOF;
-Can't find path for credentials. Looked in @path_list.
+Can not find path for credentials. Looked in @path_list.
 $credentials_string
 ---------------------------------------------------------
 EOF
