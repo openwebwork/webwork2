@@ -506,7 +506,9 @@ foreach my $key (sort qw(site_url webwork_url form_action_url site_password user
 # When used in the docker environment ENV{WEBWORK_URL} needs to be set
 # since that environment variable is called in site.conf
 
+
 	$ENV{WEBWORK_URL}=$ENV{WEBWORK_URL}//$credentials{webwork_url};
+
 
 if ($verbose) {
 	foreach (sort keys %credentials){print "$_ =>$credentials{$_} \n";} 
