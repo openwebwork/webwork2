@@ -278,9 +278,6 @@ BEGIN {
 		die "Cannot read webwork pg directory at $WeBWorK::Constants::PG_DIRECTORY";
 	}
 
-	# Warn about missing environment variables:
-	print "\n\n\nSetting the environment variable WEBWORK_URL will avoid warning messages.\n\n\n" unless exists $ENV{WEBWORK_URL};
-
 }
 
 
@@ -497,13 +494,19 @@ EOF
 our %credentials;
 eval{require $credentials_path};
 if ($@  or not  %credentials) {
-	foreach my $key (qw(userID courseID course_password XML_URL XML_PASSWORD FORM_ACTION_URL)) {
-		print STDERR "$key is missing from ".
-		             "\%credentials at $credentials_path\n" unless $credentials{$key};
-	}
 	print STDERR $credentials_string;
 	die;
 }
+
+foreach my $key (sort qw(site_url webwork_url form_action_url site_password userID courseID course_password )) {
+	print STDERR "$key is missing from ".
+				 "\%credentials at $credentials_path\n" unless $credentials{$key};
+}
+
+# When used in the docker environment ENV{WEBWORK_URL} needs to be set
+# since that environment variable is called in site.conf
+
+	$ENV{WEBWORK_URL}=$ENV{WEBWORK_URL}//$credentials{webwork_url}
 
 if ($verbose) {
 	foreach (sort keys %credentials){print "$_ =>$credentials{$_} \n";} 
