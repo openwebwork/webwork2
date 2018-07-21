@@ -407,7 +407,7 @@ sub get_credentials {
 			$self -> {login_type} = "normal";
 			$self -> {credential_source} = "params_and_cookie";
 			$self->{user_id}     = trim($self->{user_id});
-			$self->{password}     = trim($self->{user_id});
+			$self->{password}    = trim($self->{password});
 			debug("params and cookie user '", $self->{user_id}, "' params and cookie session key = '",
 				 $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
 			return 1;
