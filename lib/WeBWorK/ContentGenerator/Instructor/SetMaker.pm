@@ -36,8 +36,10 @@ use WeBWorK::Utils qw(readDirectory max sortByName wwRound x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
+use Encode;
 
 require WeBWorK::Utils::ListingDB;
 
@@ -403,7 +405,7 @@ sub browse_local_panel {
 	my $r = $self->r;	
 	my $library_selected = shift;
 	my $lib = shift || ''; $lib =~ s/^browse_//;
-	my $name = ($lib eq '')? $r->maketext('Local') : $problib{$lib};
+	my $name = ($lib eq '')? $r->maketext('Local') : Encode::decode_utf8($problib{$lib});
     
 	my $list_of_prob_dirs= get_problem_directories($r,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
@@ -807,7 +809,7 @@ sub browse_setdef_panel {
                                 -default=> $library_selected).
 		CGI::br().  $view_problem_line;
 	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
-		$popupetc = $r->maktext("there are no set definition files in this course to look at.")
+		$popupetc = $r->maketext("there are no set definition files in this course to look at.")
 	}
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:")." ",
 		$popupetc
@@ -834,7 +836,7 @@ sub make_top_row {
 	##	Make buttons for additional problem libraries
 	my $libs = '';
 	foreach my $lib (sort(keys(%problib))) {
-		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>$problib{$lib},
+		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>Encode::decode_utf8($problib{$lib}),
 																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
 			if (-d "$ce->{courseDirs}{templates}/$lib");
 	}
@@ -955,6 +957,7 @@ sub make_top_row {
 	CGI::end_table()));
 }
 
+
 sub make_data_row {
 	my $self = shift;
 	my $r = $self->r;
@@ -986,9 +989,22 @@ sub make_data_row {
 	my $isGatewaySet = ( defined($setRecord) && 
 			     $setRecord->assignment_type =~ /gateway/ );
 
+	my %problem_div_settings = ( class=>"RenderSolo", id=>"render$cnt" );
+        # Add what is needed for lang and dir settings
+	my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
+	my $to_set_tag;
+	my $to_set_val;
+	while ( scalar(@to_set_lang_dir) > 0 ) {
+	  $to_set_tag = shift( @to_set_lang_dir );
+	  $to_set_val = shift( @to_set_lang_dir );
+	  if ( defined( $to_set_val ) ) {
+	    $problem_div_settings{ "$to_set_tag" } = "$to_set_val";
+	  }
+	}
+
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div({class=>"RenderSolo", id=>"render$cnt"}, $pg->{body_text});
+		: CGI::div( \%problem_div_settings, $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
@@ -1731,7 +1747,7 @@ sub body {
 		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." ".$r->maketext("of")." ".CGI::span({-id=>'totalshown'}, $total_probs).
 			" ".$r->maketext("shown").".", $prev_button, " ", $next_button,
 		);
-		print CGI::p('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.');
+		print CGI::p($r->maketext('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.'));
 	}
 	#	 }
 	print CGI::end_form(), "\n";

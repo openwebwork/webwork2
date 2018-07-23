@@ -33,13 +33,12 @@ use WeBWorK::PG::Translator;
 use WeBWorK::PG::Local;
 use WeBWorK::DB;
 use WeBWorK::Constants;
-use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory);
+use WeBWorK::Utils qw(runtime_use formatDateTime makeTempDirectory encode_utf8_base64 decode_utf8_base64);
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::PG::IO;
 use WeBWorK::PG::ImageGenerator;
 use Benchmark;
-use MIME::Base64 qw( encode_base64 decode_base64);
 
 #print "rereading Webwork\n";
 
@@ -87,13 +86,15 @@ use constant DISPLAY_MODES => {
 	plainText     => "HTML",
 	images        => "HTML_dpng",
 	MathJax	      => "HTML_MathJax",
+	PTX           => "PTX",
 };
 
 use constant DISPLAY_MODE_FAILOVER => {
 		TeX            => [],
 		HTML           => [],
 		HTML_dpng      => [ "HTML", ],
-		HTML_MathJax    => [ "HTML_dpng", "HTML", ],
+		HTML_MathJax   => [ "HTML_dpng", "HTML", ],
+		PTX            => [ "HTML" ],
 		# legacy modes -- these are not supported, but some problems might try to
 		# set the display mode to one of these values manually and some macros may
 		# provide rendered versions for these modes but not the one we want.
@@ -364,7 +365,7 @@ sub renderProblem {
 	my $problem_source;
 	my $r_problem_source =undef;
  	if (defined($rh->{source}) and $rh->{source}) {
-  		$problem_source = decode_base64($rh->{source});
+  		$problem_source = decode_utf8_base64($rh->{source});
   		$problem_source =~ tr /\r/\n/;
 		$r_problem_source =\$problem_source;
 		# warn "source included in request";
@@ -474,11 +475,11 @@ sub renderProblem {
     }
 	# new version of output:
 	my $out2   = {
-		text 						=> encode_base64( $pg->{body_text}  ),
-		header_text 				=> encode_base64( $pg->{head_text} ),
+		text 						=> encode_utf8_base64( $pg->{body_text}  ),
+		header_text 				=> encode_utf8_base64( $pg->{head_text} ),
 		answers 					=> $pg->{answers},
 		errors         				=> $pg->{errors},
-		WARNINGS	   				=> encode_base64( 
+		WARNINGS	   				=> encode_utf8_base64( 
 		                                 "WARNINGS\n".$warning_messages."\n<br/>More<br/>\n".$pg->{warnings} 
 		                               ),
 		PG_ANSWERS_HASH             => $pg->{pgcore}->{PG_ANSWERS_HASH},
@@ -489,7 +490,7 @@ sub renderProblem {
 		debug_messages              => $pgdebug_messages,
 		internal_debug_messages     => $internal_debug_messages,
 	};
-	
+
 	# Filter out bad reference types
 	###################
 	# DEBUGGING CODE

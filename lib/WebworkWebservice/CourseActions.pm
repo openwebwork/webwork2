@@ -11,12 +11,11 @@ use WebworkWebservice;
 use base qw(WebworkWebservice); 
 use WeBWorK::DB;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
-use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime parseDateTime);
+use WeBWorK::Utils qw(runtime_use cryptPassword formatDateTime parseDateTime  encode_utf8_base64 decode_utf8_base64);
 use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
 use JSON;
-use MIME::Base64 qw( encode_base64 decode_base64);
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
 use Date::Format; # for log timestamp
@@ -143,14 +142,14 @@ sub listUsers {
 
 
     $out->{ra_out} = \@userInfo;
-    $out->{text} = encode_base64("Users for course: ".$self->{courseName});
+    $out->{text} = encode_utf8_base64("Users for course: ".$self->{courseName});
     return $out;
 }
 
 sub addUser {
 	my ($self, $params) = @_;
 	my $out = {};
-	$out->{text} = encode_base64("");
+	$out->{text} = encode_utf8_base64("");
 	my $db = $self->db;
 	my $ce = $self->ce;
 
@@ -291,7 +290,7 @@ sub deleteUser {
 	my $out = {};
 	my $db = $self->db;
 	my $ce = $self->ce;
-	$out->{text} = encode_base64("");
+	$out->{text} = encode_utf8_base64("");
 	
 	my $user = $params->{'id'};
 	
@@ -326,12 +325,12 @@ sub deleteUser {
 		{
 			my $result;
 			$result->{delete} = "success";
-			$out->{text} .=encode_base64("User " . $user . " successfully deleted");
+			$out->{text} .=encode_utf8_base64("User " . $user . " successfully deleted");
 			$out->{ra_out} .= "delete: success";
 		}
 		else 
 		{
-			$out->{text}=encode_base64("User " . $user . " could not be deleted");
+			$out->{text}=encode_utf8_base64("User " . $user . " could not be deleted");
 			$out->{ra_out} .= "delete : failed";
 		}
 
@@ -348,7 +347,7 @@ sub editUser {
     my $ce = $self->ce;
     my $out = {};
     debug("Webservices edit user request.");
-    $out->{text} = encode_base64("");
+    $out->{text} = encode_utf8_base64("");
     # make sure course actions are enabled
     #if (!$ce->{webservices}{enableCourseActions}) {
     #	$out->{status} = "failure";
@@ -367,7 +366,7 @@ sub editUser {
     	}
     }
     if($params->{'id'} eq $params->{'user'}){
-        $out->{text} .= encode_base64("You cannot change your own permissions.");
+        $out->{text} .= encode_utf8_base64("You cannot change your own permissions.");
     } else {
         foreach my $field ($PermissionLevel->NONKEYFIELDS()) {
     	    my $param = "${field}";
@@ -395,7 +394,7 @@ sub editUser {
     
 
     $out->{ra_out} = $User;
-    $out->{text} .= encode_base64("Changes saved");
+    $out->{text} .= encode_utf8_base64("Changes saved");
 
 	return $out;
 }
@@ -410,7 +409,7 @@ sub changeUserPassword {
 	my $out = {};
 	my $db = $self->db;
 	my $ce = $self->ce;
-	$out->{text} = encode_base64("");
+	$out->{text} = encode_utf8_base64("");
 	
 	my $userid = $params->{'id'};
 	
@@ -438,7 +437,7 @@ sub changeUserPassword {
 
     #my $User = $db->getUser($params->{'id'}); # checked
     if(!(defined $User)){
-	$out->{text}=encode_base64("No record found for user: ". $params->{'id'});
+	$out->{text}=encode_utf8_base64("No record found for user: ". $params->{'id'});
 	return $out;
     }
     
@@ -453,7 +452,7 @@ sub changeUserPassword {
 	}
 
 	$self->{passwordMode} = 0;
-	$out->{text} = encode_base64("New passwords saved");
+	$out->{text} = encode_utf8_base64("New passwords saved");
 	$out->{ra_out}= "password_change: success";
 	return $out;
 }
@@ -579,7 +578,7 @@ sub getCourseSettings {
   	
 	my $out = {};
 	$out->{ra_out} = $ConfigValues;
-	$out->{text} = encode_base64("Successfully found the course settings");
+	$out->{text} = encode_utf8_base64("Successfully found the course settings");
     return $out;
 
 }
@@ -665,7 +664,7 @@ sub updateSetting {
 
 	my $out = {};
 	$out->{ra_out} = "";
-	$out->{text} = encode_base64("Successfully updated the course settings");
+	$out->{text} = encode_utf8_base64("Successfully updated the course settings");
     return $out;
 }
 
@@ -699,7 +698,7 @@ sub sendEmail {
 	debug("smtpServer: " . $smtpServer);
 	
 	
-	my $mailer = Mail::Sender->new({
+	my $mailer = Email::Sender->new({
 				tls_allowed => $ce->{tls_allowed}//1, # the default for this for  Mail::Sender is 1
 				from      => $smtpServer,
 				fake_from => "pstaab\@fitchburgstate.edu",

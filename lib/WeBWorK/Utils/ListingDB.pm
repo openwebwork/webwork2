@@ -182,8 +182,8 @@ sub makeKeywordWhere {
 	my $kwstring = shift;
 	my @kwlist = keywordCleaner($kwstring);
 #	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
-	@kwlist = map { "kw.keyword = ? " } @kwlist;
-	my $where = join(" OR ", @kwlist);
+	my @kwlistqm = map { "kw.keyword = ? " } @kwlist;
+	my $where = join(" OR ", @kwlistqm);
 	return "AND ( $where )", @kwlist;
 }
 
@@ -439,6 +439,12 @@ sub getDBListings {
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
+	
+	# Make sure these strings are internally encoded in UTF-8
+	utf8::upgrade($subj);
+	utf8::upgrade($chap);
+	utf8::upgrade($sec);
+
 	my $keywords = $r->param('library_keywords') || "";
 	# Next could be an array, an array reference, or nothing
 	my @levels = $r->param('level');
@@ -462,19 +468,19 @@ sub getDBListings {
 	my $extrawhere = '';
 	my @select_parameters=();
 	if($subj) {
-		$subj =~ s/'/\\'/g;
+#		$subj =~ s/'/\\'/g;
 #		$extrawhere .= " AND dbsj.name=\"$subj\" ";
 		$extrawhere .= " AND dbsj.name= ? ";
 		push @select_parameters, $subj;
 	}
 	if($chap) {
-		$chap =~ s/'/\\'/g;
+#		$chap =~ s/'/\\'/g;
 #		$extrawhere .= " AND dbc.name=\"$chap\" ";
 		$extrawhere .= " AND dbc.name= ? ";
 		push @select_parameters, $chap;
 	}
 	if($sec) {
-		$sec =~ s/'/\\'/g;
+#		$sec =~ s/'/\\'/g;
 #		$extrawhere .= " AND dbsc.name=\"$sec\" ";
 		$extrawhere .= " AND dbsc.name= ? ";
 		push @select_parameters, $sec;
@@ -510,6 +516,7 @@ sub getDBListings {
 #               $kw2";
 
 	my $pg_id_ref;
+	$dbh->do(qq{SET NAMES 'utf8';});
 	if($haveTextInfo) {
 		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
 			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
