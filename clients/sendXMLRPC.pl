@@ -280,9 +280,7 @@ BEGIN {
 
 }
 
-
-use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
-use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
+################################################################################
 
 use Carp;
 #use Crypt::SSLeay;  # needed for https
@@ -296,56 +294,8 @@ use File::Path;
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
 use Cwd 'abs_path';
-use WebworkClient;
-use FormatRenderedProblem;
-#use Proc::ProcessTable; # use in standalonePGproblemRenderer
 
-use 5.10.0;
-$Carp::Verbose = 1;
 
-#############################################
-# CONFIGURE
-#
-# Configure displays for local operating system
-# This section will differ from on operating system to another
-# The default code is for the macOS and  applications commonly available on macOS.
-#############################################
-
-  
-#Default display commands.
-use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
-use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
-
-### Path to a temporary file for storing the output of sendXMLRPC.pl
- use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/"; 
- die "You must make the directory ".TEMPOUTPUTDIR().
-     " writeable " unless -w TEMPOUTPUTDIR();
- use constant TEMPOUTPUTFILE  => TEMPOUTPUTDIR()."temporary_output.html";
-    
-### Default path to a temporary file for storing the output 
-### of sendXMLRPC.pl
-use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/xmlrpc_results.log";
-
-### Command for editing the pg source file in the browswer
-use constant EDIT_COMMAND =>"bbedit";   # for Mac BBedit editor (used as `EDIT_COMMAND() . " $file_path")
-
-### Command for editing and viewing the tex output of the pg question.
-use constant TEX_DISPLAY_COMMAND =>"open -a 'TeXShop'";
-
-### Command for editing and viewing the tex output of the pg question.
-use constant PDF_DISPLAY_COMMAND =>"open -a 'Preview'";
-
-### set display mode
-use constant DISPLAYMODE   => 'MathJax'; 
-use constant PROBLEMSEED   => '987654321'; 
-
-### verbose output when UNIT_TESTS_ON =1;
- our $UNIT_TESTS_ON             = 0;
-
-############################################################
-# End configure displays for local operating system
-############################################################
- 
 ############################################################
 # Read command line options
 ############################################################
@@ -371,6 +321,12 @@ my $print_resource_hash;
 my $print_help_message;
 my $read_list_from_this_file;
 my $path_to_log_file;
+
+our %credentials;
+our @path_list;
+my $credentials_string;
+
+
 GetOptions(
 	'a' 			=> \$display_ans_output1,
 	'A' 			=> \$display_ans_output2,
@@ -395,12 +351,18 @@ GetOptions(
 	'log=s'         => \$path_to_log_file,
 );
 
-
 print_help_message() if $print_help_message;
 
 ############################################################
 # End Read command line options
 ############################################################
+
+################################################################################
+
+# Move up the reading of credential files to here in order to get
+# WEBWORK_URL defined before it is needed. (For Docker installs when
+# called from outside Docker, it may not be in the environment variables.)
+
 
 ####################################################
 # get credentials
@@ -409,9 +371,10 @@ print_help_message() if $print_help_message;
 # credentials are needed
 # credentials file location -- search for one of these files 
 
-our @path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
 
-my $credentials_string = <<EOF;
+BEGIN {
+    @path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
+    $credentials_string = <<EOF;
 The credentials file should contain something like this:
 
   %credentials = (
@@ -462,57 +425,113 @@ The credentials file should contain something like this:
   
 EOF
 
-if (defined $credentials_path and (-r $credentials_path) ) {
-		# we're all set
-} elsif(defined $credentials_path) { #can't find credentials
-		die "Can't find credentials file $credentials_path searching\n";
-}
+    if (defined $credentials_path and (-r $credentials_path) ) {
+	# we're all set
+    } elsif(defined $credentials_path) { #can't find credentials
+	die "Can't find credentials file $credentials_path searching\n";
+    }
 
-# if credentials_path not set explicitly go look for a credentials file.
-unless (defined $credentials_path) {
+    # if credentials_path not set explicitly go look for a credentials file.
+    unless (defined $credentials_path) {
 	foreach my $path ( @path_list) { 
-		print "looking for credentials file: $path. -- ".((-r $path)?'found!':'(not found)')."\n" if $verbose;
-		next unless defined $path;
-		if (-r $path ) {
-			$credentials_path = $path;
-			last;
-		}
+	    print "looking for credentials file: $path. -- ".((-r $path)?'found!':'(not found)')."\n" if $verbose;
+	    next unless defined $path;
+	    if (-r $path ) {
+		$credentials_path = $path;
+		last;
+	    }
 	}
-}
+    }
 
-# verify that a credentials file has been found
-if  ( $credentials_path ) { 
+    # verify that a credentials file has been found
+    if  ( $credentials_path ) {
 	print "Credentials taken from file $credentials_path\n" if $verbose;
-} else {  #failed to find credentials file
+    } else {  #failed to find credentials file
 	die <<EOF;
 Can not find path for credentials. Looked in @path_list.
 $credentials_string
 ---------------------------------------------------------
 EOF
-}  
+    }
 
-our %credentials;
-eval{require $credentials_path};
-if ($@  or not  %credentials) {
+    eval{require $credentials_path};
+    if ($@  or not  %credentials) {
 	print STDERR $credentials_string;
 	die;
-}
+    }
 
-foreach my $key (sort qw(site_url webwork_url form_action_url site_password userID courseID course_password )) {
+    foreach my $key (sort qw(site_url webwork_url form_action_url site_password userID courseID course_password )) {
 	print STDERR "$key is missing from ".
-				 "\%credentials at $credentials_path\n" unless $credentials{$key};
+	    "\%credentials at $credentials_path\n" unless $credentials{$key};
+    }
+
+    # When used in the docker environment ENV{WEBWORK_URL} needs to be set
+    # since that environment variable is called in site.conf
+
+
+    $ENV{WEBWORK_URL}=$ENV{WEBWORK_URL}//$credentials{webwork_url};
+
+    if ($verbose) {
+	foreach (sort keys %credentials){print "$_ =>$credentials{$_} \n";}
+    }
 }
 
-# When used in the docker environment ENV{WEBWORK_URL} needs to be set
-# since that environment variable is called in site.conf
+
+################################################################################
 
 
-	$ENV{WEBWORK_URL}=$ENV{WEBWORK_URL}//$credentials{webwork_url};
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
+use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
+
+use WebworkClient;
+use FormatRenderedProblem;
+#use Proc::ProcessTable; # use in standalonePGproblemRenderer
+
+use 5.10.0;
+$Carp::Verbose = 1;
+
+#############################################
+# CONFIGURE
+#
+# Configure displays for local operating system
+# This section will differ from on operating system to another
+# The default code is for the macOS and  applications commonly available on macOS.
+#############################################
 
 
-if ($verbose) {
-	foreach (sort keys %credentials){print "$_ =>$credentials{$_} \n";} 
-}
+#Default display commands.
+use constant  HTML_DISPLAY_COMMAND  => "open -a 'Google Chrome' "; # (MacOS command)
+use constant  HASH_DISPLAY_COMMAND => "";   # display tempoutputfile to STDOUT
+
+### Path to a temporary file for storing the output of sendXMLRPC.pl
+ use constant  TEMPOUTPUTDIR   => "$ENV{WEBWORK_ROOT}/DATA/";
+ die "You must make the directory ".TEMPOUTPUTDIR().
+     " writeable " unless -w TEMPOUTPUTDIR();
+ use constant TEMPOUTPUTFILE  => TEMPOUTPUTDIR()."temporary_output.html";
+ 
+### Default path to a temporary file for storing the output
+### of sendXMLRPC.pl
+use constant LOG_FILE => "$ENV{WEBWORK_ROOT}/DATA/xmlrpc_results.log";
+
+### Command for editing the pg source file in the browswer
+use constant EDIT_COMMAND =>"bbedit";   # for Mac BBedit editor (used as `EDIT_COMMAND() . " $file_path")
+
+### Command for editing and viewing the tex output of the pg question.
+use constant TEX_DISPLAY_COMMAND =>"open -a 'TeXShop'";
+
+### Command for editing and viewing the tex output of the pg question.
+use constant PDF_DISPLAY_COMMAND =>"open -a 'Preview'";
+
+### set display mode
+use constant DISPLAYMODE   => 'MathJax';
+use constant PROBLEMSEED   => '987654321';
+
+### verbose output when UNIT_TESTS_ON =1;
+our $UNIT_TESTS_ON             = 0;
+
+############################################################
+# End configure displays for local operating system
+############################################################
 
 #allow credentials to overrride the default displayMode 
 #and the browser display
@@ -790,10 +809,10 @@ sub process_problem {
 	my $xmlrpc_client = new WebworkClient (
 		url                    => $credentials{site_url},
 		form_action_url        => $credentials{form_action_url},
-		site_password          =>  $credentials{site_password}//'',
-		courseID               =>  $credentials{courseID},
-		userID                 =>  $credentials{userID},
-		session_key            =>  $credentials{session_key}//'',
+		site_password          => $credentials{site_password}//'',
+		courseID               => $credentials{courseID},
+		userID                 => $credentials{userID},
+		session_key            => $credentials{session_key}//'',
 		sourceFilePath         => $adj_file_path,
 	);
 	
