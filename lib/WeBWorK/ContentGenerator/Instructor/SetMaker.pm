@@ -36,6 +36,7 @@ use WeBWorK::Utils qw(readDirectory max sortByName wwRound x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 use Encode;
@@ -956,6 +957,7 @@ sub make_top_row {
 	CGI::end_table()));
 }
 
+
 sub make_data_row {
 	my $self = shift;
 	my $r = $self->r;
@@ -987,9 +989,22 @@ sub make_data_row {
 	my $isGatewaySet = ( defined($setRecord) && 
 			     $setRecord->assignment_type =~ /gateway/ );
 
+	my %problem_div_settings = ( class=>"RenderSolo", id=>"render$cnt" );
+        # Add what is needed for lang and dir settings
+	my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
+	my $to_set_tag;
+	my $to_set_val;
+	while ( scalar(@to_set_lang_dir) > 0 ) {
+	  $to_set_tag = shift( @to_set_lang_dir );
+	  $to_set_val = shift( @to_set_lang_dir );
+	  if ( defined( $to_set_val ) ) {
+	    $problem_div_settings{ "$to_set_tag" } = "$to_set_val";
+	  }
+	}
+
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div({class=>"RenderSolo", id=>"render$cnt"}, $pg->{body_text});
+		: CGI::div( \%problem_div_settings, $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;

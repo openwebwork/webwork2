@@ -107,7 +107,7 @@
 	<!--#endif-->
 
 	<!--#if can="body"-->
-	<div class="Body">
+	<div class="Body" <!--#output_problem_lang_and_dir-->>
 		<!--#body-->
 	</div>
 	<!--#endif-->
