@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-1307 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-1307 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -203,7 +203,7 @@ sub new {
   my $textno;
   my $textinfo=[];
 
-  open(IN,"$name") or die "can not open $name: $!";
+  open(IN,'<:encoding(UTF-8)',"$name") or die "can not open $name: $!";
   if ($name !~ /pg$/ && $name !~ /\.pg\.[-a-zA-Z0-9_.@]*\.tmp$/) {
     warn "Not a pg file";  #print caused trouble with XMLRPC 
     $self->{file}= undef;

@@ -279,7 +279,7 @@ sub addCourse {
 	##### step 4: write course.conf file #####
 	
 	my $courseEnvFile = $ce->{courseFiles}->{environment};
-	open my $fh, ">", $courseEnvFile
+	open my $fh, ">:utf8", $courseEnvFile
 		or die "failed to open $courseEnvFile for writing.\n";
 	writeCourseConf($fh, $ce, %courseOptions);
 	close $fh;
@@ -1247,7 +1247,7 @@ sub writeCourseConf {
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the

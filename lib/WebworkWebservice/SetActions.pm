@@ -21,7 +21,7 @@ use sigtrap;
 use Carp;
 use WWSafe;
 #use Apache;
-use WeBWorK::Utils;
+use WeBWorK::Utils qw( encode_utf8_base64 decode_utf8_base64 );
 use WeBWorK::Debug qw(debug);
 use JSON;
 use WeBWorK::CourseEnvironment;
@@ -29,7 +29,6 @@ use WeBWorK::PG::Translator;
 use WeBWorK::DB::Utils qw(initializeUserProblem);
 use WeBWorK::PG::IO;
 use Benchmark;
-use MIME::Base64 qw( encode_base64 decode_base64);
 
 ##############################################
 #   Some of this may have to be moved, to allow for flexability
@@ -52,7 +51,7 @@ sub listLocalSets{
   @found_sets = $db->listGlobalSets;
   my $out = {};
   $out->{ra_out} = \@found_sets;
-  $out->{text} = encode_base64("Loaded sets for course: ".$self->{courseName});
+  $out->{text} = encode_utf8_base64("Loaded sets for course: ".$self->{courseName});
   return $out;
 }
 
@@ -96,7 +95,7 @@ sub listLocalSetProblems{
 	
   	my $out = {};
   	$out->{ra_out} = \@problems;
-  	$out->{text} = encode_base64("Loaded Problems for set: " . $setName);
+  	$out->{text} = encode_utf8_base64("Loaded Problems for set: " . $setName);
   	return $out;
 }
 
@@ -121,7 +120,7 @@ sub getSets{
   
   my $out = {};
   $out->{ra_out} = \@all_sets;
-  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  $out->{text} = encode_utf8_base64("Sets for course: ".$self->{courseName});
   return $out;
 }
 
@@ -148,7 +147,7 @@ sub getUserSets{
   
   my $out = {};
   $out->{ra_out} = \@userSets;
-  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  $out->{text} = encode_utf8_base64("Sets for course: ".$self->{courseName});
   return $out;
 }
 
@@ -170,7 +169,7 @@ sub getSet {
   
   my $out = {};
   $out->{ra_out} = $set;
-  $out->{text} = encode_base64("Sets for course: ".$self->{courseName});
+  $out->{text} = encode_utf8_base64("Sets for course: ".$self->{courseName});
   return $out;
   }
 
@@ -247,7 +246,7 @@ sub updateSetProperties {
 
 	my $out = {};
 	$out->{ra_out} = $set;
-	$out->{text} = encode_base64("Successfully updated set " . $params->{set_id});
+	$out->{text} = encode_utf8_base64("Successfully updated set " . $params->{set_id});
 	return $out;
 }
 
@@ -258,7 +257,7 @@ sub listSetUsers {
     my $out = {};
     my @users = $db->listSetUsers($params->{set_id});
     $out->{ra_out} = \@users;
-    $out->{text} = encode_base64("Successfully returned the users for set " . $params->{set_id});
+    $out->{text} = encode_utf8_base64("Successfully returned the users for set " . $params->{set_id});
     return $out;
 
 }
@@ -282,7 +281,7 @@ sub createNewSet{
 
 		my $newSetRecord = $db->getGlobalSet($newSetName);
 		if (defined($newSetRecord)) {
-            $out->{out}=encode_base64("Failed to create set, you may need to try another name."),
+            $out->{out}=encode_utf8_base64("Failed to create set, you may need to try another name."),
             $out->{ra_out} = {'success' => 'false'};
 		} else {			# Do it!
 			# DBFIXME use $db->newGlobalSet
@@ -322,7 +321,7 @@ sub createNewSet{
 			
 			$db->addGlobalSet($newSetRecord);
 			if ($@) {
-				$out->{text} = encode_base64("Failed to create set, you may need to try another name.");
+				$out->{text} = encode_utf8_base64("Failed to create set, you may need to try another name.");
 				#$self->addbadmessage("Problem creating set $newSetName<br> $@");
 			} else {
 				my $selfassign = $params->{selfassign};
@@ -380,7 +379,7 @@ sub assignSetToUsers {
 
 	my $out = {};
 	$out->{ra_out} = \@results;
-	$out->{text} = encode_base64("Successfully assigned users to set " . $params->{set_id});
+	$out->{text} = encode_utf8_base64("Successfully assigned users to set " . $params->{set_id});
 	return $out;
 }
 
@@ -421,7 +420,7 @@ sub deleteProblemSet {
 	debug("deleted set:  $setID");
 	debug($result);
 
-	my $out->{text} = encode_base64("Deleted Problem Set " . $setID);
+	my $out->{text} = encode_utf8_base64("Deleted Problem Set " . $setID);
 
 
 
@@ -475,7 +474,7 @@ sub reorderProblems {
 
 	my $out;
 
-	$out->{text} = encode_base64("Successfully reordered problems");
+	$out->{text} = encode_utf8_base64("Successfully reordered problems");
 	return $out;
 }
 
@@ -497,7 +496,7 @@ sub updateProblem{
 	}
 
 		
-	my $out->{text} = encode_base64("Updated Problem Set " . $setID);
+	my $out->{text} = encode_utf8_base64("Updated Problem Set " . $setID);
 
 
 
@@ -540,7 +539,7 @@ sub updateUserSet {
   
   my $out = {};
   #$out->{ra_out} = $set;
-  $out->{text} = encode_base64("Successfully updated set " . $params->{set_id} . " for users " . $params->{users});
+  $out->{text} = encode_utf8_base64("Successfully updated set " . $params->{set_id} . " for users " . $params->{users});
   return $out;
 }
 
@@ -564,7 +563,7 @@ sub getUserSets {
 
 	my $out = {};
 	$out->{ra_out} = \@userData;
-	$out->{text} = encode_base64("Returning all users sets for set " . $params->{set_id});
+	$out->{text} = encode_utf8_base64("Returning all users sets for set " . $params->{set_id});
 
 	return $out;
 }
@@ -586,7 +585,7 @@ sub saveUserSets {
 
 	my $out = {};
 	$out->{ra_out} = "";
-	$out->{text} = encode_base64("Updating the overrides for set " . $params->{set_id});
+	$out->{text} = encode_utf8_base64("Updating the overrides for set " . $params->{set_id});
 
 	return $out;
 }
@@ -606,7 +605,7 @@ sub unassignSetFromUsers {
 		my $result = $db->deleteUserSet($user, $params->{set_id});
 	}
 	my $out = {};
-	$out->{text} = encode_base64("Successfully unassigned users: " + $params->{users} + " from set " + $params->{set_id});
+	$out->{text} = encode_utf8_base64("Successfully unassigned users: " + $params->{users} + " from set " + $params->{set_id});
 }
 
 =item assignAllSetsToUser($userID)
@@ -727,7 +726,7 @@ sub addProblem {
 	
 
 	#assignProblemToAllSetUsers($self, $problemRecord);
-	my $out->{text} = encode_base64("Problem added to ".$setName);
+	my $out->{text} = encode_utf8_base64("Problem added to ".$setName);
 	return $out;
 }
 
@@ -749,7 +748,7 @@ sub deleteProblem {
 			$db->deleteGlobalProblem($setName, $problemRecord->problem_id);
 		}
 	}
-	my $out->{text} = encode_base64("Problem removed from ".$setName);
+	my $out->{text} = encode_utf8_base64("Problem removed from ".$setName);
 	return $out;
 }
 
