@@ -182,8 +182,8 @@ sub makeKeywordWhere {
 	my $kwstring = shift;
 	my @kwlist = keywordCleaner($kwstring);
 #	@kwlist = map { "kw.keyword = \"$_\"" } @kwlist;
-	@kwlist = map { "kw.keyword = ? " } @kwlist;
-	my $where = join(" OR ", @kwlist);
+	my @kwlistqm = map { "kw.keyword = ? " } @kwlist;
+	my $where = join(" OR ", @kwlistqm);
 	return "AND ( $where )", @kwlist;
 }
 
@@ -468,19 +468,19 @@ sub getDBListings {
 	my $extrawhere = '';
 	my @select_parameters=();
 	if($subj) {
-		$subj =~ s/'/\\'/g;
+#		$subj =~ s/'/\\'/g;
 #		$extrawhere .= " AND dbsj.name=\"$subj\" ";
 		$extrawhere .= " AND dbsj.name= ? ";
 		push @select_parameters, $subj;
 	}
 	if($chap) {
-		$chap =~ s/'/\\'/g;
+#		$chap =~ s/'/\\'/g;
 #		$extrawhere .= " AND dbc.name=\"$chap\" ";
 		$extrawhere .= " AND dbc.name= ? ";
 		push @select_parameters, $chap;
 	}
 	if($sec) {
-		$sec =~ s/'/\\'/g;
+#		$sec =~ s/'/\\'/g;
 #		$extrawhere .= " AND dbsc.name=\"$sec\" ";
 		$extrawhere .= " AND dbsc.name= ? ";
 		push @select_parameters, $sec;

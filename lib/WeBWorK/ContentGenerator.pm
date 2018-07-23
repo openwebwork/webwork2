@@ -547,11 +547,13 @@ sub content {
 	unless (-r $templateFile) {  #hack to prevent disaster when missing theme directory
 	   if (-r "$themesDir/math4/$template.template") {
 	   		$templateFile = "$themesDir/math4/$template.template";
+			$theme = HTML::Entities::encode_entities($theme);
 	   		warn "Theme $theme is not one of the available themes. ".
 	   		"Please check the theme configuration ".
 	   		"in the files localOverrides.conf, course.conf and ".
 	   		"simple.conf and on the course configuration page.\n"
 	   	} else {
+			$theme = HTML::Entities::encode_entities($theme);
 	   		die "Neither the theme $theme nor the defaultTheme math4 are available.  ".  
 	   		"Please notify your site administrator that the structure of the ".
 	   		"themes directory needs attention.";

@@ -1805,8 +1805,8 @@ sub save_as_handler {
 		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
 		File not saved. No changes have been made.
 		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
-		$self->addgoodmessage(CGI::p("The text box now contains the source of the original problem.".
-		" You can recover lost edits by using the Back button on your browser."));
+		$self->addgoodmessage(CGI::p($r->maketext("The text box now contains the source of the original problem.".
+		" You can recover lost edits by using the Back button on your browser.")));
 	} else {
 		$self->{editFilePath} = $outputFilePath;
 		$self->{tempFilePath} = ''; # nothing needs to be unlinked.

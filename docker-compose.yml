@@ -1,0 +1,33 @@
+version: '2'
+services:
+  db:
+    image: mariadb:10.1
+    volumes:
+      - "./.data/db:/var/lib/mysql"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: randomepassword
+      MYSQL_DATABASE: webwork
+      MYSQL_USER: webworkWrite
+      MYSQL_PASSWORD: passwordRW
+  app:
+    build: .
+    image: webwork
+    depends_on:
+      - db
+      - r
+    volumes:
+      - ".:/opt/webwork/webwork2"
+      - "./.data/courses:/opt/webwork/courses"
+      # Uncomment the line below to use local OPL for development
+      #- "../opl:/opt/webwork/libraries/webwork-open-problem-library"
+      # Uncomment the line below to use local PG for development
+      #- "../pg:/opt/webwork/pg"
+    ports:
+      - "8080:80"
+    environment:
+      DEV: 0
+  r:
+    image: ubcctlt/rserve
+    ports:
+      - "6311:6311"

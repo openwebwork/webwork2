@@ -549,7 +549,7 @@ msgstr ""
 
 #. ($reducedScoringPerCent)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:370
-msgid "After the reduced scoring peroid begins all work counts for %1% of its value."
+msgid "After the reduced scoring period begins all work counts for %1% of its value."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:715
