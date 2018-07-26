@@ -52,7 +52,7 @@ sub new {
 # %msg format:
 #   $msg{to}      = either a single address or an arrayref containing multiple addresses
 #   $msg{subject} = string subject
-#   $msg{msg}     = string body of email (this is what Mail::Sender::MailMsg uses)
+#   $msg{msg}     = string body of email (this is what Email::Sender::MailMsg uses)
 sub add_message {
 	my ($self, %msg) = @_;
 	
