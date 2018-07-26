@@ -29,6 +29,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile seq_to_jitar_id jitar_id_to_seq jitar_problem_adjusted_status wwRound x);
+use WeBWorK::ContentGenerator::Instructor::FileManager;
 
 our @userInfoColumnHeadings = (x("STUDENT ID"), x("login ID"), x("LAST NAME"), x("FIRST NAME"), x("SECTION"), x("RECITATION"));
 our @userInfoFields = ("student_id", "user_id","last_name", "first_name", "section", "recitation");
@@ -52,11 +53,14 @@ sub initialize {
 	my $scoreSelected = $r->param('scoreSelected');
 	my $scoringFileName = $r->param('scoringFileName') || "${courseName}_totals";
 	$scoringFileName =~ s/\.csv\s*$//; $scoringFileName .='.csv';  # must end in .csv
+	my $scoringFileNameOK = (
+		$scoringFileName eq  WeBWorK::ContentGenerator::Instructor::FileManager::checkName($scoringFileName)
+	);
 	$self->{scoringFileName}=$scoringFileName;
 	
 	$self->{padFields}  = defined($r->param('padFields') ) ? 1 : 0; 
 	
-	if (defined $scoreSelected && @selected) {
+	if (defined $scoreSelected && @selected && $scoringFileNameOK) {
 
 		my @totals                 = ();
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
@@ -111,9 +115,17 @@ sub initialize {
 		$self->appendColumns( \@totals,\@sum_scores);
 		$self->writeCSV("$scoringDir/$scoringFileName", @totals);
 
-	} elsif (defined $scoreSelected) {
-		$self->addbadmessage($r->maketext("You must select one or more sets for scoring"));
-	} 
+	} else {
+		if (!@selected) {  # nothing selected for scoring
+			$self->addbadmessage($r->maketext("You must select one or more sets for scoring!"));
+		}
+		if (!$scoringFileNameOK) { # fileName is not properly formed
+			$self->addbadmessage($r->maketext("Your file name is not valid! "));
+		    $self->addbadmessage($r->maketext("A file name cannot begin with a dot, it cannot be empty, it cannot contain a " .
+				 "directory path component and only the characters -_.a-zA-Z0-9 and space  are allowed.")
+			); 
+		}
+	}
 	
 	# Obtaining list of sets:
 	my @setNames =  $db->listGlobalSets();

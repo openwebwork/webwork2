@@ -36,6 +36,7 @@ use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
+use File::Basename qw(dirname);
 use WeBWorK::Utils::Tasks qw(fake_user fake_set renderProblems);
 use Data::Dumper;
 use Fcntl;
@@ -510,32 +511,32 @@ sub body {
 	
        my @PG_Editor_Reference_Links = (
    		{label 		=>	$r->maketext('Problem Techniques')	,
-   		 url 		=>  'http://webwork.maa.org/wiki/Category:Problem_Techniques' 	,
+   		 url 		=>  $ce->{webworkURLs}{problemTechniquesHelpURL}, #'http://webwork.maa.org/wiki/Category:Problem_Techniques' 	,
    		 target     =>	'techniques_window'	,
    		 tooltip 	=>	'Snippets of PG code illustrating specific techniques'	,
    		},
    		{label 		=>	$r->maketext('Math Objects')	,
-   		 url 		=>   'http://webwork.maa.org/wiki/Category:MathObjects'  	,
+   		 url 		=>   $ce->{webworkURLs}{MathObjectsHelpURL}, #'http://webwork.maa.org/wiki/Category:MathObjects'  	,
    		 target		=>	'math_objects'	,
    		 tooltip 	=>	'Wiki summary page for MathObjects'	,
    		},   		
    		{label 		=>	$r->maketext('POD')	,
-   		 url 		=>  'http://webwork.maa.org/pod/pg_TRUNK/'  	,
+   		 url 		=>  $ce->{webworkURLs}{PODHelpURL}, #'http://webwork.maa.org/pod/pg_TRUNK/'  	,
    		 target		=>	'pod_docs'	,
    		 tooltip 	=>	'Documentation from source code for PG modules and macro files. Often the most up-to-date information.'	,
    		},
    		{label 		=>	$r->maketext('PGLab')	,
-   		 url 		=>  'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
+   		 url 		=>  $ce->{webworkURLs}{PGLabHelpURL}, #'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
    		 target		=>	'PGLab'	,
    		 tooltip 	=>	'Test snippets of PG code in interactive lab.  Good way to learn PG language.'	,
    		},
    		{label 		=>	$r->maketext('PGML')	,
-   		 url 		=>  'https://courses.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
+   		 url 		=>  $ce->{webworkURLs}{PGMLHelpURL}, #'https://courses1.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
    		 target		=>	'PGML'	,
    		 tooltip 	=>	'PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques.'	,
    		},
    		{label 		=>	$r->maketext('Author Info')	,
-   		 url 		=>  'http://webwork.maa.org/wiki/Category:Authors'  	,
+   		 url 		=>  $ce->{webworkURLs}{AuthorHelpURL}, #'http://webwork.maa.org/wiki/Category:Authors'  	,
    		 target		=>	'author_info'	,
    		 tooltip 	=>	'Top level of author information on the wiki.'	,
    		},
@@ -673,7 +674,7 @@ EOF
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
 		CGI::div({},$PG_Editor_Reference_String),
 		CGI::p(
-			CGI::textarea(
+			CGI::textarea( -id => "problemContents", 
 				-name => 'problemContents', -default => $problemContents, -class => 'latexentryfield',
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
@@ -762,29 +763,6 @@ sub getRelativeSourceFilePath {
 	return $sourceFilePath;
 }
 
-# determineLocalFilePath   constructs a local file path parallel to a library file path
-
-# 
-sub determineLocalFilePath {
-	my $self= shift;				die "determineLocalFilePath is a method" unless ref($self);
-	my $path = shift;
- 	my $default_screen_header_path   = $self->r->ce->{webworkFiles}->{hardcopySnippets}->{setHeader}; 
- 	my $default_hardcopy_header_path = $self->r->ce->{webworkFiles}->{screenSnippets}->{setHeader};
-	my $setID = $self->{setID};
-	$setID = int(rand(1000)) unless $setID =~/\S/;  # setID can be 0
-	if ($path =~ /Library/) {
-		#$path =~ s|^.*?Library/||;  # truncate the url up to a segment such as ...rochesterLibrary/.......
-		$path  =~ s|^.*?Library/|local/|;  # truncate the url up to a segment such as ...rochesterLibrary/....... and prepend local
- 	} elsif ($path eq $default_screen_header_path) {
- 		$path = "set$setID/setHeader.pg";
- 	} elsif ($path eq $default_hardcopy_header_path) {
- 		$path = "set$setID/hardcopyHeader.tex";
-	} else { # if its not in a library we'll just save it locally
-		$path = "new_problem_".int(rand(1000)).".pg";	#l hope there aren't any collisions.
-	}
-    $path;
-
-}
 
 sub determineTempEditFilePath {  # this does not create the directories in the path to the file
                                  # it  returns an absolute path to the file
@@ -1711,12 +1689,11 @@ sub save_as_form {  # calls the save_as_handler
 	my $setID         = $self->{setID};
 	my $fullSetID     = $self->{fullSetID};
 	
-	
+	my $fileDir = dirname($editFilePath);	
 	my $shortFilePath =  $editFilePath;
 	$shortFilePath   =~ s|^$templatesDir/||;
 	$shortFilePath   =  'local/'.$shortFilePath
-	  unless( $shortFilePath =~m|^local/| ||
-		  (defined $setID and $shortFilePath =~m|^set$setID|));  # suggest that modifications be saved to the "local" subdirectory
+	  if (! -w $fileDir );  # suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
 	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
    
 
@@ -2009,8 +1986,26 @@ sub output_JS{
 	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
+	 }
+
+	 if ($ce->{options}->{PGWirisEditor}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 
+
+	if ($ce->{options}->{PGCodeMirror}) {
+	  
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PG.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PGaddons.js"}), CGI::end_script();
+	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
+
+	}
+	
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor2/pgproblemeditor2.js"}), CGI::end_script();
+	
 	return "";
 }
 

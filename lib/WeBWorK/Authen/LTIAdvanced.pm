@@ -167,6 +167,7 @@ sub get_credentials {
 	 ['oauth_timestamp', 'oauth_timestamp'],
 	 ['section', 'custom_section'],
 	 ['recitation', 'custom_recitation'],
+	 ['student_id', 'custom_student_id'],
 	);
 
       # Some LMS's misspell the lis_person_sourcedid parameter name
@@ -199,6 +200,12 @@ sub get_credentials {
 	$self->{user_id} =~ s/@.*$// if
 	  $ce->{strip_address_from_email};
       }
+
+     if (!defined($self->{student_id})
+         and defined($ce->{preferred_source_of_student_id})) {
+       my $user_id_lti_param_name = $ce->{preferred_source_of_student_id};
+       $self->{student_id} = $r->param($user_id_lti_param_name);
+     }
       
       # For setting up its helpful to print out what the system think the
       # User id and address is at this point 
@@ -206,7 +213,9 @@ sub get_credentials {
 	warn "=========== summary ============";
 	warn "User id is |$self->{user_id}|\n";
 	warn "User mail address is |$self->{email}|\n";
+	warn "Student id is |", $self->{student_id}//'undefined',"|\n";
 	warn "preferred_source_of_username is |", $ce->{preferred_source_of_username}//'undefined',"|\n";
+	warn "preferred_source_of_student_id is |", $ce->{preferred_source_of_student_id}//'undefined',"|\n";
 	warn "================================\n";
       }
       if (!defined($self->{user_id})) {
@@ -360,10 +369,18 @@ sub authenticate {
 
   # We need to provide the request URL when verifying the OAuth request.
   # We use the url request by default, but also allow it to be overriden
-  my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
+  my $path = $ce->{server_root_url}.$ce->{webwork_url};
   $path = $ce->{LTIBasicToThisSiteURL} ? 
     $ce->{LTIBasicToThisSiteURL} : $path;
 
+  # append the path the the server url
+  $path = $path.$r->urlpath()->path;
+
+  if ( $ce->{debug_lti_parameters} ) {
+      warn("The following path was reconstructed by WeBWorK.  It should match the path in the LMS:");
+      warn($path);
+  }
+  
   # We also try a version without the trailing / in case that was not
   # included when the LMS user created the LMS link 
   my $altpath = $path;
@@ -396,9 +413,9 @@ sub authenticate {
       debug("OAuth verification Failed ");
       
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-      $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
+      $self->{log_error} .= "OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL.";
       if ( $ce->{debug_lti_parameters} ) {
-	warn("OAuth verification failed.  Check the Consumer Secret.");
+	warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the LMS url then you have https in \$server_root_url in site.conf");
       }
       return 0;
     } else {
@@ -510,6 +527,7 @@ sub create_user {
   $newUser-> section($self->{section} // "");
   $newUser->recitation($self->{recitation} // "");
   $newUser->comment(formatDateTime(time, "local"));
+  $newUser->student_id($self->{student_id} // "");
 
   # Allow sites to customize the user
   if (defined($ce->{LTI_modify_user})) {
@@ -575,14 +593,17 @@ sub maybe_update_user {
     # Create a temp user and run it through the create process
     my $tempUser = $db->newUser();
     $tempUser->user_id($userID);
-    $self->{last_name} =~ s/\+/ /g;
-    $tempUser->last_name($self->{last_name});
-    $self->{first_name} =~ s/\+/ /g;
-    $tempUser->first_name($self->{first_name});
+    my $last_name = $self->{last_name} // '';
+    $last_name =~ s/\+/ /g;
+    $tempUser->last_name($last_name);
+    my $first_name = $self->{first_name} // '';
+    $first_name =~ s/\+/ /g;
+    $tempUser->first_name($first_name);
     $tempUser->email_address($self->{email});
     $tempUser->status("C");
     $tempUser-> section($self->{section} // "");
     $tempUser->recitation($self->{recitation} // "");
+    $tempUser->student_id($self->{student_id} // "");
     
     # Allow sites to customize the temp user
     if (defined($ce->{LTI_modify_user})) {
@@ -591,7 +612,7 @@ sub maybe_update_user {
 
     my @elements = qw(last_name first_name 
 		      email_address status 
-		      section recitation);
+		      section recitation student_id);
 
     my $change_made = 0;
 

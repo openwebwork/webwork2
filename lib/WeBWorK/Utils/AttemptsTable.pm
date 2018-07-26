@@ -269,7 +269,7 @@ sub formatAnswerRow {
 		# push @correct_ids,   $name if $answerScore == 1;
 	} elsif (($rh_answer->{type}//'') eq 'essay') {
 		$resultString =  $self->maketext("Ungraded"); 
-		# $self->{essayFlag} = 1;
+		$self->{essayFlag} = 1;
 	} elsif ( defined($answerScore) and $answerScore == 0) { # MEG: I think $answerScore ==0 is clearer than "not $answerScore"
 		# push @incorrect_ids, $name if $answerScore < 1;
 		$resultStringClass = "ResultsWithError";
@@ -284,7 +284,7 @@ sub formatAnswerRow {
 
 	my $row = join('',
 			  ($self->showAnswerNumbers) ? CGI::td({},$answerNumber):'',
-			  ($self->showAttemptAnswers) ? CGI::td({},$self->nbsp($answerString)):'' ,   # student original answer
+			  ($self->showAttemptAnswers) ? CGI::td({dir=>"auto"},$self->nbsp($answerString)):'' ,   # student original answer
 			  ($self->showAttemptPreviews)?  $self->formatToolTip($answerString, $answerPreview):"" ,
 			  ($self->showAttemptResults)?   $attemptResults : '' ,
 			  ($self->showCorrectAnswers)?  $self->formatToolTip($correctAnswer,$correctAnswerPreview):"" ,
@@ -320,7 +320,7 @@ sub answerTemplate {
     	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
     	push @correct_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) >= 1;
     	push @incorrect_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) < 1;
-    	$self->{essayFlag} = 1;
+    	#$self->{essayFlag} = 1;
     }
 	my $answerTemplate = CGI::h3($self->maketext("Results for this submission")) .
     	CGI::table({class=>"attemptResults"},@tableRows);

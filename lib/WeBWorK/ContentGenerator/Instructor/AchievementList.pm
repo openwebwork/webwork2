@@ -280,7 +280,7 @@ sub body {
 	
 	########## print action forms
 	
-	print CGI::p(CGI::b("Any changes made below will be reflected in the achievement for ALL students.")) if $editMode;
+	print CGI::p(CGI::b($r->maketext("Any changes made below will be reflected in the achievement for ALL students."))) if $editMode;
 
 	print CGI::p($r->maketext("Select an action to perform").":");
 
@@ -414,8 +414,7 @@ sub assign_form {
 	my ($self, $onChange, %actionParams) = @_;
 	my $r = $self->r;
 
-	return join("",
-		    $r->maketext("Assign")." ",
+	return $r->maketext("Assign [_1] to all users, create global data, and [_2].",
 		CGI::popup_menu(
 			-name => "action.assign.scope",
 			-values => [qw(all selected)],
@@ -426,7 +425,6 @@ sub assign_form {
 			},
 			-onchange => $onChange,
 		),
-		    " ".$r->maketext("to all users, create global data, and")." ",
    		CGI::popup_menu(
 			-name => "action.assign.overwrite",
 			-values => [qw(everything new_only)],
@@ -436,8 +434,7 @@ sub assign_form {
 				new_only => $r->maketext("preserve existing data"),
 			},
 			-onchange => $onChange,
-		),
-
+		)
 	);
 }
 
@@ -700,14 +697,14 @@ sub create_form {
 			-width => "60",
 			-onchange => $onChange,
 		),
-		" as ",
+		" ".$r->maketext("as")." ",
 		CGI::popup_menu(
 			-name => "action.create.type",
 			-values => [qw(empty copy)],
 			-default => $actionParams{"action.create.type"}->[0] || "empty",
 			-labels => {
-				empty => "a new empty achievement.",
-				copy => "a duplicate of the first selected achievement.",
+				empty => $r->maketext("a new empty achievement."),
+				copy => $r->maketext("a duplicate of the first selected achievement."),
 			},
 			-onchange => $onChange,
 		);
@@ -770,8 +767,7 @@ sub import_form {
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 
-	return join(" ",
-		$r->maketext("Import achievements from")." ",
+	return $r->maketext("Import achievements from [_1] assigning the achievements to [_2].",
 		CGI::popup_menu(
 			-name => "action.import.source",
 			-values => [ "", $self->getAxpList() ],
@@ -779,7 +775,6 @@ sub import_form {
 			-default => $actionParams{"action.import.source"}->[0] || "",
 		        -onchange => $onChange,
 		),
-		    $r->maketext("assigning the achievements to").' '.
 		    CGI::popup_menu(
 			-name => "action.import.assign",
 			-value => [qw(none all)],
@@ -789,7 +784,8 @@ sub import_form {
 			    none => $r->maketext("no users"),
 			},
 			-onchange => $onChange,
-		   ) );
+		   )
+	);
 }
 
 # handler for importing achievements
@@ -1283,7 +1279,7 @@ sub recordEditHTML {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly";
 		$fieldValue =~ s/ /&nbsp;/g;
-		$fieldValue = ($fieldValue) ? "Yes" : "No" if $field =~ /enabled/;
+		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enabled/;
 		if ($field =~ /achievement_id/) {
 		    $fieldValue .= $imageLink;
 		    $fieldValue = CGI::div({class=>'label-with-edit-icon'},$fieldValue);
