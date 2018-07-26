@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm,v 1.37 2006/09/25 22:14:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -181,7 +181,7 @@ sub body {
 						 -value => $r->maketext("Unassign selected sets from selected users"),
 						-style => "width: 45ex",
 					),
-					CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->makeext('Assignments only'), 1=>$r->maketext('Allow unassign')}),
+					CGI::radio_group(-name=>"unassignFromAllSafety", -values=>[0,1], -default=>0, -labels=>{0=>$r->maketext('Assignments only'), 1=>$r->maketext('Allow unassign')}),
 				),
 			),
 		),

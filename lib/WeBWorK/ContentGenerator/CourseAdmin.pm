@@ -182,47 +182,49 @@ sub pre_header_initialize {
 		}
 		
 		elsif ($subDisplay eq "archive_course") {
-			if (defined $r->param("archive_course")) {
-				# validate -- if invalid, start over.
-				# if form is valid a page indicating the status of 
-				# database tables and directories is presented.
-				# If they are ok, then you can push archive button, otherwise
-				# you can quit or choose to upgrade the tables
-				@errors = $self->archive_course_validate;
-				if (@errors) {
-					$method_to_call = "archive_course_form";
-				} else {
-					$method_to_call = "archive_course_confirm"; #check tables & directories
-				}
-			} elsif (defined $r->param("confirm_archive_course")) {
-				# validate and archive
-				# the "archive it" button has been pushed and the 
-				# course will be archived
-				# a report on success or failure will be generated
-				@errors = $self->archive_course_validate;
-				if (@errors) {
-					$method_to_call = "archive_course_form";
-				} else {
-					$method_to_call = "do_archive_course";
-				}
-			} elsif (defined $r->param("upgrade_course_tables") ){
-			    # upgrade and revalidate
-			    # the "upgrade course" button has been pushed
-			    # after the course has been upgraded you are returned
-			    # to the confirm page.
-			    @errors = $self->archive_course_validate;
-				if (@errors) {
-					$method_to_call = "archive_course_form";
-				} else {
-					$method_to_call = "archive_course_confirm"; # upgrade and recheck tables & directories.
-				}
-			}	
-			elsif (defined ($r->param("archive_course_refresh"))) {
-				$method_to_call = "archive_course_form";
-			} else {
-				# form only
-				$method_to_call = "archive_course_form";
-			}
+		  if (defined $r->param("archive_course") ||
+		      defined $r->param("skip_archive_course")) {
+
+		    # validate -- if invalid, start over.
+		    # if form is valid a page indicating the status of 
+		    # database tables and directories is presented.
+		    # If they are ok, then you can push archive button, otherwise
+		    # you can quit or choose to upgrade the tables
+		    @errors = $self->archive_course_validate;
+		    if (@errors) {
+		      $method_to_call = "archive_course_form";
+		    } else {
+		      $method_to_call = "archive_course_confirm"; #check tables & directories
+		    }
+		  } elsif (defined $r->param("confirm_archive_course")) {
+		    # validate and archive
+		    # the "archive it" button has been pushed and the 
+		    # course will be archived
+		    # a report on success or failure will be generated
+		    @errors = $self->archive_course_validate;
+		    if (@errors) {
+		      $method_to_call = "archive_course_form";
+		    } else {
+		      $method_to_call = "do_archive_course";
+		    }
+		  } elsif (defined $r->param("upgrade_course_tables") ){
+		    # upgrade and revalidate
+		    # the "upgrade course" button has been pushed
+		    # after the course has been upgraded you are returned
+		    # to the confirm page.
+		    @errors = $self->archive_course_validate;
+		    if (@errors) {
+		      $method_to_call = "archive_course_form";
+		    } else {
+		      $method_to_call = "archive_course_confirm"; # upgrade and recheck tables & directories.
+		    }
+		  }	
+		  elsif (defined ($r->param("archive_course_refresh"))) {
+		    $method_to_call = "archive_course_form";
+		  } else {
+		    # form only
+		    $method_to_call = "archive_course_form";
+		  }
 		}
 		elsif ($subDisplay eq "unarchive_course") {
 			if (defined $r->param("unarchive_course")) {
@@ -1766,9 +1768,13 @@ sub archive_course_confirm {
 	
 	my @archive_courseIDs     = $r->param("archive_courseIDs");
 	@archive_courseIDs        = () unless @archive_courseIDs;
-    my $archive_courseID  = $r->param("archive_courseID"); 
-    $archive_courseID  = $archive_courseIDs[0] unless $archive_courseID;
-    
+	# if we are skipping a course remove one from
+	# the list of courses
+	if (defined $r->param("skip_archive_course")) {
+	  shift @archive_courseIDs;
+	}
+
+	my $archive_courseID  = $archive_courseIDs[0];
     
 	my $ce2 = new WeBWorK::CourseEnvironment({
 		%WeBWorK::SeedCE,
@@ -1904,7 +1910,7 @@ sub archive_course_confirm {
 		unless (-e $course_dir) {
 			print CGI::p(  $r->maketext("[_1]: The directory for the course not found.",$archive_courseID));
 		}
-		
+
 		if ($all_tables_ok && $directories_ok ) { # no missing fields
 			# Warn about overwriting an existing archive
 			if (-e $archive_path and -w $archive_path) {
@@ -1914,7 +1920,7 @@ sub archive_course_confirm {
 			print CGI::p({style=>"text-align: center"},
 				CGI::submit(-name=>"decline_archive_course", -value=>$r->maketext("Stop Archiving")),
 				"&nbsp;",
-				(@archive_courseIDs)? CGI::submit(-name=>"archive_course", -value=>$r->maketext("Skip archiving this course"))."&nbsp;":'',
+				(scalar(@archive_courseIDs) > 1)? CGI::submit(-name=>"skip_archive_course", -value=>$r->maketext("Skip archiving this course"))."&nbsp;":'',
 				CGI::submit(-name=>"confirm_archive_course", -value=>$r->maketext("Archive")) ,
 			);
 		} elsif( $directories_ok)  {
@@ -1947,11 +1953,11 @@ sub do_archive_course {
 	#my $urlpath = $r->urlpath;
 	
     
-	my $archive_courseID     = $r->param("archive_courseID")     || "";
 	my $delete_course_flag   = $r->param("delete_course")        || "";
 	my @archive_courseIDs     = $r->param("archive_courseIDs");
 	@archive_courseIDs        = () unless @archive_courseIDs;
-
+	my $archive_courseID = $archive_courseIDs[0];
+	
 	my $ce2 = new WeBWorK::CourseEnvironment({
 		%WeBWorK::SeedCE,
 		courseName => $archive_courseID,
@@ -2052,7 +2058,7 @@ sub do_archive_course {
 			print CGI::start_form(-method=>"POST", -action=>$r->uri);
 			print $self->hidden_authen_fields;
 			print $self->hidden_fields("subDisplay");
-			print CGI::hidden("archive_courseID",$archive_courseID);
+			print CGI::hidden('archive_courseIDs',$archive_courseID);		
 			print CGI::p( CGI::submit("decline_archive_course", $r->maketext("OK"))  );
 			print CGI::end_form();
 		}

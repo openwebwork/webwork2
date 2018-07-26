@@ -87,13 +87,15 @@ use constant DISPLAY_MODES => {
 	plainText     => "HTML",
 	images        => "HTML_dpng",
 	MathJax	      => "HTML_MathJax",
+	PTX           => "PTX",
 };
 
 use constant DISPLAY_MODE_FAILOVER => {
 		TeX            => [],
 		HTML           => [],
 		HTML_dpng      => [ "HTML", ],
-		HTML_MathJax    => [ "HTML_dpng", "HTML", ],
+		HTML_MathJax   => [ "HTML_dpng", "HTML", ],
+		PTX            => [ "HTML" ],
 		# legacy modes -- these are not supported, but some problems might try to
 		# set the display mode to one of these values manually and some macros may
 		# provide rendered versions for these modes but not the one we want.

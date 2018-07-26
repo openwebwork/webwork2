@@ -38,6 +38,7 @@ C<WeBWorK::ContentGenerator> to call.
 use strict;
 use warnings;
 use Time::HiRes qw/time/;
+use HTML::Entities qw/encode_entities/;
 use WeBWorK::Localize;
 # load WeBWorK::Constants before anything else
 # this sets package variables in several packages
@@ -155,8 +156,9 @@ sub dispatch($) {
 	my %displayArgs = $urlPath->args;
 	
 	unless ($displayModule) {
-		debug("The display module is empty, so we can DECLINE here.\n");
-		die "No display module found for path '$path'.";
+	    debug("The display module is empty, so we can DECLINE here.\n");
+	    $path = encode_entities($path);
+	    die "No display module found for path '$path'.";
 	}
 	
 	debug("The display module for this path is: $displayModule\n");

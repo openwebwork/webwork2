@@ -88,7 +88,7 @@ sub pre_header_initialize {
 
 	my %SMAoptions = map {$_ => 1} @{$ce->{pg}->{options}->{showMeAnother}};
 	my %showMeAnother = (
-	    active       => (!($checkAnswers or $previewAnswers) and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1)),
+	    active       => (!($checkAnswers or $previewAnswers) and $ce->{pg}->{options}->{enableShowMeAnother} and ($problem->{showMeAnother}>-1 or $problem->{showMeAnother}==-2)),
             CheckAnswers => ($checkAnswers and $r->param("showMeAnotherCheckAnswers") and $ce->{pg}->{options}->{enableShowMeAnother}),
             IsPossible => 1,
             TriesNeeded => $problem->{showMeAnother},

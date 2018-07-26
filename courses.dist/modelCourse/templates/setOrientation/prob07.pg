@@ -111,16 +111,24 @@ $al = new_aligned_list(
     spacing => 10,
 );
 
-Context("Numeric")->variables->are(t=>'Real'); $t = Formula('t');
-Context("Numeric")->variables->are(y=>'Real'); $y = Formula('y');
-Context("Numeric")->variables->are(x=>'Real'); $x = Formula('x');
-Context()->flags->set(limits=>[-2,10]);
+Context("Numeric")->variables->are(
+  u => ['Real',limits=>[0.1,1.5]],
+  t => ['Real',limits=>[-1.9,-0.1]],
+  x => ['Real',limits=>[3.75,6]]
+); 
+$u = Formula('u');
+$t = Formula('t');
+$x = Formula('x');
+
+#Context("Numeric")->variables->are(y=>'Real'); $y = Formula('y');
+#Context("Numeric")->variables->are(x=>'Real'); $x = Formula('x');
+#Context()->flags->set(limits=>[-2,10]);
 
 $al->qa(
 #  DisplayQA(sqrt($y**2+1)),
 #  DisplayQA(sin(3*$x+1)),
-  DisplayQA(1/tan($x)),
-  DisplayQA(asin($t+1)->with(limits=>[-2,0])),
+  DisplayQA(1/tan($u)),
+  DisplayQA(asin($t+1)),
   DisplayQA((sin($x)-cos($x))/sqrt(2*$x-7))
 );
 

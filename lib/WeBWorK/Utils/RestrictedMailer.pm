@@ -15,14 +15,14 @@
 ################################################################################
 
 package WeBWorK::Utils::RestrictedMailer;
-use base "Mail::Sender";
+use base "Email::Sender";
 
 =for comment
 
 PLEASE NOTE
 
 This class does not impose any restrictions on its own, it simply provides
-restricted versions of Mail::Sender's Open, OpenMultipart, MailMsg, and
+restricted versions of Email::Sender's Open, OpenMultipart, MailMsg, and
 MailFile methods.
 
 The restricted methods prevent the caller from overriding parameters that
@@ -129,14 +129,14 @@ sub new {
 	$params = munge_params("new", @$params) if ref $params eq "ARRAY";
 	
 	# make a deep copy of the params that will be passed to new
-	# Mail::Sender might delete some elements, and we need the whole thing for later comparison
+	# Email::Sender might delete some elements, and we need the whole thing for later comparison
 	my $initial_params = dclone $params;
 	
 	# create the object, passing the params in
 	my $self = $invocant->SUPER::new($params);
 	
 	# handle errors
-	die $Mail::Sender::Error unless ref $self;
+	die $Email::Sender::Error unless ref $self;
 	
 	# store the set of initial params for later perusal
 	$self->initial_params = $initial_params;

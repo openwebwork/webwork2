@@ -154,8 +154,8 @@ function MathViewer(field,button,container,userOptions) {
 		
 	/* start setting up html elements */
 	popupdiv = $('<div>', {class : 'popupdiv'});
-	popupttl = $('<div>', {class : 'navbar'});
-	dropdown = $('<ul>', {class : 'dropdown-menu'});
+	popupttl = $('<div>', {class : 'navbar', role : 'menubar'});
+	dropdown = $('<ul>', {class : 'dropdown-menu', role : 'menu'});
 	tabContent = $('<div>', {class : 'tab-content'});
 
 	/* generate html for each of the categories in the locale file */
@@ -163,15 +163,15 @@ function MathViewer(field,button,container,userOptions) {
 
 	/* create the title bar with dropdown menue and move/close buttons */
 	popupttl.append($('<div>', {class : 'navbar-inner'})
-			.append($('<a class="brand" href="#">'+mathView_translator[7]/*Equation Editor*/+'</a>')
+			.append($('<div class="brand">'+mathView_translator[7]/*Equation Editor*/+'</div>')
 				.click(function (event) {event.preventDefault();}))
 			.append($('<ul>', {class : "nav"})
 				.append($('<li>', {class : "dropdown"})
-					.append('<a href="#" id="menu'+viewerIndex+'" class="dropdown-toggle" data-toggle="dropdown">'
+					.append('<a href="#" id="menu'+viewerIndex+'" class="dropdown-toggle" data-toggle="dropdown" role="menuitem">'
 						+'Operations <b class="caret"></b></a>')
 					.append(dropdown)))
 			.append($('<ul>', {class : "nav pull-right"})
-				.append($('<li>')
+				.append($('<li>', {role:"menuitem"})
 					.append($('<a>',{href :"#", id : 'close'+viewerIndex})
 						.append($('<span>', {class :"icon icon-remove"}))
 						.append($('<span>', {class :"sr-only-glyphicon"}).html("close"))
@@ -179,7 +179,9 @@ function MathViewer(field,button,container,userOptions) {
 					    me.button.popover('hide');
 					    return false;
 						}))
-					.append($('<span>', {class:"sr-only-glyphicon", style:"font-size:14px"}).html("close editor")))));
+					.append($('<span>', {class:"sr-only-glyphicon",
+							     style:"font-size:14px",
+							    }).html("close editor")))));
 
 	/* put the categories content into the main popop div, 
 	   activate the tabs, 
@@ -306,7 +308,11 @@ function MathViewer(field,button,container,userOptions) {
 	    var className = 'opImg' + catCount + i;
 	    /* creates a li for each operator/button in the category */
 	    thisTabList.append($('<li>', {class : 'mvspan3'})
-			       .append($('<a>', {href : '#', class : 'mvthumbnail', style : 'text-align: center'})
+			       .append($('<a>', {href : '#',
+						 class : 'mvthumbnail',
+						 style : 'text-align: center',
+						 'aria-controls' : '#'+me.decoratedTextBox.attr('id'),
+})
 				       .click(function (event) {
 					   event.preventDefault(); })
 				       .append(value.text)
@@ -327,7 +333,9 @@ function MathViewer(field,button,container,userOptions) {
 	
 	dropdown.append($('<li>')
 			.append($('<a>', {href : '#mvtab'+viewerIndex+catCount,
-					  'data-toggle' : 'tab',})
+					  'data-toggle' : 'tab',
+					  'role' : 'menuitem',
+					 })
 				.append(catValue.text)
 				.click(function () {
 				    $('#menu'+viewerIndex).focus();

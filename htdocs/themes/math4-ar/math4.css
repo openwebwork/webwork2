@@ -1,0 +1,1294 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+ * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
+ * 
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+ 
+/* Bootstrap overrides */
+a:focus {
+    outline-style:solid;
+    outline-color:#aaaa00;
+    outline-width:1px;
+}
+
+.btn:focus {
+    outline-style:solid;
+    outline-color:#aaaa00;
+    outline-width:2px;
+}
+
+.row-fluid [class*="span"] {
+    min-height:0px;
+}
+
+input[type="checkbox"] {
+    margin-right:.25em;
+}
+
+legend {
+    margin-bottom: 5px;
+    font-size:18px;
+}
+
+.container-fluid {
+	padding: 0.5em;
+}
+
+/* Basic elements */
+.required-field {
+    color:red;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+}
+.sr-only-glyphicon {
+ position: absolute;
+ width: 1em;
+ height: 1em;
+ padding: 0;
+ margin: 0;
+ margin-left: -1em;
+ overflow: hidden;
+ clip: rect(0px, 0px, 0px, 0px);
+ border: 0 none;
+}
+
+/* Banner */
+#masthead {
+	background-color: #038;
+	margin: 0;
+	padding: 5px 0px 5px 0px;
+}
+
+.webwork_logo {
+	background-color: #1048ae;
+	font-size: 1.6em;
+	font-weight: 500;
+	border: 1px solid #5577b0;
+	padding: 2px 10px 0 6px; /* attempt to even out the blank space so that
+								the logo & text doesn't look lopsided */
+}
+
+.webwork_logo img {
+	padding-right: 5px; /* distance itself to the Webwork text */
+}
+
+.maa_logo img {
+	vertical-align: center;
+}
+
+.webwork_logo a,
+.maa_logo a {
+    display:block;
+}
+
+#masthead a {
+	color: white;
+}
+
+#masthead a:hover {
+	text-decoration: none;
+}
+
+#loginstatus {
+        padding-top:.5ex;
+        padding-right: .5em;
+	color: white;
+	text-align: right;
+	font-size: 0.85em;
+	font-weight: normal;
+} 
+#loginstatus a.btn {
+    margin-bottom:.5ex;
+}
+
+#loginstatus a {
+	color: black;
+}
+
+#loginstatus a .icon-signout {
+	font-size: 1em;
+}
+
+
+/* Nav */
+
+#site-links ul {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+	overflow: hidden;
+}
+
+#site-links ul ul {
+    border:0px;
+}
+
+ul.nav li a:hover {
+	background: #e1e1e1;	
+}
+
+/* for the side navigation 'fisheye' list of problems */
+li.currentProblem{
+	background: #e1e1e1;	
+}
+
+#site-links h2 {
+    margin-top:0;
+    margin-bottom:0;
+    font-size:13px;
+}
+
+#site-navigation .info-box {
+	margin-top: 0.5em;
+}
+
+#site-navigation .info-box ul {
+        overflow: hidden;
+}
+
+/* Progress Bar */
+div.progress-bar {
+   height: 20px;
+   max-width: 100%;
+   border: 1px solid #B6B6B4;
+   background-color: #DDDDDD;
+   border-radius: 5px;
+   margin-bottom: 10px;
+   position: relative;
+}
+
+div.correct-progress {
+   height: 20px;
+   background-color: #8F8; /*same colour used as 'correct' */
+   border: 2px solid #00FF00; 
+   border-radius: 4px;
+   display: inline-block;
+   float:left;
+   box-sizing:border-box;
+   text-align:center;
+}
+
+div.incorrect-progress {
+   height: 20px;
+   background-color: #FF9494; /* same colour used as 'incorrect' */
+   border: 2px solid #FF0000;
+   border-radius: 4px;
+   display: inline-block;
+   box-sizing:border-box;
+}
+
+div.inprogress-progress {
+   height: 20px;
+   background-color: #FFFF00; /* yellow */
+   border: 2px solid #FBB117; /* beer border*/
+   border-radius: 4px;
+   display: inline-block;
+   box-sizing:border-box;
+}
+
+div.unattempted-progress {
+   height: 20px;
+   display: inline-block;
+   box-sizing:border-box;
+ }
+
+#breadcrumb-row {
+    margin-top:1ex;
+}
+
+#toggle-sidebar {
+    float:left;
+    height:20px;
+    padding-top:8px;
+    padding-bottom:8px;
+}
+
+#breadcrumb-navigation {
+    float:left;
+    display:inline-block;
+    width:90%;
+    width:calc(100% - 40px);
+}
+
+/* Main Content */
+.body {
+	display: inline-block;
+	float: left;
+}
+
+.shrinkbody {
+	width: 72%;
+}
+
+h1.page-title {
+	font-size: 31.5px;
+	line-height: 35px;
+}
+
+h2.page-title {
+	border-bottom: 1px solid #ccc;
+}
+
+#info-panel-right {
+	margin-bottom: 0.5em;
+/*	width: 25%; 8*/
+	overflow: hidden;
+	display: inline-block;
+	vertical-align: top;
+/*	float: right; */
+}
+
+.breadcrumb {
+	border: 1px solid #e6e6e6;
+}
+
+.Warnings {
+	clear: both;
+}
+
+.Warnings code {
+    	white-space: normal;
+}
+
+/* Question nav section */
+.problem-nav {
+	margin-bottom:1ex;
+	display: inline-block;
+	
+}
+
+/* Message section */
+
+.Message {
+    display: inline-block;
+    margin-bottom:1ex;
+}   
+
+.font-visible   { font-weight: bold; }
+.font-hidden { font-style: italic; } 
+
+.admin-messagebox {
+    background-color:#FFFFCC;
+    width:60%;
+    padding: 10px;
+    text-align:center;
+}
+
+/* Home Page */
+ul.courses-list {
+	list-style-type: none;
+	margin: 0;
+}
+
+ul.courses-list a {
+	border: 1px solid #e6e6e6;
+	display: block;
+	padding: 0.5em;
+	margin-bottom: 0.5em;
+	background: #f6f6f6;
+	width: 95%;
+	font-weight: bold;
+}
+
+ul.courses-list a:hover {
+	text-decoration: none;
+	background: #038;
+	color: white;
+}
+
+/* past answers page */
+.past-answer-table td {
+    white-space: nowrap;
+    min-width: 20px;
+}
+
+.past-answer-table .table-rule {
+    border-top: 3px solid #d5d5d5;
+    padding-top: 5px;
+}
+.past-answer-table .essay,
+.past-answer-table .comment {
+    min-width: 400px;
+    white-space: normal;
+}
+
+.past-answer-download {
+    font-weight: bold;
+    font-size: 110%;
+}
+
+/* Classlist Editor */
+/* this table is a pain, it wants to be a certain width and it'll force you
+ * to scroll if you don't have that width, don't know how to fix it */
+.label-with-edit-icon {
+    white-space:nowrap;
+}
+
+.label-with-edit-icon .set-label,
+.label-with-edit-icon div.tooltip {
+    white-space:normal;
+}
+
+table.classlist-table {
+/*	display: block; */
+        max-width: 95%; /* prevent it from violating container-fluid's padding,
+					 only valid in a rare edge case */
+}
+
+table.classlist-table .tbody {
+    width: 100%;
+}
+
+.UserDetail-date-table td {
+    padding-left:.5em;
+}
+
+/* Homework Sets */
+.problem_set_body input[type='checkbox'], .problem_set_body input[type='radio'] {
+    margin-top: 0px;
+}
+
+.problem_set_table td, .problem_set_table th {
+    padding: 8px 3px 8px 3px;
+}
+
+.problem_set_table td a {
+    font-weight:bold;
+    font-size:13px;
+}
+
+.problem_table td {
+    white-space: nowrap;
+}
+
+
+/* these are for indenting problems on jitar sets */
+.problem_set_table .nested-problem-1 {
+    margin-left: 10px;
+}
+
+.problem_set_table .nested-problem-2 {
+    margin-left: 20px;
+}
+
+.problem_set_table .nested-problem-3 {
+    margin-left: 30px;
+}
+
+.problem_set_table .nested-problem-4 {
+    margin-left: 40px;
+}
+
+.problem_set_table .nested-problem-5 {
+    margin-left: 50px;
+}
+
+.problem_set_table .nested-problem-6 {
+    margin-left: 60px;
+}
+
+/* these are for indenting problems on jitar sets */
+.problem-list .nested-problem-1 {
+    padding-left: 20px;
+}
+
+.problem-list .nested-problem-2 {
+    padding-left: 23px;
+}
+
+.problem-list .nested-problem-3 {
+    padding-left: 26px;
+}
+
+.problem-list .nested-problem-4 {
+    padding-left: 29px;
+}
+
+.problem-list .nested-problem-5 {
+    padding-left: 32px;
+}
+
+.problem-list .nested-problem-6 {
+    padding-left: 35px;
+}
+
+.problem_set_table .hardcopy-link {
+    font-size:16px;
+}
+
+/* Info Box */
+.info-box {
+	padding: 0.5em;
+	border-radius: 8px;
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
+	background: #038;
+	border-radius: 8px;
+	color: white;
+	margin: 0;
+	padding: 0;
+	line-height: 30px;
+	margin-bottom: 0.5em;
+	font-size: 1.1em;
+	text-align: center;
+}
+
+.info-box dl {
+	margin: 1ex .5em 1ex 1ex;
+	padding: 0;
+	font-size: 80%;
+}
+.info-box li,
+.info-box dt {
+	margin: 0 0 .5ex 0;
+	padding: 0;
+	line-height: 2.2ex;
+}
+.info-box dt { font-weight: bold }
+.info-box dd {
+	margin: 0 0 .5ex 1em;
+	padding: 0;
+	line-height: 2.2ex;
+}
+.info-box dd p {
+	margin-top: 0;
+}
+.info-box a.more {
+	float: left;
+	font-size: 80%;
+	font-style: italic;
+	margin-bottom: 1ex;
+	margin-right: .5em;
+}
+
+.info-box form {
+    margin-bottom:0px;
+}
+
+/* Gateway Options */
+
+#sp-gateway-form{
+	background-color: #eeeeee;
+	color: black;
+}
+
+#sp-gateway-form label{
+    display: inline-block;
+	padding-right: 15px;    
+}
+
+/* Library Browser */
+.library-browser-table td {
+	padding-top: 0.2em;
+	padding-bottom: 0.2em;
+}
+.library-browser-table .table-separator {
+	border-bottom: 1px solid #ccc;
+}
+
+.library-browser-table-nojs td {
+    padding-right: 0.2em;
+    padding-left: 0.2em;
+}
+
+.lb-problem-header {
+    overflow:auto;
+    background-color: #FFFFFF; 
+    margin: 0px auto;
+    min-height:30px;
+    display:block;
+}
+
+.lb-problem-add {
+    text-align: left;
+}
+
+.lb-problem-path {
+    text-align: left; 
+    cursor: pointer;
+}
+
+.lb-problem-icons {
+    float:right; 
+    text-align: right; 
+    margin-right:.8em;
+}
+
+.lb-problem-stats {
+    float:right; 
+    text-align:right;
+}
+
+.lb-mlt-group {
+    border:2px solid black;
+    width :100%;
+}
+
+/* Footer */
+#footer {
+	clear: both;
+	display: block;
+	font-size: 0.8em;
+	color: #767676;
+	text-align: center;
+	padding: 1em;
+	margin-top: 1em;
+}
+
+#footer p {
+	margin-bottom: 0; /* overrides bootstrap default so there's no weird space*/
+}
+
+#footer a {
+	color: #555;
+}
+
+
+/* --- Standard elements ---------------------------------------------------- */
+
+blockquote {
+  padding: 0 0 0 0;
+  margin: 0 0 0 1em;
+  border-left-width: 0;
+}
+
+label,
+input,
+button,
+select,
+textarea {
+  font-size: 16px;
+  font-weight: normal;
+  line-height: 18px;
+  width: auto;
+}
+
+input {
+	height: auto;
+}
+
+@media (max-width:979px) {
+    input[type="text"],
+    input[type="password"],
+    textarea,
+    select {
+	max-width:95%;
+    }
+}
+
+.barrier {
+	clear:both;
+	border: none; /* 1px solid grey; */
+}
+
+#mini-sitemap {
+	font-family: "Trebuchet MS", "Arial", "Helvetica", sans-serif;
+	padding: 0 0 1ex 0;
+}
+#mini-sitemap a, #mini-sitemap a:link, #mini-sitemap a:visted {
+	text-decoration: none;
+}
+
+#InfoPanel {
+    font-size:100%;
+    float: left; /*was right*/
+    min-width: 0;
+    overflow: hidden; /*was auto*/
+    /*margin-right: -1px;*/
+    background-color: #fff;
+}
+#InfoPanel ol {
+	font-size:100%;
+}
+
+table.FormLayout { border: 0; }
+table.FormLayout tr { vertical-align: top; }
+table.FormLayout th.LeftHeader { text-align: right; white-space: nowrap; }
+table.FormLayout tr.ButtonRow { text-align: left; }
+table.FormLayout tr.ButtonRowCenter { text-align: center; }
+table.FormLayout td { padding-right:10px; padding-bottom:.5ex; }
+
+table.FormLayout tr.ButtonRow,
+table.FormLayout tr.ButtonRowCenter, 
+table.FormLayout tr.ButtonRowCenter tr {
+    vertical-align: middle;
+}
+
+div.RenderSolo { background-color: #E0E0E0; color: black; }
+div.AuthorComment { background-color: #00E0E0; color: black; }
+
+/* minimal style for lists of links (generated by the links escape) */
+/*ul.LinksMenu { list-style: none; margin-left: 0; padding-left: 0; }*/
+/*ul.LinksMenu ul { list-style: none; margin-left: 0.5em; padding-left: 0; }*/
+
+/* background styles for success and failure messages */
+div.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red */
+div.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+div.ResultsWithError { color: #bf5454; background-color: inherit; } /* red */
+div.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
+div.showMeAnotherBox { background-color: #EDE275; border-radius: 5px; border: 2px solid #FDD017; padding: 3px 3px 3px 3px; margin-bottom: 5px} /* bright gold border and harvest gold background*/
+label.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red */
+label.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+label.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
+label.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
+span.WarningMessage { background-color: #D69191; padding: 3px 3px 3px 3px; } /* red*/
+span.ResultsWithoutError { color: inherit; background-color: #8F8; } /* green */
+span.ResultsWithError { color: #bf5454; background-color: inherit; } /* red*/
+span.ResultsAlert { color: #ca5000; background-color: inherit; } /* orange */
+span.correct { color: inherit; background-color: #8F8; } /* green */
+span.incorrect { color: #bf5454; background-color: inherit; } /* red */
+span.unattempted { color: inherit; background-color: #88ECFF;}
+input.correct[type="text"]{ /* green */
+    border-color: rgba(81,153,81, 0.8);
+    outline: 0;
+    outline: thin dotted \9;
+    /* IE6-9 */
+    
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81, ,.6);
+    -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
+    
+    color:inherit; 
+}
+
+input.incorrect[type="text"] { /* red */
+  border-color: rgba(191, 84, 84, 0.8);
+  outline: 0;
+  outline: thin dotted \9;
+  /* IE6-9 */
+
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
+  -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(191,84,84,.6);
+    color:inherit; 
+}
+
+input.changed[type="text"] { /* orange */
+  border-color: #ca5000;
+  outline: 0;
+ outline: thin dotted \9;
+  /* IE6-9 */
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+  color: inherit;
+}
+
+.results-popover {
+    cursor : pointer;
+}
+
+/* styles used by WeBWorK::HTML::ScrollingRecordList */
+div.ScrollingRecordList { padding: 1em; white-space: nowrap; border: thin solid gray; }
+div.ScrollingRecordList select.ScrollingRecordList { width: 99%; }
+
+/* wraps the View Options form (generated by &optionsMacro) */
+/* FIXME: can't this style information just go in div.Options above? */
+
+.viewOptions  {
+    margin-left:1ex;
+    font-size:small;
+}
+
+.viewOptions label {
+    font-size:small;
+    display:block;
+}
+
+/* messages, attempt results, answer previews, etc. go in this DIV */
+/* this used to be "float:left", but that was suspected of causing MSIE peekaboo bug */
+div.problemHeader {}
+
+/* styles for the attemptResults table */
+table.attemptResults {
+	border-style: outset; 
+	border-width: 1px; 
+	margin-bottom: 1em; 
+	border-spacing: 1px;
+/*      removed float stuff because none of the other elements nearby are
+        floated and it was causing trouble
+	float:left;
+	clear:right; */
+}
+
+table.attemptResults td,
+table.attemptResults th {
+	border-style: inset; 
+	border-width: 1px; 
+	text-align: center; 
+	vertical-align: middle;
+	/*width: 15ex;*/ /* this was erroniously commented out with "#" */
+	padding: 2px 5px 2px 5px;
+	color: inherit;
+	background-color: #DDDDDD;
+}
+
+.attemptResults .popover {
+    max-width: 100%;
+}
+
+table.attemptResults td.FeedbackMessage { background-color:#EDE275;} /* Harvest Gold */
+table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
+span.ResultsWithErrorInResultsTable { color: inherit; background-color: inherit; } /* used to override the older red on white span */ 
+table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000000} /* red */
+
+/*styles for the instructor comment box */
+
+.answerComments {
+    margin-left: 2em;
+    max-width: 80%;
+    border-style: outset;
+    border-width: 1px;
+    border-spacing: 2px;
+    border-color: gray;
+    padding: 2px 5px 2px 5px;
+    margin-bottom:1em;
+    background-color: #E8E8E8;
+}
+
+/* Make hr a black line for problem render areas so that
+ * it can be used for fractions
+ */
+.RenderSolo hr,
+.problem-content hr {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-top-color: rgb(22,22,22);
+}
+
+.problem-content label {
+    font-size: 14px;
+}
+
+/* override above settings in tables used to display ans_array results */
+table.attemptResults td td,
+table.attemptResults td th,
+table.ArrayLayout td {
+	border-style: none; 
+	border-width: 0px; 
+	padding: 0px;
+}
+table.attemptResults td.Message {
+   text-align: left; 
+   padding: 2px 5px 2px 5px;
+   width: auto;
+}
+.attemptResultsSummary { margin-bottom: 10px; }
+.parsehilight { color: inherit; background-color: yellow; }
+
+.problem-main-form input {
+    margin-left:.5ex;
+    margin-right:.5ex;
+}
+
+/* the problem TEXT itself goes in this box */
+/* we used to make this a grey box, but surprise, MSIE is bug-ridden. */
+div.problem {  }
+
+/* jsMath emits this class when appropriate math fonts aren't available */
+div.NoFontMessage {
+	padding: 10px;
+	border-style: solid;
+	border-width: 3px;
+	border-color: #DD0000;
+	color: inherit;
+	background-color: #FFF8F8;
+	width: 75%;
+	text-align: left;
+	margin: 10px auto 10px 12%;
+}
+
+/* styles used when editing a temporary file */
+.temporaryFile { font-style: italic; color: #ca5000; background-color: inherit; }
+
+/* text colors for Auditing, Current, and Dropped students */
+.Audit { font-style: normal; color: purple; background-color: inherit; }
+.Enrolled { font-weight: normal; color: black; background-color: inherit; }
+.Drop { font-style: italic; color: gray; background-color: inherit; }
+/* text colors for problem grader page */
+.NeedsGrading { font-weight: bold; }
+
+/*Styles for the login form -- mainly small alignment changes for all of the input elements on the login page*/
+
+#login_form input {
+	margin-top: 7px;
+}
+
+#login_form label{
+	margin-right: 2px;
+}
+
+#login_form #pswd_label{
+	margin-right: 4px;
+}
+
+#login_form #rememberme{
+	margin-left: 75px;
+}
+
+/*Styles for the edit forms, found on the homework sets editor page*/
+
+/*Following are mostly alignment fixes for the input elements and their lables on this page.*/
+.edit_form  input,select{
+	margin-bottom: .5em;
+}
+
+.edit_form label {
+	margin-left: 40px;
+}
+
+.edit_form span {
+    float: none;
+}
+
+.edit_form label.radio_label{
+	margin-left: 0px;
+}
+
+.edit_form  span#filter_err_msg{
+	display: none;
+}
+
+/*Styles for the classlist editor page*/
+
+/*The styles here correctly align the table elements in the set table*/
+.set_table{
+	margin-right: 5px;
+}
+
+.set_table td{
+	padding-right: 5px;
+}
+
+.set_table th{
+	padding-right: 5px;
+	padding-left: 5px;
+}
+
+.set_table label{
+	margin-left: 0px;
+}
+
+/*General styles, for elements such as table captions input buttons, columns, etc.*/
+
+/*General styles for table captions*/
+table caption{
+	font-weight: bold;
+}
+
+/*Styling the content that is found in the login page.*/
+.p_content{
+	width: 640px;
+}
+
+/*General styles for all input buttons*/
+.button_input{
+	margin-right: 5px;
+	margin-left: 5px;
+}
+
+/*General styles for all column divs, for pages which use column layouts*/
+/*.column {
+	float: left;
+	width: 50%;
+	margin-top: 10px;
+}
+
+.column input[type="radio"] {
+    margin-right:1ex;
+}
+*/
+.problemFooter {
+	clear:both;  /* the footer shouldn't float at all */
+
+}
+
+/*General styles for the wrapper div element which goes around the InfoBoxes*/
+.info-wrapper{
+	float: right;
+	min-height: 100px;
+	/* max-width: 40%; */
+	overflow: hidden;
+	margin-left: 5px;
+}
+
+
+#show_hide{
+    margin-bottom:.5ex;
+}
+
+
+#none{
+	/*Please do not do anything with elements with id "none"*/
+}
+
+/*Styles for the PGProblemEditor Page*/
+
+#editor{
+	background-color: #FFFFFF;
+}
+
+#editor #source_and_options{
+	float: left;
+	width: 50%;
+}
+
+#editor #problemContents_label{
+	text-align: center;
+	font-weight: bold;
+	text-decoration: underline;
+	margin-left: 30%;
+}
+
+#editor #problemContents_id{
+	width: 100%;
+	height: 50%;
+}
+
+#editor .editor_form{
+	margin-left: 40px;
+}
+
+#editor #form_div{
+	float: left;
+	width: 100%;
+}
+
+/*Styles specifically for the problem viewer*/
+
+#problem_viewer_form{
+	margin-left: 10px;
+	float: left;
+	width: 45%;
+	height: 100%;
+	border-left: solid;
+	border-width: 1px;
+}
+
+#problem_viewer_form>h3{
+	margin-left: 37%;
+}
+
+#problem_viewer_form #viewer_span{
+	margin-left: 10%;
+}
+
+#problem_viewer_form #reload_button{
+	margin-left: 20%;
+	margin-top: 5%;
+}
+
+#problem_viewer_form #problem_viewer{
+	width: 60%;
+	background-color: #E8E8E8;
+	margin-left: 20%;
+	margin-top: 5%;
+	padding: 1px;
+}
+
+#problem_viewer_form #problem_viewer_content{
+	border-style: solid;
+	padding: 5%;
+	border-width: 1px;
+}
+
+#problem_viewer_form #viewer_note{
+	margin-top: 10%;
+	margin-left: 10%;
+	margin-right: 10%;
+}
+
+#editor{
+	width: 750px;
+}
+
+#editor .pg_editor_input_span{
+	margin-bottom: 10px;
+	display: none;
+}
+
+#editor .pg_editor_input_div{
+	margin-top: 20px;
+	margin-left: 50px;
+}
+
+#editor #submit_input_div{
+	margin-top: 10px;
+	clear: both;
+}
+
+#pg_editor_frame_id{
+    width:95%;
+    height:590px;
+    overflow:scroll;
+}
+
+#render-modal.modal {
+    width:1024px;
+    left:25%;
+}
+
+#render-modal .modal-body {
+    height:95%;
+    width:95%;
+    max-height:600px;
+}
+
+.radio_span, 
+.radio_span input,
+.radio_span label{
+    display:none !important;
+}
+
+table.problem_sets_table {
+	width: 640px;
+	float: left;
+	margin-bottom: 3%;
+	overflow:hidden/*was not here*/;
+}
+
+table.problem_sets_table caption {
+}
+
+table.problem_sets_table th{
+	width: 320px;
+	padding-bottom: 10px;
+}
+
+table.problem_sets_table td{
+	width: 320px;
+}
+
+div.problem_sets_options {
+	clear: both;
+	margin: 1% 1% 1% 1%;
+}
+
+#set_table_id a.set-id-tooltip,
+#set_table_id a.set-id-tooltip:hover {
+    text-decoration: none;
+    color: #000000;
+}
+
+/* ProblemSetDetail2 css */
+#psd_list {
+    padding-left: 0px;
+}
+
+#psd_list li {
+    list-style-type: none;
+}
+
+.pdr_placeholder {
+    height: 100px;
+    width: 90%;
+    border-style: dashed;
+    border-width: 1px;	
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.pdr_handle {    
+    cursor: move;
+    margin-right:2px;
+    font-size:large;
+}
+
+.pdr_collapse {
+    cursor: pointer;
+    width: 10px;
+    font-size:large;
+    display: none;
+    font-family: FontAwesome;
+}
+
+.psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
+    content: '\f054';
+}
+
+.psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
+    content: '\f078';
+}
+
+
+#psd_toolbar {
+    margin-right:10px;
+}
+
+#psd_toolbar a.btn {
+    margin-left:0px;
+    margin-right:0px;
+}
+
+#psd_list li.mjs-nestedSortable-collapsed > ol {
+    display: none;
+    }
+
+#psd_list li.mjs-nestedSortable-branch .pdr_collapse {
+    display: inline-block;
+    }
+
+#psd_list li.mjs-nestedSortable-leaf .pdr_collapse {
+    display: none;
+}
+
+.psr_render_area {
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.ScrollingRecordList > input[type='submit'] {
+    margin-top: 1ex;
+    margin-bottom: 2ex;
+}
+
+/*This is the styling specifically for the tables of problems displayed for each problem set page*/
+/*BUG FIXES*/
+
+table#grades_table pre{
+	float: left;
+}
+
+.grades-course-total, 
+.grades-course-total th {
+    font-weight: bold;
+    font-size:105%;
+}
+
+#config-form input[type="checkbox"] {
+    margin-right:1.5ex;
+}
+
+.file-manager-btn {
+    margin-bottom:.5ex;
+    margin-top:.5ex;
+}
+
+/*mainform is in the library browser*/
+.setlist-table,
+.setlist-table label,
+.user-list-form,
+.user-list-form label,
+.user-list-form input,
+.user-list-form select,
+.set-list-form,
+.set-list-form label,
+.set-list-form input,
+.set-list-form select,
+#mainform,
+#mainform label,
+#mainform input,
+#mainform select{
+    font-size:small;
+}
+
+#mainform i.icon-random {
+    cursor: pointer;
+}
+
+#send-mail-form input,
+#send-mail-form select,
+.set-list-form input,
+.set-list-form select,
+.set-list-form button,
+.user-list-form input,
+.user-list-form select {
+    margin-top: .15em;
+    margin-bottom: .25em;
+}
+
+.user-list-form select,
+.set-list-form select {
+    height:27px;
+}
+
+.set-list-form select[multiple] {
+    height:auto;
+}
+
+#problem_set_form input[type="submit"] {
+    margin-right:1ex;
+} 
+
+#mainform .btn,
+#problem_set_form .btn {
+    margin-bottom:.25ex;
+    margin-top:.25ex;
+}
+
+#problem_set_form .ui-datepicker-trigger {
+    margin: 0;
+}
+
+#problem_set_form input[type="checkbox"] {
+    margin-bottom:.5ex;
+}
+
+#editor input[type="radio"]{
+    margin-right:.5ex;
+    
+}
+
+#problem-grader-form select {
+    width:60px;
+}
+
+#problem-grader-form .graded-answer,
+#problem-grader-form .essay-answer {
+    border-bottom: 1px solid #d5d5d5;
+    margin-bottom:2px;
+    padding-bottom:5px;
+}
+
+.tab-pane {
+    margin-bottom:10px;
+}
+
+.small-table-text,
+.small-table-text td {
+    font-size:small;
+}
+
+.nav-list li {
+    font-size:small;
+}
+
+/* Equation editor bugfixes */
+#eqEditorDiv {
+    overflow:visible;
+}
+
+#openEqEditor {
+    min-height:35px;
+    min-width:43px;
+}

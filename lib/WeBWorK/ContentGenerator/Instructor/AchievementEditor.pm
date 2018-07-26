@@ -240,7 +240,8 @@ EOF
 		$force_field,
 
 		CGI::p(
-			CGI::textarea(
+		       CGI::textarea(
+				 -id => 'achievementContents',
 				-name => 'achievementContents', -default => $achievementContents,
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
@@ -679,6 +680,19 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+
+	if ($ce->{options}->{PGCodeMirror}) {
+	  
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PGaddons.js"}), CGI::end_script();
+	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PG.js"}), CGI::end_script();
+	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
+	  
+	}
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AchievementEditor/achievementeditor.js"}), CGI::end_script();
+
+
 	
 	return "";
 }

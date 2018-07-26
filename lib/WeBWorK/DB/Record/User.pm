@@ -40,6 +40,7 @@ BEGIN {
 	        displayMode   => { type=>"TEXT" },
 	        showOldAnswers => { type=>"INT" },
 		useMathView   => { type=>"INT"  },
+		useWirisEditor   => { type=>"INT"  },
 		lis_source_did  => { type=>"BLOB" },
 	);
 }

@@ -162,6 +162,7 @@ sub new {
 	my $globalFileContents = readFile($globalEnvironmentFile);
 	# warn "about to evaluate defaults.conf $seedVars{courseName}\n";
 	# warn  join(" | ", (caller(1))[0,1,2,3,4] ), "\n";
+	$safe->share_from('main', [qw(%ENV)]);
 	$safe->reval($globalFileContents);
 	# warn "end the evaluation\n";
 	

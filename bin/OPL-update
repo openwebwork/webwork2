@@ -159,7 +159,7 @@ if($libraryVersion eq '2.5') {
 	lastname varchar (255) NOT NULL,
 	firstname varchar (255) NOT NULL,
 	email varchar (255),
-	KEY author (lastname, firstname),
+	KEY author (lastname(100), firstname(100)),
 	PRIMARY KEY (author_id)
 '],
 [$tables{path}, '
@@ -186,7 +186,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{keyword}, '
 	keyword_id int(15) NOT NULL auto_increment,
-	keyword varchar(255) NOT NULL,
+	keyword varchar(256) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (keyword_id)
 '],
@@ -297,6 +297,9 @@ sub safe_get_id {
 	my $addifnew = shift;
 	my @insertvalues = @_;
 #print "\nCalled with $tablename, $idname, $whereclause, [".join(',', @$wherevalues)."], (".join(',', @insertvalues).")\n";
+	for my $j (0..$#insertvalues) {
+		$insertvalues[$j] =~ s/"/\\\"/g;
+	}
 
 	my $query = "SELECT $idname FROM `$tablename` ".$whereclause;
 	my $sth = $dbh->prepare($query);
@@ -312,7 +315,6 @@ sub safe_get_id {
 				$insertvalues[$j] = NULL;
 			}
 		}
-		#print "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$dbh->do("INSERT INTO `$tablename` VALUES(". join(',',@insertvalues) .")");
 		dbug "INSERT INTO $tablename VALUES( ".join(',',@insertvalues).")\n";
 		$sth = $dbh->prepare($query);

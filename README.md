@@ -1,4 +1,4 @@
-#Welcome to WeBWorK
+# Welcome to WeBWorK
 
 WeBWorK is an open-source online homework system for math and sciences courses. WeBWorK is supported by the MAA and the NSF and comes with an Open Problem Library (OPL) of over 30,000 homework problems. Problems in the OPL target most lower division undergraduate math courses and some advanced courses. Supported courses include college algebra, discrete mathematics, probability and statistics, single and multivariable calculus, differential equations, linear algebra and complex analysis.  Find out more at the main WeBWorK [webpage](http://webwork.maa.org).
 
@@ -12,7 +12,7 @@ New users interested in getting started with their own WeBWorK server, or instru
 *  [Forum](http://webwork.maa.org/moodle/mod/forum/index.php?id=3) - The WeBWorK Forum
 *  [Frequently Asked Questions](https://github.com/openwebwork/webwork2/wiki/Frequently-Asked-Questions) - A list of frequently asked questions.  
 
-##Information For Developers
+## Information For Developers
 
 People interested in developing new features for WeBWorK should take a look at the following resources.  People interested in developing new problems for WeBWorK should visit [Problem Authors](http://webwork.maa.org/wiki/Authors).
 *  [First Time Setup](https://github.com/openwebwork/webwork2/wiki/First-Time-Setup) - Setting up your clone of this github repo for the first time.  

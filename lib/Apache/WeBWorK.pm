@@ -30,6 +30,7 @@ details.
 
 use strict;
 use warnings;
+use Apache2::Const qw(:common);
 use HTML::Entities;
 use HTML::Scrubber;
 use Date::Format;
@@ -130,11 +131,14 @@ sub handler($) {
 			$r->send_http_header unless MP2; # not needed for Apache2
 			$htmlMessage = "<html><body>$htmlMessage</body></html>";
 		}
-		print $htmlMessage;
 		
 		# log the error to the apache error log
 		my $textMessage = textMessage($r, $warnings, $exception, @backtrace);
 		$log->error($textMessage);
+
+		$r->custom_response(FORBIDDEN,$htmlMessage);
+
+		$result = FORBIDDEN;
 	}
 	
 	return $result;

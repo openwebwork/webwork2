@@ -203,11 +203,12 @@ sub display_value {
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
+	my $r = $self->{Module}->r;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
 	my $displayoldval = $self->comparison_value($oldval);
 	return '' if($displayoldval eq $newval);
-	return('$'. $varname . " = " . ($newval eq 'True' ? 1 : 0) .";\n");
+	return('$'. $varname . " = " . ($newval eq $r->maketext("True") ? 1 : 0) .";\n");
 }
 
 sub entry_widget {
@@ -521,13 +522,13 @@ sub print_navigation_tabs {
 	my $str = '';
 	for my $tab (0..(scalar(@tab_names)-1)) {
 		if($current_tab eq "tab$tab") {
-			$tab_names[$tab] = $tab_names[$tab];
+			$tab_names[$tab] = $r->maketext($tab_names[$tab]);
 		} else {
-			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $tab_names[$tab]);
+			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]));
 		}
 	}
 	print CGI::p() .
-		'<div align="center">' . join('&nbsp;|&nbsp;', map {$r->maketext($_)} @tab_names) .'</div>'.
+		'<div align="center">' . join('&nbsp;|&nbsp;', @tab_names) .'</div>'.
 		CGI::p();
 }
 

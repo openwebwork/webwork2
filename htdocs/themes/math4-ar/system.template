@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- This encourages IE to *not* use compatibility view, which breaks math4 -->
+<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+
+<!--
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/conf/templates/math3/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
+# 
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+-->
+
+<link rel="icon" type="x-image/icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
+
+<!-- CSS Loads -->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
+<!--#if can="output_jquery_ui"-->
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+<!--#endif-->
+<!--#if can="output_achievement_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
+<!--#endif-->
+<!--#if can="output_tabber_CSS"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
+<!--#endif-->
+<!--#if can="output_CSS"-->
+	<!--#output_CSS-->
+<!--#endif-->
+<!--#if exists="math4-coloring.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
+<!--#endif-->
+<!--#if exists="math4-overrides.css"-->
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
+<!--#endif-->
+
+<!-- JS Loads -->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->"></script>
+<!--#if can="output_jquery_ui"-->
+	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+<!--#endif-->
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<!--#if can="output_tabber_CSS"-->
+<script type="text/javascript">
+var tabberOptions = {manualStartup:true};
+</script>
+<!--#endif-->
+<!--#if can="output_JS"-->
+	<!--#output_JS-->
+<!--#endif-->
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<!--#if exists="math4-overrides.js"-->
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
+<!--#endif-->
+
+<title><!--#path style="text" text=" : " textonly="1"--></title>
+
+<!--#head-->
+</head>
+
+<body>
+<a href="#page-title" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
+<!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
+	<!--#output_wztooltip_JS-->
+<!--#endif-->
+
+<!-- Bootstrap Fluid Layout Scaffolding start -->
+<div id="bs-container" class="container-fluid">
+<!-- Header -->
+<div id = "masthead" class="row-fluid" role="banner">
+	<div class="span2 webwork_logo">
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="to courses page" />WeBWorK</a>
+	</div>
+	<div class="span4 maa_logo">
+		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="to MAA (Mathematical Association of America) main web site" /></a>
+	</div>
+	<div id="loginstatus" class="offset3 span3">
+		<!--#loginstatus-->
+	</div>
+</div>
+
+<!-- Run masthead class js because it gets rendered early -->
+<script type="text/javascript">
+  // Changes links in masthead
+  $('#loginstatus a').addClass('btn btn-small');
+  $('#loginstatus a').append(' <span class="icon icon-signout" data-alt="signout"></span>'); 
+</script>
+
+<div id="body-row" class="row-fluid">
+
+<!-- Navigation -->
+<div id="site-navigation" class="span2 hidden" role="navigation" aria-label="main navigation">
+  <!--#if can="links"-->
+        <div id="site-links">
+	  <!--#links-->
+	  </div>
+	<!--#endif-->
+
+	<!--#if can="siblings"-->
+	<div id="siblings">
+	  <!--#siblings-->
+	  </div>
+	<!--#endif-->
+	<!--#if can="options"-->
+	<div id="options" class="info-box">
+	  <!--#options-->
+	  </div>
+	<!--#endif-->
+</div>
+
+<!-- Run site-navigation js because it gets loaded early -->
+<script type="text/javascript">
+  // Makes the fisheye stuff bootstrap nav
+  $('#site-navigation ul').addClass('nav nav-list');
+  $('#site-navigation li').each(function () { $(this).html($(this).html().replace(/<br>/g,"</li><li>")); });
+  $('#site-navigation a.active').parent().addClass('active');
+  $('#site-navigation strong.active').parent().addClass('active');
+  $('#site-navigation li').find('br').remove();
+  
+  $('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
+
+  // Display options formatting
+  $('.facebookbox input:submit').addClass('btn-small');
+
+  $('#site-navigation').removeClass('hidden');
+  
+</script>
+
+
+<!-- Main Content Area -->
+<div id="content" class="span10" >
+	<!-- Breadcrumb -->
+	<div id="breadcrumb-row" class="row-fluid">
+	  <div class="span12">
+	    <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
+	      <span id="toggle-sidebar-icon" class="icon icon-chevron-left" data-alt="close sidebar"></span></a>
+	    
+	    <div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
+	      <ul class="breadcrumb">
+		<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
+	      </ul>
+	    </div>
+	</div></div>
+	<!-- Run breadcrumb js since it gets loaded early -->
+	<script type="text/javascript"> 
+	  $('#toggle-sidebar').removeClass('btn-primary')
+	</script>
+	
+	<!-- Page Title -->
+	<!--#if can="title"-->
+	<div class="row-fluid"><div class="span12">
+		<h1 id='page-title' class='page-title'><!--#title --></h1>
+	</div></div>
+	<!--#endif-->
+
+	<!--#if can="nav" can="message"--> 
+	<div class="row-fluid">
+	  <div id="problem-nav" class="problem-nav span7" role="navigation" aria-label="problem navigation">
+	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
+	<!--#if can="nav"-->
+		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
+	<!--#endif-->
+	  </div>
+	  
+	  <div id="Message" class="Message span4 offset1">
+	    <!-- Message for the user -->
+	    <!--#if can="message"-->
+	        <!--#message-->
+	<!--#endif-->
+	  </div>
+	</div>
+	<!--#endif-->
+
+	<!-- Header Text for problem --> 
+	<!--#if can="post_header_text"-->
+		<!--#post_header_text-->
+	<!--#endif-->
+
+<!--	==============BEGIN BODY OF PROBLEM===============	-->
+
+	<!-- Indicate presence of perl warnings -->
+	<!--#if warnings="1"-->
+	<div class="row-fluid">
+		<div id="alert-error" class="span12 alert alert-error">
+		    <!--#warningMessage-->
+		</div>
+	</div>
+	<!--#endif-->
+             
+	<!--#if can="output_tag_info"-->
+	<div class="row-fluid">
+	  <div id="tag_info" class="span12">
+		<!--#output_tag_info-->
+	</div></div>
+	<!--#endif-->
+	 <!--#if can="output_problem_body"--> 
+	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
+		  <div id="problem_body" class="Body span12">
+
+			<!--#if can="output_custom_edit_message"-->
+			<div id="custom_edit_message" class="row-fluid"><div class="span10">
+				<!--#output_custom_edit_message-->
+			</div><div class="span2"></div></div>
+			<!--#endif-->
+			<!--#if can="output_summary"-->
+			<div class="row-fluid"><div id="output_summary" class="span10">
+					<!--#output_summary-->
+			</div><div class="span2"></div></div>
+			<!--#endif-->
+
+			<!--#if can="output_achievement_message"-->
+			<div class="row-fluid"><div id="output_achievement_message" class="span10">
+					<!--#output_achievement_message-->
+			</div><div class="span2"></div></div>
+			<!--#endif-->
+			
+			<!--#if can="output_comments" "-->
+			<div class="row-fluid"><div id="output_comments" class="span10">
+				  <!--#output_comments-->
+			</div><div class="span2"></div></div>
+			<!--#endif-->
+				
+
+
+
+			<!--#if can="output_form_start"-->
+			<div class="row-fluid">
+			  <div class="span10">
+				<!--#output_form_start-->
+			    <!--#if can="output_hidden_info"-->
+				     <!--#output_hidden_info-->
+			    <!--#endif-->
+
+				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
+					<div class="problem">
+						<!--#if can="output_problem_body"-->
+						<div id="problem_body" class="problem-content">
+							<!--#output_problem_body-->
+						</div>
+						<!--#endif-->
+						<!--#if can="output_message"-->
+							<!--#output_message-->
+						<!--#endif-->
+						<!--#if can="output_editorLink"-->
+							<!--#output_editorLink-->
+						<!--#endif-->
+					</div>
+				<!--#endif-->
+
+				<!--#if can="output_checkboxes" can="output_submit_buttons"-->
+					<p>
+						<!--#if can="output_checkboxes"-->
+							<!--#output_checkboxes-->
+						<!--#endif-->
+						<!--#if can="output_submit_buttons"-->
+							<!--#output_submit_buttons-->
+						<!--#endif-->
+					</p>
+				<!--#endif-->
+				<!--#if can="output_score_summary"-->
+					<div id="score_summary" class="scoreSummary">
+						<!--#output_score_summary-->
+					</div>
+				<!--#endif-->
+
+				<!--#if can="output_misc"-->
+					<!--#output_misc-->
+				<!--#endif-->
+				</form>
+			<!--#endif-->
+
+		<!-- inserted problem piece by piece -->
+
+		<!--#if can="info"-->
+			<p>Form2</p>
+			<!--  styles could be different for different pages so they are not set here -->
+			<div id="info-panel-right" >
+			<!--#info-->
+			</div>
+		<!--#endif-->
+
+		</div><div class="span2"></div></div>
+                </div></div>
+
+	<!-- ====  end printing body parts   -->
+	<!--#else-->
+	<!-- ==== couldn't print body parts so we'll print entire body -->	         <div class="row-fluid">
+	  <!--#if can="info"-->
+	  <div class="body span8">
+	  <!--#else-->
+	    <div id="page_body" class="body span12">
+	  <!--#endif-->
+	      <!--#body-->
+	</div>
+	<!-- inserted body as a whole -->
+	<!--#if can="info"-->
+	<div id="info-panel-right" class="span4 info-box">
+	  <!--  styles could be different for different pages so they are not set here -->
+	  <!--#info-->
+	</div>
+	<!--#endif-->
+	</div>
+	<!--#endif-->  
+
+<!--			      ==============END BODY OF PROBLEM===============      -->
+	<!--#if can="output_past_answer_button" can="output_email_instructor"-->
+		<div id="problemFooter" class="problemFooter">
+			<!--#if can="output_past_answer_button"-->
+				<!--#output_past_answer_button-->
+			<!--#endif-->
+			<!--#if can="output_email_instructor"-->
+				<!--#output_email_instructor-->
+			<!--#endif-->
+		</div>
+	<!--#endif-->
+
+<!--#if warnings="1"-->
+<div id="warnings" class="Warnings alert alert-error">
+	<!--#warnings-->
+</div>
+<!--#endif-->
+<!--#if can="message"-->
+<div id="Message_bottom" class="Message">
+  <!--#message-->
+</div>
+<!--#endif-->
+		
+</div><!--content-->
+
+
+<!-- Bootstrap Fluid Layout Scaffolding stop -->
+</div> <!-- row-fluid -->
+</div> <!-- container-fluid -->
+
+
+<!-- Footer -->
+<div id="footer" role="contentinfo">
+	<!--#footer-->
+</div>
+
+</body>
+</html>

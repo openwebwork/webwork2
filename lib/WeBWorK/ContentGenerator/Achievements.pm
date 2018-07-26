@@ -82,7 +82,7 @@ sub initialize {
 		    $self->addmessage(CGI::div({class=>"ResultsWithError"}, $error ));
 		} else {
 		    splice(@$items, $usedItem, 1);
-		    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, "Item Used Successfully!" ));
+		    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $r->maketext("Item Used Successfully!") ));
 		}	
 	    }
 	}
@@ -155,7 +155,7 @@ sub body {
 
 	#If they dont have a globalUserAchievements record then they dont have achievements
 	if (not defined($globalUserAchievements)) {
-	    print CGI::p("You don't have any Achievement data associated to you!");
+	    print CGI::p($r->maketext("You don't have any Achievement data associated to you!"));
 	    return "";
 	}
 
@@ -322,7 +322,7 @@ sub body {
 			
 			}	   
 		} else { # no achievements 
-		print CGI::p("No achievements have been assigned yet");
+		print CGI::p($r->maketext("No achievements have been assigned yet"));
 		}
 
 	return "";

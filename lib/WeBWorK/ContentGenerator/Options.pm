@@ -226,6 +226,29 @@ sub body {
 			);
 		}
 	    }
+
+	    if ((defined($r->param('displayMode')) &&
+			$EUser->displayMode() ne $r->param('displayMode')) ||
+		(defined($r->param('showOldAnswers')) &&
+			$EUser->showOldAnswers() ne $r->param('showOldAnswers')) ||
+		(defined($r->param('useWirisEditor')) && 
+			 $EUser->useWirisEditor() ne $r->param('useWirisEditor'))) {
+		
+		$EUser->displayMode($r->param('displayMode'));
+		$EUser->showOldAnswers($r->param('showOldAnswers'));
+		$EUser->useWirisEditor($r->param('useWirisEditor'));
+		
+		eval { $db->putUser($EUser) };
+		if ($@) {
+		    print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+				   CGI::p($r->maketext("Couldn't save your display options: [_1]",$@)),
+			);
+		} else {
+		    print CGI::div({class=>"ResultsWithoutError"},
+				   CGI::p($r->maketext("Your display options have been saved.")),
+			);
+		}
+	    }
 	}
 	
 	my $result = '';
@@ -271,6 +294,22 @@ sub body {
 		-name => "useMathView",
 		-values => [1,0],
 		-default => $curr_useMathView,
+		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+	    $result .= CGI::end_fieldset();
+	    $result .= CGI::br();
+	}
+
+	if ($ce->{pg}{specialPGEnvironmentVars}{WirisEditor}) {
+	    # Note, 0 is a legal value, so we can't use || in setting this
+	    my $curr_useWirisEditor = $EUser->useWirisEditor ne '' ?
+		$EUser->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor};
+	    $result .= CGI::start_fieldset();
+	    $result .= CGI::legend($r->maketext("Use Equation Editor?"));
+	    $result .= CGI::radio_group(
+		-name => "useWirisEditor",
+		-values => [1,0],
+		-default => $curr_useWirisEditor,
 		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
 		);
 	    $result .= CGI::end_fieldset();
