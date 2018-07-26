@@ -19,7 +19,7 @@ use base qw(WeBWorK);
 
 =head1 NAME
 
-  WeBWorK::AchievmeentEvaulator  -  Runs achievement evaluators for problems.
+  WeBWorK::AchievementEvaluator  -  Runs achievement evaluators for problems.
 
 =cut
 

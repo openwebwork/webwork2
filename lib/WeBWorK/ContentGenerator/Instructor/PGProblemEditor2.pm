@@ -511,32 +511,32 @@ sub body {
 	
        my @PG_Editor_Reference_Links = (
    		{label 		=>	$r->maketext('Problem Techniques')	,
-   		 url 		=>  'http://webwork.maa.org/wiki/Category:Problem_Techniques' 	,
+   		 url 		=>  $ce->{webworkURLs}{problemTechniquesHelpURL}, #'http://webwork.maa.org/wiki/Category:Problem_Techniques' 	,
    		 target     =>	'techniques_window'	,
    		 tooltip 	=>	'Snippets of PG code illustrating specific techniques'	,
    		},
    		{label 		=>	$r->maketext('Math Objects')	,
-   		 url 		=>   'http://webwork.maa.org/wiki/Category:MathObjects'  	,
+   		 url 		=>   $ce->{webworkURLs}{MathObjectsHelpURL}, #'http://webwork.maa.org/wiki/Category:MathObjects'  	,
    		 target		=>	'math_objects'	,
    		 tooltip 	=>	'Wiki summary page for MathObjects'	,
    		},   		
    		{label 		=>	$r->maketext('POD')	,
-   		 url 		=>  'http://webwork.maa.org/pod/pg_TRUNK/'  	,
+   		 url 		=>  $ce->{webworkURLs}{PODHelpURL}, #'http://webwork.maa.org/pod/pg_TRUNK/'  	,
    		 target		=>	'pod_docs'	,
    		 tooltip 	=>	'Documentation from source code for PG modules and macro files. Often the most up-to-date information.'	,
    		},
    		{label 		=>	$r->maketext('PGLab')	,
-   		 url 		=>  'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
+   		 url 		=>  $ce->{webworkURLs}{PGLabHelpURL}, #'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
    		 target		=>	'PGLab'	,
    		 tooltip 	=>	'Test snippets of PG code in interactive lab.  Good way to learn PG language.'	,
    		},
    		{label 		=>	$r->maketext('PGML')	,
-   		 url 		=>  'https://courses.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
+   		 url 		=>  $ce->{webworkURLs}{PGMLHelpURL}, #'https://courses1.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
    		 target		=>	'PGML'	,
    		 tooltip 	=>	'PG mark down syntax used to format WeBWorK questions. This interactive lab can help you to learn the techniques.'	,
    		},
    		{label 		=>	$r->maketext('Author Info')	,
-   		 url 		=>  'http://webwork.maa.org/wiki/Category:Authors'  	,
+   		 url 		=>  $ce->{webworkURLs}{AuthorHelpURL}, #'http://webwork.maa.org/wiki/Category:Authors'  	,
    		 target		=>	'author_info'	,
    		 tooltip 	=>	'Top level of author information on the wiki.'	,
    		},
@@ -1986,7 +1986,13 @@ sub output_JS{
 	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
-	  }
+	 }
+
+	 if ($ce->{options}->{PGWirisEditor}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
+	}
 
 
 	if ($ce->{options}->{PGCodeMirror}) {

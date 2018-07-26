@@ -29,7 +29,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status wwRound);
+use WeBWorK::Utils qw(readDirectory list2hash max jitar_id_to_seq jitar_problem_adjusted_status wwRound after);
 use WeBWorK::Localize;
 sub initialize {
 	my ($self) = @_;
@@ -301,7 +301,7 @@ sub displayStudentStats {
 				next;
 			} else {
 				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)), 
-						     CGI::td({colspan=>($max_problems+2)}, CGI::em("No versions of this assignment have been taken."))) );
+						     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("No versions of this assignment have been taken.")))) );
 				next;
 			}
 		}
@@ -312,7 +312,7 @@ sub displayStudentStats {
 		       ( $set->hide_score eq 'Y' || 
 			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
 			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(test_" . $set->version_id . ")")), 
-					     CGI::td({colspan=>($max_problems+2)}, CGI::em("Display of scores for this set is not allowed."))) );
+					     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("Display of scores for this set is not allowed.")))) );
 			next;
 		}
 
@@ -424,13 +424,17 @@ sub displayStudentStats {
 		    # If its the last version then add the max to the course
 		    # totals and reset variables;
 		  if ($currentVersion == $numGatewayVersions) {
-		    $courseTotal += $total;
-		    $courseTotalRight += $bestGatewayScore;
-		    $bestGatewayScore = 0;
+		      if (after($set->open_date())) {
+			  $courseTotal += $total;
+			  $courseTotalRight += $bestGatewayScore;
+		      }
+		      $bestGatewayScore = 0;
 		  }
 		} else {		
-		  $courseTotal += $total;
-		  $courseTotalRight += $totalRight;
+		    if (after($set->open_date())) {
+			$courseTotal += $total;
+			$courseTotalRight += $totalRight;
+		    }
 		}
 		
 		push @rows, CGI::Tr({},

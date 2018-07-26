@@ -36,6 +36,7 @@ use constant DISPLAY_MODES => {
 	plainText     => "HTML",
 	images        => "HTML_dpng",
 	MathJax	      => "HTML_MathJax",
+	PTX           => "PTX",
 };
 
 sub new {
@@ -204,7 +205,7 @@ sub defineProblemEnvir {
 	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
 	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
 	$envir{externalCheckUrl}     = $ce->{externalPrograms}->{checkurl};
-	$envir{externalCurlCommand}          = $ce->{externalPrograms}->{curlCommand};
+	$envir{externalCurlCommand}  = $ce->{externalPrograms}->{curlCommand};
 	# Directories and URLs
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir
