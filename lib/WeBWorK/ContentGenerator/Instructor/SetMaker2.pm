@@ -539,11 +539,12 @@ sub browse_library_panel {
 	my $ce = $r->ce;
 
 	# See if the problem library is installed
-	my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
+	# FIXME NSW
+	my $libraryRoot = $r->{ce}->{problemLibrary}->{OPL}->{root};
 
 	unless($libraryRoot) {
 		print CGI::div({class=>'ResultsWithError', align=>"center"}, 
-			"The problem library has not been installed.");
+			"The OPL problem library has not been installed.");
 		return;
 	}
 	# Test if the Library directory link exists.  If not, try to make it
@@ -551,8 +552,8 @@ sub browse_library_panel {
 		unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/Library")) {
 			my $msg =	 <<"HERE";
 You are missing the directory <code>templates/Library</code>, which is needed
-for the Problem Library to function.	It should be a link pointing to
-<code>$libraryRoot</code>, which you set in <code>conf/site.conf</code>.
+for the Open Problem Library to function.	It should be a link pointing to
+<code>$libraryRoot</code>, which you set in <code>conf/localOverrides.conf</code>.
 I tried to make the link for you, but that failed.	Check the permissions
 in your <code>templates</code> directory.
 HERE
@@ -561,7 +562,7 @@ HERE
 	}
 
 	# Now check what version we are supposed to use
-	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
+	my $libraryVersion = $r->{ce}->{problemLibrary}->{OPL}->{version} || 1;
 	if($libraryVersion == 1) {
 		return $self->browse_library_panel1;
 	} elsif($libraryVersion >= 2) {
