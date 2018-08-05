@@ -56,13 +56,14 @@ use constant ALL_SECTIONS => 'All Sections';
 use constant ALL_TEXTBOOKS => 'All Textbooks';
 
 use constant LIB2_DATA => {
-  'dbchapter' => {name => 'library_chapters', all => 'All Chapters'},
+  'dbLibrary' =>  {name => 'library_name',     all => 'All Libraries'},
+  'dbchapter' =>  {name => 'library_chapters', all => 'All Chapters'},
   'dbsection' =>  {name => 'library_sections', all =>'All Sections' },
   'dbsubject' =>  {name => 'library_subjects', all => 'All Subjects' },
-  'textbook' =>  {name => 'library_textbook', all =>  'All Textbooks'},
-  'textchapter' => {name => 'library_textchapter', all => 'All Chapters'},
-  'textsection' => {name => 'library_textsection', all => 'All Sections'},
-  'keywords' =>  {name => 'library_keywords', all => '' },
+  'textbook'  =>  {name => 'library_textbook', all =>  'All Textbooks'},
+  'textchapter'=> {name => 'library_textchapter', all => 'All Chapters'},
+  'textsection'=> {name => 'library_textsection', all => 'All Sections'},
+  'keywords'  =>  {name => 'library_keywords', all => '' },
   };
 
 ## Flags for operations on files
@@ -122,6 +123,9 @@ sub get_library_sets {
 	my @pgdirs;
 	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
 	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
+
+	# FIXME - "Library" is hardwired
+
 	# Never include Library at the top level
 	if ($top == 1) {@dirs = grep {$_ ne 'Library'} @dirs} 
 	foreach my $subdir (@dirs) {
@@ -204,6 +208,8 @@ sub munge_pg_file_path {
 sub getDBextras {
 	my $r = shift;
 	my $sourceFileName = shift;
+
+	# FIXME - "Library" is hardwired
 
 	if($sourceFileName =~ /^Library/) {
 		return @{WeBWorK::Utils::ListingDB::getDBextras($r, $sourceFileName)};
@@ -472,21 +478,23 @@ sub browse_library_panel {
 	my $r = $self->r;
 	my $ce = $r->ce;
 
-	# See if the problem library is installed
-	my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
+	# See if the problem library is installed - we check for OPL
+	my $libraryRoot = $r->{ce}->{problemLibrary}->{OPL}->{root};
+
+	my $linkName = $r->{ce}->{problemLibrary}->{OPL}->{linkname}; 
 
 	unless($libraryRoot) {
 		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
-			"The problem library has not been installed.")));
+			"The OPL problem library has not been installed.")));
 		return;
 	}
 	# Test if the Library directory link exists.  If not, try to make it
-	unless(-d "$ce->{courseDirs}->{templates}/Library") {
-		unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/Library")) {
+	unless(-d "$ce->{courseDirs}->{templates}/${linkName}") {
+		unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/${linkName}")) {
 			my $msg =	 <<"HERE";
-You are missing the directory <code>templates/Library</code>, which is needed
+You are missing the directory <code>templates/${linkName}</code>, which is needed
 for the Problem Library to function.	It should be a link pointing to
-<code>$libraryRoot</code>, which you set in <code>conf/site.conf</code>.
+<code>$libraryRoot</code>, which you set in <code>conf/localOverrides.conf</code>.
 I tried to make the link for you, but that failed.	Check the permissions
 in your <code>templates</code> directory.
 HERE
@@ -495,7 +503,7 @@ HERE
 	}
 
 	# Now check what version we are supposed to use
-	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
+	my $libraryVersion = $r->{ce}->{problemLibrary}->{OPL}->{version} || 1;
 	if($libraryVersion == 1) {
 		return $self->browse_library_panel1;
 	} elsif($libraryVersion >= 2) {
@@ -555,6 +563,11 @@ sub browse_library_panel2 {
 	my $r = $self->r;
 	my $ce = $r->ce;
 
+	my @libs = WeBWorK::Utils::ListingDB::getAllLibraries($r);
+	unshift @libs, LIB2_DATA->{dbLibrary}{all};
+
+	my %libNames = WeBWorK::Utils::ListingDB::getAllLibrariesNameHash($r);
+
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
 	unshift @subjs, LIB2_DATA->{dbsubject}{all};
 
@@ -565,23 +578,58 @@ sub browse_library_panel2 {
 	@sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
 	unshift @sects, LIB2_DATA->{dbsection}{all};
 
+        my $libName_selected = $r->param('library_name') || LIB2_DATA->{dbLibrary}{all};
 	my $subject_selected = $r->param('library_subjects') || LIB2_DATA->{dbsubject}{all};
 	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}{all};
 	my $section_selected =	$r->param('library_sections') || LIB2_DATA->{dbsection}{all};
 
 	my $view_problem_line = view_problems_line('lib_view', $r->maketext('View Problems'), $self->r);
 
-	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
-	if($count_line==0) {
-		$count_line = $r->maketext("There are no matching WeBWorK problems");
+	my $count_line = 0;
+	if ( $libName_selected eq LIB2_DATA->{dbLibrary}{all} ) {
+	    # LOOP over all libraries
+	    my $ll; 
+	    my $cc;
+	    foreach $ll ( keys( %{$ce->{problemLibrary}} ) ) {
+		# skip "LookupTable"
+		next if ( ($ll eq "LookupTable") || ( $ll eq "" ) ) ;
+		$r->param( 'library_name' => "$ce->{problemLibrary}->{$ll}->{linkname}" );
+
+		# FIXME should check here that this library is installed for this course
+
+		$count_line += WeBWorK::Utils::ListingDB::countDBListings($r);
+		$r->param( 'library_name' => LIB2_DATA->{dbLibrary}{all} );
+	    }
 	} else {
-		$count_line = $r->maketext("There are [_1] matching WeBWorK problems", $count_line);
+	    $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
+	}
+	if($count_line==0) {
+		$count_line = $r->maketext("There are no matching WeBWorK problems in [_1]", $libName_selected);
+	} elsif ( $count_line == 1 ) {
+		$count_line = $r->maketext("There is 1 matching WeBWorK problems in [_1]", $libName_selected);
+	} else {
+		$count_line = $r->maketext("There are [_1] matching WeBWorK problems in [_2]", $count_line, $libName_selected);
 	}
 
 	print CGI::Tr({},
 	    CGI::td({-class=>"InfoPanel", -align=>"left"}, 
 		CGI::hidden(-name=>"library_is_basic", -default=>1,-override=>1),
 		CGI::start_table({-width=>"100%"}),
+
+		CGI::Tr({},
+			CGI::td([$r->maketext("Library:"),
+				CGI::popup_menu(-name=> 'library_name', 
+					            -values=>\@libs,
+						    -labels=>\%libNames,
+					            -default=> $libName_selected,
+						    -onchange=>"lib_update('count', 'clear');return true"
+				 )]),
+			#CGI::td({-colspan=>2, -align=>"left"},
+			#	CGI::button(-name=>"change_library", -value=>$r->maketext("Change library"),   # Not needed
+			#		    -onclick=>"lib_update('subjects', 'get');return true"
+			#		    ))
+		),
+
 		CGI::Tr({},
 			CGI::td([$r->maketext("Subject:"),
 				CGI::popup_menu(-name=> 'library_subjects', 
@@ -609,6 +657,10 @@ sub browse_library_panel2 {
 					        -default=> $section_selected,
 						-onchange=>"lib_update('count', 'clear');return true"
 		    )]),
+			#CGI::td({-colspan=>2, -align=>"left"},
+			#	CGI::button(-name=>"rerun_search", -value=>$r->maketext("Run search again"),   # Not needed
+			#		    -onclick=>"lib_update('count', 'clear');return true"
+			#		    ))
 		 ),
 		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
 		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
@@ -622,6 +674,14 @@ sub browse_library_panel2adv {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $right_button_style = "width: 18ex";
+
+	my @libs = WeBWorK::Utils::ListingDB::getAllLibraries($r);
+	if(! grep { $_ eq $r->param('library_name') } @libs) {
+		$r->param('library_name', 'Library'); # Fall back value FIXME
+	}
+	unshift @libs, LIB2_DATA->{dbLibrary}{all};
+
+	my %libNames = WeBWorK::Utils::ListingDB::getAllLibrariesNameHash($r);
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
 	if(! grep { $_ eq $r->param('library_subjects') } @subjs) {
@@ -668,7 +728,7 @@ sub browse_library_panel2adv {
 	unshift @textsecs, LIB2_DATA->{textsection}{all};
 
 	my %selected = ();
-	for my $j (qw( dbsection dbchapter dbsubject textbook textchapter textsection )) {
+	for my $j (qw( dbLibrary dbsection dbchapter dbsubject textbook textchapter textsection )) {
 		$selected{$j} = $r->param(LIB2_DATA->{$j}{name}) || LIB2_DATA->{$j}{all};
 	}
 
@@ -683,11 +743,31 @@ sub browse_library_panel2adv {
 
 	my $view_problem_line = view_problems_line('lib_view', $r->maketext('View Problems'), $self->r);
 
-	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
-	if($count_line==0) {
-		$count_line = "There are no matching WeBWorK problems";
+        my $libName_selected = $r->param('library_name') || LIB2_DATA->{dbLibrary}{all};
+
+	my $count_line = 0;
+	if ( $libName_selected eq LIB2_DATA->{dbLibrary}{all} ) {
+	    # LOOP over all libraries
+	    my $ll;
+	    foreach $ll ( keys( %{$ce->{problemLibrary}} ) ) {
+		# skip "LookupTable"
+		next if ( ($ll eq "LookupTable") || ( $ll eq "" ) ) ;
+		$r->param( 'library_name' => "$ce->{problemLibrary}->{$ll}->{linkname}" );
+
+		# FIXME should check here that this library is installed for this course
+
+		$count_line += WeBWorK::Utils::ListingDB::countDBListings($r);
+		$r->param( 'library_name' => LIB2_DATA->{dbLibrary}{all} );
+	    }
 	} else {
-		$count_line = "There are $count_line matching WeBWorK problems";
+	    $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
+	}	
+	if($count_line==0) {
+		$count_line = $r->maketext("There are no matching WeBWorK problems in [_1]", $libName_selected);
+	} elsif ( $count_line == 1 ) {
+		$count_line = $r->maketext("There is 1 matching WeBWorK problems in [_1]", $libName_selected);
+	} else {
+		$count_line = $r->maketext("There are [_1] matching WeBWorK problems in [_2]", $count_line, $libName_selected);
 	}
 
 	# Formatting level checkboxes by hand
@@ -713,6 +793,21 @@ sub browse_library_panel2adv {
 		CGI::start_table({-width=>"100%"}),
 		# Html done by hand since it is temporary
 		CGI::Tr(CGI::td({-colspan=>4, -align=>"center"}, $r->maketext('All Selected Constraints Joined by "And"'))),
+
+		CGI::Tr({},
+			CGI::td([$r->maketext("Library:"),
+				CGI::popup_menu(-name=> 'library_name', 
+					            -values=>\@libs,
+						    -labels=>\%libNames,
+					            -default=> $selected{dbLibrary},
+						    -onchange=>"lib_update('count', 'clear');return true"
+				 )]),
+			#CGI::td({-colspan=>2, -align=>"left"},
+			#	CGI::button(-name=>"change_library", -value=>$r->maketext("Change library"),   # Not needed
+			#		    -onclick=>"lib_update('subjects', 'get');return true"
+			#	))
+		),
+
 		CGI::Tr({},
 			CGI::td([$r->maketext("Subject:"),
 				CGI::popup_menu(-name=> 'library_subjects', 
@@ -755,6 +850,10 @@ sub browse_library_panel2adv {
 					        -default=> $selected{textchapter},
 							-onchange=>"submit();return true"
 		    )]),
+			#CGI::td({-colspan=>2, -align=>"left"},
+			#	CGI::button(-name=>"rerun_search", -value=>$r->maketext("Run search again"),    # Not needed
+			#		    -onclick=>"lib_update('count', 'clear');return true"
+			#		    ))
 		 ),
 		 CGI::Tr({},
 			CGI::td([$r->maketext("Text section:"),
@@ -883,7 +982,7 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
 		$r->maketext("Browse").' ',
-		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
+		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Searchable Libraries"), -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
 		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
 		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>$these_widths, @dis4),
@@ -959,8 +1058,10 @@ sub make_data_row {
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->{ce};
+
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
+	my $libCode = $sourceFileData->{libCode};
 	my $pg = shift;
 	my $isstatic = $sourceFileData->{static};
 	my $isMO = $sourceFileData->{MO};
@@ -1069,7 +1170,9 @@ sub make_data_row {
 	# get statistics to display
 	
 	my $global_problem_stats = '';
-	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
+
+	# use $libCode below
+	if ($ce->{problemLibrary}{$libCode}{showLibraryGlobalStats}) {
 	    my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
 	    if ($stats->{students_attempted}) {
 		$global_problem_stats =    $self->helpMacro("Global_Usage_Data",$r->maketext('GLOBAL Usage')).': '.
@@ -1083,7 +1186,9 @@ sub make_data_row {
 	
 		
 	my $local_problem_stats = '';
-	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
+
+	# use $libCode below
+	if ($ce->{problemLibrary}{$libCode}{showLibraryLocalStats}) {
 	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
 	    if ($stats->{students_attempted}) {
 		$local_problem_stats =     $self->helpMacro("Local_Usage_Data",$r->maketext('LOCAL Usage')).': '.
@@ -1147,8 +1252,21 @@ sub process_search {
 	# Build a hash of MLT entries keyed by morelt_id
 	my %mlt = ();
 	my $mltind;
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+	my $libCode; 
+	my $libSymLink;
+	if ( exists( $r->ce->{problemLibrary}->{LookupTable}->{$reqLib} ) ) {
+	    $libCode = $r->ce->{problemLibrary}->{LookupTable}->{$reqLib};
+	    $libSymLink = $r->ce->{problemLibrary}->{$libCode}->{linkname};
+	} else {
+	    # Fall back to old default
+	    $libSymLink = "Library";
+	}
+
 	for my $indx (0..$#dbsearch) {
-		$dbsearch[$indx]->{filepath} = "Library/".$dbsearch[$indx]->{path}."/".$dbsearch[$indx]->{filename};
+		$dbsearch[$indx]->{filepath} = "${libSymLink}/".$dbsearch[$indx]->{path}."/".$dbsearch[$indx]->{filename};
 # For debugging
 $dbsearch[$indx]->{oindex} = $indx;
 		if($mltind = $dbsearch[$indx]->{morelt}) {
@@ -1409,8 +1527,39 @@ sub pre_header_initialize {
 	} elsif ($r->param('lib_view')) {
  
 		@pg_files=();
-		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
-		@pg_files = process_search($r, @dbsearch);
+		my @dbsearch;
+
+		# When "All Libraries" is selected, the value of $r->param('library_name') 
+		# is an empty string...
+
+		if ( ( $r->param('library_name') eq "" ) ||
+		     ( $r->param('library_name') eq LIB2_DATA->{dbLibrary}{all} ) ) {
+		    # search all libraries
+		    my @libs = WeBWorK::Utils::ListingDB::getAllLibraries($r);
+
+		    # FIXME should check here which libraries are installed for this course
+
+		    my $cl;
+		    my @tmp1;
+		    my $tmpRec;
+
+		    foreach $cl ( @libs ) {
+			$r->param( 'library_name' => "$cl" );
+
+			@dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
+			@tmp1 = process_search($r, @dbsearch);
+			#foreach $tmpRec ( @tmp1 ) {
+			#    push( @pg_files, $tmpRec );
+			#}
+			push( @pg_files, @tmp1 );
+
+		    }
+		    $r->param( 'library_name' => LIB2_DATA->{dbLibrary}{all} ); # Set it back
+		} else {
+		    # regular, single library search
+		    @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
+		    @pg_files = process_search($r, @dbsearch);
+		}
 		$use_previous_problems=0;
 
 		##### View a set from a set*.def
@@ -1585,8 +1734,9 @@ sub pre_header_initialize {
 
         my $library_stats_handler = '';
 	
-	if ($ce->{problemLibrary}{showLibraryGlobalStats} ||
-	   $ce->{problemLibrary}{showLibraryLocalStats} ) {
+# FIXME NSW - need correct library code
+	if ($ce->{problemLibrary}{OPL}{showLibraryGlobalStats} ||
+	   $ce->{problemLibrary}{OPL}{showLibraryLocalStats} ) {
 	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
 	}
 
@@ -1760,14 +1910,20 @@ sub output_JS {
   if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
-	if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+
+
+	# Determine the proper taxonomy file to use
+	my $tagging_from = "OPL"; # FIXME, should come from settings
+	my $taxofile = $ce->{problemLibrary}->{$tagging_from}->{taxo};
+
+	if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/${taxofile}') ) {
 		my $taxo = '[]';
 		$taxo = join("", <TAXONOMY>); 
 		close TAXONOMY;
 		print qq!\n<script>var taxo = $taxo ;</script>!;
 	} else {
 		print qq!\n<script>var taxo = [] ;</script>!;
-		print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+		print qq!\n<script>alert('Could not load the ${tagging_from} taxonomy from the server.');</script>!;
 	}
   }
   return '';

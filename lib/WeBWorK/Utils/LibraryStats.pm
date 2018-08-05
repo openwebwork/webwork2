@@ -66,7 +66,12 @@ sub getLocalStats {
 
     unless ($selectstm->execute($source_file)) {
       if ($selectstm->errstr =~ /Table .* doesn't exist/) {
-	warn "Couldn't find the OPL local statistics table.  Did you download the latest OPL and run update-OPL-statistics?"
+	warn "Couldn't find the OPL local statistics table.  Did you download the latest OPL and run update-OPL-statistics?";
+
+	# NSW hack - to avoid crash when no statistics
+	return {source_file => $source_file};
+	# END NSW hack
+
       }
       die $selectstm->errstr;
     }
@@ -92,7 +97,12 @@ sub getGlobalStats {
 
     unless ($selectstm->execute($source_file)) {
       if ($selectstm->errstr =~ /Table .* doesn't exist/) {
-	warn "Couldn't find the OPL global statistics table.  Did you download the latest OPL and run update-OPL-statistics?"
+	warn "Couldn't find the OPL global statistics table.  Did you download the latest OPL and run update-OPL-statistics?";
+
+	# NSW hack - to avoid crash when no statistics
+	return {source_file => $source_file};
+	# END NSW hack
+
       }
       die $selectstm->errstr;
     }

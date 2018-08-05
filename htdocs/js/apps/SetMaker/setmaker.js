@@ -94,10 +94,12 @@ function init_webservice(command) {
 }
 
 function lib_update(who, what) {
-  var child = { subjects : 'chapters', chapters : 'sections', sections : 'count'};
+  var child = { myLibrary : 'subjects', subjects : 'chapters', chapters : 'sections', sections : 'count'};
 
   nomsg();
   var all = 'All ' + capFirstLetter(who);
+
+  if(who=='myLibrary')  { all = 'All Libraries'; }
 
   var mydefaultRequestObject = init_webservice('searchLib');
   if(mydefaultRequestObject == null) {
@@ -105,9 +107,11 @@ function lib_update(who, what) {
     // console.log("Could not get webservice request object");
     return false;
   }
+  var myLb = $('[name="library_name"]     option:selected').val();
   var subj = $('[name="library_subjects"] option:selected').val();
   var chap = $('[name="library_chapters"] option:selected').val();
   var sect = $('[name="library_sections"] option:selected').val();
+  if(myLb == 'All Libraries'){ myLb = '';};
   if(subj == 'All Subjects') { subj = '';};
   if(chap == 'All Chapters') { chap = '';};
   if(sect == 'All Sections') { sect = '';};
@@ -117,12 +121,16 @@ function lib_update(who, what) {
   if(lib_text == 'All Textbooks') { lib_text = '';};
   if(lib_textchap == 'All Chapters') { lib_textchap = '';};
   if(lib_textsect == 'All Sections') { lib_textsect = '';};
+
+  mydefaultRequestObject.library_name     = myLb;
+
   mydefaultRequestObject.library_subjects = subj;
   mydefaultRequestObject.library_chapters = chap;
   mydefaultRequestObject.library_sections = sect;
   mydefaultRequestObject.library_textbooks = lib_text;
   mydefaultRequestObject.library_textchapter = lib_textchap;
   mydefaultRequestObject.library_textsection = lib_textsect;
+
   if(who == 'count') {
     mydefaultRequestObject.command = 'countDBListings';
     // console.log(mydefaultRequestObject);
@@ -131,6 +139,7 @@ function lib_update(who, what) {
 		   data: mydefaultRequestObject,
 		   timeout: 10000, //milliseconds
 		   success: function (data) {
+
 		       if (data.match(/WeBWorK error/)) {
 			   reportWWerror(data);		   
 		       }
@@ -139,11 +148,21 @@ function lib_update(who, what) {
 		       // console.log(response);
 		       var arr = response.result_data;
 		       arr = arr[0];
-		       var line = "There are "+ arr +" matching WeBWorK problems"
-		       if(arr == "1") {
-			   line = "There is 1 matching WeBWorK problem"
+
+		       if(myLb == ''){ myLb = 'All Libraries';};
+
+
+		       var line = "There are "+ arr +" matching WeBWorK problems in " + myLb
+		       if (arr == "1") {
+			   line = "There is 1 matching WeBWorK problem in " + myLb
+		       } else if (arr == "0") {
+			   line = "There are no matching WeBWorK problem in " + myLb
+
 		       }
 		       $('#library_count_line').html(line);
+
+		       if(myLb == 'All Libraries'){ myLb = '';};
+	
 		       return true;
 		   },
 		  error: function (data) {
@@ -157,9 +176,18 @@ function lib_update(who, what) {
     setselect('library_'+who, [all]);
     return lib_update(child[who], 'clear');
   }
+  if(who=='subjects' && myLb=='') { return lib_update(who, 'clear'); }
   if(who=='chapters' && subj=='') { return lib_update(who, 'clear'); }
   if(who=='sections' && chap=='') { return lib_update(who, 'clear'); }
+
+//  if(who=='myLibrary'){ subcommand = "getAllLibraries";}
+
+  if(who=='myLibrary'){ subcommand = "getAllLibraries";}
+  if(who=='subjects') { subcommand = "getAllDBsubjects";}
+  if(who=='chapters') { subcommand = "getAllDBchapters";}
+
   if(who=='sections') { subcommand = "getSectionListings";}
+
   mydefaultRequestObject.command = subcommand;
   // console.log(mydefaultRequestObject);
     return $.ajax({type:'post',

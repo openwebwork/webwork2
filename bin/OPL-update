@@ -22,6 +22,9 @@ use Cwd;
 use DBI;
 
 
+my $myLib = "OPL" ; # default value
+
+
  #(maximum varchar length is 255 for mysql version < 5.0.3.  
  #You can increase path length to  4096 for mysql > 5.0.3)
 
@@ -96,9 +99,9 @@ my $dbh = DBI->connect(
         },
 );
 
-my $libraryRoot = $ce->{problemLibrary}->{root};
+my $libraryRoot = $ce->{problemLibrary}->{$myLib}->{root};
 $libraryRoot =~ s|/+$||;
-my $libraryVersion = $ce->{problemLibrary}->{version};
+my $libraryVersion = $ce->{problemLibrary}->{$myLib}->{version};
 my $db_storage_engine = $ce->{problemLibrary_db}->{storage_engine};
 
 my $verbose = 0;
@@ -431,7 +434,7 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 	close(IN);
 } else {
 	print "Textbooks file was not found in library $libraryRoot. If the path to the problem library doesn't seem
-	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
+	correct, make modifications in webwork2/conf/localOverrides.conf (\$problemLibrary{OPL}{root}).  If that is correct then
 	updating from git should download the Textbooks file.\n";
 }
 #### End of textbooks
@@ -453,7 +456,7 @@ if(open(IN, "$libraryRoot/Taxonomy2")) {
 	$canopenfile = 1;
 } else {
 	print "Taxonomy file was not found in library $libraryRoot. If the path to the problem library doesn't seem
-	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
+	correct, make modifications in webwork2/conf/localOverrides.conf (\$problemLibrary{OPL}{root}).  If that is correct then
 	updating from git should download the Taxonomy file.\n";
 } 
 
@@ -514,7 +517,12 @@ if($canopenfile) {
 
 #### Save the official taxonomy in json format
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
+
+# Get the filename for the taxo_file which is set for THIS library via the
+# settings in conf/defaults.config and/or conf/localOverrides.conf
+my $taxo_file = $ce->{problemLibrary}->{$myLib}->{taxo};
+
+my $file = "$webwork_htdocs/DATA/${taxo_file}";
 open(OUTF, ">$file") or die "Cannot open $file";
 print OUTF to_json($tagtaxo,{pretty=>1}) or die "Cannot write to $file";
 close(OUTF);
@@ -886,7 +894,7 @@ for my $chap (@{$dbchaps}) {
 }
 
 # Now run the script build-library-tree
-# This is used to create the file library-tree.json which can be used to 
+# This is used to create the file ${myLib}-library-tree.json which can be used to
 # load in subject-chapter-section information for the OPL
 
 use strict;
@@ -960,16 +968,20 @@ foreach my $i (0..$#subjects){
 	push (@subject_tree, $clone);
 }
 
-build_library_directory_tree($ce);
-build_library_subject_tree($ce,$dbh);
-build_library_textbook_tree($ce,$dbh);
+build_library_directory_tree($myLib,$ce);
+build_library_subject_tree($myLib,$ce,$dbh);
+build_library_textbook_tree($myLib,$ce,$dbh);
 
 $dbh->disconnect;
 
-if ($ce->{problemLibrary}{showLibraryLocalStats} ||
-    $ce->{problemLibrary}{showLibraryGlobalStats}) {
-  print "\nUpdating Library Statistics.\n";
-  do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+if ( $myLib eq "OPL" ) {
+    # Only the "real" OPL has Library statistics
+
+    if ($ce->{problemLibrary}{$myLib}{showLibraryLocalStats} ||
+	$ce->{problemLibrary}{$myLib}{showLibraryGlobalStats}) {
+	print "\nUpdating Library Statistics.\n";
+	do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+    }
 }
 
 

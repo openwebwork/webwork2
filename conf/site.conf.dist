@@ -250,6 +250,9 @@ $mail{tls_allowed} = 0;
 #
 # The problemLibrary configuration data should now be set in localOverrides.conf
 
+# 2018 - in order to support multiple installed libraries, there are changes to
+# the structure of the configuration settings.
+
 # For configuration instructions, see:
 # http://webwork.maa.org/wiki/National_Problem_Library
 # The directory containing the Open Problem Library files.
@@ -260,7 +263,7 @@ $mail{tls_allowed} = 0;
 
 #CONFIGURE problemLibrary values in this file. These settings override defaults in default.config
 #################################################
-$problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
+$problemLibrary{OPL}{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 ###########################################################
 
 ################################################################################

@@ -32,34 +32,36 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Form;
-use WeBWorK::Utils qw(readDirectory max sortByName);
+use WeBWorK::Utils qw(readDirectory max sortByName wwRound x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use File::Find;
 
 require WeBWorK::Utils::ListingDB;
 
+# we use x to mark strings for maketext
 use constant SHOW_HINTS_DEFAULT => 0;
 use constant SHOW_SOLUTIONS_DEFAULT => 0;
 use constant MAX_SHOW_DEFAULT => 20;
-use constant NO_LOCAL_SET_STRING => 'No sets in this course yet';
-use constant SELECT_SET_STRING => 'Select a Set from this Course';
-use constant SELECT_LOCAL_STRING => 'Select a Problem Collection';
-use constant MY_PROBLEMS => '  My Problems  ';
-use constant MAIN_PROBLEMS => '  Unclassified Problems  ';
-use constant CREATE_SET_BUTTON => 'Create New Set';
+use constant NO_LOCAL_SET_STRING => x('No sets in this course yet');
+use constant SELECT_SET_STRING => x('Select a Set from this Course');
+use constant SELECT_LOCAL_STRING => x('Select a Problem Collection');
+use constant MY_PROBLEMS => x('My Problems');
+use constant MAIN_PROBLEMS => x('Unclassified Problems');
+use constant CREATE_SET_BUTTON => x('Create New Set');
 use constant ALL_CHAPTERS => 'All Chapters';
 use constant ALL_SUBJECTS => 'All Subjects';
 use constant ALL_SECTIONS => 'All Sections';
 use constant ALL_TEXTBOOKS => 'All Textbooks';
 
 use constant LIB2_DATA => {
-  'dbchapter' => {name => 'library_chapters', all => 'All Chapters'},
+  'dbLibrary' =>  {name => 'library_name',     all => 'All Libraries'},
+  'dbchapter' =>  {name => 'library_chapters', all => 'All Chapters'},
   'dbsection' =>  {name => 'library_sections', all =>'All Sections' },
   'dbsubject' =>  {name => 'library_subjects', all => 'All Subjects' },
-  'textbook' =>  {name => 'library_textbook', all =>  'All Textbooks'},
-  'textchapter' => {name => 'library_textchapter', all => 'All Chapters'},
-  'textsection' => {name => 'library_textsection', all => 'All Sections'},
-  'keywords' =>  {name => 'library_keywords', all => '' },
+  'textbook'  =>  {name => 'library_textbook', all =>  'All Textbooks'},
+  'textchapter'=> {name => 'library_textchapter', all => 'All Chapters'},
+  'textsection'=> {name => 'library_textsection', all => 'All Sections'},
+  'keywords'  =>  {name => 'library_keywords', all => '' },
   };
 
 ## Flags for operations on files
@@ -407,11 +409,11 @@ sub browse_library_panel {
 	my $ce = $r->ce;
 
 	# See if the problem library is installed
-	my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
+	my $libraryRoot = $r->{ce}->{problemLibrary}->{OPL}->{root};
 
 	unless($libraryRoot) {
 		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
-			"The problem library has not been installed.")));
+			"The OPL problem library has not been installed.")));
 		return;
 	}
 	# Test if the Library directory link exists.  If not, try to make it
@@ -419,8 +421,8 @@ sub browse_library_panel {
 		unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/Library")) {
 			my $msg =	 <<"HERE";
 You are missing the directory <code>templates/Library</code>, which is needed
-for the Problem Library to function.	It should be a link pointing to
-<code>$libraryRoot</code>, which you set in <code>conf/site.conf</code>.
+for the Open Problem Library to function.	It should be a link pointing to
+<code>$libraryRoot</code>, which you set in <code>conf/localOverrides.conf</code>.
 I tried to make the link for you, but that failed.	Check the permissions
 in your <code>templates</code> directory.
 HERE
@@ -429,7 +431,7 @@ HERE
 	}
 
 	# Now check what version we are supposed to use
-	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
+	my $libraryVersion = $r->{ce}->{problemLibrary}->{OPL}->{version} || 1;
 	if($libraryVersion == 1) {
 		return $self->browse_library_panel1;
 	} elsif($libraryVersion >= 2) {

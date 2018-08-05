@@ -284,7 +284,15 @@ sub searchLib {    #API for searching the NPL database
 	if($rh->{library_levels}) {
 		$self->{level} = [split(//, $rh->{library_levels})];
 	}
+
+	# The code which supports multiple libraries needs the problemLibrary data
+	# data to be passed on into WeBWorK::Utils::ListingDB when called via
+	# the instructorXMLHandler, so add it here:
+	$self->{ce}->{problemLibrary} = {%{$ce->{problemLibrary}} };
+
+
 	'getDBTextbooks' eq $subcommand && do {
+		$self->{library_name}     = $rh->{library_name};
 		$self->{library_subjects} = $rh->{library_subjects};
 		$self->{library_chapters} = $rh->{library_chapters};
 		$self->{library_sections} = $rh->{library_sections};
@@ -293,23 +301,32 @@ sub searchLib {    #API for searching the NPL database
 		$out->{ra_out} = \@textbooks;
 		return($out);		
 	};
+	'getAllLibraries' eq $subcommand && do {
+		my @libraries = WeBWorK::Utils::ListingDB::getAllLibraries($self);
+		$out->{ra_out} = \@libraries;
+		$out->{text} = encode_base64("Libraries loaded.");
+		return($out);		
+	};
 	'getAllDBsubjects' eq $subcommand && do {
+		$self->{library_name} = $rh->{library_name};
 		my @subjects = WeBWorK::Utils::ListingDB::getAllDBsubjects($self);
 		$out->{ra_out} = \@subjects;
 		$out->{text} = encode_base64("Subjects loaded.");
 		return($out);		
 	};
 	'getAllDBchapters' eq $subcommand && do {
+		$self->{library_name}     = $rh->{library_name};
 		$self->{library_subjects} = $rh->{library_subjects};
 		my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($self);
 		$out->{ra_out} = \@chaps;
-        $out->{text} = encode_base64("Chapters loaded.");
+		$out->{text} = encode_base64("Chapters loaded.");
 
 		return($out);		
 	};
 	'getDBListings' eq $subcommand && do {
 
 		my $templateDir = $self->ce->{courseDirs}->{templates};
+		$self->{library_name}     = $rh->{library_name};
 		$self->{library_subjects} = $rh->{library_subjects};
 		$self->{library_chapters} = $rh->{library_chapters};
 		$self->{library_sections} = $rh->{library_sections};
@@ -318,25 +335,39 @@ sub searchLib {    #API for searching the NPL database
 		$self->{library_textchapter} = $rh->{library_textchapter};
 		$self->{library_textsection} = $rh->{library_textsection};
 		debug(to_json($rh));
+
 		my @listings = WeBWorK::Utils::ListingDB::getDBListings($self);
-		my @output = map {$templateDir."/Library/".$_->{path}."/".$_->{filename}} @listings;
+
+		# Find library (directory) name and then lookup the code name
+		my $reqLib   = $rh->{library_name};
+		my $libCode  = $ce->{problemLibrary}->{LookupTable}->{$reqLib};
+		my $linkName = $ce->{problemLibrary}->{$libCode}->{linkname}; # Name of the symbolic link
+
+		# OLD code assumed the directory name "Library" which was for the main OPL 
+		#my @output = map {$templateDir."/Library/".$_->{path}."/".$_->{filename}} @listings;
 		#change the hard coding!!!....just saying
+
+		# NEW:
+		my @output = map {$templateDir."/${linkName}/".$_->{path}."/".$_->{filename}} @listings;
+
 		$out->{ra_out} = \@output;
 		return($out);
 	};
 	'getSectionListings' eq $subcommand && do {
+		$self->{library_name}     = $rh->{library_name};
 		$self->{library_subjects} = $rh->{library_subjects};
 		$self->{library_chapters} = $rh->{library_chapters};
 		$self->{library_sections} = $rh->{library_sections};
 
 		my @section_listings = WeBWorK::Utils::ListingDB::getAllDBsections($self);
 		$out->{ra_out} = \@section_listings;
-        $out->{text} = encode_base64("Sections loaded.");
+		$out->{text} = encode_base64("Sections loaded.");
 
 		return($out);
 	};
 
 	'countDBListings' eq $subcommand && do {
+		$self->{library_name}     = $rh->{library_name};
 		$self->{library_subjects} = $rh->{library_subjects};
 		$self->{library_chapters} = $rh->{library_chapters};
 		$self->{library_sections} = $rh->{library_sections};
@@ -344,8 +375,33 @@ sub searchLib {    #API for searching the NPL database
 		$self->{library_textbook} = $rh->{library_textbook};
 		$self->{library_textchapter} = $rh->{library_textchapter};
 		$self->{library_textsection} = $rh->{library_textsection};
-		my $count = WeBWorK::Utils::ListingDB::countDBListings($self);
-					$out->{text} = encode_base64("Count done.");
+
+		# The code which supports multiple libraries needs the problemLibrary data
+		# to be passed on
+		#$self->{ce}->{problemLibrary} = {%{$ce->{problemLibrary}} };
+
+		
+		my $count = 0;
+		if ( ( $rh->{library_name} eq "All Libraries" ) || 
+		     # ( !defined( $rh->{library_name} ) )        ||
+		     ( $rh->{library_name} eq "" ) ) {   # "All Libraries gets changes to "" by JS code
+		    my $jjj = $rh->{library_name};
+		    # LOOP over all libraries
+		    my @libs = keys( %{$ce->{problemLibrary}} );
+		    my $ll;
+		    $count = "";
+		    foreach $ll ( @libs ) {
+			# skip "LookupTable" 
+			next if ( ( $ll eq "LookupTable" ) || ( $ll eq "" ) );
+			$self->{library_name} = "$ce->{problemLibrary}->{$ll}->{linkname}";
+
+			$count += WeBWorK::Utils::ListingDB::countDBListings($self);
+		    }
+		} else {
+		    $count = WeBWorK::Utils::ListingDB::countDBListings($self);
+		}
+
+		$out->{text} = encode_base64("Count done.");
 		$out->{ra_out} = [$count];
 		return($out);
 	};
@@ -392,6 +448,7 @@ sub getProblemDirectories {
 
 	my %libraries = %{$self->ce->{courseFiles}->{problibs}};
 
+    # FIXME - this is for the OPL with the fixed path
 	my $lib = "Library";
 	my $source = $ce->{courseDirs}{templates};
 	my $main = MY_PROBLEMS; my $isTop = 1;

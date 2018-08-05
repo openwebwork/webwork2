@@ -121,26 +121,130 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # NationalProblemLibrary -- OpenProblemLibrary
 ################################################################################
 
+# 2018 - in order to support multiple installed libraries, there are changes to
+# the structure of the configuration settings.
+# the "{OPL}" was added to the path to the records for the main OPL settings.
+
+$problemLibrary{OPL} = { }; # Create an empty hash for the OPL library records
 
 # For configuration instructions, see:
 # http://webwork.maa.org/wiki/National_Problem_Library
 # The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
 # NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
-#$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
-#$problemLibrary{version}     = "2";
-# uncomment these lines below and comment out the line above if using OPL instead of NPL
+#$problemLibrary{OPL}{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
+#$problemLibrary{OPL}{version}     = "2";
+# uncomment the 2 lines above and comment the 2 below if using NPL instead of OPL
 
-$problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
-$contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
-$problemLibrary{version}    = "2.5";  
+$problemLibrary{OPL}{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
+$contribLibrary{OPL}{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
+$problemLibrary{OPL}{version}    = "2.5";
+
+# What is the "displayed" name of this library
+$problemLibrary{OPL}{name}    = "Open Problem Library";
+
+
+# What is the name of the symbolic link from inside course template directories
+# to this library. For the main OPL the value "Library" should be used. Some
+# PG files which load other files have that value hard-coded in.
+$problemLibrary{OPL}{linkname}    = "Library"; # Do NOT change this for the OPL
+
+# Used to get internal short name from the "linkname":
+$problemLibrary{LookupTable}{Library}    = "OPL";
+
+# JSON files for this library
+$problemLibrary{OPL}{tree} = 'OPL-library-directory-tree.json';
+$problemLibrary{OPL}{taxo} = 'OPL-tagging-taxonomy.json';
+$problemLibrary{OPL}{subj} = 'OPL-library-subject-tree.json';
+$problemLibrary{OPL}{text} = 'OPL-textbook-tree.json';
 
 # These flags control if statistics on opl problems are shown in the library
 # browser.  If you want to include local statistics you will need to
 # run webwork2/bin/update-OPL-statistics on a regular basis.  
-$problemLibrary{showLibraryLocalStats} = 1;
+$problemLibrary{OPL}{showLibraryLocalStats} = 1;
 # This flag controls whether global statistics will be displayed
-$problemLibrary{showLibraryGlobalStats} = 1;
+$problemLibrary{OPL}{showLibraryGlobalStats} = 1;
+
+# ======================================================
+
+# Sample records for an additional SEARCHABLE library
+
+#$problemLibrary{TSTL1} = { }; # Empty hash for the TSTL1 library records
+
+# Where is the library root directory on the server
+#$problemLibrary{TSTL1}{root}       = "/opt/webwork/libraries/tl-01";
+
+# What table version should we use. Should match that of the OTHER libraries
+#    so we use the value set for the primary libraries
+#$problemLibrary{TSTL1}{version} = "$problemLibrary{OPL}{version}";
+
+# What is the "displayed" name of this library
+#$problemLibrary{TSTL1}{name}    = "Test Library 1";
+
+# What is the name of the symbolic link from inside course template directories
+# to this library.
+# Warning: Do NOT use the value "Library" for anything except the main OPL.
+# Some PG files in the OPL reference/load other problems under the
+# assumption that the OPL is under "Library" so we should NOT put something else there.
+#$problemLibrary{TSTL1}{linkname}    = "TestLibrary1"; # Do not call this "Library" that should be reserved for the main OPL only, as linked PG problems in the OPL expect that specific value
+
+# Set the LookupTable values used to get internal short name from the "linkname":
+#$problemLibrary{LookupTable}{TestLibrary1}    = "TSTL1";
+
+# JSON files for this library
+#$problemLibrary{TSTL1}{tree} = 'TSTL1-library-directory-tree.json';
+#$problemLibrary{TSTL1}{taxo} = 'TSTL1-tagging-taxonomy.json';
+#$problemLibrary{TSTL1}{subj} = 'TSTL1-library-subject-tree.json';
+#$problemLibrary{TSTL1}{text} = 'TSTL1-textbook-tree.json';
+
+# A present it is assumed that additional libraries will NOT have stats supports,
+# so we disable the following settings.
+#$problemLibrary{TSTL1}{showLibraryLocalStats}  = 0;
+#$problemLibrary{TSTL1}{showLibraryGlobalStats} = 0;
+
+# End of sample records for an additional SEARCHABLE library
+
+# ======================================================
+
+# Sample records for an additional SEARCHABLE library
+
+#$problemLibrary{TSTL2} = { }; # Empty hash for the TSTL1 library records
+
+# Where is the library root directory on the server
+#$problemLibrary{TSTL2}{root}       = "/opt/webwork/libraries/tl-02";
+
+# What table version should we use. Should match that of the OTHER libraries
+#    so we use the value set for the primary libraries
+#$problemLibrary{TSTL2}{version} = "$problemLibrary{OPL}{version}";
+
+# What is the "displayed" name of this library
+#$problemLibrary{TSTL2}{name}    = "Test Library 2";
+
+# What is the name of the symbolic link from inside course template directories
+# to this library.
+# Warning: Do NOT use the value "Library" for anything except the main OPL.
+# Some PG files in the OPL reference/load other problems under the
+# assumption that the OPL is under "Library" so we should NOT put something else there.
+#$problemLibrary{TSTL2}{linkname}    = "TestLibrary2"; # Do not call this "Library" that should be reserved for the main OPL only, as linked PG problems in the OPL expect that specific value
+
+# Set the LookupTable values used to get internal short name from the "linkname":
+#$problemLibrary{LookupTable}{TestLibrary2}    = "TSTL2";
+
+# JSON files for this library
+#$problemLibrary{TSTL2}{tree} = 'TSTL2-library-directory-tree.json';
+#$problemLibrary{TSTL2}{taxo} = 'TSTL2-tagging-taxonomy.json';
+#$problemLibrary{TSTL2}{subj} = 'TSTL2-library-subject-tree.json';
+#$problemLibrary{TSTL2}{text} = 'TSTL2-textbook-tree.json';
+
+# A present it is assumed that additional libraries will NOT have stats supports,
+# so we disable the following settings.
+#$problemLibrary{TSTL2}{showLibraryLocalStats}  = 0;
+#$problemLibrary{TSTL2}{showLibraryGlobalStats} = 0;
+
+# End of sample records for an additional SEARCHABLE library
+
+# ======================================================
+
 
 # Additional library buttons can be added to the Library Browser (SetMaker.pm)
 # by adding the libraries you want to the following line.  For each key=>value
@@ -322,12 +426,12 @@ $pg{options}{periodicRandomizationPeriod} = 5;
 ################################################################################
 
  $pg{specialPGEnvironmentVars}{DragMath} = 0;
- $pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
- $pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
- $pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{templates}/Contrib/CAPA/CAPA_Graphics/",
- push @{$pg{directories}{macrosPath}},  
-   "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools",
-   "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools";
+ #$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
+ #$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
+ #$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{templates}/Contrib/CAPA/CAPA_Graphics/",
+ #push @{$pg{directories}{macrosPath}},  
+ #  "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools",
+ #  "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools";
 
  # The link Contrib in the course templates directory should point to ../webwork-open-problem-library/Contrib 
 
