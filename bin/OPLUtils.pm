@@ -166,6 +166,20 @@ sub build_library_subject_tree {
 
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
+	# Modify table names for per-library tables
+	my @special_tables = qw( pgfile pgfile_keyword pgfile_problem );
+	my $tmp1; my $tblName;
+	foreach $tmp1 ( @special_tables ) {
+	  $tblName = $tables{$tmp1};
+	  #print "old table name $tblName\n";
+	  if ( $libraryVersion eq '2.5') {
+	    $tblName =~ s/OPL/$myLib/;
+	  } else {
+	    $tblName =~ s/NPL/$myLib/;
+	  }
+	  #print "new table name $tblName\n";
+	  $tables{$tmp1} = $tblName;
+	}
 
 	my $selectClause = "select subj.name, ch.name, sect.name, path.path,pg.filename from `$tables{dbsection}` AS sect "
 		."JOIN `$tables{dbchapter}` AS ch ON ch.DBchapter_id = sect.DBchapter_id "
@@ -319,6 +333,20 @@ sub build_library_textbook_tree {
 
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
+	# Modify table names for per-library tables
+	my @special_tables = qw( pgfile pgfile_keyword pgfile_problem );
+	my $tmp1; my $tblName;
+	foreach $tmp1 ( @special_tables ) {
+	  $tblName = $tables{$tmp1};
+	  #print "old table name $tblName\n";
+	  if ( $libraryVersion eq '2.5') {
+	    $tblName =~ s/OPL/$myLib/;
+	  } else {
+	    $tblName =~ s/NPL/$myLib/;
+	  }
+	  #print "new table name $tblName\n";
+	  $tables{$tmp1} = $tblName;
+	}
 
 	my $selectClause = "SELECT pg.pgfile_id from `$tables{path}` as path "
 		."LEFT JOIN `$tables{pgfile}` AS pg ON pg.path_id=path.path_id "
