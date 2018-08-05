@@ -99,6 +99,23 @@ sub getTables {
 	} else {
 		%tables = %OPLtables;
 	}
+
+	# Modify table names for per-library tables
+	my @special_tables = qw( pgfile pgfile_keyword pgfile_problem );
+	my $tmp1; my $tblName;
+	foreach $tmp1 ( @special_tables ) {
+	    next if ( $myLib eq "" ); # Skip this
+	    $tblName = $tables{$tmp1};
+	    #print "old table name $tblName\n";
+	    if ( $ce->{problemLibrary}->{$myLib}->{version} eq "2" ) {
+	        $tblName =~ s/NPL/${myLib}/;
+	    } else {
+	        $tblName =~ s/OPL/${myLib}/;
+	    }
+	    #print "new table name $tblName\n";
+	    $tables{$tmp1} = $tblName;
+	}
+
 	return %tables;
 }
 
