@@ -1,28 +1,29 @@
 FROM ubuntu:16.04
 
-ENV WEBWORK_URL /webwork2
-ENV WEBWORK_ROOT_URL http://localhost
-ENV WEBWORK_DB_HOST db
-ENV WEBWORK_DB_PORT 3306
-ENV WEBWORK_DB_NAME webwork
-ENV WEBWORK_DB_DSN DBI:mysql:${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_PORT}
-ENV WEBWORK_DB_USER webworkWrite
-ENV WEBWORK_DB_PASSWORD passwordRW
-ENV WEBWORK_SMTP_SERVER localhost
-ENV WEBWORK_SMTP_SENDER webwork@example.com
-ENV WEBWORK_TIMEZONE America/New_York
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
-# temporary state file location. This might be changed to /run in Wheezy+1
-ENV APACHE_PID_FILE /var/run/apache2/apache2.pid
-ENV APACHE_RUN_DIR /var/run/apache2
-ENV APACHE_LOCK_DIR /var/lock/apache2
-# Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
-ENV APACHE_LOG_DIR /var/log/apache2
-ENV APP_ROOT /opt/webwork
-ENV WEBWORK_ROOT $APP_ROOT/webwork2
-ENV PG_ROOT $APP_ROOT/pg
-ENV DEV 0
+ENV WEBWORK_URL=/webwork2 \
+  WEBWORK_ROOT_URL=http://localhost \
+  WEBWORK_DB_HOST=db \
+  WEBWORK_DB_PORT=3306 \
+  WEBWORK_DB_NAME=webwork \
+  WEBWORK_DB_DSN=DBI:mysql:${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_PORT} \
+  WEBWORK_DB_USER=webworkWrite \
+  WEBWORK_DB_PASSWORD=passwordRW \
+  WEBWORK_SMTP_SERVER=localhost \
+  WEBWORK_SMTP_SENDER=webwork@example.com \
+  WEBWORK_TIMEZONE=America/New_York \
+  APACHE_RUN_USER=www-data \
+  APACHE_RUN_GROUP=www-data \
+  # temporary state file location. This might be changed to /run in Wheezy+1 \
+  APACHE_PID_FILE=/var/run/apache2/apache2.pid \
+  APACHE_RUN_DIR=/var/run/apache2 \
+  APACHE_LOCK_DIR=/var/lock/apache2 \
+  # Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
+  APACHE_LOG_DIR=/var/log/apache2 \
+  APP_ROOT=/opt/webwork \
+  WEBWORK_ROOT=$APP_ROOT/webwork2 \
+  PG_ROOT=$APP_ROOT/pg \
+  DEV=0 \
+  PG_VERSION=rel-PG-2.14
 
 
 RUN apt-get update \
@@ -80,11 +81,9 @@ RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
 COPY VERSION /tmp
 
-RUN WEBWORK_VERSION=`cat /tmp/VERSION|sed -n 's/.*\(develop\)'\'';/\1/p' && cat /tmp/VERSION|sed -n 's/.*\([0-9]\.[0-9]*\)'\'';/PG\-\1/p'` \
-    && curl -fSL https://github.com/openwebwork/pg/archive/${WEBWORK_VERSION}.tar.gz -o /tmp/${WEBWORK_VERSION}.tar.gz \
-    && tar xzf /tmp/${WEBWORK_VERSION}.tar.gz \
-    && mv pg-${WEBWORK_VERSION} $APP_ROOT/pg \
-    && rm /tmp/${WEBWORK_VERSION}.tar.gz \
+RUN curl -fSL https://github.com/openwebwork/pg/archive/${PG_VERSION}.tar.gz -o /tmp/${PG_VERSION}.tar.gz \
+    && tar xzf /tmp/${PG_VERSION}.tar.gz \
+    && mv pg-${PG_VERSION} $APP_ROOT/pg \
     && curl -fSL https://github.com/openwebwork/webwork-open-problem-library/archive/master.tar.gz -o /tmp/opl.tar.gz \
     && tar xzf /tmp/opl.tar.gz \
     && mv webwork-open-problem-library-master $APP_ROOT/libraries/webwork-open-problem-library \
