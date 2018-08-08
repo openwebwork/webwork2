@@ -120,14 +120,14 @@ RUN cd $APP_ROOT/webwork2/conf \
         /etc/apache2/mods-available/mpm_prefork.conf \
     && cp $APP_ROOT/webwork2/htdocs/favicon.ico /var/www/html \
     && sed -i -e 's/^<Perl>$/\
-      PerlPassWEBWORK_URL\n\
-      PerlPassWEBWORK_ROOT_URL\n\
-      PerlPassWEBWORK_DB_DSN\n\
-      PerlPassWEBWORK_DB_USER\n\
-      PerlPassWEBWORK_DB_PASSWORD\n\
-      PerlPassWEBWORK_SMTP_SERVER\n\
-      PerlPassWEBWORK_SMTP_SENDER\n\
-      PerlPassWEBWORK_TIMEZONE\n\
+      PerlPassEnv WEBWORK_URL\n\
+      PerlPassEnv WEBWORK_ROOT_URL\n\
+      PerlPassEnv WEBWORK_DB_DSN\n\
+      PerlPassEnv WEBWORK_DB_USER\n\
+      PerlPassEnv WEBWORK_DB_PASSWORD\n\
+      PerlPassEnv WEBWORK_SMTP_SERVER\n\
+      PerlPassEnv WEBWORK_SMTP_SENDER\n\
+      PerlPassEnv WEBWORK_TIMEZONE\n\
       \n<Perl>/' /etc/apache2/conf-enabled/webwork.conf
 
 RUN cd $APP_ROOT/webwork2/ \
