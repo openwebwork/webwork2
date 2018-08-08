@@ -1,28 +1,29 @@
 FROM ubuntu:16.04
 
-ENV WEBWORK_URL /webwork2
-ENV WEBWORK_ROOT_URL http://localhost
-ENV WEBWORK_DB_HOST db
-ENV WEBWORK_DB_PORT 3306
-ENV WEBWORK_DB_NAME webwork
-ENV WEBWORK_DB_DSN DBI:mysql:${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_PORT}
-ENV WEBWORK_DB_USER webworkWrite
-ENV WEBWORK_DB_PASSWORD passwordRW
-ENV WEBWORK_SMTP_SERVER localhost
-ENV WEBWORK_SMTP_SENDER webwork@example.com
-ENV WEBWORK_TIMEZONE America/New_York
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
-# temporary state file location. This might be changed to /run in Wheezy+1
-ENV APACHE_PID_FILE /var/run/apache2/apache2.pid
-ENV APACHE_RUN_DIR /var/run/apache2
-ENV APACHE_LOCK_DIR /var/lock/apache2
-# Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
-ENV APACHE_LOG_DIR /var/log/apache2
-ENV APP_ROOT /opt/webwork
-ENV WEBWORK_ROOT $APP_ROOT/webwork2
-ENV PG_ROOT $APP_ROOT/pg
-ENV DEV 0
+ENV WEBWORK_URL=/webwork2 \
+  WEBWORK_ROOT_URL=http://localhost \
+  WEBWORK_DB_HOST=db \
+  WEBWORK_DB_PORT=3306 \
+  WEBWORK_DB_NAME=webwork \
+  WEBWORK_DB_DSN=DBI:mysql:${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_PORT} \
+  WEBWORK_DB_USER=webworkWrite \
+  WEBWORK_DB_PASSWORD=passwordRW \
+  WEBWORK_SMTP_SERVER=localhost \
+  WEBWORK_SMTP_SENDER=webwork@example.com \
+  WEBWORK_TIMEZONE=America/New_York \
+  APACHE_RUN_USER=www-data \
+  APACHE_RUN_GROUP=www-data \
+  # temporary state file location. This might be changed to /run in Wheezy+1 \
+  APACHE_PID_FILE=/var/run/apache2/apache2.pid \
+  APACHE_RUN_DIR=/var/run/apache2 \
+  APACHE_LOCK_DIR=/var/lock/apache2 \
+  # Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
+  APACHE_LOG_DIR=/var/log/apache2 \
+  APP_ROOT=/opt/webwork \
+  WEBWORK_ROOT=$APP_ROOT/webwork2 \
+  PG_ROOT=$APP_ROOT/pg \
+  DEV=0 \
+  PG_VERSION=rel-PG-2.14
 
 
 RUN apt-get update \
@@ -80,8 +81,7 @@ RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
 COPY VERSION /tmp
 
-RUN PG_VERSION=rel-PG-2.14 \
-    && curl -fSL https://github.com/openwebwork/pg/archive/${PG_VERSION}.tar.gz -o /tmp/${PG_VERSION}.tar.gz \
+RUN curl -fSL https://github.com/openwebwork/pg/archive/${PG_VERSION}.tar.gz -o /tmp/${PG_VERSION}.tar.gz \
     && tar xzf /tmp/${PG_VERSION}.tar.gz \
     && mv pg-${PG_VERSION} $APP_ROOT/pg \
     && curl -fSL https://github.com/openwebwork/webwork-open-problem-library/archive/master.tar.gz -o /tmp/opl.tar.gz \
@@ -120,14 +120,14 @@ RUN cd $APP_ROOT/webwork2/conf \
         /etc/apache2/mods-available/mpm_prefork.conf \
     && cp $APP_ROOT/webwork2/htdocs/favicon.ico /var/www/html \
     && sed -i -e 's/^<Perl>$/\
-      PerlPassEnv WEBWORK_URL\n\
-      PerlPassEnv WEBWORK_ROOT_URL\n\
-      PerlPassEnv WEBWORK_DB_DSN\n\
-      PerlPassEnv WEBWORK_DB_USER\n\
-      PerlPassEnv WEBWORK_DB_PASSWORD\n\
-      PerlPassEnv WEBWORK_SMTP_SERVER\n\
-      PerlPassEnv WEBWORK_SMTP_SENDER\n\
-      PerlPassEnv WEBWORK_TIMEZONE\n\
+      PerlPassWEBWORK_URL\n\
+      PerlPassWEBWORK_ROOT_URL\n\
+      PerlPassWEBWORK_DB_DSN\n\
+      PerlPassWEBWORK_DB_USER\n\
+      PerlPassWEBWORK_DB_PASSWORD\n\
+      PerlPassWEBWORK_SMTP_SERVER\n\
+      PerlPassWEBWORK_SMTP_SENDER\n\
+      PerlPassWEBWORK_TIMEZONE\n\
       \n<Perl>/' /etc/apache2/conf-enabled/webwork.conf
 
 RUN cd $APP_ROOT/webwork2/ \
