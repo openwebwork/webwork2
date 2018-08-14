@@ -483,6 +483,16 @@ sub browse_library_panel {
 
 	my $linkName = $r->{ce}->{problemLibrary}->{OPL}->{linkname}; 
 
+	# # Debug code below displays the hash data in the HTML output
+	#my $pl1 = $r->{ce}->{problemLibrary};
+	#my $opl1 = $pl1->{OPL};
+	#print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"},
+	#	"libraryRoot setting is $libraryRoot and pl1 keys: "
+	#	. join(" ",keys( %$pl1))
+	#	. "<br> opl1 keys: "
+	#	. join(" ",keys( %$opl1))
+	#	)));
+
 	unless($libraryRoot) {
 		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
 			"The OPL problem library has not been installed.")));
