@@ -598,8 +598,8 @@ sub browse_library_panel2 {
 		# FIXME should check here that this library is installed for this course
 
 		$count_line += WeBWorK::Utils::ListingDB::countDBListings($r);
-		$r->param( 'library_name' => LIB2_DATA->{dbLibrary}{all} );
 	    }
+	    $r->param( 'library_name' => LIB2_DATA->{dbLibrary}{all} );
 	} else {
 	    $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	}
@@ -757,8 +757,8 @@ sub browse_library_panel2adv {
 		# FIXME should check here that this library is installed for this course
 
 		$count_line += WeBWorK::Utils::ListingDB::countDBListings($r);
-		$r->param( 'library_name' => LIB2_DATA->{dbLibrary}{all} );
 	    }
+	    $r->param( 'library_name' => LIB2_DATA->{dbLibrary}{all} );
 	} else {
 	    $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
 	}	
@@ -1525,7 +1525,7 @@ sub pre_header_initialize {
 		##### View from the library database
  
 	} elsif ($r->param('lib_view')) {
- 
+
 		@pg_files=();
 		my @dbsearch;
 
