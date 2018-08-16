@@ -634,10 +634,10 @@ sub browse_library_panel2 {
 					            -default=> $libName_selected,
 						    -onchange=>"lib_update('count', 'clear');return true"
 				 )]),
-			#CGI::td({-colspan=>2, -align=>"left"},
-			#	CGI::button(-name=>"change_library", -value=>$r->maketext("Change library"),   # Not needed
-			#		    -onclick=>"lib_update('subjects', 'get');return true"
-			#		    ))
+			CGI::td({-colspan=>2, -align=>"left"},
+				CGI::button(-name=>"change_library", -value=>$r->maketext("Get subjects in this library"),
+					    -onclick=>"lib_update('subjects', 'get');return true"
+					    ))
 		),
 
 		CGI::Tr({},
@@ -812,10 +812,10 @@ sub browse_library_panel2adv {
 					            -default=> $selected{dbLibrary},
 						    -onchange=>"lib_update('count', 'clear');return true"
 				 )]),
-			#CGI::td({-colspan=>2, -align=>"left"},
-			#	CGI::button(-name=>"change_library", -value=>$r->maketext("Change library"),   # Not needed
-			#		    -onclick=>"lib_update('subjects', 'get');return true"
-			#	))
+			CGI::td({-colspan=>2, -align=>"left"},
+				CGI::button(-name=>"change_library", -value=>$r->maketext("Get subjects in this library"),   # Not needed
+					    -onclick=>"lib_update('subjects', 'get');return true"
+				))
 		),
 
 		CGI::Tr({},
