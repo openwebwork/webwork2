@@ -793,19 +793,19 @@ sub requestSavedCount {
 
     if($subj) {
 	$cnt_table = $tables{cnt_dbsubject};
-	$typewhere = " dbsj.DBsubject_id = cnt.DBsubject_id ";
+	$typewhere =  "AND dbsj.DBsubject_id = cnt.DBsubject_id ";
 	$extrawhere .= " AND dbsj.name= ? ";
 	push @select_parameters, $subj;
     }
     if($chap) {
 	$cnt_table = $tables{cnt_dbchapter};
-	$typewhere = " dbc.DBchapter_id = cnt.DBchapter_id ";
+	$typewhere = " AND dbc.DBchapter_id = cnt.DBchapter_id ";
 	$extrawhere .= " AND dbc.name= ? ";
 	push @select_parameters, $chap;
     }
     if($sec) {
 	$cnt_table = $tables{cnt_dbsection};
-	$typewhere = " dbsc.DBsection_id = cnt.DBsection_id ";
+	$typewhere = " AND dbsc.DBsection_id = cnt.DBsection_id ";
 	$extrawhere .= " AND dbsc.name= ? ";
 	push @select_parameters, $sec;
     }
@@ -816,7 +816,7 @@ sub requestSavedCount {
                                    `$tables{dbchapter}` dbc,
                                    `$tables{dbsubject}` dbsj
 			WHERE dbsj.DBsubject_id = dbc.DBsubject_id  AND
-			       dbc.DBchapter_id = dbsc.DBchapter_id AND
+			       dbc.DBchapter_id = dbsc.DBchapter_id 
                                $typewhere $extrawhere AND cnt.libcode = ?";
 
     $query =~ s/\n/ /g;
