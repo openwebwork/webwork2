@@ -67,6 +67,9 @@ my %OPLtables = (
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
  pgfile_problem => 'OPL_pgfile_problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
 
 
@@ -85,6 +88,9 @@ my %NPLtables = (
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
  pgfile_problem => 'NPL-pgfile-problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
 
 
@@ -721,9 +727,263 @@ sub getDBListings {
 	return @results;
 }
 
+# special return codes:
+# -200 = all libraries, do not save data
+# -100 = should not save data
+# -1   = should save count after it is found
+
+sub requestSavedCount {
+    my $r = shift;
+
+    # Find library (directory) name and then lookup the code name
+    my $reqLib  = $r->param('library_name');
+    if ( $reqLib eq "" ) {
+	# When called via instructorXMLHandler from JavaScript
+	# there can be a difference between the "param" value and the "hash" value.
+	# and we want the non-empty value
+	$reqLib  = $r->{library_name};
+    }
+
+    # Need to handle case of "All Libraries" which should not get passed
+    # into this function, but would cause an error below.
+    if ( ( $reqLib eq "All Libraries" ) || ( $reqLib eq "" ) ) {
+	return( -200 );
+    }
+
+    my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+    # Now depends on the $libCode
+    my %tables = getTables($r->ce, $libCode);
+    my $ce = $r->ce;
+
+    my $keywords = $r->param('library_keywords') || "";
+    if($keywords) {
+	return( -100 ); # No saved counts for this case
+    }
+
+    for my $j (qw( textbook textchapter textsection )) {
+	my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
+	$foo =~ s/^\s*\d+\.\s*//;
+	if($foo) {
+	    return( -100 ); # No saved counts for this case
+	}
+    }
+
+    # Next could be an array, an array reference, or nothing
+    my @levels = $r->param('level');
+    if(scalar(@levels) == 1 and ref($levels[0]) eq 'ARRAY') {
+	@levels = @{$levels[0]};
+    }
+    @levels = grep { defined($_) && m/\S/ } @levels;
+    if(scalar(@levels)) {
+	return( -100 ); # No saved counts for this case
+    }
+
+    my $subj = $r->param('library_subjects') || "";
+    my $chap = $r->param('library_chapters') || "";
+    my $sec  = $r->param('library_sections') || "";
+
+    my $dbh = getDB($ce);
+    my $cnt_table = $tables{cnt_dbsubject};
+    my $query;
+
+    my $typewhere = '';
+    my $extrawhere = '';
+    my @select_parameters=();
+
+    if($subj) {
+	$cnt_table = $tables{cnt_dbsubject};
+	$typewhere = " dbsj.DBsubject_id = cnt.DBsubject_id ";
+	$extrawhere .= " AND dbsj.name= ? ";
+	push @select_parameters, $subj;
+    }
+    if($chap) {
+	$cnt_table = $tables{cnt_dbchapter};
+	$typewhere = " dbc.DBchapter_id = cnt.DBchapter_id ";
+	$extrawhere .= " AND dbc.name= ? ";
+	push @select_parameters, $chap;
+    }
+    if($sec) {
+	$cnt_table = $tables{cnt_dbsection};
+	$typewhere = " dbsc.DBsection_id = cnt.DBsection_id ";
+	$extrawhere .= " AND dbsc.name= ? ";
+	push @select_parameters, $sec;
+    }
+    push @select_parameters, $libCode;
+
+    my $query = "SELECT count from `$cnt_table` cnt,
+                                   `$tables{dbsection}` dbsc,
+                                   `$tables{dbchapter}` dbc,
+                                   `$tables{dbsubject}` dbsj
+			WHERE dbsj.DBsubject_id = dbc.DBsubject_id  AND
+			       dbc.DBchapter_id = dbsc.DBchapter_id AND
+                               $typewhere $extrawhere AND cnt.libcode = ?";
+
+    $query =~ s/\n/ /g;
+    warn "no text info: ", $query;
+    warn "params: ", join(" | ",@select_parameters);
+
+    my $sth = $dbh->prepare_cached( $query );
+    if ( !defined($sth) ) {
+	warn "Couldn't prepare statement: " . $dbh->errstr;
+	return(-300);
+    }
+
+    my $rv = $sth->execute(@select_parameters);
+    if ( !defined($rv) ) {
+	warn "Couldn't execute statement: " . $sth->errstr;
+	return(-300);
+    }
+
+    if ($sth->rows == 0) {
+	warn "No record found";
+	return(-1);
+    }
+    my @data = $sth->fetchrow_array();
+    return( $data[0] );
+}
+
+# Get the id
+sub safe_get_id {
+    my $dbh = shift;
+    my $tablename = shift;
+    my $idname = shift;
+    my $whereclause = shift;
+    my $wherevalues = shift;
+
+    my $query = "SELECT $idname FROM `$tablename` ".$whereclause;
+    my $sth = $dbh->prepare($query);
+    $sth->execute(@$wherevalues);
+    my $idvalue;
+    my @row;
+    unless(@row = $sth->fetchrow_array()) {
+	return -1;
+    }
+    $idvalue = $row[0];
+    return($idvalue);
+}
+
+
+sub saveCount {
+    my $r = shift;
+    my $countToSave = shift; # count found
+
+    # Find library (directory) name and then lookup the code name
+    my $reqLib  = $r->param('library_name');
+    if ( $reqLib eq "" ) {
+	# When called via instructorXMLHandler from JavaScript
+	# there can be a difference between the "param" value and the "hash" value.
+	# and we want the non-empty value
+	$reqLib  = $r->{library_name};
+    }
+
+    # Need to handle case of "All Libraries" which should not get passed
+    # into this function, but would cause an error below.
+    if ( ( $reqLib eq "All Libraries" ) || ( $reqLib eq "" ) ) {
+	return; # Do not save counts for this case
+    }
+
+    my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+    # Now depends on the $libCode
+    my %tables = getTables($r->ce, $libCode);
+    my $ce = $r->ce;
+
+    my $keywords = $r->param('library_keywords') || "";
+    if($keywords) {
+	return; # Do not save counts for this case
+    }
+
+    for my $j (qw( textbook textchapter textsection )) {
+	my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
+	$foo =~ s/^\s*\d+\.\s*//;
+	if($foo) {
+	    return; # Do not save counts for this case
+	}
+    }
+
+    # Next could be an array, an array reference, or nothing
+    my @levels = $r->param('level');
+    if(scalar(@levels) == 1 and ref($levels[0]) eq 'ARRAY') {
+	@levels = @{$levels[0]};
+    }
+    @levels = grep { defined($_) && m/\S/ } @levels;
+    if(scalar(@levels)) {
+	return; # Do not save counts for this case
+    }
+
+    my $subj = $r->param('library_subjects') || "";
+    my $chap = $r->param('library_chapters') || "";
+    my $sec  = $r->param('library_sections') || "";
+
+    my $dbh = getDB($ce);
+    my $cnt_table = $tables{cnt_dbsubject};
+    my $query;
+
+    my @insert_parameters=( "$libCode" ); # Always the first parameter
+
+    my $id_to_use = -1;
+
+    my $new_dbsubj_id;
+    my $new_dbchap_id;
+    my $new_dbsect_id;
+
+    if($subj) {
+	$new_dbsubj_id = safe_get_id($dbh, $tables{dbsubject}, 'DBsubject_id',
+				     qq(WHERE name = ?), ["$subj"] );
+	$id_to_use = $new_dbsubj_id;
+	$cnt_table = $tables{cnt_dbsubject};
+    }
+    if($chap) {
+	$new_dbchap_id = safe_get_id($dbh, $tables{dbchapter}, 'DBchapter_id',
+				     qq(WHERE name = ? and DBsubject_id = ?), ["$chap", $new_dbsubj_id] );
+	$id_to_use = $new_dbchap_id;
+	$cnt_table = $tables{cnt_dbchapter};
+    }
+    if($sec) {
+	$new_dbsect_id = safe_get_id($dbh, $tables{dbsection}, 'DBsection_id',
+				     qq(WHERE name = ? and DBchapter_id = ?), ["$sec", $new_dbchap_id] );
+	$id_to_use = $new_dbsect_id;
+	$cnt_table = $tables{cnt_dbsection};
+    }
+    push( @insert_parameters, $id_to_use, $countToSave );
+
+#    my $query = "INSERT INTO `$cnt_table` VALUES (?,?,?)";
+    my $query = "REPLACE INTO `$cnt_table` VALUES (?,?,?)";
+
+    $query =~ s/\n/ /g;
+    #warn "no text info: ", $query;
+    #warn "params: ", join(" | ",@insert_parameters);
+
+    my $sth = $dbh->prepare_cached( $query );
+    if ( !defined($sth) ) {
+	warn "Couldn't prepare statement: " . $dbh->errstr;
+	return;
+    }
+
+    my $rv = $sth->execute(@insert_parameters);
+    if ( !defined($rv) ) {
+	warn "Couldn't execute statement: " . $sth->errstr;
+	return;
+    }
+}
+
 sub countDBListings {
-	my $r = shift;
-	return (getDBListings($r,1));
+    my $r = shift;
+    my $fromSaved = -1;
+    $fromSaved = requestSavedCount($r);
+    if ( $fromSaved >= 0 ) {
+	#warn "fromSaved = $fromSaved";
+	return( $fromSaved );
+    } else {
+	#warn "fromSaved = $fromSaved";
+	my $countedNow = getDBListings($r,1);
+	#warn "countedNow = $countedNow";
+	if ( $fromSaved == -1 ) {
+	    saveCount($r, $countedNow);
+	}
+	return( $countedNow );
+    }
 }
 
 sub getMLTleader {

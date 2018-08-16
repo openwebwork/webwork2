@@ -82,6 +82,9 @@ my %OPLtables = (
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
  pgfile_problem => 'OPL_pgfile_problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
 
 
@@ -100,10 +103,13 @@ my %NPLtables = (
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
  pgfile_problem => 'NPL-pgfile-problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
 
 # Which tables to ALWAYS drop and recreate and which can remain
-# 1 = always drop, 0 = conditional on command-line arguments
+# 1 = always drop, 0 = conditional on command-line arguments, 2 = NEVER drop
 my %AlwayDropTables = (
  dbsubject => 0,
  dbchapter => 0,
@@ -119,6 +125,9 @@ my %AlwayDropTables = (
  pgfile         => 1,
  pgfile_keyword => 1,
  pgfile_problem => 1,
+ cnt_dbsubject => 2,
+ cnt_dbchapter => 2,
+ cnt_dbsection => 2,
 );
 
 
@@ -309,6 +318,24 @@ foreach $tmp1 ( @special_tables ) {
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
 	problem_id int(15) DEFAULT 0 NOT NULL,
 	PRIMARY KEY (pgfile_id, problem_id)
+'],
+["cnt_dbsubject",$tables{cnt_dbsubject}, '
+	libcode varchar(60) NOT NULL,
+	DBsubject_id int(15) NOT NULL,
+	count int(15) NOT NULL,
+        PRIMARY KEY (libcode,DBsubject_id)
+'],
+["cnt_dbchapter",$tables{cnt_dbchapter}, '
+	libcode varchar(60) NOT NULL,
+	DBchapter_id int(15) NOT NULL,
+	count int(15) NOT NULL,
+	PRIMARY KEY (libcode,DBchapter_id)
+'],
+["cnt_dbsection",$tables{cnt_dbsection}, '
+	libcode varchar(60) NOT NULL,
+	DBsection_id int(15) NOT NULL,
+	count int(15) NOT NULL,
+	PRIMARY KEY (libcode,DBsection_id)
 ']);
 
 ### End of database data
@@ -325,10 +352,16 @@ for my $tableinfo (@create_tables) {
         my $tabinit = $tableinfo->[2];
 
 # FIXME some tables should NOT be dropped on special libraries
+	if ( $AlwayDropTables{$tabCnm} == 2 ) {
+	    print "Not dropping/re-creating $tabname\n";
+	    my $query = "CREATE TABLE IF NOT EXISTS `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
+	    $dbh->do($query);
+	    next;
+	}
 	if ( $clearAll == 0 ) {
 	  # Do not drop and recreate some tables
 	  if ( $AlwayDropTables{$tabCnm} == 0 ) {
-	    print "Not dropping/re-creating $tabname$tabname\n";
+	    print "Not dropping/re-creating $tabname\n";
 	    next;
 	  }
 	}
