@@ -453,8 +453,37 @@ sub getAllDBsubjects {
 	while (@row = $sth->fetchrow_array()) {
 		push @results, $row[0];
 	}
-	# @results = sortByName(undef, @results);
-	return @results;
+
+	# When no current library is set, or "All Libraries" was set and
+	# changed to an empty string - list ALL subjects from ALL libraries.
+	if ( !defined($reqLib) || ( $reqLib eq "" ) ) {
+	    #@results = sortByName(undef, @results);
+	    return @results;
+	}
+
+	# Get count of problems to determine if the subject should be listed.
+	my $tmp1;
+	my $savedCount;
+	my @nonEmptyResults; # Results which are not empty
+
+	foreach $tmp1 ( @results ) {
+
+	    # Set the "param"eter - needs special code when this is a WebworkXMLRPC object
+	    my $toSet = 'library_subjects';
+	    if ( ref($r) eq "WebworkXMLRPC" ) {
+		$r->setParam($toSet, $tmp1);
+	    } else {
+		$r->param($toSet => "$tmp1");
+	    }
+
+	    $savedCount = countDBListings( $r );
+	    #warn "In getAllDBsubjects $tmp1 savedCount = $savedCount";
+	    push( @nonEmptyResults, $tmp1) if ( $savedCount > 0 );
+	}
+
+	#@results = sortByName(undef, @results);
+	#return @results;
+	return @nonEmptyResults;
 }
 
 
@@ -492,8 +521,36 @@ sub getAllDBchapters {
 	my $all_chaps_ref = $dbh->selectall_arrayref($query, {},$subject);
  
  	my @results = map { $_->[0] } @{$all_chaps_ref};
+
+	# When no current library is set, or "All Libraries" was set and
+	# changed to an empty string - list ALL chapters from ALL libraries.
+	if ( !defined($reqLib) || ( $reqLib eq "" ) ) {
+	    #@results = sortByName(undef, @results);
+	    return @results;
+	}
+
+	# Get count of problems to determine if the chapter should be listed.
+	my $tmp1;
+	my $savedCount;
+	my @nonEmptyResults; # Results which are not empty
+	foreach $tmp1 ( @results ) {
+
+	    # Set the "param"eter - needs special code when this is a WebworkXMLRPC object
+	    my $toSet = 'library_chapters';
+	    if ( ref($r) eq "WebworkXMLRPC" ) {
+		$r->setParam($toSet, $tmp1);
+	    } else {
+		$r->param($toSet => "$tmp1");
+	    }
+
+	    $savedCount = countDBListings( $r );
+	    #warn "In getAllDBchapters $tmp1 savedCount = $savedCount";
+	    push( @nonEmptyResults, $tmp1) if ( $savedCount > 0 );
+	}
+
 	#@results = sortByName(undef, @results);
-	return @results;
+	#return @results;
+	return @nonEmptyResults;
 }
 
 =item getAllDBsections($r)                                            
@@ -534,8 +591,35 @@ sub getAllDBsections {
 	my $all_sections_ref = $dbh->selectall_arrayref($query, {},$subject, $chapter);
 
 	my @results = map { $_->[0] } @{$all_sections_ref};
+
+	# When no current library is set, or "All Libraries" was set and
+	# changed to an empty string - list ALL subjects from ALL libraries.
+	if ( !defined($reqLib) || ( $reqLib eq "" ) ) {
+	    #@results = sortByName(undef, @results);
+	    return @results;
+	}
+
+	# Get count of problems to determine if the section should be listed.
+	my $tmp1;
+	my $savedCount;
+	my @nonEmptyResults; # Results which are not empty
+	foreach $tmp1 ( @results ) {
+	    # Set the "param"eter - needs special code when this is a WebworkXMLRPC object
+	    my $toSet = 'library_sections';
+	    if ( ref($r) eq "WebworkXMLRPC" ) {
+		$r->setParam($toSet, $tmp1);
+	    } else {
+		$r->param($toSet => "$tmp1");
+	    }
+
+	    $savedCount = countDBListings( $r );
+	    #warn "In getAllDBsections $tmp1 savedCount = $savedCount";
+	    push( @nonEmptyResults, $tmp1) if ( $savedCount > 0 );
+	}
+
 	#@results = sortByName(undef, @results);
-	return @results;
+	#return @results;
+	return @nonEmptyResults;
 }
 
 =item getDBSectionListings($r)                             
@@ -820,8 +904,8 @@ sub requestSavedCount {
                                $typewhere $extrawhere AND cnt.libcode = ?";
 
     $query =~ s/\n/ /g;
-    warn "no text info: ", $query;
-    warn "params: ", join(" | ",@select_parameters);
+    #warn "no text info: ", $query;
+    #warn "params: ", join(" | ",@select_parameters);
 
     my $sth = $dbh->prepare_cached( $query );
     if ( !defined($sth) ) {
@@ -836,7 +920,7 @@ sub requestSavedCount {
     }
 
     if ($sth->rows == 0) {
-	warn "No record found";
+	#warn "No record found";
 	return(-1);
     }
     my @data = $sth->fetchrow_array();
