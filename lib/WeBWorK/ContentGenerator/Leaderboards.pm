@@ -41,6 +41,7 @@ WeBWorK::ContentGenerator.
 use strict;
 use warnings;
 use HTML::Template;
+use JSON qw(encode_json);
 
 # SKEL: Add "use" lines for libraries you will be using here. Note that you only
 # need to add a "use" line here if you will be instantiating now objects or
@@ -150,10 +151,10 @@ sub body {
 	# SKEL: Useful things from the superclass:
 	# 
 	# The WeBWorK::Request object. Good for accessing request params and so on.
-	#my $r = $self->r;
+	my $r = $self->r;
 	# 
 	# Do you need data from the course environment?
-	#my $ce = $r->ce;
+	my $ce = $r->ce;
 	# 
 	# Will you be accessing the database?
 	#my $db = $r->db;
@@ -171,8 +172,18 @@ sub body {
 	
 	#return "<a href='http://localhost/webwork2/MAT1275EN-S18-Parker/Leaderboards.html'>Leaderboards</a>";
 
+	my $courseName = $ce->{courseName};
 
-	my $template = HTML::Template->new(filename => '/opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Leaderboards/test.tmpl');	
-	 return $template->output;
+	my $var = {name => $courseName};
+
+	my $template = HTML::Template->new(filename => '/opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Leaderboards/Leaderboards.tmpl');	
+
+	# my $phpOutput = `/usr/bin/php /var/www/html/test.php`;
+
+	$template->param(DATA => encode_json($var));
+	
+
+  return $template->output;
+
 }
 1;

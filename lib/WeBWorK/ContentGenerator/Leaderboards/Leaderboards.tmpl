@@ -5,6 +5,10 @@
     <script src="https://fb.me/react-dom-15.0.0.js"></script>
     <script type = "text/babel">
 
+    const courseinfo = <TMPL_VAR NAME=DATA>;
+
+    console.log(courseinfo.name);
+
       fetch('http://localhost/test.php') // Transform the data into json
   .then((response) => {
     return response.json();
@@ -12,6 +16,26 @@
   .then((data) => {
     console.log(data);
   })
+  function getCookie(cname) {
+    const name = cname + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+const value = getCookie(`WeBWorKCourseAuthen.${courseinfo.name}`);
+
+const [user, key, expire] = value.split("\t");
+
+console.log(`user: ${user}, key: ${key}, expires: ${expire}`);
     </script>
   </head>
 
