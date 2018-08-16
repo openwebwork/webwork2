@@ -182,11 +182,28 @@ function lib_update(who, what) {
 
 //  if(who=='myLibrary'){ subcommand = "getAllLibraries";}
 
-  if(who=='myLibrary'){ subcommand = "getAllLibraries";}
-  if(who=='subjects') { subcommand = "getAllDBsubjects";}
-  if(who=='chapters') { subcommand = "getAllDBchapters";}
-
-  if(who=='sections') { subcommand = "getSectionListings";}
+  if(who=='myLibrary'){
+	subcommand = "getAllLibraries";
+	mydefaultRequestObject.library_name='';
+	mydefaultRequestObject.library_subjects='';
+	mydefaultRequestObject.library_chapters='';
+	mydefaultRequestObject.library_sections='';
+	}
+  if(who=='subjects') {
+	subcommand = "getAllDBsubjects";
+	mydefaultRequestObject.library_subjects='';
+	mydefaultRequestObject.library_chapters='';
+	mydefaultRequestObject.library_sections='';
+	}
+  if(who=='chapters') {
+	subcommand = "getAllDBchapters";
+	mydefaultRequestObject.library_chapters='';
+	mydefaultRequestObject.library_sections='';
+	}
+  if(who=='sections') {
+	subcommand = "getSectionListings";
+	mydefaultRequestObject.library_sections='';
+	}
 
   mydefaultRequestObject.command = subcommand;
   // console.log(mydefaultRequestObject);
