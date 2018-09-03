@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# inside the docker container
+# this can be called from vim with :w ! ./pr
+
+# it sends the contents of the buffer to /var/www/html/xmlrpc_out.html aka localhost:8080/xmlrpc_output.html
+
+./sendXMLRPC.pl -h - >/var/www/html/xmlrpc_out.html
+
+# process STDIN with sendXMLRPC.p and send it to /var/www/html/xmlrpc_out.html  
+# where it can be read at localhost:8080/xmlrpc_out.html
+
+
+# Not sure how to get rid of the ./
+
+# This can also be called from the command line with   cat t/input.pg |./pr
