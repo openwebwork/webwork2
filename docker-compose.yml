@@ -3,7 +3,7 @@ services:
   db:
     image: mariadb:10.1
     volumes:
-      - "./.data/db:/var/lib/mysql"
+      - mysql:/var/lib/mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: randomepassword
@@ -31,3 +31,5 @@ services:
     image: ubcctlt/rserve
     ports:
       - "6311:6311"
+volumes:
+  mysql:

@@ -37,6 +37,29 @@ if [ "$1" = 'apache2' ]; then
         chown www-data:root -R $APP_ROOT/courses
         echo "Admin course is created."
     fi
+    # modelCourses link if not existing
+    if [ ! -d "$APP_ROOT/courses/modelCourse" ]; then
+      echo "create modelCourse subdirectory"
+      rm -rf $APP_ROOT/courses/modelCourse
+      cd $APP_ROOT/webwork2/courses.dist
+      cp -R modelCourse $APP_ROOT/courses/
+    fi
+    # defaultClasslist.lst and adminClasslist.lst files if not existing
+    if [ ! -f "$APP_ROOT/courses/defaultClasslist.lst"  ]; then
+      echo "defaultClasslist.lst is being created"
+      cd $APP_ROOT/webwork2/courses.dist
+      cp *.lst $APP_ROOT/courses/
+    fi
+    if [ ! -f "$APP_ROOT/courses/adminClasslist.lst"  ]; then
+      echo "adminClasslist.lst is being created"
+      cd $APP_ROOT/webwork2/courses.dist
+      cp *.lst $APP_ROOT/courses/
+    fi
+    # run OPL-update if necessary
+    if [ ! -f "$APP_ROOT/webwork2/htdocs/DATA/tagging-taxonomy.json"  ]; then
+      cd $APP_ROOT/webwork2/bin
+      ./OPL-update
+    fi
     # generate apache2 reload config if needed
     if [ $DEV -eq 1 ]; then
         echo "PerlModule Apache2::Reload" > /etc/apache2/conf-enabled/apache2-reload.conf
@@ -45,6 +68,10 @@ if [ "$1" = 'apache2' ]; then
     else
         rm -f /etc/apache2/conf-enabled/apache2-reload.conf
     fi
+    # Fix possible permission issues
+    cd $APP_ROOT/webwork2
+    chown -R www-data logs tmp DATA htdocs/tmp ../courses
+    chmod -R u+w logs tmp DATA htdocs/tmp ../courses
 fi
 
 exec "$@"
