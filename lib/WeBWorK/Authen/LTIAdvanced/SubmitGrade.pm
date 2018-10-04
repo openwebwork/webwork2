@@ -45,7 +45,7 @@ sub new {
   # sanity check
   my $ce = $r->{ce};
   my $db = $self->{r}->{db};
-  unless (ref($ce//'') and ref($db)//'') {
+  unless (ref($ce//'') and ref($db//'')) {
   	warn("course environment is not defined") unless ref($ce//'');
   	warn("database reference is not defined") unless ref($db//'');
   	croak("Could not create WeBWorK::Authen::LTIAdvanced::SubmitGrade object, missing items from request");
