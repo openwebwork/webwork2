@@ -504,6 +504,7 @@ sub renderProblem {
 	}
 	$out2 = xml_filter($out2); # check this -- it might not be working correctly
 	##################
+	print DEBUGCODE "\n\nStop xml encoding\n";
 	close(DEBUGCODE) if $debugXmlCode;
 	###################
 	
@@ -547,8 +548,10 @@ sub xml_filter {
 		$level++;
 		my $tmp = [];
 		foreach my $item (@{$input}) {
+		    # print DEBUGCODE "-----checking $item of type\n",ref($item) if $debugXmlCode;
 			$item = xml_filter($item,$level);
 			push @$tmp, $item;
+			# print DEBUGCODE "-----end checking $item\n" if $debugXmlCode;
 		}
 		$input = $tmp;
 		$level--;
