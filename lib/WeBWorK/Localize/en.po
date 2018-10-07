@@ -153,7 +153,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:58
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1129
 msgid "%1: Problem %2"
-msgstr ""
+msgstr "%1: Problem %2"
 
 #. ($setID, $problemID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:354
@@ -4246,12 +4246,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:496
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:498
 msgid "Problem %1"
-msgstr ""
+msgstr "Problem %1"
 
 #. ($problemNumber)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2119
 msgid "Problem %1."
-msgstr ""
+msgstr "Problem %1."
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:566
