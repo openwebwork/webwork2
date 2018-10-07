@@ -1,10 +1,10 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
+"Project-Id-Version: WeBWorK Online Homework System\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Geoff Goehle <goehle@gmail.com>\n"
-"Language-Team: \n"
+"Language-Team: Webwork language team <gage@math.rochester.edu>\n"
 "Language: en_US\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -149,13 +149,11 @@ msgstr ""
 msgid "%1's password has been changed."
 msgstr ""
 
-#
 #. ($setID, $problemID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:58
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1129
-#, fuzzy
 msgid "%1: Problem %2"
-msgstr "Problem List"
+msgstr "%1: Problem %2"
 
 #. ($setID, $problemID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:354
@@ -4233,7 +4231,6 @@ msgstr ""
 msgid "Problem #"
 msgstr ""
 
-#
 #. ($prettyProblemID)
 #. (join('.',@seq)
 #. ($problemID)
@@ -4248,16 +4245,13 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:934
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:496
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:498
-#, fuzzy
 msgid "Problem %1"
-msgstr "Problem List"
+msgstr "Problem %1"
 
-#
 #. ($problemNumber)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2119
-#, fuzzy
 msgid "Problem %1."
-msgstr "Problem List"
+msgstr "Problem %1."
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:566
@@ -7859,8 +7853,8 @@ msgstr ""
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
 msgstr ""
 "This is the classlist editor page, where you can view and edit the records "
-"of all the studentscurrently enrolled in this course.  The top of the page "
-"contains forms which allow you to filterwhich students to view, sort your "
+"of all the students currently enrolled in this course.  The top of the page "
+"contains forms which allow you to filter which students to view, sort your "
 "students in a chosen order, edit student records, give new passwords to "
 "students, import/export student records from/to external files, or add/"
 "delete students. To use, please select the action you would like to perform, "
@@ -7910,25 +7904,48 @@ msgstr ""
 "public workstations, untrusted machines, and machines over which you do not "
 "have direct control."
 
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2750
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2752
 msgid "_PROBLEM_SET_SUMMARY"
 msgstr ""
+"This is a table showing the current Homework sets for this class.  The "
+"fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned "
+"Users, Visibility to students, Reduced Scoring Enabled, Date it was opened, "
+"Date it is due, and the Date during which the answers are posted.  The Edit "
+"Set Data field contains checkboxes for selection and a link to the set data "
+"editing page.  The cells in the Edit Problems fields contain links which "
+"take you to a page where you can edit the containing problems, and the cells "
+"in the edit assigned users field contains links which take you to a page "
+"where you can edit what students the set is assigned to."
 
 #
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2088
 msgid "_REQUEST_ERROR"
 msgstr ""
-"WeBWorK has encountered a software error while attempting to process "
-"thisproblem. It is likely that there is an error in the problem itself. If "
-"you are a student, report this error message to your professor to have it "
+"WeBWorK has encountered a software error while attempting to process this "
+"problem. It is likely that there is an error in the problem itself. If you "
+"are a student, report this error message to your professor to have it "
 "corrected. If you are a professor, please consult the error output below for "
 "more information."
 
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1870
 msgid "_USER_TABLE_SUMMARY"
 msgstr ""
+"A table showing all the current users along with several fields of user "
+"information. The fields from left to right are: Login Name, Login Status, "
+"Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment "
+"Status, Section, Recitation, Comments, and Permission Level.  Clicking on "
+"the links in the column headers will sort the table by the field it "
+"corresponds to. The Login Name fields contain checkboxes for selecting the "
+"user.  Clicking the link of the name itself will allow you to act as the "
+"selected user.  There will also be an image link following the name which "
+"will take you to a page where you can edit the selected user's information.  "
+"Clicking the emails will allow you to email the corresponding user.  "
+"Clicking the links in the entries in the assigned sets columns will take you "
+"to a page where you can view and reassign the sets for the selected user."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1139
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1115
