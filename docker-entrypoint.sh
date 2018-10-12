@@ -69,9 +69,15 @@ if [ "$1" = 'apache2' ]; then
         rm -f /etc/apache2/conf-enabled/apache2-reload.conf
     fi
     # Fix possible permission issues
+    echo "Fixing ownership and permissions (just in case it is needed)"
     cd $APP_ROOT/webwork2
-    chown -R www-data logs tmp DATA htdocs/tmp ../courses
+    chown -R www-data logs tmp DATA htdocs/tmp
     chmod -R u+w logs tmp DATA htdocs/tmp ../courses
+    cd $APP_ROOT
+    find courses -type f -exec chown www-data:root {} \;
+    find courses -type d -exec chown www-data:root {} \;
+    # OLD: chown www-data -R $APP_ROOT/courses
+    #    but that sometimes caused errors in Docker on Mac OS X when there was a broken symbolic link somewhere in the directory tree being processed
 fi
 
 exec "$@"
