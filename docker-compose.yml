@@ -18,7 +18,10 @@ services:
       - r
     volumes:
       - ".:/opt/webwork/webwork2"
-      - "./.data/courses:/opt/webwork/courses"
+      # OLD approach put the courses tree under webwork2/.data/courses
+      #- "./.data/courses:/opt/webwork/courses"
+      # NEW appoach puts the courses tree in a separate tree outside of webwork2/
+      - "../ww-docker-data/courses:/opt/webwork/courses"
       # Uncomment the line below to use local OPL for development
       #- "../opl:/opt/webwork/libraries/webwork-open-problem-library"
       # Uncomment the line below to use local PG for development
