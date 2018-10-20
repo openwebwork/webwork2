@@ -1,5 +1,6 @@
 FROM ubuntu:16.04
 
+
 ENV PG_BRANCH=rel-PG-2.14 \
     WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \
@@ -80,6 +81,7 @@ RUN apt-get update \
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
+
 # Block to include webwork2 in the container, when needed, instead of  getting it from a bind mount.
 #    Uncomment when needed, and set the correct branch name on the following line.
 #ENV WEBWORK_BRANCH=rel-ww2.14   # need a valid branch name from https://github.com/openwebwork/webwork2
@@ -93,6 +95,7 @@ RUN curl -fSL https://github.com/openwebwork/pg/archive/${PG_BRANCH}.tar.gz -o /
     && tar xzf /tmp/${PG_BRANCH}.tar.gz \
     && mv pg-${PG_BRANCH} $APP_ROOT/pg \
     && rm /tmp/${PG_BRANCH}.tar.gz \
+
     && curl -fSL https://github.com/openwebwork/webwork-open-problem-library/archive/master.tar.gz -o /tmp/opl.tar.gz \
     && tar xzf /tmp/opl.tar.gz \
     && mv webwork-open-problem-library-master $APP_ROOT/libraries/webwork-open-problem-library \
@@ -100,12 +103,19 @@ RUN curl -fSL https://github.com/openwebwork/pg/archive/${PG_BRANCH}.tar.gz -o /
     && curl -fSL https://github.com/mathjax/MathJax/archive/master.tar.gz -o /tmp/mathjax.tar.gz \
     && tar xzf /tmp/mathjax.tar.gz \
     && mv MathJax-master $APP_ROOT/MathJax \
-    && rm /tmp/mathjax.tar.gz 
+
+    && rm /tmp/mathjax.tar.gz \
+    && rm /tmp/VERSION
+    #curl -fSL https://github.com/openwebwork/webwork2/archive/WeBWorK-${WEBWORK_VERSION}.tar.gz -o /tmp/WeBWorK-${WEBWORK_VERSION}.tar.gz \
+    #&& tar xzf /tmp/WeBWorK-${WEBWORK_VERSION}.tar.gz \
+    #&& mv webwork2-WeBWorK-${WEBWORK_VERSION} $APP_ROOT/webwork2 \
+    #&& rm /tmp/WeBWorK-${WEBWORK_VERSION}.tar.gz \
 
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc
 
 COPY . $APP_ROOT/webwork2
+
 
 # Move these lines into docker-entrypoint.sh so the bind mount of courses
 # will be available

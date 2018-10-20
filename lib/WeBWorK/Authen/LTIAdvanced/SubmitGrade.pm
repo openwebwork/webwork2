@@ -1,6 +1,6 @@
 ###############################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -45,7 +45,8 @@ sub new {
   # sanity check
   my $ce = $r->{ce};
   my $db = $self->{r}->{db};
-  unless (ref($ce//'') and ref($db//'')) {
+
+  unless (ref($ce//'') and ref($db)//'') {
   	warn("course environment is not defined") unless ref($ce//'');
   	warn("database reference is not defined") unless ref($db//'');
   	croak("Could not create WeBWorK::Authen::LTIAdvanced::SubmitGrade object, missing items from request");

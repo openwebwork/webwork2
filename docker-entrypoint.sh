@@ -60,6 +60,7 @@ if [ "$1" = 'apache2' ]; then
       cd $APP_ROOT/webwork2/bin
       ./OPL-update
     fi
+
     # generate apache2 reload config if needed
     if [ $DEV -eq 1 ]; then
         echo "PerlModule Apache2::Reload" > /etc/apache2/conf-enabled/apache2-reload.conf
@@ -68,6 +69,7 @@ if [ "$1" = 'apache2' ]; then
     else
         rm -f /etc/apache2/conf-enabled/apache2-reload.conf
     fi
+
     # Fix possible permission issues
     echo "Fixing ownership and permissions (just in case it is needed)"
     cd $APP_ROOT/webwork2
@@ -78,6 +80,7 @@ if [ "$1" = 'apache2' ]; then
     find courses -type d -exec chown www-data:root {} \;
     # OLD: chown www-data -R $APP_ROOT/courses
     #    but that sometimes caused errors in Docker on Mac OS X when there was a broken symbolic link somewhere in the directory tree being processed
+
 fi
 
 exec "$@"

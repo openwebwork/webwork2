@@ -291,7 +291,7 @@ BEGIN {
 
 }
 
-################################################################################
+
 
 use Carp;
 #use Crypt::SSLeay;  # needed for https
@@ -305,7 +305,16 @@ use File::Path;
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
 use Cwd 'abs_path';
+use WebworkClient;
+use FormatRenderedProblem;
+#use Proc::ProcessTable; # use in standalonePGproblemRenderer
 
+use 5.10.0;
+$Carp::Verbose = 1;
+
+
+### verbose output when UNIT_TESTS_ON =1;
+ our $UNIT_TESTS_ON             = 0;
 
 ############################################################
 # Read command line options
@@ -370,11 +379,13 @@ print_help_message() if $print_help_message;
 # End Read command line options
 ############################################################
 
+
 ################################################################################
 
 # Move up the reading of credential files to here in order to get
 # WEBWORK_URL defined before it is needed. (For Docker installs when
 # called from outside Docker, it may not be in the environment variables.)
+
 
 
 ####################################################
@@ -385,9 +396,10 @@ print_help_message() if $print_help_message;
 # credentials file location -- search for one of these files 
 
 
+our @path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
 
-@path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
-$credentials_string = <<EOF;
+my $credentials_string = <<EOF;
+
 The credentials file should contain something like this:
 
   %credentials = (
@@ -416,7 +428,9 @@ The credentials file should contain something like this:
     # running sendXMLRPC.pl
 	# Sample settings for Mac:
 
-    # html_display_command   => "open -a 'Google Chrome' ", # A web browser
+
+  # html_display_command   => "open -a 'Google Chrome' ", # A web browser
+
 	# html_display_command   => "open -a Firefox ",
 	# tex_display_command    => "open -a 'TeXShop'",	# Editor or TeX editor
 	# pdf_display_command    => "open -a 'Preview'",	# PDF viewer
@@ -443,19 +457,27 @@ if (defined $credentials_path and (-r $credentials_path) ) {
 	die  "Can't find credentials file $credentials_path searching\n";
 }
 
+
+if (defined $credentials_path and (-r $credentials_path) ) {
+		# we're all set
+} elsif(defined $credentials_path) { #can't find credentials
+		die "Can't find credentials file $credentials_path searching\n";
+}
+
 # if credentials_path not set explicitly go look for a credentials file.
 unless (defined $credentials_path) {
 	foreach my $path ( @path_list) { 
-	    print STDERR "looking for credentials file: $path. -- ".((-r $path)?'found!':'(not found)')."\n" if $verbose;
-	    next unless defined $path;
-	    if (-r $path ) {
+		print "looking for credentials file: $path. -- ".((-r $path)?'found!':'(not found)')."\n" if $verbose;
+		next unless defined $path;
+		if (-r $path ) {
 			$credentials_path = $path;
 			last;
-	    }
+		}
 	}
 }
 
 # verify that a credentials file has been found
+
 if  ( $credentials_path ) {
 	print STDERR "Credentials taken from file $credentials_path\n" if $verbose;
 } else {  #failed to find credentials file
@@ -474,11 +496,13 @@ if ($@  or not  %credentials) {
 
 foreach my $key (sort qw(site_url webwork_url form_action_url site_password userID courseID course_password )) {
 	print STDERR "$key is missing from ".
+
 	"\%credentials at $credentials_path\n" unless $credentials{$key};
 }
 
 # When used in the docker environment ENV{WEBWORK_URL} needs to be set
 # since that environment variable is called in site.conf
+
 
 
 $ENV{WEBWORK_URL}=$ENV{WEBWORK_URL}//$credentials{webwork_url};
@@ -545,6 +569,7 @@ our $UNIT_TESTS_ON             = 0;
 # End configure displays for local operating system
 ############################################################
 
+
 #allow credentials to overrride the default displayMode 
 #and the browser display
 our $HTML_DISPLAY_COMMAND = $credentials{html_display_command}//HTML_DISPLAY_COMMAND();
@@ -593,7 +618,7 @@ my $default_input = {
 my $default_form_data = { 
 		displayMode				=> $DISPLAYMODE,
 		outputformat 			=> $format//'standard',
-		problemSeed             => $problemSeed//PROBLEMSEED(),
+		problemSeed       => $problemSeed//PROBLEMSEED(),
 };
 
 ##################################################
@@ -670,6 +695,7 @@ sub process_pg_file {
 	my $NO_ERRORS = "";
 	my $ALL_CORRECT = "";
 	my $form_data1 = { %$default_form_data,
+
 					  };
 
 	if ($display_tex_output or $display_pdf_output) {
@@ -1401,6 +1427,7 @@ DETAILS
                  submitted to the question and it specifies which credential file is used.
 
     -e
+
                  Open the source file in an editor. 
                  The single letter options can be "bundled" e.g.  -vcCbB
     --tex    
@@ -1409,11 +1436,12 @@ DETAILS
                  Process question in TeX mode, then by pdflatex and output 
                  to the command line
  
-    --list   pg_list
+    --list       pg_list
                  Read and process a list of .pg files contained in the file C<pg_list>.  C<pg_list>
                  consists of a sequence of lines each of which contains the full path to a pg
                  file that should be processed. (For example this might be the output from an
                  earlier run of sendXMLRPC using the -c flag. )
+
     --pg
                 Triggers the printing of the all of the variables available to the PG question. 
                 The table appears within the question content. Use in conjunction with -b or -B.
@@ -1427,12 +1455,15 @@ DETAILS
                 Prints the PGanswergroup for each answer evaluator. The information appears in 
                 the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
                 This contains more information than printing the answer hash. (perhaps too much).
+
     --resource
 
                  Prints the resources used by the question. The information appears in 
                  the PG_debug output which follows the question content.  Use in conjunction with -b or -B.
 
+
     --credentials=s
+    
                  Specifies a file s where the  credential information can be found.
 
     --help
