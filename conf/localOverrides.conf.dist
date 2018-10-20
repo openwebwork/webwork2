@@ -238,7 +238,9 @@ $pg{displayModes} = [
 
 # Default display mode. Should be an uncommented item listed above.
 $pg{options}{displayMode}        = "MathJax";
-$webworkURLs{MathJax} = "$server_root_url/$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
+
+#$webworkURLs{MathJax} = "$server_root_url/$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
+$webworkURLs{MathJax} = "$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
 #$webworkURLs{MathJax} = "https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
 #$webworkURLs{MathJax} = "https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS_CHTML-full";
 
