@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Record/PermissionLevel.pm,v 1.10 2006/10/02 15:04:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
