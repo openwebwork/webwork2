@@ -1,4 +1,4 @@
-$PG_VERSION  ='PG-2.14';
+$PG_VERSION  ='develop';
 $PG_COPYRIGHT_YEARS = '1996-2018';
 
 1;
