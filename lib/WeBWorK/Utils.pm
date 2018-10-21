@@ -40,7 +40,7 @@ use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
-use Mail::Sender;
+#use Mail::Sender;
 use Storable qw(nfreeze thaw);
 
 
