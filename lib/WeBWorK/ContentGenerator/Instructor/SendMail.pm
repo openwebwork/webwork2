@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.64 2007/08/13 22:59:55 sh002i Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -776,7 +776,7 @@ sub saveProblem {
     my $self      = shift;
 	my ($body, $probFileName)= @_;
 	local(*PROBLEM);
-	open (PROBLEM, ">$probFileName") ||
+	open (PROBLEM, ">:utf8",$probFileName) ||
 		$self->addbadmessage(CGI::p("Could not open $probFileName for writing.
 						Check that the  permissions for this problem are 660 (-rw-rw----)"));
 	print PROBLEM $body if -w $probFileName;
@@ -794,9 +794,9 @@ sub read_input_file {
 	my ($subject, $from, $replyTo);
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
-		open FILE, "$filePath" || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
-		while ($header !~ s/Message:\s*$//m and not eof(FILE)) {
-			$header .= <FILE>;
+		open FILE, "<:utf8", $filePath || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
+		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
+			$header .= <FILE>; 
 		}
 		$text = join( '', <FILE>);
 		$text =~ s/^\s*//; # remove initial white space if any.

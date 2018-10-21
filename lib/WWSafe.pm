@@ -1,8 +1,9 @@
 package WWSafe;
 
-use 5.003_11;
+#use 5.003_11;
+use 5.12.0;
 use strict;
-
+use utf8;
 $Safe::VERSION = "2.16";
 
 # *** Don't declare any lexicals above this point ***
