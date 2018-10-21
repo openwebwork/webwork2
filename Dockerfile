@@ -95,7 +95,6 @@ RUN curl -fSL https://github.com/openwebwork/pg/archive/${PG_BRANCH}.tar.gz -o /
     && tar xzf /tmp/${PG_BRANCH}.tar.gz \
     && mv pg-${PG_BRANCH} $APP_ROOT/pg \
     && rm /tmp/${PG_BRANCH}.tar.gz \
-
     && curl -fSL https://github.com/openwebwork/webwork-open-problem-library/archive/master.tar.gz -o /tmp/opl.tar.gz \
     && tar xzf /tmp/opl.tar.gz \
     && mv webwork-open-problem-library-master $APP_ROOT/libraries/webwork-open-problem-library \
@@ -103,7 +102,6 @@ RUN curl -fSL https://github.com/openwebwork/pg/archive/${PG_BRANCH}.tar.gz -o /
     && curl -fSL https://github.com/mathjax/MathJax/archive/master.tar.gz -o /tmp/mathjax.tar.gz \
     && tar xzf /tmp/mathjax.tar.gz \
     && mv MathJax-master $APP_ROOT/MathJax \
-
     && rm /tmp/mathjax.tar.gz \
     && rm /tmp/VERSION
     #curl -fSL https://github.com/openwebwork/webwork2/archive/WeBWorK-${WEBWORK_VERSION}.tar.gz -o /tmp/WeBWorK-${WEBWORK_VERSION}.tar.gz \
