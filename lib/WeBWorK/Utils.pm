@@ -43,6 +43,9 @@ use Carp;
 use Mail::Sender;
 use Storable qw(nfreeze thaw);
 
+
+use open IO => ':encoding(UTF-8)';
+
 use constant MKDIR_ATTEMPTS => 10;
 
 # "standard" WeBWorK date/time format (for set definition files):
@@ -185,11 +188,36 @@ sub force_eoln($) {
 
 sub readFile($) {
 	my $fileName = shift;
+	# debugging code: found error in CourseEnvironment.pm with this
+# 	if ($fileName =~ /___/ or $fileName =~ /the-course-should-be-determined-at-run-time/) {
+# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n", 
+# 		join("\t ", caller()), "\n";
+# 		return();
+# 	}
 	local $/ = undef; # slurp the whole thing into one string
-	open my $dh, "<utf8:", $fileName
-		or croak "failed to read file $fileName: $!";
-	my $result = <$dh>;
-	close $dh;
+	my $result;
+	eval{
+		# CODING WARNING:
+		# if (open my $dh, "<", $fileName){
+		# will cause a utf8 "\xA9" does not map to Unicode warning if © is in latin-1 file
+		# use the following instead
+		if (open my $dh, "<:raw", $fileName){
+			$result = <$dh>;
+			decode_utf8($result) or die "failed to decode $fileName";
+			close $dh;
+		} else {
+			print STDERR "File $fileName not found.";
+		}
+	};
+	if ($@) {
+		print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
+	}
+	utf8::decode($result) or print STDERR  "file $fileName. Input is not valid UTF-8";
+	# FIXME
+	# utf8::decode($result) raises an error about the copyright sign
+	# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
+	# should direct this to warn instead of STDERR to debug files written with accents
+	# in latin-1 files
 	return force_eoln($result);
 }
 
