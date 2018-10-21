@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -34,6 +34,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use File::Find;
 
 require WeBWorK::Utils::ListingDB;
@@ -98,9 +99,22 @@ sub make_myset_data_row {
 	my $isGatewaySet = ( defined($setRecord) && 
 			     $setRecord->assignment_type =~ /gateway/ );
 
+	my %problem_div_settings = ( -class=>"RenderSolo", -dir=>"ltr" );
+        # Add what is needed for lang and dir settings
+	my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
+	my $to_set_tag;
+	my $to_set_val;
+	while ( scalar(@to_set_lang_dir) > 0 ) {
+	  $to_set_tag = shift( @to_set_lang_dir );
+	  $to_set_val = shift( @to_set_lang_dir );
+	  if ( defined( $to_set_val ) ) {
+	    $problem_div_settings{ "$to_set_tag" } = "$to_set_val";
+	  }
+	}
+
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div({class=>"RenderSolo"}, $pg->{body_text});
+		: CGI::div( \%problem_div_settings, $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 

@@ -96,13 +96,13 @@
 	
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
-				  <div class="Body" style="background-color:#ffcccc">
+				  <div class="Body" style="background-color:#ffcccc" <!--#output_problem_lang_and_dir-->>
 				  <p style="font-size:larger">
 				  Warning -- there may be something wrong with this question. Please inform your instructor
 				  including the warning messages below.
 				  </p>
 				<!--#else-->
-				  <div class="Body" style="background-color:#ffffff">
+				  <div class="Body" style="background-color:#ffffff" <!--#output_problem_lang_and_dir-->>
 				<!--#endif-->
 				
 				<!--#body-->

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -36,8 +36,10 @@ use WeBWorK::Utils qw(readDirectory max sortByName wwRound x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
+use Encode;
 
 require WeBWorK::Utils::ListingDB;
 
@@ -403,7 +405,7 @@ sub browse_local_panel {
 	my $r = $self->r;	
 	my $library_selected = shift;
 	my $lib = shift || ''; $lib =~ s/^browse_//;
-	my $name = ($lib eq '')? $r->maketext('Local') : $problib{$lib};
+	my $name = ($lib eq '')? $r->maketext('Local') : Encode::decode_utf8($problib{$lib});
     
 	my $list_of_prob_dirs= get_problem_directories($r,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
@@ -834,7 +836,7 @@ sub make_top_row {
 	##	Make buttons for additional problem libraries
 	my $libs = '';
 	foreach my $lib (sort(keys(%problib))) {
-		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>$problib{$lib},
+		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>Encode::decode_utf8($problib{$lib}),
 																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
 			if (-d "$ce->{courseDirs}{templates}/$lib");
 	}
@@ -955,6 +957,7 @@ sub make_top_row {
 	CGI::end_table()));
 }
 
+
 sub make_data_row {
 	my $self = shift;
 	my $r = $self->r;
@@ -986,9 +989,22 @@ sub make_data_row {
 	my $isGatewaySet = ( defined($setRecord) && 
 			     $setRecord->assignment_type =~ /gateway/ );
 
+	my %problem_div_settings = ( class=>"RenderSolo", id=>"render$cnt" );
+        # Add what is needed for lang and dir settings
+	my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
+	my $to_set_tag;
+	my $to_set_val;
+	while ( scalar(@to_set_lang_dir) > 0 ) {
+	  $to_set_tag = shift( @to_set_lang_dir );
+	  $to_set_val = shift( @to_set_lang_dir );
+	  if ( defined( $to_set_val ) ) {
+	    $problem_div_settings{ "$to_set_tag" } = "$to_set_val";
+	  }
+	}
+
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div({class=>"RenderSolo", id=>"render$cnt"}, $pg->{body_text});
+		: CGI::div( \%problem_div_settings, $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;

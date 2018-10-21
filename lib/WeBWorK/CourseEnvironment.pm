@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/CourseEnvironment.pm,v 1.37 2007/08/10 16:37:10 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -179,12 +179,16 @@ sub new {
 		${*{${$safe->root."::"}{courseFiles}}}{simpleConfig};
 	use strict 'refs';
 	
-	# read and evaluate the course environment file
-	# if readFile failed, we don't bother trying to reval
-	my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
-	$@ or $safe->reval($courseFileContents);
-	my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
-	$@ or $safe->reval($courseWebConfigContents);
+	# make sure the course environment file actually exists (it might not if we don't have a real course)
+	# before we try to read it
+	if(-r $courseEnvironmentFile){
+		# read and evaluate the course environment file
+		# if readFile failed, we don't bother trying to reval
+		my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
+		$@ or $safe->reval($courseFileContents);
+		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
+		$@ or $safe->reval($courseWebConfigContents);
+	}
 	
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';

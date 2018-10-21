@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WebworkClient.pm,v 1.1 2010/06/08 11:46:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -108,8 +108,7 @@ use Crypt::SSLeay;  # needed for https
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
-use MIME::Base64 qw( encode_base64 decode_base64);
-use WeBWorK::Utils qw( wwRound);
+use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
 
@@ -322,12 +321,12 @@ sub xmlrpcCall {
 		  $self->fault(1); # set fault flag to true
 		  return $self;  
 	  } else {
-	  	  if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
-	  		$result->result()->{text} = decode_base64($result->result()->{text});
-		}
-	  	if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
-		    $result->result()->{header_text} = decode_base64($result->result()->{header_text});
-	  	}
+	      if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
+		  $result->result()->{text} = decode_utf8_base64($result->result()->{text});
+	      }
+	      if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
+		  $result->result()->{header_text} = decode_utf8_base64($result->result()->{header_text});
+	      }
 
 		$self->return_object($result->result());
 		# print "\n retrieve result ",  keys %{$self->return_object};
@@ -393,7 +392,7 @@ sub jsXmlrpcCall {
 sub encodeSource {
 	my $self = shift;
 	my $source = shift||'';
-	$self->{encoded_source} =encode_base64($source);
+	$self->{encoded_source} =encode_utf8_base64($source);
 }
 
 =head2  Accessor methods
@@ -628,7 +627,7 @@ sub formatRenderedProblem {
 
 	if ( defined ($rh_result->{WARNINGS}) and $rh_result->{WARNINGS} ){
 		$warnings = "<div style=\"background-color:pink\">
-		             <p >WARNINGS</p><p>".decode_base64($rh_result->{WARNINGS})."</p></div>";
+		             <p >WARNINGS</p><p>".decode_utf8_base64($rh_result->{WARNINGS})."</p></div>";
 	}
 	#warn "keys: ", join(" | ", sort keys %{$rh_result });
 	
