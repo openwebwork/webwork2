@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Utils/DBImportExport.pm,v 1.10 2006/09/26 15:57:41 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
