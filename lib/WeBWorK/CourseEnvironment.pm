@@ -179,12 +179,16 @@ sub new {
 		${*{${$safe->root."::"}{courseFiles}}}{simpleConfig};
 	use strict 'refs';
 	
-	# read and evaluate the course environment file
-	# if readFile failed, we don't bother trying to reval
-	my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
-	$@ or $safe->reval($courseFileContents);
-	my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
-	$@ or $safe->reval($courseWebConfigContents);
+	# make sure the course environment file actually exists (it might not if we don't have a real course)
+	# before we try to read it
+	if(-r $courseEnvironmentFile){
+		# read and evaluate the course environment file
+		# if readFile failed, we don't bother trying to reval
+		my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
+		$@ or $safe->reval($courseFileContents);
+		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
+		$@ or $safe->reval($courseWebConfigContents);
+	}
 	
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';
