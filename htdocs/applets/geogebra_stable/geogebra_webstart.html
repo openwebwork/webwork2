@@ -14,7 +14,7 @@ if (width < 800) width=800;
 function geogebra_applet(width,height,filename,framePossible,enableRightClick,enableShiftDragZoom,showResetIcon,showMenuBar,showToolBar,showToolBarHelp,showAlgebraInput,enableLabelDrags,showSpreadsheet,showAlgebraView) {
  
 ret = '<applet name="ggbApplet" code="geogebra.GeoGebraApplet" archive="http://www.geogebra.org/webstart/dev/unpacked/geogebra.jar" height="'+height+'" width="'+width+'">';
-//ret = '<applet name="ggbApplet" code="geogebra.GeoGebraApplet" archive="http://hosted2.webwork.rochester.edu/webwork2_files/applets/geogebra_stable/geogebra.jar" 
+//ret = '<applet name="ggbApplet" code="geogebra.GeoGebraApplet" archive="http://demo.webwork.rochester.edu/webwork2_files/applets/geogebra_stable/geogebra.jar" 
 //height="'+height+'" width="'+width+'">';
 
   if (filename != "") ret+='<param name="filename" value="'+filename+'">';
