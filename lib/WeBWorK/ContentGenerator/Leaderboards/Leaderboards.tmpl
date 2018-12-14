@@ -3,44 +3,35 @@
     <script src="https://fb.me/react-15.0.0.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
     <script src="https://fb.me/react-dom-15.0.0.js"></script>
-    <script type = "text/babel">
+    <link crossorigin="anonymous" media="all" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" />
+    <script type = "text/javascript">
 
     const courseinfo = <TMPL_VAR NAME=DATA>;
 
-    console.log(courseinfo.name);
-
-      fetch('http://localhost/test.php') // Transform the data into json
-  .then((response) => {
-    return response.json();
-  })
-  .then((data) => {
-    console.log(data);
-  })
-  function getCookie(cname) {
-    const name = cname + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const ca = decodedCookie.split(';');
-    for(let i = 0; i <ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-        }
-    }
-    return "";
-}
-const value = getCookie(`WeBWorKCourseAuthen.${courseinfo.name}`);
-
-const [user, key, expire] = value.split("\t");
-
-console.log(`user: ${user}, key: ${key}, expires: ${expire}`);
+     
     </script>
+    <style>
+
+  .filler {
+    background: #1DA598;
+    height: 20px;
+    border-radius: 50px;
+    transition: width .2s ease-in;
+  }
+  .ion-android-arrow-dropup{
+    font-size: 20px;
+    margin-left: 4px;
+  }
+  .ion-android-arrow-dropdown{
+    font-size: 20px;
+    margin-left: 4px;
+  }
+
+      </style>
   </head>
 
   <body>
-    <div id = "app"></div>
+    <div id = "LeaderboardPage"></div>
   </body>
   <script src="http://localhost/app.js"></script>
 </html>
