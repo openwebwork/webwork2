@@ -3,6 +3,7 @@ $ptx_static_format = <<'ENDPROBLEMTEMPLATE';
 <!--BEGIN PROBLEM-->
 <webwork>
 $problemText
+$answerhashXML
 </webwork>
 <!--END PROBLEM-->
 ENDPROBLEMTEMPLATE

@@ -120,6 +120,7 @@ use HTML::Entities;
 use WeBWorK::PG::ImageGenerator;
 use IO::Socket::SSL;
 use Digest::SHA qw(sha1_base64);
+use XML::Simple qw(XMLout);
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -621,6 +622,7 @@ sub formatRenderedProblem {
 	my $encoded_source     = $self->encoded_source//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
+        my $answerhashXML     = XMLout($rh_answers, RootName => 'answerhashes');
 	
 	#################################################
 	# regular Perl warning messages generated with warn
