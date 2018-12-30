@@ -1464,7 +1464,7 @@ sub pre_header_initialize {
 				
 				my $dueDate = time+2*60*60*24*7;
 				my $display_tz = $ce->{siteDefaults}{timezone};
-				my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
+				my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
 				my $dueTime = $ce->{pg}{timeAssignDue};
 				
 				# We replace the due time by the one from the config variable
