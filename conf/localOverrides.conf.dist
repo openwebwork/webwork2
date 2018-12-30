@@ -1,8 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/localOverrides.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
+# Copyright  2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -49,6 +48,12 @@ $mail{feedbackRecipients}    = [
 	#'prof2@yourserver.yourdomain.edu',
 ];
 
+### additional mail overrides
+# Use this to customize the text of the feedback button.
+$feedback_button_name = "Email WeBWorK TA";
+
+
+
 ################################################################################
 # Repository Information
 ###############################################################################
@@ -92,6 +97,7 @@ $language = "en";
 # This is the site_info file.  You should consider changing this to point
 # to a file which is not tracked by git
 $webworkFiles{site_info} = "$webworkDirs{htdocs}/site_info.txt";
+#$webworkFiles{site_info} = "$webworkDirs{htdocs}/our_site_info.txt";
 
 
 # The setHeader preceeds each set in hardcopy output. It is a PG file.
@@ -120,9 +126,11 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # http://webwork.maa.org/wiki/National_Problem_Library
 # The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
+# NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
 #$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
 #$problemLibrary{version}     = "2";
 # uncomment these lines below and comment out the line above if using OPL instead of NPL
+
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
 $problemLibrary{version}    = "2.5";  
@@ -152,6 +160,10 @@ $problemLibrary{showLibraryGlobalStats} = 1;
  
 $courseFiles{problibs}    = {
 	Library          => "OPL Directory",
+    capaLibrary      => "CAPA",
+    Contrib          => "Contrib",
+# the following are not really needed but you can 
+# create links to your own private libraries this way. 
 # 	rochesterLibrary => "Rochester",
 # 	unionLibrary     => "Union",
 # 	asuLibrary       => "Arizona State",
@@ -159,7 +171,7 @@ $courseFiles{problibs}    = {
 # 	dartmouthLibrary => "Dartmouth",
 # 	indianaLibrary   => "Indiana",
 # 	osuLibrary       => "Ohio State",	
-#       capaLibrary      => "CAPA",
+
 };
 
 
@@ -210,6 +222,7 @@ $options{PGCodeMirror} = 1;
 
 # This sets if mathview is available on the PG editor for use as a minimal latex equation editor
 $options{PGMathView} = 0;
+$options{PGWirisEditor} = 0;
 
 ################################################################################
 # PG subsystem options
@@ -225,6 +238,12 @@ $pg{displayModes} = [
 
 # Default display mode. Should be an uncommented item listed above.
 $pg{options}{displayMode}        = "MathJax";
+
+#$webworkURLs{MathJax} = "$server_root_url/$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
+$webworkURLs{MathJax} = "$webworkURLs{htdocs}/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
+#$webworkURLs{MathJax} = "https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-MML-AM_HTMLorMML-full";
+#$webworkURLs{MathJax} = "https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS_CHTML-full";
+
  
 ################################################################################
 #  Adding to the macro file search path. (Check with entries in defaults.config before overriding)
@@ -305,12 +324,12 @@ $pg{options}{periodicRandomizationPeriod} = 5;
 ################################################################################
 
  $pg{specialPGEnvironmentVars}{DragMath} = 0;
- #$pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
- #$pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
- #$pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{templates}/Contrib/CAPA/CAPA_Graphics/",
- #push @{$pg{directories}{macrosPath}},  
- #  "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools",
- #  "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools";
+ $pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
+ $pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
+ $pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{templates}/Contrib/CAPA/CAPA_Graphics/",
+ push @{$pg{directories}{macrosPath}},  
+   "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools",
+   "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools";
 
  # The link Contrib in the course templates directory should point to ../webwork-open-problem-library/Contrib 
 
@@ -361,6 +380,11 @@ $showeditors{simplepgeditor}   = 0;
 #$courseDirs{html_temp}  =  "/var/www/wwtmp/$courseName";
 #$courseURLs{html_temp}   = "/wwtmp/$courseName";
 
+#####################
+# Additional PG modules
+#####################
+
+#push (@{${pg}{modules}}, [qw(TikZ_Image2)]);
 ################################################################################ 
 # Student Date Format
 ################################################################################
@@ -382,6 +406,28 @@ $showeditors{simplepgeditor}   = 0;
 
 # $pg{specialPGEnvironmentVars}{Rserve} = {host => "localhost"};
 
+# use this setting when running Rserve in a docker container.
+# $pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};
+
+
+################################################################################
+# Serving Opaque client questions to moodle
+################################################################################
+
+
+# this snippet checks to see if Moodle has already called MathJax
+# $pg{specialPGEnvironmentVars}{problemPreamble} = { TeX => '', HTML=> <<END_PREAMBLE };
+# 
+# 	<script type="text/x-mathjax-config">
+# 	if (MathJax.Hub.Startup.params.config && MathJax.Hub.config.config.length) {
+# 	    MathJax.Hub.Config({
+# 	      config: [],
+# 	      skipStartupTypeset: false
+# 	    });
+# 	  }
+# 	</script>
+# END_PREAMBLE
+
 ################################################################################
 # Authentication Methods
 ################################################################################
@@ -389,15 +435,45 @@ $showeditors{simplepgeditor}   = 0;
 # Extra modules have been created to allow WeBWorK to use certain external
 # methods of authentication.
 
+################################################################################
 # IMS LTI Authentication
+################################################################################
+
 # Uncomment the following line to enable authentication via IMS LTI.
 # You will have to copy the file authen_LTI.conf.dist to authen_LTI.conf,
 # and then edit that file to fill in the settings for your installation.
 
 #include("conf/authen_LTI.conf");
+# default settings
+#$debug_lti_parameters = 0; 
+#$debug_lti_grade_passback = 0;
+
+# Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
+# debugging.  This is useful when setting things up for the first time because
+# different LMS systems have different parameters
+
+# To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
+# to one.  And set the LTIMassUpdateInterval to 60 (seconds).
+
+# This will print into the apache log the success or failure of updating each user/set.
+# If the set has "no lis_source_did" then that set hasn't been assigned, or the user is an instructor
+# and not a student.
+
+# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and 
+# response between the LMS and WW to be printed into apache error log file for each
+# user/set  update of the grade.
+
+# The switches above can be set in course.conf to enable debugging for just one course.
+
+# If you want even more information enable the debug facility for SubmitGrade.pm in 
+# the WeBWorK::Constants file.  
+# This will print extensive debug messages for all courses.
 
 
+
+################################################################################
 # LDAP Authentication
+################################################################################
 # Uncomment the following line to enable authentication via an LDAP server.
 # You will have to copy the file authen_ldap.conf.dist to authen_ldap.conf,
 # and then edit that file to fill in the settings for your installation.

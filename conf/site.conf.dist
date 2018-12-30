@@ -228,7 +228,9 @@ $mail{smtpTimeout}           = 30;
 # Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
 
 $mail{tls_allowed} = 0;  
-#$tls_alowed=0;  #old method -- this variable no longer works.
+
+#$tls_allowed=0;  #old method -- this variable no longer works.
+
 
 # errors of the form
 #  unable to establish SMTP connection to smtp-gw.rochester.edu port 465

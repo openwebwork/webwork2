@@ -6,10 +6,28 @@
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
-# set this to 1 to have LTI calling parameters printed to HTML page for
+# Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
-$debug_lti_parameters = 0; 
+$debug_lti_parameters = 1; 
+
+# To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
+# to one.  And set the LTIMassUpdateInterval to 60 (seconds).
+$debug_lti_grade_passback = 0;
+
+# This will print into the apache log the success or failure of updating each user/set.
+# If the set has "no lis_source_did" then that set hasn't been assigned, or the user is an instructor
+# and not a student.
+
+# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and 
+# response between the LMS and WW to be printed into apache error log file for each
+# user/set  update of the grade.
+
+# The switches above can be set in course.conf to enable debugging for just one course.
+
+# If you want even more information enable the debug facility for SubmitGrade.pm in 
+# the WeBWorK::Constants file.  
+# This will print extensive debug messages for all courses.
 
 # This first section enables LTI authentication.
 # Failover to Basic_TheLastOption is necessary to authenticate with
@@ -30,8 +48,9 @@ $authen{user_module} = [
 # Basic_TheLastOption, then WeBWorK::Login
 # will display a screen directing the user
 # back to an external authentication system.
+# This prevents you from attempting to login in to WeBWorK directly.
 
-$external_auth=1;
+#$external_auth=1;
 
 # NOTE:  If external authentication is disabled
 # then you should probably also prevent students
@@ -84,6 +103,18 @@ $preferred_source_of_username = "lis_person_contact_email_primary";
 # portion of the email and just use the username.  
 
 #$strip_address_from_email = 1;
+
+################################################################################
+# LTI Preferred source of Student Id
+################################################################################
+
+# If preferred_source_of_student_id is not set, WeBWorK will look in the LTI
+# parameter 'custom_student_id.' If preferred_source_of_student_id is set, then
+# WeBWorK will look in the LTI parameter specified below. This parameter may be
+# dependendent on the LMS. E.G., In D2L, student_id is stored in OrgDefinedId and
+# the corresponding LTI parameter is called ext_d2l_orgdefinedid.
+
+#$preferred_source_of_student_id = "ext_d2l_orgdefinedid";
 
 ################################################################################
 # LTI Basic Authentication Parameters 
@@ -208,6 +239,7 @@ $LTIMassUpdateInterval = 86400; #in seconds
 			   "Designer" => "professor",
 			   "instructor" => "professor",
 			   "Instructor" => "professor",
+			   "Faculty" => "professor",
 			   "Teacher" => "professor",
 			   "Student" => "student",
 			   "Learner" => "student",

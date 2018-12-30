@@ -34,14 +34,14 @@ FullCreditProb
 ReducedCred
 ExtendDueDate
 DoubleSet
-RessurectHW
+ResurrectHW
 Surprise
 SuperExtendDueDate
 HalfCreditSet
 FullCreditSet
 AddNewTestGW
 ExtendDueDateGW
-RessurectGW
+ResurrectGW
 )];
 
 =head2 NAME
@@ -82,9 +82,9 @@ sub UserItems {
     return \@items;
 }
 
-#Item to ressurect a homework for 24 hours 
+#Item to resurrect a homework for 24 hours
 
-package WeBWorK::AchievementItems::RessurectHW;
+package WeBWorK::AchievementItems::ResurrectHW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
 use WeBWorK::Utils qw(sortByName before after between x);
@@ -94,8 +94,8 @@ sub new {
     my %options = @_;
 
     my $self = {
-	id => "RessurectHW",
-	name => x("Scroll of Ressurection"),
+	id => "ResurrectHW",
+	name => x("Scroll of Resurrection"),
 	description => x("Opens any homework set for 24 hours."),
 	%options,
     };
@@ -123,7 +123,7 @@ sub print_form {
     }
 
     return join("",
-	CGI::p($r->maketext("Choose the set which you would like to ressurect.")),
+	CGI::p($r->maketext("Choose the set which you would like to resurrect.")),
 	CGI::label($r->maketext("Set Name "),
 	CGI::popup_menu({values=>\@openSets,id=>"res_set_id", name=>"res_set_id"})));
 }
@@ -447,7 +447,7 @@ sub new {
 
     my $self = {
 	id => "DoubleSet",
-	name => x("Cake of Enlargment"),
+	name => x("Cake of Enlargement"),
 	description => x("Cause the selected homework set to count for twice as many points as it normally would."),
 	%options,
     };
@@ -534,7 +534,7 @@ sub new {
 
     my $self = {
 	id => "ResetIncorrectAttempts",
-	name => x("Potion of Forgetfullness"),
+	name => x("Potion of Forgetfulness"),
 	description => x("Resets the number of incorrect attempts on a single homework problem."),
 	%options,
     };
@@ -900,7 +900,7 @@ sub print_form {
     
     #print form with sets 
     return join("",
-		CGI::p($r->maketext("Choose the set which you would like to ressurect.")),
+		CGI::p($r->maketext("Choose the set which you would like to resurrect.")),
 		CGI::label($r->maketext("Set Name "),
 		CGI::popup_menu({values=>\@openSets,id=>"hcs_set_id", name=>"hcs_set_id"})));
 }
@@ -1101,7 +1101,7 @@ sub print_form {
     
     #print form with sets 
     return join("",
-		CGI::p($r->maketext("Choose the set which you would like to ressurect.")),
+		CGI::p($r->maketext("Choose the set which you would like to resurrect.")),
 		CGI::label($r->maketext("Set Name "),
 		CGI::popup_menu({values=>\@openSets,id=>"fcs_set_id", name=>"fcs_set_id"})));
 }
@@ -1538,7 +1538,7 @@ sub use_item {
 }
 
 #Item to extend the due date on a gateway 
-package WeBWorK::AchievementItems::RessurectGW;
+package WeBWorK::AchievementItems::ResurrectGW;
 our @ISA = qw(WeBWorK::AchievementItems);
 use Storable qw(nfreeze thaw);
 use WeBWorK::Utils qw(sortByName before after between x);
@@ -1548,7 +1548,7 @@ sub new {
     my %options = @_;
 
     my $self = {
-	id => "RessurectGW",
+	id => "ResurrectGW",
 	name => x("Necromancers Charm"),
 	description => x("Reopens any gateway test for an additional 24 hours. This allows you to take a test even if the close date has past. This item does not allow you to take additional versions of the test."),
 	%options,
@@ -1583,7 +1583,7 @@ sub print_form {
     #print gateways in a drop down. 
     
     return join("",
-		CGI::p($r->maketext("Ressurect which Gateway?")),
+		CGI::p($r->maketext("Resurrect which Gateway?")),
 		CGI::label($r->maketext("Gateway Name "),
 		   CGI::popup_menu({values=>\@sets,id=>"resgw_gw_id", name=>"resgw_gw_id"})));
 }

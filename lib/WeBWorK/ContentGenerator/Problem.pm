@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -227,6 +227,13 @@ sub can_useMathView {
     my $ce= $self->r->ce;
 
     return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+}
+
+sub can_useWirisEditor {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
 }
     
 
@@ -600,6 +607,7 @@ sub pre_header_initialize {
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
         useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
+        useWirisEditor     => $ce->{pg}->{options}->{useWirisEditor},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -620,6 +628,7 @@ sub pre_header_initialize {
 		showMeAnother      => 0,
 		getSubmitButton    => 0,
 	    useMathView        => 0,
+	    useWirisEditor     => 0,
 	);
 	 
 	# does the user have permission to use certain options?
@@ -638,7 +647,8 @@ sub pre_header_initialize {
 		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
 		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
 		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-	    useMathView              => $self->can_useMathView(@args)
+	    useMathView              => $self->can_useMathView(@args),
+	    useWirisEditor           => $self->can_useWirisEditor(@args),
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -1212,7 +1222,7 @@ sub output_problem_body{
 	my %will = %{ $self->{will} };
 
 	print "\n";
-	print CGI::div($pg->{body_text});
+	print CGI::div({id=>'output_problem_body'},$pg->{body_text});
 
 	return "";
 }
@@ -2156,6 +2166,13 @@ sub output_JS{
 	    } else {
 		warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
 	    }
+	}
+
+	# WirisEditor 
+	if ($self->{will}->{useWirisEditor}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 	
 	# This is for knowls

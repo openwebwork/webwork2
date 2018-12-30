@@ -526,7 +526,7 @@ sub body {
    		 tooltip 	=>	'Documentation from source code for PG modules and macro files. Often the most up-to-date information.'	,
    		},
    		{label 		=>	$r->maketext('PGLab')	,
-   		 url 		=>  $ce->{webworkURLs}{PGLabHelpURL}, #'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
+   		 url 		=>  $ce->{webworkURLs}{PGLabHelpURL}, #'http://demo.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
    		 target		=>	'PGLab'	,
    		 tooltip 	=>	'Test snippets of PG code in interactive lab.  Good way to learn PG language.'	,
    		},
@@ -1986,7 +1986,13 @@ sub output_JS{
 	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
-	  }
+	 }
+
+	 if ($ce->{options}->{PGWirisEditor}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
+	}
 
 
 	if ($ce->{options}->{PGCodeMirror}) {

@@ -147,7 +147,7 @@ function lib_update(who, what) {
 		       return true;
 		   },
 		  error: function (data) {
-		      alert(basicWebserviceURL+': '+data.statusText);
+		      alert('150 setmaker.js: '+basicWebserviceURL+': '+data.statusText);
 		  },
 		  });
       
@@ -180,7 +180,7 @@ function lib_update(who, what) {
 		       return true;
 		   },
 		  error: function (data) {
-		      alert(basicWebserviceURL+': '+data.statusText);
+		      alert('183 setmaker.js: ' + basicWebserviceURL+': '+data.statusText);
 		  },
 		  });
 }
@@ -256,7 +256,7 @@ function addemcallback(wsURL, ro, probarray, count) {
 		     timeout: 10000, //milliseconds
 		     success: addemcallback(wsURL, ro2, probarray, count+1),
 		     error: function (data) {
-			 alert(wsURL+': '+data.statusText);
+			 alert('259 setmaker.js: '+wsURL+': '+data.statusText);
 		     },
 		    });
       
@@ -302,7 +302,7 @@ function markinset() {
 		       }
 		   },
 		   error: function (data) {
-		       alert(basicWebserviceURL+': '+data.statusText);
+		       alert('305 setmaker.js: '+ basicWebserviceURL+': '+data.statusText);
 		   },
 		  });
 }
@@ -367,7 +367,7 @@ function findAPLindex(path) {
   while ($('[name="all_past_list'+ j +'"]').val() != path && (j<1000)) {
     j++;
   }
-  if(j==1000) { alert("Cannot find "+path);}
+  if(j==1000) { alert('370 setmaker.js: ' + "Cannot find " +path);}
   return j;
 }
 
@@ -431,7 +431,7 @@ function randomize(filepath, el) {
 	      }
  	  },
 	  error: function (data) {
-	      alert(basicWebserviceURL+': '+data.statusText);
+	      alert('434 setmaker.js: '+basicWebserviceURL+': '+data.statusText);
 	  },
 	 });
     

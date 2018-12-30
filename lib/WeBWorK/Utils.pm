@@ -1274,6 +1274,7 @@ sub grade_all_sets {
   my $courseTotalRight = 0;
 
   foreach my $userSet (@userSets) {
+    next unless (after ($userSet->open_date()));
     if ($userSet->assignment_type() =~ /gateway/) {
 
       my ($totalRight,$total) = grade_gateway($db,$userSet,$userSet->set_id,$studentName);

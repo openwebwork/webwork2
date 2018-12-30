@@ -678,6 +678,13 @@ print  CGI::p($r->maketext('The percentage of active students with correct answe
 			                      : '-'}			                   
 			                       @problemIDs 
 			]
+			)),
+		CGI::Tr(CGI::td(
+			[ $r->maketext('# of active students'), map {($number_of_students_attempting_problem{$_})
+			                      ? $number_of_students_attempting_problem{$_}
+			                      : '-'}
+			                       @problemIDs
+			]
 			));
 
 	#show a grading link if necc

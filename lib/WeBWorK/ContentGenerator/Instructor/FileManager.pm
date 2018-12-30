@@ -1213,7 +1213,7 @@ sub verifyName {
 				} else {$self->addbadmessage($r->maketext("Your [_1] name contains illegal characters",$object))}
 			} else {$self->addbadmessage($r->maketext("Your [_1] name may not begin with a dot",$object))}
 		} else {$self->addbadmessage($r->maketext("Your [_1] name may not contain a path component",$object))}
-	} else {$self->addbadmessage($r->maktext("You must specify a [_1] name",$object))}
+	} else {$self->addbadmessage($r->maketext("You must specify a [_1] name",$object))}
 	return
 }
 
@@ -1274,7 +1274,7 @@ sub showHTML {
 #
 sub isText {
 	my $string = shift;
-	return $string !~ m/[^\s\x20-\x7E]{4}/;
+	return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
 
 ##################################################
