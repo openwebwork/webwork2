@@ -1,7 +1,8 @@
 FROM ubuntu:16.04
 
 
-ENV PG_BRANCH=master \
+
+ENV PG_BRANCH=develop \
     WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \
     WEBWORK_DB_HOST=db \
