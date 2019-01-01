@@ -85,7 +85,7 @@ RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
 # Block to include webwork2 in the container, when needed, instead of  getting it from a bind mount.
 #    Uncomment when needed, and set the correct branch name on the following line.
-#ENV WEBWORK_BRANCH=master   # need a valid branch name from https://github.com/openwebwork/webwork2
+#ENV WEBWORK_BRANCH=develop   # need a valid branch name from https://github.com/openwebwork/webwork2
 #RUN curl -fSL https://github.com/openwebwork/webwork2/archive/${WEBWORK_BRANCH}.tar.gz -o /tmp/${WEBWORK_BRANCH}.tar.gz \
 #    && cd /tmp \
 #    && tar xzf /tmp/${WEBWORK_BRANCH}.tar.gz \
