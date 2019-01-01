@@ -8712,6 +8712,7 @@ msgid "[Edit]"
 msgstr "[Edit]"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:265
+#, fuzzy
 msgid "_ACHIEVEMENTS_EDITOR_DESCRIPTION"
 msgstr ""
 "This is the homework sets editor page where you can view and edit the "
@@ -8737,8 +8738,8 @@ msgstr ""
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
 msgstr ""
 "This is the classlist editor page, where you can view and edit the records "
-"of all the students currently enrolled in this course.  The top of the page "
-"contains forms which allow you to filter which students to view, sort your "
+"of all the studentscurrently enrolled in this course.  The top of the page "
+"contains forms which allow you to filterwhich students to view, sort your "
 "students in a chosen order, edit student records, give new passwords to "
 "students, import/export student records from/to external files, or add/"
 "delete students. To use, please select the action you would like to perform, "
@@ -8746,6 +8747,7 @@ msgstr ""
 "Action!\" button at the bottom of the form.  The bottom of the page contains "
 "a table containing the student usernames and their information."
 
+#
 #. (CGI::strong($r->maketext($course)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:199
 msgid "_EXTERNAL_AUTH_MESSAGE"
@@ -8787,42 +8789,22 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2761
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2763
 msgid "_PROBLEM_SET_SUMMARY"
-msgstr ""
-"This is a table showing the current Homework sets for this class.  The "
-"fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned "
-"Users, Visibility to students, Reduced Scoring Enabled, Date it was opened, "
-"Date it is due, and the Date during which the answers are posted.  The Edit "
-"Set Data field contains checkboxes for selection and a link to the set data "
-"editing page.  The cells in the Edit Problems fields contain links which "
-"take you to a page where you can edit the containing problems, and the cells "
-"in the edit assigned users field contains links which take you to a page "
-"where you can edit what students the set is assigned to."
+msgstr "_PROBLEM_SET_SUMMARY"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2094
 msgid "_REQUEST_ERROR"
 msgstr ""
-"WeBWorK has encountered a software error while attempting to process this "
-"problem. It is likely that there is an error in the problem itself. If you "
-"are a student, report this error message to your professor to have it "
+"WeBWorK has encountered a software error while attempting to process "
+"thisproblem. It is likely that there is an error in the problem itself. If "
+"you are a student, report this error message to your professor to have it "
 "corrected. If you are a professor, please consult the error output below for "
 "more information."
+
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1871
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1873
 msgid "_USER_TABLE_SUMMARY"
-msgstr ""
-"A table showing all the current users along with several fields of user "
-"information. The fields from left to right are: Login Name, Login Status, "
-"Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment "
-"Status, Section, Recitation, Comments, and Permission Level.  Clicking on "
-"the links in the column headers will sort the table by the field it "
-"corresponds to. The Login Name fields contain checkboxes for selecting the "
-"user.  Clicking the link of the name itself will allow you to act as the "
-"selected user.  There will also be an image link following the name which "
-"will take you to a page where you can edit the selected user's information.  "
-"Clicking the emails will allow you to email the corresponding user.  "
-"Clicking the links in the entries in the assigned sets columns will take you "
-"to a page where you can view and reassign the sets for the selected user."
+msgstr "_USER_TABLE_SUMMARY"
 
 # Context is "Create set ______ as a duplicate of the first selected set"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:707
