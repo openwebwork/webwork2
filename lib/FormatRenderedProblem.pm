@@ -46,7 +46,7 @@ sub new {
 		return_object => {},
 		encoded_source => {},
 		sourceFilePath => '',
-		url            => 'https://hosted2.webwork.rochester.edu',
+		url            => 'https://demo.webwork.rochester.edu',
 		form_action_url =>'',
 		maketext   	   => sub {return @_}, 
 		courseID       => 'daemon_course',  # optional?

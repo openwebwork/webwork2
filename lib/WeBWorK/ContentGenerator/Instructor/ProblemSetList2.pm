@@ -1130,7 +1130,11 @@ sub create_handler {
 
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Set [_1] exists.  No set created", $newSetID)) if $db->existsGlobalSet($newSetID);
+	return CGI::div({class => "ResultsWithError"},
+			$r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetID)
+			. " " . $r->maketext("No set created.")
+                       ) if $db->existsGlobalSet($newSetID);
+
 	my $newSetRecord = $db->newGlobalSet;
 	my $oldSetID = $self->{selectedSetIDs}->[0];
 
@@ -1140,7 +1144,7 @@ sub create_handler {
 
 	my $dueDate = time+2*ONE_WEEK();
 	my $display_tz = $ce->{siteDefaults}{timezone};
-	my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
+	my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
 	my $dueTime = $ce->{pg}{timeAssignDue};
 
 	# We replace the due time by the one from the config variable

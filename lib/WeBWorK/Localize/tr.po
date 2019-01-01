@@ -8055,10 +8055,28 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:265
 msgid "_ACHIEVEMENTS_EDITOR_DESCRIPTION"
 msgstr ""
+"Bu sayfa ödev setleri editörü. Burada bu derse ait ödev setlerini görebilir "
+"ve üzerlerinde değişiklikler yapabilirsiniz. Yukarıdaki formları kullanarak "
+"setleri istediğiniz kriterlere göre görüntüleyebilir, setleri "
+"düzenleyebilir, yeni setler yayımlayabilir, dışarıdan ödev setleri "
+"aktarabilir, ödevleri notlayabilir yahut var olan setleri silebilirsiniz.  "
+"Hangi işlemi yapmak istiyorsanız seçin ve gerekli bilgileri girin daha sonra "
+"\"İşlemi Gerçekleştir!\" tuşuna basın. Sayfanın aşağısında mevcut setler "
+"hakkında bir takım bilgiler var."
 
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:419
+#, fuzzy
 msgid "_ANSWER_LOG_DESCRIPTION"
 msgstr ""
+"Bu sayfa ödev setleri editörü. Burada bu derse ait ödev setlerini görebilir "
+"ve üzerlerinde değişiklikler yapabilirsiniz. Yukarıdaki formları kullanarak "
+"setleri istediğiniz kriterlere göre görüntüleyebilir, setleri "
+"düzenleyebilir, yeni setler yayımlayabilir, dışarıdan ödev setleri "
+"aktarabilir, ödevleri notlayabilir yahut var olan setleri silebilirsiniz.  "
+"Hangi işlemi yapmak istiyorsanız seçin ve gerekli bilgileri girin daha sonra "
+"\"İşlemi Gerçekleştir!\" tuşuna basın. Sayfanın aşağısında mevcut setler "
+"hakkında bir takım bilgiler var."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:467
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
