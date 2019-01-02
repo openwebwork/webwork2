@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Skeleton.pm,v 1.5 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -659,7 +659,7 @@ sub save_as_handler {
 	my $viewURL = $self->systemLink($problemPage, 
 					params=>{
 					    sourceFilePath     => $relativeOutputFilePath,
-					    status_message     => uri_escape($self->{status_message})}
+					    status_message     => uri_escape_utf8($self->{status_message})}
 					
 	    );
 	

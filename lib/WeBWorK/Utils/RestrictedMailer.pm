@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Utils/RestrictedMailer.pm,v 1.2 2006/12/05 20:57:53 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under

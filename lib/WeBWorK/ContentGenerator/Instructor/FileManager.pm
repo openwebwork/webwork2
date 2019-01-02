@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.30 2007/09/08 21:15:16 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -17,6 +17,7 @@
 package WeBWorK::ContentGenerator::Instructor::FileManager;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
+use utf8;
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
 use File::Path;
@@ -538,7 +539,7 @@ sub Save {
 	if (defined($data)) {
 		$data =~ s/\r\n?/\n/g;  # convert DOS and Mac line ends to unix
 		local (*OUTFILE);
-		if (open(OUTFILE,">$file")) {
+		if (open(OUTFILE,">:utf8",$file)) {
 			eval {print OUTFILE $data; close(OUTFILE)};
 			if ($@) {$self->addbadmessage($r->maketext("Failed to save: [_1]",$@))}
 			   else {$self->addgoodmessage($r->maketext("File saved"))}
@@ -819,7 +820,7 @@ sub NewFile {
 		my $name = $self->r->param('name');
 		if (my $file = $self->verifyName($name,"file")) {
 			local (*NEWFILE);
-			if (open(NEWFILE,">$file")) {
+			if (open(NEWFILE,">:utf8",$file)) {
 				close(NEWFILE);
 				$self->RefreshEdit("",$name);
 				return;
@@ -925,14 +926,14 @@ sub Upload {
 	if ($type eq 'Text') {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
-		if (open(UPLOAD,">$file")) {print UPLOAD $data; close(UPLOAD)}
+		if (open(UPLOAD,">:utf8",$file)) {print UPLOAD $data; close(UPLOAD)}
 		  else {$self->addbadmessage($r->maketext("Can't create file '[_1]': [_2]", $name, $!))}
 	} else {
 		$upload->disposeTo($file);
 	}
 
 	if (-e $file) {
-	  $self->addgoodmessage($r->maketext("File '[_2]' uploaded successfully",$name));
+	  $self->addgoodmessage($r->maketext("File '[_1]' uploaded successfully",$name));
 	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
 	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
 	      if (unlink($file)) {$self->addgoodmessage($r->maketext("Archive '[_1]' deleted", $name))}
@@ -1269,12 +1270,13 @@ sub showHTML {
 ##################################################
 #
 # Check if a string is plain text
-# (i.e., doesn't contain four non-regular
-# characters in a row.)
 #
 sub isText {
 	my $string = shift;
-	return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
+
+	#	return $string !~ m/[^\s\x20-\x7E]{4}/;
+	return utf8::is_utf8($string);
+	# return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
 
 ##################################################

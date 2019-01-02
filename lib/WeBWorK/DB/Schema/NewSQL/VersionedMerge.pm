@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/VersionedMerge.pm,v 1.1 2007/03/01 22:09:51 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under

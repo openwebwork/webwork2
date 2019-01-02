@@ -31,15 +31,20 @@ use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
+use Encode qw(encode_utf8 decode_utf8);
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
 use Time::Zone;
-use MIME::Base64;
+use MIME::Base64 qw(encode_base64 decode_base64);
 use Errno;
 use File::Path qw(rmtree);
 use Storable;
 use Carp;
 #use Mail::Sender;
+use Storable qw(nfreeze thaw);
+
+
+use open IO => ':encoding(UTF-8)';
 
 use constant MKDIR_ATTEMPTS => 10;
 
@@ -68,8 +73,10 @@ our @EXPORT_OK = qw(
 	constituency_hash
 	cryptPassword
 	decodeAnswers
+        decode_utf8_base64
 	dequote
 	encodeAnswers
+        encode_utf8_base64
 	fisher_yates_shuffle
 	formatDateTime
 	has_aux_files
@@ -78,6 +85,7 @@ our @EXPORT_OK = qw(
 	listFilesRecursive
 	makeTempDirectory
 	max
+        nfreeze_base64
 	not_blank
 	parseDateTime
 	path_is_subdir
@@ -93,6 +101,7 @@ our @EXPORT_OK = qw(
 	textDateTime
 	timeToSec
 	trim_spaces
+        thaw_base64
 	undefstr
 	writeCourseLog
 	writeLog
@@ -179,11 +188,36 @@ sub force_eoln($) {
 
 sub readFile($) {
 	my $fileName = shift;
+	# debugging code: found error in CourseEnvironment.pm with this
+# 	if ($fileName =~ /___/ or $fileName =~ /the-course-should-be-determined-at-run-time/) {
+# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n", 
+# 		join("\t ", caller()), "\n";
+# 		return();
+# 	}
 	local $/ = undef; # slurp the whole thing into one string
-	open my $dh, "<", $fileName
-		or croak "failed to read file $fileName: $!";
-	my $result = <$dh>;
-	close $dh;
+	my $result;
+	eval{
+		# CODING WARNING:
+		# if (open my $dh, "<", $fileName){
+		# will cause a utf8 "\xA9" does not map to Unicode warning if © is in latin-1 file
+		# use the following instead
+		if (open my $dh, "<:raw", $fileName){
+			$result = <$dh>;
+			decode_utf8($result) or die "failed to decode $fileName";
+			close $dh;
+		} else {
+			print STDERR "File $fileName not found.";
+		}
+	};
+	if ($@) {
+		print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
+	}
+	utf8::decode($result) or print STDERR  "file $fileName. Input is not valid UTF-8";
+	# FIXME
+	# utf8::decode($result) raises an error about the copyright sign
+	# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
+	# should direct this to warn instead of STDERR to debug files written with accents
+	# in latin-1 files
 	return force_eoln($result);
 }
 
@@ -777,7 +811,7 @@ sub writeCourseLog($$@) {
 	my $logFile = $ce->{courseFiles}->{logs}->{$facility};
 	surePathToFile($ce->{courseDirs}->{root}, $logFile);
 	local *LOG;
-	if (open LOG, ">>", $logFile) {
+	if (open LOG, ">>:utf8", $logFile) {
 		print LOG "[", time2str("%a %b %d %H:%M:%S %Y", time), "] @message\n";
 		close LOG;
 	} else {
@@ -889,6 +923,10 @@ sub decodeAnswers($) {
 	}
 }
 
+sub decode_utf8_base64 {
+    return decode_utf8(decode_base64(shift));
+}
+
 sub encodeAnswers(\%\@) {
 	my %hash = %{shift()};
 	my @order = @{shift()};
@@ -900,8 +938,30 @@ sub encodeAnswers(\%\@) {
 
 }
 
+sub encode_utf8_base64 {
+    return encode_base64(encode_utf8(shift));
+}
 
+sub nfreeze_base64 {
+    return encode_base64(nfreeze(shift));
+}
 
+sub thaw_base64 {
+    my $string = shift;
+    my $result;
+
+    eval {
+	$result = thaw(decode_base64($string));
+    };
+
+    if ($@) {
+	warn("Deleting corrupted achievement data.");
+	return {};
+    } else {
+	return $result;
+    }
+
+}
 sub max(@) {
 	my $soFar;
 	foreach my $item (@_) {
