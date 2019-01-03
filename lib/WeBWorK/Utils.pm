@@ -195,29 +195,34 @@ sub readFile($) {
 # 		return();
 # 	}
 	local $/ = undef; # slurp the whole thing into one string
-	my $result;
-	eval{
-		# CODING WARNING:
-		# if (open my $dh, "<", $fileName){
-		# will cause a utf8 "\xA9" does not map to Unicode warning if © is in latin-1 file
-		# use the following instead
-		if (open my $dh, "<:raw", $fileName){
-			$result = <$dh>;
-			decode_utf8($result) or die "failed to decode $fileName";
-			close $dh;
-		} else {
-			print STDERR "File $fileName not found.";
+	my $result='';  # need this initialized because the file (e.g. simple.conf) may not exist
+	if (-r $fileName) {
+		eval{
+			# CODING WARNING:
+			# if (open my $dh, "<", $fileName){
+			# will cause a utf8 "\xA9" does not map to Unicode warning if © is in latin-1 file
+			# use the following instead
+			if (open my $dh, "<:raw", $fileName){
+				$result = <$dh>;
+				decode_utf8($result) or die "failed to decode $fileName";
+				close $dh;
+			} else {
+				print STDERR "File $fileName cannot be read."; # this is not a fatal error.
+			}
+		};
+		if ($@) {
+			print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
 		}
-	};
-	if ($@) {
-		print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
+		utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ". 
+		 "is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n". 
+		 "While this is not fatal you should fix it\n";
+		# FIXME
+		# utf8::decode($result) raises an error about the copyright sign
+		# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
+		# Done:: should direct this to warn instead of STDERR to debug files written with accents
+		# in latin-1 files /Done
 	}
-	utf8::decode($result) or print STDERR  "file $fileName. Input is not valid UTF-8";
-	# FIXME
-	# utf8::decode($result) raises an error about the copyright sign
-	# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
-	# should direct this to warn instead of STDERR to debug files written with accents
-	# in latin-1 files
+	# returns the empty string if the file cannot be read
 	return force_eoln($result);
 }
 
