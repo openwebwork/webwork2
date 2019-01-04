@@ -10,5 +10,5 @@ sed -i .bak '/Copyright/c\
 # the space after -i might need to be removed for linux.
 # produces $1.bak file
 
-# use as 
-# find . -name course.conf -exec /Volumes/WW_test/opt/webwork/courses/gage_course/fix_copyright.sh {} ';'
+# use with the find command: 
+# find . -name course.conf -exec /opt/webwork/webwork2/bin/fix_copyright.sh {} ';'
