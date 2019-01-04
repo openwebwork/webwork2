@@ -2219,7 +2219,7 @@ sub output_JS{
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		if (open(TAXONOMY, ">:encoding(utf8)", $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		if (open(TAXONOMY, "<:encoding(utf8)", $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
 			my $taxo = '[]';
 			$taxo = join("", <TAXONOMY>);
 			close TAXONOMY;
