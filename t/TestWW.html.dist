@@ -4,8 +4,8 @@
 	<meta charset="utf-8" />
 	<title>Embed WW in HTML page</title>
 	<meta name="generator" content="BBEdit 11.0" />
-	<link href="https://hosted2.webwork.rochester.edu/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-	<link href="https://hosted2.webwork.rochester.edu/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
+	<link href="https://demo.webwork.rochester.edu/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+	<link href="https://demo.webwork.rochester.edu/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
 
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 	<script>
@@ -39,7 +39,7 @@ This problem will help you to understand averages.
 <div class="wwproblem" style="display: none;">
 <hr>
 <iframe  width="800" height="600" 
-src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?
 	&answersSubmitted=0
 	&sourceFilePath=Library/LoyolaChicago/Precalc/Chap1Sec2/Q03.pg
 	&problemSeed=123567
@@ -63,7 +63,7 @@ This problem gives you practice finding tangents to curves in the plane.
 <div class="wwproblem" style="display: none;">
 <hr>
 <iframe  width="800" height="600" 
-src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?
 	&answersSubmitted=0
 	&sourceFilePath=Library/Utah/Calculus_I/set5_The_Derivative/1210s5p17/1210s5p17.pg
 	&problemSeed=123567
@@ -87,7 +87,7 @@ This is for debugging and shows all the details of the hash returned by PG.
 <div class="wwproblem" style="display: none;">
 <hr>
 <iframe  width="800" height="600" 
-src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?
 	&answersSubmitted=0
 	&sourceFilePath=Library/Utah/Calculus_I/set5_The_Derivative/1210s5p17/1210s5p17.pg
 	&problemSeed=123567890
@@ -110,7 +110,7 @@ This contains embedded PG code in base64 format.
 <div class="wwproblem" style="display: none;">
 <hr>
 <iframe  width="800" height="600" 
-src="https://hosted2.webwork.rochester.edu/webwork2/html2xml?
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?
 	&answersSubmitted=0
 	&problemSeed=123567890
 	&displayMode=MathJax

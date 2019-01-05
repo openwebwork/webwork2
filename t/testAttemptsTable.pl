@@ -240,14 +240,14 @@ print <<EOF
 <head>
 	<meta charset="utf-8" />
 	<title>attempts table</title>
-	<script src="https://hosted2.webwork.rochester.edu/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-	<link rel="stylesheet" type="text/css" href="https://hosted2.webwork.rochester.edu/webwork2_files/themes/math4/math4.css"/>
-	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
-	<script src="https://hosted2.webwork.rochester.edu/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
+	<script src="https://demo.webwork.rochester.edu/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
+	<link rel="stylesheet" type="text/css" href="https://demo.webwork.rochester.edu/webwork2_files/themes/math4/math4.css"/>
+	<script type="text/javascript" src="https://demo.webwork.rochester.edu/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
+	<script src="https://demo.webwork.rochester.edu/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
 	$color_input_blanks_script
-	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/js/vendor/jquery/jquery.js"></script>
-	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/js/jquery-ui-1.9.0.js"></script>
-	<script type="text/javascript" src="https://hosted2.webwork.rochester.edu/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
+	<script type="text/javascript" src="https://demo.webwork.rochester.edu/webwork2_files/js/vendor/jquery/jquery.js"></script>
+	<script type="text/javascript" src="https://demo.webwork.rochester.edu/webwork2_files/js/jquery-ui-1.9.0.js"></script>
+	<script type="text/javascript" src="https://demo.webwork.rochester.edu/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
 	<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
 
 	<script  type="text/javascript"
@@ -270,7 +270,7 @@ print <<EOF
 	<meta name="generator" content="BBEdit 11.1" />
 </head>
 <body>
-<script src="https://hosted2.webwork.rochester.edu/webwork2_files/js/legacy/vendor/wz_tooltip.js" type="text/javascript"></script>
+<script src="https://demo.webwork.rochester.edu/webwork2_files/js/legacy/vendor/wz_tooltip.js" type="text/javascript"></script>
 $answerTemplate
 <p>
 <input type="text" name="AnSwEr0002" id = "AnSwEr0002" size=40 value="16 right answer"><br/>
