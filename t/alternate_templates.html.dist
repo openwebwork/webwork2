@@ -16,7 +16,7 @@ You will need to customize this file to access the website you are testing.
 </p>
 
 <p>
-If you use it to test hosted2.webwork.rochester.edu (the default) you will need to login
+If you use it to test demo.webwork.rochester.edu (the default) you will need to login
 as guest the first time you access the site.  After that the cookie stored
 on your computer will give you access to the pages.
 </p>
