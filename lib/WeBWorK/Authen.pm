@@ -232,8 +232,10 @@ sub verify {
 			$self->write_log_entry("LOGIN FAILED $log_error");
 		}
 		if (defined($error) and $error=~/\S/) { # if error message has a least one non-space character. 
-
-			if (defined($r->param("user")) or defined($r->param("user_id"))) {
+			if ( defined( $log_error ) and $log_error eq "inactivity timeout" ) {
+				# We don't want to override the localized inactivity timeout message.
+				# so do not check next "if" in this case.
+			} elsif (defined($r->param("user")) or defined($r->param("user_id"))) {
 				$error = $r->maketext("Your authentication failed.  Please try again. Please speak with your instructor if you need help.")
 			}
 
@@ -309,8 +311,14 @@ sub do_verify {
 
 sub trim {  # used to trim leading and trailing white space from user_id and password
             # in get_credentials
-  my $s = shift//'';
-  $s =~ s/(^\s+|\s+$)//g;
+  my $s = shift;
+  # If the value was NOT defined, we want to leave it undefined, so
+  # we can still catch session-timeouts and report them properly.
+  # Thus we only do the following substitution if $s is defined.
+  # Otherwise return the undefined value so a non-defined password
+  # can be caught later by authenticate() for the case of a
+  # session-timeout.
+  $s =~ s/(^\s+|\s+$)//g    if ( defined($s) );
   return $s;
 }
 sub get_credentials {
