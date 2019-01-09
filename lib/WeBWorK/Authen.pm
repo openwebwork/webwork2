@@ -647,7 +647,16 @@ sub checkPassword {
 		# succeed in matching an entered password
 		# Use case: Moodle wwassignment stores null passwords and forces the creation 
 		# of a key -- Moodle wwassignment does not use  passwords for authentication, only keys.
-		if (($dbPassword =~/\S/) && $possibleCryptPassword eq $Password->password) {
+		# The following line was modified to also reject cases when the database has a crypted password
+		# which matches a submitted all white-space or null password by requiring that the
+		# $possibleClearPassword contain some non-space character. This is intended to address
+		# the issue raised in http://webwork.maa.org/moodle/mod/forum/discuss.php?d=4529 .
+		# Since several authentication modules fall back to calling this function without
+		# trimming the possibleClearPassword as done during get_credentials() here in
+		# lib/WeBWorK/Authen.pm we do not assume that an all-white space password would have
+		# already been converted to an empty string and instead explicitly test it for a non-space
+		# character.
+		if (($possibleClearPassword =~/\S/) && ($dbPassword =~/\S/) && $possibleCryptPassword eq $Password->password) {
 			$self->write_log_entry("AUTH WWDB: password accepted");
 			return 1;
 		} else {
