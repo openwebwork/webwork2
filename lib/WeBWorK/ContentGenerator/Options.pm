@@ -228,8 +228,12 @@ sub body {
 	}
 
 # Creating form to change display name
-if ($authz->hasPermissions($userID, "change_email_address")) {
+	if ($authz->hasPermissions($userID, "change_email_address")) {
 		print CGI::table({class=>"FormLayout"},
+			CGI::Tr({},
+				CGI::td(CGI::label({'for' => 'currName'},$r->maketext("[_1]'s Current Display Name",$e_user_name))),
+				CGI::td(CGI::input({ type=>"text", readonly=>"true", id=>"currName", name=>"currName", value=>$EUser->comment})),
+			),
 			CGI::Tr({},
 				CGI::td(CGI::label({'for'=>'newName'},$r->maketext("[_1]'s New Name",$e_user_name))),
 #				CGI::td(CGI::textfield(-name=>"newAddress", -text=>$newA)),

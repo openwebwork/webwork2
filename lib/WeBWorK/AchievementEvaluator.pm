@@ -257,22 +257,33 @@ sub checkForAchievements {
 			$imgSrc .= $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 	    }
 
-	    $cheevoMessage .=  CGI::start_div({id=>"test", class=>'cheevopopupouter modal-body'});
+#	    $cheevoMessage .=  CGI::start_div({class=>'modal-header'});
+#	    $cheevoMessage .=  CGI::h5({class=>'modal-title',id=>'modalLabel'},"You Earned an Achievement!");
+#	    $cheevoMessage .=  '<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+#          <span aria-hidden="true">&times;</span>
+#        </button>';
+	    if ($cheevoMessage eq ""){
+	            $cheevoMessage .=  CGI::start_div({class=>'modal-header'});
+        	    $cheevoMessage .=  CGI::a({href=>"#",class=>"close","data-dismiss"=>"modal", "aria-hidden"=>"true"},CGI::span({class=>"icon icon-remove"}),CGI::div({class=>"sr-only"},$r->maketext("Close")));
+	            $cheevoMessage .=  CGI::h3({id=>"modalLabel"},"You Earned an Achievement!");
+		    $cheevoMessage .=  CGI::end_div();
+	    } # initialize cheevo-modal with a header - avoid duplication for multiple cheevos
+	    $cheevoMessage .=  CGI::start_div({id=>"cheevoOuter", class=>'modal-body'});
 	    $cheevoMessage .=  CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
-	    $cheevoMessage .= CGI::start_div({class=>'cheevopopuptext'});  
+	    $cheevoMessage .=  CGI::start_div({class=>'cheevopopuptext'});  
 	    if ($achievement->category eq 'level') {
 		
 			$cheevoMessage = $cheevoMessage . CGI::h2("$achievement->{name}");
 			#print out description as part of message if we are using items
 			
 			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : $r->maketext("Congratulations, you earned a new level!"));
-			$cheevoMessage .= CGI::end_div();
+			$cheevoMessage .= CGI::end_div(); # end cheevopopuptext
 
 	    } else {
 		
 			$cheevoMessage .=  CGI::h2("$achievement->{name}");
 			$cheevoMessage .=  CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
-			$cheevoMessage .= CGI::end_div();
+			$cheevoMessage .= CGI::end_div(); # end cheevopopuptext
 	    }
 	    
 	    # this feature doesn't really work anymore because
@@ -297,8 +308,8 @@ sub checkForAchievements {
 
 	    }
 	        
-	    $cheevoMessage .= CGI::end_div();
-	    
+	    $cheevoMessage .= CGI::end_div(); # end modal-body
+	    $cheevoMessage .= CGI::div({class=>"modal-footer"},'<button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">Close</button>');
 	        
 	    my $points = $achievement->points;
 	    #just in case points is an ininitialzied variable
@@ -322,7 +333,9 @@ sub checkForAchievements {
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     if ($cheevoMessage) {
-	$cheevoMessage = CGI::div({id=>"achievementModal", class=>"modal hide fade"},$cheevoMessage);
+	$cheevoMessage = CGI::div({class=>"modal-content"},$cheevoMessage);
+	$cheevoMessage = CGI::div({class=>"modal-dialog", role=>"document"},$cheevoMessage);
+	$cheevoMessage = CGI::div({id=>"achievementModal", class=>"modal hide fade", tabindex=>"-1", 'data-backdrop'=>"static", role=>"dialog", 'aria-labeledby'=>"modalLabel", 'aria-hidden'=>"true"},$cheevoMessage);
     }
 
     return $cheevoMessage;
@@ -330,3 +343,5 @@ sub checkForAchievements {
 
 #Perl magic
 1;
+
+
