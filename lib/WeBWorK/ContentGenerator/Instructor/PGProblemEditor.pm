@@ -507,7 +507,7 @@ sub body {
    		 tooltip 	=>	'Documentation from source code for PG modules and macro files. Often the most up-to-date information.'	,
    		},
    		{label 		=>	$r->maketext('PGLab')	,
-   		 url 		=>  $ce->{webworkURLs}{PGLabHelpURL}, #'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
+   		 url 		=>  $ce->{webworkURLs}{PGLabHelpURL}, #'http://demo.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true'  	,
    		 target		=>	'PGLab'	,
    		 tooltip 	=>	'Test snippets of PG code in interactive lab.  Good way to learn PG language.'	,
    		},
@@ -648,7 +648,7 @@ EOF
 # 			CGI::a({-href=>'http://webwork.maa.org/wiki/Category:Authors',-target=>"wiki_window"},
 # 				'&nbsp;authoring&nbsp;info&nbsp;&amp; help&nbsp;',
 # 			)," | ",
-# 			CGI::a({-href=>'http://hosted2.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',-target=>"lab_window",
+# 			CGI::a({-href=>'http://demo.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',-target=>"lab_window",
 # 			     },
 # 				'&nbsp;testing&nbsp;lab&nbsp;'
 # 			)," | ",
@@ -1805,8 +1805,8 @@ sub save_as_handler {
 		$self->addbadmessage(CGI::p("File '".$self->shortPath($outputFilePath)."' exists.  
 		File not saved. No changes have been made.
 		You can change the file path for this problem manually from the 'Hmwk Sets Editor' page"));
-		$self->addgoodmessage(CGI::p("The text box now contains the source of the original problem.".
-		" You can recover lost edits by using the Back button on your browser."));
+		$self->addgoodmessage(CGI::p($r->maketext("The text box now contains the source of the original problem.".
+		" You can recover lost edits by using the Back button on your browser.")));
 	} else {
 		$self->{editFilePath} = $outputFilePath;
 		$self->{tempFilePath} = ''; # nothing needs to be unlinked.

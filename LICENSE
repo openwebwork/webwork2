@@ -2,7 +2,8 @@
                          Online Homework Delivery System                        
                                    Version 2.*                                 
 
-                    Copyright 2000-2017, The WeBWorK Project                    
+                    Copyright 2000-2019, The WeBWorK Project                    
+
                               All rights reserved.                              
 
     This program is free software; you can redistribute it and/or modify
@@ -20,11 +21,11 @@
     the GNU General Public License or the Artistic License for more details.
 
     You should have received a copy of the Artistic License with this
-    package, in the file named "Artistic".  If not, we'll be glad to provide
+    package, in the file named "Artistic" inside the `doc` folder.  If not, we'll be glad to provide
     one.
 
     You should also have received a copy of the GNU General Public License
-    along with this program in the file named "Copying". If not, write to the 
+    along with this program in the file named "Copying" inside the `doc` folder. If not, write to the 
     Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
     02111-1307, USA or visit their web page on the internet at
     http://www.gnu.org/copyleft/gpl.html.

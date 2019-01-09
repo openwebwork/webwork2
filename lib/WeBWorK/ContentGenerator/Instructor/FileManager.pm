@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.30 2007/09/08 21:15:16 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -932,7 +932,7 @@ sub Upload {
 	}
 
 	if (-e $file) {
-	  $self->addgoodmessage($r->maketext("File '[_2]' uploaded successfully",$name));
+	  $self->addgoodmessage($r->maketext("File '[_1]' uploaded successfully",$name));
 	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
 	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
 	      if (unlink($file)) {$self->addgoodmessage($r->maketext("Archive '[_1]' deleted", $name))}
@@ -1213,7 +1213,7 @@ sub verifyName {
 				} else {$self->addbadmessage($r->maketext("Your [_1] name contains illegal characters",$object))}
 			} else {$self->addbadmessage($r->maketext("Your [_1] name may not begin with a dot",$object))}
 		} else {$self->addbadmessage($r->maketext("Your [_1] name may not contain a path component",$object))}
-	} else {$self->addbadmessage($r->maktext("You must specify a [_1] name",$object))}
+	} else {$self->addbadmessage($r->maketext("You must specify a [_1] name",$object))}
 	return
 }
 
@@ -1274,7 +1274,7 @@ sub showHTML {
 #
 sub isText {
 	my $string = shift;
-	return $string !~ m/[^\s\x20-\x7E]{4}/;
+	return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
 
 ##################################################

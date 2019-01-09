@@ -34,3 +34,5 @@ DATA/*
 *.swp
 .dump_past_answers_salt
 package-lock.json
+.data
+.idea

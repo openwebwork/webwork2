@@ -307,6 +307,13 @@ sub do_verify {
 	}
 }
 
+sub trim {  # used to trim leading and trailing white space from user_id and password
+            # in get_credentials
+  my $s = shift//'';
+  $s =~ s/(^\s+|\s+$)//g;
+  return $s;
+}
+
 sub get_credentials {
 	my ($self) = @_;
 	my $r = $self->{r};
@@ -380,6 +387,12 @@ sub get_credentials {
 			$self->{password} = $r->param("passwd");
 			$self->{login_type} = "normal";
 			$self->{credential_source} = "params";
+			$self->{user_id}     = trim($self->{user_id});
+<<<<<<< HEAD
+			$self->{password}     = trim($self->{password});
+=======
+ 			$self->{password}     = trim($self->{password});
+>>>>>>> f85e61c5506e29e5855b7ff9524c880bf47aa7b1
 			debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
 			return 1;
 		} elsif (defined $cookieKey) {
@@ -388,6 +401,7 @@ sub get_credentials {
 			$self->{cookie_timestamp} = $cookieTimeStamp;
 			$self->{login_type} = "normal";
 			$self->{credential_source} = "cookie";
+			$self->{user_id}     = trim($self->{user_id});
 			debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
 			return 1;
 		} else {
@@ -397,6 +411,12 @@ sub get_credentials {
 			$self -> {cookie_timestamp} = $cookieTimeStamp;
 			$self -> {login_type} = "normal";
 			$self -> {credential_source} = "params_and_cookie";
+			$self->{user_id}     = trim($self->{user_id});
+<<<<<<< HEAD
+			$self->{password}    = trim($self->{password});
+=======
+			$self->{password}     = trim($self->{password});
+>>>>>>> f85e61c5506e29e5855b7ff9524c880bf47aa7b1
 			debug("params and cookie user '", $self->{user_id}, "' params and cookie session key = '",
 				 $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
 			return 1;
@@ -409,7 +429,14 @@ sub get_credentials {
 		$self->{password} = $r->param("passwd");
 		$self->{login_type} = "normal";
 		$self->{credential_source} = "params";
+<<<<<<< HEAD
+		$self->{user_id}      = trim($self->{user_id});
+=======
+		$self->{user_id}     = trim($self->{user_id});
+>>>>>>> f85e61c5506e29e5855b7ff9524c880bf47aa7b1
+		$self->{password}     = trim($self->{password});
 		debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
+		debug("params password '", $self->{password}, "' key '", $self->{session_key}, "'");
 		return 1;
 	}
 	
@@ -419,6 +446,7 @@ sub get_credentials {
 		$self->{cookie_timestamp} = $cookieTimeStamp;
 		$self->{login_type} = "normal";
 		$self->{credential_source} = "cookie";
+		$self->{user_id}     = trim($self->{user_id});
 		debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
 		return 1;
 	}
