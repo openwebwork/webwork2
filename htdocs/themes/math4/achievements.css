@@ -12,19 +12,20 @@
 }
 
 .levelbox {
-    height:100px;
+    height:200px;
     margin-bottom:30px;
 }
 
 .levelbox img {
     float:left;
-    height:100px;
-    width:100px;
+    height:200px;
+    width:200px;
 }
 
 .leveldatabox {
     margin-left:20px;
     float:left;
+    margin-top:30px;
 }
 
 .leveldatabox h1 {
