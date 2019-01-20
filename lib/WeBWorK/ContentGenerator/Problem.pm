@@ -2235,7 +2235,7 @@ sub output_CSS {
 	}
 	
 	#style for mathquill
-	if ($self->{will}->{useMathView}) {
+	if ($self->{will}->{useMathQuill}) {
 	    print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
 	}
 	
