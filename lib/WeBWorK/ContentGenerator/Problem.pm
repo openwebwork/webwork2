@@ -615,7 +615,7 @@ sub pre_header_initialize {
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
 	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
 	        useWirisEditor     => $ce->{pg}->{options}->{useWirisEditor},
-	        useMathView        => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
+	        useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
