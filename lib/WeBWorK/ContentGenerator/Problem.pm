@@ -236,6 +236,13 @@ sub can_useWirisEditor {
     return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
 }
     
+sub can_useMathQuill {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{MathQuill};
+}
+    
 
 sub can_showMeAnother {
     # PURPOSE: subroutine to check if showMeAnother 
@@ -606,8 +613,9 @@ sub pre_header_initialize {
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
-        useWirisEditor     => $ce->{pg}->{options}->{useWirisEditor},
+	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
+	        useWirisEditor     => $ce->{pg}->{options}->{useWirisEditor},
+	        useMathView        => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -629,6 +637,7 @@ sub pre_header_initialize {
 		getSubmitButton    => 0,
 	    useMathView        => 0,
 	    useWirisEditor     => 0,
+	    useMathQuill       => 0,
 	);
 	 
 	# does the user have permission to use certain options?
@@ -649,6 +658,7 @@ sub pre_header_initialize {
 		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
 	    useMathView              => $self->can_useMathView(@args),
 	    useWirisEditor           => $self->can_useWirisEditor(@args),
+	    useMathQuill              => $self->can_useMathQuill(@args),
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -2175,6 +2185,13 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 	
+	# MathQuill live rendering 
+	if ($self->{will}->{useMathQuill}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/math/math.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+	}
+	
 	# This is for knowls
         # Javascript and style for knowls
         print qq{
@@ -2215,6 +2232,11 @@ sub output_CSS {
 	#style for mathview
 	if ($self->{will}->{useMathView}) {
 	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	}
+	
+	#style for mathquill
+	if ($self->{will}->{useMathView}) {
+	    print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
 	}
 	
 	return "";

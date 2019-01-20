@@ -330,6 +330,13 @@ sub can_useWirisEditor {
     return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
 }
 
+sub can_useMathQuill {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{MathQuill};
+}
+
 ################################################################################
 # output utilities
 ################################################################################
@@ -1109,6 +1116,7 @@ sub pre_header_initialize {
 	     checkAnswers       => $checkAnswers,
 	     useMathView        => $User->useMathView ne '' ? $User->useMathView : $ce->{pg}->{options}->{useMathView},
 	     useWirisEditor     => $User->useWirisEditor ne '' ? $User->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
+	     useMathQuill       => $User->useMathQuill ne '' ? $User->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 	     );
 
 	# are certain options enforced?
@@ -1121,6 +1129,7 @@ sub pre_header_initialize {
 	     checkAnswers       => 0,
 	     useMathView        => 0,
 	     useWirisEditor     => 0,
+	     useMathQuill     => 0,
 	     );
 
 	# does the user have permission to use certain options?
@@ -1138,7 +1147,8 @@ sub pre_header_initialize {
 	     checkAnswersNextTime  => $self->can_checkAnswers(@args, $sAns),
 	     showScore          => $self->can_showScore(@args),
 	     useMathView              => $self->can_useMathView(@args),
-	     useWirisEditor           => $self->can_useWirisEditor(@args)
+	     useWirisEditor           => $self->can_useWirisEditor(@args),
+	     useMathQuill           => $self->can_useMathQuill(@args)
 	     );
 
 	# final values for options
@@ -2412,6 +2422,14 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
+	}
+
+	# MathQuill interface
+	if ($self->{will}->{useMathQuill}) {
+		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/math/math.min.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
 	}
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();

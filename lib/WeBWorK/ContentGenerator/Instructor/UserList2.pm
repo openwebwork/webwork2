@@ -175,7 +175,10 @@ use constant  FIELD_PROPERTIES => {
 	useMathView => {
 	    access => 'hidden',
         },
-     useWirisEditor => {
+        useWirisEditor => {
+	    access => 'hidden',
+        },
+        useMathQuill => {
 	    access => 'hidden',
         },
         lis_source_did => {
