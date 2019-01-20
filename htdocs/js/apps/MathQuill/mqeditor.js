@@ -6,10 +6,12 @@ $(document).ready(function() {
 			var i = 1;				
 			while ((document.getElementById("AnSwEr000" + i)) != null) {
 				var input = document.getElementById("AnSwEr000" + i);
-				var node = math.parse(input.value); // parse previous student answer
 				var newSpan = document.createElement('span');
 				newSpan.id = "AnSwEr000" + i + "-mq";
-				newSpan.innerHTML = node.toTex(); // initialize with TeX'd previous answer
+				if (input.value){
+					var node = math.parse(input.value); // parse previous student answer
+					newSpan.innerHTML = node.toTex(); // initialize with TeX'd version
+				}
 				var cfgOptions = {
 				  spaceBehavesLikeTab: true,
 				  leftRightIntoCmdGoes: 'up',
