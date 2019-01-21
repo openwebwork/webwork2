@@ -202,22 +202,22 @@ var LeaderTable = function (_React$Component) {
             null,
             React.createElement(
               'td',
-              { style: tdStyle },
+              { className: 'tdStyleLB' },
               current.username ? current.username : current.id
             ),
             React.createElement(
               'td',
-              { style: tdStyle },
+              { className: 'tdStyleLB' },
               current.achievementsEarned
             ),
             React.createElement(
               'td',
-              { style: tdStyle },
+              { className: 'tdStyleLB' },
               current.achievementPoints ? current.achievementPoints : 0
             ),
             React.createElement(
               'td',
-              { style: tdStyle },
+              { className: 'tdStyleLB' },
               React.createElement(Filler, { percentage: Math.floor(current.achievementPoints / maxScore * 1000) / 10, score: current.achievementPoints })
             )
           ));
@@ -240,44 +240,48 @@ var LeaderTable = function (_React$Component) {
 
       return React.createElement(
         'div',
-        { style: divStyle },
+        { className: 'divStyleLB' },
         React.createElement(
           'table',
-          { style: tableStyle },
+          { className: 'tableStyleLB' },
           React.createElement(
-            'tr',
-            { style: trStyle },
+            'tbody',
+            null,
             React.createElement(
-              'th',
-              { id: 'username', style: thStyle },
-              'Username'
-            ),
-            React.createElement(
-              'th',
-              {
-                className: 'sortButtons',
-                style: thStyle,
-                id: 'Earned',
-                onClick: this.checkOption
-              },
-              'Achievements Earned',
-              this.state.current == "Earned" ? this.state.currentSort == "Asc" ? React.createElement('i', { className: 'ion-android-arrow-dropup' }) : React.createElement('i', { className: 'ion-android-arrow-dropdown' }) : null
-            ),
-            React.createElement(
-              'th',
-              {
-                className: 'sortButtons',
-                style: thStyle,
-                id: 'Point',
-                onClick: this.checkOption
-              },
-              'Achievement Points',
-              this.state.current == "Point" ? this.state.currentSort == "Asc" ? React.createElement('i', { className: 'ion-android-arrow-dropup' }) : React.createElement('i', { className: 'ion-android-arrow-dropdown' }) : null
-            ),
-            React.createElement(
-              'th',
-              { style: thStyle },
-              'Progress'
+              'tr',
+              { className: 'trStyleLB' },
+              React.createElement(
+                'th',
+                { id: 'username', className: 'thStyleLB' },
+                'Username'
+              ),
+              React.createElement(
+                'th',
+                {
+                  className: 'sortButtons thStyleLB',
+                  style: thStyle,
+                  id: 'Earned',
+                  onClick: this.checkOption
+                },
+                'Achievements Earned',
+                this.state.current == "Earned" ? this.state.currentSort == "Asc" ? React.createElement('i', { className: 'ion-android-arrow-dropup' }) : React.createElement('i', { className: 'ion-android-arrow-dropdown' }) : null
+              ),
+              React.createElement(
+                'th',
+                {
+                  className: 'sortButtons thStyleLB',
+                  style: thStyle,
+                  id: 'Point',
+                  onClick: this.checkOption
+                },
+                'Achievement Points',
+                this.state.current == "Point" ? this.state.currentSort == "Asc" ? React.createElement('i', { className: 'ion-android-arrow-dropup' }) : React.createElement('i', { className: 'ion-android-arrow-dropdown' }) : null
+              ),
+              React.createElement(
+                'th',
+                { className: 'thStyleLB' },
+                'Progress'
+              )
             )
           ),
           React.createElement(
@@ -309,7 +313,7 @@ var LeaderTableItem = function (_React$Component2) {
 
       return React.createElement(
         'tr',
-        { style: LeaderItemTrStyle },
+        { className: 'LeaderItemTr' },
         this.props.children
       );
     }
@@ -344,7 +348,7 @@ var Leaderboard = function (_React$Component3) {
         React.createElement(LeaderTable, null),
         React.createElement(
           'p',
-          { style: pStyle },
+          { className: 'pStyleLB' },
           React.createElement(
             'i',
             null,
