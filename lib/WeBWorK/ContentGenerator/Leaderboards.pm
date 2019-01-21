@@ -104,9 +104,11 @@ sub head {
 	print CGI::start_script({type=>"text/javascript", src=>"https://fb.me/react-dom-15.0.0.js"}), CGI::end_script();
 	print "<link href=\"$site_url/js/apps/Leaderboard/leaderboard.css\" rel=\"stylesheet\" />";
 	print "<link crossorigin=\"anonymous\" media=\"all\" href=\"https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css\" rel=\"stylesheet\" />";
+	# we wont need this because we used hidden fields
 	print CGI::start_script({type=>"text/javascript"});
 	print "const courseinfo = <TMPL_VAR NAME=DATA>";
 	print CGI::end_script();
+	# definitely need this >>>
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Leaderboard/leaderboard.js"}), CGI::end_script();
 	return "";
 }
@@ -170,7 +172,7 @@ sub body {
 	my $ce = $r->ce;
 	# 
 	# Will you be accessing the database?
-	#my $db = $r->db;
+	my $db = $r->db;
 	# 
 	# Query authorization:
 	#my $authz = $r->authz;
