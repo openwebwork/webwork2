@@ -196,24 +196,12 @@ sub body {
 	# this is a place where the maximum achievement points may be calculated
 	# then stash the max value in a hidden input field for js to access...
 
-	# lose this
-	my $var = {name => $courseName};
-
-	# also lose this
-	my $template = HTML::Template->new(filename => '/opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Leaderboards/Leaderboards.tmpl');	
-
-	# my $phpOutput = `/usr/bin/php /var/www/html/test.php`;
-
-	# lose this too
-	$template->param(DATA => encode_json($var));
-
-	# straight up print the leaderboard div instead of tmpl
+	# print the leaderboard div and call the js to fill it in
 	print CGI::div({id=>'LeaderboardPage'});
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Leaderboard/leaderboard.rel.js"}), CGI::end_script();
 
   return "";
-  #return $template->output;
 
 }
 1;
