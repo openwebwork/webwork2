@@ -2070,6 +2070,14 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 
+
+	if ($ce->{options}->{PGMathQuill}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/math/math.min.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/mathquill/mathquill.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/mathquill/mqeditor.js"}), CGI::end_script();
+		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mathquill.css\"/>";
+	}
+
 	if ($ce->{options}->{PGCodeMirror}) {
 	  
 	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
