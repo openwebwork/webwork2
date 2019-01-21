@@ -40,6 +40,7 @@ WeBWorK::ContentGenerator.
 
 use strict;
 use warnings;
+use WeBWorK::CGI;
 use HTML::Template;
 use JSON qw(encode_json);
 
@@ -57,12 +58,14 @@ use JSON qw(encode_json);
 # SKEL: If you need to do any processing before the HTTP header is sent, do it
 # in this method:
 # 
-#sub pre_header_initialize {
-#	my ($self) = @_;
-#	
-#	# Do your processing here! Don't print or return anything -- store data in
-#	# the self hash for later retrieveal.
-#}
+sub pre_header_initialize {
+	my ($self) = @_;
+	my $r              = $self->r;
+	my $ce             = $r->ce;
+	
+	# Do your processing here! Don't print or return anything -- store data in
+	# the self hash for later retrieveal.
+}
 
 # SKEL: To emit your own HTTP header, uncomment this:
 # 
@@ -90,13 +93,23 @@ use JSON qw(encode_json);
 
 # SKEL: If you need to add tags to the document <HEAD>, uncomment this method:
 # 
-#sub head {
-#	my ($self) = @_;
-#	
-#	# You can print head tags here, like <META>, <SCRIPT>, etc.
-#	
-#	return "";
-#}
+sub head {
+	my ($self) = @_;
+	my $r              = $self->r;
+	my $ce             = $r->ce;
+	my $site_url = $ce->{webworkURLs}->{htdocs};
+
+	print CGI::start_script({type=>"text/javascript", src=>"https://fb.me/react-15.0.0.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"https://fb.me/react-dom-15.0.0.js"}), CGI::end_script();
+	print "<link href=\"$site_url/js/apps/Leaderboard/leaderboard.css\" rel=\"stylesheet\" />";
+	print "<link crossorigin=\"anonymous\" media=\"all\" href=\"https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css\" rel=\"stylesheet\" />";
+	print CGI::start_script({type=>"text/javascript"});
+	print "const courseinfo = <TMPL_VAR NAME=DATA>";
+	print CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Leaderboard/leaderboard.js"}), CGI::end_script();
+	return "";
+}
 
 # SKEL: To fill in the "info" box (to the right of the main body), use this
 # method:
@@ -173,16 +186,30 @@ sub body {
 	#return "<a href='http://localhost/webwork2/MAT1275EN-S18-Parker/Leaderboards.html'>Leaderboards</a>";
 
 	my $courseName = $ce->{courseName};
+	my $site_url = $ce->{webworkURLs}->{htdocs};
 
+	# stash the courseName for use in js later...
+	print "<input type=\"hidden\" id=\"courseName\" value=\"$courseName\">;
+	print "<input type=\"hidden\" id=\"site_url\" value=\"$site_url\">;
+
+	# this is a place where the maximum achievement points may be calculated
+	# then stash the max value in a hidden input field for js to access...
+
+	# lose this
 	my $var = {name => $courseName};
 
+	# also lose this
 	my $template = HTML::Template->new(filename => '/opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Leaderboards/Leaderboards.tmpl');	
 
 	# my $phpOutput = `/usr/bin/php /var/www/html/test.php`;
 
+	# lose this too
 	$template->param(DATA => encode_json($var));
-	
 
+	# straight up print the leaderboard div instead of tmpl
+	print CGI::div({id=>'LeaderboardPage'});
+
+  # return "";
   return $template->output;
 
 }
