@@ -100,16 +100,15 @@ sub head {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	print CGI::start_script({type=>"text/javascript", src=>"https://fb.me/react-15.0.0.js"}), CGI::end_script();
+
 	print CGI::start_script({type=>"text/javascript", src=>"https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"}), CGI::end_script();
+
 	print CGI::start_script({type=>"text/javascript", src=>"https://fb.me/react-dom-15.0.0.js"}), CGI::end_script();
+
 	print "<link href=\"$site_url/js/apps/Leaderboard/leaderboard.css\" rel=\"stylesheet\" />";
+
 	print "<link crossorigin=\"anonymous\" media=\"all\" href=\"https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css\" rel=\"stylesheet\" />";
-	# we wont need this because we used hidden fields
-	print CGI::start_script({type=>"text/javascript"});
-	print "const courseinfo = <TMPL_VAR NAME=DATA>";
-	print CGI::end_script();
-	# definitely need this >>>
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Leaderboard/leaderboard.js"}), CGI::end_script();
+
 	return "";
 }
 
@@ -191,8 +190,8 @@ sub body {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# stash the courseName for use in js later...
-	print "<input type=\"hidden\" id=\"courseName\" value=\"$courseName\">;
-	print "<input type=\"hidden\" id=\"site_url\" value=\"$site_url\">;
+	print "<input type=\"hidden\" id=\"courseName\" value=\"$courseName\">";
+	print "<input type=\"hidden\" id=\"site_url\" value=\"$site_url\">";
 
 	# this is a place where the maximum achievement points may be calculated
 	# then stash the max value in a hidden input field for js to access...
@@ -211,8 +210,10 @@ sub body {
 	# straight up print the leaderboard div instead of tmpl
 	print CGI::div({id=>'LeaderboardPage'});
 
-  # return "";
-  return $template->output;
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Leaderboard/leaderboard.rel.js"}), CGI::end_script();
+
+  return "";
+  #return $template->output;
 
 }
 1;
