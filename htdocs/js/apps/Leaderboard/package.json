@@ -1,0 +1,17 @@
+{
+  "name": "ww-leaderboards",
+  "version": "1.0.0",
+  "description": "",
+  "main": "leaderboard.js",
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "build-babel": "babel src/app.js --out-file=leaderboard.js --presets=env,react --watch",
+    "build-babel-rel": "babel src/app.relative.js --out-file=leaderboard.rel.js --presets=env,react --watch"
+  },
+  "dependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-preset-env": "^1.5.2",
+    "babel-preset-react": "^6.24.1"
+  }
+}
