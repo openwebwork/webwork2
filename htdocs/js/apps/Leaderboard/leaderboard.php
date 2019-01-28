@@ -45,6 +45,14 @@
   
     // 2D array with only one collumn
     $users = extractRows($conn->query($query), 0);
+
+    $query = "select count(*) from `".$courseName."_problem`;";
+
+    $numOfProblems = extractRows($conn->query($query), 0);
+
+    $query = "select SUM(points) from `".$courseName."_achievement`;";
+
+    $achievementPtsSum = extractRows($conn->query($query), 0);
   
     $achievementsEarned = [];
     $achievementPoints = [];
@@ -58,11 +66,12 @@
       array_push($achievementPoints, extractRows($conn->query($getPoints), 0)[0][0]);
   
     }
-  
+    
+    
 
   
     for($i=0; $i < sizeof($achievementPoints); $i++){
-      $data[$i] = ["id" => $users[$i][0], "username" => $users[$i][1], "achievementsEarned" => $achievementsEarned[$i], "achievementPoints" => $achievementPoints[$i]];
+      $data[$i] = ["id" => $users[$i][0], "username" => $users[$i][1], "achievementsEarned" => $achievementsEarned[$i], "achievementPoints" => $achievementPoints[$i], "achievementPtsSum" => $achievementPtsSum[0][0], "numOfProblems" => $numOfProblems[0][0]];
     }
   
   

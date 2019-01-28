@@ -12,85 +12,22 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var user = null;
 var key = null;
 
-// uncomment the following two lines,
-// replace courseinfo.name with courseName
-// replace hard-coded leaderboard URL, 
-// and place leaderboard.php in /opt/webwork/webwork2/htdocs/js/apps/Leaderboard/
-// along with "compiled" version of this app.js
+// get static values from webwork
+var courseName = document.getElementById("courseName").value;
+var leaderboardURL = document.getElementById("site_url").value + "/js/apps/Leaderboard/leaderboard.php";
+var pointsPerProblem = document.getElementById('achievementPPP').value;
+var maxScore = 0;
 
-// const courseName = document.getElementByID('courseName').value;
-// const leaderboardURL = document.getElementByID('site_url').value + 'js/apps/Leaderboard/leaderboard.php'/;
-
-// to do: construct maxExperience in Leaderboards.pm and stash it in id='maxExperience'
-// then uncomment this bad boy
-// const maxExperience = document.getElementByID('maxExperience').value;
-
+// we must pull the user + key to authenticate for php
+// php script is set to require a valid user/key pair
 function checkCookies() {
-  var value = getCookie("WeBWorKCourseAuthen." + courseinfo.name); // getCookie defined at the bottom
+  var value = getCookie("WeBWorKCourseAuthen." + courseName); // getCookie defined at the bottom
   user = value.split("\t")[0];
   key = value.split("\t")[1];
 }
 if (!user & !key) {
   checkCookies();
 }
-
-// is it possible to move this css to a leaderboard.css file?
-// along with the css styles from the Leaderboards.tmpl file?
-// place combined leaderboard.css file in /opt/webwork/webwork2/htdocs/js/apps/Leaderboard
-
-var styles = {
-  tableStyle: {
-    width: "100%",
-    tableLayout: "fixed",
-    borderSpacing: "0px",
-    border: "1px solid #e6e6e6",
-    boxShadow: "0 6px 10px 0 rgba(0, 0, 0, .14), 0 1px 18px 0 rgba(0, 0, 0, .12), 0 3px 5px -1px rgba(0, 0, 0, .2)"
-  },
-  pStyle: {
-    fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif",
-    fontWeight: "300",
-    fontSize: "13px",
-    textAlign: "center",
-    paddingRight: "10%"
-  },
-  buttonStyle: {
-    background: "none",
-    color: "inherit",
-    border: "none",
-    padding: 0,
-    font: "inherit",
-    cursor: "pointer",
-    outline: "inherit"
-  },
-  divStyle: {
-    overflowY: "auto",
-    height: "80%",
-    width: "70%",
-    minWidth: "550px"
-  },
-  thStyle: {
-    backgroundColor: "#003388",
-    color: "white",
-    fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif",
-    padding: "15px",
-    cursor: "pointer"
-  },
-  tdStyle: {
-    textAlign: "center",
-    padding: "15px"
-  },
-  trStyle: {
-    height: "2%"
-  },
-  LeaderItemTrStyle: {
-    backgroundColor: "#f6f6f6",
-    color: "black",
-    fontFamily: "Helvetica Neue, Helvetica, Arial, sans-serif",
-    fontWeight: "300",
-    padding: "15px",
-    borderSpacing: "2px"
-  }
-};
 
 var LeaderTable = function (_React$Component) {
   _inherits(LeaderTable, _React$Component);
@@ -112,45 +49,25 @@ var LeaderTable = function (_React$Component) {
   }
 
   _createClass(LeaderTable, [{
-    key: "componentWillMount",
-    value: function componentWillMount() {
+    key: "componentDidMount",
+    value: function componentDidMount() {
       var _this2 = this;
 
       var requestObject = {
         user: user,
         key: key,
-        courseName: courseinfo.name // replace this with courseName
+        courseName: courseName
       };
-      // The url  needs to be taken from a global environment variable
-      // This would idealy be a variable in the leaderboards.tmpl file
-      // leaderboard.php should be placed in /var/www/html/
-      // fetch("http://mathww.citytech.cuny.edu/leaderboard.php", {
-      //   method: "POST",
-      //   headers: { "Content-type": "application/x-www-form-urlencoded" },
-      //   body: formEncode(requestObject) // formEncode defined at the bottom
-      // })
-      //   .then(response => {
-      //     if (!response.ok) {
-      //       throw Error(response.statusText);
-      //     }
-      //     return response.json();
-      //   })
-      //   .then(data => {
-      //     data.forEach(item => {
-      //       if (item.achievementPoints == null) item.achievementPoints = 0;
-      //     });
-      //     this.setState({ data });
-      //   })
-      //   .catch(err => {
-      //     console.log("An error has occurred: " + err);
-      //   });
 
-      $.post("http://mathww.citytech.cuny.edu/leaderboard.php", // replace this with leaderboardURL
-      requestObject, function (data) {
+      $.post(leaderboardURL, requestObject, function (data) {
         data.forEach(function (item) {
           if (item.achievementPoints == null) item.achievementPoints = 0;
         });
-        _this2.setState({ data: data });
+        maxScore = parseInt(data[0].numOfProblems) * parseInt(pointsPerProblem) + parseInt(data[0].achievementPtsSum);
+        data.sort(function (a, b) {
+          return b.achievementPoints - a.achievementPoints;
+        });
+        _this2.setState({ data: data, current: "progress" });
       }, "json");
     }
   }, {
@@ -163,7 +80,7 @@ var LeaderTable = function (_React$Component) {
           return parseFloat(a.achievementsEarned) - parseFloat(b.achievementsEarned);
         });
         if (this.state.current == "Point") this.setState({ clicks: 0 });
-      } else if (option.target.id == "Point") {
+      } else if (option.target.id == "Point" || option.target.id == "progress") {
         newData.sort(function (a, b) {
           return parseFloat(a.achievementPoints) - parseFloat(b.achievementPoints);
         });
@@ -186,34 +103,34 @@ var LeaderTable = function (_React$Component) {
   }, {
     key: "renderTable",
     value: function renderTable() {
-      var tdStyle = styles.tdStyle;
-
       var tableInfo = [];
       if (this.state.data.length > 0) {
-        for (var i = 0; i < 21; i++) {
+        for (var i = 0; i < this.state.data.length; i++) {
           var current = this.state.data[i];
           tableInfo.push(React.createElement(
             LeaderTableItem,
-            null,
+            { rID: current.id },
             React.createElement(
               "td",
-              { style: tdStyle },
-              current.username ? current.username : current.id
+              { className: "tdStyleLB" },
+              current.username ? current.username : "Anonymous"
             ),
             React.createElement(
               "td",
-              { style: tdStyle },
+              { className: "tdStyleLB" },
               current.achievementsEarned
             ),
             React.createElement(
               "td",
-              { style: tdStyle },
+              { className: "tdStyleLB" },
               current.achievementPoints ? current.achievementPoints : 0
             ),
             React.createElement(
               "td",
-              { style: tdStyle },
-              React.createElement(Filler, { percentage: current.achievementPoints / 2000 * 100 })
+              { className: "tdStyleLB" },
+              React.createElement(Filler, {
+                percentage: Math.floor(current.achievementPoints / maxScore * 1000) / 10
+              })
             )
           ));
         }
@@ -224,55 +141,61 @@ var LeaderTable = function (_React$Component) {
   }, {
     key: "render",
     value: function render() {
-      var tableStyle = styles.tableStyle,
-          thStyle = styles.thStyle,
-          tdStyle = styles.tdStyle,
-          trStyle = styles.trStyle,
-          divStyle = styles.divStyle,
-          pStyle = styles.pStyle;
 
       var tableInfo = this.renderTable();
 
       return React.createElement(
         "div",
-        { style: divStyle },
+        { className: "lbContainer" },
         React.createElement(
           "table",
-          { style: tableStyle },
+          { className: "lbTable" },
           React.createElement(
-            "tr",
-            { style: trStyle },
+            "caption",
+            null,
+            "Sponsored by Santander Bank"
+          ),
+          React.createElement(
+            "thead",
+            null,
             React.createElement(
-              "th",
-              { id: "username", style: thStyle },
-              "Username"
-            ),
-            React.createElement(
-              "th",
-              {
-                className: "sortButtons",
-                style: thStyle,
-                id: "Earned",
-                onClick: this.checkOption
-              },
-              "Achievements Earned",
-              this.state.current == "Earned" ? this.state.currentSort == "Asc" ? React.createElement("i", { className: "ion-android-arrow-dropup" }) : React.createElement("i", { className: "ion-android-arrow-dropdown" }) : null
-            ),
-            React.createElement(
-              "th",
-              {
-                className: "sortButtons",
-                style: thStyle,
-                id: "Point",
-                onClick: this.checkOption
-              },
-              "Achievement Points",
-              this.state.current == "Point" ? this.state.currentSort == "Asc" ? React.createElement("i", { className: "ion-android-arrow-dropup" }) : React.createElement("i", { className: "ion-android-arrow-dropdown" }) : null
-            ),
-            React.createElement(
-              "th",
-              { style: thStyle },
-              "Progress"
+              "tr",
+              null,
+              React.createElement(
+                "th",
+                { id: "username" },
+                "Username"
+              ),
+              React.createElement(
+                "th",
+                {
+                  className: "sortButtons",
+                  id: "Earned",
+                  onClick: this.checkOption
+                },
+                "Achievements Earned",
+                this.state.current == "Earned" ? this.state.currentSort == "Asc" ? React.createElement("i", { className: "ion-android-arrow-dropup" }) : React.createElement("i", { className: "ion-android-arrow-dropdown" }) : null
+              ),
+              React.createElement(
+                "th",
+                {
+                  className: "sortButtons",
+                  id: "Point",
+                  onClick: this.checkOption
+                },
+                "Achievement Points",
+                this.state.current == "Point" ? this.state.currentSort == "Asc" ? React.createElement("i", { className: "ion-android-arrow-dropup" }) : React.createElement("i", { className: "ion-android-arrow-dropdown" }) : null
+              ),
+              React.createElement(
+                "th",
+                {
+                  className: "sortButtons",
+                  id: "progress",
+                  onClick: this.checkOption
+                },
+                "Achievement Points Collected",
+                this.state.current == "progress" ? this.state.currentSort == "Asc" ? React.createElement("i", { className: "ion-android-arrow-dropup" }) : React.createElement("i", { className: "ion-android-arrow-dropdown" }) : null
+              )
             )
           ),
           React.createElement(
@@ -300,11 +223,16 @@ var LeaderTableItem = function (_React$Component2) {
   _createClass(LeaderTableItem, [{
     key: "render",
     value: function render() {
-      var LeaderItemTrStyle = styles.LeaderItemTrStyle;
-
+      if (this.props.rID == user) {
+        return React.createElement(
+          "tr",
+          { className: "myRow" },
+          this.props.children
+        );
+      }
       return React.createElement(
         "tr",
-        { style: LeaderItemTrStyle },
+        { className: "LeaderItemTr" },
         this.props.children
       );
     }
@@ -325,27 +253,11 @@ var Leaderboard = function (_React$Component3) {
   _createClass(Leaderboard, [{
     key: "render",
     value: function render() {
-      var tableStyle = styles.tableStyle,
-          thStyle = styles.thStyle,
-          tdStyle = styles.tdStyle,
-          trStyle = styles.trStyle,
-          divStyle = styles.divStyle,
-          pStyle = styles.pStyle,
-          LeaderItemTrStyle = styles.LeaderItemTrStyle;
 
       return React.createElement(
         "div",
         null,
-        React.createElement(LeaderTable, null),
-        React.createElement(
-          "p",
-          { style: pStyle },
-          React.createElement(
-            "i",
-            null,
-            "Sponsored by Santander Bank"
-          )
-        )
+        React.createElement(LeaderTable, null)
       );
     }
   }]);
@@ -369,38 +281,40 @@ var Filler = function (_React$Component4) {
   _createClass(Filler, [{
     key: "changeColor",
     value: function changeColor() {
-      var percentage = parseInt(this.props.percentage);
-      var colorValue = "";
-
-      switch (true) {
-        case percentage <= 20:
-          colorValue = "#ff6961";
-          break;
-        case percentage >= 60 && percentage <= 80:
-          colorValue = "#4dff88";
-          break;
-        case percentage >= 20 && percentage < 60:
-          colorValue = "#FF7F50";
-          break;
+      var perc = parseInt(this.props.percentage);
+      var r,
+          g,
+          b = 0;
+      if (perc < 50) {
+        r = 255;
+        g = Math.round(5.1 * perc);
+      } else {
+        g = 255;
+        r = Math.round(510 - 5.10 * perc);
       }
-      return colorValue;
+      var h = r * 0x10000 + g * 0x100 + b * 0x1;
+      return '#' + ('000000' + h.toString(16)).slice(-6);
     }
   }, {
     key: "render",
     value: function render() {
       return React.createElement(
         "div",
-        {
-          className: "filler",
+        { className: "fillerContainer" },
+        React.createElement("span", { className: "fillerBar",
           style: {
             width: this.props.percentage + "%",
             background: this.changeColor()
           }
-        },
+        }),
         React.createElement(
-          "p",
-          { style: { fontWeight: "100" } },
-          this.props.percentage
+          "div",
+          { className: "fillerLabel",
+            style: {
+              left: this.props.percentage + "%"
+            } },
+          this.props.percentage,
+          "%"
         )
       );
     }

@@ -4,12 +4,15 @@ let key = null;
 
 // uncomment the following two lines,
 // replace courseinfo.name with courseName
-// replace hard-coded leaderboard URL, 
+// replace hard-coded leaderboard URL,
 // and place leaderboard.php in /opt/webwork/webwork2/htdocs/js/apps/Leaderboard/
 // along with "compiled" version of this app.js
 
-const courseNameStr = document.getElementById('courseName').value;
-const leaderboardURL = getRootUrl(document.location) + document.getElementById('site_url').value + '/js/apps/Leaderboard/leaderboard.php';
+const courseNameStr = document.getElementById("courseName").value;
+const leaderboardURL =
+  getRootUrl(document.location) +
+  document.getElementById("site_url").value +
+  "/js/apps/Leaderboard/leaderboard.php";
 
 // to do: construct maxExperience in Leaderboards.pm and stash it in id='maxExperience'
 // then uncomment this bad boy
@@ -130,12 +133,14 @@ class LeaderTable extends React.Component {
 
     $.post(
       leaderboardURL,
-//      "http://mathww.citytech.cuny.edu/leaderboard.php", // replace this with leaderboardURL
+      //      "http://mathww.citytech.cuny.edu/leaderboard.php", // replace this with leaderboardURL
       requestObject,
       data => {
         data.forEach(item => {
           if (item.achievementPoints == null) item.achievementPoints = 0;
-	  if (item.achievementPoints > maxScore) maxScore = item.achievementPoints;
+
+          if (parseInt(item.achievementPoints) > maxScore)
+            maxScore = item.achievementPoints;
         });
         this.setState({ data: data });
       },
@@ -190,7 +195,12 @@ class LeaderTable extends React.Component {
               {current.achievementPoints ? current.achievementPoints : 0}
             </td>
             <td className="tdStyleLB">
-              <Filler percentage={Math.floor((current.achievementPoints / maxScore) * 1000)/10} score={current.achievementPoints} />
+              <Filler
+                percentage={
+                  Math.floor((current.achievementPoints / maxScore) * 1000) / 10
+                }
+                score={current.achievementPoints}
+              />
             </td>
           </LeaderTableItem>
         );
@@ -206,42 +216,44 @@ class LeaderTable extends React.Component {
     return (
       <div className="divStyleLB">
         <table className="tableStyleLB">
-          <tbody><tr className="trStyleLB">
-            <th id="username" className="thStyleLB">
-              Username
-            </th>
-            <th
-              className="sortButtons thStyleLB"
-              style={thStyle}
-              id="Earned"
-              onClick={this.checkOption}
-            >
-              Achievements Earned
-              {this.state.current == "Earned" ? (
-                this.state.currentSort == "Asc" ? (
-                  <i className="ion-android-arrow-dropup" />
-                ) : (
-                  <i className="ion-android-arrow-dropdown" />
-                )
-              ) : null}
-            </th>
-            <th
-              className="sortButtons thStyleLB"
-              style={thStyle}
-              id="Point"
-              onClick={this.checkOption}
-            >
-              Achievement Points
-              {this.state.current == "Point" ? (
-                this.state.currentSort == "Asc" ? (
-                  <i className="ion-android-arrow-dropup" />
-                ) : (
-                  <i className="ion-android-arrow-dropdown" />
-                )
-              ) : null}
-            </th>
-            <th className="thStyleLB">Progress</th>
-          </tr></tbody>
+          <tbody>
+            <tr className="trStyleLB">
+              <th id="username" className="thStyleLB">
+                Username
+              </th>
+              <th
+                className="sortButtons thStyleLB"
+                style={thStyle}
+                id="Earned"
+                onClick={this.checkOption}
+              >
+                Achievements Earned
+                {this.state.current == "Earned" ? (
+                  this.state.currentSort == "Asc" ? (
+                    <i className="ion-android-arrow-dropup" />
+                  ) : (
+                    <i className="ion-android-arrow-dropdown" />
+                  )
+                ) : null}
+              </th>
+              <th
+                className="sortButtons thStyleLB"
+                style={thStyle}
+                id="Point"
+                onClick={this.checkOption}
+              >
+                Achievement Points
+                {this.state.current == "Point" ? (
+                  this.state.currentSort == "Asc" ? (
+                    <i className="ion-android-arrow-dropup" />
+                  ) : (
+                    <i className="ion-android-arrow-dropdown" />
+                  )
+                ) : null}
+              </th>
+              <th className="thStyleLB">Progress</th>
+            </tr>
+          </tbody>
           <tbody>{tableInfo}</tbody>
         </table>
       </div>
@@ -347,7 +359,7 @@ function getCookie(cname) {
 }
 
 function getRootUrl(url) {
-  return url.toString().replace(/^(.*\/\/[^\/?#]*).*$/,"$1");
+  return url.toString().replace(/^(.*\/\/[^\/?#]*).*$/, "$1");
 }
 
 ReactDOM.render(<Leaderboard />, document.getElementById("LeaderboardPage"));

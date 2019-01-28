@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -14,12 +14,12 @@ var key = null;
 
 // uncomment the following two lines,
 // replace courseinfo.name with courseName
-// replace hard-coded leaderboard URL, 
+// replace hard-coded leaderboard URL,
 // and place leaderboard.php in /opt/webwork/webwork2/htdocs/js/apps/Leaderboard/
 // along with "compiled" version of this app.js
 
-var courseNameStr = document.getElementById('courseName').value;
-var leaderboardURL = getRootUrl(document.location) + document.getElementById('site_url').value + '/js/apps/Leaderboard/leaderboard.php';
+var courseNameStr = document.getElementById("courseName").value;
+var leaderboardURL = getRootUrl(document.location) + document.getElementById("site_url").value + "/js/apps/Leaderboard/leaderboard.php";
 
 // to do: construct maxExperience in Leaderboards.pm and stash it in id='maxExperience'
 // then uncomment this bad boy
@@ -29,7 +29,7 @@ var leaderboardURL = getRootUrl(document.location) + document.getElementById('si
 var maxScore = 0;
 
 function checkCookies() {
-  var value = getCookie('WeBWorKCourseAuthen.' + courseNameStr); // getCookie defined at the bottom
+  var value = getCookie("WeBWorKCourseAuthen." + courseNameStr); // getCookie defined at the bottom
   user = value.split("\t")[0];
   key = value.split("\t")[1];
 }
@@ -115,7 +115,7 @@ var LeaderTable = function (_React$Component) {
   }
 
   _createClass(LeaderTable, [{
-    key: 'componentWillMount',
+    key: "componentWillMount",
     value: function componentWillMount() {
       var _this2 = this;
 
@@ -153,13 +153,15 @@ var LeaderTable = function (_React$Component) {
       requestObject, function (data) {
         data.forEach(function (item) {
           if (item.achievementPoints == null) item.achievementPoints = 0;
-          if (item.achievementPoints > maxScore) maxScore = item.achievementPoints;
+
+          if (parseInt(item.achievementPoints) > maxScore) maxScore = item.achievementPoints;
         });
+        console.log(data);
         _this2.setState({ data: data });
       }, "json");
     }
   }, {
-    key: 'checkOption',
+    key: "checkOption",
     value: function checkOption(option) {
       this.setState({ clicks: this.state.clicks + 1 });
       var newData = this.state.data;
@@ -189,7 +191,7 @@ var LeaderTable = function (_React$Component) {
       }
     }
   }, {
-    key: 'renderTable',
+    key: "renderTable",
     value: function renderTable() {
       var tdStyle = styles.tdStyle;
 
@@ -201,24 +203,27 @@ var LeaderTable = function (_React$Component) {
             LeaderTableItem,
             null,
             React.createElement(
-              'td',
-              { className: 'tdStyleLB' },
+              "td",
+              { className: "tdStyleLB" },
               current.username ? current.username : current.id
             ),
             React.createElement(
-              'td',
-              { className: 'tdStyleLB' },
+              "td",
+              { className: "tdStyleLB" },
               current.achievementsEarned
             ),
             React.createElement(
-              'td',
-              { className: 'tdStyleLB' },
+              "td",
+              { className: "tdStyleLB" },
               current.achievementPoints ? current.achievementPoints : 0
             ),
             React.createElement(
-              'td',
-              { className: 'tdStyleLB' },
-              React.createElement(Filler, { percentage: Math.floor(current.achievementPoints / maxScore * 1000) / 10, score: current.achievementPoints })
+              "td",
+              { className: "tdStyleLB" },
+              React.createElement(Filler, {
+                percentage: Math.floor(current.achievementPoints / maxScore * 1000) / 10,
+                score: current.achievementPoints
+              })
             )
           ));
         }
@@ -227,7 +232,7 @@ var LeaderTable = function (_React$Component) {
       return tableInfo;
     }
   }, {
-    key: 'render',
+    key: "render",
     value: function render() {
       var tableStyle = styles.tableStyle,
           thStyle = styles.thStyle,
@@ -239,53 +244,53 @@ var LeaderTable = function (_React$Component) {
       var tableInfo = this.renderTable();
 
       return React.createElement(
-        'div',
-        { className: 'divStyleLB' },
+        "div",
+        { className: "divStyleLB" },
         React.createElement(
-          'table',
-          { className: 'tableStyleLB' },
+          "table",
+          { className: "tableStyleLB" },
           React.createElement(
-            'tbody',
+            "tbody",
             null,
             React.createElement(
-              'tr',
-              { className: 'trStyleLB' },
+              "tr",
+              { className: "trStyleLB" },
               React.createElement(
-                'th',
-                { id: 'username', className: 'thStyleLB' },
-                'Username'
+                "th",
+                { id: "username", className: "thStyleLB" },
+                "Username"
               ),
               React.createElement(
-                'th',
+                "th",
                 {
-                  className: 'sortButtons thStyleLB',
+                  className: "sortButtons thStyleLB",
                   style: thStyle,
-                  id: 'Earned',
+                  id: "Earned",
                   onClick: this.checkOption
                 },
-                'Achievements Earned',
-                this.state.current == "Earned" ? this.state.currentSort == "Asc" ? React.createElement('i', { className: 'ion-android-arrow-dropup' }) : React.createElement('i', { className: 'ion-android-arrow-dropdown' }) : null
+                "Achievements Earned",
+                this.state.current == "Earned" ? this.state.currentSort == "Asc" ? React.createElement("i", { className: "ion-android-arrow-dropup" }) : React.createElement("i", { className: "ion-android-arrow-dropdown" }) : null
               ),
               React.createElement(
-                'th',
+                "th",
                 {
-                  className: 'sortButtons thStyleLB',
+                  className: "sortButtons thStyleLB",
                   style: thStyle,
-                  id: 'Point',
+                  id: "Point",
                   onClick: this.checkOption
                 },
-                'Achievement Points',
-                this.state.current == "Point" ? this.state.currentSort == "Asc" ? React.createElement('i', { className: 'ion-android-arrow-dropup' }) : React.createElement('i', { className: 'ion-android-arrow-dropdown' }) : null
+                "Achievement Points",
+                this.state.current == "Point" ? this.state.currentSort == "Asc" ? React.createElement("i", { className: "ion-android-arrow-dropup" }) : React.createElement("i", { className: "ion-android-arrow-dropdown" }) : null
               ),
               React.createElement(
-                'th',
-                { className: 'thStyleLB' },
-                'Progress'
+                "th",
+                { className: "thStyleLB" },
+                "Progress"
               )
             )
           ),
           React.createElement(
-            'tbody',
+            "tbody",
             null,
             tableInfo
           )
@@ -307,13 +312,13 @@ var LeaderTableItem = function (_React$Component2) {
   }
 
   _createClass(LeaderTableItem, [{
-    key: 'render',
+    key: "render",
     value: function render() {
       var LeaderItemTrStyle = styles.LeaderItemTrStyle;
 
       return React.createElement(
-        'tr',
-        { className: 'LeaderItemTr' },
+        "tr",
+        { className: "LeaderItemTr" },
         this.props.children
       );
     }
@@ -332,7 +337,7 @@ var Leaderboard = function (_React$Component3) {
   }
 
   _createClass(Leaderboard, [{
-    key: 'render',
+    key: "render",
     value: function render() {
       var tableStyle = styles.tableStyle,
           thStyle = styles.thStyle,
@@ -343,16 +348,16 @@ var Leaderboard = function (_React$Component3) {
           LeaderItemTrStyle = styles.LeaderItemTrStyle;
 
       return React.createElement(
-        'div',
+        "div",
         null,
         React.createElement(LeaderTable, null),
         React.createElement(
-          'p',
-          { className: 'pStyleLB' },
+          "p",
+          { className: "pStyleLB" },
           React.createElement(
-            'i',
+            "i",
             null,
-            'Sponsored by Santander Bank'
+            "Sponsored by Santander Bank"
           )
         )
       );
@@ -376,7 +381,7 @@ var Filler = function (_React$Component4) {
   }
 
   _createClass(Filler, [{
-    key: 'changeColor',
+    key: "changeColor",
     value: function changeColor() {
       var percentage = parseInt(this.props.percentage);
       var colorValue = "";
@@ -401,19 +406,19 @@ var Filler = function (_React$Component4) {
       return colorValue;
     }
   }, {
-    key: 'render',
+    key: "render",
     value: function render() {
       return React.createElement(
-        'div',
+        "div",
         {
-          className: 'filler',
+          className: "filler",
           style: {
-            width: this.props.percentage + '%',
+            width: this.props.percentage + "%",
             background: this.changeColor()
           }
         },
         React.createElement(
-          'p',
+          "p",
           { style: { fontWeight: "100" } },
           this.props.score
         )
