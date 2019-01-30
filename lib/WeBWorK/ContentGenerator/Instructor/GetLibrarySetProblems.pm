@@ -593,8 +593,7 @@ sub pre_header_initialize {
 			debug("new value of local_sets is ", $r->param('local_sets'));
 			my $newSetRecord	 = $db->getGlobalSet($newSetName);
 			if (defined($newSetRecord)) {
-	            $self->addbadmessage("The set name $newSetName is already in use.  
-	            Pick a different name if you would like to start a new set.");
+		            $self->addbadmessage($r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetName));
 			} else {			# Do it!
 				# DBFIXME use $db->newGlobalSet
 				$newSetRecord = $db->{set}->{record}->new();
@@ -605,7 +604,7 @@ sub pre_header_initialize {
 				
 				my $dueDate = time+2*60*60*24*7;
 				my $display_tz = $ce->{siteDefaults}{timezone};
-				my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
+				my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
 				my $dueTime = $ce->{pg}{timeAssignDue};
 				
 				# We replace the due time by the one from the config variable

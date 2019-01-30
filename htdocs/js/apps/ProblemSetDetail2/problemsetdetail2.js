@@ -5,7 +5,7 @@ $(function() {
     $('#problemset_detail_list').addClass('container-fluid');
 
     //This sets ajax coos to be synchronous so as to not overwhelm the server
-    $.ajax({async : false});
+    //$.ajax({async : false});
 
     
     //This uses the nextedSortable jquery-ui module to drive the 

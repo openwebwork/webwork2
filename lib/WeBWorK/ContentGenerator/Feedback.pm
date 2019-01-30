@@ -320,8 +320,8 @@ $emailableURL
 
 		try {
 			sendmail($email,{transport => $transport});
-			print CGI::p("Your message was sent successfully.");
-			print CGI::p(CGI::a({-href => $returnURL}, "Return to your work"));
+			print CGI::p($r->maketext("Your message was sent successfully."));
+			print CGI::p(CGI::a({-href => $returnURL}, $r->maketext("Return to your work")));
 			print CGI::pre(wrap("", "", $feedback));
 		} catch {
 				$self->feedbackForm($user, $returnURL,

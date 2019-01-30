@@ -1130,7 +1130,11 @@ sub create_handler {
 
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Set [_1] exists.  No set created", $newSetID)) if $db->existsGlobalSet($newSetID);
+	return CGI::div({class => "ResultsWithError"},
+			$r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetID)
+			. " " . $r->maketext("No set created.")
+                       ) if $db->existsGlobalSet($newSetID);
+
 	my $newSetRecord = $db->newGlobalSet;
 	my $oldSetID = $self->{selectedSetIDs}->[0];
 
@@ -1140,7 +1144,7 @@ sub create_handler {
 
 	my $dueDate = time+2*ONE_WEEK();
 	my $display_tz = $ce->{siteDefaults}{timezone};
-	my $fDueDate = $self->formatDateTime($dueDate, $display_tz);
+	my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
 	my $dueTime = $ce->{pg}{timeAssignDue};
 
 	# We replace the due time by the one from the config variable
@@ -1713,7 +1717,7 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
+		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideScoreByProblem, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1761,6 +1765,7 @@ sub importSetsFromDef {
 		$newSetRecord->problem_randorder($problemRandOrder);
 		$newSetRecord->problems_per_page($problemsPerPage);
 		$newSetRecord->hide_score($hideScore);
+		$newSetRecord->hide_score_by_problem($hideScoreByProblem);
 		$newSetRecord->hide_work($hideWork);
 		$newSetRecord->time_limit_cap($timeCap);
 		$newSetRecord->restrict_ip($restrictIP);
@@ -1888,7 +1893,7 @@ sub readSetDef {
 		 ('')x16;  # initialize these to ''
 	my ( $timeCap, $restrictIP, $relaxRestrictIP ) = ( 0, 'No', 'No');
 # additional fields currently used only by gateways; later, the world?
-	my ( $hideScore, $hideWork, ) = ( 'N', 'N' );
+	my ( $hideScore, $hideScoreByProblem, $hideWork, ) = ( 'N', 'N', 'N' );
 
 	my %setInfo;
 	if ( open (SETFILENAME, "$filePath") )    {
@@ -1943,6 +1948,8 @@ sub readSetDef {
 				$problemsPerPage = $value;
 			} elsif ($item eq 'hideScore') {
 				$hideScore = ( $value ) ? $value : 'N';
+			} elsif ($item eq 'hideScoreByProblem') {
+				$hideScoreByProblem = ( $value ) ? $value : 'N';
 			} elsif ($item eq 'hideWork') {
 				$hideWork = ( $value ) ? $value : 'N';
 			} elsif ($item eq 'capTimeLimit') {
@@ -2016,6 +2023,11 @@ sub readSetDef {
 		     $hideScore ne 'BeforeAnswerDate' ) {
 			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScore)."\n");
 			$hideScore = 'N';
+		}
+		if ( $hideScoreByProblem ne 'N' && $hideScoreByProblem ne 'Y' && 
+		     $hideScoreByProblem ne 'BeforeAnswerDate' ) {
+			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScoreByProblem)."\n");
+			$hideScoreByProblem = 'N';
 		}
 		if ( $hideWork ne 'N' && $hideWork ne 'Y' && 
 		     $hideWork ne 'BeforeAnswerDate' ) {
@@ -2225,6 +2237,7 @@ sub readSetDef {
 		 $versionsPerInterval, $versionTimeLimit, $problemRandOrder,
 		 $problemsPerPage, 
 		 $hideScore,
+		 $hideScoreByProblem,
 		 $hideWork,
 		 $timeCap,
 		 $restrictIP,
@@ -2348,6 +2361,7 @@ SET:	foreach my $set (keys %filenames) {
 		    my $probRandom   = $setRecord->problem_randorder;
 		    my $probPerPage  = $setRecord->problems_per_page;
 		    my $hideScore    = $setRecord->hide_score;
+		    my $hideScoreByProblem  = $setRecord->hide_score_by_problem;
 		    my $hideWork     = $setRecord->hide_work;
 		    my $timeCap      = $setRecord->time_limit_cap;
 		    $gwFields =<<EOG;
@@ -2359,6 +2373,7 @@ versionTimeLimit    = $vTimeLimit
 problemRandOrder    = $probRandom
 problemsPerPage     = $probPerPage
 hideScore           = $hideScore
+hideScoreByProblem  = $hideScoreByProblem
 hideWork            = $hideWork
 capTimeLimit        = $timeCap
 EOG

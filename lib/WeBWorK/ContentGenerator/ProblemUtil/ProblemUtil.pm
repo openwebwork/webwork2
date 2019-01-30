@@ -422,63 +422,63 @@ sub output_JS{
 
 # prints out summary information for the problem pages.
 
-sub output_summary{
-
-	my $self = shift;
-
-	my $editMode = $self->{editMode};
-	my $problem = $self->{problem};
-	my $pg = $self->{pg};
-	my $submitAnswers = $self->{submitAnswers};
-	my %will = %{ $self->{will} };
-	my $checkAnswers = $self->{checkAnswers};
-	my $previewAnswers = $self->{previewAnswers};
-
-	my $r = $self->r;
-
-	my $authz = $r->authz;
-	my $user = $r->param('user');
-
-	# custom message for editor
-	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
-		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $problem->source_file));
-		} elsif ($editMode eq "savedFile") {
-			# taken care of in the initialization phase
-		}
-	}
-	print CGI::start_div({class=>"problemHeader"});
-
-
-	# attempt summary
-	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
-	# until after the due date
-	# do I need to check $will{showCorrectAnswers} to make preflight work??
-	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
-		# print this if user submitted answers OR requested correct answers
-
-		print $self->attemptResults($pg, 1,
-			$will{showCorrectAnswers},
-			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
-	} elsif ($checkAnswers) {
-		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},"ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"), CGI::br();
-		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
-			# show attempt answers
-			# show correct answers if asked
-			# show attempt results (correctness)
-			# show attempt previews
-	} elsif ($previewAnswers) {
-		# print this if user previewed answers
-		print CGI::div({class=>'ResultsWithError'},"PREVIEW ONLY -- ANSWERS NOT RECORDED"),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
-			# show attempt answers
-			# don't show correct answers
-			# don't show attempt results (correctness)
-			# show attempt previews
-	}
-
-	print CGI::end_div();
-}
+# sub output_summary{
+# 
+# 	my $self = shift;
+# 
+# 	my $editMode = $self->{editMode};
+# 	my $problem = $self->{problem};
+# 	my $pg = $self->{pg};
+# 	my $submitAnswers = $self->{submitAnswers};
+# 	my %will = %{ $self->{will} };
+# 	my $checkAnswers = $self->{checkAnswers};
+# 	my $previewAnswers = $self->{previewAnswers};
+# 
+# 	my $r = $self->r;
+# 
+# 	my $authz = $r->authz;
+# 	my $user = $r->param('user');
+# 
+# 	# custom message for editor
+# 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
+# 		if ($editMode eq "temporaryFile") {
+# 			print CGI::p(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $problem->source_file));
+# 		} elsif ($editMode eq "savedFile") {
+# 			# taken care of in the initialization phase
+# 		}
+# 	}
+# 	print CGI::start_div({class=>"problemHeader"});
+# 
+# 
+# 	# attempt summary
+# 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
+# 	# until after the due date
+# 	# do I need to check $will{showCorrectAnswers} to make preflight work??
+# 	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
+# 		# print this if user submitted answers OR requested correct answers
+# 
+# 		print $self->attemptResults($pg, 1,
+# 			$will{showCorrectAnswers},
+# 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
+# 	} elsif ($checkAnswers) {
+# 		# print this if user previewed answers
+# 		print CGI::div({class=>'ResultsWithError'},"ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"), CGI::br();
+# 		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
+# 			# show attempt answers
+# 			# show correct answers if asked
+# 			# show attempt results (correctness)
+# 			# show attempt previews
+# 	} elsif ($previewAnswers) {
+# 		# print this if user previewed answers
+# 		print CGI::div({class=>'ResultsWithError'},"PREVIEW ONLY -- ANSWERS NOT RECORDED"),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+# 			# show attempt answers
+# 			# don't show correct answers
+# 			# don't show attempt results (correctness)
+# 			# show attempt previews
+# 	}
+# 
+# 	print CGI::end_div();
+# }
 
 # output_CSS subroutine
 

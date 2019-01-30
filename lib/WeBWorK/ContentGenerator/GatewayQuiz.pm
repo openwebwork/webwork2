@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.54 2008/07/01 13:12:56 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -1129,7 +1129,7 @@ sub pre_header_initialize {
 	     checkAnswers       => 0,
 	     useMathView        => 0,
 	     useWirisEditor     => 0,
-	     useMathQuill     => 0,
+	     useMathQuill.      => 0,
 	     );
 
 	# does the user have permission to use certain options?
