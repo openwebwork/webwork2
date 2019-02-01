@@ -311,7 +311,6 @@ sub do_verify {
 
 sub trim {  # used to trim leading and trailing white space from user_id and password
             # in get_credentials
-<<<<<<< HEAD
   my $s = shift;
   # If the value was NOT defined, we want to leave it undefined, so
   # we can still catch session-timeouts and report them properly.
@@ -322,13 +321,7 @@ sub trim {  # used to trim leading and trailing white space from user_id and pas
   $s =~ s/(^\s+|\s+$)//g    if ( defined($s) );
   return $s;
 }
-=======
-  my $s = shift//'';
-  $s =~ s/(^\s+|\s+$)//g;
-  return $s;
-}
 
->>>>>>> 49dbff1d3... rebase mathquill feature onto develop
 sub get_credentials {
 	my ($self) = @_;
 	my $r = $self->{r};
