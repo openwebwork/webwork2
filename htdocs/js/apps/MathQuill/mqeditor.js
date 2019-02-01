@@ -10,7 +10,7 @@ $(document).ready(function() {
 				newSpan.id = "AnSwEr000" + i + "-mq";
 				if (input.value){
 					var node = math.parse(input.value); // parse previous student answer
-					newSpan.innerHTML = node.toTex(); // initialize with TeX'd version
+					newSpan.innerHTML = node.toTex().replace( /~/g, " "); // initialize with TeX'd version
 				}
 				var cfgOptions = {
 				  spaceBehavesLikeTab: true,
@@ -20,8 +20,8 @@ $(document).ready(function() {
 				  supSubsRequireOperand: true,
 				  charsThatBreakOutOfSupSub: '+-=<>',
 				  autoSubscriptNumerals: true,
-				  autoCommands: 'pi sqrt',
-				  autoOperatorNames: 'sin cos tan',
+				  autoCommands: 'pi sqrt abs root vert',
+				  // autoOperatorNames: 'sin cos tan',
 				  maxDepth: 10,
 				  handlers: {
 				    edit: function(mqField) {
