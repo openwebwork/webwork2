@@ -7,11 +7,8 @@ $(document).ready(function() {
 			while ((document.getElementById("AnSwEr000" + i)) != null) {
 				var input = document.getElementById("AnSwEr000" + i);
 				var newSpan = document.createElement('span');
+				var origText = (' ' + input.value).slice(1);
 				newSpan.id = "AnSwEr000" + i + "-mq";
-				if (input.value){
-					var node = math.parse(input.value); // parse previous student answer
-					newSpan.innerHTML = node.toTex().replace( /~/g, " "); // initialize with TeX'd version
-				}
 				var cfgOptions = {
 				  spaceBehavesLikeTab: true,
 				  leftRightIntoCmdGoes: 'up',
@@ -20,7 +17,7 @@ $(document).ready(function() {
 				  supSubsRequireOperand: true,
 				  charsThatBreakOutOfSupSub: '+-=<>',
 				  autoSubscriptNumerals: true,
-				  autoCommands: 'pi sqrt abs root vert',
+				  autoCommands: 'pi sqrt abs root vert inf union',
 				  // autoOperatorNames: 'sin cos tan',
 				  maxDepth: 10,
 				  handlers: {
@@ -33,7 +30,9 @@ $(document).ready(function() {
 				input.style.display = "none"; // hide the <input>
 				input.parentNode.insertBefore(newSpan, input); // use the mathSpan instead
 				answerField = MQ.MathField(newSpan,cfgOptions); // convert the span
-				answerField.data.parentID = "AnSwEr000" + i; // store the ID for the "real" answer blank
+				answerField.data.parentID = "AnSwEr000" + i;
+				answerField.data.origText = origText;
+				answerField.typedText(origText); // initialize with previous answer
 				i++;	
 			}
 

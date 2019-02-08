@@ -2187,7 +2187,6 @@ sub output_JS{
 
 	# MathQuill live rendering 
 	if ($self->{will}->{useMathQuill}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/math/math.min.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
 	}
