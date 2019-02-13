@@ -2179,12 +2179,8 @@ Controller.open(function(_) {
   _.typedText = function(ch) {
     if (ch === '\n') return this.handle('enter');
     var cursor = this.notify().cursor;
-    if (ch === ' ' && this.options.spaceBehavesLikeTab) {
-      if (cursor.parent !== this.root) cursor.parent.moveOutOf(R, cursor);
-    } else {
-      cursor.parent.write(cursor, ch);
-      this.scrollHoriz();
-    }
+    cursor.parent.write(cursor, ch);
+    this.scrollHoriz();
   };
   _.cut = function() {
     var ctrlr = this, cursor = ctrlr.cursor;
@@ -2806,8 +2802,8 @@ var Symbol = P(MathCommand, function(_, super_) {
   _.isEmpty = function(){ return true; };
 });
 var VanillaSymbol = P(Symbol, function(_, super_) {
-  _.init = function(ch, html, text) {
-    super_.init.call(this, ch, '<span>'+(html || ch)+'</span>', text);
+  _.init = function(ch, html) {
+    super_.init.call(this, ch, '<span>'+(html || ch)+'</span>');
   };
 });
 var BinaryOperator = P(Symbol, function(_, super_) {
@@ -3015,7 +3011,7 @@ var TextBlock = P(Node, function(_, super_) {
       return text + child.text;
     });
   };
-  _.text = function() { return this.textContents(); };
+  _.text = function() { return '"' + this.textContents() + '"'; };
   _.latex = function() {
     var contents = this.textContents();
     if (contents.length === 0) return '';
@@ -3051,8 +3047,10 @@ var TextBlock = P(Node, function(_, super_) {
     cursor.show().deleteSelection();
 
     if (ch !== '$') {
+      // this.postOrder('reflow');
       if (!cursor[L]) TextPiece(ch).createLeftOf(cursor);
       else cursor[L].appendText(ch);
+      this.bubble('reflow'); 
     }
     else if (this.isEmpty()) {
       cursor.insRightOf(this);
@@ -3254,7 +3252,6 @@ LatexCmds.text =
 LatexCmds.textnormal =
 LatexCmds.textrm =
 LatexCmds.textup =
-CharCmds['"'] =
 LatexCmds.textmd = TextBlock;
 
 function makeTextBlock(latex, tagName, attrs) {
@@ -3690,13 +3687,6 @@ var SupSub = P(MathCommand, function(_, super_) {
     }
     return latex('_', this.sub) + latex('^', this.sup);
   };
-  _.text = function() {
-    function text(prefix, block) {
-      var l = (block && block.text() !== " ") && block.text();
-      return l ? prefix + (l.length === 1 ? l : '(' + (l || ' ') + ')') : '';
-    }
-    return text('_', this.sub) + text('^', this.sup);
-  };
   _.addBlock = function(block) {
     if (this.supsub === 'sub') {
       this.sup = this.upInto = this.sub.upOutOf = block;
@@ -3776,7 +3766,7 @@ LatexCmds._ = P(SupSub, function(_, super_) {
     +   '<span style="display:inline-block;width:0">&#8203;</span>'
     + '</span>'
   ;
-  //_.textTemplate = [ '_' ];
+  _.textTemplate = [ '_' ];
   _.finalizeTree = function() {
     this.downInto = this.sub = this.ends[L];
     this.sub.upOutOf = insLeftOfMeUnlessAtEnd;
@@ -3793,7 +3783,7 @@ LatexCmds['^'] = P(SupSub, function(_, super_) {
     +   '<span class="mq-sup">&0</span>'
     + '</span>'
   ;
-  //_.textTemplate = [ '^(', ')' ];
+  _.textTemplate = [ '^' ];
   _.finalizeTree = function() {
     this.upInto = this.sup = this.ends[R];
     this.sup.downOutOf = insLeftOfMeUnlessAtEnd;
@@ -3898,15 +3888,7 @@ LatexCmds.fraction = P(MathCommand, function(_, super_) {
     +   '<span style="display:inline-block;width:0">&#8203;</span>'
     + '</span>'
   ;
-  //_.textTemplate = ['(', ')/(', ')'];
-  _.text = function() {
-    function text(dir, block) {
-      var blankDefault = dir === L ? 0 : 1;
-      var l = (block.ends[dir] && block.ends[dir].text() !== " ") && block.ends[dir].text();
-      return l ? (l.length === 1 ? l : '(' + l + ')') : blankDefault;
-    }
-    return text(L, this) + '/' + text(R, this) + ' ';
-  };
+  _.textTemplate = ['(', ')/(', ')'];
   _.finalizeTree = function() {
     this.upInto = this.ends[R].upOutOf = this.ends[L];
     this.downInto = this.ends[L].downOutOf = this.ends[R];
@@ -3984,7 +3966,6 @@ var Hat = LatexCmds.hat = P(MathCommand, function(_, super_) {
 });
 
 var NthRoot =
-LatexCmds.root =
 LatexCmds.nthroot = P(SquareRoot, function(_, super_) {
   _.htmlTemplate =
       '<sup class="mq-nthroot mq-non-leaf">&0</sup>'
@@ -3993,13 +3974,9 @@ LatexCmds.nthroot = P(SquareRoot, function(_, super_) {
     +   '<span class="mq-sqrt-stem mq-non-leaf">&1</span>'
     + '</span>'
   ;
-  // _.textTemplate = ['sqrt[', '](', ')'];
+  _.textTemplate = ['sqrt[', '](', ')'];
   _.latex = function() {
     return '\\sqrt['+this.ends[L].latex()+']{'+this.ends[R].latex()+'}';
-  };
-  _.text = function () {
-    var index = this.ends[L].text() === "" ? 2 : this.ends[L].text();
-    return '('+this.ends[R].text()+')^(1/'+ index +' )';
   };
 });
 
@@ -4209,7 +4186,7 @@ bindCharBracketPair('[');
 bindCharBracketPair('{', '\\{');
 LatexCmds.langle = bind(Bracket, L, '&lang;', '&rang;', '\\langle ', '\\rangle ');
 LatexCmds.rangle = bind(Bracket, R, '&lang;', '&rang;', '\\langle ', '\\rangle ');
-LatexCmds.abs = bind(Bracket, L, '|', '|', '|', '|');
+CharCmds['|'] = bind(Bracket, L, '|', '|', '|', '|');
 LatexCmds.lVert = bind(Bracket, L, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
 LatexCmds.rVert = bind(Bracket, R, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
 
@@ -4627,8 +4604,8 @@ LatexCmds.image = LatexCmds.imagin = LatexCmds.imaginary = LatexCmds.Imaginary =
 
 LatexCmds.part = LatexCmds.partial = bind(VanillaSymbol,'\\partial ','&part;');
 
-LatexCmds.inf = LatexCmds.infty = LatexCmds.infin = LatexCmds.infinity =
-  bind(VanillaSymbol,'\\infty ','&infin;', 'inf');
+LatexCmds.infty = LatexCmds.infin = LatexCmds.infinity =
+  bind(VanillaSymbol,'\\infty ','&infin;');
 
 LatexCmds.pounds = bind(VanillaSymbol,'\\pounds ','&pound;');
 
@@ -4653,8 +4630,7 @@ LatexCmds.oslash = LatexCmds.Oslash =
 LatexCmds.nothing = LatexCmds.varnothing =
   bind(BinaryOperator,'\\varnothing ','&empty;');
 
-LatexCmds.U = LatexCmds.cup = LatexCmds.union = 
-  bind(BinaryOperator,'\\cup ','&cup;', 'U');
+LatexCmds.cup = LatexCmds.union = bind(BinaryOperator,'\\cup ','&cup;');
 
 LatexCmds.cap = LatexCmds.intersect = LatexCmds.intersection =
   bind(BinaryOperator,'\\cap ','&cap;');
@@ -4698,13 +4674,13 @@ var Variable = P(Symbol, function(_, super_) {
         text = text.slice (0, -1);
       }
     } else {
-//      if (this[L] && !(this[L] instanceof Variable)
-//          && !(this[L] instanceof BinaryOperator)
-//          && this[L].ctrlSeq !== '\\ ')
-//        text = '*' + text;
-//      if (this[R] && !(this[R] instanceof BinaryOperator)
-//          && !(this[R] instanceof SupSub))
-//        text += '*';
+      if (this[L] && !(this[L] instanceof Variable)
+          && !(this[L] instanceof BinaryOperator)
+          && this[L].ctrlSeq !== '\\ ')
+        text = '*' + text;
+      if (this[R] && !(this[R] instanceof BinaryOperator)
+          && !(this[R] instanceof SupSub))
+        text += '*';
     }
     return text;
   };
@@ -4837,7 +4813,7 @@ var AutoOpNames = Options.p.autoOperatorNames = { _maxLength: 9 }; // the set
   // of operator names that MathQuill auto-unitalicizes by default; overridable
 var TwoWordOpNames = { limsup: 1, liminf: 1, projlim: 1, injlim: 1 };
 (function() {
-  var mostOps = ('arg deg det dim exp gcd hom ker lg lim ln log max min sup'
+  var mostOps = ('arg deg det dim exp gcd hom inf ker lg lim ln log max min sup'
                  + ' limsup liminf injlim projlim Pr').split(' ');
   for (var i = 0; i < mostOps.length; i += 1) {
     BuiltInOpNames[mostOps[i]] = AutoOpNames[mostOps[i]] = 1;
@@ -4900,7 +4876,6 @@ var OperatorName = P(Symbol, function(_, super_) {
 });
 for (var fn in AutoOpNames) if (AutoOpNames.hasOwnProperty(fn)) {
   LatexCmds[fn] = OperatorName;
-  LatexCmds[fn].textTemplate = [fn + '(',')'];
 }
 LatexCmds.operatorname = P(MathCommand, function(_) {
   _.createLeftOf = noop;
@@ -4924,7 +4899,7 @@ LatexCmds.f = P(Letter, function(_, super_) {
 LatexCmds[' '] = LatexCmds.space = bind(VanillaSymbol, '\\ ', '&nbsp;');
 
 LatexCmds["'"] = LatexCmds.prime = bind(VanillaSymbol, "'", '&prime;');
-// LatexCmds['\u2033'] = LatexCmds.dprime = bind(VanillaSymbol, '\u2033', '&Prime;');
+LatexCmds['\u2033'] = LatexCmds.dprime = bind(VanillaSymbol, '\u2033', '&Prime;');
 
 LatexCmds.backslash = bind(VanillaSymbol,'\\backslash ','\\');
 if (!CharCmds['\\']) CharCmds['\\'] = LatexCmds.backslash;
