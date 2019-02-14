@@ -353,6 +353,21 @@ sub create_ans_str_from_responses {
 	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
 }
 
+sub insert_mathquill_responses {
+	my ($self, $pg) = @_;
+	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
+		for my $response ($response_obj->response_labels) {
+			next if (ref($response_obj->{responses}->{$response}));
+			my $name = "MaThQuIlL_$response";
+			push(@{$response_obj->{response_order}}, $name);
+			$response_obj->{responses}->{$name} = '';
+			my $value = defined($self->{formFields}->{$name}) ? $self->{formFields}->{$name} : '';
+			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
+		}
+	}
+}
+
 # process_editorLink subroutine
 
 # Creates and returns the proper editor link for the current website.  Also checks for translation errors and prints an error message and returning a false value if one is detected.
