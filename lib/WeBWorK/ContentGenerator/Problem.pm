@@ -1252,8 +1252,7 @@ sub output_problem_body{
 			for my $response ($response_obj->response_labels) {
 				next if ($response !~ m/^MaThQuIlL_/);
 				my $value = defined($self->{formFields}->{$response}) ? $self->{formFields}->{$response} : '';
-				#$value = HTML::Entities::encode_entities($value, '<>"&\'\$\@\\\\`\\[*_\x00-\x1F\x7F');
-				print CGI::input({ -type => 'text', -name => $response, -id => $response, -value => $value });
+				print CGI::hidden({-name => $response, -id => $response, -value => $value });
 			}
 		}
 	}
