@@ -2177,6 +2177,16 @@ sub body {
 				CGI::p($pg->{result}->{msg} ? 
 				       CGI::b($r->maketext("Note")).': ' : "", 
 				       CGI::i($pg->{result}->{msg}));
+                if ($self->{will}->{useMathQuill}) {
+                    for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+                        my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
+                        for my $response ($response_obj->response_labels) {
+                            next if ($response !~ m/^MaThQuIlL_/);
+                            my $value = defined($self->{formFields}->{$response}) ? $self->{formFields}->{$response} : '';
+                            print CGI::hidden({-name => $response, -id => $response, -value => $value });
+                        }
+                    }
+                }
 				print CGI::p({class=>"gwPreview"}, 
 					     CGI::a({-href=>"$jsprevlink"}, 
 						    $r->maketext("preview answers")));
@@ -2364,6 +2374,18 @@ sub getProblemHTML {
 				 sprintf("%04d",$problemNumber) . '_',
 			     },
 			     );
+
+	if ($self->{will}->{useMathQuill}) {
+		for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+			my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
+			for my $response ($response_obj->response_labels) {
+				next if (ref($response_obj->{responses}->{$response}));
+				my $name = "MaThQuIlL_$response";
+				push(@{$response_obj->{response_order}}, $name);
+				$response_obj->{responses}->{$name} = '';
+			}
+		}
+	}
 	
 # FIXME  is problem_id the correct thing in the following two stanzas?
 # FIXME  the original version had "problem number", which is what we want.
@@ -2428,7 +2450,8 @@ sub output_JS{
 	# MathQuill interface
 	if ($self->{will}->{useMathQuill}) {
 		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
+		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />";
+        print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
 	}
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
