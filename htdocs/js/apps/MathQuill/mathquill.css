@@ -31,9 +31,6 @@
 .mq-editable-field,
 .mq-math-mode .mq-editable-field {
   border: 1px solid gray;
-  color: black;
-  border-color: black;
-  background: white;
 }
 .mq-editable-field.mq-focused,
 .mq-math-mode .mq-editable-field.mq-focused {
@@ -123,7 +120,7 @@
   box-sizing: border-box;
 }
 .mq-math-mode .mq-empty {
-  background: #ccc;
+  background: skyblue;
 }
 .mq-math-mode .mq-empty.mq-root-block {
   background: transparent;
@@ -234,11 +231,11 @@
 .mq-math-mode .mq-supsub .mq-fraction {
   font-size: 70%;
 }
-.mq-math-mode sup.mq-nthroot {
-  font-size: 70%;
-  vertical-align: 0.4em;
-  margin-right: -0.8em;
-  margin-left: 0.4em;
+.mq-math-mode span.mq-nthroot {
+  font-size: 60%;
+  vertical-align: 0.9em;
+  margin-right: -0.9em;
+  margin-left: 0.2em;
   min-width: 0.5em;
 }
 .mq-math-mode .mq-paren {

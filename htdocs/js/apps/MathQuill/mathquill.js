@@ -1659,10 +1659,8 @@ var Parser = P(function(_, super_, Parser) {
 Controller.open(function(_) {
   _.focusBlurEvents = function() {
     var ctrlr = this, root = ctrlr.root, cursor = ctrlr.cursor;
-    var blurTimeout;
     ctrlr.textarea.focus(function() {
       ctrlr.blurred = false;
-      clearTimeout(blurTimeout);
       ctrlr.container.addClass('mq-focused');
       if (!cursor.parent)
         cursor.insAtRightEnd(root);
@@ -1674,23 +1672,10 @@ Controller.open(function(_) {
         cursor.show();
     }).blur(function() {
       ctrlr.blurred = true;
-      blurTimeout = setTimeout(function() { // wait for blur on window; if
-        root.postOrder('intentionalBlur'); // none, intentional blur: #264
-        cursor.clearSelection().endSelection();
-        blur();
-      });
-      $(window).bind('blur', windowBlur);
-    });
-    function windowBlur() { // blur event also fired on window, just switching
-      clearTimeout(blurTimeout); // tabs/windows, not intentional blur
+      ctrlr.container.removeClass('mq-focused');
+      cursor.hide().parent.blur();
       if (cursor.selection) cursor.selection.jQ.addClass('mq-blur');
-      blur();
-    }
-    function blur() { // not directly in the textarea blur handler so as to be
-      cursor.hide().parent.blur(); // synchronous with/in the same frame as
-      ctrlr.container.removeClass('mq-focused'); // clearing/blurring selection
-      $(window).unbind('blur', windowBlur);
-    }
+    });
     ctrlr.blurred = true;
     cursor.hide().parent.blur();
   };
@@ -2402,6 +2387,7 @@ Controller.open(function(_) {
     var cursor = this.cursor, seln = cursor.selection;
     var rootRect = this.root.jQ[0].getBoundingClientRect();
     if (!seln) {
+      if (!cursor.jQ.length) return;
       var x = cursor.jQ[0].getBoundingClientRect().left;
       if (x > rootRect.right - 20) var scrollBy = x - (rootRect.right - 20);
       else if (x < rootRect.left + 20) var scrollBy = x - (rootRect.left + 20);
@@ -2802,8 +2788,8 @@ var Symbol = P(MathCommand, function(_, super_) {
   _.isEmpty = function(){ return true; };
 });
 var VanillaSymbol = P(Symbol, function(_, super_) {
-  _.init = function(ch, html) {
-    super_.init.call(this, ch, '<span>'+(html || ch)+'</span>');
+  _.init = function(ch, html, text) {
+    super_.init.call(this, ch, '<span>'+(html || ch)+'</span>', text);
   };
 });
 var BinaryOperator = P(Symbol, function(_, super_) {
@@ -3047,10 +3033,8 @@ var TextBlock = P(Node, function(_, super_) {
     cursor.show().deleteSelection();
 
     if (ch !== '$') {
-      // this.postOrder('reflow');
       if (!cursor[L]) TextPiece(ch).createLeftOf(cursor);
       else cursor[L].appendText(ch);
-      this.bubble('reflow'); 
     }
     else if (this.isEmpty()) {
       cursor.insRightOf(this);
@@ -3687,6 +3671,13 @@ var SupSub = P(MathCommand, function(_, super_) {
     }
     return latex('_', this.sub) + latex('^', this.sup);
   };
+  _.text = function() {
+    function text(prefix, block) {
+      var l = block && block.text();
+      return block ? prefix + ('(' + (l || ' ') + ')') : '';
+    }
+    return text('_', this.sub) + text('^', this.sup);
+  };
   _.addBlock = function(block) {
     if (this.supsub === 'sub') {
       this.sup = this.upInto = this.sub.upOutOf = block;
@@ -3888,7 +3879,7 @@ LatexCmds.fraction = P(MathCommand, function(_, super_) {
     +   '<span style="display:inline-block;width:0">&#8203;</span>'
     + '</span>'
   ;
-  _.textTemplate = ['(', ')/(', ')'];
+  _.textTemplate = ['((', ')/(', '))'];
   _.finalizeTree = function() {
     this.upInto = this.ends[R].upOutOf = this.ends[L];
     this.downInto = this.ends[L].downOutOf = this.ends[R];
@@ -3966,15 +3957,16 @@ var Hat = LatexCmds.hat = P(MathCommand, function(_, super_) {
 });
 
 var NthRoot =
+LatexCmds.root =
 LatexCmds.nthroot = P(SquareRoot, function(_, super_) {
   _.htmlTemplate =
-      '<sup class="mq-nthroot mq-non-leaf">&0</sup>'
+      '<span class="mq-nthroot mq-non-leaf">&0</span>'
     + '<span class="mq-scaled">'
     +   '<span class="mq-sqrt-prefix mq-scaled">&radic;</span>'
     +   '<span class="mq-sqrt-stem mq-non-leaf">&1</span>'
     + '</span>'
   ;
-  _.textTemplate = ['sqrt[', '](', ')'];
+  _.textTemplate = ['root(', ',', ')'];
   _.latex = function() {
     return '\\sqrt['+this.ends[L].latex()+']{'+this.ends[R].latex()+'}';
   };
@@ -4037,6 +4029,9 @@ var Bracket = P(P(MathCommand, DelimsMixin), function(_, super_) {
   _.latex = function() {
     return '\\left'+this.sides[L].ctrlSeq+this.ends[L].latex()+'\\right'+this.sides[R].ctrlSeq;
   };
+  _.text = function() {
+    return this.sides[L].ch+this.ends[L].text()+this.sides[R].ch;
+  }
   _.matchBrack = function(opts, expectedSide, node) {
     // return node iff it's a matching 1-sided bracket of expected side (if any)
     return node instanceof Bracket && node.side && node.side !== -expectedSide
@@ -4148,7 +4143,7 @@ var Bracket = P(P(MathCommand, DelimsMixin), function(_, super_) {
     };
     // FIXME HACK: after initial creation/insertion, finalizeTree would only be
     // called if the paren is selected and replaced, e.g. by LiveFraction
-    this.finalizeTree = this.intentionalBlur = function() {
+    this.finalizeTree = function() {
       this.delimjQs.eq(this.side === L ? 1 : 0).removeClass('mq-ghost');
       this.side = 0;
     };
@@ -4604,8 +4599,8 @@ LatexCmds.image = LatexCmds.imagin = LatexCmds.imaginary = LatexCmds.Imaginary =
 
 LatexCmds.part = LatexCmds.partial = bind(VanillaSymbol,'\\partial ','&part;');
 
-LatexCmds.infty = LatexCmds.infin = LatexCmds.infinity =
-  bind(VanillaSymbol,'\\infty ','&infin;');
+LatexCmds.inf = LatexCmds.infty = LatexCmds.infin = LatexCmds.infinity =
+  bind(VanillaSymbol,'\\infty ','&infin;', 'inf');
 
 LatexCmds.pounds = bind(VanillaSymbol,'\\pounds ','&pound;');
 
@@ -4630,7 +4625,8 @@ LatexCmds.oslash = LatexCmds.Oslash =
 LatexCmds.nothing = LatexCmds.varnothing =
   bind(BinaryOperator,'\\varnothing ','&empty;');
 
-LatexCmds.cup = LatexCmds.union = bind(BinaryOperator,'\\cup ','&cup;');
+LatexCmds.U = LatexCmds.cup = LatexCmds.union =
+  bind(BinaryOperator,'\\cup ','&cup;', 'U');
 
 LatexCmds.cap = LatexCmds.intersect = LatexCmds.intersection =
   bind(BinaryOperator,'\\cap ','&cap;');
@@ -4673,14 +4669,6 @@ var Variable = P(Symbol, function(_, super_) {
       else if (text[text.length-1] == ' ') {
         text = text.slice (0, -1);
       }
-    } else {
-      if (this[L] && !(this[L] instanceof Variable)
-          && !(this[L] instanceof BinaryOperator)
-          && this[L].ctrlSeq !== '\\ ')
-        text = '*' + text;
-      if (this[R] && !(this[R] instanceof BinaryOperator)
-          && !(this[R] instanceof SupSub))
-        text += '*';
     }
     return text;
   };
@@ -4813,7 +4801,7 @@ var AutoOpNames = Options.p.autoOperatorNames = { _maxLength: 9 }; // the set
   // of operator names that MathQuill auto-unitalicizes by default; overridable
 var TwoWordOpNames = { limsup: 1, liminf: 1, projlim: 1, injlim: 1 };
 (function() {
-  var mostOps = ('arg deg det dim exp gcd hom inf ker lg lim ln log max min sup'
+  var mostOps = ('arg deg det dim exp gcd hom ker lg lim ln log max min sup'
                  + ' limsup liminf injlim projlim Pr').split(' ');
   for (var i = 0; i < mostOps.length; i += 1) {
     BuiltInOpNames[mostOps[i]] = AutoOpNames[mostOps[i]] = 1;
@@ -5137,9 +5125,9 @@ var Inequality = P(BinaryOperator, function(_, super_) {
   };
 });
 
-var less = { ctrlSeq: '\\le ', html: '&le;', text: '\u2264',
+var less = { ctrlSeq: '\\le ', html: '&le;', text: '<=',
              ctrlSeqStrict: '<', htmlStrict: '&lt;', textStrict: '<' };
-var greater = { ctrlSeq: '\\ge ', html: '&ge;', text: '\u2265',
+var greater = { ctrlSeq: '\\ge ', html: '&ge;', text: '>=',
                 ctrlSeqStrict: '>', htmlStrict: '&gt;', textStrict: '>' };
 
 LatexCmds['<'] = LatexCmds.lt = bind(Inequality, less, true);

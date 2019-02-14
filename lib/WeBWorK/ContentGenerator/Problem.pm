@@ -732,6 +732,18 @@ sub pre_header_initialize {
 		},
 	);
 
+	if ($will{useMathQuill}) {
+		for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+			my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
+			for my $response ($response_obj->response_labels) {
+				next if (ref($response_obj->{responses}->{$response}));
+				my $name = "MaThQuIlL_$response";
+				push(@{$response_obj->{response_order}}, $name);
+				$response_obj->{responses}->{$name} = '';
+			}
+		}
+	}
+
 	debug("end pg processing");
 	
 	if ($prEnabled){
@@ -1233,6 +1245,18 @@ sub output_problem_body{
 
 	print "\n";
 	print CGI::div({id=>'output_problem_body'},$pg->{body_text});
+
+	if ($self->{will}->{useMathQuill}) {
+		for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+			my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
+			for my $response ($response_obj->response_labels) {
+				next if ($response !~ m/^MaThQuIlL_/);
+				my $value = defined($self->{formFields}->{$response}) ? $self->{formFields}->{$response} : '';
+				#$value = HTML::Entities::encode_entities($value, '<>"&\'\$\@\\\\`\\[*_\x00-\x1F\x7F');
+				print CGI::input({ -type => 'text', -name => $response, -id => $response, -value => $value });
+			}
+		}
+	}
 
 	return "";
 }
@@ -2187,7 +2211,7 @@ sub output_JS{
 
 	# MathQuill live rendering 
 	if ($self->{will}->{useMathQuill}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
 	}
 	
@@ -2235,7 +2259,8 @@ sub output_CSS {
 	
 	#style for mathquill
 	if ($self->{will}->{useMathQuill}) {
-	    print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
+		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
+		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />";
 	}
 	
 	return "";
