@@ -2963,6 +2963,7 @@ var TextBlock = P(Node, function(_, super_) {
     var textBlock = this;
     super_.createLeftOf.call(this, cursor);
 
+    textBlock.postOrder('reflow');
     if (textBlock[R].siblingCreated) textBlock[R].siblingCreated(cursor.options, L);
     if (textBlock[L].siblingCreated) textBlock[L].siblingCreated(cursor.options, R);
     textBlock.bubble('reflow');
@@ -2997,7 +2998,7 @@ var TextBlock = P(Node, function(_, super_) {
       return text + child.text;
     });
   };
-  _.text = function() { return '"' + this.textContents() + '"'; };
+  _.text = function() { return this.textContents(); };
   _.latex = function() {
     var contents = this.textContents();
     if (contents.length === 0) return '';
@@ -3033,8 +3034,10 @@ var TextBlock = P(Node, function(_, super_) {
     cursor.show().deleteSelection();
 
     if (ch !== '$') {
+      this.postOrder('reflow');
       if (!cursor[L]) TextPiece(ch).createLeftOf(cursor);
       else cursor[L].appendText(ch);
+      this.bubble('reflow');
     }
     else if (this.isEmpty()) {
       cursor.insRightOf(this);
@@ -3236,6 +3239,7 @@ LatexCmds.text =
 LatexCmds.textnormal =
 LatexCmds.textrm =
 LatexCmds.textup =
+CharCmds['"'] =
 LatexCmds.textmd = TextBlock;
 
 function makeTextBlock(latex, tagName, attrs) {
@@ -3774,7 +3778,7 @@ LatexCmds['^'] = P(SupSub, function(_, super_) {
     +   '<span class="mq-sup">&0</span>'
     + '</span>'
   ;
-  _.textTemplate = [ '^' ];
+  _.textTemplate = [ '^(', ')' ];
   _.finalizeTree = function() {
     this.upInto = this.sup = this.ends[R];
     this.sup.downOutOf = insLeftOfMeUnlessAtEnd;
@@ -3880,6 +3884,14 @@ LatexCmds.fraction = P(MathCommand, function(_, super_) {
     + '</span>'
   ;
   _.textTemplate = ['((', ')/(', '))'];
+  _.text = function() {
+    function text(dir, block) {
+      var blankDefault = dir === L ? 0 : 1;
+      var l = (block.ends[dir] && block.ends[dir].text() !== " ") && block.ends[dir].text();
+      return l ? (l.length === 1 ? l : '(' + l + ')') : blankDefault;
+    }
+    return '(' + text(L, this) + '/' + text(R, this) + ')';
+  };
   _.finalizeTree = function() {
     this.upInto = this.ends[R].upOutOf = this.ends[L];
     this.downInto = this.ends[L].downOutOf = this.ends[R];
@@ -3969,6 +3981,15 @@ LatexCmds.nthroot = P(SquareRoot, function(_, super_) {
   _.textTemplate = ['root(', ',', ')'];
   _.latex = function() {
     return '\\sqrt['+this.ends[L].latex()+']{'+this.ends[R].latex()+'}';
+  };
+  _.text = function () {
+    var index = this.ends[L].text() === "" ? 2 : this.ends[L].text();
+    // Hack to get to the options here.  There has to be a better way.
+    var root = this;
+    while (!('cursor' in root)) root = root.parent;
+    if (root.cursor.options.rootsAreExponents)
+      return '('+this.ends[R].text()+')^(1/'+ index +' )';
+    return 'root('+index+','+this.ends[R].text()+')';
   };
 });
 
@@ -4887,7 +4908,7 @@ LatexCmds.f = P(Letter, function(_, super_) {
 LatexCmds[' '] = LatexCmds.space = bind(VanillaSymbol, '\\ ', '&nbsp;');
 
 LatexCmds["'"] = LatexCmds.prime = bind(VanillaSymbol, "'", '&prime;');
-LatexCmds['\u2033'] = LatexCmds.dprime = bind(VanillaSymbol, '\u2033', '&Prime;');
+// LatexCmds['\u2033'] = LatexCmds.dprime = bind(VanillaSymbol, '\u2033', '&Prime;');
 
 LatexCmds.backslash = bind(VanillaSymbol,'\\backslash ','\\');
 if (!CharCmds['\\']) CharCmds['\\'] = LatexCmds.backslash;
