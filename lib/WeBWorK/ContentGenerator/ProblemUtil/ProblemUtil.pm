@@ -331,6 +331,7 @@ sub create_ans_str_from_responses {
 	my $isEssay2=0;
 	my %answersToStore2;
 	my @answer_order2;
+        my @answer_order3;
 
 	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
@@ -339,6 +340,7 @@ sub create_ans_str_from_responses {
 		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
 			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id};
 			push @answer_order2, $response_id unless ($response_id =~ /^MaThQuIlL_/);
+			push @answer_order3, $response_id;
 		 }
 	}
 	my $answerString2 = '';
@@ -348,7 +350,7 @@ sub create_ans_str_from_responses {
 	$answerString2=~s/\t$//; # remove last tab
 
    	my $encoded_answer_string = encodeAnswers(%answersToStore2,
-							 @answer_order2);
+							 @answer_order3);
 
 	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
 }
