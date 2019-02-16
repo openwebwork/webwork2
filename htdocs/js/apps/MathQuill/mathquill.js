@@ -3984,10 +3984,10 @@ LatexCmds.nthroot = P(SquareRoot, function(_, super_) {
   };
   _.text = function () {
     var index = this.ends[L].text() === "" ? 2 : this.ends[L].text();
-    // Hack to get to the options here.  There has to be a better way.
-    var root = this;
-    while (!('cursor' in root)) root = root.parent;
-    if (root.cursor.options.rootsAreExponents)
+    // Navigate up the tree to find the cursor which has the options.
+    var cursor =
+      (function getCursor(node) { return !('cursor' in node) ? getCursor(node.parent) : node.cursor; })(this);
+    if (cursor.options.rootsAreExponents)
       return '('+this.ends[R].text()+')^(1/'+ index +' )';
     return 'root('+index+','+this.ends[R].text()+')';
   };

@@ -1,24 +1,24 @@
 // initialize MathQuill
 var MQ = MathQuill.getInterface(2);
+answerQuills = {};
 
 // Avoid conflicts with bootstrap.
-jQuery.widget.bridge('uitooltip', jQuery.ui.tooltip);
+$.widget.bridge('uitooltip', $.ui.tooltip);
 
 function createAnswerQuill() {
 	var answerLabel = this.id.replace(/^MaThQuIlL_/, "");
-	var input = jQuery("#" + answerLabel);
+	var input = $("#" + answerLabel);
 	var inputType = input.attr('type');
 	if (typeof(inputType) != 'string' || inputType.toLowerCase() !== "text") return false;
-	var inputParent = input.parent();
 
-	var answerQuill = jQuery("<span id='mq-answer-" + answerLabel + "'></span>");
+	var answerQuill = $("<span id='mq-answer-" + answerLabel + "'></span>");
 	answerQuill.input = input;
-	answerQuill.latexInput = jQuery(this);
+	answerQuill.latexInput = $(this);
 
-	if (inputParent.hasClass('mv-container')) inputParent.after(answerQuill);
-	else input.after(answerQuill);
+	input.after(answerQuill);
 
-	answerQuill.mathField = MQ.MathField(answerQuill[0], {
+	// Default options.
+	var cfgOptions = {
 		spaceBehavesLikeTab: true,
 		leftRightIntoCmdGoes: 'up',
 		restrictMismatchedBrackets: true,
@@ -27,20 +27,28 @@ function createAnswerQuill() {
 		charsThatBreakOutOfSupSub: '+-=<>',
 		autoSubscriptNumerals: true,
 		autoCommands: 'pi sqrt root vert inf union',
-		maxDepth: 10,
-		handlers: {
-			edit: function() {
-				if (answerQuill.mathField.text() !== "") {
-					answerQuill.input.val(answerQuill.mathField.text().trim());
-					answerQuill.latexInput
-						.val(answerQuill.mathField.latex().replace(/^(?:\\\s)*(.*?)(?:\\\s)*$/, '$1'));
-				} else {
-					answerQuill.input.val('');
-					answerQuill.latexInput.val('');
-				}
+		maxDepth: 10
+	};
+
+	// Merge options that are set by the problem.
+	if (this.id + '_Opts' in window)
+		$.extend(cfgOptions, cfgOptions, window[this.id + '_Opts']);
+
+	// This is after the option merge to preven handlers from being overridden.
+	cfgOptions.handlers = {
+		edit: function() {
+			if (answerQuill.mathField.text() !== "") {
+				answerQuill.input.val(answerQuill.mathField.text().trim());
+				answerQuill.latexInput
+					.val(answerQuill.mathField.latex().replace(/^(?:\\\s)*(.*?)(?:\\\s)*$/, '$1'));
+			} else {
+				answerQuill.input.val('');
+				answerQuill.latexInput.val('');
 			}
 		}
-	});
+	};
+
+	answerQuill.mathField = MQ.MathField(answerQuill[0], cfgOptions);
 
 	answerQuill.textarea = answerQuill.find("textarea");
 
@@ -59,10 +67,11 @@ function createAnswerQuill() {
 		geq: { latex: '\\geq', tooltip: 'Greater Than or Equal (\\geq)', icon: '\\geq' }
 	};
 
+	// Open the toolbar when the mathquill answer box gains focus.
 	answerQuill.textarea.on('focusin', function() {
 		answerQuill.hasFocus = true;
 		if (answerQuill.toolbar) return;
-		answerQuill.toolbar = jQuery("<div class='quill-toolbar'>" +
+		answerQuill.toolbar = $("<div class='quill-toolbar'>" +
 			Object.entries(buttons).reduce(
 				function(returnString, curButton) {
 					return returnString +
@@ -79,21 +88,21 @@ function createAnswerQuill() {
 		answerQuill.toolbar.appendTo(document.body);
 
 		answerQuill.toolbar.find(".symbol-button").each(function() {
-			MQ.StaticMath(jQuery("#icon-" + this.id)[0]);
+			MQ.StaticMath($("#icon-" + this.id)[0]);
 		});
 
-		jQuery(".symbol-button").uitooltip( {
+		$(".symbol-button").uitooltip( {
 			items: "[data-tooltip]",
 			position: {my: "right center", at: "left-5px center"},
 			show: {delay: 500, effect: "none"},
 			hide: {delay: 0, effect: "none"},
 			content: function() {
-				var element = jQuery(this);
+				var element = $(this);
 				if (element.is("[data-tooltip]")) { return element.attr("data-tooltip"); }
 			}
 		});
 
-		jQuery(".symbol-button").on("click", function() {
+		$(".symbol-button").on("click", function() {
 			answerQuill.hasFocus = true;
 			answerQuill.mathField.cmd(this.getAttribute("data-latex"));
 			answerQuill.textarea.focus();
@@ -115,12 +124,33 @@ function createAnswerQuill() {
 	answerQuill.mathField.moveToLeftEnd();
 	answerQuill.mathField.blur();
 
+	// Give the mathquill answer box the correct/incorrect colors.
 	setTimeout(function() {
 		if (answerQuill.input.hasClass('correct')) answerQuill.addClass('correct');
 		else if (answerQuill.input.hasClass('incorrect')) answerQuill.addClass('incorrect');
 	}, 300);
 
-	return answerQuill;
+	// Replace the result table correct/incorrect javascript that gives focus
+	// to the original input, with javascript that gives focus to the mathquill
+	// answer box.
+	var resultsTableRows = jQuery("table.attemptResults tr:not(:first-child)");
+	if (resultsTableRows.length)
+	{
+		resultsTableRows.each(function()
+			{
+				var result = $(this).find("td > a");
+				var href = result.attr('href');
+				if (result.length && href !== undefined && href.indexOf(answerLabel) != -1)
+				{
+					// Set focus to the mathquill answer box if the correct/incorrect link is clicked.
+					result.attr('href',
+						"javascript:void(window.answerQuills['" + answerLabel + "'].textarea.focus())");
+				}
+			}
+		);
+	}
+
+	answerQuills[answerLabel] = answerQuill;
 }
 
 $(function() { $("[id^=MaThQuIlL_]").each(createAnswerQuill); });

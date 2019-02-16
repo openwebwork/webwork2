@@ -353,9 +353,15 @@ sub create_ans_str_from_responses {
 	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
 }
 
+# insert_mathquill_responses subroutine
+
+# Add responses to each answer's response group that store the latex form of the students'
+# answers and add corresponding hidden input boxes to the page.
+
 sub insert_mathquill_responses {
 	my ($self, $pg) = @_;
 	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}->{rh_ans}->{mathQuillOpts};
 		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
 		for my $response ($response_obj->response_labels) {
 			next if (ref($response_obj->{responses}->{$response}));
@@ -364,6 +370,7 @@ sub insert_mathquill_responses {
 			$response_obj->{responses}->{$name} = '';
 			my $value = defined($self->{formFields}->{$name}) ? $self->{formFields}->{$name} : '';
 			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
+			$pg->{body_text} .= "<script>var ${name}_Opts = {$mq_opts}</script>" if ($mq_opts);
 		}
 	}
 }
