@@ -338,7 +338,7 @@ sub create_ans_str_from_responses {
 		$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
 		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
 			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id};
-			push @answer_order2, $response_id;
+			push @answer_order2, $response_id unless ($response_id =~ /^MaThQuIlL_/);
 		 }
 	}
 	my $answerString2 = '';
