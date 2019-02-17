@@ -86,7 +86,7 @@ input[type=text]
     cursor: pointer;
 }
 
-.quill-toolbar .symbol-button .mq-text-mode
+.quill-toolbar .symbol-button:not([id^="text-mq-answer"]) .mq-text-mode
 {
     height: 10px;
     width: 8px;

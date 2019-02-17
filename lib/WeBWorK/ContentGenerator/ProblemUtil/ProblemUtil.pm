@@ -331,7 +331,7 @@ sub create_ans_str_from_responses {
 	my $isEssay2=0;
 	my %answersToStore2;
 	my @answer_order2;
-        my @answer_order3;
+	my @answer_order3;
 
 	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
@@ -349,7 +349,7 @@ sub create_ans_str_from_responses {
 	}
 	$answerString2=~s/\t$//; # remove last tab
 
-   	my $encoded_answer_string = encodeAnswers(%answersToStore2,
+	my $encoded_answer_string = encodeAnswers(%answersToStore2,
 							 @answer_order3);
 
 	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
@@ -363,14 +363,14 @@ sub create_ans_str_from_responses {
 sub insert_mathquill_responses {
 	my ($self, $pg) = @_;
 	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
-		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}->{rh_ans}->{mathQuillOpts};
+		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}{rh_ans}{mathQuillOpts};
 		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
 		for my $response ($response_obj->response_labels) {
-			next if (ref($response_obj->{responses}->{$response}));
+			next if (ref($response_obj->{responses}{$response}));
 			my $name = "MaThQuIlL_$response";
 			push(@{$response_obj->{response_order}}, $name);
-			$response_obj->{responses}->{$name} = '';
-			my $value = defined($self->{formFields}->{$name}) ? $self->{formFields}->{$name} : '';
+			$response_obj->{responses}{$name} = '';
+			my $value = defined($self->{formFields}{$name}) ? $self->{formFields}{$name} : '';
 			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
 			$pg->{body_text} .= "<script>var ${name}_Opts = {$mq_opts}</script>" if ($mq_opts);
 		}

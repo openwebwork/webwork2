@@ -6,10 +6,11 @@ answerQuills = {};
 $.widget.bridge('uitooltip', $.ui.tooltip);
 
 function createAnswerQuill() {
+	console.log(this.id);
 	var answerLabel = this.id.replace(/^MaThQuIlL_/, "");
 	var input = $("#" + answerLabel);
 	var inputType = input.attr('type');
-	if (typeof(inputType) != 'string' || inputType.toLowerCase() !== "text") return false;
+	if (typeof(inputType) != 'string' || inputType.toLowerCase() !== "text") return;
 
 	var answerQuill = $("<span id='mq-answer-" + answerLabel + "'></span>");
 	answerQuill.input = input;
@@ -24,7 +25,6 @@ function createAnswerQuill() {
 		restrictMismatchedBrackets: true,
 		sumStartsWithNEquals: true,
 		supSubsRequireOperand: true,
-		charsThatBreakOutOfSupSub: '+-=<>',
 		autoSubscriptNumerals: true,
 		autoCommands: 'pi sqrt root vert inf union',
 		maxDepth: 10
@@ -61,10 +61,11 @@ function createAnswerQuill() {
 		exponent: { latex: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
 		infty: { latex: '\\infty', tooltip: 'infinity (inf)', icon: '\\infty' },
 		pi: { latex: '\\pi', tooltip: 'pi (pi)', icon: '\\pi' },
-		cap: { latex: '\\cap', tooltip: 'intersection (\\cap)', icon: '\\cap' },
+		//cap: { latex: '\\cap', tooltip: 'intersection (\\cap)', icon: '\\cap' },
 		cup: { latex: '\\cup', tooltip: 'union (union)', icon: '\\cup' },
-		leq: { latex: '\\leq', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
-		geq: { latex: '\\geq', tooltip: 'Greater Than or Equal (\\geq)', icon: '\\geq' }
+		//leq: { latex: '\\leq', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
+		//geq: { latex: '\\geq', tooltip: 'Greater Than or Equal (\\geq)', icon: '\\geq' }
+		text: { latex: '\\text', tooltip: 'text (")', icon: '\\text{T}' },
 	};
 
 	// Open the toolbar when the mathquill answer box gains focus.
