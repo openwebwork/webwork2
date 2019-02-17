@@ -6,7 +6,6 @@ answerQuills = {};
 $.widget.bridge('uitooltip', $.ui.tooltip);
 
 function createAnswerQuill() {
-	console.log(this.id);
 	var answerLabel = this.id.replace(/^MaThQuIlL_/, "");
 	var input = $("#" + answerLabel);
 	var inputType = input.attr('type');
