@@ -25,6 +25,7 @@ function createAnswerQuill() {
 		sumStartsWithNEquals: true,
 		supSubsRequireOperand: true,
 		autoSubscriptNumerals: true,
+		rootsAreExponents: true,
 		autoCommands: 'pi sqrt root vert inf union',
 		maxDepth: 10
 	};
@@ -33,7 +34,7 @@ function createAnswerQuill() {
 	if (this.id + '_Opts' in window)
 		$.extend(cfgOptions, cfgOptions, window[this.id + '_Opts']);
 
-	// This is after the option merge to preven handlers from being overridden.
+	// This is after the option merge to prevent handlers from being overridden.
 	cfgOptions.handlers = {
 		edit: function() {
 			if (answerQuill.mathField.text() !== "") {
