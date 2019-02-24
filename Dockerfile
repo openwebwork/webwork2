@@ -76,12 +76,13 @@ RUN apt-get update \
        libc6-dev \
        git \
        mysql-client \
-    && curl -Lk https://cpanmin.us | perl - App::cpanminus \
+    && rm -fr /var/lib/apt/lists/*
+
+RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
     && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template XMLRPC::Lite Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO \
-    && rm -fr /var/lib/apt/lists/* ./cpanm /root/.cpanm /tmp/*
+    && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
-
 
 # Block to include webwork2 in the container, when needed, instead of  getting it from a bind mount.
 #    Uncomment when needed, and set the correct branch name on the following line.
