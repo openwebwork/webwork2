@@ -79,9 +79,9 @@ CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   `attempted` int(11) DEFAULT NULL,
   `num_correct` int(11) DEFAULT NULL,
   `num_incorrect` int(11) DEFAULT NULL,
-  UNIQUE KEY `unique_key_idx` (`course_id`(100),`user_id`(100),`set_id`(100),`due_date`,`problem_id`),
-  KEY `source_file_idx` (`source_file`(255)))
-  CHARACTER SET ascii
+  UNIQUE KEY `unique_key_idx` (`course_id`(80),`user_id`(80),`set_id`(80),`due_date`,`problem_id`),
+  KEY `source_file_idx` (`source_file`(245)))
+  CHARACTER SET utf8mb4
 EOS
 
 $dbh->do(<<EOS);
@@ -90,12 +90,12 @@ EOS
 
 $dbh->do(<<EOS);
 CREATE TABLE `OPL_local_statistics` (
-  `source_file` varchar(255) NOT NULL,
+  `source_file` varchar(245) NOT NULL,
   `students_attempted` int(11) DEFAULT NULL,
   `average_attempts` float DEFAULT NULL,
   `average_status` float DEFAULT NULL,
-  PRIMARY KEY (`source_file`(255))
-)
+  PRIMARY KEY (`source_file`(245))
+)  ENGINE=MyISAM
 EOS
 
 $dbh->commit();
