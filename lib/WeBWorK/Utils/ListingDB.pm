@@ -516,7 +516,7 @@ sub getDBListings {
 #               $kw2";
 
 	my $pg_id_ref;
-	$dbh->do(qq{SET NAMES 'utf8';});
+	$dbh->do(qq{SET NAMES 'utf8mb4';});
 	if($haveTextInfo) {
 		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
 			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,

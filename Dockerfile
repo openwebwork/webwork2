@@ -78,8 +78,13 @@ RUN apt-get update \
        mysql-client \
     && rm -fr /var/lib/apt/lists/*
 
+# Warning - when I tried to include XML::Simple near the start of the first "cpanm install" line, there was an error:
+#       Building and testing XMLRPC-Lite-0.717 ... ! Installing XMLRPC::Lite failed. See /root/.cpanm/work/1551887935.125/build.log for details. Retry with --force to force install it.
+# so it was put into a second "cpanm install" line.
+
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
     && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template XMLRPC::Lite Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO \
+    && cpanm install XML::Simple \
     && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
