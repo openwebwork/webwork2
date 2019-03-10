@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WebworkClient.pm,v 1.1 2010/06/08 11:46:38 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -120,6 +120,7 @@ use HTML::Entities;
 use WeBWorK::PG::ImageGenerator;
 use IO::Socket::SSL;
 use Digest::SHA qw(sha1_base64);
+use XML::Simple qw(XMLout);
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -621,6 +622,7 @@ sub formatRenderedProblem {
 	my $encoded_source     = $self->encoded_source//'';
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
+        my $answerhashXML     = XMLout($rh_answers, RootName => 'answerhashes');
 	
 	#################################################
 	# regular Perl warning messages generated with warn

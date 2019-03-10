@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.17 2007/08/13 22:59:50 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
