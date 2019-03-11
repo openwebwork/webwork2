@@ -245,7 +245,7 @@ sub new_helper {
 	# Safe::Rootx:: and NOT to Safe::Root1::, which is the value of main::
 	# at compile time.
 	# 
-	# TO ENABLE CACHEING UNCOMMENT THE FOLLOWING:
+	# TO ENABLE CACHEING UNCOMMENT THE FOLLOWING:  -- this has not been used in some time
 # 	eval{$translator->pre_load_macro_files(
 # 		$WeBWorK::PG::Local::safeCache,
 # 		$ce->{pg}->{directories}->{macros}, 
