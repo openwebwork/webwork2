@@ -269,6 +269,7 @@ BEGIN {
 }
 $ENV{MOD_PERL_API_VERSION} = 2;
 use lib "$main::dirname";
+print "home directory ".$main::dirname;
 #use lib "."; # is this needed?
 
 # some files such as FormatRenderedProblem.pm may need to be in the same directory
@@ -290,7 +291,7 @@ BEGIN {
 	}
 
 }
-
+use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 
 
 use Carp;

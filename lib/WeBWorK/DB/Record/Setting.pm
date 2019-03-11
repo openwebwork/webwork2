@@ -30,7 +30,7 @@ use WeBWorK::Utils::DBUpgrade;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		name  => { type=>"VARCHAR(255) NOT NULL", key=>1 },
+		name  => { type=>"VARCHAR(240) NOT NULL", key=>1 },
 		value => { type=>"TEXT" },
 	);
 	__PACKAGE__->_initial_records(
