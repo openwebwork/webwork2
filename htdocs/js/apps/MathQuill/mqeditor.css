@@ -90,12 +90,13 @@ input[type=text]
 {
     height: 10px;
     width: 8px;
-    transform: translateY(1px);
+    transform: translateY(2px);
     background-color: skyblue !important;
 }
 
 .quill-toolbar .symbol-button .mq-nthroot > .mq-text-mode,
-.quill-toolbar .symbol-button .mq-sup > .mq-text-mode
+.quill-toolbar .symbol-button .mq-sup > .mq-text-mode,
+.quill-toolbar .symbol-button .mq-sub > .mq-text-mode
 {
     height: 6px;
     width: 6px;
@@ -103,12 +104,18 @@ input[type=text]
 
 .quill-toolbar .symbol-button .mq-sup > .mq-text-mode
 {
-    transform: translateY(3px);
+    transform: translateY(2px);
 }
 
-.quill-toolbar .symbol-button .mq-sup-only
+.quill-toolbar .symbol-button .mq-sub > .mq-text-mode
 {
-    vertical-align: 12px !important;
+    transform: translateY(0px);
+}
+
+.quill-toolbar .symbol-button .mq-supsub
+{
+    height: 6px;
+    width: 6px;
     margin-left: 2px;
 }
 
