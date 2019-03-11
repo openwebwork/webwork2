@@ -24,9 +24,10 @@ function createAnswerQuill() {
 		restrictMismatchedBrackets: true,
 		sumStartsWithNEquals: true,
 		supSubsRequireOperand: true,
+		charsThatBreakOutOfSupSub: '=<>',
 		autoSubscriptNumerals: true,
+		autoCommands: 'pi sqrt root vert inf union abs',
 		rootsAreExponents: true,
-		autoCommands: 'pi sqrt root vert inf union',
 		maxDepth: 10
 	};
 
@@ -34,7 +35,7 @@ function createAnswerQuill() {
 	if (this.id + '_Opts' in window)
 		$.extend(cfgOptions, cfgOptions, window[this.id + '_Opts']);
 
-	// This is after the option merge to prevent handlers from being overridden.
+	// This is after the option merge to preven handlers from being overridden.
 	cfgOptions.handlers = {
 		edit: function() {
 			if (answerQuill.mathField.text() !== "") {
@@ -55,17 +56,18 @@ function createAnswerQuill() {
 	answerQuill.hasFocus = false;
 
 	var buttons = {
-		frac: { latex: '/', tooltip: 'fraction (/)', icon: '\\frac{\\text{\ \ }}{\\text{\ \ }}' },
-		sqrt: { latex: '\\sqrt', tooltip: 'square root (sqrt)', icon: '\\sqrt{\\text{\ \ }}' },
-		nthroot: { latex: '\\root', tooltip: 'nth root (root)', icon: '\\sqrt[\\text{\ \ }]{\\text{\ \ }}' },
-		exponent: { latex: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
-		infty: { latex: '\\infty', tooltip: 'infinity (inf)', icon: '\\infty' },
-		pi: { latex: '\\pi', tooltip: 'pi (pi)', icon: '\\pi' },
-		//cap: { latex: '\\cap', tooltip: 'intersection (\\cap)', icon: '\\cap' },
-		cup: { latex: '\\cup', tooltip: 'union (union)', icon: '\\cup' },
-		//leq: { latex: '\\leq', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
-		//geq: { latex: '\\geq', tooltip: 'Greater Than or Equal (\\geq)', icon: '\\geq' }
-		text: { latex: '\\text', tooltip: 'text (")', icon: '\\text{T}' },
+		frac: { cmd: '/', latex: '/', tooltip: 'fraction (/)', icon: '\\frac{\\text{\ \ }}{\\text{\ \ }}' },
+		abs: { cmd: 'abs', latex: '|', tooltip: 'absolute value (|)', icon: '|\\text{\ \ }|' },
+		sqrt: { cmd: 'sqrt', latex: '\\sqrt', tooltip: 'square root (sqrt)', icon: '\\sqrt{\\text{\ \ }}' },
+		nthroot: { cmd: 'root', latex: '\\root', tooltip: 'nth root (root)', icon: '\\sqrt[\\text{\ \ }]{\\text{\ \ }}' },
+		exponent: { cmd: '^', latex: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
+		infty: { cmd: 'inf', latex: '\\infty', tooltip: 'infinity (inf)', icon: '\\infty' },
+		pi: { cmd: 'pi', latex: '\\pi', tooltip: 'pi (pi)', icon: '\\pi' },
+		vert: { cmd: 'vert', latex: '\\vert', tooltip: 'such that (|)', icon: '|' },
+		cup: { cmd: 'U', latex: '\\cup', tooltip: 'union (union)', icon: '\\cup' },
+		// leq: { cmd: '<=', latex: '\\leq', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
+		// geq: { cmd: '>=', latex: '\\geq', tooltip: 'greater than or equal (\\geq)', icon: '\\geq' },
+		text: { cmd: '"', latex: '\\text', tooltip: 'text mode (")', icon: 'Tt' }
 	};
 
 	// Open the toolbar when the mathquill answer box gains focus.
@@ -79,6 +81,7 @@ function createAnswerQuill() {
 						"<button id='" + curButton[0] + "-" + answerQuill.attr('id') +
 						"' class='symbol-button btn' " +
 						"data-latex='" + curButton[1].latex +
+						"' data-textcmd='" + curButton[1].cmd +
 						"' data-tooltip='" + curButton[1].tooltip + "'>" +
 						"<span id='icon-" + curButton[0] + "-" + answerQuill.attr('id') + "'>"
 						+ curButton[1].icon +
@@ -105,7 +108,7 @@ function createAnswerQuill() {
 
 		$(".symbol-button").on("click", function() {
 			answerQuill.hasFocus = true;
-			answerQuill.mathField.cmd(this.getAttribute("data-latex"));
+			answerQuill.mathField.typedText(this.getAttribute("data-textcmd"));
 			answerQuill.textarea.focus();
 		});
 	});
