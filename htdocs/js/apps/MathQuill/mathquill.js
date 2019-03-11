@@ -2998,11 +2998,15 @@ var TextBlock = P(Node, function(_, super_) {
       return text + child.text;
     });
   };
-  _.text = function() { return this.textContents(); };
+  _.text = function() {
+    var contents = this.textContents();
+    if (contents.length === 0) return '';
+    return contents.replace(/\\/g, '');
+  };
   _.latex = function() {
     var contents = this.textContents();
     if (contents.length === 0) return '';
-    return '\\text{' + contents.replace(/\\/g, '\\backslash ').replace(/[{}]/g, '\\$&') + '}';
+    return '\\text{' + contents.replace(/[{}]/g, '\\$&') + '}';
   };
   _.html = function() {
     return (
