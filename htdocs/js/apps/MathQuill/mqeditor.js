@@ -24,8 +24,6 @@ function createAnswerQuill() {
 		restrictMismatchedBrackets: true,
 		sumStartsWithNEquals: true,
 		supSubsRequireOperand: true,
-		charsThatBreakOutOfSupSub: '=<>',
-		autoSubscriptNumerals: true,
 		autoCommands: 'pi sqrt root vert inf union',
 		rootsAreExponents: true,
 		maxDepth: 10
@@ -35,17 +33,27 @@ function createAnswerQuill() {
 	if (this.id + '_Opts' in window)
 		$.extend(cfgOptions, cfgOptions, window[this.id + '_Opts']);
 
-	// This is after the option merge to preven handlers from being overridden.
+	// This is after the option merge to prevent handlers from being overridden.
 	cfgOptions.handlers = {
-		edit: function() {
-			if (answerQuill.mathField.text() !== "") {
-				answerQuill.input.val(answerQuill.mathField.text().trim());
+		edit: function(mq) {
+			if (mq.text() !== "") {
+				answerQuill.input.val(mq.text().trim());
 				answerQuill.latexInput
-					.val(answerQuill.mathField.latex().replace(/^(?:\\\s)*(.*?)(?:\\\s)*$/, '$1'));
+					.val(mq.latex().replace(/^(?:\\\s)*(.*?)(?:\\\s)*$/, '$1'));
 			} else {
 				answerQuill.input.val('');
 				answerQuill.latexInput.val('');
 			}
+		},
+		// Disable the toolbar when a text block is entered.
+		textBlockEnter: function() {
+			if (answerQuill.toolbar)
+				answerQuill.toolbar.find("button").prop("disabled", true);
+		},
+		// Re-enable the toolbar when a text block is exited.
+		textBlockExit: function() {
+			if (answerQuill.toolbar)
+				answerQuill.toolbar.find("button").prop("disabled", false);
 		}
 	};
 
@@ -56,19 +64,18 @@ function createAnswerQuill() {
 	answerQuill.hasFocus = false;
 
 	var buttons = {
-		frac: { cmd: '/', tooltip: 'fraction (/)', icon: '\\frac{\\text{\ \ }}{\\text{\ \ }}' },
-		abs: { cmd: '|', tooltip: 'absolute value (|)', icon: '|\\text{\ \ }|' },
-		sqrt: { cmd: '\\sqrt', tooltip: 'square root (sqrt)', icon: '\\sqrt{\\text{\ \ }}' },
-		nthroot: { cmd: '\\root', tooltip: 'nth root (root)', icon: '\\sqrt[\\text{\ \ }]{\\text{\ \ }}' },
-		exponent: { cmd: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
-		subscript: { cmd: '_', tooltip: 'subscript (_)', icon: '\\text{\ \ }_\\text{\ \ }' },
-		infty: { cmd: 'inf', tooltip: 'infinity (inf)', icon: '\\infty' },
-		pi: { cmd: 'pi', tooltip: 'pi (pi)', icon: '\\pi' },
-		vert: { cmd: 'vert', tooltip: 'such that (|)', icon: '|' },
-		cup: { cmd: 'union', tooltip: 'union (union)', icon: '\\cup' },
-		// leq: { cmd: '<=', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
-		// geq: { cmd: '>=', tooltip: 'greater than or equal (\\geq)', icon: '\\geq' },
-		text: { cmd: '"', tooltip: 'text mode (")', icon: 'Tt' }
+		frac: { latex: '/', tooltip: 'fraction (/)', icon: '\\frac{\\text{\ \ }}{\\text{\ \ }}' },
+		abs: { latex: '|', tooltip: 'absolute value (|)', icon: '|\\text{\ \ }|' },
+		sqrt: { latex: '\\sqrt', tooltip: 'square root (sqrt)', icon: '\\sqrt{\\text{\ \ }}' },
+		nthroot: { latex: '\\root', tooltip: 'nth root (root)', icon: '\\sqrt[\\text{\ \ }]{\\text{\ \ }}' },
+		exponent: { latex: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
+		infty: { latex: '\\infty', tooltip: 'infinity (inf)', icon: '\\infty' },
+		pi: { latex: '\\pi', tooltip: 'pi (pi)', icon: '\\pi' },
+		vert: { latex: '\\vert', tooltip: 'such that (|)', icon: '|' },
+		cup: { latex: '\\cup', tooltip: 'union (union)', icon: '\\cup' },
+		// leq: { latex: '\\leq', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
+		// geq: { latex: '\\geq', tooltip: 'greater than or equal (\\geq)', icon: '\\geq' },
+		text: { latex: '\\text', tooltip: 'text mode (")', icon: 'Tt' }
 	};
 
 	// Open the toolbar when the mathquill answer box gains focus.
@@ -81,7 +88,7 @@ function createAnswerQuill() {
 					return returnString +
 						"<button id='" + curButton[0] + "-" + answerQuill.attr('id') +
 						"' class='symbol-button btn' " +
-						"' data-cmd='" + curButton[1].cmd +
+						"' data-latex='" + curButton[1].latex +
 						"' data-tooltip='" + curButton[1].tooltip + "'>" +
 						"<span id='icon-" + curButton[0] + "-" + answerQuill.attr('id') + "'>"
 						+ curButton[1].icon +
@@ -102,15 +109,14 @@ function createAnswerQuill() {
 			hide: {delay: 0, effect: "none"},
 			content: function() {
 				var element = $(this);
+				if (element.prop("disabled")) return;
 				if (element.is("[data-tooltip]")) { return element.attr("data-tooltip"); }
 			}
 		});
 
 		$(".symbol-button").on("click", function() {
 			answerQuill.hasFocus = true;
-			var cmd = this.getAttribute("data-cmd");
-			answerQuill.mathField.typedText(cmd);
-			if (cmd.match(/^\\/)) answerQuill.mathField.keystroke('Spacebar');
+			answerQuill.mathField.cmd(this.getAttribute("data-latex"));
 			answerQuill.textarea.focus();
 		});
 	});
