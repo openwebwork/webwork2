@@ -166,6 +166,9 @@ sub new {
 	$safe->reval($globalFileContents);
 	# warn "end the evaluation\n";
 	
+
+	
+	
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!
 	$@ and croak "Could not evaluate global environment file $globalEnvironmentFile: $@";
@@ -214,6 +217,25 @@ sub new {
 			$self->{$name} = \%hash;
 		}
 	}
+	# now that we know the name of the pg_dir we can get the pg VERSION file
+	my $PG_version_file = $self->{'pg_dir'}."/VERSION";
+	
+	# #	We'll get the pg version here and read it into the safe symbol table
+	if (-r $PG_version_file){
+		#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
+		my $PG_version_file_contents = readFile($PG_version_file)//'';
+		$safe->reval($PG_version_file_contents);
+		#print STDERR ("\n contents: $PG_version_file_contents");
+		
+		no strict 'refs';
+		my %symbolHash2 = %{$safe->root."::"};
+		#print STDERR "symbolHash".join(' ', keys %symbolHash2);
+		use strict 'refs';
+		$self->{PG_VERSION}=${*{$symbolHash2{PG_VERSION}}};
+	} else {
+		croak "Cannot read PG version file $PG_version_file";
+	}
+ 
 	
 	bless $self, $class;
 	
