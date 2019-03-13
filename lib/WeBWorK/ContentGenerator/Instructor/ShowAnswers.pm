@@ -210,7 +210,7 @@ sub initialize {
 
 	    $filename .= '.csv';
 
-	    open my $fh, ">", $fullFilename or warn "Unable to open $fullFilename for writing";
+	    open my $fh, ">:utf8", $fullFilename or warn "Unable to open $fullFilename for writing";
 
 	    my $csv = Text::CSV->new({"eol"=>"\n"});
 	    my @columns;

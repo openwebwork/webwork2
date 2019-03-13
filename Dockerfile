@@ -78,16 +78,20 @@ RUN apt-get update \
        mysql-client \
     && rm -fr /var/lib/apt/lists/*
 
+# Warning - when I tried to include XML::Simple near the start of the first "cpanm install" line, there was an error:
+#       Building and testing XMLRPC-Lite-0.717 ... ! Installing XMLRPC::Lite failed. See /root/.cpanm/work/1551887935.125/build.log for details. Retry with --force to force install it.
+# so it was put into a second "cpanm install" line.
+
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
     && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template XMLRPC::Lite Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO \
     && cpanm install XML::Simple \
-	&& rm -fr ./cpanm /root/.cpanm /tmp/*
+    && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
 # Block to include webwork2 in the container, when needed, instead of  getting it from a bind mount.
 #    Uncomment when needed, and set the correct branch name on the following line.
-#ENV WEBWORK_BRANCH=master   # need a valid branch name from https://github.com/openwebwork/webwork2
+#ENV WEBWORK_BRANCH=develop   # need a valid branch name from https://github.com/openwebwork/webwork2
 #RUN curl -fSL https://github.com/openwebwork/webwork2/archive/${WEBWORK_BRANCH}.tar.gz -o /tmp/${WEBWORK_BRANCH}.tar.gz \
 #    && cd /tmp \
 #    && tar xzf /tmp/${WEBWORK_BRANCH}.tar.gz \

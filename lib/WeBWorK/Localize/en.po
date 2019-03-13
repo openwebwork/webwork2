@@ -8733,7 +8733,8 @@ msgstr ""
 "any users answers using the form below and the answers will be colored "
 "according to correctness."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:467
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:464
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
 msgstr ""
 "This is the classlist editor page, where you can view and edit the records "
@@ -8753,6 +8754,7 @@ msgstr ""
 "%1 uses an external authentication system.  You've authenticated through "
 "that system, but aren't allowed to log in to this course."
 
+#
 #. (CGI::b($r->maketext("Guest Login")
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:285
 msgid "_GUEST_LOGIN_MESSAGE"
@@ -8760,6 +8762,7 @@ msgstr ""
 "This course supports guest logins. Click %1 to log into this course as a "
 "guest."
 
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:528
 msgid "_HMWKSETS_EDITOR_DESCRIPTION"
 msgstr ""
@@ -8798,6 +8801,7 @@ msgstr ""
 "in the edit assigned users field contains links which take you to a page "
 "where you can edit what students the set is assigned to."
 
+#
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2094
 msgid "_REQUEST_ERROR"
 msgstr ""
@@ -8807,8 +8811,9 @@ msgstr ""
 "corrected. If you are a professor, please consult the error output below for "
 "more information."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1871
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1873
+#
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1870
 msgid "_USER_TABLE_SUMMARY"
 msgstr ""
 "A table showing all the current users along with several fields of user "

@@ -166,6 +166,9 @@ sub new {
 	$safe->reval($globalFileContents);
 	# warn "end the evaluation\n";
 	
+
+	
+	
 	# if that evaluation failed, we can't really go on...
 	# we need a global environment!
 	$@ and croak "Could not evaluate global environment file $globalEnvironmentFile: $@";
@@ -179,12 +182,16 @@ sub new {
 		${*{${$safe->root."::"}{courseFiles}}}{simpleConfig};
 	use strict 'refs';
 	
-	# read and evaluate the course environment file
-	# if readFile failed, we don't bother trying to reval
-	my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
-	$@ or $safe->reval($courseFileContents);
-	my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
-	$@ or $safe->reval($courseWebConfigContents);
+	# make sure the course environment file actually exists (it might not if we don't have a real course)
+	# before we try to read it
+	if(-r $courseEnvironmentFile){
+		# read and evaluate the course environment file
+		# if readFile failed, we don't bother trying to reval
+		my $courseFileContents = eval { readFile($courseEnvironmentFile) }; # catch exceptions
+		$@ or $safe->reval($courseFileContents);
+		my $courseWebConfigContents = eval { readFile($courseWebConfigFile) }; # catch exceptions
+		$@ or $safe->reval($courseWebConfigContents);
+	}
 	
 	# get the safe compartment's namespace as a hash
 	no strict 'refs';
@@ -210,6 +217,25 @@ sub new {
 			$self->{$name} = \%hash;
 		}
 	}
+	# now that we know the name of the pg_dir we can get the pg VERSION file
+	my $PG_version_file = $self->{'pg_dir'}."/VERSION";
+	
+	# #	We'll get the pg version here and read it into the safe symbol table
+	if (-r $PG_version_file){
+		#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
+		my $PG_version_file_contents = readFile($PG_version_file)//'';
+		$safe->reval($PG_version_file_contents);
+		#print STDERR ("\n contents: $PG_version_file_contents");
+		
+		no strict 'refs';
+		my %symbolHash2 = %{$safe->root."::"};
+		#print STDERR "symbolHash".join(' ', keys %symbolHash2);
+		use strict 'refs';
+		$self->{PG_VERSION}=${*{$symbolHash2{PG_VERSION}}};
+	} else {
+		croak "Cannot read PG version file $PG_version_file";
+	}
+ 
 	
 	bless $self, $class;
 	

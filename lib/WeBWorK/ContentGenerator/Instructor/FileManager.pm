@@ -17,6 +17,7 @@
 package WeBWorK::ContentGenerator::Instructor::FileManager;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
+use utf8;
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
 use File::Path;
@@ -538,7 +539,7 @@ sub Save {
 	if (defined($data)) {
 		$data =~ s/\r\n?/\n/g;  # convert DOS and Mac line ends to unix
 		local (*OUTFILE);
-		if (open(OUTFILE,">$file")) {
+		if (open(OUTFILE,":encoding(UTF-8)",$file)) {
 			eval {print OUTFILE $data; close(OUTFILE)};
 			if ($@) {$self->addbadmessage($r->maketext("Failed to save: [_1]",$@))}
 			   else {$self->addgoodmessage($r->maketext("File saved"))}
@@ -819,7 +820,7 @@ sub NewFile {
 		my $name = $self->r->param('name');
 		if (my $file = $self->verifyName($name,"file")) {
 			local (*NEWFILE);
-			if (open(NEWFILE,">$file")) {
+			if (open(NEWFILE,">:encoding(UTF-8)",$file)) {
 				close(NEWFILE);
 				$self->RefreshEdit("",$name);
 				return;
@@ -925,7 +926,16 @@ sub Upload {
 	if ($type eq 'Text') {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
-		if (open(UPLOAD,">$file")) {print UPLOAD $data; close(UPLOAD)}
+		if (open(UPLOAD,">:encoding(UTF-8)",$file)) {
+			my $backup_data=$data; 
+			my $success= utf8::decode($data); # try to decode as utf8
+			unless ($success){
+				warn "Trying to convert file $file from latin1? to UTF-8";
+				utf8::upgrade($backup_data); # try to convert data from latin1 to utf8.
+				$data=$backup_data;
+			}
+		  print UPLOAD $data; # print massaged data to file. 
+		  close(UPLOAD)}
 		  else {$self->addbadmessage($r->maketext("Can't create file '[_1]': [_2]", $name, $!))}
 	} else {
 		$upload->disposeTo($file);
@@ -1269,12 +1279,13 @@ sub showHTML {
 ##################################################
 #
 # Check if a string is plain text
-# (i.e., doesn't contain four non-regular
-# characters in a row.)
 #
 sub isText {
 	my $string = shift;
-	return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
+
+	#	return $string !~ m/[^\s\x20-\x7E]{4}/;
+	return utf8::is_utf8($string);
+	# return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
 
 ##################################################

@@ -43,7 +43,7 @@ sub main {
 sub add_tags_to_file {
 	my ($new_tags, $file) = @_;
 	
-	my $pgfile = new IO::File($file, '+<:utf8') or do {
+	my $pgfile = new IO::File($file, '+<encoding("UTF-8")') or do {
 		warn "Failed to open file $file for editing: $!\n";
 		warn "New tags will not be written to this file.\n";
 		return;
