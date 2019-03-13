@@ -286,7 +286,7 @@ sub body {
 	    $result .= CGI::br();
 	}
 
-	if ($ce->{pg}{specialPGEnvironmentVars}{MathView}) {
+	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
 	    # Note, 0 is a legal value, so we can't use || in setting this
 	    my $curr_useMathView = $EUser->useMathView ne '' ?
 		$EUser->useMathView : $ce->{pg}->{options}->{useMathView};
@@ -302,7 +302,7 @@ sub body {
 	    $result .= CGI::br();
 	}
 
-	if ($ce->{pg}{specialPGEnvironmentVars}{WirisEditor}) {
+	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS') {
 	    # Note, 0 is a legal value, so we can't use || in setting this
 	    my $curr_useWirisEditor = $EUser->useWirisEditor ne '' ?
 		$EUser->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor};
@@ -318,7 +318,7 @@ sub body {
 	    $result .= CGI::br();
 	}
 
-	if ($ce->{pg}{specialPGEnvironmentVars}{MathQuill}) {
+	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
 	    # Note, 0 is a legal value, so we can't use || in setting this
 	    my $curr_useMathQuill = $EUser->useMathQuill ne '' ?
 		$EUser->useMathQuill : $ce->{pg}->{options}->{useMathQuill};

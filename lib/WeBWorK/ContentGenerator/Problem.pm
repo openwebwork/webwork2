@@ -226,21 +226,21 @@ sub can_useMathView {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathView';
 }
 
 sub can_useWirisEditor {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'WIRIS';
 }
     
 sub can_useMathQuill {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{MathQuill};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathQuill';
 }
     
 
@@ -614,8 +614,8 @@ sub pre_header_initialize {
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
 	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
-	        useWirisEditor     => $ce->{pg}->{options}->{useWirisEditor},
-	        useMathQuill       => $ce->{pg}->{options}->{useMathQuill},
+	        useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
+	        useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,

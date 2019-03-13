@@ -320,22 +320,21 @@ sub can_useMathView {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathView';
 }
 
 sub can_useWirisEditor {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'WIRIS';
 }
-
 
 sub can_useMathQuill {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{MathQuill};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathQuill';
 }
 ################################################################################
 # output utilities
