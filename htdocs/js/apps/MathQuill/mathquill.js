@@ -3683,8 +3683,8 @@ var SupSub = P(MathCommand, function(_, super_) {
   };
   _.text = function() {
     function text(prefix, block) {
-      var l = block && block.text();
-      return block ? prefix + ('(' + (l || ' ') + ')') : '';
+      var l = (block && block.text() !== " ") && block.text();
+      return l ? prefix + (l.length === 1 ? l : '(' + (l || ' ') + ')') : '';
     }
     return text('_', this.sub) + text('^', this.sup);
   };
@@ -3989,7 +3989,8 @@ LatexCmds.nthroot = P(SquareRoot, function(_, super_) {
     return '\\sqrt['+this.ends[L].latex()+']{'+this.ends[R].latex()+'}';
   };
   _.text = function () {
-    var index = this.ends[L].text() === "" ? 2 : this.ends[L].text();
+    if (this.ends[L].text() === "") return 'sqrt('+this.ends[L].text()+')';
+    var index = this.ends[L].text();
     // Navigate up the tree to find the cursor which has the options.
     var cursor =
       (function getCursor(node) { return !('cursor' in node) ? getCursor(node.parent) : node.cursor; })(this);
@@ -4058,7 +4059,7 @@ var Bracket = P(P(MathCommand, DelimsMixin), function(_, super_) {
   };
   _.text = function() {
     return this.sides[L].ch+this.ends[L].text()+this.sides[R].ch;
-  }
+  };
   _.matchBrack = function(opts, expectedSide, node) {
     // return node iff it's a matching 1-sided bracket of expected side (if any)
     return node instanceof Bracket && node.side && node.side !== -expectedSide
@@ -4208,6 +4209,7 @@ bindCharBracketPair('[');
 bindCharBracketPair('{', '\\{');
 LatexCmds.langle = bind(Bracket, L, '&lang;', '&rang;', '\\langle ', '\\rangle ');
 LatexCmds.rangle = bind(Bracket, R, '&lang;', '&rang;', '\\langle ', '\\rangle ');
+LatexCmds.abs = 
 CharCmds['|'] = bind(Bracket, L, '|', '|', '|', '|');
 LatexCmds.lVert = bind(Bracket, L, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
 LatexCmds.rVert = bind(Bracket, R, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');

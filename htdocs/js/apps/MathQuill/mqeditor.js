@@ -24,7 +24,7 @@ function createAnswerQuill() {
 		restrictMismatchedBrackets: true,
 		sumStartsWithNEquals: true,
 		supSubsRequireOperand: true,
-		autoCommands: 'pi sqrt root vert inf union',
+		autoCommands: 'pi sqrt root vert inf union abs',
 		rootsAreExponents: true,
 		maxDepth: 10
 	};
