@@ -80,7 +80,8 @@ RUN apt-get update \
 
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
     && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template XMLRPC::Lite Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO \
-    && rm -fr ./cpanm /root/.cpanm /tmp/*
+    && cpanm install XML::Simple \
+	&& rm -fr ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 

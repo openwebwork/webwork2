@@ -6,6 +6,8 @@ if [ "${1:0:1}" = '-'  ]; then
     set -- apache2 "$@"
 fi
 
+
+
 if [ "$1" = 'apache2' ]; then
     # generate conf files if not exist
     for i in site.conf localOverrides.conf; do
@@ -80,10 +82,13 @@ if [ "$1" = 'apache2' ]; then
     cd $APP_ROOT
     find courses -type f -exec chown www-data:root {} \;
     find courses -type d -exec chown www-data:root {} \;
+    
+    echo "start cpan install XML::Simple"
+    cpan install XML::Simple
     echo "end fixing ownership and permissions"
     # OLD: chown www-data -R $APP_ROOT/courses
     #    but that sometimes caused errors in Docker on Mac OS X when there was a broken symbolic link somewhere in the directory tree being processed
 
 fi
 
-exec "$@"
+ exec "$@"
