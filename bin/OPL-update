@@ -21,6 +21,7 @@ use File::Basename;
 use Cwd;
 use DBI;
 
+
  #(maximum varchar length is 255 for mysql version < 5.0.3.  
  #You can increase path length to  4096 for mysql > 5.0.3)
 
@@ -92,11 +93,8 @@ my $dbh = DBI->connect(
         {
                 PrintError => 0,
                 RaiseError => 1,
-		mysql_enable_utf8mb4 => 1,
         },
 );
-
-$dbh->prepare("SET NAMES 'utf8mb4'")->execute();
 
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
@@ -135,13 +133,13 @@ if($libraryVersion eq '2.5') {
 @create_tables = (
 [$tables{dbsubject}, '
 	DBsubject_id int(15) NOT NULL auto_increment,
-	name varchar(245) NOT NULL,
+	name varchar(255) NOT NULL,
 	KEY DBsubject (name),
 	PRIMARY KEY (DBsubject_id)
 '],
 [$tables{dbchapter}, '
 	DBchapter_id int(15) NOT NULL auto_increment,
-	name varchar(245) NOT NULL,
+	name varchar(255) NOT NULL,
 	DBsubject_id int(15) DEFAULT 0 NOT NULL,
 	KEY DBchapter (name),
 	KEY (DBsubject_id),
@@ -149,7 +147,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{dbsection}, '
 	DBsection_id int(15) NOT NULL auto_increment,
-	name varchar(245) NOT NULL,
+	name varchar(255) NOT NULL,
 	DBchapter_id int(15) DEFAULT 0 NOT NULL,
 	KEY DBsection (name),
 	KEY (DBchapter_id),
@@ -166,7 +164,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{path}, '
 	path_id int(15) NOT NULL auto_increment,
-	path varchar(245) NOT NULL,
+	path varchar(255) NOT NULL,
 	machine varchar(255),
 	user varchar(255),
 	KEY (path),
@@ -212,7 +210,7 @@ if($libraryVersion eq '2.5') {
 	chapter_id int (15) NOT NULL auto_increment,
 	textbook_id int (15),
 	number int(3),
-	name varchar(245) NOT NULL,
+	name varchar(255) NOT NULL,
 	page int(4),
 	KEY (textbook_id, name),
 	KEY (number),
@@ -222,7 +220,7 @@ if($libraryVersion eq '2.5') {
 	section_id int(15) NOT NULL auto_increment,
 	chapter_id int (15),
 	number int(3),
-	name varchar(245) NOT NULL,
+	name varchar(255) NOT NULL,
 	page int(4),
 	KEY (chapter_id, name),
 	KEY (number),
@@ -239,7 +237,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{morelt}, '
 	morelt_id int(15) NOT NULL auto_increment,
-	name varchar(245) NOT NULL,
+	name varchar(255) NOT NULL,
 	DBsection_id int(15),
 	leader int(15), # pgfile_id of the MLT leader
 	KEY (name),
@@ -348,7 +346,7 @@ my ($name,$pgfile,$pgpath);
 
 #### First read in textbook information
 
-if(open(IN, '<:encoding(UTF-8)', "$libraryRoot/Textbooks")) {
+if(open(IN, "$libraryRoot/Textbooks")) {
 	print "Reading in textbook data from Textbooks in the library $libraryRoot.\n";
 	my %textinfo = ( TitleText => '', EditionText =>'', AuthorText=>'');
 	my $bookid = undef;
@@ -447,10 +445,10 @@ my $tagtaxo = [];
 my ($chaplist, $seclist) = ([],[]);
 
 my $canopenfile = 0;
-if(open(IN, '<:encoding(UTF-8)', "$libraryRoot/Taxonomy2")) {
+if(open(IN, "$libraryRoot/Taxonomy2")) {
 	print "Reading in OPL taxonomy from Taxonomy2 in the library $libraryRoot.\n";
 	$canopenfile = 1;
-} elsif(open(IN, '<:encoding(UTF-8)', "$libraryRoot/Taxonomy")) {
+} elsif(open(IN, "$libraryRoot/Taxonomy")) {
 	print "Reading in OPL taxonomy from Taxonomy in the library $libraryRoot.\n";
 	$canopenfile = 1;
 } else {
@@ -518,7 +516,6 @@ if($canopenfile) {
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
 open(OUTF, ">$file") or die "Cannot open $file";
-binmode(OUTF,':encoding(UTF-8)'); 
 print OUTF to_json($tagtaxo,{pretty=>1}) or die "Cannot write to $file";
 close(OUTF);
 print "Saved taxonomy to $file.\n";
