@@ -116,6 +116,27 @@ $preferred_source_of_username = "lis_person_contact_email_primary";
 
 #$preferred_source_of_student_id = "ext_d2l_orgdefinedid";
 
+
+################################################################################
+# LTI - Should an attempt be made to "fix" multi-byte characters in the
+# $r->{paramcache} which would otherwise trigger errors in the Net:OAuth code.
+# Set to 1 to enable the beta code for the fix to this issue.
+#
+# Error message that had been triggered:
+#      Net::OAuth warning: your OAuth message appears to contain some multi-byte
+#      characters that need to be decoded via Encode.pm or a PerlIO layer first.
+#      This may result in an incorrect signature.
+#      at /usr/share/perl5/Net/OAuth/Message.pm line 106.
+#
+# See: https://metacpan.org/pod/release/KGRENNAN/Net-OAuth-0.28/lib/Net/OAuth.pm
+#      http://webwork.maa.org/moodle/mod/forum/discuss.php?d=4484
+#      http://webwork.maa.org/moodle/mod/forum/discuss.php?d=3949
+#      http://webwork.maa.org/moodle/mod/forum/discuss.php?d=3985
+#
+
+# This is NOT turned on by default. Try it if needed, but it may break something (hopefully not).
+#$allow_WW_LTI_code_to_fix_what_appear_as_multi_byte_characters = 1;
+
 ################################################################################
 # LTI Basic Authentication Parameters 
 ################################################################################

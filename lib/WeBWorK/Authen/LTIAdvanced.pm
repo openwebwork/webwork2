@@ -365,6 +365,27 @@ sub authenticate {
     $request_hash{$key} =  $r->param($key); 
     debug("$key->|" . $request_hash{$key} . "|");
   }	
+
+  # Try to fix issues with non-ASCII characters in LTI data
+  #     BUT only when the course environment has allow_WW_LTI_code_to_fix_what_appear_as_multi_byte_characters set to 1
+  # The documentation at https://metacpan.org/pod/release/KGRENNAN/Net-OAuth-0.28/lib/Net/OAuth.pm
+  # says "Per the OAuth spec, when making the signature Net::OAuth first encodes parameters to UTF-8.
+  #       This means that any parameters you pass to Net::OAuth, if they might be outside of ASCII character set,
+  #       should be run through Encode::decode() (or an equivalent PerlIO layer) first to decode them to
+  #       Perl's internal character structure."
+
+  if ( defined($ce->{allow_WW_LTI_code_to_fix_what_appear_as_multi_byte_characters})
+       and ( $ce->{allow_WW_LTI_code_to_fix_what_appear_as_multi_byte_characters} == 1 ) ) {
+    my ( $key, $val );
+    foreach $key ( keys( %request_hash ) ) {
+      $val = $request_hash{$key} ;
+      if ( ($val =~ /[\x80-\xFF]/ and !utf8::is_utf8($val)) ) {
+        debug("Key ${key} : Detected what appears to be a UTF8 multi-byte characters which would have been passed to OAuth and triggered an error. Applying utf8::decode to the relevant value.\n");
+        utf8::decode($request_hash{$key});
+      }
+    }
+  }
+
   my $requestHash = \%request_hash;
 
   # We need to provide the request URL when verifying the OAuth request.
