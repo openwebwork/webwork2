@@ -32,6 +32,23 @@
 # paths to macros and other customizations that are specific to your 
 # WeBWorK site
 
+################################################################################
+# Override setting for mysql. 
+################################################################################
+
+# This sets the way characters are encoded in mysql.  
+# the default is to use latin1.  With version 2.15 we will move to 
+# encoding utf8mb4 which allows the encoding of characters from many languages
+# including chinese, arabic and hebrew.
+
+# The default is $ENABLE_UTF8MB4=1, set in defaults.config
+# Reset this variable to 0 if you have a mysql version before 5.3. 
+#
+
+$ENABLE_UTF8MB4 =1;    # setting this to 1 enables utf8mb4 encoding, setting this to 
+					   # 0 sets this for older mysql (pre 5.3) which cannot
+					   # handle utf8mb4.   
+
 
 ################################################################################
 # Additional mail settings in defaults.conf can be overridden here
@@ -127,9 +144,6 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
 # NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
-#$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
-#$problemLibrary{version}     = "2";
-# uncomment these lines below and comment out the line above if using OPL instead of NPL
 
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
@@ -508,10 +522,10 @@ $options{useOPLdefFiles}=1;
 # Permission overrides (e.g. "admin", "professor", "ta", "student", "guest"
 ################################################################################
 
-# $permissionLevels{show_resource_info} 				= "admin";
-# $permissionLevels{show_pg_info_checkbox}            = "admin";
-# $permissionLevels{show_answer_hash_info_checkbox}	= "admin";
-# $permissionLevels{show_answer_group_info_checkbox}	= "admin";
+ $permissionLevels{show_resource_info} 				= "admin";
+ $permissionLevels{show_pg_info_checkbox}            = "admin";
+ $permissionLevels{show_answer_hash_info_checkbox}	= "admin";
+ $permissionLevels{show_answer_group_info_checkbox}	= "admin";
 
-# $permissionLevels{modify_tags} = "undef";
+ $permissionLevels{modify_tags} = "admin";
 1; #final line of the file to reassure perl that it was read properly.
