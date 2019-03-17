@@ -55,7 +55,7 @@ my $ce = new WeBWorK::CourseEnvironment({
 # decide whether the mysql installation can handle 
 # utf8mb4 and that should be used for the OPL
 
-my $ENABLE_UTF8MB4 = $ce->{mysql_enable_utf8mb4}?1:0;
+my $ENABLE_UTF8MB4 = $ce->{ENABLE_UTF8MB4}?1:0;
 
 
 my $dbh = DBI->connect(
@@ -72,7 +72,9 @@ my $dbh = DBI->connect(
 # get course list
 my @courses = listCourses($ce);
 
-# create tables.  We always redo the statistics table.  
+# create tables.  We always redo the statistics table. 
+
+if ($ENABLE_UTF8MB4){ 
 $dbh->do(<<EOS);
 CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   `course_id` tinyblob NOT NULL,
@@ -89,7 +91,24 @@ CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   KEY `source_file_idx` (`source_file`(245)))
   CHARACTER SET utf8mb4
 EOS
-
+} else {
+$dbh->do(<<EOS);
+CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
+  `course_id` tinyblob NOT NULL,
+  `user_id` tinyblob NOT NULL,
+  `set_id` tinyblob NOT NULL,
+  `due_date` int(11) NOT NULL, 
+  `problem_id` int(11) NOT NULL,
+  `source_file` text,
+  `status` float DEFAULT NULL,
+  `attempted` int(11) DEFAULT NULL,
+  `num_correct` int(11) DEFAULT NULL,
+  `num_incorrect` int(11) DEFAULT NULL,
+  UNIQUE KEY `unique_key_idx` (`course_id`(80),`user_id`(80),`set_id`(80),`due_date`,`problem_id`),
+  KEY `source_file_idx` (`source_file`(245)))
+  CHARACTER SET utf8
+EOS
+}
 $dbh->do(<<EOS);
 DROP TABLE IF EXISTS `OPL_local_statistics`
 EOS
