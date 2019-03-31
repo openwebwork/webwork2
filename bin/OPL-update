@@ -98,18 +98,20 @@ my $dbh = DBI->connect(
         {
             PrintError => 0,
             RaiseError => 1,
-			mysql_enable_utf8mb4 => $ENABLE_UTF8MB4,
+            ($ENABLE_UTF8MB)?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
         },
 );
 
-if ($ENABLE_UTF8MB4) {
-	$dbh->prepare("SET NAMES 'utf8mb4'")->execute();
-}
+my $character_set='';
+$character_set=($ENABLE_UTF8MB4)?"utf8mb4":"utf8";
+$dbh->prepare("SET NAMES '$character_set'")->execute();
 
-print "using utf8mb4 to build OPL database" if $ENABLE_UTF8MB4;
+print "using character set $character_set to build OPL database\n";
 
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
+print "using libraryRoot $libraryRoot\n";
+print "WEBWORK_ROOT $ENV{WEBWORK_ROOT}\n";
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $db_storage_engine = $ce->{problemLibrary_db}->{storage_engine};
 
@@ -274,7 +276,7 @@ for my $tableinfo (@create_tables) {
 	my $tabinit = $tableinfo->[1];
 	my $query = "DROP TABLE IF EXISTS `$tabname`";
 	$dbh->do($query);
-	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
+	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine CHARACTER SET $character_set";
 	$dbh->do($query);
 	if($lib eq 'OPL') {
 		$old_tabname = $tabname;

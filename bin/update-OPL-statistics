@@ -74,7 +74,8 @@ my @courses = listCourses($ce);
 
 # create tables.  We always redo the statistics table. 
 
-if ($ENABLE_UTF8MB4){ 
+my $character_set =  ($ENABLE_UTF8MB40)? "utf8mb4":"utf8";
+
 $dbh->do(<<EOS);
 CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   `course_id` tinyblob NOT NULL,
@@ -88,27 +89,12 @@ CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
   `num_correct` int(11) DEFAULT NULL,
   `num_incorrect` int(11) DEFAULT NULL,
   UNIQUE KEY `unique_key_idx` (`course_id`(80),`user_id`(80),`set_id`(80),`due_date`,`problem_id`),
-  KEY `source_file_idx` (`source_file`(245)))
-  CHARACTER SET utf8mb4
+  KEY `source_file_idx` (`source_file`(245))
+)
+  ENGINE=MyISAM 
+  CHARACTER SET $character_set
 EOS
-} else {
-$dbh->do(<<EOS);
-CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
-  `course_id` tinyblob NOT NULL,
-  `user_id` tinyblob NOT NULL,
-  `set_id` tinyblob NOT NULL,
-  `due_date` int(11) NOT NULL, 
-  `problem_id` int(11) NOT NULL,
-  `source_file` text,
-  `status` float DEFAULT NULL,
-  `attempted` int(11) DEFAULT NULL,
-  `num_correct` int(11) DEFAULT NULL,
-  `num_incorrect` int(11) DEFAULT NULL,
-  UNIQUE KEY `unique_key_idx` (`course_id`(80),`user_id`(80),`set_id`(80),`due_date`,`problem_id`),
-  KEY `source_file_idx` (`source_file`(245)))
-  CHARACTER SET utf8
-EOS
-}
+
 $dbh->do(<<EOS);
 DROP TABLE IF EXISTS `OPL_local_statistics`
 EOS
@@ -120,7 +106,8 @@ CREATE TABLE `OPL_local_statistics` (
   `average_attempts` float DEFAULT NULL,
   `average_status` float DEFAULT NULL,
   PRIMARY KEY (`source_file`(245))
-)  ENGINE=MyISAM
+)  ENGINE=MyISAM 
+   CHARACTER SET $character_set
 EOS
 
 $dbh->commit();
