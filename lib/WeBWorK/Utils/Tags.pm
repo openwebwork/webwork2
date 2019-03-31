@@ -224,12 +224,14 @@ sub new {
 
   while (<IN>) {
   $lineno++;
+  eval {
   SWITCH: {
       if (/#\s*\bKEYWORDS\((.*)\)/i) {
-        my @keyword = keywordcleaner($1);
-		@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
-        $self->{keywords} = [@keyword];
-        $lasttag = $lineno;
+
+			my @keyword = keywordcleaner($1);
+			@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
+			$self->{keywords} = [@keyword];
+			$lasttag = $lineno;
         last SWITCH;
       }
       if (/#\s*\bRESOURCES\((.*)\)/i) {
@@ -319,7 +321,11 @@ sub new {
         $lasttag = $lineno;
         last SWITCH;
       }
-    }}                                               #end of SWITCH and while
+    }  # end of SWITCH
+    }; # end of eval error trap
+	warn "error reading problem $name $!, $@ " if $@;
+    
+    }                                               #end of while
   $self->{textinfo} = $textinfo;
 
   if (defined($self->{DBchapter}) and $self->{DBchapter} eq 'ZZZ-Inserted Text') {

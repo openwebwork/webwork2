@@ -692,7 +692,7 @@ sub generate_hardcopy {
 	# create TeX file  (callback  write_multiuser_tex,  or ??)
 	#######################################
 	
-	my $open_result = open my $FH, ">:utf8", $tex_file_path;
+	my $open_result = open my $FH, ">:encoding(UTF-8)", $tex_file_path;
 	unless ($open_result) {
 		$self->add_errors("Failed to open file '".CGI::code(CGI::escapeHTML($tex_file_path))
 			."' for writing: ".CGI::code(CGI::escapeHTML($!)));
@@ -859,7 +859,7 @@ sub generate_hardcopy_pdf {
 		# read hardcopy.log and report first error
 		my $hardcopy_log = "$temp_dir_path/hardcopy.log";
 		if (-e $hardcopy_log) {
-			if (open my $LOG, "<:utf8", $hardcopy_log) {
+			if (open my $LOG, "<:encoding(UTF-8)", $hardcopy_log) {
 				my $line;
 				while ($line = <$LOG>) {
 					last if $line =~ /^!\s+/;
