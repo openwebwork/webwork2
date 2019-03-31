@@ -269,9 +269,10 @@ $mail{tls_allowed} = 0;
 # When changing from the NPL to the OPL it is important to change the version number
 # because the names of the tables in the database have changed.
 
-#CONFIGURE problemLibrary values in this file. These settings override defaults in default.config
+#RE-CONFIGURE problemLibrary values in the localOverrides.conf file.
+The settings in site.conf are overridden by settings  in default.config
 #################################################
-$problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
+#$problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 ###########################################################
 
 ################################################################################
