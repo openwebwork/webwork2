@@ -67,6 +67,7 @@ RUN apt-get update \
        libuuid-tiny-perl \
        libxml-parser-perl \
        libxml-writer-perl \
+       libxmlrpc-lite-perl \
        libapache2-reload-perl \
        make \
        netpbm \
@@ -85,7 +86,7 @@ RUN apt-get update \
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
     && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO 
     
-RUN cpanm install  XMLRPC::Lite XML::Simple \
+RUN cpanm install XML::Simple \
     && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
@@ -156,8 +157,8 @@ RUN cd $APP_ROOT/webwork2/conf \
       \n<Perl>/' /etc/apache2/conf-enabled/webwork.conf
 
 RUN cd $APP_ROOT/webwork2/ \
-    && chown www-data DATA ../courses htdocs/tmp htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
-    && chmod -R u+w DATA ../courses htdocs/tmp htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic
+    && chown www-data DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
+    && chmod -R u+w DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic
 
 COPY docker-entrypoint.sh /usr/local/bin/
 
