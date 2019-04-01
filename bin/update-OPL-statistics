@@ -74,7 +74,7 @@ my @courses = listCourses($ce);
 
 # create tables.  We always redo the statistics table. 
 
-my $character_set =  ($ENABLE_UTF8MB40)? "utf8mb4":"utf8";
+my $character_set =  ($ENABLE_UTF8MB4)? "utf8mb4":"utf8";
 
 $dbh->do(<<EOS);
 CREATE TABLE IF NOT EXISTS `OPL_problem_user` (
