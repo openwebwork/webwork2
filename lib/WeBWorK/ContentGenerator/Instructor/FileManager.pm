@@ -23,6 +23,8 @@ use WeBWorK::Upload;
 use File::Path;
 use File::Copy;
 use File::Spec;
+use Encode qw(encode_utf8 decode_utf8);
+
 use String::ShellQuote;
 
 =head1 NAME
@@ -463,14 +465,14 @@ sub View {
 	# For files, display the file, if possible.
 	# If the file is an image, display it as an image.
 	#
-	my $data = readFile($file);
-	if (isText($data)) {
+	if (-T $file) { #check that it is a text file
+		my $data = readFile($file);
 		print CGI::pre(showHTML($data));
 	} elsif ($file =~ m/\.(gif|jpg|png)/i) {
 		print CGI::img({src=>$fileManagerURL, border=>0});
 	} else {
 		print CGI::div({class=>"ResultsWithError"},
-			"The file does not appear to be a text file.");
+			"The file $file does not appear to be a text or image file.");
 	}
 }
 
@@ -509,13 +511,14 @@ sub Edit {
 		$self->addbadmessage($r->maketext("You can only edit text files"));
 		$self->Refresh; return;
 	}
-	my $data = readFile($file);
-	if (!isText($data)) {
+	if (-T $file) {
+		my $data = readFile($file);
+		$self->RefreshEdit($data,$filename);
+	} else {
 		$self->addbadmessage($r->maketext("The file does not appear to be a text file"));
-		$self->Refresh; return;
-	}
-
-	$self->RefreshEdit($data,$filename);
+		$self->Refresh; 
+	}	
+	return;
 }
 
 ##################################################
@@ -539,7 +542,7 @@ sub Save {
 	if (defined($data)) {
 		$data =~ s/\r\n?/\n/g;  # convert DOS and Mac line ends to unix
 		local (*OUTFILE);
-		if (open(OUTFILE,":encoding(UTF-8)",$file)) {
+		if (open(OUTFILE,">:encoding(UTF-8)",$file)) {
 			eval {print OUTFILE $data; close(OUTFILE)};
 			if ($@) {$self->addbadmessage($r->maketext("Failed to save: [_1]",$@))}
 			   else {$self->addgoodmessage($r->maketext("File saved"))}
@@ -1283,7 +1286,7 @@ sub showHTML {
 sub isText {
 	my $string = shift;
 
-	#	return $string !~ m/[^\s\x20-\x7E]{4}/;
+	#return $string !~ m/[^\s\x20-\x7E]{4}/;
 	return utf8::is_utf8($string);
 	# return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
