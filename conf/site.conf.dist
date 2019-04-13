@@ -179,7 +179,7 @@ $database_storage_engine = 'myisam';
 $ENABLE_UTF8MB4 =1;    # setting this to 1 enables utf8mb4 encoding, setting this to 
 					   # 0 sets this for older mysql (pre 5.3) which cannot
 					   # handle utf8mb4.   
-
+$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : '';
 # The following two variables must match the GRANT statement run on the mysql server as described above.
 $database_username ="webworkWrite";
 $database_password ="passwordRW";
