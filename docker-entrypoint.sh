@@ -84,8 +84,8 @@ if [ "$1" = 'apache2' ]; then
     cd $APP_ROOT/webwork2
     rm -rf htdocs/tmp/*    # pointers which which have no target shut down the rebuild process.
                            # the tmp directory is rebuilt automatically at the cost of some speed.
-    chown -R www-data logs tmp DATA 
-    chmod -R u+w logs tmp DATA  ../courses
+    chown -R www-data logs tmp DATA htdocs/tmp
+    chmod -R u+w logs tmp DATA  ../courses htdocs/tmp
     cd $APP_ROOT
     find courses -type f -exec chown www-data:root {} \;
     find courses -type d -exec chown www-data:root {} \;
