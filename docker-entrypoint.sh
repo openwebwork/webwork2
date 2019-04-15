@@ -47,11 +47,11 @@ if [ "$1" = 'apache2' ]; then
       cp -R modelCourse $APP_ROOT/courses/
     fi
     # create htdocs/tmp directory if not existing
-    if [! -d "$APP_ROOT/webwork2/htdocs/tmp"]; then
+    if [ ! -d "$APP_ROOT/webwork2/htdocs/tmp" ]; then
       mkdir $APP_ROOT/webwork2/htdocs/tmp
       echo "htdocs/tmp directory created"
     fi
-    chown www-data::root -R $APP_ROOT/webwork2/htdocs/tmp
+    chown www-data:root -R $APP_ROOT/webwork2/htdocs/tmp
       
     # defaultClasslist.lst and adminClasslist.lst files if not existing
     if [ ! -f "$APP_ROOT/courses/defaultClasslist.lst"  ]; then
