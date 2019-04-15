@@ -47,7 +47,7 @@ if [ "$1" = 'apache2' ]; then
       cp -R modelCourse $APP_ROOT/courses/
     fi
     # create htdocs/tmp directory if not existing
-    if [! -d "$APP_ROOT/webwork2/htdocs/tmp"]
+    if [! -d "$APP_ROOT/webwork2/htdocs/tmp"]; then
       mkdir $APP_ROOT/webwork2/htdocs/tmp
       echo "htdocs/tmp directory created"
     fi
