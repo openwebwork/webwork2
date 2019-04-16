@@ -58,6 +58,7 @@ RUN apt-get update \
        libpadwalker-perl \
        libpath-class-perl \
        libphp-serialization-perl \
+       libxml-simple-perl \
        libsoap-lite-perl \
        libsql-abstract-perl \
        libstring-shellquote-perl \
@@ -86,8 +87,8 @@ RUN apt-get update \
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
     && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO 
     
-RUN cpanm install XML::Simple \
-    && rm -fr ./cpanm /root/.cpanm /tmp/*
+##RUN cpanm install XML::Simple \
+#    && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
