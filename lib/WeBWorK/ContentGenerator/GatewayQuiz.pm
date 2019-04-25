@@ -1538,7 +1538,7 @@ sub body {
 					# ref($pg) eq "WeBWorK::PG::Local";
 			} else {
 				my $prefix = sprintf('Q%04d_',$i+1);
-				my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
+				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
 				my @answer_order = @fields;
 				$encoded_ans_string = encodeAnswers( %answersToStore, 
@@ -1667,7 +1667,7 @@ sub body {
 					$answerString =~ s/\t+$/\t/;
 				} else {
 					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
-					my @fields = sort grep {/^$prefix/} (keys %{$self->{formFields}});
+					my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 					foreach ( @fields ) {
 						$answerString .= $self->{formFields}->{$_} . "\t";
 						$scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
@@ -2190,7 +2190,7 @@ sub body {
 				# and print out hidden fields with the current 
 				#    last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
-				my @curr_fields = grep /^$curr_prefix/, keys %{$self->{formFields}};
+				my @curr_fields = grep {/^(?!previous).*$curr_prefix/} keys %{$self->{formFields}};
 				foreach my $curr_field ( @curr_fields ) {
  					foreach ( split(/\0/, $self->{formFields}->{$curr_field} // '') ) {
  						print CGI::hidden({-name=>$curr_field, 
