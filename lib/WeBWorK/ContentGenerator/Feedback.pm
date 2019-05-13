@@ -28,6 +28,8 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 
 use strict;
 use warnings;
+use utf8;
+use Encode qw(encode_utf8 decode_utf8);
 use Data::Dumper;
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
@@ -316,7 +318,7 @@ $emailableURL
 			$msg .= Dumper($ce). "\n\n";
 		}
 
-    $email->body_set($msg);
+    $email->body_set(encode_utf8($msg));
 
 		try {
 			sendmail($email,{transport => $transport});
