@@ -17,6 +17,8 @@
 package WeBWorK::ContentGenerator::Instructor::UserList;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
+# deprecated in favor of using UserList2
+# unless con
 =head1 NAME
 
 WeBWorK::ContentGenerator::Instructor::UserList - Entry point for User-specific
