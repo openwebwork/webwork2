@@ -68,6 +68,7 @@ RUN apt-get update \
        libxml-parser-perl \
        libxml-writer-perl \
        libapache2-reload-perl \
+       libxmlrpc-lite-perl \
        make \
        netpbm \
        preview-latex-style \
@@ -79,7 +80,7 @@ RUN apt-get update \
     && rm -fr /var/lib/apt/lists/*
 
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
-    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template XMLRPC::Lite Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO \
+    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO \
     && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
