@@ -69,6 +69,7 @@ RUN apt-get update \
        libxml-writer-perl \
        libapache2-reload-perl \
        libxmlrpc-lite-perl \
+       libxml-simple-perl \
        make \
        netpbm \
        preview-latex-style \
