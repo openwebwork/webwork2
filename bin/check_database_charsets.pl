@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-my $host = $ENV{ WEBWORK_DB_HOST};
+my $host = $ENV{WEBWORK_DB_HOST};
 my $port = $ENV{WEBWORK_DB_PORT};
 my $database_name = $ENV{WEBWORK_DB_NAME};
 my $database_user = $ENV{WEBWORK_DB_USER};
