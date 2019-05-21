@@ -77,7 +77,7 @@ use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
 use constant VIEW_FORMS => [qw(filter sort edit password import export add delete)];
-
+use Encode qw(decode_utf8 encode_utf8);
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
 		saveEdit => "modify_student_data",
@@ -441,6 +441,8 @@ sub body {
 	
 	for (my $i = 0; $i < @Users; $i++) {
 		my $User = $Users[$i];
+# FIXME  utf8, utf8mb4 debugging codes
+#		warn "UserList2: user  name, ".$User->first_name." ".$User->last_name."\n";
 		# DBFIX we maybe already have the permission level from above (for use in sorting)
 		my $PermissionLevel = $db->getPermissionLevel($User->user_id); # checked
 		
@@ -1745,6 +1747,10 @@ sub recordEditHTML {
 	foreach my $field ($User->NONKEYFIELDS) {
 	        my $fieldName = 'user.' . $User->user_id . '.' . $field,
 		my $fieldValue = $User->$field;
+# FIXME  utf8, utf8mb4 debugging codes
+#		warn "user values ".join(" ", $User->user_id,$User->first_name, $User->last_name)."\n";
+#		warn "variants". join(" ",$User->user_id, decode_utf8($User->first_name), decode_utf8($User->last_name))."\n";
+#		warn "is_utf8 flag, first_name, last_name ".join(" ", utf8::is_utf8($User->first_name)?1:0, utf8::is_utf8($User->last_name)?1:0   )."\n";
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	        next if $properties{access} eq 'hidden';
 		$properties{access} = 'readonly' unless $editMode;
