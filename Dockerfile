@@ -70,6 +70,8 @@ RUN apt-get update \
        libxml-writer-perl \
        libxmlrpc-lite-perl \
        libapache2-reload-perl \
+       libxmlrpc-lite-perl \
+       libxml-simple-perl \
        make \
        netpbm \
        preview-latex-style \
@@ -89,6 +91,7 @@ RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
     
 ##RUN cpanm install XML::Simple \
 #    && rm -fr ./cpanm /root/.cpanm /tmp/*
+
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
