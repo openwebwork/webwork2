@@ -70,6 +70,7 @@ sub new($$$) {
 			PrintError => 0,
 			RaiseError => 1,
 			mysql_enable_utf8mb4 => 1,
+			mysql_enable_utf8 => 1,  # for older versions of DBD-mysql Perl modules
 		},
 	);
 	die $DBI::errstr unless defined $self->{handle};
