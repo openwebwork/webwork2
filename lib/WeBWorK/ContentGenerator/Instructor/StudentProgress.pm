@@ -646,7 +646,7 @@ sub displaySets {
 		                                  index          => $successIndicator,
 		                                  section        => $studentRecord->section,
 		                                  recitation     => $studentRecord->recitation,
-		                                  problemString  => "<pre>$longtwo</pre>",
+		                                  problemString  => "<span dir=\"ltr\"><pre dir=\"ltr\">$longtwo</pre></span>", # RTL mode does not handle the pre well
 		                                  act_as_student => $act_as_student_url,
 		                                  email_address  => $studentRecord->email_address,
 		                                  problemData    => {%h_problemData},
@@ -763,7 +763,7 @@ sub displaySets {
 	}	    
 
 
-	$problem_header = '<pre>'.join("", map {&fourSpaceFill($_)}  @list_problems  ).'</pre>';
+	$problem_header = '<span dir=\"ltr\"><pre dir=\"ltr\">'.join("", map {&fourSpaceFill($_)}  @list_problems  ).'</pre></span>'; # RTL mode does not handle the pre well
 
 # changes for gateways/versioned sets here.  in this case we allow instructors
 # to modify the appearance of output, which we do with a form.  so paste in the
