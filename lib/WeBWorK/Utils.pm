@@ -573,8 +573,26 @@ sub parseDateTime($;$) {
 			#warn "\t\$utc_epoch = $utc_epoch\n";
 
 			# get offset for supplied timezone and utc_epoch
-			my $offset = tz_offset($zone, $utc_epoch) or die "Time zone '$zone' not recognized.\n";
-			#warn "\t\$zone is valid according to Time::Zone (\$offset = $offset)\n";
+			# fall back to $display_tz if that fails
+			#my $offset = tz_offset($zone, $utc_epoch) or die "Time zone '$zone' not recognized.\n";
+
+			my $offset;
+			if( $offset = tz_offset($zone, $utc_epoch) ) {
+			  #warn "\t\$zone is valid according to Time::Zone (\$offset = $offset)\n";
+			} else {
+			  warn "Time zone '$zone' not recognized, falling back to using $display_tz.\n";
+			  $dt = new DateTime(
+			      year      => $year,
+			      month     => $month,
+			      day       => $day,
+			      hour      => $hour,
+			      minute    => $minute,
+			      second    => $second,
+			      time_zone => $display_tz,
+			      );
+			  $epoch = $dt->epoch;
+			  return $epoch;
+			}
 
 			#$epoch = $utc_epoch + $offset;
 			##warn "\t\$epoch = \$utc_epoch + \$offset = $epoch\n";
