@@ -6,11 +6,13 @@ use base qw(Exporter);
 # This file contains the subroutines that build JSON files from the database to help speed up the client side. 
 #
 #  The following files are created:
-#		1. $webwork_htdocs/DATA/library-directory-tree.json  (the directory structure of the library)
-#		2. $webwork_htdocs/DATA/library-subject-tree.json  (the subject/chapter/section struture of the library)
-#		3. 
+#		1. $webwork_htdocs/DATA/LIBNAME-library-directory-tree.json  (the directory structure of the library)
+#		2. $webwork_htdocs/DATA/LIBNAME-library-subject-tree.json  (the subject/chapter/section struture of the library)
+#		3. $webwork_htdocs/DATA/LIBNAME-textbook-tree.json (textbook data)
 
-# This is used to create the file library-directory-tree.json which can be used to load in 
+# The filenames are set via hash values for the current library in conf/defaults.config and/or conf/localOverrides.conf
+
+# This is used to create the file LIBNAME-library-directory-tree.json which can be used to load in
 # directory information for the OPL.  It writes the file as a JSON of directories to be easily loaded. 
 
 use strict;
@@ -24,6 +26,10 @@ use JSON;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(build_library_directory_tree build_library_subject_tree build_library_textbook_tree);
+
+# what library are we handling, now is first argument of the function
+my $myLib = shift;
+
 
 ### Data for creating the database tables
 
@@ -65,16 +71,17 @@ my %NPLtables = (
 
 
 
-
-
 sub build_library_directory_tree {
+	# what library are we handling, now is first argument of the function
+	my $myLib = shift;
+
 	my $ce = shift;
 
 	print "Creating the Directory Tree\n";
-	my $libraryRoot = $ce->{problemLibrary}->{root};
+	my $libraryRoot = $ce->{problemLibrary}->{$myLib}->{root};
 	$libraryRoot =~ s|/+$||;
 
-	my $libraryVersion = $ce->{problemLibrary}->{version};
+	my $libraryVersion = $ce->{problemLibrary}->{$myLib}->{version};
 
 	my($filename, $directories) = fileparse($libraryRoot);
 
@@ -82,7 +89,12 @@ sub build_library_directory_tree {
 	push(@dirArray,buildTree($libraryRoot));
 
 	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-	my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
+
+	# Determine the proper json file names to use for THIS library via the
+	# settings in conf/defaults.config and/or conf/localOverrides.conf
+	my $jsonFile = $ce->{problemLibrary}->{$myLib}->{tree};
+
+	my $file = "$webwork_htdocs/DATA/${jsonFile}";
 
 	# use a variable for the file handle
 	my $OUTFILE;
@@ -144,15 +156,30 @@ sub buildTree {
 
 
 sub build_library_subject_tree {
-	my ($ce,$dbh) = @_;
+	# what library are we handling, now is first argument of the function
+	my ($myLib,$ce,$dbh) = @_;
 
-	my $libraryRoot = $ce->{problemLibrary}->{root};
+	my $libraryRoot = $ce->{problemLibrary}->{$myLib}->{root};
 	$libraryRoot =~ s|/+$||;
-	my $libraryVersion = $ce->{problemLibrary}->{version};
+	my $libraryVersion = $ce->{problemLibrary}->{$myLib}->{version};
 
 
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
+	# Modify table names for per-library tables
+	my @special_tables = qw( pgfile pgfile_keyword pgfile_problem );
+	my $tmp1; my $tblName;
+	foreach $tmp1 ( @special_tables ) {
+	  $tblName = $tables{$tmp1};
+	  #print "old table name $tblName\n";
+	  if ( $libraryVersion eq '2.5') {
+	    $tblName =~ s/OPL/$myLib/;
+	  } else {
+	    $tblName =~ s/NPL/$myLib/;
+	  }
+	  #print "new table name $tblName\n";
+	  $tables{$tmp1} = $tblName;
+	}
 
 	my $selectClause = "select subj.name, ch.name, sect.name, path.path,pg.filename from `$tables{dbsection}` AS sect "
 		."JOIN `$tables{dbchapter}` AS ch ON ch.DBchapter_id = sect.DBchapter_id "
@@ -272,7 +299,12 @@ sub build_library_subject_tree {
 	print "\n";
 
 	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-	my $file = "$webwork_htdocs/DATA/library-subject-tree.json";
+
+	# Determine the proper json file names to use for THIS library via the
+	# settings in conf/defaults.config and/or conf/localOverrides.conf
+	my $jsonFile = $ce->{problemLibrary}->{$myLib}->{subj};
+
+	my $file = "$webwork_htdocs/DATA/${jsonFile}";
 
 	# use a variable for the file handle
 	my $OUTFILE;
@@ -292,15 +324,29 @@ sub build_library_subject_tree {
 }
 
 sub build_library_textbook_tree {
+	# what library are we handling, now is first argument of the function
+	my ($myLib,$ce,$dbh) = @_;
 
-	my ($ce,$dbh) = @_;
-
-	my $libraryRoot = $ce->{problemLibrary}->{root};
+	my $libraryRoot = $ce->{problemLibrary}->{$myLib}->{root};
 	$libraryRoot =~ s|/+$||;
-	my $libraryVersion = $ce->{problemLibrary}->{version};
+	my $libraryVersion = $ce->{problemLibrary}->{$myLib}->{version};
 
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
+	# Modify table names for per-library tables
+	my @special_tables = qw( pgfile pgfile_keyword pgfile_problem );
+	my $tmp1; my $tblName;
+	foreach $tmp1 ( @special_tables ) {
+	  $tblName = $tables{$tmp1};
+	  #print "old table name $tblName\n";
+	  if ( $libraryVersion eq '2.5') {
+	    $tblName =~ s/OPL/$myLib/;
+	  } else {
+	    $tblName =~ s/NPL/$myLib/;
+	  }
+	  #print "new table name $tblName\n";
+	  $tables{$tmp1} = $tblName;
+	}
 
 	my $selectClause = "SELECT pg.pgfile_id from `$tables{path}` as path "
 		."LEFT JOIN `$tables{pgfile}` AS pg ON pg.path_id=path.path_id "
@@ -376,7 +422,12 @@ sub build_library_textbook_tree {
 	print "\n";
 
 	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-	my $file = "$webwork_htdocs/DATA/textbook-tree.json";
+
+	# Determine the proper json file names to use for THIS library via the
+	# settings in conf/defaults.config and/or conf/localOverrides.conf
+	my $jsonFile = $ce->{problemLibrary}->{$myLib}->{text};
+
+        my $file = "$webwork_htdocs/DATA/${jsonFile}";
 
 	# use a variable for the file handle
 	my $OUTFILE;

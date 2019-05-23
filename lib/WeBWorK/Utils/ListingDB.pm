@@ -44,7 +44,8 @@ BEGIN
 	&createListing &updateListing &deleteListing &getAllChapters
 	&getAllSections &searchListings &getAllListings &getSectionListings
 	&getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
-	&getDBListings &countDBListings &getTables &getDBextras
+	&getDBListings &countDBListings &getTables &getDBextras &getAllLibraries
+	&getAllLibrariesNameHash
 	);
 	%EXPORT_TAGS		=();
 	@EXPORT_OK		=qw();
@@ -66,6 +67,9 @@ my %OPLtables = (
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
  pgfile_problem => 'OPL_pgfile_problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
 
 
@@ -84,19 +88,40 @@ my %NPLtables = (
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
  pgfile_problem => 'NPL-pgfile-problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
 
 
 sub getTables {
 	my $ce = shift;
-	my $libraryRoot = $ce->{problemLibrary}->{root};
+	my $myLib = shift; # Library code name (as used in top level of %problemLibrary)
+
 	my %tables;
 
-       if($ce->{problemLibrary}->{version} == 2.5) {
-		%tables = %OPLtables;
-	  } else {
+	if( $ce->{problemLibrary}->{$myLib}->{version} eq "2" ) {
 		%tables = %NPLtables;
-	  }
+	} else {
+		%tables = %OPLtables;
+	}
+
+	# Modify table names for per-library tables
+	my @special_tables = qw( pgfile pgfile_keyword pgfile_problem );
+	my $tmp1; my $tblName;
+	foreach $tmp1 ( @special_tables ) {
+	    next if ( $myLib eq "" ); # Skip this
+	    $tblName = $tables{$tmp1};
+	    #print "old table name $tblName\n";
+	    if ( $ce->{problemLibrary}->{$myLib}->{version} eq "2" ) {
+	        $tblName =~ s/NPL/${myLib}/;
+	    } else {
+	        $tblName =~ s/OPL/${myLib}/;
+	    }
+	    #print "new table name $tblName\n";
+	    $tables{$tmp1} = $tblName;
+	}
+
 	return %tables;
 }
 
@@ -200,12 +225,26 @@ Out put is an array reference: [MO, static]
 
 sub getDBextras {
 	my $r = shift;
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
 	my $path = shift;
-	my %tables = getTables($r->ce);
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
 	my $dbh = getDB($r->ce);
 	my ($mo, $static)=(0,0);
 
-	$path =~ s|^Library/||;
+	# The old code assumed that the path header is "Library/" which
+	# is correct for the main OPL, but not for other libraries.
+	# OLD:
+	#      $path =~ s|^Library/||;
+	# NEW:
+	$path =~ s|^${reqLib}/||;
+
 	my $filename = basename $path;
 	$path = dirname $path;
 	my $query = "SELECT pgfile.MO, pgfile.static FROM `$tables{pgfile}` pgfile, `$tables{path}` p WHERE p.path=\"$path\" AND pgfile.path_id=p.path_id AND pgfile.filename=\"$filename\"";
@@ -233,15 +272,23 @@ consistent with the DB subject, chapter, section selected.
 
 sub getDBTextbooks {
 	my $r = shift;
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
 	my $thing = shift || 'textbook';
 	my $dbh = getDB($r->ce);
-	my %tables = getTables($r->ce);
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
 	my $extrawhere = '';
 	# Handle DB* restrictions
 	my @search_params=();
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
-	my $sec = $r->param('library_sections') || "";
+	my $sec =  $r->param('library_sections') || "";
 	if($subj) {
 		$subj =~ s/'/\\'/g;
 		$extrawhere .= " AND t.name = ?\n";
@@ -327,6 +374,58 @@ sub getDBTextbooks {
 	}
 }
 
+=item getAllLibraries($r)
+Returns an array of Library names                                             
+                                                                                
+$r is the Apache request object
+                                                                                
+=cut                                                                            
+
+sub getAllLibraries {
+	my $r = shift;
+
+	my $libLookupTable = $r->{ce}->{problemLibrary}->{LookupTable};
+
+	# The keys are the names used for the symbolic links to the library
+	# the value for a key is the 
+
+	my @results = keys( %$libLookupTable );
+
+	# Fixme - reorder ???
+	# Fixme - want a "human" name rather than symbolic link name
+	
+	return @results;
+}
+
+=item getAllLibrariesNameHash($r)
+Returns an hash of Library code names to long names
+
+$r is the Apache request object
+
+=cut
+
+sub getAllLibrariesNameHash {
+        my $r = shift;
+
+        my $libLookupTable = $r->{ce}->{problemLibrary}->{LookupTable};
+
+        # The keys are the names used for the symbolic links to the library
+        # the value for a key is the
+
+	my %result;
+
+	my $k;
+	my $code;
+	foreach $k ( keys( %$libLookupTable ) ) {
+	    $code = $r->{ce}->{problemLibrary}->{LookupTable}->{$k};
+	    $result{$k} = $r->{ce}->{problemLibrary}->{$code}->{name};
+	}
+
+	$result{"All Libraries"} = "All Libraries";
+
+        return %result;
+}
+
 =item getAllDBsubjects($r)
 Returns an array of DBsubject names                                             
                                                                                 
@@ -336,7 +435,14 @@ $r is the Apache request object
 
 sub getAllDBsubjects {
 	my $r = shift;
-	my %tables = getTables($r->ce);
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
 	my @results=();
 	my @row;
 	my $query = "SELECT DISTINCT name, DBsubject_id FROM `$tables{dbsubject}` ORDER BY DBsubject_id";
@@ -347,8 +453,37 @@ sub getAllDBsubjects {
 	while (@row = $sth->fetchrow_array()) {
 		push @results, $row[0];
 	}
-	# @results = sortByName(undef, @results);
-	return @results;
+
+	# When no current library is set, or "All Libraries" was set and
+	# changed to an empty string - list ALL subjects from ALL libraries.
+	if ( !defined($reqLib) || ( $reqLib eq "" ) ) {
+	    #@results = sortByName(undef, @results);
+	    return @results;
+	}
+
+	# Get count of problems to determine if the subject should be listed.
+	my $tmp1;
+	my $savedCount;
+	my @nonEmptyResults; # Results which are not empty
+
+	foreach $tmp1 ( @results ) {
+
+	    # Set the "param"eter - needs special code when this is a WebworkXMLRPC object
+	    my $toSet = 'library_subjects';
+	    if ( ref($r) eq "WebworkXMLRPC" ) {
+		$r->setParam($toSet, $tmp1);
+	    } else {
+		$r->param($toSet => "$tmp1");
+	    }
+
+	    $savedCount = countDBListings( $r );
+	    #warn "In getAllDBsubjects $tmp1 savedCount = $savedCount";
+	    push( @nonEmptyResults, $tmp1) if ( $savedCount > 0 );
+	}
+
+	#@results = sortByName(undef, @results);
+	#return @results;
+	return @nonEmptyResults;
 }
 
 
@@ -361,7 +496,14 @@ $r is the Apache request object
 
 sub getAllDBchapters {
 	my $r = shift;
-	my %tables = getTables($r->ce);
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
@@ -379,8 +521,36 @@ sub getAllDBchapters {
 	my $all_chaps_ref = $dbh->selectall_arrayref($query, {},$subject);
  
  	my @results = map { $_->[0] } @{$all_chaps_ref};
+
+	# When no current library is set, or "All Libraries" was set and
+	# changed to an empty string - list ALL chapters from ALL libraries.
+	if ( !defined($reqLib) || ( $reqLib eq "" ) ) {
+	    #@results = sortByName(undef, @results);
+	    return @results;
+	}
+
+	# Get count of problems to determine if the chapter should be listed.
+	my $tmp1;
+	my $savedCount;
+	my @nonEmptyResults; # Results which are not empty
+	foreach $tmp1 ( @results ) {
+
+	    # Set the "param"eter - needs special code when this is a WebworkXMLRPC object
+	    my $toSet = 'library_chapters';
+	    if ( ref($r) eq "WebworkXMLRPC" ) {
+		$r->setParam($toSet, $tmp1);
+	    } else {
+		$r->param($toSet => "$tmp1");
+	    }
+
+	    $savedCount = countDBListings( $r );
+	    #warn "In getAllDBchapters $tmp1 savedCount = $savedCount";
+	    push( @nonEmptyResults, $tmp1) if ( $savedCount > 0 );
+	}
+
 	#@results = sortByName(undef, @results);
-	return @results;
+	#return @results;
+	return @nonEmptyResults;
 }
 
 =item getAllDBsections($r)                                            
@@ -392,7 +562,14 @@ $r is the Apache request object
 
 sub getAllDBsections {
 	my $r = shift;
-	my %tables = getTables($r->ce);
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $chapter = $r->param('library_chapters');
@@ -414,8 +591,35 @@ sub getAllDBsections {
 	my $all_sections_ref = $dbh->selectall_arrayref($query, {},$subject, $chapter);
 
 	my @results = map { $_->[0] } @{$all_sections_ref};
+
+	# When no current library is set, or "All Libraries" was set and
+	# changed to an empty string - list ALL subjects from ALL libraries.
+	if ( !defined($reqLib) || ( $reqLib eq "" ) ) {
+	    #@results = sortByName(undef, @results);
+	    return @results;
+	}
+
+	# Get count of problems to determine if the section should be listed.
+	my $tmp1;
+	my $savedCount;
+	my @nonEmptyResults; # Results which are not empty
+	foreach $tmp1 ( @results ) {
+	    # Set the "param"eter - needs special code when this is a WebworkXMLRPC object
+	    my $toSet = 'library_sections';
+	    if ( ref($r) eq "WebworkXMLRPC" ) {
+		$r->setParam($toSet, $tmp1);
+	    } else {
+		$r->param($toSet => "$tmp1");
+	    }
+
+	    $savedCount = countDBListings( $r );
+	    #warn "In getAllDBsections $tmp1 savedCount = $savedCount";
+	    push( @nonEmptyResults, $tmp1) if ( $savedCount > 0 );
+	}
+
 	#@results = sortByName(undef, @results);
-	return @results;
+	#return @results;
+	return @nonEmptyResults;
 }
 
 =item getDBSectionListings($r)                             
@@ -433,9 +637,48 @@ Here, we search on all known fields out of r
 
 sub getDBListings {
 	my $r = shift;
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+	if ( $reqLib eq "" ) {
+	    # When called via instructorXMLHandler from JavaScript
+	    # there can be a difference between the "param" value and the "hash" value.
+	    # and we want the non-empty value
+	    $reqLib  = $r->{library_name};
+	}
+
+	# Need to handle case of "All Libraries" which should not get passed 
+	# into this function, but would cause an error below.
+	if ( $reqLib eq "All Libraries" ) {
+	    my $tmp1amcounter = shift;  # 0-1 if I am a counter.
+	    if ( $tmp1amcounter ) {
+		# If we got here - report 100000 results - to be seen as an unreasonable result
+		return( 100000 );
+	    } else {
+		# If we got here - report empty array of results
+		my @tmp1 = (); # no results
+		return @tmp1 ;
+	    }
+	}
+	if ( $reqLib eq "" ) {
+	    my $tmp1amcounter = shift;  # 0-1 if I am a counter.
+	    if ( $tmp1amcounter ) {
+		# If we got here - report 1000000 results - to be seen as an unreasonable result
+		return( 1000000 );
+	    } else {
+		# If we got here - report empty array of results
+		my @tmp1 = (); # no results
+		return @tmp1 ;
+	    }
+	}
+
+	my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
 	my $amcounter = shift;  # 0-1 if I am a counter.
 	my $ce = $r->ce;
-	my %tables = getTables($ce);
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
@@ -562,21 +805,282 @@ sub getDBListings {
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id= ? ";
 		my $row = $dbh->selectrow_arrayref($query,{},$pgid);
 
-		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3], 'static' => $row->[4], 'MO' => $row->[5] };
+		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3], 'static' => $row->[4], 'MO' => $row->[5], 'libCode' => "$libCode" };
 		
 	}
 	return @results;
 }
 
+# special return codes:
+# -200 = all libraries, do not save data
+# -100 = should not save data
+# -1   = should save count after it is found
+
+sub requestSavedCount {
+    my $r = shift;
+
+    # Find library (directory) name and then lookup the code name
+    my $reqLib  = $r->param('library_name');
+    if ( $reqLib eq "" ) {
+	# When called via instructorXMLHandler from JavaScript
+	# there can be a difference between the "param" value and the "hash" value.
+	# and we want the non-empty value
+	$reqLib  = $r->{library_name};
+    }
+
+    # Need to handle case of "All Libraries" which should not get passed
+    # into this function, but would cause an error below.
+    if ( ( $reqLib eq "All Libraries" ) || ( $reqLib eq "" ) ) {
+	return( -200 );
+    }
+
+    my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+    # Now depends on the $libCode
+    my %tables = getTables($r->ce, $libCode);
+    my $ce = $r->ce;
+
+    my $keywords = $r->param('library_keywords') || "";
+    if($keywords) {
+	return( -100 ); # No saved counts for this case
+    }
+
+    for my $j (qw( textbook textchapter textsection )) {
+	my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
+	$foo =~ s/^\s*\d+\.\s*//;
+	if($foo) {
+	    return( -100 ); # No saved counts for this case
+	}
+    }
+
+    # Next could be an array, an array reference, or nothing
+    my @levels = $r->param('level');
+    if(scalar(@levels) == 1 and ref($levels[0]) eq 'ARRAY') {
+	@levels = @{$levels[0]};
+    }
+    @levels = grep { defined($_) && m/\S/ } @levels;
+    if(scalar(@levels)) {
+	return( -100 ); # No saved counts for this case
+    }
+
+    my $subj = $r->param('library_subjects') || "";
+    my $chap = $r->param('library_chapters') || "";
+    my $sec  = $r->param('library_sections') || "";
+
+    my $dbh = getDB($ce);
+    my $cnt_table = $tables{cnt_dbsubject};
+    my $query;
+
+    my $typewhere = '';
+    my $extrawhere = '';
+    my @select_parameters=();
+
+    if($subj) {
+	$cnt_table = $tables{cnt_dbsubject};
+	$typewhere =  "AND dbsj.DBsubject_id = cnt.DBsubject_id ";
+	$extrawhere .= " AND dbsj.name= ? ";
+	push @select_parameters, $subj;
+    }
+    if($chap) {
+	$cnt_table = $tables{cnt_dbchapter};
+	$typewhere = " AND dbc.DBchapter_id = cnt.DBchapter_id ";
+	$extrawhere .= " AND dbc.name= ? ";
+	push @select_parameters, $chap;
+    }
+    if($sec) {
+	$cnt_table = $tables{cnt_dbsection};
+	$typewhere = " AND dbsc.DBsection_id = cnt.DBsection_id ";
+	$extrawhere .= " AND dbsc.name= ? ";
+	push @select_parameters, $sec;
+    }
+    push @select_parameters, $libCode;
+
+    my $query = "SELECT count from `$cnt_table` cnt,
+                                   `$tables{dbsection}` dbsc,
+                                   `$tables{dbchapter}` dbc,
+                                   `$tables{dbsubject}` dbsj
+			WHERE dbsj.DBsubject_id = dbc.DBsubject_id  AND
+			       dbc.DBchapter_id = dbsc.DBchapter_id 
+                               $typewhere $extrawhere AND cnt.libcode = ?";
+
+    $query =~ s/\n/ /g;
+    #warn "no text info: ", $query;
+    #warn "params: ", join(" | ",@select_parameters);
+
+    my $sth = $dbh->prepare_cached( $query );
+    if ( !defined($sth) ) {
+	warn "Couldn't prepare statement: " . $dbh->errstr;
+	return(-300);
+    }
+
+    my $rv = $sth->execute(@select_parameters);
+    if ( !defined($rv) ) {
+	warn "Couldn't execute statement: " . $sth->errstr;
+	return(-300);
+    }
+
+    if ($sth->rows == 0) {
+	#warn "No record found";
+	return(-1);
+    }
+    my @data = $sth->fetchrow_array();
+    return( $data[0] );
+}
+
+# Get the id
+sub safe_get_id {
+    my $dbh = shift;
+    my $tablename = shift;
+    my $idname = shift;
+    my $whereclause = shift;
+    my $wherevalues = shift;
+
+    my $query = "SELECT $idname FROM `$tablename` ".$whereclause;
+    my $sth = $dbh->prepare($query);
+    $sth->execute(@$wherevalues);
+    my $idvalue;
+    my @row;
+    unless(@row = $sth->fetchrow_array()) {
+	return -1;
+    }
+    $idvalue = $row[0];
+    return($idvalue);
+}
+
+
+sub saveCount {
+    my $r = shift;
+    my $countToSave = shift; # count found
+
+    # Find library (directory) name and then lookup the code name
+    my $reqLib  = $r->param('library_name');
+    if ( $reqLib eq "" ) {
+	# When called via instructorXMLHandler from JavaScript
+	# there can be a difference between the "param" value and the "hash" value.
+	# and we want the non-empty value
+	$reqLib  = $r->{library_name};
+    }
+
+    # Need to handle case of "All Libraries" which should not get passed
+    # into this function, but would cause an error below.
+    if ( ( $reqLib eq "All Libraries" ) || ( $reqLib eq "" ) ) {
+	return; # Do not save counts for this case
+    }
+
+    my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+    # Now depends on the $libCode
+    my %tables = getTables($r->ce, $libCode);
+    my $ce = $r->ce;
+
+    my $keywords = $r->param('library_keywords') || "";
+    if($keywords) {
+	return; # Do not save counts for this case
+    }
+
+    for my $j (qw( textbook textchapter textsection )) {
+	my $foo = $r->param(LIBRARY_STRUCTURE->{$j}{name}) || '';
+	$foo =~ s/^\s*\d+\.\s*//;
+	if($foo) {
+	    return; # Do not save counts for this case
+	}
+    }
+
+    # Next could be an array, an array reference, or nothing
+    my @levels = $r->param('level');
+    if(scalar(@levels) == 1 and ref($levels[0]) eq 'ARRAY') {
+	@levels = @{$levels[0]};
+    }
+    @levels = grep { defined($_) && m/\S/ } @levels;
+    if(scalar(@levels)) {
+	return; # Do not save counts for this case
+    }
+
+    my $subj = $r->param('library_subjects') || "";
+    my $chap = $r->param('library_chapters') || "";
+    my $sec  = $r->param('library_sections') || "";
+
+    my $dbh = getDB($ce);
+    my $cnt_table = $tables{cnt_dbsubject};
+    my $query;
+
+    my @insert_parameters=( "$libCode" ); # Always the first parameter
+
+    my $id_to_use = -1;
+
+    my $new_dbsubj_id;
+    my $new_dbchap_id;
+    my $new_dbsect_id;
+
+    if($subj) {
+	$new_dbsubj_id = safe_get_id($dbh, $tables{dbsubject}, 'DBsubject_id',
+				     qq(WHERE name = ?), ["$subj"] );
+	$id_to_use = $new_dbsubj_id;
+	$cnt_table = $tables{cnt_dbsubject};
+    }
+    if($chap) {
+	$new_dbchap_id = safe_get_id($dbh, $tables{dbchapter}, 'DBchapter_id',
+				     qq(WHERE name = ? and DBsubject_id = ?), ["$chap", $new_dbsubj_id] );
+	$id_to_use = $new_dbchap_id;
+	$cnt_table = $tables{cnt_dbchapter};
+    }
+    if($sec) {
+	$new_dbsect_id = safe_get_id($dbh, $tables{dbsection}, 'DBsection_id',
+				     qq(WHERE name = ? and DBchapter_id = ?), ["$sec", $new_dbchap_id] );
+	$id_to_use = $new_dbsect_id;
+	$cnt_table = $tables{cnt_dbsection};
+    }
+    push( @insert_parameters, $id_to_use, $countToSave );
+
+#    my $query = "INSERT INTO `$cnt_table` VALUES (?,?,?)";
+    my $query = "REPLACE INTO `$cnt_table` VALUES (?,?,?)";
+
+    $query =~ s/\n/ /g;
+    #warn "no text info: ", $query;
+    #warn "params: ", join(" | ",@insert_parameters);
+
+    my $sth = $dbh->prepare_cached( $query );
+    if ( !defined($sth) ) {
+	warn "Couldn't prepare statement: " . $dbh->errstr;
+	return;
+    }
+
+    my $rv = $sth->execute(@insert_parameters);
+    if ( !defined($rv) ) {
+	warn "Couldn't execute statement: " . $sth->errstr;
+	return;
+    }
+}
+
 sub countDBListings {
-	my $r = shift;
-	return (getDBListings($r,1));
+    my $r = shift;
+    my $fromSaved = -1;
+    $fromSaved = requestSavedCount($r);
+    if ( $fromSaved >= 0 ) {
+	#warn "fromSaved = $fromSaved";
+	return( $fromSaved );
+    } else {
+	#warn "fromSaved = $fromSaved";
+	my $countedNow = getDBListings($r,1);
+	#warn "countedNow = $countedNow";
+	if ( $fromSaved == -1 ) {
+	    saveCount($r, $countedNow);
+	}
+	return( $countedNow );
+    }
 }
 
 sub getMLTleader {
 	my $r = shift;
 	my $mltid = shift;
-	my %tables = getTables($r->ce);
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
 	my $dbh = getDB($r->ce);
 	my $query = "SELECT leader FROM `$tables{morelt}` WHERE morelt_id=\"$mltid\"";
 	my $row = $dbh->selectrow_arrayref($query);
@@ -787,8 +1291,17 @@ sub getMLTleader {
 sub getSectionListings	{
 	#print STDERR "ListingDB::getSectionListings(chapter,section)\n";
 	my $r = shift;
+
+	# Find library (directory) name and then lookup the code name
+	my $reqLib  = $r->param('library_name');
+        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+
+	# Now depends on the $libCode
+	my %tables = getTables($r->ce, $libCode);
+
+
 	my $ce = $r->ce;
-	my $version = $ce->{problemLibrary}->{version} || 1;
+	my $version = $ce->{problemLibrary}->{$libCode}->{version} || 1;
 	if($version => 2) { return(getDBListings($r, 0))}
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
@@ -818,7 +1331,6 @@ sub getSectionListings	{
 	FROM classify c, pgfiles p
 	WHERE ? ? c.pgfiles_id = p.pgfiles_id";
 	my $dbh = getDB($ce);
-	my %tables = getTables($ce);
 	my $sth = $dbh->prepare($query);
 	
 	$sth->execute($chapstring,$secstring);
@@ -846,13 +1358,25 @@ sub getSectionListings	{
 #  1 = all ok
 #
 # not implemented yet
+#   currently hacked up to force to "OPL" as it does not get the request object
 sub deleteListing {
 	my $ce = shift;
 	my $listing_id = shift;
 	#print STDERR "ListingDB::deleteListing(): listing == '$listing_id'\n";
 
 	my $dbh = getDB($ce);
-	my %tables = getTables($ce);
+
+# FIXME
+#	# Find library (directory) name and then lookup the code name
+#	my $reqLib  = $r->param('library_name');
+#        my $libCode = $r->{ce}->{problemLibrary}->{LookupTable}->{$reqLib};
+#
+#	# Now depends on the $libCode
+#	my %tables = getTables($r->ce, $libCode);
+
+# FIXME	- hack to OPL
+
+	my %tables = getTables($ce, "OPL");
 
 	return undef;
 }
@@ -904,6 +1428,7 @@ hash has the following format:
 
 Written by Bill Ziemer.
 Modified by John Jones.
+Modifed by Nathan Wallach to add support for multiple libraries.
 
 =cut
 

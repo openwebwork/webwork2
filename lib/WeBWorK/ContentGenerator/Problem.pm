@@ -2183,14 +2183,18 @@ sub output_JS{
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		# Determine the proper taxonomy file to use
+		my $tagging_from = "OPL"; # FIXME, should come from settings
+		my $taxofile = $ce->{problemLibrary}->{$tagging_from}->{taxo};
+
+		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/${taxofile}') ) {
 			my $taxo = '[]';
 			$taxo = join("", <TAXONOMY>);
 			close TAXONOMY;
 			print qq!\n<script>var taxo = $taxo ;</script>!;
 		} else {
 			print qq!\n<script>var taxo = [] ;</script>!;
-			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+			print qq!\n<script>alert('Could not load the ${tagging_from} taxonomy from the server.');</script>!;
 		}
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 	}

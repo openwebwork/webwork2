@@ -182,7 +182,8 @@ $dbh->commit();
 
 # check to see if the global statistics file exists and if it does, upload it.
 
-my $global_sql_file = $ce->{problemLibrary}{root}.'/OPL_global_statistics.sql';
+# FIXME - currently hardwired for OPL
+my $global_sql_file = $ce->{problemLibrary}{OPL}{root}.'/OPL_global_statistics.sql';
 
 if (-e $global_sql_file) {
 
@@ -201,6 +202,9 @@ DROP TABLE IF EXISTS OPL_global_statistics;
 EOS
   $dbh->commit();
 
+  # Added NSW
+  $dbh->disconnect();
+
   $dbuser = shell_quote($dbuser);
   $dbpass = shell_quote($dbpass);
   $db = shell_quote($db);
@@ -209,6 +213,8 @@ EOS
 
   `$mysql_command --host=$host --port=$port --user=$dbuser --password=$dbpass $db < $global_sql_file`;
 
+} else {
+  $dbh->disconnect();
 }
 
 1;

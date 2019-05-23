@@ -936,11 +936,11 @@ sub updateSetting {
 
 	ce
 	db
-	params
+	param
 	authz
 	authen
 	maketext 
-
+	setParam    - Added to add an extra param like value
 =cut
 
 sub ce {
@@ -958,6 +958,12 @@ sub param {    # imitate get behavior of the request object params method
 	my $out = $self->{fake_r}->param($param);
 	debug("use param $param => $out") if $UNIT_TESTS_ON;
 	$out;
+}
+sub setParam { # add a new param like value
+	my $self =shift;
+	my $param = shift;
+	my $value = shift;
+	$self->{fake_r}->{$param} = $value;
 }
 sub authz {
 	my $self = shift;

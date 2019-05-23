@@ -21,6 +21,32 @@ use File::Basename;
 use Cwd;
 use DBI;
 
+# Command line arguments
+# for some reason the first command line argument is disappearing before it gets here
+
+my $myLib = "OPL" ; # default value
+my $clearAll = 1  ; # default value - drop ALL old tables
+
+if ( ( 0 + @ARGV ) > 0 ) {
+
+  #print join("  ,  ", @ARGV );
+
+  $myLib = shift;
+
+  print "myLib = $myLib \n";
+
+  my $nextArg = "none";
+  if ( @ARGV ) {
+    $nextArg = shift ;
+    if ( $nextArg eq "noDrop" ) {
+      $clearAll = 0 ;
+      print "Received the noDrop setting.\n";
+    }
+
+  }
+}
+
+
 
  #(maximum varchar length is 255 for mysql version < 5.0.3.  
  #You can increase path length to  4096 for mysql > 5.0.3)
@@ -56,6 +82,9 @@ my %OPLtables = (
  problem => 'OPL_problem',
  morelt => 'OPL_morelt',
  pgfile_problem => 'OPL_pgfile_problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
 
 
@@ -74,7 +103,33 @@ my %NPLtables = (
  problem => 'NPL-problem',
  morelt => 'NPL-morelt',
  pgfile_problem => 'NPL-pgfile-problem',
+ cnt_dbsubject => 'Cnt_DBsubject',
+ cnt_dbchapter => 'Cnt_DBchapter',
+ cnt_dbsection => 'Cnt_DBsection',
 );
+
+# Which tables to ALWAYS drop and recreate and which can remain
+# 1 = always drop, 0 = conditional on command-line arguments, 2 = NEVER drop
+my %AlwayDropTables = (
+ dbsubject => 0,
+ dbchapter => 0,
+ dbsection => 0,
+ author    => 0,
+ path      => 0,
+ keyword   => 0,
+ textbook  => 0,
+ chapter   => 0,
+ section   => 0,
+ problem   => 0,
+ morelt    => 0,
+ pgfile         => 1,
+ pgfile_keyword => 1,
+ pgfile_problem => 1,
+ cnt_dbsubject => 2,
+ cnt_dbchapter => 2,
+ cnt_dbsection => 2,
+);
+
 
 
 # Get database connection
@@ -96,9 +151,9 @@ my $dbh = DBI->connect(
         },
 );
 
-my $libraryRoot = $ce->{problemLibrary}->{root};
+my $libraryRoot = $ce->{problemLibrary}->{$myLib}->{root};
 $libraryRoot =~ s|/+$||;
-my $libraryVersion = $ce->{problemLibrary}->{version};
+my $libraryVersion = $ce->{problemLibrary}->{$myLib}->{version};
 my $db_storage_engine = $ce->{problemLibrary_db}->{storage_engine};
 
 my $verbose = 0;
@@ -130,14 +185,30 @@ if($libraryVersion eq '2.5') {
 	print "Library version is $libraryVersion; NPLtables! \n";
 }
 
+
+# Modify table names for per-library tables
+my @special_tables = qw( pgfile pgfile_keyword pgfile_problem );
+my $tmp1; my $tblName;
+foreach $tmp1 ( @special_tables ) {
+    $tblName = $tables{$tmp1};
+    #print "old table name $tblName\n";
+    if ( $libraryVersion eq '2.5') {
+	$tblName =~ s/OPL/${myLib}/;
+    } else {
+	$tblName =~ s/NPL/${myLib}/;
+    }
+    #print "new table name $tblName\n";
+    $tables{$tmp1} = $tblName;
+}
+
 @create_tables = (
-[$tables{dbsubject}, '
+["dbsubject",$tables{dbsubject}, '
 	DBsubject_id int(15) NOT NULL auto_increment,
 	name varchar(255) NOT NULL,
 	KEY DBsubject (name),
 	PRIMARY KEY (DBsubject_id)
 '],
-[$tables{dbchapter}, '
+["dbchapter",$tables{dbchapter}, '
 	DBchapter_id int(15) NOT NULL auto_increment,
 	name varchar(255) NOT NULL,
 	DBsubject_id int(15) DEFAULT 0 NOT NULL,
@@ -145,7 +216,7 @@ if($libraryVersion eq '2.5') {
 	KEY (DBsubject_id),
 	PRIMARY KEY (DBchapter_id)
 '],
-[$tables{dbsection}, '
+["dbsection",$tables{dbsection}, '
 	DBsection_id int(15) NOT NULL auto_increment,
 	name varchar(255) NOT NULL,
 	DBchapter_id int(15) DEFAULT 0 NOT NULL,
@@ -153,7 +224,7 @@ if($libraryVersion eq '2.5') {
 	KEY (DBchapter_id),
 	PRIMARY KEY (DBsection_id)
 '],
-[$tables{author}, '
+["author",$tables{author}, '
 	author_id int (15) NOT NULL auto_increment,
 	institution tinyblob,
 	lastname varchar (255) NOT NULL,
@@ -162,7 +233,7 @@ if($libraryVersion eq '2.5') {
 	KEY author (lastname(100), firstname(100)),
 	PRIMARY KEY (author_id)
 '],
-[$tables{path}, '
+["path",$tables{path}, '
 	path_id int(15) NOT NULL auto_increment,
 	path varchar(255) NOT NULL,
 	machine varchar(255),
@@ -170,7 +241,7 @@ if($libraryVersion eq '2.5') {
 	KEY (path),
 	PRIMARY KEY (path_id)
 '],
-[$tables{pgfile}, '
+["pgfile",$tables{pgfile}, '
 	pgfile_id int(15) NOT NULL auto_increment,
 	DBsection_id int(15) NOT NULL,
 	author_id int(15),
@@ -184,19 +255,19 @@ if($libraryVersion eq '2.5') {
 	MO TINYINT,
 	PRIMARY KEY (pgfile_id)
 '],
-[$tables{keyword}, '
+["keyword",$tables{keyword}, '
 	keyword_id int(15) NOT NULL auto_increment,
 	keyword varchar(256) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (keyword_id)
 '],
-[$tables{pgfile_keyword}, '
+["pgfile_keyword",$tables{pgfile_keyword}, '
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
 	keyword_id int(15) DEFAULT 0 NOT NULL,
 	KEY pgfile_keyword (keyword_id, pgfile_id),
 	KEY pgfile (pgfile_id)
 '],
-[$tables{textbook}, '
+["textbook",$tables{textbook}, '
 	textbook_id int (15) NOT NULL auto_increment,
 	title varchar (255) NOT NULL,
 	edition int (15) DEFAULT 0 NOT NULL,
@@ -206,7 +277,7 @@ if($libraryVersion eq '2.5') {
 	pubdate varchar (255),
 	PRIMARY KEY (textbook_id)
 '],
-[$tables{chapter}, '
+["chapter",$tables{chapter}, '
 	chapter_id int (15) NOT NULL auto_increment,
 	textbook_id int (15),
 	number int(3),
@@ -216,7 +287,7 @@ if($libraryVersion eq '2.5') {
 	KEY (number),
 	PRIMARY KEY (chapter_id)
 '],
-[$tables{section}, '
+["section",$tables{section}, '
 	section_id int(15) NOT NULL auto_increment,
 	chapter_id int (15),
 	number int(3),
@@ -226,7 +297,7 @@ if($libraryVersion eq '2.5') {
 	KEY (number),
 	PRIMARY KEY section (section_id)
 '],
-[$tables{problem}, '
+["problem",$tables{problem}, '
 	problem_id int(15) NOT NULL auto_increment,
 	section_id int(15),
 	number int(4) NOT NULL,
@@ -235,7 +306,7 @@ if($libraryVersion eq '2.5') {
 	KEY (section_id),
 	PRIMARY KEY (problem_id)
 '],
-[$tables{morelt}, '
+["morelt",$tables{morelt}, '
 	morelt_id int(15) NOT NULL auto_increment,
 	name varchar(255) NOT NULL,
 	DBsection_id int(15),
@@ -243,10 +314,28 @@ if($libraryVersion eq '2.5') {
 	KEY (name),
 	PRIMARY KEY (morelt_id)
 '],
-[$tables{pgfile_problem}, '
+["pgfile_problem",$tables{pgfile_problem}, '
 	pgfile_id int(15) DEFAULT 0 NOT NULL,
 	problem_id int(15) DEFAULT 0 NOT NULL,
 	PRIMARY KEY (pgfile_id, problem_id)
+'],
+["cnt_dbsubject",$tables{cnt_dbsubject}, '
+	libcode varchar(60) NOT NULL,
+	DBsubject_id int(15) NOT NULL,
+	count int(15) NOT NULL,
+        PRIMARY KEY (libcode,DBsubject_id)
+'],
+["cnt_dbchapter",$tables{cnt_dbchapter}, '
+	libcode varchar(60) NOT NULL,
+	DBchapter_id int(15) NOT NULL,
+	count int(15) NOT NULL,
+	PRIMARY KEY (libcode,DBchapter_id)
+'],
+["cnt_dbsection",$tables{cnt_dbsection}, '
+	libcode varchar(60) NOT NULL,
+	DBsection_id int(15) NOT NULL,
+	count int(15) NOT NULL,
+	PRIMARY KEY (libcode,DBsection_id)
 ']);
 
 ### End of database data
@@ -258,8 +347,25 @@ $dbh->do("DROP TABLE IF EXISTS `NPL-institution`");
 $dbh->do("DROP TABLE IF EXISTS `NPL-pgfile-institution`");
 
 for my $tableinfo (@create_tables) {
-	my $tabname = $tableinfo->[0];
-	my $tabinit = $tableinfo->[1];
+ 	my $tabCnm  = $tableinfo->[0];
+	my $tabname = $tableinfo->[1];
+        my $tabinit = $tableinfo->[2];
+
+# FIXME some tables should NOT be dropped on special libraries
+	if ( $AlwayDropTables{$tabCnm} == 2 ) {
+	    print "Not dropping/re-creating $tabname\n";
+	    my $query = "CREATE TABLE IF NOT EXISTS `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
+	    $dbh->do($query);
+	    next;
+	}
+	if ( $clearAll == 0 ) {
+	  # Do not drop and recreate some tables
+	  if ( $AlwayDropTables{$tabCnm} == 0 ) {
+	    print "Not dropping/re-creating $tabname\n";
+	    next;
+	  }
+	}
+
 	my $query = "DROP TABLE IF EXISTS `$tabname`";
 	$dbh->do($query);
 	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
@@ -431,7 +537,7 @@ if(open(IN, "$libraryRoot/Textbooks")) {
 	close(IN);
 } else {
 	print "Textbooks file was not found in library $libraryRoot. If the path to the problem library doesn't seem
-	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
+	correct, make modifications in webwork2/conf/localOverrides.conf (\$problemLibrary{OPL}{root}).  If that is correct then
 	updating from git should download the Textbooks file.\n";
 }
 #### End of textbooks
@@ -453,7 +559,7 @@ if(open(IN, "$libraryRoot/Taxonomy2")) {
 	$canopenfile = 1;
 } else {
 	print "Taxonomy file was not found in library $libraryRoot. If the path to the problem library doesn't seem
-	correct, make modifications in webwork2/conf/site.conf (\$problemLibrary{root}).  If that is correct then
+	correct, make modifications in webwork2/conf/localOverrides.conf (\$problemLibrary{OPL}{root}).  If that is correct then
 	updating from git should download the Taxonomy file.\n";
 } 
 
@@ -514,7 +620,12 @@ if($canopenfile) {
 
 #### Save the official taxonomy in json format
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
-my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
+
+# Get the filename for the taxo_file which is set for THIS library via the
+# settings in conf/defaults.config and/or conf/localOverrides.conf
+my $taxo_file = $ce->{problemLibrary}->{$myLib}->{taxo};
+
+my $file = "$webwork_htdocs/DATA/${taxo_file}";
 open(OUTF, ">$file") or die "Cannot open $file";
 print OUTF to_json($tagtaxo,{pretty=>1}) or die "Cannot write to $file";
 close(OUTF);
@@ -860,33 +971,37 @@ sub pgfiles {
 
 print "\n\n";
 
-# Now prune away DBsection, etc, which do not appear in any files
-#%my $query = "SELECT chapter_id FROM `$tables{chapter}` WHERE textbook_id = \"$bookid\" AND number = \"$1\"";
-#%my $chapid = $dbh->selectrow_array($query);
+# When allowing multiple libraries, only the FIRST library should do pruning.
+if ( $clearAll == 1 ) {
 
-#select dbs.DBsection_id from OPL_DBsection dbs;
-#select COUNT(*) from OPL_pgfile where DBsection_id=857;
+    # Now prune away DBsection, etc, which do not appear in any files
+    #%my $query = "SELECT chapter_id FROM `$tables{chapter}` WHERE textbook_id = \"$bookid\" AND number = \"$1\"";
+    #%my $chapid = $dbh->selectrow_array($query);
 
-my $dbsects = $dbh->selectall_arrayref("SELECT DBsection_id from `$tables{dbsection}`");
-for my $sect (@{$dbsects}) {
+    #select dbs.DBsection_id from OPL_DBsection dbs;
+    #select COUNT(*) from OPL_pgfile where DBsection_id=857;
+
+    my $dbsects = $dbh->selectall_arrayref("SELECT DBsection_id from `$tables{dbsection}`");
+    for my $sect (@{$dbsects}) {
 	$sect = $sect->[0];
 	my $srar = $dbh->selectall_arrayref("SELECT * FROM `$tables{pgfile}` WHERE DBsection_id=$sect");
 	if(scalar(@{$srar})==0) {
 		$dbh->do("DELETE FROM `$tables{dbsection}` WHERE DBsection_id=$sect");
 	}
-}
+    }
 
-my $dbchaps = $dbh->selectall_arrayref("SELECT DBchapter_id from `$tables{dbchapter}`");
-for my $chap (@{$dbchaps}) {
+    my $dbchaps = $dbh->selectall_arrayref("SELECT DBchapter_id from `$tables{dbchapter}`");
+    for my $chap (@{$dbchaps}) {
 	$chap = $chap->[0];
 	my $srar = $dbh->selectall_arrayref("SELECT * FROM `$tables{dbsection}` WHERE DBchapter_id=$chap");
 	if(scalar(@{$srar})==0) {
 		$dbh->do("DELETE FROM `$tables{dbchapter}` WHERE DBchapter_id=$chap");
 	}
+    }
 }
 
 # Now run the script build-library-tree
-# This is used to create the file library-tree.json which can be used to 
+# This is used to create the file ${myLib}-library-tree.json which can be used to
 # load in subject-chapter-section information for the OPL
 
 use strict;
@@ -960,16 +1075,20 @@ foreach my $i (0..$#subjects){
 	push (@subject_tree, $clone);
 }
 
-build_library_directory_tree($ce);
-build_library_subject_tree($ce,$dbh);
-build_library_textbook_tree($ce,$dbh);
+build_library_directory_tree($myLib,$ce);
+build_library_subject_tree($myLib,$ce,$dbh);
+build_library_textbook_tree($myLib,$ce,$dbh);
 
 $dbh->disconnect;
 
-if ($ce->{problemLibrary}{showLibraryLocalStats} ||
-    $ce->{problemLibrary}{showLibraryGlobalStats}) {
-  print "\nUpdating Library Statistics.\n";
-  do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+if ( $myLib eq "OPL" ) {
+    # Only the "real" OPL has Library statistics
+
+    if ($ce->{problemLibrary}{$myLib}{showLibraryLocalStats} ||
+	$ce->{problemLibrary}{$myLib}{showLibraryGlobalStats}) {
+	print "\nUpdating Library Statistics.\n";
+	do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+    }
 }
 
 

@@ -72,7 +72,7 @@ system("chmod g+w ".$ce->{pg_dir}."/lib/chromatic");
 
 # The server should not be able to write to the OPL (for most sites)
 
-my $libroot = $ce->{problemLibrary}->{root};
+my $libroot = $ce->{problemLibrary}->{OPL}->{root};
 
 system("chown -R $me $libroot");
 system("chmod -R 755 $libroot");
