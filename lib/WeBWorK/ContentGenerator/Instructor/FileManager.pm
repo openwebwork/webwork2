@@ -467,7 +467,8 @@ sub View {
 	#
 	if (-T $file) { #check that it is a text file
 		my $data = readFile($file);
-		print CGI::pre(showHTML($data));
+		print CGI::div({dir=>"auto"},
+		    CGI::pre(showHTML($data)));
 	} elsif ($file =~ m/\.(gif|jpg|png)/i) {
 		print CGI::img({src=>$fileManagerURL, border=>0});
 	} else {
@@ -583,7 +584,7 @@ sub RefreshEdit {
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
 	print CGI::Tr([
 		CGI::td({align=>"center",style=>"background-color:#CCCCCC"},CGI::b($name)),
-		CGI::td(CGI::textarea(-name=>"data",-default=>$data,-override=>1,-rows=>30,-columns=>80,
+		CGI::td(CGI::textarea(-name=>"data",-default=>$data,-override=>1,-rows=>30,-columns=>80,"dir"=>"auto",
 				-style=>"width:100%")), ## can't seem to get variable height to work
 		CGI::td({align=>"center", nowrap=>1},
 			CGI::input({%button,value=>$r->maketext("Cancel")}),"&nbsp;",
