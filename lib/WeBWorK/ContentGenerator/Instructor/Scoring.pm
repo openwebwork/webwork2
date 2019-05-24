@@ -747,7 +747,7 @@ sub writeCSV {
 		rename $filename, $bakFileName or warn "Unable to rename $filename to $bakFileName";
 	}
 
-	open my $fh, ">", $filename or warn "Unable to open $filename for writing";
+	open my $fh, ">:encoding(UTF-8)", $filename or warn "Unable to open $filename for writing";
 	foreach my $row (@csv) {
 		my @rowPadded = ();
 		foreach (my $column = 0; $column < @$row; $column++) {
@@ -775,7 +775,7 @@ sub readStandardCSV {
 
 sub writeStandardCSV {
 	my ($self, $filename, @csv) = @_;
-	open my $fh, ">", $filename;
+	open my $fh, ">:encoding(UTF-8)", $filename;
 	foreach my $row (@csv) {
 		print $fh (join ",", map {$self->quote($_)} @$row);
 		print $fh "\n";

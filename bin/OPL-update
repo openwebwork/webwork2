@@ -21,7 +21,6 @@ use File::Basename;
 use Cwd;
 use DBI;
 
-
  #(maximum varchar length is 255 for mysql version < 5.0.3.  
  #You can increase path length to  4096 for mysql > 5.0.3)
 
@@ -86,18 +85,34 @@ use WeBWorK::Utils::Tags;
 use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_library_textbook_tree/;
 
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
+
+# decide whether the mysql installation can handle 
+# utf8mb4 and that should be used for the OPL
+
+my $ENABLE_UTF8MB4 = ($ce->{ENABLE_UTF8MB4})?1:0;
+print  "using utf8mb4 \n\n" if $ENABLE_UTF8MB4;
+
 my $dbh = DBI->connect(
         $ce->{problemLibrary_db}->{dbsource},
         $ce->{problemLibrary_db}->{user},
         $ce->{problemLibrary_db}->{passwd},
         {
-                PrintError => 0,
-                RaiseError => 1,
+            PrintError => 0,
+            RaiseError => 1,
+            ($ENABLE_UTF8MB)?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
         },
 );
 
+my $character_set='';
+$character_set=($ENABLE_UTF8MB4)?"utf8mb4":"utf8";
+$dbh->prepare("SET NAMES '$character_set'")->execute();
+
+print "using character set $character_set to build OPL database\n";
+
 my $libraryRoot = $ce->{problemLibrary}->{root};
 $libraryRoot =~ s|/+$||;
+print "using libraryRoot $libraryRoot\n";
+print "WEBWORK_ROOT $ENV{WEBWORK_ROOT}\n";
 my $libraryVersion = $ce->{problemLibrary}->{version};
 my $db_storage_engine = $ce->{problemLibrary_db}->{storage_engine};
 
@@ -133,13 +148,13 @@ if($libraryVersion eq '2.5') {
 @create_tables = (
 [$tables{dbsubject}, '
 	DBsubject_id int(15) NOT NULL auto_increment,
-	name varchar(255) NOT NULL,
+	name varchar(245) NOT NULL,
 	KEY DBsubject (name),
 	PRIMARY KEY (DBsubject_id)
 '],
 [$tables{dbchapter}, '
 	DBchapter_id int(15) NOT NULL auto_increment,
-	name varchar(255) NOT NULL,
+	name varchar(245) NOT NULL,
 	DBsubject_id int(15) DEFAULT 0 NOT NULL,
 	KEY DBchapter (name),
 	KEY (DBsubject_id),
@@ -147,7 +162,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{dbsection}, '
 	DBsection_id int(15) NOT NULL auto_increment,
-	name varchar(255) NOT NULL,
+	name varchar(245) NOT NULL,
 	DBchapter_id int(15) DEFAULT 0 NOT NULL,
 	KEY DBsection (name),
 	KEY (DBchapter_id),
@@ -164,7 +179,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{path}, '
 	path_id int(15) NOT NULL auto_increment,
-	path varchar(255) NOT NULL,
+	path varchar(245) NOT NULL,
 	machine varchar(255),
 	user varchar(255),
 	KEY (path),
@@ -210,7 +225,7 @@ if($libraryVersion eq '2.5') {
 	chapter_id int (15) NOT NULL auto_increment,
 	textbook_id int (15),
 	number int(3),
-	name varchar(255) NOT NULL,
+	name varchar(245) NOT NULL,
 	page int(4),
 	KEY (textbook_id, name),
 	KEY (number),
@@ -220,7 +235,7 @@ if($libraryVersion eq '2.5') {
 	section_id int(15) NOT NULL auto_increment,
 	chapter_id int (15),
 	number int(3),
-	name varchar(255) NOT NULL,
+	name varchar(245) NOT NULL,
 	page int(4),
 	KEY (chapter_id, name),
 	KEY (number),
@@ -237,7 +252,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{morelt}, '
 	morelt_id int(15) NOT NULL auto_increment,
-	name varchar(255) NOT NULL,
+	name varchar(245) NOT NULL,
 	DBsection_id int(15),
 	leader int(15), # pgfile_id of the MLT leader
 	KEY (name),
@@ -262,7 +277,7 @@ for my $tableinfo (@create_tables) {
 	my $tabinit = $tableinfo->[1];
 	my $query = "DROP TABLE IF EXISTS `$tabname`";
 	$dbh->do($query);
-	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine";
+	$query = "CREATE TABLE `$tabname` ( $tabinit ) ENGINE=$db_storage_engine CHARACTER SET $character_set";
 	$dbh->do($query);
 	if($lib eq 'OPL') {
 		$old_tabname = $tabname;
@@ -346,7 +361,7 @@ my ($name,$pgfile,$pgpath);
 
 #### First read in textbook information
 
-if(open(IN, "$libraryRoot/Textbooks")) {
+if(open(IN, '<:encoding(UTF-8)', "$libraryRoot/Textbooks")) {
 	print "Reading in textbook data from Textbooks in the library $libraryRoot.\n";
 	my %textinfo = ( TitleText => '', EditionText =>'', AuthorText=>'');
 	my $bookid = undef;
@@ -445,10 +460,10 @@ my $tagtaxo = [];
 my ($chaplist, $seclist) = ([],[]);
 
 my $canopenfile = 0;
-if(open(IN, "$libraryRoot/Taxonomy2")) {
+if(open(IN, '<:encoding(UTF-8)', "$libraryRoot/Taxonomy2")) {
 	print "Reading in OPL taxonomy from Taxonomy2 in the library $libraryRoot.\n";
 	$canopenfile = 1;
-} elsif(open(IN, "$libraryRoot/Taxonomy")) {
+} elsif(open(IN, '<:encoding(UTF-8)', "$libraryRoot/Taxonomy")) {
 	print "Reading in OPL taxonomy from Taxonomy in the library $libraryRoot.\n";
 	$canopenfile = 1;
 } else {
@@ -516,6 +531,7 @@ if($canopenfile) {
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
 open(OUTF, ">$file") or die "Cannot open $file";
+binmode(OUTF,':encoding(UTF-8)'); 
 print OUTF to_json($tagtaxo,{pretty=>1}) or die "Cannot write to $file";
 close(OUTF);
 print "Saved taxonomy to $file.\n";

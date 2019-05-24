@@ -109,7 +109,7 @@ sub scoring_info {
 	my $header = '';
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
-		open FILE, "$filePath" || return("Can't open $filePath"); 
+		open FILE, "<:encoding(UTF-8)", "$filePath" || return("Can't open $filePath"); 
 		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
 			$header .= <FILE>; 
 		}

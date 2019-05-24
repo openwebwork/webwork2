@@ -58,6 +58,7 @@ RUN apt-get update \
        libpadwalker-perl \
        libpath-class-perl \
        libphp-serialization-perl \
+       libxml-simple-perl \
        libsoap-lite-perl \
        libsql-abstract-perl \
        libstring-shellquote-perl \
@@ -67,6 +68,7 @@ RUN apt-get update \
        libuuid-tiny-perl \
        libxml-parser-perl \
        libxml-writer-perl \
+       libxmlrpc-lite-perl \
        libapache2-reload-perl \
        libxmlrpc-lite-perl \
        libxml-simple-perl \
@@ -80,15 +82,22 @@ RUN apt-get update \
        mysql-client \
     && rm -fr /var/lib/apt/lists/*
 
+# Warning - when I tried to include XML::Simple near the start of the first "cpanm install" line, there was an error:
+#       Building and testing XMLRPC-Lite-0.717 ... ! Installing XMLRPC::Lite failed. See /root/.cpanm/work/1551887935.125/build.log for details. Retry with --force to force install it.
+# so it was put into a second "cpanm install" line.
+
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
-    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO \
-    && rm -fr ./cpanm /root/.cpanm /tmp/*
+    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO 
+    
+##RUN cpanm install XML::Simple \
+#    && rm -fr ./cpanm /root/.cpanm /tmp/*
+
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/webwork2
 
 # Block to include webwork2 in the container, when needed, instead of  getting it from a bind mount.
 #    Uncomment when needed, and set the correct branch name on the following line.
-#ENV WEBWORK_BRANCH=master   # need a valid branch name from https://github.com/openwebwork/webwork2
+#ENV WEBWORK_BRANCH=develop   # need a valid branch name from https://github.com/openwebwork/webwork2
 #RUN curl -fSL https://github.com/openwebwork/webwork2/archive/${WEBWORK_BRANCH}.tar.gz -o /tmp/${WEBWORK_BRANCH}.tar.gz \
 #    && cd /tmp \
 #    && tar xzf /tmp/${WEBWORK_BRANCH}.tar.gz \
@@ -152,8 +161,8 @@ RUN cd $APP_ROOT/webwork2/conf \
       \n<Perl>/' /etc/apache2/conf-enabled/webwork.conf
 
 RUN cd $APP_ROOT/webwork2/ \
-    && chown www-data DATA ../courses htdocs/tmp htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
-    && chmod -R u+w DATA ../courses htdocs/tmp htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic
+    && chown www-data DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
+    && chmod -R u+w DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic
 
 COPY docker-entrypoint.sh /usr/local/bin/
 

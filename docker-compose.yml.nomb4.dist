@@ -1,14 +1,9 @@
 version: '2'
 services:
-  # We have renamed the database service from "db" to "dbMB4",
-  # changed the name of the data volume to "mysqlMB4" and set
-  # environment variables to use the "dbMB4" server. All this was needed
-  # ONLY to allow leaving a version of the "db" container which does not
-  # use utf8mb4 available until the UTF8MB4 changes become mainstream.
-  dbMB4:
+  db:
     image: mariadb:10.1
     volumes:
-      - mysqlMB4:/var/lib/mysql
+      - mysql:/var/lib/mysql
       # Set up UTF8MB4 in config file for the container.
       # Needs to be done BEFORE the database is created.
       - "./docker-config/db/mariadb.cnf:/etc/mysql/conf.d/mariadb.cnf"
@@ -22,7 +17,7 @@ services:
     build: .
     image: webwork
     depends_on:
-      - dbMB4
+      - db
       - r
     volumes:
       - ".:/opt/webwork/webwork2"
@@ -35,20 +30,16 @@ services:
       # Uncomment the line below to use local OPL for development
       #- "../opl:/opt/webwork/libraries/webwork-open-problem-library"
       # Uncomment the line below to use local PG for development
-      #- "../pg:/opt/webwork/pg"
+      - "../pg:/opt/webwork/pg"
     ports:
       - "8080:80"
     environment:
-      - DEV=0
-      - WEBWORK_DB_HOST=dbMB4
-      # - WEBWORK_DB_PORT=3306
-      # - WEBWORK_DB_NAME=webwork
-      - WEBWORK_DB_DSN=DBI:mysql:webwork:dbMB4:3306
+      DEV: 0
   r:
     image: ubcctlt/rserve
     ports:
       - "6311:6311"
 
 volumes:
-  mysqlMB4:
+  mysql:
 

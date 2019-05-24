@@ -21,7 +21,7 @@
 -->
 
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<html xmlns="http://www.w3.org/1999/xhtml" <!--#output_course_lang_and_dir-->>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
@@ -96,13 +96,13 @@
 	
 	    <!--#if can="body"-->
 				<!--#if warnings="1"-->
-				  <div class="Body" style="background-color:#ffcccc">
+				  <div class="Body" style="background-color:#ffcccc" <!--#output_problem_lang_and_dir-->>
 				  <p style="font-size:larger">
 				  Warning -- there may be something wrong with this question. Please inform your instructor
 				  including the warning messages below.
 				  </p>
 				<!--#else-->
-				  <div class="Body" style="background-color:#ffffff">
+				  <div class="Body" style="background-color:#ffffff" <!--#output_problem_lang_and_dir-->>
 				<!--#endif-->
 				
 				<!--#body-->
