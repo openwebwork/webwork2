@@ -213,14 +213,12 @@ sub readFile($) {
 		if ($@) {
 			print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
 		}
-		utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ". 
+		my $prevent_error_message = utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ". 
 		 "is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n". 
 		 "While this is not fatal you should fix it\n";
 		# FIXME
 		# utf8::decode($result) raises an error about the copyright sign
 		# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
-		# Done:: should direct this to warn instead of STDERR to debug files written with accents
-		# in latin-1 files /Done
 	}
 	# returns the empty string if the file cannot be read
 	return force_eoln($result);
