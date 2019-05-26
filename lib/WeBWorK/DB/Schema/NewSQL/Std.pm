@@ -126,8 +126,13 @@ sub _create_table_stmt {
 	my ($self) = @_;
 	
 	my $sql_table_name = $self->sql_table_name;
+	
+    # insure correct syntax if $engine or $character_set is empty. Can't have ENGINE = in mysql stmt.
     my $engine = $self->engine;
+    my $ENGINE_CLAUSE = ($engine)? "ENGINE=$engine" : "";
     my $character_set= $self->character_set;
+    my $CHARACTER_SET_CLAUSE = ($character_set)? "DEFAULT CHARACTER SET = $character_set": "";
+
 	my @field_list;
 	
 	# generate a column specification for each field
@@ -162,7 +167,7 @@ sub _create_table_stmt {
 	}
 	
 	my $field_string = join(", ", @field_list);
-	return "CREATE TABLE `$sql_table_name` ( $field_string ) ENGINE=$engine DEFAULT CHARACTER SET = $character_set";
+	return "CREATE TABLE `$sql_table_name` ( $field_string ) $ENGINE_CLAUSE $CHARACTER_SET_CLAUSE";
 }
 
 ################################################################################
@@ -784,8 +789,8 @@ sub engine {
 
 sub character_set {
 	my $self = shift;
-	return defined $self->{charset}
-		? $self->{charset}
+	return (defined $self->{character_set} and $self->{character_set})
+		? $self->{character_set}
 		: 'latin1';
 }
 # returns non-quoted SQL name of given field
