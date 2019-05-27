@@ -182,7 +182,7 @@ $ENABLE_UTF8MB4 =0;    # setting this to 1 enables utf8mb4 encoding, setting thi
 					   # 0 sets this for older mysql (pre 5.3) which cannot
 					   # handle utf8mb4 characters.
 
-$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : '';
+$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : 'utf8';
 
 
 # DATABASE login information

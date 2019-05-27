@@ -250,7 +250,7 @@ sub init_table {
 	my $depend = $layout->{depend};
 	my $params = $layout->{params};
   	my $engine = $layout->{engine};
-  	my $charset = $layout->{charset};
+  	my $character_set = $layout->{character_set};
 	
 	# add a key for this table to the self hash, but don't define it yet
 	# this for loop detection
@@ -271,7 +271,7 @@ sub init_table {
 	
 	runtime_use($schema);
 	my $schemaObject = eval { $schema->new(
-		$self, $driverObject, $table, $record, $params, $engine, $charset) };
+		$self, $driverObject, $table, $record, $params, $engine, $character_set) };
 	croak "error instantiating DB schema $schema for table $table: $@"
 		if $@;
 	
