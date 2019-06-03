@@ -1,3 +1,10 @@
+// Polyfill for IE >= 9.
+if (!Object.entries) Object.entries = function(o) {
+    var p = Object.keys(o), i = p.length, r = new Array(i);
+    while (i--) r[i] = [p[i], o[p[i]]];
+    return r;
+};
+
 // initialize MathQuill
 var MQ = MathQuill.getInterface(2);
 answerQuills = {};
