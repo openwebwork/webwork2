@@ -93,6 +93,7 @@ on the same computer but does require an internet connection to a remote WeBWorK
 	# site_url        => 'http://localhost:80',
 	# form_action_url => 'http://localhost:80/webwork2/html2xml',
 	# site_password   => 'xmlrpc',
+	# forcePortNumber => '80',   # A port number to be forced, when needed.
 
     # Set the identification credential used by the "daemon_course" on the remote site
         courseID        => "daemon_course",
@@ -173,7 +174,7 @@ on the same computer but does require an internet connection to a remote WeBWorK
 	Same as -c but the question is rendered with the correct answers submitted. 
     This succeeds only if the correct answers, as determined from the answer hash, all succeed.
 
-=item	 f=s 
+=item	-f formatName
 
 	Specify the format used by the browser in displaying the question. 
          Choices for s are
@@ -182,6 +183,9 @@ on the same computer but does require an internet connection to a remote WeBWorK
          debug 
          simple
          
+=item -l lang
+
+	Set a language for the HTML rendering to use. Should use a value which would be valid for a course.
 
 =item	-v 
 
@@ -332,6 +336,7 @@ my $record_ok2 = '';
 my $verbose = '';
 my $credentials_path;
 my $format = 'standard';
+my $lang = 'en';
 my $edit_source_file = '';
 my $display_tex_output='';
 my $display_pdf_output='';
@@ -350,24 +355,25 @@ my $credentials_string;
 
 
 GetOptions(
-	'a' 			=> \$display_ans_output1,
-	'A' 			=> \$display_ans_output2,
-	'b' 			=> \$display_html_output1,
-	'B' 			=> \$display_html_output2,
-	'h' 			=> \$display_hash_output1,
-	'H' 			=> \$display_hash_output2,
-	'c' 			=> \$record_ok1, # record_problem_ok1 needs to be written
-	'C' 			=> \$record_ok2,
-	'v' 			=> \$verbose,
-	'e' 			=> \$edit_source_file, 
-	'tex' 			=> \$display_tex_output,
-	'pdf' 			=> \$display_pdf_output,
-	'list=s' 		=>\$read_list_from_this_file,   # read file containing list of full file paths
-	'pg' 			=> \$print_pg_hash,
-	'anshash' 		=> \$print_answer_hash,
-	'ansgrp'  		=> \$print_answer_group,
+	'a' 		=> \$display_ans_output1,
+	'A' 		=> \$display_ans_output2,
+	'b' 		=> \$display_html_output1,
+	'B' 		=> \$display_html_output2,
+	'h' 		=> \$display_hash_output1,
+	'H' 		=> \$display_hash_output2,
+	'c' 		=> \$record_ok1, # record_problem_ok1 needs to be written
+	'C' 		=> \$record_ok2,
+	'v' 		=> \$verbose,
+	'e' 		=> \$edit_source_file,
+	'tex' 		=> \$display_tex_output,
+	'pdf' 		=> \$display_pdf_output,
+	'list=s' 	=>\$read_list_from_this_file,   # read file containing list of full file paths
+	'pg' 		=> \$print_pg_hash,
+	'anshash' 	=> \$print_answer_hash,
+	'ansgrp'  	=> \$print_answer_group,
 	'resource'      => \$print_resource_hash,
-	'f=s' 			=> \$format,
+	'f=s' 		=> \$format,
+	'l=s'		=> \$lang,
 	'credentials=s' => \$credentials_path,
 	'help'          => \$print_help_message,
 	'log=s'         => \$path_to_log_file,
@@ -415,6 +421,8 @@ The credentials file should contain something like this:
 	# site_url        => 'http://localhost:80',
 	# form_action_url => 'http://localhost:80/webwork2/html2xml',
 	# site_password   => 'xmlrpc',
+	# forcePortNumber => '80',   # A port number to be forced, when needed.
+
 
     # Set the identification credential used by the "daemon_course" on the remote site
         courseID        => "daemon_course",
@@ -606,17 +614,19 @@ die "You must first create an output file at $path_to_log_file
 ############################################
  
 my $default_input = { 
-		userID      			=> $credentials{userID}//'',
-		session_key	 			=> $credentials{session_key}//'',
-		courseID   				=> $credentials{courseID}//'',
-		courseName   			=> $credentials{courseID}//'',
-		course_password     	=> $credentials{course_password}//'',
- };
+		userID      	=> $credentials{userID}//'',
+		session_key	=> $credentials{session_key}//'',
+		courseID   	=> $credentials{courseID}//'',
+		courseName   	=> $credentials{courseID}//'',
+		course_password	=> $credentials{course_password}//'',
+};
 
 my $default_form_data = { 
-		displayMode				=> $DISPLAYMODE,
-		outputformat 			=> $format//'standard',
-		problemSeed       => $problemSeed//PROBLEMSEED(),
+		displayMode	=> $DISPLAYMODE,
+		outputformat 	=> $format//'standard',
+		problemSeed     => $problemSeed//PROBLEMSEED(),
+		forcePortNumber => $credentials{forcePortNumber}//'',
+		language	=> $lang//'en',
 };
 
 ##################################################
@@ -1120,7 +1130,7 @@ sub	display_html_output {  #display the problem in a browser
 	$file_name =~ s/\.\w+$/\.html/;    # replace extension with html
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	open(FH, '>:encoding(UTF-8)', $output_file) or die "Can't open file $output_file for writing";
 	print FH $output_text;
 	close(FH);
 
@@ -1273,7 +1283,15 @@ sub get_source {
 		if ($file_path eq '-') {
 			$source = <STDIN>;
 		} else {
-			open(FH, '<',$file_path) or die "Couldn't open file $file_path: $!";
+			# To support proper behavior with UTF-8 files, we need to open them with "<:encoding(UTF-8)"
+			# as otherwise, the first HTML file will render properly, but when "Preview" "Submit answer"
+			# or "Show correct answer" is used it will make problems, as in process_problem() the
+			# encodeSource() method is called on a data which is still UTF-8 encoded, and leads to double
+			# encoding and gibberish.
+			# NEW:
+			open(FH, "<:encoding(UTF-8)" ,$file_path) or die "Couldn't open file $file_path: $!";
+			# OLD:
+			#open(FH, "<" ,$file_path) or die "Couldn't open file $file_path: $!";
 			$source   = <FH>; #slurp  input
 			close FH;
 		}

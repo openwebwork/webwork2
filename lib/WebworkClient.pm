@@ -109,9 +109,10 @@ use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
 use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
+use Encode qw(encode_utf8 decode_utf8);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
-
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use WeBWorK::PG::ImageGenerator;
 use HTML::Entities;
 use WeBWorK::Localize;
@@ -188,6 +189,7 @@ sub new {   #WebworkClient constructor
 				 					 AnSwEr0002 => '',
 				 					 AnSwEr0003 => '',
 				 					 displayMode     => 'no displayMode defined',
+						forcePortNumber => '',
 		},
 		@_,               # options and overloads
 	};
@@ -622,7 +624,73 @@ sub formatRenderedProblem {
 	my $sourceFilePath    = $self->{sourceFilePath}//'';
 	my $warnings          = '';
         my $answerhashXML     = XMLout($rh_answers, RootName => 'answerhashes');
-	
+
+	#################################################
+	# Code to get and set problem language and direction based on flags set by the PG problem.
+	# This uses the same utility function as used by lib/WeBWorK/ContentGenerator/Problem.pm
+	# and various modules in lib/WeBWorK/ContentGenerator/Instructor/ .
+	# However, for technical reasons it requires using additional optional arguments
+	# which were added for the use here as they are not available via an internal
+	# CourseEnvironment where it was available in the other uses.
+	#################################################
+	# Need to set things like $PROBLEM_LANG_AND_DIR = "lang=\"he\" dir=\"rtl\"";
+
+	my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
+
+	my @PROBLEM_LANG_AND_DIR = ();
+
+	my $mode_for_get_problem_lang_and_dir = "auto:en:ltr"; # Will be used to set the default
+	# Setting to force English and LTR always:
+	#     $mode_for_get_problem_lang_and_dir = "force:en:ltr";
+	# Setting to avoid any setting be used:
+	#     $mode_for_get_problem_lang_and_dir = "none";
+
+	my @to_set_lang_dir = get_problem_lang_and_dir( $self, $rh_result, $mode_for_get_problem_lang_and_dir, $formLanguage );
+	   # We are calling get_problem_lang_and_dir() when $self does not
+	   # have a request hash called "r" inside it, so need to set the requested
+	   # and the course-wide language. We request mode $mode_for_get_problem_lang_and_dir
+	   # which by default is set above to "auto:en:ltr" so PG files can request their
+	   # language and text direction be set, but falls back to English and LTR.
+	   # We also do not have access to a default course language in the same sense
+	   # so use the $formLanguage instead.
+
+	while ( scalar(@to_set_lang_dir) > 0 ) {
+	    push( @PROBLEM_LANG_AND_DIR, shift( @to_set_lang_dir ) ); # HTML tag being set
+	    push( @PROBLEM_LANG_AND_DIR, "=\"" );
+	    push( @PROBLEM_LANG_AND_DIR, shift( @to_set_lang_dir ) ); # HTML value being set
+	    push( @PROBLEM_LANG_AND_DIR, "\" " );
+	}
+	my $PROBLEM_LANG_AND_DIR = join("",@PROBLEM_LANG_AND_DIR);
+
+	#################################################
+	# Code to get and set main language and direction for generated HTML pages.
+	# Very similar to the code in output_course_lang_and_dir() of
+	# lib/WeBWorK/ContentGenerator.pm with changes for the XMLRPC on the setting.
+	# It depends on the $formLanguage and not a course setting.
+	#################################################
+
+	my $master_lang_setting = "lang=\"en-US\""; # default setting
+	my $master_dir_setting  = "";               # default is NOT set
+
+	if ( $formLanguage ne "en" ) {
+	  # Attempt to override the defaults
+	  if ( $formLanguage =~ /^he/i ) { # supports also the current "heb" option
+	    # Hebrew - requires RTL direction
+	    $master_lang_setting = "lang=\"he\""; # Hebrew
+	    $master_dir_setting  = " dir=\"rtl\""; # RTL
+	  } elsif ( $formLanguage =~ /^ar/i ) {
+	    # Arabic - requires RTL direction
+	    $master_lang_setting = "lang=\"ar\""; # Arabic
+	    $master_dir_setting  = " dir=\"rtl\""; # RTL
+	  } else {
+	    # Use the $formLanguage without changing the text direction.
+	    # Additional RTL languages should be added above, as needed.
+	    $master_lang_setting = "lang=\"${formLanguage}\"";
+	  }
+	}
+
+	my $COURSE_LANG_AND_DIR = "${master_lang_setting}${master_dir_setting}";
+
 	#################################################
 	# regular Perl warning messages generated with warn
 	#################################################
@@ -666,6 +734,24 @@ sub formatRenderedProblem {
 	$self->{outputformats}={};
 	my $XML_URL      	 =  $self->url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
+
+	#################################################
+	# Local docker usage with a port number sometimes misbehaves if the port number
+	# is not forced into $XML_URL and $FORM_ACTION_URL
+	#################################################
+	my $forcePortNumber = ($self->{inputs_ref}->{forcePortNumber})//'';
+	if ( $forcePortNumber =~ /^[0-9]+$/ ) {
+	  $forcePortNumber = 0 + $forcePortNumber;
+	  if ( ! ( $XML_URL =~ /:${forcePortNumber}/ ) ) {
+	    $XML_URL .= ":${forcePortNumber}";
+	  }
+	  if ( ! ( $FORM_ACTION_URL =~ m+:${forcePortNumber}/webwork2/html2xml+ ) ) {
+	    $FORM_ACTION_URL =~ s+/webwork2/html2xml+:${forcePortNumber}/webwork2/html2xml+ ; # Ex: "http://localhost:8080/webwork2/html2xml"
+	  }
+	}
+
+	#################################################
+
 	my $courseID         =  $self->{courseID};
 	my $userID           =  $self->{userID};
 	my $course_password  =  $self->{course_password};
@@ -685,7 +771,9 @@ sub formatRenderedProblem {
     my $problemResult    =  $rh_result->{problem_result}//'';
     my $problemState     =  $rh_result->{problem_state}//'';
     my $showSummary      = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
-	my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
+
+	# $formLanguage moved above
+	#my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
 
 	my $scoreSummary     =  '';
 
@@ -716,15 +804,17 @@ sub formatRenderedProblem {
 	#warn "answersSubmitted ", $tbl->answersSubmitted;
 	# render equation images
 
-
+	my $mt = WeBWorK::Localize::getLangHandle($formLanguage//'en');
 
 	if ($submitMode && $problemResult) {
-		$scoreSummary = CGI::p('Your score on this attempt is '.wwRound(0, $problemResult->{score} * 100).'%');
+		my $ScoreMsg = $mt->maketext("You received a score of [_1] for this attempt.",wwRound(0, $problemResult->{score} * 100).'%');
+		$scoreSummary = CGI::p($ScoreMsg);
 		if ($problemResult->{msg}) {
 			 $scoreSummary .= CGI::p($problemResult->{msg});
 		}
 
-		$scoreSummary .= CGI::p('Your score on this problem has not been recorded.');
+		my $notRecorded = $mt->maketext("Your score was not recorded.");
+		$scoreSummary .= CGI::p($notRecorded);
 		$scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
 	}
 
@@ -836,6 +926,17 @@ EOS
 	$localStorageMessages .= CGI::end_div();
 		
 	# my $pretty_print_self  = pretty_print($self);
+
+	# Enable localized strings for the buttons:
+	my $STRING_Preview     = $mt->maketext("Preview My Answers");
+	my $STRING_ShowCorrect = $mt->maketext("Show correct answers");
+	my $STRING_Submit      = $mt->maketext("Check Answers");
+
+# With these values - things work, but the button text is English
+# with the localized values, or any answers in UTF-8 - thing break
+$STRING_Preview = "Preview My Answers";
+$STRING_ShowCorrect = "Show correct answers";
+$STRING_Submit = "Check Answers";
 
 ######################################################
 # Return interpolated problem template

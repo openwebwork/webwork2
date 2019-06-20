@@ -1,8 +1,9 @@
 $simple_format = <<'ENDPROBLEMTEMPLATE';
 
 <!DOCTYPE html>
-<html>
+<html $COURSE_LANG_AND_DIR>
 <head>
+<meta charset='utf-8'>
 <base href="$XML_URL">
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 
@@ -31,15 +32,15 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<title>$XML_URL WeBWorK Editor using host: $XML_URL, format: simple seed: $problemSeed</title>
+<title>$XML_URL WeBWorK using host: $XML_URL, format: simple seed: $problemSeed</title>
 </head>
 <body>
 <div class="container-fluid">
 <div class="row-fluid">
 <div class="span12 problem">			
 		    $answerTemplate
-		    <form action="$FORM_ACTION_URL" method="post">
-<div class="problem-content">
+	<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
+<div id="problem_body" class="problem-content" $PROBLEM_LANG_AND_DIR>
 			$problemText
 </div>
 $scoreSummary
@@ -59,17 +60,18 @@ $LTIGradeMessage
 	       <input type="hidden" name="outputformat" value="simple">
 	       <input type="hidden" name="language" value="$formLanguage">
 	       <input type="hidden" name="showSummary" value="$showSummary">
+	       <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
 		   <p>
-		      <input type="submit" name="preview"  value="Preview" /> 
-			  <input type="submit" name="WWsubmit" value="Submit answer"/> 
-		      <input type="submit" name="WWcorrectAns" value="Show correct answer"/>
+		      <input type="submit" name="preview"  value="$STRING_Preview" />
+		      <input type="submit" name="WWsubmit" value="$STRING_Submit"/>
+		      <input type="submit" name="WWcorrectAns" value="$STRING_ShowCorrect"/>
 		   </p>
-	       </form>
+	</form>
 </div>
 </div></div>
 
 <div id="footer">
-WeBWorK &copy 1996-2016 | host: $XML_URL | course: $courseID | format: simple | theme: math4
+WeBWorK &copy; 1996-2019 | host: $XML_URL | course: $courseID | format: simple | theme: math4
 </div>
 
 
