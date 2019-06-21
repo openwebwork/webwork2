@@ -9,25 +9,24 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link href="/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
 
 <!-- JS Loads -->
 <script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
 <script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/legacy/java_init.js" type="tesxt/javascript"></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" type="text/javascript"></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js" type="text/javascript"></script>
-<script src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full" type="text/javascript"></script>
-<script type="textx/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/legacy/java_init.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/apps/InputColor/color.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/apps/Base64/Base64.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script src="/webwork2_files/js/apps/Problem/problem.js" type="text/javascript"></script>
+<script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
