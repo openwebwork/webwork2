@@ -1004,6 +1004,17 @@ sub pretty_print {    # provides html output -- NOT a method
 		
 		
 		foreach my $key ( sort ( keys %$r_input )) {
+			# Safety feature - we do not want to display the contents of "%seed_ce" which
+			# contains the database password and lots of other things, and explicitly hide
+			# certain internals of the CourseEnvironment in case one slips in.
+			next if ( ( $key =~ /database/ ) ||
+				  ( $key =~ /dbLayout/ ) ||
+				  ( $key eq "ConfigValues" ) ||
+				  ( $key eq "ENV" ) ||
+				  ( $key eq "externalPrograms" ) ||
+				  ( $key eq "permissionLevels" ) ||
+				  ( $key eq "seed_ce" )
+			);
 			$out .= "<tr><TD> $key</TD><TD>=&gt;</td><td>&nbsp;".pretty_print($r_input->{$key}) . "</td></tr>";
 		}
 		$out .="</table>";
