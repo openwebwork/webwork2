@@ -121,6 +121,7 @@ use WeBWorK::PG::ImageGenerator;
 use IO::Socket::SSL;
 use Digest::SHA qw(sha1_base64);
 use XML::Simple qw(XMLout);
+use JSON;
 
 use constant  TRANSPORT_METHOD => 'XMLRPC::Lite';
 use constant  REQUEST_CLASS    => 'WebworkXMLRPC';  # WebworkXMLRPC is used for soap also!!
@@ -943,6 +944,40 @@ $STRING_Submit = "Check Answers";
 ######################################################
 
 	my $format_name = $self->{inputs_ref}->{outputformat}//'standard';
+
+        # The json output format is special and cannot be handled by the
+	# the standard code
+	if ( $format_name eq "json" ) {
+	  my %output_data_hash;
+	  my $key_value_pairs = do("WebworkClient/${format_name}_format.pl");
+	  my $key;
+	  my $val;
+	  while ( @$key_value_pairs ) {
+	    $key = shift( @$key_value_pairs );
+	    $val = shift( @$key_value_pairs );
+	    if ( ( $key =~ /^hidden_input_field/ ) ||
+		 ( $key =~ /^real_webwork/ ) ||
+		 ( $key =~ /_VI$/ )
+	       ) {
+		# interpolate values into $val
+		$val =~ s/(\$\w+)/$1/gee;
+		if ( $key =~ /_VI$/ ) { $key =~ s/_VI$//; }
+	    }
+	    $output_data_hash{$key} = $val;
+	  }
+	  # Add the current score to the %output_data_hash
+	  my $json_score = 0;
+	  if ( $submitMode && $problemResult ) {
+	    $json_score = wwRound(0, $problemResult->{score} * 100);
+	  }
+	  $output_data_hash{score} = $json_score;
+
+	  my $json_output_data = to_json( \%output_data_hash ,{pretty=>1, canonical=>1});
+	  # FIXME: Should set header of response to content_type("text/json; charset=utf-8");
+	  return $json_output_data;
+	}
+
+
 	# find the appropriate template in WebworkClient folder
 	my $template = do("WebworkClient/${format_name}_format.pl");
 	die "Unknown format name $format_name" unless $template;
