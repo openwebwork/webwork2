@@ -51,11 +51,15 @@ our @EXPORT_OK = ();
 
 =item get_problem_lang_and_dir subroutine
 
- @output = get_problem_lang_and_dir( $self, $pg );
+ @output = get_problem_lang_and_dir( $self, $pg [,$requested_mode,$ce_lang] );
 
 returns an array of tagname tagvalue pairs.
 
 In some cases, the result is empty.
+
+Use the optional arguments $requested_mode,$ce_lang when $self
+does not contain a request object. This was required for the
+use of this code in lib/WebworkClient.pm.
 
 =cut
 
@@ -72,15 +76,44 @@ sub get_problem_lang_and_dir {
     
     my @result = ();
     
-    my $ce_requested_mode = $self->r->ce->{perProblemLangAndDirSettingMode}; # Mode requested
-    
+    # Get the value for ce_requested_mode:
+    #   First check for the optional argument.
+    #   Otherwise try getting from $self->r->ce->{perProblemLangAndDirSettingMode}
+    #     if it is defined.
+    #   If those both failed, fall back to "none".
+    my $ce_requested_mode = shift;
+    if ( ! defined($ce_requested_mode ) ) {
+	if ( defined( $self->r ) &&
+	     defined( $self->r->ce ) &&
+	     defined( $self->r->ce->{perProblemLangAndDirSettingMode} ) ) {
+	  $ce_requested_mode = $self->r->ce->{perProblemLangAndDirSettingMode}; # Mode requested
+	} else {
+	  $ce_requested_mode = "none"; # Default
+	}
+    }
+
     if ( $ce_requested_mode eq "none" ) {
 	# Requested mode is "none" so no output should be made.
 	return( @result );
     }
     
-    # Get course-wide language setting
-    my $ce_lang = $self->r->ce->{language}; # Course wide setting
+    # Get course-wide language setting:
+    #   First check for the optional argument.
+    #   Otherwise try getting from $self->r->ce->{language}
+    #     if it is defined.
+    #   If those both failed, fall back to "en".
+    my $ce_lang = shift;
+
+    if ( ! defined($ce_lang ) ) {
+	if ( defined( $self->r ) &&
+	     defined( $self->r->ce ) &&
+	     defined( $self->r->ce->{language} ) ) {
+	  $ce_lang = $self->r->ce->{language}; # Course wide setting
+	} else {
+	  $ce_lang = "en";
+	}
+    }
+
     my $ce_dir = "ltr"; # default
     
     if ( $ce_lang =~ /^he/i ) { # supports also the current "heb" option

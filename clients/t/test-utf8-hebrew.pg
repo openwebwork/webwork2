@@ -1,0 +1,37 @@
+DOCUMENT();        # This should be the first executable line in the problem.
+
+loadMacros(
+  "PGstandard.pl",
+  "MathObjects.pl",
+);
+
+SET_PROBLEM_TEXTDIRECTION("rtl");
+SET_PROBLEM_LANGUAGE("he-IL");
+
+TEXT(beginproblem());
+
+Context("Numeric");
+
+$a = random(1,9,1);
+$b = random(1,9,1);
+
+$ans1 = Real("10*$a + $b");
+
+Context()->texStrings;
+BEGIN_TEXT
+
+חשב את \( f(x) = 10 x + $b \) עבור הערך \( x = $a \).
+$PAR
+
+$BCENTER
+\{ openSpan( { "dir" => "ltr" } ) \}
+\( f($a) = \) \{ $ans1->ans_rule(2) \}
+\{ closeSpan() \}
+$ECENTER
+
+END_TEXT
+Context()->normalStrings;
+
+ANS( $ans1->cmp() );
+
+ENDDOCUMENT();        # This should be the last executable line in the problem.
