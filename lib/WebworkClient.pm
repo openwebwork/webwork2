@@ -957,6 +957,7 @@ $STRING_Submit = "Check Answers";
 	    $val = shift( @$key_value_pairs );
 	    if ( ( $key =~ /^hidden_input_field/ ) ||
 		 ( $key =~ /^real_webwork/ ) ||
+		 ( $key =~ /^internal/ ) ||
 		 ( $key =~ /_VI$/ )
 	       ) {
 		# interpolate values into $val

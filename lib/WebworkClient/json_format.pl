@@ -145,5 +145,7 @@ push( @pairs_for_json, "hidden_input_field_forcePortNumber", '$forcePortNumber' 
 
 push( @pairs_for_json, "real_webwork_XML_URL", '$XML_URL' );
 push( @pairs_for_json, "real_webwork_FORM_ACTION_URL", '$FORM_ACTION_URL' );
+push( @pairs_for_json, "internal_problem_lang_and_dir", '$PROBLEM_LANG_AND_DIR');
 
+# Output back to WebworkClient.pm is the reference to the array:
 \@pairs_for_json;
