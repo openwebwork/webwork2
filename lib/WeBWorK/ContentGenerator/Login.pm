@@ -61,7 +61,8 @@ sub title {
 	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
     }
 
-    return $r->urlpath->name;
+    my $ref = $self->SUPER::title();
+    return $ref;
 }
 
 sub info {

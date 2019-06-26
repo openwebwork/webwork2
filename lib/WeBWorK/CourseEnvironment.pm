@@ -202,7 +202,7 @@ sub new {
 	my $self = {};
 	foreach my $name (keys %symbolHash) {
 		# weed out internal symbols
-		next if $name =~ /^(INC|_.*|__ANON__|main::)$/;
+		next if $name =~ /^(INC|_.*|__ANON__|main::|include)$/;
 		# pull scalar, array, and hash values for this symbol
 		my $scalar = ${*{$symbolHash{$name}}};
 		my @array = @{*{$symbolHash{$name}}};
