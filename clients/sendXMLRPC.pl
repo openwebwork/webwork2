@@ -269,7 +269,7 @@ BEGIN {
 }
 $ENV{MOD_PERL_API_VERSION} = 2;
 use lib "$main::dirname";
-print "home directory ".$main::dirname;
+print "home directory ".$main::dirname."\n";
 #use lib "."; # is this needed?
 
 # some files such as FormatRenderedProblem.pm may need to be in the same directory
@@ -315,7 +315,7 @@ $Carp::Verbose = 1;
 
 
 ### verbose output when UNIT_TESTS_ON =1;
- our $UNIT_TESTS_ON             = 0;
+our $UNIT_TESTS_ON = 0;
 
 ############################################################
 # Read command line options
@@ -397,9 +397,9 @@ print_help_message() if $print_help_message;
 # credentials file location -- search for one of these files 
 
 
-our @path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
+@path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
 
-my $credentials_string = <<EOF;
+$credentials_string = <<EOF;
 
 The credentials file should contain something like this:
 
@@ -562,9 +562,6 @@ use constant PDF_DISPLAY_COMMAND =>"open -a 'Preview'";
 ### set display mode
 use constant DISPLAYMODE   => 'MathJax';
 use constant PROBLEMSEED   => '987654321';
-
-### verbose output when UNIT_TESTS_ON =1;
-our $UNIT_TESTS_ON             = 0;
 
 ############################################################
 # End configure displays for local operating system
