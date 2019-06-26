@@ -3,15 +3,15 @@
 package OPLUtils;
 use base qw(Exporter);
 
-# This file contains the subroutines that build JSON files from the database to help speed up the client side. 
+# This file contains the subroutines that build JSON files from the database to help speed up the client side.
 #
 #  The following files are created:
 #		1. $webwork_htdocs/DATA/library-directory-tree.json  (the directory structure of the library)
 #		2. $webwork_htdocs/DATA/library-subject-tree.json  (the subject/chapter/section struture of the library)
-#		3. 
+#		3.
 
-# This is used to create the file library-directory-tree.json which can be used to load in 
-# directory information for the OPL.  It writes the file as a JSON of directories to be easily loaded. 
+# This is used to create the file library-directory-tree.json which can be used to load in
+# directory information for the OPL.  It writes the file as a JSON of directories to be easily loaded.
 
 use strict;
 use warnings;
@@ -123,9 +123,9 @@ sub buildTree {
 		} else {
 			$b = {};
 			$b->{name} = $dir;
-			
+
 			my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir . "/" . $dir);
-			
+
 			#print $absoluteDir . "/" . $dir . "   " . $b->{num_files} . "\n";
 			if (scalar(@files)>0){
 				$b->{num_files} = scalar(@files);
@@ -160,7 +160,7 @@ sub build_library_subject_tree {
 		."JOIN `$tables{pgfile}` AS pg ON sect.DBsection_id = pg.DBsection_id "
 		."JOIN `$tables{path}` AS path ON pg.path_id = path.path_id ";
 
-	my $tree;  # the library subject tree will be stored as arrays of objects. 
+	my $tree;  # the library subject tree will be stored as arrays of objects.
 
 	my $results = $dbh->selectall_arrayref("select subj.name from `$tables{dbsubject}` AS subj");
 
@@ -170,10 +170,10 @@ sub build_library_subject_tree {
 
 	print "Building the subject-tree.  There are " . scalar(@subject_names) . " subjects\n";
 
-	my @subject_tree;  # array to store the individual library tree for each subject 
+	my @subject_tree;  # array to store the individual library tree for each subject
 
 	for my $subj_name (@subject_names){
-		
+
 		my $subj = $subj_name;
 		$subj =~ s/'/\'/g;
 
@@ -187,7 +187,7 @@ sub build_library_subject_tree {
 		#print Dumper(\@chapter_names);
 
 		for my  $ch_name (@chapter_names){
-		
+
 			my $ch = $ch_name;
 			$ch =~ s/'/\'/g;
 
@@ -199,7 +199,7 @@ sub build_library_subject_tree {
 			my @section_names = map { $_->[0]} @{$results};
 
 			my @subfields = ();
-			
+
 			for my $sect_name (@section_names){
 				my $section_tree = {};
 				$section_tree->{name} = $sect_name;
@@ -243,9 +243,9 @@ sub build_library_subject_tree {
 
 		}
 
-		my $subject_tree; 
+		my $subject_tree;
 		$subject_tree->{name} = $subj_name;
-		$subject_tree->{subfields} = \@chapter_tree; 
+		$subject_tree->{subfields} = \@chapter_tree;
 
 		## find the number of files on the subject level
 
@@ -315,6 +315,8 @@ sub build_library_textbook_tree {
 	my @textbooks=map { {textbook_id=>$_->[0],title=>$_->[1],edition=>$_->[2],
 			author=>$_->[3],publisher=>$_->[4],isbn=>$_->[5],pubdate=>$_->[6]}} @{$results};
 
+	my @output = ();
+
 	my $i =0; ## index to alert user the length of the build
 
 	print "Building the Textbook Library Tree\n";
@@ -331,6 +333,8 @@ sub build_library_textbook_tree {
 
 		my @chapters=map { {chapter_id=>$_->[0],name=>$_->[1],number=>$_->[2]}} @{$results};
 
+		my @chs = ();
+
 		for my $chapter (@chapters){
 
 			my $results = $dbh->selectall_arrayref("select sect.section_id,sect.name,sect.number "
@@ -345,7 +349,7 @@ sub build_library_textbook_tree {
 
 			for my $section (@sections){
 
-		   		my $whereClause ="WHERE sect.section_id='". $section->{section_id} 
+		   		my $whereClause ="WHERE sect.section_id='". $section->{section_id}
 		   			."' AND ch.chapter_id='". $chapter->{chapter_id}."' AND "
 		   				."text.textbook_id='".$textbook->{textbook_id}."'";
 
@@ -362,7 +366,20 @@ sub build_library_textbook_tree {
 			$chapter->{num_probs}=scalar @{$sth->fetchall_arrayref()};
 
 			$chapter->{sections}=\@sections;
-		
+
+			my @sects = map {{
+				name=>$_->{name},
+				section_id => $_->{section_id},
+				num_files=>$_->{num_probs}
+			}} @sections;
+
+			push(@chs,{
+				name=>$chapter->{name},
+				chapter_id => $chapter->{chapter_id},
+				num_files=>$chapter->{num_probs},
+				subfields=>\@sects
+			});
+
 		}
 		my $whereClause ="WHERE text.textbook_id='".$textbook->{textbook_id}."'";
 
@@ -371,6 +388,13 @@ sub build_library_textbook_tree {
 		$textbook->{num_probs}=scalar @{$sth->fetchall_arrayref()};
 
 		$textbook->{chapters}=\@chapters;
+
+		push(@output,{
+			name=>$textbook->{title}. " - " . $textbook->{author},
+			textbook_id => $textbook->{textbook_id},
+			subfields=>\@chs,
+			num_files=>$sth->rows
+		});
 	}
 
 	print "\n";
@@ -386,13 +410,13 @@ sub build_library_textbook_tree {
 	open $OUTFILE, '>', $file  or die "Cannot open $file";
 
 	# you can check for errors (e.g., if after opening the disk gets full)
-	print { $OUTFILE } to_json(\@textbooks,{pretty=>1}) or die "Cannot write to $file";
+	print { $OUTFILE } to_json(\@output,{pretty=>1}) or die "Cannot write to $file";
 
 	# check for errors
 	close $OUTFILE or die "Cannot close $file";
 
 
-	print "Wrote Library Textbook Tree to $file\n";
+	print "\n\nWrote Library Textbook Tree to $file\n";
 
 }
 

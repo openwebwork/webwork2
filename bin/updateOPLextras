@@ -1,0 +1,80 @@
+#!/usr/bin/perl
+
+#####
+#
+#  This script allows to rerun a few scripts related to the OPL but doesn't require
+#  the entire OPLupdate script to be run.
+#
+####
+
+
+use strict;
+use warnings;
+use feature 'say';
+use Moo;
+use MooX::Options;
+use Data::Dump qw/dd/;
+use DBI;
+
+
+option textbooks  => (
+  is => 'ro',
+  doc => 'run the script to update the OPL textbooks and write to a JSON file'
+);
+option directories => (
+  is => 'ro',
+  doc => 'run the script to update the OPL directories and write to a JSON file'
+);
+option subjects => (
+  is => 'ro',
+  doc => 'run the script to update the OPL subjects and write to a JSON file'
+);
+option all => (
+  is => 'ro',
+  doc => 'run all the scripts'
+);
+
+BEGIN {
+  die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+}
+
+use lib "$ENV{WEBWORK_ROOT}/bin";
+use lib "$ENV{WEBWORK_ROOT}/lib";
+use WeBWorK::CourseEnvironment;
+use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_library_textbook_tree/;
+
+sub run {
+  my ($self) = @_;
+
+  my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
+
+  my $dbh = DBI->connect(
+          $ce->{problemLibrary_db}->{dbsource},
+          $ce->{problemLibrary_db}->{user},
+          $ce->{problemLibrary_db}->{passwd},
+          {
+              PrintError => 0,
+              RaiseError => 1,
+              ($ce->{ENABLE_UTF8MB4})?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
+          },
+  );
+
+  if (!$self->all && $self->textbooks){
+    build_library_textbook_tree($ce,$dbh);
+  }
+  if (!$self->all && $self->directories){
+    build_library_directory_tree($ce,$dbh);
+  }
+  if (!$self->all && $self->subjects){
+    build_library_subject_tree($ce,$dbh);
+  }
+  if ($self->all){
+    build_library_textbook_tree($ce,$dbh);
+    build_library_directory_tree($ce,$dbh);
+    build_library_subject_tree($ce,$dbh);
+  }
+}
+
+main->new_with_options->run;
+
+1;
