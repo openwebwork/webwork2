@@ -258,6 +258,10 @@ on the same computer but does require an internet connection to a remote WeBWorK
                  
        Sets problemSeed to the number contained in string s
 
+=item  --psvn=s
+
+       Sets psvn to the number contained in string s
+
 
 
 =back
@@ -352,6 +356,7 @@ my $print_help_message;
 my $read_list_from_this_file;
 my $path_to_log_file;
 my $problemSeed;
+my $psvn;
 
 our %credentials;
 our @path_list;
@@ -383,6 +388,7 @@ GetOptions(
 	'help'          => \$print_help_message,
 	'log=s'         => \$path_to_log_file,
 	'seed=s'        => \$problemSeed,   
+	'psvn=s'	=> \$psvn,
 );
 
 print_help_message() if $print_help_message;
@@ -630,6 +636,7 @@ my $default_form_data = {
 		displayMode	=> $DISPLAYMODE,
 		outputformat 	=> $format//'standard',
 		problemSeed     => $problemSeed//PROBLEMSEED(),
+		psvn		=> $psvn//'23456',
 		forcePortNumber => $credentials{forcePortNumber}//'',
 		language	=> $lang//'en',
 };
@@ -888,10 +895,16 @@ sub process_problem {
 	my $problemSeed = $form_data->{problemSeed};
 	die "problem seed not defined in sendXMLRPC::process_problem" unless $problemSeed;
 
+	my $local_psvn = '34567';
+	if ( defined( $form_data->{psvn} ) ) {
+	  $local_psvn = $form_data->{psvn};
+	}
+
 	my $updated_input = {%$input, 
 					  envir => $xmlrpc_client->environment(
 							   fileName       => $adj_file_path,
 							   sourceFilePath => $adj_file_path,
+							   psvn		  => $local_psvn,
 							   problemSeed    => $problemSeed,),
 	};
 
