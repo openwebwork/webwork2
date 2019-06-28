@@ -153,7 +153,7 @@ eval {
 
 
 our %imagesModeOptions = %{$seed_ce->{pg}->{displayModeOptions}->{images}};
-our $site_url = $seed_ce->{server_root_url};	
+our $site_url = $seed_ce->{server_root_url}//'';
 our $imgGen = WeBWorK::PG::ImageGenerator->new(
 		tempDir         => $seed_ce->{webworkDirs}->{tmp},
 		latex	        => $seed_ce->{externalPrograms}->{latex},
@@ -564,7 +564,7 @@ sub environment {
 		problemSeed  => $self->{inputs_ref}->{problemSeed}//3333,
 		problemValue =>1,
 		probNum => 13,
-		psvn => 54321,
+		psvn => $self->{inputs_ref}->{psvn}//54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
 		sectionName => 'Gage',
@@ -757,6 +757,7 @@ sub formatRenderedProblem {
 	my $userID           =  $self->{userID};
 	my $course_password  =  $self->{course_password};
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//4444;
+        my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode};
 	
