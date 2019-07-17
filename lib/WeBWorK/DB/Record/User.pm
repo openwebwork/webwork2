@@ -25,6 +25,7 @@ WeBWorK::DB::Record::User - represent a record from the user table.
 
 use strict;
 use warnings;
+use Encode qw(encode);
 
 BEGIN {
 	__PACKAGE__->_fields(
@@ -87,13 +88,12 @@ sub rfc822_mailbox {
 	
 	if (defined $address and $address ne "") {
 		if (defined $full_name and $full_name ne "") {
-			# see if we need to quote the phrase
-			# (this regex matches CTL, SPACE, and specials)
-			if ($full_name =~ /[\0-\037\177 ()<>@,;:\\".\[\]]/) {
-				$full_name =~ s/(["\\\r])/\\$1/g; # escape <">, "\", or CR
-				$full_name = "\"$full_name\"";
-			}
-			return "$full_name <$address>";
+			# Encode the user name using "MIME-Header" encoding,
+			# which allows UTF-8 encoded names. Given this change,
+			# the code to escape backslash, double quote, and \r
+			# was removed. Any such characters will be handled by
+			# the MIME-Header encoding.
+			return encode("MIME-Header", $full_name) . " <$address>";
 		} else {
 			return $address;
 		}

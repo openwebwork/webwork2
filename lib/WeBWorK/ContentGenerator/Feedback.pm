@@ -29,7 +29,7 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 use strict;
 use warnings;
 use utf8;
-use Encode qw(encode_utf8 decode_utf8);
+use Encode qw(encode_utf8 encode);
 use Data::Dumper;
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
@@ -175,7 +175,9 @@ sub body {
 				$sender = $user->rfc822_mailbox;
 			} else {
 				if ($user->full_name) {
-					$sender = $user->full_name . " <$from>"
+					# Encode the user name using "MIME-Header" encoding,
+					# which allows UTF-8 encoded names.
+					$sender = encode("MIME-Header", $user->full_name) . " <$from>";
 				} else {
 					$sender = $from;
 				}
@@ -259,7 +261,8 @@ sub body {
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
 			"From" => $sender,
-			"Subject" => $subject
+			"Subject" => $subject,
+			"Content-Type" => "text/plain; charset=UTF-8"
 		]);
 
 		# my $header = Email::Simple::Header->new;
