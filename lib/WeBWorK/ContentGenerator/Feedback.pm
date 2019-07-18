@@ -172,11 +172,14 @@ sub body {
 		my $sender;
 		if ($user) {
 			if ($user->email_address) {
+				# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding
+				# when the full_name is set.
 				$sender = $user->rfc822_mailbox;
 			} else {
 				if ($user->full_name) {
 					# Encode the user name using "MIME-Header" encoding,
-					# which allows UTF-8 encoded names.
+					# (RFC 2047) which allows UTF-8 encoded names to be
+					# encoded inside the mail header using a special format.
 					$sender = encode("MIME-Header", $user->full_name) . " <$from>";
 				} else {
 					$sender = $from;
@@ -211,6 +214,11 @@ sub body {
 		my $subject = $ce->{mail}{feedbackSubjectFormat}
 			|| "WeBWorK question from %c: %u set %s/prob %p"; # default if not entered
 		$subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
+
+		# If in the future any fields in the subject can contain non-ASCII characters
+		# then we will also need:
+		# $subject = encode("MIME-Header", $subject);
+		# at present, this does not seem to be necessary.
 
 		# get info about remote user (stolen from &WeBWorK::Authen::write_log_entry)
 		my ($remote_host, $remote_port);
@@ -416,6 +424,8 @@ sub getFeedbackRecipients {
 				and defined $rcpt->section and defined $user->section
 				and $rcpt->section ne $user->section;
 			if ($rcpt and $rcpt->email_address) {
+				# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding
+				# when the full_name is set.
 				push @recipients, $rcpt->rfc822_mailbox;
 			}
 		}

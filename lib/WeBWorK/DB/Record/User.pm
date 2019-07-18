@@ -80,6 +80,22 @@ sub full_name {
 # CR          =  <ASCII CR, carriage return>  ; (     15,      13.)
 # quoted-pair =  "\" CHAR                     ; may quote any char
 
+# 2019 rfc822_mailbox was modified for UTF-8 support:
+#   If the full_name is set it will use the RFC 2047 "MIME-Header" encoding
+#   for the full_name, so that UTF-8 characters can be "sent" via the
+#   permitted ASCII encoding.
+# When "international emails" (RFC 6532 and RFC 6531) which allow Unicode in
+#   the address become widely accepted, and are well supported by the public
+#   SMTP mail infrastructure - a different approach will be needed, and
+#   WW will need to validate email addresses when they are set/saved to the
+#   DB based on the new standards.
+# References:
+#	https://tools.ietf.org/html/rfc822
+#	https://tools.ietf.org/html/rfc2047
+#	https://tools.ietf.org/html/rfc6531
+#	https://tools.ietf.org/html/rfc6532
+#	https://en.wikipedia.org/wiki/International_email#UTF-8_headers
+
 sub rfc822_mailbox {
 	my ($self) = @_;
 	
@@ -89,10 +105,7 @@ sub rfc822_mailbox {
 	if (defined $address and $address ne "") {
 		if (defined $full_name and $full_name ne "") {
 			# Encode the user name using "MIME-Header" encoding,
-			# which allows UTF-8 encoded names. Given this change,
-			# the code to escape backslash, double quote, and \r
-			# was removed. Any such characters will be handled by
-			# the MIME-Header encoding.
+			# which allows UTF-8 encoded names.
 			return encode("MIME-Header", $full_name) . " <$address>";
 		} else {
 			return $address;
