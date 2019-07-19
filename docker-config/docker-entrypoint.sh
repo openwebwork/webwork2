@@ -22,7 +22,7 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/mail{smtpServer} = '\'''\''/mail{smtpServer} = $ENV{"WEBWORK_SMTP_SERVER"}/' \
                     -e 's/mail{smtpSender} = '\'''\''/mail{smtpSender} = $ENV{"WEBWORK_SMTP_SENDER"}/' \
                     -e 's/siteDefaults{timezone} = "America\/New_York"/siteDefaults{timezone} = $ENV{"WEBWORK_TIMEZONE"}/' \
-                    -e 's/$server_groupID    = '\''wwdata'\''/$server_groupID    = "root"/' \
+                    -e 's/$server_groupID    = '\''wwdata'\''/$server_groupID    = "www-data"/' \
                     $APP_ROOT/webwork2/conf/site.conf
             fi
         fi
@@ -36,7 +36,7 @@ if [ "$1" = 'apache2' ]; then
         umask 2
         cd $APP_ROOT/courses
         WEBWORK_ROOT=$APP_ROOT/webwork2 $APP_ROOT/webwork2/bin/addcourse admin --db-layout=sql_single --users=$APP_ROOT/webwork2/courses.dist/adminClasslist.lst --professors=admin
-        chown www-data:root -R $APP_ROOT/courses
+        chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
     fi
     # modelCourses link if not existing
@@ -49,9 +49,9 @@ if [ "$1" = 'apache2' ]; then
     # create htdocs/tmp directory if not existing
     if [ ! -d "$APP_ROOT/webwork2/htdocs/tmp" ]; then
       mkdir $APP_ROOT/webwork2/htdocs/tmp
+      chown www-data:www-data -R $APP_ROOT/webwork2/htdocs/tmp
       echo "htdocs/tmp directory created"
     fi
-    chown www-data:root -R $APP_ROOT/webwork2/htdocs/tmp
       
     # defaultClasslist.lst and adminClasslist.lst files if not existing
     if [ ! -f "$APP_ROOT/courses/defaultClasslist.lst"  ]; then
@@ -69,7 +69,11 @@ if [ "$1" = 'apache2' ]; then
       cd $APP_ROOT/webwork2/bin
       ./OPL-update
     fi
-
+    # Compile chromatic/color.c if necessary - may be needed for PG directory mounted from outside image
+    if [ ! -f "$APP_ROOT/pg/lib/chromatic/color"  ]; then
+      cd $APP_ROOT/pg/lib/chromatic
+      gcc color.c -o color
+    fi
     # generate apache2 reload config if needed
     if [ $DEV -eq 1 ]; then
         echo "PerlModule Apache2::Reload" > /etc/apache2/conf-enabled/apache2-reload.conf
@@ -82,20 +86,22 @@ if [ "$1" = 'apache2' ]; then
     # Fix possible permission issues
     echo "Fixing ownership and permissions (just in case it is needed)"
     cd $APP_ROOT/webwork2
-    rm -rf htdocs/tmp/*    # pointers which which have no target shut down the rebuild process.
-                           # the tmp directory is rebuilt automatically at the cost of some speed.
-    chown -R www-data logs tmp DATA htdocs/tmp
+    # Symbolic links which have no target outside the Docker container
+    # cause problems duringt the rebuild process on some systems.
+    # So we delete them. They will be rebuilt automatically when needed again
+    # at the cost of some speed.
+    find htdocs/tmp -type l -exec rm -f {} \;
+    chown -R www-data:www-data logs tmp DATA htdocs/tmp
     chmod -R u+w logs tmp DATA  ../courses htdocs/tmp
     cd $APP_ROOT
-    find courses -type f -exec chown www-data:root {} \;
-    find courses -type d -exec chown www-data:root {} \;
-    
-    # echo "start cpan install XML::Simple"
-    # cpan install XML::Simple
-    # echo "end fixing ownership and permissions"
-    # OLD: chown www-data -R $APP_ROOT/courses
-    #    but that sometimes caused errors in Docker on Mac OS X when there was a broken symbolic link somewhere in the directory tree being processed
+    # The chown for files/directories under courses is done using find, as
+    # using a simple "chown -R www-data $APP_ROOT/courses" would sometimes
+    # cause errors in Docker on Mac OS X when there was a broken symbolic link
+    # somewhere in the directory tree being processed.
+    find courses -type f -exec chown www-data:www-data {} \;
+    find courses -type d -exec chown www-data:www-data {} \;
+    echo "end fixing ownership and permissions"
 
 fi
 
- exec "$@"
+exec "$@"
