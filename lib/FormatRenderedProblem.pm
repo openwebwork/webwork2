@@ -143,6 +143,7 @@ sub formatRenderedProblem {
 	my $userID           =  $self->{userID}//'';
 	my $course_password  =  $self->{course_password}//'';
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//6666;
+	my $problemUUID      =  $self->{inputs_ref}->{problemUUID}//0;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode}//'foobar';
 	

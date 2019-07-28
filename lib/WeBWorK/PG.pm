@@ -72,7 +72,7 @@ sub defineProblemEnvir {
 		$key,
 		$set,
 		$problem,
-		$psvn,  #FIXME  -- not used
+		$psvn,  #FIXME  -- not used  ??
 		$formFields,
 		$translationOptions,
 		$extras,
@@ -95,7 +95,12 @@ sub defineProblemEnvir {
 	# pstaab: changed the next line from
 	#$envir{psvn}                = $set->psvn;
 	# to
-	$envir{psvn}                = $psvn;
+	$envir{psvn}                = $psvn;  #'problem set version number' (associated with homework set)
+	# update problemUUID from submitted form
+	$envir{problemUUID}         =  	   $formFields->{problemUUID} // 
+	                                   $formFields->{problemIdentifierPrefix} //
+	                                   $envir{problemUUID}//
+	                                   0;
 	$envir{psvnNumber}          = "psvnNumber-is-deprecated-Please-use-psvn-Instead"; #FIXME
 	$envir{probNum}             = $problem->problem_id;
 	$envir{questionNumber}      = $envir{probNum};

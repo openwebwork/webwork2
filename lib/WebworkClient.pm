@@ -104,7 +104,8 @@ our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pd
 
 package WebworkClient;
 
-use Crypt::SSLeay;  # needed for https
+# use Crypt::SSLeay;  # needed for https
+use LWP::Protocol::https;
 use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
@@ -562,6 +563,7 @@ sub environment {
 		PRINT_FILE_NAMES_FOR => [ 'gage'],
 		probFileName => 'WebworkClient.pm:: define probFileName in environment',
 		problemSeed  => $self->{inputs_ref}->{problemSeed}//3333,
+		problemUUID  => $self->{inputs_ref}->{problemUUID}//0,
 		problemValue =>1,
 		probNum => 13,
 		psvn => $self->{inputs_ref}->{psvn}//54321,
@@ -757,7 +759,8 @@ sub formatRenderedProblem {
 	my $userID           =  $self->{userID};
 	my $course_password  =  $self->{course_password};
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//4444;
-        my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
+	my $problemUUID      =  $self->{inputs_ref}->{problemUUID}//0;
+    my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode};
 	
