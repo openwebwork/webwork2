@@ -625,20 +625,20 @@ die "You must first create an output file at $path_to_log_file
 ############################################
  
 my $default_input = { 
-		userID      	=> $credentials{userID}//'',
-		session_key	=> $credentials{session_key}//'',
-		courseID   	=> $credentials{courseID}//'',
-		courseName   	=> $credentials{courseID}//'',
-		course_password	=> $credentials{course_password}//'',
+		userID          => $credentials{userID}//'',
+		session_key     => $credentials{session_key}//'',
+		courseID        => $credentials{courseID}//'',
+		courseName      => $credentials{courseID}//'',
+		course_password => $credentials{course_password}//'',
 };
 
 my $default_form_data = { 
-		displayMode	=> $DISPLAYMODE,
-		outputformat 	=> $format//'standard',
+		displayMode     => $DISPLAYMODE,
+		outputformat    => $format//'standard',
 		problemSeed     => $problemSeed//PROBLEMSEED(),
-		psvn		    => $psvn//'23456',
+		psvn            => $psvn//'23456',
 		forcePortNumber => $credentials{forcePortNumber}//'',
-		language	    => $lang//'en',
+		language        => $lang//'en',
 };
 
 ##################################################
@@ -901,7 +901,7 @@ sub process_problem {
 					  envir => $xmlrpc_client->environment(
 							   fileName       => $adj_file_path,
 							   sourceFilePath => $adj_file_path,
-							   psvn		      => $local_psvn,
+							   psvn           => $local_psvn,
 							   problemSeed    => $problemSeed,),
 	};
 
