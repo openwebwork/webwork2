@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.99 2010/05/18 18:39:40 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -1079,7 +1079,7 @@ sub saveFileChanges {
 
 		eval {
 			local *OUTPUTFILE;
-			open OUTPUTFILE,  ">$outputFilePath"
+			open OUTPUTFILE,  ">:utf8", $outputFilePath
 					or die "Failed to open $outputFilePath";
 			print OUTPUTFILE $problemContents;
 			close OUTPUTFILE;		
@@ -1291,7 +1291,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);
@@ -1308,7 +1308,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1325,7 +1325,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1340,7 +1340,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} elsif ($file_type eq 'options_info') {  # redirec to Options.pm
@@ -1352,7 +1352,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} else {
@@ -1445,7 +1445,7 @@ sub add_problem_handler {
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
 					sourceFilePath     => $relativeSourceFilePath,
-					status_message     => uri_escape($self->{status_message})
+					status_message     => uri_escape_utf8($self->{status_message})
 	
 				}
 		);
@@ -1472,7 +1472,7 @@ sub add_problem_handler {
 					displayMode        => $displayMode,
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
-					status_message     => uri_escape($self->{status_message})
+					status_message     => uri_escape_utf8($self->{status_message})
 				}
 		);
 	} else {
@@ -1556,7 +1556,7 @@ sub save_handler {
 				editMode           => "savedFile",
 				edit_level         => 0,
 				sourceFilePath     => $relativeEditFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);
@@ -1571,7 +1571,7 @@ sub save_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "savedFile",
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1586,7 +1586,7 @@ sub save_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "savedFile",
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1598,7 +1598,7 @@ sub save_handler {
 			params => {
 				editMode           => ("savedFile"),
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} elsif ($file_type eq 'options_info') {  # redirect to Options.pm
@@ -1608,7 +1608,7 @@ sub save_handler {
 			params => {
 				editMode           => ("savedFile"),
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} elsif ($file_type eq 'source_path_for_problem_file') {  # redirect to ProblemSets.pm
@@ -1623,7 +1623,7 @@ sub save_handler {
 				edit_level         => 0,
 				sourceFilePath     => $outputFilePath, #The path relative to the templates directory is required.
 				file_type          => 'source_path_for_problem_file',
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 
 			 }
 	);
@@ -1918,7 +1918,7 @@ sub save_as_handler {
 									 problemSeed        => $problemSeed,
 									 edit_level         => $edit_level,
 									 file_type          => $new_file_type,
-									 status_message     => uri_escape($self->{status_message})
+									 status_message     => uri_escape_utf8($self->{status_message})
 
 								 }
 	);

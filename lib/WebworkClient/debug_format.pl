@@ -1,14 +1,15 @@
 $debug_format = 
 q{
 
-	<html>
+	<html $COURSE_LANG_AND_DIR>
 	<head>
+	<meta charset='utf-8'>
 	<base href="$XML_URL">
-	<title>$XML_URL WeBWorK Editor using host: $XML_URL, course: $courseID format: debug</title>
+	<title>$XML_URL WeBWorK using host: $XML_URL, course: $courseID format: debug</title>
 	</head>
 	<body>
 			
-	<h2> WeBWorK Editor using host: $XML_URL,  course: $courseID format: debug</h2>
+	<h2> WeBWorK using host: $XML_URL,  course: $courseID format: debug</h2>
 $pretty_print_self	   
 </body>
 </html>

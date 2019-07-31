@@ -17,11 +17,14 @@
 package WeBWorK::ContentGenerator::Instructor::FileManager;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
+use utf8;
 use WeBWorK::Utils qw(readDirectory readFile sortByName listFilesRecursive);
 use WeBWorK::Upload;
 use File::Path;
 use File::Copy;
 use File::Spec;
+use Encode qw(encode_utf8 decode_utf8);
+
 use String::ShellQuote;
 
 =head1 NAME
@@ -462,14 +465,15 @@ sub View {
 	# For files, display the file, if possible.
 	# If the file is an image, display it as an image.
 	#
-	my $data = readFile($file);
-	if (isText($data)) {
-		print CGI::pre(showHTML($data));
+	if (-T $file) { #check that it is a text file
+		my $data = readFile($file);
+		print CGI::div({dir=>"auto"},
+		    CGI::pre(showHTML($data)));
 	} elsif ($file =~ m/\.(gif|jpg|png)/i) {
 		print CGI::img({src=>$fileManagerURL, border=>0});
 	} else {
 		print CGI::div({class=>"ResultsWithError"},
-			"The file does not appear to be a text file.");
+			"The file $file does not appear to be a text or image file.");
 	}
 }
 
@@ -508,13 +512,14 @@ sub Edit {
 		$self->addbadmessage($r->maketext("You can only edit text files"));
 		$self->Refresh; return;
 	}
-	my $data = readFile($file);
-	if (!isText($data)) {
+	if (-T $file) {
+		my $data = readFile($file);
+		$self->RefreshEdit($data,$filename);
+	} else {
 		$self->addbadmessage($r->maketext("The file does not appear to be a text file"));
-		$self->Refresh; return;
-	}
-
-	$self->RefreshEdit($data,$filename);
+		$self->Refresh; 
+	}	
+	return;
 }
 
 ##################################################
@@ -538,7 +543,7 @@ sub Save {
 	if (defined($data)) {
 		$data =~ s/\r\n?/\n/g;  # convert DOS and Mac line ends to unix
 		local (*OUTFILE);
-		if (open(OUTFILE,">$file")) {
+		if (open(OUTFILE,">:encoding(UTF-8)",$file)) {
 			eval {print OUTFILE $data; close(OUTFILE)};
 			if ($@) {$self->addbadmessage($r->maketext("Failed to save: [_1]",$@))}
 			   else {$self->addgoodmessage($r->maketext("File saved"))}
@@ -579,7 +584,7 @@ sub RefreshEdit {
 	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
 	print CGI::Tr([
 		CGI::td({align=>"center",style=>"background-color:#CCCCCC"},CGI::b($name)),
-		CGI::td(CGI::textarea(-name=>"data",-default=>$data,-override=>1,-rows=>30,-columns=>80,
+		CGI::td(CGI::textarea(-name=>"data",-default=>$data,-override=>1,-rows=>30,-columns=>80,"dir"=>"auto",
 				-style=>"width:100%")), ## can't seem to get variable height to work
 		CGI::td({align=>"center", nowrap=>1},
 			CGI::input({%button,value=>$r->maketext("Cancel")}),"&nbsp;",
@@ -819,7 +824,7 @@ sub NewFile {
 		my $name = $self->r->param('name');
 		if (my $file = $self->verifyName($name,"file")) {
 			local (*NEWFILE);
-			if (open(NEWFILE,">$file")) {
+			if (open(NEWFILE,">:encoding(UTF-8)",$file)) {
 				close(NEWFILE);
 				$self->RefreshEdit("",$name);
 				return;
@@ -925,7 +930,16 @@ sub Upload {
 	if ($type eq 'Text') {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
-		if (open(UPLOAD,">$file")) {print UPLOAD $data; close(UPLOAD)}
+		if (open(UPLOAD,">:encoding(UTF-8)",$file)) {
+			my $backup_data=$data; 
+			my $success= utf8::decode($data); # try to decode as utf8
+			unless ($success){
+				warn "Trying to convert file $file from latin1? to UTF-8";
+				utf8::upgrade($backup_data); # try to convert data from latin1 to utf8.
+				$data=$backup_data;
+			}
+		  print UPLOAD $data; # print massaged data to file. 
+		  close(UPLOAD)}
 		  else {$self->addbadmessage($r->maketext("Can't create file '[_1]': [_2]", $name, $!))}
 	} else {
 		$upload->disposeTo($file);
@@ -1269,12 +1283,13 @@ sub showHTML {
 ##################################################
 #
 # Check if a string is plain text
-# (i.e., doesn't contain four non-regular
-# characters in a row.)
 #
 sub isText {
 	my $string = shift;
-	return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
+
+	#return $string !~ m/[^\s\x20-\x7E]{4}/;
+	return utf8::is_utf8($string);
+	# return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
 
 ##################################################

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -42,9 +42,13 @@ require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
 
+use utf8;
+#use open ':encoding(utf8)';
+binmode(STDOUT, ":utf8");
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
 ################################################################################
@@ -1225,6 +1229,37 @@ sub output_form_start{
 	return "";
 }
 
+# output_problem_lang_and_dir subroutine
+
+# adds a lang and maybe also a dir setting to the DIV tag attributes, if
+# needed by the PROBLEM language
+
+sub output_problem_lang_and_dir {
+    my $self = shift;
+    my $pg = $self->{pg};
+
+    my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
+    my $to_set_tag;
+    my $to_set_val;
+
+    # String with the HTML attributes to add
+    my $to_set = " ";
+
+    # Put the requested tags and values into the string format
+    while ( scalar(@to_set_lang_dir) > 0 ) {
+	$to_set_tag = shift( @to_set_lang_dir );
+	$to_set_val = shift( @to_set_lang_dir );
+	if ( defined( $to_set_val ) ) {
+	    $to_set .= " ${to_set_tag}=\"${to_set_val}\"";
+	}
+    }
+
+    print "$to_set";
+    return "";
+}
+
+
+
 # output_problem_body subroutine
 
 # prints out the body of the current problem
@@ -1235,6 +1270,7 @@ sub output_problem_body{
 	my %will = %{ $self->{will} };
 
 	print "\n";
+
 	print CGI::div({id=>'output_problem_body'},$pg->{body_text});
 
 	return "";
@@ -2202,7 +2238,7 @@ sub output_JS{
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		if (open(TAXONOMY, "<:encoding(utf8)", $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
 			my $taxo = '[]';
 			$taxo = join("", <TAXONOMY>);
 			close TAXONOMY;

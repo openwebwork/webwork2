@@ -280,8 +280,8 @@ msgid ""
 "std_problem_grader (the all or nothing grader). It will work with custom "
 "graders if they are written appropriately.</p>"
 msgstr ""
-"<p>לאחר תאריך הניקוד המופחת כל ,תשובות נוספות של התלמיד יקבלו ערך מופחת. כאן "
-"ניתן למלא את הערך המופת באחוזים. לדוגמה, אם הערך הוא 50% ותלמיד צופה בבעיה "
+"<p>לאחר תאריך התלחת תקןפת הניקוד המופחת כל ,תשובות נוספות של התלמיד יקבלו ערך מופחת. כאן "
+"ניתן למלא את הערך המופת באחוזים. לדוגמה, אם הערך הוא 50% ותלמיד צופה בשאלה "
 "בזמן תקופת הניקוד המופחת, הוא יראה את ההודעה \"אתה בתקופת ניקוד מופחת: כל "
 "הגשה נוספת תחשב כ-50% מהניקוד המקורי.\"</p><p>כדי להשתמש אפשרות זאת, יש גם "
 "לאפשר ניקוד מופחת ולבחור תאריך ניקוד מופחת לכל מטלה בנפרד, על-ידי עריכתו של "
@@ -465,15 +465,15 @@ msgstr "סטטוס מותאם"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2145
 msgid "ANSWERS NOT RECORDED"
-msgstr "תשובות לא נשמרו"
+msgstr "התשובות לא נשמרו"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2133
 msgid "ANSWERS NOT RECORDED --"
-msgstr "תשובות לא נשמרו --"
+msgstr "התשובות לא נשמרו --"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2144
 msgid "ANSWERS ONLY CHECKED -- "
-msgstr "תשובות רק נבדקו --"
+msgstr "התשובות נבדקו בלבד --"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1882
 msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
@@ -568,12 +568,12 @@ msgstr "התחזה"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:159
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:161
 msgid "Act as:"
-msgstr "מתחזה ל-:"
+msgstr "התחל להתחזות ל-:"
 
 #. (HTML::Entities::encode_entities($eUserID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:983
 msgid "Acting as %1."
-msgstr "מתחזה ל%1."
+msgstr "מתחזה ל- %1."
 
 #. ($actionID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:392
@@ -789,11 +789,11 @@ msgstr "כל המטלות בוצעו בהצלחה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:407
 msgid "All of the answers above are correct."
-msgstr "כל התשובות לעיל הם נכונות."
+msgstr "כל התשובות לעיל הן נכונות."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:405
 msgid "All of the gradeable answers above are correct."
-msgstr "כל התשבות לעיל שניתנות לניקוד הן נכונותם."
+msgstr "כל התשבות לעיל שניתנות לניקוד הן נכונות."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:229
 msgid "All of these files will also be made available for mail merge."
@@ -1347,7 +1347,7 @@ msgstr "גרום לשעורי הבית שנבחרו להניב פי-2 יותר �
 msgid ""
 "Causes a homework problem to become a clone of another problem from the same "
 "set."
-msgstr "גרום לשאלת שיעורי בית להפוך להעתק של בעיה אחרת באותו הגליון."
+msgstr "גרום לשאלת שיעורי בית להפוך להעתק של שאלה אחרת באותו הגליון."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:649
 msgid "Causes a single homework problem to be worth twice as much."
@@ -1528,16 +1528,16 @@ msgstr "סגור"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:827
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Close Date"
-msgstr "תאריך סגירה"
+msgstr "מועד הגשה אחרון"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:554
 msgid "Closed, answers available."
-msgstr "סגור, תשובות זמינות."
+msgstr "סגור, התשובות זמינות."
 
 #. ($self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:550
 msgid "Closed, answers on %1."
-msgstr "סגור, תשובות ב%1."
+msgstr "סגור, התשובות תהיו זמינות ב %1."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:552
 msgid "Closed, answers recently available."
@@ -1550,17 +1550,17 @@ msgstr "סגור."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:124
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:85
 msgid "Closes"
-msgstr "סוגר"
+msgstr "מועד הגשה אחרון"
 
 #. ($self->formatDateTime($set->due_date,undef,				       $r->ce->{studentDateDisplayFormat})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:144
 msgid "Closes %1"
-msgstr "סוגר את  %1"
+msgstr "מועד הגשה אחרון: %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:37
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm:232
 msgid "Closes:"
-msgstr "סוגר את:"
+msgstr "מועד הגשה אחרון:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2476
 msgid "Collapse"
@@ -1587,16 +1587,16 @@ msgstr "הסתר הכל"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:801
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:830
 msgid "Comment"
-msgstr "הגב"
+msgstr "הערה"
 
 #. ($self->formatDateTime($set->answer_date)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2029
 msgid "Completed results for this assignment are not available until %1"
-msgstr "תוצאות עבור מטלה זו לא זמינות עד %1"
+msgstr "תוצאות עבור מטלה זו אינן זמינות עד %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2031
 msgid "Completed results for this assignment are not available."
-msgstr "תוצאות עבור מטלה זו לא זמינות."
+msgstr "תוצאות עבור מטלה זו אינן זמינות."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:446
 msgid "Completed."
@@ -2328,7 +2328,7 @@ msgstr "ערוך איזה משתמשים?"
 #. ($user)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:199
 msgid "Edit data for %1"
-msgstr "ערוך את המידע של &1"
+msgstr "ערוך את המידע של %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2092
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2264
@@ -2476,7 +2476,7 @@ msgstr "הפעל הישגי קורס"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:172
 msgid "Enable Progress Bar and current problem highlighting"
-msgstr "הפעל סרגל התקדמות והדגשת הבעיה הנוכחית"
+msgstr "הפעל סרגל התקדמות והדגשת השאלה הנוכחית"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:590
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:613
@@ -3758,8 +3758,8 @@ msgstr "מקסימום שיוצגו:"
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:257
 msgid "Maximum times Show me Another can be used per problem (-1 => unlimited)"
 msgstr ""
-"מספר מקסימאלי של פעמים שניתן להשתמש בכפתור \"תראה לי עוד אחת\" עבור כל בעיה "
-"(1- => לא מוגבל)"
+"מספר מקסימאלי של פעמים שניתן להשתמש בכפתור \"תראה לי עוד אחת\" עבור כל שאלה "
+"(-1 => לא מוגבל)"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:666
 msgid "Merge file:"
@@ -4208,12 +4208,12 @@ msgstr "פתח בחלון חדש"
 #. ($self->formatDateTime($set->due_date()
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:694
 msgid "Open, closes %1."
-msgstr "פתח, נסגר ב-%1."
+msgstr "פתוח, מועד הגשה אחרון: %1."
 
 #. ($self->formatDateTime($set->due_date()
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:692
 msgid "Open, complete by %1."
-msgstr "פתח, השלם עד %1."
+msgstr "פתוח, מועד הגשה אחרון: %1."
 
 #. ($beginReducedScoringPeriod, $self->formatDateTime($set->due_date()
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:689
@@ -4249,7 +4249,7 @@ msgstr "דפדפן ספרייה מקורית"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:838
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:866
 msgid "Out Of"
-msgstr "אזל"
+msgstr "מתוך"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:449
 msgid "Over time, closed."
@@ -4287,7 +4287,7 @@ msgstr "הודעות שגיאות עיבוד של שאלת PG"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:799
 msgid "PG warning messages"
-msgstr "הודעות הזהרה של PG"
+msgstr "הודעות אזהרה של PG"
 
 # Doesn't need to be translated
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1405
@@ -4413,7 +4413,7 @@ msgstr ""
 msgid ""
 "Please choose the set name and problem number of the question which should "
 "be given full credit."
-msgstr "אנא בחר שם גליון ומספר מספר שאלה של השאלה שיש לתת לה  ניקוד מלא."
+msgstr "אנא בחר שם גליון ומספר מספר שאלה של השאלה שיש לתת לה ניקוד מלא."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:811
 msgid ""
@@ -4452,7 +4452,7 @@ msgstr "אנה הכנס ערך תואם בשדה הסינון."
 #. (CGI::b($course)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:205
 msgid "Please enter your username and password for %1 below:"
-msgstr "אנה הכנס את שם המשתמש והסיסמה שלךעבור %1 למטה:"
+msgstr "אנא הכנס את שם המשתמש והסיסמה שלך עבור %1 למטה:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2767
 msgid "Please provide a location name to delete."
@@ -5875,7 +5875,7 @@ msgstr "שלח תשובות עבור %1"
 
 #: /opt/webwork/pg/macros/compoundProblem.pl:502
 msgid "Submit your answers again to go on to the next part."
-msgstr ""
+msgstr "שלח את התשובות שוב כדי להתקדם לחלק הבא."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1620
 msgid "Success"
@@ -6332,7 +6332,7 @@ msgstr "המסלול לקוץ המקור צריך להיות מוחלט"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:659
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:505
 msgid "The percentage of active students with correct answers for each problem"
-msgstr "אחוז הסטודנטים הפעילים עם תשובות נכונות לכל בעיה."
+msgstr "אחוז הסטודנטים הפעילים עם תשובות נכונות לכל שאלה."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:720
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:533
@@ -6996,7 +6996,7 @@ msgid ""
 "value of -1 uses the default from course configuration. The value of 0 "
 "disables rerandomization."
 msgstr ""
-"זה מפרט את תקופת הרנדומיזציה מחדש: מספר הניסיונות לפני שנוצרת בעיה חדשה על "
+"זה מפרט את תקופת הרנדומיזציה מחדש: מספר הניסיונות לפני שנוצרת שאלה חדשה על "
 "ידי שינוי ערך הזרע. הערך -1 מסמל את ברירת המחדל של הקורס. הערך 0 מבטל את "
 "הרנדומיזציה מחדש."
 
@@ -7378,7 +7378,7 @@ msgid ""
 "or an error in a problem you are attempting. Along with your message, "
 "additional information about the state of the system will be included."
 msgstr ""
-"השתמש בטופס זה כדי לדווח לפרופסור שלך על בעיה עם מערכת WeBWorK או על שגיאה "
+"השתמש בטופס זה כדי לדווח למרצה שלך על בעיה עם מערכת WeBWorK או על שגיאה "
 "בשאלה שאתה מנסה לפתור. יחד עם ההודעה, ישלח מידע נוסף על מצב המערכת שלך."
 
 #. ($userID)
@@ -7593,11 +7593,11 @@ msgstr "גלוי לסטודנטים"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2130
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:730
 msgid "Warning"
-msgstr "הזהרה"
+msgstr "אזהרה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2181
 msgid "Warning messages"
-msgstr "הודעות הזהרה"
+msgstr "הודעות אזהרה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1033
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:935
@@ -7695,7 +7695,7 @@ msgid ""
 "and if set to -2 the course default is used."
 msgstr ""
 "כאשר לסטודנט יש יותר נסיונות משמצויין כאן, הם יוכלו לראות גרסה אחרת של "
-"הבעיה. אם מוזן -1 האופציה מבוטלת, ואם מוזן -2 ייעשה שימוש בברירת המחדל של "
+"השאלה. אם מוזן -1 האופציה מבוטלת, ואם מוזן -2 ייעשה שימוש בברירת המחדל של "
 "הקורס"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:301
@@ -7711,7 +7711,7 @@ msgstr ""
 msgid ""
 "When changing problem numbers, we will move the problem to be %1 the chosen "
 "number."
-msgstr "כאשר משנים מספרים בבעיה, נזיז את הבעיה להיות %1 המספר הנבחר."
+msgstr "כאשר משנים מספרי השאלות, נזיז את השאלה להיות %1 המספר הנבחר."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:384
 msgid ""
@@ -7836,7 +7836,7 @@ msgid ""
 "original problem once you are done here."
 msgstr ""
 "אתה כרגע בודק תשובות לגרסה אחרת של השאלה - אלו לא יישמרו, ואתה צריך לזכור "
-"לחזור לבעיה המקורית לאחר שתסיים כאן."
+"לחזור לשאלה המקורית לאחר שתסיים כאן."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:460
 msgid ""
@@ -7922,7 +7922,7 @@ msgstr "אתה יכול לצפות גם בקבצים הזמניים הבאים:"
 
 #: /opt/webwork/pg/macros/PGanswermacros.pl:1693
 msgid "You can earn partial credit on this problem."
-msgstr "ניתן להרוויח ניקוד חלקי בבעיה זו"
+msgstr "ניתן לקבל ניקוד חלקי בשאלה זו"
 
 #: /opt/webwork/pg/macros/problemRandomize.pl:383
 msgid "You can get a new version of this problem after the due date."
@@ -8049,7 +8049,7 @@ msgstr "נשארו לך %1 ניסיון/ות למבחן זה."
 #. ($attemptsLeft)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1622
 msgid "You have %negquant(%1,unlimited attempts,attempt,attempts) remaining."
-msgstr "נותר לך egquant(%1,נסיונות לא מוגבלים,נסיון,ניסיונות)%n."
+msgstr "נותר לך %negquant(%1,נסיונות לא מוגבלים,נסיון,ניסיונות)."
 
 #. ($attempts_before_rr)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1579
@@ -8445,7 +8445,7 @@ msgstr "הניקוד שלך לא נשלח בהצלחה ל-LMS"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:261
 msgid "Your score was recorded."
-msgstr "הניקוד שלך לא נשמר."
+msgstr "הניקוד שלך נשמר."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1891
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:288
@@ -9490,13 +9490,13 @@ msgstr "התלמידים שלך"
 #~ msgstr "יבא הישגים מ-"
 
 #~ msgid "Open, reduced scoring starts on %1."
-#~ msgstr "פתח, ניקוד מופלת מתחיל ב-%1"
+#~ msgstr "פתוח, תקופת ניקוד מופחת מתחיל ב- %1"
 
 #~ msgid "Reduced Scoring Starts %1"
-#~ msgstr "נתוני ניקוד מופחת %1"
+#~ msgstr "תקופת ניקוד מופחת מתחיל ב- %1"
 
 #~ msgid "Reduced scoring started on %1."
-#~ msgstr "ניקוד מופחת מצחיל ב-%1."
+#~ msgstr "תקופת ניקוד מופחת התחיל ב-%1."
 
 #
 #, fuzzy

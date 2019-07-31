@@ -89,7 +89,7 @@ sub build_library_directory_tree {
 
 	# use the three arguments version of open
 	# and check for errors
-	open $OUTFILE, '>', $file  or die "Cannot open $file";
+	open $OUTFILE, '>encoding(UTF-8)', $file  or die "Cannot open $file";
 
 	# you can check for errors (e.g., if after opening the disk gets full)
 	print { $OUTFILE } to_json(\@dirArray) or die "Cannot write to $file";
@@ -279,7 +279,7 @@ sub build_library_subject_tree {
 
 	# use the three arguments version of open
 	# and check for errors
-	open $OUTFILE, '>', $file  or die "Cannot open $file";
+	open $OUTFILE, '>encoding(UTF-8)', $file  or die "Cannot open $file";
 
 	# you can check for errors (e.g., if after opening the disk gets full)
 	print { $OUTFILE } to_json(\@subject_tree,{pretty=>1}) or die "Cannot write to $file";

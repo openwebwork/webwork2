@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.76 2009/07/18 02:52:51 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -26,11 +26,10 @@ use base qw(WeBWorK);
 use strict;
 use warnings;
 use WeBWorK::CGI;
-use WeBWorK::Utils qw(before after readFile sortAchievements);
+use WeBWorK::Utils qw(before after readFile sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::Tags;
 
 use WWSafe;
-use Storable qw(nfreeze thaw);
 
 sub checkForAchievements {
 
@@ -118,9 +117,10 @@ sub checkForAchievements {
     #Methods alowed in the safe container
     $compartment->permit(qw(time localtime));
 
-    #Thaw globalData hash
-    if ($globalUserAchievement->frozen_hash) {       
-		$globalData = thaw($globalUserAchievement->frozen_hash);
+    #Thaw_Base64 globalData hash
+    if ($globalUserAchievement->frozen_hash) {
+
+		$globalData = thaw_base64($globalUserAchievement->frozen_hash);
     }
 
     #Update a couple of "standard" variables in globalData hash.
@@ -217,9 +217,9 @@ sub checkForAchievements {
 	my $setType = $set->assignment_type;
 	next unless $achievement->assignment_type =~ /$setType/;
 
-	#thaw localData hash
+	#thaw_base64 localData hash
 	if ($userAchievement->frozen_hash) {
-	    $localData = thaw($userAchievement->frozen_hash);
+	    $localData = thaw_base64($userAchievement->frozen_hash);
 	}
 
 	#recover counter information (for progress bar achievements)
@@ -310,15 +310,15 @@ sub checkForAchievements {
 	    $achievementPoints += $points;
 	}    
 	
-	#update counter, nfreeze localData and store
+	#update counter, nfreeze_base64 localData and store
 	$userAchievement->counter($counter);
-	$userAchievement->frozen_hash(nfreeze($localData));	
+	$userAchievement->frozen_hash(nfreeze_base64($localData));	
 	$db->putUserAchievement($userAchievement);
 	
     }  #end for loop
     
-    #nfreeze globalData and store
-    $globalUserAchievement->frozen_hash(nfreeze($globalData));
+    #nfreeze_base64 globalData and store
+    $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     if ($cheevoMessage) {

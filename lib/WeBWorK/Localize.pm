@@ -50,6 +50,12 @@ sub getLoc {
 	return sub {$lh->maketext(@_)};
 }
 
+sub getLangHandle {
+	my $lang = shift;
+	my $lh = WeBWorK::Localize::I18N->get_handle($lang);
+	return $lh;
+}
+
 # this is like [quant] but it doesn't write the number
 #  usage: [quant,_1,<singular>,<plural>,<optional zero>]
 
@@ -135,6 +141,13 @@ my $ConfigStrings = [
 		  doc => x('Language (refresh page after saving changes to reveal new language.)'),
 		  doc2 => x('WeBWorK currently has translations for four languages: "English en", "Turkish tr", "Spanish es", and "French fr" '),
 		  values => [qw(en tr es fr zh_hk heb)],
+		  type => 'popuplist'
+		},
+		{ var => 'perProblemLangAndDirSettingMode',
+		  doc => x('Mode in which the LANG and DIR settings for a single problem are determined.'),
+		  # doc2 is very long so is being commented out here for now
+		  # doc2 => x('Mode in which the LANG and DIR settings for a single problem are determined.<p>The system will set the LANGuage attribute to either a value determined from the problem, a course-wide default, or the system default of en-US, depending on the mode selected. The tag will only be added to the DIV enclosing the problem if it is different than the value which should be set in the main HTML tag set for the entire course based on the course language.<p>There are two options for the DIRection attribute: \"ltr\" for left-to-write sripts, and \"rtl\" for right-to-left scripts like Arabic and Hebrew.<p>The DIRection attribute is needed to trigger proper display of the question text when the problem text-direction is different than that used by the current language of the course. For example, English problems from the library browser would display improperly in RTL mode for a Hebrew course, unless the problen Direction is set to LTR.<p>The feature to set a problem language and direction was only added in 2018 to the PG language, so most problems will not declare their language, and the system needs to fall back to determining the language and direction in a different manner. The OPL itself is all English, so the system wide fallback is to en-US in LTR mode.<p>Since the defaults fall back to the LTR direction, most sites should be fine with the \"auto::\" mode, but may want to select the one which matches their course language. The mode \"force::ltr\" would also be an option for a course which runs into trouble with the \"auto\" modes.<p>Modes:<br><ul><li> \"none\" prevents any additional LANG and/or DIR tag being added. The browser will use the main setting which was applied to the entire HTML page. This is likely to cause trouble when a problem of the other direction is displayed.</li><li> \"auto::\" allows the system to make the settings based on the language and direction reported by the problem (a new feature, so not set in almost all existing problems) and falling back to the expected default of en-US in LTR mode. </li><li> \"auto:LangCode:Dir\" allows the system to make the settings based on the language and direction reported by the problem (a new feature, so not set in almost all existing problems) but falling back to the language with the given LangCode and the direction Dir when problem settings are not available from PG.</li><li> \"auto::Dir\" for problems without PG settings, this will use the default en=english language, but force the direction to Dir. Problems with PG settings will get those settings.</li><li> \"auto:LangCode:\" for problems without PG settings, this will use the default LTR direction, but will set the language to LangCode.Problems with PG settings will get those settings.</li><li> \"force:LangCode:Dir\" will <b>ignore</b> any setting made by the PG code of the problem, and will force the system to set the language with the given LangCode and the direction to Dir for <b>all</b> problems.</li><li> \"force::Dir\" will <b>ignore</b> any setting made by the PG code of the problem, and will force the system to set the direction to Dir for <b>all</b> problems, but will avoid setting any language attribute for individual problem.</li></ul>'),
+		  values => [qw(none auto:: force::ltr force::rtl force:en:ltr auto:en:ltr force:tr:ltr auto:tr:ltr force:es:ltr auto:es:ltr force:fr:ltr auto:fr:ltr force:zh_hk:ltr auto:zh_hk:ltr force:he:rtl auto:he:rtl   )],
 		  type => 'popuplist'
 		},
 		{ var => 'sessionKeyTimeout',

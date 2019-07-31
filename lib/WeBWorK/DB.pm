@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.112 2012/06/08 22:40:00 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -249,7 +249,8 @@ sub init_table {
 	my $source = $layout->{source};
 	my $depend = $layout->{depend};
 	my $params = $layout->{params};
-  my $engine = $layout->{engine};
+  	my $engine = $layout->{engine};
+  	my $charset = $layout->{charset};
 	
 	# add a key for this table to the self hash, but don't define it yet
 	# this for loop detection
@@ -270,7 +271,7 @@ sub init_table {
 	
 	runtime_use($schema);
 	my $schemaObject = eval { $schema->new(
-		$self, $driverObject, $table, $record, $params, $engine) };
+		$self, $driverObject, $table, $record, $params, $engine, $charset) };
 	croak "error instantiating DB schema $schema for table $table: $@"
 		if $@;
 	

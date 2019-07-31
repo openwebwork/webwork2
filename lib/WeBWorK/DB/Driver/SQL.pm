@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Driver/SQL.pm,v 1.15 2007/07/19 21:02:42 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -69,6 +69,9 @@ sub new($$$) {
 		{
 			PrintError => 0,
 			RaiseError => 1,
+
+			mysql_enable_utf8mb4 => 1,
+			mysql_enable_utf8 => 1,  # for older versions of DBD-mysql Perl modules
 		},
 	);
 	die $DBI::errstr unless defined $self->{handle};

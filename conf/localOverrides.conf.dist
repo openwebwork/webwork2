@@ -33,6 +33,7 @@
 # WeBWorK site
 
 
+
 ################################################################################
 # Additional mail settings in defaults.conf can be overridden here
 ################################################################################
@@ -127,9 +128,6 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
 # NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
-#$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
-#$problemLibrary{version}     = "2";
-# uncomment these lines below and comment out the line above if using OPL instead of NPL
 
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
@@ -509,10 +507,10 @@ $options{useOPLdefFiles}=1;
 # Permission overrides (e.g. "admin", "professor", "ta", "student", "guest"
 ################################################################################
 
-# $permissionLevels{show_resource_info} 				= "admin";
-# $permissionLevels{show_pg_info_checkbox}            = "admin";
-# $permissionLevels{show_answer_hash_info_checkbox}	= "admin";
-# $permissionLevels{show_answer_group_info_checkbox}	= "admin";
+ $permissionLevels{show_resource_info} 				= "admin";
+ $permissionLevels{show_pg_info_checkbox}            = "admin";
+ $permissionLevels{show_answer_hash_info_checkbox}	= "admin";
+ $permissionLevels{show_answer_group_info_checkbox}	= "admin";
 
-# $permissionLevels{modify_tags} = "undef";
+ $permissionLevels{modify_tags} = "admin";
 1; #final line of the file to reassure perl that it was read properly.

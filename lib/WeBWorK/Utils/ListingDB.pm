@@ -439,6 +439,12 @@ sub getDBListings {
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
+	
+	# Make sure these strings are internally encoded in UTF-8
+	utf8::upgrade($subj);
+	utf8::upgrade($chap);
+	utf8::upgrade($sec);
+
 	my $keywords = $r->param('library_keywords') || "";
 	# Next could be an array, an array reference, or nothing
 	my @levels = $r->param('level');
@@ -510,6 +516,8 @@ sub getDBListings {
 #               $kw2";
 
 	my $pg_id_ref;
+	
+	$dbh->do(qq{SET NAMES 'utf8mb4';}) if $ce->{ENABLE_UTF8MB};
 	if($haveTextInfo) {
 		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
 			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,

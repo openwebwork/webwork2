@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm,v 1.96 2010/05/14 00:52:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -17,6 +17,8 @@
 package WeBWorK::ContentGenerator::Instructor::UserList;
 use base qw(WeBWorK::ContentGenerator::Instructor);
 
+# deprecated in favor of using UserList2
+# unless con
 =head1 NAME
 
 WeBWorK::ContentGenerator::Instructor::UserList - Entry point for User-specific
