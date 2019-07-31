@@ -824,6 +824,7 @@ sub links {
 			
 			if ($ce->{achievementsEnabled}) {
 			    print CGI::li(&$makelink("${pfx}Achievements", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)); 
+				print CGI::li(&$makelink("${pfx}Leaderboards", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)); 
 
 			}
 

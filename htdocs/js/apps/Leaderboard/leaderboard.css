@@ -1,0 +1,162 @@
+  .lbContainer {
+    overflow-y: auto;
+    /* height: 80%; */
+    width: 90%;
+    min-width: 600px;
+  }
+  .lbTable {
+    width: 100%;
+    table-layout: fixed;
+    border-spacing: 0px;
+    border: 1px solid #003388;
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, .14), 0 1px 18px 0 rgba(0, 0, 0, .12), 0 3px 5px -1px rgba(0, 0, 0, .2);
+  }
+  #username {
+    width: 35%;
+  }
+  #Earned {
+    width: 25%;
+  }
+  #Points {
+    width: 15%;
+  }
+  #progress {
+    /* width: 45%; */
+  }
+  table.lbTable tr {
+    /* height: 2%; */
+  }
+  table.lbTable tr th:nth-child(3) {
+    display: none;
+  }
+  table.lbTable tr td:nth-child(3) {
+    display: none;
+  }
+  table.lbTable thead th {
+    background-color: #003388;
+    color: white;
+    font-size: 12pt;
+    font-family: 'Aldrich';
+    padding: 5px;
+    cursor: pointer;
+  }
+  table.lbTable tbody tr {
+    height: 32px;
+    background-color: #f6f6f6;
+    color: white;
+    font-size: 16pt;
+    font-family: 'Luckiest Guy';
+    padding: 15px;
+    text-shadow:   0px -1px 0 #212121,  
+                   0px  1px 0 #212121,
+                  -1px  0px 0 #212121,  
+                   1px  0px 0 #212121,
+                  -1px  0px 0 #212121,
+                   1px  0px 0 #212121,
+                  -1px -1px 0 #212121,  
+                   1px -1px 0 #212121,
+                  -1px  1px 0 #212121,
+                   1px  1px 0 #212121;
+  }
+  table.lbTable tbody tr:nth-child(1) {
+    background: gold;
+  }
+  table.lbTable tbody tr:nth-child(2) {
+    background: #c0c0c0;
+  }
+  table.lbTable tbody tr:nth-child(3) {
+    background: #cd7f32;
+  }
+  table.lbTable tbody tr.myRow {
+  font-size: 22pt;
+  font-family: 'Luckiest Guy';
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-shadow:   0px -2px 0 #212121,  
+                 0px  2px 0 #212121,
+                -2px  0px 0 #212121,  
+                 2px  0px 0 #212121,
+                -2px  0px 0 #212121,
+                 2px  0px 0 #212121,
+                -2px -2px 0 #212121,  
+                 2px -2px 0 #212121,
+                -2px  2px 0 #212121,
+                 2px  2px 0 #212121,
+                -2px  6px 0 #212121,
+                 0px  6px 0 #212121,
+                 2px  6px 0 #212121,
+                 0 6px 1px rgba(0,0,0,.1),
+                 0 0 2px rgba(0,0,0,.1),
+                 0 2px 1px rgba(0,0,0,.3),
+                 0 4px 2px rgba(0,0,0,.2),
+                 0 6px 6px rgba(0,0,0,.25),
+                 0 8px 8px rgba(0,0,0,.2),
+                 0 12px 12px rgba(0,0,0,.15);
+  }
+  table.lbTable tr.myRow td {
+    padding-top: 5px;
+  }
+  table.lbTable tbody td {
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    vertical-align: middle;
+    padding: 5px 15px;
+    padding-top: 12px;
+  }
+  .fillerContainer {
+    height: 20px;
+    /* width: 80%; */
+    margin-right: 65px;
+    text-align: left;
+    position: relative;
+    /* display: table; */
+    /* overflow: hidden; */
+  }
+  .fillerBar {
+    /* background: #1DA598; */
+    vertical-align: middle;
+    border-radius: 10px;
+    transition: width .2s ease-in;
+    border: 1px solid black;
+    height: 16px;
+    display: inline-block;
+    position: absolute;
+    top: -3px;
+  }
+  tr.myRow .fillerBar {
+    top: 1px;
+  }
+  .fillerLabel {
+    /* width: 50px; */
+    /* display: table-cell; */
+    text-align: left;
+    margin-left: 10px;
+    position:absolute;
+  }
+  .ion-android-arrow-dropup{
+    font-size: 20px;
+    margin-left: 4px;
+  }
+  .ion-android-arrow-dropdown{
+    font-size: 20px;
+    margin-left: 4px;
+  }
+  table.lbTable caption {
+    caption-side: bottom;
+    font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    text-align: right;
+    padding-right: 10%;
+  }
+  .buttonStyleLB {
+    background: none";
+    color: inherit;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+  }

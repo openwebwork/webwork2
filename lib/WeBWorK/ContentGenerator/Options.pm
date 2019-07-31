@@ -55,6 +55,7 @@ sub body {
 	my $newP = $r->param("newPassword");
 	my $confirmP = $r->param("confirmPassword");
 	my $newA = $r->param("newAddress");
+	my $newName = $r->param("newName");
 		
 	print CGI::start_form(-method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields;
@@ -197,7 +198,52 @@ sub body {
 		print CGI::p($r->maketext("You do not have permission to change email addresses."))
 			unless $changeOptions and $newA; # avoid double message
 	}
+
+
+	print CGI::h2($r->maketext("Change Display Name"));
 	
+		# changing display name
+	if ($changeOptions and $newName) {
+		if ($authz->hasPermissions($userID, "change_email_address")) {
+			
+			my $oldName = $EUser->comment;
+			$EUser->comment($newName);
+			eval { $db->putUser($EUser) };
+			if ($@) {
+				$EUser->comment($oldName);
+				print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+					CGI::p($r->maketext("Couldn't change your display name: [_1]",$@)),
+				);
+			} else {
+				print CGI::div({class=>"ResultsWithoutError"},
+					CGI::p($r->maketext("Your display name has been changed.")),
+				);
+			}
+			
+		} else {
+			print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
+				CGI::p($r->maketext("You do not have permission to change your display name.")),
+			);
+		}
+	}
+
+# Creating form to change display name
+	if ($authz->hasPermissions($userID, "change_email_address")) {
+		print CGI::table({class=>"FormLayout"},
+			CGI::Tr({},
+				CGI::td(CGI::label({'for' => 'currName'},$r->maketext("[_1]'s Current Display Name",$e_user_name))),
+				CGI::td(CGI::input({ type=>"text", readonly=>"true", id=>"currName", name=>"currName", value=>$EUser->comment})),
+			),
+			CGI::Tr({},
+				CGI::td(CGI::label({'for'=>'newName'},$r->maketext("[_1]'s New Name",$e_user_name))),
+#				CGI::td(CGI::textfield(-name=>"newAddress", -text=>$newA)),
+				CGI::td(CGI::textfield(-name=>"newName",-id,=>"newName")),
+			),
+		);
+	} else {
+		print CGI::p($r->maketext("You do not have permission to change display name."))
+			unless $changeOptions and $newName; # avoid double message
+	}
 
 	
 	print CGI::h2($r->maketext("Change Display Settings"));
