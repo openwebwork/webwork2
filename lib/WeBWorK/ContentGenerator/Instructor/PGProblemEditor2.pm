@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.99 2010/05/18 18:39:40 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -1754,7 +1754,7 @@ sub save_as_form {  # calls the save_as_handler
 }
 # suggestions for improvement
 # save as ......
-# ¥replacing foobar (rename) ¥ and add to set (add_new_problem) ¥ as an independent file (new_independent_problem)
+# Â¥replacing foobar (rename) Â¥ and add to set (add_new_problem) Â¥ as an independent file (new_independent_problem)
  
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
@@ -1988,16 +1988,16 @@ sub output_JS{
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
 	 }
 
-	 if ($ce->{options}->{PGWirisEditor}) {
+	if ($ce->{options}->{PGWirisEditor}) {
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 
 
-	 if ($ce->{options}->{PGMathQuill}) {
-        print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mathquill.css\"/>";
-        print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mqeditor.css\"/>";
+	if ($ce->{options}->{PGMathQuill}) {
+        	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mathquill.css\"/>";
+        	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mqeditor.css\"/>";
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
 	}
