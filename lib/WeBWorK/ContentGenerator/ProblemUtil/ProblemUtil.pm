@@ -331,6 +331,7 @@ sub create_ans_str_from_responses {
 	my $isEssay2=0;
 	my %answersToStore2;
 	my @answer_order2;
+	my @answer_order3;
 
 	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
@@ -338,7 +339,8 @@ sub create_ans_str_from_responses {
 		$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
 		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
 			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id};
-			push @answer_order2, $response_id;
+			push @answer_order2, $response_id unless ($response_id =~ /^MaThQuIlL_/);
+			push @answer_order3, $response_id;
 		 }
 	}
 	my $answerString2 = '';
@@ -347,10 +349,32 @@ sub create_ans_str_from_responses {
 	}
 	$answerString2=~s/\t$//; # remove last tab
 
-   	my $encoded_answer_string = encodeAnswers(%answersToStore2,
-							 @answer_order2);
+	my $encoded_answer_string = encodeAnswers(%answersToStore2,
+							 @answer_order3);
 
 	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
+}
+
+# insert_mathquill_responses subroutine
+
+# Add responses to each answer's response group that store the latex form of the students'
+# answers and add corresponding hidden input boxes to the page.
+
+sub insert_mathquill_responses {
+	my ($self, $pg) = @_;
+	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}{rh_ans}{mathQuillOpts};
+		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
+		for my $response ($response_obj->response_labels) {
+			next if (ref($response_obj->{responses}{$response}));
+			my $name = "MaThQuIlL_$response";
+			push(@{$response_obj->{response_order}}, $name);
+			$response_obj->{responses}{$name} = '';
+			my $value = defined($self->{formFields}{$name}) ? $self->{formFields}{$name} : '';
+			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
+			$pg->{body_text} .= "<script>var ${name}_Opts = {$mq_opts}</script>" if ($mq_opts);
+		}
+	}
 }
 
 # process_editorLink subroutine

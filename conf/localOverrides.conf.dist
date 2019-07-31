@@ -221,6 +221,7 @@ $options{PGCodeMirror} = 1;
 # This sets if mathview is available on the PG editor for use as a minimal latex equation editor
 $options{PGMathView} = 0;
 $options{PGWirisEditor} = 0;
+$options{PGMathQuill} = 0;
 
 ################################################################################
 # PG subsystem options

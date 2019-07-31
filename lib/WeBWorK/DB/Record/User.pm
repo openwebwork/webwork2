@@ -37,10 +37,11 @@ BEGIN {
 		section       => { type=>"TEXT" },
 		recitation    => { type=>"TEXT" },
 		comment       => { type=>"TEXT" },
-	        displayMode   => { type=>"TEXT" },
-	        showOldAnswers => { type=>"INT" },
+		displayMode   => { type=>"TEXT" },
+		showOldAnswers => { type=>"INT" },
 		useMathView   => { type=>"INT"  },
 		useWirisEditor   => { type=>"INT"  },
+		useMathQuill   => { type=>"INT"  },
 		lis_source_did  => { type=>"BLOB" },
 	);
 }
