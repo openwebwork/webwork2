@@ -29,6 +29,9 @@ ENV WEBWORK_DB_DSN=DBI:mysql:${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_
     PG_ROOT=$APP_ROOT/pg \
     PATH=$PATH:$APP_ROOT/webwork2/bin
 
+# Ubuntu 18.04 should add libemail-address-xs-perl in the package list below.
+# For Ubuntu 16.04 it is not packed in Ubuntu universe, so installed using CPANM below.
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends --no-install-suggests \
        apache2 \
@@ -41,7 +44,6 @@ RUN apt-get update \
        libdancer-perl \
        libdancer-plugin-database-perl \
        libdbd-mysql-perl \
-       libemail-address-perl \
        libexception-class-perl \
        libextutils-xsbuilder-perl \
        libfile-find-rule-perl-perl \
@@ -87,7 +89,7 @@ RUN apt-get update \
 # so it was put into a second "cpanm install" line.
 
 RUN curl -Lk https://cpanmin.us | perl - App::cpanminus \
-    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO 
+    && cpanm install XML::Parser::EasyTree Iterator Iterator::Util Pod::WSDL Array::Utils HTML::Template Mail::Sender Email::Sender::Simple Data::Dump Statistics::R::IO Email::Address::XS
     
 ##RUN cpanm install XML::Simple \
 #    && rm -fr ./cpanm /root/.cpanm /tmp/*

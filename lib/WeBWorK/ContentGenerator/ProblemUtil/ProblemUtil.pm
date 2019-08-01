@@ -21,6 +21,7 @@
 package WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
+use Encode qw(encode_utf8 encode);
 
 =head1 NAME
 
@@ -683,6 +684,7 @@ sub jitar_send_warning_email {
 			    and defined $rcpt->section and defined $user->section
 			    and $rcpt->section ne $user->section;
 			if ($rcpt and $rcpt->email_address) {
+			    # rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
 			    push @recipients, $rcpt->rfc822_mailbox;
 			}
 		}
@@ -690,9 +692,14 @@ sub jitar_send_warning_email {
 
     my $sender;
     if ($user->email_address) {
+	# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding
+	# when the full_name is set.
 	$sender = $user->rfc822_mailbox;
     } elsif ($user->full_name) {
-	$sender = $user->full_name;
+	# Encode the user name using "MIME-Header" encoding, (RFC 2047) which
+	# allows UTF-8 encoded names to be encoded inside the mail header using
+	# a special format.
+	$sender = encode("MIME-Header", $user->full_name);
     } else {
 	$sender = $userID;
     }
@@ -714,6 +721,12 @@ sub jitar_send_warning_email {
     || "WeBWorK question from %c: %u set %s/prob %p"; # default if not entered
     $subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
 
+    # If in the future any fields in the subject can contain non-ASCII characters
+    # then we will also need:
+    # $subject = encode("MIME-Header", $subject);
+    # at present, this does not seem to be necessary.
+
+
 # 		my $transport = Email::Sender::Transport::SMTP->new({
 # 			host => $ce->{mail}->{smtpServer},
 # 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
@@ -726,7 +739,8 @@ sub jitar_send_warning_email {
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
 			"From" => $sender,
-			"Subject" => $subject
+			"Subject" => $subject,
+			"Content-Type" => "text/plain; charset=UTF-8"
 		]);
 
 		## extra headers
@@ -763,7 +777,8 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-  	$email->body_set($msg);
+	# Encode the body in UTF-8 when adding it.
+	$email->body_set(encode_utf8($msg));
 
 		## try to send the email
 
