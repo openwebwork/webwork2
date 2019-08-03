@@ -49,7 +49,7 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch master --depth 1 https://github.com/openwebwork/webwork-open-problem-library.git
   # The next line forces the system to run OPL-update below, as we just installed it
-  rm $APP_ROOT/webwork2/htdocs/DATA/tagging-taxonomy.json
+  touch "$APP_ROOT/libraries/RunOPLupdate"
 fi
 
 if [ "$1" = 'apache2' ]; then
@@ -112,9 +112,17 @@ if [ "$1" = 'apache2' ]; then
     fi
     # run OPL-update if necessary
     if [ ! -f "$APP_ROOT/webwork2/htdocs/DATA/tagging-taxonomy.json"  ]; then
-      echo "About to start OPL-update. This takes time - please be patient."
+      # The next line forces the system to run OPL-update below, as the
+      # tagging-taxonomy.json file was found to be missing.
+      echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
+      echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
+      touch "$APP_ROOT/libraries/RunOPLupdate"
+    fi
+    if [ -f "$APP_ROOT/libraries/RunOPLupdate" ]; then
+      echo "About to start OPL-update. This takes a long time - please be patient."
       cd $APP_ROOT/webwork2/bin
       ./OPL-update
+      rm $APP_ROOT/libraries/RunOPLupdate
     fi
     # Compile chromatic/color.c if necessary - may be needed for PG directory mounted from outside image
     if [ ! -f "$APP_ROOT/pg/lib/chromatic/color"  ]; then
