@@ -78,7 +78,7 @@ function createAnswerQuill() {
 		exponent: { latex: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
 		infty: { latex: '\\infty', tooltip: 'infinity (inf)', icon: '\\infty' },
 		pi: { latex: '\\pi', tooltip: 'pi (pi)', icon: '\\pi' },
-		vert: { latex: '\\vert', tooltip: 'such that (|)', icon: '|' },
+		vert: { latex: '\\vert', tooltip: 'such that (vert)', icon: '|' },
 		cup: { latex: '\\cup', tooltip: 'union (union)', icon: '\\cup' },
 		// leq: { latex: '\\leq', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
 		// geq: { latex: '\\geq', tooltip: 'greater than or equal (\\geq)', icon: '\\geq' },
