@@ -1284,9 +1284,9 @@ sub pre_header_initialize {
 			$pg = $self->getProblemHTML($self->{effectiveUser},
 						    $set, $formFields,
 						    $ProblemN);
+			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
+			if ($self->{will}->{useMathQuill});
 		}
-		WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
-		if ($self->{will}->{useMathQuill});
 		push(@pg_results, $pg);
 	}
 	$self->{ra_problems} = \@problems;
