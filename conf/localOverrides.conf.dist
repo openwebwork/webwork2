@@ -513,4 +513,36 @@ $options{useOPLdefFiles}=1;
  $permissionLevels{show_answer_group_info_checkbox}	= "admin";
 
  $permissionLevels{modify_tags} = "admin";
+
+################################################################################
+
+# Available Hardcopy themes (located in snippets) - adds four XeLaTeX themes
+# using polyglossia for multilingual support and fontspec.
+
+$hardcopyThemes = [ qw (
+	oneColumn
+	twoColumn
+	XeLaTeX-oneColumn
+	XeLaTeX-twoColumn
+	XeLaTeX-Hebrew-oneColumn
+	XeLaTeX-Hebrew-twoColumn
+)];
+
+# Hardcopy theme names (pretty names for themes)
+$hardcopyThemeNames = {
+        oneColumn => 'pdfLaTeX - English - One Column',
+        twoColumn => 'pdfLaTeX - English - Two Columns',
+	XeLaTeX-oneColumn => 'XeLaTeX - English - one Column',
+	XeLaTeX-twoColumn => 'XeLaTeX - English - two Columns',
+        XeLaTeX-Hebrew-oneColumn => 'XeLaTeX - Hebrew/English - one Column',
+        XeLaTeX-Hebrew-twoColumn => 'XeLaTeX - Hebrew/English - two Columns',
+};
+
+# Change default Hardcopy theme - in order to use an XeLaTeX theme, we must set
+#    $externalPrograms{pdflatex} to use xelatex (here or in site.conf) !!!
+#$hardcopyTheme = "XeLaTeX-twoColumn";
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+
+################################################################################
+
 1; #final line of the file to reassure perl that it was read properly.

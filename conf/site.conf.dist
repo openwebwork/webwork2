@@ -104,6 +104,12 @@ $externalPrograms{git} = "/usr/bin/git";
 # equation rendering/hardcopy utiltiies
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
+
+$externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
+# Consider using xelatex instead of pdflatex for multilingual use, and
+# use polyglossia and fontspec packages (which require xelatex or lualatex).
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+
 $externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
 ####################################################
