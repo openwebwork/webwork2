@@ -44,7 +44,6 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils qw/readFile readDirectory/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
-use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 
@@ -795,8 +794,8 @@ sub read_input_file {
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
 		open FILE, "<:utf8", $filePath || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
-		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
-			$header .= <FILE>; 
+		while ($header !~ s/Message:\s*$//m and not eof(FILE)) {
+			$header .= <FILE>;
 		}
 		$text = join( '', <FILE>);
 		$text =~ s/^\s*//; # remove initial white space if any.
@@ -862,7 +861,7 @@ sub mail_message_to_recipients {
 # 				ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 # 				timeout => $ce->{mail}->{smtpTimeout}
 # 			});
-# 
+#
 
 #           createEmailSenderTransportSMTP is defined in ContentGenerator
 			my $transport = $self->createEmailSenderTransportSMTP();
@@ -915,8 +914,8 @@ sub email_notification {
 # 		ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 # 		timeout => $ce->{mail}->{smtpTimeout}
 # 	});
-# 
-# 	$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort}; 
+#
+# 	$transport->port($ce->{mail}->{smtpPort}) if defined $ce->{mail}->{smtpPort};
 #           createEmailSenderTransportSMTP is defined in ContentGenerator
 	my $transport = $self->createEmailSenderTransportSMTP();
 

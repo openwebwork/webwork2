@@ -45,7 +45,6 @@ use Socket qw/unpack_sockaddr_in inet_ntoa/; # for remote host/port info
 use Text::Wrap qw(wrap);
 use WeBWorK::Utils qw/ decodeAnswers/;
 
-use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # request paramaters used

@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader$
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -38,7 +38,6 @@ use WeBWorK;
 use Encode;
 use utf8;
 
-use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # load correct modules
@@ -85,23 +84,23 @@ sub handler($) {
 			#$warnings .= "$backtrace\n\n";
 			$warnings = Encode::encode_utf8($warnings);
 			$r->notes->set(warnings => $warnings);
-			
+
 			$log->warn("[$uri] $warning");
 		};
 	} else {
 		$warning_handler = sub {
 			my ($warning) = @_;
 			chomp $warning;
-			
+
 			my $warnings = $r->notes("warnings");
 			$warnings .= "$warning\n";
 			#my $backtrace = join("\n",backtrace());
 			#$warnings .= "$backtrace\n\n";
 			$r->notes("warnings" => $warnings);
-			
+
 			$log->warn("[$uri] $warning");
 		};
-		
+
 		# the exception handler generates a backtrace when catching an exception
 		my @backtrace;
 		my $exception_handler = sub {
@@ -109,24 +108,24 @@ sub handler($) {
 			die @_;
 		};
 	}
-	
+
 	# the exception handler generates a backtrace when catching an exception
 	my @backtrace;
 	my $exception_handler = sub {
 		@backtrace = backtrace();
 		die @_;
 	};
-	
+
 	my $result = do {
 		local $SIG{__WARN__} = $warning_handler;
 		local $SIG{__DIE__} = $exception_handler;
-		
+
 		eval { WeBWorK::dispatch($r) };
 	};
-	
+
 	if ($@) {
 		my $exception = $@;
-		
+
 		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 		my $htmlMessage = htmlMessage($r, $warnings, $exception, @backtrace);
 		unless ($r->bytes_sent) {
@@ -134,7 +133,7 @@ sub handler($) {
 			$r->send_http_header unless MP2; # not needed for Apache2
 			$htmlMessage = "<html><body>$htmlMessage</body></html>";
 		}
-		
+
 		# log the error to the apache error log
 		my $textMessage = textMessage($r, $warnings, $exception, @backtrace);
 		$log->error($textMessage);
@@ -143,7 +142,7 @@ sub handler($) {
 
 		$result = FORBIDDEN;
 	}
-	
+
 	return $result;
 }
 
@@ -167,12 +166,12 @@ Apache::WeBWorK.
 sub backtrace {
 	my $frame = 2;
 	my @trace;
-	
+
 	while (my ($pkg, $file, $line, $subname) = caller($frame++)) {
 		last if $pkg eq "Apache::WeBWorK";
 		push @trace, "in $subname called at line $line of $file";
 	}
-	
+
 	return @trace;
 }
 
@@ -195,9 +194,9 @@ associated warnings.
 
 sub htmlMessage($$$@) {
 	my ($r, $warnings, $exception, @backtrace) = @_;
-	
-	# Warnings have html and look better scrubbed. 
-	
+
+	# Warnings have html and look better scrubbed.
+
 	my $scrubber = HTML::Scrubber->new(
 	    default => 1,
 	    script => 0,
@@ -212,7 +211,7 @@ sub htmlMessage($$$@) {
 
 	$warnings = $scrubber->scrub($warnings);
 	$exception = $scrubber->scrub($exception);
-	
+
 	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
@@ -220,9 +219,9 @@ sub htmlMessage($$$@) {
 	# $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf
 	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
 	# if an explicit email address has not been set.
-	
+
 	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
-	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined. 
+	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined.
 
 	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
@@ -235,7 +234,7 @@ sub htmlMessage($$$@) {
 		join("", map { "<tr><td><small>" . htmlEscape($_). "</small></td><td><small>" .
 		                htmlEscape($headers{$_}) . " </small></td></tr>" } keys %headers);
 	};
-	
+
 	return <<EOF;
 <div style="text-align:left">
  <h2>WeBWorK error</h2>
@@ -273,13 +272,13 @@ associated warnings.
 
 sub textMessage($$$@) {
 	my ($r, $warnings, $exception, @backtrace) = @_;
-	
+
 	#my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 	#$warnings = textWarningsList(@warnings);
 	chomp $exception;
 	my $backtrace = textBacktrace(@backtrace);
 	my $uri = $r->uri;
-	
+
 	return "[$uri] $exception\n$backtrace";
 }
 

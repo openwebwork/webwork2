@@ -1,13 +1,13 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2012 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright ï¿½ 2000-2012 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: /webwork/cvs/system/webwork2/lib/WeBWorK/Authen/LTIBasic.pm,v 1.1 2012/05/17 18:50:11 wheeler Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -34,7 +34,6 @@ use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use URI::Escape;
 use Net::OAuth;
-use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
@@ -52,20 +51,20 @@ BEGIN {
 	}
 }
 
-our $GENERIC_ERROR_MESSAGE = 
+our $GENERIC_ERROR_MESSAGE =
 	"Your authentication failed.  Please return to "
 	. "your Course Management System (e.g., Oncourse, Moodle, "
 	. "Blackboard, Canvas, Sakai, etc.)  and login again.";
-our $GENERIC_MISSING_USER_ID_ERROR_MESSAGE = 
+our $GENERIC_MISSING_USER_ID_ERROR_MESSAGE =
 	"Your authentication failed.  Please return to "
 	. "your Course Management System (e.g., Oncourse, Moodle, "
 	. "Blackboard, Canvas, Sakai, etc.)  and login again.";
-our $GENERIC_DENIED_LOGIN_ERROR_MESSAGE = 
+our $GENERIC_DENIED_LOGIN_ERROR_MESSAGE =
 	"You are not permitted to login into this site at this time. "
 	. "Please speak with your instructor.";
-our $GENERIC_UNKNOWN_USER_ERROR_MESSAGE = 
+our $GENERIC_UNKNOWN_USER_ERROR_MESSAGE =
 	"This username does not appear on the roster for this WeBWorK site." ;
-our $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE = 
+our $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE =
 	"You have attemped to access this site as an instructor without prior authorization.";
 
 =head1 CONSTRUCTOR
@@ -111,7 +110,7 @@ sub new {
 #         $Key -> key = "nonce"
 #         $Key -> timestamp = the nonce's timestamp
 #  3. when this method is used, there needs to be a CRON job
-#     to delete old nonce records 
+#     to delete old nonce records
 #  4. A program ww_purge_old_nonces is available for
 #     deleting old nonce records.  It should be placed
 #     in webwork2/system/bin
@@ -182,13 +181,13 @@ sub get_credentials {
 	my $self = shift;
 	my $r = $self->{r};
 	my $ce = $r -> {ce};
-	
+
 	#debug("LTIBasic::get_credentials has been called\n");
-	
+
 	## debug code MEG
 	if ( $ce->{debug_lti_parameters} ) {
 		my $rh_headers = $r->headers_in;  #request headers
-	
+
 		my @parameter_names = $r->param;       # form parameter names
 		my $parameter_report = '';
 		foreach my $key (@parameter_names) {
@@ -197,10 +196,10 @@ sub get_credentials {
 		warn ("===== parameters received =======\n", $parameter_report);
 	}
 	###
-	
-	
-	
-	
+
+
+
+
 	#disable password login
 	$self->{external_auth} = 1;
 
@@ -219,9 +218,9 @@ sub get_credentials {
 	}
 
 	# if at least the user ID is available in request parameters
-	if (defined $r->param("user_id")) 
+	if (defined $r->param("user_id"))
 		{
-		map {$self -> {$_ -> [0]} = $r -> param($_ -> [1]);} 
+		map {$self -> {$_ -> [0]} = $r -> param($_ -> [1]);}
 						(
 						#['user_id', 'lis_person_sourcedid'],
 						['role', 'roles'],
@@ -240,37 +239,37 @@ sub get_credentials {
 		# The following lines were substituted for the commented out line above
 		# because some LMS's misspell the lis_person_sourcedid parameter name
 		if (defined($r -> param("lis_person_sourced_id"))) {
-			$self -> {user_id} = $r -> param("lis_person_sourced_id"); 
+			$self -> {user_id} = $r -> param("lis_person_sourced_id");
 		} elsif (defined($r -> param("lis_person_sourcedid"))) {
-			$self -> {user_id} = $r -> param("lis_person_sourcedid"); 
+			$self -> {user_id} = $r -> param("lis_person_sourcedid");
 		} elsif (defined($r -> param("lis_person_source_id"))) {
-			$self -> {user_id} = $r -> param("lis_person_source_id"); 
+			$self -> {user_id} = $r -> param("lis_person_source_id");
 		} elsif (defined($r -> param("lis_person_sourceid"))) {
-			$self -> {user_id} = $r -> param("lis_person_sourceid"); 
+			$self -> {user_id} = $r -> param("lis_person_sourceid");
 		} else {
 			undef($self ->{user_id});
 		}
 		###############
-		# if get_username_from_email == 1 then replace user_id with the full email address if possible 
+		# if get_username_from_email == 1 then replace user_id with the full email address if possible
 		# or if the user_id is still undefined try to set the user_id to full the email address
-		
+
 		$self -> {email} = uri_unescape($r -> param("lis_person_contact_email_primary"));
 # 		if (!defined($self->{user_id})
 # 		    or defined($self -> {email}) and $ce -> {get_username_from_email} )  {
 # 		    $self->{user_id} = $self -> {email};
-# 
+#
 # 		}
-		
+
 		#############
 		# if preferred_source_of_username eq "lis_person_contact_email_primary"
-		# then replace the user_id with the full email address. 
-		
+		# then replace the user_id with the full email address.
+
 		# or if the user_id is still undefined try to set the user_id to full the email address
-		
+
 		# if strip_address_from_email ==1  strip off the part of the address after @
 		#############
 		if (!defined($self->{user_id})
-			or (defined($self -> {email})  
+			or (defined($self -> {email})
 				and defined($ce -> {preferred_source_of_username})
 				and $ce -> {preferred_source_of_username} eq "lis_person_contact_email_primary")) {
 			$self->{user_id} = $self -> {email};
@@ -310,7 +309,7 @@ sub check_user {
 	my $self = shift;
 	my $r = $self->{r};
 	my ($ce, $db, $authz) = map {$r -> $_ ;} ('ce', 'db', 'authz');
-	
+
 	my $user_id = $self->{user_id};
 
 	#debug("LTIBasic::check_user has been called for user_id = |$user_id|");
@@ -326,14 +325,14 @@ sub check_user {
 		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE);
 		return 0;
 	}
-	
+
 	my $User = $db->getUser($user_id);
-	
+
 	if (!$User) {
 		if ( defined($r -> param("lis_person_sourcedid"))
 			or defined($r -> param("lis_person_sourced_id"))
 			or defined($r -> param("lis_person_source_id"))
-			or defined($r -> param("lis_person_sourceid")) 
+			or defined($r -> param("lis_person_sourceid"))
 			or defined($r -> param("lis_person_contact_email_primary")) ) {
 			#debug("User |$user_id| is unknown but may be an new user from an LSM via LTI.  About to return a 1");
 			return 1;  #This may be a new user coming in from a LMS via LTI.
@@ -349,23 +348,23 @@ sub check_user {
 		$self->{error} = $r->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
 		return 0;
 	}
-	
+
 	unless ($authz->hasPermissions($user_id, "login")) {
 		$self->{log_error} .= "LOGIN FAILED $user_id - no permission to login";
 		$self->{error} = $r->maketext($GENERIC_DENIED_LOGIN_ERROR_MESSAGE);
 		return 0;
 	}
-	#debug("LTIBasic::check_user is about to return a 1.");	
+	#debug("LTIBasic::check_user is about to return a 1.");
 	return 1;
 }
 
 # disable practice users
 sub verify_practice_user { return(0) ;}
 
-sub verify_normal_user 
+sub verify_normal_user
 {
 	my $self = shift;
-	my ($r, $user_id, $session_key) 
+	my ($r, $user_id, $session_key)
 			= map {$self -> {$_};} ('r', 'user_id', 'session_key');
 
 
@@ -380,10 +379,10 @@ sub verify_normal_user
     # Call check_session in order to destroy any existing session cookies and Key table sessions
 	my ($sessionExists, $keyMatches, $timestampValid) = $self->check_session($user_id, $session_key, 0);
 	debug("sessionExists='", $sessionExists, "' keyMatches='", $keyMatches, "' timestampValid='", $timestampValid, "'");
-	
+
 	my $auth_result = $self->authenticate;
 
-	#debug("auth_result=|${auth_result}|");	
+	#debug("auth_result=|${auth_result}|");
 
 	# Parameters CANNOT be modified until after LTIBasic authentication
 	# has been done, because the parameters passed with the request
@@ -396,26 +395,26 @@ sub verify_normal_user
 
 	$r -> param("user" => $user_id);
 
-	if ($auth_result eq "1") 
+	if ($auth_result eq "1")
 		{
 		#debug("About to call create_session.");
 		$self->{session_key} = $self->create_session($user_id);
 		#debug("session_key=|" . $self -> {session_key} . "|.");
 		return 1;
 		}
-	else  
+	else
 		{
 		$self->{error} = $r->maketext($auth_result);
 		$self-> {log_error} .= "$user_id - authentication failed: ". $self->{error};
 		return 0;
-		} 
+		}
 }
 
 sub authenticate
 {
 	my $self = shift;
 	my ($r, $user ) = map {$self -> {$_};} ('r', 'user_id');
-	
+
 	# See comment in get_credentials()
 	if ($r->{xmlrpc}) {
 		#debug("falling back to superclass authenticate (xmlrpc call)");
@@ -435,10 +434,10 @@ sub authenticate
 
 	# Check nonce to see whether request is legitimate
 	#debug("Nonce = |" . $self-> {oauth_nonce} . "|");
-	my $nonce = WeBWorK::Authen::LTIBasic::Nonce -> new($r, $self -> {oauth_nonce}, $self -> {oauth_timestamp}); 
+	my $nonce = WeBWorK::Authen::LTIBasic::Nonce -> new($r, $self -> {oauth_nonce}, $self -> {oauth_timestamp});
 	if (!($nonce -> ok ) )
 		{
-		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
+		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r););
 		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
 				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor");
 		return 0;
@@ -447,39 +446,39 @@ sub authenticate
 	my %request_hash;
 	my @keys = keys %{$r-> {paramcache}};
 	foreach my $key (@keys) {
-		$request_hash{$key} =  $r -> param($key); 
+		$request_hash{$key} =  $r -> param($key);
 		#debug("$key -> |" . $requestHash -> {$key} . "|");
-	}	
+	}
 	my $requestHash = \%request_hash;
 	my $path = $ce->{server_root_url}.$ce->{webwork_url}.$r->urlpath()->path;
-	$path = $ce->{LTIBasicToThisSiteURL} ? 
+	$path = $ce->{LTIBasicToThisSiteURL} ?
 	    $ce->{LTIBasicToThisSiteURL} : $path;
-	
+
 	my $altpath = $path;
 	$altpath =~ s/\/$//;
 
 	my ($request, $altrequest);
-	eval 
-		{ 
+	eval
+		{
 		$request = Net::OAuth -> request("request token") -> from_hash($requestHash,
 			request_url => $path,
-									       
-        		request_method => "POST",                                    
+
+        		request_method => "POST",
         		consumer_secret => $ce -> {LTIBasicConsumerSecret},
         	);
 
 		$altrequest = Net::OAuth -> request("request token") -> from_hash($requestHash,
 			request_url => $altpath,
-									       
-        		request_method => "POST",                                    
+
+        		request_method => "POST",
         		consumer_secret => $ce -> {LTIBasicConsumerSecret},
         	);
 		};
 
-	if ($@) 
+	if ($@)
 		{
 		#debug("construction of Net::OAuth object failed: $@");
-		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
+		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r););
 		$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
 		$self -> {error} .= $r->maketext("Something was wrong with your LTI parameters.  If this recurs, please speak with your instructor");
 		$self -> {log_error} .= "Construction of OAuth request record failed";
@@ -487,7 +486,7 @@ sub authenticate
 		}
 	else
 		{
-		if (! $request -> verify && ! $altrequest -> verify) 
+		if (! $request -> verify && ! $altrequest -> verify)
 			{
 			#debug("LTIBasic::authenticate request-> verify failed");
 			#debug("<h2> OAuth verification Failed</h2> "; print_keys($r));
@@ -514,15 +513,15 @@ sub authenticate
 				       join("\n--", @LTIroles), "\n",
 				       "Any initial ^urn:lti:.*:ims/lis/ segments have been stripped off.\n",
 				       "The user will be assigned the highest role defined for them\n",
-				       "========================\n"		
+				       "========================\n"
 			}
-			
+
 			my $nr = scalar(@LTIroles);
 			if (! defined($ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[0]}})) {
 				croak("Cannot find a WeBWorK role that corresponds to the LMS role of "
 						. $LTIroles[0] .".");
 			}
-			my $LTI_webwork_permissionLevel 
+			my $LTI_webwork_permissionLevel
 				= $ce -> {userRoles} -> {$ce -> {LMSrolesToWeBWorKroles} -> {$LTIroles[0]}};
 			if ($nr > 1) {
 				for (my $j =1; $j < $nr; $j++) {
@@ -530,18 +529,18 @@ sub authenticate
 					next unless defined $wwRole;
 					if ($LTI_webwork_permissionLevel < $ce -> {userRoles} -> {$wwRole}) {
 						$LTI_webwork_permissionLevel = $ce -> {userRoles} -> {$wwRole};
-					}	
+					}
 				}
 			}
 			####### End defining roles and $LTI_webwork_permissionLevel#######
-			
+
 			##################################################################
 			# Determine the section name provided by lti
 			# This may vary widely from LTI provider to LTI provider
 			# If custom_section item is provided by the LTI then nothing needs to be done
 			# The code works for the U. of Rochester Blackboard
 			##################################################################
-		
+
 # 			my $LTI_section = $r->param("context_label");   #  for example: MTH208.2014FALL.54648
 # 			my ($course_number, $semester, $CRN) = split(/\./, $LTI_section);
 # 			if ($self->{section} eq "unknown" and $CRN ) {
@@ -554,10 +553,10 @@ sub authenticate
 # 				warn "CRN $CRN\n";
 # 				warn "section $self->{section}";
 # 			}
-			########### end determine section name	
+			########### end determine section name
 			if (! $db -> existsUser($userID) )
-				{ # New User. Create User record 
-				warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel. 
+				{ # New User. Create User record
+				warn "New user: $userID -- requested permission level is $LTI_webwork_permissionLevel.
 				      Only new users with permission levels less than or equal to 'ta = 5' can be created." if ( $ce->{debug_lti_parameters} );
 				if ($LTI_webwork_permissionLevel > $ce ->{userRoles} -> {"ta"}) {
 				    $self->{log_error}.= "userID: $userID --".' '. $GENERIC_UNKNOWN_INSTRUCTOR_ERROR_MESSAGE;
@@ -586,7 +585,7 @@ sub authenticate
 				  # Assign existing sets
 				  # This module is not a subclass of WeBWorK::ContentGenerator::Instuctor,
 				  #  do the methods defined therein for assigning problem sets and problems
-				  #  to users are not available for use here.  
+				  #  to users are not available for use here.
 				  #  Therefore, we have to resort to the lower level methods in WeBWorK::DB.
 				my $numberOfProblemsAssigned = 0;
 				my %globalProblemsBySet=();
@@ -613,15 +612,15 @@ sub authenticate
 				my $due_cut = time() + 2*24*3600;
 				my $userSet;
 				my $userProblem;
-				foreach $globalSet (@GlobalSets) 
+				foreach $globalSet (@GlobalSets)
 					{
-					if (defined($globalSet)) 
+					if (defined($globalSet))
 						{
 						if (defined($ce -> {"adjustDueDatesForLateAdds"}) and $ce -> {"adjustDueDatesForLateAdds"}
 							and $globalSet -> open_date < $open_cut and $globalSet -> due_date < $due_cut
-							) 
+							)
 							{
-							if (not $db -> existsUserSet($userID, $globalSet -> set_id ) ) 
+							if (not $db -> existsUserSet($userID, $globalSet -> set_id ) )
 								{
 								$userSet = $db -> newUserSet();
 								$userSet -> user_id($userID);
@@ -668,34 +667,34 @@ sub authenticate
 				}
 				$self -> {initial_login} = 1;
 			}
-		else 
+		else
 			{ # Existing user.  Possibly modify demographic information and permission level.
 			my $user = $db -> getUser($userID);
 			my $permissionLevel = $db -> getPermissionLevel($userID);
 			if (($user -> last_name() eq "Teacher" and $user -> first_name() eq "The")
-					or (defined($permissionLevel -> permission) 
-							and $permissionLevel -> permission > $ce -> {userRoles} -> {professor})) 
-				{  #This is the instructor of record or an administrator.  No changes permitted via LTI.	
+					or (defined($permissionLevel -> permission)
+							and $permissionLevel -> permission > $ce -> {userRoles} -> {professor}))
+				{  #This is the instructor of record or an administrator.  No changes permitted via LTI.
 				}
-			else 
+			else
 				{
 				my $change_made = 0;
 				$self -> {last_name} =~ s/\+/ /g;
 				if (defined($user -> last_name) and defined($self -> {last_name})
-					and $user -> last_name ne $self -> {last_name}) 
+					and $user -> last_name ne $self -> {last_name})
 					{
 					$user -> last_name($self -> {last_name});
 					$change_made = 1;
 					}
 				$self -> {first_name} =~ s/\+/ /g;
 				if (defined($user -> first_name) and defined($self -> {first_name})
-					and $user -> first_name ne $self -> {first_name}) 
+					and $user -> first_name ne $self -> {first_name})
 					{
 					$user -> first_name($self -> {first_name});
 					$change_made = 1;
 					}
 				if (defined($user -> email_address) and defined($self -> {email})
-					and $user -> email_address ne $self -> {email}) 
+					and $user -> email_address ne $self -> {email})
 					{
 					$user -> email_address($self -> {email});
 					$change_made = 1;
@@ -707,22 +706,22 @@ sub authenticate
 					}
 				if (defined($permissionLevel -> permission)
 					and $permissionLevel -> permission > $ce ->{userRoles} -> {"student"})
-						{if ($user -> section ne "Admin") 
+						{if ($user -> section ne "Admin")
 							{
 							$user -> section("Admin");
 							$change_made = 1;
 							}
 						}
-				elsif ($LTI_webwork_permissionLevel > $ce -> {userRoles}->{"student"} 
+				elsif ($LTI_webwork_permissionLevel > $ce -> {userRoles}->{"student"}
 					and (!defined($user -> section) or $user -> section ne "Admin") )
 						{
 						$user -> section("Admin");
 						$change_made = 1;
 						}
-				elsif (defined ($self -> {"section"}) 
-					and (! defined($user -> section) 
+				elsif (defined ($self -> {"section"})
+					and (! defined($user -> section)
 						or ($user -> section ne $self -> {"section"}
-							and $self -> {"section"} ne "" 
+							and $self -> {"section"} ne ""
 							and $user -> section ne "Admin"
 							)
 						)
@@ -736,7 +735,7 @@ sub authenticate
 					{$user -> recitation($self ->{"recitation"});
 					$change_made = 1;
 				}
-				if ($change_made) 
+				if ($change_made)
 					{
 					$user -> comment(formatDateTime(time, "local"));
 					$db -> putUser($user);
@@ -747,7 +746,7 @@ sub authenticate
 #				if (!defined($permissionLevel -> permission) or $permissionLevel -> permission != $LTI_webwork_permissionLevel)
 
 # you seldom fine a defined user without a permissionLevel assigned
-# I don'think the following if statement is ever run. 
+# I don'think the following if statement is ever run.
 				if (!defined($permissionLevel -> permission) )
 #################################################################
 					{
@@ -758,7 +757,7 @@ sub authenticate
 					warn "Setting permission level for $userID to $LTI_webwork_permissionLevel" if ( $ce->{debug_lti_parameters} );
 				}
 				warn "Existing user: $userID updated.\n  LTIpermission level is $LTI_webwork_permissionLevel.
-				      webwork level is ". $permissionLevel -> permission. ".\n". 
+				      webwork level is ". $permissionLevel -> permission. ".\n".
 				      "User section is |".$user->{section}. "|\n recitation is |".$user->{recitation}."|\n" if ( $ce->{debug_lti_parameters} );
 			}
 			$self -> {initial_login} = 1;
@@ -803,8 +802,8 @@ sub ok {
 	my $Key = $db -> getKey($self -> {nonce});
 	if (! defined($Key) ) {
 		# nonce, timestamp are ok
-		$Key = $db -> newKey(user_id=>$self->{nonce}, 
-							key=>"nonce", 
+		$Key = $db -> newKey(user_id=>$self->{nonce},
+							key=>"nonce",
 							timestamp=>$self->{"timestamp"},
 					);
 		$db -> addKey($Key);
@@ -835,11 +834,10 @@ sub print_keys {
 	my %request_hash;
 	my $key;
 	foreach $key (@keys) {
-		$request_hash{$key} =  $r -> param($key); 
+		$request_hash{$key} =  $r -> param($key);
 		warn("$key -> |" . $request_hash{$key} . "|");
 	}
 	my $requestHash = \%request_hash;
 }
 
 1;
-
