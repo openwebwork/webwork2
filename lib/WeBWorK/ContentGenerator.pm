@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-2012 The WeBWorK Project, http://github.com/openwebwork
+# Copyright &copy; 2000-2012 The WeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
