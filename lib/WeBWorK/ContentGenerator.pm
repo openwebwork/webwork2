@@ -54,7 +54,7 @@ use WeBWorK::PG;
 use MIME::Base64;
 use WeBWorK::Template qw(template);
 use WeBWorK::Localize;
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Scalar::Util qw(weaken);
 use HTML::Entities;

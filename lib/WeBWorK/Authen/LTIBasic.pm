@@ -34,7 +34,6 @@ use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use URI::Escape;
 use Net::OAuth;
-use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;

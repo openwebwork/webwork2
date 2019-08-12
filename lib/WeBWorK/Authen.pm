@@ -61,7 +61,7 @@ use URI::Escape;
 use Carp;
 use Scalar::Util qw(weaken);
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 #####################
