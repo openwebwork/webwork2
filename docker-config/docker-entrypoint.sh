@@ -1,6 +1,13 @@
 #!/bin/bash
 set -eo pipefail
 
+function wait_for_db {
+	echo "Waiting for database to become available..."
+        while ! timeout 1 bash -c "(cat < /dev/null > /dev/tcp/$WEBWORK_DB_HOST/$WEBWORK_DB_PORT) >/dev/null 2>&1"; do \
+		echo "waiting..."
+		sleep 0.5; \
+	done
+}
 # if command starts with an option, prepend apache2
 if [ "${1:0:1}" = '-'  ]; then
     set -- apache2 "$@"
@@ -74,12 +81,10 @@ if [ "$1" = 'apache2' ]; then
     done
     # create admin course if not existing
     if [ ! -d "$APP_ROOT/courses/admin"  ]; then
-        # wait for db to start up
-        echo "Waiting for database to start..."
-        while ! timeout 1 bash -c "(cat < /dev/null > /dev/tcp/$WEBWORK_DB_HOST/$WEBWORK_DB_PORT) >/dev/null 2>&1"; do sleep 0.5; done
         newgrp www-data
         umask 2
         cd $APP_ROOT/courses
+	wait_for_db
         WEBWORK_ROOT=$APP_ROOT/webwork2 $APP_ROOT/webwork2/bin/addcourse admin --db-layout=sql_single --users=$APP_ROOT/webwork2/courses.dist/adminClasslist.lst --professors=admin
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
@@ -128,6 +133,7 @@ if [ "$1" = 'apache2' ]; then
       cd $APP_ROOT/webwork2/bin
       if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
+	wait_for_db
         ./restore-OPL-tables
 	./update-OPL-statistics
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
@@ -141,6 +147,7 @@ if [ "$1" = 'apache2' ]; then
         fi
       else
         echo "About to start OPL-update. This takes a long time - please be patient."
+	wait_for_db
         ./OPL-update
 	# Dump the OPL tables, to allow a quick restore in the future
         ./dump-OPL-tables
