@@ -117,6 +117,7 @@ our @EXPORT_OK = qw(
         is_jitar_problem_closed
         jitar_problem_adjusted_status
         jitar_problem_finished
+	fetchEmailRecipients
 	x
 );
 
@@ -190,7 +191,7 @@ sub readFile($) {
 	my $fileName = shift;
 	# debugging code: found error in CourseEnvironment.pm with this
 # 	if ($fileName =~ /___/ or $fileName =~ /the-course-should-be-determined-at-run-time/) {
-# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n", 
+# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n",
 # 		join("\t ", caller()), "\n";
 # 		return();
 # 	}
@@ -213,8 +214,8 @@ sub readFile($) {
 		if ($@) {
 			print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
 		}
-		utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ". 
-		 "is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n". 
+		utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ".
+		 "is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n".
 		 "While this is not fatal you should fix it\n";
 		# FIXME
 		# utf8::decode($result) raises an error about the copyright sign
@@ -1691,6 +1692,31 @@ sub jitar_problem_finished {
 
     # if we got here then the problem is finished
     return 1;
+}
+
+# requires the request object, and a permission type
+# a user may also be submitted, in case we need to filter by section
+# could require the db, course environment and authz separately... why tho?
+
+sub fetchEmailRecipients {
+	my $r = shift;
+	my ($permissionType, $user) = @_; # user argument is optional
+	my $db = $r->db;
+	my $ce = $r->ce;
+	my $authz = $r->authz;
+	my @recipients;
+	foreach my $potentialRecipient ($db->listUsers()) {
+		if ($authz->hasPermissions($potentialRecipient, $permissionType)) {
+			my $recipient = $db->getUser($potentialRecipient);
+			next if $ce->{feedback_by_section} and defined $user
+					and defined $recipient->section and defined $user->section
+					and $recipient->section ne $user->section;
+			if ($recipient and $recipient->email_address) {
+					push @recipients, $recipient->rfc822_mailbox;
+			}
+		}
+	}
+	return @recipients;
 }
 
 # This is a dummy function used to mark strings for localization

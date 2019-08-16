@@ -423,9 +423,9 @@ sub output_JS{
 # prints out summary information for the problem pages.
 
 # sub output_summary{
-# 
+#
 # 	my $self = shift;
-# 
+#
 # 	my $editMode = $self->{editMode};
 # 	my $problem = $self->{problem};
 # 	my $pg = $self->{pg};
@@ -433,12 +433,12 @@ sub output_JS{
 # 	my %will = %{ $self->{will} };
 # 	my $checkAnswers = $self->{checkAnswers};
 # 	my $previewAnswers = $self->{previewAnswers};
-# 
+#
 # 	my $r = $self->r;
-# 
+#
 # 	my $authz = $r->authz;
 # 	my $user = $r->param('user');
-# 
+#
 # 	# custom message for editor
 # 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 # 		if ($editMode eq "temporaryFile") {
@@ -448,15 +448,15 @@ sub output_JS{
 # 		}
 # 	}
 # 	print CGI::start_div({class=>"problemHeader"});
-# 
-# 
+#
+#
 # 	# attempt summary
 # 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 # 	# until after the due date
 # 	# do I need to check $will{showCorrectAnswers} to make preflight work??
 # 	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 # 		# print this if user submitted answers OR requested correct answers
-# 
+#
 # 		print $self->attemptResults($pg, 1,
 # 			$will{showCorrectAnswers},
 # 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
@@ -476,7 +476,7 @@ sub output_JS{
 # 			# don't show attempt results (correctness)
 # 			# show attempt previews
 # 	}
-# 
+#
 # 	print CGI::end_div();
 # }
 
@@ -624,106 +624,94 @@ sub test{
 # instructors of the course that the student has finished the problem,
 # and its children, and did not get 100%
 sub jitar_send_warning_email {
-    my $self = shift;
-    my $userProblem = shift;
+  my $self = shift;
+  my $userProblem = shift;
 
-    my $r= $self->r;
-    my $ce = $r->ce;
-    my $db = $r->db;
-    my $authz = $r->authz;
-    my $urlpath    = $r->urlpath;
-    my $courseID = $urlpath->arg("courseID");
-    my $userID = $userProblem->user_id;
-    my $setID = $userProblem->set_id;
-    my $problemID = $userProblem->problem_id;
+  my $r= $self->r;
+  my $ce = $r->ce;
+  my $db = $r->db;
+  my $authz = $r->authz;
+  my $urlpath = $r->urlpath;
+  my $courseID = $urlpath->arg("courseID");
+  my $userID = $userProblem->user_id;
+  my $setID = $userProblem->set_id;
+  my $problemID = $userProblem->problem_id;
 
-    my $status = jitar_problem_adjusted_status($userProblem,$r->db);
-    $status = eval{ sprintf("%.0f%%", $status * 100)}; # round to whole number
+  my $status = jitar_problem_adjusted_status($userProblem,$r->db);
+  $status = eval{ sprintf("%.0f%%", $status * 100)}; # round to whole number
 
-    my $user = $db->getUser($userID);
+  my $user = $db->getUser($userID);
 
-    debug("Couldn't get user $userID from database") unless $user;
+  debug("Couldn't get user $userID from database") unless $user;
 
-    my $emailableURL = $self->systemLink(
+  my $emailableURL = $self->systemLink(
 	$urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
 				courseID => $courseID, setID => $setID, problemID => $problemID), params=>{effectiveUser=>$userID}, use_abs_url=>1);
 
 
-	my @recipients;
-        # send to all users with permission to score_sets an email address
-	# DBFIXME iterator?
-	foreach my $rcptName ($db->listUsers()) {
-		if ($authz->hasPermissions($rcptName, "score_sets")) {
-			my $rcpt = $db->getUser($rcptName); # checked
-			next if $ce->{feedback_by_section} and defined $user
-			    and defined $rcpt->section and defined $user->section
-			    and $rcpt->section ne $user->section;
-			if ($rcpt and $rcpt->email_address) {
-			    push @recipients, $rcpt->rfc822_mailbox;
-			}
-		}
-	}
+	my @recipients = fetchEmailRecipients("score_sets", $user);
+  # send to all users with permission to score_sets and an email address
 
-    my $sender;
-    if ($user->email_address) {
-	$sender = $user->rfc822_mailbox;
-    } elsif ($user->full_name) {
-	$sender = $user->full_name;
-    } else {
-	$sender = $userID;
-    }
+  my $sender;
+  if ($user->email_address) {
+		$sender = $user->rfc822_mailbox;
+  } elsif ($user->full_name) {
+		$sender = $user->full_name;
+  } else {
+		$sender = $userID;
+  }
 
-    $problemID = join('.',jitar_id_to_seq($problemID));
+  $problemID = join('.',jitar_id_to_seq($problemID));
 
 
-    my %subject_map = (
-	'c' => $courseID,
-	'u' => $userID,
-	's' => $setID,
-	'p' => $problemID,
-	'x' => $user->section,
-	'r' => $user->recitation,
-	'%' => '%',
+  my %subject_map = (
+		'c' => $courseID,
+		'u' => $userID,
+		's' => $setID,
+		'p' => $problemID,
+		'x' => $user->section,
+		'r' => $user->recitation,
+		'%' => '%',
 	);
-    my $chars = join("", keys %subject_map);
-    my $subject = $ce->{mail}{feedbackSubjectFormat}
+  my $chars = join("", keys %subject_map);
+  my $subject = $ce->{mail}{feedbackSubjectFormat}
     || "WeBWorK question from %c: %u set %s/prob %p"; # default if not entered
-    $subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
+  $subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
 
 # 		my $transport = Email::Sender::Transport::SMTP->new({
 # 			host => $ce->{mail}->{smtpServer},
 # 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 # 			timeout => $ce->{mail}->{smtpTimeout}
 # 		});
-# 
+#
 
 #           createEmailSenderTransportSMTP is defined in ContentGenerator
-		my $transport = $self->createEmailSenderTransportSMTP();
-		my $email = Email::Simple->create(header => [
-			"To" => join(",", @recipients),
-			"From" => $sender,
-			"Subject" => $subject
-		]);
+	my $transport = $self->createEmailSenderTransportSMTP();
+	my $email = Email::Simple->create(header => [
+		"To" => join(",", @recipients),
+		"From" => $sender,
+		"Subject" => $subject
+	]);
 
 		## extra headers
-		$email->header_set("X-WeBWorK-Course: ",$courseID) if defined $courseID;
-		if ($user) {
-			$email->header_set("X-WeBWorK-User: ",$user->user_id);
-			$email->header_set("X-WeBWorK-Section: ",$user->section);
-			$email->header_set("X-WeBWorK-Recitation: ",$user->recitation);
-		}
-		$email->header_set("X-WeBWorK-Set: ",$setID) if defined $setID;
-		$email->header_set("X-WeBWorK-Problem: ",$problemID) if defined $problemID;
+	$email->header_set("X-WeBWorK-Course: ",$courseID) if defined $courseID;
+	if ($user) {
+		$email->header_set("X-WeBWorK-User: ",$user->user_id);
+		$email->header_set("X-WeBWorK-Section: ",$user->section);
+		$email->header_set("X-WeBWorK-Recitation: ",$user->recitation);
+	}
+	$email->header_set("X-WeBWorK-Set: ",$setID) if defined $setID;
+	$email->header_set("X-WeBWorK-Problem: ",$problemID) if defined $problemID;
 
-    my $full_name = $user->full_name;
-    my $email_address = $user->email_address;
-    my $student_id = $user->student_id;
-    my $section = $user->section;
-    my $recitation = $user->recitation;
-    my $comment = $user->comment;
+  my $full_name = $user->full_name;
+  my $email_address = $user->email_address;
+  my $student_id = $user->student_id;
+  my $section = $user->section;
+  my $recitation = $user->recitation;
+  my $comment = $user->comment;
 
     # print message
-my $msg = qq/
+	my $msg = qq/
 This  message was automatically generated by WeBWorK.
 
 User $full_name ($userID) has not sucessfully completed the review for problem $problemID in set $setID.  Their final adjusted score on the problem is $status.
@@ -739,19 +727,19 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-  	$email->body_set($msg);
+  $email->body_set($msg);
 
-		## try to send the email
+	## try to send the email
 
-		try {
-			sendmail($email,{transport => $transport});
-				debug("Successfully sent JITAR alert message");
-		} catch {
-      $r->log_error("Failed to send JITAR alert message: $_");
-		};
+	try {
+		sendmail($email,{transport => $transport});
+		debug("Successfully sent JITAR alert message");
+	} catch {
+    $r->log_error("Failed to send JITAR alert message: $_");
+	};
 
 
-    return "";
+  return "";
 }
 
 1;
