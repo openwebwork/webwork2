@@ -72,7 +72,7 @@ sub defineProblemEnvir {
 		$key,
 		$set,
 		$problem,
-		$psvn,  #FIXME  -- not used  ??
+		$psvn,
 		$formFields,
 		$translationOptions,
 		$extras,
