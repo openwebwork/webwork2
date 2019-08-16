@@ -55,8 +55,13 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
   echo "Installing the OPL - This takes time - please be patient."
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch master --depth 1 https://github.com/openwebwork/webwork-open-problem-library.git
+
+  # FIXME / TO-DO : Download a saved version of the OPL sql table data to be loaded and extract
+  #    it in the appropriate location.This would avoid the need for a length run of OPL-update.
+  # At present, a distribution point has not been set up for such data.
+
   # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it
-  touch "$APP_ROOT/libraries/RunOPLupdate"
+  touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
 fi
 
 if [ "$1" = 'apache2' ]; then
@@ -127,15 +132,15 @@ if [ "$1" = 'apache2' ]; then
         echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
         echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
       fi
-      touch "$APP_ROOT/libraries/RunOPLupdate"
+      touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
     fi
-    if [ -f "$APP_ROOT/libraries/RunOPLupdate" ]; then
+    if [ -f "$APP_ROOT/libraries/Restore_or_build_OPL_tables" ]; then
       cd $APP_ROOT/webwork2/bin
       if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
 	wait_for_db
         ./restore-OPL-tables
-	./update-OPL-statistics
+	./load-OPL-global-statistics
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
@@ -155,7 +160,7 @@ if [ "$1" = 'apache2' ]; then
         mkdir -p $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
         cp -a $APP_ROOT/webwork2/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
       fi
-      rm $APP_ROOT/libraries/RunOPLupdate
+      rm $APP_ROOT/libraries/Restore_or_build_OPL_tables
     fi
     # Compile chromatic/color.c if necessary - may be needed for PG directory mounted from outside image
     if [ ! -f "$APP_ROOT/pg/lib/chromatic/color"  ]; then

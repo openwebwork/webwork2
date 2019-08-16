@@ -146,17 +146,28 @@ services:
       # Old default:
       #WEBWORK_DB_PASSWORD: passwordRW
 
+      # =======================================================
+      # Local configuration variables:
+
       # To turn on SSL in the running container
       #SSL: 1
 
       # Change to A4 paper
       #PAPERSIZE: a4
 
-      # Use to build additional locales in the running container at startup
+      # Use to build additional locales in the running container at startup. Ex:
       #ADD_LOCALES: he_IL ISO-8859-8,he_IL.UTF-8 UTF-8
 
       # Extra Ubuntu packages to install during startup
       #ADD_PACKAGES: mc vim telnet
+
+      # The system timezone for the container can be set using
+      #SYSTEM_TIMEZONE: zone/city
+      # where zone/city must be a valid setting.
+      # "/usr/bin/timedatectl list-timezones" on an Ubuntu system with
+      # that tool installed will find valid values.
+
+      # =======================================================
 
       # If you use https below, make sure to set up the certificate and SSL configuration
 #      WEBWORK_ROOT_URL: https://myhost.mydomain.edu

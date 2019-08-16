@@ -28,6 +28,8 @@
 #          will set the system timezone to zone/city
 #          Make sure to use a valid setting.
 #          "/usr/bin/timedatectl list-timezones" on Ubuntu will find valid values
+#        ADD_PACKAGES="package1 package2 package3"
+#	   will have these additional Ubuntu packages installed at startup.
 #
 # ==================================================================
 
