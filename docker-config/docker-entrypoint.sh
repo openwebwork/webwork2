@@ -48,7 +48,7 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
   echo "Installing the OPL - This takes time - please be patient."
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch master --depth 1 https://github.com/openwebwork/webwork-open-problem-library.git
-  # The next line forces the system to run OPL-update below, as we just installed it
+  # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it
   touch "$APP_ROOT/libraries/RunOPLupdate"
 fi
 
@@ -114,14 +114,40 @@ if [ "$1" = 'apache2' ]; then
     if [ ! -f "$APP_ROOT/webwork2/htdocs/DATA/tagging-taxonomy.json"  ]; then
       # The next line forces the system to run OPL-update below, as the
       # tagging-taxonomy.json file was found to be missing.
-      echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
-      echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
+      if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
+        echo "The tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
+        echo "But the libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql files was seen"
+        echo "so the OPL tables and the JSON files will (hopefully) be restored from save versions"
+      else
+        echo "We will run OPL-update as the tagging-taxonomy.json file is missing in webwork2/htdocs/DATA/."
+        echo "Check if you should be mounting webwork2/htdocs/DATA/ from outside the Docker image!"
+      fi
       touch "$APP_ROOT/libraries/RunOPLupdate"
     fi
     if [ -f "$APP_ROOT/libraries/RunOPLupdate" ]; then
-      echo "About to start OPL-update. This takes a long time - please be patient."
       cd $APP_ROOT/webwork2/bin
-      ./OPL-update
+      if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
+        echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
+        ./restore-OPL-tables
+	./update-OPL-statistics
+        if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
+          # Restore saved JSON files
+          echo "Restoring JSON files from JSON-SAVED directory"
+          cp -a $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED/*.json $APP_ROOT/webwork2/htdocs/DATA/
+        else
+          echo "No webwork-open-problem-library/JSON-SAVED directory was found."
+          echo "You are missing some of the JSON files including tagging-taxonomy.json"
+          echo "Some of the library functions will not work properly"
+        fi
+      else
+        echo "About to start OPL-update. This takes a long time - please be patient."
+        ./OPL-update
+	# Dump the OPL tables, to allow a quick restore in the future
+        ./dump-OPL-tables
+        # Save a copy of the generated JSON files
+        mkdir -p $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
+        cp -a $APP_ROOT/webwork2/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
+      fi
       rm $APP_ROOT/libraries/RunOPLupdate
     fi
     # Compile chromatic/color.c if necessary - may be needed for PG directory mounted from outside image
