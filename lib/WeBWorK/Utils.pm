@@ -1723,9 +1723,10 @@ sub fetchEmailRecipients {
 	return @recipients;
 }
 
-# requires a request object and an optional string
+# requires a CG object and an optional string
 # 'relative' or 'absolute' to return a single URL
 # or NULL to return an array containing both URLs
+# this subroutine could be expanded to
 
 sub generateURLs {
 	my ($self, $urlRequested) = @_;

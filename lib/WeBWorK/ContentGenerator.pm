@@ -1663,9 +1663,6 @@ Helper macro for displaying the feedback form. Returns a button named "Email
 Instructor". %params contains the request parameters accepted by the Feedback
 module and their values.
 
-Called by "output_email_instructor" in Problem.pm and by "output_footer"
-in ProblemUtil/ProblemUtil.pm
-
 =cut
 
 sub feedbackMacro {
@@ -1721,24 +1718,23 @@ sub feedbackMacro_form {
 	my ($self, $feedbackFormURL, %params) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $db = $r->db;
 
 	# feedback form url
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
 
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackFormURL,-target=>"WW_info") . "\n";
+
 	$result .= $self->hidden_authen_fields . "\n";
 
 	while (my ($key, $value) = each %params) {
-		if ($key eq 'pg_object') {
-			my $tmp = $value->{body_text};
-			$tmp .= CGI::p(CGI::b("Note: "). CGI::i($value->{result}->{msg})) if $value->{result}->{msg} ;
-			$result .= CGI::hidden($key, encode_base64($tmp, "") );
-		} else {
+	    if ($key eq 'pg_object') {
+	        my $tmp = $value->{body_text};
+	        $tmp .= CGI::p(CGI::b("Note: "). CGI::i($value->{result}->{msg})) if $value->{result}->{msg} ;
+	        $result .= CGI::hidden($key, encode_base64($tmp, "") );
+	    } else {
 			$result .= CGI::hidden($key, $value) . "\n";
 		}
 	}
-
 	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
 	$result .= CGI::end_form() . "\n";
 

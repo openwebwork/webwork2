@@ -17,7 +17,7 @@
 package WeBWorK::ContentGenerator::Problem;
 #use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
-use WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;  # not needed?
+use  WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;  # not needed?
 
 =head1 NAME
 
