@@ -118,6 +118,7 @@ our @EXPORT_OK = qw(
         jitar_problem_adjusted_status
         jitar_problem_finished
 	fetchEmailRecipients
+	generateURLs
 	x
 );
 
@@ -1694,29 +1695,97 @@ sub jitar_problem_finished {
     return 1;
 }
 
-# requires the request object, and a permission type
+# requires a CG object, and a permission type
 # a user may also be submitted, in case we need to filter by section
 # could require the db, course environment and authz separately... why tho?
 
 sub fetchEmailRecipients {
-	my $r = shift;
-	my ($permissionType, $user) = @_; # user argument is optional
+	my ($self, $permissionType, $sender) = @_; # sender argument is optional
+	my $r = $self->r;
 	my $db = $r->db;
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my @recipients;
+
+  return unless $permissionType;
+
 	foreach my $potentialRecipient ($db->listUsers()) {
 		if ($authz->hasPermissions($potentialRecipient, $permissionType)) {
-			my $recipient = $db->getUser($potentialRecipient);
-			next if $ce->{feedback_by_section} and defined $user
-					and defined $recipient->section and defined $user->section
-					and $recipient->section ne $user->section;
-			if ($recipient and $recipient->email_address) {
-					push @recipients, $recipient->rfc822_mailbox;
+			my $validRecipient = $db->getUser($potentialRecipient);
+			next if $ce->{feedback_by_section} and defined $sender
+					and defined $validRecipient->section and defined $sender->section
+					and $validRecipient->section ne $sender->section;
+			if ($validRecipient and $validRecipient->email_address) {
+					push @recipients, $validRecipient->rfc822_mailbox;
 			}
 		}
 	}
 	return @recipients;
+}
+
+# requires a request object and an optional string
+# 'relative' or 'absolute' to return a single URL
+# or NULL to return an array containing both URLs
+
+sub generateURLs {
+	my ($self, $urlRequested) = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	my $userName = $r->param("user");
+	my $setName = $urlpath->arg("setID");
+	my $problemNumber = $urlpath->arg("problemID");
+
+	# generate context URLs
+	my $emailableURL;
+	my $returnURL;
+	if ($userName) {
+		my $modulePath;
+		my @args;
+		if ($setName) {
+			if ($problemNumber) {
+				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
+					courseID => $r->urlpath->arg("courseID"),
+					setID => $setName,
+					problemID => $problemNumber,
+				);
+				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
+			} else {
+				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
+					courseID => $r->urlpath->arg("courseID"),
+					setID => $setName,
+				);
+				@args = ();
+			}
+		} else {
+			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
+				courseID => $r->urlpath->arg("courseID"),
+			);
+			@args = ();
+		}
+		$emailableURL = $self->systemLink($modulePath,
+			authen => 0,
+			params => [ "effectiveUser", @args ],
+			use_abs_url => 1,
+		);
+		$returnURL = $self->systemLink($modulePath,
+			authen => 1,
+			params => [ @args ],
+		);
+	} else {
+		$emailableURL = "(not available)";
+		$returnURL = "";
+	}
+	if ($urlRequested) {
+		if ($urlRequested eq 'relative') {
+			return $returnURL;
+		} else {
+			return $emailableURL; # could include other types of URL here...
+		}
+	} else {
+		return ($emailableURL, $returnURL);
+	}
+	return;
 }
 
 # This is a dummy function used to mark strings for localization

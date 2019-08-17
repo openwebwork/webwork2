@@ -2115,14 +2115,22 @@ sub output_past_answer_button{
 
 sub output_email_instructor{
 	my $self = shift;
+	my $r = $self->r;
 	my $problem = $self->{problem};
 	my %will = %{ $self->{will} };
 	my $pg = $self->{pg};
+	my $userName = $r->param('user');
+	my $user = $r->db->getUser($userName);
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
+		problemPath        => $problem->source_file,
+		randomSeed         => $problem->problem_seed,
+		notifyAddresses    => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
+		emailableURL       => $self->generateURLs('absolute'),
+		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
 		showCorrectAnswers => $will{showCorrectAnswers},

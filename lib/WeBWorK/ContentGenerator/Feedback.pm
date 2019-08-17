@@ -109,45 +109,8 @@ sub body {
 	}
 
 	# generate context URLs
-	my $emailableURL;
-	my $returnURL;
-	if ($user) {
-		my $modulePath;
-		my @args;
-		if ($set) {
-			if ($problem) {
-				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID => $set->set_id,
-					problemID => $problem->problem_id,
-				);
-				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
-			} else {
-				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID => $set->set_id,
-				);
-				@args = ();
-			}
-		} else {
-			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-				courseID => $r->urlpath->arg("courseID"),
-			);
-			@args = ();
-		}
-		$emailableURL = $self->systemLink($modulePath,
-			authen => 0,
-			params => [ "effectiveUser", @args ],
-			use_abs_url => 1,
-		);
-		$returnURL = $self->systemLink($modulePath,
-			authen => 1,
-			params => [ @args ],
-		);
-	} else {
-		$emailableURL = "(not available)";
-		$returnURL = "";
-	}
+	my ($emailableURL, $returnURL) = $self->generateURLs();
+
 	my $homeModulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Home", $r);
 	my $systemURL = $self->systemLink($homeModulePath, authen=>0, use_abs_url=>1);
 

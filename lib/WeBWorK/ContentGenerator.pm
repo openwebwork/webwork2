@@ -59,7 +59,7 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
-use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients);
+use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use Encode;
 
@@ -1663,6 +1663,9 @@ Helper macro for displaying the feedback form. Returns a button named "Email
 Instructor". %params contains the request parameters accepted by the Feedback
 module and their values.
 
+Called by "output_email_instructor" in Problem.pm and by "output_footer"
+in ProblemUtil/ProblemUtil.pm
+
 =cut
 
 sub feedbackMacro {
@@ -1719,143 +1722,27 @@ sub feedbackMacro_form {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
-	my $urlpath = $r->urlpath;
-	my $courseID = $urlpath->arg("courseID");
-	my $userName 		= $r->param("user");
-	my $setName             = $params{set};
-	my $problemNumber       = $params{problem};
-
-	my ($user, $set, $problem);
-	$user = $db->getUser($userName) # checked
-		if defined $userName and $userName ne "";
-	if (defined $user) {
-		$set = $db->getMergedSet($userName, $setName) # checked
-			if defined $setName and $setName ne "";
-		$problem = $db->getMergedProblem($userName, $setName, $problemNumber) # checked
-			if defined $set and defined $problemNumber && $problemNumber ne "";
-	} else {
-		$set = $db->getGlobalSet($setName) # checked
-			if defined $setName and $setName ne "";
-		$problem = $db->getGlobalProblem($setName, $problemNumber) # checked
-			if defined $set and defined $problemNumber && $problemNumber ne "";
-	}
-
-	my $studentName = $user->full_name if (defined $user);
-	my $setID = $set->set_id if (defined $set);
-	my $problemSource = $problem->source_file if (defined $problem);
-	my $randomSeed = $problem->problem_seed if (defined $problem);
-
-	# generate context URLs
-	my $emailableURL;
-	my $returnURL;
-	if ($user) {
-		my $modulePath;
-		my @args;
-		if ($set) {
-			if ($problem) {
-				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID => $set->set_id,
-					problemID => $problem->problem_id,
-				);
-				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
-			} else {
-				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID => $set->set_id,
-				);
-				@args = ();
-			}
-		} else {
-			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-				courseID => $r->urlpath->arg("courseID"),
-			);
-			@args = ();
-		}
-		$emailableURL = $self->systemLink($modulePath,
-			authen => 0,
-			params => [ "effectiveUser", @args ],
-			use_abs_url => 1,
-		);
-		$returnURL = $self->systemLink($modulePath,
-			authen => 1,
-			params => [ @args ],
-		);
-	} else {
-		$emailableURL = "(not available)";
-		$returnURL = "";
-	}
-
-	# determine the recipients of the email
-	my @recipients = fetchEmailRecipients($r, 'receive_feedback', $user);
 
 	# feedback form url
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
 
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackFormURL,-target=>"WW_info") . "\n";
-
 	$result .= $self->hidden_authen_fields . "\n";
 
 	while (my ($key, $value) = each %params) {
-	    if ($key eq 'pg_object') {
-	        my $tmp = $value->{body_text};
-	        $tmp .= CGI::p(CGI::b("Note: "). CGI::i($value->{result}->{msg})) if $value->{result}->{msg} ;
-	        $result .= CGI::hidden($key, encode_base64($tmp, "") );
-	    } else {
+		if ($key eq 'pg_object') {
+			my $tmp = $value->{body_text};
+			$tmp .= CGI::p(CGI::b("Note: "). CGI::i($value->{result}->{msg})) if $value->{result}->{msg} ;
+			$result .= CGI::hidden($key, encode_base64($tmp, "") );
+		} else {
 			$result .= CGI::hidden($key, $value) . "\n";
 		}
 	}
-	$result .= CGI::hidden("problemSource", $problemSource) . "\n";
-	$result .= CGI::hidden("randomSeed", $randomSeed) . "\n";
-	$result .= CGI::hidden("studentName", $studentName) . "\n";
-	$result .= CGI::hidden("problemSetID", $setName) . "\n";
-	$result .= CGI::hidden("courseID", $courseID) . "\n";
-	$result .= CGI::hidden("emailURL", $emailableURL) . "\n";
-	$result .= CGI::hidden("returnURL", $returnURL) . "\n";
-	my $counter = 1;
-	foreach my $emailAddress (@recipients) {
-		$result .= CGI::hidden("email$counter",$emailAddress) . "\n";
-		my ($emailName,$emailAdd) = split($emailAddress,"\<",2);
-		if ($emailAdd) { $emailAdd =~ s/\>//; }   # it is necessary to avoid regex
-		if ($emailName) { $emailName =~ s/"//; }  # throwing out uninitialized warnings
-		$result .= CGI::hidden("emailName$counter",$emailName) . "\n";
-		$result .= CGI::hidden("emailAddress$counter",$emailAdd) . "\n";
-		$counter++;
-	}
+
 	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
 	$result .= CGI::end_form() . "\n";
 
 	return $result;
-}
-
-# borrowed from ContentGenerator/Feedback.pm
-sub getFeedbackRecipients {
-	my ($self, $user) = @_;
-	my $ce = $self->r->ce;
-	my $db = $self->r->db;
-	my $authz = $self->r->authz;
-
-	my @recipients;
-
-	# send to all users with permission to receive_feedback and an email address
-	# DBFIXME iterator?
-	foreach my $rcptName ($db->listUsers()) {
-		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
-			my $rcpt = $db->getUser($rcptName); # checked
-			next if $ce->{feedback_by_section} and defined $user
-				and defined $rcpt->section and defined $user->section
-				and $rcpt->section ne $user->section;
-			if ($rcpt and $rcpt->email_address) {
-				push @recipients, $rcpt->rfc822_mailbox;
-			}
-		}
-	}
-
-#	if (defined $ce->{mail}->{feedbackRecipients}) {
-#		push @recipients, @{$ce->{mail}->{feedbackRecipients}};
-#	}
-
-	return @recipients;
 }
 
 sub feedbackMacro_url {

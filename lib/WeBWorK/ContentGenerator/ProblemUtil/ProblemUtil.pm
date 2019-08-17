@@ -576,6 +576,11 @@ sub output_footer{
 		module             => __PACKAGE__,
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
+		problemPath        => $problem->source_file,
+		randomSeed         => $problem->problem_seed,
+		emailAddress       => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
+		emailableURL       => $self->generateURLs('absolute'),
+		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
 		showCorrectAnswers => $will{showCorrectAnswers},
@@ -649,7 +654,7 @@ sub jitar_send_warning_email {
 				courseID => $courseID, setID => $setID, problemID => $problemID), params=>{effectiveUser=>$userID}, use_abs_url=>1);
 
 
-	my @recipients = fetchEmailRecipients("score_sets", $user);
+	my @recipients = $self->fetchEmailRecipients("score_sets", $user);
   # send to all users with permission to score_sets and an email address
 
   my $sender;
