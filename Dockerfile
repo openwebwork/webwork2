@@ -1,3 +1,4 @@
+
 # Optional things to change/configure below:
 #
 # 1. Which branch of webwork2/ and pg/ to install.
@@ -38,24 +39,27 @@
 
 FROM alpine/git AS base
 
+# build args specifying the branches for webwork2 and pg used to build the image
+
+# To use the master branches of webwork2 and pg 
+#ARG WEBWORK2_BRANCH=master
+#ARG PG_BRANCH=master
+# To use the 2.15 branches or webwork2 and pg 
+ARG WEBWORK2_BRANCH=WeBWorK-2.15
+ARG PG_BRANCH=PG-2.15
+
+# assign the build args WEBWORK2_BRANCH and PG_BRANCH to the ENV WEBWORK2_BRANCH_ENV and PG_BRANCH_ENV, resp.
+ENV WEBWORK2_BRANCH_ENV ${WEBWORK2_BRANCH}
+ENV PG_BRANCH_ENV ${PG_BRANCH}
+
 WORKDIR /opt/base
 
-# Currently set to use the 2.15 branches or WeBWorK and PG
-
-# WeBWorK master branch:
-#RUN git clone --single-branch --branch master --depth 1 https://github.com/openwebwork/webwork2.git \
-#  && rm -rf webwork2/.git webwork2/{*ignore,Dockerfile,docker-compose.yml,docker-config}
-
-# WeBWorK 2.15 branch:
-RUN git clone --single-branch --branch WeBWorK-2.15 --depth 1 https://github.com/openwebwork/webwork2.git \
+RUN echo Cloning branch $WEBWORK2_BRANCH_ENV from https://github.com/openwebwork/webwork2.git \
+  && git clone --single-branch --branch ${WEBWORK2_BRANCH_ENV} --depth 1 https://github.com/openwebwork/webwork2.git \
   && rm -rf webwork2/.git webwork2/{*ignore,Dockerfile,docker-compose.yml,docker-config}
 
-# PG master branch:
-#RUN git clone --single-branch --branch master --depth 1 https://github.com/openwebwork/pg.git \
-#  && rm -rf  pg/.git
-
-# PG 2.15 branch:
-RUN git clone --single-branch --branch PG-2.15 --depth 1 https://github.com/openwebwork/pg.git \
+RUN echo Cloning branch $PG_BRANCH_ENV branch from https://github.com/openwebwork/pg.git \
+  && git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 https://github.com/openwebwork/pg.git \
   && rm -rf  pg/.git
 
 RUN git clone --single-branch --branch master --depth 1 https://github.com/mathjax/MathJax \
