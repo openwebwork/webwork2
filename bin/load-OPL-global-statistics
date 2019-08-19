@@ -70,10 +70,12 @@ EOS
   $dbuser = shell_quote($dbuser);
   $dbpass = shell_quote($dbpass);
   $db = shell_quote($db);
+
+  $ENV{'MYSQL_PWD'}=$dbpass;
   
   my $mysql_command = $ce->{externalPrograms}->{mysql};  
 
-  `$mysql_command --host=$host --port=$port --user=$dbuser --password=$dbpass $db < $global_sql_file`;
+  `$mysql_command --host=$host --port=$port --user=$dbuser $db < $global_sql_file`;
 
 }
 

@@ -49,9 +49,11 @@ $dbuser = shell_quote($dbuser);
 $dbpass = shell_quote($dbpass);
 $db = shell_quote($db);
 
+$ENV{'MYSQL_PWD'}=$dbpass;
+
 my $mysqldump_command = $ce->{externalPrograms}->{mysqldump};  
 
-`$mysqldump_command --host=$host --port=$port --user=$dbuser --password=$dbpass $db OPL_local_statistics > $output_file`;
+`$mysqldump_command --host=$host --port=$port --user=$dbuser $db OPL_local_statistics > $output_file`;
 
 print "Database File Created\n";
 

@@ -77,6 +77,8 @@ $dbuser = shell_quote($dbuser);
 $dbpass = shell_quote($dbpass);
 $db = shell_quote($db);
 
+$ENV{'MYSQL_PWD'}=$dbpass;
+
 # decide whether the mysql installation can handle
 # utf8mb4 and that should be used for the OPL
 
@@ -99,7 +101,7 @@ my $OPL_tables_to_dump = "OPL_DBsubject OPL_DBchapter OPL_DBsection OPL_author O
 
 print "Dumping OPL tables\n";
 
-`$mysqldump_command --host=$host --port=$port --user=$dbuser --password=$dbpass --default-character-set=$character_set $db $OPL_tables_to_dump  > $prepared_OPL_tables_file`;
+`$mysqldump_command --host=$host --port=$port --user=$dbuser --default-character-set=$character_set $db $OPL_tables_to_dump  > $prepared_OPL_tables_file`;
 
 print "OPL database dump created: $prepared_OPL_tables_file\n";
 
