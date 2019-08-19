@@ -78,7 +78,7 @@ services:
       #- "/per_host_data_path/webwork2/htdocs/tmp:/opt/webwork/webwork2/htdocs/tmp"
 
       # By default the courses tree in a separate tree outside of webwork2/ as follows:
-      - "../ww-docker-data/courses:/opt/webwork/courses"
+      - "${COURSES_DIRECTORY_ON_HOST}:/opt/webwork/courses"
       # OR mount like (here we are assuming that the hosts have different courses on them)
       #- "/per_host_data_path/courses/:/opt/webwork/courses/"
 
