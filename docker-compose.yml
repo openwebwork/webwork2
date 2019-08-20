@@ -125,8 +125,7 @@ services:
     hostname: myhost.mydomain.edu
 
     ports:
-      # For a personal machine
-      - "8080:80"
+      - "${WEBWORK2_HTTP_PORT_ON_HOST}:80"
 
       # For a production machine
       #- "80:80"
