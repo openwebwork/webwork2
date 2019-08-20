@@ -4,8 +4,6 @@ services:
     image: mariadb:10.4
     volumes:
       - mysql:/var/lib/mysql
-      # When using "dbMB4" as the name of the Docker DB volume, comment out line above and uncomment the line below
-      #- mysqlMB4:/var/lib/mysql
 
       # Set up UTF8MB4 in config file for the container.
       # Needs to be done BEFORE the database is created.
@@ -171,9 +169,6 @@ services:
 
 #      WEBWORK_TIMEZONE: America/New_York
 
-       # For when using "dbMB4" as the name of the Docker DB volume:
-       #WEBWORK_DB_HOST: dbMB4
-       #WEBWORK_DB_DSN: DBI:mysql:webwork:dbMB4:3306
   r:
     image: ubcctlt/rserve
 #    # The R server need not be available from outside the local Docker network.
@@ -183,5 +178,3 @@ services:
 volumes:
   oplVolume:
   mysql:
-  # When using "dbMB4" as the name of the Docker DB volume, comment out line above and uncomment the line below
-  #mysqlMB4:
