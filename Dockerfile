@@ -77,18 +77,8 @@ RUN git clone --single-branch --branch master --depth 1 https://github.com/mathj
 
 FROM ubuntu:18.04
 
-# WARNING: The real value of WEBWORK_DB_PASSWORD is set in docker-compose.yml via the
-# value of MYSQL_PASSWORD at the time the MariaDB container is first initialized.
-# Thus the value of WEBWORK_DB_PASSWORD should usually also be set in docker-compose.yml.
-# Several other environment values should usually be set via docker-compose.yml.
-
 ENV WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \
-    WEBWORK_DB_HOST=db \
-    WEBWORK_DB_PORT=3306 \
-    WEBWORK_DB_NAME=webwork \
-    WEBWORK_DB_USER=webworkWrite \
-    WEBWORK_DB_PASSWORD=passwordRW \
     WEBWORK_SMTP_SERVER=localhost \
     WEBWORK_SMTP_SENDER=webwork@example.com \
     WEBWORK_TIMEZONE=America/New_York \
@@ -107,8 +97,7 @@ ENV WEBWORK_URL=/webwork2 \
 
 # Environment variables which depend on a prior environment variable must be set
 # in an ENV call after the dependencies were defined.
-ENV WEBWORK_DB_DSN=DBI:mysql:${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_PORT} \
-    WEBWORK_ROOT=$APP_ROOT/webwork2 \
+ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
     PG_ROOT=$APP_ROOT/pg \
     PATH=$PATH:$APP_ROOT/webwork2/bin
 
