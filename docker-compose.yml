@@ -20,10 +20,8 @@ services:
       # When the MariaDB container is first started it will create
       #    the WW database and WW DB user based on:
       MYSQL_DATABASE: webwork
-      MYSQL_USER: webworkWrite
-      MYSQL_PASSWORD: passwordRWsetItBeforeFirstStartingTheDBcontainer
-      # Old default:
-      #MYSQL_PASSWORD: passwordRW
+      MYSQL_USER: ${WEBWORK_DB_USER}
+      MYSQL_PASSWORD: ${WEBWORK_DB_PASSWORD}
 
   app:
     image: webwork
@@ -78,7 +76,7 @@ services:
       #- "/per_host_data_path/webwork2/htdocs/tmp:/opt/webwork/webwork2/htdocs/tmp"
 
       # By default the courses tree in a separate tree outside of webwork2/ as follows:
-      - "../ww-docker-data/courses:/opt/webwork/courses"
+      - "${COURSES_DIRECTORY_ON_HOST}:/opt/webwork/courses"
       # OR mount like (here we are assuming that the hosts have different courses on them)
       #- "/per_host_data_path/courses/:/opt/webwork/courses/"
 
@@ -125,8 +123,7 @@ services:
     hostname: myhost.mydomain.edu
 
     ports:
-      # For a personal machine
-      - "8080:80"
+      - "${WEBWORK2_HTTP_PORT_ON_HOST}:80"
 
       # For a production machine
       #- "80:80"
@@ -141,10 +138,7 @@ services:
 
       APACHE_RUN_GROUP: www-data
 
-      WEBWORK_DB_PASSWORD: passwordRWsetItBeforeFirstStartingTheDBcontainer
-      # should be the same password as MYSQL_PASSWORD above.
-      # Old default:
-      #WEBWORK_DB_PASSWORD: passwordRW
+      WEBWORK_DB_PASSWORD: ${WEBWORK_DB_PASSWORD}
 
       # =======================================================
       # Local configuration variables:
