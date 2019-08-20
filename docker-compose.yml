@@ -20,10 +20,8 @@ services:
       # When the MariaDB container is first started it will create
       #    the WW database and WW DB user based on:
       MYSQL_DATABASE: webwork
-      MYSQL_USER: webworkWrite
-      MYSQL_PASSWORD: passwordRWsetItBeforeFirstStartingTheDBcontainer
-      # Old default:
-      #MYSQL_PASSWORD: passwordRW
+      MYSQL_USER: ${WEBWORK_DB_USER}
+      MYSQL_PASSWORD: ${WEBWORK_DB_PASSWORD}
 
   app:
     image: webwork
@@ -140,10 +138,7 @@ services:
 
       APACHE_RUN_GROUP: www-data
 
-      WEBWORK_DB_PASSWORD: passwordRWsetItBeforeFirstStartingTheDBcontainer
-      # should be the same password as MYSQL_PASSWORD above.
-      # Old default:
-      #WEBWORK_DB_PASSWORD: passwordRW
+      WEBWORK_DB_PASSWORD: ${WEBWORK_DB_PASSWORD}
 
       # =======================================================
       # Local configuration variables:
