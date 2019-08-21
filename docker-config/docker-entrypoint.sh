@@ -54,7 +54,7 @@ fi
 if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" ]; then
   echo "Installing the OPL - This takes time - please be patient."
   cd $APP_ROOT/libraries/
-  /usr/bin/git clone -v --progress --single-branch --branch master --depth 1 https://github.com/openwebwork/webwork-open-problem-library.git
+  /usr/bin/git clone -v --progress --single-branch --branch master https://github.com/openwebwork/webwork-open-problem-library.git
 
   # FIXME / TO-DO : Download a saved version of the OPL sql table data to be loaded and extract
   #    it in the appropriate location.This would avoid the need for a length run of OPL-update.
