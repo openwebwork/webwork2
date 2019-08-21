@@ -138,8 +138,8 @@ if [ "$1" = 'apache2' ]; then
       if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
-        $WEBWORK_ROOT/bin/restore-OPL-tables
-        $WEBWORK_ROOT/bin/load-OPL-global-statistics
+        $WEBWORK_ROOT/bin/restore-OPL-tables.pl
+        $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
@@ -154,7 +154,7 @@ if [ "$1" = 'apache2' ]; then
         wait_for_db
         $WEBWORK_ROOT/bin/OPL-update
         # Dump the OPL tables, to allow a quick restore in the future
-        $WEBWORK_ROOT/bin/dump-OPL-tables
+        $WEBWORK_ROOT/bin/dump-OPL-tables.pl
         # Save a copy of the generated JSON files
         mkdir -p $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
         cp -a $WEBWORK_ROOT/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
