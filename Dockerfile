@@ -44,7 +44,7 @@ FROM alpine/git AS base
 # To use the master branches of webwork2 and pg 
 #ARG WEBWORK2_BRANCH=master
 #ARG PG_BRANCH=master
-# To use the 2.15 branches or webwork2 and pg 
+# To use the 2.15 branches of webwork2 and pg 
 ARG WEBWORK2_BRANCH=WeBWorK-2.15
 ARG PG_BRANCH=PG-2.15
 
