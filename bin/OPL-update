@@ -988,7 +988,7 @@ if ($ce->{problemLibrary}{showLibraryLocalStats} ||
   do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
 
   print "\nLoading global statistics (if possible).\n";
-  do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics';
+  do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';
 }
 
 

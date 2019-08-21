@@ -193,7 +193,7 @@ EOS
 $dbh->commit();
 
 # We no longer automatically load the global statistics data here.
-print( "You may want to run load-OPL-global-statistics to update the global statistics data.\n",
+print( "You may want to run load-OPL-global-statistics.pl to update the global statistics data.\n",
 	"If this is being run by OPL-update, that will be done automatically.\n");
 
 1;
