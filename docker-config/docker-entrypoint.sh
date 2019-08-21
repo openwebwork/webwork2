@@ -67,9 +67,9 @@ fi
 if [ "$1" = 'apache2' ]; then
     # generate conf files if not exist
     for i in site.conf localOverrides.conf; do
-        if [ ! -f $APP_ROOT/webwork2/conf/$i ]; then
-            echo "Creating a new $APP_ROOT/webwork2/conf/$i"
-            cp $APP_ROOT/webwork2/conf/$i.dist $APP_ROOT/webwork2/conf/$i
+        if [ ! -f $WEBWORK_ROOT/conf/$i ]; then
+            echo "Creating a new $WEBWORK_ROOT/conf/$i"
+            cp $WEBWORK_ROOT/conf/$i.dist $WEBWORK_ROOT/conf/$i
             if [ $i == 'site.conf' ]; then
                 sed -i -e 's/webwork_url       = '\''\/webwork2'\''/webwork_url       = $ENV{"WEBWORK_URL"}/' \
                     -e 's/server_root_url   = '\'''\''/server_root_url   = $ENV{"WEBWORK_ROOT_URL"}/' \
@@ -80,7 +80,7 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/mail{smtpSender} = '\'''\''/mail{smtpSender} = $ENV{"WEBWORK_SMTP_SENDER"}/' \
                     -e 's/siteDefaults{timezone} = "America\/New_York"/siteDefaults{timezone} = $ENV{"WEBWORK_TIMEZONE"}/' \
                     -e 's/$server_groupID    = '\''wwdata'\''/$server_groupID    = "www-data"/' \
-                    $APP_ROOT/webwork2/conf/site.conf
+                    $WEBWORK_ROOT/conf/site.conf
             fi
         fi
     done
@@ -89,8 +89,8 @@ if [ "$1" = 'apache2' ]; then
         newgrp www-data
         umask 2
         cd $APP_ROOT/courses
-	wait_for_db
-        WEBWORK_ROOT=$APP_ROOT/webwork2 $APP_ROOT/webwork2/bin/addcourse admin --db-layout=sql_single --users=$APP_ROOT/webwork2/courses.dist/adminClasslist.lst --professors=admin
+        wait_for_db
+        $WEBWORK_ROOT/bin/addcourse admin --db-layout=sql_single --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
     fi
@@ -98,30 +98,30 @@ if [ "$1" = 'apache2' ]; then
     if [ ! -d "$APP_ROOT/courses/modelCourse" ]; then
       echo "create modelCourse subdirectory"
       rm -rf $APP_ROOT/courses/modelCourse
-      cd $APP_ROOT/webwork2/courses.dist
+      cd $WEBWORK_ROOT/courses.dist
       cp -R modelCourse $APP_ROOT/courses/
     fi
     # create htdocs/tmp directory if not existing
-    if [ ! -d "$APP_ROOT/webwork2/htdocs/tmp" ]; then
+    if [ ! -d "$WEBWORK_ROOT/htdocs/tmp" ]; then
       echo "Creating htdocs/tmp directory"
-      mkdir $APP_ROOT/webwork2/htdocs/tmp
-      chown www-data:www-data -R $APP_ROOT/webwork2/htdocs/tmp
+      mkdir $WEBWORK_ROOT/htdocs/tmp
+      chown www-data:www-data -R $WEBWORK_ROOT/htdocs/tmp
       echo "htdocs/tmp directory created"
     fi
 
     # defaultClasslist.lst and adminClasslist.lst files if not existing
     if [ ! -f "$APP_ROOT/courses/defaultClasslist.lst"  ]; then
       echo "defaultClasslist.lst is being created"
-      cd $APP_ROOT/webwork2/courses.dist
+      cd $WEBWORK_ROOT/courses.dist
       cp *.lst $APP_ROOT/courses/
     fi
     if [ ! -f "$APP_ROOT/courses/adminClasslist.lst"  ]; then
       echo "adminClasslist.lst is being created"
-      cd $APP_ROOT/webwork2/courses.dist
+      cd $WEBWORK_ROOT/courses.dist
       cp *.lst $APP_ROOT/courses/
     fi
     # run OPL-update if necessary
-    if [ ! -f "$APP_ROOT/webwork2/htdocs/DATA/tagging-taxonomy.json"  ]; then
+    if [ ! -f "$WEBWORK_ROOT/htdocs/DATA/tagging-taxonomy.json"  ]; then
       # The next line forces the system to run OPL-update below, as the
       # tagging-taxonomy.json file was found to be missing.
       if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
@@ -135,16 +135,15 @@ if [ "$1" = 'apache2' ]; then
       touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
     fi
     if [ -f "$APP_ROOT/libraries/Restore_or_build_OPL_tables" ]; then
-      cd $APP_ROOT/webwork2/bin
       if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
-	wait_for_db
-        ./restore-OPL-tables
-	./load-OPL-global-statistics
+        wait_for_db
+        $WEBWORK_ROOT/bin/restore-OPL-tables
+        $WEBWORK_ROOT/bin/load-OPL-global-statistics
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
-          cp -a $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED/*.json $APP_ROOT/webwork2/htdocs/DATA/
+          cp -a $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED/*.json $WEBWORK_ROOT/htdocs/DATA/
         else
           echo "No webwork-open-problem-library/JSON-SAVED directory was found."
           echo "You are missing some of the JSON files including tagging-taxonomy.json"
@@ -152,13 +151,13 @@ if [ "$1" = 'apache2' ]; then
         fi
       else
         echo "About to start OPL-update. This takes a long time - please be patient."
-	wait_for_db
-        ./OPL-update
-	# Dump the OPL tables, to allow a quick restore in the future
-        ./dump-OPL-tables
+        wait_for_db
+        $WEBWORK_ROOT/bin/OPL-update
+        # Dump the OPL tables, to allow a quick restore in the future
+        $WEBWORK_ROOT/bin/dump-OPL-tables
         # Save a copy of the generated JSON files
         mkdir -p $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
-        cp -a $APP_ROOT/webwork2/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
+        cp -a $WEBWORK_ROOT/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
       fi
       rm $APP_ROOT/libraries/Restore_or_build_OPL_tables
     fi
@@ -180,7 +179,7 @@ if [ "$1" = 'apache2' ]; then
 
     # Fix possible permission issues
     echo "Fixing ownership and permissions (just in case it is needed)"
-    cd $APP_ROOT/webwork2
+    cd $WEBWORK_ROOT
     # Symbolic links which have no target outside the Docker container
     # cause problems duringt the rebuild process on some systems.
     # So we delete them. They will be rebuilt automatically when needed again
