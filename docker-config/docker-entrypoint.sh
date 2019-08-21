@@ -89,7 +89,7 @@ if [ "$1" = 'apache2' ]; then
         newgrp www-data
         umask 2
         cd $APP_ROOT/courses
-	wait_for_db
+        wait_for_db
         $WEBWORK_ROOT/bin/addcourse admin --db-layout=sql_single --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
@@ -135,12 +135,11 @@ if [ "$1" = 'apache2' ]; then
       touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
     fi
     if [ -f "$APP_ROOT/libraries/Restore_or_build_OPL_tables" ]; then
-      cd $WEBWORK_ROOT/bin
       if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
-	wait_for_db
-        ./restore-OPL-tables
-	./load-OPL-global-statistics
+        wait_for_db
+        $WEBWORK_ROOT/bin/restore-OPL-tables
+        $WEBWORK_ROOT/bin/load-OPL-global-statistics
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
@@ -152,10 +151,10 @@ if [ "$1" = 'apache2' ]; then
         fi
       else
         echo "About to start OPL-update. This takes a long time - please be patient."
-	wait_for_db
-        ./OPL-update
-	# Dump the OPL tables, to allow a quick restore in the future
-        ./dump-OPL-tables
+        wait_for_db
+        $WEBWORK_ROOT/bin/OPL-update
+        # Dump the OPL tables, to allow a quick restore in the future
+        $WEBWORK_ROOT/bin/dump-OPL-tables
         # Save a copy of the generated JSON files
         mkdir -p $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
         cp -a $WEBWORK_ROOT/htdocs/DATA/*.json $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED
