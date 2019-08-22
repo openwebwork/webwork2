@@ -187,6 +187,7 @@ RUN apt-get update \
 	libuniversal-isa-perl \
 	libtest-fatal-perl \
 	libjson-xs-perl \
+	libmoox-options-perl \
 	make \
 	netpbm \
 	preview-latex-style \

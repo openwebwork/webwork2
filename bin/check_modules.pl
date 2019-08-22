@@ -88,6 +88,8 @@ my @modulesList = qw(
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
+	Moo
+	MooX::Options
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
