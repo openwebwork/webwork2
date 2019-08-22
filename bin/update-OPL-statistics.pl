@@ -192,35 +192,8 @@ EOS
 
 $dbh->commit();
 
-# check to see if the global statistics file exists and if it does, upload it.
-
-my $global_sql_file = $ce->{problemLibrary}{root}.'/OPL_global_statistics.sql';
-
-if (-e $global_sql_file) {
-
-  my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
-  
-  $host = 'localhost' unless $host;
-
-  $port = 3306 unless $port;
-  
-  my $dbuser = $ce->{database_username};
-  my $dbpass = $ce->{database_password};
-
-  
-  $dbh->do(<<EOS);
-DROP TABLE IF EXISTS OPL_global_statistics;
-EOS
-  $dbh->commit();
-
-  $dbuser = shell_quote($dbuser);
-  $dbpass = shell_quote($dbpass);
-  $db = shell_quote($db);
-  
-  my $mysql_command = $ce->{externalPrograms}->{mysql};  
-
-  `$mysql_command --host=$host --port=$port --user=$dbuser --password=$dbpass $db < $global_sql_file`;
-
-}
+# We no longer automatically load the global statistics data here.
+print( "You may want to run load-OPL-global-statistics.pl to update the global statistics data.\n",
+	"If this is being run by OPL-update, that will be done automatically.\n");
 
 1;
