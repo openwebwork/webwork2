@@ -41,7 +41,7 @@ use WeBWorK::Cookie;
 use WeBWorK::Debug;
 use Date::Parse; # for moodle 1.7 date parsing
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 sub new {

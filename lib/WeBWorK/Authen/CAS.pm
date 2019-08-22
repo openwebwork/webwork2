@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2012 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2012 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: $
 # 
 # This program is free software; you can redistribute it and/or modify it under

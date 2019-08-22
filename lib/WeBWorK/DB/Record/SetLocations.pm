@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/bin/readURClassList.pl,v 1.2.2.1 2007/08/13 22:53:39 sh002i Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under

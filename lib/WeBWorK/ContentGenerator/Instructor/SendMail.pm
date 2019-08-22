@@ -44,7 +44,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils qw/readFile readDirectory/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 
