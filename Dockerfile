@@ -209,6 +209,7 @@ RUN apt-get update \
 	culmus \
 	fonts-linuxlibertine \
 	lmodern \
+	zip \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/*
 
