@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -21,6 +21,7 @@
 package WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
+use Encode qw(encode_utf8 encode);
 
 =head1 NAME
 
@@ -331,6 +332,7 @@ sub create_ans_str_from_responses {
 	my $isEssay2=0;
 	my %answersToStore2;
 	my @answer_order2;
+	my @answer_order3;
 
 	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
@@ -338,7 +340,8 @@ sub create_ans_str_from_responses {
 		$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
 		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
 			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id};
-			push @answer_order2, $response_id;
+			push @answer_order2, $response_id unless ($response_id =~ /^MaThQuIlL_/);
+			push @answer_order3, $response_id;
 		 }
 	}
 	my $answerString2 = '';
@@ -347,10 +350,32 @@ sub create_ans_str_from_responses {
 	}
 	$answerString2=~s/\t$//; # remove last tab
 
-   	my $encoded_answer_string = encodeAnswers(%answersToStore2,
-							 @answer_order2);
+	my $encoded_answer_string = encodeAnswers(%answersToStore2,
+							 @answer_order3);
 
 	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
+}
+
+# insert_mathquill_responses subroutine
+
+# Add responses to each answer's response group that store the latex form of the students'
+# answers and add corresponding hidden input boxes to the page.
+
+sub insert_mathquill_responses {
+	my ($self, $pg) = @_;
+	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
+		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}{rh_ans}{mathQuillOpts};
+		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
+		for my $response ($response_obj->response_labels) {
+			next if (ref($response_obj->{responses}{$response}));
+			my $name = "MaThQuIlL_$response";
+			push(@{$response_obj->{response_order}}, $name);
+			$response_obj->{responses}{$name} = '';
+			my $value = defined($self->{formFields}{$name}) ? $self->{formFields}{$name} : '';
+			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
+			$pg->{body_text} .= "<script>var ${name}_Opts = {$mq_opts}</script>" if ($mq_opts);
+		}
+	}
 }
 
 # process_editorLink subroutine
@@ -659,6 +684,7 @@ sub jitar_send_warning_email {
 			    and defined $rcpt->section and defined $user->section
 			    and $rcpt->section ne $user->section;
 			if ($rcpt and $rcpt->email_address) {
+			    # rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
 			    push @recipients, $rcpt->rfc822_mailbox;
 			}
 		}
@@ -666,9 +692,14 @@ sub jitar_send_warning_email {
 
     my $sender;
     if ($user->email_address) {
+	# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding
+	# when the full_name is set.
 	$sender = $user->rfc822_mailbox;
     } elsif ($user->full_name) {
-	$sender = $user->full_name;
+	# Encode the user name using "MIME-Header" encoding, (RFC 2047) which
+	# allows UTF-8 encoded names to be encoded inside the mail header using
+	# a special format.
+	$sender = encode("MIME-Header", $user->full_name);
     } else {
 	$sender = $userID;
     }
@@ -690,6 +721,12 @@ sub jitar_send_warning_email {
     || "WeBWorK question from %c: %u set %s/prob %p"; # default if not entered
     $subject =~ s/%([$chars])/defined $subject_map{$1} ? $subject_map{$1} : ""/eg;
 
+    # If in the future any fields in the subject can contain non-ASCII characters
+    # then we will also need:
+    # $subject = encode("MIME-Header", $subject);
+    # at present, this does not seem to be necessary.
+
+
 # 		my $transport = Email::Sender::Transport::SMTP->new({
 # 			host => $ce->{mail}->{smtpServer},
 # 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
@@ -702,7 +739,8 @@ sub jitar_send_warning_email {
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
 			"From" => $sender,
-			"Subject" => $subject
+			"Subject" => $subject,
+			"Content-Type" => "text/plain; charset=UTF-8"
 		]);
 
 		## extra headers
@@ -739,7 +777,8 @@ Recitation: $recitation
 Comment:    $comment
 /;
 
-  	$email->body_set($msg);
+	# Encode the body in UTF-8 when adding it.
+	$email->body_set(encode_utf8($msg));
 
 		## try to send the email
 

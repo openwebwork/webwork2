@@ -1,0 +1,8 @@
+This directory should have your real SSL key and certificate, and 
+the Certificate Authority's root certificate or certrificate chain.
+
+The file names should match those defined in default-ssl.conf, ex:
+
+        SSLCertificateFile  /etc/ssl/local/my.crt
+        SSLCertificateKeyFile   /etc/ssl/local/my.key
+        SSLCertificateChainFile /etc/ssl/local/myCA_chain.crt

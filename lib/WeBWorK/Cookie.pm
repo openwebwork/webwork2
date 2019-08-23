@@ -32,7 +32,7 @@ Given C<$r>, a WeBWorK::Request object
 use strict;
 use warnings;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # This class inherits from Apache::Cookie under mod_perl and Apache2::Cookie under mod_perl2

@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile dequote jitar_id_to_seq);
 use Encode;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Encode;
 

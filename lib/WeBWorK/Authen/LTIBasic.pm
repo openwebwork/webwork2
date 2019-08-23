@@ -1,13 +1,13 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2012 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2012 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: /webwork/cvs/system/webwork2/lib/WeBWorK/Authen/LTIBasic.pm,v 1.1 2012/05/17 18:50:11 wheeler Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -34,7 +34,6 @@ use WeBWorK::Utils qw(formatDateTime);
 use WeBWorK::Localize;
 use URI::Escape;
 use Net::OAuth;
-use mod_perl;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
