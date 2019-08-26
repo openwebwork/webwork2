@@ -140,6 +140,7 @@ if [ "$1" = 'apache2' ]; then
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
         $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
+        $WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
