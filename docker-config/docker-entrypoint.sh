@@ -50,7 +50,7 @@ if [ "$ADD_PACKAGES" != "0" ]; then
   apt-get install -y --no-install-recommends --no-install-suggests $ADD_PACKAGES
 fi
 
-# If necessary, install the OPL in the running container, hopefully in persistent storage
+# If necessary, clone the OPL in the running container, hopefully in persistent storage
 if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" ]; then
   echo "Cloning the OPL - This takes time - please be patient."
   cd $APP_ROOT/libraries/
