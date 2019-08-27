@@ -50,9 +50,9 @@ if [ "$ADD_PACKAGES" != "0" ]; then
   apt-get install -y --no-install-recommends --no-install-suggests $ADD_PACKAGES
 fi
 
-# If necessary, install the OPL in the running container, hopefully in persistent storage
+# If necessary, clone the OPL in the running container, hopefully in persistent storage
 if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" ]; then
-  echo "Installing the OPL - This takes time - please be patient."
+  echo "Cloning the OPL - This takes time - please be patient."
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch master https://github.com/openwebwork/webwork-open-problem-library.git
 
@@ -140,6 +140,7 @@ if [ "$1" = 'apache2' ]; then
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
         $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
+        $WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
