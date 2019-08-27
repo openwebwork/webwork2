@@ -29,7 +29,7 @@
 #          will set the system timezone to zone/city
 #          Make sure to use a valid setting.
 #          "/usr/bin/timedatectl list-timezones" on Ubuntu will find valid values
-#        ADD_PACKAGES="package1 package2 package3"
+#        ADD_APT_PACKAGES="package1 package2 package3"
 #	   will have these additional Ubuntu packages installed at startup.
 #
 # ==================================================================
@@ -332,7 +332,7 @@ ENV SSL=0 \
     PAPERSIZE=letter \
     SYSTEM_TIMEZONE=UTC \
     ADD_LOCALES=0 \
-    ADD_PACKAGES=0
+    ADD_APT_PACKAGES=0
 
 # ================================================
 
