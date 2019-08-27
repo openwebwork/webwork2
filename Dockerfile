@@ -211,6 +211,7 @@ RUN apt-get update \
 	fonts-linuxlibertine \
 	lmodern \
 	zip \
+	jq \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/*
 
