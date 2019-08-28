@@ -712,7 +712,7 @@ sub pre_header_initialize {
 		$key,
 		$set,
 		$problem,
-		$set->psvn, # FIXME: this field should be removed
+		$set->psvn,
 		$formFields,
 		{ # translation options
 			displayMode     => $displayMode,
