@@ -92,11 +92,7 @@ sub defineProblemEnvir {
 	# ADDED: displayModeFailover, displayHintsQ, displaySolutionsQ,
 	#        refreshMath2img, texDisposition
 
-	# pstaab: changed the next line from
-	#$envir{psvn}                = $set->psvn;
-	# to
 	$envir{psvn}                = $psvn;  #'problem set version number' (associated with homework set)
-	# MEG added the following. psvn is a unique id for the user_set record 
 	$envir{psvn}                = $envir{psvn}//$set->psvn; # use set value of psvn unless there is an explicit override. 
 	# update problemUUID from submitted form
 	$envir{problemUUID}         =  	   $formFields->{problemUUID} // 
