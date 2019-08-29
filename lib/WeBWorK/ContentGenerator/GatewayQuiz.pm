@@ -320,16 +320,22 @@ sub can_useMathView {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathView';
 }
 
 sub can_useWirisEditor {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'WIRIS';
 }
 
+sub can_useMathQuill {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathQuill';
+}
 ################################################################################
 # output utilities
 ################################################################################
@@ -1109,6 +1115,7 @@ sub pre_header_initialize {
 	     checkAnswers       => $checkAnswers,
 	     useMathView        => $User->useMathView ne '' ? $User->useMathView : $ce->{pg}->{options}->{useMathView},
 	     useWirisEditor     => $User->useWirisEditor ne '' ? $User->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
+	     useMathQuill       => $User->useMathQuill ne '' ? $User->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 	     );
 
 	# are certain options enforced?
@@ -1121,6 +1128,7 @@ sub pre_header_initialize {
 	     checkAnswers       => 0,
 	     useMathView        => 0,
 	     useWirisEditor     => 0,
+	     useMathQuill     => 0,
 	     );
 
 	# does the user have permission to use certain options?
@@ -1138,7 +1146,8 @@ sub pre_header_initialize {
 	     checkAnswersNextTime  => $self->can_checkAnswers(@args, $sAns),
 	     showScore          => $self->can_showScore(@args),
 	     useMathView              => $self->can_useMathView(@args),
-	     useWirisEditor           => $self->can_useWirisEditor(@args)
+	     useWirisEditor           => $self->can_useWirisEditor(@args),
+	     useMathQuill           => $self->can_useMathQuill(@args)
 	     );
 
 	# final values for options
@@ -1275,6 +1284,8 @@ sub pre_header_initialize {
 			$pg = $self->getProblemHTML($self->{effectiveUser},
 						    $set, $formFields,
 						    $ProblemN);
+			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
+			if ($self->{will}->{useMathQuill});
 		}
 		push(@pg_results, $pg);
 	}
@@ -2354,7 +2365,8 @@ sub getProblemHTML {
 				 sprintf("%04d",$problemNumber) . '_',
 			     },
 			     );
-	
+
+
 # FIXME  is problem_id the correct thing in the following two stanzas?
 # FIXME  the original version had "problem number", which is what we want.
 # FIXME  I think problem_id will work, too
@@ -2414,6 +2426,14 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 
+
+	# MathQuill interface
+	if ($self->{will}->{useMathQuill}) {
+		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
+		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />";
+        	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+	}
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
 	#This is for page specfific js
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();

@@ -189,6 +189,9 @@ use constant  FIELD_PROPERTIES => {
 	useWirisEditor => {
 	    access => 'hidden',
 	},
+	useMathQuill => {
+	    access => 'hidden',
+	},
 };
 sub pre_header_initialize {
 	my $self          = shift;

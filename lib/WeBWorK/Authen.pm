@@ -61,7 +61,7 @@ use URI::Escape;
 use Carp;
 use Scalar::Util qw(weaken);
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 #####################
@@ -321,6 +321,7 @@ sub trim {  # used to trim leading and trailing white space from user_id and pas
   $s =~ s/(^\s+|\s+$)//g    if ( defined($s) );
   return $s;
 }
+
 sub get_credentials {
 	my ($self) = @_;
 	my $r = $self->{r};
