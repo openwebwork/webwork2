@@ -672,24 +672,26 @@ sub pre_header_initialize {
 	if (defined($problem->{prPeriod}) && $problem->{prPeriod} =~ /^\s*$/);
 
 	$rerandomizePeriod = $problem->{prPeriod}
-	if (defined($problem->{prPeriod}) and $problem->{prPeriod} > -1);
+	if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 
 	$prEnabled = 0 if ($rerandomizePeriod < 1);
 	if ($prEnabled) {
-		$problem->{prAttemptsThisVersion} = 0
-		if !defined($problem->{prAttemptsThisVersion}) || $problem->{prAttemptsThisVersion} =~ /^\s*$/;
+		$problem->{prAttemptsThisSeed} = 0
+		if !defined($problem->{prAttemptsThisSeed}) || $problem->{prAttemptsThisSeed} =~ /^\s*$/;
+		$problem->{prCount} = 0
+		if !defined($problem->{prCount}) || $problem->{prCount} =~ /^\s*$/;
 
-		$problem->{prAttemptsThisVersion} += $submitAnswers ? 1 : 0;
+		$problem->{prAttemptsThisSeed} += $submitAnswers ? 1 : 0;
 
 		$self->{requestNewSeed} = 0
-		if ($problem->{prAttemptsThisVersion} < $rerandomizePeriod or after($set->due_date));
+		if ($problem->{prAttemptsThisSeed} < $rerandomizePeriod || after($set->due_date));
 
 		if ($self->{requestNewSeed}) {
 			# obtain new random seed to hopefully change the problem
 			my $newSeed = ($problem->{problem_seed} + $problem->num_correct + $problem->num_incorrect) % 10000;
 			$problem->{problem_seed} = $newSeed;
 			$problem->{prCount} += 1;
-			$problem->{prAttemptsThisVersion} = 0;
+			$problem->{prAttemptsThisSeed} = 0;
 		}
 		$db->putUserProblem($problem);
 	}
@@ -734,7 +736,7 @@ sub pre_header_initialize {
 
 	debug("end pg processing");
 	
-	if ($prEnabled && $problem->{prAttemptsThisVersion} >= $rerandomizePeriod && !after($set->due_date)) {
+	if ($prEnabled && $problem->{prAttemptsThisSeed} >= $rerandomizePeriod && !after($set->due_date)) {
 		$showMeAnother{active} = 0;
 		$must{requestNewSeed} = 1;
 		$can{requestNewSeed} = 1;
@@ -742,7 +744,7 @@ sub pre_header_initialize {
 		$will{requestNewSeed} = 1;
 		# If this happens, it means that the page was refreshed.  So prevent the answers from
 		# being checked and recorded and the number of attempts from being increased.
-		if ($problem->{prAttemptsThisVersion} > $rerandomizePeriod) {
+		if ($problem->{prAttemptsThisSeed} > $rerandomizePeriod) {
 			$must{recordAnswers} = 0;
 			$can{recordAnswers} = 0;
 			$want{recordAnswers} = 0;
@@ -1604,7 +1606,7 @@ sub output_score_summary{
 
 	my $prEnabled = $ce->{pg}->{options}->{enablePeriodicRandomization} // 0;
 	my $rerandomizePeriod = $ce->{pg}->{options}->{periodicRandomizationPeriod} // 0;
-	$rerandomizePeriod = $problem->{prPeriod} if ((defined $problem->{prPeriod}) and ($problem->{prPeriod} > -1));
+	$rerandomizePeriod = $problem->{prPeriod} if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 	$prEnabled = 0 if ($rerandomizePeriod < 1);
 
 	# score summary
@@ -1615,13 +1617,12 @@ sub output_score_summary{
 	
 	my $prMessage = "";
 	if ($prEnabled) {
-		my $attempts_before_rr = (defined($will{requestNewSeed}) && $will{requestNewSeed}) ? 0 :
-			($rerandomizePeriod - $problem->{prAttemptsThisVersion});
+		my $attempts_before_rr = (defined($will{requestNewSeed}) && $will{requestNewSeed}) ? 0
+			: ($rerandomizePeriod - $problem->{prAttemptsThisSeed});
 
-		$prMessage = " " .
-			$r->maketext(
-				"You have [quant,_1,attempt,attempts] left before new version will be requested.",
-				$attempts_before_rr)
+		$prMessage = " " . $r->maketext(
+			"You have [quant,_1,attempt,attempts] left before new version will be requested.",
+			$attempts_before_rr)
 		if ($attempts_before_rr > 0);
 
 		$prMessage = " " . $r->maketext("Request new version now.")

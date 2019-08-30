@@ -41,7 +41,8 @@ BEGIN {
 		prPeriod => {type => "INT"},
 		# periodic re-randomization version count
 		prCount => {type => "INT"},
-		prAttemptsThisVersion => {type => "INT"},
+		# periodic re-randomization number of attempts for the current seed
+		prAttemptsThisSeed => {type => "INT"},
 		# a field for flags relating to this problem
 		flags => { type =>"TEXT" },
 	);
