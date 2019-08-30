@@ -54,7 +54,7 @@ use CGI;
 =cut
  
 # To configure the target webwork server two URLs are required
-# 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
+# 1.    http://test.webwork.maa.org/mod_xmlrpc
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice
 #
@@ -111,14 +111,14 @@ unless ($server_root_url) {
 # child
 ############################
 
-our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
+our ($SITE_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 	$XML_PASSWORD     	 =  'xmlwebwork';
 	$XML_COURSE          =  'daemon_course';
 
 
 
-	$XML_URL             =  "$server_root_url";  #"$server_root_url/mod_xmlrpc";
+	$SITE_URL             =  "$server_root_url"; 
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
 
 
@@ -171,7 +171,7 @@ sub pre_header_initialize {
     my $xmlrpc_client = new WebworkClient;
 
 	$xmlrpc_client ->encoded_source($r->param('problemSource')) ; # this source has already been encoded
-	$xmlrpc_client-> url($XML_URL);
+	$xmlrpc_client-> site_url($SITE_URL);
 	$xmlrpc_client->{form_action_url} = $FORM_ACTION_URL;
 	$xmlrpc_client->{userID}          = $inputs_ref{userID};
 	$xmlrpc_client->{course_password} = $inputs_ref{course_password};

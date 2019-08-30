@@ -23,7 +23,7 @@ WebworkClient.pm
 
 =head1 SYNPOSIS
 	our $xmlrpc_client = new WebworkClient (
-		url                    => $XML_URL,
+		url                    => $ce->{server_site_url}, 
 		form_action_url        => $FORM_ACTION_URL,
 		site_password          =>  $XML_PASSWORD//'',
 		courseID               =>  $credentials{courseID},
@@ -62,9 +62,11 @@ use warnings;
 
 # To configure the target webwork server
 # two URLs are required
-# 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
+# 1. $SITE_URL   http://test.webwork.maa.org/mod_xmlrpc
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice
+#    Note: This not the same as the webworkClient->url which should NOT have
+#          the mod_xmlrpc segment. 
 #
 # 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
 #    points to the renderViaXMLRPC.pm module.
@@ -87,10 +89,11 @@ use warnings;
 #     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
 #     and returns the result to the browser. 
 #     The The client renderProblem.pl script is no longer involved.
-# 4.  Summary: renderProblem.pl is only involved in the first round trip
-#     of the submitted problem.  After that the communication is  between the browser and
-#     renderViaXMLRPC using HTML forms and between renderViaXMLRPC and the WebworkWebservice.pm
-#     module using XML_RPC.
+# 4.  Summary: The WebworkWebservice (with command renderProblem) is called directly in the first round trip
+#     of  submitting the problem via the https://mysite.edu/mod_xmlrpc route.  After that the communication is  
+#     between the browser and renderViaXMLRPC using HTML forms and the route https://mysite.edu/webwork2/html2xml
+#     and from there renderViaXMLRPC calls the WebworkWebservice using the route https://mysite.edu/mod_xmlrpc with the
+#     renderProblem command.
 
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
@@ -271,23 +274,33 @@ sub xmlrpcCall {
 	
 	my $requestResult; 
 	my $transporter = TRANSPORT_METHOD->new;
-
+    #FIXME -- transitional error fix to remove mod_xmlrpc from end of url call
+    my $site_url = $self->site_url;
+    if ($site_url =~ /mod_xmlrpc$/ ){
+    	$site_url =~ s|/mod_xmlrpc/?||; # mod_xmlrpc from  https://my.site.edu/mod_xmlrpc
+    	$self->site_url($site_url);
+    	# complain
+    	print STDERR "\n\n\$self->site_url() should not end in /mod_xmlrpc \n\n";
+    }
 	eval {
 	    $requestResult= $transporter
 	        #->uri('http://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_CLASS)
 		#-> proxy(PROTOCOL.'://'.HOSTURL.':'.HOSTPORT.'/'.REQUEST_URI);
-		-> proxy(($self->url).'/'.REQUEST_URI);
+		-> proxy(($site_url).'/'.REQUEST_URI);
 	};
-	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
+	# END of FIXME section
+	
+	print STDERR "WebworkClient: Initiating xmlrpc request to url ",($self->site_url).'/'.REQUEST_URI, " \n Error: $@\n" if $@;
 	# turn off verification of the ssl cert 
 	$transporter->transport->ssl_opts(verify_hostname=>0,
 	    SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE);
 			
     if ($UNIT_TESTS_ON) {
-        print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall sent to ", $self->url,"\n";
-    	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
-    	print STDERR  "WebworkClient.pm ".__LINE__." input is: ",join(" ", %{$self->request_object}),"\n";
-    	print STDERR  "WebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
+        print STDERR  "\n\tWebworkClient.pm ".__LINE__." xmlrpcCall sent to site ", $self->site_url,"\n";
+        print STDERR  "\tWebworkClient.pm ".__LINE__." full xmlrpcCall path ", ($self->site_url).'/'.REQUEST_URI,"\n";
+    	print STDERR  "\tWebworkClient.pm ".__LINE__." xmlrpcCall issued with command $command\n";
+    	print STDERR  "\tWebworkClient.pm ".__LINE__." input is: ",join(" ", map {$_//'--'} %{$self->request_object}),"\n";
+    	print STDERR  "\tWebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
     }
  		
 	  local( $result);
@@ -360,7 +373,7 @@ sub jsXmlrpcCall {
 	my $transporter = TRANSPORT_METHOD->new;
 	
 	my $requestResult = $transporter
-	    -> proxy(($self->url).'/'.REQUEST_URI);
+	    -> proxy(($self->site_url).'/'.REQUEST_URI);
 	$transporter->transport->ssl_opts(verify_hostname=>0,
 	     SSL_verify_mode => 'SSL_VERIFY_NONE');
 	
@@ -389,27 +402,25 @@ sub jsXmlrpcCall {
 	  }
 }
 
-=head2 encodeSource 
 
-
-=cut 
-sub encodeSource {
-	my $self = shift;
-	my $source = shift||'';
-	$self->{encoded_source} =encode_utf8_base64($source);
-}
 
 =head2  Accessor methods
-	
+	enconcodeSource  # encode source string with utf8 and base64 and store in encoded_source
 	encoded_source
 	request_object
 	return_object
 	error_string
 	fault
-	url
+	url  (https://mysite.edu)
 	form_data
 	
 =cut 
+
+sub encodeSource {
+	my $self = shift;
+	my $source = shift||'';
+	$self->{encoded_source} =encode_utf8_base64($source);
+}
 
 sub encoded_source {
 	my $self = shift;
@@ -441,9 +452,17 @@ sub fault {
 	$self->{fault_flag} =$fault_flag if defined $fault_flag and $fault_flag =~/\S/; # source is non-empty
 	$self->{fault_flag};
 }
-sub url {
+sub site_url {  #site_url  https://mysite.edu
 	my $self = shift;
 	my $new_url = shift;
+	$self->{url} = $new_url if defined($new_url) and $new_url =~ /\S/;
+	$self->{url};
+}
+
+sub url {  #site_url  https://mysite.edu
+	my $self = shift;
+	my $new_url = shift;
+	die "use webworkClient->site_url instead of webworkClient->url";
 	$self->{url} = $new_url if defined($new_url) and $new_url =~ /\S/;
 	$self->{url};
 }
@@ -733,18 +752,18 @@ sub formatRenderedProblem {
 
 
 	$self->{outputformats}={};
-	my $XML_URL      	 =  $self->url;
+	my $SITE_URL      	 =  $self->site_url;
 	my $FORM_ACTION_URL  =  $self->{form_action_url};
 
 	#################################################
 	# Local docker usage with a port number sometimes misbehaves if the port number
-	# is not forced into $XML_URL and $FORM_ACTION_URL
+	# is not forced into $SITE_URL and $FORM_ACTION_URL
 	#################################################
 	my $forcePortNumber = ($self->{inputs_ref}->{forcePortNumber})//'';
 	if ( $forcePortNumber =~ /^[0-9]+$/ ) {
 	  $forcePortNumber = 0 + $forcePortNumber;
-	  if ( ! ( $XML_URL =~ /:${forcePortNumber}/ ) ) {
-	    $XML_URL .= ":${forcePortNumber}";
+	  if ( ! ( $SITE_URL =~ /:${forcePortNumber}/ ) ) {
+	    $SITE_URL .= ":${forcePortNumber}";     #this won't work if $SITE_URL ends in mod_xmlrpc
 	  }
 	  if ( ! ( $FORM_ACTION_URL =~ m+:${forcePortNumber}/webwork2/html2xml+ ) ) {
 	    $FORM_ACTION_URL =~ s+/webwork2/html2xml+:${forcePortNumber}/webwork2/html2xml+ ; # Ex: "http://localhost:8080/webwork2/html2xml"
