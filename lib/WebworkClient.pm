@@ -455,8 +455,8 @@ sub fault {
 sub site_url {  #site_url  https://mysite.edu
 	my $self = shift;
 	my $new_url = shift;
-	$self->{url} = $new_url if defined($new_url) and $new_url =~ /\S/;
-	$self->{url};
+	$self->{site_url} = $new_url if defined($new_url) and $new_url =~ /\S/;
+	$self->{site_url};
 }
 
 sub url {  #site_url  https://mysite.edu
