@@ -715,6 +715,7 @@ sub addProblem {
 	$problemRecord->{counts_parent_grade} = $countsParentGrade;
 	$problemRecord->prPeriod($prPeriod);
 	$problemRecord->prCount(0);
+	$problemRecord->prAttemptsThisVersion(0);
 	$db->addGlobalProblem($problemRecord);
 
 	my @results; 

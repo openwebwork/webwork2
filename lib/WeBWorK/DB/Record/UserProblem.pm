@@ -42,6 +42,7 @@ BEGIN {
 		prPeriod => {type => "INT"},
 		# periodic re-randomization version count
 		prCount => {type => "INT"},
+		prAttemptsThisVersion => {type => "INT"},
 		problem_seed  => { type=>"INT" },
 		status        => { type=>"FLOAT" },
 		attempted     => { type=>"INT" },
@@ -49,10 +50,10 @@ BEGIN {
 		num_correct   => { type=>"INT" },
 		num_incorrect => { type=>"INT" },
 		att_to_open_children => { type=>"INT" },
-	        counts_parent_grade => { type=>"INT" },
+		counts_parent_grade => { type=>"INT" },
 		sub_status    => { type=>"FLOAT" },    # A subsidiary status used to implement the reduced scoring period
-	        #a field for flags which need to be set 
-	        flags => { type=>"TEXT" },
+		# a field for flags which need to be set
+		flags => { type=>"TEXT" },
 	);
 }
 

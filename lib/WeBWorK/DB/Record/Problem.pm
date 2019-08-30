@@ -34,15 +34,16 @@ BEGIN {
 		value        => { type=>"INT" },
 		max_attempts => { type=>"INT" },
 		att_to_open_children => { type=>"INT" },
-	        counts_parent_grade => { type=>"INT" },
+		counts_parent_grade => { type=>"INT" },
 		showMeAnother => { type=>"INT" },
 		showMeAnotherCount => { type=>"INT" },
 		# periodic re-randomization period
 		prPeriod => {type => "INT"},
 		# periodic re-randomization version count
 		prCount => {type => "INT"},
-		# a field for flags relating to this problem  
-	        flags => { type =>"TEXT" },
+		prAttemptsThisVersion => {type => "INT"},
+		# a field for flags relating to this problem
+		flags => { type =>"TEXT" },
 	);
 }
 

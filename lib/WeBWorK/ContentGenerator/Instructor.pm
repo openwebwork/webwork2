@@ -581,6 +581,7 @@ sub addProblemToSet {
 	$problemRecord->{showMeAnotherCount}=$showMeAnotherCount;
 	$problemRecord->prPeriod($prPeriod);
 	$problemRecord->prCount(0);
+	$problemRecord->prAttemptsThisVersion(0);
 	$db->addGlobalProblem($problemRecord);
 
 	return $problemRecord;
