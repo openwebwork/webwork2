@@ -411,7 +411,7 @@ sub jsXmlrpcCall {
 	return_object
 	error_string
 	fault
-	url  (https://mysite.edu)
+	site_url  (https://mysite.edu)
 	form_data
 	
 =cut 
