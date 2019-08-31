@@ -65,7 +65,7 @@ use warnings;
 # 1. $SITE_URL   http://test.webwork.maa.org/mod_xmlrpc
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice
-#    Note: This not the same as the webworkClient->url which should NOT have
+#    Note: This is not the same as the webworkClient->url which should NOT have
 #          the mod_xmlrpc segment. 
 #
 # 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
