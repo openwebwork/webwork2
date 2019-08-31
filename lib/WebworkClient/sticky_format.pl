@@ -61,6 +61,7 @@ $LTIGradeMessage
 <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 <input type="hidden" name="problemSource" value="$encoded_source"> 
 <input type="hidden" name="problemSeed" value="$problemSeed"> 
+<input type="hidden" name="psvn" value="$psvn">
 <input type="hidden" name="pathToProblemFile" value="$fileName">
 <input type="hidden" name="courseName" value="$courseID">
 <input type="hidden" name="courseID" value="$courseID">

@@ -1986,10 +1986,29 @@ sub readSetDef {
 		}
 
 		# validate reduced credit date
-		$reducedScoringDate = $self->parseDateTime($reducedScoringDate) if ($reducedScoringDate);
+
+		# Special handling for values which seem to roughly correspond to epoch 0.
+		#    namely if the date string contains 12/31/1969 or 01/01/1970
+		if ($reducedScoringDate) {
+			if ( ( $reducedScoringDate =~ m+12/31/1969+ ) || ( $reducedScoringDate =~ m+01/01/1970+ ) ) {
+				my $origReducedScoringDate = $reducedScoringDate;
+				$reducedScoringDate = $self->parseDateTime($reducedScoringDate);
+				if ( $reducedScoringDate != 0 ) {
+					# In this case we want to treat it BY FORCE as if the value did correspond to epoch 0.
+					warn $r->maketext("The reduced credit date [_1] in the file probably was generated from the Unix epoch 0 value and is being treated as if it was Unix epoch 0.", $origReducedScoringDate );
+					$reducedScoringDate = 0;
+				}
+			} else {
+				# Original behavior, which may cause problems for some time-zones when epoch 0 was set and does not parse back to 0
+				$reducedScoringDate = $self->parseDateTime($reducedScoringDate);
+			}
+		}
 
 		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
 		    warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
+		} elsif ( $reducedScoringDate == 0 && $enableReducedScoring ne 'Y' ) {
+			# In this case - the date in the file was Unix epoch 0 (or treated as such),
+			# and unless $enableReducedScoring eq 'Y' we will leave it as 0.
 		} elsif (!$reducedScoringDate) {
 		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}

@@ -566,7 +566,9 @@ sub display_form {
 	
 	}
 
-	my %hardcopyThemeNames = map {$_ => $r->maketext($ce->{hardcopyThemeNames}->{$_})} @{$ce->{hardcopyThemes}};
+	# Using maketext on the next line would trigger errors when a local hardcopyTheme is installed.
+	# my %hardcopyThemeNames = map {$_ => $r->maketext($ce->{hardcopyThemeNames}->{$_})} @{$ce->{hardcopyThemes}};
+	my %hardcopyThemeNames = map {$_ => $ce->{hardcopyThemeNames}->{$_}} @{$ce->{hardcopyThemes}};
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},

@@ -1,54 +1,194 @@
-version: '2'
+version: '3.5'
 services:
-  # We have renamed the database service from "db" to "dbMB4",
-  # changed the name of the data volume to "mysqlMB4" and set
-  # environment variables to use the "dbMB4" server. All this was needed
-  # ONLY to allow leaving a version of the "db" container which does not
-  # use utf8mb4 available until the UTF8MB4 changes become mainstream.
-  dbMB4:
-    image: mariadb:10.1
+  db:
+    image: mariadb:10.4
     volumes:
-      - mysqlMB4:/var/lib/mysql
+      - mysql:/var/lib/mysql
+
       # Set up UTF8MB4 in config file for the container.
       # Needs to be done BEFORE the database is created.
       - "./docker-config/db/mariadb.cnf:/etc/mysql/conf.d/mariadb.cnf"
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: randomepassword
+      # When the MariaDB container is first started it will set the
+      # the MYSQL_ROOT_PASSWORD if there is no mysql database in the
+      # data volume.
+      MYSQL_ROOT_PASSWORD: sqlRootPasswordSetThisPasswordBEFOREfirstStartingTheDBcontainer
+
+      # When the MariaDB container is first started it will create
+      #    the WW database and WW DB user based on:
       MYSQL_DATABASE: webwork
-      MYSQL_USER: webworkWrite
-      MYSQL_PASSWORD: passwordRW
+      MYSQL_USER: ${WEBWORK_DB_USER}
+      MYSQL_PASSWORD: ${WEBWORK_DB_PASSWORD}
+
   app:
-    build: .
     image: webwork
+
+    # Select the appropriate "build:" block:
+
+    # For use/building when docker-compose.yml is in the webwork2 directory
+    build: .
+
+    # For use/building when docker-compose.yml is OUTSIDE the webwork2 directory.
+    # For example, if multiple hosts use a NFS shared webwork2/ directory, and
+    # each one needs customized values in docker-compose.yml.
+    # Under typical use, the Dockerfile should not need to be customized per host,
+    # but may contain some changes/additions relative to the standard webwork image.
+    #
+    #build:
+    #  context: /Path_To/webwork2/
+    #  dockerfile: /Path_To/Dockerfile
+
     depends_on:
-      - dbMB4
+      - db
       - r
+
     volumes:
-      - ".:/opt/webwork/webwork2"
 
-      # OLD approach put the courses tree under webwork2/.data/courses
-      #- "./.data/courses:/opt/webwork/courses"
-      # NEW appoach puts the courses tree in a separate tree outside of webwork2/
-      - "../ww-docker-data/courses:/opt/webwork/courses"
+      # ======================================================================
 
-      # Uncomment the line below to use local OPL for development
-      #- "../opl:/opt/webwork/libraries/webwork-open-problem-library"
-      # Uncomment the line below to use local PG for development
+      # If you are using locally modified webwork2 files, then
+      # either mount them from the webwork2 tree from which you start Docker:
+      #- ".:/opt/webwork/webwork2"
+      # OR mount it from a fixed external location
+      #- "/path_to/webwork2:/opt/webwork/webwork2"
+
+      # Shared main /pg repository - allows local PG development
+      #- "/path_to_shared/pg:/opt/webwork/pg"
+      # OR locally modified PG directory
       #- "../pg:/opt/webwork/pg"
+
+      # ======================================================================
+
+      # Sometimes it is helpful to mount certain webwork2/conf files from elsewhere
+      # so the main contents of webwork2 can be shared by several hosts (ex. NFS)
+      #- "/per_host_conf_path/conf/authen_LTI.conf:/opt/webwork/webwork2/conf/authen_LTI.conf"
+      #- "/per_host_conf_path/conf/localOverrides.conf:/opt/webwork/webwork2/conf/localOverrides.conf"
+      #- "/per_host_conf_path/conf/site.conf:/opt/webwork/webwork2/conf/site.conf"
+
+      # webwork2 misc LOCAL files - mount live (per host) so NOT in the main webwork2 location
+      #- "/per_host_conf_path/htdocs/my_site_info.txt:/opt/webwork/webwork2/htdocs/my_site_info.txt"
+
+      # webwork2 LOCAL logs and htdocs/tmp directories (per host)
+      #- "/per_host_data_path/webwork2/logs:/opt/webwork/webwork2/logs"
+      #- "/per_host_data_path/webwork2/htdocs/tmp:/opt/webwork/webwork2/htdocs/tmp"
+
+      # By default the courses tree in a separate tree outside of webwork2/ as follows:
+      - "${COURSES_DIRECTORY_ON_HOST}:/opt/webwork/courses"
+      # OR mount like (here we are assuming that the hosts have different courses on them)
+      #- "/per_host_data_path/courses/:/opt/webwork/courses/"
+
+      # ======================================================================
+
+      # By default the OPL is stored in a named Docker storage volume:
+      - oplVolume:/opt/webwork/libraries/webwork-open-problem-library
+      #
+      # as an alternative, you can comment out the prior option and uncomment the line below to use a local directory containing the OPL
+      #- "/path_to/webwork-open-problem-library:/opt/webwork/libraries/webwork-open-problem-library"
+
+      # ======================================================================
+
+      # The mounts from ./docker-config/ below are local samples.
+      # In production, there may be per-host versions of most
+      # of these files stored in an appropriate place.
+      # If not - the samples should be edited as needed.
+
+      # Main index.html page with a redirect (you probably need to customize some of these files)
+      #- "./docker-config/apache/index.html:/var/www/html/index.html"
+      #- "./docker-config/apache/htaccess:/var/www/html/.htaccess"
+
+      # Apache config (you probably need to customize some of these files)
+      - "./docker-config/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf"
+      - "./docker-config/apache/apache2.conf:/etc/apache2/apache2.conf"
+      - "./docker-config/apache/mpm_prefork.conf:/etc/apache2/mods-enabled/mpm_prefork.conf"
+
+      # Apache logs - to have them persistent (per host) mount directory from outside.
+      #- "/per_host_data_path/apache2_logs:/var/log/apache2"
+
+      # ======================================================================
+
+      # SSL certificates (subdirectory with certificate and key)
+      #    (you MUST replace/customize these files, or change the location they are mounded from)
+      - "./docker-config/ssl/local/:/etc/ssl/local"
+
+      # Apache SSL config (you probably need to customize some of these files)
+      #    (make sure default-ssl.conf points to the certificates where they will be in the container)
+      - "./docker-config/ssl/ssl.conf:/etc/apache2/mods-available/ssl.conf"
+      - "./docker-config/ssl/default-ssl.conf:/etc/apache2/sites-available/default-ssl.conf"
+
+      # ======================================================================
+
+    hostname: myhost.mydomain.edu
+
     ports:
-      - "8080:80"
+      # For a personal machine
+      - "${WEBWORK2_HTTP_PORT_ON_HOST}:80"
+
+      # For a production machine
+      #- "80:80"
+      #- "443:443"
+
+    # For a production machine
+    #restart: always
+
     environment:
-      - DEV=0
-      - WEBWORK_DB_HOST=dbMB4
-      # - WEBWORK_DB_PORT=3306
-      # - WEBWORK_DB_NAME=webwork
-      - WEBWORK_DB_DSN=DBI:mysql:webwork:dbMB4:3306
+
+      DEV: 0
+
+      APACHE_RUN_GROUP: www-data
+
+      # Standard database environment variables needed by WeBWorK:
+      WEBWORK_DB_HOST: db
+      WEBWORK_DB_PORT: 3306
+      WEBWORK_DB_NAME: webwork
+      WEBWORK_DB_DSN: DBI:mysql:webwork:db:3306
+      # We currently need to put the same data in the WEBWORK_DB_DSN line above
+      # as we cannot use the following form, as it would be done before the values
+      # needed are available.
+      # NO GOOD # WEBWORK_DB_DSN: DBI:mysql${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_PORT}
+
+
+      # These are set in the .env file and import values from there
+      WEBWORK_DB_PASSWORD: ${WEBWORK_DB_PASSWORD}
+      WEBWORK_DB_USER: ${WEBWORK_DB_USER}
+
+      # =======================================================
+      # Local configuration variables:
+
+      # To turn on SSL in the running container
+      #SSL: 1
+
+      # Change to A4 paper
+      #PAPERSIZE: a4
+
+      # Use to build additional locales in the running container at startup. Ex:
+      #ADD_LOCALES: he_IL ISO-8859-8,he_IL.UTF-8 UTF-8
+
+      # Extra Ubuntu packages to install during startup
+      #ADD_PACKAGES: mc vim telnet
+
+      # The system timezone for the container can be set using
+      #SYSTEM_TIMEZONE: zone/city
+      # where zone/city must be a valid setting.
+      # "/usr/bin/timedatectl list-timezones" on an Ubuntu system with
+      # that tool installed will find valid values.
+
+      # =======================================================
+
+      # If you use https below, make sure to set up the certificate and SSL configuration
+#      WEBWORK_ROOT_URL: https://myhost.mydomain.edu
+
+#      WEBWORK_SMTP_SERVER: smtp.mydomain.edu
+#      WEBWORK_SMTP_SENDER: support@mydomain.edu
+
+#      WEBWORK_TIMEZONE: America/New_York
+
   r:
     image: ubcctlt/rserve
-    ports:
-      - "6311:6311"
+#    # The R server need not be available from outside the local Docker network.
+#    ports:
+#      - "6311:6311"
 
 volumes:
-  mysqlMB4:
-
+  oplVolume:
+  mysql:

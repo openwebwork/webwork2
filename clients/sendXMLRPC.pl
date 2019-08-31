@@ -205,6 +205,9 @@ on the same computer but does require an internet connection to a remote WeBWorK
 
 	Process question in TeX mode, convert to PDF and display.
 	
+=item   --json
+
+	Process question in JSON mode and save to file
 =item   
 
 	The single letter options can be "bundled" e.g.  -vcCbB
@@ -254,6 +257,10 @@ on the same computer but does require an internet connection to a remote WeBWorK
 =item  --seed=s     
                  
        Sets problemSeed to the number contained in string s
+
+=item  --psvn=s
+
+       Sets psvn to the number contained in string s
 
 
 
@@ -340,6 +347,7 @@ my $lang = 'en';
 my $edit_source_file = '';
 my $display_tex_output='';
 my $display_pdf_output='';
+my $display_json_output='';
 my $print_answer_hash;
 my $print_answer_group;
 my $print_pg_hash;
@@ -348,6 +356,7 @@ my $print_help_message;
 my $read_list_from_this_file;
 my $path_to_log_file;
 my $problemSeed;
+my $psvn;
 
 our %credentials;
 our @path_list;
@@ -367,6 +376,7 @@ GetOptions(
 	'e' 		=> \$edit_source_file,
 	'tex' 		=> \$display_tex_output,
 	'pdf' 		=> \$display_pdf_output,
+	'json'		=> \$display_json_output,
 	'list=s' 	=>\$read_list_from_this_file,   # read file containing list of full file paths
 	'pg' 		=> \$print_pg_hash,
 	'anshash' 	=> \$print_answer_hash,
@@ -378,6 +388,7 @@ GetOptions(
 	'help'          => \$print_help_message,
 	'log=s'         => \$path_to_log_file,
 	'seed=s'        => \$problemSeed,   
+	'psvn=s'	=> \$psvn,
 );
 
 print_help_message() if $print_help_message;
@@ -598,7 +609,7 @@ $path_to_log_file         = $path_to_log_file //$credentials{path_to_log_file}//
 
 eval { # attempt to create log file
 	local(*FH);
-	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	open(FH, '>>:encoding(UTF-8)',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	close(FH);	
 };
 
@@ -625,6 +636,7 @@ my $default_form_data = {
 		displayMode	=> $DISPLAYMODE,
 		outputformat 	=> $format//'standard',
 		problemSeed     => $problemSeed//PROBLEMSEED(),
+		psvn		=> $psvn//'23456',
 		forcePortNumber => $credentials{forcePortNumber}//'',
 		language	=> $lang//'en',
 };
@@ -725,6 +737,19 @@ sub process_pg_file {
 	    	my $pdf_path = create_pdf_output($tex_file_name); 
 	    	system($PDF_DISPLAY_COMMAND." ".$pdf_path);	    
 	    }
+	}
+	if ($display_json_output) {
+		my $form_data2 = {
+			%$form_data1,
+			outputformat => 'json',
+			displayMode  =>'MathJax',
+		};
+		print "Creating json\n" if $UNIT_TESTS_ON;
+		my ($error_flag, $formatter, $error_string) =
+		process_problem($file_path, $default_input, $form_data2);
+		my $json_file_name = create_json_output($file_path, $formatter);
+		print( "Created JSON data in file ", TEMPOUTPUTDIR(), $json_file_name, "\n");
+		exit;
 	}
 	my ($error_flag, $formatter, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
@@ -870,10 +895,16 @@ sub process_problem {
 	my $problemSeed = $form_data->{problemSeed};
 	die "problem seed not defined in sendXMLRPC::process_problem" unless $problemSeed;
 
+	my $local_psvn = '34567';
+	if ( defined( $form_data->{psvn} ) ) {
+	  $local_psvn = $form_data->{psvn};
+	}
+
 	my $updated_input = {%$input, 
 					  envir => $xmlrpc_client->environment(
 							   fileName       => $adj_file_path,
 							   sourceFilePath => $adj_file_path,
+							   psvn		  => $local_psvn,
 							   problemSeed    => $problemSeed,),
 	};
 
@@ -1111,10 +1142,29 @@ sub create_tex_output {
 	$file_name =~ s/\.\w+$/\.tex/;    # replace extension with tex
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	open(FH, '>:encoding(UTF-8)', $output_file) or die "Can't open file $output_file for writing";
 	print FH $output_text;
 	close(FH);
 	print "tex result sent to $output_file\n" if $UNIT_TESTS_ON;
+#	sleep 5;   #wait 5 seconds
+#	unlink($output_file);
+	return $file_name;
+}
+
+sub create_json_output {
+	my $file_path = shift;
+	my $formatter = shift;
+	my $output_text = $formatter->formatRenderedProblem;
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.json/;    # replace extension with json
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	local(*FH);
+	open(FH, '>:encoding(UTF-8)', $output_file) or die "Can't open file $output_file for writing";
+	print FH $output_text;
+	close(FH);
+	print "json result sent to $output_file\n" if $UNIT_TESTS_ON;
 #	sleep 5;   #wait 5 seconds
 #	unlink($output_file);
 	return $file_name;
@@ -1219,7 +1269,7 @@ sub record_problem_ok1 {
 	}
 	 
 	local(*FH);
-	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	open(FH, '>>:encoding(UTF-8)',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	print FH $return_string;
 	close(FH);
 	return $SHORT_RETURN_STRING;
@@ -1242,7 +1292,7 @@ sub record_problem_ok2 {
 	$all_correct = ".5" if $some_correct_answers_not_specified;
 	$ALL_CORRECT = ($all_correct == 1)?'All answers are correct':'Some answers are incorrect';
 	local(*FH);
-	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	open(FH, '>>:encoding(UTF-8)',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	print FH "$all_correct $file_path\n"; #  do we need this? compile_errors=$error_flag\n";
 	close(FH);
 	return $ALL_CORRECT;

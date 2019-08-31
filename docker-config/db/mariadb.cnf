@@ -32,3 +32,13 @@ character_set_server   = utf8mb4
 collation_server       = utf8mb4_general_ci
 init-connect='SET NAMES utf8mb4'
 
+# Increase max_connections
+max_connections = 500
+
+# Modify:
+#   wait_timeout (default usually 28800),
+#   interactive_timeout (default usually 28800),
+#   net_read_timeout (default usually 60)
+wait_timeout = 28800
+interactive_timeout = 28800
+net_read_timeout = 3600
