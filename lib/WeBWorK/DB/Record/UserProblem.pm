@@ -40,10 +40,8 @@ BEGIN {
 		showMeAnotherCount  => { type=>"INT" },
 		# periodic re-randomization period
 		prPeriod => {type => "INT"},
-		# periodic re-randomization version count
-		prCount => {type => "INT"},
 		# periodic re-randomization number of attempts for the current seed
-		prAttemptsThisSeed => {type => "INT"},
+		prCount => {type => "INT"},
 		problem_seed  => { type=>"INT" },
 		status        => { type=>"FLOAT" },
 		attempted     => { type=>"INT" },

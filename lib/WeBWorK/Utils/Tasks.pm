@@ -148,7 +148,6 @@ sub fake_problem {
 	$problem->num_correct(1000); 
 	$problem->num_incorrect(1000); 
 	$problem->prCount(0);
-	$problem->prAttemptsThisSeed(0);
 
 	#for my $key (keys(%{$problem})){
 	#	my $value = '####UNDEF###';
