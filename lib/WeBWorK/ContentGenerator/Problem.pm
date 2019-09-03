@@ -563,7 +563,12 @@ sub pre_header_initialize {
 	my $requestNewSeed            = $r->param("requestNewSeed") // 0;
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-	
+
+	# Check for a page refresh which causes a cached form resubmission.  In that case this is
+	# not a valid submission of answers.
+	$submitAnswers = 0 if ($submitAnswers && defined($formFields->{num_attempts}) &&
+		$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect);
+
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
@@ -595,7 +600,7 @@ sub pre_header_initialize {
     # store the showMeAnother hash for the check to see if the button can be used
     # (this hash is updated and re-stored after the can, must, will hashes)
 	$self->{showMeAnother} = \%showMeAnother;
-	
+
 	##### permissions #####
 
 	# what does the user want to do?
@@ -686,8 +691,7 @@ sub pre_header_initialize {
 
 		if ($requestNewSeed) {
 			# obtain new random seed to hopefully change the problem
-			my $newSeed = ($problem->{problem_seed} + $problem->num_correct + $problem->num_incorrect) % 10000;
-			$problem->{problem_seed} = $newSeed;
+			$problem->{problem_seed} = ($problem->{problem_seed} + $problem->num_correct + $problem->num_incorrect) % 10000;
 			$problem->{prCount} = 0;
 		}
 		$db->putUserProblem($problem);
@@ -732,7 +736,10 @@ sub pre_header_initialize {
 	);
 
 	debug("end pg processing");
-	
+
+	$pg->{body_text} .= CGI::hidden({ -name => 'num_attempts', -id => 'num_attempts',
+			-value => $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) });
+
 	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($set->due_date)) {
 		$showMeAnother{active} = 0;
 		$must{requestNewSeed} = 1;
@@ -740,16 +747,12 @@ sub pre_header_initialize {
 		$want{requestNewSeed} = 1;
 		$will{requestNewSeed} = 1;
 		# If this happens, it means that the page was refreshed.  So prevent the answers from
-		# being checked and recorded and the number of attempts from being increased.
+		# being recorded and the number of attempts from being increased.
 		if ($problem->{prCount} > $rerandomizePeriod) {
 			$must{recordAnswers} = 0;
 			$can{recordAnswers} = 0;
 			$want{recordAnswers} = 0;
 			$will{recordAnswers} = 0;
-			$must{checkAnswers} = 0;
-			$can{checkAnswers} = 0;
-			$want{checkAnswers} = 0;
-			$will{checkAnswers} = 0;
 		}
 	}
 	
