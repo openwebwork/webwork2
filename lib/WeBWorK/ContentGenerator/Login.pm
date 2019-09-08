@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.47 2012/06/08 22:59:55 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -147,6 +147,10 @@ sub pre_header_initialize {
 	}
 }
 
+sub head {
+        print '<meta name="robots" content="noindex" />';
+        return "";
+}
 
 sub body {
 	my ($self) = @_;
