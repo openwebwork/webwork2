@@ -112,6 +112,11 @@ $externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
 
 $externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
+# In order to use imagemagick convert you need to change the rights for PDF files from
+# "none" to "read" in the policy file /etc/ImageMagick-6/policy.xml.  This has possible
+# security implications for the server.
+$externalPrograms{convert}  ="/usr/bin/convert";
+
 ####################################################
 # NetPBM - basic image manipulation utilities
 # Most sites only need to configure $netpbm_prefix.
@@ -128,7 +133,7 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 ####################################################
 # set timeout time (-t 40 sec) to be less than timeout for problem (usually 60 seconds)
 $externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -t 40 -mHEAD "; # or "/usr/local/bin/w3c -head "
-$externalPrograms{curlCommand}  = "/usr/bin/curl";
+$externalPrograms{curl}  = "/usr/bin/curl";
 
 ####################################################
 # image conversions utiltiies
