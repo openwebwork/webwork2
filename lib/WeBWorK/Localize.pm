@@ -50,6 +50,12 @@ sub getLoc {
 	return sub {$lh->maketext(@_)};
 }
 
+sub getLangHandle {
+	my $lang = shift;
+	my $lh = WeBWorK::Localize::I18N->get_handle($lang);
+	return $lh;
+}
+
 # this is like [quant] but it doesn't write the number
 #  usage: [quant,_1,<singular>,<plural>,<optional zero>]
 

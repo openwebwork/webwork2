@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-1307 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-1307 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -66,7 +66,7 @@ sub getLocalStats {
 
     unless ($selectstm->execute($source_file)) {
       if ($selectstm->errstr =~ /Table .* doesn't exist/) {
-	warn "Couldn't find the OPL local statistics table.  Did you download the latest OPL and run update-OPL-statistics?"
+	warn "Couldn't find the OPL local statistics table.  Did you download the latest OPL and run update-OPL-statistics.pl?"
       }
       die $selectstm->errstr;
     }
@@ -92,7 +92,7 @@ sub getGlobalStats {
 
     unless ($selectstm->execute($source_file)) {
       if ($selectstm->errstr =~ /Table .* doesn't exist/) {
-	warn "Couldn't find the OPL global statistics table.  Did you download the latest OPL and run update-OPL-statistics?"
+	warn "Couldn't find the OPL global statistics table.  Did you download the latest OPL and run load-OPL-global-statistics.pl?"
       }
       die $selectstm->errstr;
     }

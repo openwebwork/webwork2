@@ -93,6 +93,7 @@ on the same computer but does require an internet connection to a remote WeBWorK
 	# site_url        => 'http://localhost:80',
 	# form_action_url => 'http://localhost:80/webwork2/html2xml',
 	# site_password   => 'xmlrpc',
+	# forcePortNumber => '80',   # A port number to be forced, when needed.
 
     # Set the identification credential used by the "daemon_course" on the remote site
         courseID        => "daemon_course",
@@ -173,7 +174,7 @@ on the same computer but does require an internet connection to a remote WeBWorK
 	Same as -c but the question is rendered with the correct answers submitted. 
     This succeeds only if the correct answers, as determined from the answer hash, all succeed.
 
-=item	 f=s 
+=item	-f formatName
 
 	Specify the format used by the browser in displaying the question. 
          Choices for s are
@@ -182,6 +183,9 @@ on the same computer but does require an internet connection to a remote WeBWorK
          debug 
          simple
          
+=item -l lang
+
+	Set a language for the HTML rendering to use. Should use a value which would be valid for a course.
 
 =item	-v 
 
@@ -201,6 +205,9 @@ on the same computer but does require an internet connection to a remote WeBWorK
 
 	Process question in TeX mode, convert to PDF and display.
 	
+=item   --json
+
+	Process question in JSON mode and save to file
 =item   
 
 	The single letter options can be "bundled" e.g.  -vcCbB
@@ -251,6 +258,10 @@ on the same computer but does require an internet connection to a remote WeBWorK
                  
        Sets problemSeed to the number contained in string s
 
+=item  --psvn=s
+
+       Sets psvn to the number contained in string s
+
 
 
 =back
@@ -269,7 +280,7 @@ BEGIN {
 }
 $ENV{MOD_PERL_API_VERSION} = 2;
 use lib "$main::dirname";
-print "home directory ".$main::dirname;
+print "home directory ".$main::dirname."\n";
 #use lib "."; # is this needed?
 
 # some files such as FormatRenderedProblem.pm may need to be in the same directory
@@ -315,7 +326,7 @@ $Carp::Verbose = 1;
 
 
 ### verbose output when UNIT_TESTS_ON =1;
- our $UNIT_TESTS_ON             = 0;
+our $UNIT_TESTS_ON = 0;
 
 ############################################################
 # Read command line options
@@ -332,9 +343,11 @@ my $record_ok2 = '';
 my $verbose = '';
 my $credentials_path;
 my $format = 'standard';
+my $lang = 'en';
 my $edit_source_file = '';
 my $display_tex_output='';
 my $display_pdf_output='';
+my $display_json_output='';
 my $print_answer_hash;
 my $print_answer_group;
 my $print_pg_hash;
@@ -343,6 +356,7 @@ my $print_help_message;
 my $read_list_from_this_file;
 my $path_to_log_file;
 my $problemSeed;
+my $psvn;
 
 our %credentials;
 our @path_list;
@@ -350,28 +364,31 @@ my $credentials_string;
 
 
 GetOptions(
-	'a' 			=> \$display_ans_output1,
-	'A' 			=> \$display_ans_output2,
-	'b' 			=> \$display_html_output1,
-	'B' 			=> \$display_html_output2,
-	'h' 			=> \$display_hash_output1,
-	'H' 			=> \$display_hash_output2,
-	'c' 			=> \$record_ok1, # record_problem_ok1 needs to be written
-	'C' 			=> \$record_ok2,
-	'v' 			=> \$verbose,
-	'e' 			=> \$edit_source_file, 
-	'tex' 			=> \$display_tex_output,
-	'pdf' 			=> \$display_pdf_output,
-	'list=s' 		=>\$read_list_from_this_file,   # read file containing list of full file paths
-	'pg' 			=> \$print_pg_hash,
-	'anshash' 		=> \$print_answer_hash,
-	'ansgrp'  		=> \$print_answer_group,
+	'a' 		=> \$display_ans_output1,
+	'A' 		=> \$display_ans_output2,
+	'b' 		=> \$display_html_output1,
+	'B' 		=> \$display_html_output2,
+	'h' 		=> \$display_hash_output1,
+	'H' 		=> \$display_hash_output2,
+	'c' 		=> \$record_ok1, # record_problem_ok1 needs to be written
+	'C' 		=> \$record_ok2,
+	'v' 		=> \$verbose,
+	'e' 		=> \$edit_source_file,
+	'tex' 		=> \$display_tex_output,
+	'pdf' 		=> \$display_pdf_output,
+	'json'		=> \$display_json_output,
+	'list=s' 	=>\$read_list_from_this_file,   # read file containing list of full file paths
+	'pg' 		=> \$print_pg_hash,
+	'anshash' 	=> \$print_answer_hash,
+	'ansgrp'  	=> \$print_answer_group,
 	'resource'      => \$print_resource_hash,
-	'f=s' 			=> \$format,
+	'f=s' 		=> \$format,
+	'l=s'		=> \$lang,
 	'credentials=s' => \$credentials_path,
 	'help'          => \$print_help_message,
 	'log=s'         => \$path_to_log_file,
 	'seed=s'        => \$problemSeed,   
+	'psvn=s'	=> \$psvn,
 );
 
 print_help_message() if $print_help_message;
@@ -397,9 +414,9 @@ print_help_message() if $print_help_message;
 # credentials file location -- search for one of these files 
 
 
-our @path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
+@path_list = ("$ENV{HOME}/.ww_credentials", "$ENV{HOME}/ww_session_credentials", 'ww_credentials', 'ww_credentials.dist');
 
-my $credentials_string = <<EOF;
+$credentials_string = <<EOF;
 
 The credentials file should contain something like this:
 
@@ -415,6 +432,8 @@ The credentials file should contain something like this:
 	# site_url        => 'http://localhost:80',
 	# form_action_url => 'http://localhost:80/webwork2/html2xml',
 	# site_password   => 'xmlrpc',
+	# forcePortNumber => '80',   # A port number to be forced, when needed.
+
 
     # Set the identification credential used by the "daemon_course" on the remote site
         courseID        => "daemon_course",
@@ -563,9 +582,6 @@ use constant PDF_DISPLAY_COMMAND =>"open -a 'Preview'";
 use constant DISPLAYMODE   => 'MathJax';
 use constant PROBLEMSEED   => '987654321';
 
-### verbose output when UNIT_TESTS_ON =1;
-our $UNIT_TESTS_ON             = 0;
-
 ############################################################
 # End configure displays for local operating system
 ############################################################
@@ -593,7 +609,7 @@ $path_to_log_file         = $path_to_log_file //$credentials{path_to_log_file}//
 
 eval { # attempt to create log file
 	local(*FH);
-	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	open(FH, '>>:encoding(UTF-8)',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	close(FH);	
 };
 
@@ -609,17 +625,20 @@ die "You must first create an output file at $path_to_log_file
 ############################################
  
 my $default_input = { 
-		userID      			=> $credentials{userID}//'',
-		session_key	 			=> $credentials{session_key}//'',
-		courseID   				=> $credentials{courseID}//'',
-		courseName   			=> $credentials{courseID}//'',
-		course_password     	=> $credentials{course_password}//'',
- };
+		userID      	=> $credentials{userID}//'',
+		session_key	=> $credentials{session_key}//'',
+		courseID   	=> $credentials{courseID}//'',
+		courseName   	=> $credentials{courseID}//'',
+		course_password	=> $credentials{course_password}//'',
+};
 
 my $default_form_data = { 
-		displayMode				=> $DISPLAYMODE,
-		outputformat 			=> $format//'standard',
-		problemSeed       => $problemSeed//PROBLEMSEED(),
+		displayMode	=> $DISPLAYMODE,
+		outputformat 	=> $format//'standard',
+		problemSeed     => $problemSeed//PROBLEMSEED(),
+		psvn		=> $psvn//'23456',
+		forcePortNumber => $credentials{forcePortNumber}//'',
+		language	=> $lang//'en',
 };
 
 ##################################################
@@ -718,6 +737,19 @@ sub process_pg_file {
 	    	my $pdf_path = create_pdf_output($tex_file_name); 
 	    	system($PDF_DISPLAY_COMMAND." ".$pdf_path);	    
 	    }
+	}
+	if ($display_json_output) {
+		my $form_data2 = {
+			%$form_data1,
+			outputformat => 'json',
+			displayMode  =>'MathJax',
+		};
+		print "Creating json\n" if $UNIT_TESTS_ON;
+		my ($error_flag, $formatter, $error_string) =
+		process_problem($file_path, $default_input, $form_data2);
+		my $json_file_name = create_json_output($file_path, $formatter);
+		print( "Created JSON data in file ", TEMPOUTPUTDIR(), $json_file_name, "\n");
+		exit;
 	}
 	my ($error_flag, $formatter, $error_string) = 
 	    process_problem($file_path, $default_input, $form_data1);
@@ -863,10 +895,16 @@ sub process_problem {
 	my $problemSeed = $form_data->{problemSeed};
 	die "problem seed not defined in sendXMLRPC::process_problem" unless $problemSeed;
 
+	my $local_psvn = '34567';
+	if ( defined( $form_data->{psvn} ) ) {
+	  $local_psvn = $form_data->{psvn};
+	}
+
 	my $updated_input = {%$input, 
 					  envir => $xmlrpc_client->environment(
 							   fileName       => $adj_file_path,
 							   sourceFilePath => $adj_file_path,
+							   psvn		  => $local_psvn,
 							   problemSeed    => $problemSeed,),
 	};
 
@@ -1104,10 +1142,29 @@ sub create_tex_output {
 	$file_name =~ s/\.\w+$/\.tex/;    # replace extension with tex
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	open(FH, '>:encoding(UTF-8)', $output_file) or die "Can't open file $output_file for writing";
 	print FH $output_text;
 	close(FH);
 	print "tex result sent to $output_file\n" if $UNIT_TESTS_ON;
+#	sleep 5;   #wait 5 seconds
+#	unlink($output_file);
+	return $file_name;
+}
+
+sub create_json_output {
+	my $file_path = shift;
+	my $formatter = shift;
+	my $output_text = $formatter->formatRenderedProblem;
+	$file_path =~s|/$||;   # remove final /
+	$file_path =~ m|/?([^/]+)$|;
+	my $file_name = $1;
+	$file_name =~ s/\.\w+$/\.json/;    # replace extension with json
+	my $output_file = TEMPOUTPUTDIR().$file_name;
+	local(*FH);
+	open(FH, '>:encoding(UTF-8)', $output_file) or die "Can't open file $output_file for writing";
+	print FH $output_text;
+	close(FH);
+	print "json result sent to $output_file\n" if $UNIT_TESTS_ON;
 #	sleep 5;   #wait 5 seconds
 #	unlink($output_file);
 	return $file_name;
@@ -1123,7 +1180,7 @@ sub	display_html_output {  #display the problem in a browser
 	$file_name =~ s/\.\w+$/\.html/;    # replace extension with html
 	my $output_file = TEMPOUTPUTDIR().$file_name;
 	local(*FH);
-	open(FH, '>', $output_file) or die "Can't open file $output_file for writing";
+	open(FH, '>:encoding(UTF-8)', $output_file) or die "Can't open file $output_file for writing";
 	print FH $output_text;
 	close(FH);
 
@@ -1212,7 +1269,7 @@ sub record_problem_ok1 {
 	}
 	 
 	local(*FH);
-	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	open(FH, '>>:encoding(UTF-8)',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	print FH $return_string;
 	close(FH);
 	return $SHORT_RETURN_STRING;
@@ -1235,7 +1292,7 @@ sub record_problem_ok2 {
 	$all_correct = ".5" if $some_correct_answers_not_specified;
 	$ALL_CORRECT = ($all_correct == 1)?'All answers are correct':'Some answers are incorrect';
 	local(*FH);
-	open(FH, '>>',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
+	open(FH, '>>:encoding(UTF-8)',$path_to_log_file) or die "Can't open file $path_to_log_file for writing";
 	print FH "$all_correct $file_path\n"; #  do we need this? compile_errors=$error_flag\n";
 	close(FH);
 	return $ALL_CORRECT;
@@ -1276,7 +1333,15 @@ sub get_source {
 		if ($file_path eq '-') {
 			$source = <STDIN>;
 		} else {
-			open(FH, '<',$file_path) or die "Couldn't open file $file_path: $!";
+			# To support proper behavior with UTF-8 files, we need to open them with "<:encoding(UTF-8)"
+			# as otherwise, the first HTML file will render properly, but when "Preview" "Submit answer"
+			# or "Show correct answer" is used it will make problems, as in process_problem() the
+			# encodeSource() method is called on a data which is still UTF-8 encoded, and leads to double
+			# encoding and gibberish.
+			# NEW:
+			open(FH, "<:encoding(UTF-8)" ,$file_path) or die "Couldn't open file $file_path: $!";
+			# OLD:
+			#open(FH, "<" ,$file_path) or die "Couldn't open file $file_path: $!";
 			$source   = <FH>; #slurp  input
 			close FH;
 		}

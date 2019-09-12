@@ -38,7 +38,7 @@ use WeBWorK;
 use Encode;
 use utf8;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # load correct modules

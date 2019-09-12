@@ -83,7 +83,7 @@ dependent. C<$db> is provided so that schemas can query other schemas.
 =cut
 
 sub new {
-	my ($proto, $db, $driver, $table, $record, $params, $engine, $charset) = @_;
+	my ($proto, $db, $driver, $table, $record, $params, $engine, $character_set) = @_;
 	my $class = ref($proto) || $proto;
 	
 	my @supportedTables = $proto->TABLES();
@@ -101,7 +101,7 @@ sub new {
 		record => $record,
 		params => $params,
     	engine => $engine,
-    	charset => $charset,
+    	character_set => $character_set,
 	};
 	bless $self, $class;
 	return $self;

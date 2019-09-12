@@ -104,6 +104,12 @@ $externalPrograms{git} = "/usr/bin/git";
 # equation rendering/hardcopy utiltiies
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
+
+$externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
+# Consider using xelatex instead of pdflatex for multilingual use, and
+# use polyglossia and fontspec packages (which require xelatex or lualatex).
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+
 $externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
 ####################################################
@@ -182,7 +188,7 @@ $ENABLE_UTF8MB4 =1;    # setting this to 1 enables utf8mb4 encoding, setting thi
 					   # 0 sets this for older mysql (pre 5.3) which cannot
 					   # handle utf8mb4 characters.
 
-$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : '';
+$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : 'utf8';
 
 
 # DATABASE login information

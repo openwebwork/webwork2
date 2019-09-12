@@ -202,7 +202,7 @@ sub new {
 	my $self = {};
 	foreach my $name (keys %symbolHash) {
 		# weed out internal symbols
-		next if $name =~ /^(INC|_.*|__ANON__|main::)$/;
+		next if $name =~ /^(INC|_.*|__ANON__|main::|include)$/;
 		# pull scalar, array, and hash values for this symbol
 		my $scalar = ${*{$symbolHash{$name}}};
 		my @array = @{*{$symbolHash{$name}}};
@@ -219,7 +219,11 @@ sub new {
 	}
 	# now that we know the name of the pg_dir we can get the pg VERSION file
 	my $PG_version_file = $self->{'pg_dir'}."/VERSION";
-	
+
+	# Try a fallback location
+	if ( !-r $PG_version_file ) {
+	  $PG_version_file = $self->{'webwork_dir'}."/../pg/VERSION";
+	}
 	# #	We'll get the pg version here and read it into the safe symbol table
 	if (-r $PG_version_file){
 		#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
@@ -233,7 +237,9 @@ sub new {
 		use strict 'refs';
 		$self->{PG_VERSION}=${*{$symbolHash2{PG_VERSION}}};
 	} else {
-		croak "Cannot read PG version file $PG_version_file";
+		$self->{PG_VERSION}="unknown";
+		#croak "Cannot read PG version file $PG_version_file";
+		warn "Cannot read PG version file $PG_version_file";
 	}
  
 	

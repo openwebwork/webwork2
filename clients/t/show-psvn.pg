@@ -1,0 +1,19 @@
+##DESCRIPTION
+##  A very simple first problem
+##ENDDESCRIPTION
+##KEYWORDS('algebra')
+DOCUMENT();        # This should be the first executable line in the problem.
+loadMacros(
+"PG.pl",
+"PGbasicmacros.pl",
+);
+
+TEXT(beginproblem());
+
+BEGIN_TEXT
+$PAR
+PSVN is $psvn
+$PAR
+END_TEXT
+
+ENDDOCUMENT();        # This should be the last executable line in the problem.

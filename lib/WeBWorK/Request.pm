@@ -26,7 +26,7 @@ Apache::Request with additional WeBWorK-specific fields.
 use strict;
 use warnings;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Encode;
 

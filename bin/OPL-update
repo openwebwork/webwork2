@@ -99,7 +99,7 @@ my $dbh = DBI->connect(
         {
             PrintError => 0,
             RaiseError => 1,
-            ($ENABLE_UTF8MB)?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
+            ($ENABLE_UTF8MB4)?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
         },
 );
 
@@ -986,6 +986,9 @@ if ($ce->{problemLibrary}{showLibraryLocalStats} ||
     $ce->{problemLibrary}{showLibraryGlobalStats}) {
   print "\nUpdating Library Statistics.\n";
   do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+
+  print "\nLoading global statistics (if possible).\n";
+  do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';
 }
 
 
