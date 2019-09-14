@@ -45,9 +45,9 @@ debconf-set-selections /tmp/preseed.txt
 dpkg-reconfigure -f noninteractive libpaper1
 
 # Install some extra packages
-if [ "$ADD_PACKAGES" != "0" ]; then
+if [ "$ADD_APT_PACKAGES" != "0" ]; then
   apt-get update
-  apt-get install -y --no-install-recommends --no-install-suggests $ADD_PACKAGES
+  apt-get install -y --no-install-recommends --no-install-suggests $ADD_APT_PACKAGES
 fi
 
 # If necessary, clone the OPL in the running container, hopefully in persistent storage

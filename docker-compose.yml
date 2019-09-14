@@ -165,7 +165,7 @@ services:
       #ADD_LOCALES: he_IL ISO-8859-8,he_IL.UTF-8 UTF-8
 
       # Extra Ubuntu packages to install during startup
-      #ADD_PACKAGES: mc vim telnet
+      #ADD_APT_PACKAGES: vim telnet
 
       # The system timezone for the container can be set using
       #SYSTEM_TIMEZONE: zone/city
