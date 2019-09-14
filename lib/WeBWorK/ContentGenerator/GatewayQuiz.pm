@@ -417,7 +417,7 @@ sub attemptResults {
 	    my $correctAnswer = $answerResult->{correct_ans};
 	    $answerScore = $answerResult->{score}//0;
 	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-	    $numCorrect += $answerScore > 0;
+	    $numCorrect += ($answerScore >= 1) ? 1 : 0;
 	    $numEssay += ($answerResult->{type}//'') eq 'essay';
 	    $numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
 	    
