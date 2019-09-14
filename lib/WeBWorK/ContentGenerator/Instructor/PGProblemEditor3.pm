@@ -2086,6 +2086,9 @@ sub output_JS{
 
 	}
 
+	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/ImageView/imageview.css\"/>";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
 	
 	return "";
