@@ -139,6 +139,16 @@ function createAnswerQuill() {
 		}, 200);
 	});
 
+	// Trigger an answer preview when the enter key is pressed in an answer box.
+	answerQuill.on('keypress.preview', function(e) {
+		if (e.key == 'Enter' || e.which == 13 || e.keyCode == 13) {
+			// For homework
+			$("#previewAnswers_id").trigger('click');
+			// For gateway quizzes
+			$("input[name=previewAnswers]").trigger('click');
+		}
+	});
+
 	answerQuill.mathField.latex(answerQuill.latexInput.val());
 	answerQuill.mathField.moveToLeftEnd();
 	answerQuill.mathField.blur();
