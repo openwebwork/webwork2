@@ -298,8 +298,6 @@ sub can_showMeAnother {
 # output utilities
 ################################################################################
 
-# Note: the substance of attemptResults is lifted into GatewayQuiz.pm,
-# with some changes to the output format
 sub attemptResults {
 	my $self = shift;
 	my $r = $self->r;
