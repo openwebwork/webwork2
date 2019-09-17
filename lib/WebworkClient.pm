@@ -759,7 +759,6 @@ sub formatRenderedProblem {
 	my $userID           =  $self->{userID};
 	my $course_password  =  $self->{course_password};
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//4444;
-	my $problemUUID      =  $self->{inputs_ref}->{problemUUID}//0;
 	my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode};
@@ -772,10 +771,10 @@ sub formatRenderedProblem {
         # It adds a prefix to the 
         # identifier used by the  format so that several different problems
         # can appear on the same page.   
-	my $problemUUID = $self->{inputs_ref}->{problemUUID} //'';
-    my $problemResult    =  $rh_result->{problem_result}//'';
-    my $problemState     =  $rh_result->{problem_state}//'';
-    my $showSummary      = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
+	my $problemUUID      =  $self->{inputs_ref}->{problemUUID}//0;
+	my $problemResult    =  $rh_result->{problem_result}//'';
+	my $problemState     =  $rh_result->{problem_state}//'';
+	my $showSummary      = ($self->{inputs_ref}->{showSummary})//1; #default to show summary for the moment
 
 	# $formLanguage moved above
 	#my $formLanguage     = ($self->{inputs_ref}->{language})//'en';
