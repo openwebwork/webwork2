@@ -379,6 +379,7 @@ sub attemptResults {
 		answersSubmitted       => 1,
 		answerOrder            => $pg->{flags}{ANSWER_ENTRY_ORDER},
 		displayMode            => $self->{displayMode},
+		showHeadline           => 0,
 		showAnswerNumbers      => 0,
 		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
 		showAttemptPreviews    => $showAttemptPreview,

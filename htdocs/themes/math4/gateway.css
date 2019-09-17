@@ -64,6 +64,8 @@ div#gwScoreSummary {
     margin-left:.2em;
 }
 
+table.attemptResults { width: unset; }
+
 span.resultsWithError, span.resultsWithoutError {
 	padding: 0.2em 1em;
 	box-shadow: 2px 2px 3px darkgray;
