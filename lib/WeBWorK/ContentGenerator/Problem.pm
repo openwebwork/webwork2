@@ -566,8 +566,10 @@ sub pre_header_initialize {
 
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.
-	$submitAnswers = 0 if ($submitAnswers && defined($formFields->{num_attempts}) &&
-		$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect);
+	$submitAnswers = 0, $self->{resubmitDetected} = 1
+	if ($submitAnswers && (!defined($formFields->{num_attempts}) ||
+			(defined($formFields->{num_attempts}) &&
+				$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect)));
 
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
@@ -749,6 +751,7 @@ sub pre_header_initialize {
 		# If this happens, it means that the page was refreshed.  So prevent the answers from
 		# being recorded and the number of attempts from being increased.
 		if ($problem->{prCount} > $rerandomizePeriod) {
+			$self->{resubmitDetected} = 1;
 			$must{recordAnswers} = 0;
 			$can{recordAnswers} = 0;
 			$want{recordAnswers} = 0;
@@ -1945,7 +1948,11 @@ sub output_summary{
 	    # don't show attempt results (correctness)
 	    # show attempt previews
 	  }
-	
+
+	  print CGI::div({class=>'ResultsWithError'},
+		  $r->maketext("ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).")),
+	  CGI::br() if ($self->{resubmitDetected});
+
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;
 	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
