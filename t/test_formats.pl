@@ -17,7 +17,7 @@ my %replacement_key_value_pairs =(
 	 showCorrectMode  =>  "showCorrectMode",
 			# Can be added to the request as a parameter.  Adds a prefix to the 
 			# identifier used by the sticky format.  
-	 problemIdentifierPrefix => "problemIdentifierPrefix",
+	 problemUUID => "problemUUID",
 	 problemResult    =>  "problemResult",
 	 problemState     =>  "problemState",
 	 showSummary      => " showSummary", #default to show summary for the moment
