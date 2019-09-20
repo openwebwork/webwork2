@@ -192,6 +192,7 @@ sub pre_header_initialize {
 		    subcommand		        => $r->param("subcommand") ||undef,
 		    maxdepth		        => $r->param("maxdepth") || 0,
 		    problemSeed	            => $r->param("problemSeed") || 0,
+		    problemUUID             => $r->param("problemUUID") // 0,
 		    displayMode	            => $r->param("displayMode") || undef,
 		    noprepostambles	        => $r->param("noprepostambles") || undef,
 		    library_subjects	    => $r->param("library_subjects") ||undef,

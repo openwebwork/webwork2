@@ -61,12 +61,12 @@ $LTIGradeMessage
 <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 <input type="hidden" name="problemSource" value="$encoded_source"> 
 <input type="hidden" name="problemSeed" value="$problemSeed"> 
+<input type="hidden" name="problemUUID" value="$problemUUID">
 <input type="hidden" name="psvn" value="$psvn">
 <input type="hidden" name="pathToProblemFile" value="$fileName">
 <input type="hidden" name="courseName" value="$courseID">
 <input type="hidden" name="courseID" value="$courseID">
 <input type="hidden" name="userID" value="$userID">
-<input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
 <input type="hidden" name="course_password" value="$course_password">
 <input type="hidden" name="displayMode" value="$displayMode">
 <input type="hidden" name="session_key" value="$session_key">

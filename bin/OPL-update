@@ -201,7 +201,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{keyword}, '
 	keyword_id int(15) NOT NULL auto_increment,
-	keyword varchar(256) NOT NULL,
+	keyword varchar(245) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (keyword_id)
 '],
@@ -986,6 +986,9 @@ if ($ce->{problemLibrary}{showLibraryLocalStats} ||
     $ce->{problemLibrary}{showLibraryGlobalStats}) {
   print "\nUpdating Library Statistics.\n";
   do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+
+  print "\nLoading global statistics (if possible).\n";
+  do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';
 }
 
 

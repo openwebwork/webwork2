@@ -336,7 +336,9 @@ sub dispatch($) {
 					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
 				} else {
 					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
-					die "You are not allowed to act as another user.\n";
+					die "You do not have permission to act as another user. 
+					Close down your browser (this clears temporary cookies), 
+					restart and try again.\n";
 				}
 			}
 			

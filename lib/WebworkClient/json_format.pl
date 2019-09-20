@@ -127,6 +127,7 @@ push( @pairs_for_json, "hidden_input_field_answersSubmitted", '1' );
 push( @pairs_for_json, "hidden_input_field_sourceFilePath", '$sourceFilePath' );
 push( @pairs_for_json, "hidden_input_field_problemSource", '$encoded_source' );
 push( @pairs_for_json, "hidden_input_field_problemSeed", '$problemSeed' );
+push( @pairs_for_json, "hidden_input_field_problemUUID", '$problemUUID' );
 push( @pairs_for_json, "hidden_input_field_psvn", '$psvn' );
 push( @pairs_for_json, "hidden_input_field_pathToProblemFile", '$fileName' );
 push( @pairs_for_json, "hidden_input_field_courseName", '$courseID' );
