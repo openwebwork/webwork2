@@ -896,7 +896,7 @@ sub process_problem {
 	die "problem seed not defined in sendXMLRPC::process_problem" unless $problemSeed;
 
 	
-    $local_psvn = $form_data->{psvn}//34567;
+    my $local_psvn = $form_data->{psvn}//34567;
 	my $updated_input = {%$input, 
 					  envir => $xmlrpc_client->environment(
 							   fileName       => $adj_file_path,
