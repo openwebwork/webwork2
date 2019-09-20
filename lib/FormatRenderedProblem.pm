@@ -33,6 +33,7 @@ use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
 use XML::Simple qw(XMLout);
 use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use Encode qw(encode_utf8 decode_utf8);
+use JSON;
 
 our $UNIT_TESTS_ON  = 0; 
 
