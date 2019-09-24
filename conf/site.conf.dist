@@ -317,4 +317,13 @@ $siteDefaults{timezone} = "America/New_York";
 # If you do not fill this in, the system will default to "en_US"
 $siteDefaults{locale}="";
 
+################################################################################
+# Search Engine Indexing Enable/Disable
+################################################################################
+# sets the default meta robots content for individual course pages
+# this will not stop your main course listing page from being indexed
+# valid contents: index, noindex, follow, nofollow, noarchive, and
+# unavailable_after (example: "index, unavailable_after: 23-Jul-2007 18:00:00 EST")
+$options{metaRobotsContent}='noindex, nofollow';
+
 1; #final line of the file to reassure perl that it was read properly.
