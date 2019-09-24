@@ -459,9 +459,9 @@ sub renderProblem {
 		$formFields,
 		# translation options
 		$translationOptions,
-# 		{ # extras
-# 				overrides       => $rh->{overrides}},
-#         }
+ 		{ # extras
+ 				problemUUID => $rh->{envir}->{inputs_ref}->{problemUUID}//0,
+         }
 		
 	);
 
