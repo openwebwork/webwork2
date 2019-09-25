@@ -136,6 +136,10 @@ cd $LIBRARY_DIR
 #
 
 notice "Library path: " $LIBRARY_DIR
+
+notice "Updating OPL tables"
+OPL-update
+
 notice "Dumping OPL tables"
 dump-OPL-tables.pl
 
