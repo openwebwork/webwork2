@@ -2268,20 +2268,46 @@ sub output_CSS {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
         # Javascript and style for knowls
-        print qq{
-           <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+        print "<link href=\"$site_url/css/knowlstyle.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
 
 	#style for mathview
 	if ($self->{will}->{useMathView}) {
-	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />\n";
 	}
 	
 	#style for mathquill
 	if ($self->{will}->{useMathQuill}) {
-		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
-		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />";
+		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />\n";
+		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />\n";
 	}
-	
+
+	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
+	# or via a setting of $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
+	# which can be set in course.conf (the value should be an anon array).
+	my $pg = $self->{pg};
+	if ( defined( $pg->{flags}{extra_css_files} ) ) {
+		my $baseDir = $ce->{webwork_htdocs_url};
+		my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
+		my $cssFile;
+		my %cssFiles;
+		# Avoid duplicates
+		my @courseCssRequests = ();
+		if ( defined($ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files} ) ) {
+			@courseCssRequests = ( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
+} );
+		}
+		foreach $cssFile ( @courseCssRequests, @{$pg->{flags}{extra_css_files}} ) {
+			$cssFiles{$cssFile} = 1;
+		}
+		foreach $cssFile ( keys( %cssFiles ) ) {
+			if ( -f "$webwork_dir/htdocs/css/$cssFile" ) { # FIXME - test for existence
+				print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${baseDir}/css/$cssFile\" />\n";
+			} else {
+				print "<!-- $cssFile is not available in htdocs/css/ on this server -->\n";
+			}
+		}
+	}
+
 	return "";
 }
 
