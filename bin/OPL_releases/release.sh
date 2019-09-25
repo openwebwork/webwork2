@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Shell script to make releases of webwork problem libraries, heavily inspired
 # by https://github.com/gap-system/ReleaseTools/blob/master/release
@@ -299,6 +299,26 @@ if [ x"$RELEASE_ID" = x ] ; then
     error "creating release on GitHub failed: no release id"
 fi
 
+
+######################################################################
+#
+# Test whether ARCHIVE_FORMATS contains at least one valid format
+#
+
+FOUND_VALID_FORMAT=0
+VALID_ARCHIVE_FORMATS='.tar.gz .tar.bz2 .zip'
+for VALID_FORMAT in $VALID_ARCHIVE_FORMATS
+do
+	if [[ $ARCHIVE_FORMATS =~ $VALID_FORMAT ]]
+	then
+		FOUND_VALID_FORMAT=1;
+	fi;
+done;
+if [[ $FOUND_VALID_FORMAT == "0" ]]
+then
+	warning "No valid archive format specified." ;
+	exit 1;
+fi;
 
 ######################################################################
 #
