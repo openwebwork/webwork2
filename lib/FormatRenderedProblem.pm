@@ -242,13 +242,13 @@ sub formatRenderedProblem {
 
 	#################################################
 	# Local docker usage with a port number sometimes misbehaves if the port number
-	# is not forced into $XML_URL and $FORM_ACTION_URL
+	# is not forced into $SITE_URL and $FORM_ACTION_URL
 	#################################################
 	my $forcePortNumber = ($self->{inputs_ref}->{forcePortNumber})//'';
 	if ( $forcePortNumber =~ /^[0-9]+$/ ) {
 	  $forcePortNumber = 0 + $forcePortNumber;
-	  if ( ! ( $XML_URL =~ /:${forcePortNumber}/ ) ) {
-	    $XML_URL .= ":${forcePortNumber}";
+	  if ( ! ( $SITE_URL =~ /:${forcePortNumber}/ ) ) {
+	    $SITE_URL .= ":${forcePortNumber}";
 	  }
 	  if ( ! ( $FORM_ACTION_URL =~ m+:${forcePortNumber}/webwork2/html2xml+ ) ) {
 	    $FORM_ACTION_URL =~ s+/webwork2/html2xml+:${forcePortNumber}/webwork2/html2xml+ ; # Ex: "http://localhost:8080/webwork2/html2xml"
