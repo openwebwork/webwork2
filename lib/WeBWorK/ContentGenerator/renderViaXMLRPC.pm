@@ -54,9 +54,12 @@ use CGI;
 =cut
  
 # To configure the target webwork server two URLs are required
-# 1.    http://test.webwork.maa.org/mod_xmlrpc
+# 1.  The url  http://test.webwork.maa.org/mod_xmlrpc
 #    points to the Webservice.pm and Webservice/RenderProblem modules
-#    Is used by the client to send the original XML request to the webservice
+#    Is used by the client to send the original XML request to the webservice.
+#    It is constructed in WebworkClient::xmlrpcCall() from the value of $webworkClient->site_url which does 
+#    NOT have the mod_xmlrpc segment (it should be   http://test.webwork.maa.org) 
+#    and the constant  REQUEST_URI defined in WebworkClient.pm to be mod_xmlrpc.  
 #
 # 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
 #    points to the renderViaXMLRPC.pm module.

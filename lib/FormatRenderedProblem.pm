@@ -261,7 +261,7 @@ sub formatRenderedProblem {
 	my $userID           =  $self->{userID}//'';
 	my $course_password  =  $self->{course_password}//'';
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//6666;
-    my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
+	my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode};
 	
@@ -270,10 +270,10 @@ sub formatRenderedProblem {
 	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck})||0;
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit})||0;
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWcorrectAns})||0;
-        # problemUUID can be added to the request as a parameter.  
-        # It adds a prefix to the 
-        # identifier used by the  format so that several different problems
-        # can appear on the same page.   
+	# problemUUID can be added to the request as a parameter.  
+	# It adds a prefix to the 
+	# identifier used by the  format so that several different problems
+	# can appear on the same page.   
 	my $problemUUID      =  $self->{inputs_ref}->{problemUUID}//0;
 	my $problemResult    =  $rh_result->{problem_result}//'';
 	my $problemState     =  $rh_result->{problem_state}//'';
