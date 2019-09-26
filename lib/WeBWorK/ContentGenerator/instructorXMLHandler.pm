@@ -55,10 +55,11 @@ use JSON;
 =cut
  
 # To configure the target webwork server two URLs are required
-# 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
+# 1.    http://test.webwork.maa.org/mod_xmlrpc 
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice
-#
+#    Note: This not the same as the webworkClient->url which should NOT have
+#          the mod_xmlrpc segment. 
 # 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
 #    points to the renderViaXMLRPC.pm module.
 #
@@ -112,14 +113,14 @@ unless ($server_root_url) {
 # child
 ############################
 
-our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
+our ($SITE_URL, $FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 	$XML_PASSWORD     	 =  'xmluser';
 	$XML_COURSE          =  'daemon_course';
 
 
 
-	$XML_URL             =  "$server_root_url/mod_xmlrpc";
+	$SITE_URL            =  "$server_root_url" ; 
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/instructorXMLHandler";
 
 use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
@@ -165,11 +166,10 @@ sub pre_header_initialize {
     #######################
     my $xmlrpc_client = new WebworkClient;
 
-	$xmlrpc_client->url($XML_URL);
+	$xmlrpc_client->site_url($SITE_URL);  # does NOT include mod_xmlrpc ending
+#	$xmlrpc_client->{site_url} ='';   # make this the site without the mod_xmlrpc ending? ~= s/mod_xmlrpc$
 	$xmlrpc_client->{form_action_url}= $FORM_ACTION_URL;
-#	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
 	$xmlrpc_client->{user}          = 'xmluser';
-#	$xmlrpc_client->{password}      = $XML_PASSWORD;
 	$xmlrpc_client->{site_password} = $XML_PASSWORD;
 #	$xmlrpc_client->{course}        = $r->param('courseID');
 	$xmlrpc_client->{courseID}      = $r->param('courseID');
@@ -263,8 +263,8 @@ sub pre_header_initialize {
 
 
 	if ($UNIT_TESTS_ON) {
-		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
-		   format_hash_ref($input);
+		print STDERR "\tinstructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
+		   format_hash_ref($input),"\n";
 	}
 	my $source = "";
 	#print $r->param('problemPath');
