@@ -239,6 +239,7 @@ sub HiddenFlags {
 #
 # Display the directory listing and associated buttons
 #
+
 sub Refresh {
  	my $self = shift;
 	my $r = $self->r;
@@ -1001,23 +1002,23 @@ sub getFile {
 	my @files = $self->r->param("files");
 	if (scalar(@files) > 1) {
 		$self->addbadmessage($r->maketext("You can only [_1] one file at a time.",$action));
-		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
+		$self->Refresh unless $action eq 'download';
 		return;
 	}
 	if (scalar(@files) == 0 || $files[0] eq "") {
 		$self->addbadmessage($r->maketext("You need to select a file to [_1].",$action));
-		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
+		$self->Refresh unless $action eq 'download';
 		return;
 	}
 	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || HOME) || '.';
 	if ($self->isSymLink($pwd.'/'.$files[0])) {
 		$self->addbadmessage($r->maketext("That symbolic link takes you outside your course directory"));
-		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
+		$self->Refresh unless $action eq 'download';
 		return;
 	}
 	unless ($self->checkPWD($pwd.'/'.$files[0],1)) {
 		$self->addbadmessage($r->maketext("You have specified an illegal file"));
-		$self->Refresh unless ($action eq 'Download' || $action eq $r->maketext('Download'));
+		$self->Refresh unless $action eq 'download';
 		return;
 	}
 	return $files[0];
