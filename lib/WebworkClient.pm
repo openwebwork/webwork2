@@ -398,7 +398,7 @@ sub jsXmlrpcCall {
 
 
 =head2  Accessor methods
-	enconcodeSource  # encode source string with utf8 and base64 and store in encoded_source
+	encodeSource  # encode source string with utf8 and base64 and store in encoded_source
 	encoded_source
 	request_object
 	return_object
