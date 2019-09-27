@@ -257,6 +257,7 @@ sub formatRenderedProblem {
 
 	#################################################
 
+
 	my $courseID         =  $self->{courseID}//'';
 	my $userID           =  $self->{userID}//'';
 	my $course_password  =  $self->{course_password}//'';
