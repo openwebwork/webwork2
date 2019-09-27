@@ -261,7 +261,7 @@ sub formatRenderedProblem {
 	my $userID           =  $self->{userID};
 	my $course_password  =  $self->{course_password};
 	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//4444;
-        my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
+	my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode};
 	
