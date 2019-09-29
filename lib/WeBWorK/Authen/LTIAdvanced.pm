@@ -421,23 +421,39 @@ sub authenticate {
       debug("OAuth verification SUCCEEDED !!");
       
       my $userID = $self->{user_id};
+
+	# Indentation of the internal blocks below was modified to follow
+	# the WW coding standard; however, the leading indentation of the
+	# if/elsif/closing '}' was kept as in the original code for now.
+	# Thus the apparenly overlarge indentation below.
       if (! $db->existsUser($userID) ) { # New User. Create User record
-	unless ($self->create_user()) {
-	  $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-	  $self->{log_error} .= "Failed to create user $userID.";
-	  if ( $ce->{debug_lti_parameters} ) {
-	    warn("Failed to create user $userID.");
-	  }
-	}
+		if ( $ce->{block_lti_create_user} ) {
+			# We don't yet have the next string in the PO/POT files - so the next line is disabled.
+			# $r->maketext("Account creation is currently disabled in this course.  Please speak to your instructor or system administrator.");
+			$self->{log_error} .= "Account creation blocked by block_lti_create_user setting. Did not create user $userID.";
+			if ( $ce->{debug_lti_parameters} ) {
+				warn("Account creation is currently disabled in this course.  Please speak to your instructor or system administrator.");
+			}
+			return 0;
+		} else {
+			# Attempt to create the user, and warn if that fails.
+			unless ($self->create_user()) {
+				$r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
+				$self->{log_error} .= "Failed to create user $userID.";
+				if ( $ce->{debug_lti_parameters} ) {
+					warn("Failed to create user $userID.");
+				}
+			}
+		}
       }  elsif ($ce->{LMSManageUserData}) {
-	# Existing user.  Possibly modify demographic information and permission level.
-	unless ($self->maybe_update_user()) {
-	  $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-	  $self->{log_error} .= "Failed to update user $userID.";
-	  if ( $ce->{debug_lti_parameters} ) {
-	    warn("Failed to updateuser $userID.");
-	  }
-	}
+		# Existing user.  Possibly modify demographic information and permission level.
+		unless ($self->maybe_update_user()) {
+			$r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
+			  $self->{log_error} .= "Failed to update user $userID.";
+			if ( $ce->{debug_lti_parameters} ) {
+				warn("Failed to updateuser $userID.");
+			}
+		}
       }
 
       # If we are using grade passback then make sure the data
