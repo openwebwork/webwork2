@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 use 5.10.0;
-my $XML_URL = "foobar";
+my $SITE_URL = "foobar";
 my $template = do("standard_format.pl");
 my %replacement_key_value_pairs =(
-	 XML_URL      	 =>   $XML_URL,
+	 SITE_URL      	 =>   $SITE_URL,
 	 FORM_ACTION_URL  =>  "FORM_ACTION_URL",
 	 courseID         =>  "courseID",
 	 userID           =>  "userID",

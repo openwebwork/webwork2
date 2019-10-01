@@ -77,14 +77,14 @@ sub new {
     my $invocant = shift;
     my $class = ref $invocant || $invocant;
 	$self = {
-		return_object => {},
-		encoded_source => {},
-		sourceFilePath => '',
-		url            => 'https://demo.webwork.rochester.edu',
+		return_object   => {},
+		encoded_source  => {},
+		sourceFilePath  => '',
+		site_url        => 'https://demo.webwork.rochester.edu',
 		form_action_url =>'',
-		maketext   	   => sub {return @_}, 
-		courseID       => 'daemon_course',  # optional?
-		userID         => 'daemon',  # optional?
+		maketext        => sub {return @_}, 
+		courseID        => 'daemon_course',  # optional?
+		userID          => 'daemon',  # optional?
 		course_password => 'daemon',
 		inputs_ref      => {},	  
 		@_,
@@ -103,11 +103,11 @@ sub encoded_source {
 	$self->{encoded_source} =$source if defined $source and $source =~/\S/; # source is non-empty
 	$self->{encoded_source};
 }
-sub url {
+sub site_url {
 	my $self = shift;
 	my $new_url = shift;
-	$self->{url} = $new_url if defined($new_url) and $new_url =~ /\S/;
-	$self->{url};
+	$self->{site_url} = $new_url if defined($new_url) and $new_url =~ /\S/;
+	$self->{site_url};
 }
 sub formatRenderedProblem {
 	my $self 			  = shift;
@@ -237,18 +237,18 @@ sub formatRenderedProblem {
 
 
 	$self->{outputformats}={};
-	my $XML_URL      	 =  $self->url;
-	my $FORM_ACTION_URL  =  $self->{form_action_url};
+	my $SITE_URL      	 =  $self->site_url//'';
+	my $FORM_ACTION_URL  =  $self->{form_action_url}//'';
 
 	#################################################
 	# Local docker usage with a port number sometimes misbehaves if the port number
-	# is not forced into $XML_URL and $FORM_ACTION_URL
+	# is not forced into $SITE_URL and $FORM_ACTION_URL
 	#################################################
 	my $forcePortNumber = ($self->{inputs_ref}->{forcePortNumber})//'';
 	if ( $forcePortNumber =~ /^[0-9]+$/ ) {
 	  $forcePortNumber = 0 + $forcePortNumber;
-	  if ( ! ( $XML_URL =~ /:${forcePortNumber}/ ) ) {
-	    $XML_URL .= ":${forcePortNumber}";
+	  if ( ! ( $SITE_URL =~ /:${forcePortNumber}/ ) ) {
+	    $SITE_URL .= ":${forcePortNumber}";
 	  }
 	  if ( ! ( $FORM_ACTION_URL =~ m+:${forcePortNumber}/webwork2/html2xml+ ) ) {
 	    $FORM_ACTION_URL =~ s+/webwork2/html2xml+:${forcePortNumber}/webwork2/html2xml+ ; # Ex: "http://localhost:8080/webwork2/html2xml"
@@ -257,10 +257,11 @@ sub formatRenderedProblem {
 
 	#################################################
 
-	my $courseID         =  $self->{courseID};
-	my $userID           =  $self->{userID};
-	my $course_password  =  $self->{course_password};
-	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//4444;
+
+	my $courseID         =  $self->{courseID}//'';
+	my $userID           =  $self->{userID}//'';
+	my $course_password  =  $self->{course_password}//'';
+	my $problemSeed      =  $self->{inputs_ref}->{problemSeed}//6666;
 	my $psvn             =  $self->{inputs_ref}->{psvn}//54321;
 	my $session_key      =  $rh_result->{session_key}//'';
 	my $displayMode      =  $self->{inputs_ref}->{displayMode};
@@ -270,10 +271,10 @@ sub formatRenderedProblem {
 	my $checkMode        =  defined($self->{inputs_ref}->{WWcheck})||0;
 	my $submitMode       =  defined($self->{inputs_ref}->{WWsubmit})||0;
 	my $showCorrectMode  =  defined($self->{inputs_ref}->{WWcorrectAns})||0;
-        # problemUUID can be added to the request as a parameter.  
-        # It adds a prefix to the 
-        # identifier used by the  format so that several different problems
-        # can appear on the same page.   
+	# problemUUID can be added to the request as a parameter.  
+	# It adds a prefix to the 
+	# identifier used by the  format so that several different problems
+	# can appear on the same page.   
 	my $problemUUID      =  $self->{inputs_ref}->{problemUUID}//0;
 	my $problemResult    =  $rh_result->{problem_result}//'';
 	my $problemState     =  $rh_result->{problem_state}//'';
