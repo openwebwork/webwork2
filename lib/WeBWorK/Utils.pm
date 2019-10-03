@@ -42,7 +42,7 @@ use Storable;
 use Carp;
 #use Mail::Sender;
 use Storable qw(nfreeze thaw);
-
+use JSON;
 
 use open IO => ':encoding(UTF-8)';
 
@@ -914,7 +914,7 @@ our $BASE64_ENCODED = 'base64_encoded:';
 #  statements
 
 
-sub decodeAnswers($) {
+sub OLDdecodeAnswers($) {
 	my $serialized = shift;
 	return unless defined $serialized and $serialized;
 	my $array_ref = eval{ Storable::thaw($serialized) };
@@ -926,12 +926,24 @@ sub decodeAnswers($) {
 		return @{$array_ref};
 	}
 }
+sub decodeAnswers($) {
+	my $serialized = shift;
+	return unless defined $serialized and $serialized;
+	if ( $serialized =~ /^\[/ && $serialized =~ /\]$/) {
+		# Assuming this is JSON encoded
+		my @array_data = @{from_json($serialized)};
+		return @array_data;
+	} else {
+		# Fall back to old Storable::thaw based code
+		return OLDdecodeAnswers($serialized);
+	}
+}
 
 sub decode_utf8_base64 {
     return decode_utf8(decode_base64(shift));
 }
 
-sub encodeAnswers(\%\@) {
+sub OLD_encodeAnswers(\%\@) {
 	my %hash = %{shift()};
 	my @order = @{shift()};
 	my @ordered_hash = ();
@@ -939,7 +951,15 @@ sub encodeAnswers(\%\@) {
 		push @ordered_hash, $key, $hash{$key};
 	}
 	return Storable::nfreeze( \@ordered_hash);
-
+}
+sub encodeAnswers(\%\@) {
+	my %hash = %{shift()};
+	my @order = @{shift()};
+	my @ordered_hash = ();
+	foreach my $key (@order) {
+		push @ordered_hash, $key, $hash{$key};
+	}
+	return to_json(\@ordered_hash);
 }
 
 sub encode_utf8_base64 {
