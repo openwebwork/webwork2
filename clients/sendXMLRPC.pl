@@ -306,7 +306,6 @@ use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 
 
 use Carp;
-#use Crypt::SSLeay;  # needed for https
 use LWP::Protocol::https;
 use Time::HiRes qw/time/;
 use MIME::Base64 qw( encode_base64 decode_base64);
