@@ -37,9 +37,7 @@ my @apache2ModulesList = qw(
 	Apache2::ServerUtil
 );
 
-# Crypt::SSLeay was commented out below, but should the not be
-#   in the array when commented out - remove it.
-# For WW 2.15 replace Email::Address with Email::Address::XS
+
 
 my @modulesList = qw(
 	Array::Utils

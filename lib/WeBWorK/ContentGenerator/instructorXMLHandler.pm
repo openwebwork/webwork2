@@ -31,7 +31,6 @@ use PGUtil qw(not_null);
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
-#use Crypt::SSLeay;
 #use XMLRPC::Lite;
 
 use strict;

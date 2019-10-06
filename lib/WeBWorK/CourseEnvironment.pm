@@ -226,10 +226,10 @@ sub new {
 	}
 	# #	We'll get the pg version here and read it into the safe symbol table
 	if (-r $PG_version_file){
-		#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
+			#print STDERR ( "\n\nread PG_version file $PG_version_file\n\n");
 		my $PG_version_file_contents = readFile($PG_version_file)//'';
 		$safe->reval($PG_version_file_contents);
-		#print STDERR ("\n contents: $PG_version_file_contents");
+			#print STDERR ("\n contents: $PG_version_file_contents");
 		
 		no strict 'refs';
 		my %symbolHash2 = %{$safe->root."::"};
