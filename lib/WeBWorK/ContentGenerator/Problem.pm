@@ -2285,7 +2285,10 @@ sub output_CSS {
 	# or via a setting of $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
 	# which can be set in course.conf (the value should be an anon array).
 	my $pg = $self->{pg};
-	if ( defined( $pg->{flags}{extra_css_files} ) ) {
+	if ( defined( $pg->{flags}{extra_css_files} ) ||
+	     ( defined(  $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}  ) &&
+	       scalar( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}} ) > 0   )
+	   ) {
 		my $baseDir = $ce->{webwork_htdocs_url};
 		my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
 		my $cssFile;
