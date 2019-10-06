@@ -8,7 +8,7 @@ var WWLocalStorage = function(givenContainer) {
 	container = $('#problemMainForm');
     }
 
-    var identifier = $("input[name='problemIdentifierPrefix']").val()+
+    var identifier = $("input[name='problemUUID']").val()+
 	$("input[name='sourceFilePath']").val()+
 	$("input[name='problemSource']").val()+
 	$("input[name='problemSeed']").val();

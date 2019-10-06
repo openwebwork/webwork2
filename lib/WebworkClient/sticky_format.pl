@@ -4,7 +4,7 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <html $COURSE_LANG_AND_DIR>
 <head>
 <meta charset='utf-8'>
-<base href="$XML_URL">
+<base href="$SITE_URL">
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 
 <!-- CSS Loads -->
@@ -34,7 +34,7 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<title>$XML_URL WeBWorK using host: $XML_URL, format: sticky seed: $problemSeed</title>
+<title>WeBWorK using host: $SITE_URL, format: sticky seed: $problemSeed</title>
 </head>
 <body>
 <div class="container-fluid">
@@ -61,12 +61,12 @@ $LTIGradeMessage
 <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 <input type="hidden" name="problemSource" value="$encoded_source"> 
 <input type="hidden" name="problemSeed" value="$problemSeed"> 
+<input type="hidden" name="problemUUID" value="$problemUUID">
 <input type="hidden" name="psvn" value="$psvn">
 <input type="hidden" name="pathToProblemFile" value="$fileName">
 <input type="hidden" name="courseName" value="$courseID">
 <input type="hidden" name="courseID" value="$courseID">
 <input type="hidden" name="userID" value="$userID">
-<input type="hidden" name="problemIdentifierPrefix" value="$problemIdentifierPrefix">
 <input type="hidden" name="course_password" value="$course_password">
 <input type="hidden" name="displayMode" value="$displayMode">
 <input type="hidden" name="session_key" value="$session_key">
@@ -85,7 +85,7 @@ $LTIGradeMessage
 </div>
 </div>
 <div id="footer">
-WeBWorK &copy; 1996-2019 | host: $XML_URL | course: $courseID | format: sticky | theme: math4
+WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: sticky | theme: math4
 </div>
 <!-- Activate local storage js -->
 <script type="text/javascript">WWLocalStorage();</script>

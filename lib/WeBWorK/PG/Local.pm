@@ -201,6 +201,7 @@ sub new_helper {
 		{ #extras (this is kind of a hack, but not a serious one)
 			image_generator => $image_generator,
 			mailer => $mailer,
+			problemUUID => 0,
 		},
 	);
 	$translator->environment($envir);

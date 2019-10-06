@@ -15,7 +15,7 @@
 $nextBlock = <<'ENDPROBLEMTEMPLATE';
 <head>
 <meta charset='utf-8'>
-<base href="TO_SET_LATER_XML_URL">
+<base href="TO_SET_LATER_SITE_URL">
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 ENDPROBLEMTEMPLATE
 
@@ -127,6 +127,7 @@ push( @pairs_for_json, "hidden_input_field_answersSubmitted", '1' );
 push( @pairs_for_json, "hidden_input_field_sourceFilePath", '$sourceFilePath' );
 push( @pairs_for_json, "hidden_input_field_problemSource", '$encoded_source' );
 push( @pairs_for_json, "hidden_input_field_problemSeed", '$problemSeed' );
+push( @pairs_for_json, "hidden_input_field_problemUUID", '$problemUUID' );
 push( @pairs_for_json, "hidden_input_field_psvn", '$psvn' );
 push( @pairs_for_json, "hidden_input_field_pathToProblemFile", '$fileName' );
 push( @pairs_for_json, "hidden_input_field_courseName", '$courseID' );
@@ -144,7 +145,7 @@ push( @pairs_for_json, "hidden_input_field_forcePortNumber", '$forcePortNumber' 
 # to communicate with WW, while the distant client must use URLs of the
 # intermediate server (the man in the middle).
 
-push( @pairs_for_json, "real_webwork_XML_URL", '$XML_URL' );
+push( @pairs_for_json, "real_webwork_SITE_URL", '$SITE_URL' );
 push( @pairs_for_json, "real_webwork_FORM_ACTION_URL", '$FORM_ACTION_URL' );
 push( @pairs_for_json, "internal_problem_lang_and_dir", '$PROBLEM_LANG_AND_DIR');
 
