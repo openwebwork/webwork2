@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm,v 1.20 2006/10/10 10:58:54 dpvc Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -210,7 +210,7 @@ sub initialize {
 
 	    $filename .= '.csv';
 
-	    open my $fh, ">", $fullFilename or warn "Unable to open $fullFilename for writing";
+	    open my $fh, ">:utf8", $fullFilename or warn "Unable to open $fullFilename for writing";
 
 	    my $csv = Text::CSV->new({"eol"=>"\n"});
 	    my @columns;
@@ -463,7 +463,7 @@ sub body {
 
 	      my $previousTime = -1;
 
-	      print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center"});
+	      print CGI::start_table({class=>"past-answer-table", border=>0,cellpadding=>0,cellspacing=>3,align=>"center", dir=>"ltr"}); # The answers are not well formatted in RTL mode
 	      
 	      foreach my $answerID (@pastAnswerIDs) {
 		$foundMatches = 1 unless $foundMatches;

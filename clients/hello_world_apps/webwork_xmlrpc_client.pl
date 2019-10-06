@@ -29,7 +29,7 @@ use constant  REQUEST_CLASS    =>  'WebworkXMLRPC';  # WebworkXMLRPC is used for
 use constant  REQUEST_URI      =>  'mod_xmlrpc';
 use constant  TEMPOUTPUTFILE   =>  '/Users/gage/Desktop/renderProblemOutput.html';
 
-our	$XML_URL      =  'http://localhost:80';
+our	$SITE_URL      =  'http://localhost:80';
 our	$FORM_ACTION_URL  =  'http://localhost:80/webwork2/html2xml';
 our	$XML_PASSWORD     =  'xmlwebwork';
 our	$XML_COURSE       =  'gage_course';
@@ -98,7 +98,7 @@ our $source;
 # Build client
 ############################################
 our $xmlrpc_client = new WebworkClient (
-	url                    => $XML_URL,
+	site_url               => $SITE_URL,
 	form_action_url        => $FORM_ACTION_URL,
 	displayMode            => DISPLAYMODE(),
 

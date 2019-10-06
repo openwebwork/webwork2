@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK.pm,v 1.104 2010/05/15 18:44:26 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -336,7 +336,9 @@ sub dispatch($) {
 					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
 				} else {
 					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
-					die "You are not allowed to act as another user.\n";
+					die "You do not have permission to act as another user. 
+					Close down your browser (this clears temporary cookies), 
+					restart and try again.\n";
 				}
 			}
 			

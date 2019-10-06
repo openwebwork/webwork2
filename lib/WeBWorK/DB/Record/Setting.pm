@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Setting.pm,v 1.2 2007/07/22 05:25:17 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -30,7 +30,7 @@ use WeBWorK::Utils::DBUpgrade;
 
 BEGIN {
 	__PACKAGE__->_fields(
-		name  => { type=>"VARCHAR(255) NOT NULL", key=>1 },
+		name  => { type=>"VARCHAR(240) NOT NULL", key=>1 },
 		value => { type=>"TEXT" },
 	);
 	__PACKAGE__->_initial_records(

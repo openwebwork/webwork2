@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -2291,6 +2291,10 @@ sub body {
 					($error ? 
 						CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error) 
 						: CGI::div({class=> "RenderSolo"}, $problem_html[0]->{body_text})
+					 # did not add code to the div above to handle problem language and text direction
+					 # other RenderSolo objects make use of get_problem_lang_and_dir( $self, $pg )
+					 # and code to build a hash which sets the lang and dir attributes in addition to
+					 # the class RenderSolo. 
 					) .
 					($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : ''),
 			]));

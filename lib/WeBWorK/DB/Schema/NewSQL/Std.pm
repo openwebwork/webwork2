@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Schema/NewSQL/Std.pm,v 1.22 2009/02/02 03:18:09 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -56,9 +56,10 @@ naming requirements.
 # constructor for SQL-specific behavior
 ################################################################################
 
-sub new {
+sub new {    
 	my $self = shift->SUPER::new(@_);
-	
+		# effectively calls WeBWorK::DB::Schema::new
+		
 	$self->sql_init;
 	
 	# provide a custom error handler
@@ -111,7 +112,6 @@ sub sql_init {
 
 sub create_table {
 	my ($self) = @_;
-	
 	my $stmt = $self->_create_table_stmt;
 	$self->dbh->do($stmt);
 	my @fields = $self->fields;
@@ -126,8 +126,13 @@ sub _create_table_stmt {
 	my ($self) = @_;
 	
 	my $sql_table_name = $self->sql_table_name;
-  my $engine = $self->engine;
 	
+    # insure correct syntax if $engine or $character_set is empty. Can't have ENGINE = in mysql stmt.
+    my $engine = $self->engine;
+    my $ENGINE_CLAUSE = ($engine)? "ENGINE=$engine" : "";
+    my $character_set= $self->character_set;
+    my $CHARACTER_SET_CLAUSE = ($character_set)? "DEFAULT CHARACTER SET = $character_set": "";
+
 	my @field_list;
 	
 	# generate a column specification for each field
@@ -162,7 +167,7 @@ sub _create_table_stmt {
 	}
 	
 	my $field_string = join(", ", @field_list);
-	return "CREATE TABLE `$sql_table_name` ( $field_string ) ENGINE=$engine";
+	return "CREATE TABLE `$sql_table_name` ( $field_string ) $ENGINE_CLAUSE $CHARACTER_SET_CLAUSE";
 }
 
 ################################################################################
@@ -782,6 +787,12 @@ sub engine {
     : 'MYISAM';
 }
 
+sub character_set {
+	my $self = shift;
+	return (defined $self->{character_set} and $self->{character_set})
+		? $self->{character_set}
+		: 'latin1';
+}
 # returns non-quoted SQL name of given field
 sub sql_field_name {
 	my ($self, $field) = @_;

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Options.pm,v 1.24 2006/07/24 23:28:41 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -232,11 +232,13 @@ sub body {
 		(defined($r->param('showOldAnswers')) &&
 			$EUser->showOldAnswers() ne $r->param('showOldAnswers')) ||
 		(defined($r->param('useWirisEditor')) && 
-			 $EUser->useWirisEditor() ne $r->param('useWirisEditor'))) {
-		
+			 $EUser->useWirisEditor() ne $r->param('useWirisEditor')) ||
+		(defined($r->param('useMathQuill')) && 
+			 $EUser->useMathQuill() ne $r->param('useMathQuill'))) {		
 		$EUser->displayMode($r->param('displayMode'));
 		$EUser->showOldAnswers($r->param('showOldAnswers'));
 		$EUser->useWirisEditor($r->param('useWirisEditor'));
+		$EUser->useMathQuill($r->param('useMathQuill'));
 		
 		eval { $db->putUser($EUser) };
 		if ($@) {
@@ -284,7 +286,7 @@ sub body {
 	    $result .= CGI::br();
 	}
 
-	if ($ce->{pg}{specialPGEnvironmentVars}{MathView}) {
+	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathView') {
 	    # Note, 0 is a legal value, so we can't use || in setting this
 	    my $curr_useMathView = $EUser->useMathView ne '' ?
 		$EUser->useMathView : $ce->{pg}->{options}->{useMathView};
@@ -300,7 +302,7 @@ sub body {
 	    $result .= CGI::br();
 	}
 
-	if ($ce->{pg}{specialPGEnvironmentVars}{WirisEditor}) {
+	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'WIRIS') {
 	    # Note, 0 is a legal value, so we can't use || in setting this
 	    my $curr_useWirisEditor = $EUser->useWirisEditor ne '' ?
 		$EUser->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor};
@@ -310,6 +312,22 @@ sub body {
 		-name => "useWirisEditor",
 		-values => [1,0],
 		-default => $curr_useWirisEditor,
+		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
+		);
+	    $result .= CGI::end_fieldset();
+	    $result .= CGI::br();
+	}
+
+	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
+	    # Note, 0 is a legal value, so we can't use || in setting this
+	    my $curr_useMathQuill = $EUser->useMathQuill ne '' ?
+		$EUser->useMathQuill : $ce->{pg}->{options}->{useMathQuill};
+	    $result .= CGI::start_fieldset();
+	    $result .= CGI::legend($r->maketext("Use live equation rendering?"));
+	    $result .= CGI::radio_group(
+		-name => "useMathQuill",
+		-values => [1,0],
+		-default => $curr_useMathQuill,
 		-labels => { 0=>$r->maketext('No'), 1=>$r->maketext('Yes') },
 		);
 	    $result .= CGI::end_fieldset();

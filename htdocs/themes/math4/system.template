@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html <!--#output_course_lang_and_dir-->>
+<!--  Note that the lang and dir attributes are now set during the
+      processing of the template and not hard-coded above.
+-->
 <head>
 <meta charset='utf-8'>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +12,7 @@
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/conf/templates/math3/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -210,7 +213,6 @@ var tabberOptions = {manualStartup:true};
 		<!--#output_tag_info-->
 	</div></div>
 	<!--#endif-->
-
 	 <!--#if can="output_problem_body"--> 
 	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
 		  <div id="problem_body" class="Body span12">
@@ -252,7 +254,7 @@ var tabberOptions = {manualStartup:true};
 				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
 						<!--#if can="output_problem_body"-->
-						<div id="problem_body" class="problem-content">
+						<div id="problem_body" class="problem-content" <!--#output_problem_lang_and_dir--> >
 							<!--#output_problem_body-->
 						</div>
 						<!--#endif-->

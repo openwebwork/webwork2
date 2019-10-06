@@ -123,6 +123,19 @@ if (exists(($ce->{mail}->{smtpPort})) )  { # port not chosen automatically
 
 require Apache::WeBWorK; # force compilation of pretty much everything
 
+print "Check in with MAA site\n";
+system("ping -c1 -s100 webwork.maa.org "); # check MAA site
+print "End connectivity check\n";
+# this snippet checks the connectivity with the internet.
+
+# it also alerts MAA that a webwork site is starting up.
+# The MAA site runs the following command
+#   tcpdump -l icmp |grep 100 >tcpdump.txt 
+# to collect pings with packet length 108 (8 more bytes then sent)
+# icmp says listen for pings only. -l says to output tcpdump one line
+# a time. One of the items in the line is "length 108"
+
+# This stores the ip address of a webwork site each time it starts up.
 
 # At this point, the following configuration variables should be present for use
 # in wiring WeBWorK into Apache:

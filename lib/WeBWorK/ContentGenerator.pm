@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-2012 The WeBWorK Project, http://github.com/openwebwork
+# Copyright &copy; 2000-2012 The WeBWorK Project, http://github.com/openwebwork
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -54,14 +54,15 @@ use WeBWorK::PG;
 use MIME::Base64;
 use WeBWorK::Template qw(template);
 use WeBWorK::Localize;
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
 use WeBWorK::Utils qw(jitar_id_to_seq);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
-  
+use Encode; 
+
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
 
@@ -513,6 +514,53 @@ HTTP header is sent but before any content is sent.
 =cut
 
 #sub initialize {  }
+
+=item output_course_lang_and_dir()
+
+Defined in this package.
+
+Sets the LANG attribute and when needed the DIR attribute based
+on the language set in the course configuration.
+
+The intended use is to set these tags in the main HTML tag of the generated
+web page when the template files calls this function.
+
+It selects the language based on the setting in the course configuration
+file (when it is set) and otherwise defaults back to
+	lang="en-US"
+which was the old hard-coded setting.
+
+When the language chosen is a known right to left language, it will also set
+the DIR attribute to "rtl". Currently, only Hebrew ("heb" or "he") and
+Arabic ("ar") trigger the RTL direction setting.
+
+=cut
+
+sub output_course_lang_and_dir{
+        my $self = shift;
+        my $master_lang_setting = "lang=\"en-US\""; # default setting
+        my $master_dir_setting  = "";               # default is NOT set
+
+        my $ce_lang = $self->r->ce->{language};
+
+        if ( $ce_lang eq "en" ) {
+          $master_lang_setting = "lang=\"en-US\""; # as in default
+        } elsif ( $ce_lang =~ /^he/i ) { # supports also the current "heb" option
+          # Hebrew - requires RTL direction
+          $master_lang_setting = "lang=\"he\""; # Hebrew
+          $master_dir_setting  = "dir=\"rtl\""; # RTL
+        } elsif ( $ce_lang =~ /^ar/i ) {
+          # Hebrew - requires RTL direction
+          $master_lang_setting = "lang=\"ar\""; # Arabic
+          $master_dir_setting  = "dir=\"rtl\""; # RTL
+        } else {
+          # use the language setting of the course, with NO direction setting
+          $master_lang_setting = "lang=\"${ce_lang}\"";
+        }
+
+        print "$master_lang_setting $master_dir_setting";
+        return "";
+}
 
 =item content()
 
@@ -1099,9 +1147,9 @@ sub footer(){
 	my $ww_version = $ce->{WW_VERSION}||"unknown -- set ww version VERSION";
 	my $pg_version = $ce->{PG_VERSION}||"unknown -- set pg version PG_VERSION link to ../pg/VERSION";
 	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
-	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2011";
+	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2019";
 	print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, $r->maketext("WeBWorK &#169; [_1]| theme: [_2] | ww_version: [_3] | pg_version [_4]|", 
+	print CGI::div({-id=>"copyright"}, $r->maketext("WeBWorK &copy; [_1]| theme: [_2] | ww_version: [_3] | pg_version [_4]|", 
 	                $copyright_years,$theme, $ww_version, $pg_version), 
 	                CGI::a({-href=>"http://webwork.maa.org/"}, 
 	                $r->maketext("The WeBWorK Project"), ));
@@ -1213,6 +1261,7 @@ sub warnings {
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
+	$warnings = Encode::decode_utf8($warnings);
 	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 	
@@ -1804,7 +1853,7 @@ sub url_args {
 	foreach my $param (@fields) {
 		my @values = $r->param($param);
 		foreach my $value (@values) {
-			push @pairs, uri_escape($param) . "=" . uri_escape($value);
+			push @pairs, uri_escape_utf8($param) . "=" . uri_escape($value);
 		}
 	}
 	
@@ -2160,7 +2209,6 @@ sub warningOutput($$) {
 	
 	foreach my $warning (@warnings) {
             # Since these warnings have html they look better scrubbed
-
 	    #$warning = HTML::Entities::encode_entities($warning);  
 	    $warning = $scrubber->scrub($warning);
 	    $warning = CGI::li(CGI::code($warning));

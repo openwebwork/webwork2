@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm,v 1.10 2007/04/04 15:05:26 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -31,7 +31,7 @@ use WeBWorK::Utils qw(readFile dequote);
 use WeBWorK::DB::Utils qw(grok_vsetID);
 use WeBWorK::ContentGenerator::GatewayQuiz qw(can_recordAnswers);
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # This content generator is NOT logged in.

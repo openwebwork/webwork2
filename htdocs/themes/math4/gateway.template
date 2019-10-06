@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html <!--#output_course_lang_and_dir-->>
+<!--  Note that the lang and dir attributes are now set during the
+      processing of the template and not hard-coded above.
+-->
 <head>
 <meta charset='utf-8'>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +12,7 @@
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -104,7 +107,7 @@
 	<!--#endif-->
 
 	<!--#if can="body"-->
-	<div class="Body">
+	<div class="Body" <!--#output_problem_lang_and_dir-->>
 		<!--#body-->
 	</div>
 	<!--#endif-->

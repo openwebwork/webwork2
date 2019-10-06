@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm,v 1.64 2007/08/13 22:59:55 sh002i Exp $
 #
 # This program is free software; you can redistribute it and/or modify it under
@@ -27,14 +27,14 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use Email::Address;
+use Email::Address::XS;
 use HTML::Entities;
 #use Mail::Sender;
 use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP qw();
 use Try::Tiny;
-
+use Encode qw(encode_utf8 encode);
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
 
@@ -44,7 +44,7 @@ use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::Utils qw/readFile readDirectory/;
 use WeBWorK::Utils::FilterRecords qw/filterRecords/;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 
@@ -118,6 +118,7 @@ sub initialize {
 	my $ur = $self->{db}->getUser($user);
 
 	# store data
+	# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
 	$self->{defaultFrom}            =   $ur->rfc822_mailbox;
 	$self->{defaultReply}           =   $ur->rfc822_mailbox;
 	$self->{defaultSubject}         =   $self->r->urlpath->arg("courseID") . " notice";
@@ -388,11 +389,14 @@ sub initialize {
 		#################################################################
 		my $temp_body = ${ $r_text };
 		$temp_body =~ s/\r\n/\n/g;
-		$temp_body = join("",
-				  $r->maketext("From:")," $from \n",
-				  $r->maketext("Reply-To:")," $replyTo\n" ,
-				  $r->maketext("Subject:")," $subject\n" ,
-				  $r->maketext("Message:")," \n    $temp_body");
+		$temp_body = join("\n",
+				  "From: $from",
+				  "Reply-To: $replyTo",
+				  "Subject: $subject",
+				  "Content-Type: text/plain; charset=UTF-8",
+				  "Message:",
+				# Do NOT encode to UTF-8 here.
+				  $temp_body);
 		#warn "FIXME from $from | subject $subject |reply $replyTo|msg $temp_body";
 		#################################################################
 		# overwrite protection
@@ -425,16 +429,16 @@ sub initialize {
 		$self->{response}         = 'preview';
 
 	} elsif ($action eq 'sendEmail') {
-		# verify format of From address (one valid rfc2822 address)
-		my @parsed_from_addrs = Email::Address->parse($self->{from});
+		# verify format of From address (one valid rfc2822/rfc5322 address)
+		my @parsed_from_addrs = Email::Address::XS->parse($self->{from});
 		unless (@parsed_from_addrs == 1) {
 			$self->addbadmessage($r->maketext("From field must contain one valid email address."));
 			return;
 		}
 
-		# verify format of Reply-to address (zero or more valid rfc2822 addresses)
+		# verify format of Reply-to address (zero or more valid rfc2822/ref5322 addresses)
 		if (defined $self->{replyTo} and $self->{replyTo} ne "") {
-			my @parsed_replyto_addrs = Email::Address->parse($self->{replyTo});
+			my @parsed_replyto_addrs = Email::Address::XS->parse($self->{replyTo});
 			unless (@parsed_replyto_addrs > 0) {
 				$self->addbadmessage($r->maketext("Invalid Reply-to address."));
 				return;
@@ -558,18 +562,29 @@ sub print_preview {
 	$msg = wrap("","",$msg);
 
 	$msg = join("",
-		    $errorMessage,
-		    $preview_header,
-		    $r->maketext("To:")," ", $ur->email_address,"\n",
-		    $r->maketext("From:")," ", $self->{from} , "\n" ,
-		    $r->maketext("Reply-To:")," ", $self->{replyTo} , "\n" ,
-		    $r->maketext("Subject:"),"  ", $self->{subject} , "\n" ,"\n" ,
-	   $msg , "\n"
+		    "To: ", $ur->email_address,"\n",
+		    "From: ", "$self->{from}" , "\n",
+		    "Reply-To: ", $self->{replyTo} , "\n",
+		    "Subject: ", $self->{subject} , "\n",
+		    # In a real mails we would UTF-8 encode the message
+		    # and give the Content-Type header, for the preview which
+		    # is displayed - just add the header, but do NOT use
+		    # encode_utf8($msg) as it will be done late.
+		    "Content-Type: text/plain; charset=UTF-8\n\n",
+		    $msg, # will be in HTML output, and gets encoded to UTF-8 later on
+		    "\n"
 	);
 
-#	return join("", '<pre>',wrap("","",$msg),"\n","\n",
-	return join("", '<pre>',$msg,"\n","\n",
-				   '</pre>',
+
+	# The content in message is going to be put in HTML.
+	# It needs to be encoded to avoid problems with things like
+	# <user@domain.com>.
+	$msg = encode_entities($msg);
+
+	$msg = join("",$errorMessage,$preview_header,$msg);
+
+	return join("", '<div dir="ltr"><pre>',$msg,"\n","\n",
+				   '</pre></div>',
 				   CGI::p($r->maketext('Use browser back button to return from preview mode')),
 				   CGI::h3($r->maketext('Emails to be sent to the following:')),
 				   $recipients, "\n",
@@ -672,9 +687,18 @@ sub print_form {
 				 "\n",
 				 #CGI::hr(),
 				 CGI::div(
-					 "\n", $r->maketext('From:'),'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',  CGI::textfield(-name=>"from", -size=>30, -value=>$from, -override=>1),
-					 "\n", CGI::br(),$r->maketext('Reply-To:'),' ', CGI::textfield(-name=>"replyTo", -size=>30, -value=>$replyTo, -override=>1),
-					 "\n", CGI::br(),$r->maketext('Subject: ').' ', CGI::br(), CGI::textarea(-name=>'subject', -default=>$subject, -rows=>3,-cols=>30, -override=>1),
+					 "\n", $r->maketext('From:'),'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+						CGI::textfield(-name=>"from", -size=>30,
+							-maxlength=>120,
+							-value=>$from, -override=>1),
+					 "\n", CGI::br(),$r->maketext('Reply-To:'),' ',
+						CGI::textfield(-name=>"replyTo", -size=>30,
+							-maxlength=>120,
+							-value=>$replyTo, -override=>1),
+					 "\n", CGI::br(),$r->maketext('Subject: ').' ', CGI::br(),
+						CGI::textarea(-name=>'subject',
+							-default=>$subject, -override=>1,
+							-rows=>3, -cols=>30 ),
 				),
 				#CGI::hr(),
 				$r->maketext("Editor rows:").' ', CGI::textfield(-name=>'rows', -size=>3, -value=>$rows),
@@ -707,6 +731,7 @@ sub print_form {
 
 				#CGI::i('Press any action button to update display'),CGI::br(),
 			#show available macros
+			CGI::span({dir=>"ltr"}, # Put the popup in a LTR span
 				CGI::popup_menu(
 						-name=>'dummyName',
 						-values=>['', '$SID', '$FN', '$LN', '$SECTION', '$RECITATION','$STATUS', '$EMAIL', '$LOGIN', '$COL[n]', '$COL[-1]'],
@@ -723,7 +748,7 @@ sub print_form {
 							'$COL[-1]'=>'$COL[-1] - '.$r->maketext('Last column of merge file')
 							}
 				), "\n",
-			),
+			)),
 	);
 
 	print CGI::end_table();
@@ -773,10 +798,10 @@ sub print_form {
 ##############################################################################
 
 sub saveProblem {
-    my $self      = shift;
+	my $self = shift;
 	my ($body, $probFileName)= @_;
 	local(*PROBLEM);
-	open (PROBLEM, ">$probFileName") ||
+	open (PROBLEM, ">:encoding(UTF-8)",$probFileName) ||
 		$self->addbadmessage(CGI::p("Could not open $probFileName for writing.
 						Check that the  permissions for this problem are 660 (-rw-rw----)"));
 	print PROBLEM $body if -w $probFileName;
@@ -794,9 +819,9 @@ sub read_input_file {
 	my ($subject, $from, $replyTo);
 	local(*FILE);
 	if (-e "$filePath" and -r "$filePath") {
-		open FILE, "$filePath" || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
-		while ($header !~ s/Message:\s*$//m and not eof(FILE)) {
-			$header .= <FILE>;
+		open FILE, "<:encoding(UTF-8)", $filePath || do { $self->addbadmessage(CGI::p($r->maketext("Can't open [_1]",$filePath))); return};
+		while ($header !~ s/Message:\s*$//m and not eof(FILE)) { 
+			$header .= <FILE>; 
 		}
 		$text = join( '', <FILE>);
 		$text =~ s/^\s*//; # remove initial white space if any.
@@ -869,8 +894,10 @@ sub mail_message_to_recipients {
 			my $email = Email::Simple->create(
 				header => [
 					To => $ur->email_address,
-					From => $from, Subject => $subject ],
-				body => $msg
+					From => $from,
+					Subject => $subject,
+					"Content-Type" => "text/plain; charset=UTF-8" ],
+				body => encode_utf8($msg)
 			);
 			$email->header_set("X-Remote-Host: ",$self->{remote_host});
 
@@ -925,8 +952,9 @@ sub email_notification {
 			To => $self->{defaultFrom},
 			From => $self->{defaultFrom},
 			Subject => $subject,
+			"Content-Type" => "text/plain; charset=UTF-8"
 		],
-		body => $result_message,
+		body => encode_utf8($result_message),
 	);
 	$email->header_set("X-Remote-Host: ",$self->{remote_host});
 

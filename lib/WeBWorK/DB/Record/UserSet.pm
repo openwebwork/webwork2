@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserSet.pm,v 1.21 2007/08/13 22:59:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -36,13 +36,13 @@ BEGIN {
 		open_date                 => { type=>"BIGINT" },
 		due_date                  => { type=>"BIGINT" },
 		answer_date               => { type=>"BIGINT" },
-		reduced_scoring_date       => { type=>"BIGINT" },	    
+		reduced_scoring_date      => { type=>"BIGINT" },
 		visible                   => { type=>"INT" },
 		enable_reduced_scoring    => { type=>"INT" },
 		assignment_type           => { type=>"TEXT" },
-	        description               => { type=>"TEXT" },
-		restricted_release	      => { type=>"TEXT" },
-		restricted_status	      => { type=>"FLOAT" },
+		description               => { type=>"TEXT" },
+		restricted_release        => { type=>"TEXT" },
+		restricted_status         => { type=>"FLOAT" },
 		attempts_per_version      => { type=>"INT" },
 		time_interval             => { type=>"INT" },
 		versions_per_interval     => { type=>"INT" },

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Record/Problem.pm,v 1.9 2006/10/02 15:04:27 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -34,15 +34,15 @@ BEGIN {
 		value        => { type=>"INT" },
 		max_attempts => { type=>"INT" },
 		att_to_open_children => { type=>"INT" },
-	        counts_parent_grade => { type=>"INT" },
+		counts_parent_grade => { type=>"INT" },
 		showMeAnother => { type=>"INT" },
 		showMeAnotherCount => { type=>"INT" },
 		# periodic re-randomization period
 		prPeriod => {type => "INT"},
-		# periodic re-randomization version count
+		# periodic re-randomization number of attempts for the current seed
 		prCount => {type => "INT"},
-		# a field for flags relating to this problem  
-	        flags => { type =>"TEXT" },
+		# a field for flags relating to this problem
+		flags => { type =>"TEXT" },
 	);
 }
 

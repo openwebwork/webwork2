@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright � 2000-1307 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright © 2000-1307 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -203,7 +203,7 @@ sub new {
   my $textno;
   my $textinfo=[];
 
-  open(IN,"$name") or die "can not open $name: $!";
+  open(IN,'<:encoding(UTF-8)',"$name") or die "can not open $name: $!";
   if ($name !~ /pg$/ && $name !~ /\.pg\.[-a-zA-Z0-9_.@]*\.tmp$/) {
     warn "Not a pg file";  #print caused trouble with XMLRPC 
     $self->{file}= undef;
@@ -224,12 +224,14 @@ sub new {
 
   while (<IN>) {
   $lineno++;
+  eval {
   SWITCH: {
       if (/#\s*\bKEYWORDS\((.*)\)/i) {
-        my @keyword = keywordcleaner($1);
-		@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
-        $self->{keywords} = [@keyword];
-        $lasttag = $lineno;
+
+			my @keyword = keywordcleaner($1);
+			@keyword = grep { not /^\s*'?\s*'?\s*$/ } @keyword;
+			$self->{keywords} = [@keyword];
+			$lasttag = $lineno;
         last SWITCH;
       }
       if (/#\s*\bRESOURCES\((.*)\)/i) {
@@ -319,7 +321,11 @@ sub new {
         $lasttag = $lineno;
         last SWITCH;
       }
-    }}                                               #end of SWITCH and while
+    }  # end of SWITCH
+    }; # end of eval error trap
+	warn "error reading problem $name $!, $@ " if $@;
+    
+    }                                               #end of while
   $self->{textinfo} = $textinfo;
 
   if (defined($self->{DBchapter}) and $self->{DBchapter} eq 'ZZZ-Inserted Text') {

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Skeleton.pm,v 1.5 2006/07/08 14:07:34 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -240,7 +240,7 @@ sub body {
 		    print CGI::start_div({id=>"modal_".$item->id(),class=>"modal hide fade"});
 		    print CGI::start_div({class=>'modal-header'});
 		    print CGI::a({href=>"#",class=>"close","data-dismiss"=>"modal", "aria-hidden"=>"true"},CGI::span({class=>"icon icon-remove"}),CGI::div({class=>"sr-only"},$r->maketext("close")));
-		    print CGI::h3($item->name()); 
+		    print CGI::h3($r->maketext($item->name())); 
 		    print CGI::end_div();
 		    print CGI::start_form({method=>"post", action=>$self->systemLink($urlpath,authen=>0), name=>"itemform_$itemnumber", class=>"achievementitemform"});
 		    print CGI::start_div({class=>"modal-body"});
@@ -303,7 +303,7 @@ sub body {
 			$imgSrc = $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 			}
 	
-			print CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'});
+			print CGI::div(CGI::img({src=>$imgSrc, alt=>$userAchievement->earned ? 'Achievement Earned' : 'Achievement Unearned'}));
 			print CGI::start_div({class=>'cheevotextbox'});
 			print CGI::h3($achievement->name);
 			print CGI::div(CGI::i($r->maketext("[_1] Points:", $achievement->{points})).' '.$achievement->{description});

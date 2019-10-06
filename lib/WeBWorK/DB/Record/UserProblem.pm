@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Record/UserProblem.pm,v 1.11 2007/08/13 22:59:57 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -40,7 +40,7 @@ BEGIN {
 		showMeAnotherCount  => { type=>"INT" },
 		# periodic re-randomization period
 		prPeriod => {type => "INT"},
-		# periodic re-randomization version count
+		# periodic re-randomization number of attempts for the current seed
 		prCount => {type => "INT"},
 		problem_seed  => { type=>"INT" },
 		status        => { type=>"FLOAT" },
@@ -49,10 +49,10 @@ BEGIN {
 		num_correct   => { type=>"INT" },
 		num_incorrect => { type=>"INT" },
 		att_to_open_children => { type=>"INT" },
-	        counts_parent_grade => { type=>"INT" },
+		counts_parent_grade => { type=>"INT" },
 		sub_status    => { type=>"FLOAT" },    # A subsidiary status used to implement the reduced scoring period
-	        #a field for flags which need to be set 
-	        flags => { type=>"TEXT" },
+		# a field for flags which need to be set
+		flags => { type=>"TEXT" },
 	);
 }
 

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System>
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB.pm,v 1.112 2012/06/08 22:40:00 wheeler Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -249,7 +249,8 @@ sub init_table {
 	my $source = $layout->{source};
 	my $depend = $layout->{depend};
 	my $params = $layout->{params};
-  my $engine = $layout->{engine};
+  	my $engine = $layout->{engine};
+  	my $character_set = $layout->{character_set};
 	
 	# add a key for this table to the self hash, but don't define it yet
 	# this for loop detection
@@ -270,7 +271,7 @@ sub init_table {
 	
 	runtime_use($schema);
 	my $schemaObject = eval { $schema->new(
-		$self, $driverObject, $table, $record, $params, $engine) };
+		$self, $driverObject, $table, $record, $params, $engine, $character_set) };
 	croak "error instantiating DB schema $schema for table $table: $@"
 		if $@;
 	
@@ -2321,7 +2322,7 @@ sub validateKeyfieldValue {
 	croak "invalid characters in '".encode_entities($keyfield)." field: '".encode_entities($value)."' (valid characters are [0-9])"
 	    unless $value =~ m/^[0-9]*$/;
     } elsif ($versioned and $keyfield eq "set_id" || $keyfield eq 'setID') {
-	croak "invalid characters in '".encode_entities($keyfield)." field: '".encode_entities($value)."' (valid characters are [0-9])"
+	croak "invalid characters in '".encode_entities($keyfield)." field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.,])"
 	    unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
 	# } elsif ($versioned and $keyfield eq "user_id") { 
     } elsif ($keyfield eq "user_id" || $keyfield eq 'userID') { 

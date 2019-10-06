@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -25,17 +25,13 @@ use warnings;
 
 package WeBWorK::ContentGenerator::instructorXMLHandler;
 use base qw(WeBWorK::ContentGenerator);
-use MIME::Base64 qw( encode_base64 decode_base64);
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(readFile);
 use PGUtil qw(not_null);
 
 our $UNIT_TESTS_ON      = 0;  # should be called DEBUG??  FIXME
 
-#use Crypt::SSLeay;
 #use XMLRPC::Lite;
-#use MIME::Base64 qw( encode_base64 decode_base64);
-
 
 use strict;
 use warnings;
@@ -49,8 +45,8 @@ use JSON;
 #################################################
   instructorXMLHandler -- a front end for the Webservice that accepts HTML forms
 
-  receives WeBWorK problems presented as HTML forms, usually created with js xmlhttprequests,
-  packages the form variables into an XML_RPC request
+ receives WeBWorK problems presented as HTML forms, usually created with js xmlhttprequests,
+ packages the form variables into an XML_RPC request
  suitable for all of the webservices in WebworkWebservices
  returns xml resutls
 #################################################
@@ -58,12 +54,15 @@ use JSON;
 =cut
  
 # To configure the target webwork server two URLs are required
-# 1. $XML_URL   http://test.webwork.maa.org/mod_xmlrpc
+# 1. http://test.webwork.maa.org/mod_xmlrpc 
 #    points to the Webservice.pm and Webservice/RenderProblem modules
 #    Is used by the client to send the original XML request to the webservice
-#
-# 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/html2xml
-#    points to the renderViaXMLRPC.pm module.
+#  Note: This NOT the same as the webworkClient->url which does NOT have
+#        the mod_xmlrpc segment attached. webworkClient->url would be http://test.webwork.maa.org
+#        The mod_xmlrpc segment is added by WebworkClient.pm when issuing the webservice call
+#        using the constant REQUEST_URI within the subroutine xmlrpcCall
+# 2. $FORM_ACTION_URL      http:http://test.webwork.maa.org/webwork2/instructorXMLHandler
+#    points to the instructorXMLHandler.pm module.
 #
 #     This url is placed as form action url when the rendered HTML from the original
 #     request is returned to the client from Webservice/RenderProblem. The client
@@ -71,32 +70,28 @@ use JSON;
 #     pipes it through a local browser.
 #
 #     The browser uses this url to resubmit the problem (with answers) via the standard
-#     HTML webform used by WeBWorK to the renderViaXMLRPC.pm handler.  
+#     HTML webform used by WeBWorK to the instructorXMLHandler.pm handler.  
 #
-#     This renderViaXMLRPC.pm handler acts as an intermediary between the browser 
+#     This instructorXMLHandler.pm handler acts as an intermediary between the browser 
 #     and the webservice.  It interprets the HTML form sent by the browser, 
 #     rewrites the form data in XML format, submits it to the WebworkWebservice.pm 
 #     which processes it and sends the the resulting HTML back to renderViaXMLRPC.pm
 #     which in turn passes it back to the browser.
-# 3.  The second time a problem is submitted renderViaXMLRPC.pm receives the WeBWorK form 
+# 3.  The second time a problem is submitted instructorXMLHandler.pm receives the WeBWorK form 
 #     submitted directly by the browser.  
-#     The renderViaXMLRPC.pm translates the WeBWorK form, has it processes by the webservice
+#     The instructorXMLHandler.pm translates the WeBWorK form, has it processed by the webservice
 #     and returns the result to the browser. 
 #     The The client renderProblem.pl script is no longer involved.
-# 4.  Summary: renderProblem.pl is only involved in the first round trip
-#     of the submitted problem.  After that the communication is  between the browser and
-#     renderViaXMLRPC using HTML forms and between renderViaXMLRPC and the WebworkWebservice.pm
-#     module using XML_RPC.
 
 
 # Determine the root directory for webwork on this machine (e.g. /opt/webwork/webwork2 )
 # this is set in webwork.apache2-config
 # it specifies the address of the webwork root directory
 
-#my $webwork_dir  = $ENV{WEBWORK_ROOT};
+
 my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
 unless ($webwork_dir) {
-	die "renderViaXMLRPC.pm requires that the top WeBWorK directory be set in ".
+	die " instructorXMLHandler.pm requires that the top WeBWorK directory be set in ".
 	"\$WeBWorK::Constants::WEBWORK_DIRECTORY by webwork.apache-config or webwork.apache2-config\n";
 }
 
@@ -115,14 +110,14 @@ unless ($server_root_url) {
 # child
 ############################
 
-our ($XML_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
+our ($SITE_URL, $FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 	$XML_PASSWORD     	 =  'xmluser';
 	$XML_COURSE          =  'daemon_course';
 
 
 
-	$XML_URL             =  "$server_root_url/mod_xmlrpc";
+	$SITE_URL            =  "$server_root_url" ; 
 	$FORM_ACTION_URL     =  "$server_root_url/webwork2/instructorXMLHandler";
 
 use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
@@ -168,11 +163,10 @@ sub pre_header_initialize {
     #######################
     my $xmlrpc_client = new WebworkClient;
 
-	$xmlrpc_client->url($XML_URL);
+	$xmlrpc_client->site_url($SITE_URL);  # does NOT include mod_xmlrpc ending
+#	$xmlrpc_client->{site_url} ='';   # make this the site without the mod_xmlrpc ending? ~= s/mod_xmlrpc$
 	$xmlrpc_client->{form_action_url}= $FORM_ACTION_URL;
-#	$xmlrpc_client->{displayMode}   = DISPLAYMODE();
 	$xmlrpc_client->{user}          = 'xmluser';
-#	$xmlrpc_client->{password}      = $XML_PASSWORD;
 	$xmlrpc_client->{site_password} = $XML_PASSWORD;
 #	$xmlrpc_client->{course}        = $r->param('courseID');
 	$xmlrpc_client->{courseID}      = $r->param('courseID');
@@ -195,6 +189,7 @@ sub pre_header_initialize {
 		    subcommand		        => $r->param("subcommand") ||undef,
 		    maxdepth		        => $r->param("maxdepth") || 0,
 		    problemSeed	            => $r->param("problemSeed") || 0,
+		    problemUUID             => $r->param("problemUUID") // 0,
 		    displayMode	            => $r->param("displayMode") || undef,
 		    noprepostambles	        => $r->param("noprepostambles") || undef,
 		    library_subjects	    => $r->param("library_subjects") ||undef,
@@ -265,8 +260,8 @@ sub pre_header_initialize {
 
 
 	if ($UNIT_TESTS_ON) {
-		print STDERR "instructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
-		   format_hash_ref($input);
+		print STDERR "\tinstructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",
+		   format_hash_ref($input),"\n";
 	}
 	my $source = "";
 	#print $r->param('problemPath');
@@ -438,7 +433,8 @@ sub content {
 		# it behaves differently when re-randomization in the library takes place
 		# then during the initial rendering. 
 		# print only the text field (not the ra_out field)
-		# and print the text directly without formatting.
+	        # and print the text directly without formatting.
+	    
 		if ($xmlrpc_client->return_object->{problem_out}->{text}) {
 			print $xmlrpc_client->return_object->{problem_out}->{text};
 		} else {

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -42,9 +42,13 @@ require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
+use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
 
+use utf8;
+#use open ':encoding(utf8)';
+binmode(STDOUT, ":utf8");
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
 ################################################################################
@@ -226,14 +230,21 @@ sub can_useMathView {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{MathView};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathView';
 }
 
 sub can_useWirisEditor {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
 
-    return $ce->{pg}->{specialPGEnvironmentVars}->{WirisEditor};
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'WIRIS';
+}
+    
+sub can_useMathQuill {
+    my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
+    my $ce= $self->r->ce;
+
+    return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathQuill';
 }
     
 
@@ -552,14 +563,20 @@ sub pre_header_initialize {
 	my $requestNewSeed            = $r->param("requestNewSeed") // 0;
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-	
+
+	# Check for a page refresh which causes a cached form resubmission.  In that case this is
+	# not a valid submission of answers.
+	$submitAnswers = 0, $self->{resubmitDetected} = 1
+	if ($submitAnswers && (!defined($formFields->{num_attempts}) ||
+			(defined($formFields->{num_attempts}) &&
+				$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect)));
+
 	$self->{displayMode}    = $displayMode;
 	$self->{redisplay}      = $redisplay;
 	$self->{submitAnswers}  = $submitAnswers;
 	$self->{checkAnswers}   = $checkAnswers;
 	$self->{previewAnswers} = $previewAnswers;
 	$self->{formFields}     = $formFields;
-	$self->{requestNewSeed} = $requestNewSeed;
 
 	# get result and send to message
 	my $status_message = $r->param("status_message");
@@ -585,7 +602,7 @@ sub pre_header_initialize {
     # store the showMeAnother hash for the check to see if the button can be used
     # (this hash is updated and re-stored after the can, must, will hashes)
 	$self->{showMeAnother} = \%showMeAnother;
-	
+
 	##### permissions #####
 
 	# what does the user want to do?
@@ -606,8 +623,9 @@ sub pre_header_initialize {
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
-        useWirisEditor     => $ce->{pg}->{options}->{useWirisEditor},
+	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
+	        useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
+	        useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -629,6 +647,7 @@ sub pre_header_initialize {
 		getSubmitButton    => 0,
 	    useMathView        => 0,
 	    useWirisEditor     => 0,
+	    useMathQuill       => 0,
 	);
 	 
 	# does the user have permission to use certain options?
@@ -649,40 +668,36 @@ sub pre_header_initialize {
 		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
 	    useMathView              => $self->can_useMathView(@args),
 	    useWirisEditor           => $self->can_useWirisEditor(@args),
+	    useMathQuill              => $self->can_useMathQuill(@args),
 	);
 
 	# re-randomization based on the number of attempts and specified period
-	my $prEnabled = $ce->{pg}->{options}->{enablePeriodicRandomization} // 0;
-	my $rerandomizePeriod = $ce->{pg}->{options}->{periodicRandomizationPeriod} // 0;
-	if (defined $problem->{prPeriod} ){
-		if ( $problem->{prPeriod} =~ /^\s*$/ ){
-			$problem->{prPeriod} = $ce->{problemDefaults}->{prPeriod};
-		}
-	}
-	if ( (defined $problem->{prPeriod}) and ($problem->{prPeriod} > -1) ){
-		$rerandomizePeriod = $problem->{prPeriod};
-	}
-	$prEnabled = 0 if ($rerandomizePeriod < 1);
-	if ($prEnabled){
-		my $thisAttempt = ($submitAnswers) ? 1 : 0;
-		my $attempts_used = $problem->num_correct + $problem->num_incorrect + $thisAttempt;
-		if ($problem->{prCount} =~ /^\s*$/) {
-			$problem->{prCount} = sprintf("%d",$attempts_used/$rerandomizePeriod) - 1;
-		}
-		$requestNewSeed = 0 if (
-			($attempts_used % $rerandomizePeriod) or
-			( sprintf("%d",$attempts_used/$rerandomizePeriod) <= $problem->{prCount} ) or
-			after($set->due_date)
-		);
-		if ($requestNewSeed){
-			# obtain new random seed to hopefully change the problem
-			my $newSeed = ($problem->{problem_seed} + $attempts_used) % 10000;
-			$problem->{problem_seed} = $newSeed;
-			$problem->{prCount} = sprintf("%d",$attempts_used/$rerandomizePeriod);
-			$db->putUserProblem($problem);
-		}
-	}
+	my $prEnabled = $ce->{pg}{options}{enablePeriodicRandomization} // 0;
+	my $rerandomizePeriod = $ce->{pg}{options}{periodicRandomizationPeriod} // 0;
 
+	$problem->{prPeriod} = $ce->{problemDefaults}{prPeriod}
+	if (defined($problem->{prPeriod}) && $problem->{prPeriod} =~ /^\s*$/);
+
+	$rerandomizePeriod = $problem->{prPeriod}
+	if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
+
+	$prEnabled = 0 if ($rerandomizePeriod < 1);
+	if ($prEnabled) {
+		$problem->{prCount} = 0
+		if !defined($problem->{prCount}) || $problem->{prCount} =~ /^\s*$/;
+
+		$problem->{prCount} += $submitAnswers ? 1 : 0;
+
+		$requestNewSeed = 0
+		if ($problem->{prCount} < $rerandomizePeriod || after($set->due_date));
+
+		if ($requestNewSeed) {
+			# obtain new random seed to hopefully change the problem
+			$problem->{problem_seed} = ($problem->{problem_seed} + $problem->num_correct + $problem->num_incorrect) % 10000;
+			$problem->{prCount} = 0;
+		}
+		$db->putUserProblem($problem);
+	}
 	
 	# final values for options
 	my %will;
@@ -708,7 +723,7 @@ sub pre_header_initialize {
 		$key,
 		$set,
 		$problem,
-		$set->psvn, # FIXME: this field should be removed
+		$set->psvn,
 		$formFields,
 		{ # translation options
 			displayMode     => $displayMode,
@@ -723,25 +738,26 @@ sub pre_header_initialize {
 	);
 
 	debug("end pg processing");
-	
-	if ($prEnabled){
-		my $thisAttempt = ($submitAnswers) ? 1 : 0;
-		my $attempts_used = $problem->num_correct + $problem->num_incorrect + $thisAttempt;
-		my $rerandomize_step = 0;
-		$rerandomize_step = 1 if (
-			($attempts_used > 0) &&
-			($attempts_used % $rerandomizePeriod == 0) &&
-			(sprintf("%d",$attempts_used/$rerandomizePeriod) > $problem->{prCount})
-			);
-		$rerandomize_step = 0 if ( after($set->due_date) );
-		if ($rerandomize_step){
-			$showMeAnother{active} = 0;
-			$must{requestNewSeed} = 1;
-			$can{requestNewSeed} = 1;
-			$want{requestNewSeed} = 1;
-			$will{requestNewSeed} = 1;
+
+	$pg->{body_text} .= CGI::hidden({ -name => 'num_attempts', -id => 'num_attempts',
+			-value => $problem->num_correct + $problem->num_incorrect + ($submitAnswers ? 1 : 0) });
+
+	if ($prEnabled && $problem->{prCount} >= $rerandomizePeriod && !after($set->due_date)) {
+		$showMeAnother{active} = 0;
+		$must{requestNewSeed} = 1;
+		$can{requestNewSeed} = 1;
+		$want{requestNewSeed} = 1;
+		$will{requestNewSeed} = 1;
+		# If this happens, it means that the page was refreshed.  So prevent the answers from
+		# being recorded and the number of attempts from being increased.
+		if ($problem->{prCount} > $rerandomizePeriod) {
+			$self->{resubmitDetected} = 1;
+			$must{recordAnswers} = 0;
+			$can{recordAnswers} = 0;
+			$want{recordAnswers} = 0;
+			$will{recordAnswers} = 0;
 		}
-	} 
+	}
 	
 	##### update and fix hint/solution options after PG processing #####
 	
@@ -770,6 +786,9 @@ sub pre_header_initialize {
 	$self->{can}  = \%can;
 	$self->{will} = \%will;
 	$self->{pg} = $pg;
+
+	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
+	if ($self->{will}->{useMathQuill});
 
 	#### process and log answers ####
 	$self->{scoreRecordedMessage} = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
@@ -1212,6 +1231,37 @@ sub output_form_start{
 	return "";
 }
 
+# output_problem_lang_and_dir subroutine
+
+# adds a lang and maybe also a dir setting to the DIV tag attributes, if
+# needed by the PROBLEM language
+
+sub output_problem_lang_and_dir {
+    my $self = shift;
+    my $pg = $self->{pg};
+
+    my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
+    my $to_set_tag;
+    my $to_set_val;
+
+    # String with the HTML attributes to add
+    my $to_set = " ";
+
+    # Put the requested tags and values into the string format
+    while ( scalar(@to_set_lang_dir) > 0 ) {
+	$to_set_tag = shift( @to_set_lang_dir );
+	$to_set_val = shift( @to_set_lang_dir );
+	if ( defined( $to_set_val ) ) {
+	    $to_set .= " ${to_set_tag}=\"${to_set_val}\"";
+	}
+    }
+
+    print "$to_set";
+    return "";
+}
+
+
+
 # output_problem_body subroutine
 
 # prints out the body of the current problem
@@ -1222,6 +1272,7 @@ sub output_problem_body{
 	my %will = %{ $self->{will} };
 
 	print "\n";
+
 	print CGI::div({id=>'output_problem_body'},$pg->{body_text});
 
 	return "";
@@ -1558,9 +1609,7 @@ sub output_score_summary{
 
 	my $prEnabled = $ce->{pg}->{options}->{enablePeriodicRandomization} // 0;
 	my $rerandomizePeriod = $ce->{pg}->{options}->{periodicRandomizationPeriod} // 0;
-	if ( (defined $problem->{prPeriod}) and ($problem->{prPeriod} > -1) ){
-		$rerandomizePeriod = $problem->{prPeriod};
-	}
+	$rerandomizePeriod = $problem->{prPeriod} if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 	$prEnabled = 0 if ($rerandomizePeriod < 1);
 
 	# score summary
@@ -1570,19 +1619,19 @@ sub output_score_summary{
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
 	
 	my $prMessage = "";
-	if ($prEnabled){
-		my $attempts_before_rr = ($rerandomizePeriod) - ($attempts ) % ($rerandomizePeriod);
-		$attempts_before_rr = 0 if ( (defined $will{requestNewSeed}) and $will{requestNewSeed});
-		$prMessage = " ".
-			$r->maketext(
-				"You have [quant,_1,attempt,attempts] left before new version will be requested.",
-				$attempts_before_rr)
-			if ($attempts_before_rr > 0);
-		$prMessage = " ".
-			$r->maketext("Request new version now.")
-			if ($attempts_before_rr == 0);
+	if ($prEnabled) {
+		my $attempts_before_rr = (defined($will{requestNewSeed}) && $will{requestNewSeed}) ? 0
+			: ($rerandomizePeriod - $problem->{prCount});
+
+		$prMessage = " " . $r->maketext(
+			"You have [quant,_1,attempt,attempts] left before new version will be requested.",
+			$attempts_before_rr)
+		if ($attempts_before_rr > 0);
+
+		$prMessage = " " . $r->maketext("Request new version now.")
+		if ($attempts_before_rr == 0);
 	}
-	$prMessage = "" if ( after($set->due_date) or before($set->open_date) );
+	$prMessage = "" if (after($set->due_date) or before($set->open_date));
 	
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
@@ -1899,7 +1948,11 @@ sub output_summary{
 	    # don't show attempt results (correctness)
 	    # show attempt previews
 	  }
-	
+
+	  print CGI::div({class=>'ResultsWithError'},
+		  $r->maketext("ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).")),
+	  CGI::br() if ($self->{resubmitDetected});
+
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;
 	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
@@ -2174,6 +2227,12 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
+
+	# MathQuill live rendering 
+	if ($self->{will}->{useMathQuill}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+	}
 	
 	# This is for knowls
         # Javascript and style for knowls
@@ -2183,7 +2242,7 @@ sub output_JS{
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
-		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+		if (open(TAXONOMY, "<:encoding(utf8)", $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
 			my $taxo = '[]';
 			$taxo = join("", <TAXONOMY>);
 			close TAXONOMY;
@@ -2209,14 +2268,49 @@ sub output_CSS {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
         # Javascript and style for knowls
-        print qq{
-           <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+        print "<link href=\"$site_url/css/knowlstyle.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
 
 	#style for mathview
 	if ($self->{will}->{useMathView}) {
-	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />\n";
 	}
 	
+	#style for mathquill
+	if ($self->{will}->{useMathQuill}) {
+		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />\n";
+		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />\n";
+	}
+
+	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
+	# or via a setting of $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
+	# which can be set in course.conf (the value should be an anon array).
+	my $pg = $self->{pg};
+	if ( defined( $pg->{flags}{extra_css_files} ) ||
+	     ( defined(  $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}  ) &&
+	       scalar( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}} ) > 0   )
+	   ) {
+		my $baseDir = $ce->{webwork_htdocs_url};
+		my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
+		my $cssFile;
+		my %cssFiles;
+		# Avoid duplicates
+		my @courseCssRequests = ();
+		if ( defined($ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files} ) ) {
+			@courseCssRequests = ( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
+} );
+		}
+		foreach $cssFile ( @courseCssRequests, @{$pg->{flags}{extra_css_files}} ) {
+			$cssFiles{$cssFile} = 1;
+		}
+		foreach $cssFile ( keys( %cssFiles ) ) {
+			if ( -f "$webwork_dir/htdocs/css/$cssFile" ) { # FIXME - test for existence
+				print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${baseDir}/css/$cssFile\" />\n";
+			} else {
+				print "<!-- $cssFile is not available in htdocs/css/ on this server -->\n";
+			}
+		}
+	}
+
 	return "";
 }
 

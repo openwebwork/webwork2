@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Authen/Moodle.pm,v 1.14 2007/02/14 19:08:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -41,7 +41,7 @@ use WeBWorK::Cookie;
 use WeBWorK::Debug;
 use Date::Parse; # for moodle 1.7 date parsing
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 sub new {

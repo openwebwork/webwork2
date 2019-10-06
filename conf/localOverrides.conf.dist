@@ -33,6 +33,7 @@
 # WeBWorK site
 
 
+
 ################################################################################
 # Additional mail settings in defaults.conf can be overridden here
 ################################################################################
@@ -127,9 +128,6 @@ $webworkFiles{screenSnippets}{setHeader}         = "$webworkDirs{conf}/snippets/
 # The directory containing the natinal problem library files. Set to "" if no problem
 # library is installed.
 # NationalProblemLibrary (NPL) has been renamed to OpenProblemLibrary (OPL)
-#$problemLibrary{root}        = "/opt/webwork/libraries/NationalProblemLibrary";
-#$problemLibrary{version}     = "2";
-# uncomment these lines below and comment out the line above if using OPL instead of NPL
 
 $problemLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 $contribLibrary{root}       = "/opt/webwork/libraries/webwork-open-problem-library/Contrib";
@@ -223,6 +221,7 @@ $options{PGCodeMirror} = 1;
 # This sets if mathview is available on the PG editor for use as a minimal latex equation editor
 $options{PGMathView} = 0;
 $options{PGWirisEditor} = 0;
+$options{PGMathQuill} = 0;
 
 ################################################################################
 # PG subsystem options
@@ -508,10 +507,42 @@ $options{useOPLdefFiles}=1;
 # Permission overrides (e.g. "admin", "professor", "ta", "student", "guest"
 ################################################################################
 
-# $permissionLevels{show_resource_info} 				= "admin";
-# $permissionLevels{show_pg_info_checkbox}            = "admin";
-# $permissionLevels{show_answer_hash_info_checkbox}	= "admin";
-# $permissionLevels{show_answer_group_info_checkbox}	= "admin";
+ $permissionLevels{show_resource_info} 				= "admin";
+ $permissionLevels{show_pg_info_checkbox}            = "admin";
+ $permissionLevels{show_answer_hash_info_checkbox}	= "admin";
+ $permissionLevels{show_answer_group_info_checkbox}	= "admin";
 
-# $permissionLevels{modify_tags} = "undef";
+ $permissionLevels{modify_tags} = "admin";
+
+################################################################################
+
+# Available Hardcopy themes (located in snippets) - adds four XeLaTeX themes
+# using polyglossia for multilingual support and fontspec.
+
+$hardcopyThemes = [ qw (
+	oneColumn
+	twoColumn
+	XeLaTeX-oneColumn
+	XeLaTeX-twoColumn
+	XeLaTeX-Hebrew-oneColumn
+	XeLaTeX-Hebrew-twoColumn
+)];
+
+# Hardcopy theme names (pretty names for themes)
+$hardcopyThemeNames = {
+        oneColumn => 'pdfLaTeX - English - One Column',
+        twoColumn => 'pdfLaTeX - English - Two Columns',
+	XeLaTeX-oneColumn => 'XeLaTeX - English - one Column',
+	XeLaTeX-twoColumn => 'XeLaTeX - English - two Columns',
+        XeLaTeX-Hebrew-oneColumn => 'XeLaTeX - Hebrew/English - one Column',
+        XeLaTeX-Hebrew-twoColumn => 'XeLaTeX - Hebrew/English - two Columns',
+};
+
+# Change default Hardcopy theme - in order to use an XeLaTeX theme, we must set
+#    $externalPrograms{pdflatex} to use xelatex (here or in site.conf) !!!
+#$hardcopyTheme = "XeLaTeX-twoColumn";
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+
+################################################################################
+
 1; #final line of the file to reassure perl that it was read properly.

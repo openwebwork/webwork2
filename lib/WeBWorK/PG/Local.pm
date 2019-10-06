@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/PG/Local.pm,v 1.28 2009/10/17 15:50:33 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -201,6 +201,7 @@ sub new_helper {
 		{ #extras (this is kind of a hack, but not a serious one)
 			image_generator => $image_generator,
 			mailer => $mailer,
+			problemUUID => 0,
 		},
 	);
 	$translator->environment($envir);
@@ -245,7 +246,7 @@ sub new_helper {
 	# Safe::Rootx:: and NOT to Safe::Root1::, which is the value of main::
 	# at compile time.
 	# 
-	# TO ENABLE CACHEING UNCOMMENT THE FOLLOWING:
+	# TO ENABLE CACHEING UNCOMMENT THE FOLLOWING:  -- this has not been used in some time
 # 	eval{$translator->pre_load_macro_files(
 # 		$WeBWorK::PG::Local::safeCache,
 # 		$ce->{pg}->{directories}->{macros}, 

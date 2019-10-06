@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/DB/Schema.pm,v 1.13 2009/01/25 15:30:35 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -83,7 +83,7 @@ dependent. C<$db> is provided so that schemas can query other schemas.
 =cut
 
 sub new {
-	my ($proto, $db, $driver, $table, $record, $params, $engine) = @_;
+	my ($proto, $db, $driver, $table, $record, $params, $engine, $character_set) = @_;
 	my $class = ref($proto) || $proto;
 	
 	my @supportedTables = $proto->TABLES();
@@ -100,7 +100,8 @@ sub new {
 		table  => $table,
 		record => $record,
 		params => $params,
-    engine => $engine,
+    	engine => $engine,
+    	character_set => $character_set,
 	};
 	bless $self, $class;
 	return $self;

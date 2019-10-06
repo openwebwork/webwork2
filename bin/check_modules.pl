@@ -37,13 +37,14 @@ my @apache2ModulesList = qw(
 	Apache2::ServerUtil
 );
 
+
+
 my @modulesList = qw(
 	Array::Utils
 	Benchmark
 	Carp
 	CGI
 	Class::Accessor
-	#Crypt::SSLeay
 	Dancer
 	Dancer::Plugin::Database
 	Data::Dump
@@ -56,7 +57,7 @@ my @modulesList = qw(
 	DBI
 	Digest::MD5
 	Digest::SHA
-	Email::Address
+	Email::Address::XS
 	Email::Simple
 	Email::Sender::Simple
 	Email::Sender::Transport::SMTP
@@ -85,6 +86,8 @@ my @modulesList = qw(
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
+	Moo
+	MooX::Options
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
@@ -113,6 +116,7 @@ my @modulesList = qw(
 	UUID::Tiny
 	XML::Parser
 	XML::Parser::EasyTree
+	XML::Simple
 	XML::Writer
 	XMLRPC::Lite
 	YAML

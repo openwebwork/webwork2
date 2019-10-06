@@ -1,7 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/conf/site.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -104,7 +104,12 @@ $externalPrograms{git} = "/usr/bin/git";
 # equation rendering/hardcopy utiltiies
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
+
 $externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
+# Consider using xelatex instead of pdflatex for multilingual use, and
+# use polyglossia and fontspec packages (which require xelatex or lualatex).
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+
 $externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
 ####################################################
@@ -171,6 +176,22 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 $database_dsn ="dbi:mysql:webwork";
 $database_storage_engine = 'myisam';
 
+#########################
+# MYSQL compatibility settings for handling international Unicode characters (utf8 and utf8mb)
+#########################
+# These set the way characters are encoded in mysql and will depend on the version of mysqld being used.  
+# the default is to use latin1.  With version 2.15 we will move to 
+# encoding utf8mb4 which allows the encoding of characters from many languages
+# including chinese, arabic and hebrew.
+
+$ENABLE_UTF8MB4 =1;    # setting this to 1 enables utf8mb4 encoding, setting this to 
+					   # 0 sets this for older mysql (pre 5.3) which cannot
+					   # handle utf8mb4 characters.
+
+$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : 'utf8';
+
+
+# DATABASE login information
 # The following two variables must match the GRANT statement run on the mysql server as described above.
 $database_username ="webworkWrite";
 $database_password ="passwordRW";
@@ -260,9 +281,10 @@ $mail{tls_allowed} = 0;
 # When changing from the NPL to the OPL it is important to change the version number
 # because the names of the tables in the database have changed.
 
-#CONFIGURE problemLibrary values in this file. These settings override defaults in default.config
+# RE-CONFIGURE problemLibrary values in the localOverrides.conf file.
+# The settings in site.conf are overridden by settings  in default.config
 #################################################
-$problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
+#$problemLibrary{root}        ="/opt/webwork/libraries/webwork-open-problem-library/OpenProblemLibrary";
 ###########################################################
 
 ################################################################################
@@ -294,5 +316,14 @@ $siteDefaults{timezone} = "America/New_York";
 # enter one of the listed values here.
 # If you do not fill this in, the system will default to "en_US"
 $siteDefaults{locale}="";
+
+################################################################################
+# Search Engine Indexing Enable/Disable
+################################################################################
+# sets the default meta robots content for individual course pages
+# this will not stop your main course listing page from being indexed
+# valid contents: index, noindex, follow, nofollow, noarchive, and
+# unavailable_after (example: "index, unavailable_after: 23-Jul-2007 18:00:00 EST")
+$options{metaRobotsContent}='noindex, nofollow';
 
 1; #final line of the file to reassure perl that it was read properly.

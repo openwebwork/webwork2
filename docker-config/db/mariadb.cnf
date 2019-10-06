@@ -1,0 +1,44 @@
+# MariaDB-specific config file.
+# Read by /etc/mysql/my.cnf
+
+[client]
+# Default is Latin1, if you need UTF-8 set this (also in server section)
+#default-character-set = utf8 
+
+# Based on:  https://salsa.debian.org/mariadb-team/mariadb-10.1/commit/e6ade2be57856736e8bc8039d71b35f9ffcde48e
+default-character-set = utf8mb4
+
+[mysql]
+# Based on:  https://salsa.debian.org/mariadb-team/mariadb-10.1/commit/e6ade2be57856736e8bc8039d71b35f9ffcde48e
+default-character-set = utf8mb4
+
+[mysqld]
+#
+# * Character sets
+# 
+# Default is Latin1, if you need UTF-8 set all this (also in client section)
+#
+#character-set-server  = utf8 
+#collation-server      = utf8_general_ci 
+#character_set_server   = utf8 
+#collation_server       = utf8_general_ci 
+
+# MySQL/MariaDB default is Latin1, but we want the full utf8 4-bit character set. 
+# See also client.cnf
+# Based on:  https://salsa.debian.org/mariadb-team/mariadb-10.1/commit/e6ade2be57856736e8bc8039d71b35f9ffcde48e
+character-set-server  = utf8mb4
+collation-server      = utf8mb4_general_ci
+character_set_server   = utf8mb4
+collation_server       = utf8mb4_general_ci
+init-connect='SET NAMES utf8mb4'
+
+# Increase max_connections
+max_connections = 500
+
+# Modify:
+#   wait_timeout (default usually 28800),
+#   interactive_timeout (default usually 28800),
+#   net_read_timeout (default usually 60)
+wait_timeout = 28800
+interactive_timeout = 28800
+net_read_timeout = 3600

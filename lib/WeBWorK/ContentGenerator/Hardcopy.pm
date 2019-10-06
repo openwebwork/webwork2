@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm,v 1.102 2009/09/25 00:39:49 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -566,7 +566,9 @@ sub display_form {
 	
 	}
 
-	my %hardcopyThemeNames = map {$_ => $r->maketext($ce->{hardcopyThemeNames}->{$_})} @{$ce->{hardcopyThemes}};
+	# Using maketext on the next line would trigger errors when a local hardcopyTheme is installed.
+	# my %hardcopyThemeNames = map {$_ => $r->maketext($ce->{hardcopyThemeNames}->{$_})} @{$ce->{hardcopyThemes}};
+	my %hardcopyThemeNames = map {$_ => $ce->{hardcopyThemeNames}->{$_}} @{$ce->{hardcopyThemes}};
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
@@ -692,7 +694,7 @@ sub generate_hardcopy {
 	# create TeX file  (callback  write_multiuser_tex,  or ??)
 	#######################################
 	
-	my $open_result = open my $FH, ">", $tex_file_path;
+	my $open_result = open my $FH, ">:encoding(UTF-8)", $tex_file_path;
 	unless ($open_result) {
 		$self->add_errors("Failed to open file '".CGI::code(CGI::escapeHTML($tex_file_path))
 			."' for writing: ".CGI::code(CGI::escapeHTML($!)));
@@ -859,7 +861,7 @@ sub generate_hardcopy_pdf {
 		# read hardcopy.log and report first error
 		my $hardcopy_log = "$temp_dir_path/hardcopy.log";
 		if (-e $hardcopy_log) {
-			if (open my $LOG, "<", $hardcopy_log) {
+			if (open my $LOG, "<:encoding(UTF-8)", $hardcopy_log) {
 				my $line;
 				while ($line = <$LOG>) {
 					last if $line =~ /^!\s+/;

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader$
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -35,8 +35,10 @@ use HTML::Entities;
 use HTML::Scrubber;
 use Date::Format;
 use WeBWorK;
+use Encode;
+use utf8;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # load correct modules
@@ -65,10 +67,10 @@ sub handler($) {
 	my $log = $r->log;
 	my $uri = $r->uri;
 
+
 	# We set the bimode for print to utf8 because some language options
 	# use utf8 characters
-	binmode(STDOUT, ":utf8");
-
+	binmode(STDOUT, "encoding(UTF-8)");
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
 	my $warning_handler;
@@ -76,11 +78,12 @@ sub handler($) {
 		$warning_handler = sub {
 			my ($warning) = @_;
 			chomp $warning;
-			
 			my $warnings = $r->notes->get("warnings");
+			$warnings = Encode::decode_utf8($warnings);
 			$warnings .= "$warning\n";
 			#my $backtrace = join("\n",backtrace());
 			#$warnings .= "$backtrace\n\n";
+			$warnings = Encode::encode_utf8($warnings);
 			$r->notes->set(warnings => $warnings);
 			
 			$log->warn("[$uri] $warning");

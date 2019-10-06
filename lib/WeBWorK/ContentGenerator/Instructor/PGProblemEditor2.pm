@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm,v 1.99 2010/05/18 18:39:40 apizer Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -1076,7 +1076,7 @@ sub saveFileChanges {
 
 		eval {
 			local *OUTPUTFILE;
-			open OUTPUTFILE,  ">$outputFilePath"
+			open OUTPUTFILE,  ">:utf8", $outputFilePath
 					or die "Failed to open $outputFilePath";
 			print OUTPUTFILE $problemContents;
 			close OUTPUTFILE;		
@@ -1292,7 +1292,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);
@@ -1309,7 +1309,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1326,7 +1326,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1341,7 +1341,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} elsif ($file_type eq 'options_info') {  # redirec to Options.pm
@@ -1353,7 +1353,7 @@ sub view_handler {
 				editMode           => "temporaryFile",
 				edit_level         => $edit_level,
 				sourceFilePath     => $relativeTempFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} else {
@@ -1460,7 +1460,7 @@ sub add_problem_handler {
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
 					sourceFilePath     => $relativeSourceFilePath,
-					status_message     => uri_escape($self->{status_message}),
+					status_message     => uri_escape_utf8($self->{status_message}),
 					file_type          => 'problem',
 	
 				}
@@ -1489,7 +1489,7 @@ sub add_problem_handler {
 					displayMode        => $displayMode,
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
-					status_message     => uri_escape($self->{status_message}),
+					status_message     => uri_escape_utf8($self->{status_message}),
 						}
 		);
 	} elsif ($targetFileType eq 'hardcopy_header')  {
@@ -1515,7 +1515,7 @@ sub add_problem_handler {
 					displayMode        => $displayMode,
 					editMode           => "savedFile",
 					edit_level         => $edit_level,
-					status_message     => uri_escape($self->{status_message}),
+					status_message     => uri_escape_utf8($self->{status_message}),
 						}
 		);
 	} else {
@@ -1599,7 +1599,7 @@ sub save_handler {
 				editMode           => "savedFile",
 				edit_level         => 0,
 				sourceFilePath     => $relativeEditFilePath,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);
@@ -1614,7 +1614,7 @@ sub save_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "savedFile",
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1629,7 +1629,7 @@ sub save_handler {
 				problemSeed        => $problemSeed,
 				editMode           => "savedFile",
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 	
 			}
 		);	
@@ -1641,7 +1641,7 @@ sub save_handler {
 			params => {
 				editMode           => ("savedFile"),
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} elsif ($file_type eq 'options_info') {  # redirect to Options.pm
@@ -1651,7 +1651,7 @@ sub save_handler {
 			params => {
 				editMode           => ("savedFile"),
 				edit_level         => 0,
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 			}
 		);
 	} elsif ($file_type eq 'source_path_for_problem_file') {  # redirect to ProblemSets.pm
@@ -1666,7 +1666,7 @@ sub save_handler {
 				edit_level         => 0,
 				sourceFilePath     => $outputFilePath, #The path relative to the templates directory is required.
 				file_type          => 'source_path_for_problem_file',
-				status_message     => uri_escape($self->{status_message})
+				status_message     => uri_escape_utf8($self->{status_message})
 
 			 }
 	);
@@ -1754,7 +1754,7 @@ sub save_as_form {  # calls the save_as_handler
 }
 # suggestions for improvement
 # save as ......
-# ¥replacing foobar (rename) ¥ and add to set (add_new_problem) ¥ as an independent file (new_independent_problem)
+# Â¥replacing foobar (rename) Â¥ and add to set (add_new_problem) Â¥ as an independent file (new_independent_problem)
  
 sub save_as_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
@@ -1810,7 +1810,7 @@ sub save_as_handler {
 		# setting $do_not_save stops saving and any redirects
 		$do_not_save = 1;
 		$self->addbadmessage(CGI::p($r->maketext("File '[_1]' exists. File not saved. No changes have been made.  You can change the file path for this problem manually from the 'Hmwk Sets Editor' page", $self->shortPath($outputFilePath))));
-		$self->addgoodmessage(CGI::p($r->maketext($r->maketext("The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser."))));
+		$self->addgoodmessage(CGI::p($r->maketext("The text box now contains the source of the original problem. You can recover lost edits by using the Back button on your browser.")));
 	} else {
 		$self->{editFilePath} = $outputFilePath;
 		$self->{tempFilePath} = ''; # nothing needs to be unlinked.
@@ -1938,7 +1938,7 @@ sub save_as_handler {
 									 problemSeed        => $problemSeed,
 									 edit_level         => $edit_level,
 									 file_type          => $new_file_type,
-									 status_message     => uri_escape($self->{status_message})
+									 status_message     => uri_escape_utf8($self->{status_message})
 
 								 }
 	);
@@ -1988,10 +1988,18 @@ sub output_JS{
 	    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
 	 }
 
-	 if ($ce->{options}->{PGWirisEditor}) {
+	if ($ce->{options}->{PGWirisEditor}) {
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
+	}
+
+
+	if ($ce->{options}->{PGMathQuill}) {
+        	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mathquill.css\"/>";
+        	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mqeditor.css\"/>";
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
 	}
 
 

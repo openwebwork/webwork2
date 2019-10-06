@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm,v 1.36 2008/06/19 19:34:31 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -646,7 +646,7 @@ sub displaySets {
 		                                  index          => $successIndicator,
 		                                  section        => $studentRecord->section,
 		                                  recitation     => $studentRecord->recitation,
-		                                  problemString  => "<pre>$longtwo</pre>",
+		                                  problemString  => "<span dir=\"ltr\"><pre dir=\"ltr\">$longtwo</pre></span>", # RTL mode does not handle the pre well
 		                                  act_as_student => $act_as_student_url,
 		                                  email_address  => $studentRecord->email_address,
 		                                  problemData    => {%h_problemData},
@@ -763,7 +763,7 @@ sub displaySets {
 	}	    
 
 
-	$problem_header = '<pre>'.join("", map {&fourSpaceFill($_)}  @list_problems  ).'</pre>';
+	$problem_header = '<span dir=\"ltr\"><pre dir=\"ltr\">'.join("", map {&fourSpaceFill($_)}  @list_problems  ).'</pre></span>'; # RTL mode does not handle the pre well
 
 # changes for gateways/versioned sets here.  in this case we allow instructors
 # to modify the appearance of output, which we do with a form.  so paste in the

@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm,v 1.62 2007/03/07 17:34:42 glarose Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -747,7 +747,7 @@ sub writeCSV {
 		rename $filename, $bakFileName or warn "Unable to rename $filename to $bakFileName";
 	}
 
-	open my $fh, ">", $filename or warn "Unable to open $filename for writing";
+	open my $fh, ">:encoding(UTF-8)", $filename or warn "Unable to open $filename for writing";
 	foreach my $row (@csv) {
 		my @rowPadded = ();
 		foreach (my $column = 0; $column < @$row; $column++) {
@@ -775,7 +775,7 @@ sub readStandardCSV {
 
 sub writeStandardCSV {
 	my ($self, $filename, @csv) = @_;
-	open my $fh, ">", $filename;
+	open my $fh, ">:encoding(UTF-8)", $filename;
 	foreach my $row (@csv) {
 		print $fh (join ",", map {$self->quote($_)} @$row);
 		print $fh "\n";

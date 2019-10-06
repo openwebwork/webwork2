@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Request.pm,v 1.10 2007/07/23 04:06:32 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
@@ -26,9 +26,9 @@ Apache::Request with additional WeBWorK-specific fields.
 use strict;
 use warnings;
 
-use mod_perl;
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
+use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+use Encode;
 
 use WeBWorK::Localize;
 
@@ -58,10 +58,14 @@ sub mutable_param {
 	my $self = shift;
 	
 	if (not defined $self->{paramcache}) {
-		my @names = $self->SUPER::param;
-		@{$self->{paramcache}}{@names} = map { [ $self->SUPER::param($_) ] } @names;
+	    my @names = $self->SUPER::param();
+	    foreach my $name (@names) {
+		my @params = $self->SUPER::param($name);
+		@params = map {Encode::decode_utf8($_)} @params;
+		$self->{paramcache}{$name} = [@params];
+	    }
 	}
-	
+
 	@_ or return keys %{$self->{paramcache}};
 	
 	my $name = shift;
