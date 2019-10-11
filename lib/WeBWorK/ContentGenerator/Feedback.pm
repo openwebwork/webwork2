@@ -503,7 +503,7 @@ sub format_userproblem {
 	if (%last_answer) {
 		$result .= "Last answer:\n";
 		foreach my $key (sort keys %last_answer) {
-			$result .= "\t$key: $last_answer{$key}\n";
+			$result .= "\t$key: $last_answer{$key}\n" if $last_answer{$key};
 		}
 	} else {
 		$result .= "Last answer:                  none\n";
