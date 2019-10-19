@@ -75,7 +75,7 @@ function WWDatePicker(name,reduced) {
 
     var getDate = function(element) {
 
-	if ($(element).val() == 'None Specified') {
+	if ($(element).val() == '') {
 	    return null;
 	} else {
 	    return element.datetimepicker('getDate');

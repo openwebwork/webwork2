@@ -115,30 +115,18 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "25",
 		override  => "any",
-		labels    => {
-				#0 => "None Specified",
-				"" => x("None Specified"),
-		},
 	},
 	due_date => {
 		name      => x("Closes"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
-		labels    => {
-				#0 => "None Specified",
-				"" => x("None Specified"),
-		},
 	},
 	answer_date => {
 		name      => x("Answers Available"),
 		type      => "edit",
 		size      => "25",
 		override  => "any",
-		labels    => {
-				#0 => "None Specified",
-				"" => x("None Specified"),
-		},
 	},
 	visible => {
 		name      => x("Visible to Students"),
@@ -165,20 +153,12 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "25",
 		override  => "any",
-		labels    => {
-				#0 => "None Specified",
-				"" => x("None Specified"),
-		},
 	},
 	restricted_release => {
 		name      => x("Restrict release by set(s)"),
 		type      => "edit",
 		size      => "30",
 		override  => "any",
-		labels    => {
-				#0 => "None Specified",
-				"" => x("None Specified"),
-		},
                 help_text => x("This set will be unavailable to students until they have earned a certain score on the sets specified in this field.  The sets should be written as a comma separated list.  The minimum score required on the sets is specified in the following field.")
 	},
 	restricted_status => {
@@ -710,23 +690,23 @@ sub FieldHTML {
 	# if we are creating override feilds we should add the js to automatically check the
 	# override box.
 	if ($forUsers && $check) {
-	    $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
-			$onKeyUp = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
-			$uncheckBox = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',false)";
-			$resetClass = "\$('#$recordType\\\\.$recordID\\\\.${field}_id').attr('class', 'hasDatepicker')";
+		$onChange = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)";
+		$onKeyUp = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)";
+		$uncheckBox = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false)";
+		$resetClass = "\$('input[id=\"$recordType.$recordID.${field}_id').attr('class', 'hasDatepicker')";
 	}
 
 	if ($edit) {
 		$inputType = CGI::font({class=>"visible"}, CGI::input({
-		                type => "text",
+				type => "text",
 				name => "$recordType.$recordID.$field",
 				id   => "$recordType.$recordID.${field}_id",
 				value => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
 				size => $properties{size} || 5,
+				placeholder => $field =~ /_date/ ? x("None Specified") : '',
 				onChange => $onChange,
 				onkeyup => $onKeyUp,
-				onfocus => "if (this.value=='None Specified') { this.value = ''; }",
-				onblur => "if (this.value == '') { this.value = 'None Specified'; $uncheckBox; $resetClass; }",
+				onblur => "if (this.value == '') { $uncheckBox; $resetClass; }",
 		}));
 
 	} elsif ($choose) {
