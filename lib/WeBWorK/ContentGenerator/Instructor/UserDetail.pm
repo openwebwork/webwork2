@@ -481,9 +481,6 @@ sub DBFieldTable {
 		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
 		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
 
-		my $onChange = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)";
-		my $onKeyUp = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)";
-
 		push @results,
 			[$r->maketext($rh_fieldLabels->{$field}).' ',
 			 defined $UserRecord ?
@@ -500,10 +497,11 @@ sub DBFieldTable {
 							-id =>"$recordType.$recordID.${field}_id",
 							-type=> "text",
 							-value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
-							-onchange => $onChange,
-							-onkeyup => $onKeyUp,
+							-onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)",
+							-onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)",
 							-placeholder => x("None Specified"),
-							-onblur => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false); \$('input[id=\"$recordType.$recordID.${field}_id\"]').attr('class', 'hasDatepicker'); }",
+							-onblur => "if (this.value == '')"
+								. "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
 							-size => 25})
 					) : "",
 				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),
