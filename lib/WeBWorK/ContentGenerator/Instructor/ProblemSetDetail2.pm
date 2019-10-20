@@ -653,9 +653,9 @@ sub FieldHTML {
 	$userValue = (defined($userValue)) ? ($labels{$userValue // ""} || $userValue) : $blankfield; # this allows for a label if value is 0
 
 	if ($field =~ /_date/) {
-		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P') if defined $globalValue && $globalValue ne $labels{""};
+		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P') if defined $globalValue && $globalValue ne "";
 		# this is still fragile, but the check for blank (as opposed to 0) $userValue seems to prevent errors when no user has been assigned.
-		$userValue = $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') if defined $userValue && $userValue =~/\S/ && $userValue ne $labels{""};
+		$userValue = $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') if defined $userValue && $userValue =~/\S/ && $userValue ne "";
 	}
 
 	if ( defined($properties{convertby}) && $properties{convertby} ) {
@@ -1096,58 +1096,71 @@ sub initialize {
 	if (defined $r->param('submit_changes')) {
 		my @names = ("open_date", "due_date", "answer_date", "reduced_scoring_date");
 
-		my %dates = map { $_ => $r->param("set.$setID.$_") || ''} @names;
-
-		%dates = map {
-			my $unlabel = $undoLabels{$_}->{$dates{$_}};
-			$_ => (defined($unlabel) || !$dates{$_}) ? $setRecord->$_ : $self->parseDateTime($dates{$_})
-		} @names;
-
-		($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_}||0 } @names;
-
-		# make sure dates are numeric by using ||0
-
-		if ($answer_date < $due_date || $answer_date < $open_date) {
-			$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the close date!"));
-			$error = $r->param('submit_changes');
+		my %dates;
+		for (@names)
+		{
+			$dates{$_} = $r->param("set.$setID.$_") || '';
+			if (defined($undoLabels{$_}{$dates{$_}}) || !$dates{$_})
+			{
+				$dates{$_} = $setRecord->$_;
+			}
+			else
+			{
+				eval{ $dates{$_} = $self->parseDateTime($dates{$_}) };
+				if ($@) {
+					$self->addbadmessage("Badly defined time. No date changes made:<br>$@");
+					$error = $r->param('submit_changes');
+				}
+			}
 		}
 
-		if ($due_date < $open_date ) {
-			$self->addbadmessage($r->maketext("Answers cannot be due until on or after the open date!"));
-			$error = $r->param('submit_changes');
-		}
+		if (!$error)
+		{
+			($open_date, $due_date, $answer_date, $reduced_scoring_date) = map { $dates{$_}||0 } @names;
 
-		my $enable_reduced_scoring =
-		    $ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-		    (defined($r->param("set.$setID.enable_reduced_scoring")) ?
-		    $r->param("set.$setID.enable_reduced_scoring") :
-		    $setRecord->enable_reduced_scoring);
+			# make sure dates are numeric by using ||0
 
-		if ($enable_reduced_scoring &&
-		    $reduced_scoring_date
-		    && ($reduced_scoring_date > $due_date
-			|| $reduced_scoring_date < $open_date)) {
-		    $self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and close date."));
-		    $error = $r->param('submit_changes');
-		}
+			if ($answer_date < $due_date || $answer_date < $open_date) {
+				$self->addbadmessage($r->maketext("Answers cannot be made available until on or after the close date!"));
+				$error = $r->param('submit_changes');
+			}
 
-		# make sure the dates are not more than 10 years in the future
-		my $curr_time = time;
-		my $seconds_per_year = 31_556_926;
-		my $cutoff = $curr_time + $seconds_per_year*10;
-		if ($open_date > $cutoff) {
-			$self->addbadmessage($r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID));
-			$error = $r->param('submit_changes');
-		}
-		if ($due_date > $cutoff) {
-			$self->addbadmessage($r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID));
-			$error = $r->param('submit_changes');
-		}
-		if ($answer_date > $cutoff) {
-			$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
-			$error = $r->param('submit_changes');
-		}
+			if ($due_date < $open_date ) {
+				$self->addbadmessage($r->maketext("Answers cannot be due until on or after the open date!"));
+				$error = $r->param('submit_changes');
+			}
 
+			my $enable_reduced_scoring =
+			$ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
+			(defined($r->param("set.$setID.enable_reduced_scoring")) ?
+				$r->param("set.$setID.enable_reduced_scoring") :
+				$setRecord->enable_reduced_scoring);
+
+			if ($enable_reduced_scoring &&
+				$reduced_scoring_date
+				&& ($reduced_scoring_date > $due_date
+					|| $reduced_scoring_date < $open_date)) {
+				$self->addbadmessage($r->maketext("The reduced scoring date should be between the open date and close date."));
+				$error = $r->param('submit_changes');
+			}
+
+			# make sure the dates are not more than 10 years in the future
+			my $curr_time = time;
+			my $seconds_per_year = 31_556_926;
+			my $cutoff = $curr_time + $seconds_per_year*10;
+			if ($open_date > $cutoff) {
+				$self->addbadmessage($r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID));
+				$error = $r->param('submit_changes');
+			}
+			if ($due_date > $cutoff) {
+				$self->addbadmessage($r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID));
+				$error = $r->param('submit_changes');
+			}
+			if ($answer_date > $cutoff) {
+				$self->addbadmessage($r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID));
+				$error = $r->param('submit_changes');
+			}
+		}
 	}
 
 	if ($error) {
