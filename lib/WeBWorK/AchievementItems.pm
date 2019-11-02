@@ -155,6 +155,7 @@ sub use_item {
     # Set a new close date and answer time for the student and remove the item
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
+    $set->reduced_scoring_date(time()+86400);
 
     $db->putUserSet($set);
 	
@@ -246,6 +247,7 @@ sub use_item {
     #add time to the due date and answer date and remove item from inventory
     $userSet->due_date($set->due_date()+86400);
     $userSet->answer_date($set->answer_date()+86400);
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400);
 
     $db->putUserSet($userSet);
 	
@@ -329,6 +331,7 @@ sub use_item {
     #add time to the due date and answer date and remove item from inventory
     $userSet->due_date($set->due_date()+172800);
     $userSet->answer_date($set->answer_date()+172800);
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+172800);
 
     $db->putUserSet($userSet);
 	
@@ -1515,6 +1518,7 @@ sub use_item {
     #add time to the due date and answer date
     $userSet->due_date($set->due_date()+86400);
     $userSet->answer_date($set->answer_date()+86400);
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400);
 
     $db->putUserSet($userSet);
 
@@ -1526,6 +1530,7 @@ sub use_item {
 	$set = $db->getSetVersion($userName,$setID,$version);
 	$set->due_date($set->due_date()+86400);
 	$set->answer_date($set->answer_date()+86400);
+	$set->reduced_scoring_date($set->reduced_scoring_date()+86400);
 	$db->putSetVersion($set);
 
     }
@@ -1615,6 +1620,7 @@ sub use_item {
     #add time to the due date and answer date and remove item from inventory
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
+    $set->reduced_scoring_date(time()+86400);
 
     $db->putUserSet($set);
 	
