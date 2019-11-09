@@ -26,7 +26,7 @@ sub add_defaults
 	my $actor = Caliper::Actor::generate_actor($ce, $db, $user_id);
 
 	if (!exists($event_hash->{'@context'})) {
-		$event_hash->{'@context'} = 'http://purl.imsglobal.org/ctx/caliper/v1p1';
+		$event_hash->{'@context'} = 'http://purl.imsglobal.org/ctx/caliper/v1p2';
 	}
 	$event_hash->{'id'} = 'urn:uuid:' . $uuid;
 	$event_hash->{'actor'} = $actor;
@@ -41,15 +41,8 @@ sub add_defaults
 	if (!exists($event_hash->{'extensions'})) {
 		$event_hash->{'extensions'} = ();
 	}
-	$event_hash->{'extensions'}{'browser-info'} = ();
-	if (defined($ENV{HTTP_USER_AGENT})) {
-		$event_hash->{'extensions'}{'browser-info'}{'userAgent'} = $ENV{HTTP_USER_AGENT};
-	}
 	if (defined($ENV{HTTP_REFERER})) {
-		$event_hash->{'extensions'}{'browser-info'}{'referer'} = $ENV{HTTP_REFERER};
-	}
-	if (defined($ENV{REMOTE_ADDR})) {
-		$event_hash->{'extensions'}{'browser-info'}{'ipAddress'} = $ENV{REMOTE_ADDR};
+		$event_hash->{'extensions'}{'referer'} = $ENV{HTTP_REFERER};
 	}
 }
 

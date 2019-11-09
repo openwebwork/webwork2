@@ -63,6 +63,12 @@ sub user_session
 	return $self->getBaseUrl() . 'session/'. $session_key;
 }
 
+sub user_client
+{
+	my ($self, $session_key) = @_;
+	return $self->user_session($session_key) . '/client';
+}
+
 sub user_membership
 {
 	my ($self, $user_id) = @_;

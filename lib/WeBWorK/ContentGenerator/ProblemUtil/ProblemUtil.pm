@@ -290,6 +290,7 @@ sub process_and_log_answer{
 					my $completed_question_event = {
 						'type' => 'AssessmentItemEvent',
 						'action' => 'Completed',
+						'profile' => 'AssessmentProfile',
 						'object' => Caliper::Entity::problem_user(
 							$self->{ce},
 							$db,
@@ -314,6 +315,7 @@ sub process_and_log_answer{
 					my $submitted_set_event = {
 						'type' => 'AssessmentEvent',
 						'action' => 'Submitted',
+						'profile' => 'AssessmentProfile',
 						'object' => Caliper::Entity::problem_set(
 							$self->{ce},
 							$db,

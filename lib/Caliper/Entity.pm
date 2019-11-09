@@ -41,6 +41,21 @@ sub session
 		'id' => $resource_iri->user_session($session_key),
 		'type' => 'Session',
 		'user' => $actor,
+		'client' => Caliper::Entity::client($ce, $db, $session_key),
+	};
+}
+
+sub client
+{
+	my ($ce, $db, $session_key) = @_;
+	my $resource_iri = Caliper::ResourseIri->new($ce);
+
+	return {
+		'id' => $resource_iri->user_client($session_key),
+		'type' => 'SoftwareApplication',
+		'userAgent' => $ENV{HTTP_USER_AGENT},
+		'ipAddress' => $ENV{REMOTE_ADDR},
+		'host' => $ENV{HTTP_HOST},
 	};
 }
 

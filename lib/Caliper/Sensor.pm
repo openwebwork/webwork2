@@ -66,7 +66,7 @@ sub sendEvents
 		my $envelope = {
 			'sensor' => $resource_iri->webwork(),
 			'sendTime' => Caliper::Sensor::formatted_timestamp(time()),
-			'dataVersion' => 'http://purl.imsglobal.org/ctx/caliper/v1p1',
+			'dataVersion' => 'http://purl.imsglobal.org/ctx/caliper/v1p2',
 			'data' => $event_chunk,
 		};
 

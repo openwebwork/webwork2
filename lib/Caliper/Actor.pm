@@ -13,7 +13,7 @@ use Caliper::ResourceIri;
 sub generate_anonymous_actor
 {
 	return {
-		'id' => 'http://purl.imsglobal.org/ctx/caliper/v1p1/Person',
+		'id' => 'http://purl.imsglobal.org/caliper/Person',
 		'type' => 'Person',
 	};
 }
