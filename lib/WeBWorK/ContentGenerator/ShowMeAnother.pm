@@ -326,6 +326,8 @@ sub pre_header_initialize {
 
 	$self->{showMeAnother} = \%showMeAnother;
 	$self->{pg} = $pg;
+	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
+	if ($self->{will}->{useMathQuill});
 }
 
 # We disable showOldAnswers because old answers are answers to the original
