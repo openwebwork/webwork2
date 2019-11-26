@@ -147,7 +147,7 @@ sub fake_problem {
 	$problem->last_answer(""); 
 	$problem->num_correct(1000); 
 	$problem->num_incorrect(1000); 
-	$problem->prCount(0);
+	$problem->prCount(-10); # Negative to detect fake problems and disable problem randomization.
 
 	#for my $key (keys(%{$problem})){
 	#	my $value = '####UNDEF###';
