@@ -390,7 +390,7 @@ sub checkDates {
 	foreach my $field (@{DATE_FIELDS_ORDER()}) {  # check that override dates can be parsed and are not blank
 		$dates{$field} = $setRecord->$field;
 		if (defined  $r->param("set.$setID.$field.override") &&
-		    $r->param("set.$setID.$field") ne 'None Specified'){
+		    $r->param("set.$setID.$field") ne ''){
 			eval{ $numerical_date = $self->parseDateTime($r->param("set.$setID.$field"))};
 			unless( $@  ) {
 					$dates{$field}=$numerical_date;
@@ -481,9 +481,6 @@ sub DBFieldTable {
 		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
 		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
 
-		my $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
-		my $onKeyUp = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
-
 		push @results,
 			[$r->maketext($rh_fieldLabels->{$field}).' ',
 			 defined $UserRecord ?
@@ -497,14 +494,15 @@ sub DBFieldTable {
 				}) : "",
 				defined $UserRecord ?
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
-						      -id =>"$recordType.$recordID.${field}_id",
-						      -type=> "text",
-					        -value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "None Specified",
-						      -onchange => $onChange,
-						      -onkeyup => $onKeyUp,
-						      -onfocus => "if (this.value=='None Specified') { this.value = ''; }",
-						      -onblur => "if (this.value == '') { this.value = 'None Specified'; \$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',false); \$('#$recordType\\\\.$recordID\\\\.${field}_id').attr('class', 'hasDatepicker'); }",
-					        -size => 25})
+							-id =>"$recordType.$recordID.${field}_id",
+							-type=> "text",
+							-value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
+							-onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)",
+							-onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)",
+							-placeholder => x("None Specified"),
+							-onblur => "if (this.value == '')"
+								. "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
+							-size => 25})
 					) : "",
 				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),
 			]
