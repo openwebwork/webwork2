@@ -29,7 +29,7 @@
 #          will set the system timezone to zone/city
 #          Make sure to use a valid setting.
 #          "/usr/bin/timedatectl list-timezones" on Ubuntu will find valid values
-#        ADD_PACKAGES="package1 package2 package3"
+#        ADD_APT_PACKAGES="package1 package2 package3"
 #	   will have these additional Ubuntu packages installed at startup.
 #
 # ==================================================================
@@ -44,25 +44,31 @@ FROM alpine/git AS base
 # To use the master branches of webwork2 and pg 
 #ARG WEBWORK2_BRANCH=master
 #ARG PG_BRANCH=master
-# To use the 2.15 branches of webwork2 and pg 
-ARG WEBWORK2_BRANCH=WeBWorK-2.15
-ARG PG_BRANCH=PG-2.15
+# To use the 2.15 branches of webwork2 and pg from the "official" GitHub repositories
+ARG WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
+ARG WEBWORK2_BRANCH=develop
+ARG PG_GIT_URL=https://github.com/openwebwork/pg.git
+ARG PG_BRANCH=develop
 
-# assign the build args WEBWORK2_BRANCH and PG_BRANCH to the ENV WEBWORK2_BRANCH_ENV and PG_BRANCH_ENV, resp.
+# assign the build args to the ENV variables
+ENV WEBWORK2_GIT_URL_ENV ${WEBWORK2_GIT_URL}
 ENV WEBWORK2_BRANCH_ENV ${WEBWORK2_BRANCH}
+ENV PG_GIT_URL_ENV ${PG_GIT_URL}
 ENV PG_BRANCH_ENV ${PG_BRANCH}
 
 WORKDIR /opt/base
 
-RUN echo Cloning branch $WEBWORK2_BRANCH_ENV from https://github.com/openwebwork/webwork2.git \
-  && git clone --single-branch --branch ${WEBWORK2_BRANCH_ENV} --depth 1 https://github.com/openwebwork/webwork2.git \
+RUN echo Cloning branch $WEBWORK2_BRANCH_ENV from $WEBWORK2_GIT_URL_ENV \
+  && echo git clone --single-branch --branch ${WEBWORK2_BRANCH_ENV} --depth 1 $WEBWORK2_GIT_URL_ENV \
+  && git clone --single-branch --branch ${WEBWORK2_BRANCH_ENV} --depth 1 $WEBWORK2_GIT_URL_ENV \
   && rm -rf webwork2/.git webwork2/{*ignore,Dockerfile,docker-compose.yml,docker-config}
 
-RUN echo Cloning branch $PG_BRANCH_ENV branch from https://github.com/openwebwork/pg.git \
-  && git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 https://github.com/openwebwork/pg.git \
+RUN echo Cloning branch $PG_BRANCH_ENV branch from $PG_GIT_URL_ENV \
+  && echo git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 $PG_GIT_URL_ENV \
+  && git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 $PG_GIT_URL_ENV \
   && rm -rf  pg/.git
 
-RUN git clone --single-branch --branch master --depth 1 https://github.com/mathjax/MathJax \
+RUN git clone --single-branch --branch legacy-v2 --depth 1 https://github.com/mathjax/MathJax \
   && rm -rf MathJax/.git
 
 # Optional - include OPL (also need to uncomment further below when an included OPL is desired):
@@ -211,6 +217,7 @@ RUN apt-get update \
 	fonts-linuxlibertine \
 	lmodern \
 	zip \
+	jq \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/*
 
@@ -334,7 +341,7 @@ ENV SSL=0 \
     PAPERSIZE=letter \
     SYSTEM_TIMEZONE=UTC \
     ADD_LOCALES=0 \
-    ADD_PACKAGES=0
+    ADD_APT_PACKAGES=0
 
 # ================================================
 

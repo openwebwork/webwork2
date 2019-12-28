@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 use 5.10.0;
-my $XML_URL = "foobar";
+my $SITE_URL = "foobar";
 my $template = do("standard_format.pl");
 my %replacement_key_value_pairs =(
-	 XML_URL      	 =>   $XML_URL,
+	 SITE_URL      	 =>   $SITE_URL,
 	 FORM_ACTION_URL  =>  "FORM_ACTION_URL",
 	 courseID         =>  "courseID",
 	 userID           =>  "userID",
@@ -17,7 +17,7 @@ my %replacement_key_value_pairs =(
 	 showCorrectMode  =>  "showCorrectMode",
 			# Can be added to the request as a parameter.  Adds a prefix to the 
 			# identifier used by the sticky format.  
-	 problemIdentifierPrefix => "problemIdentifierPrefix",
+	 problemUUID => "problemUUID",
 	 problemResult    =>  "problemResult",
 	 problemState     =>  "problemState",
 	 showSummary      => " showSummary", #default to show summary for the moment

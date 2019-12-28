@@ -1,10 +1,3 @@
-// Polyfill for IE >= 9.
-if (!Object.entries) Object.entries = function(o) {
-    var p = Object.keys(o), i = p.length, r = new Array(i);
-    while (i--) r[i] = [p[i], o[p[i]]];
-    return r;
-};
-
 // initialize MathQuill
 var MQ = MathQuill.getInterface(2);
 answerQuills = {};
@@ -70,35 +63,35 @@ function createAnswerQuill() {
 
 	answerQuill.hasFocus = false;
 
-	var buttons = {
-		frac: { latex: '/', tooltip: 'fraction (/)', icon: '\\frac{\\text{\ \ }}{\\text{\ \ }}' },
-		abs: { latex: '|', tooltip: 'absolute value (|)', icon: '|\\text{\ \ }|' },
-		sqrt: { latex: '\\sqrt', tooltip: 'square root (sqrt)', icon: '\\sqrt{\\text{\ \ }}' },
-		nthroot: { latex: '\\root', tooltip: 'nth root (root)', icon: '\\sqrt[\\text{\ \ }]{\\text{\ \ }}' },
-		exponent: { latex: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
-		infty: { latex: '\\infty', tooltip: 'infinity (inf)', icon: '\\infty' },
-		pi: { latex: '\\pi', tooltip: 'pi (pi)', icon: '\\pi' },
-		vert: { latex: '\\vert', tooltip: 'such that (vert)', icon: '|' },
-		cup: { latex: '\\cup', tooltip: 'union (union)', icon: '\\cup' },
-		// leq: { latex: '\\leq', tooltip: 'less than or equal (\\leq)', icon: '\\leq' },
-		// geq: { latex: '\\geq', tooltip: 'greater than or equal (\\geq)', icon: '\\geq' },
-		text: { latex: '\\text', tooltip: 'text mode (")', icon: 'Tt' }
-	};
+	answerQuill.buttons = [
+		{ id: 'frac', latex: '/', tooltip: 'fraction (/)', icon: '\\frac{\\text{\ \ }}{\\text{\ \ }}' },
+		{ id: 'abs', latex: '|', tooltip: 'absolute value (|)', icon: '|\\text{\ \ }|' },
+		{ id: 'sqrt', latex: '\\sqrt', tooltip: 'square root (sqrt)', icon: '\\sqrt{\\text{\ \ }}' },
+		{ id: 'nthroot', latex: '\\root', tooltip: 'nth root (root)', icon: '\\sqrt[\\text{\ \ }]{\\text{\ \ }}' },
+		{ id: 'exponent', latex: '^', tooltip: 'exponent (^)', icon: '\\text{\ \ }^\\text{\ \ }' },
+		{ id: 'infty', latex: '\\infty', tooltip: 'infinity (inf)', icon: '\\infty' },
+		{ id: 'pi', latex: '\\pi', tooltip: 'pi (pi)', icon: '\\pi' },
+		{ id: 'vert', latex: '\\vert', tooltip: 'such that (vert)', icon: '|' },
+		{ id: 'cup', latex: '\\cup', tooltip: 'union (union)', icon: '\\cup' },
+		// { id: 'leq', latex: '\\leq', tooltip: 'less than or equal (<=)', icon: '\\leq' },
+		// { id: 'geq', latex: '\\geq', tooltip: 'greater than or equal (>=)', icon: '\\geq' },
+		{ id: 'text', latex: '\\text', tooltip: 'text mode (")', icon: 'Tt' }
+	];
 
 	// Open the toolbar when the mathquill answer box gains focus.
 	answerQuill.textarea.on('focusin', function() {
 		answerQuill.hasFocus = true;
 		if (answerQuill.toolbar) return;
 		answerQuill.toolbar = $("<div class='quill-toolbar'>" +
-			Object.entries(buttons).reduce(
+			answerQuill.buttons.reduce(
 				function(returnString, curButton) {
 					return returnString +
-						"<button id='" + curButton[0] + "-" + answerQuill.attr('id') +
+						"<button id='" + curButton.id + "-" + answerQuill.attr('id') +
 						"' class='symbol-button btn' " +
-						"' data-latex='" + curButton[1].latex +
-						"' data-tooltip='" + curButton[1].tooltip + "'>" +
-						"<span id='icon-" + curButton[0] + "-" + answerQuill.attr('id') + "'>"
-						+ curButton[1].icon +
+						"' data-latex='" + curButton.latex +
+						"' data-tooltip='" + curButton.tooltip + "'>" +
+						"<span id='icon-" + curButton.id + "-" + answerQuill.attr('id') + "'>"
+						+ curButton.icon +
 						"</span>" +
 						"</button>";
 				}, ""
@@ -137,6 +130,16 @@ function createAnswerQuill() {
 				delete answerQuill.toolbar;
 			}
 		}, 200);
+	});
+
+	// Trigger an answer preview when the enter key is pressed in an answer box.
+	answerQuill.on('keypress.preview', function(e) {
+		if (e.key == 'Enter' || e.which == 13 || e.keyCode == 13) {
+			// For homework
+			$("#previewAnswers_id").trigger('click');
+			// For gateway quizzes
+			$("input[name=previewAnswers]").trigger('click');
+		}
 	});
 
 	answerQuill.mathField.latex(answerQuill.latexInput.val());

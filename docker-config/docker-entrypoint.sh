@@ -45,9 +45,9 @@ debconf-set-selections /tmp/preseed.txt
 dpkg-reconfigure -f noninteractive libpaper1
 
 # Install some extra packages
-if [ "$ADD_PACKAGES" != "0" ]; then
+if [ "$ADD_APT_PACKAGES" != "0" ]; then
   apt-get update
-  apt-get install -y --no-install-recommends --no-install-suggests $ADD_PACKAGES
+  apt-get install -y --no-install-recommends --no-install-suggests $ADD_APT_PACKAGES
 fi
 
 # If necessary, clone the OPL in the running container, hopefully in persistent storage
@@ -55,10 +55,6 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
   echo "Cloning the OPL - This takes time - please be patient."
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch master https://github.com/openwebwork/webwork-open-problem-library.git
-
-  # FIXME / TO-DO : Download a saved version of the OPL sql table data to be loaded and extract
-  #    it in the appropriate location.This would avoid the need for a length run of OPL-update.
-  # At present, a distribution point has not been set up for such data.
 
   # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it
   touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
@@ -135,6 +131,22 @@ if [ "$1" = 'apache2' ]; then
       touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
     fi
     if [ -f "$APP_ROOT/libraries/Restore_or_build_OPL_tables" ]; then
+      if [ ! -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
+        # Download a saved version of the OPL sql table data to be loaded and extract
+        cd $WEBWORK_ROOT/bin/OPL_releases/
+        make extract
+        cp -r webwork-open-problem-library $APP_ROOT/libraries/
+        # check out commit corresponding to the release
+        make latest_release.tag
+        OPL_TAG=`cat $WEBWORK_ROOT/bin/OPL_releases/latest_release.tag`
+        cd $APP_ROOT/libraries/webwork-open-problem-library/
+        git remote rm heiderich || true
+        git remote add heiderich https://github.com/heiderich/webwork-open-problem-library.git
+        git fetch --tags heiderich
+        echo "Checking out tag $OPL_TAG"
+        git checkout $OPL_TAG
+      fi
+
       if [ -f "$APP_ROOT/libraries/webwork-open-problem-library/TABLE-DUMP/OPL-tables.sql" ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db

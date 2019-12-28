@@ -151,6 +151,13 @@ sub pre_header_initialize {
 	}
 }
 
+sub head {
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+	my $contents = $ce->{options}{metaRobotsContent} // 'none';
+        print '<meta name="robots" content="'.$contents.'" />';
+        return "";
+}
 
 sub body {
 	my ($self) = @_;

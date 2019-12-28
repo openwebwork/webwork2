@@ -4,7 +4,7 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <html $COURSE_LANG_AND_DIR>
 <head>
 <meta charset='utf-8'>
-<base href="$XML_URL">
+<base href="$SITE_URL">
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 
 <!-- CSS Loads -->
@@ -31,7 +31,7 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<title>$XML_URL WeBWorK using host: $XML_URL, format: simple seed: $problemSeed</title>
+<title>WeBWorK using host: $SITE_URL, format: simple seed: $problemSeed</title>
 </head>
 <body>
 <div class="container-fluid">
@@ -48,7 +48,8 @@ $LTIGradeMessage
 	       <input type="hidden" name="answersSubmitted" value="1"> 
 	       <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
 	       <input type="hidden" name="problemSource" value="$encoded_source"> 
-	       <input type="hidden" name="problemSeed" value="$problemSeed"> 
+	       <input type="hidden" name="problemSeed" value="$problemSeed">
+	       <input type="hidden" name="problemUUID" value="$problemUUID"> 
 	       <input type="hidden" name="psvn" value="$psvn">
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
 	       <input type="hidden" name=courseName value="$courseID">
@@ -71,7 +72,7 @@ $LTIGradeMessage
 </div></div>
 
 <div id="footer">
-WeBWorK &copy; 1996-2019 | host: $XML_URL | course: $courseID | format: simple | theme: math4
+WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: simple | theme: math4
 </div>
 
 

@@ -201,7 +201,7 @@ if($libraryVersion eq '2.5') {
 '],
 [$tables{keyword}, '
 	keyword_id int(15) NOT NULL auto_increment,
-	keyword varchar(256) NOT NULL,
+	keyword varchar(245) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (keyword_id)
 '],

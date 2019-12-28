@@ -361,7 +361,7 @@ var Node = P(function(_) {
   _.isEmpty = function() {
     return this.ends[L] === 0 && this.ends[R] === 0;
   };
-  
+
   _.isStyleBlock = function() {
     return false;
   };
@@ -3112,7 +3112,9 @@ var TextBlock = P(Node, function(_, super_) {
       else if (cursor[R] === this) cursor[R] = this[R];
     }
     else fuseChildren(this);
-    cursor.parent.controller.handle('textBlockExit');
+    (function getCtrlr(node) {
+      return ('controller' in node) ? node.controller : getCtrlr(node.parent);
+    })(cursor.parent).handle('textBlockExit');
   };
 
   function fuseChildren(self) {
@@ -4209,7 +4211,7 @@ bindCharBracketPair('[');
 bindCharBracketPair('{', '\\{');
 LatexCmds.langle = bind(Bracket, L, '&lang;', '&rang;', '\\langle ', '\\rangle ');
 LatexCmds.rangle = bind(Bracket, R, '&lang;', '&rang;', '\\langle ', '\\rangle ');
-LatexCmds.abs = 
+LatexCmds.abs =
 CharCmds['|'] = bind(Bracket, L, '|', '|', '|', '|');
 LatexCmds.lVert = bind(Bracket, L, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
 LatexCmds.rVert = bind(Bracket, R, '&#8741;', '&#8741;', '\\lVert ', '\\rVert ');
@@ -5110,7 +5112,7 @@ var PlusMinus = P(BinaryOperator, function(_) {
 
       return 'mq-binary-operator';
     };
-    
+
     if (dir === R) return; // ignore if sibling only changed on the right
     this.jQ[0].className = determineOpClassType(this);
     return this;
