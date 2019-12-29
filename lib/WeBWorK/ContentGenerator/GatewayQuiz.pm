@@ -1300,10 +1300,15 @@ sub pre_header_initialize {
 }
 
 sub head {
-        my ($self) = @_;
-        my $ce = $self->r->ce;
-        my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-        return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
+	my ($self) = @_;
+	return if !defined($self->{ra_pg_results});
+	my $head_text = "";
+	for (@{$self->{ra_pg_results}})
+	{
+		next if !ref($_);
+		$head_text .= $_->{head_text} if $_->{head_text};
+	}
+	return $head_text;
 }
 
 sub path {

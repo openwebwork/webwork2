@@ -52,8 +52,8 @@
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
-<!--#head-->
 <!--#output_JS-->
+<!--#head-->
 </head>
 <body>
 <a href="#content" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
