@@ -689,8 +689,8 @@ sub FieldHTML {
 	# if we are creating override feilds we should add the js to automatically check the
 	# override box.
 	if ($forUsers && $check) {
-		$onChange = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)";
-		$onKeyUp = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)";
+		$onChange = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')";
+		$onKeyUp = "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')";
 		$uncheckBox = "if (this.value == '')"
 			. "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);";
 	}

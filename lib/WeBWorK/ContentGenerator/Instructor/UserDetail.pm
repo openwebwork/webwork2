@@ -497,8 +497,8 @@ sub DBFieldTable {
 							-id =>"$recordType.$recordID.${field}_id",
 							-type=> "text",
 							-value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
-							-onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)",
-							-onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',true)",
+							-onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
+							-onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
 							-placeholder => x("None Specified"),
 							-onblur => "if (this.value == '')"
 								. "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
