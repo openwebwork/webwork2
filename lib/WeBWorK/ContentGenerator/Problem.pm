@@ -706,10 +706,15 @@ sub pre_header_initialize {
 
 	##### sticky answers #####
 
-	if (not ($submitAnswers or $previewAnswers or $checkAnswers) and $will{showOldAnswers}) {
-		# do this only if new answers are NOT being submitted
+	if (!($submitAnswers || $previewAnswers || $checkAnswers) && $will{showOldAnswers}) {
 		my %oldAnswers = decodeAnswers($problem->last_answer);
-		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
+		# Do this only if new answers are NOT being submitted
+		if ($prEnabled && !$problem->{prCount}) {
+			# Clear answers if this is a new problem version
+			delete $formFields->{$_} foreach keys %oldAnswers;
+		} else {
+			$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
+		}
 	}
 
 	##### translation #####
