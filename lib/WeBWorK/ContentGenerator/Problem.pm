@@ -751,6 +751,7 @@ sub pre_header_initialize {
 		$can{requestNewSeed} = 1;
 		$want{requestNewSeed} = 1;
 		$will{requestNewSeed} = 1;
+		$self->{showCorrectOnRandomize} = $ce->{pg}{options}{showCorrectOnRandomize};
 		# If this happens, it means that the page was refreshed.  So prevent the answers from
 		# being recorded and the number of attempts from being increased.
 		if ($problem->{prCount} > $rerandomizePeriod) {
@@ -1922,7 +1923,7 @@ sub output_summary{
 	    # print this if user submitted answers OR requested correct answers
 	    my $results = $self->attemptResults($pg,
 	                    1,   # showAttemptAnswers --display the unformatted submitted answer attempt
-						$will{showCorrectAnswers}, # showCorrectAnswers
+						$self->{showCorrectOnRandomize} // $will{showCorrectAnswers}, # showCorrectAnswers
 						$pg->{flags}->{showPartialCorrectAnswers}, # showAttemptResults
 			            1, # showSummary
 			            1  # showAttemptPreview
