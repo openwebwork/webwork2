@@ -152,7 +152,8 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
 
-    # Set a new close date and answer time for the student and remove the item
+    # Set a new reduced scoring date, close date, and answer date for the student; remove the item
+    $set->reduced_scoring_date(time()+86400);
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
 
@@ -243,7 +244,8 @@ sub use_item {
 	($set);
     my $userSet = $db->getUserSet($userName,$setID);
     
-    #add time to the due date and answer date and remove item from inventory
+    #add time to the reduced scoring date, due date, and answer date; remove item from inventory
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date());
     $userSet->due_date($set->due_date()+86400);
     $userSet->answer_date($set->answer_date()+86400);
 
@@ -326,7 +328,8 @@ sub use_item {
 	($set);
     my $userSet = $db->getUserSet($userName,$setID);
     
-    #add time to the due date and answer date and remove item from inventory
+    #add time to the reduced scoring date, due date, and answer date; remove item from inventory
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+172800) if defined($set->reduced_scoring_date());
     $userSet->due_date($set->due_date()+172800);
     $userSet->answer_date($set->answer_date()+172800);
 
@@ -1512,18 +1515,20 @@ sub use_item {
 	($set);
     my $userSet = $db->getUserSet($userName,$setID);
     
-    #add time to the due date and answer date
+    #add time to the reduced scoring date, due date, and answer date
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date());
     $userSet->due_date($set->due_date()+86400);
     $userSet->answer_date($set->answer_date()+86400);
 
     $db->putUserSet($userSet);
 
-    #add time to the due date and answer date of verious verisons
+    #add time to the reduced scoring date, due date, and answer date of various versions
     my @versions = $db->listSetVersions($userName,$setID);
 
     foreach my $version (@versions) {
 
 	$set = $db->getSetVersion($userName,$setID,$version);
+	$set->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date());
 	$set->due_date($set->due_date()+86400);
 	$set->answer_date($set->answer_date()+86400);
 	$db->putSetVersion($set);
@@ -1612,7 +1617,8 @@ sub use_item {
     return "Couldn't find that set!" unless
 	($set);
     
-    #add time to the due date and answer date and remove item from inventory
+    #add time to the reduced scoring date, due date, and answer date; remove item from inventory
+    $set->reduced_scoring_date(time()+86400) if defined($set->reduced_scoring_date());
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
 
