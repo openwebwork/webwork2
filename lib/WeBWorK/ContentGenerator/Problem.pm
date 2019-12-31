@@ -696,7 +696,7 @@ sub pre_header_initialize {
 			$problem->{problem_seed} = ($problem->{problem_seed} + $problem->num_correct + $problem->num_incorrect) % 10000;
 			$problem->{prCount} = 0;
 		}
-		$db->putUserProblem($problem) if $problem->{prCount} > -1;
+		$db->putUserProblem($problem);
 	}
 	
 	# final values for options
