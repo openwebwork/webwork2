@@ -17,7 +17,7 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 
 <!-- JS Loads -->
 <script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
+<script type="text/javascript" src="/webwork2_files/mathjax/es5/tex-mml-chtml.js" id="MathJax-script" async defer></script>
 <script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js"></script>

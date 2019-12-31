@@ -418,7 +418,7 @@ function randomize(filepath, el) {
 	      $('#'+el).html(data);
 	      // run typesetter depending on the displaymode
 	      if(displayMode=='MathJax')
-		  MathJax.Hub.Queue(["Typeset",MathJax.Hub,el]);
+              MathJax.typeset([ el ]);
 	      if(displayMode=='jsMath')
 		  jsMath.ProcessBeforeShowing(el);
 	      

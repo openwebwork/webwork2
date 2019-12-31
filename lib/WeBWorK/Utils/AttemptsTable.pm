@@ -360,7 +360,7 @@ sub previewAnswer {
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+		return '<span>\['.$tex.'\]</span>';
 	}
 }
 
@@ -380,7 +380,7 @@ sub previewCorrectAnswer {
 		$imgGen->add($tex);
 		# warn "adding $tex";
 	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+		return '<span>\['.$tex.'\]</span>';
 	}
 }
 

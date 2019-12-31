@@ -9,10 +9,10 @@ $(function() {
 	$(".preview").click(function(evt) {
 		var previewBtn = $(evt.target);
 		previewBtn.attr("data-content",
-			previewBtn.siblings("textarea").val().replace(/</g, '< ').replace(/>/g, ' >'));
+			"<span>" + previewBtn.siblings("textarea").val().replace(/</g, '< ').replace(/>/g, ' >')) + "</span>";
 		previewBtn.popover('toggle');
 		if (window.MathJax) {
-			MathJax.Hub.Queue(["Typeset",MathJax.Hub])
+			MathJax.typeset([ '.popover-content' ]);
 		}
 	});
 })

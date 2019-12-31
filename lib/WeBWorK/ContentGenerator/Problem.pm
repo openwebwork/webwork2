@@ -1859,28 +1859,12 @@ sub output_comments{
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		if ($userPastAnswer->comment_string) {
-
-		    my $comment = $userPastAnswer->comment_string;
-		    $comment = CGI::escapeHTML($comment);
-		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		   		    print CGI::start_div({id=>"answerComment", class=>"answerComments"});
-		    print CGI::b("Instructor Comment:"),  CGI::br();
-		    print $comment;
-		    print <<EOS;
-				<script type="text/javascript">
-					MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
-					var AM = MathJax.InputJax.AsciiMath.AM;
-					for (var i=0; i< AM.symbols.length; i++) {
-						if (AM.symbols[i].input == '**') {
-						AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
-						}
-					}
-									 });
-				MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
-
-				MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'answerComment']);
-				</script>
-EOS
+			my $comment = $userPastAnswer->comment_string;
+			$comment = CGI::escapeHTML($comment);
+			my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+			print CGI::start_div({id=>"answerComment", class=>"answerComments"});
+			print CGI::b("Instructor Comment:"),  CGI::br();
+			print $comment;
 		}
 	}
 
@@ -2223,7 +2207,6 @@ sub output_JS{
 	# This is for MathView.
 	if ($self->{will}->{useMathView}) {
 	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();

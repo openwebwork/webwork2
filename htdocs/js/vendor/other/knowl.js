@@ -97,8 +97,7 @@ function knowl_click_handler($el) {
       if(window.MathJax == undefined) {
             $knowl.slideDown("slow");
       }  else {
-            MathJax.Hub.Queue(['Typeset', MathJax.Hub, $output.get(0)]);
-            MathJax.Hub.Queue([ function() { $knowl.slideDown("slow"); }]);
+            MathJax.typesetPromise([ $output[0] ]).then(function() { $knowl.slideDown("slow"); });
       }
     } else {
     // Get code from server.
@@ -121,8 +120,7 @@ function knowl_click_handler($el) {
       if(window.MathJax == undefined) {
             $knowl.slideDown("slow");
       }  else {
-            MathJax.Hub.Queue(['Typeset', MathJax.Hub, $output.get(0)]);
-            MathJax.Hub.Queue([ function() { $knowl.slideDown("slow"); }]);
+            MathJax.typesetPromise([ $output[0] ]).then(function() { $knowl.slideDown("slow"); });
       }
      }); 
     }

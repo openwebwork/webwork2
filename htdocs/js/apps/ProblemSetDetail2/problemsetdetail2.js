@@ -334,7 +334,7 @@ function render(id) {
 			$('#psr_render_area_'+id).html(response);
 			// run typesetter depending on the displaymode
 			if(displayMode=='MathJax')
-				MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+				MathJax.typeset();
 			if(displayMode=='jsMath')
 				jsMath.ProcessBeforeShowing(el);
 

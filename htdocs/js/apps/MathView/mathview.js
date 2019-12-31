@@ -20,17 +20,6 @@ $(document).keydown(function(e){
 /* load up and config mathview */
 $(document).ready(function() {
 
-	MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
-		var AM = MathJax.InputJax.AsciiMath.AM;
-		for (var i=0; i< AM.symbols.length; i++) {
-			if (AM.symbols[i].input == '**') {
-				AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
-			}
-		}
-	});
-	/* Make sure mathjax is confugued for AsciiMath input */
-	MathJax.Hub.Config(["input/Tex","input/AsciiMath","input/TeX", "output/HTML-CSS"]);
-
 	/* attach a viewer to each answer input */
 	$('.codeshard').each(function () {
 		var input = this;
@@ -125,11 +114,6 @@ function MathViewer(field,button,container,userOptions) {
 		this.inputTextBox = $('<input>',{type : 'text', class : 'mv-input', size:'32'});
 	}
 
-	MathJax.Hub.Config({
-		showProcessingMessages : false,
-		TeX : {MultLineWidth : "50%"},
-	});
-
 	/* start setting up html elements */
 	var popupdiv;
 	var popupttl;
@@ -142,7 +126,7 @@ function MathViewer(field,button,container,userOptions) {
 		$('.popover').draggable({handle: ".brand"});
 
 		me.inputTextBox.keyup();
-		MathJax.Hub.Queue([ "Typeset", MathJax.Hub]);
+		window.MathJax.typeset([ ".popover" ]);
 		return false;
 	});
 
@@ -265,17 +249,19 @@ function MathViewer(field,button,container,userOptions) {
 	   whenever the input value changes */
 
 	this.regenPreview = function() {
-		var text = me.inputTextBox.val();
+		var text = me.inputTextBox.val().replace(/\*\*/g, '^');
 
 		/* This escapes any html in the input field, preventing xss */
 		text = $('<div>').text(text).html();
 
+		var mviewer = $('#mviewer' + viewerIndex);
+		if (!mviewer.length) return;
 		if (me.renderingMode == "LATEX") {
-			$('#mviewer'+viewerIndex).html('\\(' + text + '\\)');
-			MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
+			mviewer.html("<p>\\(" + text + "\\)</p>");
+			window.MathJax.typeset([ mviewer[0] ]);
 		} else if (me.renderingMode == "PGML") {
-			$('#mviewer'+viewerIndex).html("`" + text + "`");
-			MathJax.Hub.Queue([ "Typeset", MathJax.Hub, "mviewer"+viewerIndex ]);
+			mviewer.html("<p>`" + text + "`</p>");
+			window.MathJax.typeset([ mviewer[0] ]);
 		} else
 			console.log('Invalid Rendering Mode');
 	};
