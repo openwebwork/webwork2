@@ -51,6 +51,9 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP qw();
 use Try::Tiny;
 
+use Caliper::Sensor;
+use Caliper::Entity;
+
 
 # process_and_log_answer subroutine.
 
@@ -278,6 +281,61 @@ sub process_and_log_answer{
 					$pureProblem->num_correct."\t".
 					$pureProblem->num_incorrect
 					);
+
+				my $caliper_sensor = Caliper::Sensor->new($self->{ce});
+				if ($caliper_sensor->caliperEnabled()) {
+					my $startTime = $r->param('startTime');
+					my $endTime = time();
+
+					my $completed_question_event = {
+						'type' => 'AssessmentItemEvent',
+						'action' => 'Completed',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_user(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg
+						),
+						'generated' => Caliper::Entity::answer(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg,
+							$startTime,
+							$endTime
+						),
+					};
+					my $submitted_set_event = {
+						'type' => 'AssessmentEvent',
+						'action' => 'Submitted',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_set(
+							$self->{ce},
+							$db,
+							$problem->set_id()
+						),
+						'generated' => Caliper::Entity::problem_set_attempt(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->user_id(),
+							$startTime,
+							$endTime
+						),
+					};
+					$caliper_sensor->sendEvents($r, [$completed_question_event, $submitted_set_event]);
+
+					# reset start time
+					$r->param('startTime', '');
+				}
 
 				#Try to update the student score on the LMS
 				# if that option is enabled.
@@ -541,6 +599,7 @@ sub output_main_form{
 	my $problem = $self->{problem};
 	my $set = $self->{set};
 	my $submitAnswers = $self->{submitAnswers};
+	my $startTime = $r->param('startTime') || time();
 
 	my $db = $r->db;
 	my $ce = $r->ce;
@@ -553,6 +612,7 @@ sub output_main_form{
 	print "\n";
 	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
+	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	print CGI::end_form();
 }
 

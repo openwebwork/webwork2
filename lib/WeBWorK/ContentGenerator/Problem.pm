@@ -1228,10 +1228,11 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
+	my $startTime = $r->param('startTime') || time();
 
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
-
 	print $self->hidden_authen_fields;
+	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	return "";
 }
 
