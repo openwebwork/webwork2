@@ -2252,6 +2252,11 @@ sub output_JS{
         print qq{
            <script type="text/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
            <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+           
+    # This is for when the problem is embedded in an iframe
+    	print qq{
+    		<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
+    	};
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {

@@ -39,11 +39,9 @@ $problemHeadText
 <body>
 <div class="container-fluid">
 <div class="row-fluid">
-<div class="span12 problem">	
-<hr/>		
+<div class="span12 problem">		
 $answerTemplate
-<hr/>
-<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
+<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post" style="margin-bottom:-20px">
 <div id="problem_body" class="problem-content" $PROBLEM_LANG_AND_DIR>
 $problemText
 </div>
@@ -84,9 +82,26 @@ $LTIGradeMessage
 </div>
 </div>
 </div>
-<div id="footer">
+
+<!--  script for knowl-like object -->
+<script>
+	$(document).ready(function(){
+		$( ".clickme" ).click(function() {
+		  $( this).next().slideToggle( "slow", function() {
+			// Animation complete.
+		  });
+		});
+
+	   // jQuery methods go here...
+	});
+</script>
+<div class="clickme">
+<img height="8px" width="8px" src="https://demo.webwork.rochester.edu/webwork2_files/images/webwork_square.svg"/>
+</div>
+<div id="footer" style="display:none">
 WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: sticky | theme: math4
 </div>
+
 <!-- Activate local storage js -->
 <script type="text/javascript">WWLocalStorage();</script>
 </body>
