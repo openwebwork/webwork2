@@ -383,7 +383,7 @@ $showeditors{simplepgeditor}   = 0;
 # Additional PG modules
 #####################
 
-#push (@{${pg}{modules}}, [qw(TikZ_Image2)]);
+#push (@{${pg}{modules}}, [qw(TikZImage)]);
 ################################################################################ 
 # Student Date Format
 ################################################################################

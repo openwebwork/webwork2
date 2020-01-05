@@ -42,7 +42,7 @@ sub generate_actor
 		if (defined($ce->{caliper}{custom_actor_generator})) {
 			return $ce->{caliper}{custom_actor_generator}($ce, $db, $user);
 		} else {
-			return Caliper::Entity::generate_default_actor($ce, $db, $user);
+			return generate_default_actor($ce, $db, $user);
 		}
 	}
 }
