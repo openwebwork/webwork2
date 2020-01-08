@@ -34,12 +34,14 @@ git checkout -b WeBWorK2.14+ WeBWorK2.14+
 ```
 * If you want to pull the PG-2.15 branch of pg then run:
 
-```cd /opt/webwork/pg
+```
+cd /opt/webwork/pg
 git checkout -b PG-2.14+ PG-2.14+
 ```
 * If you also need an earlier branch of MathJax then run:
 
-```cd /opt/webwork/MathJax
+```
+cd /opt/webwork/MathJax
 git checkout legacy-v2
 ```
 
