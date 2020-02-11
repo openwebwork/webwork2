@@ -75,14 +75,23 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
         // Overwrite the popup infobox for points.
         gt.board.highlightInfobox = function (x, y, el) { return gt.board.highlightCustomInfobox('', el); }
 
-        if (!isStatic)
-        {
+        if (!isStatic) {
             gt.board.on('move', function(e) {
                 var coords = getMouseCoords(e);
-                gt.current_pos_text.setText(
-                    "(" + snapRound(coords.usrCoords[1], snapSizeX) + ", " +
-                    snapRound(coords.usrCoords[2], snapSizeY) + ")"
-                );
+                if (!gt.selectedObj ||
+                    Object.keys(gt.selectedObj.definingPts).every(function(point) {
+                        if (point == "icon") return true;
+                        if (this[point].hasPoint(coords.scrCoords[1], coords.scrCoords[2])) {
+                            setTextCoords(this[point].X(), this[point].Y());
+                            return false;
+                        }
+                        return true;
+                    }, gt.selectedObj.definingPts)) {
+                    if (!("hl_point" in gt.activeTool.hlObjs)) {
+                        setTextCoords(coords.usrCoords[1], coords.usrCoords[2]);
+                    }
+                }
+
                 gt.activeTool.updateHighlights(coords);
             });
         }
@@ -111,6 +120,12 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
 
         gt.board.unsuspendUpdate();
     }
+
+    function setTextCoords(x, y) {
+        gt.current_pos_text.setText(
+            "(" + snapRound(x, snapSizeX) + ", " + snapRound(y, snapSizeY) + ")"
+        );
+    };
 
     function updateText() {
         html_input.value = gt.graphedObjs.reduce(
@@ -634,6 +649,7 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
         else
             this.hlObjs.hl_point.setPosition(JXG.COORDS_BY_USER, [coords.usrCoords[1], coords.usrCoords[2]]);
 
+        setTextCoords(this.hlObjs.hl_point.X(), this.hlObjs.hl_point.Y());
         gt.board.update();
     };
     LineTool.prototype.deactivate = function() {
@@ -709,6 +725,7 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
         else
             this.hlObjs.hl_point.setPosition(JXG.COORDS_BY_USER, [coords.usrCoords[1], coords.usrCoords[2]]);
 
+        setTextCoords(this.hlObjs.hl_point.X(), this.hlObjs.hl_point.Y());
         gt.board.update();
     };
     CircleTool.prototype.deactivate = function() {
@@ -790,6 +807,7 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
         else
             this.hlObjs.hl_point.setPosition(JXG.COORDS_BY_USER, [coords.usrCoords[1], coords.usrCoords[2]]);
 
+        setTextCoords(this.hlObjs.hl_point.X(), this.hlObjs.hl_point.Y());
         gt.board.update();
     };
     ParabolaTool.prototype.deactivate = function() {
@@ -854,18 +872,20 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
         { value: FillTool, enumerable: false, writable: true });
     FillTool.prototype.updateHighlights = function(coords) {
         if (typeof(coords) === 'undefined') return;
-        if (!('hl_image' in this.hlObjs)) {
-            this.hlObjs.hl_image = gt.board.create('image', [fillIcon, [
+        if (!('hl_point' in this.hlObjs)) {
+            this.hlObjs.hl_point = gt.board.create('image', [fillIcon, [
                     snapRound(coords.usrCoords[1], snapSizeX) - 12 / gt.board.unitX,
                     snapRound(coords.usrCoords[2], snapSizeY) - 12 / gt.board.unitY
                 ], [24 / gt.board.unitX, 24 / gt.board.unitY]
             ], { withLabel: false, highlight: false, layer: 9 });
         }
         else
-            this.hlObjs.hl_image.setPosition(JXG.COORDS_BY_USER, [
+            this.hlObjs.hl_point.setPosition(JXG.COORDS_BY_USER, [
                 snapRound(coords.usrCoords[1], snapSizeX) - 12 / gt.board.unitX,
                 snapRound(coords.usrCoords[2], snapSizeY) - 12 / gt.board.unitY
             ]);
+
+        setTextCoords(coords.usrCoords[1], coords.usrCoords[2]);
         gt.board.update();
     };
     FillTool.prototype.deactivate = function() {
