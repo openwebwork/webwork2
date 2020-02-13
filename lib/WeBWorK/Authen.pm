@@ -256,6 +256,7 @@ sub verify {
 		my $login_event = {
 			'type' => 'SessionEvent',
 			'action' => 'LoggedIn',
+			'profile' => 'SessionProfile',
 			'object' => Caliper::Entity::webwork_app()
 		};
 		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
@@ -835,6 +836,7 @@ sub killSession {
 		my $login_event = {
 			'type' => 'SessionEvent',
 			'action' => 'LoggedOut',
+			'profile' => 'SessionProfile',
 			'object' => Caliper::Entity::webwork_app()
 		};
 		$caliper_sensor->sendEvents($self->{r}, [$login_event]);

@@ -1700,6 +1700,13 @@ sub body {
 				};
 				push @$events, $paused_set_event;
 			}
+			my $tool_use_event = {
+				'type' => 'ToolUseEvent',
+				'action' => 'Used',
+				'profile' => 'ToolUseProfile',
+				'object' => Caliper::Entity::webwork_app(),
+			};
+			push @$events, $tool_use_event;
 			$caliper_sensor->sendEvents($r, $events);
 
 			# reset start time
