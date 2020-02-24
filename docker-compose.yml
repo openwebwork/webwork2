@@ -13,7 +13,7 @@ services:
       # When the MariaDB container is first started it will set the
       # the MYSQL_ROOT_PASSWORD if there is no mysql database in the
       # data volume.
-      MYSQL_ROOT_PASSWORD: sqlRootPasswordSetThisPasswordBEFOREfirstStartingTheDBcontainer
+      MYSQL_ROOT_PASSWORD: passwordRoot
 
       # When the MariaDB container is first started it will create
       #    the WW database and WW DB user based on:
@@ -49,14 +49,14 @@ services:
 
       # If you are using locally modified webwork2 files, then
       # either mount them from the webwork2 tree from which you start Docker:
-      #- ".:/opt/webwork/webwork2"
+      - ".:/opt/webwork/webwork2"
       # OR mount it from a fixed external location
       #- "/path_to/webwork2:/opt/webwork/webwork2"
 
       # Shared main /pg repository - allows local PG development
       #- "/path_to_shared/pg:/opt/webwork/pg"
       # OR locally modified PG directory
-      #- "../pg:/opt/webwork/pg"
+      - "../pg:/opt/webwork/pg"
 
       # ======================================================================
 
@@ -81,10 +81,10 @@ services:
       # ======================================================================
 
       # By default the OPL is stored in a named Docker storage volume:
-      - oplVolume:/opt/webwork/libraries/webwork-open-problem-library
+      # - oplVolume:/opt/webwork/libraries/webwork-open-problem-library
       #
       # as an alternative, you can comment out the prior option and uncomment the line below to use a local directory containing the OPL
-      #- "/path_to/webwork-open-problem-library:/opt/webwork/libraries/webwork-open-problem-library"
+      - "../webwork-open-problem-library:/opt/webwork/libraries/webwork-open-problem-library"
 
       # ======================================================================
 
@@ -122,14 +122,14 @@ services:
 
     ports:
       # For a personal machine
-      - "${WEBWORK2_HTTP_PORT_ON_HOST}:80"
+      #- "${WEBWORK2_HTTP_PORT_ON_HOST}:80"
 
       # For a production machine
-      #- "80:80"
-      #- "443:443"
+      - "80:80"
+      - "443:443"
 
     # For a production machine
-    #restart: always
+    restart: always
 
     environment:
 
