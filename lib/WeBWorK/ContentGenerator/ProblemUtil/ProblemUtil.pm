@@ -51,6 +51,9 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP qw();
 use Try::Tiny;
 
+use Caliper::Sensor;
+use Caliper::Entity;
+
 
 # process_and_log_answer subroutine.
 
@@ -279,6 +282,61 @@ sub process_and_log_answer{
 					$pureProblem->num_incorrect
 					);
 
+				my $caliper_sensor = Caliper::Sensor->new($self->{ce});
+				if ($caliper_sensor->caliperEnabled()) {
+					my $startTime = $r->param('startTime');
+					my $endTime = time();
+
+					my $completed_question_event = {
+						'type' => 'AssessmentItemEvent',
+						'action' => 'Completed',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_user(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg
+						),
+						'generated' => Caliper::Entity::answer(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg,
+							$startTime,
+							$endTime
+						),
+					};
+					my $submitted_set_event = {
+						'type' => 'AssessmentEvent',
+						'action' => 'Submitted',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_set(
+							$self->{ce},
+							$db,
+							$problem->set_id()
+						),
+						'generated' => Caliper::Entity::problem_set_attempt(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->user_id(),
+							$startTime,
+							$endTime
+						),
+					};
+					$caliper_sensor->sendEvents($r, [$completed_question_event, $submitted_set_event]);
+
+					# reset start time
+					$r->param('startTime', '');
+				}
+
 				#Try to update the student score on the LMS
 				# if that option is enabled.
 				my $LTIGradeMode = $self->{ce}->{LTIGradeMode} // '';
@@ -448,9 +506,9 @@ sub output_JS{
 # prints out summary information for the problem pages.
 
 # sub output_summary{
-# 
+#
 # 	my $self = shift;
-# 
+#
 # 	my $editMode = $self->{editMode};
 # 	my $problem = $self->{problem};
 # 	my $pg = $self->{pg};
@@ -458,12 +516,12 @@ sub output_JS{
 # 	my %will = %{ $self->{will} };
 # 	my $checkAnswers = $self->{checkAnswers};
 # 	my $previewAnswers = $self->{previewAnswers};
-# 
+#
 # 	my $r = $self->r;
-# 
+#
 # 	my $authz = $r->authz;
 # 	my $user = $r->param('user');
-# 
+#
 # 	# custom message for editor
 # 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 # 		if ($editMode eq "temporaryFile") {
@@ -473,15 +531,15 @@ sub output_JS{
 # 		}
 # 	}
 # 	print CGI::start_div({class=>"problemHeader"});
-# 
-# 
+#
+#
 # 	# attempt summary
 # 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 # 	# until after the due date
 # 	# do I need to check $will{showCorrectAnswers} to make preflight work??
 # 	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 # 		# print this if user submitted answers OR requested correct answers
-# 
+#
 # 		print $self->attemptResults($pg, 1,
 # 			$will{showCorrectAnswers},
 # 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
@@ -501,7 +559,7 @@ sub output_JS{
 # 			# don't show attempt results (correctness)
 # 			# show attempt previews
 # 	}
-# 
+#
 # 	print CGI::end_div();
 # }
 
@@ -541,6 +599,7 @@ sub output_main_form{
 	my $problem = $self->{problem};
 	my $set = $self->{set};
 	my $submitAnswers = $self->{submitAnswers};
+	my $startTime = $r->param('startTime') || time();
 
 	my $db = $r->db;
 	my $ce = $r->ce;
@@ -553,6 +612,7 @@ sub output_main_form{
 	print "\n";
 	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
+	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	print CGI::end_form();
 }
 
@@ -601,6 +661,11 @@ sub output_footer{
 		module             => __PACKAGE__,
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
+		problemPath        => $problem->source_file,
+		randomSeed         => $problem->problem_seed,
+		emailAddress       => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
+		emailableURL       => $self->generateURLs('absolute'),
+		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
 		showCorrectAnswers => $will{showCorrectAnswers},
@@ -674,21 +739,8 @@ sub jitar_send_warning_email {
 				courseID => $courseID, setID => $setID, problemID => $problemID), params=>{effectiveUser=>$userID}, use_abs_url=>1);
 
 
-	my @recipients;
-        # send to all users with permission to score_sets an email address
-	# DBFIXME iterator?
-	foreach my $rcptName ($db->listUsers()) {
-		if ($authz->hasPermissions($rcptName, "score_sets")) {
-			my $rcpt = $db->getUser($rcptName); # checked
-			next if $ce->{feedback_by_section} and defined $user
-			    and defined $rcpt->section and defined $user->section
-			    and $rcpt->section ne $user->section;
-			if ($rcpt and $rcpt->email_address) {
-			    # rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
-			    push @recipients, $rcpt->rfc822_mailbox;
-			}
-		}
-	}
+	  my @recipients = $self->fetchEmailRecipients("score_sets", $user);
+        # send to all users with permission to score_sets and an email address
 
     my $sender;
     if ($user->email_address) {
@@ -732,7 +784,7 @@ sub jitar_send_warning_email {
 # 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
 # 			timeout => $ce->{mail}->{smtpTimeout}
 # 		});
-# 
+#
 
 #           createEmailSenderTransportSMTP is defined in ContentGenerator
 		my $transport = $self->createEmailSenderTransportSMTP();

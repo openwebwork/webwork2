@@ -57,6 +57,7 @@ answer to a WeBWorK problem.  It is used in Problem.pm, OpaqueServer.pm, standAl
 		answersSubmitted       => 1,
 		answerOrder            => $pg->{flags}->{ANSWER_ENTRY_ORDER},
 		displayMode            => 'MathJax',
+		showHeadline           => 1,
 		showAnswerNumbers      => 0,
 		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
 		showAttemptPreviews    => $showAttemptPreview,
@@ -75,6 +76,8 @@ answer to a WeBWorK problem.  It is used in Problem.pm, OpaqueServer.pm, standAl
 	answerOrder       -- an array indicating the order the answers appear on the page.
 	displayMode       'MathJax' and 'images' are the most common
 	
+	showHeadline       Show the header line 'Results for this submission'
+
 	showAnswerNumbers, showAttemptAnswers, showAttemptPreviews,showAttemptResults,
 	showCorrectAnswers and showMessages control the display of each column in the table.
 	
@@ -168,6 +171,7 @@ sub new {
 		answersSubmitted    => $options{answersSubmitted}//0,
 		summary             => $options{summary}//'', # summary provided by problem grader
 	    displayMode 		=> $options{displayMode} || "MathJax",
+		showHeadline        => $options{showHeadline} // 1,
 	    showAnswerNumbers    => $options{showAnswerNumbers}//1,
 	    showAttemptAnswers =>  $options{showAttemptAnswers}//1,    # show student answer as entered and simplified 
 	                                                               #  (e.g numerical formulas are calculated to produce numbers)
@@ -182,7 +186,7 @@ sub new {
 	bless $self, $class;
 	# create read only accessors/mutators
 	$self->mk_ro_accessors(qw(answers answerOrder answersSubmitted displayMode imgGen maketext));
-	$self->mk_ro_accessors(qw(showAnswerNumbers showAttemptAnswers 
+	$self->mk_ro_accessors(qw(showAnswerNumbers showAttemptAnswers showHeadline
 	                          showAttemptPreviews showAttemptResults 
 	                          showCorrectAnswers showSummary));
 	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages  summary));
@@ -322,8 +326,9 @@ sub answerTemplate {
     	push @incorrect_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) < 1;
     	#$self->{essayFlag} = 1;
     }
-	my $answerTemplate = CGI::h3($self->maketext("Results for this submission")) .
-    	CGI::table({class=>"attemptResults"},@tableRows);
+	my $answerTemplate = "";
+	$answerTemplate .= CGI::h3($self->maketext("Results for this submission")) if $self->showHeadline;
+	$answerTemplate .= CGI::table({class=>"attemptResults"},@tableRows);
     ### "results for this submission" is better than "attempt results" for a headline
     $answerTemplate .= ($self->showSummary)? $self->createSummary() : '';
     $answerTemplate = "" unless $self->answersSubmitted; # only print if there is at least one non-blank answer

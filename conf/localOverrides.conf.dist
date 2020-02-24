@@ -383,7 +383,7 @@ $showeditors{simplepgeditor}   = 0;
 # Additional PG modules
 #####################
 
-#push (@{${pg}{modules}}, [qw(TikZ_Image2)]);
+#push (@{${pg}{modules}}, [qw(TikZImage)]);
 ################################################################################ 
 # Student Date Format
 ################################################################################
@@ -544,5 +544,33 @@ $hardcopyThemeNames = {
 #$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
 
 ################################################################################
+
+
+################################################################################
+# Webwork Caliper
+################################################################################
+
+# enable/disable Caliper for install
+$caliper{enabled} = 0;
+# base_url should ideally be hard coded to a persistent url pointing to the webwork root
+# (important to keep it consistent over time)
+$caliper{base_url} = 'https://webwork.elearning.ubc.ca/webwork2/';
+# LRS endpoint
+$caliper{host} = 'http://caliper.example.host.org/api/endpoint';
+# LRS endpoint Bearer API key
+$caliper{api_key} = '1234567890abcdefg';
+# log file for caliper errors
+$caliper{errorlog} = $webworkDirs{logs} . "/caliper_errors.log";
+# customized Caliper actor. Useful if persistent identifiers for students are available in WebWork
+# $caliper{custom_actor_generator} = sub {
+# 	my ($ce, $db, $user) = @_;
+# 	# set caliper id as needed
+# 	my $caliper_id = 'http://www.ubc.ca/' . $user->user_id();
+# 	return {
+# 		'id' => $caliper_id,
+# 		'type' => 'Person',
+# 		'name' => $user->first_name() . " " . $user->last_name(),
+# 	};
+# };
 
 1; #final line of the file to reassure perl that it was read properly.

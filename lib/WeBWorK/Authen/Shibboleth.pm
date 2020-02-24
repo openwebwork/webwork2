@@ -75,9 +75,9 @@ sub get_credentials {
 			return $self->SUPER::get_credentials( @_ );
 		}
 		
-		if ( defined ($ENV{$ce->{shibboleth}{session_header}}) && defined( $ENV{$ce->{shibboleth}{mapping}{user_id}} ) ) {
+		if ( defined ($ce->{shibboleth}{session_header}) && defined( $ce->{shibboleth}{mapping}{user_id} ) ) {
 			debug('Got shib header and user_id');
-			my $user_id = $ENV{$ce->{shibboleth}{mapping}{user_id}};
+			my $user_id = $ce->{shibboleth}{mapping}{user_id};
 			if ( defined ($ce->{shibboleth}{hash_user_id_method}) && 
 			     $ce->{shibboleth}{hash_user_id_method} ne "none" && 
 			     $ce->{shibboleth}{hash_user_id_method} ne "" ) {

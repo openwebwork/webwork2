@@ -151,6 +151,8 @@ RUN apt-get update \
 	libpath-class-perl \
 	libphp-serialization-perl \
 	libxml-simple-perl \
+	libnet-https-nb-perl \
+	libhttp-async-perl \
 	libsoap-lite-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \

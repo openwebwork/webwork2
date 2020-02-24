@@ -41,8 +41,11 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+use WeBWorK::Utils::AttemptsTable;
 use PGrandom;
 
+use Caliper::Sensor;
+use Caliper::Entity;
 # template method
 sub templateName {
 	return "gateway";
@@ -340,8 +343,6 @@ sub can_useMathQuill {
 # output utilities
 ################################################################################
 
-# subroutine is modified from that in Problem.pm to produce a different 
-#    table format
 sub attemptResults {
 	my $self = shift;
 	my $pg = shift;
@@ -351,134 +352,53 @@ sub attemptResults {
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
 	my $colorAnswers = $showAttemptResults;
-
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my @links = ("Homework Sets" , "$root/$courseName", "navUp");
-	my $tail = "";
-	
-	my $problemResult = $pg->{result}; # the overall result of the problem
-	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	
-	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 
 	# for color coding the responses.
 	$self->{correct_ids} = [] unless $self->{correct_ids};
 	$self->{incorrect_ids} = [] unless $self->{incorrect_ids};
 
-  # present in ver 1.10; why is this checked here?
-	#	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the homework set that contains it is not yet open."))
-	#	unless $self->{isOpen};
-
-	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
-
 	# to make grabbing these options easier, we'll pull them out now...
-	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
-	
+	my %imagesModeOptions = %{$ce->{pg}{displayModeOptions}{images}};
+
 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
-		tempDir         => $ce->{webworkDirs}->{tmp},
-		latex	        => $ce->{externalPrograms}->{latex},
-		dvipng          => $ce->{externalPrograms}->{dvipng},
+		tempDir         => $ce->{webworkDirs}{tmp},
+		latex	        => $ce->{externalPrograms}{latex},
+		dvipng          => $ce->{externalPrograms}{dvipng},
 		useCache        => 1,
-		cacheDir        => $ce->{webworkDirs}->{equationCache},
-		cacheURL        => $ce->{webworkURLs}->{equationCache},
-		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
+		cacheDir        => $ce->{webworkDirs}{equationCache},
+		cacheURL        => $ce->{webworkURLs}{equationCache},
+		cacheDB         => $ce->{webworkFiles}{equationCacheDB},
 		dvipng_align    => $imagesModeOptions{dvipng_align},
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 
-	my @rows;
-	my @row;
-	
-	push @row, CGI::th({scope=>"col"},$r->maketext('Entered')) if $showAttemptAnswers;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Answer Preview')) if $showAttemptPreview;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Correct')) if $showCorrectAnswers;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Result')) if $showAttemptResults;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Messages')) if $showMessages;
+	my $showEvaluatedAnswers = $ce->{pg}{options}{showEvaluatedAnswers} // '';
 
-	push @rows, CGI::Tr(@row);
+	# Create AttemptsTable object	
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$pg->{answers},
+		answersSubmitted       => 1,
+		answerOrder            => $pg->{flags}{ANSWER_ENTRY_ORDER},
+		displayMode            => $self->{displayMode},
+		showHeadline           => 0,
+		showAnswerNumbers      => 0,
+		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
+		showAttemptPreviews    => $showAttemptPreview,
+		showAttemptResults     => $showAttemptResults,
+		showCorrectAnswers     => $showCorrectAnswers,
+		showMessages           => $showAttemptAnswers, # internally checks for messages
+		showSummary            => $showSummary,
+		imgGen                 => $imgGen, # not needed if ce is present ,
+		ce                     => '',	   # not needed if $imgGen is present
+		maketext               => WeBWorK::Localize::getLoc($ce->{language}),
+	);
 
-	my $answerScore = 0;
-	my $numCorrect = 0;
-	my $numAns = 0;
-	my $numBlanks = 0;
-	my $numEssay = 0;
-	foreach my $name (@answerNames) {
-
-	    @row = ();
-	    my $answerResult  = $pg->{answers}->{$name};
-	    my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
-	    my $preview       = ($showAttemptPreview
-				 ? $self->previewAnswer($answerResult, $imgGen)
-				 : "");
-	    my $correctAnswer = $answerResult->{correct_ans};
-	    $answerScore = $answerResult->{score}//0;
-	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-	    $numCorrect += ($answerScore >= 1) ? 1 : 0;
-	    $numEssay += ($answerResult->{type}//'') eq 'essay';
-	    $numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
-	    
-	    my $resultString;
-	    if ($answerScore >= 1) {
-		$resultString = $r->maketext("correct");
-		push @{$self->{correct_ids}}, $name if $colorAnswers;
-	    } elsif (($answerResult->{type}//'') eq 'essay') {
-		$resultString =  $r->maketext("Ungraded");
-		$self->{essayFlag} = 1;
-	    } elsif (defined($answerScore) and $answerScore == 0) {
-		$resultString = $r->maketext("incorrect");
-		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
-	    } else {
-		$resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
-	    }
-	    
-	    push @row, CGI::td({scope=>"col"},$self->nbsp($studentAnswer)) if $showAttemptAnswers;
-	    push @row, CGI::td({scope=>"col"}, $self->nbsp($preview)) if $showAttemptPreview;
-	    push @row, CGI::td({scope=>"col"}, $self->nbsp($correctAnswer)) if $showCorrectAnswers;
-	    push @row, CGI::td({scope=>"col"}, $self->nbsp($resultString)) if $showAttemptResults;
-	    push @row, CGI::td({scope=>"col"},  $self->nbsp($answerMessage)) if $showMessages;
-	    
-	    push @rows, CGI::Tr(@row);
-	    $numAns++;
-
-	}
-
-	# render equation images
-	$imgGen->render(refresh => 1);
-
-	my $summary = "";
-	if (scalar @answerNames == 1) { #Here there is just one answer blank
-		if ($numCorrect == 1) { #The student might be totally right
-			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext("This answer is correct."));
-		} elsif ($self->{essayFlag}) {
-			$summary .= $r->maketext("The answer will be graded later.");
-		} elsif ($answerScore > 0 && $answerScore < 1) { #The student might be partially right
-			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT completely correct."));
-		} else { #The student might be completely wrong.
-		 	 $summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT correct."));
-		}
-	} else {
-		if ($numCorrect + $numEssay == scalar @answerNames) {
-			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext(
-				$numEssay ? "All of the gradeable answers are correct." :
-					    "All of the answers are correct."));
-		} elsif ($numBlanks + $numEssay != scalar(@answerNames)) {
-			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext(
-				$answerScore > 0 && $answerScore < 1 ?
-				      "At least one of these answers is NOT completely correct." :
-				      "At least one of these answers is NOT correct."));
-		}
-	}
-
-	return
-
-	    CGI::table({-class=>"gwAttemptResults"}, @rows).
-
-	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
+	my $answerTemplate = $tbl->answerTemplate; 
+	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	push(@{$self->{correct_ids}}, @{$tbl->correct_ids}) if $colorAnswers;
+	push(@{$self->{incorrect_ids}}, @{$tbl->incorrect_ids}) if $colorAnswers;
+	return $answerTemplate;
 }
 
 sub handle_input_colors {
@@ -499,41 +419,6 @@ sub handle_input_colors {
 	        "]\n);",
 	      CGI::end_script();
 }
-
-# *BeginPPM* ###################################################################
-# this code taken from Problem.pm; excerpted section ends at *EndPPM*
-# modifications are flagged with comments *GW*
-
-sub previewAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->r->ce;
-	my $EffectiveUser = $self->{effectiveUser};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $displayMode   = $self->{displayMode};
-	
-	# note: right now, we have to do things completely differently when we are
-	# rendering math from INSIDE the translator and from OUTSIDE the translator.
-	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
-	
-	my $tex = $answerResult->{preview_latex_string};
-	
-	return "" unless defined $tex and $tex ne "";
-	
-	if ($displayMode eq "plainText") {
-		return $tex;
-	} elsif ($displayMode eq "images") {
-		$imgGen->add($tex);
-	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	} elsif ($displayMode eq "jsMath") {
-		$tex =~ s/&/&amp;/g; $tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
-		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
-	}
-}
-
-# *EndPPM ######################################################################
 
 ################################################################################
 # Template escape implementations
@@ -1300,10 +1185,15 @@ sub pre_header_initialize {
 }
 
 sub head {
-        my ($self) = @_;
-        my $ce = $self->r->ce;
-        my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-        return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
+	my ($self) = @_;
+	return if !defined($self->{ra_pg_results});
+	my $head_text = "";
+	for (@{$self->{ra_pg_results}})
+	{
+		next if !ref($_);
+		$head_text .= $_->{head_text} if $_->{head_text};
+	}
+	return $head_text;
 }
 
 sub path {
@@ -1730,6 +1620,91 @@ sub body {
 
 			}
 		}
+
+		my $caliper_sensor = Caliper::Sensor->new($self->{ce});
+		if ($caliper_sensor->caliperEnabled()) {
+			my $events = [];
+
+			my $startTime = $r->param('startTime');
+			my $endTime = time();
+			if ($submitAnswers && $will{recordAnswers}) {
+				foreach my $i ( 0 .. $#problems ) {
+					my $problem = $problems[$i];
+					my $pg = $pg_results[$i];
+					my $completed_question_event = {
+						'type' => 'AssessmentItemEvent',
+						'action' => 'Completed',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_user(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							$versionNumber,
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg
+						),
+						'generated' => Caliper::Entity::answer(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							$versionNumber,
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg,
+							0, # don't track start/end time for gateway problems (multiple answers per page)
+							0 # don't track start/end time for gateway problems (multiple answers per page)
+						),
+					};
+					push @$events, $completed_question_event;
+				}
+				my $submitted_set_event = {
+					'type' => 'AssessmentEvent',
+					'action' => 'Submitted',
+					'profile' => 'AssessmentProfile',
+					'object' => Caliper::Entity::problem_set(
+						$self->{ce},
+						$db,
+						$setName
+					),
+					'generated' => Caliper::Entity::problem_set_attempt(
+						$self->{ce},
+						$db,
+						$setName,
+						$versionNumber,
+						$effectiveUser,
+						$startTime,
+						$endTime
+					),
+				};
+				push @$events, $submitted_set_event;
+			} else {
+				my $paused_set_event = {
+					'type' => 'AssessmentEvent',
+					'action' => 'Paused',
+					'profile' => 'AssessmentProfile',
+					'object' => Caliper::Entity::problem_set(
+						$self->{ce},
+						$db,
+						$setName
+					),
+					'generated' => Caliper::Entity::problem_set_attempt(
+						$self->{ce},
+						$db,
+						$setName,
+						$versionNumber,
+						$effectiveUser,
+						$startTime,
+						$endTime
+					),
+				};
+				push @$events, $paused_set_event;
+			}
+			$caliper_sensor->sendEvents($r, $events);
+
+			# reset start time
+			$r->param('startTime', '');
+		}
 	}
 	debug("end answer processing");
 # end problem loop
@@ -2045,6 +2020,7 @@ sub body {
 
 	# else: we're not hiding answers
 	} else {
+		my $startTime = $r->param('startTime') || time();
 
 		print CGI::start_form({-name=>"gwquiz", -method=>"POST", 
 				      -action=>$action}), 
@@ -2055,6 +2031,7 @@ sub body {
 	#    subsequent pages of a multipage test
 		print CGI::hidden({-name=>'previewHack', -value=>''}), 
 			CGI::br();
+        print CGI::hidden({-name=>'startTime', -value=>$startTime});
 		if ( $numProbPerPage && $numPages > 1 ) { 
 			print CGI::hidden({-name=>'newPage', -value=>''});
 			print CGI::hidden({-name=>'currentPage',
