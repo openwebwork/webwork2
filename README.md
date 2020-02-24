@@ -22,6 +22,31 @@ New users interested in getting started with their own WeBWorK server, or instru
 *  [Forum](http://webwork.maa.org/moodle/mod/forum/index.php?id=3) - The WeBWorK Forum
 *  [Frequently Asked Questions](https://github.com/openwebwork/webwork2/wiki/Frequently-Asked-Questions) - A list of frequently asked questions.  
 
+## Information for downloading
+
+* The current version is WeBWorK-2.15 and its companion PG-2.15
+
+* If you would prefer to download a previous release, say WeBWorK 2.14, then run the following commands:
+
+```
+cd /opt/webwork/webwork2
+git checkout -b WeBWorK2.14+ WeBWorK2.14+
+```
+* If you want to pull the PG-2.15 branch of pg then run:
+
+```
+cd /opt/webwork/pg
+git checkout -b PG-2.14+ PG-2.14+
+```
+* If you also need an earlier branch of MathJax then run:
+
+```
+cd /opt/webwork/MathJax
+git checkout legacy-v2
+```
+
+* A tab to the upper right lists the releases that are available.
+
 ## Information For Developers
 
 People interested in developing new features for WeBWorK should take a look at the following resources.  People interested in developing new problems for WeBWorK should visit [Problem Authors](http://webwork.maa.org/wiki/Authors).
