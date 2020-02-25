@@ -41,7 +41,9 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
             },
             highlight: false,
             firstArrow: { size: 7 },
-            lastArrow: { size: 7 }
+            lastArrow: { size: 7 },
+            straightFirst: false,
+            straightLast: false
         },
         grid: { gridX: snapSizeX, gridY: snapSizeY },
     };
@@ -52,6 +54,14 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
     function setupBoard() {
         gt.board = JXG.JSXGraph.initBoard(containerId + "_graph", cfgOptions);
         gt.board.suspendUpdate();
+
+        // Move the axes defining points to the end so that the arrows go to the board edges.
+        var bbox = gt.board.getBoundingBox();
+        gt.board.defaultAxes.x.point1.setPosition(JXG.COORDS_BY_USER, [bbox[0], 0]);
+        gt.board.defaultAxes.x.point2.setPosition(JXG.COORDS_BY_USER, [bbox[2], 0]);
+        gt.board.defaultAxes.y.point1.setPosition(JXG.COORDS_BY_USER, [0, bbox[3]]);
+        gt.board.defaultAxes.y.point2.setPosition(JXG.COORDS_BY_USER, [0, bbox[1]]);
+
         gt.board.create('text', [
             function() { return gt.board.getBoundingBox()[2] - 3 / gt.board.unitX; },
             function() { return 1.5 / gt.board.unitY; },
