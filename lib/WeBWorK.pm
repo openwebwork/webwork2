@@ -184,11 +184,11 @@ sub dispatch($) {
 	debug("The raw params:\n");
 	foreach my $key ($r->param) {
 	    #make it so we dont debug plain text passwords
-	    my $vals;	    
+	    my $vals;
 	    if ($key eq 'passwd'||
 		$key eq 'confirmPassword' ||
 		$key eq 'currPassword' ||
-		$key eq 'newPassword' || 
+		$key eq 'newPassword' ||
 		$key =~ /\.new_password/) {
 		$vals = '**********';
 	    } else {
@@ -225,9 +225,68 @@ sub dispatch($) {
 	# Create Course Environment    $ce
 	####################################################################
 	debug("We need to get a course environment (with or without a courseID!)\n");
+
+	my @tempMessage = (); # Collect debug data to log
+	my @failMessage = (); # Collect debug data to log
+	my $courseID = "";
+	my $usingLTIhtml2xml = 0;
+	if ( defined( $displayArgs{courseID} ) ) {
+		$courseID = $displayArgs{courseID};
+		push (@tempMessage, "Have a value for displayArgs{courseID} = $displayArgs{courseID}");
+	} elsif ( $displayModule eq 'WeBWorK::ContentGenerator::renderViaXMLRPC' ) {
+		push (@tempMessage, "The raw params:");
+		foreach my $key ($r->param) {
+		    #make it so we dont debug plain text passwords
+		    my $vals;
+		    if ($key eq 'passwd'||
+			$key eq 'confirmPassword' ||
+			$key eq 'currPassword' ||
+			$key eq 'newPassword' ||
+			$key =~ /\.new_password/) {
+			$vals = '**********';
+		    } else {
+			my @vals = $r->param($key);
+			$vals = join(", ", map { "'$_'" } @vals);
+		    }
+		    push(@tempMessage, "  $key => $vals  ");
+		}
+
+		# If we are handling an html2xml request and seem to have LTI data
+		my $key;
+		my %tmpP;
+		my %numP;
+		my @Pvals;
+		foreach $key ( $r->param ) {
+			@Pvals = $r->param($key);
+			$tmpP{$key} = join(", ", map { "'$_'" } @Pvals);
+			$numP{$key} = scalar( @Pvals );
+		}
+		my @toTest= qw( user_id oauth_timestamp oauth_signature_method
+			oauth_consumer_key oauth_signature lti_message_type  );
+		my $toTest;
+		my $sawAll = 1;
+		foreach $toTest( @toTest ) {
+			if ( ( ! defined( $numP{$toTest} ) ) || ( $numP{$toTest} != 1 ) ) {
+				$sawAll = 0;
+				push( @failMessage, "Fail on $toTest " . ( defined( $numP{$toTest} ) ? $numP{$toTest} : "numP not defined" ) );
+			}
+		}
+		if ( $sawAll ) {
+			foreach my $cid ( qw ( courseID courseid custom_courseID custom_courseid ) ) {
+				if ( $courseID eq "" && defined( $numP{$cid} ) && ( $numP{$cid} == 1 ) ) {
+					@Pvals = $r->param("$cid");
+					$courseID = $Pvals[0];
+					$usingLTIhtml2xml = 1;
+				}
+			}
+		}
+	} else {
+		push (@tempMessage, "Value of displayModule=|$displayModule|");
+	}
+
 	my $ce = eval { new WeBWorK::CourseEnvironment({
 		%SeedCE,
-		courseName => $displayArgs{courseID},
+		courseName => $courseID,
 		# this is kind of a hack, but it's really the only sane way to get this
 		# server information into the PG box
 		apache_hostname => $apache_hostname,
@@ -238,8 +297,12 @@ sub dispatch($) {
 	$@ and die "Failed to initialize course environment: $@\n";
 	debug("Here's the course environment: $ce\n");
 	$r->ce($ce);
-	
-	
+
+	# For Debugging - write to timing.log as that works.
+	#writeTimingLogEntry($ce,"[".$r->uri."]","usingLTIhtml2xml =|$usingLTIhtml2xml|  courseID=|$courseID|   tempMessage="
+	#   .join(", ", @tempMessage)  . " failMessage = " . join(", ", @failMessage) ,"");
+
+
 	######################
 	# Localizing language
 	######################
@@ -302,15 +365,19 @@ sub dispatch($) {
 	runtime_use $user_authen_module;
 	my $authen = $user_authen_module->new($r);
 	debug("Using user_authen_module $user_authen_module: $authen\n");
+
+	# For Debugging - write to timing.log as that works.
+	#writeTimingLogEntry($ce,"[".$r->uri."]","Using user_authen_module $user_authen_module: $authen","");
+
 	$r->authen($authen);
 	
 	my $db;
 	
-	if ($displayArgs{courseID}) {
+	if ( $courseID ne "" ) {
 		debug("We got a courseID from the URLPath, now we can do some stuff:\n");
 		
 		unless (-e $ce->{courseDirs}->{root}) {
-			die "Course '$displayArgs{courseID}' not found: $!";
+			die "Course '$courseID' not found: $!";
 		}
 		
 		debug("...we can create a database object...\n");
@@ -319,10 +386,35 @@ sub dispatch($) {
 		$r->db($db);
 		
 		my $authenOK = $authen->verify;
+
+		# For Debugging - write to timing.log as that works.
+		#writeTimingLogEntry($ce,"[".$r->uri."]","Just called authen->verify and received authenOK=|$authenOK|","");
+
 		if ($authenOK) {
 			my $userID = $r->param("user");
 			debug("Hi, $userID, glad you made it.\n");
-			
+
+			if ( $usingLTIhtml2xml && $authen->was_LTI ) {
+
+				# Until something better is coded, the INITIAL call to WebworkWebservice.pm
+				# to process an LTI authenticated html2xml call uses the "internal_WW2_secret"
+				# to authenticate the connection. This is instead of providing a fixed
+				# password for embedded problems, but it really does not validate that the
+				# data which the original LTI connection provided and verified was not
+				# tampered with before it arrives at lib/WebworkWebservice.pm.
+				#
+				# A safer solution would need to provide a digital signature for some additional
+				# input parameter which encodes the "protected" fields from the initial
+				# connection and then we can verify the digital signature AND that the
+				# "protected" fields for which we have a digital signature match the "signed"
+				# values. A JSON object may be a good method to encode the "protected" fields,
+				# and a course level shared secret could be used to calculate the digital
+				# signature.
+
+				$r->{custom_internal_WW2_secret} = "TemporaryApproachSetSomeServerSecretHere";
+				$r->param("custom_internal_WW2_secret" => $r->{custom_internal_WW2_secret});
+			}
+
 			# tell authorizer to cache this user's permission level
 			$authz->setCachedUser($userID);
 			
@@ -335,6 +427,13 @@ sub dispatch($) {
 				if ($su_authorized) {
 					debug("Ok, looks like you're allowed to become $eUserID. Whoopie!\n");
 				} else {
+				        if ( $usingLTIhtml2xml ) {
+					  # remove the secret
+					  $r->param("custom_internal_WW2_secret" => "BAD");
+					  $r->{custom_internal_WW2_secret} = "BAD";
+					  # should this be failing differently than the "die" below?
+				        }
+
 					debug("Uh oh, you're not allowed to become $eUserID. Nice try!\n");
 					die "You do not have permission to act as another user. 
 					Close down your browser (this clears temporary cookies), 
@@ -362,6 +461,13 @@ sub dispatch($) {
 				}
 			}
 		} else {
+		        if ( $usingLTIhtml2xml ) {
+			  # remove the secret
+			  $r->param("custom_internal_WW2_secret" => "BAD");
+			  $r->{custom_internal_WW2_secret} = "BAD";
+			  # FIXME - we may want to display something rather than
+			  # the login style page on failure
+			}
 			debug("Bad news: authentication failed!\n");
 			$displayModule = LOGIN_MODULE;
 			debug("set displayModule to $displayModule\n");

@@ -500,6 +500,7 @@ sub header {
 	my $r = $self->r;
 
 	$r->content_type("text/html; charset=utf-8");
+	$r->headers_out->add("Access-Control-Allow-Origin" => '*');
 	$r->send_http_header unless MP2;
 	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 }

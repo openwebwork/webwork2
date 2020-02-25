@@ -768,8 +768,16 @@ sub getKeys {
 	return $self->{key}->gets(map { [$_] } @userIDs);
 }
 
+sub getKeysExtended {
+	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
+	my $where = [user_id_like => "$userID%"];
+	my $order = [ 'user_id' ];
+
+	return $self->{key}->get_records_where($where, $order);
+}
+
 sub addKey {
-	# PROCTORING - allow comma in keyfields
+	# PROCTORING (and renderViaXMLRPC) - allow comma in keyfields
 	my ($self, $Key) = shift->checkArgs(\@_, qw/VREC:key/);
 	
 	# PROCTORING -  check for both user and proctor
@@ -778,17 +786,37 @@ sub addKey {
 	#    of the form userid,proctorid,g (which authorizes grading)
 	# (having two of these means that a proctored test will require 
 	#    authorization for both login and grading).
-	if ($Key->user_id =~ /([^,]+)(?:,([^,]*))?(,g)?/) {
+
+	# renderViaXMLRPC - piggyback on the structure, but:
+	#  * The second field is a hash of "session data" which is required
+	#    to remain unchanged (for when the primary session authentication
+	#    was done via LTI on the initial connection) so we need to prevent
+	#    any tampering with the "session data" carried over via hidden
+	#    form fields.
+	# * The third fields is MANDATORY and must be ",x".
+
+	# We add start/end anchors,
+	if ($Key->user_id =~ /^([^,]+)(?:,([^,]*))?(,[gx])?$/) {
 		my ($userID, $proctorID) = ($1, $2);
+		my $field3 = $3;
 		croak "addKey: user $userID not found"
-#			unless $self->{user}->exists($userID);
 			unless $Key -> key eq "nonce" or $self->{user}->exists($userID);
-		croak "addKey: proctor $proctorID not found"
-#			unless $self->{user}->exists($proctorID);
-			unless $Key -> key eq "nonce" or $self->{user}->exists($proctorID);
+		if ( defined( $field3 ) && ( $field3 eq ",x" ) ) {
+			# This is for renderViaXMLRPC pathway.
+			# The hash is 64 hex characters from Digest::SHAsha256_hex().
+			croak "addKey: renderViaXMLRPC pathway, invalid hash $proctorID"
+				unless $Key -> key eq "nonce"
+					or ( $proctorID =~ /^[0-9a-f]{64}$/ );
+		} else {
+			# This is for lib/WeBWorK/Authen/Proctor.pm
+			croak "addKey: proctor $proctorID not found"
+				unless $Key -> key eq "nonce" or $self->{user}->exists($proctorID);
+		}
+	} elsif ( $Key->user_id =~ /,/ ) {
+		# No comma should not appear unless it was handled above
+		croak "addKey: invalid user_id containing a comma";
 	} else {
 		croak "addKey: user ", $Key->user_id, " not found"
-#			unless $self->{user}->exists($Key->user_id);
 			unless $Key -> key eq "nonce" or $self->{user}->exists($Key->user_id);
 	}
 	
@@ -816,6 +844,12 @@ sub putKey {
 sub deleteKey {
 	my ($self, $userID) = shift->checkArgs(\@_, qw/user_id/);
 	return $self->{key}->delete($userID);
+}
+
+sub deleteKeyForSession {
+	my ($self, $userID, $keyString ) = shift->checkArgs(\@_, qw/user_id key/);
+	my $where = [user_id_eq_key_eq => $userID,$keyString ];
+	return $self->{key}->delete_where($where);
 }
 
 sub deleteAllProctorKeys {
@@ -1096,7 +1130,6 @@ sub listProblemPastAnswers {
 	}
 }
 
-
 sub latestProblemPastAnswer {
         my ($self, $courseID, $userID, $setID, $problemID);
 	$self = shift;
@@ -1144,9 +1177,10 @@ sub addPastAnswer {
 
 	croak "addPastAnswert: user problem ", $pastAnswer->user_id, " ", 
               $pastAnswer->set_id, " ", $pastAnswer->problem_id, " not found"
-		unless 	$self->{problem_user}->exists($pastAnswer->user_id, 
-						      $pastAnswer->set_id,
-						      $pastAnswer->problem_id);
+		unless ( $self->{problem_user}->exists($pastAnswer->user_id,
+						       $pastAnswer->set_id,
+						       $pastAnswer->problem_id)
+			|| $pastAnswer->set_id =~ /^html2xml/  ) ; # Allows html2xml to create records before we have problem_user records
 
 	eval {
 		return $self->{past_answer}->add($pastAnswer);
@@ -2284,7 +2318,8 @@ sub getAllMergedProblemVersions {
 
 sub check_user_id { #  (valid characters are [-a-zA-Z0-9_.,@]) 
 	my $value = shift;
-	if ($value =~ m/^[-a-zA-Z0-9_.@]*,?(set_id:)?[-a-zA-Z0-9_.@]*(,g)?$/ ) {
+	if ($value =~ m/^[-a-zA-Z0-9_.@]*,?(set_id:)?[-a-zA-Z0-9_.@]*(,[gx])?$/ ) {
+		# last item can be ",g" for graded gateways and ",x" for html2xml LTI
 		return 1;
 	} else {
 		croak "invalid characters in user_id field: '$value' (valid characters are [-a-zA-Z0-9_.,@])";

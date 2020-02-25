@@ -183,7 +183,10 @@ sub get_credentials {
 	undef($self ->{user_id});
       }
       
-      $self->{email} = uri_unescape($r->param("lis_person_contact_email_primary"));
+      $self->{email} = ""; # set an initial value to avoid warnings when not provided
+      if ( defined( $r->param("lis_person_contact_email_primary") ) ) {
+        $self->{email} = uri_unescape($r->param("lis_person_contact_email_primary"));
+      }
 
       # if preferred_source_of_username eq "lis_person_contact_email_primary"
       # or if the user_id is still undefined at this point 
@@ -192,7 +195,7 @@ sub get_credentials {
       # after @
 
       if (!defined($self->{user_id})
-	  or (defined($self->{email})  
+	  or ( $self->{email} ne "" # modified to ne "" as fallback value defined above
 	      and defined($ce->{preferred_source_of_username})
 	      and $ce->{preferred_source_of_username} eq "lis_person_contact_email_primary")) {
 	$self->{user_id} = $self->{email};
@@ -200,17 +203,38 @@ sub get_credentials {
 	  $ce->{strip_address_from_email};
       }
 
-     if (!defined($self->{student_id})
-         and defined($ce->{preferred_source_of_student_id})) {
-       my $user_id_lti_param_name = $ce->{preferred_source_of_student_id};
-       $self->{student_id} = $r->param($user_id_lti_param_name);
-     }
+      my $used_LMS_user_id = 0;
+      if ( defined( $ce->{force_lti_to_use_provided_user_id} ) and
+          $ce->{force_lti_to_use_provided_user_id} ) {
+	# If this is set we FORCE LTI to use the LMS provided user_id string
+	# which will make sure the accounts are created using this value
+	# even if we have something else
+	$self->{user_id} = $r->param("user_id");
+	$used_LMS_user_id = 1;
+      } elsif ( ! defined( $self->{user_id} ) and
+          defined( $ce->{allow_lti_to_use_provided_user_id} ) and
+          $ce->{allow_lti_to_use_provided_user_id} ) {
+        # Final fallback to the LMS provided user_id string is permitted via a
+        # course environment setting
+        $self->{user_id} = $r->param("user_id");
+        $used_LMS_user_id = 1;
+      }
+
+      if (!defined($self->{student_id}) ) {
+        if ( defined($ce->{preferred_source_of_student_id}) ) {
+          my $user_id_lti_param_name = $ce->{preferred_source_of_student_id};
+          $self->{student_id} = $r->param($user_id_lti_param_name);
+        } else {
+          $self->{student_id} = ""; # fall back to an empty string to avoid a warning when below in debug_lti_parameters processing.
+        }
+      }
       
       # For setting up its helpful to print out what the system think the
       # User id and address is at this point 
       if ( $ce->{debug_lti_parameters} ) {
 	warn "=========== summary ============";
-	warn "User id is |$self->{user_id}|\n";
+	my $tmpIDmsg = ( $used_LMS_user_id == 1 ) ? " was the remote LMS LTI provided user_id\n" : "\n" ;
+	warn "User id is |$self->{user_id}| $tmpIDmsg";
 	warn "User mail address is |$self->{email}|\n";
 	warn "Student id is |", $self->{student_id}//'undefined',"|\n";
 	warn "preferred_source_of_username is |", $ce->{preferred_source_of_username}//'undefined',"|\n";
@@ -240,6 +264,9 @@ sub check_user {
   
   debug("LTIAdvanced::check_user has been called for user_id = |$user_id|");
 
+  # alt DEBUG
+  #warn "LTIAdvanced::check_user has been called for user_id = |$user_id|";
+
   # See comment in get_credentials()
   if ($r->{xmlrpc}) {
     #debug("falling back to superclass check_user (xmlrpc call)");
@@ -259,7 +286,10 @@ sub check_user {
 	 or defined($r->param("lis_person_sourced_id"))
 	 or defined($r->param("lis_person_source_id"))
 	 or defined($r->param("lis_person_sourceid")) 
-	 or defined($r->param("lis_person_contact_email_primary")) ) {
+	 or defined($r->param("lis_person_contact_email_primary")) 
+         or ( defined( $ce->{allow_lti_to_use_provided_user_id} ) and
+              $ce->{allow_lti_to_use_provided_user_id} )
+       ) {
       debug("User |$user_id| is unknown but may be an new user from an LSM via LTI. About to return a 1");
       return 1;  #This may be a new user coming in from a LMS via LTI.
     } else {
@@ -294,10 +324,14 @@ sub verify_normal_user {
     = map {$self->{$_};} ('r', 'user_id', 'session_key');
   
   debug("LTIAdvanced::verify_normal_user called for user |$user_id|");
-  
+  # alt Debug
+  #warn "LTIAdvanced::verify_normal_user has been called for user_id = |$user_id|";  
+
   # See comment in get_credentials()
   if ($r->{xmlrpc}) {
     #debug("falling back to superclass verify_normal_user (xmlrpc call)");
+    # alt Debug
+    #warn "LTIAdvanced::verify_normal_user falling back to superclass verify_normal_user (xmlrpc call)";
     return $self->SUPER::verify_normal_user(@_);
   }
   
@@ -309,6 +343,8 @@ sub verify_normal_user {
   my $auth_result = $self->authenticate;
   
   debug("auth_result=|${auth_result}|");	
+  # alt Debug
+  #warn "LTIAdvanced::verify_normal_user auth_result=|${auth_result}|";
 
   # Parameters CANNOT be modified until after LTIAdvanced authentication
   # has been done, because the parameters passed with the request
@@ -334,6 +370,8 @@ sub authenticate {
   my $self = shift;
   my ($r, $user ) = map {$self->{$_};} ('r', 'user_id');
   
+  my $verifyOK = 0;
+
   # See comment in get_credentials()
   if ($r->{xmlrpc}) {
     #debug("falling back to superclass authenticate (xmlrpc call)");
@@ -384,20 +422,21 @@ sub authenticate {
   # included when the LMS user created the LMS link 
   my $altpath = $path;
   $altpath =~ s/\/$//;
-  
+
+  my $consumer_secret = $ce->{LTIBasicConsumerSecret};
+
   my ($request, $altrequest);
   eval { 
     $request = Net::OAuth->request("request token")->from_hash($requestHash,
 	       request_url => $path,
 	       request_method => "POST",
-	       consumer_secret => $ce->{LTIBasicConsumerSecret},
-							      );
+	       consumer_secret => $consumer_secret    );
     
     $altrequest = Net::OAuth->request("request token")->from_hash($requestHash,
 		  request_url => $altpath,
 		  request_method => "POST",
-		  consumer_secret => $ce->{LTIBasicConsumerSecret},
-								 );
+		  consumer_secret => $consumer_secret );
+
   };
 
   if ($@) {
@@ -407,7 +446,74 @@ sub authenticate {
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
       $self->{log_error} .= "Construction of OAuth request record failed";
       return 0;
-    } elsif (! $request->verify && ! $altrequest->verify) {
+  } # was an elsif here, but we would have returned in the case that the if condition help
+
+  $verifyOK = $request->verify;
+
+
+  # UGLY HACK for use during local testing without a real LTI consumer.
+  # Do NOT ever leave the code on following line active on a public server.
+  # VERY DANGEROUS !!! # $verifyOK = 1; # VERY DANGEROUS !!!
+  # END UGLY HACK
+
+  if ( ! $verifyOK ) {
+    # Try the altrequest
+    $verifyOK = $altrequest->verify;
+  }
+
+  if ( ( ! $verifyOK ) && defined( $ce->{LTIxml2htmlPath} ) ) {
+
+    # Add handling for xml2html path
+    my $html2xmlPath1 = $ce->{LTIxml2htmlPath};
+    my $html2xmlPath2 = $html2xmlPath1;
+    $html2xmlPath2 =~ s/\/$//;            # drop trailing "/" if included
+    $html2xmlPath1 = "${html2xmlPath2}/"; # Force a trailing "/"
+
+    my ( $html2xmlRequest1, $html2xmlRequest2 );
+
+    if ( $html2xmlPath2 ne "" ) {
+
+      debug("Trying the html2xml path: $html2xmlPath2");
+
+      if ( $ce->{debug_lti_parameters} ) {
+        warn("Trying the html2xml path: $html2xmlPath2");
+      }
+
+      eval { 
+        $html2xmlRequest1 = Net::OAuth->request("request token")->from_hash($requestHash,
+		  request_url => $html2xmlPath1,
+		  request_method => "POST",
+		  consumer_secret => $consumer_secret );
+
+        $html2xmlRequest2 = Net::OAuth->request("request token")->from_hash($requestHash,
+		  request_url => $html2xmlPath2,
+		  request_method => "POST",
+		  consumer_secret => $consumer_secret );
+      };
+
+      if ($@) {
+        debug("construction of html2xml Net::OAuth objects failed: $@");
+        debug( "eval failed: ", $@, "<br /><br />");
+      } else {
+        # Try the html2xml options
+        $verifyOK = $html2xmlRequest1->verify;
+        if ( ! $verifyOK ) {
+          $verifyOK = $html2xmlRequest2->verify;
+        }
+        if ( $ce->{debug_lti_parameters} ) {
+          if ( $verifyOK ) {
+            warn "html2xml LTI verification passed.";
+            debug("html2xml LTI verification passed.");
+          } else {
+            warn "html2xml LTI verification failed.";
+            debug("html2xml LTI verification failed.");
+          }
+        }
+      }
+    }
+  }
+
+  if ( ! $verifyOK ) {
       debug("LTIAdvanced::authenticate request-> verify failed");
       debug("OAuth verification Failed ");
       
@@ -417,7 +523,7 @@ sub authenticate {
 	warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the LMS url then you have https in \$server_root_url in site.conf");
       }
       return 0;
-    } else {
+  } else {
       debug("OAuth verification SUCCEEDED !!");
       
       my $userID = $self->{user_id};
@@ -466,7 +572,7 @@ sub authenticate {
       }
 
       return 1;
-    }
+  }
   
   debug("LTIAdvanced is returning a failed authentication");
   $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
@@ -559,7 +665,21 @@ sub create_user {
   $db->addPermissionLevel($newPermissionLevel);
   $r->authz->{PermissionLevel} = $newPermissionLevel;  #cache the Permission Level Record.
 
-  
+
+  # Allow the CourseEnvironment to bypass assigning existing sets to new users.
+  # Initial use case is LTI + html2xml where the problems are assigned by
+  # problem file path and not by setID + problemID.
+
+  if ( defined( $ce->{lti_do_not_assign_sets_to_new_users} ) &&
+       $ce->{lti_do_not_assign_sets_to_new_users} == 1 ) {
+    # When this setting is enabled, we return here to skip
+    # assigning sets to the new users.
+    $self->{initial_login} = 1;
+    $self->{was_LTI} = 1;
+
+    return 1;
+  }
+
   # Assign existing sets
   my $instructorTools = WeBWorK::ContentGenerator::Instructor->new($r);
   my @setsToAssign = ();
@@ -587,6 +707,7 @@ sub create_user {
   }
 
   $self->{initial_login} = 1;
+  $self->{was_LTI} = 1;
 
   return 1;
 }
@@ -648,6 +769,7 @@ sub maybe_update_user {
     }
       
     $self->{initial_login} = 1;
+    $self->{was_LTI} = 1;
   }
 
   return 1;

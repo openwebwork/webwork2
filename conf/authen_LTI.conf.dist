@@ -129,6 +129,19 @@ $preferred_source_of_username = "lis_person_contact_email_primary";
 
 $LTIBasicConsumerSecret = "";  #This must be set  
 
+################################################################################
+
+# List key + secret pairs for html2xml LTI support in the hash below.
+# This is the location from which lib/FormatRenderedProblem.pm
+# can get a LTI secret using a "seed_ce".
+#   A sample pair is provided.
+
+%LISConsumerKeyHash = (
+  "key_for_html2xml_LTI_course1" => "secret_for_html2xml_LTI_course1",
+);
+
+################################################################################
+
 # The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
 # The NonceLifeTime (in seconds) must be short enought to prevent
 # at least casual man-in-the-middle attacks but

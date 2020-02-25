@@ -209,6 +209,8 @@ use base qw(WebworkWebservice);
 use WeBWorK::Utils qw(runtime_use writeTimingLogEntry);
 use WeBWorK::Debug;
 use JSON;
+use Digest::SHA qw(sha256_hex);
+use Encode qw(encode);
 
 
 ###########################################################################
@@ -221,22 +223,151 @@ sub initiate_session {    # close to being a "new" subroutine
 	######### trace commands ######
  	    my @caller = caller(1);  # caller data
  	    my $calling_function = $caller[3];
- 	    #print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
     ###############################
 	
 	my $rh_input     = $args[0];
 ###########################################################################
 # identify course 
 ###########################################################################
- 
-if ($UNIT_TESTS_ON) {
-	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
-}    
 
+my $debug_message1 = join("",
+	"WebworkWebservice.pm ",
+	__LINE__,
+	" initiate_session called from $calling_function\n",
+	" site_password  is ",
+	( defined($rh_input->{site_password}) ? $rh_input->{site_password} : "was not provided" ),
+	"\n",
+	" course_password  is ",
+	( defined($rh_input->{course_password}) ? $rh_input->{course_password} : "was not provided" ),
+	"\n",
+	" courseID  is ",
+	( defined($rh_input->{courseID}) ? $rh_input->{courseID} : "was not provided" ),
+	"\n",
+	" userID  is ",
+	( defined($rh_input->{userID}) ? $rh_input->{userID} : "was not provided" ),
+	"\n",
+	" session_key  is ",
+	( defined($rh_input->{session_key}) ? $rh_input->{session_key} : "was not provided" ),
+	"\n",
+	" key  is ",
+	( defined($rh_input->{key}) ? $rh_input->{key} : "was not provided" ),
+	"\n",
+	" internal_WW2_secret is ",
+	( defined($rh_input->{internal_WW2_secret}) ? $rh_input->{internal_WW2_secret} : "was not provided" ),
+	"\n" );
+
+if ($UNIT_TESTS_ON) {
+	print STDERR $debug_message1;
+}
+debug( $debug_message1 );
+
+my $desired_level = "proctor_quiz_login"; # usually level 2
+
+# Until something better is coded, the INITIAL call to WebworkWebservice.pm
+# to process an LTI authenticated html2xml call uses the "internal_WW2_secret"
+# to authenticate the connection. This is instead of providing a fixed
+# password for embedded problems, but it really does not validate that the
+# data which the original LTI connection provided and verified was not
+# tampered with before it arrives at lib/WebworkWebservice.pm.
+#
+# A safer solution would need to provide a digital signature for some additional
+# input parameter which encodes the "protected" fields from the initial
+# connection and then we can verify the digital signature AND that the
+# "protected" fields for which we have a digital signature match the "signed"
+# values. A JSON object may be a good method to encode the "protected" fields,
+# and a course level shared secret could be used to calculate the digital
+# signature.
+
+my $hadValid_internal_WW2_secret = 0;
+$rh_input->{had_Valid_internal_WW2_secret} = 0;
+
+if ( defined( $rh_input->{internal_WW2_secret} ) ) {
+	if ( $rh_input->{internal_WW2_secret} eq "TemporaryApproachSetSomeServerSecretHere" ) { # Ideally should be a course-dependent value
+		$hadValid_internal_WW2_secret = 1;
+		debug("Saw calling_function = $calling_function and valid internal_WW2_secret");
+		warn "Saw calling_function = $calling_function and valid internal_WW2_secret" if ($UNIT_TESTS_ON);
+		$rh_input->{had_Valid_internal_WW2_secret} = 1;
+	} else {
+		# BAD - we have an invalid value for internal_WW2_secret
+		$hadValid_internal_WW2_secret = 0;
+		debug("Saw calling_function = $calling_function and INVALID internal_WW2_secret");
+		warn "Saw calling_function = $calling_function and INVALID internal_WW2_secret" if ($UNIT_TESTS_ON);
+	}
+	# Remove the value now
+	delete( $rh_input->{internal_WW2_secret} );
+}
+
+# Add settings for sessionDataHash based authentication, if relevant
+my $use_sessionDataHash = 0;
+
+if ( ( $calling_function =~ /enderProblem/ )            &&   # If the action is renderProblem
+     ( defined( $rh_input->{courseID} ) )               &&   # AND we have a courseID
+     ( $rh_input->{courseID} =~ /daemon/ )              &&   # AND the courseID includes daemon as a substring
+     ( ! defined( $rh_input->{course_password} )             # AND we were NOT sent a course_password to use for authentication
+       || $rh_input->{course_password} eq ""     )      &&   #
+     ( $hadValid_internal_WW2_secret                         # AND we EITHER had the valid internal_WW2_secret (for initial LTI connection)
+       || (    defined( $rh_input->{oauth_consumer_key} )    #        OR     have "LTI" data (we cannot assume that lis_outcome_service_url is provided!)
+            && defined( $rh_input->{session_key} )      ) )  #                    AND a session_key
+   ) { #
+	# We probably want to set $use_sessionDataHash
+
+	if ( $hadValid_internal_WW2_secret ) {
+		# Case 1 = just after initial LTI connection
+		$use_sessionDataHash = 1;
+		debug("permitted for renderProblem by original LTI authorization - valid internal_WW2_secret");
+		warn "Saw calling_function = $calling_function and valid internal_WW2_secret" if ($UNIT_TESTS_ON);
+		$desired_level = "permitted for renderProblem by original LTI authorization";
+	} else {
+		# Case 2 - NOT an initial connection
+		$use_sessionDataHash = 1;
+		$desired_level = "testing based on sessionDataHash linked session_key";
+		debug("Trying to validate using sessionDataHash approach");
+		warn "Trying to validate using sessionDataHash approach" if ($UNIT_TESTS_ON);
+	}
+}
+
+
+my $sessionDataHash = "";
+
+if ( $use_sessionDataHash ) {
+	my @ToInclude = qw( userID
+			    courseID
+			    oauth_consumer_key
+			    oauth_signature_method
+			    lis_outcome_service_url
+			    lis_result_sourcedid
+			    problemSeed
+			    psvn
+			    problemUUID
+			    sourceFilePath
+			    problemSource
+			    pathToProblemFile );
+	my $key1;
+	my @sessionDataToHash;
+
+	foreach $key1 ( @ToInclude ) {
+		push ( @sessionDataToHash, $key1 );
+		if ( defined( $rh_input->{$key1} ) ) {
+			push( @sessionDataToHash, $rh_input->{$key1} );
+		} else {
+			warn "$key1 was not provided in the input data or is undefined.";
+			push( @sessionDataToHash, "" );
+		}
+	}
+
+	my $sessionDataToHash = join("@@@",@sessionDataToHash);
+	warn "Set sessionDataToHash to |$sessionDataToHash|";
+
+	# sha256_hex cannot handle wide-Unicode characters, but can handle UTF-8, so encode first.
+	$sessionDataHash = sha256_hex( encode("UTF-8", $sessionDataToHash) );
+
+	# We want to use the sessionDataHash for the authentication process
+	# and it will be added to the userID in the "user" field of the keys
+	# table so that multiple html2xml sessions can work in parallel.
+
+	$rh_input->{use_sessionDataHash} = 1;
+	$rh_input->{sessionDataHash} = $sessionDataHash;
+}
 
 # create fake version of Apache::Request object
 # This abstracts some of the work that used to be done by the webworkXMLRPC object
@@ -258,14 +389,18 @@ my $authz  = $fake_r->authz;
 		fake_r      =>  $fake_r,
 	};	
 	$self = bless $self, $class;
+	my $debug_message2 = join("",
+		"WebworkWebservice.pm ",
+		__LINE__,
+		" initiate data:\n",
+		"class type is ",   $class,       "\n",
+		"Self has type ",   ref($self),   "\n",
+		"authen has type ", ref($authen), "\n",
+		"authz  has type ", ref($authz),  "\n" );
 	if ($UNIT_TESTS_ON) {
- 	   print STDERR  "WebworkWebservice.pm ".__LINE__." initiate data:\n  "; 
- 	   print STDERR  "class type is ", $class, "\n";
- 	   print STDERR  "Self has type ", ref($self), "\n";
- 	   print STDERR   "self has data: \n", format_hash_ref($self), "\n";
- 	   print STDERR   "authen has type ", ref($authen), "\n";
- 	   print STDERR   "authz  has type ", ref($authz), "\n";
+		print STDERR $debug_message2 ;
 	}
+	debug( $debug_message2 );
 	
 	die "Please use 'course_password' instead of 'password' as the key for submitting
 		passwords to this webservice\n" 
@@ -313,25 +448,87 @@ my $authz  = $fake_r->authz;
 	};
 ###########################################################################
 # security check -- check that the user is in fact at least a proctor in the course
+# for TYPICAL uses, except renderProblem which has additional permitted uses.
 ###########################################################################
-	
+
+	if ( $hadValid_internal_WW2_secret && ( ! $authenOK ) ) {
+		# If we have this - we want to treat the connection as authenticated
+		# but for some reason it failed to authenticate... we will try to
+		# hack it to pass, but this is probably broken as the session_key
+		# will probably not exist
+		$authenOK = 1;
+		warn "HACK - we saw the internal_WW2_secret and are pretending the connection authenticated.";
+		debug("HACK - we saw the internal_WW2_secret and are pretending the connection authenticated.");
+	}
+
 	$self->{authenOK}  = $authenOK;
-	$self->{authzOK}   = $authz->hasPermissions($self->{user_id}, "proctor_quiz_login"); # usually level 2
+
+	# For renderProblem, we allow lower level access if...
+	#   we set $use_sessionDataHash to 1 above
+	#   AND were then successfully authenticated.
+	# (This is only possible for renderProblem.)
+	if ( $use_sessionDataHash == 1 ) {
+
+		# If we authenticated when use_sessionDataHash == 1 then
+		# either this is the initial LTI connection, so we need to
+		# trust the parameters (and we saved them)
+		# or we are in a followup connection and were able to
+		# validate a key linked to the sessionDataHash.
+
+		$self->{authzOK} = 1;
+
+	} else {
+
+		# Standard behavior
+
+		$self->{authzOK} = $authz->hasPermissions($self->{user_id}, $desired_level);
+
+	}
 	
-# Update the credentials -- in particular the session_key may have changed.
+	# Update the credentials -- in particular the session_key may have changed.
  	$self->{session_key} = $authen->{session_key};
 
- 	if ($UNIT_TESTS_ON) {
-  		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
-      	print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n"; 
-  		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
-  		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
-  	} 
+	my $debug_message3 = join("",
+		"WebworkWebservice.pm ",
+		__LINE__,
+		" authentication for ",
+		$self->{user_id},
+		" in course ",
+		$self->{courseName},
+		" is = ",
+		$self->{authenOK},
+		"\n",
+		"authorization as >= $desired_level for ",
+		$self->{user_id},
+		" is ",
+		$self->{authzOK},
+		"\n",
+		" authentication contains ",
+		format_hash_ref($authen),
+		"\n",
+		"self has new data \n",
+		format_hash_ref($self),
+		"\n" );
+	if ($UNIT_TESTS_ON) {
+		print STDERR $debug_message3 ;
+	}
+	debug( $debug_message3 );
+
  # Is there a way to transmit a number as well as a message?
  # Could be useful for handling errors.
  	debug("initialize webworkXMLRPC object in: ", format_hash_ref($rh_input),"\n") if $UNIT_TESTS_ON;
  	debug("fake_r :", format_hash_ref($fake_r),"\n") if $UNIT_TESTS_ON;
- 	die "Could not authenticate user $user_id with key $session_key"  unless $self->{authenOK};
+
+	my $msg1 = "";
+	if ( $use_sessionDataHash > 0 ) {
+		$msg1 = "using the sessionDataHash approach";
+	} elsif ( defined( $session_key ) ) {
+		$msg1 = "with key $session_key";
+	} else {
+		$msg1 = "with provided data, NO session_key was provided.";
+	}
+
+	die "Could not authenticate user $user_id $msg1"  unless $self->{authenOK};
  	die "User $user_id does not have sufficient privileges in this course $courseName" unless $self->{authzOK};
  	return $self;
 }

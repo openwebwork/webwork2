@@ -266,6 +266,33 @@ sub verify {
 	return $result;
 }
 
+=item was_initial_login()
+
+Returns true if initial_login was set
+
+=cut
+
+sub was_initial_login {
+        my ($self) = @_;
+
+        return 1 if exists $self->{initial_login} and $self->{initial_login};
+        return 0;
+}
+
+=item was_LTI()
+
+Returns true if processed by LTI
+
+=cut
+
+sub was_LTI {
+        my ($self) = @_;
+
+        return 1 if exists $self->{was_LTI} and $self->{was_LTI};
+        return 0;
+}
+
+
 =item was_verified()
 
 Returns true if verify() returned true the last time it was called.
@@ -410,6 +437,7 @@ sub get_credentials {
 			$self->{credential_source} = "params";
 			$self->{user_id}     = trim($self->{user_id});
 			$self->{password}     = trim($self->{password});
+			debug("get_credentials getting params from case that param key is defined");
 			debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
 			return 1;
 		} elsif (defined $cookieKey) {
@@ -444,6 +472,7 @@ sub get_credentials {
 		$self->{credential_source} = "params";
 		$self->{user_id}      = trim($self->{user_id});
 		$self->{password}     = trim($self->{password});
+		debug("get_credentials getting params from case that param user is defined");
 		debug("params user '", $self->{user_id}, "' key '", $self->{session_key}, "'");
 		debug("params password '", $self->{password}, "' key '", $self->{session_key}, "'");
 		return 1;
@@ -862,8 +891,28 @@ sub fetchCookie {
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	
-	my $courseID = $urlpath->arg("courseID");
-	
+	my $courseID = "";
+
+	if ( $urlpath->module eq 'WeBWorK::ContentGenerator::renderViaXMLRPC' ) {
+		# Try to get the courseID from the request parameters
+		foreach my $cid ( qw ( courseID courseid custom_courseID custom_courseid ) ) {
+			my @Pvals;
+			if ( $courseID eq "" ) {
+				if ( scalar( @Pvals = $r->param($cid) ) >= 1 ) {
+					$courseID = $Pvals[0];
+				}
+			}
+		}
+	} else {
+		# Standard behavior
+		$courseID = $urlpath->arg("courseID");
+	}
+
+	if ( !defined($courseID) || $courseID eq "" ) {
+		debug("did not find courseID. returning nothing.");
+		return;
+	}
+
 	# AP2 - Apache2::Cookie needs $r, Apache::Cookie doesn't
     #my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
     #my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
@@ -914,8 +963,29 @@ sub sendCookie {
 	my ($self, $userID, $key) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
 	
-	my $courseID = $r->urlpath->arg("courseID");
+	my $courseID = "";
+
+	if ( $urlpath->module eq 'WeBWorK::ContentGenerator::renderViaXMLRPC' ) {
+		# Try to get the courseID from the request parameters
+		foreach my $cid ( qw ( courseID courseid custom_courseID custom_courseid ) ) {
+			my @Pvals;
+			if ( $courseID eq "" ) {
+				if ( scalar( @Pvals = $r->param($cid) ) >= 1 ) {
+					$courseID = $Pvals[0];
+				}
+			}
+		}
+	} else {
+		# Standard behavior
+		$courseID = $urlpath->arg("courseID");
+	}
+
+	if ( !defined($courseID) || $courseID eq "" ) {
+		debug("did not find courseID. returning nothing.");
+		return;
+	}
 	
  	my $timestamp = time();
 	
@@ -943,8 +1013,29 @@ sub killCookie {
 	my ($self) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
 	
-	my $courseID = $r->urlpath->arg("courseID");
+	my $courseID = "";
+
+	if ( $urlpath->module eq 'WeBWorK::ContentGenerator::renderViaXMLRPC' ) {
+		# Try to get the courseID from the request parameters
+		foreach my $cid ( qw ( courseID courseid custom_courseID custom_courseid ) ) {
+			my @Pvals;
+			if ( $courseID eq "" ) {
+				if ( scalar( @Pvals = $r->param($cid) ) >= 1 ) {
+					$courseID = $Pvals[0];
+				}
+			}
+		}
+	} else {
+		# Standard behavior
+		$courseID = $urlpath->arg("courseID");
+	}
+
+	if ( !defined($courseID) || $courseID eq "" ) {
+		debug("did not find courseID. returning nothing.");
+		return;
+	}
 	
 	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
 	my $cookie = WeBWorK::Cookie->new($r,

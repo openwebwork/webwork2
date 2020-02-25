@@ -33,6 +33,8 @@ use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
 use XML::Simple qw(XMLout);
 use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use Encode qw(encode_utf8 decode_utf8);
+use Digest::SHA qw(sha1_base64);
+use Date::Format;
 use JSON;
 
 our $UNIT_TESTS_ON  = 0; 
@@ -44,7 +46,7 @@ our $seed_ce;
 
 eval {
 	$seed_ce = WeBWorK::CourseEnvironment->new( 
-				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY, 
+				{webwork_dir		=>		$WeBWorK::Constants::WEBWORK_DIRECTORY // "/opt/webwork/webwork2",
 				 courseName         =>      '',
 				 webworkURL         =>      '',
 				 pg_dir             =>      $WeBWorK::Constants::PG_DIRECTORY,
@@ -114,6 +116,9 @@ sub formatRenderedProblem {
 	my $problemText       ='';
 	my $rh_result         = $self->return_object() || {};  # wrap problem in formats
 	$problemText       = "No output from rendered Problem" unless $rh_result ;
+
+	my $forbidGradePassback = 0;
+
 	#print "formatRenderedProblem text $rh_result = ",%$rh_result,"\n";
 	if (ref($rh_result) and $rh_result->{text} ) {
 		$problemText       =  $rh_result->{text};
@@ -121,6 +126,8 @@ sub formatRenderedProblem {
 		$problemText       .= "Unable to decode problem text<br/>\n".
 		$self->{error_string}."\n".
 		format_hash_ref($rh_result);
+		$rh_result->{problem_result}->{score} = 0; # force score to 0 for such errors.
+		$forbidGradePassback = 1;
 	}
 	my $problemHeadText = $rh_result->{header_text}//'';
 	my $rh_answers        = $rh_result->{answers}//{};
@@ -304,43 +311,95 @@ sub formatRenderedProblem {
 	my $color_input_blanks_script = $tbl->color_answer_blanks;
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
+	if ( $forbidGradePassback ) {
+		# Do not produce an AttemptsTable when we had a rendering error.
+		$answerTemplate = '<!-- No AttemptsTable on errors like this. --> ';
+	}
+
 	# warn "imgGen is ", $tbl->imgGen;
 	#warn "answerOrder ", $tbl->answerOrder;
 	#warn "answersSubmitted ", $tbl->answersSubmitted;
 	# render equation images
 
+	##########################################################
+	#  Collect LTI info
+	##########################################################
+
+	my $LTIGradeMessage = '';
+	my $request_url;
+	my $consumer_key;
+	my $signature_method;
+	my $sourcedid;
+	my $consumer_secret;
+        my $LTIhadNeeded = 1;
+
+	# save parameters for next time
+	if ( defined($self->{inputs_ref}->{lis_outcome_service_url} ) ) {
+	  $request_url = $self->{inputs_ref}->{lis_outcome_service_url};
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'lis_outcome_service_url', value=>$request_url});
+	} else {
+	  $LTIhadNeeded = 0;
+	}
+
+	if ( defined($self->{inputs_ref}->{oauth_consumer_key} ) ) {
+	  $consumer_key = $self->{inputs_ref}->{'oauth_consumer_key'};
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'oauth_consumer_key', value=>$consumer_key});
+
+	  if ( defined($self->{seed_ce}->{'LISConsumerKeyHash'}->{$consumer_key} ) ) {
+	    $consumer_secret = $self->{seed_ce}->{'LISConsumerKeyHash'}->{$consumer_key};
+          } else {
+	    $LTIGradeMessage .= "\n<!-- Missing LTI secret-->\n";
+	    $LTIhadNeeded = 0;
+	  }
+	} else {
+	  $LTIhadNeeded = 0;
+	}
+
+	if ( defined($self->{inputs_ref}->{oauth_signature_method} ) ) {
+	  $signature_method = $self->{inputs_ref}->{'oauth_signature_method'};
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'oauth_signature_method', value=>$signature_method});
+	} else {
+	  $LTIhadNeeded = 0;
+	}
+
+	if ( defined($self->{inputs_ref}->{lis_result_sourcedid} ) ) {
+	  $sourcedid = $self->{inputs_ref}->{'lis_result_sourcedid'};
+	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'lis_result_sourcedid', value=>$sourcedid});
+	} else {
+	  $LTIhadNeeded = 0;
+	}
+
+	##########################################################
+
 	my $mt = WeBWorK::Localize::getLangHandle($formLanguage//'en');
 
-	if ($submitMode && $problemResult) {
+	if ( $submitMode && $problemResult && ! $forbidGradePassback ) {
 		my $ScoreMsg = $mt->maketext("You received a score of [_1] for this attempt.",wwRound(0, $problemResult->{score} * 100).'%');
 		$scoreSummary = CGI::p($ScoreMsg);
 		if ($problemResult->{msg}) {
 			 $scoreSummary .= CGI::p($problemResult->{msg});
 		}
 
-		my $notRecorded = $mt->maketext("Your score was not recorded.");
-		$scoreSummary .= CGI::p($notRecorded);
+		# Do NOT report the score not being recorded when we have LTI lis_outcome_service_url
+		if ( ! $LTIhadNeeded ) {
+		  my $notRecorded = $mt->maketext("Your score was not recorded.");
+		  $scoreSummary .= CGI::p($notRecorded);
+		}
 		$scoreSummary .= CGI::hidden({id=>'problem-result-score', name=>'problem-result-score',value=>$problemResult->{score}});
+	}
+	if ( $forbidGradePassback ) {
+		$scoreSummary  = '<!-- No scoreSummary on errors. -->';
 	}
 
 	##########################################################
 	#  Try to save the grade to an LTI if one provided us data
 	##########################################################
 
-	my $LTIGradeMessage = '';
-	if (defined($self->{inputs_ref}->{lis_outcome_service_url}) &&
-	    defined($self->{inputs_ref}->{'oauth_consumer_key'}) &&
-	    defined($self->{inputs_ref}->{'oauth_signature_method'}) &&
-	    defined($self->{inputs_ref}->{'lis_result_sourcedid'}) &&
-	    defined($self->{seed_ce}->{'LISConsumerKeyHash'}->{$self->{inputs_ref}->{'oauth_consumer_key'}}) ) {
-	  
-	  my $request_url = $self->{inputs_ref}->{lis_outcome_service_url};
-	  my $consumer_key = $self->{inputs_ref}->{'oauth_consumer_key'}; 
-	  my $signature_method = $self->{inputs_ref}->{'oauth_signature_method'};
-	  my $sourcedid = $self->{inputs_ref}->{'lis_result_sourcedid'};
-	  my $consumer_secret = $self->{seed_ce}->{'LISConsumerKeyHash'}->{$consumer_key};
-	  my $score = $problemResult ? $problemResult->{score} : 0;
-	  
+	# Right now - we just submit the NEW score, if it was a submission and there is a result.
+	if ($submitMode && $problemResult && $LTIhadNeeded && ! $forbidGradePassback ) {
+	  my $score = $problemResult->{score}//0;
+	  $score = wwRound(2,$score);
+
 	  # This is boilerplate XML used to submit the $score for $sourcedid
   my $replaceResultXML = <<EOS;
 <?xml version = "1.0" encoding = "UTF-8"?>
@@ -368,6 +427,10 @@ sub formatRenderedProblem {
   </imsx_POXBody>
 </imsx_POXEnvelopeRequest>
 EOS
+
+	  chomp($replaceResultXML);
+
+          $LTIGradeMessage .= "\n<!--\n\nreplaceResultXML is:\n\n$replaceResultXML\n\n-->\n"; # DEBUG
 
 	  my $bodyhash = sha1_base64($replaceResultXML);
 
@@ -405,25 +468,129 @@ EOS
 	  my $response = LWP::UserAgent->new->request($HTTPRequest);
 	  
 	  if ($response->is_success) {
+	    my $tmp1 = $response->content;
+	    $LTIGradeMessage .= "\n<!--\n\nresponse content is:\n\n$tmp1\n\n-->\n"; # DEBUG
+
 	    $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 	    my $message = $1;
 	    if ($message ne 'success') {
-	      $LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$message);
+	      $LTIGradeMessage .= CGI::p("Unable to update LMS grade. Error (01): ".$message);
+	      $LTIGradeMessage .= CGI::p($response->content); # DEBUG
 	      $debug_messages .= CGI::escapeHTML($response->content);
 	    } else {
-	      $LTIGradeMessage = CGI::p("Grade sucessfully saved.");
+	      $LTIGradeMessage .= CGI::p("Grade sucessfully saved.");
 	    }
 	  } else {
-	    $LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$response->message);
+	    $LTIGradeMessage .= CGI::p("Unable to update LMS grade. Error (02): ".$response->message);
+	    $LTIGradeMessage .= CGI::p($response->content); # DEBUG
 	    $debug_messages .= CGI::escapeHTML($response->content);
 	  }
+	}
 
-	  # save parameters for next time
-	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'lis_outcome_service_url', value=>$request_url});
-	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'oauth_consumer_key', value=>$consumer_key});
-	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'oauth_signature_method', value=>$signature_method});
-	  $LTIGradeMessage .= CGI::input({type=>'hidden', name=>'lis_result_sourcedid', value=>$sourcedid});
-	  
+	# Attempt to log submission / record to DB
+	if ($submitMode && $problemResult) {
+	    # probably should handle specially if $encoded_source is NOT ''
+
+	    # $seed_ce->{courseFiles}->{logs}->{'answer_log'} = $seed_ce->{webworkDirs}->{courses} . "/$courseID/logs/answer_log";
+
+	    # my $rh_answers        = $rh_result->{answers}//{};
+
+	    my $score2 = $problemResult->{score}//0;
+	    $score2 = wwRound(2,$score2);
+
+		# ==================================================================================
+
+	    my $answerString3 = to_json( $rh_answers ,{pretty=>0, canonical=>1});
+
+		# Build $answerString2
+		my $answerEntryOrder = $rh_result->{flags}->{ANSWER_ENTRY_ORDER};
+		my $answerHash       = $rh_result->{PG_ANSWERS_HASH};
+		my $scores2 = "";
+        my @answer_order2 = ();
+		if ( defined( $answerEntryOrder ) && defined( $answerHash ) ) {
+			foreach my $ans_id ( @{ $answerEntryOrder } ) {
+				#warn "saw ans_id = $ans_id";
+				$scores2.= ( $answerHash->{$ans_id}->{ans_eval}{rh_ans}{score}//0 ) >= 1 ? "1" : "0";
+				foreach my $response_id ( @{ $answerHash->{$ans_id}->{response}->{response_order} }) {
+					#warn "saw response_id = $response_id";
+					push( @answer_order2, $response_id) unless ($response_id =~ /^MaThQuIlL_/);
+				}
+			}
+		}
+
+        my @answerStrings = ();
+        foreach my $response_id (@answer_order2) {
+			push( @answerStrings,
+				  $self->{inputs_ref}->{$response_id} // 'Missing for $response_id' ); # tabs added by join below
+        }
+        $answerString2 = join( "\t", @answerStrings );
+
+		# ==================================================================================
+
+	    # store in answer_log   past answers file (user_id,set_id,problem_id,answerString,scores,source_file)
+	    my $timestamp = time();
+
+	    my $logFile = "/opt/webwork/webwork2/logs/test1.log";
+	    if ( defined($courseID) && $courseID ne "" ) {
+			$logFile = "/opt/webwork/webwork2/logs/${courseID}_html2xml_answers.log";
+	    }
+	    local *LOG;
+	    if (open LOG, ">>:utf8", $logFile) {
+			print LOG ( "[", time2str("%a %b %d %H:%M:%S %Y", time), "] ",
+			   join("",
+				'|userID=',         $userID, 
+				'|sourceFilePath=', $sourceFilePath,
+				'|filename=',       $fileName,
+				'|session_key=',    $session_key,
+				'|problemUUID=',    $problemUUID,
+				'|psvn=',           $psvn,
+				'|problemSeed=',    $problemSeed,
+				'|score=', $score2, "\t",
+				$timestamp,"\t",
+				$answerString2,
+				), "\n" );
+			close LOG;
+	    } else {
+			warn "failed to open $logFile for writing: $!";
+	    }
+
+		# ==================================================================================
+
+		# See if we can store in the database
+		my $ce2 = eval { new WeBWorK::CourseEnvironment({
+			%seed_ce,
+			webwork_dir	=> $WeBWorK::Constants::WEBWORK_DIRECTORY // "/opt/webwork/webwork2",
+			courseName => $courseID,
+		}) };
+		if ( ! $@ ) { # We made a new CourseEnvironment, so we can try to save to the database
+			my $db = eval { new WeBWorK::DB($ce2->{dbLayout}); };
+			if ( ! $@ ) { # We seem to have made the DB handle so try to add a record to the past_answer table
+				my $pastAnswer = $db->newPastAnswer();
+				$pastAnswer->course_id($courseID);
+				$pastAnswer->user_id($userID);
+				$pastAnswer->set_id("html2xml"); # for now all in one html2xml set
+				# FIXME - We need to set a problem_id as it is part of the PRIMARY key in SQL
+				# Temporary hack - we are using -1 as the problem_id until we have a real problem_id.
+				$pastAnswer->problem_id( -1 ); # FIXME
+				$pastAnswer->timestamp($timestamp);
+				$pastAnswer->scores($scores2);
+				$pastAnswer->answer_string($answerString2);
+				$pastAnswer->source_file($sourceFilePath);
+				# Temporary hack - store additional parameters in comment_string for now
+				# until they are stored in set_user and problem_user tables
+				my @saveInComment;
+				push( @saveInComment, "problemSeed=$problemSeed" );
+				push( @saveInComment, "psvn=$psvn" );
+				$pastAnswer->comment_string( join(" , ", @saveInComment ) );
+				$db->addPastAnswer($pastAnswer);
+			} else {
+				warn "Failed to get DB handle: $@";
+			}
+		} else {
+			warn "Failed to make new ce2 CourseEnvironment: $@";
+		}
+
+		# ==================================================================================
 	}
 
 	my $localStorageMessages = CGI::start_div({id=>'local-storage-messages'});
@@ -439,9 +606,9 @@ EOS
 
 # With these values - things work, but the button text is English
 # with the localized values, or any answers in UTF-8 - thing break
-$STRING_Preview = "Preview My Answers";
-$STRING_ShowCorrect = "Show correct answers";
-$STRING_Submit = "Check Answers";
+#$STRING_Preview = "Preview My Answers";
+#$STRING_ShowCorrect = "Show correct answers";
+#$STRING_Submit = "Check Answers";
 
 ######################################################
 # Return interpolated problem template

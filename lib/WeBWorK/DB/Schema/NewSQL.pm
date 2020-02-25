@@ -137,6 +137,12 @@ sub where_permission_in_range {
 	}
 }
 
+# can be used for key
+sub where_user_id_eq_key_eq {
+    my ($self, $flags, $user_id, $key_string) = @_;
+    return {user_id=>$user_id, key=>$key_string};
+}
+
 # can be used for set,set_user,problem,problem_user
 sub where_set_id_eq {
 	my ($self, $flags, $set_id) = @_;
