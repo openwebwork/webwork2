@@ -1,12 +1,12 @@
 ###############################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2016 The WeBWorK Project, http://openwebwork.sf.net/
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -51,21 +51,21 @@ sub new {
   	warn("database reference is not defined") unless ref($db//'');
   	croak("Could not create WeBWorK::Authen::LTIAdvanced::SubmitGrade object, missing items from request");
   }
- 
+
   bless $self, $class;
   return $self;
 }
 
 # This updates the sourcedid for the object we are looking at.  Its either
 # the sourcedid for the user for course grades or the sourcedid for the
-# userset for homework grades. 
+# userset for homework grades.
 sub update_sourcedid {
   my $self = shift;
   my $userID = shift;
   my $r = $self->{r};
   my $ce = $r->{ce};
   my $db = $self->{r}->{db};
-  
+
   # These parameters are used to build the passback request
   # warn if no outcome service url
   if (!defined($r->param('lis_outcome_service_url'))) {
@@ -80,7 +80,7 @@ sub update_sourcedid {
 			   $r->param('lis_outcome_service_url'));
     }
   }
-  
+
   # these parameters have to be here or we couldn't have gotten this far
   my $consumer_key = $db->getSettingValue('consumer_key');
   if (!defined($consumer_key) ||
@@ -88,20 +88,20 @@ sub update_sourcedid {
     $db->setSettingValue('consumer_key',
 			 $r->param('oauth_consumer_key'));
   }
-  
+
   my $signature_method = $db->getSettingValue('signature_method');
   if (!defined($signature_method) ||
       $signature_method ne $r->param('oauth_signature_method')) {
     $db->setSettingValue('signature_method',
 			 $r->param('oauth_signature_method'));
   }
-  
+
   # The $sourcedid is what identifies the user and assignment
   # to the LMS.  It is either a course grade or a set grade
-  # depending on the request and the mode we are in.  
+  # depending on the request and the mode we are in.
   my $sourcedid = $r->param('lis_result_sourcedid');
   if (!defined($sourcedid)) {
-    warn "No LISSourceID! Some LMS's do not give grades to instructors, but this".  
+    warn "No LISSourceID! Some LMS's do not give grades to instructors, but this".
      "could also be a sign that external grades are not enabled in your LMS." if $ce->{debug_lti_grade_passback};
   } elsif ($ce->{LTIGradeMode} eq 'course') {
     # Update the SourceDID for the user if we are in course mode
@@ -122,18 +122,18 @@ sub update_sourcedid {
       # is set dependent then there are problems that will be caught
       # later
       if (defined($set) &&
-	   (!defined($set->lis_source_did) ||
+	  (!defined($set->lis_source_did) ||
 	   $set->lis_source_did ne $sourcedid)) {
 		$set->lis_source_did($sourcedid);
 		$db->putUserSet($set);
-	
+
       }
     }
   }
 } # end update_sourcedid
 
 # computes and submits the course grade for userID to the LMS
-# the course grade is the average of all sets assigned to the user.  
+# the course grade is the average of all sets assigned to the user.
 sub submit_course_grade {
   my $self = shift;
   my $userID = shift;
@@ -148,11 +148,11 @@ sub submit_course_grade {
   warn "submitting all grades for user: $userID  \n" if $ce->{debug_lti_grade_passback};
   warn "lis_source_did is not available for user: $userID \n" if !($user->lis_source_did) and $ce->{debug_lti_grade_passback};
   return $self->submit_grade($user->lis_source_did,$score);
-  
+
 }
 
 # computes and submits the set grade for $userID and $setID to the
-# LMS.  For gateways the best score is used.  
+# LMS.  For gateways the best score is used.
 sub submit_set_grade {
   my $self = shift;
   my $userID = shift;
@@ -190,7 +190,7 @@ sub submit_set_grade {
 sub local_escape_html {  # a local version of escapeHTML that works for post processing
 	my $self = shift;   # a grading object
 	my @message = @_;
-	if ($self->{post_processing_mode}) {		
+	if ($self->{post_processing_mode}) {
 		return join('', @message);    # this goes to log files in post processing to escapeHTML is not essential
 	} else {
 		return CGI::escapeHTML(@message);  #FIXME -- why won't this work in post_processing_mode (missing $r ??)
@@ -198,7 +198,7 @@ sub local_escape_html {  # a local version of escapeHTML that works for post pro
 }
 
 # submits a score of $score to the lms with $sourcedid as the
-# identifier.  
+# identifier.
 sub submit_grade {
   my $self = shift;
   my $sourcedid = shift;
@@ -208,7 +208,7 @@ sub submit_grade {
   my $db = $self->{r}->{db};
 
   $score = wwRound(2,$score);
-  
+
   # We have to fail gracefully here because some users, like instructors,
   # may not actually have a sourcedid
   if (!$sourcedid) {
@@ -217,7 +217,116 @@ sub submit_grade {
 #      "mean your settings are not correct.") if $ce->{debug_lti_grade_passback};
     return 0;
   }
-  
+
+  # This is boilerplate XML used to retrieve the currently recorded score for $sourcedid (which will later be tested)
+  my $readResultXML = <<EOS;
+<?xml version = "1.0" encoding = "UTF-8"?>
+<imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
+  <imsx_POXHeader>
+    <imsx_POXRequestHeaderInfo>
+      <imsx_version>V1.0</imsx_version>
+      <imsx_messageIdentifier>999999123</imsx_messageIdentifier>
+    </imsx_POXRequestHeaderInfo>
+  </imsx_POXHeader>
+  <imsx_POXBody>
+    <readResultRequest>
+      <resultRecord>
+        <sourcedGUID>
+          <sourcedId>$sourcedid</sourcedId>
+        </sourcedGUID>
+      </resultRecord>
+    </readResultRequest>
+  </imsx_POXBody>
+</imsx_POXEnvelopeRequest>
+EOS
+
+  chomp($readResultXML);
+
+  my $bodyhash = sha1_base64($readResultXML);
+
+  # since sha1_base64 doesn't pad we have to do so manually
+  while (length($bodyhash) % 4) {
+    $bodyhash .= '=';
+  }
+
+  warn("Retrieving prior grade using sourcedid: $sourcedid") if
+    $ce->{debug_lti_parameters};
+
+  my $request_url = $db->getSettingValue('lis_outcome_service_url');
+  if (!defined($request_url)) {
+    warn("Cannot retrieve grades from the LMS, no lis_outcome_service_url");
+    return 0;
+  }
+
+  my $consumer_key = $db->getSettingValue('consumer_key');
+  if (!defined($consumer_key)) {
+    warn("Cannot retrieve grades from the LMS, no consumer_key");
+    return 0;
+  }
+
+  my $signature_method = $db->getSettingValue('signature_method');
+  if (!defined($signature_method)) {
+    warn("Cannot retrieve grades from the LMS, no signature_method");
+    return 0;
+  }
+
+  my $requestGen = Net::OAuth->request("consumer");
+
+  $requestGen->add_required_message_params('body_hash');
+
+  my $gradeRequest = $requestGen->new(
+		  request_url => $request_url,
+		  request_method => "POST",
+		  consumer_secret => $ce->{LTIBasicConsumerSecret},
+		  consumer_key => $consumer_key,
+		  signature_method => $signature_method,
+		  nonce => int(rand( 2**32)),
+		  timestamp => time(),
+		  body_hash => $bodyhash
+							 );
+  $gradeRequest->sign();
+
+  my $HTTPRequest = HTTP::Request->new(
+	       $gradeRequest->request_method,
+	       $gradeRequest->request_url,
+	       [
+		  'Authorization' => $gradeRequest->to_authorization_header,
+		  'Content-Type'  => 'application/xml',
+	       ],
+	       $readResultXML,
+				      );
+
+  my $response = LWP::UserAgent->new->request($HTTPRequest);
+  if ($response->is_success) {
+    $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+    my $message = $1;
+    if ($message ne 'success') {
+      warn("Unable to retrieve prior grade from LMS. Error: ".$message);
+      #debug(CGI::escapeHTML($response->content));
+      return 0;
+    } else {
+      my $oldScore;
+      # Possibly no score yet.
+      if ($response->content =~ /<textString\/>/) {
+        $oldScore = ""
+      } else {
+        $response->content =~ /<textString>\s*(\S+)\s*<\/textString>/;
+        $oldScore = $1;
+      }
+      # Do not update the score if no change.
+      if ($oldScore ne "" && abs($score-$oldScore) < 0.001) {
+        return 1;
+      } else {
+        #warn("LMS grade will be updated. sourcedid: ".$sourcedid." Old score: ".$oldScore." New score: ".$score);
+      }
+    }
+  } else {
+    warn("Unable to retrieve prior grade from LMS. Error: ".$response->message) if $ce->{debug_lti_grade_passback};
+    debug(CGI::escapeHTML($response->content));
+    return 0;
+  }
+
+
   # This is boilerplate XML used to submit the $score for $sourcedid
   my $replaceResultXML = <<EOS;
 <?xml version = "1.0" encoding = "UTF-8"?>
@@ -247,10 +356,10 @@ sub submit_grade {
 EOS
 
   chomp($replaceResultXML);
-  
-  my $bodyhash = sha1_base64($replaceResultXML);
 
-  # since sha1_base64 doesn't pad we have to do so manually 
+  $bodyhash = sha1_base64($replaceResultXML);
+
+  # since sha1_base64 doesn't pad we have to do so manually
   while (length($bodyhash) % 4) {
     $bodyhash .= '=';
   }
@@ -258,31 +367,34 @@ EOS
   $message2 .= "mass_update: " if $self->{post_processing_mode};
   $message2 .= "Submitting grade using sourcedid: $sourcedid and score: $score\n";
   warn($message2) if $ce->{debug_lti_grade_passback};
-  
-  my $request_url = $db->getSettingValue('lis_outcome_service_url');
-  
+
+  $request_url = $db->getSettingValue('lis_outcome_service_url');
+
   unless ($request_url//'' ) {
     warn("Cannot submit grades to LMS, no request_url obtained from 'lis_outcome_service_url' ");
     return 0;
   }
 
-  my $consumer_key = $db->getSettingValue('consumer_key');
+  $consumer_key = $db->getSettingValue('consumer_key');
   unless ($consumer_key//'') {
     warn("Cannot submit grades to LMS, no consumer_key");
     return 0;
   }
-  
-  my $signature_method = $db->getSettingValue('signature_method');
+
+  $signature_method = $db->getSettingValue('signature_method');
   unless ($signature_method//'') {
     warn("Cannot submit grades to LMS, no signature_method");
     return 0;
   }
   debug("found data required for submitting grades to LMS");
-  my $requestGen = Net::OAuth->request("consumer");
+
+  $requestGen = Net::OAuth->request("consumer");
   debug( "obtained requestGen $requestGen");
+
   $requestGen->add_required_message_params('body_hash');
-  debug("add required message params"); 
-  my $gradeRequest = $requestGen->new(
+  debug("add required message params");
+
+  $gradeRequest = $requestGen->new(
 		  request_url => $request_url,
 		  request_method => "POST",
 		  consumer_secret => $ce->{LTIBasicConsumerSecret},
@@ -294,8 +406,9 @@ EOS
 							 );
 	debug("created grade request ". $gradeRequest);
   $gradeRequest->sign();
-	debug("signed grade request"); 
-  my $HTTPRequest = HTTP::Request->new(
+  debug("signed grade request");
+
+  $HTTPRequest = HTTP::Request->new(
 	       $gradeRequest->request_method,
 	       $gradeRequest->request_url,
 	       [
@@ -305,24 +418,21 @@ EOS
 	       $replaceResultXML,
 		);
     debug ("posting grade request: $HTTPRequest");
- 
-my $response = eval {   
-   LWP::UserAgent->new->request($HTTPRequest);
- };
- if ($@) {
+
+  $response = eval {
+    LWP::UserAgent->new->request($HTTPRequest);
+  };
+  if ($@) {
   	warn "error sending HTTP request to LMS, $@";
   }
 
-# debug section
-
-
+  # debug section
 	if ($ce->{debug_lti_grade_passback} and $ce->{debug_lti_parameters}){
-	  warn "The response is:\n ". ($self->local_escape_html(join(" ", %$response )));  
-	  warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest))); 
+	  warn "The response is:\n ". ($self->local_escape_html(join(" ", %$response )));
+	  warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest)));
 	}
+  # end debug section
 
-
-# end debug section 
   if ($response->is_success) {
     $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
     my $message = $1;
@@ -336,28 +446,28 @@ my $response = eval {
     }
   } else {
     debug("Unable to update LMS grade $sourcedid. Error: ".($response->message) );
-    debug(local_escape_html($response->content)); 
+    debug(local_escape_html($response->content));
     return 0;
   }
    debug("Success submitting grade using sourcedid: $sourcedid and score: $score\n") ;
- 
+
    return 1; # success
 }
 
 # does a mass update of all grades.  This is all user grades for
-# course grade mode and all user set grades for homework grade mode.  
+# course grade mode and all user set grades for homework grade mode.
 sub mass_update {
   my $self = shift;
   my $r = $self->{r};
   my $ce = $r->{ce};
   my $db = $self->{r}->{db};
   $self->{post_processing_mode}=1;
-  
+
   # sanity check
   warn("course environment is not defined") unless ref($ce//'');
   warn("database reference is not defined") unless ref($db//'');
   warn "\nperforming mass_update via LTI"  if $ce->{debug_lti_grade_passback};
-    
+
   my $lastUpdate = $db->getSettingValue('LTILastUpdate') // 0;
   my $updateInterval = $ce->{LTIMassUpdateInterval} // -1; # -1 suppresses update
 
@@ -365,17 +475,17 @@ sub mass_update {
       time - $lastUpdate > $updateInterval) {
 
     $db->setSettingValue('LTILastUpdate',time());
-    
+
     if ($ce->{LTIGradeMode} eq 'course') {
       my @users = $db->listUsers();
 
       foreach my $user (@users) {
 		$self->submit_course_grade($user);
       }
-      
+
     } elsif ($ce->{LTIGradeMode} eq 'homework') {
       my @users = $db->listUsers();
-      
+
       foreach my $user (@users) {
 		my @sets = $db->listUserSets($user);
 		warn "\nmass_update: all sets assigned to user $user :\n".join(" ",  @sets)."\n" if $ce->{debug_lti_grade_passback};
@@ -387,12 +497,12 @@ sub mass_update {
 	  		if ($@) {
 	  			warn "error in reporting $user, $set, $@" if $ce->{debug_lti_grade_passback};
 	  		}
-	  	
+
 		}
       }
     }
   }
-  $self->{post_processing_mode}=0; 
+  $self->{post_processing_mode}=0;
 }
 
 1;
