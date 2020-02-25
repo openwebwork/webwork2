@@ -48,7 +48,6 @@ use strict;
 use warnings;
 use CGI qw/:standard/;
 use WeBWorK::Debug;
-use Data::Dumper;
 
 # this is similar to the method in the base class, except that Shibboleth
 # ensures that we don't get to the address without a login.  this means
@@ -63,57 +62,50 @@ sub get_credentials {
 	
 	if ( $ce->{shiboff} || $r->param('bypassShib')) {
 		return $self->SUPER::get_credentials( @_ );
-	} else {
-		debug("Shib is on!");
+	}
 
-		# set external auth parameter so that Login.pm knows
-		#    not to rely on internal logins if there's a check_user
-		#    failure.
-		$self->{external_auth} = 1;
+	debug("Shib is on!");
 
-		if ( $r->param("user") && ! $r->param("force_passwd_authen") ) {
-			return $self->SUPER::get_credentials( @_ );
+	# set external auth parameter so that Login.pm knows
+	#    not to rely on internal logins if there's a check_user
+	#    failure.
+	$self->{external_auth} = 1;
+
+	if ( $r->param("user") && ! $r->param("force_passwd_authen") ) {
+		return $self->SUPER::get_credentials( @_ );
+	}
+
+	if ( defined ($ce->{shibboleth}{session_header}) && defined( $ce->{shibboleth}{mapping}{user_id} ) ) {
+		debug('Got shib header and user_id');
+		my $user_id = $ce->{shibboleth}{mapping}{user_id};
+		if ( defined ($ce->{shibboleth}{hash_user_id_method}) &&
+		     $ce->{shibboleth}{hash_user_id_method} ne "none" &&
+		     $ce->{shibboleth}{hash_user_id_method} ne "" ) {
+			use Digest;
+			my $digest  = Digest->new($ce->{shibboleth}{hash_user_id_method});
+			$digest->add(uc($user_id). ( defined $ce->{shibboleth}{hash_user_id_salt} ? $ce->{shibboleth}{hash_user_id_salt} : ""));
+			$user_id = $digest->hexdigest;
 		}
-		
-		if ( defined ($ce->{shibboleth}{session_header}) && defined( $ce->{shibboleth}{mapping}{user_id} ) ) {
-			debug('Got shib header and user_id');
-			my $user_id = $ce->{shibboleth}{mapping}{user_id};
-			if ( defined ($ce->{shibboleth}{hash_user_id_method}) && 
-			     $ce->{shibboleth}{hash_user_id_method} ne "none" && 
-			     $ce->{shibboleth}{hash_user_id_method} ne "" ) {
-				use Digest;
-				my $digest  = Digest->new($ce->{shibboleth}{hash_user_id_method});
-				$digest->add(uc($user_id). ( defined $ce->{shibboleth}{hash_user_id_salt} ? $ce->{shibboleth}{hash_user_id_salt} : ""));
-				$user_id = $digest->hexdigest;
-			}
-			$self->{'user_id'} = $user_id;
-			$self->{r}->param("user", $user_id);
-
-			# set external auth parameter so that login.pm
-			#    knows not to rely on internal logins if
-			#    there's a check_user failure.
-			$self->{session_key}   = undef;
-			$self->{password}      = "youwouldneverpickthispassword";
-			$self->{login_type}    = "normal";
-			$self->{credential_source} = "params";
-		} else {
-			debug("Couldn't shib header or user_id");
-			my $q = new CGI;
-			my $go_to = $ce->{shibboleth}{login_script}."?target=".$q->url(-path=>1);
-			$self->{redirect} = $go_to;
-			print $q->redirect($go_to);
-			return 0;
-		}
+		$self->{'user_id'} = $user_id;
+		$self->{r}->param("user", $user_id);
 
 		# the session key isn't used (Shibboleth is managing this 
 		#    for us), and we want to force checking against the 
 		#    site_checkPassword
 		$self->{'session_key'} = undef;
 		$self->{'password'} = 1;
+		$self->{login_type} = "normal";
 		$self->{'credential_source'} = "params";
 
 		return 1;
 	}
+
+	debug("Couldn't shib header or user_id");
+	my $q = new CGI;
+	my $go_to = $ce->{shibboleth}{login_script}."?target=".$q->url(-path=>1);
+	$self->{redirect} = $go_to;
+	print $q->redirect($go_to);
+	return 0;
 }
 
 sub site_checkPassword { 
