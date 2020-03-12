@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2020-02-26 02:59+0000\n"
+"PO-Revision-Date: 2020-03-11 17:44+0000\n"
 "Last-Translator: Enrique Acosta <enriqueacostajaramillo@gmail.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/webwork/webwork2/language/"
 "es/)\n"
@@ -84,7 +84,8 @@ msgstr ""
 msgid "%1 students out of %2"
 msgstr ""
 
-#. ($rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle, $rename_oldCourseInstitution, $rename_newCourseInstitution)
+#. ($rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle,
+#. $rename_oldCourseInstitution, $rename_newCourseInstitution)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1293
 msgid "%1 title and institution changed from %2 to %3 and from %4 to %5"
 msgstr ""
@@ -195,6 +196,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:416
 msgid "%quant(%1,of the questions remains,of the questions remain) unanswered."
 msgstr ""
+"%quant(%1,de las preguntas sigue,de las preguntas siguen) sin respuesta."
 
 #. ($succeeded_count)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3144
@@ -208,7 +210,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2327
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2580
 msgid "(Any unsaved changes will be lost.)"
-msgstr ""
+msgstr "(Todos los cambios no guardados se perderán.)"
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1343
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1350
@@ -253,7 +255,7 @@ msgstr ""
 #. ($recScore)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1265
 msgid "(score %1)"
-msgstr ""
+msgstr "(puntaje %1)"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:622
 msgid "1 student"
@@ -344,6 +346,9 @@ msgid ""
 "check that no problems are missing and that they are all legible. If not, "
 "please inform your instructor."
 msgstr ""
+"Se generó una versión para imprimir, pero puede no estar correcta o "
+"completa. Por favor verifica que no falten problemas y que todos sean "
+"legibles. De lo contrario, contacta a tu instructor."
 
 #. ($locationID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2714
@@ -402,7 +407,7 @@ msgid ""
 "Clicking the emails will allow you to email the corresponding user.  "
 "Clicking the links in the entries in the assigned sets columns will take you "
 "to a page where you can view and reassign the sets for the selected user."
-msgstr ""
+msgstr "Apellido"
 
 # Short for ADJUSTED STATUS
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:483
@@ -424,7 +429,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1882
 msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
-msgstr ""
+msgstr "LAS RESPUESTAS SOLO SE VERIFICARON -- LAS RESPUESTAS NO SE GUARDARON"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:998
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1417
@@ -550,11 +555,11 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2567
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1110
 msgid "Add"
-msgstr "tr: Add"
+msgstr "Agregar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:942
 msgid "Add All"
-msgstr ""
+msgstr "Agregar todos"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:361
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:490
@@ -581,28 +586,30 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1390
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1466
 msgid "Add as what filetype?"
-msgstr "tr: Add as what filetype?"
+msgstr "Agregar como archivo de tipo:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:998
 msgid "Add how many students?"
-msgstr "tr: Add how many students?"
+msgstr "¿Agregar cuántos estudiantes?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:855
 msgid "Add problems to"
-msgstr ""
+msgstr "Agregar problemas a"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1389
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1465
 msgid "Add to what set?"
-msgstr ""
+msgstr "Agregar a la tarea:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1045
 msgid "Add which new users?"
-msgstr "tr: Add which new users?"
+msgstr "¿Qué nuevos usuarios agregar?"
 
 #. ($new_file_path, $setID, $targetProblemNumber)
-#. ($sourceFilePath, $targetSetName,($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)
-#. ($new_file_name, $setName, ($set->assignment_type eq 'jitar' ? join('.',jitar_id_to_seq($targetProblemNumber)
+#. ($sourceFilePath, $targetSetName,($set->assignment_type eq 'jitar' ?
+#. join('.',jitar_id_to_seq($targetProblemNumber)
+#. ($new_file_name, $setName, ($set->assignment_type eq 'jitar' ?
+#. join('.',jitar_id_to_seq($targetProblemNumber)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1444
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1886
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1518
@@ -700,7 +707,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:595
 msgid "Advanced Search"
-msgstr ""
+msgstr "Búsqueda avanzada"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:220
 msgid "After set answer date"
@@ -734,7 +741,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:955
 msgid "All selected sets hidden from all students"
-msgstr ""
+msgstr "Oculta para los estudiantes"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:954
 msgid "All selected sets made visible for all students"
@@ -776,7 +783,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:291
 msgid "Allowed to <em>act as</em> another user"
-msgstr ""
+msgstr "Con autorización para <em>actuar como</em> otro usuario"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:310
 msgid "Allowed to change their e-mail address"
@@ -855,7 +862,7 @@ msgstr "Vista previa de mi respuesta"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1268
 msgid "Answer(s) submitted:"
-msgstr ""
+msgstr "Respuesta(s) enviada(s):"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:38
 msgid "Answer:"
@@ -877,7 +884,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:134
 msgid "Answers Available"
-msgstr ""
+msgstr "Respuestas disponibles"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1055
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1128
@@ -900,7 +907,8 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:561
 msgid "Any changes made below will be reflected in the set for ALL students."
 msgstr ""
-"tr: Any changes made below will be reflected in the set for ALL students."
+"Todos los cambios que se hagan a continuación aplicarán en la tarea para "
+"TODOS los estudiantes."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1942
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2139
@@ -919,13 +927,13 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:131
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:132
 msgid "Append"
-msgstr ""
+msgstr "Agregar"
 
 #. (CGI::strong("$fullSetID")
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1730
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1802
 msgid "Append to end of %1 set"
-msgstr ""
+msgstr "Agregar al final de la tarea %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1924
 msgid "Archive"
@@ -987,7 +995,8 @@ msgstr ""
 msgid "Assign"
 msgstr "Asignar"
 
-#. (CGI::popup_menu(       -name => "action.assign.scope",        -values => [qw(all selected)
+#. (CGI::popup_menu(                       -name => "action.assign.scope",
+#. -values => [qw(all selected)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:420
 msgid "Assign %1 to all users, create global data, and %2."
 msgstr ""
@@ -998,7 +1007,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm:167
 msgid "Assign selected sets to selected users"
-msgstr "Asignar tareas seleccionadas a usuarios seleccionados"
+msgstr "Asignar tareas seleccionadas a los usuarios seleccionados"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1303
 msgid "Assign this set to which users?"
@@ -1007,17 +1016,17 @@ msgstr "tr: Assign this set to which users?"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:149
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:124
 msgid "Assign to All Current Users"
-msgstr ""
+msgstr "Asignar a todos los usuarios actuales"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:158
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Assigned"
-msgstr ""
+msgstr "Asignado(s)"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1779
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1853
 msgid "Assigned Sets"
-msgstr ""
+msgstr "Tareas asignadas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:504
 msgid "Assigned achievements to users"
@@ -1030,7 +1039,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:226
 msgid "Assignment type"
-msgstr ""
+msgstr "Tipo de asignación"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm:184
 msgid "Assignments only"
@@ -1038,7 +1047,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:412
 msgid "At least one of the answers above is NOT correct."
-msgstr ""
+msgstr "Al menos una de las respuestas arriba NO es correcta."
 
 # Short for "Attempts to Open Children"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:437
@@ -1074,7 +1083,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:538
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:538
 msgid "Author Info"
-msgstr "tr: Author Info"
+msgstr "Info. para autores"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:374
 msgid "Automatic"
@@ -1082,7 +1091,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2553
 msgid "Automatically render problems on page load"
-msgstr ""
+msgstr "Mostrar vistas previas de los problemas al cargar la página"
 
 #. ($emailDirectory,$old_default_msg_file)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:412
@@ -1103,7 +1112,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:885
 msgid "Browse"
-msgstr ""
+msgstr "Explorar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:455
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:812
@@ -1127,7 +1136,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:370
 msgid "CLOSE DATE"
-msgstr ""
+msgstr "FECHA DE ENTREGA"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:371
 msgid "CLOSE TIME"
@@ -1330,7 +1339,7 @@ msgstr "tr: Changes in this file have not yet been permanently saved."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:629
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1258
 msgid "Changes saved"
-msgstr ""
+msgstr "Los cambios se han guardado"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1354
 msgid ""
@@ -1341,7 +1350,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:598
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:727
 msgid "Chapter:"
-msgstr ""
+msgstr "Capítulo:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1503
 msgid "Check Answers"
@@ -1400,11 +1409,11 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:375
 msgid "Classlist Editor"
-msgstr "Editor de la lista de clases"
+msgstr "Editor de lista de clase"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:324
 msgid "Clear"
-msgstr "tr: Clear"
+msgstr "Desmarcar todo"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:945
 msgid "Clear Problem Display"
@@ -1445,11 +1454,11 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:827
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Close Date"
-msgstr ""
+msgstr "Fecha de entrega"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:554
 msgid "Closed, answers available."
-msgstr ""
+msgstr "No disponible. Se pueden revisar las respuestas."
 
 #. ($self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:550
@@ -1469,7 +1478,8 @@ msgstr ""
 msgid "Closes"
 msgstr "Cierra el "
 
-#. ($self->formatDateTime($set->due_date,undef,                 $r->ce->{studentDateDisplayFormat})
+#. ($self->formatDateTime($set->due_date,undef,
+#. $r->ce->{studentDateDisplayFormat})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:144
 msgid "Closes %1"
 msgstr "Cierra el %1"
@@ -1504,7 +1514,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:801
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:830
 msgid "Comment"
-msgstr "tr: Comment"
+msgstr "Comentario"
 
 #. ($self->formatDateTime($set->answer_date)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2029
@@ -1540,7 +1550,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:260
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm:291
 msgid "Continue"
-msgstr "tr: Continue"
+msgstr "Ingresar"
 
 #. ($sourceDirectory, $outputDirectory)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1152
@@ -1599,7 +1609,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1331
 msgid "CorrectAnswers"
-msgstr ""
+msgstr "Respuestas correctas"
 
 #. ($newBlankProblems, $MAX_NEW_PROBLEMS)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1627
@@ -1666,7 +1676,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Home.pm:92
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:169
 msgid "Course Administration"
-msgstr "Administración del curso"
+msgstr "Administrar curso"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:484
 msgid "Course Configuration"
@@ -1721,7 +1731,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:170
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:396
 msgid "Create"
-msgstr "tr: Create"
+msgstr "Crear"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:439
 msgid "Create CSV"
@@ -1733,7 +1743,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:866
 msgid "Create a New Set in This Course:"
-msgstr ""
+msgstr "Crear una nueva tarea en este curso:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:693
 msgid "Create a new achievement with ID"
@@ -1746,7 +1756,7 @@ msgstr "tr: Create as what type of set?"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1743
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1815
 msgid "Create unattached problem"
-msgstr ""
+msgstr "Crear problema sin asociación a tareas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1668
 msgid ""
@@ -1832,7 +1842,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1067
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:943
 msgid "Delete"
-msgstr "tr: Delete"
+msgstr "Eliminar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1438
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1459
@@ -1840,7 +1850,7 @@ msgstr "tr: Delete"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1521
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:366
 msgid "Delete Course"
-msgstr ""
+msgstr "Eliminar curso"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2850
 msgid "Delete all existing addresses"
@@ -1852,17 +1862,17 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1712
 msgid "Delete course:"
-msgstr ""
+msgstr "Eliminar curso:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1037
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:939
 msgid "Delete how many?"
-msgstr "tr: Delete how many?"
+msgstr "¿Eliminar qué usuarios?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2268
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2489
 msgid "Delete it?"
-msgstr ""
+msgstr "Eliminar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2625
 msgid "Delete location:"
@@ -1978,7 +1988,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2350
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:379
 msgid "Display Mode:"
-msgstr ""
+msgstr "Modo de visualización:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:438
 msgid "Display Past Answers"
@@ -2007,7 +2017,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:151
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:126
 msgid "Do not uncheck students, unless you know what you are doing."
-msgstr ""
+msgstr "No desmarques estudiantes a menos de que sepas lo que haces."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1928
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1936
@@ -2092,7 +2102,7 @@ msgstr "tr: Download PDF or TeX Hardcopy for Selected Sets"
 #. ($selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:560
 msgid "Download hardcopy of set %1 for %2?"
-msgstr ""
+msgstr "¿Descargar una versión para imprimir de la tarea %1 para %2?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:410
 msgid "Download:"
@@ -2102,7 +2112,8 @@ msgstr ""
 msgid "Drop"
 msgstr "tr: Drop"
 
-#. ($self->formatDateTime($set->reduced_scoring_date,undef,                 $r->ce->{studentDateDisplayFormat})
+#. ($self->formatDateTime($set->reduced_scoring_date,undef,
+#. $r->ce->{studentDateDisplayFormat})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:138
 msgid "Due %1, after which reduced scoring is available until %2"
 msgstr ""
@@ -2174,7 +2185,8 @@ msgstr ""
 msgid "Edit"
 msgstr "Editar"
 
-#. (CGI::a({href=>$editUsersAssignedToSetURL},$r->maketext('individual versions')
+#. (CGI::a({href=>$editUsersAssignedToSetURL},$r->maketext('individual
+#. versions')
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1896
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2105
 msgid "Edit %1 of set %2."
@@ -2221,16 +2233,16 @@ msgstr "tr: Edit Set Data"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:862
 msgid "Edit Target Set"
-msgstr ""
+msgstr "Editar esta tarea"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:845
 msgid "Edit Which Users?"
-msgstr "tr: Edit Which Users?"
+msgstr "¿Qué usuarios editar?"
 
 #. ($user)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:199
 msgid "Edit data for %1"
-msgstr ""
+msgstr "Editar información de %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2092
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2264
@@ -2280,7 +2292,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:612
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:612
 msgid "Editing %1 in file '%2'"
-msgstr ""
+msgstr "Editando %1 en el archivo '%2'"
 
 #. ($self->shortPath($sourceFilePath)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:212
@@ -2335,7 +2347,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1856
 msgid "Email Link"
-msgstr ""
+msgstr "Enlace al correo electrónico"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:720
 msgid "Email address"
@@ -2431,7 +2443,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:109
 msgid "Enrolled"
-msgstr "tr: Enrolled"
+msgstr "Inscrito"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:719
 msgid "Enrolled, Drop, etc."
@@ -2610,7 +2622,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:887
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1092
 msgid "Export"
-msgstr "tr: Export"
+msgstr "Exportar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:940
 msgid "Export selected achievements."
@@ -2622,7 +2634,7 @@ msgstr "tr: Export selected sets"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1122
 msgid "Export to what kind of file?"
-msgstr "tr: Export to what kind of file?"
+msgstr "¿Exportar a qué tipo de archivo?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1356
 msgid "Export which sets?"
@@ -2630,7 +2642,7 @@ msgstr "tr: Export which sets?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1105
 msgid "Export which users?"
-msgstr "tr: Export which users?"
+msgstr "¿Qué usuarios exportar?"
 
 #. ($FileName)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:991
@@ -2806,7 +2818,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1136
 msgid "Filename"
-msgstr "tr: Filename"
+msgstr "Nombre de archivo"
 
 #. ($extension,$location)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1168
@@ -2815,7 +2827,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:662
 msgid "Filter by what text?"
-msgstr "tr: Filter by what text?"
+msgstr "¿Qué texto usar para filtrar?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/DropdownList.pm:174
 #: /opt/webwork/webwork2/lib/WeBWorK/HTML/ScrollingRecordList.pm:167
@@ -2842,7 +2854,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:795
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:824
 msgid "First Name"
-msgstr "tr: First Name"
+msgstr "Nombre"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:715
 msgid "First name"
@@ -2858,7 +2870,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2559
 msgid "Force problems to be numbered consecutively from one"
-msgstr ""
+msgstr "Hacer que los problemas queden numerados de forma consecutiva desde 1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2303
 msgid ""
@@ -2886,7 +2898,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:888
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:797
 msgid "From This Course"
-msgstr ""
+msgstr "De este curso"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:431
 msgid "From field must contain one valid email address."
@@ -2925,15 +2937,16 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1962
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2161
 msgid "General Information"
-msgstr ""
+msgstr "Información general"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:472
 msgid "Generate Hardcopy"
-msgstr ""
+msgstr "Generar versión para imprimir"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:472
 msgid "Generate hardcopy for selected sets and selected users"
 msgstr ""
+"Generar versión para imprimir de las tareas y los estudiantes seleccionados"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:548
 msgid "Get Library Set Problems"
@@ -2954,7 +2967,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:892
 msgid "Give new password to which users?"
-msgstr "tr: Give new password to which users?"
+msgstr "¿Dar una nueva contraseña a qué usuarios?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:968
 msgid "Gives full credit on a single homework problem."
@@ -3045,12 +3058,12 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:605
 msgid "Hardcopy Format:"
-msgstr ""
+msgstr "Formato de versión para imprimir:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:295
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:304
 msgid "Hardcopy Generator"
-msgstr ""
+msgstr "Generador de versiones para imprimir"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:100
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:448
@@ -3059,7 +3072,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:471
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:783
 msgid "Hardcopy Header"
-msgstr "tr: Hardcopy Header"
+msgstr "Encabezado de la versión para imprimir"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:617
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:153
@@ -3073,7 +3086,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2027
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2234
 msgid "Headers"
-msgstr ""
+msgstr "Encabezados"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:923
 msgid "Help"
@@ -3089,7 +3102,7 @@ msgstr "tr: Hidden"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2345
 msgid "Hide All"
-msgstr ""
+msgstr "Ocultar todos"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3044
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3066
@@ -3102,7 +3115,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:427
 msgid "Hide Hints from Students"
-msgstr ""
+msgstr "No mostrar pistas a los estudiantes"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3019
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:376
@@ -3119,12 +3132,12 @@ msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1638
 msgid "Hint:"
-msgstr ""
+msgstr "Pista:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:593
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:390
 msgid "Hints"
-msgstr ""
+msgstr "Pistas"
 
 # Hmwk is short for Homework
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:414
@@ -3139,7 +3152,7 @@ msgstr "Tareas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:485
 msgid "Homework Totals"
-msgstr ""
+msgstr "Totales de la tarea"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1308
 msgid "I couldn't find the file [ACHEVDIR]/surprise_message.txt!"
@@ -3207,9 +3220,10 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1238
 msgid "Import"
-msgstr "tr: Import"
+msgstr "Importar"
 
-#. (CGI::popup_menu(       -name => "action.import.source",       -values => [ "", $self->getAxpList()
+#. (CGI::popup_menu(                       -name => "action.import.source",
+#. -values => [ "", $self->getAxpList()
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:773
 msgid "Import achievements from %1 assigning the achievements to %2."
 msgstr ""
@@ -3228,7 +3242,7 @@ msgstr "tr: Import sets with names"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1015
 msgid "Import users from what file?"
-msgstr "tr: Import users from what file?"
+msgstr "¿Importar usuarios de qué archivo?"
 
 #. ($count)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:879
@@ -3255,7 +3269,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1962
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:421
 msgid "Incorrect"
-msgstr ""
+msgstr "incorrecto"
 
 #. ($total_incorrect,$num_of_problems)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:985
@@ -3445,7 +3459,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker2.pm:980
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:796
 msgid "Local Problems"
-msgstr ""
+msgstr "Problemas locales"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2649
 msgid "Location"
@@ -3528,12 +3542,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:823
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Login Name"
-msgstr "tr: Login Name"
+msgstr "Nombre de usuario"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1778
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1852
 msgid "Login Status"
-msgstr ""
+msgstr "Estado de usuario"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:313
 msgid "Logout"
@@ -3581,7 +3595,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2270
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2490
 msgid "Mark Correct?"
-msgstr ""
+msgstr "¿Marcar como correcta?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:698
 msgid "Match on what? (separate multiple IDs with commas)"
@@ -3591,15 +3605,15 @@ msgstr "tr: Match on what? (separate multiple IDs with commas)"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:518
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:518
 msgid "Math Objects"
-msgstr "tr: Math Objects"
+msgstr "MathObjects"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:351
 msgid "Max attempts"
-msgstr ""
+msgstr "Máx. número de intentos"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:384
 msgid "Max. Shown:"
-msgstr ""
+msgstr "Mostrar máximo:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:257
 msgid "Maximum times Show me Another can be used per problem (-1 => unlimited)"
@@ -3736,7 +3750,7 @@ msgstr "tr: New passwords saved"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:133
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:134
 msgid "NewVersion"
-msgstr ""
+msgstr "Nueva versión"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1852
 msgid "Newer problem set def files must be imported using Hmwk Sets Editor2"
@@ -3750,7 +3764,7 @@ msgstr "Problema siguiente"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1728
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:924
 msgid "Next page"
-msgstr ""
+msgstr "Siguiente página"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1282
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:150
@@ -3956,7 +3970,7 @@ msgstr "No ha iniciado sesión"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2168
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1239
 msgid "Note"
-msgstr "tr: Note"
+msgstr "Nota"
 
 #: /opt/webwork/pg/macros/problemRandomize.pl:382
 #: /opt/webwork/pg/macros/problemRandomize.pl:407
@@ -4034,22 +4048,22 @@ msgstr "tr: Open Date"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:886
 msgid "Open Problem Library"
-msgstr ""
+msgstr "Repositorio OpenProblemLibrary"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2284
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2487
 msgid "Open in New Window"
-msgstr ""
+msgstr "Abrir en una nueva ventana"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:728
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:768
 msgid "Open in new window"
-msgstr ""
+msgstr "Abrir en una nueva ventana"
 
 #. ($self->formatDateTime($set->due_date()
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:694
 msgid "Open, closes %1."
-msgstr ""
+msgstr "Disponible, cierra el %1."
 
 #. ($self->formatDateTime($set->due_date()
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:692
@@ -4067,7 +4081,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:114
 msgid "Opens"
-msgstr ""
+msgstr "Disponible el"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:99
 msgid "Opens any homework set for 24 hours."
@@ -4140,21 +4154,21 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:528
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:528
 msgid "PGLab"
-msgstr ""
+msgstr "PGLab"
 
 # Doesn't need to be translated
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:514
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:533
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:533
 msgid "PGML"
-msgstr ""
+msgstr "PGML"
 
 # Doesn't need to be translated
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:504
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:523
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:523
 msgid "POD"
-msgstr ""
+msgstr "Documentación POD"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2155
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1896
@@ -4231,7 +4245,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:802
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:831
 msgid "Permission Level"
-msgstr "tr: Permission Level"
+msgstr "Nivel de permisos"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:280
 msgid "Permissions"
@@ -4295,7 +4309,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:399
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:413
 msgid "Please select action to be performed."
-msgstr "tr: Please select action to be performed."
+msgstr "Por favor selecciona la acción que quieres realizar."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:179
 msgid "Please select at least one set and try again."
@@ -4431,7 +4445,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:513
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:513
 msgid "Problem Techniques"
-msgstr "tr: Problem Techniques"
+msgstr "Estrategias para problemas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:778
 msgid "Problem Viewer"
@@ -4459,7 +4473,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:65
 msgid "Problems for selected students have been reassigned."
-msgstr ""
+msgstr "Se han reasignado problemas para los estudiantes seleccionados."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:57
 msgid "Problems have been assigned to all current users."
@@ -4499,7 +4513,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2840
 msgid "Publish"
-msgstr "tr: Publish"
+msgstr "Publicar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:34
 msgid "RECITATION"
@@ -4508,7 +4522,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:227
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:215
 msgid "Read only"
-msgstr ""
+msgstr "Solo lectura"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:735
 msgid "Really delete the items listed above?"
@@ -4632,7 +4646,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2343
 msgid "Render All"
-msgstr ""
+msgstr "Mostrar todos"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2485
 msgid "Render Problem"
@@ -4640,7 +4654,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2341
 msgid "Renumber Problems"
-msgstr ""
+msgstr "Volver a numerar los problemas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1553
 msgid ""
@@ -4657,11 +4671,11 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1722
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1794
 msgid "Replace current problem: %1"
-msgstr ""
+msgstr "Reemplazar problema actual: %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1027
 msgid "Replace which users?"
-msgstr "tr: Replace which users?"
+msgstr "¿Qué usuarios reemplazar?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:393
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:565
@@ -4673,7 +4687,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:543
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:543
 msgid "Report Bugs in this Problem"
-msgstr ""
+msgstr "Reportar errores de código en este problema"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:937
 msgid "Report bugs"
@@ -4699,7 +4713,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2107
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2183
 msgid "Request information"
-msgstr ""
+msgstr "Solicitar información"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1582
 msgid "Request new version now."
@@ -4767,7 +4781,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2150
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2579
 msgid "Reset Form"
-msgstr ""
+msgstr "Descartar cambios"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:538
 msgid "Resets the number of incorrect attempts on a single homework problem."
@@ -4812,7 +4826,8 @@ msgstr "Resultado"
 msgid "Result of last action performed"
 msgstr ""
 
-#. (CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)
+#. (CGI::i($self->$actionHandler(\%genericParams, \%actionParams,
+#. \%tableParams)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:367
 msgid "Result of last action performed: %1"
 msgstr ""
@@ -4823,11 +4838,11 @@ msgstr "Resultados"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:403
 msgid "Results of last action performed"
-msgstr "tr: Results of last action performed"
+msgstr "Resultados de la última acción realizada"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:213
 msgid "Results of last action performed: "
-msgstr ""
+msgstr "Resultados de la última acción:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1586
 msgid "Resurrect which Gateway?"
@@ -4886,19 +4901,19 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:757
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:209
 msgid "Save"
-msgstr "tr: Save"
+msgstr "Guardar"
 
 #. (CGI::b($self->shortPath($self->{sourceFilePath})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:455
 msgid "Save %1"
-msgstr ""
+msgstr "Guardar %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:45
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:526
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:168
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:588
 msgid "Save As"
-msgstr "tr: Save As [TMPL]/"
+msgstr "Guardar como"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:715
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1950
@@ -4906,11 +4921,11 @@ msgstr "tr: Save As [TMPL]/"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2149
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2578
 msgid "Save Changes"
-msgstr ""
+msgstr "Guardar los cambios"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:758
 msgid "Save as"
-msgstr "tr: Save as"
+msgstr "Guardar como"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:761
 msgid "Save as Default"
@@ -4926,13 +4941,13 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1213
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1288
 msgid "Save changes"
-msgstr "tr: Save changes"
+msgstr "Guardar los cambios"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1747
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1819
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:664
 msgid "Save file to:"
-msgstr ""
+msgstr "Guardar archivo en:"
 
 #. (CGI::b($self->shortPath($self->{editFilePath})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1537
@@ -4967,11 +4982,11 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:837
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:865
 msgid "Score"
-msgstr "Calificación"
+msgstr "Calificar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:217
 msgid "Score (%)"
-msgstr ""
+msgstr "Puntaje (%)"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:185
 msgid "Score required for release"
@@ -4979,7 +4994,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:217
 msgid "Score selected set(s) and save to:"
-msgstr "tr: Score selected set(s) and save to:"
+msgstr "Calificar las tareas selccionadas y guardar en:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1957
 msgid "Score summary for last submit:"
@@ -4987,7 +5002,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:975
 msgid "Score which sets?"
-msgstr "tr: Score which sets?"
+msgstr "¿Calificar qué tareas?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:222
 msgid "Scores"
@@ -5043,13 +5058,13 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:828
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Section"
-msgstr "tr: Section"
+msgstr "Sección"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:541
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:606
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:738
 msgid "Section:"
-msgstr ""
+msgstr "Sección:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:385
 msgid "Seed"
@@ -5071,7 +5086,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:49
 msgid "Select a Set from this Course"
-msgstr ""
+msgstr "Seleccionar una tarea de este curso"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1464
 msgid "Select a course to delete."
@@ -5215,12 +5230,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:889
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:798
 msgid "Set Definition Files"
-msgstr ""
+msgstr "Establecer archivos de definiciones"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2007
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2206
 msgid "Set Description"
-msgstr ""
+msgstr "Descripción de la tarea"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:433
 msgid "Set Detail 2 for set %2"
@@ -5239,7 +5254,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:470
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:782
 msgid "Set Header"
-msgstr "tr: Set Header"
+msgstr "Encabezado de la tarea"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:219
 msgid "Set ID"
@@ -5348,7 +5363,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:797
 msgid "Show Me Another"
-msgstr ""
+msgstr "Muéstrame otra versión"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2273
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2068
@@ -5366,7 +5381,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2226
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1451
 msgid "Show Solutions"
-msgstr ""
+msgstr "Mostrar soluciones"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:166
 msgid "Show Total Homework Grade on Grades Page"
@@ -5374,7 +5389,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:629
 msgid "Show Which Users?"
-msgstr "tr: Show Which Users?"
+msgstr "¿Qué usuarios mostrar?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:928
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:933
@@ -5388,7 +5403,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:361
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1522
 msgid "Show me another"
-msgstr ""
+msgstr "Muéstrame otra versión"
 
 #. ($exhausted)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1535
@@ -5413,12 +5428,12 @@ msgstr "tr: Show which sets?"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:418
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:466
 msgid "Show/Hide Site Description"
-msgstr "tr: Show/Hide Site Description"
+msgstr "Mostrar/Ocultar la descripción de esta página"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:577
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1325
 msgid "Show:"
-msgstr ""
+msgstr "Mostrar:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:593
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:572
@@ -5433,7 +5448,7 @@ msgstr ""
 #. (scalar @Users, scalar @allUserIDs)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:546
 msgid "Showing %1 out of %2 users"
-msgstr ""
+msgstr "Mostrando %1 de un total de %2 usuarios."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:391
 msgid "Simple"
@@ -5455,12 +5470,12 @@ msgstr ""
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1634
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1635
 msgid "Solution:"
-msgstr ""
+msgstr "Solución:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:599
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:392
 msgid "Solutions"
-msgstr ""
+msgstr "Soluciones"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:398
 msgid "Some answers will be graded later."
@@ -5502,13 +5517,13 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2839
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1924
 msgid "Sort"
-msgstr "tr: Sort"
+msgstr "Ordenar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:775
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:762
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:742
 msgid "Sort by"
-msgstr "tr: Sort by"
+msgstr "Ordenar por"
 
 #. ($names{$primary}, $names{$secondary})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:832
@@ -5522,7 +5537,7 @@ msgstr "Ordenar por:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:337
 msgid "Source File"
-msgstr ""
+msgstr "Archivo:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1439
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1465
@@ -5558,7 +5573,8 @@ msgstr "Estadísticas"
 msgid "Statistics for"
 msgstr ""
 
-#. ($self->{ce}->{courseName}, $self->{setName}, $self->formatDateTime($self->{set_due_date})
+#. ($self->{ce}->{courseName}, $self->{setName},
+#. $self->formatDateTime($self->{set_due_date})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:83
 msgid "Statistics for %1 set %2. Closes %3"
 msgstr ""
@@ -5609,12 +5625,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:797
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:826
 msgid "Student ID"
-msgstr "tr: Student ID"
+msgstr "ID de estudiante"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:158
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Student Name"
-msgstr ""
+msgstr "Nombre del estudiante"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:109
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:749
@@ -5623,7 +5639,8 @@ msgstr ""
 msgid "Student Progress"
 msgstr "Reportes de avance"
 
-#. ($self->{ce}->{courseName}, $self->{setName}, $self->formatDateTime($self->{set_due_date})
+#. ($self->{ce}->{courseName}, $self->{setName},
+#. $self->formatDateTime($self->{set_due_date})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:85
 msgid "Student Progress for %1 set %2. Closes %3"
 msgstr "Reporte de avance del estudiante %2 de %1. Cierra el %3"
@@ -5635,18 +5652,18 @@ msgstr "Reporte de avance del estudiante %2 de %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:581
 msgid "Student answers"
-msgstr ""
+msgstr "Respuestas del estudiante"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:394
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:566
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:586
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:717
 msgid "Subject:"
-msgstr ""
+msgstr "Tema:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:677
 msgid "Subject: "
-msgstr ""
+msgstr "Tema:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm:230
 msgid "Submission time:"
@@ -5758,11 +5775,11 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:565
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:540
 msgid "Take Action!"
-msgstr "tr: Take Action!"
+msgstr "Ejecutar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:856
 msgid "Target Set:"
-msgstr ""
+msgstr "La Tarea:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:270
 msgid "Test Date"
@@ -5963,7 +5980,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:389
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:390
 msgid "The file '%1' is protected!"
-msgstr ""
+msgstr "¡El archivo %1 está protegido!"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:513
 msgid "The file does not appear to be a text file"
@@ -6014,7 +6031,8 @@ msgstr ""
 msgid "The hardcopy header for set %1 has been renamed to '%2'."
 msgstr ""
 
-#. ($rename_oldCourseID, $rename_oldCourseInstitution, $rename_newCourseInstitution)
+#. ($rename_oldCourseID, $rename_oldCourseInstitution,
+#. $rename_newCourseInstitution)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1286
 msgid ""
 "The institution associated with the course %1 has been changed from %2 to %3"
@@ -6128,7 +6146,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1837
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2053
 msgid "The set %1 is assigned to %2."
-msgstr ""
+msgstr "La tarea %1 está asignada a %2."
 
 #. ($setName, $self->shortPath($outputFilePath)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1833
@@ -6259,12 +6277,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:765
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:788
 msgid "Then by"
-msgstr "tr: Then by"
+msgstr "Después por:"
 
 #. ($count_line)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:578
 msgid "There are %1 matching WeBWorK problems"
-msgstr ""
+msgstr "%1 problemas cumplen con los criterios seleccionados"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:154
 msgid ""
@@ -6402,6 +6420,8 @@ msgid ""
 "There may be something wrong with this question. Please inform your "
 "instructor including the warning messages below."
 msgstr ""
+"Puede que haya problemas técnicos con esta pregunta. Por favor informa a tu "
+"instructor e incluye los mensajes de alerta que ves abajo en la página."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:356
 msgid ""
@@ -6429,7 +6449,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:124
 msgid "This action can take a long time if there are many students."
-msgstr ""
+msgstr "Esta acción puede tomar bastante tiempo si hay muchos estudiantes."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:149
 msgid "This action will not overwrite existing users."
@@ -6452,7 +6472,7 @@ msgid ""
 "This course supports guest logins. Click %1 to log into this course as a "
 "guest."
 msgstr ""
-"Este curso permite ingresar como invitado. Haz click en %1 para acceder a "
+"Este curso permite ingresar como invitado. Haz click en %1 para ingresar a "
 "este curso como invitado."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:437
@@ -6514,6 +6534,16 @@ msgid ""
 "\\\"Take Action!\\\" button at the bottom of the form.  The bottom of the "
 "page contains a table containing the student usernames and their information."
 msgstr ""
+"Este es el editor de lista de clase. Acá puedes ver y editar los registros "
+"de todos los estudiantes que están inscritos actualmente en este curso. En "
+"la parte de arriba hay filtros que te permiten elegir qué estudiantes ver, "
+"ordenar a los estudiantes de distintas formas, editar registros de "
+"estudiantes, dar nuevas claves a estudiantes, importar y exportar registros "
+"de estudiantes hacia o de archivos externos, o agregar y eliminar "
+"estudiantes. Para usar el editor, selecciona la acción que quieres ejecutar, "
+"introduce la información relevante en los campos de abajo y presiona el "
+"botón \\\"Ejecutar\\\" en la parte de abajo. Al final de la página hay una "
+"tabla que muestra los nombres de usuario de los estudiantes y su información."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:90
 msgid ""
@@ -6585,7 +6615,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1895
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2104
 msgid "This set %1 is assigned to %2."
-msgstr ""
+msgstr "Esta tarea (%1) está asignada a %2."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2310
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2563
@@ -6610,7 +6640,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:527
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:90
 msgid "This set is %1"
-msgstr "Esta tarea es %1"
+msgstr "Esta tarea está %1"
 
 #. ($reducedScoringPerCent)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:375
@@ -6762,6 +6792,8 @@ msgid ""
 "To edit this text you must first make a copy of this file using the "
 "'NewVersion' action below."
 msgstr ""
+"Para editar este texto, primero debes hacer una copia de este archivo usando "
+"la acción \"Nueva versión\" abajo."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:394
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:395
@@ -6975,7 +7007,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2102
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2293
 msgid "Use Default Header File"
-msgstr ""
+msgstr "Usar encabezados estándar"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:292
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:308
@@ -7071,7 +7103,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:252
 msgid "Username"
-msgstr ""
+msgstr "Nombre de usuario"
 
 #. ($user_id)
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:342
@@ -7087,7 +7119,7 @@ msgstr "Usuarios"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:443
 msgid "Users Assigned to Set %2"
-msgstr ""
+msgstr "Usuarios a los que se ha asignado la tarea %2"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1876
 msgid "Users List"
@@ -7134,12 +7166,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1230
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1306
 msgid "Using what display mode?: "
-msgstr ""
+msgstr "Modo de visualización:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1226
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1302
 msgid "Using what seed?: "
-msgstr ""
+msgstr "Semilla para usar:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:222
 msgid "Value of work done in Reduced Scoring Period"
@@ -7161,7 +7193,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2284
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2487
 msgid "View"
-msgstr "tr: View"
+msgstr "Ver"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:420
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:453
@@ -7170,7 +7202,7 @@ msgstr "tr: View"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:684
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:804
 msgid "View Problems"
-msgstr ""
+msgstr "Ver problemas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:263
 msgid "View equations as"
@@ -7207,7 +7239,7 @@ msgstr "Ver/Editar"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:267
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:91
 msgid "Viewing temporary file:"
-msgstr ""
+msgstr "Viendo archivo temporal:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:767
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:783
@@ -7234,13 +7266,14 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2181
 msgid "Warning messages"
-msgstr ""
+msgstr "Mensajes de alerta"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1033
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:935
 msgid "Warning: Deletion destroys all user-related data and is not undoable!"
 msgstr ""
-"tr: Warning: Deletion destroys all user-related data and is not undoable!"
+"Alerta: ¡Al eliminar usuarios, destruyes toda la información de este "
+"estudiante y no la puedes recuperar!"
 
 #. ($problem_desc , CGI::br()
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1223
@@ -7258,7 +7291,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2179
 msgid "WeBWorK Warnings"
-msgstr ""
+msgstr "Alertas de WeBWorK"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:136
 msgid ""
@@ -7284,6 +7317,12 @@ msgid ""
 "professor to have them corrected. If you are a professor, please consult the "
 "warning output below for more information."
 msgstr ""
+"WeBWorK ha generado alertas al procesar tu solucitud. Si esto ocurrió "
+"mientras veías un problema, es probable que haya sido causado por un error o "
+"ambiguedad en este problema. De lo contrario, puede que indique un problema "
+"con el sistema interno de WeBWorK. Si eres un estudiante, reporta estas "
+"alertas a tu instructor para que sean corregidas. Si eres un instructor, por "
+"favor consulta el registro de alertas que se incluye abajo."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:491
 msgid ""
@@ -7296,14 +7335,16 @@ msgid ""
 "WeBWorK was unable to generate a paper copy of this homework set.  Please "
 "inform your instructor. "
 msgstr ""
+"WeBWorK no pudo generar una versión para imprimir de esta tarea. Por favor "
+"contacta a tu instructor."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:344
 msgid "Weight"
-msgstr ""
+msgstr "Peso"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Home.pm:88
 msgid "Welcome to WeBWorK!"
-msgstr "Bienvenido a WeBWork!"
+msgstr "¡Bienvenido a WeBWorK!"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1289
 msgid "What could be inside?"
@@ -7311,7 +7352,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:649
 msgid "What field should filtered users match on?"
-msgstr "tr: What field should filtered users match on?"
+msgstr "¿Qué campo utilizar para filtrar la lista de usuarios?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:370
 msgid ""
@@ -7319,6 +7360,10 @@ msgid ""
 "view another version of this problem.  If set to -1 the feature is disabled "
 "and if set to -2 the course default is used."
 msgstr ""
+"Cuando un estudiante tiene más intentos de lo que se especifica acá, podrá "
+"ver otra versión de este problema. Si se asigna -1, la opción de ver más "
+"intentos se deshabilita. Si se asigna -2, se usa la opción estándar del "
+"curso."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:301
 msgid ""
@@ -7518,7 +7563,7 @@ msgstr ""
 
 #: /opt/webwork/pg/macros/PGanswermacros.pl:1693
 msgid "You can earn partial credit on this problem."
-msgstr "En este problema puedes obtener crédito parcial."
+msgstr "Puedes obtener una fracción del puntaje total en este problema."
 
 #: /opt/webwork/pg/macros/problemRandomize.pl:383
 msgid "You can get a new version of this problem after the due date."
@@ -7606,7 +7651,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:133
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:155
 msgid "You do not have permission to change your password."
-msgstr "No tienes permiso para cambiar tu contraseña"
+msgstr "No tienes permiso para cambiar tu contraseña."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:495
 msgid "You do not have permission to edit this file."
@@ -7616,6 +7661,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:156
 msgid "You do not have permission to generate hardcopy in %1 format."
 msgstr ""
+"No tienes permiso para generar una versiones para imprimir en formato %1."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1299
 msgid "You do not have permission to view the details of this error."
@@ -7693,6 +7739,9 @@ msgid ""
 "and solutions are only available %1 after the answer date of the homework "
 "set."
 msgstr ""
+"Puedes elegir mostrar cualquiera de la siguiente información. Las respuestas "
+"correctas, pistas y soluciones solo están disponibles %1 de la fecha límite "
+"de envío de respuestas de la tarea."
 
 #: /opt/webwork/pg/macros/compoundProblem.pl:610
 msgid "You may not change your answers when going on to the next part!"
@@ -7842,7 +7891,7 @@ msgstr ""
 #. (wwRound(0, $pg->{result}->{score} * 100)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1617
 msgid "You received a score of %1 for this attempt."
-msgstr ""
+msgstr "Obtuviste un puntaje de %1 en este intento."
 
 #. (join('.',@{$problemSeqs[$next_id]})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1685
@@ -7935,7 +7984,7 @@ msgstr ""
 #. ($lastScore,$notCountedMessage)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1620
 msgid "Your overall recorded score is %1.  %2"
-msgstr ""
+msgstr "Tu puntaje actual en este problema es %1. %2"
 
 #. ($versionNumber, wwRound(2,$recordedScore)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1972
@@ -7950,13 +7999,13 @@ msgstr ""
 #. ($testNounNum)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1871
 msgid "Your score on this %1 WAS recorded."
-msgstr ""
+msgstr "Tu puntaje en este %1 se ha guardado."
 
 # $testNoun is either "test" or "submission"
 #. ($testNoun,$attemptScore,$totPossible)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1876
 msgid "Your score on this %1 is %2/%3."
-msgstr ""
+msgstr "Tu puntaje en este %1 es %2/%3."
 
 # $testNounNum is either "test (#)" or "submission (#)
 #. ($testNounNum)
@@ -7973,7 +8022,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1857
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2131
 msgid "Your score on this problem was recorded."
-msgstr ""
+msgstr "Tu puntaje en este problema se ha guardado."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1570
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:263
@@ -8034,7 +8083,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:553
 msgid "Your session has timed out due to inactivity. Please log in again."
 msgstr ""
-"Tu sesión ha terminado debido a inactividad. Por favor reinicia sesión."
+"Tu sesión ha terminado debido a inactividad. Por favor reinicia la sesión."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:3450
 msgid "Your systems are up to date!"
@@ -8207,11 +8256,11 @@ msgstr "todas las fechas de las tareas de un <b> usuario </b>"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:897
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:982
 msgid "all sets"
-msgstr "tr: all sets"
+msgstr "todas las tareas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:620
 msgid "all students"
-msgstr ""
+msgstr "todos los estudiantes"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1098
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:658
@@ -8252,7 +8301,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1033
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1051
 msgid "any users"
-msgstr "tr: any users"
+msgstr "cualquier usuario"
 
 # Context is "Create _____ as a new empty set"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:700
@@ -8275,6 +8324,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2574
 msgid "blank problem template(s) to end of homework set"
 msgstr ""
+"problema(s) en blanco usando la plantilla estándar al final de la tarea."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1443
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1676
@@ -8290,7 +8340,7 @@ msgstr "tr: changes abandoned"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1057
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1567
 msgid "changes saved"
-msgstr "tr: changes saved"
+msgstr "los cambios se han guardado"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:222
 msgid "class list data"
@@ -8338,11 +8388,11 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:868
 msgid "editing all sets"
-msgstr "tr: editing all sets"
+msgstr "editando todas las tareas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:869
 msgid "editing all users"
-msgstr "tr: editing all users"
+msgstr "editando todos los usuarios"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:405
 msgid "editing selected achievements"
@@ -8350,7 +8400,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:874
 msgid "editing selected sets"
-msgstr "tr: editing selected sets"
+msgstr "editando tareas seleccionadas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:875
 msgid "editing selected users"
@@ -8397,7 +8447,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1381
 msgid "exporting all sets"
-msgstr "tr: exporting all sets"
+msgstr "exportando todas las tareas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:913
 msgid "exporting selected achievements"
@@ -8405,7 +8455,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1388
 msgid "exporting selected sets"
-msgstr "tr: exporting selected sets"
+msgstr "exportando tareas seleccionadas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1385
 msgid "exporting visible sets"
@@ -8599,7 +8649,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:896
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:981
 msgid "no sets"
-msgstr "tr: no sets"
+msgstr "ninguna tarea"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:618
 msgid "no students"
@@ -8613,7 +8663,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:636
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:945
 msgid "no users"
-msgstr "tr: no users"
+msgstr "ningún usuario"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:236
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
@@ -8664,7 +8714,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:841
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:754
 msgid "or Problems from"
-msgstr ""
+msgstr "o problemas del"
 
 #: /opt/webwork/pg/macros/contextPiecewiseFunction.pl:777
 msgid "otherwise"
@@ -8771,7 +8821,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:80
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:91
 msgid "section:"
-msgstr ""
+msgstr "sección:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:392
 msgid "selected <b>sets</b>"
@@ -8805,7 +8855,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:899
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:983
 msgid "selected sets"
-msgstr "tr: selected sets"
+msgstr "tareas seleccionadas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1100
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:660
@@ -8853,7 +8903,7 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:724
 msgid "showing all sets"
-msgstr "tr: showing all sets"
+msgstr "mostrando todas las tareas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:690
 msgid "showing all users"
@@ -8876,7 +8926,7 @@ msgstr "tr: showing matching users"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:727
 msgid "showing no sets"
-msgstr "tr: showing no sets"
+msgstr "mostrando ninguna tarea"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:693
 msgid "showing no users"
@@ -8884,7 +8934,7 @@ msgstr "tr: showing no users"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:730
 msgid "showing selected sets"
-msgstr "tr: showing selected sets"
+msgstr "mostrando tareas seleccionadas"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:696
 msgid "showing selected users"
@@ -8999,7 +9049,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:725
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:538
 msgid "top score"
-msgstr ""
+msgstr "mejor puntaje"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:587
 msgid "total"
@@ -9070,7 +9120,7 @@ msgstr "visible para los estudiantes"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:852
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:899
 msgid "visible users"
-msgstr "tr: visible users"
+msgstr "usuarios visibles"
 
 #: /opt/webwork/pg/macros/compoundProblem.pl:470
 #: /opt/webwork/pg/macros/compoundProblem.pl:480
@@ -9094,429 +9144,3 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:411
 msgid "your students"
 msgstr "a tus estudiantes"
-
-#
-#, fuzzy
-msgid "Will open on %1"
-msgstr "Abrirá el %1"
-
-#
-msgid "Viewing temporary file"
-msgstr "tr: Viewing temporary file"
-
-#
-#, fuzzy
-msgid "font-hidden"
-msgstr "tr: Hidden"
-
-#
-#, fuzzy
-msgid "set %1."
-msgstr "tr: Revert to %1"
-
-#
-#, fuzzy
-msgid "Bad Nonce for user "
-msgstr "tr: Set Header for set %1"
-
-#
-#, fuzzy
-msgid "Can't write to file: %1"
-msgstr "tr: Saved to file '%1'"
-
-#
-msgid "navNext"
-msgstr "images_es/navNext"
-
-#
-msgid "navNextGrey"
-msgstr "images_es/navNextGrey"
-
-#
-msgid "navPrev"
-msgstr "images_es/navPrev"
-
-#
-msgid "navPrevGrey"
-msgstr "images_es/navPrevGrey"
-
-#
-msgid "navProbListGrey"
-msgstr "images_es/navProbListGrey"
-
-#
-msgid "navUp"
-msgstr "images_es/navUp"
-
-#
-#, fuzzy
-msgid "At least one of these answers is NOT completely correct."
-msgstr "Al menos una de las respuestas no es %1 correcta"
-
-#
-#, fuzzy
-msgid "Show me another [_1]"
-msgstr "tr: Show in another window"
-
-#
-msgid "Apply Options"
-msgstr "tr: Apply Options"
-
-#
-msgid "Disable"
-msgstr "tr: Disable"
-
-#
-msgid "Enable/Disable reduced scoring for selected sets"
-msgstr "tr: Enable/Disable reduced scoring for selected sets"
-
-#
-#, fuzzy
-msgid "Reduced Credit %1 for all sets"
-msgstr "tr: Reduced Credit %1 for all sets"
-
-#
-msgid "_REDUCED_CREDIT_MESSAGE_1"
-msgstr ""
-"tr: This assignment has a Reduced Credit Period that begins %1 and ends on "
-"the due date, %2.  During this period all additional work done counts %3% of "
-"the original."
-
-#
-msgid "_REDUCED_CREDIT_MESSAGE_2"
-msgstr ""
-"tr: This assignment had a Reduced Credit Period that began %1 and ended on "
-"the due date, %2.  During that period all additional work done counted %3% "
-"of the original."
-
-#
-msgid "completely"
-msgstr "tr: completely"
-
-#
-msgid "Course Information for course [_1]"
-msgstr "tr: Course Information for course %1"
-
-#
-msgid ""
-"Report bugs in a WeBWorK question/problem using this link. The very first "
-"time you do this you will need to register with an email address so that "
-"information on the bug fix can be reported back to you."
-msgstr ""
-"tr: Report bugs in a WeBWorK question/problem using this link. The very "
-"first time you do this you will need to register with an email address so "
-"that information on the bug fix can be reported back to you."
-
-#
-msgid "Unable to change the hardcopy header for set [_1]. Unknown error."
-msgstr "tr: Unable to change the hardcopy header for set %1. Unknown error."
-
-#
-msgid "Unable to make '[_1]' the set header for [_2]"
-msgstr "tr: Unable to make '%1' the set header for %2"
-
-#
-msgid "Can't determine user of temporary edit file [_1]."
-msgstr "tr: Can't determine user of temporary edit file %1."
-
-#
-msgid "Top level of author information on the wiki."
-msgstr "tr: Top level of author information on the wiki."
-
-#
-msgid "Reverting to original file '[_1]'"
-msgstr "tr: Reverting to original file '%1'"
-
-#
-msgid "Wiki summary page for MathObjects"
-msgstr "tr: Wiki summary page for MathObjects"
-
-#
-msgid "Snippets of PG code illustrating specific techniques"
-msgstr "tr: Snippets of PG code illustrating specific techniques"
-
-#
-msgid "Error copying [_1] to [_2]"
-msgstr "tr: Error copying %1 to %2"
-
-#
-msgid ""
-"Note: this problem viewer is for viewing purposes only. As of right now, "
-"testing functionality is not possible."
-msgstr ""
-"tr: Note: this problem viewer is for viewing purposes only. As of right now, "
-"testing functionality is not possible."
-
-#
-msgid "webwork"
-msgstr "webwork"
-
-#
-#, fuzzy
-msgid "submit button clicked"
-msgstr "Botón enviar pulsado."
-
-#
-msgid ""
-"Test snippets of PG code in interactive lab.  Good way to learn PG language."
-msgstr ""
-"tr: Test snippets of PG code in interactive lab.  Good way to learn PG "
-"language."
-
-#
-#, fuzzy
-msgid "Page generated at [_1] at [_2]"
-msgstr "tr: Page generated at %1"
-
-#
-msgid "View Using Seed Number"
-msgstr "tr: View Using Seed Number"
-
-#
-msgid ""
-"Documentation from source code for PG modules and macro files. Often the "
-"most up-to-date information."
-msgstr ""
-"tr: Documentation from source code for PG modules and macro files. Often the "
-"most up-to-date information."
-
-#
-msgid ""
-"PG mark down syntax used to format WeBWorK questions. This interactive lab "
-"can help you to learn the techniques."
-msgstr ""
-"tr: PG mark down syntax used to format WeBWorK questions. This interactive "
-"lab can help you to learn the techniques."
-
-#
-msgid ""
-"Error: This path is already in the temporary edit directory -- no new "
-"temporary file is created. path = [_1]"
-msgstr ""
-"tr: Error: This path is already in the temporary edit directory -- no new "
-"temporary file is created. path = %1"
-
-#
-msgid ""
-"Please use radio buttons to choose the method for saving this file. Can't "
-"recognize saveMode: |[_1]|."
-msgstr ""
-"tr: Please use radio buttons to choose the method for saving this file. "
-"Can't recognize saveMode: |%1|."
-
-#
-#, fuzzy
-msgid "The selected problem ([_1]) is not a valid problem for set [_2]."
-msgstr ""
-"El problema seleccionado (%1) no es un problema válido para el conjunto %2."
-
-#
-msgid "Resources"
-msgstr "tr: Resources"
-
-#
-msgid "Duplicate"
-msgstr "tr: Duplicate"
-
-#
-msgid "This path |[_1]| is not the path to a temporary edit file."
-msgstr "tr: This path |%1| is not the path to a temporary edit file."
-
-#
-msgid ""
-"Unable to change the source file path for set [_1], problem [_2]. Unknown "
-"error."
-msgstr ""
-"tr: Unable to change the source file path for set %1, problem %2. Unknown "
-"error."
-
-#
-msgid "Options Information"
-msgstr "tr: Options Information"
-
-#
-msgid "Save as new independent problem"
-msgstr "tr: Save as new independent problem"
-
-#
-msgid "options information"
-msgstr "tr: options information"
-
-#
-msgid "The selected problem([_1]) is not a valid problem for set [_2]."
-msgstr ""
-"El problema seleccionado (%1) no es válido para el conjunto de problemas "
-"(%2). "
-
-#
-msgid "Unknown file type"
-msgstr "tr: Unknown file type"
-
-#
-msgid "Viewing temporary file:  "
-msgstr "Viendo el archivo temporal"
-
-#, fuzzy
-#~ msgid "User ID:"
-#~ msgstr "Usuarios"
-
-#, fuzzy
-#~ msgid "submitAnswers"
-#~ msgstr "Enviar mis respuestas"
-
-#, fuzzy
-#~ msgid "Change Display Options"
-#~ msgstr "Cambiar preferencias de visualización"
-
-#, fuzzy
-#~ msgid "[_1]: Problem [_2]"
-#~ msgstr "%1: Problema %2"
-
-# Context is "This set is visible" or "This set is hidden"
-#, fuzzy
-#~ msgid "This set is [_1] students."
-#~ msgstr "Esta tarea es %1"
-
-#, fuzzy
-#~ msgid "blank problem"
-#~ msgstr "Problema"
-
-#, fuzzy
-#~ msgid "answer "
-#~ msgstr "tr: Answer Date"
-
-#, fuzzy
-#~ msgid "You are not authorized to access instructor tools"
-#~ msgstr "tr: You are not authorized to access the instructor tools."
-
-#, fuzzy
-#~ msgid "all current users."
-#~ msgstr "todos los usuarios"
-
-#, fuzzy
-#~ msgid "font-visible"
-#~ msgstr "tr: Visible"
-
-#, fuzzy
-#~ msgid "no users."
-#~ msgstr "tr: no users"
-
-#, fuzzy
-#~ msgid "All sets %1 all students"
-#~ msgstr "tr: Select all sets"
-
-#, fuzzy
-#~ msgid "Changes saved."
-#~ msgstr "tr: changes saved"
-
-#, fuzzy
-#~ msgid "Comment: "
-#~ msgstr "tr: Comment"
-
-#, fuzzy
-#~ msgid "Hardcopy Theme:"
-#~ msgstr "tr: Hardcopy Header"
-
-#, fuzzy
-#~ msgid "No sets selected for scoring."
-#~ msgstr "tr: No sets selected for scoring"
-
-#, fuzzy
-#~ msgid "Recitation:"
-#~ msgstr "tr: Recitation"
-
-#, fuzzy
-#~ msgid "Save as:"
-#~ msgstr "tr: Save as"
-
-#, fuzzy
-#~ msgid "Log into"
-#~ msgstr "Salir"
-
-#, fuzzy
-#~ msgid "Sets assigned to $userID"
-#~ msgstr "tr: Edit Assigned Users"
-
-#, fuzzy
-#~ msgid "navProbList"
-#~ msgstr "Lista de problemas"
-
-#, fuzzy
-#~ msgid "Problem [_1]"
-#~ msgstr "Problema %1"
-
-#, fuzzy
-#~ msgid "[_1]% correct"
-#~ msgstr "correcto"
-
-#, fuzzy
-#~ msgid "Edit "
-#~ msgstr "Editar"
-
-#, fuzzy
-#~ msgid "Delete "
-#~ msgstr "tr: Delete"
-
-#, fuzzy
-#~ msgid "Export "
-#~ msgstr "tr: Export"
-
-#, fuzzy
-#~ msgid "Add "
-#~ msgstr "Agregar usuarios"
-
-#, fuzzy
-#~ msgid ""
-#~ "No students shown.  Choose one of the options above to \n"
-#~ "\t              list the students in the course."
-#~ msgstr ""
-#~ "tr: No sets shown.  Choose one of the options above to list the sets in "
-#~ "the course."
-
-#, fuzzy
-#~ msgid "Reduced Credit %1 for selected sets"
-#~ msgstr "tr: editing selected sets"
-
-#, fuzzy
-#~ msgid "Reduced Credit %1 for visable sets"
-#~ msgstr "tr: Record Scores for Single Sets"
-
-#, fuzzy
-#~ msgid "Cancel Password"
-#~ msgstr "Cambiar contraseña"
-
-#, fuzzy
-#~ msgid "Hardcopy Header for set [_1]"
-#~ msgstr "tr: Hardcopy Header"
-
-#, fuzzy
-#~ msgid "hardcopy header file"
-#~ msgstr "tr: Hardcopy Header"
-
-#, fuzzy
-#~ msgid "Unpublished"
-#~ msgstr "tr: Publish"
-
-#, fuzzy
-#~ msgid "Save Password"
-#~ msgstr "Nueva contraseña"
-
-#, fuzzy
-#~ msgid "Password/Email"
-#~ msgstr "Contraseña"
-
-#, fuzzy
-#~ msgid "Save Export"
-#~ msgstr "tr: Export"
-
-#, fuzzy
-#~ msgid "Problem Source Code"
-#~ msgstr "Editor de problemas"
-
-#, fuzzy
-#~ msgid "Published"
-#~ msgstr "tr: Publish"
-
-#, fuzzy
-#~ msgid "Cancel Export"
-#~ msgstr "tr: Export"
