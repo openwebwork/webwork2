@@ -1735,7 +1735,7 @@ sub fetchEmailRecipients {
 					and defined $validRecipient->section and defined $sender->section
 					and $validRecipient->section ne $sender->section;
 			if ($validRecipient and $validRecipient->email_address) {
-					push @recipients, $validRecipient->rfc822_mailbox;
+					push @recipients, $validRecipient->email_address;
 			}
 		}
 	}
