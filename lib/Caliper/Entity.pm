@@ -8,6 +8,7 @@ use WeBWorK::DB;
 use WeBWorK::Debug;
 use Data::Dumper;
 use WeBWorK::Utils::Tags;
+use Digest::SHA qw(sha1_base64);
 
 use Caliper::ResourceIri;
 use Caliper::Sensor;
@@ -36,25 +37,35 @@ sub session
 {
 	my ($ce, $db, $actor, $session_key) = @_;
 	my $resource_iri = Caliper::ResourseIri->new($ce);
+	my $session_key_hash = sha1_base64($session_key);
 
 	return {
-		'id' => $resource_iri->user_session($session_key),
+		'id' => $resource_iri->user_session($session_key_hash),
 		'type' => 'Session',
 		'user' => $actor,
-		'client' => Caliper::Entity::client($ce, $db, $session_key),
+		'client' => Caliper::Entity::client($ce, $db, $session_key_hash),
 	};
 }
 
 sub client
 {
-	my ($ce, $db, $session_key) = @_;
+	my ($ce, $db, $session_key_hash) = @_;
 	my $resource_iri = Caliper::ResourseIri->new($ce);
 
+	my $ip_address = '';
+	if ($ENV{HTTP_X_FORWARDED_FOR}) {
+		$ip_address = $ENV{HTTP_X_FORWARDED_FOR};
+	} elsif ($ENV{REMOTE_ADDR}) {
+		$ip_address = $ENV{REMOTE_ADDR};
+	} elsif ($ENV{HTTP_CLIENT_IP}) {
+		$ip_address = $ENV{HTTP_CLIENT_IP};
+	}
+
 	return {
-		'id' => $resource_iri->user_client($session_key),
+		'id' => $resource_iri->user_client($session_key_hash),
 		'type' => 'SoftwareApplication',
 		'userAgent' => $ENV{HTTP_USER_AGENT},
-		'ipAddress' => $ENV{REMOTE_ADDR},
+		'ipAddress' => $ip_address,
 		'host' => $ENV{HTTP_HOST},
 	};
 }
