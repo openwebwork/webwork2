@@ -1,0 +1,28 @@
+DOCUMENT();        # This should be the first executable line in the problem.
+
+loadMacros(
+  "PGstandard.pl",
+  "MathObjects.pl",
+  "parserPopUp.pl"
+);
+
+SET_PROBLEM_TEXTDIRECTION("rtl");
+SET_PROBLEM_LANGUAGE("he-IL");
+
+TEXT(beginproblem());
+
+Context("Numeric");
+
+$popup1 = PopUp(['נכון', 'לא נכון','foobar' ], 'נכון');
+
+
+BEGIN_TEXT
+This is a test popup menu. \(\int x^2 dx \)$PAR
+\{$popup1->menu\}
+
+END_TEXT
+
+ANS($popup1->cmp);
+
+ENDDOCUMENT();        # This should be the last executable line in the problem.
+
