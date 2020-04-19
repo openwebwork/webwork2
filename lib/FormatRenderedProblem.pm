@@ -437,11 +437,6 @@ EOS
 	my $STRING_ShowCorrect = $mt->maketext("Show correct answers");
 	my $STRING_Submit      = $mt->maketext("Check Answers");
 
-# With these values - things work, but the button text is English
-# with the localized values, or any answers in UTF-8 - thing break
-$STRING_Preview = "Preview My Answers";
-$STRING_ShowCorrect = "Show correct answers";
-$STRING_Submit = "Check Answers";
 
 ######################################################
 # Return interpolated problem template
