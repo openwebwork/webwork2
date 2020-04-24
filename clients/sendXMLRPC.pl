@@ -815,11 +815,23 @@ sub process_pg_file {
 				foreach my $response_id (@response_order) {
 					$correct_answers{$response_id} = shift @ans_array;
 				}
-			} else {
+			} else { # handle simple answers
 				warn "responding to an answer evaluator of type |".$ans_obj->{type}. 
 				  "|  with ".scalar(@response_order)." ans_blanks: ", 
 				   join(" ",@response_order),"\n" if $UNIT_TESTS_ON;
 				$correct_answers{$ans_id}=($ans_obj->{correct_ans})//($ans_obj->{correct_value})//'';
+                $correct_answers{$ans_id}= encode("UTF-8", $correct_answers{$ans_id});
+
+# 				my $value = $correct_answers{$ans_id};
+# 				if ( ! Scalar::Util::looks_like_number( $value ) &&
+# 							 $value =~ /[^\x00-\x7f]/ # Some non 7-bit character included
+# 						   ) {
+# 								# UTF-8 encoding needed
+# 								$correct_answers{$ans_id} = encode("UTF-8",$value );
+# 				}
+# 				else {
+# 					$correct_answers{$ans_id}= $value;
+# 				}
 			}
 		}
 		#FIXME  hack to get rid of html protection of < and > for vectors

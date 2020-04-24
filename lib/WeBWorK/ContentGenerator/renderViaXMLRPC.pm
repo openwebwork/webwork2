@@ -36,6 +36,7 @@ use strict;
 use warnings;
 use WebworkClient;
 use WeBWorK::Debug;
+use Encode qw(encode_utf8 decode_utf8 encode decode);
 use CGI;
 
 =head1 Description
@@ -137,8 +138,27 @@ sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
 	# Note: Vars helps handle things like checkbox 'packed' data;
-	my %inputs_ref =  WeBWorK::Form->new_from_paramable($r)->Vars ;
-
+	#my %inputs_ref =  WeBWorK::Form->new_from_paramable($r)->Vars ;
+	my $formObject = WeBWorK::Form->new_from_paramable($r);
+    my %inputs_ref=();
+    # attempt to fix wide characters occurring in answers
+    # this is the right spot, but perhaps encode_utf8 isn't the right translation
+    # I get x xxx  for the characters  -- look at Tani's fix in Problem
+    foreach my $key ($formObject->param) {
+    	my $value = $formObject->param($key);
+        if ( ! Scalar::Util::looks_like_number( $value ) &&
+				     $value =~ /[^\x00-\x7f]/ # Some non 7-bit character included
+				   ) {
+						# UTF-8 encoding needed
+    					$inputs_ref{"xmlrpc_UTF8_encoded_$key"} = encode("UTF-8",$value );
+    	}
+    	else {
+    		$inputs_ref{$key}= $value;
+    	}
+    }
+    
+    
+    
 	# When passing parameters via an LMS you get "custom_" put in front of them. So lets
 	# try to clean that up
 	$inputs_ref{userID} = $inputs_ref{custom_userid} if $inputs_ref{custom_userid};

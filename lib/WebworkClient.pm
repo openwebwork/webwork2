@@ -421,7 +421,7 @@ sub xml_utf_decode { # Do UTF-8 decoding where xml_filter applied encoding
 		$level++;
 		foreach my $item (keys %{$input}) {
 			# We need to decode the values which were encoded by xml_filter().
-			# Explantaion from xml_filter():
+			# Explanation from xml_filter():
 			#
 			# Until 2020 - ALL scalar values were left unchanged.
 			# However, since the release of WeBWorK 2.15 (late 2019) there
