@@ -24,6 +24,7 @@ span[id^=mq-answer].incorrect /* red */
 
 span[id^=mq-answer]
 {
+    direction: ltr;
     padding: 4px 5px 2px 5px;
     border-radius: 4px !important;
     background-color: white;
@@ -40,6 +41,7 @@ input[type=text].codeshard
 {
     font-size: .75em;
     display: inline-block;
+    direction: ltr;
     position: fixed;
     top: 50%;
     transform: translateY(-55%);
