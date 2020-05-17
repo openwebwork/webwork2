@@ -232,11 +232,26 @@ var tabberOptions = {manualStartup:true};
 
  		
 </div><!--content-->
+
 <!-- Bootstrap Fluid Layout Scaffolding stop -->
 </div> <!-- row-fluid -->
 </div> <!-- container-fluid -->
 
+<!--  script for knowl-like object -->
+<script>
+	$(document).ready(function(){
+		$( ".clickme" ).click(function() {
+		  $( this).next().slideToggle( "slow", function() {
+			// Animation complete.
+		  });
+		});
 
+	   // jQuery methods go here...
+	});
+</script>
+<div class="clickme">
+<img height="8px" width="8px" src="https://demo.webwork.rochester.edu/webwork2_files/images/webwork_square.svg"/>
+</div>
 
 <!-- Footer -->
 <div id="footer" role="contentinfo" style="display: none">
