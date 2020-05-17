@@ -1,4 +1,4 @@
-$sticky_format = <<'ENDPROBLEMTEMPLATE';
+$libretexts_format = <<'ENDPROBLEMTEMPLATE';
 
 <!DOCTYPE html>
 <html $COURSE_LANG_AND_DIR>
@@ -99,7 +99,7 @@ $LTIGradeMessage
 <img height="8px" width="8px" src="https://demo.webwork.rochester.edu/webwork2_files/images/webwork_square.svg"/>
 </div>
 <div id="footer" style="display:none">
-WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: sticky | theme: math4
+WeBWorK &copy; 1996-2020 | host: $SITE_URL | course: $courseID | format: libretexts | theme: math4
 </div>
 
 <!-- Activate local storage js -->
@@ -109,4 +109,4 @@ WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: sticky 
 
 ENDPROBLEMTEMPLATE
 
-$sticky_format;
+$libretexts_format;
