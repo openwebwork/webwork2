@@ -180,9 +180,9 @@ sub can_recordAnswers {
    # get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 
-	my $submitTime = ( defined($Set->version_last_attempt_time()) &&
-			   $Set->version_last_attempt_time() ) ? 
-			   $Set->version_last_attempt_time() : $timeNow;
+	my $submitTime = ($Set->assignment_type eq 'proctored_gateway' &&
+		defined($Set->version_last_attempt_time()) && $Set->version_last_attempt_time())
+			? $Set->version_last_attempt_time() : $timeNow;
 
 	if ($User->user_id ne $EffectiveUser->user_id) {
 		my $recordAsOther = $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
@@ -249,9 +249,9 @@ sub can_checkAnswers {
    # get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 	
-	my $submitTime = ( defined($Set->version_last_attempt_time()) &&
-			   $Set->version_last_attempt_time() ) ? 
-			   $Set->version_last_attempt_time() : $timeNow;
+	my $submitTime = ($Set->assignment_type eq 'proctored_gateway' &&
+		defined($Set->version_last_attempt_time()) && $Set->version_last_attempt_time())
+			? $Set->version_last_attempt_time() : $timeNow;
 
 	# this is further complicated by trying to address hiding scores by 
 	#    problem---that is, if $set->hide_score_by_problem and 
