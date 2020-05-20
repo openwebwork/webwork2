@@ -21,6 +21,9 @@
 }
 
 /* Bootstrap overrides */
+body {
+	font-size: 1.1rem;
+}
 a:focus {
     outline-style:solid;
     outline-color:#aaaa00;
