@@ -95,8 +95,8 @@ $LTIGradeMessage
 	   // jQuery methods go here...
 	});
 </script>
-<div class="clickme">
-<img height="8px" width="8px" src="https://demo.webwork.rochester.edu/webwork2_files/images/webwork_square.svg"/>
+<div class="clickme" id="version">
+<img height="16px" width="16px" src="https://demo.webwork.rochester.edu/webwork2_files/images/webwork_square.svg"/>
 </div>
 <div id="footer" style="display:none">
 WeBWorK &copy; 1996-2020 | host: $SITE_URL | course: $courseID | format: libretexts | theme: math4

@@ -24,6 +24,13 @@
 body {
 	font-size: 1.1rem;
 }
+
+/* override background and border of problem insert */
+#problem_body { 
+	background-color: #ffffff;
+	border: 0px solid #ffffff;	
+}
+
 a:focus {
     outline-style:solid;
     outline-color:#aaaa00;
@@ -1301,4 +1308,9 @@ table#grades_table pre{
 #openEqEditor {
     min-height:35px;
     min-width:43px;
+}
+/* version and copyright knowl */
+#version {
+	text-align: right;
+
 }
