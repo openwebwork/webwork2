@@ -122,7 +122,7 @@ $(function(){
     $('.problem_set_options a').addClass('btn btn-info');
 
     // Problem formatting
-    $('#problemMainForm').addClass('problem-main-form form-inline');
+    $('#problemMainForm, form[name=gwquiz]').addClass('problem-main-form form-inline');
     $('.attemptResults').addClass('table table-condensed table-bordered');
     $('.problem .problem-content').addClass('well well-small');
     $('.answerComments').addClass('well');
