@@ -12,8 +12,9 @@ $libretexts_format = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/jquery-ui-1.8.18.custom.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/libretexts/libretexts.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
+# contains overrides
+<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/libretexts/libretexts.css"/> 
 
 <!-- JS Loads -->
 <script type="text/javascript" src="/webwork2_files/js/vendor/jquery/jquery.js"></script>
@@ -34,7 +35,7 @@ $libretexts_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<title>WeBWorK using host: $SITE_URL, format: sticky seed: $problemSeed</title>
+<title>WeBWorK using host: $SITE_URL, format: libretexts seed: $problemSeed</title>
 </head>
 <body>
 <div class="container-fluid">
@@ -68,7 +69,7 @@ $LTIGradeMessage
 <input type="hidden" name="course_password" value="$course_password">
 <input type="hidden" name="displayMode" value="$displayMode">
 <input type="hidden" name="session_key" value="$session_key">
-<input type="hidden" name="outputformat" value="sticky">
+<input type="hidden" name="outputformat" value="libretexts">
 <input type="hidden" name="language" value="$formLanguage">
 <input type="hidden" name="showSummary" value="$showSummary">
 <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
