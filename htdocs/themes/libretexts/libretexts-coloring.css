@@ -1,0 +1,144 @@
+/* This is the coloring file for the green version of math4
+ * this file is tracked by git and changes here will be overwritten
+ * If you would like to alter this theme, make a copy of math4-overrides.css
+ * in this directory and put your changes there. 
+ */
+
+/* Color for links and link hover */
+a {
+  color: #0f67a6;
+}
+
+a:hover,
+a:focus {
+  color: #127bc4;
+}
+
+body{
+  font-family: Roboto;
+}
+
+/* Color for the dark blue buttons */
+.btn-primary {
+  color: #ffffff;
+  background-color: #0f67a6;
+  background-image: none;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.btn-primary.disabled,
+.btn-primary[disabled] {
+  color: #ffffff;
+  background-color: #0f67a6;
+}
+
+/* Colors for the light blue buttons */
+.btn-info {
+  color: #ffffff;
+  background-color: #127bc4;
+  background-image: none;
+}
+.btn-info:hover,
+.btn-info:focus,
+.btn-info:active,
+.btn-info.active,
+.btn-info.disabled,
+.btn-info[disabled] {
+  color: #ffffff;
+  background-color: #57a3d9;
+}
+
+/* colors for the masthead */
+#masthead {
+    background-color: #0f67a6;
+}
+
+/* Color for the background of the webwork logo */
+.webwork_logo {
+    background-color: #0f67a6;
+    border-color: #0f67a6;
+}
+
+.well {
+  background: none;
+  box-shadow: none;
+  border: none;
+}
+
+#masthead a {
+    color: white;
+}
+
+#loginstatus {
+    color: white;
+}
+
+#loginstatus a {
+    color:black;
+}
+
+/* colors for the left hand nav list */
+#site-links ul {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.nav-list > .active > a,
+.nav-list > .active > a:hover,
+.nav-list > .active > a:focus {
+    color: #ffffff;
+    background-color: #0f67a6;
+}
+
+ul.nav li a:hover {
+	background: #e1e1e1;	
+}
+
+/* The breadcrumb nav */
+.breadcrumb {
+	border: 1px solid #e6e6e6;
+}
+
+/* The courses list coloring */
+ul.courses-list a {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+ul.courses-list a:hover {
+	background: #0f67a6;
+	color: white;
+}
+
+/* Info box (right hand box) coloring */
+.info-box {
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+}
+
+.info-box h2, .info-box h3, .info-box h4, .info-box h5, .info-box h6 {
+	background: #0f67a6;
+	color: white;
+}
+
+#InfoPanel {
+    background-color: #fffffff;
+}
+
+#loginstatus{
+  margin: 5px;
+  float: right;
+}
+
+/* Achievement bar coloring */
+.levelinnerbar {
+    background-color:#57a3d9;
+}
+
+.cheevoinnerbar {
+    background-color:#57a3d9;
+}
+
