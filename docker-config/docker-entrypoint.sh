@@ -19,6 +19,9 @@ if [ $SSL -eq 1 ]; then
   a2enmod ssl && a2ensite default-ssl
 fi
 
+echo "Enabling Apache headers module"
+a2enmod headers
+
 # Build more locales
 if [ "$ADD_LOCALES" != "0" ]; then
   echo "Rebulding locales - adding: $ADD_LOCALES"
@@ -152,7 +155,7 @@ if [ "$1" = 'apache2' ]; then
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
         $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
-        $WEBWORK_ROOT/bin/update-OPL-statistics.pl
+        #$WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
@@ -193,20 +196,43 @@ if [ "$1" = 'apache2' ]; then
     # Fix possible permission issues
     echo "Fixing ownership and permissions (just in case it is needed)"
     cd $WEBWORK_ROOT
+
+    # Minimal chown/chmod code - moves the critical parts which were in
+    # blocks below to to here
+    # but SKIPS handling htdocs/tmp and ../courses for the chmod line,
+    # and SKIPS the deletion of symbolic links.
+    # This change significantly speeds up Docker startup time on production
+    # servers with many files/courses (on Linux).
+
+    chown -R www-data:www-data logs tmp DATA
+    chmod -R ug+w logs tmp DATA
+
     # Symbolic links which have no target outside the Docker container
     # cause problems duringt the rebuild process on some systems.
     # So we delete them. They will be rebuilt automatically when needed again
     # at the cost of some speed.
-    find htdocs/tmp -type l -exec rm -f {} \;
-    chown -R www-data:www-data logs tmp DATA htdocs/tmp
-    chmod -R u+w logs tmp DATA  ../courses htdocs/tmp
-    cd $APP_ROOT
+
+    # The following 3 lines (find, chown, chmod) make Docker startup quite slow
+    # slow and have been commented out. The critical parts to chown/chmod the
+    # directories:   logs/ tmp/ DATA/   were moved above and removed below.
+    # Developers who encounter permission issues may want to reenable these lines.
+
+    #find htdocs/tmp -type l -exec rm -f {} \;
+    #chown -R www-data:www-data htdocs/tmp
+    #chmod -R u+w ../courses htdocs/tmp
+
     # The chown for files/directories under courses is done using find, as
     # using a simple "chown -R www-data $APP_ROOT/courses" would sometimes
     # cause errors in Docker on Mac OS X when there was a broken symbolic link
     # somewhere in the directory tree being processed.
-    find courses -type f -exec chown www-data:www-data {} \;
-    find courses -type d -exec chown www-data:www-data {} \;
+
+    # The following 3 lines (cd, find, find) make Docker startup quite slow.
+    # Developers who encounter permission issues may want to reenable these lines.
+
+    #cd $APP_ROOT
+    #find courses -type f -exec chown www-data:www-data {} \;
+    #find courses -type d -exec chown www-data:www-data {} \;
+
     echo "end fixing ownership and permissions"
 
 fi
