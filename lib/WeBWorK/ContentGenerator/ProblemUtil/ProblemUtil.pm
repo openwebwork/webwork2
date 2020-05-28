@@ -331,7 +331,13 @@ sub process_and_log_answer{
 							$endTime
 						),
 					};
-					$caliper_sensor->sendEvents($r, [$completed_question_event, $submitted_set_event]);
+					my $tool_use_event = {
+						'type' => 'ToolUseEvent',
+						'action' => 'Used',
+						'profile' => 'ToolUseProfile',
+						'object' => Caliper::Entity::webwork_app(),
+					};
+					$caliper_sensor->sendEvents($r, [$completed_question_event, $submitted_set_event, $tool_use_event]);
 
 					# reset start time
 					$r->param('startTime', '');

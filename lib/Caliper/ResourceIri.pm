@@ -59,14 +59,14 @@ sub actor_homepage
 
 sub user_session
 {
-	my ($self, $session_key) = @_;
-	return $self->getBaseUrl() . 'session/'. $session_key;
+	my ($self, $session_key_hash) = @_;
+	return $self->getBaseUrl() . 'session/'. $session_key_hash;
 }
 
 sub user_client
 {
-	my ($self, $session_key) = @_;
-	return $self->user_session($session_key) . '/client';
+	my ($self, $session_key_hash) = @_;
+	return $self->user_session($session_key_hash) . '/client';
 }
 
 sub user_membership
