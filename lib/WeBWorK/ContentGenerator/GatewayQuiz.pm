@@ -1394,8 +1394,8 @@ sub body {
 		# This refactoring hasn't taken place yet
 		# because I don't yet understand why the ordering 
 		# for creating past answers was chosen as it is, different from creating sticky answers
-#		my @answerString = (); 
-#		my @encoded_ans_string = ();
+#		my @past_answers_string = (); 
+#		my @encoded_last_answer_string = ();
 #		my @scores = ();
 #		my @isEssay = ();
 		
@@ -1416,7 +1416,7 @@ sub body {
 			#    submitting
 			my %answerHash = ();
 			my @answer_order = ();
-			my $encoded_ans_string;
+			my $encoded_last_answer_string;
 			if ( ref( $pg_results[$i] ) ) {
 # 				%answerHash = %{$pg_results[$i]->{answers}};
 # 				$answersToStore{$_} = $self->{formFields}->{$_} 
@@ -1431,8 +1431,8 @@ sub body {
 # 				@answer_order = 
 # 				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
 # 				      @extra_answer_names );
-                my ($answerString, $scores,$isEssay); #not used here
-				($answerString,$encoded_ans_string,$scores,$isEssay) =
+                my ($past_answers_string, $scores,$isEssay); #not used here
+				($past_answers_string,$encoded_last_answer_string,$scores,$isEssay) =
 				WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 					$self, $pg_results[$i]
 				);  # ref($self) eq WeBWorK::ContentGenerator::Problem
@@ -1442,16 +1442,16 @@ sub body {
 				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
 				my @answer_order = @fields;
-				$encoded_ans_string = encodeAnswers( %answersToStore, 
+				$encoded_last_answer_string = encodeAnswers( %answersToStore, 
  							  @answer_order );
  						
 			}
-# 				my $answerString = encodeAnswers( %answersToStore, 
+# 				my $past_answers_string = encodeAnswers( %answersToStore, 
 # 							  @answer_order );
 # 			
 			# and get the last answer 
-			$problems[$i]->last_answer( $encoded_ans_string );
-			$pureProblem->last_answer( $encoded_ans_string );
+			$problems[$i]->last_answer( $encoded_last_answer_string );
+			$pureProblem->last_answer( $encoded_last_answer_string );
 
 			# next, store the state in the database if that makes 
 			#    sense
@@ -1546,7 +1546,7 @@ sub body {
 		if ( defined( $answer_log ) ) {
 			foreach my $i ( 0 .. $#problems ) {
 # begin problem loop for passed answers
-				my $answerString = '';
+				my $past_answers_string = '';
 				my $scores = '';
 				my $isEssay = 0;
 				# note that we store these answers in the 
@@ -1556,24 +1556,24 @@ sub body {
 					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
 # 					foreach ( sortByName(undef, keys %answerHash) ) {
 # 						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
-# 						$answerString .= $sAns . "\t";
+# 						$past_answers_string .= $sAns . "\t";
 # 						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
 # 					}
-                   	my ($encoded_ans_string, ); #not used here
-					($answerString,$encoded_ans_string,$scores,$isEssay) =
+                   	my ($encoded_last_answer_string, ); #not used here
+					($past_answers_string,$encoded_last_answer_string,$scores,$isEssay) =
 					WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 						$self, $pg_results[$probOrder[$i]]
 					);  # ref($self) eq WeBWorK::ContentGenerator::Problem
 						# ref($pg) eq "WeBWorK::PG::Local";
-					$answerString =~ s/\t+$/\t/;
+					$past_answers_string =~ s/\t+$/\t/;
 				} else {
 					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
 					my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 					foreach ( @fields ) {
-						$answerString .= $self->{formFields}->{$_} . "\t";
+						$past_answers_string .= $self->{formFields}->{$_} . "\t";
 						$scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
 					}
-					$answerString =~ s/\t+$/\t/;
+					$past_answers_string =~ s/\t+$/\t/;
 				}
 				
 				
@@ -1587,13 +1587,13 @@ sub body {
 					$answerPrefix = "[newPage] "; 
 				}
 
-				if ( ! $answerString || 
-				     $answerString =~ /^\t$/ ) {
-					$answerString = "$answerPrefix" . 
+				if ( ! $past_answers_string || 
+				     $past_answers_string =~ /^\t$/ ) {
+					$past_answers_string = "$answerPrefix" . 
 						"No answer entered\t";
 				} else {
-					$answerString = "$answerPrefix" .
-						"$answerString";
+					$past_answers_string = "$answerPrefix" .
+						"$past_answers_string";
 				}
 				
 		#Write to courseLog
@@ -1603,7 +1603,7 @@ sub body {
 						     '|', $setVName,
 						     '|', ($i+1), '|', $scores, 
 						     "\t$timeNow\t",
-						     "$answerString"), 
+						     "$past_answers_string"), 
 						);
 		#add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
@@ -1613,7 +1613,7 @@ sub body {
 				$pastAnswer->problem_id($problems[$i]->problem_id);
 				$pastAnswer->timestamp($timeNow);
 				$pastAnswer->scores($scores);
-				$pastAnswer->answer_string($answerString);
+				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problems[$i]->source_file);
 				
 				$db->addPastAnswer($pastAnswer);

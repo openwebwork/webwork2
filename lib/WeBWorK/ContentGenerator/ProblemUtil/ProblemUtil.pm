@@ -106,18 +106,18 @@ sub process_and_log_answer{
 #    				    push @answer_order2, $response_id;
 #    				 }
 #    			}
-#    			my $answerString2 = '';
+#    			my $past_answers_string = '';
 #    			foreach my $response_id (@answer_order2) {
-#    				$answerString2.=($answersToStore2{$response_id}//'')."\t";
+#    				$past_answers_string.=($answersToStore2{$response_id}//'')."\t";
 #    			}
-#    			$answerString2=~s/\t$//; # remove last tab
-	my ($answerString2);
-	($answerString2,$encoded_answer_string, $scores2, $isEssay2) =
+#    			$past_answers_string=~s/\t$//; # remove last tab
+	my ($past_answers_string);
+	($past_answers_string,$encoded_answer_string, $scores2, $isEssay2) =
 	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 	      $self, $pg
 	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
 	        # ref($pg) eq "WeBWorK::PG::Local";
-# end new code (output is answerString2, $scores, $isEssay)
+# end new code (output is past_answers_string, $scores, $isEssay)
 ################################################################
 # 		    my $answerString = ""; my $scores = "";
 # 			my %answerHash = %{ $pg->{answers} };
@@ -145,7 +145,7 @@ sub process_and_log_answer{
 			# The answer hash is inside ans_id.ans_eval.rh_ans
 			#
 #    			warn "answerString1: $answerString";
-# 			warn "answerString2: $answerString2";
+# 			warn "past_answers_string: $past_answers_string";
 # 			warn "scores1: $scores";
 # 			warn "scores2: $scores2";
 # 			warn "isEssay1: $isEssay";
@@ -162,7 +162,7 @@ sub process_and_log_answer{
 						'|', $problem->problem_id,
 						'|', $scores2, "\t",
 						$timestamp,"\t",
-						$answerString2,
+						$past_answers_string,
 					),
 			);
 
@@ -220,13 +220,13 @@ sub process_and_log_answer{
 			# because of profile for encodeAnswers
 
 			# encodeAnswers creates a hash and uses Storage::nfreeze to serialize it
-			# replaced by $encoded_answer_string
+			# replaced by $encoded_last_answer_string
 # 			my $answerString3 = encodeAnswers(%answersToStore2,
 # 							 @answer_order2);
 
 			# store last answer to database for use in "sticky" answers
-			$problem->last_answer($encoded_answer_string);
-			$pureProblem->last_answer($encoded_answer_string);
+			$problem->last_answer($encoded_last_answer_string);
+			$pureProblem->last_answer($encoded_last_answer_string);
 			$db->putUserProblem($pureProblem);
 
 			# store state in DB if it makes sense
@@ -387,6 +387,15 @@ sub process_and_log_answer{
 #        ref($problem)eq 'WeBWorK::ContentGenerator::Problem
 # output:  (str, str, str)
 
+
+# 2020_05 MEG FIXME -- seems to have omitted saving $pg->{flags}->{KEPT_EXTRA_ANSWERS} which also 
+# labels stored in $PG->{PERSISTANCE_HASH}
+# 2020_05a MEG -- answerString2 is being created for use in the past_answer table
+# and other persistant objects need not be included.  
+# The extra persistence objects do need to be included in problem->last_answer 
+# in order to keep those objects persistant -- as long as RECORD_FORM_ANSWER
+# is used to preserve objects by piggy backing on the persistence mechanism for answers.
+
 sub create_ans_str_from_responses {
 	my $problem = shift;  #  ref($problem) eq 'WeBWorK::ContentGenerator::Problem'
 	                   	  #  must contain $self->{formFields}->{$response_id}
@@ -394,30 +403,40 @@ sub create_ans_str_from_responses {
 	#warn "create_ans_str_from_responses pg has type ", ref($pg);
 	my $scores2='';
 	my $isEssay2=0;
-	my %answersToStore2;
-	my @answer_order2;
-	my @answer_order3;
+	my %answers_to_store;
+	my @past_answers_order;
+	my @last_answer_order;
 
-	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+	my %pg_anwers_hash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-		$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
-		$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
-		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
-			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id};
-			push @answer_order2, $response_id unless ($response_id =~ /^MaThQuIlL_/);
-			push @answer_order3, $response_id;
+		$scores2.= ($pg_anwers_hash{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+		$isEssay2 = 1 if ($pg_anwers_hash{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+		foreach my $response_id ($pg_anwers_hash{$ans_id}->response_obj->response_labels) {
+			$answers_to_store{$response_id} = $problem->{formFields}->{$response_id};
+			#Math quill response items do not need to be stored -- they duplicate other response items
+			push @past_answers_order, $response_id unless ($response_id =~ /^MaThQuIlL_/);
+			push @last_answer_order, $response_id;
 		 }
 	}
-	my $answerString2 = '';
-	foreach my $response_id (@answer_order2) {
-		$answerString2.=($answersToStore2{$response_id}//'')."\t";
+	# KEPT_EXTRA_ANSWERS need to be stored in last_answer in order to preserve persistence items
+	# the persistence items do not need to be stored in past_answers_string
+	foreach my $entry_id (@{ $pg->{flags}->{KEPT_EXTRA_ANSWERS} }) {
+		next if exists( $answers_to_store{$entry_id}  );
+		$answers_to_store{$entry_id}= $problem->{formFields}->{$entry_id};
+		push @last_answer_order, $entry_id;
 	}
-	$answerString2=~s/\t$//; # remove last tab
 
-	my $encoded_answer_string = encodeAnswers(%answersToStore2,
-							 @answer_order3);
+	my $past_answers_string = '';
+	foreach my $response_id (@past_answers_order) {
+		$past_answers_string.=($answers_to_store{$response_id}//'')."\t";
+	}
+	$past_answers_string=~s/\t$//; # remove last tab
 
-	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
+	my $encoded_last_answer_string = encodeAnswers(%answers_to_store,
+							 @last_answer_order);
+    # past_answers_string is stored in past_answer table
+    # encoded_last_answer_string is used in last_answer entry of the problem_user table
+	return ($past_answers_string,$encoded_last_answer_string, $scores2,$isEssay2);
 }
 
 # insert_mathquill_responses subroutine
