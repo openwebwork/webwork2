@@ -81,7 +81,7 @@ sub process_and_log_answer{
 	my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
 	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
 
-    my ($encoded_answer_string, $scores2, $isEssay2);
+    my ($encoded_last_answer_string, $scores2, $isEssay2);
 	my $scoreRecordedMessage = "";
 
 	if ( defined($answer_log ) and defined($pureProblem)) {
@@ -92,12 +92,12 @@ sub process_and_log_answer{
 #########################################
 
 	my ($past_answers_string);
-	($past_answers_string,$encoded_answer_string, $scores2, $isEssay2) =
+	($past_answers_string,$encoded_last_answer_string, $scores2, $isEssay2) =
 	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 	      $self, $pg
 	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
 	        # ref($pg) eq "WeBWorK::PG::Local";
-# end new code (output is $past_answers_string, $encoded_answer_string,$scores, $isEssay)
+# end new code (output is $past_answers_string, $encoded_last_answer_string,$scores, $isEssay)
 ################################################################
 
 # store in answer_log   past answers file (user_id,set_id,problem_id,courseID,answerString,scores,source_file)
@@ -121,7 +121,7 @@ sub process_and_log_answer{
 			$pastAnswer->problem_id($problem->problem_id);
 			$pastAnswer->timestamp($timestamp);
 			$pastAnswer->scores($scores2);
-			$pastAnswer->answer_string($answerString2);
+			$pastAnswer->answer_string($past_answers_string);
 			$pastAnswer->source_file($problem->source_file);
 			$db->addPastAnswer($pastAnswer);
 
@@ -307,7 +307,7 @@ sub process_and_log_answer{
 
 # 2020_05 MEG  -- previous version seems to have omitted saving $pg->{flags}->{KEPT_EXTRA_ANSWERS} which also 
 # labels stored in $PG->{PERSISTANCE_HASH}
-# 2020_05a MEG -- answerString2 is being created for use in the past_answer table
+# 2020_05a MEG -- past_answers_string is being created for use in the past_answer table
 # and other persistant objects need not be included.  
 # The extra persistence objects do need to be included in problem->last_answer 
 # in order to keep those objects persistant -- as long as RECORD_FORM_ANSWER
@@ -326,9 +326,9 @@ sub create_ans_str_from_responses {
 
 	my %pg_answers_hash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-		$scores2.= ($pg_anwers_hash{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
-		$isEssay2 = 1 if ($pg_anwers_hash{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
-		foreach my $response_id ($pg_anwers_hash{$ans_id}->response_obj->response_labels) {
+		$scores2.= ($pg_answers_hash{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+		$isEssay2 = 1 if ($pg_answers_hash{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+		foreach my $response_id ($pg_answers_hash{$ans_id}->response_obj->response_labels) {
 			$answers_to_store{$response_id} = $problem->{formFields}->{$response_id};
 			#Math quill response items do not need to be stored -- they duplicate other response items
 			push @past_answers_order, $response_id unless ($response_id =~ /^MaThQuIlL_/);
@@ -351,6 +351,7 @@ sub create_ans_str_from_responses {
 
 	my $encoded_last_answer_string = encodeAnswers(%answers_to_store,
 							 @last_answer_order);
+	# warn "$encoded_last_answer_string", $encoded_last_answer_string;
     # past_answers_string is stored in past_answer table
     # encoded_last_answer_string is used in `last_answer` entry of the problem_user table
 	return ($past_answers_string,$encoded_last_answer_string, $scores2,$isEssay2);
