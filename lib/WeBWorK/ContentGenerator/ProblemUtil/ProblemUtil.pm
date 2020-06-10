@@ -305,11 +305,11 @@ sub process_and_log_answer{
 # output:  (str, str, str)
 
 
-# 2020_05 MEG  -- previous version seems to have omitted saving $pg->{flags}->{KEPT_EXTRA_ANSWERS} which also 
+# 2020_05 MEG  -- previous version seems to have omitted saving $pg->{flags}->{KEPT_EXTRA_ANSWERS} which also
 # labels stored in $PG->{PERSISTANCE_HASH}
 # 2020_05a MEG -- past_answers_string is being created for use in the past_answer table
-# and other persistant objects need not be included.  
-# The extra persistence objects do need to be included in problem->last_answer 
+# and other persistant objects need not be included.
+# The extra persistence objects do need to be included in problem->last_answer
 # in order to keep those objects persistant -- as long as RECORD_FORM_ANSWER
 # is used to preserve objects by piggy backing on the persistence mechanism for answers.
 

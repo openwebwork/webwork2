@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.54 2008/07/01 13:12:56 glarose Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -57,7 +57,7 @@ sub templateName {
 
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
-# 
+#
 #     ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem)
 
 # *** The "can" routines are taken from Problem.pm, with small modifications
@@ -67,21 +67,21 @@ sub templateName {
 sub can_showOldAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $tmplSet ) = @_;
 	my $authz = $self->r->authz;
-# we'd like to use "! $Set->hide_work()", but that hides students' work 
+# we'd like to use "! $Set->hide_work()", but that hides students' work
 # as they're working on the set, which isn't quite right.  so use instead:
 	return 0 unless $authz->hasPermissions($User->user_id,"can_show_old_answers");
 
-	return( before( $Set->due_date() ) || 
+	return( before( $Set->due_date() ) ||
 		
 		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
-		( $Set->hide_work() eq 'N' || 
+		( $Set->hide_work() eq 'N' ||
 		  ( $Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date ) ) );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
 #   to be included if it's defined
 sub can_showCorrectAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, 
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem,
 	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	
@@ -94,10 +94,10 @@ sub can_showCorrectAnswers {
 	    $addOne || 0;
 
 # this is complicated by trying to address hiding scores by problem---that
-#    is, if $set->hide_score_by_problem and $set->hide_score are both set, 
-#    then we should allow scores to be shown, but not show the score on 
-#    any individual problem.  to deal with this, we make 
-#    can_showCorrectAnswers give the least restrictive view of hiding, and 
+#    is, if $set->hide_score_by_problem and $set->hide_score are both set,
+#    then we should allow scores to be shown, but not show the score on
+#    any individual problem.  to deal with this, we make
+#    can_showCorrectAnswers give the least restrictive view of hiding, and
 #    then filter scores for the problems themselves later
 
 #    showing correcrt answers but not showing scores doesn't make sense
