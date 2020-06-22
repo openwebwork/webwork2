@@ -104,6 +104,10 @@ function graphTool(containerId, htmlInputId, staticObjects, isStatic, options, s
 
                 gt.activeTool.updateHighlights(coords);
             });
+
+            $(document).on('keydown.ToolDeactivate', function(e) {
+                if (e.key === 'Escape') gt.tools[0].activate();
+            });
         }
 
         $(window).resize(function(e) {
