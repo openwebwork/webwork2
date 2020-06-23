@@ -9,6 +9,14 @@ function graphTool(containerId, options) {
 
     var snapSizeX = options.snapSizeX ? options.snapSizeX : 1;
     var snapSizeY = options.snapSizeY ? options.snapSizeY : 1;
+    var availableTools = options.availableTools ? options.availableTools : [
+        "LineTool",
+        "CircleTool",
+        "VerticalParabolaTool",
+        "HorizontalParabolaTool",
+        "FillTool",
+        "SolidDashTool"
+    ];
 
     function snapRound(x, snap) {
         return Math.round(Math.round(x / snap) * snap * 100000) / 100000;
@@ -1006,12 +1014,17 @@ function graphTool(containerId, options) {
     if (!options.isStatic)
     {
         var buttonBox = $("<div class='gt-toolbar-container'></div>");
-        gt.tools[0] = new SelectTool(buttonBox);
-        gt.tools[1] = new LineTool(buttonBox);
-        gt.tools[2] = new CircleTool(buttonBox);
-        gt.tools[3] = new ParabolaTool(buttonBox, true);
-        gt.tools[4] = new ParabolaTool(buttonBox, false);
-        gt.tools[5] = new FillTool(buttonBox, false);
+        gt.tools.push(new SelectTool(buttonBox));
+        if (availableTools.indexOf('LineTool') > -1)
+            gt.tools.push(new LineTool(buttonBox));
+        if (availableTools.indexOf('CircleTool') > -1)
+            gt.tools.push(new CircleTool(buttonBox));
+        if (availableTools.indexOf('VerticalParabolaTool') > -1)
+            gt.tools.push(new ParabolaTool(buttonBox, true));
+        if (availableTools.indexOf('HorizontalParabolaTool') > -1)
+            gt.tools.push(new ParabolaTool(buttonBox, false));
+        if (availableTools.indexOf('FillTool') > -1)
+            gt.tools.push(new FillTool(buttonBox, false));
 
         var solidDashBox = $("<div class='gt-solid-dash-box'></div>");
         // The draw solid button is active by default.
@@ -1025,7 +1038,8 @@ function graphTool(containerId, options) {
                 "data-tooltip='Make Selected Object Dashed'>&nbsp;</button>")
             .on('click', { solid: false }, toggleSolidity);
         solidDashBox.append(dashedButton);
-        buttonBox.append(solidDashBox);
+        if (availableTools.indexOf("SolidDashTool") > -1)
+            buttonBox.append(solidDashBox);
 
         buttonBox.append($("<button type=button class='btn gt-button' " +
             "data-tooltip='Delete Selected Object'>Delete</button>")
