@@ -9,6 +9,7 @@ function graphTool(containerId, options) {
 
     var snapSizeX = options.snapSizeX ? options.snapSizeX : 1;
     var snapSizeY = options.snapSizeY ? options.snapSizeY : 1;
+    var isStatic = 'isStatic' in options ? options.isStatic : false;
     var availableTools = options.availableTools ? options.availableTools : [
         "LineTool",
         "CircleTool",
@@ -28,7 +29,7 @@ function graphTool(containerId, options) {
     var fillIconFocused = "data:image/svg+xml,%3Csvg xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:cc='http://creativecommons.org/ns%23' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23' xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' id='SVGRoot' version='1.1' viewBox='0 0 32 32' height='32px' width='32px'%3E%3Cdefs id='defs815' /%3E%3Cmetadata id='metadata818'%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage' /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cg id='layer1'%3E%3Cpath id='path1382' d='m 13.466084,10.267728 -4.9000003,8.4 4.9000003,4.9 8.4,-4.9 z' style='opacity:1;fill:%2300ff00;fill-opacity:1;stroke:%23000000;stroke-width:1.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none' /%3E%3Cpath id='path1384' d='M 16.266084,15.780798 V 6.273173' style='fill:none;stroke:%23000000;stroke-width:1.38;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' /%3E%3Cpath id='path1405' d='m 20,16 c 0,0 2,-1 3,0 1,0 1,1 2,2 0,1 0,2 0,3 0,1 0,2 0,2 0,0 -1,0 -1,0 -1,-1 -1,-1 -1,-2 0,-1 0,-1 -1,-2 0,-1 0,-2 -1,-2 -1,-1 -2,-1 -1,-1 z' style='fill:%230900ff;fill-opacity:1;stroke:%23000000;stroke-width:0.7px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' /%3E%3C/g%3E%3C/svg%3E";
 
     var gt = {}, html_input;
-    if (options.htmlInputId) html_input = document.getElementById(options.htmlInputId);
+    if ('htmlInputId' in options) html_input = document.getElementById(options.htmlInputId);
     var cfgOptions = {
         showCopyright: false,
         minimizeReflow: "all",
@@ -57,7 +58,7 @@ function graphTool(containerId, options) {
     };
 
     // Merge options that are set by the problem.
-    if (options.JSXGraphOptions) $.extend(true, cfgOptions, cfgOptions, options.JSXGraphOptions);
+    if ('JSXGraphOptions' in options) $.extend(true, cfgOptions, cfgOptions, options.JSXGraphOptions);
 
     function setupBoard() {
         gt.board = JXG.JSXGraph.initBoard(containerId + "_graph", cfgOptions);
@@ -93,7 +94,7 @@ function graphTool(containerId, options) {
         // Overwrite the popup infobox for points.
         gt.board.highlightInfobox = function (x, y, el) { return gt.board.highlightCustomInfobox('', el); }
 
-        if (!options.isStatic) {
+        if (!isStatic) {
             gt.board.on('move', function(e) {
                 var coords = getMouseCoords(e);
                 if (!gt.selectedObj ||
@@ -345,8 +346,8 @@ function graphTool(containerId, options) {
     }
 
     function createParabola(vertex, point, vertical, solid, color) {
-        var options = { strokeWidth: 2, highlight: false, dash: solid ? 0 : 2 };
-        if (color !== undefined) options.strokeColor = color;
+        var curveOptions = { strokeWidth: 2, highlight: false, dash: solid ? 0 : 2 };
+        if (color !== undefined) curveOptions.strokeColor = color;
         if (vertical) return gt.board.create('curve', [
             // x coordinate of point on curve
             function(x) { return x; },
@@ -359,7 +360,7 @@ function graphTool(containerId, options) {
             function() { return gt.board.getBoundingBox()[0]; },
             // domain maximum
             function() { return gt.board.getBoundingBox()[2]; }
-        ], options)
+        ], curveOptions)
         else return gt.board.create('curve', [
             // x coordinate of point on curve
             function(x) {
@@ -372,7 +373,7 @@ function graphTool(containerId, options) {
             function() { return gt.board.getBoundingBox()[3]; },
             // domain maximum
             function() { return gt.board.getBoundingBox()[1]; }
-        ], options);
+        ], curveOptions);
     }
 
     function Parabola(vertex, point, vertical, solid) {
@@ -424,8 +425,8 @@ function graphTool(containerId, options) {
             { withLabel: false, highlight: false, layer: 9, name: 'FillIcon' });
         this.definingPts.icon.gtGraphObject = this;
         this.definingPts.icon.point = point;
-        this.isStatic = options.isStatic;
-        if (!options.isStatic)
+        this.isStatic = isStatic;
+        if (!isStatic)
         {
             this.definingPts.icon.on('down', function() { gt.board.containerObj.style.cursor = 'none'; });
             this.definingPts.icon.on('up', function() { gt.board.containerObj.style.cursor = 'auto'; });
@@ -1011,7 +1012,7 @@ function graphTool(containerId, options) {
     var graphDiv = $("<div id='" + containerId + "_graph' class='jxgbox graphtool-graph'></div>");
     graphContainer.append(graphDiv);
 
-    if (!options.isStatic)
+    if (!isStatic)
     {
         var buttonBox = $("<div class='gt-toolbar-container'></div>");
         gt.tools.push(new SelectTool(buttonBox));
@@ -1070,8 +1071,8 @@ function graphTool(containerId, options) {
     // Restore data from previous attempts if available
     function restoreObjects(data, objectsAreStatic) {
         gt.board.suspendUpdate();
-        var tmpIsStatic = options.isStatic;
-        options.isStatic = objectsAreStatic;
+        var tmpIsStatic = isStatic;
+        isStatic = objectsAreStatic;
         var objectRegexp = /{(.*?)}/g;
         var objectData;
         while (objectData = objectRegexp.exec(data)) {
@@ -1082,14 +1083,14 @@ function graphTool(containerId, options) {
                 else gt.graphedObjs.push(obj);
             }
         }
-        options.isStatic = tmpIsStatic;
+        isStatic = tmpIsStatic;
         updateObjects();
         gt.board.unsuspendUpdate();
     }
     if (html_input) restoreObjects(html_input.value, false);
-    if (options.staticObjects && typeof(options.staticObjects) === 'string' && options.staticObjects.length)
+    if ('staticObjects' in options && typeof(options.staticObjects) === 'string' && options.staticObjects.length)
         restoreObjects(options.staticObjects, true);
-    if (!options.isStatic)
+    if (!isStatic)
     {
         updateText();
         gt.activeTool = gt.tools[0];
