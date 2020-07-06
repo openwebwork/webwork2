@@ -30,7 +30,7 @@ function graphTool(containerId, options) {
     if ('htmlInputId' in options) gt.html_input = document.getElementById(options.htmlInputId);
     var cfgOptions = {
         showCopyright: false,
-        minimizeReflow: "all",
+        //minimizeReflow: "all",
         pan: { enabled: false },
         zoom: { enabled: false },
         showNavigation: false,
