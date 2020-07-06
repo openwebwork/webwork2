@@ -444,7 +444,7 @@ EOS
 
 	my $format_name = $self->{inputs_ref}->{outputformat}//'standard';
 
-        # The json output format is special and cannot be handled by the
+        # The json and raw output formats are special and cannot be handled by the
 	# the standard code
 	if ( $format_name eq "json" ) {
 	  my %output_data_hash;
@@ -477,6 +477,22 @@ EOS
 	  return $json_output_data;
 	}
 
+	# This format returns javascript object notation corresponding to the perl hash
+	# with everything that a client-side application could use to work with the problem.
+	# There is no wrapping HTML "_format" template.
+	if ( $format_name eq "raw") {
+	  $output = {};
+	  # Everything that ships out with other formats can be constructed from these
+	  $output->{rh_result} = {%{$rh_result}};
+	  $output->{inputs_ref} = {%{$self->{inputs_ref}}};
+	  $output->{input} = {%{$self->{input}}};
+	  # The following could be constructed from the above, but this is a convenience
+	  $output->{answerTemplate} = $answerTemplate if ($answerTemplate);
+	  $output->{lang} = $PROBLEM_LANG_AND_DIR[2];
+	  $output->{dir} = $PROBLEM_LANG_AND_DIR[6];
+	  # Convert to JSON
+	  return to_json( $output ,{pretty=>1, canonical=>1});
+	}
 
 	# find the appropriate template in WebworkClient folder
 	my $template = do("WebworkClient/${format_name}_format.pl");

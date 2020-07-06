@@ -229,6 +229,10 @@ PerlModule WebworkWebservice
         Require all granted
 </Location>
 
+########### For "raw" json format ###########
+<Location /webwork2/html2xml>
+    Header set Access-Control-Allow-Origin "*"
+</Location>
 
 
 ########## WebworkWebservice SOAP handler ##########
