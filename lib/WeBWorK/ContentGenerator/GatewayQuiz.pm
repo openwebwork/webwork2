@@ -936,13 +936,9 @@ sub pre_header_initialize {
 	# also get the current page, if it's given
 	my $currentPage = $r->param("currentPage") || 1;
 
-	# this is a hack manage previewing a page.  we set previewAnswers to 
-	# yes if either of the following are true:
-	#  1. the "previewAnswers" input is set (the "preview" button was
-	#     clicked), or 
-	#  2. the "previewHack" input is set (a preview link was used)
-	my $prevOr = $r->param('previewAnswers') || $r->param('previewHack');
-	$r->param('previewAnswers', $prevOr) if ( defined( $prevOr ) );
+	# This is a hack to manage changing pages.  We set previewAnswers to
+	# false if the "pageChangeHack" input is set (a page change link was used).
+	$r->param('previewAnswers', 0) if ($r->param('pageChangeHack'));
 
         # [This section lifted from Problem.pm] ##############################
 
@@ -1530,79 +1526,35 @@ sub body {
 		  }
 		}
 		
-		## finally, log student answers if we're submitting, 
-		##    previewing, or changing pages, provided that we can 
-		##    record answers.  note that this will log an overtime 
-		##    submission (or any case where someone submits the 
-		##    test, or spoofs a request to submit a test)
+		# Finally, log student answers if we're submitting answers,
+		# provided that we can record answers.  Note that this will log an overtime submission
+		# (or any case where someone submits the test, or spoofs a request to submit a test).
 
-		my $answer_log = 
+		my $answer_log =
 			$self->{ce}->{courseFiles}->{logs}->{'answer_log'};
 
-		# this is carried over from Problem.pm
-		if ( defined( $answer_log ) ) {
-			foreach my $i ( 0 .. $#problems ) {
-# begin problem loop for passed answers
-				my $past_answers_string = '';
-				my $scores = '';
-				my $isEssay = 0;
-				# note that we store these answers in the 
-				#    order that they are presented, not the 
-				#    actual problem order
-				if ( ref( $pg_results[$probOrder[$i]] ) ) {
-					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
-# 					foreach ( sortByName(undef, keys %answerHash) ) {
-# 						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
-# 						$past_answers_string .= $sAns . "\t";
-# 						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
-# 					}
-                   	my ($encoded_last_answer_string, ); #not used here
-					($past_answers_string,$encoded_last_answer_string,$scores,$isEssay) =
+		# This is modified from process_and_log_answer in ProblemUtil.pm
+		if (defined($answer_log) && $submitAnswers) {
+			foreach my $i (0 .. $#problems) {
+				# Begin problem loop for passed answers.
+				next unless ref($pg_results[$probOrder[$i]]); # This shouldn't happen now.
+
+				my ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
 					WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 						$self, $pg_results[$probOrder[$i]]
-					);  # ref($self) eq WeBWorK::ContentGenerator::Problem
-						# ref($pg) eq "WeBWorK::PG::Local";
-					$past_answers_string =~ s/\t+$/\t/;
-				} else {
-					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
-					my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
-					foreach ( @fields ) {
-						$past_answers_string .= $self->{formFields}->{$_} . "\t";
-						$scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
-					}
-					$past_answers_string =~ s/\t+$/\t/;
-				}
-				
-				
-		# Prefix answer string with submission type
-				my $answerPrefix;
-				if ( $submitAnswers ) { 
-					$answerPrefix = "[submit] ";  
-				} elsif ( $previewAnswers ) { 
-					$answerPrefix = "[preview] "; 
-				} else { 
-					$answerPrefix = "[newPage] "; 
+					);
+				$past_answers_string =~ s/\t+$/\t/;
+
+				if (!$past_answers_string || $past_answers_string =~ /^\t$/) {
+					$past_answers_string = "No answer entered\t";
 				}
 
-				if ( ! $past_answers_string || 
-				     $past_answers_string =~ /^\t$/ ) {
-					$past_answers_string = "$answerPrefix" . 
-						"No answer entered\t";
-				} else {
-					$past_answers_string = "$answerPrefix" .
-						"$past_answers_string";
-				}
-				
-		#Write to courseLog
-				writeCourseLog( $self->{ce}, "answer_log",
-						join("", '|', 
-						     $problems[$i]->user_id,
-						     '|', $setVName,
-						     '|', ($i+1), '|', $scores, 
-						     "\t$timeNow\t",
-						     "$past_answers_string"), 
-						);
-		#add to PastAnswer db
+				# Write to courseLog
+				writeCourseLog($self->{ce}, "answer_log",
+					join("", '|', $problems[$i]->user_id, '|', $setVName, '|', ($i+1), '|', $scores,
+						"\t$timeNow\t", "$past_answers_string"));
+
+				# Add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
 				$pastAnswer->course_id($courseID);
 				$pastAnswer->user_id($problems[$i]->user_id);
@@ -1612,9 +1564,7 @@ sub body {
 				$pastAnswer->scores($scores);
 				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problems[$i]->source_file);
-				
 				$db->addPastAnswer($pastAnswer);
-
 			}
 		}
 
@@ -2033,7 +1983,7 @@ sub body {
 
 	# hacks to use a javascript link to trigger previews and jump to 
 	#    subsequent pages of a multipage test
-		print CGI::hidden({-name=>'previewHack', -value=>''}), 
+		print CGI::hidden({-name=>'pageChangeHack', -value=>''}),
 			CGI::br();
         print CGI::hidden({-name=>'startTime', -value=>$startTime});
 		if ( $numProbPerPage && $numPages > 1 ) { 
@@ -2044,10 +1994,10 @@ sub body {
 
 	# the link for a preview; for a multipage test, this also needs to 
 	#    keep track of what page we're on
-		my $jsprevlink = 'javascript:document.gwquiz.previewHack.value="1";';
+		my $jsprevlink = 'javascript:';
 		$jsprevlink .= "document.gwquiz.newPage.value=\"$pageNumber\";"
 			if ( $numProbPerPage && $numPages > 1 );
-		$jsprevlink .= 'document.gwquiz.submit();';
+		$jsprevlink .= 'document.gwquiz.previewAnswers.click();';
 
 	# set up links between problems and, for multi-page tests, pages
 		my $jumpLinks = '';
@@ -2072,9 +2022,9 @@ sub body {
 					CGI::td(CGI::b(' [ ' )) ];
 			for my $i ( 1 .. $numPages ) {
 				my $pn = ( $i == $pageNumber ) ? $i : 
-				    CGI::a({-href=>'javascript:' .
+				    CGI::a({-href=>'javascript:document.gwquiz.pageChangeHack.value=1;' .
 						"document.gwquiz.newPage.value=\"$i\";" .
-						'document.gwquiz.submit();'}, 
+						'document.gwquiz.previewAnswers.click();'},
 					   "&nbsp;$i&nbsp;");
 
 				my $colspan =  0;
@@ -2418,7 +2368,30 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
 	#This is for page specfific js
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
-	
+
+	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
+	my %jsFiles;
+	for my $pg (@{$self->{ra_pg_results}}) {
+		next unless ref($pg);
+		if (defined($pg->{flags}{extra_js_files})) {
+			# Avoid duplicates
+			for (@{$pg->{flags}{extra_js_files}}) {
+				$jsFiles{$_->{file}} = $_->{local};
+			}
+		}
+	}
+	for (keys(%jsFiles)) {
+		if ($jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/js/$_") {
+			print CGI::start_script({type => "text/javascript",
+					src => "$site_url/js/$_"}), CGI::end_script();
+		} elsif (!$jsFiles{$_}) {
+			print CGI::start_script({type => "text/javascript",
+					src => "$_"}), CGI::end_script();
+		} else {
+			print "<!-- $_ is not available in htdocs/js/ on this server -->\n";
+		}
+	}
+
 	return "";
 }
 

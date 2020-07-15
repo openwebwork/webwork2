@@ -28,61 +28,31 @@ function debug_add(str) {
 	debugText += "\n" + str;
 }
 
-// INITIALIZE and SUBMIT actions
-
-// Called from the submit button defined in Problem.pm
-function submitAction() {
-	console.log("Submit button pushed. Calling submit action routines.");
-	if (jsDebugMode == 0) {
-		debugText = "Call submitAction() function on each applet.\n";
-	}
-
-	for (var appletName in ww_applet_list) {
-		ww_applet_list[appletName].submitAction();
-	}
-	if (jsDebugMode == 1) { debug_add("\nDone calling submitAction() on each applet.\n"); }
-	if (jsDebugMode == 1) { console.log("DebugText:\n" + debugText); debugText = ""; };
-	console.log("Done calling submit action routines");
-}
-
-function initializeWWquestion() {
-	console.log("Into initializeWWquestion");
-	for (var appletName in ww_applet_list) {
-		if (!ww_applet_list[appletName].onInit) {
-			console.log("Applet " + appletName + " has no onInit function. Initializing with safe_applet_initialize.");
-			var maxInitializationAttempts = ww_applet_list[appletName].maxInitializationAttempts;
-			this.debug_add("Initializing " + appletName);
-			ww_applet_list[appletName].safe_applet_initialize(maxInitializationAttempts);
-		} else {
-			// If onInit is defined, then the onInit function will handle the initialization.
-			console.log("Applet " + appletName + " has onInit function. No further initialization required.");
-		}
-	}
-	this.debug_add("End of applet initialization");
-	console.log("Out of initializeWWquestion");
-}
+// Utility functions
 
 // Applet can set isReady flag by calling applet_loaded(appletName, loaded);
 // If loaded is 0, it means the applet is not loaded.
-function applet_loaded(appletName,ready) {
+function applet_loaded(appletName, ready) {
 	debug_add("Applet reporting that it has been loaded.  Ready status: " + ready );
 	ww_applet_list[appletName].reportsLoaded = ready;
 	ww_applet_list[appletName].isReady = ready;
 }
 
-// Utility functions
-
-// This has been replaced by defining the function in the classes
-// function getApplet(appletName) {
-// 	  var isIE = navigator.appName.indexOf("Microsoft") != -1;
-// 	  var obj = (isIE) ? window[appletName] : window.document[appletName];
-// 	  //return window.document[appletName];
-// 	  if (obj && (obj.name == appletName)) {   //RECENT FIX to ==
-// 		  return( obj );
-// 	  } else {
-// 		  alert ("can't find applet " + appletName);
-// 	  }
-//  }
+function getApplet(appletName) {
+	var obj;
+	if (ww_applet_list[appletName].type == 'geogebraweb') {
+		// Geogebra web applet
+		obj = document[appletName];
+	} else if (ww_applet_list[appletName].type == 'html5canvas') {
+		// html5 canvas applet
+		obj = appletName; // Define fake applet for this object
+	} else {
+		// Flash or Java applet
+		obj = window.document[appletName];
+		if (!obj) { obj = document.getElementById(appletName); }
+	}
+	return obj;
+}
 
 function listQuestionElements() { // list all HTML input and textarea elements in main problem form
 	var elementList = document.problemMainForm.getElementsByTagName("input");
@@ -90,12 +60,12 @@ function listQuestionElements() { // list all HTML input and textarea elements i
 	for(var i = 0; i < elementList.length; ++i) {
 		str += " " + i + " " + elementList[i].type
 			+ " | " + elementList[i].name
-			+ "= " + elementList[i].value +
+			+ " = " + elementList[i].value +
 			" <" + elementList[i].id + ">\n";
 	}
 	elementList = document.problemMainForm.getElementsByTagName("textarea");
-	for( var i=0; i< elementList.length; i++) {
-		str = str + " "+i+" " + elementList[i].type
+	for (var i = 0; i < elementList.length; ++i) {
+		str = str + " " + i + " " + elementList[i].type
 			+ " | " + elementList[i].name
 			+ " = " + elementList[i].value +
 			" <" + elementList[i].id + ">\n";
@@ -117,18 +87,12 @@ function base64Q(str) {
 	}
 }
 
-// Resets the state stored on HTML page not in the applet
-function setHTMLAppletStateToRestart(appletName) {
-	var newState = "<xml>restart_applet</xml>";
-	getQE(appletName + "_state").value = newState;
-	getQE("previous_" + appletName + "_state").value = newState;
-}
-
-// Resets the state stored on the HTML page
+// Set the state stored on the HTML page
 function setHTMLAppletState(appletName, newState) {
-	var newState = "<xml></xml>";
-	getQE(appletName + "_state").value = newState;
-	getQE("previous_" + appletName + "_state").value = newState;
+	if (typeof(newState) === 'undefined') newState = "<xml>restart_applet</xml>";
+	var stateInput = ww_applet_list[appletName].stateInput;
+	getQE(stateInput).value = newState;
+	getQE("previous_" + stateInput).value = newState;
 }
 
 // Get Question Element in problemMainForm by name
@@ -144,7 +108,7 @@ function getQE(name1) {
 			alert(msg); listQuestionElements();
 		};
 	} else {
-		return( obj );
+		return obj;
 	}
 }
 
@@ -155,23 +119,26 @@ function getQuestionElement(name1) {
 // WW_Applet class definition
 
 function ww_applet(appletName) {
-	this.appletName            = appletName;
-	this.code                  = '';
-	this.codebase              = '';
-	this.appletID              = '';
-	this.configuration         = '';
-	this.initialState          = '';
-	this.getStateAlias         = '';
-	this.setStateAlias         = '';
-	this.configAlias           = '';
-	this.initializeActionAlias = '';
-	this.submitActionAlias     = '';
-	this.submitActionScript    = '';
-	this.getAnswerAlias        = '';
-	this.answerBox             = '';
-	this.debugMode             = 0;
-	this.isReady               = 0;
-	this.reportsLoaded         = 0;
+	this.appletName                = appletName;
+	this.type                      = '';
+	this.code                      = '';
+	this.codebase                  = '';
+	this.base64State               = '';
+	this.initialState              = '';
+	this.configuration             = '';
+	this.getStateAlias             = '';
+	this.setStateAlias             = '';
+	this.setConfigAlias            = '';
+	this.getConfigAlias            = '';
+	this.initializeActionAlias     = '';
+	this.submitActionAlias         = '';
+	this.submitActionScript        = '';
+	this.answerBoxAlias            = '';
+	this.maxInitializationAttempts = 5;
+	this.debugMode                 = 0;
+	this.isReady                   = 0;
+	this.reportsLoaded             = 0;
+	this.onInit                    = 0;
 };
 
 // Make sure that the applet has this function available
@@ -194,7 +161,7 @@ ww_applet.prototype.methodDefined = function(methodName) {
 		this.debug_add("Error in accessing " + methodName + " in applet " + appletName + "\n  *Error: " + e);
 	}
 	return false;
-}
+};
 
 // CONFIGURATIONS
 // Configurations are "permanent"
@@ -232,7 +199,7 @@ ww_applet.prototype.getConfig = function() {
 	} catch(e) {
 		alert("    Error in getting configuration from applet " + appletName + " " + e);
 	}
-}
+};
 
 // STATE:
 // State can vary as the applet is manipulated.  It is reset from the questions _state values.
@@ -243,21 +210,22 @@ ww_applet.prototype.setState = function(state) {
 	console.log("Into setState for applet " + appletName);
 	this.debug_add("\n++++++++++++++++++++++++++++++++++++++++\nBegin process of setting state for applet " + appletName);
 
+
 	// Obtain the state which will be sent to the applet and if it is encoded place it in plain xml text.
 	// Communication with the applet is in plain text, not in base64 code.
 
 	if (state) {
-		this.debug_add("Obtain state from calling parameter:\n " + state.substring(0,200) + "\n");
+		this.debug_add("Obtain state from calling parameter:\n " + state.substring(0, 200) + "\n");
 	} else {
-		this.debug_add("Obtain state from " + appletName + "_state");
+		this.debug_add("Obtain state from " + this.stateInput);
 
 		// Hidden answer box preserving applet state
-		var ww_preserve_applet_state = getQE(appletName + "_state");
+		var ww_preserve_applet_state = getQE(this.stateInput);
 		state = ww_preserve_applet_state.value;
 		this.debug_add("Immediately on grabbing state from HTML cache state is " + (state.substring(0, 200) ) + "...");
 	}
 
-	if ( base64Q(state) ) {
+	if (base64Q(state)) {
 		state = Base64.decode(state);
 		this.debug_add("Decodes to:  " + state.substring(0, 200));
 		if (this.debugMode >= 1) {
@@ -309,7 +277,7 @@ ww_applet.prototype.setState = function(state) {
 				alert("The applet is being reset to its initialState.");
 			}
 			// Store the state in the HTML variables just for safetey
-			setHTMLAppletState(appletName,this.initialState);
+			setHTMLAppletState(appletName, this.initialState);
 
 			// If there was a viable state in the initialState variable we can
 			// now continue as if we had found a valid state in the HTML cache.
@@ -374,11 +342,12 @@ ww_applet.prototype.getState = function () {
 	};
 
 	this.debug_add("  state is\n    " + state.substring(0, 20) + "\n"); // state should still be in plain text
+
 	// Answer box preserving applet state (jsDebugMode: textarea, otherwise: hidden)
-	var ww_preserve_applet_state = getQE(appletName + "_state");
+	var ww_preserve_applet_state = getQE(this.stateInput);
 	// Place state in input item (jsDebugMode: textarea, otherwise: hidden)
 	ww_preserve_applet_state.value = state;
-	this.debug_add("State stored in answer box " + appletName + "_state and getState is finished.");
+	this.debug_add("State stored in answer box " + this.stateInput + " and getState is finished.");
 	console.log("Out of getState for applet " + appletName);
 };
 
@@ -399,7 +368,7 @@ ww_applet.prototype.setDebug = function(debugMode) {
 	} catch(e) {
 		alert("Unable to set debug mode for applet " + appletName);
 	}
-}
+};
 
 // INITIALIZE
 ww_applet.prototype.initializeAction = function () {
@@ -410,19 +379,22 @@ ww_applet.prototype.submitAction = function () {
 	var appletName = this.appletName;
 	console.log("Into submitAction for " + appletName);
 	// Don't do anything if the applet is hidden.
-	if(!ww_applet_list[appletName].visible) { return; }
+	if (!ww_applet_list[appletName].visible) return;
 	this.debug_add("submitAction");
+
 	// Hidden HTML input element preserving applet state
-	var ww_preserve_applet_state = getQE(appletName + "_state");
+	var ww_preserve_applet_state = getQE(this.stateInput);
 	var saved_state = ww_preserve_applet_state.value;
 
+	// Check to see if we want to restart the applet
 	if (saved_state.match(/^<xml>restart_applet<\/xml>/)) {
 		this.debug_add("Restarting the applet " + appletName);
 		// Replace the saved state with <xml>restart_applet</xml>
-		setHTMLAppletStateToRestart(appletName);
+		setHTMLAppletState(appletName);
 		if (this.debugMode >= 2) { console.log("DebugText:\n" + debugText); debugText = ""; }
 		return;
 	}
+	// If we are not restarting the applet save the state and submit
 	this.debug_add("Not restarting.");
 	this.debug_add("Begin submit action for applet " + appletName);
 	var applet = getApplet(appletName);
@@ -432,10 +404,8 @@ ww_applet.prototype.submitAction = function () {
 			"There should have been plenty of time for the applet to load.");
 		this.initializeAction();
 	}
-	// Check to see if we want to restart the applet
 
 	this.debug_add("About to get state");
-	// If we are not restarting the applet save the state and submit
 
 	// Have ww_applet retrieve state from applet and store in HTML cache
 	this.getState();
@@ -445,12 +415,10 @@ ww_applet.prototype.submitAction = function () {
 
 	this.debug_add("Completed submitAction(" + this.submitActionScript + ") \nfor applet " + appletName + "\n");
 
-	// Because the state has not always been perfectly preserved when storing the state in text area boxes
-	// we take a "belt && suspenders" approach by converting the value even of the text area state cache
-	// to base64 form.
+	// Because the state has not always been perfectly preserved when storing the state in text
+	// area boxes we take a "belt && suspenders" approach by converting the value of the text
+	// area state cache to base64 form.
 
-	// Hidden HTML input element preserving applet state
-	ww_preserve_applet_state = getQE(appletName + "_state");
 	saved_state = ww_preserve_applet_state.value;
 	this.debug_add("Saved state looks like before encoding " + saved_state.substring(0, 200));
 	if (!base64Q(saved_state)) {
@@ -459,18 +427,16 @@ ww_applet.prototype.submitAction = function () {
 		// you switch from debug to non debug modes
 		saved_state = Base64.encode(saved_state);
 	}
-	// Hidden HTML input element preserving applet state
-	ww_preserve_applet_state = getQE(appletName + "_state");
 
 	// On submit the value of ww_preserve_applet_state.value is always in Base64.
 	ww_preserve_applet_state.value = saved_state;
 	this.debug_add("just before submitting saved state looks like " + ww_preserve_applet_state.value.substring(0, 200));
 
 	if (this.debugMode >= 2) { console.log("DebugText:\n" + debugText); debugText = ""; }
-}
+};
 
 // This function returns 0 unless:
-// applet has already been flagged as ready in applet_isReady_list
+// applet has already been flagged as ready
 // applet.config is defined (or alias for .config)
 // applet.setState is defined
 // applet.isActive is defined and returns 1;
@@ -481,7 +447,7 @@ ww_applet.prototype.checkLoaded = function() {
 	var applet = getApplet(appletName);
 
 	// Memorize readiness in non-debug mode
-	if (this.debugMode == 0 && this.isReady) {return 1};
+	if (this.debugMode == 0 && this.isReady) return 1;
 
 	this.debug_add("*Test 4 methods to see if the applet " + appletName + " has been loaded:\n");
 
@@ -516,13 +482,13 @@ ww_applet.prototype.checkLoaded = function() {
 	}
 	this.isReady = ready;
 	return(ready);
-}
+};
 
 ww_applet.prototype.debug_add = function(str) {
 	if (this.debugMode >= 2) {
 		debugText += "\n" +str;
 	}
-}
+};
 
 ww_applet.prototype.safe_applet_initialize = function(i) {
 	var appletName = this.appletName;
@@ -535,7 +501,7 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 	this.debug_add("*  Try to initialize applet " + appletName + ". Count down: " + i + ".\n" );
 	this.debug_add("Entering checkLoaded subroutine");
 	var applet_loaded = this.checkLoaded();
-	if ( ( applet_loaded != 0 ) && ( applet_loaded != 1 ) ) {
+	if ((applet_loaded != 0) && (applet_loaded != 1)) {
 		alert("Error: The applet_loaded variable has not been defined. " + applet_loaded);
 	}
 	this.debug_add("Returning from checkLoaded subroutine with result " + applet_loaded);
@@ -603,17 +569,73 @@ ww_applet.prototype.safe_applet_initialize = function(i) {
 	}
 	console.log("Out of safe_applet_initialize for applet " + appletName);
 	return;
-}
+};
 
-// Initialize the WWquestion.
-function initWW(){
-	// Be careful that initializeWWQuestion is only called once.
-	if (typeof initWW.hasRun == 'undefined') initWW.hasRun = true;
+// Initialize applet support and the applets.
+function initializeAppletSupport() {
+	// Be careful that this function is only executed once.
+	if (typeof initializeAppletSupport.hasRun == 'undefined') initializeAppletSupport.hasRun = true;
 	else return;
 
-	console.log("Into initWW");
-	initializeWWquestion();
-	console.log("Out of initWW");
+	console.log("Into initializeAppletSupport");
+
+	// This should be the only ggbOnInit method defined.  Unfortunately some older problems define a
+	// ggbOnInit so we check for that here.  Those problems should be updated, and newly written
+	// problems should not define a javascript function by that name.
+	// This caches the ggbOnInit from the problem, and calls it in the ggbOnInit function defined
+	// here.  This will only work if there is only one of these old problems on the page.
+	var ggbOnInitFromProblem = window.ggbOnInit ? window.ggbOnInit : null;
+
+	window.ggbOnInit = function(appletName) {
+		if (ggbOnInitFromProblem) {
+			console.log("Calling cached ggbOnInit from problem.");
+			ggbOnInitFromProblem(appletName);
+		}
+		if (appletName in ww_applet_list && ww_applet_list[appletName].onInit &&
+			ww_applet_list[appletName].onInit != 'ggbOnInit') {
+			if (window[ww_applet_list[appletName].onInit] &&
+				typeof(window[ww_applet_list[appletName].onInit]) == 'function') {
+				console.log("Calling onInit function for " + appletName + " in ggbOnInit.");
+				window[ww_applet_list[appletName].onInit](appletName);
+			} else {
+				console.log("Calling onInit code for " + appletName + " in ggbOnInit.");
+				eval(ww_applet_list[appletName].onInit);
+			}
+		}
+	};
+
+	// Called from the submit event listener defined below.
+	function submitAction() {
+		console.log("Submit button pushed. Calling submit action routines.");
+		if (jsDebugMode == 0) {
+			debugText = "Call submitAction() function on each applet.\n";
+		}
+
+		for (var appletName in ww_applet_list) {
+			ww_applet_list[appletName].submitAction();
+		}
+		if (jsDebugMode == 1) { debug_add("\nDone calling submitAction() on each applet.\n"); }
+		if (jsDebugMode == 1) { console.log("DebugText:\n" + debugText); debugText = ""; };
+		console.log("Done calling submit action routines");
+	}
+
+	// Connect the form submitAction handler.
+	if (document.problemMainForm) document.problemMainForm.addEventListener('submit', submitAction);
+	if (document.gwquiz) document.gwquiz.addEventListener('submit', submitAction);
+
+	for (var appletName in ww_applet_list) {
+		if (!ww_applet_list[appletName].onInit) {
+			console.log("Applet " + appletName + " has no onInit function. Initializing with safe_applet_initialize.");
+			var maxInitializationAttempts = ww_applet_list[appletName].maxInitializationAttempts;
+			this.debug_add("Initializing " + appletName);
+			ww_applet_list[appletName].safe_applet_initialize(maxInitializationAttempts);
+		} else {
+			// If onInit is defined, then the onInit function will handle the initialization.
+			console.log("Applet " + appletName + " has onInit function. No further initialization required.");
+		}
+	}
+	this.debug_add("End of applet initialization");
+	console.log("Out of initializeAppletSupport");
 }
 
-window.addEventListener('load', initWW);
+window.addEventListener('load', initializeAppletSupport);

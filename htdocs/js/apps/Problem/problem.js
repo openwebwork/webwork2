@@ -11,8 +11,3 @@ $(function() {
 	});
     
 })
-
-function submitAction() {
-    
-}
-
