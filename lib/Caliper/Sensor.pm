@@ -57,6 +57,8 @@ sub sendEvents
 	my $ce = $r->{ce};
 	my $resource_iri = Caliper::ResourseIri->new($ce);
 	my $async = HTTP::Async->new;
+	$async->timeout( 5 );
+	$async->max_request_time( 10 );
 
 	# chunk events to prevent size issues (send a maximum of 3 events at a time)
 	my $event_chunks = [];

@@ -159,7 +159,13 @@ div.gwPrintMe a:hover, p.gwPreview a:hover {
 */
 
 /* Fix checkbox input's label text not aligned with the checkbox. */
-label input[type='checkbox'] {
-	margin: 0 0.2em 0.1em 0;
+label.checkbox input[type='checkbox'] {
+	margin-top: 2px;
 
+}
+
+/* Put the show correct and show solutions checkboxes on separate lines. */
+.form-inline label.checkbox {
+	display: block;
+	margin-bottom: 5px;
 }

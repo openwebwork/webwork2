@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.54 2008/07/01 13:12:56 glarose Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -57,7 +57,7 @@ sub templateName {
 
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
-# 
+#
 #     ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem)
 
 # *** The "can" routines are taken from Problem.pm, with small modifications
@@ -67,21 +67,21 @@ sub templateName {
 sub can_showOldAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $tmplSet ) = @_;
 	my $authz = $self->r->authz;
-# we'd like to use "! $Set->hide_work()", but that hides students' work 
+# we'd like to use "! $Set->hide_work()", but that hides students' work
 # as they're working on the set, which isn't quite right.  so use instead:
 	return 0 unless $authz->hasPermissions($User->user_id,"can_show_old_answers");
 
-	return( before( $Set->due_date() ) || 
+	return( before( $Set->due_date() ) ||
 		
 		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
-		( $Set->hide_work() eq 'N' || 
+		( $Set->hide_work() eq 'N' ||
 		  ( $Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date ) ) );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
 #   to be included if it's defined
 sub can_showCorrectAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, 
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem,
 	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	
@@ -94,10 +94,10 @@ sub can_showCorrectAnswers {
 	    $addOne || 0;
 
 # this is complicated by trying to address hiding scores by problem---that
-#    is, if $set->hide_score_by_problem and $set->hide_score are both set, 
-#    then we should allow scores to be shown, but not show the score on 
-#    any individual problem.  to deal with this, we make 
-#    can_showCorrectAnswers give the least restrictive view of hiding, and 
+#    is, if $set->hide_score_by_problem and $set->hide_score are both set,
+#    then we should allow scores to be shown, but not show the score on
+#    any individual problem.  to deal with this, we make
+#    can_showCorrectAnswers give the least restrictive view of hiding, and
 #    then filter scores for the problems themselves later
 
 #    showing correcrt answers but not showing scores doesn't make sense
@@ -183,9 +183,9 @@ sub can_recordAnswers {
    # get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 
-	my $submitTime = ( defined($Set->version_last_attempt_time()) &&
-			   $Set->version_last_attempt_time() ) ? 
-			   $Set->version_last_attempt_time() : $timeNow;
+	my $submitTime = ($Set->assignment_type eq 'proctored_gateway' &&
+		defined($Set->version_last_attempt_time()) && $Set->version_last_attempt_time())
+			? $Set->version_last_attempt_time() : $timeNow;
 
 	if ($User->user_id ne $EffectiveUser->user_id) {
 		my $recordAsOther = $authz->hasPermissions($User->user_id, "record_answers_when_acting_as_student");
@@ -252,9 +252,9 @@ sub can_checkAnswers {
    # get the sag time after the due date in which we'll still grade the test
 	my $grace = $self->{ce}->{gatewayGracePeriod};
 	
-	my $submitTime = ( defined($Set->version_last_attempt_time()) &&
-			   $Set->version_last_attempt_time() ) ? 
-			   $Set->version_last_attempt_time() : $timeNow;
+	my $submitTime = ($Set->assignment_type eq 'proctored_gateway' &&
+		defined($Set->version_last_attempt_time()) && $Set->version_last_attempt_time())
+			? $Set->version_last_attempt_time() : $timeNow;
 
 	# this is further complicated by trying to address hiding scores by 
 	#    problem---that is, if $set->hide_score_by_problem and 
@@ -1394,8 +1394,8 @@ sub body {
 		# This refactoring hasn't taken place yet
 		# because I don't yet understand why the ordering 
 		# for creating past answers was chosen as it is, different from creating sticky answers
-#		my @answerString = (); 
-#		my @encoded_ans_string = ();
+#		my @past_answers_string = (); 
+#		my @encoded_last_answer_string = ();
 #		my @scores = ();
 #		my @isEssay = ();
 		
@@ -1416,7 +1416,7 @@ sub body {
 			#    submitting
 			my %answerHash = ();
 			my @answer_order = ();
-			my $encoded_ans_string;
+			my $encoded_last_answer_string;
 			if ( ref( $pg_results[$i] ) ) {
 # 				%answerHash = %{$pg_results[$i]->{answers}};
 # 				$answersToStore{$_} = $self->{formFields}->{$_} 
@@ -1431,8 +1431,8 @@ sub body {
 # 				@answer_order = 
 # 				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
 # 				      @extra_answer_names );
-                my ($answerString, $scores,$isEssay); #not used here
-				($answerString,$encoded_ans_string,$scores,$isEssay) =
+                my ($past_answers_string, $scores,$isEssay); #not used here
+				($past_answers_string,$encoded_last_answer_string,$scores,$isEssay) =
 				WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 					$self, $pg_results[$i]
 				);  # ref($self) eq WeBWorK::ContentGenerator::Problem
@@ -1442,16 +1442,16 @@ sub body {
 				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
 				my @answer_order = @fields;
-				$encoded_ans_string = encodeAnswers( %answersToStore, 
+				$encoded_last_answer_string = encodeAnswers( %answersToStore, 
  							  @answer_order );
  						
 			}
-# 				my $answerString = encodeAnswers( %answersToStore, 
+# 				my $past_answers_string = encodeAnswers( %answersToStore, 
 # 							  @answer_order );
 # 			
 			# and get the last answer 
-			$problems[$i]->last_answer( $encoded_ans_string );
-			$pureProblem->last_answer( $encoded_ans_string );
+			$problems[$i]->last_answer( $encoded_last_answer_string );
+			$pureProblem->last_answer( $encoded_last_answer_string );
 
 			# next, store the state in the database if that makes 
 			#    sense
@@ -1546,7 +1546,7 @@ sub body {
 		if ( defined( $answer_log ) ) {
 			foreach my $i ( 0 .. $#problems ) {
 # begin problem loop for passed answers
-				my $answerString = '';
+				my $past_answers_string = '';
 				my $scores = '';
 				my $isEssay = 0;
 				# note that we store these answers in the 
@@ -1556,24 +1556,24 @@ sub body {
 					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
 # 					foreach ( sortByName(undef, keys %answerHash) ) {
 # 						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
-# 						$answerString .= $sAns . "\t";
+# 						$past_answers_string .= $sAns . "\t";
 # 						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
 # 					}
-                   	my ($encoded_ans_string, ); #not used here
-					($answerString,$encoded_ans_string,$scores,$isEssay) =
+                   	my ($encoded_last_answer_string, ); #not used here
+					($past_answers_string,$encoded_last_answer_string,$scores,$isEssay) =
 					WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 						$self, $pg_results[$probOrder[$i]]
 					);  # ref($self) eq WeBWorK::ContentGenerator::Problem
 						# ref($pg) eq "WeBWorK::PG::Local";
-					$answerString =~ s/\t+$/\t/;
+					$past_answers_string =~ s/\t+$/\t/;
 				} else {
 					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
 					my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 					foreach ( @fields ) {
-						$answerString .= $self->{formFields}->{$_} . "\t";
+						$past_answers_string .= $self->{formFields}->{$_} . "\t";
 						$scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
 					}
-					$answerString =~ s/\t+$/\t/;
+					$past_answers_string =~ s/\t+$/\t/;
 				}
 				
 				
@@ -1587,13 +1587,13 @@ sub body {
 					$answerPrefix = "[newPage] "; 
 				}
 
-				if ( ! $answerString || 
-				     $answerString =~ /^\t$/ ) {
-					$answerString = "$answerPrefix" . 
+				if ( ! $past_answers_string || 
+				     $past_answers_string =~ /^\t$/ ) {
+					$past_answers_string = "$answerPrefix" . 
 						"No answer entered\t";
 				} else {
-					$answerString = "$answerPrefix" .
-						"$answerString";
+					$past_answers_string = "$answerPrefix" .
+						"$past_answers_string";
 				}
 				
 		#Write to courseLog
@@ -1603,7 +1603,7 @@ sub body {
 						     '|', $setVName,
 						     '|', ($i+1), '|', $scores, 
 						     "\t$timeNow\t",
-						     "$answerString"), 
+						     "$past_answers_string"), 
 						);
 		#add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
@@ -1613,7 +1613,7 @@ sub body {
 				$pastAnswer->problem_id($problems[$i]->problem_id);
 				$pastAnswer->timestamp($timeNow);
 				$pastAnswer->scores($scores);
-				$pastAnswer->answer_string($answerString);
+				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problems[$i]->source_file);
 				
 				$db->addPastAnswer($pastAnswer);
@@ -1700,6 +1700,13 @@ sub body {
 				};
 				push @$events, $paused_set_event;
 			}
+			my $tool_use_event = {
+				'type' => 'ToolUseEvent',
+				'action' => 'Used',
+				'profile' => 'ToolUseProfile',
+				'object' => Caliper::Entity::webwork_app(),
+			};
+			push @$events, $tool_use_event;
 			$caliper_sensor->sendEvents($r, $events);
 
 			# reset start time

@@ -111,7 +111,7 @@ use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
 use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
-use Encode qw(encode_utf8 decode_utf8);
+use Encode qw(encode_utf8 decode_utf8 decode);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils::DetermineProblemLangAndDirection;
@@ -182,11 +182,13 @@ sub new {   #WebworkClient constructor
 		site_password   => '',
 		courseID        => '',
 		userID          => '',
-		inputs_ref      => {		 AnSwEr0001 => '',
-				 					 AnSwEr0002 => '',
-				 					 AnSwEr0003 => '',
-				 					 displayMode     => 'no displayMode defined',
-						forcePortNumber => '',
+		inputs_ref      => {
+			AnSwEr0001 => '',
+			AnSwEr0002 => '',
+			AnSwEr0003 => '',
+			displayMode     => 'no displayMode defined',
+			forcePortNumber => '',
+			internal_WW2_secret => 'BAD',
 		},
 		@_,               # options and overloads
 	};
@@ -296,55 +298,62 @@ sub xmlrpcCall {
     	print STDERR  "\tWebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
     }
  		
-	  local( $result);
-	  # use eval to catch errors
-	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
-	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
-	  # result is of type XMLRPC::SOM
-	  print STDERR "There were a lot of errors\n" if $@;
-	  print STDERR "Errors: \n $@\n End Errors\n" if $@;
-
-          print CGI::h2("WebworkClient Errors") if $@;
-	  print CGI::p("Errors:",CGI::br(),CGI::blockquote({style=>"color:red"},CGI::code($@)),CGI::br(),"End Errors") if $@;
+	local( $result);
+	# use eval to catch errors
+	#print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
+	eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
+	# result is of type XMLRPC::SOM
+	if ( $@ ) {
+		print STDERR (
+			"There were a lot of errors\n",
+			"Errors: \n $@\n End Errors\n" );
+		print CGI::h2("WebworkClient Errors");
+		print CGI::p("Errors:",CGI::br(),CGI::blockquote({style=>"color:red"},CGI::code($@)),CGI::br(),"End Errors");
+	}
 	  
-	  if (not ref($result) ) {
-	  	my $error_string = "xmlrpcCall to $command returned no result for ". 
-	  	     ($self->{sourceFilePath}//'')."\n";
-	  	print STDERR $error_string;
-	  	$self->error_string($error_string);
-	  	$self->fault(1);
-	  	return $self;
-	  } elsif ( $result->fault  ) { # report errors
+	if (not ref($result) ) {
+		my $error_string = "xmlrpcCall to $command returned no result for ".
+			($self->{sourceFilePath}//'')."\n";
+		print STDERR $error_string;
+		$self->error_string($error_string);
+		$self->fault(1);
+		return $self;
+	} elsif ( $result->fault  ) { # report errors
 		my $error_string = 'Error message for '.
-		  join( ' ',
-			  "command:",
-			  $command,
-			  "\n<br/>faultcode:",
-			  $result->faultcode, 
-			  "\n<br/>faultstring:",
-			  $result->faultstring, "\n<br/>End error message<br/>\n"
-		  );
+		join( ' ',
+			"command:",
+			$command,
+			"\n<br/>faultcode:",
+			$result->faultcode,
+			"\n<br/>faultstring:",
+			$result->faultstring, "\n<br/>End error message<br/>\n"
+		);
 
-		  print STDERR $error_string;
-		  $self->return_object($result->result());
-		  $self->error_string($error_string);
-		  $self->fault(1); # set fault flag to true
-		  return $self;  
-	  } else {
-	      if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
-		  $result->result()->{text} = decode_utf8_base64($result->result()->{text});
-	      }
-	      if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
-		  $result->result()->{header_text} = decode_utf8_base64($result->result()->{header_text});
-	      }
-
+		$result->{score} = 0; # Set score to 0 when a fault occurred.
+		print STDERR $error_string;
 		$self->return_object($result->result());
-		# print "\n retrieve result ",  keys %{$self->return_object};
-		return $self->return_object; # $result->result();  
-		# would it be better to return the entire $result?
-		# probably not, there is no hash directly available from the $result object. 
-	  } 
+		$self->error_string($error_string);
+		$self->fault(1); # set fault flag to true
+		return $self;
+	} else {
+		# Do UTF-8 + base64 "decoding"
+		my $final_result = {}; # init as an empty hash reference
+		if ( ref($result->result())=~/HASH/ ) {
+			$final_result = $result->result(); # Gets the Perl structure from the XMLRPC::SOM object
+			if ( defined($final_result->{text}) ) {
+				$final_result->{text} = decode_utf8_base64($final_result->{text});
+			}
+			if ( defined($final_result->{header_text}) ) {
+				$final_result->{header_text} = decode_utf8_base64($final_result->{header_text});
+			}
+			# Need to parse the entire object to apply UTF-8 decoding to strings which were encoded
+			$final_result = xml_utf_decode($final_result);
+		}
 
+		$self->return_object( $final_result );
+		# print "\n retrieve result ",  keys %{$self->return_object};
+		return $self->return_object;
+	}
 }
 
 
@@ -396,6 +405,73 @@ sub jsXmlrpcCall {
 }
 
 
+=head2 xml_utf_decode
+	Parse the structure to UTF-8 decode where needed.
+=cut
+
+sub xml_utf_decode { # Do UTF-8 decoding where xml_filter applied encoding
+	my $input = shift;
+	my $level = shift || 0;
+	my $space="  ";
+	my $type = ref($input);
+
+	if (!defined($type) or !$type ) {
+		# scalars get returned as is
+	} elsif( $type =~/HASH/i or "$input"=~/HASH/i) {
+		$level++;
+		foreach my $item (keys %{$input}) {
+			# We need to decode the values which were encoded by xml_filter().
+			# Explantaion from xml_filter():
+			#
+			# Until 2020 - ALL scalar values were left unchanged.
+			# However, since the release of WeBWorK 2.15 (late 2019) there
+			# can be Unicode values of hash entires, and they trigger failures
+			# of the XMLRPC system. For now, based on current experience
+			# we are ONLY handling the values stored in the hashes, under the
+			# assumption that key names will be ASCII, and that arrays are not
+			# going to contain Unicode values. When a hash value is encoded,
+			# we prefix the key name with "xmlrpc_UTF8_encoded_" so it can
+			# be detected for the decode on the other side.
+
+			my $item_type = ref( $input->{$item} );
+			my $filtered_value = xml_utf_decode($input->{$item},$level);
+
+			if (!defined($item_type) or !$item_type ) {
+				# This is a scalar object
+				if ( $item =~ /^xmlrpc_UTF8_encoded_/ ) {
+					# Get the original name back
+					my $new_item = $item;
+					$new_item =~ s/^xmlrpc_UTF8_encoded_//;
+					$input->{$new_item} = decode("UTF-8", $filtered_value);
+					delete( $input->{$item} ); # remove the temporary encoded value with the modified key
+				} else {
+					$input->{$item} = $filtered_value; # No decoding needed
+				}
+				# This is a scalar object
+			} else {
+				# Not a scalar object - default recursive handling
+				$input->{$item} = $filtered_value;
+			}
+		}
+		$level--;
+	} elsif( $type=~/ARRAY/i or "$input"=~/ARRAY/i) {
+		# arrays get processed recursively, just as by xml_filter().
+		$level++;
+		my $tmp = [];
+		foreach my $item (@{$input}) {
+			$item = xml_utf_decode($item,$level);
+			push @$tmp, $item;
+		}
+		$input = $tmp;
+		$level--;
+	} elsif($type =~ /CODE/i or "$input" =~/CODE/i) {
+		# code get returned as is (probably just says "CODE reference" from the call to xml_filter().
+	} else {
+		# leave this case alone also - would have been made into a string in xml_filter().
+		#      "$type reference";
+	}
+	$input;
+}
 
 =head2  Accessor methods
 	encodeSource  # encode source string with utf8 and base64 and store in encoded_source

@@ -111,7 +111,8 @@ sub initialize {
 				$self->appendColumns(\@totals, \@totalsColumn);
 			}	
 		}
-		my @sum_scores  = $self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs);
+		# FIXME - add handling of a checkbox to set the final parameter (currently fixed)
+		my @sum_scores  = $self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs, 1);
 		$self->appendColumns( \@totals,\@sum_scores);
 		$self->writeCSV("$scoringDir/$scoringFileName", @totals);
 
@@ -606,11 +607,13 @@ sub scoreSet {
 }
 
 sub sumScores {    # Create a totals column for each student
+	# Also create columns with percentage grades per assignment if requested
 	my $self        = shift;
 	my $r_totals    = shift;
 	my $showIndex   = shift;
 	my $r_users     = shift;
 	my $r_sorted_user_ids =shift;
+	my $addPercentagePerAssignmentColumns = shift;
 	my $r           = $self->r;
 	my $db          = $r->db;
 	my @scoringData = ();
@@ -629,22 +632,41 @@ sub sumScores {    # Create a totals column for each student
 		$totalPoints += ($score =~/^\s*[\d\.]+\s*$/)? $score : 0;
 	}
     foreach my $i (0..$row_count) {
+		# Skip heading rows
+		next if ( $i <= ( $problemValueRow +1 ) ); # the row after $problemValueRow has headers
     	my $studentTotal = 0;
+		my $hw_Cnum = 2; # The first 2 columns we produce will be for summary and total score from 100
 		for( my $j = $start_column;$j<=$last_column;$j+= $index_increment) {
 			my $score = $r_totals->[$i]->[$j];
 			$studentTotal += ($score =~/^\s*[\d\.]+\s*$/)? $score : 0;
-			
+			if ( $addPercentagePerAssignmentColumns ) {
+				$scoringData[$i][$hw_Cnum] = ($score) ?
+				  wwRound( 2, 100 * $score/ ($r_totals->[$problemValueRow]->[$j]) ) : 0;
+				$hw_Cnum++;
+			}
 		}
 		$scoringData[$i][0] = wwRound(2,$studentTotal);
 		$scoringData[$i][1] = ($totalPoints) ?wwRound(2,100*$studentTotal/$totalPoints) : 0;
     }
-    $scoringData[0]      = ['',''];
-    $scoringData[1]      = [$r->maketext('summary'), $r->maketext('%score')];
-	$scoringData[2]      = ['',''];
-	$scoringData[3]      = ['',''];
-	$scoringData[4]      = ['',''];
-	$scoringData[6]      = ['',''];
 
+	my @HeaderRowsData0 = ('','');
+	my @HeaderRowsData1 = ($r->maketext('summary'),$r->maketext('%score'));
+	my @HeaderRowsData2 = ('','');
+	if ( $addPercentagePerAssignmentColumns ) {
+		for( my $j = $start_column;$j<=$last_column;$j+= $index_increment) {
+			push( @HeaderRowsData0 , '' );
+			push( @HeaderRowsData1 , $r_totals->[1]->[$j] ); # The assignment number
+			push( @HeaderRowsData2 , $r->maketext('%score') );
+		}
+	}
+    $scoringData[1] = [ @HeaderRowsData1 ];
+    $scoringData[6] = [ @HeaderRowsData1 ]; # Put the header in this row also
+
+	$scoringData[2] = [ @HeaderRowsData2 ];
+
+	foreach my $j ( 0 , 3 .. 5 ) {
+		$scoringData[$j] = [ @HeaderRowsData0 ];
+	}
 
 	return @scoringData;
 }
