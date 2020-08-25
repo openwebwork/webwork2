@@ -2319,10 +2319,10 @@ sub validateKeyfieldValue {
     my ($keyfield,$value,$versioned) = @_;
 
     if ($keyfield eq "problem_id" || $keyfield eq 'problemID') {
-	croak "invalid characters in '".encode_entities($keyfield)." field: '".encode_entities($value)."' (valid characters are [0-9])"
+	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [0-9])"
 	    unless $value =~ m/^[0-9]*$/;
     } elsif ($versioned and $keyfield eq "set_id" || $keyfield eq 'setID') {
-	croak "invalid characters in '".encode_entities($keyfield)." field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.,])"
+	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.,])"
 	    unless $value =~ m/^[-a-zA-Z0-9_.,]*$/;
 	# } elsif ($versioned and $keyfield eq "user_id") { 
     } elsif ($keyfield eq "user_id" || $keyfield eq 'userID') { 
@@ -2332,7 +2332,7 @@ sub validateKeyfieldValue {
 	    unless $value =~ m/^[-a-fA-F0-9_.:\/]*$/;
 	
     } else {
-	croak "invalid characters in '".encode_entities($keyfield)." field: '".encode_entities($value)."' (valid characters are [0-9])"
+	croak "invalid characters in '".encode_entities($keyfield)."' field: '".encode_entities($value)."' (valid characters are [-a-zA-Z0-9_.])"
 	    unless $value =~ m/^[-a-zA-Z0-9_.]*$/;
     }
     
