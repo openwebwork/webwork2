@@ -444,6 +444,21 @@ sub body {
 	      CGI::checkbox(-label=>$r->maketext('Create CSV'), -name => 'createCSV', -id => 'createCSV', -checked => $r->param('createCSV')//0 ),' &nbsp; ',
 		$scoringDownloadMessage;
 	    
+		if ($ce->{showAnswerLog}) {
+			print CGI::start_div({id=>"answer-log-modal", class=>"modal show fade"});
+			print CGI::start_div({class=>'modal-header'});
+			print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
+			print CGI::h3($r->maketext("Answer Log Viewer"));
+			print CGI::end_div();
+			print CGI::start_div({id=>"log-body", class=>"modal-body"});
+			print CGI::end_div();
+			print CGI::start_div({class=>"modal-footer"});
+			print '<button type="button" class="btn csv">CSV</button>';
+			print CGI::end_div();
+			print CGI::end_div();
+			print '<button type="button" class="btn show_answer_log_modal">Answer Log Modal</button>';
+		}
+		
 	    print CGI::end_form();
 	}
 
@@ -531,7 +546,7 @@ sub body {
 		  push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
 		  
 		  if ($ce->{showAnswerLog}) {
-			  $entry = {};
+			  my $entry = {};
 			  $entry->{studentUser} = $studentUser;
 			  $entry->{setName} = $setName;
 			  $entry->{answerID} = $answerID; # pschan I'm assuming this is incremented chronologically?

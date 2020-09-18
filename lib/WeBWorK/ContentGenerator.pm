@@ -939,6 +939,10 @@ sub links {
 				}
 				print CGI::end_li(); # end Student Progress
 
+				if ($authz->hasPermissions($userID, "view_answers") && $ce->{showAnswerLog})  {
+					print CGI::li(&$makelink("${pfx}ShowAnswers", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				}
+				
 				if ($authz->hasPermissions($userID, "score_sets")) {
 					print CGI::li(&$makelink("${pfx}Scoring", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}

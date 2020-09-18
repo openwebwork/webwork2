@@ -69,8 +69,9 @@ function outputTableBody(entriesJSON, attempts) {
         // $tr.append('<td>' + item['answerID'] + '</td>');
         // $tr.append('<td>' + item['time'] + '</td>');
         var pSetNum;
-        for (var j = 0; i < prettyProblemNumbers.length; j++) {
-        // prettyProblemNumbers.forEach(function (pSetNum) {
+        for (var j = 0; j < prettyProblemNumbers.length; j++) {
+            // prettyProblemNumbers.forEach(function (pSetNum) {
+            pSetNum = prettyProblemNumbers[j];
             $tr.append('<td>' + row['answers'][pSetNum] + '</td>');
         };
         $tbody.append($tr);
