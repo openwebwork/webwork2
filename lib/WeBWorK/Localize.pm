@@ -294,6 +294,11 @@ my $ConfigStrings = [
 		doc2 => 'Show the correct answer to the current problem on the last attempt before a new version is requestion.',
 		type => 'boolean'
 	},
+    { var => 'showAnswerLog',
+      doc => x('Enable Experimental Answer Log'),
+      doc2 => x('Answer Log.'),
+      type => 'boolean'
+      },
  	],		  
 	[x('Permissions'),
 		{ var => 'permissionLevels{login}',

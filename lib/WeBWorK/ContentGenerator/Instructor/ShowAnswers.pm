@@ -32,6 +32,8 @@ use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id);
 use PGcore;
 use Text::CSV;
 
+use JSON;
+
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
 sub initialize {
@@ -248,7 +250,10 @@ sub initialize {
 	    close($fh) or warn "Couldn't Close $fullFilename";
 	    
 	    }
-
+		if($ce->{showAnswerLog}) {
+			$self->{entries} = [ () ];
+			$self->{entries_json} = '';
+		}
 }
 
 
@@ -524,6 +529,16 @@ sub body {
 		  }
 		  
 		  push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
+		  
+		  if ($ce->{showAnswerLog}) {
+			  $entry = {};
+			  $entry->{studentUser} = $studentUser;
+			  $entry->{setName} = $setName;
+			  $entry->{answerID} = $answerID; # pschan I'm assuming this is incremented chronologically?
+			  $entry->{"prettyProblemNumber-$setName-$prettyProblemNumber-$i"} = $score ? "** $answer **" : "$answer";
+			  $entry->{time} = $time;
+			  push @{ $self->{entries} } , $entry;
+		  }
 		}
 		
 		if ($record{comment}) {
@@ -541,7 +556,8 @@ sub body {
 	  }
 	}
       	      
-	
+	my $json = JSON->new->allow_nonref;
+	$self->{entries_json} = $json->encode($self->{entries});
 
 
 	
@@ -565,6 +581,13 @@ EOS
 	
 	print CGI::h2($r->maketext('No problems matched the given parameters.')) unless $foundMatches;
 
+	if ($ce->{showAnswerLog}) {
+		print CGI::script("\$(function() {\$('button.show_render_modal').hide();});") unless $foundMatches;
+		my $site_url = $ce->{webworkURLs}->{htdocs};
+		print CGI::script("var entriesJSON = $self->{entries_json};");
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/LogParser/logparser.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/LogParser/table2csv.js"}), CGI::end_script();
+	}
 	return "";
       }
 

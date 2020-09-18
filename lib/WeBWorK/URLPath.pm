@@ -748,7 +748,7 @@ our %pathTypes = (
 	instructor_progress => {
 		name    => x('Student Progress'),
 		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_progress instructor_user_progress/ ],
+		kids    => [ qw/instructor_set_progress instructor_user_progress instructor_answer_log/ ],
 		match   => qr|^progress/|,
 		capture => [ qw// ],
 		produce => 'progress/',
@@ -772,7 +772,15 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
-	
+	instructor_answer_log => {
+	name    => x('Answer Log'),
+	parent  => 'instructor_progress',
+	kids    => [ qw// ],
+	match   => qr|^show_answers/|,
+	capture => [ qw// ],
+	produce => 'show_answers/',
+	display => 'WeBWorK::ContentGenerator::Instructor::ShowAnswers',
+    },
 	################################################################################
 	
 	problem_list => {

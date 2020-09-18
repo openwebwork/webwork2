@@ -1204,5 +1204,42 @@ sub fourSpaceFill {
 	else {return "### ";}
 }
 
+sub output_past_answer_button {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+
+	if (!$ce->{showAnswerLog}) {
+		return "";
+	}
+
+	my $authz = $r->authz;
+	my $urlpath = $r->urlpath;
+
+	my $user = $r->param('user');
+	my $courseName = $urlpath->arg("courseID");
+
+	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r,
+		courseID => $courseName);
+	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
+
+	# print answer inspection button
+	if ($authz->hasPermissions($user, "view_answers")) {
+	        my $hiddenFields = $self->hidden_authen_fields;
+		$hiddenFields =~ s/\"hidden_/\"pastans-hidden_/g;
+		print "\n",
+			CGI::start_form(-method=>"POST",-action=>$showPastAnswersURL,-target=>"WW_Info"),"\n",
+			$hiddenFields,"\n",
+			CGI::hidden(-name => 'courseID',  -value=>$courseName), "\n",
+			CGI::hidden(-name => 'selected_sets',  -value=>$self->{setName}), "\n",
+			CGI::hidden(-name => 'selected_users',  -value=>$self->{studentName}), "\n",
+			CGI::p(
+				CGI::submit(-name => 'action',  -value=>$r->maketext("Show Past Answers"))
+			), "\n",
+			CGI::end_form();
+	}
+
+	return "";
+}
 
 1;
