@@ -100,12 +100,14 @@ $(function() {
             // $setNames.append(option);
         }
         for(var key in item) {
-            var match = key.match(/^prettyProblemNumber-(.*)/);
-            if (match) {
-                var setProblemName = match[1];
-                // if (!(prettyProblemNumbers.includes(setProblemName))) {
-                if (prettyProblemNumbers.indexOf(setProblemName) == -1) {
-                    prettyProblemNumbers.push(setProblemName);
+            if (item.hasOwnProperty(key)) {
+                var match = key.match(/^prettyProblemNumber-(.*)/);
+                if (match) {
+                    var setProblemName = match[1];
+                    // if (!(prettyProblemNumbers.includes(setProblemName))) {
+                    if (prettyProblemNumbers.indexOf(setProblemName) == -1) {
+                        prettyProblemNumbers.push(setProblemName);
+                    }
                 }
             }
         }
