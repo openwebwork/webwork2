@@ -336,7 +336,7 @@ my $response = eval {
     }
   } else {
     debug("Unable to update LMS grade $sourcedid. Error: ".($response->message) );
-    debug(local_escape_html($response->content)); 
+    debug($self->local_escape_html($response->content)); 
     return 0;
   }
    debug("Success submitting grade using sourcedid: $sourcedid and score: $score\n") ;
