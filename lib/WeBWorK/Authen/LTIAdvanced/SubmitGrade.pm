@@ -101,7 +101,7 @@ sub update_sourcedid {
   # depending on the request and the mode we are in.  
   my $sourcedid = $r->param('lis_result_sourcedid');
   if (!defined($sourcedid)) {
-    warn "No LISSourceID! Some LMS's do not give grades to instructors, but this ".  
+    warn "No LISSourceID! Some LMS's do not give grades to instructors, but this".  
      "could also be a sign that external grades are not enabled in your LMS." if $ce->{debug_lti_grade_passback};
   } elsif ($ce->{LTIGradeMode} eq 'course') {
     # Update the SourceDID for the user if we are in course mode
