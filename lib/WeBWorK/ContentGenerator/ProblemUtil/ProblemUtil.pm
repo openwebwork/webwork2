@@ -267,15 +267,15 @@ sub process_and_log_answer{
 				  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 				  if ($LTIGradeMode eq 'course') {
 				    if ($grader->submit_course_grade($problem->user_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  } elsif ($LTIGradeMode eq 'homework') {
 				    if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  }
 				}
