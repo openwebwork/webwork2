@@ -1,27 +1,5 @@
 "use strict"
 
-// Semantic color control
-    // dark blue
-    // > 13:1 with white
-    var curveColor = '#0000a6'
-
-    // blue
-    // > 9:1 with white
-    var focusCurveColor = '#0000f5'
-
-    // fillColor must use 6-digit hex
-    // medium purple
-    // 3:1 with white
-    // 4.5:1 with #0000a6
-    // > 3:1 with #0000f5
-    var fillColor  = '#a384e5'
-
-    // strict contrast ratios are less important for these colors
-    var pointColor = 'orange'
-    var pointHighlightColor = 'yellow'
-    var underConstructionColor = 'orange'
-
-
 // Polyfill for IE11.
 if (!Object.values) Object.values = function(o) {
     return Object.keys(o).map(function(i) { return o[i]; });
@@ -31,7 +9,30 @@ function graphTool(containerId, options) {
     // Do nothing if the graph has already been created.
 	if (document.getElementById(containerId + "_graph")) return;
 
-    var gt = {};
+	var gt = {};
+
+	// Semantic color control
+
+	// dark blue
+	// > 13:1 with white
+	gt.curveColor = '#0000a6'
+
+	// blue
+	// > 9:1 with white
+	gt.focusCurveColor = '#0000f5'
+
+	// fillColor must use 6-digit hex
+	// medium purple
+	// 3:1 with white
+	// 4.5:1 with #0000a6
+	// > 3:1 with #0000f5
+	gt.fillColor  = '#a384e5'
+
+	// strict contrast ratios are less important for these colors
+	gt.pointColor = 'orange'
+	gt.pointHighlightColor = 'yellow'
+	gt.underConstructionColor = 'orange'
+
     gt.snapSizeX = options.snapSizeX ? options.snapSizeX : 1;
     gt.snapSizeY = options.snapSizeY ? options.snapSizeY : 1;
     gt.isStatic = 'isStatic' in options ? options.isStatic : false;
@@ -45,9 +46,9 @@ function graphTool(containerId, options) {
     ];
 
     // These are the icons used for the fill tool and fill graph object.
-    gt.fillIcon = "data:image/svg+xml,%3Csvg xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:cc='http://creativecommons.org/ns%23' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23' xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' id='SVGRoot' version='1.1' viewBox='0 0 32 32' height='32px' width='32px'%3E%3Cdefs id='defs815' /%3E%3Cmetadata id='metadata818'%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage' /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cg id='layer1'%3E%3Cpath id='path1382' d='m 13.466084,10.267728 -4.9000003,8.4 4.9000003,4.9 8.4,-4.9 z' style='opacity:1;fill:" + fillColor.replace(/#/, '%23') + ";fill-opacity:1;stroke:%23000000;stroke-width:1.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none' /%3E%3Cpath id='path1384' d='M 16.266084,15.780798 V 6.273173' style='fill:none;stroke:%23000000;stroke-width:1.38;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' /%3E%3Cpath id='path1405' d='m 20,16 c 0,0 2,-1 3,0 1,0 1,1 2,2 0,1 0,2 0,3 0,1 0,2 0,2 0,0 -1,0 -1,0 -1,-1 -1,-1 -1,-2 0,-1 0,-1 -1,-2 0,-1 0,-2 -1,-2 -1,-1 -2,-1 -1,-1 z' style='fill:%230900ff;fill-opacity:1;stroke:%23000000;stroke-width:0.7px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' /%3E%3C/g%3E%3C/svg%3E";
+    gt.fillIcon = "data:image/svg+xml,%3Csvg xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:cc='http://creativecommons.org/ns%23' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23' xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' id='SVGRoot' version='1.1' viewBox='0 0 32 32' height='32px' width='32px'%3E%3Cdefs id='defs815' /%3E%3Cmetadata id='metadata818'%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage' /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cg id='layer1'%3E%3Cpath id='path1382' d='m 13.466084,10.267728 -4.9000003,8.4 4.9000003,4.9 8.4,-4.9 z' style='opacity:1;fill:" + gt.fillColor.replace(/#/, '%23') + ";fill-opacity:1;stroke:%23000000;stroke-width:1.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none' /%3E%3Cpath id='path1384' d='M 16.266084,15.780798 V 6.273173' style='fill:none;stroke:%23000000;stroke-width:1.38;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' /%3E%3Cpath id='path1405' d='m 20,16 c 0,0 2,-1 3,0 1,0 1,1 2,2 0,1 0,2 0,3 0,1 0,2 0,2 0,0 -1,0 -1,0 -1,-1 -1,-1 -1,-2 0,-1 0,-1 -1,-2 0,-1 0,-2 -1,-2 -1,-1 -2,-1 -1,-1 z' style='fill:%230900ff;fill-opacity:1;stroke:%23000000;stroke-width:0.7px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' /%3E%3C/g%3E%3C/svg%3E";
 
-    gt.fillIconFocused = "data:image/svg+xml,%3Csvg xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:cc='http://creativecommons.org/ns%23' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23' xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' id='SVGRoot' version='1.1' viewBox='0 0 32 32' height='32px' width='32px'%3E%3Cdefs id='defs815' /%3E%3Cmetadata id='metadata818'%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage' /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cg id='layer1'%3E%3Cpath id='path1382' d='m 13.466084,10.267728 -4.9000003,8.4 4.9000003,4.9 8.4,-4.9 z' style='opacity:1;fill:" + pointHighlightColor.replace(/#/, '%23') + ";fill-opacity:1;stroke:%23000000;stroke-width:1.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none' /%3E%3Cpath id='path1384' d='M 16.266084,15.780798 V 6.273173' style='fill:none;stroke:%23000000;stroke-width:1.38;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' /%3E%3Cpath id='path1405' d='m 20,16 c 0,0 2,-1 3,0 1,0 1,1 2,2 0,1 0,2 0,3 0,1 0,2 0,2 0,0 -1,0 -1,0 -1,-1 -1,-1 -1,-2 0,-1 0,-1 -1,-2 0,-1 0,-2 -1,-2 -1,-1 -2,-1 -1,-1 z' style='fill:%230900ff;fill-opacity:1;stroke:%23000000;stroke-width:0.7px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' /%3E%3C/g%3E%3C/svg%3E";
+    gt.fillIconFocused = "data:image/svg+xml,%3Csvg xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:cc='http://creativecommons.org/ns%23' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns%23' xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' id='SVGRoot' version='1.1' viewBox='0 0 32 32' height='32px' width='32px'%3E%3Cdefs id='defs815' /%3E%3Cmetadata id='metadata818'%3E%3Crdf:RDF%3E%3Ccc:Work rdf:about=''%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type rdf:resource='http://purl.org/dc/dcmitype/StillImage' /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cg id='layer1'%3E%3Cpath id='path1382' d='m 13.466084,10.267728 -4.9000003,8.4 4.9000003,4.9 8.4,-4.9 z' style='opacity:1;fill:" + gt.pointHighlightColor.replace(/#/, '%23') + ";fill-opacity:1;stroke:%23000000;stroke-width:1.3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none' /%3E%3Cpath id='path1384' d='M 16.266084,15.780798 V 6.273173' style='fill:none;stroke:%23000000;stroke-width:1.38;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1' /%3E%3Cpath id='path1405' d='m 20,16 c 0,0 2,-1 3,0 1,0 1,1 2,2 0,1 0,2 0,3 0,1 0,2 0,2 0,0 -1,0 -1,0 -1,-1 -1,-1 -1,-2 0,-1 0,-1 -1,-2 0,-1 0,-2 -1,-2 -1,-1 -2,-1 -1,-1 z' style='fill:%230900ff;fill-opacity:1;stroke:%23000000;stroke-width:0.7px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' /%3E%3C/g%3E%3C/svg%3E";
 
     if ('htmlInputId' in options) gt.html_input = document.getElementById(options.htmlInputId);
     var cfgOptions = {
@@ -253,13 +254,17 @@ function graphTool(containerId, options) {
         Object.values(this.definingPts).forEach(function(obj) {
             obj.setAttribute({ visible: false });
         });
-        this.baseObj.setAttribute({ strokeColor: curveColor, strokeWidth: 2 });
+        this.baseObj.setAttribute({ strokeColor: gt.curveColor, strokeWidth: 2 });
     };
     GraphObject.prototype.focus = function() {
         Object.values(this.definingPts).forEach(function(obj) {
-            obj.setAttribute({ visible: true, strokeColor: focusCurveColor, strokeWidth: 1, size: 4, fillColor: pointColor, highlightStrokeColor: focusCurveColor, highlightFillColor: pointHighlightColor });
+            obj.setAttribute({
+				visible: true, strokeColor: gt.focusCurveColor, strokeWidth: 1, size: 3,
+				fillColor: gt.pointColor, highlightStrokeColor: gt.focusCurveColor,
+				highlightFillColor: gt.pointHighlightColor
+			});
         });
-        this.baseObj.setAttribute({ strokeColor: focusCurveColor, strokeWidth: 4 });
+        this.baseObj.setAttribute({ strokeColor: gt.focusCurveColor, strokeWidth: 3 });
         gt.drawSolid = this.baseObj.getAttribute('dash') == 0;
         if ('solidButton' in gt) gt.solidButton.prop('disabled', gt.drawSolid);
         if ('dashedButton' in gt) gt.dashedButton.prop('disabled', !gt.drawSolid);
@@ -306,8 +311,10 @@ function graphTool(containerId, options) {
 
     // Line graph object
     function Line(point1, point2, solid, color) {
-        GraphObject.call(this, gt.board.create('line', [point1, point2],
-            { fixed: true, highlight: false, strokeColor: color ? color : underConstructionColor, dash: solid ? 0 : 2 }));
+		GraphObject.call(this, gt.board.create('line', [point1, point2], {
+			fixed: true, highlight: false, strokeColor: color ? color : gt.underConstructionColor,
+			dash: solid ? 0 : 2
+		}));
         this.definingPts.point1 = point1;
         this.definingPts.point2 = point2;
     };
@@ -335,13 +342,15 @@ function graphTool(containerId, options) {
         if (points.length < 2) return false;
         var point1 = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
         var point2 = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), point1);
-        return new gt.graphObjectTypes.line(point1, point2, /solid/.test(string), curveColor);
+        return new gt.graphObjectTypes.line(point1, point2, /solid/.test(string), gt.curveColor);
     };
 
     // Circle graph object
     function Circle(center, point, solid, color) {
-        GraphObject.call(this, gt.board.create('circle', [center, point],
-            { fixed: true, highlight: false, strokeColor: color ? color : underConstructionColor, dash: solid ? 0 : 2 }));
+		GraphObject.call(this, gt.board.create('circle', [center, point], {
+			fixed: true, highlight: false, strokeColor: color ? color : gt.underConstructionColor,
+			dash: solid ? 0 : 2
+		}));
         this.definingPts.center = center;
         this.definingPts.point = point;
     };
@@ -371,7 +380,7 @@ function graphTool(containerId, options) {
         if (points.length < 2) return false;
         var center = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
         var point = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), center);
-        return new gt.graphObjectTypes.circle(center, point, /solid/.test(string), curveColor);
+        return new gt.graphObjectTypes.circle(center, point, /solid/.test(string), gt.curveColor);
     };
 
     // Parabola graph object.
@@ -397,7 +406,10 @@ function graphTool(containerId, options) {
             function() { return gt.board.getBoundingBox()[0]; },
             // domain maximum
             function() { return gt.board.getBoundingBox()[2]; }
-        ], { strokeWidth: 2, highlight: false, strokeColor: color ? color : underConstructionColor, dash: solid ? 0 : 2 });
+		], {
+			strokeWidth: 2, highlight: false, strokeColor: color ? color : gt.underConstructionColor,
+			dash: solid ? 0 : 2
+		});
         else return gt.board.create('curve', [
             // x coordinate of point on curve
             function(x) {
@@ -410,7 +422,10 @@ function graphTool(containerId, options) {
             function() { return gt.board.getBoundingBox()[3]; },
             // domain maximum
             function() { return gt.board.getBoundingBox()[1]; }
-        ], { strokeWidth: 2, highlight: false, strokeColor: color ? color : underConstructionColor, dash: solid ? 0 : 2 });
+        ], {
+			strokeWidth: 2, highlight: false, strokeColor: color ? color : gt.underConstructionColor,
+			dash: solid ? 0 : 2
+		});
     }
 
     function Parabola(vertex, point, vertical, solid, color) {
@@ -447,7 +462,7 @@ function graphTool(containerId, options) {
         if (points.length < 2) return false;
         var vertex = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
         var point = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), vertex, true);
-        return new gt.graphObjectTypes.parabola(vertex, point, /vertical/.test(string), /solid/.test(string), curveColor);
+        return new gt.graphObjectTypes.parabola(vertex, point, /vertical/.test(string), /solid/.test(string), gt.curveColor);
     };
 
     // Fill graph object
@@ -535,9 +550,9 @@ function graphTool(containerId, options) {
             var colorLayerData = context.getImageData(0, 0, canvas.width, canvas.height);
 
             var fillPixel = function(pixelPos) {
-                colorLayerData.data[pixelPos] = Number('0x' + fillColor[1] + fillColor[2]);
-                colorLayerData.data[pixelPos + 1] = Number('0x' + fillColor[3] + fillColor[4]);
-                colorLayerData.data[pixelPos + 2] = Number('0x' + fillColor[5] + fillColor[6]);
+                colorLayerData.data[pixelPos] = Number('0x' + gt.fillColor.slice(1, 3));
+                colorLayerData.data[pixelPos + 1] = Number('0x' + gt.fillColor.slice(3, 5));
+                colorLayerData.data[pixelPos + 2] = Number('0x' + gt.fillColor.slice(5));
                 colorLayerData.data[pixelPos + 3] = 255;
             };
 
@@ -811,12 +826,14 @@ function graphTool(containerId, options) {
             return false;
         if (!('hl_point' in this.hlObjs)) {
             this.hlObjs.hl_point = gt.board.create('point', [coords.usrCoords[1], coords.usrCoords[2]], {
-                size: 2, color: underConstructionColor, fixed: true, snapToGrid: true,
+                size: 2, color: gt.underConstructionColor, fixed: true, snapToGrid: true,
                 snapSizeX: gt.snapSizeX, snapSizeY: gt.snapSizeY, withLabel: false
             });
             if ('point1' in this)
-                this.hlObjs.hl_line = gt.board.create('line', [this.point1, this.hlObjs.hl_point],
-                    { fixed: true, strokeColor: underConstructionColor, highlight: false, dash: gt.drawSolid ? 0 : 2 });
+				this.hlObjs.hl_line = gt.board.create('line', [this.point1, this.hlObjs.hl_point], {
+					fixed: true, strokeColor: gt.underConstructionColor, highlight: false,
+					dash: gt.drawSolid ? 0 : 2
+				});
         }
         else
             this.hlObjs.hl_point.setPosition(JXG.COORDS_BY_USER, [coords.usrCoords[1], coords.usrCoords[2]]);
@@ -888,12 +905,14 @@ function graphTool(containerId, options) {
             return false;
         if (!('hl_point' in this.hlObjs)) {
             this.hlObjs.hl_point = gt.board.create('point', [coords.usrCoords[1], coords.usrCoords[2]], {
-                size: 2, color: underConstructionColor, fixed: true, snapToGrid: true,
+                size: 2, color: gt.underConstructionColor, fixed: true, snapToGrid: true,
                 snapSizeX: gt.snapSizeX, snapSizeY: gt.snapSizeY, withLabel: false
             });
             if ('center' in this)
-                this.hlObjs.hl_circle = gt.board.create('circle', [this.center, this.hlObjs.hl_point],
-                    { fixed: true, strokeColor: underConstructionColor, highlight: false, dash: gt.drawSolid ? 0 : 2 });
+				this.hlObjs.hl_circle = gt.board.create('circle', [this.center, this.hlObjs.hl_point], {
+					fixed: true, strokeColor: gt.underConstructionColor, highlight: false,
+					dash: gt.drawSolid ? 0 : 2
+				});
         }
         else
             this.hlObjs.hl_point.setPosition(JXG.COORDS_BY_USER, [coords.usrCoords[1], coords.usrCoords[2]]);
@@ -969,13 +988,13 @@ function graphTool(containerId, options) {
             return false;
         if (!('hl_point' in this.hlObjs)) {
             this.hlObjs.hl_point = gt.board.create('point', [coords.usrCoords[1], coords.usrCoords[2]], {
-                size: 2, color: underConstructionColor, fixed: true, snapToGrid: true,
+                size: 2, color: gt.underConstructionColor, fixed: true, snapToGrid: true,
                 snapSizeX: gt.snapSizeX, snapSizeY: gt.snapSizeY,
                 highlight: false, withLabel: false
             });
             if ('vertex' in this)
-                this.hlObjs.hl_parabola =
-                    createParabola(this.vertex, this.hlObjs.hl_point, this.vertical, gt.drawSolid, underConstructionColor);
+				this.hlObjs.hl_parabola = createParabola(this.vertex, this.hlObjs.hl_point, this.vertical,
+					gt.drawSolid, gt.underConstructionColor);
         }
         else
             this.hlObjs.hl_point.setPosition(JXG.COORDS_BY_USER, [coords.usrCoords[1], coords.usrCoords[2]]);
