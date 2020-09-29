@@ -244,13 +244,13 @@ function graphTool(containerId, options) {
         Object.values(this.definingPts).forEach(function(obj) {
             obj.setAttribute({ visible: false });
         });
-        this.baseObj.setAttribute({ strokeColor: curveColor });
+        this.baseObj.setAttribute({ strokeColor: curveColor, strokeWidth: 2 });
     };
     GraphObject.prototype.focus = function() {
         Object.values(this.definingPts).forEach(function(obj) {
             obj.setAttribute({ visible: true, strokeColor: focusCurveColor, strokeWidth: 1, size: 4, fillColor: pointColor, highlightStrokeColor: focusCurveColor, highlightFillColor: pointHighlightColor });
         });
-        this.baseObj.setAttribute({ strokeColor: focusCurveColor });
+        this.baseObj.setAttribute({ strokeColor: focusCurveColor, strokeWidth: 4 });
         gt.drawSolid = this.baseObj.getAttribute('dash') == 0;
         if ('solidButton' in gt) gt.solidButton.prop('disabled', gt.drawSolid);
         if ('dashedButton' in gt) gt.dashedButton.prop('disabled', !gt.drawSolid);
