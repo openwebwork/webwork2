@@ -1,16 +1,16 @@
 "use strict"
 
-const curveColor = '#0000a6'   // dark blue
-                               // > 13:1 with white
-const fillColor  = '#a384e5'   // must use 6-digit hex
-                               // medium purple
-                               // 3:1 with white
-                               // 4.5:1 with #0000a6
-const focusCurveColor = '#0000f5' // > 9:1 with white
-                                  // > 3:1 with #a384e5
-const pointColor = 'orange'
-const pointHighlightColor = 'yellow'
-const underConstructionColor = 'orange'
+var curveColor = '#0000a6'   // dark blue
+                             // > 13:1 with white
+var fillColor  = '#a384e5'   // must use 6-digit hex
+                             // medium purple
+                             // 3:1 with white
+                             // 4.5:1 with #0000a6
+var focusCurveColor = '#0000f5' // > 9:1 with white
+                                // > 3:1 with #a384e5
+var pointColor = 'orange'
+var pointHighlightColor = 'yellow'
+var underConstructionColor = 'orange'
 
 
 // Polyfill for IE11.
