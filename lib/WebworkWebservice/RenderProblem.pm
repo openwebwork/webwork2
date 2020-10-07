@@ -530,6 +530,17 @@ sub xml_filter {
 		return;
 	}
 	my $type = ref($input);
+
+	# The string value of a Value::Matrix object will often get mishandled below
+	# as the string form can contain HTML code including things like
+	#    class="ans_array", class="ans_array_open", class="ans_array_table"
+	#    class="ans_array_cell", class="ans_array_sep", class="ans_array_close"
+	# which get picked up and detected as an ARRAY reference when it is not.
+	# So bypass if necessary.
+	if ( ( "$type" eq "Value::Matrix" ) && ( "$input"=~/ARRAY/i ) ) {
+		#warn "Special processing of Value::Matrix" . $input;
+		return( "Value::Matrix object with string value: $input" );
+	}
 	
 	# Hack to filter out CODE references??
 	if (!defined($type) or !$type ) {
