@@ -272,7 +272,7 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 
 # Phase 6 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
 
-RUN cpanm install Statistics::R::IO \
+RUN cpanm install Statistics::R::IO CGI::Cookie \
     && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # Now installed from Ubuntu packages:
