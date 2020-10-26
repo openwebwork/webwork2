@@ -82,6 +82,8 @@ RUN git clone --single-branch --branch legacy-v2 --depth 1 https://github.com/ma
 # we need to change FROM before setting the ENV variables
 
 FROM ubuntu:18.04
+# Once ubuntu 20.04 is used, CGI.pm and CGI::Cookie will be new enough to
+# drop the cpanm install of CGI::Cookie which is needed to upgrade it.
 
 ENV WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \
@@ -271,6 +273,8 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 # ==================================================================
 
 # Phase 6 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
+
+# Ubuntu 18.04 has CGI.pm 4.38-1 which is too old to support the cookie samesite attribute added in CGI.pm 4.45 - so install CGI::Cookie here to get an upgraded version.
 
 RUN cpanm install Statistics::R::IO CGI::Cookie \
     && rm -fr ./cpanm /root/.cpanm /tmp/*
