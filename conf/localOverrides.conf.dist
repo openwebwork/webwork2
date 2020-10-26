@@ -499,6 +499,33 @@ $mail{feedbackRecipients}    = [
 #$session_management_via = "key";
 
 ################################################################################
+# Cookie control settings
+################################################################################
+
+# The following variables can be set to control cookie behavior.
+
+# Set the value of the samesite attribute of the WeBWorK cookie:
+#    See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
+#         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+#         https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
+
+#$CookieSameSite = "None";
+#$CookieSameSite = "Strict";
+#$CookieSameSite = "Lax";
+
+# Set the value of the secure cookie attribute:
+#$CookieSecure = 1;
+
+# Set cookie lifetime for when $session_management_via eq "session_cookie"
+#$CookieLifeTime = "+7d";
+
+# Set cookie lifetime for when $session_management_via ne "session_cookie"
+#$CookieLifeTime2 = "+30d";
+
+# NOTE: the cookie lifespan settings use the CGI.pm relative time settings.
+# Search for "30 seconds from now" at https://metacpan.org/pod/CGI to see the various options.
+
+################################################################################
 # Searching for set.def files to import
 ################################################################################
 ## Uncomment below so that when the homework sets editor searches for set def

@@ -44,7 +44,7 @@ my @modulesList = qw(
 	Benchmark
 	Carp
 	CGI
-	CGI:Cookie
+	CGI::Cookie
 	Class::Accessor
 	Dancer
 	Dancer::Plugin::Database
