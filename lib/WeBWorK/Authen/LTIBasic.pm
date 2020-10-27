@@ -519,8 +519,9 @@ sub authenticate
 			my $nr = scalar(@LTIroles);
 
 			my $LTI_webwork_permissionLevel;
-			if (! defined($ce->{userRoles}->{$ce->{LMSrolesToWeBWorKroles}->{$LTIroles[0]}})) {
-				croak("Cannot find a WeBWorK role that corresponds to the LMS role of "
+			if ( ! defined( $ce->{LMSrolesToWeBWorKroles}->{$LTIroles[0]} ) ||
+			     ! defined( $ce->{userRoles}->{$ce->{LMSrolesToWeBWorKroles}->{$LTIroles[0]}} ) ) {
+				warn("Cannot find a WeBWorK role that corresponds to the LMS role of "
 						. $LTIroles[0] ." so will create a student level account.");
 				$LTI_webwork_permissionLevel = $ce->{userRoles}->{student};
 			} else {
