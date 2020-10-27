@@ -501,13 +501,16 @@ sub create_user {
     }
   
   my $nr = scalar(@LTIroles);
+
+  my $LTI_webwork_permissionLevel;
   if (! defined($ce->{userRoles}->{$ce->{LMSrolesToWeBWorKroles}->{$LTIroles[0]}})) {
     croak("Cannot find a WeBWorK role that corresponds to the LMS role of "
-	  . $LTIroles[0] .".");
+	  . $LTIroles[0] ." so will create a student level account.");
+    $LTI_webwork_permissionLevel = $ce->{userRoles}->{student};
+  } else {
+    $LTI_webwork_permissionLevel = $ce->{userRoles}->{$ce->{LMSrolesToWeBWorKroles}->{$LTIroles[0]}};
   }
-  
-  my $LTI_webwork_permissionLevel 
-    = $ce->{userRoles}->{$ce->{LMSrolesToWeBWorKroles}->{$LTIroles[0]}};
+
   if ($nr > 1) {
     for (my $j =1; $j < $nr; $j++) {
       my $wwRole = $ce->{LMSrolesToWeBWorKroles}->{$LTIroles[$j]};
