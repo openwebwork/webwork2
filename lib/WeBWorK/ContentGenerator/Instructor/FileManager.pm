@@ -23,7 +23,6 @@ use WeBWorK::Upload;
 use File::Path;
 use File::Copy;
 use File::Spec;
-use Encode qw(encode_utf8 decode_utf8);
 
 use String::ShellQuote;
 

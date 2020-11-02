@@ -48,7 +48,7 @@ use WeBWorK::Utils::AttemptsTable;
 
 use utf8;
 #use open ':encoding(utf8)';
-binmode(STDOUT, ":utf8");
+binmode(STDOUT, ":encoding(UTF-8)");
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
 ################################################################################

@@ -29,7 +29,6 @@ WeBWorK::ContentGenerator::Feedback - Send mail to professors.
 use strict;
 use warnings;
 use utf8;
-use Encode qw(encode_utf8 encode);
 use Data::Dumper;
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
@@ -143,7 +142,7 @@ sub body {
 					# Encode the user name using "MIME-Header" encoding,
 					# (RFC 2047) which allows UTF-8 encoded names to be
 					# encoded inside the mail header using a special format.
-					$sender = encode("MIME-Header", $user->full_name) . " <$from>";
+					$sender = Encode::encode("MIME-Header", $user->full_name) . " <$from>";
 				} else {
 					$sender = $from;
 				}
@@ -180,7 +179,7 @@ sub body {
 
 		# If in the future any fields in the subject can contain non-ASCII characters
 		# then we will also need:
-		# $subject = encode("MIME-Header", $subject);
+		# $subject = Encode::encode("MIME-Header", $subject);
 		# at present, this does not seem to be necessary.
 
 		# get info about remote user (stolen from &WeBWorK::Authen::write_log_entry)
@@ -292,7 +291,7 @@ $emailableURL
 			$msg .= Dumper($ce). "\n\n";
 		}
 
-    $email->body_set(encode_utf8($msg));
+    $email->body_set(Encode::encode("UTF-8",$msg));
 
 		try {
 			sendmail($email,{transport => $transport});

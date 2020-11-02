@@ -21,7 +21,6 @@
 package WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
-use Encode qw(encode_utf8 encode);
 
 =head1 NAME
 
@@ -611,7 +610,7 @@ sub jitar_send_warning_email {
 	# Encode the user name using "MIME-Header" encoding, (RFC 2047) which
 	# allows UTF-8 encoded names to be encoded inside the mail header using
 	# a special format.
-	$sender = encode("MIME-Header", $user->full_name);
+	$sender = Encode::encode("MIME-Header", $user->full_name);
     } else {
 	$sender = $userID;
     }
@@ -635,7 +634,7 @@ sub jitar_send_warning_email {
 
     # If in the future any fields in the subject can contain non-ASCII characters
     # then we will also need:
-    # $subject = encode("MIME-Header", $subject);
+    # $subject = Encode::encode("MIME-Header", $subject);
     # at present, this does not seem to be necessary.
 
 
@@ -683,7 +682,7 @@ Comment:    $comment
 /;
 
 	# Encode the body in UTF-8 when adding it.
-	$email->body_set(encode_utf8($msg));
+	$email->body_set(Encode::encode("UTF-8",$msg));
 
 		## try to send the email
 

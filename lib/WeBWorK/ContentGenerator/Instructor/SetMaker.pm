@@ -405,7 +405,7 @@ sub browse_local_panel {
 	my $r = $self->r;	
 	my $library_selected = shift;
 	my $lib = shift || ''; $lib =~ s/^browse_//;
-	my $name = ($lib eq '')? $r->maketext('Local') : Encode::decode_utf8($problib{$lib});
+	my $name = ($lib eq '')? $r->maketext('Local') : Encode::decode("UTF-8",$problib{$lib});
     
 	my $list_of_prob_dirs= get_problem_directories($r,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
@@ -836,7 +836,7 @@ sub make_top_row {
 	##	Make buttons for additional problem libraries
 	my $libs = '';
 	foreach my $lib (sort(keys(%problib))) {
-		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>Encode::decode_utf8($problib{$lib}),
+		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>Encode::decode("UTF-8",$problib{$lib}),
 																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
 			if (-d "$ce->{courseDirs}{templates}/$lib");
 	}
