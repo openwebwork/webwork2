@@ -16,6 +16,11 @@ use WeBWorK::Utils::CourseManagement qw(addCourse);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor::SendMail;
 use JSON;
+use utf8;
+
+binmode(STDIN, ':encoding(utf8)');
+binmode(STDOUT, ':encoding(utf8)');
+binmode(STDERR, ':encoding(utf8)');
 
 use Time::HiRes qw/gettimeofday/; # for log timestamp
 use Date::Format; # for log timestamp
@@ -611,7 +616,7 @@ sub updateSetting {
 
 	# read in the file 
 
-	open(DAT, $filename) || die("Could not open file!");
+	open(DAT, "<:utf8", $filename) || die("Could not open file!");
 	my @raw_data=<DAT>;
 	close(DAT);
 
