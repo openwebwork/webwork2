@@ -613,7 +613,6 @@ sub output_JS {
 
     my $site_url = $ce->{webworkURLs}->{htdocs};
     
-    print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
     print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
 
     return "";

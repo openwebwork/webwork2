@@ -93,10 +93,6 @@ sub head {
 	my $ce = $self->r->ce;
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
   print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css"/>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-1.7.1.min.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery-ui-1.8.16.custom.min.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/jquery/jquery.ui.touch-punch.js"></script>!;
-  #print qq!<script src="$webwork_htdocs_url/js/lib/vendor/ui.tabs.closable.js"></script>!;
 
 
   print qq!<script data-main="$webwork_htdocs_url/js/apps/LibraryBrowser/library_browser" src="$webwork_htdocs_url/js/vendor/requirejs/require.js"></script>!;
@@ -112,7 +108,7 @@ sub head {
 
   print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/library_browser.css" />!;
 
-  print qq!<link href="$webwork_htdocs_url/css/jquery-ui-1.8.18.custom.css" rel="stylesheet" type="text/css"/>!;
+  print qq!<link href="$webwork_htdocs_url/js/vendor/jquery/jquery-ui-1.12.1.custom/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
   #print qq!<script>window.addEventListener("load", setup, false);</script>!;
   return "";
 }

@@ -39,7 +39,6 @@ $nextBlock = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
 <script type="text/javascript" src="/webwork2_files/js/jquery-ui-1.9.0.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/AddOnLoad/addOnLoadEvent.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/legacy/java_init.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/InputColor/color.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Base64/Base64.js"></script>

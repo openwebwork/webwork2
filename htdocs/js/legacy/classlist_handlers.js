@@ -24,9 +24,9 @@ function classlist_add_export_elements() {
 	}
 }
 
-addOnLoadEvent(function() {
-		document.getElementById("filter_select").onchange = classlist_add_filter_elements;
-		classlist_add_filter_elements();
-		document.getElementById("export_select_target").onchange = classlist_add_export_elements;
-		classlist_add_export_elements();
-	});
+$(function() {
+    document.getElementById("filter_select").onchange = classlist_add_filter_elements;
+    classlist_add_filter_elements();
+    document.getElementById("export_select_target").onchange = classlist_add_export_elements;
+    classlist_add_export_elements();
+});

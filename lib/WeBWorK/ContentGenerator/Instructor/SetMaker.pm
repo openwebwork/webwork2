@@ -1793,18 +1793,17 @@ sub output_JS {
 
 
 sub output_CSS {
-  my ($self) = @_;
-  my $ce = $self->r->ce;
-  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-    #print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
+	#print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
 
-  print qq!<link href="$webwork_htdocs_url/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css"/>!;
+	print qq!<link href="$webwork_htdocs_url/vendor/jquery-ui-themes-1.12.1/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
 
-  print qq{
-           <link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+	print qq{<link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
 
-  return '';
+	return '';
 
 }
 
