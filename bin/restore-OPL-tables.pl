@@ -66,6 +66,16 @@ my $prepared_OPL_tables_file = "$prepared_OPL_tables_dir/OPL-tables.sql";
 
 my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
 
+# The MariaDB driver use a different DSN format
+# Ex: DBI:MariaDB:database=webwork;host=db;port=3306
+
+if ( $dbtype =~ /MariaDB/i ) {
+  ($db,$host,$port) = split(';',$db);
+  $db   =~ s/database=//;
+  $host =~ s/host=//;
+  $port =~ s/port=//;
+}
+
 $host = 'localhost' unless $host;
 
 $port = 3306 unless $port;

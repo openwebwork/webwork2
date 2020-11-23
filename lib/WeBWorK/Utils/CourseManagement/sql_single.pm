@@ -195,17 +195,38 @@ sub _get_db_info {
 	my $dsn = $ce->{database_dsn};
 	my $username = $ce->{database_username};
 	my $password = $ce->{database_password};
-	
-	die "Can't call dump_table or restore_table on a table with a non-MySQL source"
-		unless $dsn =~ s/^dbi:mysql://i;
-	
-	# this is an internal function which we probably shouldn't be using here
-	# but it's quick and gets us what we want (FIXME what about sockets, etc?)
+
 	my %dsn;
-	runtime_use "DBD::mysql";
-	DBD::mysql->_OdbcParse($dsn, \%dsn, ['database', 'host', 'port']);
-	die "no database specified in DSN!" unless defined $dsn{database};
+	if (      $dsn =~ s/^dbi:mariadb://i ) {
+		my ($dbi,$dbtype,$temp1) = split(':',$dsn);
+		( $dsn{database}, $dsn{host}, $dsn{port} ) = split(';',$db);
+		$dsn{database} =~ s/database=//;
+		$dsn{host} =~ s/host=// if ( defined $dsn{host} );
+		$dsn{port} =~ s/port=// if ( defined $dsn{port} );
+	} elsif ( $dsn =~ s/^dbi:mysql://i ) {
+		# This code works for DBD::mysql
+		# this is an internal function which we probably shouldn't be using here
+		# but it's quick and gets us what we want (FIXME what about sockets, etc?)
+		runtime_use "DBD::mysql";
+		DBD::mysql->_OdbcParse($dsn, \%dsn, ['database', 'host', 'port']);
+	} else {
+		die "Can't call dump_table or restore_table on a table with a non-MySQL/MariaDB source";
+	}
 	
+	die "no database specified in DSN!" unless defined $dsn{database};
+
+	my $mysqldump = $self->{params}{mysqldump_path};
+	# Conditionally add column-statistics=0 as MariaDB databases do not support it
+	# see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
+	#      https://github.com/drush-ops/drush/issues/4410
+
+	my $column_statistics_off = "";
+	my $test_for_column_statistics = `$mysqldump_command --help | grep 'column-statistics'`;
+	if ( $test_for_column_statistics ) {
+		$column_statistics_off = "[mysqldump]\ncolumn-statistics=0\n";
+warn "Setting in the temporary mysql config file for table dump/restore:\n$column_statistics_off\n\n";
+	}
+
 	# doing this securely is kind of a hassle...
 	my $my_cnf = new File::Temp;
 	$my_cnf->unlink_on_destroy(1);
@@ -215,7 +236,8 @@ sub _get_db_info {
 	print $my_cnf "password=$password\n" if defined $password and length($password) > 0;
 	print $my_cnf "host=$dsn{host}\n" if defined $dsn{host} and length($dsn{host}) > 0;
 	print $my_cnf "port=$dsn{port}\n" if defined $dsn{port} and length($dsn{port}) > 0;
-	
+	print $my_cnf "$column_statistics_off" if $test_for_column_statistics;
+
 	return ($my_cnf, $dsn{database});
 }
 

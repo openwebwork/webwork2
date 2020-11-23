@@ -53,6 +53,18 @@ my $global_sql_file = $ce->{problemLibrary}{root}.'/OPL_global_statistics.sql';
 if (-e $global_sql_file) {
 
   my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
+
+  # The MariaDB driver use a different DSN format
+  # Ex: DBI:MariaDB:database=webwork;host=db;port=3306
+
+  if ( $dbtype =~ /MariaDB/i ) {
+    ($db,$host,$port) = split(';',$db);
+    $db   =~ s/database=//;
+    $host =~ s/host=//;
+    $port =~ s/port=//;
+  }
+
+
   
   $host = 'localhost' unless $host;
 
