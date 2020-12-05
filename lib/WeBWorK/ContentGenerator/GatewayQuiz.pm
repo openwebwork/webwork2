@@ -41,6 +41,7 @@ use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use WeBWorK::Utils::AttemptsTable;
+use WeBWorK::ContentGenerator::Instructor::SingleProblemGrader;
 use PGrandom;
 
 use Caliper::Sensor;
@@ -111,6 +112,14 @@ sub can_showCorrectAnswers {
 					$Set->due_date() == $Set->answer_date())) ||
 			$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")) &&
 		($authz->hasPermissions($User->user_id, "view_hidden_work") || $canShowScores));
+}
+
+sub can_showProblemGrader {
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+
+	return ($authz->hasPermissions($User->user_id, "access_instructor_tools") &&
+		$authz->hasPermissions($User->user_id, "score_sets"));
 }
 
 sub can_showHints {
@@ -403,6 +412,21 @@ sub handle_input_colors {
 				join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
 			"]\n);",
 		CGI::end_script();
+}
+
+sub get_instructor_comment {
+	my ($self, $problem) = @_;
+
+	my $db = $self->r->db;
+	my $userPastAnswerID = $db->latestProblemPastAnswer($self->{ce}{courseName}, $problem->user_id,
+		$problem->set_id . ",v" . $problem->version_id, $problem->problem_id);
+
+	if ($userPastAnswerID) {
+		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
+		return $userPastAnswer->comment_string;
+	}
+
+	return "";
 }
 
 ################################################################################
@@ -880,7 +904,7 @@ sub pre_header_initialize {
 	my $displayMode      = $User->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay        = $r->param("redisplay");
 	my $submitAnswers    = $r->param("submitAnswers") // 0;
-	my $checkAnswers     = $r->param("checkAnswers") // 0;
+	my $checkAnswers     = $r->param("checkAnswers") // $r->param("saveGrade") // 0;
 	my $previewAnswers   = $r->param("previewAnswers") // 0;
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
@@ -913,8 +937,11 @@ sub pre_header_initialize {
 	my %want = (
 		showOldAnswers     => $User->showOldAnswers ne '' ?
 			$User->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => ($r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers}) &&
-			($submitAnswers || $checkAnswers),
+		showCorrectAnswers => ($r->param("showCorrectAnswers") || $r->param('showProblemGrader') ||
+			$ce->{pg}->{options}->{showCorrectAnswers}) && ($submitAnswers || $checkAnswers),
+			# showProblemGrader implies showCorrectAnswers
+			# This is a convenience for grading.
+		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showHints          => $r->param("showHints") || $ce->{pg}->{options}->{showHints},
 		showSolutions      => ($r->param("showSolutions") || $ce->{pg}->{options}->{showSolutions}) &&
 			($submitAnswers || $checkAnswers),
@@ -931,6 +958,7 @@ sub pre_header_initialize {
 	my %must = (
 		showOldAnswers     => 0,
 		showCorrectAnswers => 0,
+		showProblemGrader  => 0,
 		showHints          => 0,
 		showSolutions      => 0,
 		recordAnswers      => 0,
@@ -946,6 +974,7 @@ sub pre_header_initialize {
 	my %can = (
 		showOldAnswers        => $self->can_showOldAnswers(@args),
 		showCorrectAnswers    => $self->can_showCorrectAnswers(@args, $sAns),
+		showProblemGrader     => $self->can_showProblemGrader(@args),
 		showHints             => $self->can_showHints(@args),
 		showSolutions         => $self->can_showSolutions(@args, $sAns),
 		recordAnswers         => $self->can_recordAnswers(@args),
@@ -1048,6 +1077,8 @@ sub pre_header_initialize {
 
 	my @problems = ();
 	my @pg_results = ();
+	my @instructor_comments = ();
+	my @problem_graders = ();
 	# pg errors are stored here; initialize it to empty to start
 	$self->{errors} = [ ];
 
@@ -1086,11 +1117,25 @@ sub pre_header_initialize {
 				$ProblemN);
 			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
 			if ($self->{will}->{useMathQuill});
+
+			# Initialize the problem graders for the problem.
+			if ($self->{will}{showProblemGrader}) {
+				$problem_grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader($r, $pg, $ProblemN, $formFields);
+			} else {
+				$problem_grader = 0;
+			}
+
+			# Get instructor comments for the problem if any.
+			$instructor_comment = $self->get_instructor_comment($ProblemN);
 		}
 		push(@pg_results, $pg);
+		push(@problem_graders, $problem_grader);
+		push(@instructor_comments, $instructor_comment);
 	}
 	$self->{ra_problems} = \@problems;
 	$self->{ra_pg_results}=\@pg_results;
+	$self->{problem_graders} = \@problem_graders;
+	$self->{instructor_comments} = \@instructor_comments;
 
 	$self->{startProb} = $startProb;
 	$self->{endProb} = $endProb;
@@ -1101,7 +1146,7 @@ sub pre_header_initialize {
 
 sub head {
 	my ($self) = @_;
-	return if !defined($self->{ra_pg_results});
+	return "" if !defined($self->{ra_pg_results});
 	my $head_text = "";
 	for (@{$self->{ra_pg_results}})
 	{
@@ -1210,6 +1255,8 @@ sub body {
 
 	my @problems = @{$self->{ra_problems}};
 	my @pg_results = @{$self->{ra_pg_results}};
+	my @instructor_comments = @{$self->{instructor_comments}};
+	my @problem_graders = @{$self->{problem_graders}};
 	my @pg_errors = @{$self->{errors}};
 	my $requestedVersion = $self->{requestedVersion};
 
@@ -1236,7 +1283,7 @@ sub body {
 			$message .= $_->{message} . CGI::br() . "\n";
 
 			$context .= CGI::p((@pg_errors > 1? "$errorNum.": '') .
-				$_->{context}) . "\n\n" . CGI::hr() . "\n\n";
+				$_->{context}) . "\n\n" . CGI::div({ class => 'gwDivider' }, "") . "\n\n";
 		}
 		return $self->errorOutput($message, $context);
 	}
@@ -1961,6 +2008,8 @@ sub body {
 
 		foreach my $i (0 .. $#pg_results) {
 			my $pg = $pg_results[$probOrder[$i]];
+			my $instructor_comment = $instructor_comments[$probOrder[$i]];
+			my $problem_grader = $problem_graders[$probOrder[$i]];
 			$problemNumber++;
 
 			if ($i >= $startProb && $i <= $endProb) {
@@ -2001,11 +2050,21 @@ sub body {
 				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
 				print CGI::div({-id=>"prob$i"},"");
 				print CGI::h2($r->maketext("Problem [_1].",$problemNumber)), $recordMessage;
+
+				if ($instructor_comment) {
+					print CGI::start_div({ id => "answerComment", class => "answerComments" });
+					print CGI::b($r->maketext("Instructor Comment:")),  CGI::br();
+					print CGI::escapeHTML($instructor_comment);
+					print CGI::end_div();
+				}
+
 				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
 					CGI::p($pg->{result}->{msg} ? CGI::b($r->maketext("Note")).': ' : "", CGI::i($pg->{result}->{msg}));
 				print CGI::p({class=>"gwPreview"}, CGI::a({-href=>"$jsprevlink"}, $r->maketext("preview answers")));
 
 				print $resultsTable if $resultsTable;
+
+				$problem_grader->insertGrader if $problem_grader;
 
 				print CGI::end_div();
 				# finally, store the problem status for
@@ -2013,7 +2072,7 @@ sub body {
 				my $pNum = $probOrder[$i] + 1;
 				print CGI::hidden({-name=>"probstatus$pNum", -value=>$probStatus[$probOrder[$i]]});
 
-				print "\n", CGI::hr(), "\n";
+				print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 			} else {
 				my $i1 = $i+1;
 				# keep the jump to anchors so that jumping to
@@ -2039,7 +2098,7 @@ sub body {
 		$self->handle_input_colors;
 
 		print CGI::div($jumpLinks, "\n");
-		print "\n",CGI::hr(), "\n";
+		print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 
 		if ($can{showCorrectAnswers}) {
 			print CGI::checkbox(
@@ -2053,6 +2112,13 @@ sub body {
 				-name    => "showSolutions",
 				-checked => $will{showSolutions},
 				-label   => $r->maketext("Show Solutions"),
+			);
+		}
+		if ($can{showProblemGrader}) {
+			print CGI::checkbox(
+				-name    => "showProblemGrader",
+				-checked => $want{showProblemGrader},
+				-label   => $r->maketext("Show problem graders"),
 			);
 		}
 
@@ -2254,8 +2320,16 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript",
 				src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
 	}
+
 	print CGI::start_script({type=>"text/javascript",
 			src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
+
+	# This is for the problem grader
+	if ($self->{will}{showProblemGrader}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}),
+			CGI::end_script();
+	}
+
 	#This is for page specfific js
 	print CGI::start_script({type=>"text/javascript",
 			src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();

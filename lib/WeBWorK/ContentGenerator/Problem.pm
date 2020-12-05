@@ -18,6 +18,7 @@ package WeBWorK::ContentGenerator::Problem;
 #use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
 use  WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;  # not needed?
+use WeBWorK::ContentGenerator::Instructor::SingleProblemGrader;
 
 =head1 NAME
 
@@ -118,6 +119,15 @@ sub can_showCorrectAnswers {
 		$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")
 		;
 }
+
+sub can_showProblemGrader {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+
+	return ($authz->hasPermissions($User->user_id, "access_instructor_tools") &&
+		$authz->hasPermissions($User->user_id, "score_sets"));
+}
+
 sub can_showAnsGroupInfo {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
@@ -556,7 +566,7 @@ sub pre_header_initialize {
 	my $displayMode               = $r->param("displayMode") || $user->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay                 = $r->param("redisplay");
 	my $submitAnswers             = $r->param("submitAnswers");
-	my $checkAnswers              = $r->param("checkAnswers");
+	my $checkAnswers              = $r->param("checkAnswers") || $r->param("saveGrade");
 	my $previewAnswers            = $r->param("previewAnswers");
 	my $requestNewSeed            = $r->param("requestNewSeed") // 0;
 
@@ -612,18 +622,22 @@ sub pre_header_initialize {
 	#       needs to be treated as if it is not set.
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
+		showCorrectAnswers => $r->param('showCorrectAnswers') || $r->param('showProblemGrader')
+		                      || $ce->{pg}->{options}->{showCorrectAnswers},
+		                      # showProblemGrader implies showCorrectAnswers
+		                      # This is a convenience for grading.
+		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showAnsGroupInfo     => $r->param('showAnsGroupInfo') || $ce->{pg}->{options}->{showAnsGroupInfo},
 		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
 		showPGInfo         => $r->param('showPGInfo') || $ce->{pg}->{options}->{showPGInfo},
 		showResourceInfo   => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
-		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints}
-		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
+		showHints          => $r->param("showHints") || $ce->{pg}->{options}{use_knowls_for_hints}
+		                      || $ce->{pg}->{options}->{showHints}, #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}
-							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
-	        useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
-	        useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
+		                      || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
+		useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
+		useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
+		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -633,9 +647,10 @@ sub pre_header_initialize {
 	my %must = (
 		showOldAnswers     => 0,
 		showCorrectAnswers => 0,
-		showAnsGroupInfo     => 0,
+		showProblemGrader  => 0,
+		showAnsGroupInfo   => 0,
 		showAnsHashInfo    => 0,
-		showPGInfo		   => 0,
+		showPGInfo         => 0,
 		showResourceInfo   => 0,
 		showHints          => 0,
 		showSolutions      => 0,
@@ -643,30 +658,31 @@ sub pre_header_initialize {
 		checkAnswers       => 0,
 		showMeAnother      => 0,
 		getSubmitButton    => 0,
-	    useMathView        => 0,
-	    useWirisEditor     => 0,
-	    useMathQuill       => 0,
+		useMathView        => 0,
+		useWirisEditor     => 0,
+		useMathQuill       => 0,
 	);
 
 	# does the user have permission to use certain options?
 	my @args = ($user, $effectiveUser, $set, $problem);
 
 	my %can = (
-		showOldAnswers           => $self->can_showOldAnswers(@args),
-		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
-		showAnsGroupInfo         => $self->can_showAnsGroupInfo(@args),
-		showAnsHashInfo          => $self->can_showAnsHashInfo(@args),
-		showPGInfo           	 => $self->can_showPGInfo(@args),
-		showResourceInfo         => $self->can_showResourceInfo(@args),
-		showHints                => $self->can_showHints(@args),
-		showSolutions            => $self->can_showSolutions(@args),
-		recordAnswers            => $self->can_recordAnswers(@args, 0),
-		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
-		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
-		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-	    useMathView              => $self->can_useMathView(@args),
-	    useWirisEditor           => $self->can_useWirisEditor(@args),
-	    useMathQuill              => $self->can_useMathQuill(@args),
+		showOldAnswers     => $self->can_showOldAnswers(@args),
+		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
+		showProblemGrader  => $self->can_showProblemGrader(@args),
+		showAnsGroupInfo   => $self->can_showAnsGroupInfo(@args),
+		showAnsHashInfo    => $self->can_showAnsHashInfo(@args),
+		showPGInfo         => $self->can_showPGInfo(@args),
+		showResourceInfo   => $self->can_showResourceInfo(@args),
+		showHints          => $self->can_showHints(@args),
+		showSolutions      => $self->can_showSolutions(@args),
+		recordAnswers      => $self->can_recordAnswers(@args, 0),
+		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother      => $self->can_showMeAnother(@args, $submitAnswers),
+		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
+		useMathView        => $self->can_useMathView(@args),
+		useWirisEditor     => $self->can_useWirisEditor(@args),
+		useMathQuill       => $self->can_useMathQuill(@args),
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -793,6 +809,10 @@ sub pre_header_initialize {
 
 	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
 	if ($self->{will}->{useMathQuill});
+
+	# Initialize the problem grader.
+	$self->{grader} = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader($r, $pg, $problem, $formFields)
+	if $self->{will}{showProblemGrader};
 
 	#### process and log answers ####
 	$self->{scoreRecordedMessage} = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
@@ -1296,6 +1316,18 @@ sub output_message{
 	return "";
 }
 
+# output_grader subroutine
+
+# displays the problem grader if the user has permissions to grade problems
+
+sub output_grader {
+	my $self = shift;
+
+	$self->{grader}->insertGrader if $self->{will}{showProblemGrader};
+
+	return "";
+}
+
 # output_editorLink subroutine
 
 # processes and prints out the correct link to the editor of the current problem
@@ -1394,6 +1426,24 @@ sub output_checkboxes{
 			:
 			{
 				-name    => "showCorrectAnswers",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	if ($can{showProblemGrader}) {
+		print WeBWorK::CGI_labeled_input(
+			-type        => "checkbox",
+			-id          => "showProblemGrader_id",
+			-label_text  => $r->maketext("ProblemGrader"),
+			-input_attr  => $will{showProblemGrader} ?
+			{
+				-name    => "showProblemGrader",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showProblemGrader",
 				-value   => 1,
 			}
 		),"&nbsp;";
@@ -1522,10 +1572,10 @@ sub output_checkboxes{
 	  }
 	}
 
-
-	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or
-	    $can{showHints} or $can{showSolutions} or # needed to put buttons on newline
-	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
+	# needed to put buttons on newline
+	if ($can{showCorrectAnswers} or $can{showProblemGrader} or $can{showAnsGroupInfo} or
+		$can{showHints} or $can{showSolutions} or $can{showAnsHashInfo} or
+		$can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
 
@@ -1864,7 +1914,7 @@ sub output_comments{
 		    $comment = CGI::escapeHTML($comment);
 		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 		   		    print CGI::start_div({id=>"answerComment", class=>"answerComments"});
-		    print CGI::b("Instructor Comment:"),  CGI::br();
+		    print CGI::b($r->maketext("Instructor Comment:")),  CGI::br();
 		    print $comment;
 		    print <<EOS;
 				<script type="text/javascript">
@@ -2267,6 +2317,12 @@ sub output_JS{
 			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
 		}
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
+	}
+
+	# This is for the problem grader
+	if ($self->{will}{showProblemGrader}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}),
+			CGI::end_script();
 	}
 
 	# This is for any page specific js.  Right now its just used for achievement popups

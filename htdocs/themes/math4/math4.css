@@ -1277,6 +1277,19 @@ table#grades_table pre{
     padding-bottom:5px;
 }
 
+.problem-grader-table {
+	border-collapse: separate;
+	border-spacing: 2px
+}
+
+.problem-grader-table input {
+	margin-left: 0px;
+}
+
+.problem-grader-table .preview {
+	margin-top: 2px;
+}
+
 .tab-pane {
     margin-bottom:10px;
 }
