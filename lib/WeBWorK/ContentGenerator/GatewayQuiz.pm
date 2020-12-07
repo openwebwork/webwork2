@@ -904,7 +904,7 @@ sub pre_header_initialize {
 	my $displayMode      = $User->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay        = $r->param("redisplay");
 	my $submitAnswers    = $r->param("submitAnswers") // 0;
-	my $checkAnswers     = $r->param("checkAnswers") // $r->param("saveGrade") // 0;
+	my $checkAnswers     = $r->param("checkAnswers") // 0;
 	my $previewAnswers   = $r->param("previewAnswers") // 0;
 
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
@@ -1077,8 +1077,6 @@ sub pre_header_initialize {
 
 	my @problems = ();
 	my @pg_results = ();
-	my @instructor_comments = ();
-	my @problem_graders = ();
 	# pg errors are stored here; initialize it to empty to start
 	$self->{errors} = [ ];
 
@@ -1117,25 +1115,11 @@ sub pre_header_initialize {
 				$ProblemN);
 			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
 			if ($self->{will}->{useMathQuill});
-
-			# Initialize the problem graders for the problem.
-			if ($self->{will}{showProblemGrader}) {
-				$problem_grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader($r, $pg, $ProblemN, $formFields);
-			} else {
-				$problem_grader = 0;
-			}
-
-			# Get instructor comments for the problem if any.
-			$instructor_comment = $self->get_instructor_comment($ProblemN);
 		}
 		push(@pg_results, $pg);
-		push(@problem_graders, $problem_grader);
-		push(@instructor_comments, $instructor_comment);
 	}
 	$self->{ra_problems} = \@problems;
 	$self->{ra_pg_results}=\@pg_results;
-	$self->{problem_graders} = \@problem_graders;
-	$self->{instructor_comments} = \@instructor_comments;
 
 	$self->{startProb} = $startProb;
 	$self->{endProb} = $endProb;
@@ -1255,8 +1239,6 @@ sub body {
 
 	my @problems = @{$self->{ra_problems}};
 	my @pg_results = @{$self->{ra_pg_results}};
-	my @instructor_comments = @{$self->{instructor_comments}};
-	my @problem_graders = @{$self->{problem_graders}};
 	my @pg_errors = @{$self->{errors}};
 	my $requestedVersion = $self->{requestedVersion};
 
@@ -2008,8 +1990,6 @@ sub body {
 
 		foreach my $i (0 .. $#pg_results) {
 			my $pg = $pg_results[$probOrder[$i]];
-			my $instructor_comment = $instructor_comments[$probOrder[$i]];
-			my $problem_grader = $problem_graders[$probOrder[$i]];
 			$problemNumber++;
 
 			if ($i >= $startProb && $i <= $endProb) {
@@ -2046,11 +2026,10 @@ sub body {
 				}
 
 				print CGI::start_div({class=>"gwProblem"});
-				my $i1 = $i+1;
-				my $pv = $problems[$probOrder[$i]]->value() ? $problems[$probOrder[$i]]->value() : 1;
 				print CGI::div({-id=>"prob$i"},"");
 				print CGI::h2($r->maketext("Problem [_1].",$problemNumber)), $recordMessage;
 
+				my $instructor_comment = $self->get_instructor_comment($problems[$probOrder[$i]]);
 				if ($instructor_comment) {
 					print CGI::start_div({ id => "answerComment", class => "answerComments" });
 					print CGI::b($r->maketext("Instructor Comment:")),  CGI::br();
@@ -2064,7 +2043,12 @@ sub body {
 
 				print $resultsTable if $resultsTable;
 
-				$problem_grader->insertGrader if $problem_grader;
+				# Initialize the problem graders for the problem.
+				if ($self->{will}{showProblemGrader}) {
+					my $problem_grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader(
+						$self->r, $pg, $problems[$probOrder[$i]]);
+					$problem_grader->insertGrader;
+				}
 
 				print CGI::end_div();
 				# finally, store the problem status for
@@ -2074,7 +2058,6 @@ sub body {
 
 				print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 			} else {
-				my $i1 = $i+1;
 				# keep the jump to anchors so that jumping to
 				#    problem number 6 still works, even if
 				#    we're viewing only problems 5-7, etc.

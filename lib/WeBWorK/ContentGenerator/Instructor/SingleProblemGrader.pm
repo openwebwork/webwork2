@@ -32,13 +32,14 @@ use strict;
 use warnings;
 
 sub new {
-	my ($class, $r, $pg, $userProblem, $formFields) = @_;
+	my ($class, $r, $pg, $userProblem) = @_;
 	$class = ref($class) ? ref($class) : $class;
 
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
-	my $courseName = $urlpath->arg("courseID");
-	my $setID = $urlpath->arg("setID");
+	my $courseID = $urlpath->arg("courseID");
+	my $setID = $userProblem->set_id;
+	my $versionID = ref($userProblem) =~ /::ProblemVersion/ ? $userProblem->version_id : 0;
 	my $studentID = $userProblem->user_id;
 	my $problemID = $userProblem->problem_id;
 
@@ -46,32 +47,20 @@ sub new {
 	my $recordedScore = $userProblem->status;
 
 	# Retrieve the latest past answer and comment (if any).
-	my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $studentID, $setID, $problemID);
+	my $userPastAnswerID = $db->latestProblemPastAnswer($courseID, $studentID,
+		$setID . ($versionID ? ",v$versionID" : ""), $problemID);
 	my $pastAnswer = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
 	my $comment = $pastAnswer ? $pastAnswer->comment_string : "";
 
-	# Save the grade and comment if this is a saveGrade submission.
-	if ($r->param('saveGrade')) {
-		$recordedScore = $formFields->{"problem$problemID.score"} / 100;
-		$userProblem->status($recordedScore);
-		if (ref($userProblem) =~ /.*::ProblemVersion$/) {
-			$db->putProblemVersion($userProblem);
-		} else {
-			$db->putUserProblem($userProblem);
-		}
-
-		if ($pastAnswer) {
-			$comment = $formFields->{"problem$problemID.comment"};
-			$pastAnswer->comment_string($comment);
-			$db->putPastAnswer($pastAnswer);
-		}
-	}
-
 	my $self = {
 		pg => $pg,
-		prob_id => "problem$problemID",
+		course_id => $courseID,
+		student_id => $studentID,
+		problem_id => $problemID,
+		set_id => $setID,
+		version_id => $versionID,
 		recorded_score => $recordedScore,
-		have_past_answer => $pastAnswer ? 1 : 0,
+		past_answer_id => $userPastAnswerID // 0,
 		comment_string => $comment,
 		maketext => WeBWorK::Localize::getLoc($r->ce->{language})
 	};
@@ -110,8 +99,8 @@ sub insertGrader {
 				CGI::td(CGI::input({ type => 'number',
 							min => 0, max => 100, autocomplete => "off",
 							class => 'answer-part-score',
-							name => "$self->{prob_id}.$self->{pg}{flags}{ANSWER_ENTRY_ORDER}[$part].score",
-							data_prob_id => $self->{prob_id},
+							id => "score_problem$self->{problem_id}_$self->{pg}{flags}{ANSWER_ENTRY_ORDER}[$part]",
+							data_problem_id => $self->{problem_id},
 							data_answer_labels => '["' . join('","', @{$self->{pg}{flags}{ANSWER_ENTRY_ORDER}}) . '"]',
 							data_weight => $weights[$part],
 							value => $scores[$part],
@@ -124,30 +113,36 @@ sub insertGrader {
 	# Total problem score
 	print CGI::Tr({ align => "left" },
 		CGI::th($self->{maketext}("Problem Score (%):")) .
-		CGI::td(CGI::input({ type => 'number', name => "$self->{prob_id}.score", class => 'problem-score',
+		CGI::td(CGI::input({ type => 'number', id => "score_problem$self->{problem_id}", class => 'problem-score',
 					min => 0, max => 100, autocomplete => "off",
+					data_problem_id => $self->{problem_id},
 					value => wwRound(0, $self->{recorded_score} * 100), size => 5 }))
 	);
 
 	# Instructor comment
-	if ($self->{have_past_answer}) {
+	if ($self->{past_answer_id}) {
 		print CGI::Tr({ valign => "top", align => "left" },
 			CGI::th($self->{maketext}("Comment:")) .
-			CGI::td(CGI::textarea({ name => "$self->{prob_id}.comment",
+			CGI::td(CGI::textarea({ id => "comment_problem$self->{problem_id}", class => 'grader-problem-comment',
+						data_problem_id => $self->{problem_id},
 						value => $self->{comment_string}, rows => 3, cols => 30 }) .
 				CGI::br() .
-				CGI::input({ class => 'preview btn', type => 'button', name => "$self->{prob_id}.preview",
-						value => "Preview Comment" }))
+				CGI::input({ class => 'preview btn', type => 'button',
+						value => $self->{maketext}("Preview Comment") }))
 		);
 	}
 
 	# Save button
 	print CGI::Tr({ align => "left" },
-		CGI::td([WeBWorK::CGI_labeled_input(-type => "submit", -id => "saveGrade_id",
-					-input_attr => {
-						-formtarget => "_self", -name => "saveGrade",
-						-value => $self->{maketext}("Save")
-					}), "&nbsp;"])
+		CGI::td([CGI::input({ class => 'save-grade btn', type => 'button', id => "save_grade_problem$self->{problem_id}",
+						data_course_id => $self->{course_id},
+						data_student_id => $self->{student_id},
+						data_set_id => $self->{set_id},
+						data_version_id => $self->{version_id},
+						data_problem_id => $self->{problem_id},
+						data_past_answer_id => $self->{past_answer_id},
+						value => "Save" }),
+				CGI::div({ id => "grader_messages_problem$self->{problem_id}" , class => "problem-grader-message" } , "")])
 	);
 	print CGI::end_table();
 	print CGI::hr();

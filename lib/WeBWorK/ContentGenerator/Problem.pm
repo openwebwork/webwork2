@@ -566,7 +566,7 @@ sub pre_header_initialize {
 	my $displayMode               = $r->param("displayMode") || $user->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay                 = $r->param("redisplay");
 	my $submitAnswers             = $r->param("submitAnswers");
-	my $checkAnswers              = $r->param("checkAnswers") || $r->param("saveGrade");
+	my $checkAnswers              = $r->param("checkAnswers");
 	my $previewAnswers            = $r->param("previewAnswers");
 	my $requestNewSeed            = $r->param("requestNewSeed") // 0;
 
@@ -809,10 +809,6 @@ sub pre_header_initialize {
 
 	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
 	if ($self->{will}->{useMathQuill});
-
-	# Initialize the problem grader.
-	$self->{grader} = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader($r, $pg, $problem, $formFields)
-	if $self->{will}{showProblemGrader};
 
 	#### process and log answers ####
 	$self->{scoreRecordedMessage} = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
@@ -1323,7 +1319,11 @@ sub output_message{
 sub output_grader {
 	my $self = shift;
 
-	$self->{grader}->insertGrader if $self->{will}{showProblemGrader};
+	if ($self->{will}{showProblemGrader}) {
+		my $grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader(
+			$self->r, $self->{pg}, $self->{problem});
+		$grader->insertGrader if $self->{will}{showProblemGrader};
+	}
 
 	return "";
 }

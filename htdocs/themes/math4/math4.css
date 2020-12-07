@@ -1290,6 +1290,18 @@ table#grades_table pre{
 	margin-top: 2px;
 }
 
+.problem-grader-table .problem-grader-message {
+	padding: 2px;
+	font-weight: bold;
+}
+
+.problem-grader-table .problem-grader-message.ResultsWithoutError { background-color: #88ff88; }
+.problem-grader-table .problem-grader-message.ResultsWithError { background-color: #d69191; }
+.problem-grader-table .problem-grader-message.ResultsWithError {
+	border-radius: 3px;
+	color: black;
+}
+
 .tab-pane {
     margin-bottom:10px;
 }
