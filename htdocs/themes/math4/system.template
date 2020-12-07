@@ -239,9 +239,12 @@ var tabberOptions = {manualStartup:true};
 				  <!--#output_comments-->
 			</div><div class="span2"></div></div>
 			<!--#endif-->
-				
 
-
+			<!--#if can="output_grader"-->
+			<div class="row-fluid"><div id="output_grader" class="span10">
+				<!--#output_grader-->
+			</div><div class="span2"></div></div>
+			<!--#endif-->
 
 			<!--#if can="output_form_start"-->
 			<div class="row-fluid">
@@ -251,7 +254,7 @@ var tabberOptions = {manualStartup:true};
 				     <!--#output_hidden_info-->
 			    <!--#endif-->
 
-				<!--#if can="output_problem_body" can="output_message" can="output_grader" can="output_editorLink"-->
+				<!--#if can="output_problem_body" can="output_message" can="output_editorLink"-->
 					<div class="problem">
 						<!--#if can="output_problem_body"-->
 						<div id="problem_body" class="problem-content" <!--#output_problem_lang_and_dir--> >
@@ -260,9 +263,6 @@ var tabberOptions = {manualStartup:true};
 						<!--#endif-->
 						<!--#if can="output_message"-->
 							<!--#output_message-->
-						<!--#endif-->
-						<!--#if can="output_grader"-->
-							<!--#output_grader-->
 						<!--#endif-->
 						<!--#if can="output_editorLink"-->
 							<!--#output_editorLink-->

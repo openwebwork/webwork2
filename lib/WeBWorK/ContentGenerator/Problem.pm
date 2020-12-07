@@ -1206,6 +1206,7 @@ sub body {
 	$self ->output_tag_info;
 	$self ->output_custom_edit_message;
 	$self ->output_summary;
+	$self ->output_grader;
 	$self ->output_hidden_info;
 	$self ->output_form_start();
 	$self ->output_problem_body;

@@ -90,7 +90,7 @@ $(function(){
 						},
 						error: function (data) {
 							messageArea.addClass('ResultsWithError');
-							messageArea.html('<div>Error saving score.</div>' +
+							messageArea.html('<div>The score was saved, but there was an error saving the comment.</div>' +
 								'<div>' + basicWebserviceURL + ' response: ' + data.statusText + '</div>');
 							messageArea.removeClass('ResultsWithError', 3000);
 						},
