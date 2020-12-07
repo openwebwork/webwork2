@@ -1139,10 +1139,8 @@ sub pre_header_initialize {
 		@mergedProblems = $db->getAllMergedProblemVersions($effectiveUserName, $setName, $setVersionNumber);
 	}
 
-	foreach my $problemNumber (sort {$a<=>$b } @problemNumbers) {
+	for my $pIndex (0 .. $#problemNumbers) {
 
-		# pIndex numbers from zero
-		my $pIndex = $problemNumber - 1;
 		if ( ! defined( $mergedProblems[$pIndex] ) ) {
 			$self->{invalidSet} = "One or more of the problems " .
 				"in this set have not been assigned to you.";
@@ -1160,9 +1158,8 @@ sub pre_header_initialize {
 		
 		push( @problems, $ProblemN );
 
-		# if we don't have to translate this problem, just save the 
-		#    problem number
-		my $pg = $problemNumber;
+		# if we don't have to translate this problem, just store a placeholder in the array.
+		my $pg = 0;
 		# this is the actual translation of each problem.  errors are 
 		#    stored in @{$self->{errors}} in each case
 		if ( (grep /^$pIndex$/, @probsToDisplay) || $submitAnswers ) {
