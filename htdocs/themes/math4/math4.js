@@ -108,6 +108,8 @@ $(function(){
     //Problem page
     $('.currentProblem').addClass('active');
 
+    $('.student-nav-button').tooltip({trigger: 'hover'});
+
     //Reformats the problem_set_table.  
     $('#problem-sets-form').addClass('form-inline');
     $('.body:has(.problem_set_table)').addClass('problem_set_body');

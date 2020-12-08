@@ -290,6 +290,10 @@ h2.page-title {
 	
 }
 
+.problem-nav .user-nav {
+	margin-bottom: 5px;
+}
+
 /* Message section */
 
 .Message {

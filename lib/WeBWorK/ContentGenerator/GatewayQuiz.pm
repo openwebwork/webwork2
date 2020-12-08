@@ -937,10 +937,9 @@ sub pre_header_initialize {
 	my %want = (
 		showOldAnswers     => $User->showOldAnswers ne '' ?
 			$User->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers},
+		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
 		showCorrectAnswers => ($r->param("showCorrectAnswers") || $r->param('showProblemGrader') ||
 			$ce->{pg}->{options}->{showCorrectAnswers}) && ($submitAnswers || $checkAnswers),
-			# showProblemGrader implies showCorrectAnswers
-			# This is a convenience for grading.
 		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showHints          => $r->param("showHints") || $ce->{pg}->{options}->{showHints},
 		showSolutions      => ($r->param("showSolutions") || $ce->{pg}->{options}->{showSolutions}) &&
@@ -2010,7 +2009,7 @@ sub body {
 						$pg->{flags}->{showPartialCorrectAnswers} && $canShowProblemScores,
 						$canShowProblemScores, 1);
 
-				} elsif ($will{checkAnswers}) {
+				} elsif ($will{checkAnswers} || $will{showProblemGrader}) {
 					$recordMessage = CGI::span({class=>"resultsWithError"},
 						$r->maketext("ANSWERS ONLY CHECKED -- "),
 						$r->maketext("ANSWERS NOT RECORDED"));
@@ -2086,7 +2085,7 @@ sub body {
 		if ($can{showCorrectAnswers}) {
 			print CGI::checkbox(
 				-name    => "showCorrectAnswers",
-				-checked => $want{showCorrectAnswers},
+				-checked => $want{showCorrectAnswers} || $want{showProblemGrader},
 				-label   => $r->maketext("Show correct answers"),
 			);
 		}

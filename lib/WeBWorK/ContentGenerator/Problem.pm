@@ -622,10 +622,9 @@ sub pre_header_initialize {
 	#       needs to be treated as if it is not set.
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
+		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
 		showCorrectAnswers => $r->param('showCorrectAnswers') || $r->param('showProblemGrader')
 		                      || $ce->{pg}->{options}->{showCorrectAnswers},
-		                      # showProblemGrader implies showCorrectAnswers
-		                      # This is a convenience for grading.
 		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showAnsGroupInfo     => $r->param('showAnsGroupInfo') || $ce->{pg}->{options}->{showAnsGroupInfo},
 		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
@@ -1061,9 +1060,86 @@ sub nav {
 	return "" if ( $self->{invalidSet} );
 
 	my $courseID = $urlpath->arg("courseID");
-	my $setID = $self->{set}->set_id if !($self->{invalidSet});
+	my $setID = $self->{set}->set_id;
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
+	my $userID = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
+
+	# Set up a student navigation for those that have permission to act as a student.
+	my $userNav = "";
+	if ($authz->hasPermissions($userID, "become_student") && $eUserID ne $userID) {
+		# Find all users for this set (except the current user).
+		my @users = grep { $_ ne $userID } $db->listSetUsers($setID);
+		my @userRecords = ();
+		for (@users) {
+			my $userObj = $db->getUser($_);
+			next unless $userObj;
+			$userObj->{displayName} = ($userObj->last_name || $userObj->first_name
+				? $userObj->last_name . ", " . $userObj->first_name
+				: $userObj->user_id);
+			push (@userRecords, $userObj);
+		}
+		# Sort by last name, then first name, then user_id.
+		@userRecords = sort {
+			(lc($a->last_name) cmp lc($b->last_name)) ||
+			(lc($a->first_name) cmp lc($b->first_name)) ||
+			(lc($a->user_id) cmp lc($b->user_id))
+		} @userRecords;
+
+		# Find the previous, current, and next users.
+		my $currentUserIndex = 0;
+		for (0 .. $#userRecords) {
+			$currentUserIndex = $_, last if $userRecords[$_]->user_id eq $eUserID;
+		}
+		my $prevUser = $currentUserIndex > 0 ? $userRecords[$currentUserIndex - 1] : 0;
+		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[$currentUserIndex + 1] : 0;
+
+		my $problemPage = $urlpath->newFromModule(__PACKAGE__, $r,
+			courseID => $courseID, setID => $setID, problemID => $problemID);
+
+		# Set up the student nav.
+		$userNav = join("",
+			CGI::start_div({ class => 'user-nav' }),
+			$prevUser
+			? CGI::a({
+					href => $self->systemLink($problemPage, params => { effectiveUser => $prevUser->user_id,
+							showProblemGrader => $self->{will}{showProblemGrader} }),
+					data_toggle => "tooltip", data_placement => "top",
+					title => $prevUser->{displayName},
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Previous Student"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Student")),
+			$args->{separator},
+			CGI::start_span({ class => "btn-group student-nav-selector" }),
+			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
+				$userRecords[$currentUserIndex]{displayName} . " " . CGI::span({ class => "caret" }, "")),
+			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
+			(
+				map {
+					CGI::li(
+						CGI::a({ tabindex => "-1",
+							href => $self->systemLink($problemPage, params => { effectiveUser => $_->user_id,
+									showProblemGrader => $self->{will}{showProblemGrader} }) },
+						$_->{displayName})
+					)
+				} @userRecords
+			),
+			CGI::end_ul(),
+			CGI::end_span(),
+			$args->{separator},
+			$nextUser
+			? CGI::a({
+					href => $self->systemLink($problemPage, params => { effectiveUser => $nextUser->user_id,
+							showProblemGrader => $self->{will}{showProblemGrader} }),
+					data_toggle => "tooltip", data_placement => "top",
+					title => $nextUser->{displayName},
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Next Student"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Next Student")),
+			CGI::end_div()
+		);
+	}
+
 	my $mergedSet = $db->getMergedSet($eUserID,$setID);
 	return "" unless $mergedSet;
 
@@ -1099,8 +1175,6 @@ sub nav {
 		$nextID = '' if ($isJitarSet && $nextID
 				 && !$authz->hasPermissions($eUserID, "view_unopened_sets")
 				 && is_jitar_problem_closed($db,$ce, $eUserID,$setID,$nextID));
-
-
 	}
 
 	my @links;
@@ -1132,7 +1206,9 @@ sub nav {
 	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
-	return $self->navMacro($args, $tail, @links);
+	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
+		if defined $self->{will}{showProblemGrader};
+	return $userNav . $self->navMacro($args, $tail, @links);
 }
 
 sub path {
@@ -1323,7 +1399,7 @@ sub output_grader {
 	if ($self->{will}{showProblemGrader}) {
 		my $grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader(
 			$self->r, $self->{pg}, $self->{problem});
-		$grader->insertGrader if $self->{will}{showProblemGrader};
+		$grader->insertGrader;
 	}
 
 	return "";
@@ -1982,8 +2058,8 @@ sub output_summary{
 		);
 	    print $results;
 
-	} elsif ($will{checkAnswers}) {
-	    # print this if user previewed answers
+	} elsif ($will{checkAnswers} || $self->{will}{showProblemGrader}) {
+	    # print this if user checked answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg,
 	    	1, # showAttemptAnswers
