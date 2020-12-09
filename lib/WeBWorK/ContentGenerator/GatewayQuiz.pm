@@ -1155,16 +1155,118 @@ sub path {
 
 sub nav {
 	my ($self, $args) = @_;
-
 	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my @links = ("Problem Sets" , "$root/$courseName", "navUp");
-	my $tail = "";
+	my $db = $r->db;
+	my $user = $r->param("user");
+	my $effectiveUser = $r->param('effectiveUser');
 
-	return $self->navMacro($args, $tail, @links);
+	# Set up and display a student navigation for those that have permission to act as a student.
+	if ($r->authz->hasPermissions($user, "become_student") && $effectiveUser ne $user) {
+		my $setName = $self->{set}->set_id;
+		my $setVersion = $self->{set}->version_id;
+		my $courseName = $self->{ce}{courseName};
+
+		# Find all users that have taken a version of this set (excluding the current user).
+		my @users = grep { $_ ne $user } $db->listSetUsers($setName);
+		my @userRecords = ();
+		for (@users) {
+			my $userObj = $db->getUser($_);
+			next unless $userObj;
+			my @userSetVersions = $db->listSetVersions($_, $setName);
+			next unless @userSetVersions;
+			$userObj->{displayName} = ($userObj->last_name || $userObj->first_name
+				? $userObj->last_name . ", " . $userObj->first_name
+				: $userObj->user_id);
+			$userObj->{setVersions} = \@userSetVersions;
+			push (@userRecords, $userObj);
+		}
+		# Sort by last name, then first name, then user_id.
+		@userRecords = sort {
+			(lc($a->last_name) cmp lc($b->last_name)) ||
+			(lc($a->first_name) cmp lc($b->first_name)) ||
+			(lc($a->user_id) cmp lc($b->user_id))
+		} @userRecords;
+
+		# Find the previous, current, and next test.
+		my ($currentUserIndex, $currentVersionIndex) = (0, 0);
+		for (0 .. $#userRecords) {
+			$currentUserIndex = $_, last if $userRecords[$_]->user_id eq $effectiveUser;
+		}
+		for (0 .. $#{$userRecords[$currentUserIndex]->{setVersions}}) {
+			$currentVersionIndex = $_, last
+			if $userRecords[$currentUserIndex]->{setVersions}[$_] == $setVersion;
+		}
+		my ($prevUser, $prevVersion, $nextUser, $nextVersion) = (0, 0, 0, 0);
+		if ($currentVersionIndex > 0) {
+			$prevUser = $userRecords[$currentUserIndex];
+			$prevVersion = $prevUser->{setVersions}[$currentVersionIndex - 1];
+		} elsif ($currentUserIndex > 0) {
+			$prevUser = $userRecords[$currentUserIndex - 1];
+			$prevVersion = $prevUser->{setVersions}[$#{$prevUser->{setVersions}}];
+		}
+		if ($currentVersionIndex < $#{$userRecords[$currentUserIndex]{setVersions}}) {
+			$nextUser = $userRecords[$currentUserIndex];
+			$nextVersion = $nextUser->{setVersions}[$currentVersionIndex + 1];
+		} elsif ($currentUserIndex < $#userRecords) {
+			$nextUser = $userRecords[$currentUserIndex + 1];
+			$nextVersion = $nextUser->{setVersions}[0];
+		}
+
+		my $setPage = $r->urlpath->newFromModule(__PACKAGE__, $r,
+			courseID => $courseName, setID => "$setName,v%s");
+
+		# Set up the student nav.
+		print join("",
+			CGI::start_div({ class => 'user-nav' }),
+			$prevUser
+			? CGI::a({
+					href => sprintf($self->systemLink($setPage, params => { effectiveUser => $prevUser->user_id,
+								currentPage => $self->{pageNumber},
+								showProblemGrader => $self->{will}{showProblemGrader} }), $prevVersion),
+					data_toggle => "tooltip", data_placement => "top",
+					title => "$prevUser->{displayName} (test $prevVersion)",
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Previous Test"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Test")),
+			" ",
+			CGI::start_span({ class => "btn-group student-nav-selector" }),
+			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
+				$userRecords[$currentUserIndex]{displayName} .
+				" (test $userRecords[$currentUserIndex]{setVersions}[$currentVersionIndex]) " .
+				CGI::span({ class => "caret" }, "")),
+			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
+			(
+				map {
+					my $user = $_;
+					map {
+						CGI::li(
+							CGI::a({ tabindex => "-1",
+								href => sprintf($self->systemLink($setPage, params => { effectiveUser => $user->user_id,
+											currentPage => $self->{pageNumber},
+											showProblemGrader => $self->{will}{showProblemGrader} }), $_) },
+							"$user->{displayName} (test $_)" )
+						)
+					} @{$user->{setVersions}}
+				} @userRecords
+			),
+			CGI::end_ul(),
+			CGI::end_span(),
+			" ",
+			$nextUser
+			? CGI::a({
+					href => sprintf($self->systemLink($setPage, params => { effectiveUser => $nextUser->user_id,
+								currentPage => $self->{pageNumber},
+								showProblemGrader => $self->{will}{showProblemGrader} }), $nextVersion),
+					data_toggle => "tooltip", data_placement => "top",
+					title => "$nextUser->{displayName} (test $nextVersion)",
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Next Test"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Next Test")),
+			CGI::end_div()
+		);
+	}
+
+	return "";
 }
 
 sub body {
