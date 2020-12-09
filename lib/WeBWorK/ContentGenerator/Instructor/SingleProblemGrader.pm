@@ -100,7 +100,7 @@ sub insertGrader {
 
 		for my $part (0 .. $#scores) {
 			print CGI::Tr({ align => "left" },
-				CGI::th($self->maketext("Answer [_1] Score (%):", $part + 1) .
+				CGI::th($self->maketext("Answer [_1] Score (%):", $part + 1) . " " .
 					CGI::a({
 							class => 'help-popup', href => '#',
 							data_content => $self->maketext("The initial value is the answer sub score for the " .

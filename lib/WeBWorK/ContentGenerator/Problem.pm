@@ -1069,30 +1069,29 @@ sub nav {
 	my $userNav = "";
 	if ($authz->hasPermissions($userID, "become_student") && $eUserID ne $userID) {
 		# Find all users for this set (except the current user).
-		my @users = grep { $_ ne $userID } $db->listSetUsers($setID);
-		my @userRecords = ();
-		for (@users) {
-			my $userObj = $db->getUser($_);
-			next unless $userObj;
-			$userObj->{displayName} = ($userObj->last_name || $userObj->first_name
-				? $userObj->last_name . ", " . $userObj->first_name
-				: $userObj->user_id);
-			push (@userRecords, $userObj);
-		}
+		my @userRecords = $db->getUsers(grep { $_ ne $userID } $db->listSetUsers($setID));
+
 		# Sort by last name, then first name, then user_id.
 		@userRecords = sort {
-			(lc($a->last_name) cmp lc($b->last_name)) ||
-			(lc($a->first_name) cmp lc($b->first_name)) ||
-			(lc($a->user_id) cmp lc($b->user_id))
+			lc($a->last_name) cmp lc($b->last_name) ||
+			lc($a->first_name) cmp lc($b->first_name) ||
+			lc($a->user_id) cmp lc($b->user_id)
 		} @userRecords;
 
-		# Find the previous, current, and next users.
+		# Find the previous, current, and next users, and format the student names for display.
 		my $currentUserIndex = 0;
 		for (0 .. $#userRecords) {
-			$currentUserIndex = $_, last if $userRecords[$_]->user_id eq $eUserID;
+			$currentUserIndex = $_ if $userRecords[$_]->user_id eq $eUserID;
+			# Construct a display name.
+			$userRecords[$_]{displayName} = ($userRecords[$_]->last_name || $userRecords[$_]->first_name
+				? $userRecords[$_]->last_name . ", " . $userRecords[$_]->first_name
+				: $userRecords[$_]->user_id);
 		}
 		my $prevUser = $currentUserIndex > 0 ? $userRecords[$currentUserIndex - 1] : 0;
 		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[$currentUserIndex + 1] : 0;
+
+		# Mark the current user.
+		$userRecords[$currentUserIndex]{currentUser} = 1;
 
 		my $problemPage = $urlpath->newFromModule(__PACKAGE__, $r,
 			courseID => $courseID, setID => $setID, problemID => $problemID);
@@ -1111,18 +1110,21 @@ sub nav {
 			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Student")),
 			$args->{separator},
 			CGI::start_span({ class => "btn-group student-nav-selector" }),
-			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
+			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown", href => "#" },
 				$userRecords[$currentUserIndex]{displayName} . " " . CGI::span({ class => "caret" }, "")),
 			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
 			(
 				map {
 					CGI::li(
-						CGI::a({ tabindex => "-1",
+						CGI::a({ tabindex => "-1", style => $_->{currentUser} ? "background-color: #8F8" : "",
 							href => $self->systemLink($problemPage, params => { effectiveUser => $_->user_id,
 									showProblemGrader => $self->{will}{showProblemGrader} }) },
 						$_->{displayName})
 					)
-				} @userRecords
+				}
+				# Cap the number of students shown to at most 50 before and 50 after the current student.
+				@userRecords[($currentUserIndex < 50 ? 0 : $currentUserIndex - 50) ..
+					($currentUserIndex > $#userRecords - 50 ? $#userRecords : $currentUserIndex + 50)]
 			),
 			CGI::end_ul(),
 			CGI::end_span(),
