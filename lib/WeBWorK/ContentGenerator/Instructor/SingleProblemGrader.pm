@@ -69,6 +69,11 @@ sub new {
 	return $self;
 }
 
+sub maketext {
+	my $self = shift;
+	return &{$self->{maketext}}(@_);
+}
+
 # Output the problem grader.
 
 sub insertGrader {
@@ -95,7 +100,16 @@ sub insertGrader {
 
 		for my $part (0 .. $#scores) {
 			print CGI::Tr({ align => "left" },
-				CGI::th($self->{maketext}("Answer [_1] Score (%):", $part + 1)) .
+				CGI::th($self->maketext("Answer [_1] Score (%):", $part + 1) .
+					CGI::a({
+							class => 'help-popup', href => '#',
+							data_content => $self->maketext("The initial value is the answer sub score for the " .
+								"answer that is currently shown.  If this is modified, it will be used to compute " .
+								"the total problem score below.  This score is not saved, and will reset to the " .
+								"score for the shown answer if the page is reloaded."),
+							data_placement => 'top', data_toggle => 'popover'
+						}, '&#9072')
+				) .
 				CGI::td(CGI::input({ type => 'number',
 							min => 0, max => 100, autocomplete => "off",
 							class => 'answer-part-score',
@@ -105,14 +119,28 @@ sub insertGrader {
 							data_weight => $weights[$part],
 							value => $scores[$part],
 							size => 5 }) . "&nbsp" .
-					$self->{maketext}("<b>Weight:</b> [_1]%", wwRound(2, $weights[$part] * 100)))
+					$self->maketext("<b>Weight:</b> [_1]%", wwRound(2, $weights[$part] * 100)))
 			);
 		}
 	}
 
 	# Total problem score
 	print CGI::Tr({ align => "left" },
-		CGI::th($self->{maketext}("Problem Score (%):")) .
+		CGI::th(
+			$self->maketext("Problem Score (%):") . " " .
+			CGI::a({
+					class => 'help-popup', href => '#',
+					data_content => $self->maketext("The initial value is the currently saved score for this student.") . (
+						@{$self->{pg}{flags}{ANSWER_ENTRY_ORDER}} > 1
+						? " " . $self->maketext("This is the only part of the score that is actually saved. " .
+							"This is computed from the answer sub scores above using the weights shown if they " .
+							"are modified.  Alternatively, enter the score you want saved here " .
+							"(the above sub scores will be ignored).")
+						: ""
+					),
+					data_placement => 'top', data_toggle => 'popover'
+				}, '&#9072')
+		) .
 		CGI::td(CGI::input({ type => 'number', id => "score_problem$self->{problem_id}", class => 'problem-score',
 					min => 0, max => 100, autocomplete => "off",
 					data_problem_id => $self->{problem_id},
@@ -122,13 +150,13 @@ sub insertGrader {
 	# Instructor comment
 	if ($self->{past_answer_id}) {
 		print CGI::Tr({ valign => "top", align => "left" },
-			CGI::th($self->{maketext}("Comment:")) .
+			CGI::th($self->maketext("Comment:")) .
 			CGI::td(CGI::textarea({ id => "comment_problem$self->{problem_id}", class => 'grader-problem-comment',
 						data_problem_id => $self->{problem_id},
 						value => $self->{comment_string}, rows => 3, cols => 30 }) .
 				CGI::br() .
 				CGI::input({ class => 'preview btn', type => 'button',
-						value => $self->{maketext}("Preview Comment") }))
+						value => $self->maketext("Preview Comment") }))
 		);
 	}
 

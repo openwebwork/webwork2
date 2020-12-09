@@ -90,10 +90,10 @@ $(function(){
     //(loads older version of bootstrap?)
     // so we'll work around that for now
     if ($.fn.popover) {
-    	$('a.table-summary').popover({trigger : 'click'}).click(function (event) {
+    	$('a.table-summary').popover({trigger : 'focus'}).click(function (event) {
 		event.preventDefault();
 		});
-		$('a.help-popup').popover({trigger : 'click'}).click(function (event) {
+		$('a.help-popup').popover({trigger : 'focus'}).click(function (event) {
 		event.preventDefault();
 		}).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
     }
