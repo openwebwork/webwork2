@@ -1864,33 +1864,55 @@ sub body {
 		}
 	}
 
-	##### remaining output of test headers:
-	##### display timer or information about elapsed time, "printme" link,
-	##### and information about any recorded score if not submitAnswers or
-	##### checkAnswers
+	# Remaining output of test headers:
+	# Display timer or information about elapsed time, "printme" link,
+	# and information about any recorded score if not submitAnswers or
+	# checkAnswers.
 	if ($can{recordAnswersNextTime}) {
 
-		# print timer
-		my $timeLeft = $set->due_date() - $timeNow;  # this is in secs
-		# dont print the timer if there is over 24 hours because its kind of silly
+		my $timeLeft = $set->due_date() - $timeNow;    # This is in seconds
+
+		# Print the timer if there is less than 24 hours left.
 		if ($timeLeft < 86400) {
-			print CGI::div({-id=>"gwTimer"},"\n");
-			print CGI::start_form({-name=>"gwTimeData", -method=>"POST", -action=>$r->uri});
-			print CGI::hidden({-name=>"serverTime", -value=>$timeNow}), "\n";
-			print CGI::hidden({-name=>"serverDueTime", -value=>$set->due_date()}), "\n";
-			print CGI::end_form();
+			print CGI::div(
+				{
+					id                   => 'gwTimer',
+					class                => 'alert alert-warning p-1',
+					data_server_time     => $timeNow,
+					data_server_due_time => $set->due_date(),
+					data_grace_period    => $ce->{gatewayGracePeriod},
+					data_alert_title     => $r->maketext('Test Time Notification'),
+					data_alert_three     => $r->maketext(
+						'You have less than 90 seconds left to complete this '
+							. 'assignment. You should finish it soon!'
+					),
+					data_alert_two => '<div>'
+						. $r->maketext('You have less than 45 seconds left!')
+						. '</div><div>'
+						. $r->maketext('Press "Grade Test" soon!')
+						. '</div>',
+					data_alert_one => '<div>'
+						. $r->maketext('You are out of time!')
+						. '</div><div>'
+						. $r->maketext('Press "Grade Test" now!')
+						. '</div>',
+					$user ne $effectiveUser ? (data_acting => 1) : ()
+				},
+				# '00:00:00' is a placeholder that is replaced by the actual time remaining via javascript.
+				$r->maketext('Remaining time: [_1]', '00:00:00')
+			);
 		}
-		if ($timeLeft < 1
+		if ($timeLeft < 60
 			&& $timeLeft > 0
 			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
 		{
-			print CGI::div({ class => 'ResultsWithError d-inline-block mb-2' },
-				CGI::b($r->maketext("You have less than 1 minute to complete this test.") . "\n"));
+			print CGI::span({ class => "ResultsWithError d-inline-block mb-2" },
+				CGI::b($r->maketext("You have less than 1 minute to complete this test.")));
 		} elsif ($timeLeft <= 0
 			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
 		{
-			print CGI::div({ class => "ResultsWithError d-inline-block mb-2" },
-				CGI::b($r->maketext("You are out of time.  Press grade now!") . "\n"));
+			print CGI::span({ class => "ResultsWithError d-inline-block mb-2" },
+				CGI::b($r->maketext('You are out of time.  Press "Grade Test" now!')));
 		}
 		# if there are multiple attempts per version, indicate the
 		#    number remaining, and if we've submitted a multiple
@@ -1995,8 +2017,7 @@ sub body {
 
 		# hacks to use a javascript link to trigger previews and jump to
 		# subsequent pages of a multipage test
-		print CGI::hidden({-name=>'pageChangeHack', -value=>''}),
-			CGI::br();
+		print CGI::hidden({-name=>'pageChangeHack', -value=>''});
 		print CGI::hidden({-name=>'startTime', -value=>$startTime});
 		if ($numProbPerPage && $numPages > 1) {
 			print CGI::hidden({-name=>'newPage', -value=>''});
@@ -2016,7 +2037,7 @@ sub body {
 		for my $i (0 .. $#pg_results) {
 			my $pn = $i + 1;
 			if ($i >= $startProb && $i <= $endProb) {
-				push(@$probRow, CGI::a({-href=>"#", -onclick => "jumpTo($pn);return false;"}, $pn));
+				push(@$probRow, CGI::a({ href => "#", class => 'problem-jump-link', data_problem_number => $pn }, $pn));
 			} else {
 				push(@$probRow, $pn);
 			}
@@ -2099,7 +2120,9 @@ sub body {
 				}
 
 				print CGI::start_div({class=>"gwProblem"});
-				print CGI::div({-id=>"prob$i"}, $recordMessage);
+
+				# Output the jump to anchor.
+				print CGI::div({ id => "prob$i", tabindex => -1 }, $recordMessage);
 
 				# Output the problem header.
 				print CGI::h2($r->maketext("Problem [_1].", $problemNumber));
@@ -2153,12 +2176,7 @@ sub body {
 
 				print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 			} else {
-				# keep the jump to anchors so that jumping to
-				#    problem number 6 still works, even if
-				#    we're viewing only problems 5-7, etc.
-				print CGI::div({-id=>"prob$i"},""), "\n";
-				# and print out hidden fields with the current
-				#    last answers
+				# Print out hidden fields with the current last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $problemNumbers[$probOrder[$i]]) . '_';
 				my @curr_fields = grep {/^(?!previous).*$curr_prefix/} keys %{$self->{formFields}};
 				foreach my $curr_field (@curr_fields) {
@@ -2425,8 +2443,8 @@ sub output_JS{
 		print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '');
 	}
 
-	# This is for page specfific js
-	print CGI::script({ src => "$site_url/js/apps/GatewayQuiz/gateway.js" }, '');
+	#This is for page specfific js
+	print CGI::script({ src => "$site_url/js/apps/GatewayQuiz/gateway.js", defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
