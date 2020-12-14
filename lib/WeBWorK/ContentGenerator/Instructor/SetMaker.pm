@@ -1761,7 +1761,7 @@ sub output_JS {
   my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
   print qq!<script src="$webwork_htdocs_url/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui.js"></script>!;
+  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/jquery-ui-1.12.1.custom/jquery-ui.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
   print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
@@ -1799,7 +1799,7 @@ sub output_CSS {
 
 	#print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
 
-	print qq!<link href="$webwork_htdocs_url/vendor/jquery-ui-themes-1.12.1/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
+	print qq!<link href="$webwork_htdocs_url/css/vendor/jquery-ui-themes-1.12.1/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
 
 	print qq{<link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
 

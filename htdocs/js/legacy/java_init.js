@@ -7,5 +7,4 @@ function initWW(){
 }
 console.log("load intWW at line 8 of java_init.js");
 
-// this addOnLoad event is in ww_applet_support.js line 740.
 window.addEventListener("load", initWW);
