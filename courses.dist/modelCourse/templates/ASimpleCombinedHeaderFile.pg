@@ -7,7 +7,9 @@ DOCUMENT();
 loadMacros(
 	"PG.pl",
 	"PGbasicmacros.pl",
-
+	"PGML.pl",
+	# "source.pl",
+	"PGcourse.pl",
 );
 
 TEXT($BEGIN_ONE_COLUMN);
@@ -78,9 +80,9 @@ EOT
 #
 ####################################################
 
-BEGIN_TEXT
+BEGIN_PGML
 
-END_TEXT
+END_PGML
 
 
 TEXT($END_ONE_COLUMN);

@@ -77,7 +77,7 @@ use constant SUCCESS => (1 << 2);
 my %problib;	## This is configured in defaults.config
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1, 'achievements' => 1,
+	'headers' => 1, 'macros' => 1, 'email' => 1, 'graphics'=>1, '.svn' => 1, 'achievements' => 1,
 );
 
 sub prepare_activity_entry {

@@ -80,7 +80,7 @@ my %sqlParams = (
 	username => $database_username,
 	password => $database_password,
 	debug    => $database_debug,
-    ($ENABLE_UTF8MB)?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
+    ($ENABLE_UTF8MB4)?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
 	# kinda hacky, but needed for table dumping
 	mysql_path     => $externalPrograms{mysql},
 	mysqldump_path => $externalPrograms{mysqldump},

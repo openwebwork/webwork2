@@ -208,7 +208,7 @@ sub defineProblemEnvir {
 	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
 	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
 	$envir{externalCheckUrl}     = $ce->{externalPrograms}->{checkurl};
-	$envir{externalCurlCommand}  = $ce->{externalPrograms}->{curlCommand};
+	#$envir{externalCurlCommand}  = $ce->{externalPrograms}->{curl};
 	# Directories and URLs
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir

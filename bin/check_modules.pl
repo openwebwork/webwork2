@@ -120,6 +120,7 @@ my @modulesList = qw(
 	XML::Writer
 	XMLRPC::Lite
 	YAML
+    HTTP::Async
 );
 
 my %moduleVersion = (

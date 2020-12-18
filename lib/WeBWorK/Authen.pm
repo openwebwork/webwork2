@@ -64,6 +64,9 @@ use Scalar::Util qw(weaken);
 
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
+use Caliper::Sensor;
+use Caliper::Entity;
+
 #####################
 ## WeBWorK-tr modification
 ## If GENERIC_ERROR_MESSAGE is constant, we can't translate it
@@ -248,6 +251,17 @@ sub verify {
 		}
 	}
 	
+	my $caliper_sensor = Caliper::Sensor->new($self->{r}->ce);
+	if ($caliper_sensor->caliperEnabled() && $result && $self->{initial_login}) {
+		my $login_event = {
+			'type' => 'SessionEvent',
+			'action' => 'LoggedIn',
+			'profile' => 'SessionProfile',
+			'object' => Caliper::Entity::webwork_app()
+		};
+		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
+	}
+
 	debug("END VERIFY");
 	debug("result $result");
 	return $result;
@@ -336,9 +350,9 @@ sub get_credentials {
 		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
 		my @GuestUsers = $db->getUsers(@guestUserIDs);
 		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
-		my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
+		my @allowedGuestUserIDs = map { $_->user_id } @allowedGuestUsers;
 
-		foreach my $userID (List::Util::shuffle(@allowedGestUserIDs)) {
+		foreach my $userID (List::Util::shuffle(@allowedGuestUserIDs)) {
 			if (not $self->unexpired_session_exists($userID)) {
 				my $newKey = $self->create_session($userID);
 				$self->{initial_login} = 1;
@@ -816,6 +830,17 @@ sub killSession {
 	my $r = $self -> {r};
 	my $ce = $r -> {ce};
 	my $db = $r -> {db};
+
+	my $caliper_sensor = Caliper::Sensor->new($ce);
+	if ($caliper_sensor->caliperEnabled()) {
+		my $login_event = {
+			'type' => 'SessionEvent',
+			'action' => 'LoggedOut',
+			'profile' => 'SessionProfile',
+			'object' => Caliper::Entity::webwork_app()
+		};
+		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
+	}
 
 	$self -> forget_verification;
 	if ($ce -> {session_management_via} eq "session_cookie")  {

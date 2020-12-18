@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.54 2008/07/01 13:12:56 glarose Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -41,8 +41,11 @@ use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
 use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Instructor qw(assignSetVersionToUser);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
+use WeBWorK::Utils::AttemptsTable;
 use PGrandom;
 
+use Caliper::Sensor;
+use Caliper::Entity;
 # template method
 sub templateName {
 	return "gateway";
@@ -54,7 +57,7 @@ sub templateName {
 
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
-# 
+#
 #     ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem)
 
 # *** The "can" routines are taken from Problem.pm, with small modifications
@@ -64,21 +67,21 @@ sub templateName {
 sub can_showOldAnswers {
 	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, $tmplSet ) = @_;
 	my $authz = $self->r->authz;
-# we'd like to use "! $Set->hide_work()", but that hides students' work 
+# we'd like to use "! $Set->hide_work()", but that hides students' work
 # as they're working on the set, which isn't quite right.  so use instead:
 	return 0 unless $authz->hasPermissions($User->user_id,"can_show_old_answers");
 
-	return( before( $Set->due_date() ) || 
+	return( before( $Set->due_date() ) ||
 		
 		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
-		( $Set->hide_work() eq 'N' || 
+		( $Set->hide_work() eq 'N' ||
 		  ( $Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date ) ) );
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
 #   to be included if it's defined
 sub can_showCorrectAnswers {
-	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem, 
+	my ($self, $User, $PermissionLevel, $EffectiveUser, $Set, $Problem,
 	    $tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	
@@ -91,10 +94,10 @@ sub can_showCorrectAnswers {
 	    $addOne || 0;
 
 # this is complicated by trying to address hiding scores by problem---that
-#    is, if $set->hide_score_by_problem and $set->hide_score are both set, 
-#    then we should allow scores to be shown, but not show the score on 
-#    any individual problem.  to deal with this, we make 
-#    can_showCorrectAnswers give the least restrictive view of hiding, and 
+#    is, if $set->hide_score_by_problem and $set->hide_score are both set,
+#    then we should allow scores to be shown, but not show the score on
+#    any individual problem.  to deal with this, we make
+#    can_showCorrectAnswers give the least restrictive view of hiding, and
 #    then filter scores for the problems themselves later
 
 #    showing correcrt answers but not showing scores doesn't make sense
@@ -340,8 +343,6 @@ sub can_useMathQuill {
 # output utilities
 ################################################################################
 
-# subroutine is modified from that in Problem.pm to produce a different 
-#    table format
 sub attemptResults {
 	my $self = shift;
 	my $pg = shift;
@@ -351,134 +352,53 @@ sub attemptResults {
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
 	my $colorAnswers = $showAttemptResults;
-
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
 	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
-	my $courseName = $ce->{courseName};
-	my @links = ("Homework Sets" , "$root/$courseName", "navUp");
-	my $tail = "";
-	
-	my $problemResult = $pg->{result}; # the overall result of the problem
-	my @answerNames = @{ $pg->{flags}->{ANSWER_ENTRY_ORDER} };
-	
-	my $showMessages = $showAttemptAnswers && grep { $pg->{answers}->{$_}->{ans_message} } @answerNames;
 
 	# for color coding the responses.
 	$self->{correct_ids} = [] unless $self->{correct_ids};
 	$self->{incorrect_ids} = [] unless $self->{incorrect_ids};
 
-  # present in ver 1.10; why is this checked here?
-	#	return CGI::p(CGI::font({-color=>"red"}, "This problem is not available because the homework set that contains it is not yet open."))
-	#	unless $self->{isOpen};
-
-	my $basename = "equation-" . $self->{set}->psvn. "." . $self->{problem}->problem_id . "-preview";
-
 	# to make grabbing these options easier, we'll pull them out now...
-	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
-	
+	my %imagesModeOptions = %{$ce->{pg}{displayModeOptions}{images}};
+
 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
-		tempDir         => $ce->{webworkDirs}->{tmp},
-		latex	        => $ce->{externalPrograms}->{latex},
-		dvipng          => $ce->{externalPrograms}->{dvipng},
+		tempDir         => $ce->{webworkDirs}{tmp},
+		latex	        => $ce->{externalPrograms}{latex},
+		dvipng          => $ce->{externalPrograms}{dvipng},
 		useCache        => 1,
-		cacheDir        => $ce->{webworkDirs}->{equationCache},
-		cacheURL        => $ce->{webworkURLs}->{equationCache},
-		cacheDB         => $ce->{webworkFiles}->{equationCacheDB},
+		cacheDir        => $ce->{webworkDirs}{equationCache},
+		cacheURL        => $ce->{webworkURLs}{equationCache},
+		cacheDB         => $ce->{webworkFiles}{equationCacheDB},
 		dvipng_align    => $imagesModeOptions{dvipng_align},
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 
-	my @rows;
-	my @row;
-	
-	push @row, CGI::th({scope=>"col"},$r->maketext('Entered')) if $showAttemptAnswers;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Answer Preview')) if $showAttemptPreview;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Correct')) if $showCorrectAnswers;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Result')) if $showAttemptResults;
-	push @row, CGI::th({scope=>"col"},$r->maketext('Messages')) if $showMessages;
+	my $showEvaluatedAnswers = $ce->{pg}{options}{showEvaluatedAnswers} // '';
 
-	push @rows, CGI::Tr(@row);
+	# Create AttemptsTable object	
+	my $tbl = WeBWorK::Utils::AttemptsTable->new(
+		$pg->{answers},
+		answersSubmitted       => 1,
+		answerOrder            => $pg->{flags}{ANSWER_ENTRY_ORDER},
+		displayMode            => $self->{displayMode},
+		showHeadline           => 0,
+		showAnswerNumbers      => 0,
+		showAttemptAnswers     => $showAttemptAnswers && $showEvaluatedAnswers,
+		showAttemptPreviews    => $showAttemptPreview,
+		showAttemptResults     => $showAttemptResults,
+		showCorrectAnswers     => $showCorrectAnswers,
+		showMessages           => $showAttemptAnswers, # internally checks for messages
+		showSummary            => $showSummary,
+		imgGen                 => $imgGen, # not needed if ce is present ,
+		ce                     => '',	   # not needed if $imgGen is present
+		maketext               => WeBWorK::Localize::getLoc($ce->{language}),
+	);
 
-	my $answerScore = 0;
-	my $numCorrect = 0;
-	my $numAns = 0;
-	my $numBlanks = 0;
-	my $numEssay = 0;
-	foreach my $name (@answerNames) {
-
-	    @row = ();
-	    my $answerResult  = $pg->{answers}->{$name};
-	    my $studentAnswer = $answerResult->{student_ans}//''; # original_student_ans
-	    my $preview       = ($showAttemptPreview
-				 ? $self->previewAnswer($answerResult, $imgGen)
-				 : "");
-	    my $correctAnswer = $answerResult->{correct_ans};
-	    $answerScore = $answerResult->{score}//0;
-	    my $answerMessage = $showMessages ? $answerResult->{ans_message} : "";
-	    $numCorrect += ($answerScore >= 1) ? 1 : 0;
-	    $numEssay += ($answerResult->{type}//'') eq 'essay';
-	    $numBlanks++ unless $studentAnswer =~/\S/ || $answerScore >= 1;
-	    
-	    my $resultString;
-	    if ($answerScore >= 1) {
-		$resultString = $r->maketext("correct");
-		push @{$self->{correct_ids}}, $name if $colorAnswers;
-	    } elsif (($answerResult->{type}//'') eq 'essay') {
-		$resultString =  $r->maketext("Ungraded");
-		$self->{essayFlag} = 1;
-	    } elsif (defined($answerScore) and $answerScore == 0) {
-		$resultString = $r->maketext("incorrect");
-		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
-	    } else {
-		$resultString =  $r->maketext("[_1]% correct", int($answerScore*100));
-		push @{$self->{incorrect_ids}}, $name if $colorAnswers;
-	    }
-	    
-	    push @row, CGI::td({scope=>"col"},$self->nbsp($studentAnswer)) if $showAttemptAnswers;
-	    push @row, CGI::td({scope=>"col"}, $self->nbsp($preview)) if $showAttemptPreview;
-	    push @row, CGI::td({scope=>"col"}, $self->nbsp($correctAnswer)) if $showCorrectAnswers;
-	    push @row, CGI::td({scope=>"col"}, $self->nbsp($resultString)) if $showAttemptResults;
-	    push @row, CGI::td({scope=>"col"},  $self->nbsp($answerMessage)) if $showMessages;
-	    
-	    push @rows, CGI::Tr(@row);
-	    $numAns++;
-
-	}
-
-	# render equation images
-	$imgGen->render(refresh => 1);
-
-	my $summary = "";
-	if (scalar @answerNames == 1) { #Here there is just one answer blank
-		if ($numCorrect == 1) { #The student might be totally right
-			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext("This answer is correct."));
-		} elsif ($self->{essayFlag}) {
-			$summary .= $r->maketext("The answer will be graded later.");
-		} elsif ($answerScore > 0 && $answerScore < 1) { #The student might be partially right
-			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT completely correct."));
-		} else { #The student might be completely wrong.
-		 	 $summary .= CGI::div({class=>"gwIncorrect"},$r->maketext("This answer is NOT correct."));
-		}
-	} else {
-		if ($numCorrect + $numEssay == scalar @answerNames) {
-			$summary .= CGI::div({class=>"gwCorrect"},$r->maketext(
-				$numEssay ? "All of the gradeable answers are correct." :
-					    "All of the answers are correct."));
-		} elsif ($numBlanks + $numEssay != scalar(@answerNames)) {
-			$summary .= CGI::div({class=>"gwIncorrect"},$r->maketext(
-				$answerScore > 0 && $answerScore < 1 ?
-				      "At least one of these answers is NOT completely correct." :
-				      "At least one of these answers is NOT correct."));
-		}
-	}
-
-	return
-
-	    CGI::table({-class=>"gwAttemptResults"}, @rows).
-
-	    ($showSummary ? CGI::p({class=>'attemptResultsSummary'},$summary) : "");
+	my $answerTemplate = $tbl->answerTemplate; 
+	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	push(@{$self->{correct_ids}}, @{$tbl->correct_ids}) if $colorAnswers;
+	push(@{$self->{incorrect_ids}}, @{$tbl->incorrect_ids}) if $colorAnswers;
+	return $answerTemplate;
 }
 
 sub handle_input_colors {
@@ -499,41 +419,6 @@ sub handle_input_colors {
 	        "]\n);",
 	      CGI::end_script();
 }
-
-# *BeginPPM* ###################################################################
-# this code taken from Problem.pm; excerpted section ends at *EndPPM*
-# modifications are flagged with comments *GW*
-
-sub previewAnswer {
-	my ($self, $answerResult, $imgGen) = @_;
-	my $ce            = $self->r->ce;
-	my $EffectiveUser = $self->{effectiveUser};
-	my $set           = $self->{set};
-	my $problem       = $self->{problem};
-	my $displayMode   = $self->{displayMode};
-	
-	# note: right now, we have to do things completely differently when we are
-	# rendering math from INSIDE the translator and from OUTSIDE the translator.
-	# so we'll just deal with each case explicitly here. there's some code
-	# duplication that can be dealt with later by abstracting out tth/dvipng/etc.
-	
-	my $tex = $answerResult->{preview_latex_string};
-	
-	return "" unless defined $tex and $tex ne "";
-	
-	if ($displayMode eq "plainText") {
-		return $tex;
-	} elsif ($displayMode eq "images") {
-		$imgGen->add($tex);
-	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
-	} elsif ($displayMode eq "jsMath") {
-		$tex =~ s/&/&amp;/g; $tex =~ s/</&lt;/g; $tex =~ s/>/&gt;/g;
-		return '<SPAN CLASS="math">\\displaystyle{'.$tex.'}</SPAN>';
-	}
-}
-
-# *EndPPM ######################################################################
 
 ################################################################################
 # Template escape implementations
@@ -1300,10 +1185,15 @@ sub pre_header_initialize {
 }
 
 sub head {
-        my ($self) = @_;
-        my $ce = $self->r->ce;
-        my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-        return $self->{pg}->{head_text} if defined($self->{pg}->{head_text});
+	my ($self) = @_;
+	return if !defined($self->{ra_pg_results});
+	my $head_text = "";
+	for (@{$self->{ra_pg_results}})
+	{
+		next if !ref($_);
+		$head_text .= $_->{head_text} if $_->{head_text};
+	}
+	return $head_text;
 }
 
 sub path {
@@ -1504,8 +1394,8 @@ sub body {
 		# This refactoring hasn't taken place yet
 		# because I don't yet understand why the ordering 
 		# for creating past answers was chosen as it is, different from creating sticky answers
-#		my @answerString = (); 
-#		my @encoded_ans_string = ();
+#		my @past_answers_string = (); 
+#		my @encoded_last_answer_string = ();
 #		my @scores = ();
 #		my @isEssay = ();
 		
@@ -1526,7 +1416,7 @@ sub body {
 			#    submitting
 			my %answerHash = ();
 			my @answer_order = ();
-			my $encoded_ans_string;
+			my $encoded_last_answer_string;
 			if ( ref( $pg_results[$i] ) ) {
 # 				%answerHash = %{$pg_results[$i]->{answers}};
 # 				$answersToStore{$_} = $self->{formFields}->{$_} 
@@ -1541,8 +1431,8 @@ sub body {
 # 				@answer_order = 
 # 				    ( @{$pg_results[$i]->{flags}->{ANSWER_ENTRY_ORDER}}, 
 # 				      @extra_answer_names );
-                my ($answerString, $scores,$isEssay); #not used here
-				($answerString,$encoded_ans_string,$scores,$isEssay) =
+                my ($past_answers_string, $scores,$isEssay); #not used here
+				($past_answers_string,$encoded_last_answer_string,$scores,$isEssay) =
 				WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 					$self, $pg_results[$i]
 				);  # ref($self) eq WeBWorK::ContentGenerator::Problem
@@ -1552,16 +1442,16 @@ sub body {
 				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
 				my @answer_order = @fields;
-				$encoded_ans_string = encodeAnswers( %answersToStore, 
+				$encoded_last_answer_string = encodeAnswers( %answersToStore, 
  							  @answer_order );
  						
 			}
-# 				my $answerString = encodeAnswers( %answersToStore, 
+# 				my $past_answers_string = encodeAnswers( %answersToStore, 
 # 							  @answer_order );
 # 			
 			# and get the last answer 
-			$problems[$i]->last_answer( $encoded_ans_string );
-			$pureProblem->last_answer( $encoded_ans_string );
+			$problems[$i]->last_answer( $encoded_last_answer_string );
+			$pureProblem->last_answer( $encoded_last_answer_string );
 
 			# next, store the state in the database if that makes 
 			#    sense
@@ -1656,7 +1546,7 @@ sub body {
 		if ( defined( $answer_log ) ) {
 			foreach my $i ( 0 .. $#problems ) {
 # begin problem loop for passed answers
-				my $answerString = '';
+				my $past_answers_string = '';
 				my $scores = '';
 				my $isEssay = 0;
 				# note that we store these answers in the 
@@ -1666,24 +1556,24 @@ sub body {
 					my %answerHash = %{ $pg_results[$probOrder[$i]]->{answers} };
 # 					foreach ( sortByName(undef, keys %answerHash) ) {
 # 						my $sAns = defined($answerHash{$_}->{original_student_ans}) ? $answerHash{$_}->{original_student_ans} : '';
-# 						$answerString .= $sAns . "\t";
+# 						$past_answers_string .= $sAns . "\t";
 # 						$scores .= $answerHash{$_}->{score}>=1 ? "1" : "0" if ( $submitAnswers );
 # 					}
-                   	my ($encoded_ans_string, ); #not used here
-					($answerString,$encoded_ans_string,$scores,$isEssay) =
+                   	my ($encoded_last_answer_string, ); #not used here
+					($past_answers_string,$encoded_last_answer_string,$scores,$isEssay) =
 					WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
 						$self, $pg_results[$probOrder[$i]]
 					);  # ref($self) eq WeBWorK::ContentGenerator::Problem
 						# ref($pg) eq "WeBWorK::PG::Local";
-					$answerString =~ s/\t+$/\t/;
+					$past_answers_string =~ s/\t+$/\t/;
 				} else {
 					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
 					my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 					foreach ( @fields ) {
-						$answerString .= $self->{formFields}->{$_} . "\t";
+						$past_answers_string .= $self->{formFields}->{$_} . "\t";
 						$scores .= $self->{formFields}->{"probstatus" . ($probOrder[$i]+1)} >= 1 ? "1" : "0" if ( $submitAnswers );
 					}
-					$answerString =~ s/\t+$/\t/;
+					$past_answers_string =~ s/\t+$/\t/;
 				}
 				
 				
@@ -1697,13 +1587,13 @@ sub body {
 					$answerPrefix = "[newPage] "; 
 				}
 
-				if ( ! $answerString || 
-				     $answerString =~ /^\t$/ ) {
-					$answerString = "$answerPrefix" . 
+				if ( ! $past_answers_string || 
+				     $past_answers_string =~ /^\t$/ ) {
+					$past_answers_string = "$answerPrefix" . 
 						"No answer entered\t";
 				} else {
-					$answerString = "$answerPrefix" .
-						"$answerString";
+					$past_answers_string = "$answerPrefix" .
+						"$past_answers_string";
 				}
 				
 		#Write to courseLog
@@ -1713,7 +1603,7 @@ sub body {
 						     '|', $setVName,
 						     '|', ($i+1), '|', $scores, 
 						     "\t$timeNow\t",
-						     "$answerString"), 
+						     "$past_answers_string"), 
 						);
 		#add to PastAnswer db
 				my $pastAnswer = $db->newPastAnswer();
@@ -1723,12 +1613,104 @@ sub body {
 				$pastAnswer->problem_id($problems[$i]->problem_id);
 				$pastAnswer->timestamp($timeNow);
 				$pastAnswer->scores($scores);
-				$pastAnswer->answer_string($answerString);
+				$pastAnswer->answer_string($past_answers_string);
 				$pastAnswer->source_file($problems[$i]->source_file);
 				
 				$db->addPastAnswer($pastAnswer);
 
 			}
+		}
+
+		my $caliper_sensor = Caliper::Sensor->new($self->{ce});
+		if ($caliper_sensor->caliperEnabled()) {
+			my $events = [];
+
+			my $startTime = $r->param('startTime');
+			my $endTime = time();
+			if ($submitAnswers && $will{recordAnswers}) {
+				foreach my $i ( 0 .. $#problems ) {
+					my $problem = $problems[$i];
+					my $pg = $pg_results[$i];
+					my $completed_question_event = {
+						'type' => 'AssessmentItemEvent',
+						'action' => 'Completed',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_user(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							$versionNumber,
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg
+						),
+						'generated' => Caliper::Entity::answer(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							$versionNumber,
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg,
+							0, # don't track start/end time for gateway problems (multiple answers per page)
+							0 # don't track start/end time for gateway problems (multiple answers per page)
+						),
+					};
+					push @$events, $completed_question_event;
+				}
+				my $submitted_set_event = {
+					'type' => 'AssessmentEvent',
+					'action' => 'Submitted',
+					'profile' => 'AssessmentProfile',
+					'object' => Caliper::Entity::problem_set(
+						$self->{ce},
+						$db,
+						$setName
+					),
+					'generated' => Caliper::Entity::problem_set_attempt(
+						$self->{ce},
+						$db,
+						$setName,
+						$versionNumber,
+						$effectiveUser,
+						$startTime,
+						$endTime
+					),
+				};
+				push @$events, $submitted_set_event;
+			} else {
+				my $paused_set_event = {
+					'type' => 'AssessmentEvent',
+					'action' => 'Paused',
+					'profile' => 'AssessmentProfile',
+					'object' => Caliper::Entity::problem_set(
+						$self->{ce},
+						$db,
+						$setName
+					),
+					'generated' => Caliper::Entity::problem_set_attempt(
+						$self->{ce},
+						$db,
+						$setName,
+						$versionNumber,
+						$effectiveUser,
+						$startTime,
+						$endTime
+					),
+				};
+				push @$events, $paused_set_event;
+			}
+			my $tool_use_event = {
+				'type' => 'ToolUseEvent',
+				'action' => 'Used',
+				'profile' => 'ToolUseProfile',
+				'object' => Caliper::Entity::webwork_app(),
+			};
+			push @$events, $tool_use_event;
+			$caliper_sensor->sendEvents($r, $events);
+
+			# reset start time
+			$r->param('startTime', '');
 		}
 	}
 	debug("end answer processing");
@@ -2045,6 +2027,7 @@ sub body {
 
 	# else: we're not hiding answers
 	} else {
+		my $startTime = $r->param('startTime') || time();
 
 		print CGI::start_form({-name=>"gwquiz", -method=>"POST", 
 				      -action=>$action}), 
@@ -2055,6 +2038,7 @@ sub body {
 	#    subsequent pages of a multipage test
 		print CGI::hidden({-name=>'previewHack', -value=>''}), 
 			CGI::br();
+        print CGI::hidden({-name=>'startTime', -value=>$startTime});
 		if ( $numProbPerPage && $numPages > 1 ) { 
 			print CGI::hidden({-name=>'newPage', -value=>''});
 			print CGI::hidden({-name=>'currentPage',

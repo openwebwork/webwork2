@@ -68,8 +68,8 @@ html>body #gwScoreSummary {
 
 span.resultsWithError { background-color: #ffcccc; color: black; }
 span.resultsWithoutError { background-color: #66ff99; color: black; }
-div.gwCorrect { background-color: #66ff99; color: black; }
-div.gwIncorrect { background-color: #ff9999; color: black; }
+div.ResultsWithoutError { background-color: #66ff99; color: black; }
+div.ResultsWithError { background-color: #ff9999; color: black; }
 
 div.gwProblem {
         clear: both;

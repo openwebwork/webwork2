@@ -1,13 +1,13 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: 
-# 
+# $CVSHeader:
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -31,7 +31,7 @@ use WeBWorK::Utils qw(sortByName x);
 use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
-# We use the x function to mark strings for localizaton 
+# We use the x function to mark strings for localizaton
 use constant DATE_FIELDS => {   open_date    => x("Open:"),
                                 reduced_scoring_date => x("Reduced:"),
 	                            due_date     => x("Closes:"),
@@ -53,24 +53,24 @@ sub initialize {
 	# templates for getting field names
 	my $userTemplate = $self->{userTemplate} = $db->newUser;
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
-	
+
 	# first check to see if a save form has been submitted
 	return '' unless ($r->param('save_button') ||
 			  $r->param('assignAll'));
-	
-	# As it stands we need to check each set to see if it is still assigned 
+
+	# As it stands we need to check each set to see if it is still assigned
 	# the forms are not currently set up to simply transmit changes
-	
+
 	#Get the list of sets and the global set records
 	# DBFIXME shouldn't need set IDs to get records
 	my @setIDs = $db->listGlobalSets;
 	my @setRecords = grep { defined $_ } $db->getGlobalSets(@setIDs);
-	
+
 	my @assignedSets = ();
 	foreach my $setID (@setIDs) {
 	    # add sets to the assigned list if the parameter is checked or the
 	    # assign all button is pushed.  (already assigned sets will be
-	    # skipped later) 
+	    # skipped later)
 	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
@@ -100,7 +100,7 @@ sub initialize {
 		my $setID = $setRecord->set_id;
 		# does the user want it to be assigned to the selected user
 		if (exists $selectedSets{$setID}) {
-		    # change by glarose, 2007/02/07: only assign set if the 
+		    # change by glarose, 2007/02/07: only assign set if the
 		    # user doesn't already have the set assigned.
 			$self->assignSetToUser($editForUserID, $setRecord) if ( ! $userSets{$setID} );
 
@@ -154,11 +154,11 @@ sub initialize {
 			# debug("done deleteUserSet($editForUserID, $setID)");
 		}
 	}
-	
+
 	return '';
-	
-	
-	
+
+
+
 }
 
 sub body {
@@ -171,39 +171,39 @@ sub body {
 	my $courseID = $urlpath->arg("courseID");
 	my $editForUserID = $urlpath->arg("userID");
 	my $userID = $r->param("user");
-	
+
 	my @editForSets = $r->param("editForSets");
-	
+
 	return CGI::div({class => "ResultsWithError"}, "You are not authorized to edit user specific information.")
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
-	
+
 	my $UserRecord = $db->getUser($editForUserID);
 	my $PermissionRecord = $db->getPermissionLevel($editForUserID);
 	my @UserSetIDs = $db->listUserSets($editForUserID);
-	
+
 	my $userName = $UserRecord->first_name . " " . $UserRecord->last_name;
 
 	# templates for getting field names
 	my $userTemplate = $self->{userTemplate};
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate};
-	
+
 	# This table can be consulted when display-ready forms of field names are needed.
-	my %prettyFieldNames = map { $_ => $_ } 
+	my %prettyFieldNames = map { $_ => $_ }
 		$userTemplate->FIELDS();
-	
-	
+
+
 	my @dateFields         = @{DATE_FIELDS_ORDER()};
 	my $rh_dateFieldLabels =  DATE_FIELDS();
 
 
 	# create a link to the SetsAssignedToUser page
 # 	my $editSetsPath = $urlpath->newFromModule(
-# 		"WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser", $r, 
+# 		"WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser", $r,
 # 		courseID => $courseID,
 # 		userID => $userID,
 # 	);
 # 	my $editSetsAssignedToUserURL = $self->systemLink($editSetsPath);
-	
+
 	# create a message about how many sets have been assigned to this user
  	my $setCount = $db->countUserSets($editForUserID);
 # 	my $userCountMessage =  CGI::a({href=>$editSetsAssignedToUserURL}, $setCount . " sets.");
@@ -220,8 +220,8 @@ sub body {
 		);
 
 	print CGI::h4({align=>'center'},$r->maketext("Edit")," ",CGI::a({href=>$basicInfoUrl},$r->maketext('class list data'))," ",$r->maketext("for  [_1] ([_2]) who has been assigned [_3] sets.",$userName, $editForUserID, $setCount));
-	
-	
+
+
 	print CGI::br();
 
 	my $userDetailPage = $urlpath->new(type =>'instructor_user_detail',
@@ -253,7 +253,7 @@ sub body {
 			}
 		}
 	}
-	
+
 	########################################
 	# Assigned sets form
 	########################################
@@ -280,7 +280,7 @@ sub body {
 	print CGI::div({-class=>'ResultsWithError'},$r->maketext("When you uncheck a homework set (and save the changes), you destroy all of the data for that set for this student.   If you reassign the set, the student will receive a new version of each problem. Make sure this is what you want to do before unchecking sets."));
 
 	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
-	
+
 	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
 	print CGI::Tr(
 		CGI::th({align=>'center',colspan=>3}, "Sets assigned to $userName ($editForUserID)")
@@ -367,7 +367,7 @@ sub body {
 	########################################
 
 	CGI::div( {class=>'ResultsWithError'},
-				"There is NO undo for this function.  
+				"There is NO undo for this function.
 				 Do not use it unless you know what you are doing!  When you unassign
 				 sets using this button, or by unchecking their set names, you destroy all
 				 of the data for those sets for this student."
@@ -377,7 +377,7 @@ sub body {
 	return '';
 }
 
-sub checkDates { 
+sub checkDates {
 	my $self         = shift;
 	my $setRecord    = shift;
 	my $setID        = shift;
@@ -389,8 +389,8 @@ sub checkDates {
 	my $error        = 0;
 	foreach my $field (@{DATE_FIELDS_ORDER()}) {  # check that override dates can be parsed and are not blank
 		$dates{$field} = $setRecord->$field;
-		if (defined  $r->param("set.$setID.$field.override") && 
-		    $r->param("set.$setID.$field") ne 'None Specified'){
+		if (defined  $r->param("set.$setID.$field.override") &&
+		    $r->param("set.$setID.$field") ne ''){
 			eval{ $numerical_date = $self->parseDateTime($r->param("set.$setID.$field"))};
 			unless( $@  ) {
 					$dates{$field}=$numerical_date;
@@ -399,23 +399,23 @@ sub checkDates {
 					$error = 1;
 			}
 		}
-			
+
 
 	}
 	return {%dates,error=>1} if $error;    # no point in going on if the dates can't be parsed.
-	
+
 	my ($open_date, $reduced_scoring_date, $due_date, $answer_date) = map { $dates{$_} } @{DATE_FIELDS_ORDER()};
 
     unless ($answer_date && $due_date && $open_date) {
-    	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|, 
+    	$self->addbadmessage("set $setID has errors in its dates: answer_date |$answer_date|,
     	 due date |$due_date|, open_date |$open_date|");
 	}
 
-	if ($answer_date < $due_date || $answer_date < $open_date) {		
+	if ($answer_date < $due_date || $answer_date < $open_date) {
 		$self->addbadmessage("Answers cannot be made available until on or after the due date in set $setID!");
 		$error = 1;
 	}
-	
+
 	if ($due_date < $open_date) {
 		$self->addbadmessage("Answers cannot be due until on or after the open date in set $setID!");
 		$error = 1;
@@ -427,7 +427,7 @@ sub checkDates {
     		$self->addbadmessage("The reduced scoring date should be between the open date and the due date in set $setID!");
 		$error = 1;
 }
-    
+
 
 	# make sure the dates are not more than 10 years in the future
 	my $curr_time = time;
@@ -445,8 +445,8 @@ sub checkDates {
 		$self->addbadmessage("Error: answer date cannot be more than 10 years from now in set $setID");
 		$error = 1;
 	}
-	
-	
+
+
 	if ($error) {
 		$self->addbadmessage("No date changes were saved!");
 	}
@@ -456,7 +456,7 @@ sub checkDates {
 sub DBFieldTable {
 	my ($self, $GlobalRecord, $UserRecord, $MergedRecord, $recordType,
 	    $recordID, $fieldsRef, $rh_fieldLabels) = @_;
-	
+
 	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
 
 	# modify record name if we're dealing with versioned sets
@@ -475,17 +475,15 @@ sub DBFieldTable {
                 #Skip reduced credit dates for sets which don't have them
 	        next unless ($field ne 'reduced_scoring_date' ||
 			     ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-			      $GlobalRecord->enable_reduced_scoring));	 
+			      $GlobalRecord->enable_reduced_scoring));
 
 		my $globalValue = $GlobalRecord->$field;
 		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
 		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
 
-		my $onChange = "\$('#$recordType\\\\.$recordID\\\\.$field\\\\.override_id').attr('checked',true)";
-       
-		push @results, 
+		push @results,
 			[$r->maketext($rh_fieldLabels->{$field}).' ',
-			 defined $UserRecord ? 
+			 defined $UserRecord ?
 				CGI::checkbox({
 					type => "checkbox",
 					name => "$recordType.$recordID.$field.override",
@@ -494,17 +492,21 @@ sub DBFieldTable {
 					value => $field,
 					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || ($isVersioned && $field ne 'reduced_scoring_date')) ? 1 : 0
 				}) : "",
-				defined $UserRecord ? 
+				defined $UserRecord ?
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
-						      -id =>"$recordType.$recordID.${field}_id",
-						      -type=> "text",
-					              -value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "None Specified",
-						      -onchange => $onChange,
-					              -size => 25})
+							-id =>"$recordType.$recordID.${field}_id",
+							-type=> "text",
+							-value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
+							-onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
+							-onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
+							-placeholder => x("None Specified"),
+							-onblur => "if (this.value == '')"
+								. "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
+							-size => 25})
 					) : "",
-				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),				
+				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),
 			]
-			
+
 	}
 
 	my @table;
@@ -513,7 +515,7 @@ sub DBFieldTable {
 	}
 
 	# set up date picker scripts.  We have to spoof the set name if its
-	# a versioned set.  
+	# a versioned set.
 	my $script = '';
 	if ($ce->{options}->{useDateTimePicker}) {
 	    $GlobalRecord->set_id($recordID) if $isVersioned;
@@ -534,20 +536,20 @@ sub output_JS{
 	my $ce = $r->ce;
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-	# print javaScript for dateTimePicker	
+	# print javaScript for dateTimePicker
 	# jquery ui printed seperately
 
 	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
-	print q!<style> 
-	.ui-datepicker{font-size:85%} 
-	.auto-changed{background-color: #ffffcc} 
+	print q!<style>
+	.ui-datepicker{font-size:85%}
+	.auto-changed{background-color: #ffffcc}
 	.changed {background-color: #ffffcc}
         </style>!,"\n";
-	
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();	
+
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 

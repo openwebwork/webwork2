@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -20,7 +20,7 @@ use base qw(WeBWorK::ContentGenerator);
 use  WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;  # not needed?
 
 =head1 NAME
- 
+
 WeBWorK::ContentGenerator::Problem - Allow a student to interact with a problem.
 
 =cut
@@ -54,34 +54,34 @@ binmode(STDOUT, ":utf8");
 ################################################################################
 
 # Standard params:
-# 
+#
 #     user - user ID of real user
 #     key - session key
 #     effectiveUser - user ID of effective user
-# 
+#
 # Integration with PGProblemEditor:
-# 
+#
 #     editMode - if set, indicates alternate problem source location.
 #                can be "temporaryFile" or "savedFile".
-# 
+#
 #     sourceFilePath - path to file to be edited
 #     problemSeed - force problem seed to value
 #     success - success message to display
 #     failure - failure message to display
-# 
+#
 # Rendering options:
-# 
+#
 #     displayMode - name of display mode to use
-#     
+#
 #     showOldAnswers - request that last entered answer be shown (if allowed)
 #     showCorrectAnswers - request that correct answers be shown (if allowed)
 #     showHints - request that hints be shown (if allowed)
 #     showSolutions - request that solutions be shown (if allowed)
-# 
+#
 # Problem interaction:
-# 
+#
 #     AnSwEr# - answer blanks in problem
-#     
+#
 #     redisplay - name of the "Redisplay Problem" button
 #     submitAnswers - name of "Submit Answers" button
 #     checkAnswers - name of the "Check Answers" button
@@ -94,10 +94,10 @@ binmode(STDOUT, ":utf8");
 
 # Subroutines to determine if a user "can" perform an action. Each subroutine is
 # called with the following arguments:
-# 
+#
 #     ($self, $User, $EffectiveUser, $Set, $Problem)
 
-# Note that significant parts of the "can" methods are lifted into the 
+# Note that significant parts of the "can" methods are lifted into the
 # GatewayQuiz module.  It isn't direct, however, because of the necessity
 # of dealing with versioning there.
 
@@ -111,7 +111,7 @@ sub can_showOldAnswers {
 sub can_showCorrectAnswers {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
-	
+
 	return
 		after($Set->answer_date)
 			||
@@ -148,7 +148,7 @@ sub can_showPGInfo {
 sub can_showResourceInfo {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
-	
+
 	return
 		$authz->hasPermissions($User->user_id, "show_resource_info")
 		;
@@ -157,14 +157,14 @@ sub can_showResourceInfo {
 sub can_showHints {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
-	
+
 	return !$Set->hide_hint;
 }
 
 sub can_showSolutions {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
-	
+
 	return
 		after($Set->answer_date)
 			||
@@ -201,14 +201,14 @@ sub can_checkAnswers {
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 	my $thisAttempt = $submitAnswers ? 1 : 0;
-	
+
 	# if we can record answers then we dont need to be able to check them
-	# unless we have that specific permission. 
-	if ($self->can_recordAnswers($User,$EffectiveUser,$Set,$Problem,$submitAnswers) 
+	# unless we have that specific permission.
+	if ($self->can_recordAnswers($User,$EffectiveUser,$Set,$Problem,$submitAnswers)
 	    && !$authz->hasPermissions($User->user_id, "can_check_and_submit_answers")) {
 	    return 0;
 	}
-	
+
 	if (before($Set->open_date)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
 	} elsif (between($Set->open_date, $Set->due_date)) {
@@ -246,17 +246,17 @@ sub can_useMathQuill {
 
     return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'MathQuill';
 }
-    
+
 
 sub can_showMeAnother {
-    # PURPOSE: subroutine to check if showMeAnother 
+    # PURPOSE: subroutine to check if showMeAnother
     #          button should be allowed; note that this is done
-    #          *before* the check to see if showMeAnother is 
+    #          *before* the check to see if showMeAnother is
     #          possible.
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce = $self->r->ce;
 
-    # if the showMeAnother button isn't enabled in the course configuration, 
+    # if the showMeAnother button isn't enabled in the course configuration,
     # don't show it under any circumstances (not even for the instructor)
     return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
 
@@ -264,7 +264,7 @@ sub can_showMeAnother {
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
     if (after($Set->open_date)) {
-        # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
+        # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
         $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 
 	    # if SMA is just not permitted for the problem, don't show it
@@ -283,14 +283,14 @@ sub can_showMeAnother {
 
 	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
 	    # not submitted enough answers yet or has used the SMA button too many times
-	    if ($attempts_used < $showMeAnother{TriesNeeded} 
+	    if ($attempts_used < $showMeAnother{TriesNeeded}
 	        or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
           return 0;
         } else {
           return 1;
         }
     } else {
-      # otherwise the set hasn't been opened yet, so we can't use showMeAnother 
+      # otherwise the set hasn't been opened yet, so we can't use showMeAnother
       return 0;}
 }
 
@@ -298,8 +298,6 @@ sub can_showMeAnother {
 # output utilities
 ################################################################################
 
-# Note: the substance of attemptResults is lifted into GatewayQuiz.pm,
-# with some changes to the output format
 sub attemptResults {
 	my $self = shift;
 	my $r = $self->r;
@@ -310,7 +308,7 @@ sub attemptResults {
 	my $showSummary = shift;
 	my $showAttemptPreview = shift // 1;
 	my $ce = $self->r->ce;
-	
+
 	# to make grabbing these options easier, we'll pull them out now...
 	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
 
@@ -329,7 +327,7 @@ sub attemptResults {
 	my $answers = $pg->{answers};
 	my $showEvaluatedAnswers = $ce->{pg}->{options}->{showEvaluatedAnswers}//'';
 
-# Create AttemptsTable object	
+# Create AttemptsTable object
 	my $tbl = WeBWorK::Utils::AttemptsTable->new(
 		$answers,
 		answersSubmitted       => 1,
@@ -347,8 +345,8 @@ sub attemptResults {
 		maketext               => WeBWorK::Localize::getLoc($ce->{language}),
 	);
 	# render equation images
-	my $answerTemplate = $tbl->answerTemplate; 
-	   # answerTemplate collects all the formulas to be displayed in the attempts table  
+	my $answerTemplate = $tbl->answerTemplate;
+	   # answerTemplate collects all the formulas to be displayed in the attempts table
 	   # answerTemplate also collects the correct_ids and incorrect_ids
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	    # after all of the formulas have been collected the render command creates png's for them
@@ -390,18 +388,18 @@ sub pre_header_initialize {
 	my $effectiveUserName = $r->param('effectiveUser');
 	my $key = $r->param('key');
 	my $editMode = $r->param("editMode");
-	
+
 	my $user = $db->getUser($userName); # checked
 	die "record for user $userName (real user) does not exist."
 		unless defined $user;
-	
+
 	my $effectiveUser = $db->getUser($effectiveUserName); # checked
 	die "record for user $effectiveUserName (effective user) does not exist."
 		unless defined $effectiveUser;
-		
+
 	# obtain the merged set for $effectiveUser
-	my $set = $db->getMergedSet($effectiveUserName, $setName); 
-	
+	my $set = $db->getMergedSet($effectiveUserName, $setName);
+
 	# check that the set is valid;
 	# $self->{invalidSet} is set by ContentGenerator.pm
 	die($self->{invalidSet}) if $self->{invalidSet};
@@ -411,10 +409,10 @@ sub pre_header_initialize {
 
 	# or if the set is the "Undefined_set"
 	$self->{isOpen} = $self->{isOpen} || $setName eq "Undefined_Set";
-	
+
 	# or if the set is past the answer date
 	$self->{isOpen} = $self->{isOpen} || time >= $set->answer_date;
-	
+
 	my $isClosed = 0;
 	# now we check the reasons why it might be closed
 	unless ($self->{isOpen}) {
@@ -427,10 +425,10 @@ sub pre_header_initialize {
 				      is_jitar_problem_closed($db,$ce,$effectiveUserName,$set->set_id,$problemNumber));
 	}
 
-	# isOpen overrides $isClosed.  
+	# isOpen overrides $isClosed.
 	$self->{isOpen} = $self->{isOpen} || !$isClosed;
-	
-	die("You do not have permission to view unopened sets") unless $self->{isOpen};	
+
+	die("You do not have permission to view unopened sets") unless $self->{isOpen};
 
 	# Database fix (in case of undefined visiblity state values)
 	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
@@ -444,27 +442,27 @@ sub pre_header_initialize {
 		# don't do anything just yet, maybe we're a professor and we're
 		# fabricating a set or haven't assigned it to ourselves just yet
 	}
-		# When a set is created enable_reduced_scoring is null, so we have to set it 
+		# When a set is created enable_reduced_scoring is null, so we have to set it
 	if ( $set and $set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
 		my $globalSet = $db->getGlobalSet($set->set_id);
 		$globalSet->enable_reduced_scoring("0");	# defaults to disabled
 		$db->putGlobalSet($globalSet);
 		$set = $db->getMergedSet($effectiveUserName, $setName);
 	}
-	
-	
+
+
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
-	
+
 	# A very hacky and temporary solution to the max_attempts problem
 	# if($problem->max_attempts == ""){
 		# $problem->max_attempts = -1;
 	# }
-	
+
 	if ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		# professors are allowed to fabricate sets and problems not
 		# assigned to them (or anyone). this allows them to use the
-		# editor to 
+		# editor to
 
 		# if a User Set does not exist for this user and this set
 		# then we check the Global Set
@@ -481,7 +479,7 @@ sub pre_header_initialize {
 				$set->psvn(0);
 			}
 		}
-		
+
 		# if that is not yet defined obtain the global problem,
 		# convert it to a user problem, and add fake user data
 		unless (defined $problem) {
@@ -509,12 +507,12 @@ sub pre_header_initialize {
 				$problem->num_incorrect(0);
 			}
 		}
-		
+
 		# now we're sure we have valid UserSet and UserProblem objects
 		# yay!
-		
+
 		# now deal with possible editor overrides:
-		
+
 		# if the caller is asking to override the source file, and
 		# editMode calls for a temporary file, do so
 		my $sourceFilePath = $r->param("sourceFilePath");
@@ -522,8 +520,8 @@ sub pre_header_initialize {
 			die "sourceFilePath is unsafe!" unless path_is_subdir($sourceFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
 			$problem->source_file($sourceFilePath);
 		}
-		
-		# if the problem does not have a source file or no source file has been passed in 
+
+		# if the problem does not have a source file or no source file has been passed in
 		# then this is really an invalid problem (probably from a bad URL)
 		$self->{invalidProblem} = not (defined $sourceFilePath or $problem->source_file);
 
@@ -531,7 +529,7 @@ sub pre_header_initialize {
 		my $problemSeed = $r->param("problemSeed");
 		if (defined $problemSeed && $problemSeed =~ /^[+-]?\d+$/) {
 			$problem->problem_seed($problemSeed);
-        }	
+        }
 
 		my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
@@ -540,7 +538,7 @@ sub pre_header_initialize {
   # test for additional problem validity if it's not already invalid
         } else {
 		$self->{invalidProblem} = !(defined $problem and ($set->visible || $authz->hasPermissions($userName, "view_hidden_sets")));
-		
+
 		$self->addbadmessage(CGI::p($r->maketext("This problem will not count towards your grade."))) if $problem and not $problem->value and not $self->{invalidProblem};
 	}
 
@@ -551,9 +549,9 @@ sub pre_header_initialize {
 	$self->{set}               = $set;
 	$self->{problem}           = $problem;
 	$self->{editMode}          = $editMode;
-	
+
 	##### form processing #####
-	
+
 	# set options from form fields (see comment at top of file for names)
 	my $displayMode               = $r->param("displayMode") || $user->displayMode || $ce->{pg}->{options}->{displayMode};
 	my $redisplay                 = $r->param("redisplay");
@@ -619,9 +617,9 @@ sub pre_header_initialize {
 		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
 		showPGInfo         => $r->param('showPGInfo') || $ce->{pg}->{options}->{showPGInfo},
 		showResourceInfo   => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
-		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints} 
+		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints}
 		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
-		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}      
+		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}
 							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
 	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
 	        useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
@@ -649,7 +647,7 @@ sub pre_header_initialize {
 	    useWirisEditor     => 0,
 	    useMathQuill       => 0,
 	);
-	 
+
 	# does the user have permission to use certain options?
 	my @args = ($user, $effectiveUser, $set, $problem);
 
@@ -705,15 +703,20 @@ sub pre_header_initialize {
 		$will{$_} = $can{$_} && ($want{$_} || $must{$_});
 		#warn "final values for options $_ is can $can{$_}, want $want{$_}, must $must{$_}, will $will{$_}";
 	}
-	
+
 	##### sticky answers #####
-	
-	if (not ($submitAnswers or $previewAnswers or $checkAnswers) and $will{showOldAnswers}) {
-		# do this only if new answers are NOT being submitted
+
+	if (!($submitAnswers || $previewAnswers || $checkAnswers) && $will{showOldAnswers}) {
 		my %oldAnswers = decodeAnswers($problem->last_answer);
-		$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
+		# Do this only if new answers are NOT being submitted
+		if ($prEnabled && !$problem->{prCount}) {
+			# Clear answers if this is a new problem version
+			delete $formFields->{$_} foreach keys %oldAnswers;
+		} else {
+			$formFields->{$_} = $oldAnswers{$_} foreach keys %oldAnswers;
+		}
 	}
-	
+
 	##### translation #####
 
 	debug("begin pg processing");
@@ -748,6 +751,7 @@ sub pre_header_initialize {
 		$can{requestNewSeed} = 1;
 		$want{requestNewSeed} = 1;
 		$will{requestNewSeed} = 1;
+		$self->{showCorrectOnRandomize} = $ce->{pg}{options}{showCorrectOnRandomize};
 		# If this happens, it means that the page was refreshed.  So prevent the answers from
 		# being recorded and the number of attempts from being increased.
 		if ($problem->{prCount} > $rerandomizePeriod) {
@@ -760,11 +764,11 @@ sub pre_header_initialize {
 	}
 	
 	##### update and fix hint/solution options after PG processing #####
-	
-	$can{showHints}     &&= $pg->{flags}->{hintExists}  
+
+	$can{showHints}     &&= $pg->{flags}->{hintExists}
 	                    &&= $pg->{flags}->{showHintLimit}<=$pg->{state}->{num_of_incorrect_ans};
 	$can{showSolutions} &&= $pg->{flags}->{solutionExists};
-	
+
 	##### record errors #########
 	if (ref ($pg->{pgcore}) )  {
 		my @debug_messages     = @{$pg->{pgcore}->get_debug_messages};
@@ -780,7 +784,7 @@ sub pre_header_initialize {
 	}
 
 	##### store fields #####
-	
+
 	$self->{want} = \%want;
 	$self->{must} = \%must;
 	$self->{can}  = \%can;
@@ -809,16 +813,16 @@ sub warnings {
 		print CGI::p($r->maketext("Unable to obtain error messages from within the PG question." ));
 		print CGI::end_div();
     } elsif ( $self->{pgerrors} > 0 ) {
-        my @pgdebug          = (defined $self->{pgdebug}) ? @{ $self->{pgdebug}} : () ; 
+        my @pgdebug          = (defined $self->{pgdebug}) ? @{ $self->{pgdebug}} : () ;
  		my @pgwarning        = (defined $self->{pgwarning}) ? @{ $self->{pgwarning}} : ();
  		my @pginternalerrors = (defined $self->{pginternalerrors}) ? @{ $self->{pginternalerrors}} : ();
 		print CGI::start_div();
 		print CGI::h3({style=>"color:red;"}, $r->maketext("PG question processing error messages"));
 		print CGI::p(CGI::h3($r->maketext("PG debug messages" ) ),  join(CGI::br(), @pgdebug  )  )  if @pgdebug   ;
-		print CGI::p(CGI::h3($r->maketext("PG warning messages" ) ),join(CGI::br(), @pgwarning)  )  if @pgwarning ;	
+		print CGI::p(CGI::h3($r->maketext("PG warning messages" ) ),join(CGI::br(), @pgwarning)  )  if @pgwarning ;
 		print CGI::p(CGI::h3($r->maketext("PG internal errors" ) ), join(CGI::br(), @pginternalerrors )) if @pginternalerrors;
 		print CGI::end_div();
-	} 
+	}
 	# print "proceeding to SUPER::warnings";
 	$self->SUPER::warnings();
 	#  print $self->{pgerrors};
@@ -827,7 +831,7 @@ sub warnings {
 
 sub if_errors($$) {
 	my ($self, $arg) = @_;
-	
+
 	if ($self->{isOpen}) {
 		return $self->{pg}->{flags}->{error_flag} ? $arg : !$arg;
 	} else {
@@ -864,10 +868,10 @@ sub siblings {
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
-	
+
 	# can't show sibling problems if the set is invalid
 	return "" if $self->{invalidSet};
-	
+
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id;
 	my $eUserID = $r->param("effectiveUser");
@@ -881,7 +885,7 @@ sub siblings {
 		$isJitarSet = 1;
 	    }
 	}
-	
+
 	my @where = map {[$eUserID, $setID, $_]} @problemIDs;
 	my @problemRecords = $db->getMergedProblems(@where);
 
@@ -894,12 +898,12 @@ sub siblings {
 	my $currentProblemID = $self->{problem}->problem_id if !($self->{invalidProblem});
 
 	my $progressBarEnabled = $r->ce->{pg}->{options}->{enableProgressBar};
-	
+
 
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2($r->maketext("Problems"));
 	print CGI::start_ul({class=>"problem-list"});
-	
+
 	my @items;
 
 	foreach my $problemID (@problemIDs) {
@@ -907,21 +911,21 @@ sub siblings {
 		shift(@problemRecords) if $progressBarEnabled;
 		next;
 	      }
-	  
+
 	  my $problemPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r, courseID => $courseID, setID => $setID, problemID => $problemID);
 	  my $link;
-	  
+
 	  my $status_symbol = '';
 	  if($progressBarEnabled){
 	    my $problemRecord = shift(@problemRecords);
 	    $num_of_problems++;
 	    my $total_attempts = $problemRecord->num_correct+$problemRecord->num_incorrect;
-	    
+
 	    my $status = $problemRecord->status;
 	    if ($isJitarSet) {
 	      $status = jitar_problem_adjusted_status($problemRecord,$db);
 	    }
-	    
+
 	    # variables for the widths of the bars in the Progress Bar
 	    if( $status ==1 ){
 	      # correct
@@ -941,28 +945,28 @@ sub siblings {
 	      }
 	    }
 	  }
-	  
+
 	  # if its a jitar set we need to hide and disable links to hidden or restricted
-	  # problems.  
+	  # problems.
 	  if ($isJitarSet) {
-	    
+
 	    my @seq = jitar_id_to_seq($problemID);
 	    my $level = $#seq;
 	    my $class = '';
 	    if ($level != 0) {
 	      $class='nested-problem-'.$level;
 	    }
-	    
+
 	    if (!$authz->hasPermissions($eUserID, "view_unopened_sets") && is_jitar_problem_closed($db, $ce, $eUserID, $setID, $problemID)) {
 	      $link = CGI::a( {href=>'#', class=>$class.' disabled-problem'},  $r->maketext("Problem [_1]", join('.',@seq)));
 	    } else {
 	      $link = CGI::a( {class=>$class,href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]", join('.',@seq)).($progressBarEnabled?$status_symbol:""));
-	      
+
 	    }
 	  } else {
 	    $link = CGI::a( {href=>$self->systemLink($problemPage)},  $r->maketext("Problem [_1]", $problemID).($progressBarEnabled?$status_symbol:""));
 	  }
-	  
+
 	  push @items, CGI::li({($progressBarEnabled && $currentProblemID eq $problemID ? ('class','currentProblem'):())},$link);
 	}
 
@@ -973,8 +977,8 @@ sub siblings {
 	    my $progress_bar_incorrect_width = $total_incorrect*100/$num_of_problems;
 	    my $progress_bar_inprogress_width = $total_inprogress*100/$num_of_problems;
 	    my $progress_bar_unattempted_width = $unattempted*100/$num_of_problems;
-	    
-	    # construct the progress bar 
+
+	    # construct the progress bar
 	    #       CORRECT | IN PROGRESS | INCORRECT | UNATTEMPTED
 	    my $progress_bar = CGI::start_div({-class=>"progress-bar set-id-tooltip",
 					       "aria-label"=>"progress bar for current problem set",
@@ -982,17 +986,17 @@ sub siblings {
 	    if($total_correct>0){
 		$progress_bar .= CGI::div({-class=>"correct-progress set-id-tooltip",-style=>"width:$progress_bar_correct_width%",
 					   "aria-label"=>"correct progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
 					   "data-original-title"=>$r->maketext("Correct: [_1]/[_2]",$total_correct,$num_of_problems)
 					  });
 		# perfect scores deserve some stars (&#9733;)
 		$progress_bar .= ($total_correct == $num_of_problems)?"&#9733;Perfect&#9733;":"";
 		$progress_bar .= CGI::end_div();
-	    } 
+	    }
 	    if($total_inprogress>0){
 		$progress_bar .= CGI::div({-class=>"inprogress-progress set-id-tooltip",-style=>"width:$progress_bar_inprogress_width%",
 					   "aria-label"=>"in progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
 					   "data-original-title"=>$r->maketext("In progress: [_1]/[_2]",$total_inprogress, $num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
@@ -1000,7 +1004,7 @@ sub siblings {
 	    if($total_incorrect>0){
 		$progress_bar .= CGI::div({-class=>"incorrect-progress set-id-tooltip",-style=>"width:$progress_bar_incorrect_width%",
 					   "aria-label"=>"incorrect progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
 					   "data-original-title"=>$r->maketext("Incorrect: [_1]/[_2]",$total_incorrect,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
@@ -1008,14 +1012,14 @@ sub siblings {
 	    if($unattempted>0){
 		$progress_bar .= CGI::div({-class=>"unattempted-progress set-id-tooltip",-style=>"width:$progress_bar_unattempted_width%",
 					   "aria-label"=>"unattempted progress bar for current problem set",
-					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
+					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"",
 					   "data-original-title"=>$r->maketext("Unattempted: [_1]/[_2]",$unattempted,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
-	    # close the progress bar div 
+	    # close the progress bar div
 	    $progress_bar .= CGI::end_div();
-	    
+
 	    # output to the screen
 	    print $progress_bar;
 	}
@@ -1024,7 +1028,7 @@ sub siblings {
 
 	print CGI::end_ul();
 	print CGI::end_div();
-	
+
 	return "";
 }
 
@@ -1052,12 +1056,12 @@ sub nav {
 	my ($prevID, $nextID);
 
 	# for jitar sets finding the next or previous problem, and seeing if it
-	# is actually open is a bit more of a process. 
+	# is actually open is a bit more of a process.
 	if (!$self->{invalidProblem}) {
 		my @problemIDs = $db->listUserProblems($eUserID, $setID);
 
 		@problemIDs = sort { $a <=> $b } @problemIDs;
-		
+
 
 		if ($isJitarSet) {
 		    my @processedProblemIDs;
@@ -1076,17 +1080,17 @@ sub nav {
 
 		$prevID = $problemIDs[$curr_index-1] if $curr_index-1 >=0;
 		$nextID = $problemIDs[$curr_index+1] if $curr_index+1 <= $#problemIDs;
-		$nextID = '' if ($isJitarSet && $nextID 
-				 && !$authz->hasPermissions($eUserID, "view_unopened_sets") 
+		$nextID = '' if ($isJitarSet && $nextID
+				 && !$authz->hasPermissions($eUserID, "view_unopened_sets")
 				 && is_jitar_problem_closed($db,$ce, $eUserID,$setID,$nextID));
-		    
-		
+
+
 	}
-	
+
 	my @links;
 
 	if ($prevID) {
-		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r, 
+		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r,
 			courseID => $courseID, setID => $setID, problemID => $prevID);
 		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("Previous Problem");
 	} else {
@@ -1100,7 +1104,7 @@ sub nav {
 	}
 
 	if ($nextID) {
-		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r, 
+		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r,
 			courseID => $courseID, setID => $setID, problemID => $nextID);
 		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("Next Problem");
 	} else {
@@ -1123,7 +1127,7 @@ sub path {
 	my $setName       = $urlpath->arg("setID") || '';
 	my $problemNumber = $urlpath->arg("problemID") || '';
 	my $prettyProblemNumber = $problemNumber;
-	
+
 	if ($setName) {
 	    my $set = $r->db->getGlobalSet($setName);
 	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
@@ -1136,9 +1140,9 @@ sub path {
 	          "$setName",    $r->location."/$courseName/$setName",
 	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
 	);
-	
+
 	print $self->pathMacro($args, @path);
-	
+
 	return "";
 }
 
@@ -1165,7 +1169,7 @@ sub body {
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
 
-	print CGI::p("Entering Problem::body subroutine.  
+	print CGI::p("Entering Problem::body subroutine.
 	         This indicates an old style system.template file -- consider upgrading. ",
 	         caller(1), );
 
@@ -1173,9 +1177,9 @@ sub body {
 	unless($valid eq "valid"){
 		return $valid;
 	}
-	
-	
-	
+
+
+
 	##### answer processing #####
 	debug("begin answer processing");
 	# if answers were submitted:
@@ -1224,10 +1228,11 @@ sub body {
 sub output_form_start{
 	my $self = shift;
 	my $r = $self->r;
+	my $startTime = $r->param('startTime') || time();
 
 	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
-
 	print $self->hidden_authen_fields;
+	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	return "";
 }
 
@@ -1296,21 +1301,21 @@ sub output_message{
 # processes and prints out the correct link to the editor of the current problem
 
 sub output_editorLink{
-	
+
 	my $self = shift;
 
 	my $set             = $self->{set};
 	my $problem         = $self->{problem};
 	my $pg              = $self->{pg};
-	
+
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
-	
+
 	my $courseName = $urlpath->arg("courseID");
-	
+
 	# FIXME: move editor link to top, next to problem number.
 	# format as "[edit]" like we're doing with course info file, etc.
 	# add edit link for set as well.
@@ -1322,19 +1327,19 @@ sub output_editorLink{
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
 	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor1}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor1'}, $r->maketext("Edit1")));
 	}
 	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink2 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit2")));
 	}
 	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor3}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3", $r, 
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3", $r,
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
@@ -1371,7 +1376,7 @@ sub output_checkboxes{
     my $showSolutionCheckbox  = $ce->{pg}->{options}->{show_solution_checkbox};
     my $useKnowlsForHints     = $ce->{pg}->{options}->{use_knowls_for_hints};
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
-	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
+	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
 		print $r->maketext("Show:")."&nbsp;&nbsp;";
 	}
@@ -1448,7 +1453,7 @@ sub output_checkboxes{
 			}
 		),"&nbsp;";
 	}
-	
+
 	if ($can{showPGInfo}) {
 		print WeBWorK::CGI_labeled_input(
 			-type	 => "checkbox",
@@ -1493,7 +1498,7 @@ sub output_checkboxes{
 
 		}
 	}
-	
+
 	if ($can{showSolutions} ) {
 	  if (  $showSolutionCheckbox or not $useKnowlsForSolutions ) { # always allow checkbox to display if knowls are not used.
 		print WeBWorK::CGI_labeled_input(
@@ -1516,14 +1521,14 @@ sub output_checkboxes{
 	    print CGI::hidden({id=>"showSolutions_id", name => "showSolutions", value=>1})
 	  }
 	}
-	
 
-	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
+
+	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or
 	    $can{showHints} or $can{showSolutions} or # needed to put buttons on newline
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
-       
+
 	return "";
 }
 
@@ -1543,7 +1548,7 @@ sub output_submit_buttons{
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 	my %showMeAnother = %{ $self->{showMeAnother} };
-	
+
 	if ($will{requestNewSeed}){
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
 		return "";
@@ -1569,15 +1574,15 @@ sub output_submit_buttons{
             # only output showMeAnother button if we're not on the showMeAnother page
 	    my $SMAURL = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::ShowMeAnother", $r,courseID => $courseID, setID => $problem->set_id, problemID =>$problem->problem_id));
 
-	    print CGI::a({href=>$SMAURL, class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", id=>"SMA_button", title=>"", target=>"_wwsma", 
+	    print CGI::a({href=>$SMAURL, class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", id=>"SMA_button", title=>"", target=>"_wwsma",
 				   "data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")}, $r->maketext("Show me another"));
         } else {
             # if showMeAnother is available for the course, and for the current problem (but not yet
             # because the student hasn't tried enough times) then gray it out; otherwise display nothing
 
-	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value 
+	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
 	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
-	  
+
             if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
                 my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
                 print CGI::span({class=>"gray_button set-id-tooltip",
@@ -1586,7 +1591,7 @@ sub output_submit_buttons{
                                 }, $r->maketext("Show me another [_1]",$exhausted));
               }
 	}
-	
+
 	return "";
 }
 
@@ -1613,11 +1618,11 @@ sub output_score_summary{
 	$prEnabled = 0 if ($rerandomizePeriod < 1);
 
 	# score summary
-	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect 
+	warn "num_correct =", $problem->num_correct,"num_incorrect=",$problem->num_incorrect
 	  unless defined($problem->num_correct) and defined($problem->num_incorrect) ;
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
 	#my $attemptsNoun = $attempts != 1 ? $r->maketext("times") : $r->maketext("time");
-	
+
 	my $prMessage = "";
 	if ($prEnabled) {
 		my $attempts_before_rr = (defined($will{requestNewSeed}) && $will{requestNewSeed}) ? 0
@@ -1636,7 +1641,7 @@ sub output_score_summary{
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
-	
+
 	my $setClosed = 0;
 	my $setClosedMessage;
 	if (before($set->open_date) or after($set->due_date)) {
@@ -1665,70 +1670,70 @@ sub output_score_summary{
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), $prMessage, CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
 			$problem->attempted
-		
+
 		? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
-			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
+			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft)
 		);
 	}else {
 	  print $pg->{state}->{state_summary_msg};
 	}
-	
-	#print jitar specific informaton for students. (and notify instructor 
+
+	#print jitar specific informaton for students. (and notify instructor
 	# if necessary
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	  my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
 	  @problemIDs = sort { $a <=> $b } @problemIDs;
-	  
-	  # get some data 
+
+	  # get some data
 	  my @problemSeqs;
 	  my $index;
-	  # this sets of an array of the sequence assoicated to the 
+	  # this sets of an array of the sequence assoicated to the
 	  #problem_id
 	  for (my $i=0; $i<=$#problemIDs; $i++) {
 	    $index = $i if ($problemIDs[$i] == $problem->problem_id);
 	    my @seq = jitar_id_to_seq($problemIDs[$i]);
 	    push @problemSeqs, \@seq;
 	  }
-	  
+
 	  my $next_id = $index+1;
 	  my @seq = @{$problemSeqs[$index]};
 	  my @children_counts_indexs;
 	  my $hasChildren = 0;
-	  
+
 	  # this does several things.  It finds the index of the next problem
 	  # at the same level as the current one.  It checks to see if there
 	  # are any children, and it finds which of those children count
-	  # toward the grade of this problem.  
-	  
+	  # toward the grade of this problem.
+
 	  while ($next_id <= $#problemIDs && scalar(@{$problemSeqs[$index]}) < scalar(@{$problemSeqs[$next_id]})) {
-	    
+
 	    my $childProblem = $db->getMergedProblem($effectiveUser,$set->set_id, $problemIDs[$next_id]);
 	    $hasChildren = 1;
 	    push @children_counts_indexs, $next_id if scalar(@{$problemSeqs[$index]}) + 1 == scalar(@{$problemSeqs[$next_id]}) && $childProblem->counts_parent_grade;
 	    $next_id++;
-	  }	
-	  
+	  }
+
 	  # print information if this problem has open children and if the grade
 	  # for this problem can be replaced by the grades of its children
-	  if ( $hasChildren 
+	  if ( $hasChildren
 	       && (($problem->att_to_open_children != -1 && $problem->num_incorrect >= $problem->att_to_open_children) ||
-		   ($problem->max_attempts != -1 && 
+		   ($problem->max_attempts != -1 &&
 		    $problem->num_incorrect >= $problem->max_attempts))) {
 	    print CGI::br().$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.');
-	    
+
 	    if (scalar(@children_counts_indexs) == 1) {
 	      print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the score of problem [_1].', join('.', @{$problemSeqs[$children_counts_indexs[0]]}));
 	    } elsif (scalar(@children_counts_indexs) > 1) {
 	      print CGI::br().$r->maketext('The grade for this problem is the larger of the score for this problem, or the weighted average of the problems: [_1].', join(', ', map({join('.', @{$problemSeqs[$_]})}  @children_counts_indexs)));
 	    }
 	  }
-	  
-	  
+
+
 	  # print information if this set has restricted progression and if you need
 	  # to finish this problem (and maybe its children) to proceed
 	  if ($set->restrict_prob_progression() &&
-	      $next_id <= $#problemIDs && 
+	      $next_id <= $#problemIDs &&
 	      is_jitar_problem_closed($db,$ce,$effectiveUser, $set->set_id, $problemIDs[$next_id])) {
 	    if ($hasChildren) {
 	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem and its graded subproblems.',join('.',@{$problemSeqs[$next_id]}));
@@ -1737,8 +1742,8 @@ sub output_score_summary{
 	      print CGI::br().$r->maketext('You will not be able to proceed to problem [_1] until you have completed, or run out of attempts, for this problem.',join('.',@{$problemSeqs[$next_id]}));
 	    }
 	  }
-	  # print information if this problem counts towards the grade of its parent, 
-	  # if it doesn't (and its not a top level problem) then its grade doesnt matter. 
+	  # print information if this problem counts towards the grade of its parent,
+	  # if it doesn't (and its not a top level problem) then its grade doesnt matter.
 	  if ($problem->counts_parent_grade() && scalar(@seq) != 1) {
 	    pop @seq;
 	    print CGI::br().$r->maketext('The score for this problem can count towards score of problem [_1].',join('.',@seq));
@@ -1746,21 +1751,21 @@ sub output_score_summary{
 	    pop @seq;
 	    print CGI::br().$r->maketext('This score for this problem does not count for the score of problem [_1] or for the set.',join('.',@seq));
 	  }
-	  
-	  # if the instructor has set this up, email the instructor a warning message if 
+
+	  # if the instructor has set this up, email the instructor a warning message if
 	  # the student has run out of attempts on a top level problem and all of its children
 	  # and didn't get 100%
 	  if ($submitAnswers && $set->email_instructor) {
 	    my $parentProb = $db->getMergedProblem($effectiveUser,$set->set_id,seq_to_jitar_id($seq[0]));
 	    warn("Couldn't find problem $seq[0] from set ".$set->set_id." in the database") unless $parentProb;
-	    
+
 	    #email instructor with a message if the student didnt finish
 	    if (jitar_problem_finished($parentProb,$db) &&
 		jitar_problem_adjusted_status($parentProb,$db) != 1) {
 	      WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::jitar_send_warning_email($self,$parentProb);
 	    }
-	    
-	  }   
+
+	  }
 	}
 	print CGI::end_p();
 	return "";
@@ -1781,18 +1786,18 @@ sub output_misc{
 	my $user = $r->param('user');
 
 # 	print CGI::start_div();
-# 	
+#
 # 	my $pgdebug = join(CGI::br(), @{$pg->{pgcore}->{DEBUG_messages}} );
 # 	my $pgwarning = join(CGI::br(), @{$pg->{pgcore}->{WARNING_messages}} );
 # 	my $pginternalerrors = join(CGI::br(),  @{$pg->{pgcore}->get_internal_debug_messages}   );
 # 	my $pgerrordiv = $pgdebug||$pgwarning||$pginternalerrors;  # is 1 if any of these are non-empty
-# 	
+#
 # 	print CGI::p({style=>"color:red;"}, $r->maketext("Checking additional error messages")) if $pgerrordiv  ;
 #  	print CGI::p($r->maketext("pg debug"),CGI::br(), $pgdebug                 )   if $pgdebug ;
-# 	print CGI::p($r->maketext("pg warning"),CGI::br(),$pgwarning                ) if $pgwarning ;	
+# 	print CGI::p($r->maketext("pg warning"),CGI::br(),$pgwarning                ) if $pgwarning ;
 # 	print CGI::p($r->maketext("pg internal errors"),CGI::br(), $pginternalerrors) if $pginternalerrors;
 # 	print CGI::end_div()                                                          if $pgerrordiv ;
-	
+
 	# save state for viewOptions
 	print  CGI::hidden(
 			   -name  => "showOldAnswers",
@@ -1808,7 +1813,7 @@ sub output_misc{
 			   -value   => $self->{editMode},
 		   )
 	) if defined($self->{editMode}) and $self->{editMode} eq 'temporaryFile';
-	
+
 	# this is a security risk -- students can use this to find the source code for the problem
 
 	my $permissionLevel = $db->getPermissionLevel($user)->permission;
@@ -1847,10 +1852,10 @@ sub output_comments{
 	my $eUserID          = $r->param('effectiveUser');
 	my $displayMode   = $self->{displayMode};
 	my $authz = $r->authz;
-	
-	my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $eUserID, $setID, $problemID); 
 
-	#if there is a comment then render it and print it 
+	my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $eUserID, $setID, $problemID);
+
+	#if there is a comment then render it and print it
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		if ($userPastAnswer->comment_string) {
@@ -1872,7 +1877,7 @@ sub output_comments{
 					}
 									 });
 				MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
-	
+
 				MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'answerComment']);
 				</script>
 EOS
@@ -1884,13 +1889,13 @@ EOS
 
 # output_summary subroutine
 
-# prints out the summary of the questions that the student has answered 
+# prints out the summary of the questions that the student has answered
 # for the current problem, along with available information about correctness
 
 sub output_summary{
-	
+
 	my $self = shift;
-	
+
 	my $editMode = $self->{editMode};
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
@@ -1908,7 +1913,7 @@ sub output_summary{
 	my $authz = $r->authz;
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
-	
+
         # attempt summary
 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
 	# until after the due date
@@ -1916,20 +1921,20 @@ sub output_summary{
 
 	if (defined($pg->{flags}->{showPartialCorrectAnswers}) and ($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
 
-	    # print this if user submitted answers OR requested correct answers	    
-	    my $results = $self->attemptResults($pg, 
+	    # print this if user submitted answers OR requested correct answers
+	    my $results = $self->attemptResults($pg,
 	                    1,   # showAttemptAnswers --display the unformatted submitted answer attempt
-						$will{showCorrectAnswers}, # showCorrectAnswers
+						$self->{showCorrectOnRandomize} // $will{showCorrectAnswers}, # showCorrectAnswers
 						$pg->{flags}->{showPartialCorrectAnswers}, # showAttemptResults
 			            1, # showSummary
 			            1  # showAttemptPreview
-		);	    
+		);
 	    print $results;
-	    
+
 	} elsif ($will{checkAnswers}) {
 	    # print this if user previewed answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
-	    print $self->attemptResults($pg, 
+	    print $self->attemptResults($pg,
 	    	1, # showAttemptAnswers
 	    	$will{showCorrectAnswers}, # showCorrectAnswers
 	    	1, # showAttemptResults
@@ -1958,35 +1963,35 @@ sub output_summary{
 	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
 	@problemIDs = sort { $a <=> $b } @problemIDs;
 
-	# get some data 
+	# get some data
 	my @problemSeqs;
 	my $index;
-	# this sets of an array of the sequence associated to the 
+	# this sets of an array of the sequence associated to the
 	#problem_id
 	for (my $i=0; $i<=$#problemIDs; $i++) {
 	    $index = $i if ($problemIDs[$i] == $problem->problem_id);
 	    my @seq = jitar_id_to_seq($problemIDs[$i]);
 	    push @problemSeqs, \@seq;
 	}
-	
+
 	my $next_id = $index+1;
 	my @seq = @{$problemSeqs[$index]};
-	
+
 	# check to see if the problem has children
 	while ($next_id <= $#problemIDs && scalar(@{$problemSeqs[$index]}) < scalar(@{$problemSeqs[$next_id]})) {
 	    $hasChildren = 1;
 	    $next_id++;
-	}	
-	
+	}
+
 	# if it has children and conditions are right, print a message
-	if ( $hasChildren 
+	if ( $hasChildren
 	     && (($problem->att_to_open_children != -1 && $problem->num_incorrect >= $problem->att_to_open_children) ||
-		    ($problem->max_attempts != -1 && 
+		    ($problem->max_attempts != -1 &&
 		     $problem->num_incorrect >= $problem->max_attempts))) {
 	    print CGI::div({class=>'showMeAnotherBox'},$r->maketext('This problem has open subproblems.  You can visit them by using the links to the left or visiting the set page.'));
 	}
-    }		
-	    
+    }
+
 
     if (!$previewAnswers) {    # only color answers if not previewing
         if ($checkAnswers or $showPartialCorrectAnswers) { # color answers when partialCorrectAnswers is set
@@ -2008,7 +2013,7 @@ sub output_summary{
 sub output_achievement_message{
 
     	my $self = shift;
-	
+
 	my $editMode = $self->{editMode};
 	my $problem = $self->{problem};
 	my $pg = $self->{pg};
@@ -2021,14 +2026,14 @@ sub output_achievement_message{
 
 	my $authz = $r->authz;
 	my $user = $r->param('user');
-	
+
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
-	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
+	if ($ce->{achievementsEnabled} && $will{recordAnswers}
 	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
 	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $r);
 	    print $achievementMessage;
 	}
-	
+
 
 	return "";
 }
@@ -2065,7 +2070,7 @@ sub output_custom_edit_message{
 	my $user = $r->param('user');
 	my $editMode = $self->{editMode};
 	my $problem = $self->{problem};
-	
+
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
@@ -2074,7 +2079,7 @@ sub output_custom_edit_message{
 			# taken care of in the initialization phase
 		}
 	}
-	
+
 	return "";
 }
 
@@ -2089,17 +2094,17 @@ sub output_past_answer_button{
 	my $self = shift;
 	my $r = $self->r;
 	my $problem = $self->{problem};
-	
+
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 	my $user = $r->param('user');
-	
+
 	my $courseName = $urlpath->arg("courseID");
 
-	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r, 
+	my $pastAnswersPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::ShowAnswers", $r,
 		courseID => $courseName);
 	my $showPastAnswersURL = $self->systemLink($pastAnswersPage, authen => 0); # no authen info for form action
-	
+
 	my $problemNumber = $problem->problem_id;
 	my $setRecord = $r->db->getGlobalSet($problem->set_id);
 	if ( defined($setRecord) && $setRecord->assignment_type eq 'jitar' ) {
@@ -2122,7 +2127,7 @@ sub output_past_answer_button{
 			), "\n",
 			CGI::end_form();
 	}
-	
+
 	return "";
 }
 
@@ -2132,14 +2137,22 @@ sub output_past_answer_button{
 
 sub output_email_instructor{
 	my $self = shift;
+	my $r = $self->r;
 	my $problem = $self->{problem};
 	my %will = %{ $self->{will} };
 	my $pg = $self->{pg};
+	my $userName = $r->param('user');
+	my $user = $r->db->getUser($userName);
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
+		problemPath        => $problem->source_file,
+		randomSeed         => $problem->problem_seed,
+		notifyAddresses    => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
+		emailableURL       => $self->generateURLs('absolute'),
+		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
 		showCorrectAnswers => $will{showCorrectAnswers},
@@ -2147,7 +2160,7 @@ sub output_email_instructor{
 		showSolutions      => $will{showSolutions},
 		pg_object          => $pg,
 	);
-	
+
 	return "";
 }
 
@@ -2156,7 +2169,7 @@ sub output_email_instructor{
 
 sub output_hidden_info {
     my $self = shift;
-	print CGI::hidden({name => "templateName", 
+	print CGI::hidden({name => "templateName",
 	            id=>"templateName_id", value => $self->{templateName}}
 	       );
     return "";
@@ -2167,22 +2180,22 @@ sub output_hidden_info {
 # prints out the wz_tooltip.js script for the current site.
 
 sub output_wztooltip_JS{
-	
+
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
 	return "";
 }
 
-# outputs all of the Javascript needed for this page. 
-# The main javascript needed here is color.js, which colors input fields based on whether or not 
-# they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification 
-# information for the fields that were correct and the fields that were incorrect.  color.js collects of the correct and incorrect fields into 
-# two arrays using the information gathered from the hidden fields, and then loops through and changes the styles so 
+# outputs all of the Javascript needed for this page.
+# The main javascript needed here is color.js, which colors input fields based on whether or not
+# they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification
+# information for the fields that were correct and the fields that were incorrect.  color.js collects of the correct and incorrect fields into
+# two arrays using the information gathered from the hidden fields, and then loops through and changes the styles so
 # that the colors will show up correctly.
 
 sub output_JS{
@@ -2194,20 +2207,20 @@ sub output_JS{
 
 	# This adds the dragmath functionality
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
-	
+
 	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
-	
+
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
 	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
-	
+
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
-	
+
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
-	
-	# This is for MathView.  
+
+	# This is for MathView.
 	if ($self->{will}->{useMathView}) {
 	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
 		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
@@ -2221,7 +2234,7 @@ sub output_JS{
 	    }
 	}
 
-	# WirisEditor 
+	# WirisEditor
 	if ($self->{will}->{useWirisEditor}) {
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
