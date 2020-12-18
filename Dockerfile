@@ -43,15 +43,9 @@ FROM alpine/git AS base
 
 # To use the master branches of webwork2 and pg 
 ARG WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
-<<<<<<< HEAD
-ARG WEBWORK2_BRANCH=master
-ARG PG_GIT_URL=https://github.com/openwebwork/pg.git
-ARG PG_BRANCH=master
-=======
 ARG WEBWORK2_BRANCH=develop
 ARG PG_GIT_URL=https://github.com/openwebwork/pg.git
 ARG PG_BRANCH=develop
->>>>>>> tmp
 
 # assign the build args to the ENV variables
 ENV WEBWORK2_GIT_URL_ENV ${WEBWORK2_GIT_URL}
