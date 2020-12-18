@@ -1,0 +1,8 @@
+{
+    "name": "webwork.javascript_package_manager",
+    "dependencies": {
+        "jquery": "3.5.1",
+        "jquery-ui-dist": "1.12.1",
+        "jquery-ui-themes": "1.12.0"
+    }
+}

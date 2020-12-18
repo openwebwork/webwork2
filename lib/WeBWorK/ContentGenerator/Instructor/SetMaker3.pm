@@ -108,7 +108,7 @@ sub head {
 
   print qq!<link rel="stylesheet" type="text/css" href="$webwork_htdocs_url/css/library_browser.css" />!;
 
-  print qq!<link href="$webwork_htdocs_url/js/vendor/jquery/jquery-ui-1.12.1.custom/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
+  print qq!<link href="$webwork_htdocs_url/node_modules/jquery-ui-dist/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
   #print qq!<script>window.addEventListener("load", setup, false);</script>!;
   return "";
 }

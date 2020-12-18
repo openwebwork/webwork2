@@ -41,10 +41,10 @@
 <!--#if exists="math4-overrides.css"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
 <!--#endif-->
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery-ui-1.12.1.custom/jquery-ui.min.css"/>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
 <!--#if exists="math4-overrides.js"-->
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
