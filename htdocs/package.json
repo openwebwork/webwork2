@@ -1,5 +1,11 @@
 {
     "name": "webwork.javascript_package_manager",
+    "description": "Third party javascript for WeBWorK",
+    "license": "GPL-2.0+",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/openwebwork/webwork2"
+    },
     "dependencies": {
         "jquery": "3.5.1",
         "jquery-ui-dist": "1.12.1",
