@@ -1,3 +1,10 @@
+// Handle some bootstrap/jquery-ui conflicts.
+if ($.widget) {
+	$.widget.bridge('uibutton', $.ui.button);
+	$.widget.bridge('uitooltip', $.ui.tooltip);
+}
+if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
+
 // Object for toggling the sidebar
 var ToggleNavigation = function () {
 	var threshold = 768
