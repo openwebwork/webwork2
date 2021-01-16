@@ -391,12 +391,12 @@ my $ConfigStrings = [
 		  },
 		{ var => 'pg{specialPGEnvironmentVars}{parseAlternatives}',
 		  doc => x('Allow Unicode alternatives in student answers'),
-		  doc2 => x('Set to true to allow students to enter Unicode versions of some characters (like U+2212 for the minus sign) in their answers.  One reason to allow this is that copyihng and pasting output from MathJax can introduce these characters, but it is also getting easier to enter these characters directory from the keyboard.'),
+		  doc2 => x('Set to true to allow students to enter Unicode versions of some characters (like U+2212 for the minus sign) in their answers.  One reason to allow this is that copying and pasting output from MathJax can introduce these characters, but it is also getting easier to enter these characters directory from the keyboard.'),
 		  type => 'boolean'
 		  },
 		{ var => 'pg{specialPGEnvironmentVars}{convertFullWidthCharacters}',
 		  doc => x('Automatically convert Full Width Unicode characters to their ASCII equivalents'),
-		  doc2 => x('Set to true to have Full Width Unicode character (U+FF01 to U+FF5E) converted to their ASCII equivalents (U+0021 to U+007E) automatically in MathObjects.  This may be valuable for Chinese keyboards, for example, that automatically use Fullk Width characters for parentheses and commas.'),
+		  doc2 => x('Set to true to have Full Width Unicode character (U+FF01 to U+FF5E) converted to their ASCII equivalents (U+0021 to U+007E) automatically in MathObjects.  This may be valuable for Chinese keyboards, for example, that automatically use Full Width characters for parentheses and commas.'),
 		  type => 'boolean'
 		  },
 
