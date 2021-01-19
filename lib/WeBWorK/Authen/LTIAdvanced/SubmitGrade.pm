@@ -32,6 +32,7 @@ use WeBWorK::Utils qw(grade_set grade_gateway grade_all_sets wwRound);
 use Net::OAuth;
 use HTTP::Request;
 use LWP::UserAgent;
+use UUID::Tiny  ':std';
 
 use Digest::SHA qw(sha1_base64);
 
@@ -212,14 +213,57 @@ sub submit_grade {
   # We have to fail gracefully here because some users, like instructors,
   # may not actually have a sourcedid
   if (!$sourcedid) {
-#     carp("No sourcedid for this user/assignment.  Some LMS's do not provide ".
+#     debug("No sourcedid for this user/assignment.  Some LMS's do not provide ".
 #      "sourcedid for instructors so this may not be a problem, or it might ".
 #      "mean your settings are not correct.") if $ce->{debug_lti_grade_passback};
     return 0;
   }
 
-  # This is boilerplate XML used to retrieve the currently recorded score for $sourcedid (which will later be tested)
-  my $readResultXML = <<EOS;
+  # Needed in both phases
+  my $bodyhash;
+  my $requestGen;
+  my $gradeRequest;
+  my $HTTPRequest;
+  my $response;
+
+  my $request_url = $db->getSettingValue('lis_outcome_service_url');
+  if ( !defined($request_url) || $request_url eq "" ) {
+    warn("Cannot send/retrieve grades to/from the LMS, no lis_outcome_service_url");
+    return 0;
+  }
+
+  my $consumer_key = $db->getSettingValue('consumer_key');
+  if ( !defined($consumer_key) || $consumer_key eq "" ) {
+    warn("Cannot send/retrieve grades to/from the LMS, no consumer_key");
+    return 0;
+  }
+
+  my $signature_method = $db->getSettingValue('signature_method');
+  if ( !defined($signature_method) || $signature_method eq "" ) {
+    warn("Cannot send/retrieve grades to/from the LMS, no signature_method");
+    return 0;
+  }
+
+  debug("found data required for submitting grades to LMS");
+
+  # Generate a better nonce, first a portion unique for the sourcedid
+  # which should be dependent on the student + the assignment if a
+  # "homework" level sourcedid. This part can be used twice
+  my $uuid_p1 = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $sourcedid);
+  my $uuid_p2;
+
+  my $lti_check_prior = $ce->{lti_check_prior} // 0; # Should we first poll the LMS for the current grade
+
+  my $lti_do_send = 1; # Default to yes
+
+  if ( $lti_check_prior ) {
+
+    # Poll the LMS for prior grade
+
+    $lti_do_send = 0; # Change default to no, and change below if needed
+
+    # This is boilerplate XML used to retrieve the currently recorded score for $sourcedid (which will later be tested)
+    my $readResultXML = <<EOS;
 <?xml version = "1.0" encoding = "UTF-8"?>
 <imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
   <imsx_POXHeader>
@@ -240,53 +284,39 @@ sub submit_grade {
 </imsx_POXEnvelopeRequest>
 EOS
 
-  chomp($readResultXML);
+    chomp($readResultXML);
 
-  my $bodyhash = sha1_base64($readResultXML);
+    $bodyhash = sha1_base64($readResultXML);
 
-  # since sha1_base64 doesn't pad we have to do so manually
-  while (length($bodyhash) % 4) {
-    $bodyhash .= '=';
-  }
+    # since sha1_base64 doesn't pad we have to do so manually
+    while (length($bodyhash) % 4) {
+      $bodyhash .= '=';
+    }
 
-  warn("Retrieving prior grade using sourcedid: $sourcedid") if
-    $ce->{debug_lti_parameters};
+    warn("Retrieving prior grade using sourcedid: $sourcedid") if
+      $ce->{debug_lti_parameters};
 
-  my $request_url = $db->getSettingValue('lis_outcome_service_url');
-  if (!defined($request_url)) {
-    warn("Cannot retrieve grades from the LMS, no lis_outcome_service_url");
-    return 0;
-  }
 
-  my $consumer_key = $db->getSettingValue('consumer_key');
-  if (!defined($consumer_key)) {
-    warn("Cannot retrieve grades from the LMS, no consumer_key");
-    return 0;
-  }
+    $requestGen = Net::OAuth->request("consumer");
 
-  my $signature_method = $db->getSettingValue('signature_method');
-  if (!defined($signature_method)) {
-    warn("Cannot retrieve grades from the LMS, no signature_method");
-    return 0;
-  }
+    $requestGen->add_required_message_params('body_hash');
 
-  my $requestGen = Net::OAuth->request("consumer");
+    # Generate a better nonce, second part is a time dependent portion
+    $uuid_p2 = create_uuid_as_string(UUID_TIME);
 
-  $requestGen->add_required_message_params('body_hash');
-
-  my $gradeRequest = $requestGen->new(
+    $gradeRequest = $requestGen->new(
 		  request_url => $request_url,
 		  request_method => "POST",
 		  consumer_secret => $ce->{LTIBasicConsumerSecret},
 		  consumer_key => $consumer_key,
 		  signature_method => $signature_method,
-		  nonce => int(rand( 2**32)),
+		  nonce => "${uuid_p1}__${uuid_p2}",
 		  timestamp => time(),
 		  body_hash => $bodyhash
 							 );
-  $gradeRequest->sign();
+    $gradeRequest->sign();
 
-  my $HTTPRequest = HTTP::Request->new(
+    $HTTPRequest = HTTP::Request->new(
 	       $gradeRequest->request_method,
 	       $gradeRequest->request_url,
 	       [
@@ -296,39 +326,67 @@ EOS
 	       $readResultXML,
 				      );
 
-  my $response = LWP::UserAgent->new->request($HTTPRequest);
-  if ($response->is_success) {
-    $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
-    my $message = $1;
-    if ($message ne 'success') {
-      warn("Unable to retrieve prior grade from LMS. Error: ".$message);
-      #debug(CGI::escapeHTML($response->content));
-      return 0;
-    } else {
-      my $oldScore;
-      # Possibly no score yet.
-      if ($response->content =~ /<textString\/>/) {
-        $oldScore = ""
-      } else {
-        $response->content =~ /<textString>\s*(\S+)\s*<\/textString>/;
-        $oldScore = $1;
-      }
-      # Do not update the score if no change.
-      if ($oldScore ne "" && abs($score-$oldScore) < 0.001) {
-        return 1;
-      } else {
-        #warn("LMS grade will be updated. sourcedid: ".$sourcedid." Old score: ".$oldScore." New score: ".$score);
-      }
+    $response = LWP::UserAgent->new->request($HTTPRequest);
+
+    # debug section
+    if ($ce->{debug_lti_grade_passback} and $ce->{debug_lti_parameters}){
+      warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest)));
+      warn "The nonce used is ${uuid_p1}__${uuid_p2}\n";
+      warn "The response is:\n ". ($self->local_escape_html(join(" ", %$response )));
+      warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest)));
+      debug( "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest))) );
+      debug( "The nonce used is ${uuid_p1}__${uuid_p2}\n" );
+      debug( "The response is:\n ". ($self->local_escape_html(join(" ", %$response ))) );
     }
-  } else {
-    warn("Unable to retrieve prior grade from LMS. Error: ".$response->message) if $ce->{debug_lti_grade_passback};
-    debug(CGI::escapeHTML($response->content));
-    return 0;
+
+    if ($response->is_success) {
+      $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+      my $message = $1;
+      if ($message ne 'success') {
+        warn("Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: ".$message);
+        debug("Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: ".$message);
+        #debug(CGI::escapeHTML($response->content));
+        return 0;
+      } else {
+        my $oldScore;
+        # Possibly no score yet.
+        if ($response->content =~ /<textString\/>/) {
+          $oldScore = ""
+        } else {
+          $response->content =~ /<textString>\s*(\S+)\s*<\/textString>/;
+          $oldScore = $1;
+        }
+        # Do not update the score if no change.
+        if ( $oldScore eq "success" ) { 
+          # Blackboard seems to return this when there is no prior grade.
+          # See: https://webwork.maa.org/moodle/mod/forum/discuss.php?d=5002
+	  debug("LMS grade will be updated. sourcedid: ".$sourcedid." Old score: ".$oldScore." New score: ".$score) if ($ce->{debug_lti_grade_passback});
+	  $lti_do_send = 1; # Change back to sending the update
+        } elsif ( $oldScore ne "" && abs($score-$oldScore) < 0.001 ) {
+          # LMS has essentially the same score, no reason to update it
+          debug("LMS grade will NOT be updated - grade unchanges. Old score: ".$oldScore." New score: ".$score) if ($ce->{debug_lti_grade_passback});
+          warn("LMS grade will NOT be updated - grade unchanges. Old score: ".$oldScore." New score: ".$score) if ($ce->{debug_lti_grade_passback});
+	  $lti_do_send = 0; # Do not send
+          return 1;
+        } else {
+	  $lti_do_send = 1; # Change back to sending the update
+          debug("LMS grade will be updated. sourcedid: ".$sourcedid." Old score: ".$oldScore." New score: ".$score) if ($ce->{debug_lti_grade_passback});
+        }
+      }
+    } else {
+      warn("Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: " . $response->message) if ($ce->{debug_lti_grade_passback});
+      debug("Unable to retrieve prior grade from LMS. Note that if your server time is not correct, this may fail for reasons which are less than obvious from the error messages. Error: " . $response->message);
+      debug(CGI::escapeHTML($response->content));
+      return 0;
+    }
   }
 
+  if ( $lti_do_send ) {
 
-  # This is boilerplate XML used to submit the $score for $sourcedid
-  my $replaceResultXML = <<EOS;
+    # Send the LMS the new grade
+
+    # This is boilerplate XML used to submit the $score for $sourcedid
+    my $replaceResultXML = <<EOS;
 <?xml version = "1.0" encoding = "UTF-8"?>
 <imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
   <imsx_POXHeader>
@@ -355,60 +413,43 @@ EOS
 </imsx_POXEnvelopeRequest>
 EOS
 
-  chomp($replaceResultXML);
+    chomp($replaceResultXML);
 
-  $bodyhash = sha1_base64($replaceResultXML);
+    $bodyhash = sha1_base64($replaceResultXML);
 
-  # since sha1_base64 doesn't pad we have to do so manually
-  while (length($bodyhash) % 4) {
-    $bodyhash .= '=';
-  }
-  my $message2='';
-  $message2 .= "mass_update: " if $self->{post_processing_mode};
-  $message2 .= "Submitting grade using sourcedid: $sourcedid and score: $score\n";
-  warn($message2) if $ce->{debug_lti_grade_passback};
+    # since sha1_base64 doesn't pad we have to do so manually
+    while (length($bodyhash) % 4) {
+      $bodyhash .= '=';
+    }
+    my $message2='';
+    $message2 .= "mass_update: " if $self->{post_processing_mode};
+    $message2 .= "Submitting grade using sourcedid: $sourcedid and score: $score\n";
+    warn($message2) if $ce->{debug_lti_grade_passback};
 
-  $request_url = $db->getSettingValue('lis_outcome_service_url');
+    $requestGen = Net::OAuth->request("consumer");
+    debug( "obtained requestGen $requestGen");
 
-  unless ($request_url//'' ) {
-    warn("Cannot submit grades to LMS, no request_url obtained from 'lis_outcome_service_url' ");
-    return 0;
-  }
+    $requestGen->add_required_message_params('body_hash');
+    debug("add required message params");
 
-  $consumer_key = $db->getSettingValue('consumer_key');
-  unless ($consumer_key//'') {
-    warn("Cannot submit grades to LMS, no consumer_key");
-    return 0;
-  }
+    # Change the time dependent portion of the nonce for the second stage
+    $uuid_p2 .= "-step2";
 
-  $signature_method = $db->getSettingValue('signature_method');
-  unless ($signature_method//'') {
-    warn("Cannot submit grades to LMS, no signature_method");
-    return 0;
-  }
-  debug("found data required for submitting grades to LMS");
-
-  $requestGen = Net::OAuth->request("consumer");
-  debug( "obtained requestGen $requestGen");
-
-  $requestGen->add_required_message_params('body_hash');
-  debug("add required message params");
-
-  $gradeRequest = $requestGen->new(
+    $gradeRequest = $requestGen->new(
 		  request_url => $request_url,
 		  request_method => "POST",
 		  consumer_secret => $ce->{LTIBasicConsumerSecret},
 		  consumer_key => $consumer_key,
 		  signature_method => $signature_method,
-		  nonce => int(rand( 2**32)),
+		  nonce => "${uuid_p1}__${uuid_p2}",
 		  timestamp => time(),
 		  body_hash => $bodyhash
 							 );
-	debug("created grade request ". $gradeRequest);
-  $gradeRequest->sign();
-  debug("signed grade request");
+    debug("created grade request ". $gradeRequest);
+    $gradeRequest->sign();
+    debug("signed grade request");
 
-  $HTTPRequest = HTTP::Request->new(
+    $HTTPRequest = HTTP::Request->new(
 	       $gradeRequest->request_method,
 	       $gradeRequest->request_url,
 	       [
@@ -419,39 +460,45 @@ EOS
 		);
     debug ("posting grade request: $HTTPRequest");
 
-  $response = eval {
-    LWP::UserAgent->new->request($HTTPRequest);
-  };
-  if ($@) {
-  	warn "error sending HTTP request to LMS, $@";
-  }
-
-  # debug section
-	if ($ce->{debug_lti_grade_passback} and $ce->{debug_lti_parameters}){
-	  warn "The response is:\n ". ($self->local_escape_html(join(" ", %$response )));
-	  warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest)));
-	}
-  # end debug section
-
-  if ($response->is_success) {
-    $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
-    my $message = $1;
-    warn ("result is: $message\n") if $ce->{debug_lti_grade_passback};
-    if ($message ne 'success') {
-      debug("Unable to update LMS grade $sourcedid . LMS responded with message: ". $message) ;
-      return 0;
-    } else {
-      # if we got here we got successes from both the post and the lms
-      debug("Successfully updated LMS grade $sourcedid. LMS responded with message: ".$message );
+    $response = eval {
+      LWP::UserAgent->new->request($HTTPRequest);
+    };
+    if ($@) {
+      warn "error sending HTTP request to LMS, $@";
     }
-  } else {
-    debug("Unable to update LMS grade $sourcedid. Error: ".($response->message) );
-    debug(local_escape_html($response->content));
-    return 0;
-  }
-   debug("Success submitting grade using sourcedid: $sourcedid and score: $score\n") ;
 
-   return 1; # success
+    # debug section
+    if ($ce->{debug_lti_grade_passback} and $ce->{debug_lti_parameters}){
+      warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest)));
+      warn "The nonce used is ${uuid_p1}__${uuid_p2}\n";
+      warn "The response is:\n ". ($self->local_escape_html(join(" ", %$response )));
+      warn "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest)));
+      debug( "The request was:\n ". ($self->local_escape_html(join(" ",%$HTTPRequest))) );
+      debug( "The nonce used is ${uuid_p1}__${uuid_p2}\n" );
+      debug( "The response is:\n ". ($self->local_escape_html(join(" ", %$response ))) );
+    }
+
+    if ($response->is_success) {
+      $response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+      my $message = $1;
+      warn ("result is: $message\n") if $ce->{debug_lti_grade_passback};
+      if ($message ne 'success') {
+        debug("Unable to update LMS grade $sourcedid . LMS responded with message: ". $message) ;
+        return 0;
+      } else {
+        # if we got here we got successes from both the post and the lms
+        debug("Successfully updated LMS grade $sourcedid. LMS responded with message: ".$message );
+      }
+    } else {
+      debug("Unable to update LMS grade $sourcedid. Error: ".($response->message) );
+      debug($self->local_escape_html($response->content));
+      return 0;
+    }
+    debug("Success submitting grade using sourcedid: $sourcedid and score: $score\n") ;
+
+    return 1; # success
+  }
+  return 0; # failure as a fallback value
 }
 
 # does a mass update of all grades.  This is all user grades for
@@ -466,13 +513,14 @@ sub mass_update {
   # sanity check
   warn("course environment is not defined") unless ref($ce//'');
   warn("database reference is not defined") unless ref($db//'');
-  warn "\nperforming mass_update via LTI"  if $ce->{debug_lti_grade_passback};
 
   my $lastUpdate = $db->getSettingValue('LTILastUpdate') // 0;
   my $updateInterval = $ce->{LTIMassUpdateInterval} // -1; # -1 suppresses update
 
   if ($updateInterval != -1 &&
       time - $lastUpdate > $updateInterval) {
+
+    warn "\nperforming mass_update via LTI"  if $ce->{debug_lti_grade_passback};
 
     $db->setSettingValue('LTILastUpdate',time());
 
