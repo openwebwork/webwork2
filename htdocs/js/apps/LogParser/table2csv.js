@@ -47,15 +47,19 @@
             $(elem).find("td,th").filter(":visible").not(options.excludeColumns)
                 .each(function (i, col) {
                     var column = $(col);
-
-                    // Strip whitespaces
-                    var content = options.trimContent
-                        ? $.trim(column.text())
-                        : column.text();
-
+                    var content = '';
+                    column.find("*:visible").each(function (i, div) {
+                        // Strip whitespaces
+                        if (i != 0) {
+                            content += '|';
+                        }
+                        content += options.trimContent
+                        ? $.trim($(div).text())
+                        : $(div).text();                                                                
+                    });
                     output += options.quoteFields
-                        ? quote(content)
-                        : content;
+                    ? quote(content)
+                    : content;        
                     if (i !== numCols - 1) {
                         output += options.separator;
                     } else {

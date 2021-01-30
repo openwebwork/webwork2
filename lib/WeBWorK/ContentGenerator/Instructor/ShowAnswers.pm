@@ -550,7 +550,9 @@ sub body {
 			  $entry->{studentUser} = $studentUser;
 			  $entry->{setName} = $setName;
 			  $entry->{answerID} = $answerID; # pschan I'm assuming this is incremented chronologically?
-			  $entry->{"prettyProblemNumber-$setName-$prettyProblemNumber-$i"} = $score ? "** $answer **" : "$answer";
+			  $entry->{pSetNum} = "$setName-$prettyProblemNumber-$i";
+			  $entry->{score} = $score;
+			  $entry->{answer} = $score ? "** $answer **" : "$answer";
 			  $entry->{time} = $time;
 			  push @{ $self->{entries} } , $entry;
 		  }
