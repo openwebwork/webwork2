@@ -109,7 +109,7 @@ sub body {
 	}
 
 	# generate context URLs
-	my ($emailableURL, $returnURL) = $self->generateURLs();
+	my ($emailableURL, $returnURL) = $self->generateURLs(set_id => $setName, problem_id => $problemNumber);
 
 	my $homeModulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Home", $r);
 	my $systemURL = $self->systemLink($homeModulePath, authen=>0, use_abs_url=>1);
