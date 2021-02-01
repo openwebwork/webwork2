@@ -938,8 +938,9 @@ sub pre_header_initialize {
 		showOldAnswers     => $User->showOldAnswers ne '' ?
 			$User->showOldAnswers : $ce->{pg}->{options}->{showOldAnswers},
 		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
-		showCorrectAnswers => ($r->param("showCorrectAnswers") || $r->param('showProblemGrader') ||
-			$ce->{pg}->{options}->{showCorrectAnswers}) && ($submitAnswers || $checkAnswers),
+		showCorrectAnswers => $r->param('showProblemGrader') ||
+			(($r->param("showCorrectAnswers") || $ce->{pg}->{options}->{showCorrectAnswers})
+				&& ($submitAnswers || $checkAnswers)),
 		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showHints          => $r->param("showHints") || $ce->{pg}->{options}->{showHints},
 		showSolutions      => ($r->param("showSolutions") || $ce->{pg}->{options}->{showSolutions}) &&
