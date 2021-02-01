@@ -1745,7 +1745,6 @@ sub fetchEmailRecipients {
 # requires a CG object and an optional string
 # 'relative' or 'absolute' to return a single URL
 # or NULL to return an array containing both URLs
-# this subroutine could be expanded to
 
 sub generateURLs {
 	my ($self, $urlRequested) = @_;
@@ -1755,6 +1754,23 @@ sub generateURLs {
 	my $userName = $r->param("user");
 	my $setName = $urlpath->arg("setID");
 	my $problemNumber = $urlpath->arg("problemID");
+	my $courseId = $urlpath->arg("courseID");
+
+	my ($user, $set, $problem);
+	$user = $db->getUser($userName) # checked
+		if defined $userName and $userName ne "";
+	if (defined $user) {
+		$set = $db->getMergedSet($userName, $setName) # checked
+			if defined $setName and $setName ne "";
+		$problem = $db->getMergedProblem($userName, $setName, $problemNumber) # checked
+			if defined $set and defined $problemNumber && $problemNumber ne "";
+	} else {
+		$set = $db->getGlobalSet($setName) # checked
+			if defined $setName and $setName ne "";
+		$problem = $db->getGlobalProblem($setName, $problemNumber) # checked
+			if defined $set and defined $problemNumber && $problemNumber ne "";
+	}
+
 
 	# generate context URLs
 	my $emailableURL;
@@ -1763,23 +1779,23 @@ sub generateURLs {
 		my $modulePath;
 		my @args;
 		if ($setName) {
-			if ($problemNumber) {
+			if ($problem) {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
-					courseID => $r->urlpath->arg("courseID"),
+					courseID => $courseID,
 					setID => $setName,
-					problemID => $problemNumber,
+					problemID => $problem->problem_id,
 				);
 				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
 			} else {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
-					courseID => $r->urlpath->arg("courseID"),
-					setID => $setName,
+					courseID => $courseID,
+					setID => $set->set_id,
 				);
 				@args = ();
 			}
 		} else {
 			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
-				courseID => $r->urlpath->arg("courseID"),
+				courseID => $courseID,
 			);
 			@args = ();
 		}
