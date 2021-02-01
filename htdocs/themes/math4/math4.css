@@ -294,6 +294,11 @@ h2.page-title {
 	margin-bottom: 5px;
 }
 
+.user-nav .student-nav-selector .dropdown-menu {
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
 /* Message section */
 
 .Message {
