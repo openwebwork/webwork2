@@ -1096,6 +1096,12 @@ sub nav {
 		my $problemPage = $urlpath->newFromModule(__PACKAGE__, $r,
 			courseID => $courseID, setID => $setID, problemID => $problemID);
 
+		# Cap the number of students shown to at most 200.
+		my $numAfter = $#userRecords - $currentUserIndex;
+		my $numBefore = 200 - ($numAfter < 100 ? $numAfter : 100);
+		my $minStudentIndex = $currentUserIndex < $numBefore ? 0 : $currentUserIndex - $numBefore;
+		my $maxStudentIndex = $minStudentIndex + 200 < $#userRecords ? $minStudentIndex + 200 : $#userRecords;
+
 		# Set up the student nav.
 		$userNav = join("",
 			CGI::start_div({ class => 'user-nav' }),
@@ -1122,9 +1128,7 @@ sub nav {
 						$_->{displayName})
 					)
 				}
-				# Cap the number of students shown to at most 50 before and 50 after the current student.
-				@userRecords[($currentUserIndex < 50 ? 0 : $currentUserIndex - 50) ..
-					($currentUserIndex > $#userRecords - 50 ? $#userRecords : $currentUserIndex + 50)]
+				@userRecords[$minStudentIndex .. $maxStudentIndex]
 			),
 			CGI::end_ul(),
 			CGI::end_span(),

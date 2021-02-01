@@ -1202,6 +1202,12 @@ sub nav {
 		my $setPage = $r->urlpath->newFromModule(__PACKAGE__, $r,
 			courseID => $courseName, setID => "$setName,v%s");
 
+		# Cap the number of tests shown to at most 200.
+		my $numAfter = $#userRecords - $currentTestIndex;
+		my $numBefore = 200 - ($numAfter < 100 ? $numAfter : 100);
+		my $minTestIndex = $currentTestIndex < $numBefore ? 0 : $currentTestIndex - $numBefore;
+		my $maxTestIndex = $minTestIndex + 200 < $#userRecords ? $minTestIndex + 200 : $#userRecords;
+
 		# Set up the student nav.
 		print join("",
 			CGI::start_div({ class => 'user-nav' }),
@@ -1232,9 +1238,7 @@ sub nav {
 					"$_->{displayName} (test $_->{setVersion})" )
 					)
 				}
-				# Cap the number of tests shown to at most 50 before and 50 after the current test.
-				@userRecords[($currentTestIndex < 50 ? 0 : $currentTestIndex - 50) ..
-					($currentTestIndex > $#userRecords - 50 ? $#userRecords : $currentTestIndex + 50)]
+				@userRecords[$minTestIndex ..  $maxTestIndex]
 			),
 			CGI::end_ul(),
 			CGI::end_span(),
