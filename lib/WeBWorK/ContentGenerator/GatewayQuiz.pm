@@ -417,6 +417,8 @@ sub handle_input_colors {
 sub get_instructor_comment {
 	my ($self, $problem) = @_;
 
+	return unless ref($problem) =~ /ProblemVersion/;
+
 	my $db = $self->r->db;
 	my $userPastAnswerID = $db->latestProblemPastAnswer($self->{ce}{courseName}, $problem->user_id,
 		$problem->set_id . ",v" . $problem->version_id, $problem->problem_id);
