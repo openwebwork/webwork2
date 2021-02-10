@@ -37,9 +37,16 @@ use Date::Format;
 use WeBWorK;
 use Encode;
 use utf8;
-
+use JSON::MaybeXS;
+use UUID::Tiny  ':std';
 
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+
+# Should the minimal (more secure) HTML error output be used?
+use constant MIN_HTML_ERRORS => ( exists $ENV{"MIN_HTML_ERRORS"} and $ENV{"MIN_HTML_ERRORS"} );
+
+# Should Apache logs get JSON formatted record?
+use constant JSON_ERROR_LOG => ( exists $ENV{"JSON_ERROR_LOG"} and $ENV{"JSON_ERROR_LOG"} );
 
 # load correct modules
 BEGIN {
@@ -128,16 +135,30 @@ sub handler($) {
 		my $exception = $@;
 		
 		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
-		my $htmlMessage = htmlMessage($r, $warnings, $exception, @backtrace);
+		my $htmlMessage;
+		my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $r->uri )
+		  . "::" . create_uuid_as_string(UUID_TIME);
+		my $time = time2str("%a %b %d %H:%M:%S %Y", time);
+
+		if ( MIN_HTML_ERRORS ) {
+			$htmlMessage = htmlMinMessage($r, $exception, $uuid, $time);
+		} else {
+			$htmlMessage = htmlMessage($r, $warnings, $exception, $uuid, $time, @backtrace);
+		}
 		unless ($r->bytes_sent) {
 			$r->content_type("text/html");
 			$r->send_http_header unless MP2; # not needed for Apache2
-			$htmlMessage = "<html><body>$htmlMessage</body></html>";
+			$htmlMessage = "<html lang=\"en-US\"><head><title>WeBWorK error</title></head><body>$htmlMessage</body></html>";
 		}
 		
 		# log the error to the apache error log
-		my $textMessage = textMessage($r, $warnings, $exception, @backtrace);
-		$log->error($textMessage);
+		my $logMessage;
+		if ( JSON_ERROR_LOG ) {
+			$logMessage = jsonMessage($r, $warnings, $exception, $uuid, $time, @backtrace);
+		} else {
+			$logMessage = textMessage($r, $warnings, $exception, $uuid, $time, @backtrace);
+		}
+		$log->error($logMessage);
 
 		$r->custom_response(FORBIDDEN,$htmlMessage);
 
@@ -186,7 +207,7 @@ sub backtrace {
 
 =over
 
-=item htmlMessage($r, $warnings, $exception, @backtrace)
+=item htmlMessage($r, $warnings, $exception, $uuid, $time, @backtrace)
 
 Format a message for HTML output reporting an exception, backtrace, and any
 associated warnings.
@@ -194,10 +215,10 @@ associated warnings.
 =cut
 
 sub htmlMessage($$$@) {
-	my ($r, $warnings, $exception, @backtrace) = @_;
-	
+	my ($r, $warnings, $exception, $uuid, $time, @backtrace) = @_;
+
 	# Warnings have html and look better scrubbed. 
-	
+
 	my $scrubber = HTML::Scrubber->new(
 	    default => 1,
 	    script => 0,
@@ -212,7 +233,7 @@ sub htmlMessage($$$@) {
 
 	$warnings = $scrubber->scrub($warnings);
 	$exception = $scrubber->scrub($exception);
-	
+
 	my @warnings = defined $warnings ? split m|<br />|, $warnings : ();  #fragile
 	$warnings = htmlWarningsList(@warnings);
 	my $backtrace = htmlBacktrace(@backtrace);
@@ -220,14 +241,13 @@ sub htmlMessage($$$@) {
 	# $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf
 	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
 	# if an explicit email address has not been set.
-	
+
 	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
 	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined. 
 
 	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
 		: "");
-	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = htmlEscape( $r->method  );
 	my $uri = htmlEscape(  $r->uri );
 	my $headers = do {
@@ -235,22 +255,24 @@ sub htmlMessage($$$@) {
 		join("", map { "<tr><td><small>" . htmlEscape($_). "</small></td><td><small>" .
 		                htmlEscape($headers{$_}) . " </small></td></tr>" } keys %headers);
 	};
-	
+
 	return <<EOF;
 <div style="text-align:left">
- <h2>WeBWorK error</h2>
+ <h1>WeBWorK error</h2>
  <p>An error occured while processing your request. For help, please send mail
  to this site's webmaster $admin, including all of the following information as
  well as what what you were doing when the error occured.</p>
  <p>$time</p>
- <h3>Warning messages</h3>
+ <h2>Error record identifier</h3>
+ <p style="color: #dc2a2a"><code>$uuid</code></blockquote>
+ <h2>Warning messages</h3>
  <ul>$warnings</ul>
- <h3>Error messages</h3>
- <blockquote style="color:red"><code>$exception</code></blockquote>
- <h3>Call stack</h3>
+ <h2>Error messages</h3>
+ <blockquote style="color: #dc2a2a"><code>$exception</code></blockquote>
+ <h2>Call stack</h3>
    <p>The information below can help locate the source of the problem.</p>
    <ul>$backtrace</ul>
- <h3>Request information</h3>
+ <h2>Request information</h3>
  <table border="1">
   <tr><td>Method</td><td>$method</td></tr>
   <tr><td>URI</td><td>$uri</td></tr>
@@ -264,7 +286,67 @@ sub htmlMessage($$$@) {
 EOF
 }
 
-=item textMessage($r, $warnings, $exception, @backtrace)
+###############################################################################
+
+=item htmlMinMessage($r, $exception, $uuid, $time)
+
+Format a minimal message for HTML output reporting an error ID number, and NOT providing much
+additional data, which will instead be in the log files.
+
+=cut
+
+sub htmlMinMessage($$$@) {
+	my ($r, $exception, $uuid, $time) = @_;
+
+	# Warnings have html and look better scrubbed.
+
+	my $scrubber = HTML::Scrubber->new(
+	    default => 1,
+	    script => 0,
+	    comment => 0
+	    );
+	$scrubber->default(
+	    undef,
+	    {
+		'*' => 1,
+	    }
+	    );
+
+	$exception = $scrubber->scrub($exception);
+
+	# Drop any code reference from the error message
+	$exception =~ s/ at \/.*//;
+
+	# $ENV{WEBWORK_SERVER_ADMIN} is set from $webwork_server_admin_email in site.conf
+	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
+	# if an explicit email address has not been set.
+
+	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
+	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined.
+
+	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
+		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
+		: "");
+
+	return <<EOF;
+<div style="text-align:left">
+ <h1>WeBWorK error</h2>
+ <p>An error occured while processing your request. For help, please send mail
+ to this site's webmaster $admin, including all of the following information as
+ well as what what you were doing when the error occured.</p>
+ <p>$time</p>
+ <h2>Error record identifier</h3>
+ <p style="color: #dc2a2a"><code>$uuid</code></blockquote>
+ <h2>Error messages</h3>
+ <blockquote style="color: #dc2a2a"><code>$exception</code></blockquote>
+
+</div>
+EOF
+}
+
+################################################################################
+
+=item textMessage($r, $warnings, $exception, $uuid, $time, @backtrace)
 
 Format a message for HTML output reporting an exception, backtrace, and any
 associated warnings.
@@ -272,7 +354,7 @@ associated warnings.
 =cut
 
 sub textMessage($$$@) {
-	my ($r, $warnings, $exception, @backtrace) = @_;
+	my ($r, $warnings, $exception, $uuid, $time, @backtrace) = @_;
 	
 	#my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 	#$warnings = textWarningsList(@warnings);
@@ -280,8 +362,48 @@ sub textMessage($$$@) {
 	my $backtrace = textBacktrace(@backtrace);
 	my $uri = $r->uri;
 	
-	return "[$uri] $exception\n$backtrace";
+	return "[$uuid] [$uri] $exception\n$backtrace";
 }
+
+=item jsonMessage($r, $warnings, $exception, $uuid, $time, @backtrace)
+
+Format a JSON message for log output reporting an exception, backtrace, and any
+associated warnings.
+
+=cut
+
+sub jsonMessage($$$@) {
+	my ($r, $warnings, $exception, $uuid, $time, @backtrace) = @_;
+
+	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
+
+	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
+	my %headers2 = ( %headers,
+			 "sec-ch-ua" => "REMOVED",
+			);
+
+	return join("",
+		    "{ ", # Start object
+		    encode_json("Error record identifier"), ": ",
+		    encode_json($uuid), ", ",
+		    encode_json("Time"), ": ",
+		    encode_json($time), ", ",
+		    encode_json("Method"), ": ",
+		    encode_json($r->method), ", ",
+		    encode_json("URI"), ": ",
+		    encode_json($r->uri), ", ",
+		    encode_json("HTTP Headers"), ": ",
+		    encode_json( {%headers2} ), ", ",
+		    encode_json("Warnings"), ": ", jsonWarningsList(@warnings), ", ",
+		    encode_json("Exception"), ": ",
+		    encode_json(chomp $exception), ", ",
+		    encode_json("Backtrace"), ": ", jsonBacktrace(@backtrace),
+		    " }" # End object
+		   );
+}
+
+################################################################################
 
 =item htmlBacktrace(@frames)
 
@@ -312,6 +434,20 @@ sub textBacktrace(@) {
 	return join "\n", @frames;
 }
 
+
+=item jsonBacktrace(@frames)
+
+Converts a list of stack frames in a backtrace into a JSON array.
+
+=cut
+
+sub jsonBacktrace(@) {
+	my (@frames) = @_;
+	return encode_json( [ @frames ] );
+}
+
+################################################################################
+
 =item htmlWarningsList(@warnings)
 
 Formats a list of warning strings as list items for HTML output.
@@ -340,6 +476,19 @@ sub textWarningsList(@) {
 	}
 	return join "\n", @warnings;
 }
+
+=item jsonWarningsList(@warnings)
+
+Converts a list of warnings into a JSON array.
+
+=cut
+
+sub jsonWarningsList(@) {
+	my (@warnings) = @_;
+	return encode_json( [ @warnings ] );
+}
+
+################################################################################
 
 =item htmlEscape($string)
 

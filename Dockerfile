@@ -314,6 +314,8 @@ RUN cd $APP_ROOT/webwork2/conf \
 	PerlPassEnv WEBWORK_SMTP_SERVER\n\
 	PerlPassEnv WEBWORK_SMTP_SENDER\n\
 	PerlPassEnv WEBWORK_TIMEZONE\n\
+	PerlPassEnv MIN_HTML_ERRORS\n\
+	PerlPassEnv JSON_ERROR_LOG\n\
 	\n<Perl>/' /etc/apache2/conf-enabled/webwork.conf
 
 EXPOSE 80
