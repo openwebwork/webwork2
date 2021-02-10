@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader$
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -92,23 +92,23 @@ sub handler($) {
 			#$warnings .= "$backtrace\n\n";
 			$warnings = Encode::encode_utf8($warnings);
 			$r->notes->set(warnings => $warnings);
-			
+
 			$log->warn("[$uri] $warning");
 		};
 	} else {
 		$warning_handler = sub {
 			my ($warning) = @_;
 			chomp $warning;
-			
+
 			my $warnings = $r->notes("warnings");
 			$warnings .= "$warning\n";
 			#my $backtrace = join("\n",backtrace());
 			#$warnings .= "$backtrace\n\n";
 			$r->notes("warnings" => $warnings);
-			
+
 			$log->warn("[$uri] $warning");
 		};
-		
+
 		# the exception handler generates a backtrace when catching an exception
 		my @backtrace;
 		my $exception_handler = sub {
@@ -116,24 +116,24 @@ sub handler($) {
 			die @_;
 		};
 	}
-	
+
 	# the exception handler generates a backtrace when catching an exception
 	my @backtrace;
 	my $exception_handler = sub {
 		@backtrace = backtrace();
 		die @_;
 	};
-	
+
 	my $result = do {
 		local $SIG{__WARN__} = $warning_handler;
 		local $SIG{__DIE__} = $exception_handler;
-		
+
 		eval { WeBWorK::dispatch($r) };
 	};
-	
+
 	if ($@) {
 		my $exception = $@;
-		
+
 		my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
 		my $htmlMessage;
 		my $uuid = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $r->uri )
@@ -150,7 +150,7 @@ sub handler($) {
 			$r->send_http_header unless MP2; # not needed for Apache2
 			$htmlMessage = "<html lang=\"en-US\"><head><title>WeBWorK error</title></head><body>$htmlMessage</body></html>";
 		}
-		
+
 		# log the error to the apache error log
 		my $logMessage;
 		if ( JSON_ERROR_LOG ) {
@@ -164,7 +164,7 @@ sub handler($) {
 
 		$result = FORBIDDEN;
 	}
-	
+
 	return $result;
 }
 
@@ -188,12 +188,12 @@ Apache::WeBWorK.
 sub backtrace {
 	my $frame = 2;
 	my @trace;
-	
+
 	while (my ($pkg, $file, $line, $subname) = caller($frame++)) {
 		last if $pkg eq "Apache::WeBWorK";
 		push @trace, "in $subname called at line $line of $file";
 	}
-	
+
 	return @trace;
 }
 
@@ -217,7 +217,7 @@ associated warnings.
 sub htmlMessage($$$@) {
 	my ($r, $warnings, $exception, $uuid, $time, @backtrace) = @_;
 
-	# Warnings have html and look better scrubbed. 
+	# Warnings have html and look better scrubbed.
 
 	my $scrubber = HTML::Scrubber->new(
 	    default => 1,
@@ -243,7 +243,7 @@ sub htmlMessage($$$@) {
 	# if an explicit email address has not been set.
 
 	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
-	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined. 
+	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined.
 
 	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
@@ -355,13 +355,13 @@ associated warnings.
 
 sub textMessage($$$@) {
 	my ($r, $warnings, $exception, $uuid, $time, @backtrace) = @_;
-	
+
 	#my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 	#$warnings = textWarningsList(@warnings);
 	chomp $exception;
 	my $backtrace = textBacktrace(@backtrace);
 	my $uri = $r->uri;
-	
+
 	return "[$uuid] [$uri] $exception\n$backtrace";
 }
 
