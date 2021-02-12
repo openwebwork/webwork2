@@ -200,7 +200,7 @@ sub process_and_log_answer{
 					);
 
 				my $caliper_sensor = Caliper::Sensor->new($self->{ce});
-				if ($caliper_sensor->caliperEnabled() && defined($answer_log) && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+				if ($caliper_sensor->caliperEnabled()) {
 					my $startTime = $r->param('startTime');
 					my $endTime = time();
 
