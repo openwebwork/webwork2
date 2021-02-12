@@ -242,8 +242,7 @@ sub htmlMessage($$$@) {
 	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
 	# if an explicit email address has not been set.
 
-	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
-	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined.
+	$ENV{WEBWORK_SERVER_ADMIN} = $ENV{WEBWORK_SERVER_ADMIN} || $ENV{SERVER_ADMIN} // ''; #guarantee this variable is defined.
 
 	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
@@ -258,21 +257,21 @@ sub htmlMessage($$$@) {
 
 	return <<EOF;
 <div style="text-align:left">
- <h1>WeBWorK error</h2>
+ <h1>WeBWorK error</h1>
  <p>An error occured while processing your request. For help, please send mail
  to this site's webmaster $admin, including all of the following information as
  well as what what you were doing when the error occured.</p>
  <p>$time</p>
- <h2>Error record identifier</h3>
+ <h2>Error record identifier</h2>
  <p style="color: #dc2a2a"><code>$uuid</code></blockquote>
- <h2>Warning messages</h3>
+ <h2>Warning messages</h2>
  <ul>$warnings</ul>
- <h2>Error messages</h3>
+ <h2>Error messages</h2>
  <blockquote style="color: #dc2a2a"><code>$exception</code></blockquote>
- <h2>Call stack</h3>
+ <h2>Call stack</h2>
    <p>The information below can help locate the source of the problem.</p>
    <ul>$backtrace</ul>
- <h2>Request information</h3>
+ <h2>Request information</h2>
  <table border="1">
   <tr><td>Method</td><td>$method</td></tr>
   <tr><td>URI</td><td>$uri</td></tr>
@@ -321,8 +320,7 @@ sub htmlMinMessage($$$@) {
 	# and $ENV{SERVER_ADMIN} which is set by ServerAdmin in httpd.conf is used as a backup
 	# if an explicit email address has not been set.
 
-	$ENV{WEBWORK_SERVER_ADMIN} = ($ENV{WEBWORK_SERVER_ADMIN}) ?$ENV{WEBWORK_SERVER_ADMIN}:$ENV{SERVER_ADMIN};
-	$ENV{WEBWORK_SERVER_ADMIN}= $ENV{WEBWORK_SERVER_ADMIN}//''; #guarantee this variable is defined.
+	$ENV{WEBWORK_SERVER_ADMIN} = $ENV{WEBWORK_SERVER_ADMIN} || $ENV{SERVER_ADMIN} // ''; #guarantee this variable is defined.
 
 	my $admin = ($ENV{WEBWORK_SERVER_ADMIN}
 		? " (<a href=\"mailto:$ENV{WEBWORK_SERVER_ADMIN}\">$ENV{WEBWORK_SERVER_ADMIN}</a>)"
@@ -330,14 +328,14 @@ sub htmlMinMessage($$$@) {
 
 	return <<EOF;
 <div style="text-align:left">
- <h1>WeBWorK error</h2>
+ <h1>WeBWorK error</h1>
  <p>An error occured while processing your request. For help, please send mail
  to this site's webmaster $admin, including all of the following information as
  well as what what you were doing when the error occured.</p>
  <p>$time</p>
- <h2>Error record identifier</h3>
+ <h2>Error record identifier</h2>
  <p style="color: #dc2a2a"><code>$uuid</code></blockquote>
- <h2>Error messages</h3>
+ <h2>Error messages</h2>
  <blockquote style="color: #dc2a2a"><code>$exception</code></blockquote>
 
 </div>
