@@ -594,7 +594,7 @@ sub score_handler {
 	    my $user_id = $userRecord->user_id;
 	    next unless $db->existsGlobalUserAchievement($user_id);
 	    next if ($userRecord->{status} eq 'D' || $userRecord->{status} eq 'A');
-	    print SCORE "$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ";
+	    print SCORE Encode::encode("UTF-8","$user_id, $userRecord->{last_name}, $userRecord->{first_name}, $userRecord->{section}, ");
 	    my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
 	    my $level_id = $globalUserAchievement->level_achievement_id;
 	    $level_id = ' ' unless $level_id;
@@ -803,7 +803,7 @@ sub import_handler {
 	
 	#open file name
 	my $fh;
-	open $fh, "$filePath" or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]",$filePath));
+	open ($fh,'<:encoding(UTF-8)',"$filePath") or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]",$filePath));
 
 	#read in lines from file
 	my $count = 0;
@@ -970,16 +970,18 @@ sub saveExport_handler {
 	#run through achievements outputing data as csv list.  This format is not documented anywhere
 	foreach my $achievement (@achievements) {
 	    my $line = [$achievement->achievement_id,
-			$achievement->name,
+			Encode::encode("UTF-8","$achievement->name"),
 			$achievement->number,
 			$achievement->category,
 			$achievement->assignment_type,
-			$achievement->description,
+			Encode::encode("UTF-8","$achievement->description"),
 			$achievement->points,
 			$achievement->max_counter,
 			$achievement->test,
 			$achievement->icon,];
-
+            # Fix for UTF-8 characters in the name and the description of the achivements
+	    $$line[1] = Encode::encode("UTF-8","$$line[1]");
+	    $$line[5] = Encode::encode("UTF-8","$$line[5]");
 	    warn("Error Exporting Achievement ".$achievement->achievement_id)
 		unless $csv->print($fh, $line);
 	}
