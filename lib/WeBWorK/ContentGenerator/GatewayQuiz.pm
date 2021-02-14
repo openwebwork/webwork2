@@ -1176,6 +1176,7 @@ sub pre_header_initialize {
 	$self->{endProb} = $endProb;
 	$self->{numPages} = $numPages;
 	$self->{pageNumber} = $pageNumber;
+	$self->{ra_problem_numbers} = \@problemNumbers;
 	$self->{ra_probOrder} = \@probOrder;
 }
 
@@ -1301,6 +1302,7 @@ sub body {
 	my $endProb = $self->{endProb};
 	my $numPages = $self->{numPages};
 	my $pageNumber = $self->{pageNumber};
+	my @problemNumbers = @{$self->{ra_problem_numbers}};
 	my @probOrder = @{$self->{ra_probOrder}};
 
 	my $setName  = $set->set_id;
@@ -1433,7 +1435,7 @@ sub body {
 				);  # ref($self) eq WeBWorK::ContentGenerator::Problem
 					# ref($pg) eq "WeBWorK::PG::Local";
 			} else {
-				my $prefix = sprintf('Q%04d_',$i+1);
+				my $prefix = sprintf('Q%04d_', $problemNumbers[$i]);
 				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
 				my @answer_order = @fields;
@@ -1562,7 +1564,7 @@ sub body {
 						# ref($pg) eq "WeBWorK::PG::Local";
 					$past_answers_string =~ s/\t+$/\t/;
 				} else {
-					my $prefix = sprintf('Q%04d_', ($probOrder[$i]+1));
+					my $prefix = sprintf('Q%04d_', $problemNumbers[$probOrder[$i]]);
 					my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 					foreach ( @fields ) {
 						$past_answers_string .= $self->{formFields}->{$_} . "\t";
@@ -2179,7 +2181,7 @@ sub body {
 				print CGI::div({-id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current 
 				#    last answers
-				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
+				my $curr_prefix = 'Q' . sprintf("%04d", $problemNumbers[$probOrder[$i]]) . '_';
 				my @curr_fields = grep {/^(?!previous).*$curr_prefix/} keys %{$self->{formFields}};
 				foreach my $curr_field ( @curr_fields ) {
  					foreach ( split(/\0/, $self->{formFields}->{$curr_field} // '') ) {
