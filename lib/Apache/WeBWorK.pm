@@ -251,37 +251,55 @@ sub htmlMessage($$$@) {
 	my $uri = htmlEscape(  $r->uri );
 	my $headers = do {
 		my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
-		join("", map { "<tr><td><small>" . htmlEscape($_). "</small></td><td><small>" .
-		                htmlEscape($headers{$_}) . " </small></td></tr>" } keys %headers);
+		# Was getting warnings about the value of "sec-ch-ua" in my testing...
+		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+		$headers{"sec-ch-ua"} =~ s/\"//g;
+
+		join("",
+			"<tr><th id=\"header_key\"><small>Key</small></th><th id=\"header_value\"><small>Value</small></th></tr>\n",
+			map { "<tr><td headers=\"header_key\"><small>" .
+				htmlEscape($_) .
+				"</small></td><td headers=\"header_value\"><small>" .
+				htmlEscape($headers{$_}) .
+				"</small></td></tr>\n"
+			} keys %headers );
 	};
 
 	return <<EOF;
+<main>
 <div style="text-align:left">
  <h1>WeBWorK error</h1>
- <p>An error occured while processing your request. For help, please send mail
- to this site's webmaster $admin, including all of the following information as
- well as what what you were doing when the error occured.</p>
- <p>$time</p>
+ <p>An error occured while processing your request.</p>
+ <p>For help, please send mail to this site's webmaster $admin, including all of the following information as well as what what you were doing when the error occured.</p>
  <h2>Error record identifier</h2>
- <p style="color: #dc2a2a"><code>$uuid</code></blockquote>
+ <p style="margin-left: 5em; color: #dc2a2a"><code>$uuid</code></p>
  <h2>Warning messages</h2>
  <ul>$warnings</ul>
  <h2>Error messages</h2>
- <blockquote style="color: #dc2a2a"><code>$exception</code></blockquote>
+ <p style="margin-left: 5em; color: #dc2a2a"><code>$exception</code></p>
  <h2>Call stack</h2>
-   <p>The information below can help locate the source of the problem.</p>
+   <p>The following information can help locate the source of the problem.</p>
    <ul>$backtrace</ul>
  <h2>Request information</h2>
- <table border="1">
-  <tr><td>Method</td><td>$method</td></tr>
-  <tr><td>URI</td><td>$uri</td></tr>
-  <tr><td>HTTP Headers</td><td>
-   <table width="90%">
+ <div style="margin-left: 5em;">
+ <p>The HTTP request information is included in the following table.</p>
+ <table border="1" aria-labelledby="req_info_summary1">
+  <caption id="req_info_summary1">HTTP request information</caption>
+  <tr><th id="outer_item">Item</th><th id="outer_data">Data</th></tr>
+  <tr><td headers="outer_item">Method</td><td headers="outer_data">$method</td></tr>
+  <tr><td headers="outer_item">URI</td headers="outer_data"><td headers="outer_data">$uri</td></tr>
+  <tr><td headers="outer_item"">HTTP Headers</td><td headers="outer_data">
+   <table width="90%" aria-labelledby="req_header_summary">
+    <caption id="req_header_summary">HTTP request headers</caption>
     $headers
    </table>
   </td></tr>
  </table>
+ </div>
+ <h2>Time generated:</h2>
+ <p style="margin-left: 5em;">$time</p>
 </div>
+</main>
 EOF
 }
 
@@ -327,18 +345,19 @@ sub htmlMinMessage($$$@) {
 		: "");
 
 	return <<EOF;
+<main>
 <div style="text-align:left">
  <h1>WeBWorK error</h1>
- <p>An error occured while processing your request. For help, please send mail
- to this site's webmaster $admin, including all of the following information as
- well as what what you were doing when the error occured.</p>
- <p>$time</p>
+ <p>An error occured while processing your request.</p>
+ <p>For help, please send mail to this site's webmaster $admin, including all of the following information as well as what what you were doing when the error occured.</p>
  <h2>Error record identifier</h2>
- <p style="color: #dc2a2a"><code>$uuid</code></blockquote>
+ <p style="margin-left: 5em; color: #dc2a2a"><code>$uuid</code></p>
  <h2>Error messages</h2>
- <blockquote style="color: #dc2a2a"><code>$exception</code></blockquote>
-
+ <p style="margin-left: 5em; color: #dc2a2a"><code>$exception</code></p>
+ <h2>Time generated:</h2>
+ <p style="margin-left: 5em;">$time</p>
 </div>
+</main>
 EOF
 }
 
@@ -377,9 +396,8 @@ sub jsonMessage($$$@) {
 
 	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
-	my %headers2 = ( %headers,
-			 "sec-ch-ua" => "REMOVED",
-			);
+	$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+	$headers{"sec-ch-ua"} =~ s/\"//g;
 
 	return join("",
 		    "{ ", # Start object
@@ -392,7 +410,7 @@ sub jsonMessage($$$@) {
 		    encode_json("URI"), ": ",
 		    encode_json($r->uri), ", ",
 		    encode_json("HTTP Headers"), ": ",
-		    encode_json( {%headers2} ), ", ",
+		    encode_json( {%headers} ), ", ",
 		    encode_json("Warnings"), ": ", jsonWarningsList(@warnings), ", ",
 		    encode_json("Exception"), ": ",
 		    encode_json(chomp $exception), ", ",
