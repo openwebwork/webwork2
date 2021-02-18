@@ -373,13 +373,36 @@ associated warnings.
 sub textMessage($$$@) {
 	my ($r, $warnings, $exception, $uuid, $time, @backtrace) = @_;
 
-	#my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
-	#$warnings = textWarningsList(@warnings);
 	chomp $exception;
 	my $backtrace = textBacktrace(@backtrace);
 	my $uri = $r->uri;
 
-	return "[$uuid] [$uri] $exception\n$backtrace";
+	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
+
+	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
+	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
+	if ( defined( $headers{"sec-ch-ua"} ) ) {
+		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+		$headers{"sec-ch-ua"} =~ s/\"//g;
+	}
+
+	my $additional_json = join("",
+		    "{ ", # Start object
+		    encode_json("Error record identifier"), ": ",
+		    encode_json($uuid), ", ",
+		    encode_json("Time"), ": ",
+		    encode_json($time), ", ",
+		    encode_json("Method"), ": ",
+		    encode_json($r->method), ", ",
+		    encode_json("URI"), ": ",
+		    encode_json($r->uri), ", ",
+		    encode_json("HTTP Headers"), ": ",
+		    encode_json( {%headers} ), ", ",
+		    encode_json("Warnings"), ": ", jsonWarningsList(@warnings), ", ",
+		    " }" # End object
+		   );
+
+	return "[$uuid] [$uri] $additional_json $exception\n$backtrace";
 }
 
 =item jsonMessage($r, $warnings, $exception, $uuid, $time, @backtrace)
@@ -396,8 +419,10 @@ sub jsonMessage($$$@) {
 
 	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
 	# Was getting JSON errors for the value of "sec-ch-ua" in my testing, so remove it
-	$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
-	$headers{"sec-ch-ua"} =~ s/\"//g;
+	if ( defined( $headers{"sec-ch-ua"} ) ) {
+		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+		$headers{"sec-ch-ua"} =~ s/\"//g;
+	}
 
 	return join("",
 		    "{ ", # Start object
