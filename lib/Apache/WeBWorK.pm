@@ -37,7 +37,7 @@ use Date::Format;
 use WeBWorK;
 use Encode;
 use utf8;
-use JSON::MaybeXS;
+use JSON;
 use UUID::Tiny  ':std';
 
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -415,6 +415,7 @@ associated warnings.
 sub jsonMessage($$$@) {
 	my ($r, $warnings, $exception, $uuid, $time, @backtrace) = @_;
 
+	chomp $exception;
 	my @warnings = defined $warnings ? split m/\n+/, $warnings : ();
 
 	my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
@@ -438,7 +439,7 @@ sub jsonMessage($$$@) {
 		    encode_json( {%headers} ), ", ",
 		    encode_json("Warnings"), ": ", jsonWarningsList(@warnings), ", ",
 		    encode_json("Exception"), ": ",
-		    encode_json(chomp $exception), ", ",
+		    encode_json($exception), ", ",
 		    encode_json("Backtrace"), ": ", jsonBacktrace(@backtrace),
 		    " }" # End object
 		   );
