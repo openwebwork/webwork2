@@ -55,6 +55,7 @@ use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortAc
 use DateTime;
 use Text::CSV;
 use Encode;
+use open IO => ':encoding(UTF-8)';
 
 #constants for forms and the various handlers
 use constant BLANK_ACHIEVEMENT => "blankachievement.at";
@@ -971,18 +972,15 @@ sub saveExport_handler {
 	#run through achievements outputing data as csv list.  This format is not documented anywhere
 	foreach my $achievement (@achievements) {
 	    my $line = [$achievement->achievement_id,
-			Encode::encode("UTF-8","$achievement->name"),
+			$achievement->name,
 			$achievement->number,
 			$achievement->category,
 			$achievement->assignment_type,
-			Encode::encode("UTF-8","$achievement->description"),
+			$achievement->description,
 			$achievement->points,
 			$achievement->max_counter,
 			$achievement->test,
 			$achievement->icon,];
-            # Fix for UTF-8 characters in the name and the description of the achivements
-	    $$line[1] = Encode::encode("UTF-8","$$line[1]");
-	    $$line[5] = Encode::encode("UTF-8","$$line[5]");
 	    warn("Error Exporting Achievement ".$achievement->achievement_id)
 		unless $csv->print($fh, $line);
 	}
