@@ -195,6 +195,8 @@ RUN apt-get update \
 	libuniversal-isa-perl \
 	libtest-fatal-perl \
 	libjson-xs-perl \
+	libjson-maybexs-perl \
+	libcpanel-json-xs-perl \
 	libmoox-options-perl \
 	make \
 	netpbm \
