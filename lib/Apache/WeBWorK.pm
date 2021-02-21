@@ -37,7 +37,7 @@ use Date::Format;
 use WeBWorK;
 use Encode;
 use utf8;
-use JSON;
+use JSON::MaybeXS;
 use UUID::Tiny  ':std';
 
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
@@ -386,21 +386,14 @@ sub textMessage($$$@) {
 		$headers{"sec-ch-ua"} =~ s/\"//g;
 	}
 
-	my $additional_json = join("",
-		    "{ ", # Start object
-		    encode_json("Error record identifier"), ": ",
-		    encode_json($uuid), ", ",
-		    encode_json("Time"), ": ",
-		    encode_json($time), ", ",
-		    encode_json("Method"), ": ",
-		    encode_json($r->method), ", ",
-		    encode_json("URI"), ": ",
-		    encode_json($r->uri), ", ",
-		    encode_json("HTTP Headers"), ": ",
-		    encode_json( {%headers} ), ", ",
-		    encode_json("Warnings"), ": ", jsonWarningsList(@warnings), ", ",
-		    " }" # End object
-		   );
+	my $additional_json = encode_json({
+			"Error record identifier" => $uuid,
+			"Time" => $time,
+			"Method" => $r->method,
+			"URI" => $r->uri,
+			"HTTP Headers" => {%headers},
+			"Warnings" => [ @warnings ],
+		});
 
 	return "[$uuid] [$uri] $additional_json $exception\n$backtrace";
 }
@@ -425,24 +418,16 @@ sub jsonMessage($$$@) {
 		$headers{"sec-ch-ua"} =~ s/\"//g;
 	}
 
-	return join("",
-		    "{ ", # Start object
-		    encode_json("Error record identifier"), ": ",
-		    encode_json($uuid), ", ",
-		    encode_json("Time"), ": ",
-		    encode_json($time), ", ",
-		    encode_json("Method"), ": ",
-		    encode_json($r->method), ", ",
-		    encode_json("URI"), ": ",
-		    encode_json($r->uri), ", ",
-		    encode_json("HTTP Headers"), ": ",
-		    encode_json( {%headers} ), ", ",
-		    encode_json("Warnings"), ": ", jsonWarningsList(@warnings), ", ",
-		    encode_json("Exception"), ": ",
-		    encode_json($exception), ", ",
-		    encode_json("Backtrace"), ": ", jsonBacktrace(@backtrace),
-		    " }" # End object
-		   );
+	return encode_json({
+			"Error record identifier" => $uuid,
+			"Time" => $time,
+			"Method" => $r->method,
+			"URI" => $r->uri,
+			"HTTP Headers" => {%headers},
+			"Warnings" => [ @warnings ],
+			"Exception" => $exception,
+			"Backtrace" => [ @backtrace ],
+		});
 }
 
 ################################################################################
@@ -476,18 +461,6 @@ sub textBacktrace(@) {
 	return join "\n", @frames;
 }
 
-
-=item jsonBacktrace(@frames)
-
-Converts a list of stack frames in a backtrace into a JSON array.
-
-=cut
-
-sub jsonBacktrace(@) {
-	my (@frames) = @_;
-	return encode_json( [ @frames ] );
-}
-
 ################################################################################
 
 =item htmlWarningsList(@warnings)
@@ -517,17 +490,6 @@ sub textWarningsList(@) {
 		$warning = " * $warning";
 	}
 	return join "\n", @warnings;
-}
-
-=item jsonWarningsList(@warnings)
-
-Converts a list of warnings into a JSON array.
-
-=cut
-
-sub jsonWarningsList(@) {
-	my (@warnings) = @_;
-	return encode_json( [ @warnings ] );
 }
 
 ################################################################################
