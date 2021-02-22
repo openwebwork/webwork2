@@ -1878,8 +1878,8 @@ sub body {
 			if ($LTIGradeResult != -1) {
 			  print CGI::br();
 			  print $LTIGradeResult ?
-			    $r->maketext("Your score was successfully sent to the LMS") :
-			    $r->maketext("Your score was not successfully sent to the LMS");
+			    $r->maketext("Your score was successfully sent to the LMS.") :
+			    $r->maketext("Your score was not successfully sent to the LMS.");
 			}
 			
 		}
