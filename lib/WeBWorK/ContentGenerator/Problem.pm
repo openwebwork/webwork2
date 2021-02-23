@@ -125,7 +125,8 @@ sub can_showProblemGrader {
 	my $authz = $self->r->authz;
 
 	return ($authz->hasPermissions($User->user_id, "access_instructor_tools") &&
-		$authz->hasPermissions($User->user_id, "score_sets"));
+		$authz->hasPermissions($User->user_id, "score_sets") &&
+		$Set->set_id ne 'Undefined_Set' && !$self->{invalidSet});
 }
 
 sub can_showAnsGroupInfo {

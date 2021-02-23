@@ -119,7 +119,8 @@ sub can_showProblemGrader {
 	my $authz = $self->r->authz;
 
 	return ($authz->hasPermissions($User->user_id, "access_instructor_tools") &&
-		$authz->hasPermissions($User->user_id, "score_sets"));
+		$authz->hasPermissions($User->user_id, "score_sets") &&
+		$Set->set_id ne "Undefined_Set" && !$self->{invalidSet});
 }
 
 sub can_showHints {
@@ -1166,6 +1167,9 @@ sub nav {
 	# Set up and display a student navigation for those that have permission to act as a student.
 	if ($r->authz->hasPermissions($user, "become_student") && $effectiveUser ne $user) {
 		my $setName = $self->{set}->set_id;
+
+		return "" if $setName eq "Undefined_Set";
+
 		my $setVersion = $self->{set}->version_id;
 		my $courseName = $self->{ce}{courseName};
 
