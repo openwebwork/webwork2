@@ -181,6 +181,7 @@ sub pre_header_initialize {
 		    courseID                => $r->param('courseID'),
 		    library_name            => $r->param("library_name") ||undef,
 		    user        	        => $r->param("user") ||undef,
+			effectiveUser           => $r->param("effectiveUser") || undef,
 		    set                     => $r->param("set") ||undef,
 		    fileName                => $r->param("file_name") ||undef,
 		    new_set_name	        => $r->param("new_set_name") ||undef,
@@ -218,6 +219,7 @@ sub pre_header_initialize {
             userpassword   			=> $r->param('userpassword') || undef,	# defaults to studentid if empty
 	     	set_props	    		=> $r->param('set_props') || undef,
 	     	set_id	    			=> not_null($r->param('set_id')) ? $r->param('set_id') : undef,
+			version_id              => $r->param('version_id') || undef,
 	     	due_date	    		=> $r->param('due_date') || undef,
 	     	set_header     		   	=> $r->param('set_header') || undef,
 	        hardcopy_header 	   	=> $r->param('hardcopy_header') || undef,

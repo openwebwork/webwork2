@@ -287,11 +287,11 @@ function init_webservice(command) {
 function render(id) {
     var ro = init_webservice('renderProblem');
  
-    if ($('#problem\\.'+id+'\\.problem_seed').length > 0) {
-	ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed').val();
-    } else {
-	ro.problemSeed = 1;
-    }
+	if ($('#problem\\.'+id+'\\.problem_seed_id').length > 0) {
+		ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed_id').val();
+	} else {
+		ro.problemSeed = 1;
+	}
     var source_file
 
     if ($('#problem\\.'+id+'\\.source_file_id').val()) {
@@ -306,6 +306,12 @@ function render(id) {
     }
 
     ro.problemPath = source_file;
+
+	var editForUserInputs = $('input[name=editForUser]');
+	if (editForUserInputs.length == 1) ro.effectiveUser = editForUserInputs.val();
+
+	var versionIDInput = $('#hidden_version_id');
+	if (versionIDInput.length) ro.version_id = versionIDInput.val();
 
     ro.set = ro.problemPath;
     ro.probNum = id;
