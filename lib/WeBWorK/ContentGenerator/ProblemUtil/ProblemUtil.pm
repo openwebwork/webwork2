@@ -519,6 +519,7 @@ sub output_footer{
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
+		courseId           => $courseName,	
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
 		problemPath        => $problem->source_file,
