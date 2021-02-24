@@ -12,7 +12,7 @@ $(function() {
 			"<span>" + previewBtn.siblings("textarea").val().replace(/</g, '< ').replace(/>/g, ' >')) + "</span>";
 		previewBtn.popover('toggle');
 		if (window.MathJax) {
-			MathJax.typeset([ '.popover-content' ]);
+			MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise(['.popover-content']));
 		}
 	});
 })

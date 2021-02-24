@@ -360,7 +360,7 @@ sub previewAnswer {
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
-		return '<span>\['.$tex.'\]</span>';
+		return '\['.$tex.'\]';
 	}
 }
 
