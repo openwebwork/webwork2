@@ -380,7 +380,7 @@ sub previewCorrectAnswer {
 		$imgGen->add($tex);
 		# warn "adding $tex";
 	} elsif ($displayMode eq "MathJax") {
-		return '<span>\['.$tex.'\]</span>';
+		return '\['.$tex.'\]';
 	}
 }
 
