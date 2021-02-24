@@ -126,7 +126,7 @@ function MathViewer(field,button,container,userOptions) {
 		$('.popover').draggable({handle: ".brand"});
 
 		me.inputTextBox.keyup();
-		window.MathJax.typeset([ ".popover" ]);
+		MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise(['.popover']));
 		return false;
 	});
 
@@ -258,10 +258,10 @@ function MathViewer(field,button,container,userOptions) {
 		if (!mviewer.length) return;
 		if (me.renderingMode == "LATEX") {
 			mviewer.html("<p>\\(" + text + "\\)</p>");
-			window.MathJax.typeset([ mviewer[0] ]);
+			MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise([mviewer[0]]));
 		} else if (me.renderingMode == "PGML") {
 			mviewer.html("<p>`" + text + "`</p>");
-			window.MathJax.typeset([ mviewer[0] ]);
+			MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise([mviewer[0]]));
 		} else
 			console.log('Invalid Rendering Mode');
 	};
