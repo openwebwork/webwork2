@@ -908,8 +908,8 @@ sub killCookie {
 
 	my $courseID = $r->urlpath->arg("courseID");
 
-	my $sameSite = ( defined($ce->{CookieSameSite} ) ) ? $ce->{CookieSameSite} : "Strict" ;
-	my $secure   = ( defined($ce->{CookieSecure}   ) ) ? $ce->{CookieSecure}   : 0 ;
+	my $sameSite  = $ce->{CookieSameSite};
+	my $secure    = $ce->{CookieSecure};    # Warning: use 1 only if using https
 
 	my $cookie = WeBWorK::Cookie->new(
 		-name      => "WeBWorKCourseAuthen.$courseID",
