@@ -787,18 +787,16 @@ sub check_session {
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
 	
 	my $timestampValid=0;
-# first part of if clause is disabled for now until we figure out long term fix for using cookies
-# safely (see pull request #576)   This means that the database key time is always being used
-# even when in "session_cookie" mode
-#	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
-#		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
-#	} else {
-		$timestampValid = (time <= $Key->timestamp()+$ce->{sessionKeyTimeout});
+	if ( $ce->{session_management_via} eq "session_cookie"
+		&& $ce->{CookieSecure} && defined($self->{cookie_timestamp}) ) {
+		$timestampValid = ( time <= $self->{cookie_timestamp} + $ce->{CookieLifeTime} );
+	} else {
+		$timestampValid = ( time <= $Key->timestamp() + $ce->{sessionKeyTimeout} );
 		if ($keyMatches and $timestampValid and $updateTimestamp) {
 			$Key->timestamp(time);
 			$db->putKey($Key);
 		}
-#	}
+	}
 	return (1, $keyMatches, $timestampValid);
 }
 
@@ -874,10 +872,10 @@ sub sendCookie {
 
  	my $timestamp = time();
 
-	my $sameSite  = ( defined($ce->{CookieSameSite}  ) ) ? $ce->{CookieSameSite}  : "Strict" ; # Default to Strict
-	my $secure    = ( defined($ce->{CookieSecure}    ) ) ? $ce->{CookieSecure}    : 0 ;        # Default to NOT setting secure as it requires https
-	my $lifetime  = ( defined($ce->{CookieLifeTime}  ) ) ? $ce->{CookieLifeTime}  : "+6h" ;    # Default to 6 hours (for when session_management_via is session_cookie)
-	my $lifetime2 = ( defined($ce->{CookieLifeTime2} ) ) ? $ce->{CookieLifeTime2} : "+30d" ;   # Default to 30 days (for when session_management_via is NOT session_cookie)
+	my $sameSite  = $ce->{CookieSameSite};
+	my $secure    = $ce->{CookieSecure};    # Warning: use 1 only if using https
+	my $lifetime  = $ce->{CookieLifeTime};  # for when session_management_via is session_cookie
+	my $lifetime2 = $ce->{CookieLifeTime2}; # for when session_management_via is NOT session_cookie
 
 	my $cookie = WeBWorK::Cookie->new(
 		-name     => "WeBWorKCourseAuthen.$courseID",
