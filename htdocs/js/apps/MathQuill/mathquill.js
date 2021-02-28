@@ -3030,11 +3030,11 @@ var TextBlock = P(Node, function(_, super_) {
     var regex = Parser.regex;
     var optWhitespace = Parser.optWhitespace;
     return optWhitespace
-      .then(string('{')).then(regex(/^[^}]*/)).skip(string('}'))
+      .then(string('{')).then(regex(/^(\\}|[^}])*/)).skip(string('}'))
       .map(function(text) {
         if (text.length === 0) return Fragment();
 
-        TextPiece(text).adopt(textBlock, 0, 0);
+        TextPiece(text.replace(/\\{/g, '{').replace(/\\}/g, '}')).adopt(textBlock, 0, 0);
         return textBlock;
       })
     ;
