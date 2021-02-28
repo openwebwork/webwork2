@@ -97,7 +97,7 @@ function knowl_click_handler($el) {
       if(window.MathJax == undefined) {
             $knowl.slideDown("slow");
       }  else {
-		  MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise([$output[0]]));
+		  MathJax.startup.promise = MathJax.startup.promise.then(function() { return MathJax.typesetPromise([$output[0]]); });
 		  MathJax.startup.promise.then(function () {$knowl.slideDown("slow")});
       }
     } else {
@@ -121,7 +121,7 @@ function knowl_click_handler($el) {
       if(window.MathJax == undefined) {
             $knowl.slideDown("slow");
       }  else {
-		  MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise([$output[0]]));
+		  MathJax.startup.promise = MathJax.startup.promise.then(function() { return MathJax.typesetPromise([$output[0]]); });
 		  MathJax.startup.promise.then(function () {$knowl.slideDown("slow")});
       }
      }); 

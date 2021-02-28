@@ -334,7 +334,7 @@ function render(id) {
 			$('#psr_render_area_'+id).html(response);
 			// run typesetter depending on the displaymode
 			if(displayMode=='MathJax')
-				MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise());
+				MathJax.startup.promise = MathJax.startup.promise.then(function() { return MathJax.typesetPromise(); });
 			if(displayMode=='jsMath')
 				jsMath.ProcessBeforeShowing(el);
 
