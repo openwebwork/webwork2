@@ -458,10 +458,15 @@ sub formatToolTip {  # note that formatToolTip output includes CGI::td wrapper
 	my $self = shift;
 	my $answer = shift;
 	my $formattedAnswer = shift;
-	return CGI::td({onmouseover=>qq!Tip('$answer',SHADOW, true, 
-		                    DELAY, 1000, FADEIN, 300, FADEOUT, 300, STICKY, 1, OFFSETX, -20, CLOSEBTN, true, CLICKCLOSE, false, 
-		                    BGCOLOR, '#F4FF91', TITLE, 'Entered:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!},
-		                    $self->nbsp($formattedAnswer));
+	return CGI::td(CGI::span({
+				"class" => "answer-preview",
+				"data-toggle" => "popover",
+				"data-content" => $answer,
+				"data-placement" => "bottom",
+				"data-html" => "true"
+			},
+			$self->nbsp($formattedAnswer))
+	);
 }
 
 
