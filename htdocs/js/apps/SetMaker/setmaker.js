@@ -30,19 +30,12 @@ function badmsg(msg) {
 
 
 function settoggle(id, text1, text2) {
-  $('#'+id).toggle(function() {$('#'+id).html(text2)}, 
-    function() {$('#'+id).html(text1)});
-  return true;
-}
-
-function toggle_content(id, text1, text2) {
-  var e = $('#'+id);
-  nomsg();
-  if(e.text() == text1)
-    e.text(text2);
-  else
-    e.text(text1);
-  return true;
+	var elt = $('#' + id);
+	elt.click(function() {
+		if (elt.html() == text1) elt.html(text2);
+		else elt.html(text1);
+	});
+	return true;
 }
 
 function togglepaths() {
