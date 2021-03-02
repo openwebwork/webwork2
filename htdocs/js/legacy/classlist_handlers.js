@@ -24,9 +24,15 @@ function classlist_add_export_elements() {
 	}
 }
 
-addOnLoadEvent(function() {
-		document.getElementById("filter_select").onchange = classlist_add_filter_elements;
+$(function() {
+	var filter_select = document.getElementById("filter_select")
+	if (filter_select) {
+		filter_select.addEventListener("change", classlist_add_filter_elements);
 		classlist_add_filter_elements();
-		document.getElementById("export_select_target").onchange = classlist_add_export_elements;
+	}
+	var export_select_target = document.getElementById("export_select_target");
+	if (export_select_target) {
+		export_select_target.addEventListener("change", classlist_add_export_elements);
 		classlist_add_export_elements();
-	});
+	}
+});
