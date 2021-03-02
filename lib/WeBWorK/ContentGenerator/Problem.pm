@@ -1117,7 +1117,7 @@ sub nav {
 			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Student")),
 			$args->{separator},
 			CGI::start_span({ class => "btn-group student-nav-selector" }),
-			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown", href => "#" },
+			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
 				$userRecords[$currentUserIndex]{displayName} . " " . CGI::span({ class => "caret" }, "")),
 			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
 			(
@@ -2127,18 +2127,15 @@ sub output_summary{
     }
 
 
-    if (!$previewAnswers) {    # only color answers if not previewing
-        if ($checkAnswers or $showPartialCorrectAnswers) { # color answers when partialCorrectAnswers is set
-                                                           # or when checkAnswers is submitted
-	    print CGI::start_script({type=>"text/javascript"}),
-	            "addOnLoadEvent(function () {color_inputs([\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
-	            "\n],[\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
-	            "]\n)});",
-	          CGI::end_script();
+	if (!$previewAnswers && ($checkAnswers || $showPartialCorrectAnswers)) {
+		# Only color answers if not previewing and when partialCorrectAnswers is set or when
+		# checkAnswers is submitted.
+		print CGI::start_script({type=>"text/javascript"}),
+			"\$(function () {color_inputs([",
+			join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],[",
+			join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "])});",
+			CGI::end_script();
 	}
-    }
 	return "";
 }
 
@@ -2343,9 +2340,6 @@ sub output_JS{
 
 	# This adds the dragmath functionality
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
-
-	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
 	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();

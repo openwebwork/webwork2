@@ -10,4 +10,4 @@ function show_hide(){
 	}
 }
 
-addOnLoadEvent(function() { document.getElementById("show_hide").onclick = show_hide; });
+$(function() { document.getElementById("show_hide").onclick = show_hide; });

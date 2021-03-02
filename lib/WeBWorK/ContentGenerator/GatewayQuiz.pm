@@ -407,11 +407,9 @@ sub handle_input_colors {
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript"}),
-			"color_inputs([\n  ",
-				join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
-			"\n],[\n  ",
-				join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
-			"]\n);",
+		"color_inputs([",
+	   	join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],\n[",
+		join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "]);",
 		CGI::end_script();
 }
 
@@ -1229,7 +1227,7 @@ sub nav {
 			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Test")),
 			" ",
 			CGI::start_span({ class => "btn-group student-nav-selector" }),
-			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown", href => "#" },
+			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
 				$userRecords[$currentTestIndex]{displayName} .
 				" (test $userRecords[$currentTestIndex]{setVersion}) " .
 				CGI::span({ class => "caret" }, "")),

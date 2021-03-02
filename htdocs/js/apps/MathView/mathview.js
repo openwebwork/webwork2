@@ -167,7 +167,7 @@ function MathViewer(field,button,container,userOptions) {
 				.click(function (event) {event.preventDefault();}))
 			.append($('<ul>', {class : "nav"})
 				.append($('<li>', {class : "dropdown"})
-					.append('<a href="#" id="menu'+viewerIndex+'" class="dropdown-toggle" data-toggle="dropdown" role="menuitem">'
+					.append('<a id="menu'+viewerIndex+'" class="dropdown-toggle" data-toggle="dropdown" role="menuitem">'
 						+'Operations <b class="caret"></b></a>')
 					.append(dropdown)))
 			.append($('<ul>', {class : "nav pull-right"})

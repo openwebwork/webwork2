@@ -59,7 +59,8 @@ sub initialize {
 	$self->{scoringFileName}=$scoringFileName;
 	
 	$self->{padFields}  = defined($r->param('padFields') ) ? 1 : 0; 
-	
+	$self->{includePercentEachSet} = defined($r->param('includePercentEachSet') ) ? 1 : 0;
+
 	if (defined $scoreSelected && @selected && $scoringFileNameOK) {
 
 		my @totals                 = ();
@@ -111,8 +112,7 @@ sub initialize {
 				$self->appendColumns(\@totals, \@totalsColumn);
 			}	
 		}
-		# FIXME - add handling of a checkbox to set the final parameter (currently fixed)
-		my @sum_scores  = $self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs, 1);
+		my @sum_scores  = $self->sumScores(\@totals, $showIndex, \%Users, \@sortedUserIDs, $self->{includePercentEachSet});
 		$self->appendColumns( \@totals,\@sum_scores);
 		$self->writeCSV("$scoringDir/$scoringFileName", @totals);
 
@@ -211,6 +211,14 @@ sub body {
 										-checked=>1,
 									  },
 									 'Pad Fields'
+						),
+						CGI::br(),
+						CGI::checkbox({ -name=>'includePercentEachSet',
+										-value=>1,
+										-label=>'Include percentage grades columns for all sets', # should use maketext and add to POT file
+										-checked=>1,
+									},
+									'Include percentage grades columns for all sets'
 						),
 					),
 				),
@@ -641,7 +649,10 @@ sub sumScores {    # Create a totals column for each student
 			$studentTotal += ($score =~/^\s*[\d\.]+\s*$/)? $score : 0;
 			if ( $addPercentagePerAssignmentColumns ) {
 				$scoringData[$i][$hw_Cnum] = ($score) ?
-				  wwRound( 2, 100 * $score/ ($r_totals->[$problemValueRow]->[$j]) ) : 0;
+				  # Note: the multiplication by 100 is OUTSIDE the wwRound() so the computed
+				  # score is an integer percentage, just as that displayed by
+				  # lib/WeBWorK/ContentGenerator/Grades.pm as $totalRightPercent.
+				  ( 100 * wwRound( 2, $score/ ($r_totals->[$problemValueRow]->[$j]) ) ) : 0;
 				$hw_Cnum++;
 			}
 		}
