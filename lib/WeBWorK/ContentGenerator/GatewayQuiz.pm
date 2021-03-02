@@ -412,12 +412,10 @@ sub handle_input_colors {
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript"}),
-	        "color_inputs([\n  ",
-		  join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
-	        "\n],[\n  ",
-                  join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
-	        "]\n);",
-	      CGI::end_script();
+		"color_inputs([",
+	   	join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],\n[",
+		join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "]);",
+		CGI::end_script();
 }
 
 ################################################################################
@@ -1878,8 +1876,8 @@ sub body {
 			if ($LTIGradeResult != -1) {
 			  print CGI::br();
 			  print $LTIGradeResult ?
-			    $r->maketext("Your score was successfully sent to the LMS") :
-			    $r->maketext("Your score was not successfully sent to the LMS");
+			    $r->maketext("Your score was successfully sent to the LMS.") :
+			    $r->maketext("Your score was not successfully sent to the LMS.");
 			}
 			
 		}

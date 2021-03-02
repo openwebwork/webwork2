@@ -46,7 +46,7 @@ $(function(){
     
 });
 
-addOnLoadEvent( function () {
+window.addEventListener("load", function () {
     $('#submit_button_id').on('click',function() {
 	/* NOTE:  This makes a lot of the updateTarget()/setTarget() JS
 	   in the main pgeditor3 code superfluous.  Since we are doing a 
@@ -85,4 +85,4 @@ addOnLoadEvent( function () {
 
     });
         
-})
+});

@@ -1742,19 +1742,21 @@ sub fetchEmailRecipients {
 	return @recipients;
 }
 
-# requires a CG object and an optional string
-# 'relative' or 'absolute' to return a single URL
-# or NULL to return an array containing both URLs
-# this subroutine could be expanded to
+# Requires a CG object.
+# The following optional parameters may be passed:
+# set_id: A problem set name
+# problem_id: Number of a problem in the set
+# url_type:  This should a string with the value 'relative' or 'absolute' to
+# return a single URL, or undefined to return an array containing both URLs
+# this subroutine could be expanded to.
 
 sub generateURLs {
-	my ($self, $urlRequested) = @_;
+	my $self = shift;
+	my %params = @_;
 	my $r = $self->r;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 	my $userName = $r->param("user");
-	my $setName = $urlpath->arg("setID");
-	my $problemNumber = $urlpath->arg("problemID");
 
 	# generate context URLs
 	my $emailableURL;
@@ -1762,18 +1764,18 @@ sub generateURLs {
 	if ($userName) {
 		my $modulePath;
 		my @args;
-		if ($setName) {
-			if ($problemNumber) {
+		if ($params{set_id}) {
+			if ($params{problem_id}) {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
 					courseID => $r->urlpath->arg("courseID"),
-					setID => $setName,
-					problemID => $problemNumber,
+					setID => $params{set_id},
+					problemID => $params{problem_id},
 				);
 				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
 			} else {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
 					courseID => $r->urlpath->arg("courseID"),
-					setID => $setName,
+					setID => $params{set_id},
 				);
 				@args = ();
 			}
@@ -1796,8 +1798,8 @@ sub generateURLs {
 		$emailableURL = "(not available)";
 		$returnURL = "";
 	}
-	if ($urlRequested) {
-		if ($urlRequested eq 'relative') {
+	if ($params{url_type}) {
+		if ($params{url_type} eq 'relative') {
 			return $returnURL;
 		} else {
 			return $emailableURL; # could include other types of URL here...

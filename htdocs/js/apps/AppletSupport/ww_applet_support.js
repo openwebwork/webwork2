@@ -741,4 +741,4 @@ function initWW(){
 	console.log("Out of initWW");
 }
 // be careful that initWW is not called from more than one place.
-addOnLoadEvent(initWW);
+window.addEventListener("load", initWW);
