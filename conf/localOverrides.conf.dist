@@ -332,6 +332,14 @@ $pg{options}{periodicRandomizationPeriod} = 5;
 
  # The link Contrib in the course templates directory should point to ../webwork-open-problem-library/Contrib 
 
+# Determines whether or not MathObjects contexts will parse the alternative tokens
+# listed in the "alternatives" property (mostly for unicode alternatives for parse tokens).
+# $pg{specialPGEnvironmentVars}{parseAlternatives} = 1;
+
+# Determines whether or not the MathObjects parser will convert the Full Width Unicode block
+# (U+FF01 to U+FF5E) to their corresponding ASCII characters (U+0021 to U+007E) automatically.
+# $pg{specialPGEnvironmentVars}{convertFullWidthCharacters} = 1;
+
 ################################################################################
 #  Configuring the display of different versions of the editors
 ################################################################################

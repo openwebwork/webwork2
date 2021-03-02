@@ -8683,8 +8683,8 @@ msgstr "Your score was not recorded."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1892
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:290
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:296
-msgid "Your score was not successfully sent to the LMS"
-msgstr "Your score was not successfully sent to the LMS"
+msgid "Your score was not successfully sent to the LMS."
+msgstr "Your score was not successfully sent to the LMS."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:261
 msgid "Your score was recorded."
@@ -8693,8 +8693,8 @@ msgstr "Your score was recorded."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1891
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:288
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:294
-msgid "Your score was successfully sent to the LMS"
-msgstr "Your score was successfully sent to the LMS"
+msgid "Your score was successfully sent to the LMS."
+msgstr "Your score was successfully sent to the LMS."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:553
 msgid "Your session has timed out due to inactivity. Please log in again."
