@@ -433,15 +433,14 @@ sub createSummary {
 
 
 sub color_answer_blanks {
-	 my $self = shift;
-	 my $out = join('', 
-	 		  CGI::start_script({type=>"text/javascript"}),
-	            "addOnLoadEvent(function () {color_inputs([\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
-	            "\n],[\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
-	            "]\n)});",
-	          CGI::end_script()
+	my $self = shift;
+	my $out = join('', 
+		CGI::start_script({type=>"text/javascript"}),
+		"\$(function() {color_inputs([",
+	   	join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],\n[",
+		join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}),
+		"])});",
+		CGI::end_script()
 	);
 	return $out;
 }

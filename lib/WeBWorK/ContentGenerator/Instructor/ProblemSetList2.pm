@@ -2828,24 +2828,22 @@ sub output_JS{
 	my $setID   = $r->urlpath->arg("setID");
 	my $timezone = $ce->{siteDefaults}{timezone};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-    
-    print "\n\n<!-- add to header ProblemSetList2.pm -->";
-        
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+
+	print "\n\n<!-- add to header ProblemSetList2.pm -->";
+
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style> 
 	.ui-datepicker{font-size:85%} 
 	.auto-changed{background-color: #ffffcc} 
 	.changed {background-color: #ffffcc}
-    </style>!,"\n";
-    
+	</style>!,"\n";
+
 	# print javaScript for dateTimePicker	
 	# jquery ui printed seperately
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
