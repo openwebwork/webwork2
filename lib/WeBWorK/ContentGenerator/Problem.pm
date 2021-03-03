@@ -1859,28 +1859,12 @@ sub output_comments{
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		if ($userPastAnswer->comment_string) {
-
-		    my $comment = $userPastAnswer->comment_string;
-		    $comment = CGI::escapeHTML($comment);
-		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		   		    print CGI::start_div({id=>"answerComment", class=>"answerComments"});
-		    print CGI::b("Instructor Comment:"),  CGI::br();
-		    print $comment;
-		    print <<EOS;
-				<script type="text/javascript">
-					MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
-					var AM = MathJax.InputJax.AsciiMath.AM;
-					for (var i=0; i< AM.symbols.length; i++) {
-						if (AM.symbols[i].input == '**') {
-						AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
-						}
-					}
-									 });
-				MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
-
-				MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'answerComment']);
-				</script>
-EOS
+			my $comment = $userPastAnswer->comment_string;
+			$comment = CGI::escapeHTML($comment);
+			my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+			print CGI::start_div({id=>"answerComment", class=>"answerComments"});
+			print CGI::b("Instructor Comment:"),  CGI::br();
+			print $comment;
 		}
 	}
 
@@ -1993,18 +1977,15 @@ sub output_summary{
     }
 
 
-    if (!$previewAnswers) {    # only color answers if not previewing
-        if ($checkAnswers or $showPartialCorrectAnswers) { # color answers when partialCorrectAnswers is set
-                                                           # or when checkAnswers is submitted
-	    print CGI::start_script({type=>"text/javascript"}),
-	            "addOnLoadEvent(function () {color_inputs([\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
-	            "\n],[\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
-	            "]\n)});",
-	          CGI::end_script();
+	if (!$previewAnswers && ($checkAnswers || $showPartialCorrectAnswers)) {
+		# Only color answers if not previewing and when partialCorrectAnswers is set or when
+		# checkAnswers is submitted.
+		print CGI::start_script({type=>"text/javascript"}),
+			"\$(function () {color_inputs([",
+			join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],[",
+			join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "])});",
+			CGI::end_script();
 	}
-    }
 	return "";
 }
 
@@ -2210,9 +2191,6 @@ sub output_JS{
 	# This adds the dragmath functionality
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 
-	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
-
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
 	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 
@@ -2225,7 +2203,6 @@ sub output_JS{
 	# This is for MathView.
 	if ($self->{will}->{useMathView}) {
 	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();

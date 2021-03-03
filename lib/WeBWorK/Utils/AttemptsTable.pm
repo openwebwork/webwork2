@@ -352,6 +352,8 @@ sub previewAnswer {
 	my $tex = $answerResult->{preview_latex_string};
 	
 	return "" unless defined $tex and $tex ne "";
+
+	return $tex if $answerResult->{non_tex_preview};
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
@@ -360,7 +362,7 @@ sub previewAnswer {
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+		return '\['.$tex.'\]';
 	}
 }
 
@@ -373,14 +375,16 @@ sub previewCorrectAnswer {
 	my $tex = $answerResult->{correct_ans_latex_string};
 	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
 	# return "" unless defined $tex and $tex ne "";
-	
+
+	return $tex if $answerResult->{non_tex_preview};
+
 	if ($displayMode eq "plainText") {
 		return $tex;
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 		# warn "adding $tex";
 	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+		return '\['.$tex.'\]';
 	}
 }
 
@@ -433,15 +437,14 @@ sub createSummary {
 
 
 sub color_answer_blanks {
-	 my $self = shift;
-	 my $out = join('', 
-	 		  CGI::start_script({type=>"text/javascript"}),
-	            "addOnLoadEvent(function () {color_inputs([\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
-	            "\n],[\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
-	            "]\n)});",
-	          CGI::end_script()
+	my $self = shift;
+	my $out = join('', 
+		CGI::start_script({type=>"text/javascript"}),
+		"\$(function() {color_inputs([",
+	   	join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],\n[",
+		join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}),
+		"])});",
+		CGI::end_script()
 	);
 	return $out;
 }

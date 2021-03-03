@@ -12,9 +12,9 @@ function hmwksets_add_filter_elements() {
 	}
 }
 
-addOnLoadEvent(function() {
-	if(document.getElementById("filter_select") != null){
-		document.getElementById("filter_select").onchange = hmwksets_add_filter_elements;
-	}
+$(function() {
+    if (document.getElementById("filter_select") != null){
+        document.getElementById("filter_select").onchange = hmwksets_add_filter_elements;
+    }
 });
 
