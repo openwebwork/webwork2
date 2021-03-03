@@ -2364,8 +2364,6 @@ sub output_JS{
 	# This is for MathView.
 	if ($self->{will}->{useMathView}) {
 		if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-			print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
-
 			print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
 			print CGI::start_script({type=>"text/javascript"});
 			print "mathView_basepath = \"$site_url/images/mathview/\";";

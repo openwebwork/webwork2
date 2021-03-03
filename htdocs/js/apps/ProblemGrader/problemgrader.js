@@ -7,7 +7,9 @@ $(function(){
 			$(evt.target).siblings("textarea").val().replace(/</g, '< ').replace(/>/g, ' >'));
 		$(evt.target).popover('show');
 		if (window.MathJax) {
-			MathJax.Hub.Queue(["Typeset",MathJax.Hub])
+			MathJax.startup.promise = MathJax.startup.promise.then(function() {
+				return MathJax.typesetPromise(['.popover-content']);
+			});
 		}
 	});
 
