@@ -1127,6 +1127,8 @@ sub path {
 	my $setName       = $urlpath->arg("setID") || '';
 	my $problemNumber = $urlpath->arg("problemID") || '';
 	my $prettyProblemNumber = $problemNumber;
+    my $authz = $r->authz;
+    my $userID = $r->param('user');
 
 	if ($setName) {
 	    my $set = $r->db->getGlobalSet($setName);
@@ -1140,6 +1142,15 @@ sub path {
 	          "$setName",    $r->location."/$courseName/$setName",
 	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
 	);
+
+    unless ($authz->hasPermissions($userID, "navigation_allowed")){
+        print CGI::button(
+            -name=>'goBackButton',
+            -class=>"nav_button",
+            -value=>'Go Back',
+            -onClick=>'window.history.back();');
+        return "";
+    }
 
 	print $self->pathMacro($args, @path);
 

@@ -770,6 +770,22 @@ sub links {
 	my %systemlink_args;
 	$systemlink_args{params} = \%params if %params;
 
+    # A permission that is normally set to guest, but can be set to 'login_proctor' so that students don't see navigation links.
+	# This would be very useful when having students navigate to problem sets from an LMS and preventing the student from navigating
+	# to a different problem set from within WeBWorK.  Doing so prevents the LMS from receiving scores for the navigated problem sets. 
+	# Those problem sets must navigated to directly from the LMS for the grade to be sent back to the LMS gradebook. 
+	# This modification will only include the User Settings link so that students can switch between text and MathJax.
+	unless ($authz->hasPermissions($userID, "navigation_allowed")){
+	if (defined $courseID) {
+		if ($authen->was_verified) {
+			print CGI::start_ul();
+			print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+			print CGI::end_li();
+			}
+		}
+		return "";
+	}
+
 	print CGI::start_ul();
 	print CGI::start_li({class => "nav-header"});
 	print CGI::h2($r->maketext("Main Menu"));
@@ -1095,10 +1111,14 @@ associated with the current request.
 sub path {
 	my ($self, $args) = @_;
 	my $r = $self->r;
+    my $authz = $r->authz;
 
 	my @path;
 
 	my $urlpath = $r->urlpath;
+    my $courseID = $urlpath->arg("courseID");
+	my $userID = $r->param('user');
+
 	do {
 	    my $name = $urlpath->name;
 	    # If its a problemid for a jitar set (something which requires
@@ -1115,6 +1135,13 @@ sub path {
 	} while ($urlpath = $urlpath->parent);
 
 	$path[$#path] = ""; # we don't want the last path element to be a link
+
+    # restrict navigation capabilities if not allowed
+	if (defined $courseID) {
+		unless ($authz->hasPermissions($userID, "navigation_allowed")){
+			return "";
+		}
+	}
 
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
 	print $self->pathMacro($args, @path);

@@ -112,6 +112,34 @@ our %HC_FORMATS = (
 # UI subroutines
 ################################################################################
 
+sub path {
+	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	
+	my @path;
+	
+	my $urlpath = $r->urlpath;
+	my $courseID = $urlpath->arg("courseID");
+	my $userID = $r->param('user');
+  
+  $self->SUPER::path($args);
+
+	# If regular navigation is restricted, we'll need a "go back" button in case students are using an iframe window within their LMS.
+  # Using browser navigation will only navigate away from the entire webwork iframe in that case.
+	if (defined $courseID) {
+		unless ($authz->hasPermissions($userID, "navigation_allowed")){
+			print CGI::button(
+        -name=>'goBackButton',
+        -class=>"nav_button",
+        -value=>'Go Back',
+        -onClick=>'window.history.back();');
+		}
+	}
+	
+	return "";
+}
+
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $r = $self->r;
