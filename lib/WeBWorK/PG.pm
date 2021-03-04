@@ -58,10 +58,23 @@ sub free {
 	#  freeing them later can cause "Can't locate package ..." errors in the log during
 	#  perl garbage collection.  So free them here.
 	#
-	$self->{pgcore}{OUTPUT_ARRAY} = [];
-	$self->{answers} = {};
-	undef $self->{translator};
-	foreach (keys %{$self->{pgcore}{PG_ANSWERS_HASH}}) {undef $self->{pgcore}{PG_ANSWERS_HASH}{$_}}
+
+	# PREVIOUSLY:
+	# AnswerHash objects: (these will be freed when pgcore dies)
+	# foreach (keys %{$self->{pgcore}{PG_ANSWERS_HASH}}) {delete $self->{pgcore}{PG_ANSWERS_HASH}{$_}}
+	# PGresponsegroups: (these are freed when pgcore dies)
+	# delete $self->{answers};
+
+	# initial breakthrough: (removing pgcore reference from _inside_ the safe)
+	# $self->{translator}{safe}->reval('undef $main::PG;');
+
+	# translator holds the only reference to safe - safe will be GC'ed after this
+	delete $self->{translator}{safe};
+	# safe destruction now cleans "all" refs from its namespace (esp. pgcore)
+	# this leaves translator holding the only remaining pgcore reference
+	# allocation: new pg::local->translator->safe->pgcore
+	# deallocation: this->safe->...->pg::local->translator->pgcore
+	# followed by: (->PGanswergroup->PGresponsegroup->PGalias->PGloadfiles->AnswerHash)
 }
 
 sub defineProblemEnvir {

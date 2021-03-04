@@ -154,6 +154,7 @@ sub erase {
     my $leaf_glob   = $stem_symtab->{$leaf};
     my $leaf_symtab = *{$leaf_glob}{HASH};
 #    warn " leaf_symtab ", join(', ', %$leaf_symtab),"\n";
+    clean_namespace($pkg);
     %$leaf_symtab = ();
     #delete $leaf_symtab->{'__ANON__'};
     #delete $leaf_symtab->{'foo'};
@@ -168,6 +169,50 @@ sub erase {
     1;
 }
 
+sub clean_namespace {
+    my $pkg = shift;
+    no strict 'refs';
+    my $pkg_symtab = *{$pkg}{HASH};
+
+    # print "============= SAFE CLEAR: $pkg ("
+    #   . scalar( keys %$pkg_symtab ) . ")\n";
+
+    foreach my $key ( keys %$pkg_symtab ) {
+        next if ( $key =~ /^(main::|__.*|defaultContext)$/ );
+        if ( $key =~ /::$/ ) {
+            # issue with JSON::XS::true -- a blessed ref to __ANON__ sub (returning scalar)
+            # do not mess with default context info in Value::Context::
+            # issues with removing i from Value::Complex:: (avoid Value:: altogether?)
+            # is it safe to remove Parser::class and Parser::reduce?
+            # PGML::Parse::block? 
+            # perhaps we should avoid diving into sub-namespaces altogether?
+            # it is hard to distinguish 'reval'ed objects from 'share'ed ones...
+            next if $key =~ (/JSON::/ || $key =~ /Context::/ || $key =~ /Complex::/);
+            clean_namespace("$pkg$key");
+        } else {
+            my $isref = ref ${ *{"$pkg$key"} };
+            next unless ( $isref && $isref !~ /PopUp/ ); 
+            # PopUp objects automatically stringify, so emptying them is impossible
+            # they GC after rh_envir/rh_state are cleaned from safe anyhow...
+            my $val = ${ *{"$pkg$key"} } // "UNDEF";
+
+            # print("$pkg$key should be removed ($isref_raw)\n");
+            if ( $val =~ /ARRAY/ ) {
+                ${ *{"$pkg$key"} } = [];
+            }
+            elsif ($val =~ /HASH/ ) {
+                ${ *{"$pkg$key"} } = {};
+            }
+            elsif ( $val =~ /REF/ ) {
+                # Value::context is a REF to a REF -- do NOT DELETE
+                # even deleting it from the symbol-table causes
+                # clear_namespace to die before completing
+            )
+            delete $pkg_symtab->{$key} unless $val =~ /REF/;
+        }
+    }
+    1;
+}
 
 sub reinit {
     my $obj= shift;
