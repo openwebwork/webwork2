@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -254,6 +254,25 @@ PerlModule WebworkWebservice
         Require all granted
 </Location>
 
+########### For "raw" json format ###########
+# If a remote site is using this WW server to process WW problems
+# and embed them into web pages, the web browser might not permit
+# the WW problems to be displayed, as it violates security policy
+# to mix content from different originis without an explicit
+# directive from the WW server that it is safe.
+# Uncomment the following to set the header to enable Cross-Origin
+# Resource Sharing (CORS).
+# You will also need to enable headers via something like:
+# sudo a2enmod headers
+# to use this. 
+# This is not actually needed to use the client formats unless
+# they are accessed from a *remote* server. 
+
+#<IfModule mod_headers.c>
+#    <Location /webwork2/html2xml>
+#        Header set Access-Control-Allow-Origin "*"
+#    </Location>
+#</IfModule>
 
 
 ########## WebworkWebservice SOAP handler ##########
