@@ -207,7 +207,7 @@ sub clean_namespace {
                 # Value::context is a REF to a REF -- do NOT DELETE
                 # even deleting it from the symbol-table causes
                 # clear_namespace to die before completing
-            )
+            }
             delete $pkg_symtab->{$key} unless $val =~ /REF/;
         }
     }
