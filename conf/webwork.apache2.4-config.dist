@@ -41,6 +41,9 @@ PerlChildInitHandler "sub { srand }"
 
 PerlModule mod_perl2
 
+PerlPassEnv MIN_HTML_ERRORS
+PerlPassEnv JSON_ERROR_LOG
+
 <Perl>
 
 #################################################################
@@ -90,6 +93,28 @@ $ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
 $WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
 $ENV{PG_ROOT} = $pg_dir;
+
+#################################################################
+# Modify the manner in which errors are reported.
+# Uncommenting $ENV{MIN_HTML_ERRORS} = 1; will minimize the data provided
+#    on HTML error pages, which some security reviews request, as in particular
+#    the older output provided backtrace information which could help idenfify
+#    the code and version of the code being used on the server.
+#    The useful information will be in the Apache error.log file, with a UID
+#    displayed also in the HTML error page to help match up records.
+# Warning: The Apache error.log is available to system adminstrators but not to
+#    users with staff level accounts in the courses, so using the more secure
+#    settings requires more cooperation from the system administrators when
+#    debugging data is needed.
+# Uncommenting $ENV{JSON_ERROR_LOG} = 1; will change the output format in the
+#    Apache error.log file to be JSON based, which will make programmatic
+#    processing of the error reports easier, but can break the functionality
+#    of existing scripts which parse error.log.
+#################################################################
+
+#$ENV{MIN_HTML_ERRORS} = 1;
+#$ENV{JSON_ERROR_LOG} = 1;
+
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
