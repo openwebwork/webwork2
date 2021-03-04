@@ -31,7 +31,7 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/LocalStorage/localstorage.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>	
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
