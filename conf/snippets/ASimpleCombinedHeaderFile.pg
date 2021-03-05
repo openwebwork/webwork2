@@ -7,6 +7,7 @@ DOCUMENT();
 loadMacros(
 	"PG.pl",
 	"PGbasicmacros.pl",
+	#"source.pl", #uncommenting this will display "show source" button if that is permitted
 	"PGcourse.pl",
 );
 

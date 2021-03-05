@@ -104,7 +104,18 @@ $externalPrograms{git} = "/usr/bin/git";
 # equation rendering/hardcopy utiltiies
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
+
+$externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
+# Consider using xelatex instead of pdflatex for multilingual use, and
+# use polyglossia and fontspec packages (which require xelatex or lualatex).
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+
 $externalPrograms{dvipng}   ="/usr/bin/dvipng";
+
+# In order to use imagemagick convert you need to change the rights for PDF files from
+# "none" to "read" in the policy file /etc/ImageMagick-6/policy.xml.  This has possible
+# security implications for the server.
+$externalPrograms{convert}  ="/usr/bin/convert";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
@@ -122,7 +133,7 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 ####################################################
 # set timeout time (-t 40 sec) to be less than timeout for problem (usually 60 seconds)
 $externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -t 40 -mHEAD "; # or "/usr/local/bin/w3c -head "
-$externalPrograms{curlCommand}  = "/usr/bin/curl";
+$externalPrograms{curl}  = "/usr/bin/curl";
 
 ####################################################
 # image conversions utiltiies
@@ -182,7 +193,7 @@ $ENABLE_UTF8MB4 =1;    # setting this to 1 enables utf8mb4 encoding, setting thi
 					   # 0 sets this for older mysql (pre 5.3) which cannot
 					   # handle utf8mb4 characters.
 
-$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : '';
+$database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : 'utf8';
 
 
 # DATABASE login information
@@ -310,5 +321,14 @@ $siteDefaults{timezone} = "America/New_York";
 # enter one of the listed values here.
 # If you do not fill this in, the system will default to "en_US"
 $siteDefaults{locale}="";
+
+################################################################################
+# Search Engine Indexing Enable/Disable
+################################################################################
+# sets the default meta robots content for individual course pages
+# this will not stop your main course listing page from being indexed
+# valid contents: index, noindex, follow, nofollow, noarchive, and
+# unavailable_after (example: "index, unavailable_after: 23-Jul-2007 18:00:00 EST")
+$options{metaRobotsContent}='noindex, nofollow';
 
 1; #final line of the file to reassure perl that it was read properly.

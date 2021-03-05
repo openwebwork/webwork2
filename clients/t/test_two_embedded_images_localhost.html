@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Embed WW in HTML page</title>
+	<meta name="generator" content="BBEdit 11.0" />
+	<link href="https://demo.webwork.rochester.edu/webwork2_files/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+	<link href="https://demo.webwork.rochester.edu/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script>
+	$(document).ready(function(){
+		$( ".clickme" ).click(function() {
+		  $( this).next().slideToggle( "slow", function() {
+			// Animation complete.
+		  });
+		});
+
+	   // jQuery methods go here...
+	});
+	</script>
+	<style>
+		.clickme {background-color: #ccccFF ;}
+		iframe {
+			margin-left: 20px;
+			padding-left: 10px;
+		}
+	</style>
+</head>
+<body>
+
+
+<h2>Problem 1</h2>
+<p>
+This problem gives you practice finding tangents to curves in the plane.
+It has problemSeed = 226 and problemIdentifierPrefix=321
+</p>
+
+
+
+<hr>
+<iframe  width="800" height="600" 
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?
+	&answersSubmitted=0
+	&sourceFilePath=setDemo/limits.pg
+	&problemSeed=226
+	&displayMode=MathJax
+	&courseID=daemon_course
+	&userID=daemon
+	&problemUUID=321
+	&course_password=daemon
+	&outputformat=standard">
+</iframe>
+<hr>
+
+<h2>Problem 2</h2>
+<p>
+This problem has a different problem seed but the same path and prefix as the first problem.
+It has problemSeed = 225 and problemIdentifierPrefix=321
+</p>
+<p>
+By loading the graphs into separate tabs you can see that the two
+graphs have different urls. This allows separation of 
+graphs, auxiliary html, and geogebra applets which might have the same 
+name and are loaded from problems with the same name but are supposed to be
+two different exercises. (Usually the fact that the problems have different
+seeds is enough to separate them but just in case you can set 
+different problemUUID/problemIdentifierPrefix values. problemUUID is the preferred
+key name -- problemIdentifierPrefix also works for compatibility. )
+
+</p>
+
+
+<hr>
+<iframe  width="800" height="600" 
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?
+	&answersSubmitted=0
+	&sourceFilePath=setDemo/limits.pg
+	&problemSeed=225
+	&displayMode=MathJax
+	&courseID=daemon_course
+	&userID=daemon
+	&problemUUID=231
+	&course_password=daemon
+	&outputformat=standard">
+</iframe>
+<hr>
+
+
+<h2>Problem 3</h2>
+<p>
+This has problemSeed = 225 and problemIdentifierPrefix=321
+</p>
+<iframe  width="800" height="600" 
+src="http://localhost/webwork2/html2xml?
+	&answersSubmitted=0
+	&sourceFilePath=setDemo/limits.pg
+	&problemSeed=225
+	&displayMode=MathJax
+	&courseID=daemon_course
+	&userID=daemon
+	&problemIdentifierPrefix=321
+	&course_password=daemon
+	&outputformat=standard">
+</iframe>
+<hr>
+
+<h2>Problem 4</h2>
+<p>
+This has problemSeed = 225 and problemIdentifierPrefix=322
+</p>
+<iframe  width="800" height="600" 
+src="http://localhost/webwork2/html2xml?
+	&answersSubmitted=0
+	&sourceFilePath=setDemo/limits.pg
+	&problemSeed=225
+	&displayMode=MathJax
+	&courseID=daemon_course
+	&userID=daemon
+	&problemIdentifierPrefix=322
+	&course_password=daemon
+	&outputformat=standard">
+</iframe>
+<hr>
+</body>
+</html>

@@ -31,7 +31,7 @@ use WeBWorK::Utils qw(readFile dequote);
 use WeBWorK::DB::Utils qw(grok_vsetID);
 use WeBWorK::ContentGenerator::GatewayQuiz qw(can_recordAnswers);
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 # This content generator is NOT logged in.

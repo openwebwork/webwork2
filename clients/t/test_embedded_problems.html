@@ -1,0 +1,327 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>mth162_overview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style id="mkstylesheet">
+body{-webkit-font-smoothing:antialiased;font-family:"Helvetica Neue",Helvetica,Arial,Verdana,sans-serif;margin:30px 0 0;padding:0;background:#fff}#wrapper{padding:20px}li{font-size:110%}li li{font-size:100%}li p{font-size:100%;margin:.5em 0}h1{color:#000}h2{color:#111}h3{color:#111;margin:0}h4{color:#111}h5{color:#111}h6{font-size:1em;line-height:1.5em;margin:1.5em 0}body,p,td,div{color:#111;font-family:"Helvetica Neue",Helvetica,Arial,Verdana,sans-serif;word-wrap:break-word}a{color:#0d6ea1;text-decoration:none;-webkit-transition:color 0.2s ease-in-out;-moz-transition:color 0.2s ease-in-out;-o-transition:color 0.2s ease-in-out;-ms-transition:color 0.2s ease-in-out;transition:color 0.2s ease-in-out}a:hover{color:#3593d9}body{font-size:15px;line-height:21px;margin:0 auto}h1{font-size:37px;line-height:42px;margin-top:42px;margin-bottom:21px}h2{font-size:27px;line-height:42px;margin-top:42px;margin-bottom:21px}h3{font-size:20px;line-height:21px;margin-top:21px;margin-bottom:21px}h4{font-size:20px;line-height:21px;margin-top:21px;margin-bottom:21px}p,ul,ol,pre,table,blockquote{margin-top:21px;margin-bottom:21px}hr{border:1px solid;margin:-1px 0}ul ul,ol ol,ul ol,ol ul{margin-top:0;margin-bottom:0}b,strong,em,small,code{line-height:1}.footnote{color:#0d6ea1;font-size:.8em;vertical-align:super}abbr,acronym{border-bottom:1px dotted #aaa}#wrapper img{max-width:100%;height:auto}dd{font-size:1em;margin-bottom:1em}li>p:first-child{margin:0}ul,ol{padding-left:1.5em}ul ul,ul ol{margin-bottom:.4em}caption,col,colgroup,table,tbody,td,tfoot,th,thead,tr{border-spacing:0}table{border:1px solid rgba(0,0,0,0.25);border-collapse:collapse;display:table;empty-cells:hide;margin:-1px 0 1.3125em;padding:0;table-layout:fixed}caption{display:table-caption;font-weight:700}col{display:table-column}colgroup{display:table-column-group}tbody{display:table-row-group}tfoot{display:table-footer-group}thead{display:table-header-group}td,th{display:table-cell}tr{display:table-row}table th,table td{font-size:1.1em;line-height:1.3;padding:.5em 1em 0}table thead{background:rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.15);border-bottom:1px solid rgba(0,0,0,0.2)}table tbody{background:rgba(0,0,0,0.05)}table tfoot{background:rgba(0,0,0,0.15);border:1px solid rgba(0,0,0,0.15);border-top:1px solid rgba(0,0,0,0.2)}figure{display:inline-block;overflow:hidden;position:relative;margin:1em 0 2em}figcaption{font-style:italic;text-align:center;background:white;color:#666}.poetry pre{display:block;font-family:Georgia,Garamond,serif !important;font-size:110% !important;font-style:italic;line-height:1.6em;margin-left:1em}.poetry pre code{font-family:Georgia,Garamond,serif !important;word-break:break-all;word-break:break-word;-webkit-hyphens:auto;-moz-hyphens:auto;hyphens:auto;white-space:pre-wrap}blockquote p{font-size:110%;font-style:italic;line-height:1.6em}sup,sub,a.footnote{font-size:1.4ex;height:0;line-height:1;position:relative;vertical-align:super}sub{vertical-align:sub;top:-1px}p,h5{font-size:1.1429em;line-height:1.3125em;margin:1.3125em 0}dt,th{font-weight:700}table tr:nth-child(odd),table th:nth-child(odd),table td:nth-child(odd){background:rgba(255,255,255,0.06)}table tr:nth-child(even),table td:nth-child(even){background:rgba(200,200,200,0.25)}@media print{img,table,figure{page-break-inside:avoid}#wrapper{background:#fff;color:#303030;padding:10px;position:relative;text-indent:0}}@media screen{.inverted{background:#252a2a}.inverted #wrapper{background:#252a2a;color:#eee}.inverted hr{border-color:#333f40 !important}.inverted p,.inverted td,.inverted li,.inverted h1,.inverted h2,.inverted h3,.inverted h4,.inverted h5,.inverted h6,.inverted th,.inverted .math,.inverted caption,.inverted dt,.inverted dd{color:#eee}.inverted pre{background:#ccc;color:#111}.inverted table{background:none}.inverted table tr:nth-child(odd),.inverted table td:nth-child(odd){background:none}.inverted a{color:#acd1d5}::selection{background:rgba(157,193,200,0.5)}h1::selection{background-color:rgba(45,156,208,0.3)}h2::selection{background-color:rgba(90,182,224,0.3)}h3::selection,h4::selection,h5::selection,h6::selection,li::selection,ol::selection{background-color:rgba(133,201,232,0.3)}code::selection{background-color:rgba(0,0,0,0.7);color:#eee}code span::selection{background-color:rgba(0,0,0,0.7) !important;color:#eee !important}a::selection{background-color:rgba(255,230,102,0.2)}.inverted a::selection{background-color:rgba(255,230,102,0.6)}td::selection,th::selection,caption::selection{background-color:rgba(180,237,95,0.5)}}
+#mkreplaced-toc{list-style-position:inside;padding:0;margin:0 0 0 1rem;list-style-type:none}#mkreplaced-toc li::before{content:''}#mkreplaced-toc li{font-size:1.5rem;line-height:1.5;font-weight:normal}#mkreplaced-toc li ul{font-size:1.3rem;font-weight:300;padding:.5rem 0;margin:0 0 0 1rem}#mkreplaced-toc li.missing{list-style-type:none !important}#mkreplaced-toc.max-1 ul,#mkreplaced-toc.max1 ul{display:none}#mkreplaced-toc.max-2 ul ul,#mkreplaced-toc.max2 ul ul{display:none}#mkreplaced-toc.max-3 ul ul ul,#mkreplaced-toc.max3 ul ul ul{display:none}#mkreplaced-toc.max-4 ul ul ul ul,#mkreplaced-toc.max4 ul ul ul ul{display:none}#mkreplaced-toc.max-5 ul ul ul ul ul,#mkreplaced-toc.max5 ul ul ul ul ul{display:none}.rtl{direction:rtl;text-align:right}@media print{body{background:white;line-height:1.4}html,body,#wrapper{max-width:100%;width:100%;-webkit-text-size-adjust:none;-webkit-perspective:none !important;box-sizing:border-box;width:auto;border:0;margin:0;padding:0;float:none;-moz-box-shadow:none !important;-webkit-box-shadow:none !important;box-shadow:none !important}h1,h2,h3,h4,h5,h6{page-break-after:avoid}p,h2,h3{orphans:3;widows:3}section{page-break-before:avoid}#generated-toc,#firstdiff,#toc-title,#mkdocumentprogress,#mkincludechart,#mkprogressbar1,#mkprogressbar2,.mkscrollmeter,#alllinks,.popup{display:none !important}.suppressprintlinks a{color:inherit !important;text-decoration:none !important;border-bottom:none !important;cursor:default !important}.hrefafterlinktext #wrapper a:link:after,.hrefafterlinktext #wrapper a:visited:after{content:" (" attr(href) ") ";font-size:90%;opacity:0.9}.nocodebreak pre{page-break-inside:avoid}img,table,figure{page-break-inside:avoid}.breakfootnotes .footnotes{page-break-before:always}.breakfootnotes .footnotes hr{display:none}#mktoctitle{display:block}#print-title{display:block;border-bottom:solid 1px #666}#wrapper pre{white-space:pre;white-space:pre-wrap;word-wrap:break-word}#wrapper #generated-toc-clone,#wrapper #mkreplaced-toc{display:block}}
+#wrapper #generated-toc-clone, #wrapper #mkreplaced-toc, #wrapper #generated-toc-clone ul, #wrapper #mkreplaced-toc ul {
+    list-style-position: inside;
+}
+#wrapper #generated-toc-clone li.missing, #wrapper #mkreplaced-toc li.missing {
+    list-style-type: none!important;
+}
+#wrapper #generated-toc-clone, #wrapper #mkreplaced-toc {
+    list-style-type: upper-roman;
+}
+#wrapper #generated-toc-clone>li>ul, #wrapper #mkreplaced-toc>li>ul  {
+    list-style-type: decimal;
+}
+#wrapper #generated-toc-clone>li>ul>li>ul, #wrapper #mkreplaced-toc>li>ul>li>ul {
+    list-style-type: decimal-leading-zero;
+}
+#wrapper #generated-toc-clone>li>ul>li>ul>li>ul, #wrapper #mkreplaced-toc>li>ul>li>ul>li>ul {
+    list-style-type: lower-greek;
+}
+#wrapper #generated-toc-clone>li>ul>li>ul>li>ul>li>ul, #wrapper #mkreplaced-toc>li>ul>li>ul>li>ul>li>ul {
+    list-style-type: disc;
+}
+#wrapper #generated-toc-clone>li>ul>li>ul>li>ul>li>ul>li>ul, #wrapper #mkreplaced-toc>li>ul>li>ul>li>ul>li>ul>li>ul {
+    list-style-type: square;
+}
+#wrapper #generated-toc-clone,#wrapper #mkreplaced-toc{list-style-position:outside!important;margin-left:2rem;}
+</style>
+
+<style id="mkprintstyles">@media print{#wrapper #generated-toc-clone,#generated-toc{display:none!important;}
+html,body,#wrapper{font-size:10pt!important;}
+}
+</style>
+
+
+</head>
+<body class="normal">
+  <div id="wrapper">
+      <h1 id="math162secondsemestercalculus">Math 162, Second semester Calculus</h1>
+
+<p>Here are some remarks on the topics we will cover this semester with examples<br/>
+of the kinds of homework questions we&#8217;ll ask you to work on in each homework set.</p>
+
+<h2 id="review:0.fundamentaltheoremofcalculusintegrationbysubstitutionindefiniteintegration">Review: 0. Fundamental theorem of Calculus, Integration by Substitution, Indefinite integration</h2>
+<p>
+Be patient while the entire page of problems loads for the first time. 
+</p>
+<p>
+Additional information about WeBWorK can be found at <a href="https://webwork.maa.org/wiki">https://webwork.maa.org/wiki</a> and <a href="https://webwork.maa.org/planet">https://webwork.maa.org/planet</a>
+</p>
+
+<p><iframe  width="800" height="600"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/FortLewis/Calc1/06-01-Antiderivatives-graphically/AF1/AF1.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<p>Play with the Geogebra applet above to get a feeling for the relationship between <span class="math">\(f\)</span>, the height<br/>
+of the upper boundary of the region at <span class="math">\(x\)</span>, and <span class="math">\(F\)</span>, the area of the region to the left of <span class="math">\(x\)</span>.</p>
+
+<p><span class="math">\(f\)</span> is the derivative of <span class="math">\(F\)</span> and <span class="math">\(F\)</span> is an anti-derivative of <span class="math">\(f\)</span>. A visual image of this<br/>
+relationship is useful. (Why did I write <strong>an</strong> antiderivative?)</p>
+
+<p><iframe  width="800" height="400"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/Union/setIntFTC/sc5_4_13.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<p><iframe  width="800" height="400"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/ma122DB/set12/s5_4_14.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<h2 id="1.topics:areasbetweencurves">1. <strong>Topics</strong>: , Areas Between Curves</h2>
+
+<p><iframe  width="800" height="600"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/Rochester/setIntegrals19Area/ns6_1_1.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<p>The example above is simple once you draw the picture! We&#8217;ll see how<br/>
+this can be reduced to integrating <span class="math">\(f(x)-g(x)\)</span>. To make this visually<br/>
+obvious imagine that the region is composed of vertical tooth picks and<br/>
+then slide them so their butts all rest on the <span class="math">\(x\)</span>-axis. The tooth picks<br/>
+haven&#8217;t changed length or thickness so the area hasn&#8217;t changed either.<br/>
+(look up <a href="https://en.wikipedia.org/wiki/Bonaventura_Cavalieri">Cavalieri</a> and his principle !)</p>
+
+<h2 id="2.topics:volumeswork">2. <strong>Topics</strong>: Volumes, Work</h2>
+
+<p><iframe  width="800" height="600"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/Rochester/setIntegrals20Volume/osu_in_20_2/osu_in_20_2.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<p>Visualizing and describing the region whose area or volume you want to find is often the hardest part of the problem. You&#8217;ll get lots of practice visualizing as with the example above and the one below.</p>
+
+<p><iframe  width="800" height="600"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/UMN/calculusStewartCCC/s_6_3_6.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<p>This problem is harder (at first). You first have to visualize the region, then understand the volume of each of the thin vertical cylinders it&#8217;s made up of, (cylinders are what you get if you rotate vertical toothpicks around the <span class="math">\(y\)</span> axis), and then add these<br/>
+volumes together (the Riemann sum).</p>
+
+<p>The Riemann integral is simply the &#8216;one and only&#8217; value (mathematicians say &#8216;unique&#8217; value) you get when the toothpicks are thin enough. BUT the integral has the enormous advantage that you can calculate it using anti-derivatives instead of doing lots and lots of addition of volumes.</p>
+
+<h2 id="3.topics:integrationbypartstrigintegrals">3. <strong>Topics</strong>: Integration by Parts, Trig Integrals</h2>
+
+<p>In some ways this section is more technical &#8211; a bunch of challenges, like solving cross-word puzzles &#8211; some people find this really fun.<br/>
+As an analyst and a geometer I can tell you that integration by parts also has REALLY important theoretical uses as well.<br/>
+I can&#8217;t explain the theoretical importance to you yet however, maybe next semester if we get to Stoke&#8217;s theorem in multivariable calculus. :-)</p>
+
+<h2 id="4.topics:trigsubstitutionpartialfractions">4. <strong>Topics</strong>: Trig Substitution, Partial Fractions</h2>
+
+<p>More technical challenges. For me, when I took calculus, these challenges were one of the most fun parts of the course. </p>
+
+<p>But I have admit, particularly now-a-days, that Mathematica or Maple or Sage (or you guys) can solve these faster than I can. </p>
+
+<p>These challenges do illustrate one larger concept however. These antidifferentiation techniques are the simplest example of <strong>Inverse Problems</strong>. We can differentiate most functions <span class="math">\(F\)</span> mechanically &#8211;it&#8217;s much harder to do the reverse &#8211; to guess the function <span class="math">\(F\)</span> given the function <span class="math">\(f\)</span> (and then check your guess by differentiating <span class="math">\(F\)</span>). And yes guessing (then checking) plays a <strong>big</strong> role in Inverse Problems.</p>
+
+<p>&#8220;Integration techniques&#8221; are just advanced, efficient methods of guessing of anti-derivatives. (And usually it is worth your while to validate your answer by differentiating.</p>
+
+<p>Another inverse problem is solving differential equations, and inverse problems just get more and more interesting from there. </p>
+
+<p>Given the shape of a drum one can calculate what it will sound like relatively easily. If you hear a drum can you predict its shape from the sound alone? Well?? What do you think?</p>
+
+<h2 id="5topics:improperintegralsarclength">5 <strong>Topics</strong>: Improper Integrals, Arc Length</h2>
+
+<p>These two topics don&#8217;t fit together that well. We&#8217;ll talk about about improper integrals more later. The arc length problem is simply calculating the length of a rope when it is not straight. You do it by approximating by straight lines and then adding everything up of course. Here is an example.</p>
+
+<h2 id="6.topics:surfaceareacurvesdefinedbyparametricequations">6. <strong>Topics</strong>: Surface Area, Curves defined by parametric equations</h2>
+
+<h2 id="7.topics:calculusofparametriccurves">7. <strong>Topics</strong>: Calculus of parametric curves</h2>
+
+<p>This is the beginning of a topic which is really important to physicists and engineers &#8211; how to describe things that don&#8217;t go in straight lines. It&#8217;s also important for video game designers (oh yes and mathematicians like them as well.) Here is a sample problem &#8211; don&#8217;t try to calculate the area yet just see why the formula makes sense. (You can try visualizing as the sum of two vectors that change with time.)</p>
+
+<p><iframe  width="800" height="400"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/UCSB/Stewart5_10_2/Stewart5_10_2_74/Stewart5_10_2_74.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<h2 id="8.topics:polarcoordinates:areasandlengthssequences">8. <strong>Topics</strong>: Polar coordinates: Areas and lengths, Sequences</h2>
+
+<p>Physicists and differential geometers have a magic weapon. They choose the right coordinate system to describe the problem. If you get the coordinate system right the problem becomes much simpler. Here is an example.<br/>
+<iframe  width="800" height="400"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/WHFreeman/Rogawski_Calculus_Early_Transcendentals_Second_Edition/11_Parametric_Equations_Polar_Coordinates_and_Conic_Sections/11.4_Area_and_Arc_Length_in_Polar_Coordinates/11.4.9.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe> </p>
+
+<h2 id="9topics:seriesintegraltest">9 <strong>Topics</strong>: Series, Integral test</h2>
+
+<p>Now we get to series. A topic that most students think is impossible at first and then up wondering what they thought was so hard about it. The hidden trick here &#8211; which is not immediately apparent from the cookbook methods &#8211; is the art of approximation &#8211; finding inequalities that give you useful information.<br/>
+This is not widely taught in high schools but its a very creative and interesting skill to acquire &#8211; usually through lots of practice. The squeeze principle which you used in the first semester to find limits is an example of this type of thinking. Here is an example of a series question.</p>
+
+<p>Below is an example (one from the power series chapter) where you can glimpse it&#8217;s importance. A power series defines a function which is just a <strong>really</strong> long polynomial. If the first 10 decimal points of <span class="math">\(f\)</span><br/>
+are completely determined by say the first 20 terms of the series then in that case you might as well just deal with the polynomial, which you understand concretely (and computers can calculate with). &#8220;Functions are just long polynomials.&#8221; This isn&#8217;t strictly true but it&#8217;s 90% true and thinking this way gets you started in the right direction. </p>
+
+<p>To get started solving the problem below just plug in some values. You can use the convention that <span class="math">\(0^0=1\)</span> &#8211;it&#8217;s defined that way because it makes these sigma summation formulas easy to write.</p>
+
+<p>Don&#8217;t be worried by the sigma notation &#8211; get someone to show you how to write it out in long string &#8230; or look it up on the web.<br/>
+<iframe  width="800" height="400"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/ma123DB/set12/s11_9_10.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe> </p>
+
+<h2 id="10topics:comparisontestsalternatingseries">10 <strong>Topics</strong>: Comparison tests, Alternating series</h2>
+
+<p>Positive series (where each term is positive) have two choices. Each term is like a derivative (the speed) and the sum is how far you have traveled. Since the speed is positive either you travel all the way to infinity along the <span class="math">\(x\)</span> axis or you travel up to some finite bound (Think <span class="math">\(1/2 + 1/4 +1/8 +...\)</span> can you ever get beyond <span class="math">\(1\)</span> when each term is slowing down that fast? Once you realize this, the trick is to find a known series that goes only a finite distance but is larger than your series (which proves your series converges) or find a known series that is smaller and travels off to infinity, pushing your series ahead of it. Everything else is just details of finding one or the other of these known series.</p>
+
+<h2 id="11topics:ratioandroottestsabsoluteconvergence">11 <strong>Topics</strong>: Ratio and Root tests, Absolute convergence</h2>
+
+<p>These are the details &#8211; we&#8217;ll talk about them when the time comes. </p>
+
+<h2 id="12topics:powerseries">12 <strong>Topics</strong>: Power series</h2>
+
+<p>More details &#8211; specialized for power series &#8220;really long polynomials&#8221;. </p>
+
+<h2 id="13topics:representationoffunctionsaspowerseriestaylorseries">13 <strong>Topics</strong>: Representation of functions as power series, Taylor series</h2>
+
+<p>As I said above there is a sense in which every reasonable function is just a long polynomials. Talyor series come at the end of this course but they are the foundation of most applications and a lot of theory. Just ask anyone taking MTH280 (numerical analysis) or MTH285(applied mathematics) or MTH282 (Complex analysis). They model reality, they solve differential equations. Of course there are a few functions which are much weirder and don&#8217;t behave much like long polynomials and mathematicians (and some physicists) get excited about understanding those if for no other reason that they are a challenge to figure out. </p>
+
+<h2 id="topics:applicationofpowerseries"><strong>Topics</strong>: Application of power series</h2>
+
+<p>Power series are very useful. Here is an example.<br/>
+<iframe  width="800" height="400"  
+src="https://demo.webwork.rochester.edu/webwork2/html2xml?  
+    &answersSubmitted=0&  
+    &sourceFilePath=Library/Union/setSeriesTaylor/ur_sr_9_6.pg&  
+    &problemSeed=123567&  
+    &courseID=daemon_course&  
+    &userID=daemon&  
+    &course_password=daemon&  
+    &showSummary=1&  
+    &displayMode=MathJax&  
+    &problemUUID=102&  
+    &language=en&  
+    &outputformat=sticky"><br/>
+</iframe></p>
+
+<h2 id="forthejmmpresentation">For the JMM presentation</h2>
+
+<p>Here is the magic code for embedding these problems.</p>
+<pre><code class="(null)">&amp;lt; iframe  width=&quot;800&quot; height=&quot;400&quot; 
+src=&quot;https://demo.webwork.rochester.edu/webwork2/html2xml?
+	&amp;answersSubmitted=0&amp;
+	&amp;sourceFilePath=Library/Union/setSeriesTaylor/ur_sr_9_6.pg&amp;
+	&amp;problemSeed=123567&amp;
+	&amp;courseID=daemon_course&amp;
+	&amp;userID=daemon&amp;
+	&amp;course_password=daemon&amp;
+	&amp;showSummary=1&amp;
+	&amp;displayMode=MathJax&amp;
+	&amp;problemUUID=102&amp;
+	&amp;language=en&amp;
+	&amp;outputformat=sticky&quot;&gt;
+&amp;lt; /iframe&gt;</code></pre>
+<div style="display:none"><br/>
+<!--This seemingly unnecessary div markup is the only thing keeping this script working after Markdown conversion. Trust me.--><br/>
+ <script type="text/x-mathjax-config">  
+  MathJax.Hub.Config({
+    
+  });  
+</script><br/>
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><br/>
+</div>
+<script>(function(factory){if(typeof define==="function"&&define.amd){define("bidi_helpers",[],factory)}else{window.bidi_helpers=factory()}})(function(){var module={};module.Dir={RTL:-1,UNKNOWN:0,LTR:1};module.Format={LRE:"\u202A",RLE:"\u202B",PDF:"\u202C",LRM:"\u200E",RLM:"\u200F"};module.ltrChars_="A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFE00-\uFE6F\uFEFD-\uFFFF";module.rtlChars_="\u0591-\u07FF\uFB1D-\uFDFF\uFE70-\uFEFC";module.ltrDirCheckRe_=new RegExp("^[^"+module.rtlChars_+"]*["+module.ltrChars_+"]");module.ltrCharReg_=new RegExp("["+module.ltrChars_+"]");module.hasAnyLtr=function(text){return module.ltrCharReg_.test(text)};module.rtlDirCheckRe_=new RegExp("^[^"+module.ltrChars_+"]*["+module.rtlChars_+"]");module.rtlRe=module.rtlDirCheckRe_;module.isRtlText=function(text){return module.rtlDirCheckRe_.test(text)};module.isLtrText=function(text){return module.ltrDirCheckRe_.test(text)};module.isRequiredLtrRe_=/^http:\/\/.*/;module.hasNumeralsRe_=/\d/;module.estimateDirection=function(text,detectionThreshold){var rtlCount=0;var totalCount=0;var hasWeaklyLtr=false;var tokens=text.split(/\s+/);for(var i=0;i<tokens.length;i++){var token=tokens[i];if(module.isRtlText(token)){rtlCount++;totalCount++}else{if(module.isRequiredLtrRe_.test(token)){hasWeaklyLtr=true}else{if(module.hasAnyLtr(token)){totalCount++}else{if(module.hasNumeralsRe_.test(token)){hasWeaklyLtr=true}}}}}return totalCount==0?(hasWeaklyLtr?module.Dir.LTR:module.Dir.UNKNOWN):(rtlCount/totalCount>detectionThreshold?module.Dir.RTL:module.Dir.LTR)};return module});(function(factory){if(typeof define==="function"&&define.amd){define("bidiweb",["bidi_helpers"],factory)}else{window.bidiweb=factory(bidi_helpers)}})(function(bidi_helpers){var module={};var IProcessor={makeRtl:function(element){},makeLtr:function(element){}};var css_processor=function(classes){return{makeRtl:function(element){element.classList.add(classes.rtl)},makeLtr:function(element){element.classList.add(classes.ltr)}}};var style_processor=function(falign){return{makeRtl:function(element){element.style.direction="rtl";if(falign){element.style.textAlign="right"}},makeLtr:function(element){element.style.direction="ltr";if(falign){element.style.textAlign="left"}}}};module.processors={css:css_processor,style:style_processor};var nodeListMock=function(node){var list=[node];list.item=function(i){return list[i]};return list};module.process=function(query,processor){var elements;if(query instanceof NodeList){elements=query}else{if(query instanceof Node){elements=nodeListMock(query)}else{elements=document.querySelectorAll(query)}}module.process_elements(elements,processor);return elements};module.process_elements=function(elements,processor){for(var index=0;index<elements.length;index++){var element=elements.item(index);var text=element.textContent||element.value||element.placeholder||"";var dir=bidi_helpers.estimateDirection(text,0.4);if(dir==bidi_helpers.Dir.RTL){processor.makeRtl(element)}else{if(dir==bidi_helpers.Dir.LTR){processor.makeLtr(element)}}}};module.process_css=function(query,classes){var proc=module.processors.css(classes);return module.process(query,proc)};module.process_style=function(query,falign){var proc=module.processors.style(falign);return module.process(query,proc)};module.style=function(query){return module.process_style(query,true)};module.css=function(query){return module.process_css(query,{rtl:"rtl",ltr:"ltr"})};module.htmlToElement=function(html){var container=document.createElement("div");container.innerHTML=html;return container};module.html_css=function(html){var container=module.htmlToElement(html);var nodes=container.querySelectorAll("*");module.css(nodes);return container.innerHTML};module.html_style=function(html){var container=module.htmlToElement(html);var nodes=container.querySelectorAll("*");module.style(nodes);return container.innerHTML};return module});</script>
+<!-- ##END MARKED WRAPPER## -->
+    </div>
+</body>
+</html>

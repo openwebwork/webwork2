@@ -31,7 +31,7 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile dequote jitar_id_to_seq);
 use Encode;
 
-use mod_perl;
+
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 use Encode;
 
@@ -151,6 +151,13 @@ sub pre_header_initialize {
 	}
 }
 
+sub head {
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+	my $contents = $ce->{options}{metaRobotsContent} // 'none';
+        print '<meta name="robots" content="'.$contents.'" />';
+        return "";
+}
 
 sub body {
 	my ($self) = @_;
@@ -202,7 +209,7 @@ sub body {
 			if ($r -> authen() eq "WeBWorK::Authen::LTIBasic") {
 				print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
 			} else {
-				print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
+				print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course)));
 			}
 		} else {
 		    print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
