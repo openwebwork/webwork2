@@ -2188,7 +2188,7 @@ sub body {
 				$viewProblemPage =
 					$urlpath->new(type =>'gateway_quiz',
 						      args => { courseID => $courseID,
-								setID => "Undefined_Set",
+								setID => ($editingSetVersion > 0) ? $fullSetID : "Undefined_Set",
 								problemID => "1" } );
 
 				my $seed = $problemToShow ? $problemToShow->problem_seed : "";
