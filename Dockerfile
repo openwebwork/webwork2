@@ -68,7 +68,7 @@ RUN echo Cloning branch $PG_BRANCH_ENV branch from $PG_GIT_URL_ENV \
   && git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 $PG_GIT_URL_ENV \
   && rm -rf  pg/.git
 
-RUN git clone --single-branch --branch legacy-v2 --depth 1 https://github.com/mathjax/MathJax \
+RUN git clone --single-branch --branch master --depth 1 https://github.com/mathjax/MathJax \
   && rm -rf MathJax/.git
 
 # Optional - include OPL (also need to uncomment further below when an included OPL is desired):
@@ -195,6 +195,8 @@ RUN apt-get update \
 	libuniversal-isa-perl \
 	libtest-fatal-perl \
 	libjson-xs-perl \
+	libjson-maybexs-perl \
+	libcpanel-json-xs-perl \
 	libmoox-options-perl \
 	make \
 	netpbm \

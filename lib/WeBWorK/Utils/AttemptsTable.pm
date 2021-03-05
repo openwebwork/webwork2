@@ -352,6 +352,8 @@ sub previewAnswer {
 	my $tex = $answerResult->{preview_latex_string};
 	
 	return "" unless defined $tex and $tex ne "";
+
+	return $tex if $answerResult->{non_tex_preview};
 	
 	if ($displayMode eq "plainText") {
 		return $tex;
@@ -360,7 +362,7 @@ sub previewAnswer {
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+		return '\['.$tex.'\]';
 	}
 }
 
@@ -373,14 +375,16 @@ sub previewCorrectAnswer {
 	my $tex = $answerResult->{correct_ans_latex_string};
 	return $answerResult->{correct_ans} unless defined $tex and $tex=~/\S/;   # some answers don't have latex strings defined
 	# return "" unless defined $tex and $tex ne "";
-	
+
+	return $tex if $answerResult->{non_tex_preview};
+
 	if ($displayMode eq "plainText") {
 		return $tex;
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 		# warn "adding $tex";
 	} elsif ($displayMode eq "MathJax") {
-		return '<span class="MathJax_Preview">[math]</span><script type="math/tex; mode=display">'.$tex.'</script>';
+		return '\['.$tex.'\]';
 	}
 }
 

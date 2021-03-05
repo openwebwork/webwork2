@@ -36,8 +36,10 @@ push( @pairs_for_json, "head_part100", $nextBlock );
 
 $nextBlock = <<'ENDPROBLEMTEMPLATE';
 <!-- JS Loads -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+<script type="text/javascript" src="/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
+<script type="text/javascript" src="/webwork2_files/mathjax/es5/tex-chtml.js" id="MathJax-script" defer></script>
 <script type="text/javascript" src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/MathJax.js?config=TeX-MML-AM_HTMLorMML-full"></script>
 <script type="text/javascript" src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/legacy/java_init.js"></script>
@@ -47,7 +49,7 @@ $nextBlock = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 ENDPROBLEMTEMPLATE
 
