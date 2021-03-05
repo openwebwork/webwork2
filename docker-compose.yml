@@ -158,6 +158,11 @@ services:
       # To turn on SSL in the running container
       #SSL: 1
 
+      # Control settings for error message handling by webwork2/lib/WeBWorK.pm
+      # The standard behavior is with both of these set to 0
+      MIN_HTML_ERRORS: 0
+      JSON_ERROR_LOG: 0
+
       # Change to A4 paper
       #PAPERSIZE: a4
 

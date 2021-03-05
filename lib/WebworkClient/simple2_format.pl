@@ -28,7 +28,7 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>	
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
