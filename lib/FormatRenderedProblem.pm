@@ -472,7 +472,7 @@ EOS
 	  }
 	  $output_data_hash{score} = $json_score;
 
-	  my $json_output_data = encode_json( \%output_data_hash ,{pretty=>1, canonical=>1});
+	  my $json_output_data = JSON->new->utf8->canonical->pretty->encode(\%output_data_hash);
 	  # FIXME: Should set header of response to content_type("text/json; charset=utf-8");
 	  return $json_output_data;
 	}
@@ -491,7 +491,7 @@ EOS
 	  $output->{lang} = $PROBLEM_LANG_AND_DIR[2];
 	  $output->{dir} = $PROBLEM_LANG_AND_DIR[6];
 	  # Convert to JSON
-	  return encode_json( $output ,{pretty=>1, canonical=>1});
+	  return JSON->new->utf8->canonical->pretty->encode($output);
 	}
 
 	# find the appropriate template in WebworkClient folder
