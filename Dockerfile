@@ -68,7 +68,7 @@ RUN echo Cloning branch $PG_BRANCH_ENV branch from $PG_GIT_URL_ENV \
   && git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 $PG_GIT_URL_ENV \
   && rm -rf  pg/.git
 
-RUN git clone --single-branch --branch legacy-v2 --depth 1 https://github.com/mathjax/MathJax \
+RUN git clone --single-branch --branch master --depth 1 https://github.com/mathjax/MathJax \
   && rm -rf MathJax/.git
 
 # Optional - include OPL (also need to uncomment further below when an included OPL is desired):
@@ -195,6 +195,8 @@ RUN apt-get update \
 	libuniversal-isa-perl \
 	libtest-fatal-perl \
 	libjson-xs-perl \
+	libjson-maybexs-perl \
+	libcpanel-json-xs-perl \
 	libmoox-options-perl \
 	make \
 	netpbm \
@@ -220,6 +222,7 @@ RUN apt-get update \
 	lmodern \
 	zip \
 	jq \
+	npm \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/*
 
@@ -250,6 +253,7 @@ COPY --from=base /opt/base/MathJax $APP_ROOT/MathJax
 # 3. Some chown/chmod for material INSIDE the image.
 # 4. Build some standard locales.
 # 5. Set the default system timezone to be UTC.
+# 6. Install third party javascript files.
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
@@ -261,7 +265,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
       && echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
       && debconf-set-selections /tmp/preseed.txt \
     && rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
-      &&   dpkg-reconfigure -f noninteractive tzdata
+      &&   dpkg-reconfigure -f noninteractive tzdata \
+    && cd $WEBWORK_ROOT/htdocs \
+      && npm install
 
 # These lines were moved into docker-entrypoint.sh so the bind mount of courses will be available
 #RUN cd $APP_ROOT/webwork2/courses.dist \
