@@ -2,6 +2,7 @@
 
 (function() {
 	function imageViewDialog() {
+		var elt = $(this);
 		var img = this.cloneNode(true);
 		var imgType = img.tagName.toLowerCase();
 		img.classList.remove('image-view-elt');
@@ -52,9 +53,8 @@
 			// Find the natural dimensions of the image.
 			var naturalWidth, naturalHeight;
 			if (imgType == 'img') {
-				var image = modal.find('.modal-body img');
-				naturalWidth = image.prop('naturalWidth');
-				naturalHeight = image.prop('naturalHeight');
+				naturalWidth = elt.prop('naturalWidth');
+				naturalHeight = elt.prop('naturalHeight');
 			} else if (imgType == 'svg') {
 				var svg = modal.find('.modal-body svg');
 				var viewBoxDims = svg.prop('viewBox').baseVal;
@@ -192,7 +192,6 @@
 			// Make the backdrop a little lighter
 			$('.modal-backdrop').css('opacity', '0.2');
 		});
-		var elt = $(this);
 		modal.on('hidden', function() {
 			modal.remove();
 			$(window).off("resize.ImageView");
