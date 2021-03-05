@@ -912,7 +912,7 @@ sub listSetUsers {
 sub getCourseSettings {
 	my $class = shift;
 	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_problem_sets");
+	my $self = $class->initiate_session($in, "modify_course_files");
 	return $self->do(WebworkWebservice::CourseActions::getCourseSettings($self,$in));	
 }
 
@@ -923,7 +923,7 @@ sub getCourseSettings {
 sub updateSetting {
 	my $class = shift;
 	my $in = shift;
-	my $self = $class->initiate_session($in, "modify_problem_sets");
+	my $self = $class->initiate_session($in, "access_instructor_tools");
 	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
 }
 
