@@ -2389,6 +2389,9 @@ sub output_JS{
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
 
+	# This is for the image dialog
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+
 	return "";
 }
 
@@ -2412,6 +2415,9 @@ sub output_CSS {
 		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />\n";
 		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />\n";
 	}
+
+	# Style for the image dialog
+	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}

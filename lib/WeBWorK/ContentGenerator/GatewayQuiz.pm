@@ -2408,8 +2408,11 @@ sub output_JS{
 	}
 
 	#This is for page specfific js
-	print CGI::start_script({type=>"text/javascript",
-			src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
+
+	# This is for the image dialog
+	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
 
 	return "";
 }
