@@ -10,27 +10,33 @@
 
 use strict;
 use warnings;
-use feature 'say';
 use Moo;
 use MooX::Options;
-use Data::Dump qw/dd/;
 use DBI;
 
-
+option verbose => (
+  is => 'ro',
+  short => 'v',
+  doc => 'turn on verbosity'
+);
 option textbooks  => (
   is => 'ro',
+  short => 't',
   doc => 'run the script to update the OPL textbooks and write to a JSON file'
 );
 option directories => (
   is => 'ro',
+  short => 'd',
   doc => 'run the script to update the OPL directories and write to a JSON file'
 );
 option subjects => (
   is => 'ro',
+  short => 's',
   doc => 'run the script to update the OPL subjects and write to a JSON file'
 );
 option all => (
   is => 'ro',
+  short => 'a',
   doc => 'run all the scripts'
 );
 
@@ -59,20 +65,9 @@ sub run {
           },
   );
 
-  if (!$self->all && $self->textbooks){
-    build_library_textbook_tree($ce,$dbh);
-  }
-  if (!$self->all && $self->directories){
-    build_library_directory_tree($ce,$dbh);
-  }
-  if (!$self->all && $self->subjects){
-    build_library_subject_tree($ce,$dbh);
-  }
-  if ($self->all){
-    build_library_textbook_tree($ce,$dbh);
-    build_library_directory_tree($ce,$dbh);
-    build_library_subject_tree($ce,$dbh);
-  }
+  build_library_textbook_tree($ce,$dbh,$self->verbose) if ($self->all || $self->textbooks);
+  build_library_directory_tree($ce,$self->verbose) if ($self->all || $self->directories);
+  build_library_subject_tree($ce,$dbh,$self->verbose) if ($self->all || $self->subjects);
 }
 
 main->new_with_options->run;

@@ -8,10 +8,10 @@ use base qw(Exporter);
 #  The following files are created:
 #		1. $webwork_htdocs/DATA/library-directory-tree.json  (the directory structure of the library)
 #		2. $webwork_htdocs/DATA/library-subject-tree.json  (the subject/chapter/section struture of the library)
-#		3.
+#		3. $webwork_htdocs/DATA/library-textbook-tree.json  (the subject/chapter/section struture of the library)
 
-# This is used to create the file library-directory-tree.json which can be used to load in
-# directory information for the OPL.  It writes the file as a JSON of directories to be easily loaded.
+# the above JSON files can be used to load and more quickly lookup OPL information
+# 
 
 use strict;
 use warnings;
@@ -21,6 +21,7 @@ use open qw/:std :utf8/;
 # use Cwd;
 # use DBI;
 use JSON;
+use Data::Dump qw/dd/;
 
 our @EXPORT    = ();
 our @EXPORT_OK = qw(build_library_directory_tree build_library_subject_tree build_library_textbook_tree);
@@ -68,9 +69,9 @@ my %NPLtables = (
 
 
 sub build_library_directory_tree {
-	my $ce = shift;
+	my ($ce,$verbose) = @_;
 
-	print "Creating the Directory Tree\n";
+	print "Creating the Directory Tree\n" if $verbose; 
 	my $libraryRoot = $ce->{problemLibrary}->{root};
 	$libraryRoot =~ s|/+$||;
 
@@ -97,9 +98,7 @@ sub build_library_directory_tree {
 	# check for errors
 	close $OUTFILE or die "Cannot close $file";
 
-
-	print "Wrote Library Directory Tree to $file\n";
-
+	print "Wrote Library Directory Tree to $file\n" if $verbose; 
 }
 
 sub buildTree {
@@ -126,7 +125,6 @@ sub buildTree {
 
 			my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir . "/" . $dir);
 
-			#print $absoluteDir . "/" . $dir . "   " . $b->{num_files} . "\n";
 			if (scalar(@files)>0){
 				$b->{num_files} = scalar(@files);
 				push(@branches,$b);
@@ -138,58 +136,50 @@ sub buildTree {
 	my @files = File::Find::Rule->file()->name("*.pg")->in($absoluteDir);
 	$branch->{num_files} = scalar(@files);
 
-
 	return $branch;
 }
 
 
 sub build_library_subject_tree {
-	my ($ce,$dbh) = @_;
+	my ($ce,$dbh,$verbose) = @_;
 
 	my $libraryRoot = $ce->{problemLibrary}->{root};
 	$libraryRoot =~ s|/+$||;
 	my $libraryVersion = $ce->{problemLibrary}->{version};
 
-
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
-
-	my $selectClause = "select subj.name, ch.name, sect.name, path.path,pg.filename from `$tables{dbsection}` AS sect "
-		."JOIN `$tables{dbchapter}` AS ch ON ch.DBchapter_id = sect.DBchapter_id "
-		."JOIN `$tables{dbsubject}` AS subj ON subj.DBsubject_id = ch.DBsubject_id "
-		."JOIN `$tables{pgfile}` AS pg ON sect.DBsection_id = pg.DBsection_id "
-		."JOIN `$tables{path}` AS path ON pg.path_id = path.path_id ";
+	# query the database for all of the subject names
+	my $cmd = qq/select name from $tables{dbsubject};/;
+	my @subject_names = map { $_->[0]} $dbh->selectall_array($cmd);
 
 	my $tree;  # the library subject tree will be stored as arrays of objects.
 
-	my $results = $dbh->selectall_arrayref("select subj.name from `$tables{dbsubject}` AS subj");
-
-	my @subject_names = map { $_->[0]} @{$results};
-
-	my $i=0; # counter to print to the screen.
-
-	print "Building the subject-tree.  There are " . scalar(@subject_names) . " subjects\n";
+	print "Building the subject-tree.  There are " . scalar(@subject_names) . " subjects\n" if $verbose; 
 
 	my @subject_tree;  # array to store the individual library tree for each subject
+
+	my $selectClause = "";
 
 	for my $subj_name (@subject_names){
 
 		my $subj = $subj_name;
-		$subj =~ s/'/\'/g;
+		$subj =~ s/'/\'/g; # escape any single quotes; 
 
+    print "subject: $subj_name is being processed.\n" if $verbose; 
 
-		my $results = $dbh->selectall_arrayref("select ch.name from `$tables{dbsubject}` AS subj JOIN `$tables{dbchapter}` AS ch "
-				. " ON subj.DBsubject_id = ch.DBsubject_id WHERE subj.name='$subj';");
-		my @chapter_names = map {$_->[0]} @{$results};
+	  my $cmd = qq/SELECT ch.name from $tables{dbchapter} AS ch
+			JOIN $tables{dbsubject} AS subj ON ch.DBsubject_id=subj.DBsubject_id
+			WHERE subj.name='$subj';/;
 
+		my @chapter_names = map { $_->[0] } $dbh->selectall_array($cmd);
+	
 		my @chapter_tree; # array to store the individual library tree for each chapter
-
-		#print Dumper(\@chapter_names);
 
 		for my  $ch_name (@chapter_names){
 
 			my $ch = $ch_name;
-			$ch =~ s/'/\'/g;
+			$ch =~ s/'/\'/g; # escape any single quotes;
 
 			my $results = $dbh->selectall_arrayref("SELECT sect.name from `$tables{dbsubject}` AS subj "
 					."JOIN `$tables{dbchapter}` AS ch ON subj.DBsubject_id = ch.DBsubject_id "
@@ -201,69 +191,54 @@ sub build_library_subject_tree {
 			my @subfields = ();
 
 			for my $sect_name (@section_names){
-				my $section_tree = {};
-				$section_tree->{name} = $sect_name;
+				my $section_tree = {name => $sect_name};
+
 				## Determine the number of files that falls into each
 
-				my $sect = $section_tree->{name};
-				$sect =~ s/'/\\'/g;
+				my $sect = $sect_name;
+				$sect =~ s/'/\\'/g; # escape any single quotes
 
-				my $whereClause ="WHERE sect.name='$sect' AND ch.name='$ch' AND subj.name='$subj'";
+				my $cmd = qq/SELECT COUNT(*) from $tables{dbsection} AS sect 
+					JOIN $tables{dbchapter} AS ch ON sect.DBchapter_id = ch.DBchapter_id
+					JOIN $tables{dbsubject} AS subj ON subj.DBsubject_id = ch.DBsubject_id
+					JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id 
+					where subj.name = '$subj' AND ch.name='$ch' AND sect.name='$sect';/;
 
-				my $sth = $dbh->prepare($selectClause.$whereClause);
-				$sth->execute;
-				my $numFiles= scalar @{$sth->fetchall_arrayref()};
-
-				$section_tree->{num_files} = $numFiles;
-
+				$section_tree->{num_files} = $dbh->selectrow_array($cmd); 
 				my $clone = { %{ $section_tree } };  # need to clone it before pushing into the @subfield array.
 
-			    push(@subfields,$clone);
-		    }
+				push(@subfields,$clone);
+			}
 
-			my $chapter_tree;
-			$chapter_tree->{name} = $ch_name;
-			$chapter_tree->{subfields} = \@subfields;
+			my $chapter_tree = {name => $ch_name, subfields => \@subfields};
 
 			## determine the number of files in each chapter
 
-			my $whereClause ="WHERE subj.name='$subj' AND ch.name='$ch'";
+			my $cmd = qq/select COUNT(*) from $tables{dbsection} AS sect 
+				JOIN $tables{dbchapter} AS ch ON sect.DBchapter_id = ch.DBchapter_id
+				JOIN $tables{dbsubject} AS subj ON subj.DBsubject_id = ch.DBsubject_id
+				JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id 
+				JOIN $tables{path} AS path ON pg.path_id = path.path_id 
+				where ch.name = '$ch' AND subj.name = '$subj_name';/;
 
-
-			my $sth = $dbh->prepare($selectClause.$whereClause);
-			$sth->execute;
-			my $numFiles = scalar @{$sth->fetchall_arrayref()};
-			# my $allFiles = $sth->fetchall_arrayref;
-			 $chapter_tree->{num_files} = $numFiles;
+			$chapter_tree->{num_files} = $dbh->selectrow_array($cmd);
 
 			my $clone = { %{ $chapter_tree } };  # need to clone it before pushing into the @chapter_tree array.
 			push(@chapter_tree,$clone);
-
-
-
 		}
 
-		my $subject_tree;
-		$subject_tree->{name} = $subj_name;
-		$subject_tree->{subfields} = \@chapter_tree;
+		my $subject_tree = {name => $subj_name, subfields => \@chapter_tree};
 
 		## find the number of files on the subject level
 
-		my $whereClause ="WHERE subj.name='$subj'";
+		$cmd = qq/select COUNT(*) from $tables{dbsection} AS sect 
+			JOIN $tables{dbchapter} AS ch ON sect.DBchapter_id = ch.DBchapter_id
+			JOIN $tables{dbsubject} AS subj ON subj.DBsubject_id = ch.DBsubject_id
+			JOIN $tables{pgfile} AS pg ON sect.DBsection_id = pg.DBsection_id 
+			JOIN $tables{path} AS path ON pg.path_id = path.path_id 
+			where subj.name = '$subj_name';/;
 
-
-		my $sth = $dbh->prepare($selectClause.$whereClause);
-		$sth->execute;
-		my $numFiles = scalar @{$sth->fetchall_arrayref()};
-		$subject_tree->{num_files} = $numFiles;
-
-		$i++;
-
-		print sprintf("%3d", $i);
-
-		if ($i%10 == 0) {
-		    print "\n";
-		}
+		$subject_tree->{num_files} = $dbh->selectrow_array($cmd);
 
 		my $clone = { % {$subject_tree}};
 		push (@subject_tree, $clone);
@@ -293,7 +268,7 @@ sub build_library_subject_tree {
 
 sub build_library_textbook_tree {
 
-	my ($ce,$dbh) = @_;
+	my ($ce,$dbh,$verbose) = @_;
 
 	my $libraryRoot = $ce->{problemLibrary}->{root};
 	$libraryRoot =~ s|/+$||;
@@ -301,14 +276,13 @@ sub build_library_textbook_tree {
 
 	my %tables = ($libraryVersion eq '2.5')? %OPLtables : %NPLtables;
 
-
-	my $selectClause = "SELECT pg.pgfile_id from `$tables{path}` as path "
-		."LEFT JOIN `$tables{pgfile}` AS pg ON pg.path_id=path.path_id "
-		."LEFT JOIN `$tables{pgfile_problem}` AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
-		."LEFT JOIN `$tables{problem}` AS prob ON prob.problem_id=pgprob.problem_id "
-		."LEFT JOIN `$tables{section}` AS sect ON sect.section_id=prob.section_id "
-		."LEFT JOIN `$tables{chapter}` AS ch ON ch.chapter_id=sect.chapter_id "
-		."LEFT JOIN `$tables{textbook}` AS text ON text.textbook_id=ch.textbook_id ";
+	my $selectClause = "SELECT pg.pgfile_id from $tables{path} as path "
+		."LEFT JOIN $tables{pgfile} AS pg ON pg.path_id=path.path_id "
+		."LEFT JOIN $tables{pgfile_problem} AS pgprob ON pgprob.pgfile_id=pg.pgfile_id "
+		."LEFT JOIN $tables{problem} AS prob ON prob.problem_id=pgprob.problem_id "
+		."LEFT JOIN $tables{section} AS sect ON sect.section_id=prob.section_id "
+		."LEFT JOIN $tables{chapter} AS ch ON ch.chapter_id=sect.chapter_id "
+		."LEFT JOIN $tables{textbook} AS text ON text.textbook_id=ch.textbook_id ";
 
 	my $results = $dbh->selectall_arrayref("select * from `$tables{textbook}` ORDER BY title;");
 
@@ -319,13 +293,13 @@ sub build_library_textbook_tree {
 
 	my $i =0; ## index to alert user the length of the build
 
-	print "Building the Textbook Library Tree\n";
-	print "There are ". $#textbooks ." textbooks to process.\n";
+	print "Building the Textbook Library Tree\n" if $verbose;
+	print "There are ". $#textbooks ." textbooks to process.\n" if $verbose;
 
 	for my $textbook (@textbooks){
 		$i++;
-		printf("%4d",$i);
-		print("\n") if ($i %10==0);
+		printf("%4d",$i) if $verbose;
+		print("\n") if ($i % 10==0 && $verbose); 
 
 		my $results = $dbh->selectall_arrayref("select ch.chapter_id,ch.name,ch.number "
 			. " from `$tables{chapter}` AS ch JOIN `$tables{textbook}` AS text ON ch.textbook_id=text.textbook_id "
@@ -356,10 +330,9 @@ sub build_library_textbook_tree {
 				my $sth = $dbh->prepare($selectClause.$whereClause);
 				$sth->execute;
 				$section->{num_probs}=scalar @{$sth->fetchall_arrayref()};
-
 			}
 			my $whereClause ="WHERE ch.chapter_id='". $chapter->{chapter_id}."' AND "
-	   				."text.textbook_id='".$textbook->{textbook_id}."'";
+				."text.textbook_id='".$textbook->{textbook_id}."'";
 
 			my $sth = $dbh->prepare($selectClause.$whereClause);
 			$sth->execute;
@@ -419,6 +392,5 @@ sub build_library_textbook_tree {
 	print "\n\nWrote Library Textbook Tree to $file\n";
 
 }
-
 
 1;
