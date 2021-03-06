@@ -29,6 +29,7 @@ $nextBlock = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
 ENDPROBLEMTEMPLATE
 
 push( @pairs_for_json, "head_part100", $nextBlock );
@@ -47,6 +48,7 @@ $nextBlock = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 ENDPROBLEMTEMPLATE
