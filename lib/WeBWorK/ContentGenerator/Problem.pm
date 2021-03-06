@@ -18,6 +18,7 @@ package WeBWorK::ContentGenerator::Problem;
 #use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
 use  WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;  # not needed?
+use WeBWorK::ContentGenerator::Instructor::SingleProblemGrader;
 
 =head1 NAME
 
@@ -118,6 +119,16 @@ sub can_showCorrectAnswers {
 		$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")
 		;
 }
+
+sub can_showProblemGrader {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+
+	return ($authz->hasPermissions($User->user_id, "access_instructor_tools") &&
+		$authz->hasPermissions($User->user_id, "score_sets") &&
+		$Set->set_id ne 'Undefined_Set' && !$self->{invalidSet});
+}
+
 sub can_showAnsGroupInfo {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
@@ -612,18 +623,21 @@ sub pre_header_initialize {
 	#       needs to be treated as if it is not set.
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
+		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
+		showCorrectAnswers => $r->param('showCorrectAnswers') || $r->param('showProblemGrader')
+		                      || $ce->{pg}->{options}->{showCorrectAnswers},
+		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showAnsGroupInfo     => $r->param('showAnsGroupInfo') || $ce->{pg}->{options}->{showAnsGroupInfo},
 		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
 		showPGInfo         => $r->param('showPGInfo') || $ce->{pg}->{options}->{showPGInfo},
 		showResourceInfo   => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
-		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints}
-		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
+		showHints          => $r->param("showHints") || $ce->{pg}->{options}{use_knowls_for_hints}
+		                      || $ce->{pg}->{options}->{showHints}, #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}
-							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
-	        useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
-	        useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
+		                      || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
+		useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
+		useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
+		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -633,9 +647,10 @@ sub pre_header_initialize {
 	my %must = (
 		showOldAnswers     => 0,
 		showCorrectAnswers => 0,
-		showAnsGroupInfo     => 0,
+		showProblemGrader  => 0,
+		showAnsGroupInfo   => 0,
 		showAnsHashInfo    => 0,
-		showPGInfo		   => 0,
+		showPGInfo         => 0,
 		showResourceInfo   => 0,
 		showHints          => 0,
 		showSolutions      => 0,
@@ -643,30 +658,31 @@ sub pre_header_initialize {
 		checkAnswers       => 0,
 		showMeAnother      => 0,
 		getSubmitButton    => 0,
-	    useMathView        => 0,
-	    useWirisEditor     => 0,
-	    useMathQuill       => 0,
+		useMathView        => 0,
+		useWirisEditor     => 0,
+		useMathQuill       => 0,
 	);
 
 	# does the user have permission to use certain options?
 	my @args = ($user, $effectiveUser, $set, $problem);
 
 	my %can = (
-		showOldAnswers           => $self->can_showOldAnswers(@args),
-		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
-		showAnsGroupInfo         => $self->can_showAnsGroupInfo(@args),
-		showAnsHashInfo          => $self->can_showAnsHashInfo(@args),
-		showPGInfo           	 => $self->can_showPGInfo(@args),
-		showResourceInfo         => $self->can_showResourceInfo(@args),
-		showHints                => $self->can_showHints(@args),
-		showSolutions            => $self->can_showSolutions(@args),
-		recordAnswers            => $self->can_recordAnswers(@args, 0),
-		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
-		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
-		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-	    useMathView              => $self->can_useMathView(@args),
-	    useWirisEditor           => $self->can_useWirisEditor(@args),
-	    useMathQuill              => $self->can_useMathQuill(@args),
+		showOldAnswers     => $self->can_showOldAnswers(@args),
+		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
+		showProblemGrader  => $self->can_showProblemGrader(@args),
+		showAnsGroupInfo   => $self->can_showAnsGroupInfo(@args),
+		showAnsHashInfo    => $self->can_showAnsHashInfo(@args),
+		showPGInfo         => $self->can_showPGInfo(@args),
+		showResourceInfo   => $self->can_showResourceInfo(@args),
+		showHints          => $self->can_showHints(@args),
+		showSolutions      => $self->can_showSolutions(@args),
+		recordAnswers      => $self->can_recordAnswers(@args, 0),
+		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother      => $self->can_showMeAnother(@args, $submitAnswers),
+		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
+		useMathView        => $self->can_useMathView(@args),
+		useWirisEditor     => $self->can_useWirisEditor(@args),
+		useMathQuill       => $self->can_useMathQuill(@args),
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -1045,9 +1061,92 @@ sub nav {
 	return "" if ( $self->{invalidSet} );
 
 	my $courseID = $urlpath->arg("courseID");
-	my $setID = $self->{set}->set_id if !($self->{invalidSet});
+	my $setID = $self->{set}->set_id;
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
+	my $userID = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
+
+	# Set up a student navigation for those that have permission to act as a student.
+	my $userNav = "";
+	if ($authz->hasPermissions($userID, "become_student") && $eUserID ne $userID) {
+		# Find all users for this set (except the current user).
+		my @userRecords = $db->getUsers(grep { $_ ne $userID } $db->listSetUsers($setID));
+
+		# Sort by last name, then first name, then user_id.
+		@userRecords = sort {
+			lc($a->last_name) cmp lc($b->last_name) ||
+			lc($a->first_name) cmp lc($b->first_name) ||
+			lc($a->user_id) cmp lc($b->user_id)
+		} @userRecords;
+
+		# Find the previous, current, and next users, and format the student names for display.
+		my $currentUserIndex = 0;
+		for (0 .. $#userRecords) {
+			$currentUserIndex = $_ if $userRecords[$_]->user_id eq $eUserID;
+			# Construct a display name.
+			$userRecords[$_]{displayName} = ($userRecords[$_]->last_name || $userRecords[$_]->first_name
+				? $userRecords[$_]->last_name . ", " . $userRecords[$_]->first_name
+				: $userRecords[$_]->user_id);
+		}
+		my $prevUser = $currentUserIndex > 0 ? $userRecords[$currentUserIndex - 1] : 0;
+		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[$currentUserIndex + 1] : 0;
+
+		# Mark the current user.
+		$userRecords[$currentUserIndex]{currentUser} = 1;
+
+		my $problemPage = $urlpath->newFromModule(__PACKAGE__, $r,
+			courseID => $courseID, setID => $setID, problemID => $problemID);
+
+		# Cap the number of students shown to at most 200.
+		my $numAfter = $#userRecords - $currentUserIndex;
+		my $numBefore = 200 - ($numAfter < 100 ? $numAfter : 100);
+		my $minStudentIndex = $currentUserIndex < $numBefore ? 0 : $currentUserIndex - $numBefore;
+		my $maxStudentIndex = $minStudentIndex + 200 < $#userRecords ? $minStudentIndex + 200 : $#userRecords;
+
+		# Set up the student nav.
+		$userNav = join("",
+			CGI::start_div({ class => 'user-nav' }),
+			$prevUser
+			? CGI::a({
+					href => $self->systemLink($problemPage, params => { effectiveUser => $prevUser->user_id,
+							showProblemGrader => $self->{will}{showProblemGrader} }),
+					data_toggle => "tooltip", data_placement => "top",
+					title => $prevUser->{displayName},
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Previous Student"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Student")),
+			$args->{separator},
+			CGI::start_span({ class => "btn-group student-nav-selector" }),
+			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
+				$userRecords[$currentUserIndex]{displayName} . " " . CGI::span({ class => "caret" }, "")),
+			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
+			(
+				map {
+					CGI::li(
+						CGI::a({ tabindex => "-1", style => $_->{currentUser} ? "background-color: #8F8" : "",
+							href => $self->systemLink($problemPage, params => { effectiveUser => $_->user_id,
+									showProblemGrader => $self->{will}{showProblemGrader} }) },
+						$_->{displayName})
+					)
+				}
+				@userRecords[$minStudentIndex .. $maxStudentIndex]
+			),
+			CGI::end_ul(),
+			CGI::end_span(),
+			$args->{separator},
+			$nextUser
+			? CGI::a({
+					href => $self->systemLink($problemPage, params => { effectiveUser => $nextUser->user_id,
+							showProblemGrader => $self->{will}{showProblemGrader} }),
+					data_toggle => "tooltip", data_placement => "top",
+					title => $nextUser->{displayName},
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Next Student"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Next Student")),
+			CGI::end_div()
+		);
+	}
+
 	my $mergedSet = $db->getMergedSet($eUserID,$setID);
 	return "" unless $mergedSet;
 
@@ -1083,8 +1182,6 @@ sub nav {
 		$nextID = '' if ($isJitarSet && $nextID
 				 && !$authz->hasPermissions($eUserID, "view_unopened_sets")
 				 && is_jitar_problem_closed($db,$ce, $eUserID,$setID,$nextID));
-
-
 	}
 
 	my @links;
@@ -1116,7 +1213,9 @@ sub nav {
 	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
-	return $self->navMacro($args, $tail, @links);
+	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
+		if defined $self->{will}{showProblemGrader};
+	return $userNav . $self->navMacro($args, $tail, @links);
 }
 
 sub path {
@@ -1190,6 +1289,7 @@ sub body {
 	$self ->output_tag_info;
 	$self ->output_custom_edit_message;
 	$self ->output_summary;
+	$self ->output_grader;
 	$self ->output_hidden_info;
 	$self ->output_form_start();
 	$self ->output_problem_body;
@@ -1296,6 +1396,22 @@ sub output_message{
 	return "";
 }
 
+# output_grader subroutine
+
+# displays the problem grader if the user has permissions to grade problems
+
+sub output_grader {
+	my $self = shift;
+
+	if ($self->{will}{showProblemGrader}) {
+		my $grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader(
+			$self->r, $self->{pg}, $self->{problem});
+		$grader->insertGrader;
+	}
+
+	return "";
+}
+
 # output_editorLink subroutine
 
 # processes and prints out the correct link to the editor of the current problem
@@ -1394,6 +1510,24 @@ sub output_checkboxes{
 			:
 			{
 				-name    => "showCorrectAnswers",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	if ($can{showProblemGrader}) {
+		print WeBWorK::CGI_labeled_input(
+			-type        => "checkbox",
+			-id          => "showProblemGrader_id",
+			-label_text  => $r->maketext("ProblemGrader"),
+			-input_attr  => $will{showProblemGrader} ?
+			{
+				-name    => "showProblemGrader",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showProblemGrader",
 				-value   => 1,
 			}
 		),"&nbsp;";
@@ -1522,10 +1656,10 @@ sub output_checkboxes{
 	  }
 	}
 
-
-	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or
-	    $can{showHints} or $can{showSolutions} or # needed to put buttons on newline
-	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
+	# needed to put buttons on newline
+	if ($can{showCorrectAnswers} or $can{showProblemGrader} or $can{showAnsGroupInfo} or
+		$can{showHints} or $can{showSolutions} or $can{showAnsHashInfo} or
+		$can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
 
@@ -1915,8 +2049,8 @@ sub output_summary{
 		);
 	    print $results;
 
-	} elsif ($will{checkAnswers}) {
-	    # print this if user previewed answers
+	} elsif ($will{checkAnswers} || $self->{will}{showProblemGrader}) {
+	    # print this if user checked answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg,
 	    	1, # showAttemptAnswers
@@ -2244,6 +2378,12 @@ sub output_JS{
 			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
 		}
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
+	}
+
+	# This is for the problem grader
+	if ($self->{will}{showProblemGrader}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}),
+			CGI::end_script();
 	}
 
 	# This is for any page specific js.  Right now its just used for achievement popups

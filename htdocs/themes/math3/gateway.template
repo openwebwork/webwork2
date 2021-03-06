@@ -64,7 +64,9 @@
 		<!--</div>-->
 		<!--#endif-->
 		
-		<!-- [gateway] removed nav button to go up -->
+		<!--#if can="nav"-->
+			<!--#nav separator="  "-->
+		<!--#endif-->
 		
 		<!--#if can="title"-->
 		<h1><!--#title--></h1>

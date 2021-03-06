@@ -92,10 +92,10 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	//(loads older version of bootstrap?)
 	// so we'll work around that for now
 	if ($.fn.popover) {
-		$('a.table-summary').popover({trigger : 'click'}).click(function (event) {
+		$('a.table-summary').popover({trigger : 'hover'}).click(function (event) {
 			event.preventDefault();
 		});
-		$('a.help-popup').popover({trigger : 'click'}).click(function (event) {
+		$('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
 			event.preventDefault();
 		}).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 	}
@@ -109,6 +109,8 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 
 	//Problem page
 	$('.currentProblem').addClass('active');
+
+	$('.student-nav-button').tooltip({trigger: 'hover'});
 
 	//Reformats the problem_set_table.
 	$('#problem-sets-form').addClass('form-inline');
