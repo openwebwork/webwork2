@@ -1237,17 +1237,15 @@ sub write_problem_tex {
 	# if we got here, there were no errors (because errors cause a return above)
 	$self->{at_least_one_problem_rendered_without_error} = 1;
 
-	print $FH "{\\bf Problem $versioned.}\n" 
-		if ( $versioned && $MergedProblem->problem_id != 0 );
-
 	my $body_text = $pg->{body_text};
 
-	# Use the pretty problem number if its a jitar problem
 	if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
+		# Use the pretty problem number if its a jitar problem
 	    my $id = $MergedProblem->problem_id;
 	    my $prettyID = join('.',jitar_id_to_seq($id));
-	    
-	    $body_text =~ s/$id/$prettyID/;
+		print $FH ("{\\bf Problem $prettyID.}");
+	} elsif ($MergedProblem->problem_id != 0) {
+		print $FH ("{\\bf Problem " . ($versioned ? $versioned : $MergedProblem->problem_id) . ".}");
 	}
 
 	print $FH $body_text;
@@ -1271,7 +1269,7 @@ sub write_problem_tex {
 			  "}\n" .
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
-			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
+			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans} // "";
 			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
