@@ -1,0 +1,61 @@
+.image-view-elt:hover { cursor: pointer; }
+
+.image-view-dialog.modal { padding: 0 !important; }
+
+.image-view-dialog .modal-body {
+	overflow: auto;
+	padding: 8px;
+	text-align: center;
+	box-sizing: content-box !important;
+	max-height: none;
+}
+
+.image-view-dialog .modal-header {
+	padding: 0.1rem 0.5rem;
+}
+
+.image-view-dialog .modal-header .drag-handle {
+	display: inline-block;
+	cursor: pointer;
+	width: calc(100% - 72px);
+	height: 100%;
+	touch-action: none;
+}
+
+.image-view-dialog .modal-header .btn {
+	padding: 0 0.2rem;
+	margin: 0 0.25rem 0 0;
+	background: transparent;
+	border: 0;
+}
+
+.image-view-dialog .modal-header .btn svg {
+	margin-top: 4px;
+	margin-bottom: -4px;
+	opacity: 0.5;
+}
+
+.image-view-dialog .modal-header .close {
+	padding: 0 0.2rem;
+	margin: 0 -0.2rem 0 auto;
+	opacity: 0.5;
+	font-size: 1.5rem;
+	font-weight: 700;
+}
+
+.image-view-dialog .modal-header .btn svg:hover {
+	opacity: 1;
+}
+
+.image-view-dialog .modal-header .close:hover {
+	opacity: 0.75;
+}
+
+.image-view-dialog .modal-body img {
+	max-width: 100%;
+	height: 100%;
+}
+
+.image-view-dialog .modal-body svg {
+	overflow: visible;
+}
