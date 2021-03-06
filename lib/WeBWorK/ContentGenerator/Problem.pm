@@ -1330,7 +1330,7 @@ sub output_form_start{
 	my $r = $self->r;
 	my $startTime = $r->param('startTime') || time();
 
-	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
+	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm");
 	print $self->hidden_authen_fields;
 	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	return "";
@@ -2391,6 +2391,26 @@ sub output_JS{
 
 	# This is for the image dialog
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+
+	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
+	if (defined($self->{pg}{flags}{extra_js_files})) {
+		my %jsFiles;
+		# Avoid duplicates
+		for (@{$self->{pg}{flags}{extra_js_files}}) {
+			$jsFiles{$_->{file}} = $_->{local};
+		}
+		for (keys(%jsFiles)) {
+			if ($jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/js/$_") {
+				print CGI::start_script({type => "text/javascript",
+						src => "$site_url/js/$_"}), CGI::end_script();
+			} elsif (!$jsFiles{$_}) {
+				print CGI::start_script({type => "text/javascript",
+						src => "$_"}), CGI::end_script();
+			} else {
+				print "<!-- $_ is not available in htdocs/js/ on this server -->\n";
+			}
+		}
+	}
 
 	return "";
 }
