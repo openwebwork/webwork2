@@ -290,6 +290,15 @@ h2.page-title {
 	
 }
 
+.problem-nav .user-nav {
+	margin-bottom: 5px;
+}
+
+.user-nav .student-nav-selector .dropdown-menu {
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
 /* Message section */
 
 .Message {
@@ -1275,6 +1284,31 @@ table#grades_table pre{
     border-bottom: 1px solid #d5d5d5;
     margin-bottom:2px;
     padding-bottom:5px;
+}
+
+.problem-grader-table {
+	border-collapse: separate;
+	border-spacing: 2px
+}
+
+.problem-grader-table input {
+	margin-left: 0px;
+}
+
+.problem-grader-table .preview {
+	margin-top: 2px;
+}
+
+.problem-grader-table .problem-grader-message {
+	padding: 2px;
+	font-weight: bold;
+}
+
+.problem-grader-table .problem-grader-message.ResultsWithoutError { background-color: #88ff88; }
+.problem-grader-table .problem-grader-message.ResultsWithError { background-color: #d69191; }
+.problem-grader-table .problem-grader-message.ResultsWithError {
+	border-radius: 3px;
+	color: black;
 }
 
 .tab-pane {

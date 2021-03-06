@@ -500,6 +500,25 @@ sub output_summary{
 	return "";
 }
 
+# output_comments subroutine
+
+sub output_comments {
+	my $self = shift;
+
+	# skip instructor comments.
+
+	return "";
+}
+
+# output_grader subroutine
+
+sub output_grader {
+	my $self = shift;
+
+	# skip instructor grader.
+
+	return "";
+}
 
 # outputs the hidden fields required for the form
 
