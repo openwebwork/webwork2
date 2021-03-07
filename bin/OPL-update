@@ -527,6 +527,8 @@ if($canopenfile) {
 }
 #### End of taxonomy/taxonomy2
 
+use JSON; 
+
 #### Save the official taxonomy in json format
 my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 my $file = "$webwork_htdocs/DATA/tagging-taxonomy.json";
