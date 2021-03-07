@@ -471,9 +471,9 @@ sub output_summary{
 	    if($showMeAnother{Count}<=$showMeAnother{MaxReps} or ($showMeAnother{MaxReps}==-1)){
 		# check to see if a solution exists for this problem, and vary the feedback accordingly
 		if($pg->{flags}->{solutionExists} && $showMeAnother{options}->{showSolutions}){
-		    $solutionShown = $r->maketext("There is a written solution available");
+		    $solutionShown = $r->maketext("There is a written solution available.");
 		} elsif ($showMeAnother{options}->{showSolutions} and $showMeAnother{options}->{showCorrect} and $showMeAnother{options}->{checkAnswers}) {
-		    $solutionShown = $r->maketext("There is no written solution available for this problem, but you can still view the correct answers");
+		    $solutionShown = $r->maketext("There is no written solution available for this problem, but you can still view the correct answers.");
 		  } elsif ($showMeAnother{options}->{showSolutions}) {
 		    $solutionShown = $r->maketext("There is no written solution available for this problem.");
 		  }
