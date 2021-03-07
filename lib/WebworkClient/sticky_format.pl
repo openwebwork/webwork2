@@ -14,6 +14,7 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
 
 <!-- JS Loads -->
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
@@ -31,7 +32,8 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/LocalStorage/localstorage.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js"></script>	
+<script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
+<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>	
 <script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 

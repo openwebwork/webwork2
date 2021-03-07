@@ -106,10 +106,7 @@ div.gwProblem
     text-align:right;
 }
 
-
-hr 
-{ 
-	border: none;
+div.gwDivider {
 	margin: 0px 0px 10px 0px;
 }
 

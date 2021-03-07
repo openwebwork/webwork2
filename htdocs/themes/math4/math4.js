@@ -5,8 +5,8 @@ if ($.widget) {
 }
 if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 
-// Object for toggling the sidebar
-var ToggleNavigation = function () {
+(function() {
+	// Initialize navigation menu toggling
 	var threshold = 768
 	var windowwidth = $(window).width();
 	var navigation_element = $('#site-navigation');
@@ -15,13 +15,13 @@ var ToggleNavigation = function () {
 		$('#site-navigation').remove();
 		$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');	
 		$('#content').removeClass('span10').addClass('span11');
-	}
+	};
 
 	var showSidebar = function () {
 		$('#body-row').prepend(navigation_element);
 		$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');
 		$('#content').addClass('span10').removeClass('span11');	
-	}
+	};
 
 	var toggleSidebar = function () {
 		if ($('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
@@ -29,7 +29,7 @@ var ToggleNavigation = function () {
 		} else {
 			showSidebar();
 		}
-	}
+	};
 
 	// if no fish eye then collapse site-navigation 
 	if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
@@ -60,11 +60,6 @@ var ToggleNavigation = function () {
 			}
 		}); 
 	}
-}
-
-$(function(){
-	// Initialize navigation menu toggling
-	ToggleNavigation();
 
 	// Focus on a  results with error if one is around and focussable. 
 	$('.ResultsWithError').first().focus();
@@ -97,10 +92,10 @@ $(function(){
 	//(loads older version of bootstrap?)
 	// so we'll work around that for now
 	if ($.fn.popover) {
-		$('a.table-summary').popover({trigger : 'click'}).click(function (event) {
+		$('a.table-summary').popover({trigger : 'hover'}).click(function (event) {
 			event.preventDefault();
 		});
-		$('a.help-popup').popover({trigger : 'click'}).click(function (event) {
+		$('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
 			event.preventDefault();
 		}).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
 	}
@@ -114,6 +109,8 @@ $(function(){
 
 	//Problem page
 	$('.currentProblem').addClass('active');
+
+	$('.student-nav-button').tooltip({trigger: 'hover'});
 
 	//Reformats the problem_set_table.
 	$('#problem-sets-form').addClass('form-inline');
@@ -129,7 +126,7 @@ $(function(){
 	$('.problem_set_options a').addClass('btn btn-info');
 
 	// Problem formatting
-    $('#problemMainForm, form[name=gwquiz]').addClass('problem-main-form form-inline');
+	$('#problemMainForm, form[name=gwquiz]').addClass('problem-main-form form-inline');
 	$('.attemptResults').addClass('table table-condensed table-bordered');
 	$('.problem .problem-content').addClass('well well-small');
 	$('.answerComments').addClass('well');
@@ -318,5 +315,4 @@ $(function(){
 		}
 	});
 
-});    
-
+})();

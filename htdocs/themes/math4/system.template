@@ -70,7 +70,7 @@ var tabberOptions = {manualStartup:true};
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
 <!--#if exists="math4-overrides.js"-->
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
 <!--#endif-->
@@ -241,9 +241,12 @@ var tabberOptions = {manualStartup:true};
 				  <!--#output_comments-->
 			</div><div class="span2"></div></div>
 			<!--#endif-->
-				
 
-
+			<!--#if can="output_grader"-->
+			<div class="row-fluid"><div id="output_grader" class="span10">
+				<!--#output_grader-->
+			</div><div class="span2"></div></div>
+			<!--#endif-->
 
 			<!--#if can="output_form_start"-->
 			<div class="row-fluid">

@@ -31,6 +31,7 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
 <link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <!--#if can="output_achievement_CSS"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
 <!--#endif-->
@@ -45,10 +46,9 @@
 <script type="text/javascript" src="/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
 <!--#if exists="math4-overrides.js"-->
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
 <!--#endif-->
@@ -99,7 +99,9 @@
 	<!--</div>-->
 	<!--#endif-->
 	
-	<!-- [gateway] removed nav button to go up -->
+	<!--#if can="nav"-->
+		<!--#nav separator="  "-->
+	<!--#endif-->
 	
 	<!--#if can="title"-->
 	<h1 id="content"><!--#title--></h1>

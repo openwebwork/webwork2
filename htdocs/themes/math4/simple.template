@@ -70,7 +70,7 @@ var tabberOptions = {manualStartup:true};
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
 <!--#if exists="math4-overrides.js"-->
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
 <!--#endif-->
