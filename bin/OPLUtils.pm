@@ -85,18 +85,7 @@ sub build_library_directory_tree {
 	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 	my $file = "$webwork_htdocs/DATA/library-directory-tree.json";
 
-	# use a variable for the file handle
-	my $OUTFILE;
-
-	# use the three arguments version of open
-	# and check for errors
-	open $OUTFILE, '>encoding(UTF-8)', $file  or die "Cannot open $file";
-
-	# you can check for errors (e.g., if after opening the disk gets full)
-	print { $OUTFILE } to_json(\@dirArray) or die "Cannot write to $file";
-
-	# check for errors
-	close $OUTFILE or die "Cannot close $file";
+	writeJSONtoFile(\@dirArray,$file);
 
 	print "Wrote Library Directory Tree to $file\n" if $verbose; 
 }
@@ -243,27 +232,12 @@ sub build_library_subject_tree {
 		my $clone = { % {$subject_tree}};
 		push (@subject_tree, $clone);
 	}
-
-	print "\n";
-
 	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 	my $file = "$webwork_htdocs/DATA/library-subject-tree.json";
 
-	# use a variable for the file handle
-	my $OUTFILE;
+	writeJSONtoFile(\@subject_tree,$file);
 
-	# use the three arguments version of open
-	# and check for errors
-	open $OUTFILE, '>encoding(UTF-8)', $file  or die "Cannot open $file";
-
-	# you can check for errors (e.g., if after opening the disk gets full)
-	print { $OUTFILE } to_json(\@subject_tree,{pretty=>1}) or die "Cannot write to $file";
-
-	# check for errors
-	close $OUTFILE or die "Cannot close $file";
-
-
-	print "Wrote Library Subject Tree to $file\n";
+	print "Wrote Library Subject Tree to $file\n" if $verbose;
 }
 
 sub build_library_textbook_tree {
@@ -375,22 +349,20 @@ sub build_library_textbook_tree {
 	my $webwork_htdocs = $ce->{webwork_dir}."/htdocs";
 	my $file = "$webwork_htdocs/DATA/textbook-tree.json";
 
-	# use a variable for the file handle
-	my $OUTFILE;
+	writeJSONtoFile(\@output,$file);
 
-	# use the three arguments version of open
-	# and check for errors
-	open $OUTFILE, '>', $file  or die "Cannot open $file";
+	print "\n\nWrote Library Textbook Tree to $file\n" if $verbose; 
 
-	# you can check for errors (e.g., if after opening the disk gets full)
-	print { $OUTFILE } to_json(\@output,{pretty=>1}) or die "Cannot write to $file";
+}
 
-	# check for errors
-	close $OUTFILE or die "Cannot close $file";
+# this takes a hash created in the other subroutines and write the result to a file
+sub writeJSONtoFile {
+	my ($data,$filename) = @_;
 
-
-	print "\n\nWrote Library Textbook Tree to $file\n";
-
+	my $json = JSON->new->utf8->pretty(0)->encode($data);	
+	open my $fh, ">", $filename or die "Cannot open $filename";
+	print $fh $json; 
+	close $fh;
 }
 
 1;
