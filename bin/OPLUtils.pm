@@ -8,7 +8,7 @@ use base qw(Exporter);
 #  The following files are created:
 #		1. $webwork_htdocs/DATA/library-directory-tree.json  (the directory structure of the library)
 #		2. $webwork_htdocs/DATA/library-subject-tree.json  (the subject/chapter/section struture of the library)
-#		3. $webwork_htdocs/DATA/library-textbook-tree.json  (the subject/chapter/section struture of the library)
+#		3. $webwork_htdocs/DATA/textbook-tree.json  (the subject/chapter/section struture of the library)
 
 # the above JSON files can be used to load and more quickly lookup OPL information
 # 
@@ -18,13 +18,10 @@ use warnings;
 use File::Find::Rule;
 use File::Basename;
 use open qw/:std :utf8/;
-# use Cwd;
-# use DBI;
 use JSON;
-use Data::Dump qw/dd/;
 
 our @EXPORT    = ();
-our @EXPORT_OK = qw(build_library_directory_tree build_library_subject_tree build_library_textbook_tree);
+our @EXPORT_OK = qw(build_library_directory_tree build_library_subject_tree build_library_textbook_tree writeJSONtoFile);
 
 ### Data for creating the database tables
 
@@ -74,8 +71,6 @@ sub build_library_directory_tree {
 	print "Creating the Directory Tree\n" if $verbose; 
 	my $libraryRoot = $ce->{problemLibrary}->{root};
 	$libraryRoot =~ s|/+$||;
-
-	my $libraryVersion = $ce->{problemLibrary}->{version};
 
 	my($filename, $directories) = fileparse($libraryRoot);
 
@@ -359,7 +354,7 @@ sub build_library_textbook_tree {
 sub writeJSONtoFile {
 	my ($data,$filename) = @_;
 
-	my $json = JSON->new->utf8->pretty(0)->encode($data);	
+	my $json = JSON->new->utf8->encode($data);	
 	open my $fh, ">", $filename or die "Cannot open $filename";
 	print $fh $json; 
 	close $fh;

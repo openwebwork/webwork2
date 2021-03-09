@@ -197,7 +197,6 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
-	libmoox-options-perl \
 	make \
 	netpbm \
 	preview-latex-style \
