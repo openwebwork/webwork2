@@ -1012,7 +1012,7 @@ sub getFile {
 	}
 	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || HOME) || '.';
 	if ($self->isSymLink($pwd.'/'.$files[0])) {
-		$self->addbadmessage($r->maketext("You may not follow symbolc links"));
+		$self->addbadmessage($r->maketext("You may not follow symbolic links"));
 		$self->Refresh unless $action eq 'download';
 		return;
 	}

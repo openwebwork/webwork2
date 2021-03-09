@@ -114,7 +114,7 @@ msgstr ""
 "%1 משתמש במערכת אימות חיצונית (כגון Oncourse, CAS, Blackboard, Moodle, "
 "Canvas, וכו'.) בבקשה חזור למערכת בה השתמשת ונסה שוב."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:103
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:104
 msgid ""
 "%1 uses an external authentication system.  You've authenticated through "
 "that system, but aren't allowed to log in to this course."
@@ -270,7 +270,7 @@ msgstr "1 תלמיד"
 msgid "<b>Weight:</b> %1%"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:237
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:240
 msgid ""
 "<p>After the Reduced Scoring Date all additional work done by the student "
 "counts at a reduced rate. Here is where you set the reduced rate which must "
@@ -295,7 +295,7 @@ msgstr ""
 "ידי המשתמשים, אם הם נכתבו כנדרש.</p>"
 
 # Leave HTML in place
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:359
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:362
 msgid ""
 "<p>When viewing a problem, users may choose different methods of rendering "
 "formulas via an options box in the left panel. Here, you can adjust what "
@@ -319,7 +319,7 @@ msgstr ""
 "האפשרויות לא תתן לבחור אפשרות תצוגה(בגלל שרק אחת תהיה פעילה)</p>"
 
 # Leave HTML in place
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:277
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:280
 msgid ""
 "<ul><li><b>SMAcheckAnswers</b>: enables the Check Answers button <i>for the "
 "new problem</i> when Show Me Another is clicked</li> "
@@ -426,7 +426,7 @@ msgstr ""
 "השנייה הוא מספר הניסיונות הלא נכונים."
 
 # Leave symbol codes in place
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:187
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:190
 msgid ""
 "A switch to govern the use of a Progress Bar for the student; this also "
 "enables/disables the highlighting of the current problem in the side bar, "
@@ -437,7 +437,7 @@ msgstr ""
 "הנוכחית בסרגל הצד, והאם היא נכונה (&#x2713;), מתבצעת (&hellip;), שגויה "
 "(&#x2717;), או לא נוסתה כלל (ללא סימון)."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:107
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:108
 msgid ""
 "A table showing all the current users along with several fields of user "
 "information. The fields from left to right are: Login Name, Login Status, "
@@ -547,7 +547,7 @@ msgstr "מזהה הישג"
 msgid "Achievement ID exists!  No new achievement created.  File not saved."
 msgstr "מזהה הישג כבר קיים! לא נוצר הישג חדש. קובץ לא נשמר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:216
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:219
 msgid "Achievement Points Per Problem"
 msgstr "נקודות הישג עבור כל שאלה"
 
@@ -602,7 +602,7 @@ msgstr "פעולה %1 לא נמצאה"
 msgid "Active"
 msgstr "פעיל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:212
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:215
 msgid ""
 "Activiating this will enable Mathchievements for webwork.  Mathchievements "
 "can be managed by using the Achievement Editor link."
@@ -610,7 +610,7 @@ msgstr ""
 "מאפשר הישגי מתמטיקה עבור webwork. הישגי מתמטיקה ניתנים לשינוי בעזרת הקישור "
 "לעורך היעדים. "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:222
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:225
 msgid ""
 "Activiating this will enable achievement items. This features rewards "
 "students who earn achievements with items that allow them to affect their "
@@ -703,7 +703,7 @@ msgstr "נוסף '%1' ל%2 בתור קידומת גליון חדשה"
 msgid "Added addresses %1 to location %2."
 msgstr "נוספו כתובות %1 למיקום %2."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:438
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:441
 msgid "Additional addresses for receiving feedback e-mail."
 msgstr "כתובות נוספות לקבלת משוב בדוא\"ל."
 
@@ -848,7 +848,7 @@ msgstr "כל הנראים כאן הם מוחבאים מכל התלמידים"
 msgid "All visible sets made visible for all students"
 msgstr "כל האוספים הנראים כאן הם ניתנים לצפייה לכל התלמידים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:394
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:397
 msgid "Allow Unicode alternatives in student answers"
 msgstr ""
 
@@ -858,39 +858,39 @@ msgstr ""
 msgid "Allow unassign"
 msgstr "אפשר לבטל הקצאה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:405
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:408
 msgid "Allowed error, as a percentage, for numerical comparisons"
 msgstr "שגיאה מותרת, באחוזים, להשוואה מספרית"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:310
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:313
 msgid "Allowed to <em>act as</em> another user"
 msgstr "מורשה <em>להתחזות</em> למשתמש אחר"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:329
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:332
 msgid "Allowed to change their e-mail address"
 msgstr "מורשה לשנות כתובת דוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:305
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:308
 msgid "Allowed to change their password"
 msgstr "מורשה לשנות סיסמה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:301
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:304
 msgid "Allowed to login to the course"
 msgstr "מורשה להתחבר לקורס"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:347
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:350
 msgid "Allowed to see solutions before the answer date"
 msgstr "מורשה לראות תשובות לפני תאריך התשובות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:343
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:346
 msgid "Allowed to see the correct answers before the answer date"
 msgstr "מורשה לראות תשובות נכונות לפני תאריך התשובות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:334
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:337
 msgid "Allowed to view past answers"
 msgstr "מורשה לראות תשובות מהעבר"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:339
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:342
 msgid "Allowed to view problems in sets which are not open yet"
 msgstr "מורש לצפות בשאלו באוספים שעדיין לא נפתחו"
 
@@ -1159,7 +1159,7 @@ msgstr "בוצע נסיון"
 msgid "Attempts"
 msgstr "ניסיונות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:115
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:118
 msgid "Audit"
 msgstr "צופה"
 
@@ -1178,7 +1178,7 @@ msgstr "מידע על הכותב"
 msgid "Automatic"
 msgstr "אוטומטי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:399
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:402
 msgid ""
 "Automatically convert Full Width Unicode characters to their ASCII "
 "equivalents"
@@ -1214,7 +1214,7 @@ msgstr "עיין"
 msgid "Browse from:"
 msgstr "עיין מתוך:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:444
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:447
 msgid ""
 "By default, feeback is always sent to all users specified to recieve "
 "feedback.  This variable sets the system to only email feedback to users who "
@@ -1225,7 +1225,7 @@ msgstr ""
 "למערכת לשלוח דוא\"ל משוב רק למשתמשים חברי אותה הקבוצה כמו המשתמש ששולח את "
 "המשוב. ז\"א משוב ישלח רק למנהיגי הקבוצה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:439
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:442
 msgid ""
 "By default, feeback is sent to all users above who have permission to "
 "receive feedback. Feedback is also sent to any addresses specified in this "
@@ -1246,19 +1246,19 @@ msgstr "זמן הגשה"
 msgid "Cake of Enlargement"
 msgstr "עוגת התפיחה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:314
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:317
 msgid "Can e-mail instructor"
 msgstr "יכול לשלוח דוא\"ל למדריך"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:324
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:327
 msgid "Can report bugs"
 msgstr "יכול לדווח על באגים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:351
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:354
 msgid "Can show old answers"
 msgstr "יכול לראות תשובות מהעבר"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:319
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:322
 msgid "Can submit answers for a student"
 msgstr "יכול לשלוח תשבות בשם תלמיד"
 
@@ -1313,7 +1313,7 @@ msgid "Can't open %1"
 msgstr "לא יכול לפתוח את %1"
 
 #. ($filePath)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2270
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2272
 msgid "Can't open file %1"
 msgstr "לא יכול לפתוח את הקובץ %1"
 
@@ -1924,7 +1924,7 @@ msgstr "מסד נתונים:"
 msgid "Date"
 msgstr "תאריך"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:422
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:425
 msgid "Debug"
 msgstr "דיבאג"
 
@@ -1934,22 +1934,22 @@ msgstr "דיבאג"
 msgid "Default"
 msgstr "ברירת מחדל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:203
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:206
 msgid ""
 "Default Amount of Time (in minutes) after Due Date that Answers are Open"
 msgstr "זמן ברירת המחדל (בדקות) לאחר תאריך ההגשה שהשאולות ישארו פתוחות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:197
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:200
 msgid ""
 "Default Amount of Time (in minutes) before Due Date that the Assignment is "
 "Open"
 msgstr "זמן ברירת המחדל (בדקות) לפני תאריך ההגשה שהמטלה פתוחה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:261
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:264
 msgid "Default Length of Reduced Scoring Period in minutes"
 msgstr "זמן ברירת המחדל (בדקות) של תקופת הניקוד המופחת"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:191
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:194
 msgid "Default Time that the Assignment is Due"
 msgstr "זמן ברירת המחדל שבו יש להגיש את המטלה"
 
@@ -2121,7 +2121,7 @@ msgstr "הצגת הצינים למטלה זו אסורה."
 msgid "Display options: Show"
 msgstr "אפשריות תצוגה: הראה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:378
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:381
 msgid "Display the evaluated student answer"
 msgstr "הצג את התשובה הבדוקה של התלמיד"
 
@@ -2222,7 +2222,7 @@ msgstr "הורד קובץ להדפסה של גליון %1 עבור %2?"
 msgid "Download:"
 msgstr "הורדה:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:115
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:118
 msgid "Drop"
 msgstr "עזוב"
 
@@ -2240,7 +2240,7 @@ msgstr ""
 msgid "Duplicate this set and name it"
 msgstr "שכפל את הגליון הזה ותן לו שם"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:390
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:393
 msgid ""
 "During summer 2005, a newer version of the answer checkers was implemented "
 "for answers which are functions and numbers.  The newer checkers allow more "
@@ -2258,7 +2258,7 @@ msgstr ""
 "ברירת המחדל. <p> בחירת <i> לא נכון</i> כאן אומר שהבודקים החדשים יהיו ברירת "
 "המחדל, ולבחור <i>נכון</i> אומר שהבודקים הישנים יהיו ברירת המחדל."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:410
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:413
 msgid "E-Mail"
 msgstr "דוא\"ל"
 
@@ -2266,17 +2266,17 @@ msgstr "דוא\"ל"
 msgid "E-mail Instructor"
 msgstr "שלח דוא\"ל למדריך"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:428
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:431
 msgid "E-mail addresses which can receive e-mail from a pg problem"
 msgstr "כתובות דוא\"ל שיכולות לקבל הודעה משאלת PG"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:433
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:436
 msgid ""
 "E-mail feedback from students automatically sent to this permission level "
 "and higher:"
 msgstr "דוא\"ל משוב מתלמידים נשלח אוטומטית לדרגת היתרים זו ומעלה:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:418
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:421
 msgid "E-mail verbosity level"
 msgstr "אורך פורמט הדוא\"ל"
 
@@ -2494,33 +2494,33 @@ msgstr ""
 msgid "Emails to be sent to the following:"
 msgstr "דוא\"ל נשלח ל-:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:221
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:224
 msgid "Enable Achievement Items"
 msgstr "הפעל חפצי הישגים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:226
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:229
 msgid "Enable Conditional Release"
 msgstr "הפעל פרסום מותנה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:211
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:214
 msgid "Enable Course Achievements"
 msgstr "הפעל הישגי קורס"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:186
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:189
 msgid "Enable Progress Bar and current problem highlighting"
 msgstr "הפעל סרגל התקדמות והדגשת השאלה הנוכחית"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:590
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:613
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:231
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:234
 msgid "Enable Reduced Scoring"
 msgstr "הפעל ניקוד מופחת"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:266
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:269
 msgid "Enable Show Me Another button"
 msgstr "הפעל את כפתור \"תראה לי עוד אחת\""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:284
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:287
 msgid "Enable periodic re-randomization of problems"
 msgstr "הפעל רנדומיזציה מחדש של שאלות מדי לסרוגין."
 
@@ -2537,7 +2537,7 @@ msgstr ""
 msgid "Enabled"
 msgstr "מופעל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:285
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:288
 msgid ""
 "Enables periodic re-randomization of problems after a given number of "
 "attempts. Student would have to click Request New Version to obtain new "
@@ -2547,7 +2547,7 @@ msgstr ""
 "התלמידילחץ על \"בקש גרסה חדשה\" כדי לקבל גרסה חדשה של השאלה ולהמשיך לעבוד על "
 "השאלה "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:227
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:230
 msgid ""
 "Enables the use of the conditional release system.  To use conditional "
 "release you need to specify a list of set names on the Problem Set Detail "
@@ -2559,7 +2559,7 @@ msgstr ""
 "של שמות בדף פרטי גליון השאלות, ולפרט ציון מינימלי. לתלמידים לא יהיה גישה "
 "לגליון הזה עד שהגיעו לציון המינימלי בכל האוספים שנרשמו."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:176
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:179
 msgid ""
 "Enables the use of the date picker on the Homework Sets Editor 2 page and "
 "the Problem Set Detail page"
@@ -2567,7 +2567,7 @@ msgstr ""
 "מפעיל את השימוש בבורר התאריך על אוספי שיעורי הבית דף עורך 2 ודף פרטי גליון "
 "השאלות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:267
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:270
 msgid ""
 "Enables use of the Show Me Another button, which offers the student a newly-"
 "seeded version of the current problem, complete with solution (if it exists "
@@ -2576,7 +2576,7 @@ msgstr ""
 "הפעל את השימוש בכפתור \"תראה לי עוד אחת\", שנותן לתלמיד גרסה עם מספרים שונים "
 "של אותה השאלה, ביחד עם פתרון מתאים (אם קיים לשאלה)."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:115
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:118
 msgid "Enrolled"
 msgstr "רשום"
 
@@ -2752,7 +2752,7 @@ msgstr ""
 "אותם:"
 
 #. ($filePath)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2306
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2308
 msgid "Existing file %1 could not be backed up and was lost."
 msgstr "לא היה אפשרות לשמור את הקובץ %1 ולכן הוא נמחק."
 
@@ -2862,7 +2862,7 @@ msgstr "הוספת תלמיד נכשלה:"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:565
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:806
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:966
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2435
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2437
 msgid "Failed to open %1"
 msgstr "פתיחת %1 נכשלה"
 
@@ -2884,7 +2884,7 @@ msgstr "האפשרותת כבר נוצלה עד תומה עבור שאלה זו"
 msgid "Feedback"
 msgstr "משוב"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:443
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:446
 msgid "Feedback by Section."
 msgstr "משוב לפי קבוצה."
 
@@ -3036,7 +3036,7 @@ msgstr ""
 msgid "Format"
 msgstr "פורמט"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:412
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:415
 msgid "Format for the subject line in feedback e-mails"
 msgstr "פורמט עבור נשורת נושא בדוא\"ל משוב."
 
@@ -3082,7 +3082,7 @@ msgstr "בוחן מחסום %2"
 msgid "Gateway parameters"
 msgstr "הפאראמטרים של בוחן המחסום"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:126
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:129
 msgid "General"
 msgstr "כללי"
 
@@ -3226,7 +3226,7 @@ msgid "Hardcopy Header"
 msgstr "קידומת גירסת הדפסה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:619
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:167
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:170
 msgid "Hardcopy Theme"
 msgstr "עיצוב גרסת הדפסה"
 
@@ -3374,7 +3374,7 @@ msgstr ""
 msgid "Illegal file '%1' specified"
 msgstr "נבחר קובץ לא חוקי '%1' "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2291
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2293
 msgid "Illegal filename contains '..'"
 msgstr "שם קובץ לא חוקי, מכיל '..'"
 
@@ -3418,7 +3418,7 @@ msgstr "בתהליך: %1/%2"
 msgid "Inactive"
 msgstr "לא פעיל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:155
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:158
 msgid "Inactivity time before a user is required to login again"
 msgstr "זמן אי-פעילות לפני שהמשתמש נדרש להתחבר שוב"
 
@@ -3523,7 +3523,7 @@ msgstr "שם משפחה"
 msgid "LOCAL Usage"
 msgstr "שימוש מקומי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:141
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:144
 msgid "Language (refresh page after saving changes to reveal new language.)"
 msgstr "שפה (רענן דף לאחר שמירת שינויים כדי להציג את השפה החדשה.)"
 
@@ -3565,7 +3565,7 @@ msgstr "שם משפחה"
 msgid "Latest Answers"
 msgstr "תשובות אחרונות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:156
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:159
 msgid ""
 "Length of time, in seconds, a user has to be inactive before he is required "
 "to login again.<p> This value should be entered as a number, so as 3600 "
@@ -3606,11 +3606,11 @@ msgstr "דפדפן ספרייה 3"
 msgid "Library Browser no js"
 msgstr "דפדפן ספרייה ללא js"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:358
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:361
 msgid "List of display modes made available to students"
 msgstr "רשימת מצבי התצוגה המופיעים לתלמידים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:429
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:432
 msgid ""
 "List of e-mail addresses to which e-mail can be sent by a problem. "
 "Professors need to be added to this list if questionaires are used, or other "
@@ -3620,7 +3620,7 @@ msgstr ""
 "משתמשים בשאלונים, או שאלות WeBWorK אחרות ששולחות דוא\"ל כחלק ממנגנות התשובות "
 "שלהן."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:276
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:279
 msgid "List of options for Show Me Another button"
 msgstr "רשימת אפשרויות עבור כפתור \"תראה לי עוד אחת\""
 
@@ -3790,7 +3790,7 @@ msgstr "מספר מקסימאלי של נסיונות"
 msgid "Max. Shown:"
 msgstr "מקסימום שיוצגו:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:271
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:274
 msgid "Maximum times Show me Another can be used per problem (-1 => unlimited)"
 msgstr ""
 "מספר מקסימאלי של פעמים שניתן להשתמש בכפתור \"תראה לי עוד אחת\" עבור כל שאלה "
@@ -3824,7 +3824,7 @@ msgid ""
 "create location fields and resubmit."
 msgstr "חסר קלט הכרחי. אנא ודא שמלאת את כל שדות יצירת המיקום ושלח שוב."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:147
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:150
 msgid ""
 "Mode in which the LANG and DIR settings for a single problem are determined."
 msgstr ""
@@ -3869,7 +3869,7 @@ msgstr "שם"
 msgid "Name for new set here"
 msgstr "שם לגליון חדש "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:128
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:131
 msgid "Name of course information file"
 msgstr "שם של  קובץ מידע של הקורס"
 
@@ -3960,9 +3960,9 @@ msgstr "הדף הבא"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:413
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2695
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2696
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2697
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2698
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2699
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:283
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:299
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:315
@@ -4071,11 +4071,11 @@ msgid "No record for user %1."
 msgstr "אין רישום למשתמש %1."
 
 #. ($prob)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2333
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2335
 msgid "No record found for problem %1."
 msgstr "לא נמצא רישום עבור שאלה %1."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2298
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2300
 msgid "No record found."
 msgstr "לא נמצא רישום."
 
@@ -4093,7 +4093,7 @@ msgstr "עדיין לא קיימים אוספים בקורס זה"
 msgid "No sets selected for scoring"
 msgstr "לא נבחרו אוספים לנקד"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2811
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2813
 msgid ""
 "No sets shown.  Choose one of the options above to list the sets in the "
 "course."
@@ -4105,7 +4105,7 @@ msgstr ""
 msgid "No source filePath specified"
 msgstr "לא פורט מסלול קובץ מקור"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2164
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2166
 msgid "No source_file for problem in .def file"
 msgstr "אין קובץ מקור לשאלה בקובץ ה-def."
 
@@ -4209,7 +4209,7 @@ msgstr "עורך רשימת כיתה ישן"
 msgid "Old Hmwk Sets Editor"
 msgstr "עורך אוספי שיעורי בית ישן"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:109
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:112
 msgid "One Column"
 msgstr "עמודה אחת"
 
@@ -4218,7 +4218,7 @@ msgstr "עמודה אחת"
 msgid "Only after set answer date"
 msgstr "רק לאחר תאריך התשובות של הגליון"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:315
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:318
 msgid ""
 "Only this permission level and higher get buttons for sending e-mail to the "
 "instructor."
@@ -4279,7 +4279,7 @@ msgstr "פותח"
 msgid "Opens any homework set for 24 hours."
 msgstr "פותח גליון שיעורי בית ל-24 שעות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:209
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:212
 msgid "Optional Modules"
 msgstr "מערכות אפשריות"
 
@@ -4312,7 +4312,7 @@ msgid "Overwrite existing files silently"
 msgstr "דרוס קבצים קיימים באופן שקט"
 
 # PG is a WeBWorK abreviation and should stay PG
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:356
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:359
 msgid "PG - Problem Display/Answer Checking"
 msgstr "PG - הצגת שאלה/בדיקת תשובה"
 
@@ -4443,7 +4443,7 @@ msgstr ""
 msgid "Permission Level"
 msgstr "רמת הרשאה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:299
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:302
 msgid "Permissions"
 msgstr "היתרים"
 
@@ -4707,7 +4707,7 @@ msgstr "הוקצאו שאלות לתלמידים הנבחרים"
 msgid "Problems have been assigned to all current users."
 msgstr "שאלות הוקצאו לכל המשתמשים הנוכחיים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:115
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:118
 msgid "Proctor"
 msgstr "משגיח"
 
@@ -4741,7 +4741,7 @@ msgstr ""
 "כדי להתחיל ולנקד מבחן עם משגיח צריך הרשאת משגיח. תן סיסמה כדי שיהיה סיסמה "
 "אחת שכל התלמידים יוכלו להתחיל בעזרתה מבחן עם משגיח."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2861
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2863
 msgid "Publish"
 msgstr "פרסם"
 
@@ -4794,14 +4794,14 @@ msgid "Reduced Scoring Date"
 msgstr "תאריך ניקוד מופחת"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2223
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2582
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2584
 msgid "Reduced Scoring Disabled"
 msgstr "ביטול ניקוד מופחת"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:142
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2223
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:453
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2582
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2584
 msgid "Reduced Scoring Enabled"
 msgstr "הפעלת ניקוד מופחת"
 
@@ -5508,7 +5508,7 @@ msgstr "מזהה גליון"
 msgid "Set Info"
 msgstr "נתוני גליון"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2789
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2791
 msgid "Set List"
 msgstr "רשימת אוספים"
 
@@ -5544,14 +5544,14 @@ msgstr "קידומות אוספים  לא משומשות בהצגת בחני מ�
 msgid "Set random seed to:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:384
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:387
 msgid ""
 "Set to true for log to mean base 10 log and false for log to mean natural "
 "logarithm"
 msgstr ""
 "בחר \"נכון\" כדי ש-log יסמל לוגריתם בבסיס 10 ו\"לא נכון\"  עבור לוגרית טבעי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:395
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:398
 msgid ""
 "Set to true to allow students to enter Unicode versions of some characters "
 "(like U+2212 for the minus sign) in their answers.  One reason to allow this "
@@ -5560,13 +5560,13 @@ msgid ""
 "directory from the keyboard."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:374
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:377
 msgid ""
 "Set to true to display MathView equation editor icon next to each answer box"
 msgstr ""
 "בחר \"נכון\" כדי להציג את סמל עורך המשוואות MathView לצד כל קופסת תשובה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:379
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:382
 msgid ""
 "Set to true to display the \"Entered\" column which automatically shows the "
 "evaluated student answer, e.g. 1 if student input is sin(pi/2). If this is "
@@ -5579,7 +5579,7 @@ msgstr ""
 "לשמור מקום באיזור התגובה, התלמיד עדיין יכול לראות את התשובה המוערכת שלו על "
 "ידי להניח את הסמן על התשובה שהכניס."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:400
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:403
 msgid ""
 "Set to true to have Full Width Unicode character (U+FF01 to U+FF5E) "
 "converted to their ASCII equivalents (U+0021 to U+007E) automatically in "
@@ -5649,7 +5649,7 @@ msgstr "הראה ציונים על מטלות שבוצעו?"
 msgid "Show Solutions"
 msgstr "הראה פתרונות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:180
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:183
 msgid "Show Total Homework Grade on Grades Page"
 msgstr "הראה ציון בסך כל שיעורי הבית בעמוד הציונים"
 
@@ -5722,7 +5722,7 @@ msgstr "מראה %1 מתוך %2 אוספים."
 msgid "Showing %1 out of %2 users"
 msgstr "מראה %1 מתוך %2 אוספים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:420
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:423
 msgid "Simple"
 msgstr "פשוט"
 
@@ -5772,7 +5772,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:161
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:164
 msgid ""
 "Some servers handle courses taking place in different timezones.  If this "
 "course is not showing the correct timezone, enter the correct value here.  "
@@ -5795,7 +5795,7 @@ msgstr ""
 "משהו לא כשורה עם הפאראמטרים של ה-LTI שלך. אם בעיה זו חוזרת על עצמה, אנא פנה "
 "למדריך שלך"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2860
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2862
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1933
 msgid "Sort"
 msgstr "מיין"
@@ -5839,7 +5839,7 @@ msgstr ""
 "פרט מזהה, כותרת, ומוסד עבור הקורס החדש. מזהה הקורס יכול להכיל רק אותיות, "
 "מספרים, מקפים, וקוים תחתונים."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:421
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:424
 msgid "Standard"
 msgstr "סטנדרטי"
 
@@ -6092,7 +6092,7 @@ msgstr "קטע טקסט:"
 msgid "Textbook:"
 msgstr "ספר לימוד:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:272
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:275
 msgid ""
 "The Maximum number of times Show me Another can be used per problem by a "
 "student. If set to -1 then there is no limit to the number of times that "
@@ -6101,7 +6101,7 @@ msgstr ""
 "המספר המקסימלי של הפעמים שתלמיד יכול להשתמש ב-\"תראה לי עוד אחת\" עבור כל "
 "שאלה. אם הוכנס -1 אז אין גבול למספר הפעמים."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:262
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:265
 msgid ""
 "The Reduced Scoring Period is the default period before the due date during "
 "which all additional work done by the student counts at a reduced rate. When "
@@ -6134,7 +6134,7 @@ msgstr ""
 "הסטטוס המותאם של שאלה הוא הגדול מבין הסטטוס של השאלה הממוצה המתואם של הסטטוס "
 "של השאלות שנספרות לניקוד שאלה המכילה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:204
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:207
 msgid ""
 "The amount of time (in minutes) after the due date that the Answers are "
 "available to student to view.  You can change this for individual homework, "
@@ -6144,7 +6144,7 @@ msgstr ""
 "יכול לשנות את זה עבור גליון שיעורי בית ספציפי, אבל WeBWorK ישתמש בערך זה "
 "כשהגליון נוצר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:198
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:201
 msgid ""
 "The amount of time (in minutes) before the due date when the assignment is "
 "opened.  You can change this for individual homework, but WeBWorK will use "
@@ -6190,18 +6190,18 @@ msgid ""
 msgstr ""
 "הקורס '%1' כבר הוכנס לארכיון ב-'%2'. הרישום המוקדם יותר ימחק. זה בילתי הפיך."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:366
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:369
 msgid "The default display mode"
 msgstr "ברירי ת המחדל של מצב התצוגה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:290
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:293
 msgid ""
 "The default number of attempts before the problem is re-randomized. ( 0 => "
 "never )"
 msgstr ""
 "ברירת המחדל למספר הנסיונות לפני שהשאלה עוברת רמדומיזציה מחדש. ( 0 => אף פעם )"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:289
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:292
 msgid ""
 "The default number of attempts between re-randomization of the problems ( 0 "
 "=> never)"
@@ -6216,7 +6216,7 @@ msgstr "התיקייה שציינת  לא קיימת"
 msgid "The display was already cleared."
 msgstr "התצוגה כבר היתה ריקה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:419
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:422
 msgid ""
 "The e-mail verbosity level controls how much information is automatically "
 "added to feedback e-mails.  Levels are<ol><li value=\"Simple\"> Simple: send "
@@ -6375,7 +6375,7 @@ msgid ""
 "The name '%1' is not a valid set name.  Use only letters, digits, -, _, and ."
 msgstr "השם '%1' הוא לא שם גליון תקין. השתמש רק באותיות, ספרות, ובסימנים . - _"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:129
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:132
 msgid ""
 "The name of course information file (located in the templates directory). "
 "Its contents are displayed in the right panel next to the list of homework "
@@ -6450,7 +6450,7 @@ msgid ""
 msgstr ""
 
 #. ($openDate, $dueDate)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2008
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2009
 msgid ""
 "The reduced credit date should be between the open date %1 and close date %2"
 msgstr "תאריך הניקוד מופחת צריך להיות בין תאריך הפתיחה %1 ותאריך סגירה %2"
@@ -6534,7 +6534,7 @@ msgid ""
 msgstr ""
 "הזמן המוגבל למשימה זו נגמר. ניתן לבדוק את מטלה זו, אך התוצאות לא תספרנה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:192
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:195
 msgid ""
 "The time of the day that the assignment is due.  This can be changed on an "
 "individual basis, but WeBWorK will use this value for default when a set is "
@@ -6560,14 +6560,14 @@ msgid "The user %1 has been assigned %2."
 msgstr "%2 הוקצה למשתמש %1."
 
 #. ($enableReducedScoring)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2021
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2023
 msgid ""
 "The value %1 for enableReducedScoring is not valid; it will be replaced with "
 "'N'."
 msgstr "הערך %1 עבור \"אפשר ניקוד מופחת\" אינו חוקי. הוא יוחלף בערך 'N'."
 
 #. ($timeCap)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2057
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2059
 msgid ""
 "The value %1 for the capTimeLimit option is not valid; it will be replaced "
 "with '0'."
@@ -6576,29 +6576,29 @@ msgstr ""
 
 #. ($hideScore)
 #. ($hideScoreByProblem)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2043
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2048
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2045
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2050
 msgid ""
 "The value %1 for the hideScore option is not valid; it will be replaced with "
 "'N'."
 msgstr "הערך %1 עבור האפשרות \"החבאת ציון\" הוא לא תקין; הוא יוחלף ב-'N'."
 
 #. ($hideWork)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2053
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2055
 msgid ""
 "The value %1 for the hideWork option is not valid; it will be replaced with "
 "'N'."
 msgstr "הערך %1 עבור האפשרות \"החבאת עבודה\" הוא לא תקין; הוא יוחלף ב-'N'."
 
 #. ($relaxRestrictIP)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2070
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2072
 msgid ""
 "The value %1 for the relaxRestrictIP option is not valid; it will be "
 "replaced with 'No'."
 msgstr "הערך %1 עבור האפשרות \"הרגע הגבלת IP\" הוא לא תקין; הוא יוחלף ב-'לא'."
 
 #. ($restrictIP)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2062
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2064
 msgid ""
 "The value %1 for the restrictIP option is not valid; it will be replaced "
 "with 'No'."
@@ -6611,7 +6611,7 @@ msgid ""
 msgstr ""
 "שרת ה-WeBWorK חייב לאפשר רישום של התיקיות הללו. אנא תקן את שגיאות ההרשאה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:134
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:137
 msgid "Theme (refresh page after saving changes to reveal new theme.)"
 msgstr "עיצוב (רענן את העמוד לאחר שמירת השינויים על מנת לראות את העיצוב החדש)."
 
@@ -6627,7 +6627,7 @@ msgstr "ואז לפי"
 msgid "There are %1 matching WeBWorK problems"
 msgstr "יש %1 בעיות WeBWorK מתאימות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:168
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:171
 msgid ""
 "There are currently two hardcopy themes to choose from: One Column and Two "
 "Columns.  The Two Columns theme is the traditional hardcopy format.  The One "
@@ -6637,7 +6637,7 @@ msgstr ""
 "עיצוב בשתי עמודות הוא עיציב גרסת ההדפסה המסורתי. עיצוב בעמודה האחת משתמש בכל "
 "רוחב הדף לכל עמודה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:135
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:138
 msgid ""
 "There are currently two themes (or skins) to choose from: math3 and math4.  "
 "The theme specifies a unified look and feel for the WeBWorK course web pages."
@@ -6746,7 +6746,8 @@ msgid "There is a new version of WeBWorK available."
 msgstr "יש גרסה חדשה של WeBWorK."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:474
-msgid "There is a written solution available"
+#, fuzzy
+msgid "There is a written solution available."
 msgstr "קיים פתרון כתוב."
 
 #. ($message_file, $merge_file)
@@ -6772,9 +6773,10 @@ msgid "There is no undo for deleting files or directories!"
 msgstr "אי אפשר לחזור בך ממחיקת קבצים או תיקייות!"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:476
+#, fuzzy
 msgid ""
 "There is no written solution available for this problem, but you can still "
-"view the correct answers"
+"view the correct answers."
 msgstr "לא קיים פתרון כתוב לשאלה זו, אבל עדיין ניתן לצפות בתשובות נכונות"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:478
@@ -6808,7 +6810,7 @@ msgid ""
 "instructor or system administrator."
 msgstr "הייתה שגיאה בתהליך ההתחברות. אנא פנה למדריך או למנהל מערכת."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:335
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:338
 msgid ""
 "These users and higher get the \"Show Past Answers\" button on the problem "
 "page."
@@ -6822,7 +6824,7 @@ msgstr "הפעולה יכולה להמשך זמן רב אם ישנם תלמיד�
 msgid "This action will not overwrite existing users."
 msgstr "פעולה זו לא תדרוס משתמשים קיימים."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:101
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:102
 msgid ""
 "This course supports guest logins. Click %1 to log into this course as a "
 "guest."
@@ -6854,7 +6856,7 @@ msgstr ""
 msgid "This is a new (re-randomized) version of the problem."
 msgstr "הנה גרסה חדשה של השאלה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:105
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:106
 msgid ""
 "This is a table showing the current Homework sets for this class.  The "
 "fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned "
@@ -6873,7 +6875,7 @@ msgstr ""
 "התאים בשדת \"ערוך שאלות\" מכילים קישורים שמפנים לדף שבו ניתן לערוך לאיזה "
 "תלמידים מוקצה הקורס/"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:99
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:100
 msgid ""
 "This is the Achievement Editor.  It is used to edit the achievements "
 "available to students.  Please keep in mind the following facts: Achievments "
@@ -6887,7 +6889,8 @@ msgstr ""
 "\"סודית\" יוצרת הישגים שמוחבאים מהתלמידים עד שהם הרוויחו אותם. הקטגורית ה-"
 "\"שלב\" משמשת להישגים שמקושרים לשלב המשתמש."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:97
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:98
+#, fuzzy
 msgid ""
 "This is the classlist editor page, where you can view and edit the records "
 "of all the students currently enrolled in this course.  The top of the page "
@@ -6896,8 +6899,8 @@ msgid ""
 "students, import/export student records from/to external files, or add/"
 "delete students.  To use, please select the action you would like to "
 "perform, enter in the relevant information in the fields below, and hit the "
-"\\\"Take Action!\\\" button at the bottom of the form.  The bottom of the "
-"page contains a table containing the student usernames and their information."
+"\"Take Action!\" button at the bottom of the form.  The bottom of the page "
+"contains a table containing the student usernames and their information."
 msgstr ""
 "זהו דף רשימת הכיתה, בו ניתן לצפות ולערוך את הנתונים של כל התלמידים שרשומים "
 "בקורס. החלק העליון של דף זה מכיל טפסים שמאפשרים לסנן את התלמדים, לסדר אותם "
@@ -6907,6 +6910,7 @@ msgstr ""
 "\"\\ בתחתית הטופס. תחתית הדף כוללת טבלה שמכילה את שמות התלמידים ואת נתוניהם."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:96
+#, fuzzy
 msgid ""
 "This is the homework sets editor page where you can view and edit the "
 "homework sets that exist in this course and the problems that they contain. "
@@ -6915,9 +6919,9 @@ msgid ""
 "publish homework sets, import/export sets from/to an external file, score "
 "sets, or create/delete sets.  To use, please select the action you would "
 "like to perform, enter in the relevant information in the fields below, and "
-"hit the \\\"Take Action!\\\" button at the bottom of the form.  The bottom "
-"of the page contains a table displaying the sets and several pieces of "
-"relevant information."
+"hit the \"Take Action!\" button at the bottom of the form.  The bottom of "
+"the page contains a table displaying the sets and several pieces of relevant "
+"information."
 msgstr ""
 "זהו דף עורך אוספי שיעורי הבית, שבו ניתן לצפות ולערוך אוספי שיעורי בית "
 "שקיימים בקורס ואת השאלות שהם מכילים. החל העליון של דף זה מכיל טפסים שמאפשרים "
@@ -6927,7 +6931,7 @@ msgstr ""
 "ולחץ על כפתור \\\"בצע פעולה!\"\\ בתחתית הטופס. תחתית הדף מכילה טבלה שמציגה "
 "את האוספים וכמה נתונים רלוונטים."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:217
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:220
 msgid ""
 "This is the number of achievement points given to each user for completing a "
 "problem."
@@ -6939,6 +6943,14 @@ msgid ""
 "from the answer sub scores above using the weights shown if they are "
 "modified.  Alternatively, enter the score you want saved here (the above sub "
 "scores will be ignored)."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:110
+msgid ""
+"This is the past answer viewer.  Students can only see their answers, and "
+"they will not be able to see which parts are correct.  Instructors can view "
+"any users answers using the form below and the answers will be colored "
+"according to correctness."
 msgstr ""
 
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:3111
@@ -7051,7 +7063,7 @@ msgstr ""
 "בשדה זה. האוספים צריך להכתב כרשימה מופרדת בפסיקים. הניקוד המינימלי הנדרש "
 "בגליון יצויין בשדה שלאחר מכן."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:232
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:235
 msgid ""
 "This sets whether the Reduced Scoring system will be enabled.  If enabled "
 "you will need to set the default length of the reduced scoring period and "
@@ -7148,7 +7160,7 @@ msgstr "זמן שנלקח לבחינה: %1 דקות (%2 דקות מורשות)."
 msgid "Timestamp"
 msgstr "חותמת זמן"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:160
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:163
 msgid "Timezone for the course"
 msgstr "איזור זמנים של הקורס"
 
@@ -7253,7 +7265,7 @@ msgstr "נסה זאת"
 msgid "Tunic of Extension"
 msgstr "טוניקת ההארכה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:111
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:114
 msgid "Two Columns"
 msgstr "שתי עמודות"
 
@@ -7416,7 +7428,7 @@ msgstr "עדכן תהליכים שהושלמו"
 msgid "Upload"
 msgstr "העלה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:175
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:178
 msgid "Use Date Picker"
 msgstr "השתמש בבוחר התאריכים"
 
@@ -7434,7 +7446,7 @@ msgstr "השתמש בעורך המשוואות?"
 msgid "Use Item"
 msgstr "השתמש בפריט"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2766
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2768
 msgid "Use System Default"
 msgstr "השתמש בברירת המחדל של המערכת"
 
@@ -7456,11 +7468,11 @@ msgstr "השתמש בהישג חדש:"
 msgid "Use live equation rendering?"
 msgstr "השתמש בעורך המשוואות?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:383
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:386
 msgid "Use log base 10 instead of base <i>e</i>"
 msgstr "השתמש בלוגריתם בבסיס 10 במקום בבסיס <i>e</i>"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:389
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:392
 msgid "Use older answer checkers"
 msgstr "השתמש בבודקי תשובות ישנים יותר"
 
@@ -7545,7 +7557,7 @@ msgstr "משתמש מוקצה לגליון %2"
 msgid "Users List"
 msgstr "רשימת משתמשים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:330
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:333
 msgid ""
 "Users at this level and higher are allowed to change their e-mail address. "
 "Normally guest users are not allowed to change the e-mail address since it "
@@ -7555,7 +7567,7 @@ msgstr ""
 "אורחים לא מורשים לשנות את כתובת הדוא\"ל שלהם שכן זה לא יהיה הגיוני לשלוח "
 "דואר למשתמשים אנונימיים."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:306
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:309
 msgid ""
 "Users at this level and higher are allowed to change their password. "
 "Normally guest users are not allowed to change their password."
@@ -7568,7 +7580,7 @@ msgstr ""
 msgid "Users sorted by %1, then by %2, then by %3"
 msgstr "משתמשים מוינו לפי %1, לאחר מכן לפי %2, ואז לפי %3"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:325
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:328
 msgid ""
 "Users with at least this permission level get a link in the left panel for "
 "reporting bugs to the bug tracking system in Rochester"
@@ -7576,7 +7588,7 @@ msgstr ""
 "משתמשים עם רמת הרשאה כזו לפחות מקבלים קישור בפאנל השמאלי כדי לדווח על באגים "
 "למערכת ניטור הבאגים ברוצ'סטר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:434
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:437
 msgid ""
 "Users with this permssion level or greater will automatically be sent "
 "feedback from students (generated when they use the \"Contact instructor\" "
@@ -7604,7 +7616,7 @@ msgstr "באיזה מצב תצוגה להשתמש?:"
 msgid "Using what seed?: "
 msgstr "להשתמש באיזה זרע?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:236
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:239
 msgid "Value of work done in Reduced Scoring Period"
 msgstr "ערך העבודה נעשה בתקופת ניקוד מופחת."
 
@@ -7722,7 +7734,7 @@ msgstr "שגיאת WeBWorK"
 msgid "WeBWorK Warnings"
 msgstr "אזהרות WeBWorK"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:142
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:145
 msgid ""
 "WeBWorK currently has translations for four languages: \"English en\", "
 "\"Turkish tr\", \"Spanish es\", and \"French fr\" "
@@ -7798,7 +7810,7 @@ msgstr ""
 "השאלה. אם מוזן -1 האופציה מבוטלת, ואם מוזן -2 ייעשה שימוש בברירת המחדל של "
 "הקורס"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:320
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:323
 msgid ""
 "When acting as a student, this permission level and higher can submit "
 "answers for that student."
@@ -7813,7 +7825,7 @@ msgid ""
 "number."
 msgstr "כאשר משנים מספרי השאלות, נזיז את השאלה להיות %1 המספר הנבחר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:413
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:416
 msgid ""
 "When students click the <em>Email Instructor</em> button to send feedback, "
 "WeBWorK fills in the subject line.  Here you can set the subject line.  In "
@@ -7828,7 +7840,7 @@ msgstr ""
 "מזהה משתמש <li>%p = מזהה שאלה <li>%x = קבוצה <li> %r = תרגול <li>%% = סימן "
 "אחוז</ul>"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:181
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:184
 msgid ""
 "When this is on students will see a line on the Grades page which has their "
 "total cumulative homework score.  This score includes all sets assigned to "
@@ -7837,7 +7849,7 @@ msgstr ""
 "כאשר אפשרות זו נבחרת, הסטודנט יראה שורה בעמוד הציונים עם הציון הכולל שלהם "
 "בשיעורי הבית. הניקוד יכלול את כל האוספים שמוקצים לסטודנט."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:352
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:355
 msgid ""
 "When viewing a problem, WeBWorK usually puts the previously submitted answer "
 "in the answer blank.  Below this level, old answers are never shown.  "
@@ -7919,9 +7931,9 @@ msgstr "הרשאות כתיבה לא הופעלו בתיקיית התבניות.
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:412
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2317
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:2318
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2695
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2696
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2697
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2698
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2699
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:283
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:299
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:315
@@ -8215,9 +8227,6 @@ msgid "You may not change your own password here!"
 msgstr "לא ניתן לשנות את הסיסמה שלך כאן!"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1015
-msgid "You may not follow symbolc links"
-msgstr ""
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:437
 msgid "You may not follow symbolic links"
 msgstr ""
@@ -8611,8 +8620,8 @@ msgstr "_תיאור_עורך_שיעורי_הבית"
 msgid "_LOGIN_MESSAGE"
 msgstr "_הודעת_היתחברות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2784
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2786
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2788
 msgid "_PROBLEM_SET_SUMMARY"
 msgstr "_תקציר_גליון_שאלות"
 
@@ -8675,7 +8684,7 @@ msgid "added missing permission level for user"
 msgstr "נוספה רמת ההרשאות החסרה למשתמש"
 
 # #short for administrator
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "admin"
 msgstr "מנהל"
 
@@ -8963,11 +8972,11 @@ msgstr "גליון גלובלי  %1 לא נמצא."
 msgid "global set %1 not found."
 msgstr "גליון גלובלי %1 לא נמצא."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "grade_proctor"
 msgstr "משגיח_ציון"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "guest"
 msgstr "אורח"
 
@@ -9053,7 +9062,7 @@ msgstr "מזהה התחברות"
 msgid "login/studentID:"
 msgstr "מזהה משתמש/התחברות:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "login_proctor"
 msgstr "התחברות_משגיח"
 
@@ -9118,7 +9127,7 @@ msgstr "שום משתמשים"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:236
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:251
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "nobody"
 msgstr "אף אחד"
 
@@ -9226,7 +9235,7 @@ msgstr "שאלה"
 msgid "problems"
 msgstr "שאלות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "professor"
 msgstr "מרצה"
 
@@ -9237,7 +9246,7 @@ msgstr "התקדמות"
 
 #. ($line)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1975
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2237
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2239
 msgid "readSetDef error, can't read the line: ||%1||"
 msgstr "שגיאת קריאת הגדרת גליון, לא יכול לקרוא את השורה: ||%1||"
 
@@ -9405,7 +9414,7 @@ msgid "still open"
 msgstr "עדיין פתוח"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:82
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "student"
 msgstr "תלמיד"
 
@@ -9427,7 +9436,7 @@ msgstr "הגשה (מבחן %1)"
 msgid "summary"
 msgstr "תקציר"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:113
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:116
 msgid "ta"
 msgstr "עוזר מורה"
 
