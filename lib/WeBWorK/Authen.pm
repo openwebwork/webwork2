@@ -997,7 +997,7 @@ sub write_log_entry {
 	    }
 
 	    if ($version) {
-		$APACHE24 = version->parse($version) >= version->parse('2.4');
+		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
 	    }
 	}
 	# If its apache 2.4 then the API has changed

@@ -267,15 +267,15 @@ sub process_and_log_answer{
 				  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 				  if ($LTIGradeMode eq 'course') {
 				    if ($grader->submit_course_grade($problem->user_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  } elsif ($LTIGradeMode eq 'homework') {
 				    if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  }
 				}
@@ -519,12 +519,15 @@ sub output_footer{
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
+		courseId           => $courseName,	
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
 		problemPath        => $problem->source_file,
 		randomSeed         => $problem->problem_seed,
 		emailAddress       => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
-		emailableURL       => $self->generateURLs('absolute'),
+		emailableURL       => $self->generateURLs(url_type => 'absolute',
+		                                          set_id => $self->{set}->set_id,
+		                                          problem_id => $problem->problem_id),
 		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},

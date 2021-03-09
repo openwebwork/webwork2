@@ -22,9 +22,9 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="expires" content="Wed, 21 Dec 2005 00:00:01 GMT"/>
-<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+<script type="text/javascript", src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <!-- Minimal bootstrap for newer features -->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap/js/bootstrap.js"></script>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
@@ -64,7 +64,9 @@
 		<!--</div>-->
 		<!--#endif-->
 		
-		<!-- [gateway] removed nav button to go up -->
+		<!--#if can="nav"-->
+			<!--#nav separator="  "-->
+		<!--#endif-->
 		
 		<!--#if can="title"-->
 		<h1><!--#title--></h1>

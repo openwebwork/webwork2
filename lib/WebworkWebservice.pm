@@ -152,6 +152,7 @@ use WebworkWebservice::LibraryActions;
 use WebworkWebservice::MathTranslators;
 use WebworkWebservice::SetActions;
 use WebworkWebservice::CourseActions;
+use WebworkWebservice::ProblemActions;
 
 ###############################################################################
 
@@ -927,11 +928,55 @@ sub updateSetting {
 	return $self->do(WebworkWebservice::CourseActions::updateSetting($self,$in));	
 }
 
+=item getUserProblem
 
+=cut
+
+sub getUserProblem {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::ProblemActions::getUserProblem($self, $in));
+}
 
 =back
 
+=item putUserProblem
 
+=cut
+
+sub putUserProblem {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::ProblemActions::putUserProblem($self, $in));
+}
+
+=item putProblemVersion
+
+=cut
+
+sub putProblemVersion {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::ProblemActions::putProblemVersion($self, $in));
+}
+
+=back
+
+=item putPastAnswer
+
+=cut
+
+sub putPastAnswer {
+	my $class = shift;
+	my $in = shift;
+	my $self = $class->initiate_session($in);
+	return $self->do(WebworkWebservice::ProblemActions::putPastAnswer($self, $in));
+}
+
+=back
 
 =head2 Pass through methods which access the data in the FakeRequest object
 

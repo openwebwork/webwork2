@@ -1,7 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Utils/CourseManagement.pm,v 1.48 2009/10/01 21:28:46 gage Exp $
+# $CVSHeader: webwork2/lib/WeBWorK/Utils/DatePickerScripts.pm,v 1.48 2009/10/01 21:28:46 gage Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -20,26 +20,11 @@ use WeBWorK::Utils qw(formatDateTime);
 use POSIX;
 
 sub date_scripts {
-        my $ce = shift;
+	my $ce = shift;
 	my $set = shift;
-	my $bareName = 'set.'.$set->set_id;
-        $bareName =~ s/(\.|,)/\\\\$1/g;
-
-	my $reduced = 0;
-
-	if ($ce->{pg}{ansEvalDefaults}{enableReducedScoring}) {
-	    $reduced = 1;
-	}
-	
-	my $out =<<EOS;
-	addOnLoadEvent(function () {
-	    new WWDatePicker('$bareName',$reduced);
-	});
-EOS
-
-	return $out;
+	my $bareName = 'set.' . $set->set_id;
+	my $reduced = $ce->{pg}{ansEvalDefaults}{enableReducedScoring} ? 1 : 0;
+	return qq{\$(function() { new WWDatePicker("$bareName", $reduced); });};
 }
-
-
 
 1;
