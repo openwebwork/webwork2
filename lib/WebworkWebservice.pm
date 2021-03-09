@@ -162,7 +162,7 @@ use WebworkWebservice::ProblemActions;
 
 =head1 SYNPOSIS
 
- 	$self = $class->initiate_session($request_input);
+ 	$self = $class->initiate_session($request_input, $permission_level);
  	
  	$class is "WebworkXMLRPC".  
  
@@ -172,6 +172,10 @@ of the <xmlrpc> snippet in webwork.apache2-config.
 
 The $request_input hash includes a command which the WebworkXMLRPC object uses to dispatch the 
 request to WebworkWebservice routines which do the actual work.
+
+The $permisson_level argument is an optional string that defaults to "proctor_quiz_login".  Methods
+that require higher permission levels should set this appropriately.  This permission level will be
+checked against the user's permission level in the course.
  	
 =head1 DESCRIPTION
 
@@ -182,7 +186,7 @@ as long as that is necessary.
 
 =head2 initiate_session   (constructor equivalent to new)
 
-	$webworkXMLRPC = WebworkXMLRPC->initiate_session($request_input)
+	$webworkXMLRPC = WebworkXMLRPC->initiate_session($request_input, $permission_level)
 
 This is equivalent to a "new" command for WebworkXMLRPC.  It checks authentication and authorization of the
 webservice request using information provided by the $request_input.  It does this using 
@@ -935,7 +939,7 @@ sub updateSetting {
 sub getUserProblem {
 	my $class = shift;
 	my $in = shift;
-	my $self = $class->initiate_session($in);
+	my $self = $class->initiate_session($in, "access_instructor_tools");
 	return $self->do(WebworkWebservice::ProblemActions::getUserProblem($self, $in));
 }
 
@@ -948,7 +952,7 @@ sub getUserProblem {
 sub putUserProblem {
 	my $class = shift;
 	my $in = shift;
-	my $self = $class->initiate_session($in);
+	my $self = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::ProblemActions::putUserProblem($self, $in));
 }
 
@@ -959,7 +963,7 @@ sub putUserProblem {
 sub putProblemVersion {
 	my $class = shift;
 	my $in = shift;
-	my $self = $class->initiate_session($in);
+	my $self = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::ProblemActions::putProblemVersion($self, $in));
 }
 
@@ -972,7 +976,7 @@ sub putProblemVersion {
 sub putPastAnswer {
 	my $class = shift;
 	my $in = shift;
-	my $self = $class->initiate_session($in);
+	my $self = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::ProblemActions::putPastAnswer($self, $in));
 }
 
