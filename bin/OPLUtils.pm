@@ -72,8 +72,6 @@ sub build_library_directory_tree {
 	my $libraryRoot = $ce->{problemLibrary}->{root};
 	$libraryRoot =~ s|/+$||;
 
-	my($filename, $directories) = fileparse($libraryRoot);
-
 	my @dirArray = ();
 	push(@dirArray,buildTree($libraryRoot));
 
