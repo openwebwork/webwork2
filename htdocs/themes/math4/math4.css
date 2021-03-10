@@ -776,6 +776,12 @@ table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
 span.ResultsWithErrorInResultsTable { color: inherit; background-color: inherit; } /* used to override the older red on white span */ 
 table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000000} /* red */
 
+table.attemptResults span.answer-preview {
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+}
+
 /*styles for the instructor comment box */
 
 .answerComments {
