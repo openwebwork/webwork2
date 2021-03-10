@@ -105,10 +105,13 @@ $externalPrograms{git} = "/usr/bin/git";
 ####################################################
 $externalPrograms{latex}    ="/usr/bin/latex";
 
-$externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
+# Using --shell-escape can open security holes. It should typically be disabled,
+# and anyone using --shell-escape whould understand the potential risks.
+
+$externalPrograms{pdflatex} ="/usr/bin/pdflatex --no-shell-escape";
 # Consider using xelatex instead of pdflatex for multilingual use, and
 # use polyglossia and fontspec packages (which require xelatex or lualatex).
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
 
 $externalPrograms{dvipng}   ="/usr/bin/dvipng";
 
@@ -176,8 +179,15 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # The database dsn is the path to the WeBWorK database which you have created.
 # Unless you have given the database a different name or the database resides on another
 # server you do not need to change this first value.
-# The format is dbi:mysql:[databasename] for databases on the local machine
-# For a remote database the format is dbi:mysql:[databasename]:[hostname]:[port]
+
+# When using the DBD:mysql driver the format is dbi:mysql:[databasename]:[hostname]:[port]
+#    example:  DBI:mysql:webwork:db:3306
+#    ** Only uses colons between fields.
+#    For a database on the local machine the format is dbi:mysql:[databasename]
+# When using the DBD::MariaDB driver the format is dbi:MariaDB:database=dbname;host=hostname;port=portnum
+#    example:  DBI:MariaDB:database=webwork;host=db;port=3306
+#    ** Pay attention to the semicolons after the second colon, as the dbname, hostname, portnum are all "one" parameter
+
 $database_dsn ="dbi:mysql:webwork";
 $database_storage_engine = 'myisam';
 
