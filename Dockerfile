@@ -81,7 +81,7 @@ RUN git clone --single-branch --branch master --depth 1 https://github.com/mathj
 
 # we need to change FROM before setting the ENV variables
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \
@@ -109,14 +109,10 @@ ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
 
 # ==================================================================
 
-# Phase 3 - Ubuntu 18.04 base image + required packages
+# Phase 3 - Ubuntu 20.04 base image + required packages
 
-# Packages changes/added for ubuntu 18.04:
-
-# For ubuntu 18.04 libemail-address-xs-perl installed from Ubuntu, for 16.04 it would be installed using cpamn
-#
-#    texlive-generic-recommended # For ubuntu 16.04 - contains path.sty
-#    texlive-plain-generic       # For ubuntu 18.04 - contains path.sty
+# Packages changes/added for ubuntu 20.04:
+#       libcgi-pm-perl (for CGI::Cookie), libdbd-mariadb-perl
 
 # Do NOT include "apt-get -y upgrade"
 # see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
@@ -128,11 +124,13 @@ RUN apt-get update \
 	dvipng \
 	gcc \
 	libapache2-request-perl \
+	libcgi-pm-perl \
 	libcrypt-ssleay-perl \
 	libdatetime-perl \
 	libdancer-perl \
 	libdancer-plugin-database-perl \
 	libdbd-mysql-perl \
+	libdbd-mariadb-perl \
 	libemail-address-xs-perl \
 	libexception-class-perl \
 	libextutils-xsbuilder-perl \
@@ -221,6 +219,8 @@ RUN apt-get update \
 	fonts-linuxlibertine \
 	lmodern \
 	zip \
+	iputils-ping \
+	imagemagick \
 	jq \
 	npm \
     && apt-get clean \
