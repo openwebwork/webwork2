@@ -85,6 +85,11 @@ services:
 
     volumes:
 
+      # You must enable this (with the potential attendant security risks) for
+      # the current TikZ support from https://github.com/openwebwork/pg/pull/541
+      # to work. The file gives "coder" "read" rights to PDF files.
+      #- "./docker-config/ImageMagick-6-policy.xml:/etc/ImageMagick-6/policy.xml"
+
       # The Lite.pm patch for proper UTF-8 support
       - "./docker-config/Lite.pm:/usr/share/perl5/XMLRPC/Lite.pm"
 
