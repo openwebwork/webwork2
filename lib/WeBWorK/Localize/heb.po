@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-02-23 17:39-0600\n"
+"PO-Revision-Date: 2021-03-10 21:16-0600\n"
 "Last-Translator: Michael Oren Perlstein <michaelore@campus.technion.ac.il>\n"
 "Language-Team: Hebrew (http://www.transifex.com/webwork/webwork2/language/"
 "he/)\n"
@@ -924,9 +924,8 @@ msgstr "שגיאה ארעה בזמן שינוי השם של הקורס %1 ל-%2:
 
 #. ($part + 1)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:103
-#, fuzzy
 msgid "Answer %1 Score (%):"
-msgstr "ציון (%)"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:451
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:766
@@ -1623,9 +1622,8 @@ msgid "Comment"
 msgstr "הערה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:153
-#, fuzzy
 msgid "Comment:"
-msgstr "הגב"
+msgstr ""
 
 #. ($self->formatDateTime($set->answer_date)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1961
@@ -2937,9 +2935,8 @@ msgstr "הקובץ '%1' הוסר בהצלחה"
 
 #. ($name)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:950
-#, fuzzy
 msgid "File '%1' uploaded successfully"
-msgstr "הקובץ '%2' הועלה בהצלחה"
+msgstr ""
 
 #. ($name)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:910
@@ -3446,9 +3443,8 @@ msgid "Institution:"
 msgstr "מוסד:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2091
-#, fuzzy
 msgid "Instructor Comment:"
-msgstr "כלי מדריך"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:343
 msgid "Instructor Tools"
@@ -3937,15 +3933,13 @@ msgstr "שאלה הבאה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1144
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1145
-#, fuzzy
 msgid "Next Student"
-msgstr "הוסף תלמידים"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1255
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1256
-#, fuzzy
 msgid "Next Test"
-msgstr "הדף הבא"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1744
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:926
@@ -4080,9 +4074,8 @@ msgid "No record found."
 msgstr "לא נמצא רישום."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1135
-#, fuzzy
 msgid "No set created."
-msgstr "גליון %1 קיים. לא נוצר גליון"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:50
 msgid "No sets in this course yet"
@@ -4538,9 +4531,8 @@ msgid "Preflight Log"
 msgstr "פרטי בדיקה מקדימה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:159
-#, fuzzy
 msgid "Preview Comment"
-msgstr "צפייה מוקדמת במבחן"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:723
 msgid "Preview Message"
@@ -4570,15 +4562,13 @@ msgstr "שאלה קודמת"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1116
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1117
-#, fuzzy
 msgid "Previous Student"
-msgstr "עמוד קודם"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1223
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1224
-#, fuzzy
 msgid "Previous Test"
-msgstr "צפייה מוקדמת במבחן"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1740
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:921
@@ -4660,9 +4650,8 @@ msgid "Problem Number "
 msgstr "מספר שאלה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:130
-#, fuzzy
 msgid "Problem Score (%):"
-msgstr "מספר שאלה"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:494
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:513
@@ -4680,9 +4669,8 @@ msgid "Problem source is drawn from a grouping set"
 msgstr "השאלה נבחרת באופן אקראי מתוך קבוצת שאלות ייעודיות"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1521
-#, fuzzy
 msgid "ProblemGrader"
-msgstr "שאלה"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:465
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2152
@@ -5683,9 +5671,8 @@ msgid "Show path ..."
 msgstr "הראה מסלול ..."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2160
-#, fuzzy
 msgid "Show problem graders"
-msgstr "הראה תשובות נכונות"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:278
 msgid "Show saved answers?"
@@ -6746,9 +6733,8 @@ msgid "There is a new version of WeBWorK available."
 msgstr "יש גרסה חדשה של WeBWorK."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:474
-#, fuzzy
 msgid "There is a written solution available."
-msgstr "קיים פתרון כתוב."
+msgstr ""
 
 #. ($message_file, $merge_file)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:101
@@ -7464,9 +7450,8 @@ msgid "Use in new achievement:"
 msgstr "השתמש בהישג חדש:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:326
-#, fuzzy
 msgid "Use live equation rendering?"
-msgstr "השתמש בעורך המשוואות?"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:386
 msgid "Use log base 10 instead of base <i>e</i>"

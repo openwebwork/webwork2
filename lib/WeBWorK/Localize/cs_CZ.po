@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2020-12-15 12:46+0100\n"
+"PO-Revision-Date: 2021-03-10 21:13-0600\n"
 "Last-Translator: Robert Mařík\n"
 "Language-Team: \n"
 "Language: cs_CZ\n"
@@ -1537,9 +1537,8 @@ msgid "Comment"
 msgstr "Poznámka"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:153
-#, fuzzy
 msgid "Comment:"
-msgstr "Poznámka"
+msgstr ""
 
 #. ($self->formatDateTime($set->answer_date)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1961
@@ -3779,9 +3778,8 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1255
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1256
-#, fuzzy
 msgid "Next Test"
-msgstr "Opravit Test"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1744
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:926
@@ -4364,9 +4362,8 @@ msgid "Preflight Log"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:159
-#, fuzzy
 msgid "Preview Comment"
-msgstr "Náhled Testu"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:723
 msgid "Preview Message"
@@ -4396,15 +4393,13 @@ msgstr "Předchozí úloha"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1116
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1117
-#, fuzzy
 msgid "Previous Student"
-msgstr "Předchozí strana"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1223
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1224
-#, fuzzy
 msgid "Previous Test"
-msgstr "Náhled Testu"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1740
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:921
@@ -4486,9 +4481,8 @@ msgid "Problem Number "
 msgstr "Číslo úlohy "
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:130
-#, fuzzy
 msgid "Problem Score (%):"
-msgstr "Úloha %1"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:494
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:513
@@ -4506,9 +4500,8 @@ msgid "Problem source is drawn from a grouping set"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1521
-#, fuzzy
 msgid "ProblemGrader"
-msgstr "Úloha"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:465
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2152
@@ -6461,9 +6454,8 @@ msgid "There is a new version of WeBWorK available."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:474
-#, fuzzy
 msgid "There is a written solution available."
-msgstr "Řešení úlohy je k dispozici"
+msgstr ""
 
 #. ($message_file, $merge_file)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:101
@@ -8137,9 +8129,8 @@ msgstr "Hodnocení nebylo uloženo."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1827
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:272
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:278
-#, fuzzy
 msgid "Your score was not successfully sent to the LMS."
-msgstr "Zpráva byla úspěšně odeslána."
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:182
 msgid "Your score was recorded."
@@ -8148,9 +8139,8 @@ msgstr "Hodnocení bylo uloženo."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1826
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:270
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:276
-#, fuzzy
 msgid "Your score was successfully sent to the LMS."
-msgstr "Zpráva byla úspěšně odeslána."
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:576
 msgid "Your session has timed out due to inactivity. Please log in again."

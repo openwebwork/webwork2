@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2018-10-07 12:04+0000\n"
+"PO-Revision-Date: 2021-03-10 21:17-0600\n"
 "Last-Translator: Jason Aubrey <aubreyja@gmail.com>\n"
 "Language-Team: Hungarian (http://www.transifex.com/webwork/webwork2/language/"
 "hu/)\n"
@@ -19,9 +19,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:683
-#, fuzzy
 msgid "# of active students"
-msgstr "minden diák"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:498
 msgid "#corr"
@@ -520,9 +519,8 @@ msgid "Achievement has been assigned to all users."
 msgstr "Az eredmény hozzá lett rendelve az összes felhasználóhoz"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:59
-#, fuzzy
 msgid "Achievement has been assigned to selected users."
-msgstr "Az eredmény hozzá lett rendelve az összes felhasználóhoz"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:56
 msgid "Achievement has been unassigned to all students."
@@ -1073,9 +1071,8 @@ msgid "Assignment type"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Assigner.pm:184
-#, fuzzy
 msgid "Assignments only"
-msgstr "Hozzárendelt feladatsorok"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:421
 msgid "At least one of the answers above is NOT correct."
@@ -1559,9 +1556,8 @@ msgid "Comment"
 msgstr "Megjegyzés"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:153
-#, fuzzy
 msgid "Comment:"
-msgstr "Megjegyzés"
+msgstr ""
 
 #. ($self->formatDateTime($set->answer_date)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1961
@@ -2941,9 +2937,8 @@ msgid "Format:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:412
-#, fuzzy
 msgid "Found no directories containing problems"
-msgstr "Ez a feladatgysor nem tartalmaz feladatokat."
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:890
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMakernojs.pm:798
@@ -3330,9 +3325,8 @@ msgid "Institution:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2091
-#, fuzzy
 msgid "Instructor Comment:"
-msgstr "Oktatói eszközök"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:343
 msgid "Instructor Tools"
@@ -3809,15 +3803,13 @@ msgstr "Új feladat"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1144
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1145
-#, fuzzy
 msgid "Next Student"
-msgstr "Diák hozzáadása"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1255
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1256
-#, fuzzy
 msgid "Next Test"
-msgstr "A teszt ellenőrzése"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1744
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:926
@@ -3848,9 +3840,8 @@ msgid "No Description"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:325
-#, fuzzy
 msgid "No achievements have been assigned yet"
-msgstr "Az eredmény hozzá lett rendelve az összes felhasználóhoz"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1388
 msgid "No achievements shown.  Create an achievement!"
@@ -3951,9 +3942,8 @@ msgid "No record found."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1135
-#, fuzzy
 msgid "No set created."
-msgstr "A %1 feladatsor létezik. A feladatsor nem lett létrehozva."
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:50
 msgid "No sets in this course yet"
@@ -4036,9 +4026,8 @@ msgstr "Megjegyzés"
 
 #: /opt/webwork/pg/macros/problemRandomize.pl:382
 #: /opt/webwork/pg/macros/problemRandomize.pl:407
-#, fuzzy
 msgid "Note:"
-msgstr "Megjegyzés"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2171
 msgid ""
@@ -4401,9 +4390,8 @@ msgid "Preflight Log"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:159
-#, fuzzy
 msgid "Preview Comment"
-msgstr "Megjegyzés"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:723
 msgid "Preview Message"
@@ -4433,15 +4421,13 @@ msgstr "Előző feladat"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1116
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1117
-#, fuzzy
 msgid "Previous Student"
-msgstr "Előző feladat"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1223
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1224
-#, fuzzy
 msgid "Previous Test"
-msgstr "Előző feladat"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1740
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:921
@@ -4523,9 +4509,8 @@ msgid "Problem Number "
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:130
-#, fuzzy
 msgid "Problem Score (%):"
-msgstr "%1. feladat"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:494
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:513
@@ -4543,9 +4528,8 @@ msgid "Problem source is drawn from a grouping set"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1521
-#, fuzzy
 msgid "ProblemGrader"
-msgstr "Feladatszerkesztő"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:465
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2152
@@ -5164,9 +5148,8 @@ msgid "Select"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:446
-#, fuzzy
 msgid "Select a Homework Set"
-msgstr "Feladatsorok"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:52
 msgid "Select a Problem Collection"
@@ -5517,9 +5500,8 @@ msgid "Show path ..."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2160
-#, fuzzy
 msgid "Show problem graders"
-msgstr "A helyes válasz megjelenítése"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:278
 msgid "Show saved answers?"
@@ -7137,9 +7119,8 @@ msgid "Use in new achievement:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:326
-#, fuzzy
 msgid "Use live equation rendering?"
-msgstr "Egyenletszerkesztő használata"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:386
 msgid "Use log base 10 instead of base <i>e</i>"
@@ -7831,9 +7812,8 @@ msgid ""
 msgstr ""
 
 #: /opt/webwork/pg/macros/compoundProblem.pl:610
-#, fuzzy
 msgid "You may not change your answers when going on to the next part!"
-msgstr "Ön nem tudja megváltoztatni itt a jelszavát!"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1718
 msgid "You may not change your own password here!"
@@ -7890,15 +7870,13 @@ msgid "You must select at least one file to delete"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:121
-#, fuzzy
 msgid "You must select one or more sets for scoring!"
-msgstr "Nincsenek feladatsorok kiválasztva értékelésre"
+msgstr ""
 
 #. ($object)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1226
-#, fuzzy
 msgid "You must specify a %1 name"
-msgstr "Meg kell adni egy felhasználói azonosítót (ID)."
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:635
 msgid "You must specify a course ID."
@@ -8272,9 +8250,8 @@ msgstr ""
 
 # Context is "Create set ______ as a duplicate of the first selected set"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:707
-#, fuzzy
 msgid "a duplicate of the first selected achievement."
-msgstr "másolat az első kijelölt feladatsorról"
+msgstr ""
 
 # Context is "Create set ______ as a duplicate of the first selected set"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1139
@@ -8284,9 +8261,8 @@ msgstr "másolat az első kijelölt feladatsorról"
 
 # Context is "Create set ______ as a new empty set"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:706
-#, fuzzy
 msgid "a new empty achievement."
-msgstr "új, üres feladatsor"
+msgstr ""
 
 # Context is "Create set ______ as a new empty set"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1138

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: webwork2\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2020-03-16 03:29+0000\n"
+"PO-Revision-Date: 2021-03-10 21:14-0600\n"
 "Last-Translator: Enrique Acosta <enriqueacostajaramillo@gmail.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/webwork/webwork2/language/"
 "es/)\n"
@@ -860,9 +860,8 @@ msgstr ""
 
 #. ($part + 1)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:103
-#, fuzzy
 msgid "Answer %1 Score (%):"
-msgstr "Puntaje (%)"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:451
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:766
@@ -1546,9 +1545,8 @@ msgid "Comment"
 msgstr "Comentario"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:153
-#, fuzzy
 msgid "Comment:"
-msgstr "Comentario"
+msgstr ""
 
 #. ($self->formatDateTime($set->answer_date)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1961
@@ -3310,9 +3308,8 @@ msgid "Institution:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2091
-#, fuzzy
 msgid "Instructor Comment:"
-msgstr "Herramientas del instructor"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:343
 msgid "Instructor Tools"
@@ -3789,15 +3786,13 @@ msgstr "Problema siguiente"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1144
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1145
-#, fuzzy
 msgid "Next Student"
-msgstr "Agregar estudiantes"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1255
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1256
-#, fuzzy
 msgid "Next Test"
-msgstr "Siguiente página"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1744
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:926
@@ -4378,9 +4373,8 @@ msgid "Preflight Log"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:159
-#, fuzzy
 msgid "Preview Comment"
-msgstr "Comentario"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:723
 msgid "Preview Message"
@@ -4410,15 +4404,13 @@ msgstr "Problema anterior"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1116
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1117
-#, fuzzy
 msgid "Previous Student"
-msgstr "Problema anterior"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1223
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1224
-#, fuzzy
 msgid "Previous Test"
-msgstr "Problema anterior"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1740
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:921
@@ -4500,9 +4492,8 @@ msgid "Problem Number "
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SingleProblemGrader.pm:130
-#, fuzzy
 msgid "Problem Score (%):"
-msgstr "Puntaje (%)"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:494
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:513
@@ -4520,9 +4511,8 @@ msgid "Problem source is drawn from a grouping set"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1521
-#, fuzzy
 msgid "ProblemGrader"
-msgstr "Problema"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Grades.pm:465
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:2152
@@ -7145,9 +7135,8 @@ msgid "Use in new achievement:"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Options.pm:326
-#, fuzzy
 msgid "Use live equation rendering?"
-msgstr "¿Usar editor de ecuaciones?"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:386
 msgid "Use log base 10 instead of base <i>e</i>"
