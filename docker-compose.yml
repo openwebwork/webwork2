@@ -17,7 +17,7 @@ services:
       # Note: It seems different versions of the MariaDB container need
       #       this file in different locations. Put in in both places.
       - "./docker-config/db/mariadb.cnf:/etc/mysql/conf.d/mariadb.cnf"
-      - "./docker-config/db/mariadb.cnf::/etc/mysql/mariadb.cnf"
+      - "./docker-config/db/mariadb.cnf:/etc/mysql/mariadb.cnf"
 
       # Tuning MariaDB config - sample file
       # The sample file modifies wait_timeout, and adds skip-name-resolve
@@ -186,17 +186,14 @@ services:
       APACHE_RUN_GROUP: www-data
 
       # Standard database environment variables needed by WeBWorK:
+
+      # Select which DBD driver to use
+      WEBWORK_DB_DRIVER: MariaDB
+      # WEBWORK_DB_DRIVER: mysql
+
       WEBWORK_DB_HOST: db
       WEBWORK_DB_PORT: 3306
       WEBWORK_DB_NAME: webwork
-
-      # For DBD::mysql driver
-      WEBWORK_DB_DSN: DBI:mysql:webwork:db:3306
-      # For DBD::MariaDB driver
-      #WEBWORK_DB_DSN: DBI:MariaDB:database=webwork;host=db;port=3306
-
-      # We currently need to put the same data in the WEBWORK_DB_DSN line above
-      # as we cannot set that using the other environment variables.
 
       # These are set in the .env file and import values from there
       WEBWORK_DB_PASSWORD: ${WEBWORK_DB_PASSWORD}
