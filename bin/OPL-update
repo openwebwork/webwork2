@@ -96,7 +96,8 @@ print  "using utf8mb4 \n\n" if $ENABLE_UTF8MB4;
 #    mysql_enable_utf8mb4 or mysql_enable_utf8 settings,
 # but DBD::mysql should.
 my %utf8_parameters = ();
-if ( $ce->{database_dsn} =~ /DBI:mysql:/i ) {
+
+if ( $ce->{database_driver} =~ /^mysql$/i ) {
 	# Only needed for older DBI:mysql driver
 	if ( $ENABLE_UTF8MB4 ) {
 		$utf8_parameters{mysql_enable_utf8mb4} = 1;

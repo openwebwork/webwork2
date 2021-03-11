@@ -1,8 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/site.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, http://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -163,6 +162,7 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # Database options
 ################################################################################
 
+# $database_debug = 0;
 
 # Standard permissions command used to initialize the webwork database
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
@@ -176,19 +176,30 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # Edit the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
 ################################################################################
 
-# The database dsn is the path to the WeBWorK database which you have created.
-# Unless you have given the database a different name or the database resides on another
-# server you do not need to change this first value.
+# The database DSN is the path to the WeBWorK database which you have created.
 
-# When using the DBD:mysql driver the format is dbi:mysql:[databasename]:[hostname]:[port]
-#    example:  DBI:mysql:webwork:db:3306
-#    ** Only uses colons between fields.
-#    For a database on the local machine the format is dbi:mysql:[databasename]
-# When using the DBD::MariaDB driver the format is dbi:MariaDB:database=dbname;host=hostname;port=portnum
-#    example:  DBI:MariaDB:database=webwork;host=db;port=3306
-#    ** Pay attention to the semicolons after the second colon, as the dbname, hostname, portnum are all "one" parameter
+# Modern database DSN format:
+#	DBI:driver:database=$database;host=$hostname;port=$port
 
-$database_dsn ="dbi:mysql:webwork";
+# One thing on which it depends is the driver name, which you may want to modify.
+# It also depends on the database name, which may be non-standard in some settings,
+# as may be the hostname and port of the database server.
+
+# driver should be one of:
+#	"mysql"   for the DBD:mysql driver
+#	"MariaDB" for the DBD:mysql driver
+
+# Select the desired DB driver:
+$database_driver="mysql";
+#$database_driver="MariaDB";
+
+$database_host="localhost";
+$database_port="3306";
+$database_name="webwork";
+
+$database_dsn="DBI:$database_driver:database=$database_name;host=$database_host;port=$database_port";
+
+# The default storange engine to use is set here:
 $database_storage_engine = 'myisam';
 
 #########################

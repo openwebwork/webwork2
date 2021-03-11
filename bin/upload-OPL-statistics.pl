@@ -28,24 +28,14 @@ use Net::Domain;
 use String::ShellQuote;
 
 my $ce = new WeBWorK::CourseEnvironment({
-					 webwork_dir => $ENV{WEBWORK_ROOT},});
+	webwork_dir => $ENV{WEBWORK_ROOT},
+	});
 
-my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
+# Get DB connection settings
 
-# The MariaDB driver use a different DSN format
-# Ex: DBI:MariaDB:database=webwork;host=db;port=3306
-
-if ( $dbtype =~ /MariaDB/i ) {
-  ($db,$host,$port) = split(';',$db);
-  $db   =~ s/database=//;
-  $host =~ s/host=//;
-  $port =~ s/port=//;
-}
-
-$host = 'localhost' unless $host;
-
-$port = 3306 unless $port;
-
+my $db     = $ce->{database_name};
+my $host   = $ce->{database_host};
+my $port   = $ce->{database_port};
 my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
 
