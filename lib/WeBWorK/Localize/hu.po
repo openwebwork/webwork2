@@ -220,8 +220,8 @@ msgstr ""
 msgid "(Any unsaved changes will be lost.)"
 msgstr "(Minden nem mentett változtatás el fog veszni.)"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1274
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1283
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1277
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1286
 msgid ""
 "(Instructor hint preview: show the student hint after the following number "
 "of attempts:"
@@ -725,6 +725,10 @@ msgstr "A házi feladat lezárásának meghosszabbítása 48 órával"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:419
 msgid "Adjusted Status"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:64
+msgid "Adobe PDF"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:597
@@ -3172,8 +3176,12 @@ msgstr ""
 msgid "Hide path:"
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1556
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1559
 msgid "Hint:"
+msgstr ""
+
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1559
+msgid "Hint: "
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:595
@@ -5554,10 +5562,13 @@ msgstr "Oldal-információ"
 msgid "Skip archiving this course"
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1551
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1552
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1553
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1555
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1556
 msgid "Solution:"
+msgstr ""
+
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1554
+msgid "Solution: "
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:601
@@ -5863,6 +5874,10 @@ msgstr "Csináld!"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:858
 msgid "Target Set:"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:63
+msgid "TeX Source"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:270
@@ -6654,7 +6669,7 @@ msgid ""
 "according to correctness."
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:3111
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:3114
 msgid "This problem contains a video which must be viewed online."
 msgstr ""
 
@@ -8014,7 +8029,7 @@ msgid ""
 "instructor if you need help."
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:3106
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:3109
 msgid "Your browser does not support the video tag."
 msgstr ""
 
@@ -8824,11 +8839,11 @@ msgstr ""
 msgid "pg warning"
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2478
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:2481
 msgid "point"
 msgstr "pont"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2476
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:2479
 msgid "points"
 msgstr "pontok"
 

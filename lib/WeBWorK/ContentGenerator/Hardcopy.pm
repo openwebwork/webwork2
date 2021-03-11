@@ -39,7 +39,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after/;
+use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -60,8 +60,8 @@ our $PreserveTempFiles = 0 unless defined $PreserveTempFiles;
 
 our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for the user...
 our %HC_FORMATS = (
-	tex => { name => "TeX Source", subr => "generate_hardcopy_tex" },
-	pdf => { name => "Adobe PDF",  subr => "generate_hardcopy_pdf" },
+	tex => { name => x("TeX Source"), subr => "generate_hardcopy_tex" },
+	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf" },
 # Not ready for prime time
 #	tikz =>{ name => "TikZ PDF file", subr => "generate_hardcopy_tigz"},
 );
