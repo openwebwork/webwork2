@@ -858,6 +858,48 @@ sub generate_hardcopy_tex {
 		}
 	}
 
+	# Attempt to copy image files used into the bundle directory
+	# For security reasons only files in the $ce->{courseDirs}{html_temp}/images are included.
+	# The file names of the images are only allowed to contain alphanumeric characters, underscores, dashes, and
+	# periods.  No spaces or slashes, etc.  This will usually be all of the included images.
+	if (open(my $in_fh,  "<", "$bundle_path/$src_name")) {
+		local $/;
+		my $data = <$in_fh>;
+		close($in_fh);
+
+		# Extract the included image file names and strip the absolute path in the tex file.
+		my @image_files;
+		my $image_tmp_dir = $ce->{courseDirs}{html_temp} . "/images/";
+		$data =~ s{\\includegraphics\[([^]]*)\]\{$image_tmp_dir([^\}]*)\}}
+			{push @image_files, $2; "\\includegraphics[$1]{$2}"}ge;
+
+		# Rewrite the tex file with the image paths stripped.
+		open(my $out_fh, ">", "$bundle_path/$src_name")
+			or warn "Can't open $bundle_path/$src_name for writing.";
+		print $out_fh $data;
+		close $out_fh;
+
+		for (@image_files) {
+			# This is a little protection in case a student enters an answer like
+			# \includegraphics[]{$ce->{courseDirs}{html_temp}/images/malicious code or absolute system file name}
+			$self->add_errors("Unable to safely copy image '" . CGI::code(CGI::escapeHTML("$image_tmp_dir$_")) .
+				"' into directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "'."),
+			warn "Invalid image file name '$_' detected.  Possible malicious activity?",
+		   	next unless $_ =~ /^[\w._-]*$/ && -f "$image_tmp_dir$_";
+
+			# Copy the image file into the bundle directory.
+			my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$image_tmp_dir$_", $bundle_path);
+			my $cp_out = readpipe $cp_cmd;
+			if ($?) {
+				$self->add_errors("Failed to copy image '" . CGI::code(CGI::escapeHTML("$image_tmp_dir$_")) .
+					"' into directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "':" . CGI::br()
+					. CGI::pre(CGI::escapeHTML($cp_out)));
+			}
+	   	}
+	} else {
+		$self->add_errors("Failed to open '" . CGI::code(CGI::escapeHTML("$bundle_path/$src_name")) . "' for reading.");
+	}
+
 	# Create a zip archive of the bundle directory
 	my $zip = Archive::Zip->new();
 	$zip->addTree($temp_dir_path);
