@@ -128,6 +128,7 @@ RUN apt-get update \
 	dvipng \
 	gcc \
 	libapache2-request-perl \
+	libarchive-zip-perl \
 	libcrypt-ssleay-perl \
 	libdatetime-perl \
 	libdancer-perl \

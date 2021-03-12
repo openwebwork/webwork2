@@ -34,6 +34,7 @@ use WeBWorK::CGI;
 use File::Path;
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
+use Archive::Zip qw(:ERROR_CODES);
 use WeBWorK::DB::Utils qw/user2global/;
 use WeBWorK::Debug;
 use WeBWorK::Form;
@@ -811,36 +812,64 @@ sub delete_temp_dir {
 	}
 }
 
-# format subroutines
-# 
-# assume that TeX source is located at $temp_dir_path/hardcopy.tex
-# the generated file will being with $final_file_basename
-# first element of return value is the name of the generated file (relative to $temp_dir_path)
-# rest of return value elements are names of temporary files that may be of interest in the
-#   case of an error, relative to $temp_dir_path. these are returned whether or not an error
-#   actually occured.
+# Hardcopy generation subroutines
+#
+# These subroutines assume that the TeX source file is located at $temp_dir_path/hardcopy.tex The
+# subroutines return a list whose first entry is the generated file name in $temp_dir_path, and
+# whose remaining elements are names of temporary files that may be of interest in the case of an
+# error (also located in $temp_dir_path).  These are returned whether or not an error actually
+# occured.
 
 sub generate_hardcopy_tex {
 	my ($self, $temp_dir_path, $final_file_basename) = @_;
-	
-	my $final_file_name;
-	
-	# try to rename tex file
+
 	my $src_name = "hardcopy.tex";
-	my $dest_name = "$final_file_basename.tex";
-	my $mv_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
-		$self->add_errors("Failed to rename '".CGI::code(CGI::escapeHTML($src_name))."' to '"
-			.CGI::code(CGI::escapeHTML($dest_name))."' in directory '"
-			.CGI::code(CGI::escapeHTML($temp_dir_path))."':".CGI::br()
-			.CGI::pre(CGI::escapeHTML($mv_out)));
-		$final_file_name = $src_name;
-	} else {
-		$final_file_name = $dest_name;
+	my $bundle_path = "$temp_dir_path/$final_file_basename";
+
+	# Create directory for the tex bundle
+	if (!mkdir $bundle_path) {
+		$self->add_errors("Failed to create directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "': " .
+			CGI::br() . CGI::pre(CGI::escapeHTML($!)));
+		return $src_name;
 	}
-	
-	return $final_file_name;
+
+	# Move the tex file into the bundle directory
+	my $mv_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{mv} . " " .
+		shell_quote("$temp_dir_path/$src_name", $bundle_path);
+	my $mv_out = readpipe $mv_cmd;
+
+	if ($?) {
+		$self->add_errors("Failed to move '" . CGI::code(CGI::escapeHTML($src_name)) . "' into directory '"
+			. CGI::code(CGI::escapeHTML($bundle_path)) . "':" . CGI::br()
+			. CGI::pre(CGI::escapeHTML($mv_out)));
+		return $src_name;
+	}
+
+	# Copy the common tex files into the bundle directory
+	my $ce = $self->r->ce;
+	my $commonTeXDir = "$ce->{webworkDirs}{conf}/snippets/hardcopyThemes/common";
+	for (qw{packages.tex CAPA.tex PGML.tex}) {
+		my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$commonTeXDir/$_", $bundle_path);
+		my $cp_out = readpipe $cp_cmd;
+		if ($?) {
+			$self->add_errors("Failed to copy '" . CGI::code(CGI::escapeHTML("$commonTeXDir/$_")) .
+				"' into directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "':" . CGI::br()
+				. CGI::pre(CGI::escapeHTML($cp_out)));
+		}
+	}
+
+	# Create a zip archive of the bundle directory
+	my $zip = Archive::Zip->new();
+	$zip->addTree($temp_dir_path);
+
+	my $zip_file = "$final_file_basename.zip";
+	unless ($zip->writeToFileNamed("$temp_dir_path/$zip_file") == AZ_OK) {
+		$self->add_errors("Failed to create zip archive of directory '" .
+			CGI::code(CGI::escapeHTML($bundle_path)) . "'");
+		return "$bundle_path/$src_name";
+	}
+
+	return $zip_file;
 }
 
 sub generate_hardcopy_pdf {
