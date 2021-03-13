@@ -412,7 +412,7 @@ function randomize(filepath, el) {
 	      // run typesetter depending on the displaymode
 	      if(displayMode=='MathJax')
               MathJax.startup.promise = MathJax.startup.promise.then(function() {
-				  return MathJax.typesetPromise([document.getElementById(el)]);
+				  return MathJax.typesetPromise(['#' + el]);
 			  });
 	      if(displayMode=='jsMath')
 		  jsMath.ProcessBeforeShowing(el);
