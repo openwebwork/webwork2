@@ -1009,15 +1009,16 @@ sub make_data_row {
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
-			  courseID =>$urlpath->arg("courseID"),
-			  setID=>"Undefined_Set",
-			  problemID=>"1"),
-			params=>{sourceFilePath => "$sourceFileName", 
-				problemSeed=> $problem_seed}
-		  ), 
-				id=> "editit$cnt",
-				target=>"WW_Editor", title=>"Edit it"}, '<img src="/webwork2_files/images/edit.gif" border="0" />' );
+				$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
+					courseID =>$urlpath->arg("courseID"),
+					setID=>"Undefined_Set",
+					problemID=>"1"),
+				params=>{sourceFilePath => "$sourceFileName", 
+					problemSeed=> $problem_seed}
+			), 
+			id=> "editit$cnt",
+			target=>"WW_Editor", title=>"Edit it"},
+		CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
@@ -1795,8 +1796,6 @@ sub output_CSS {
 	my ($self) = @_;
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-
-	#print qq!<link rel="stylesheet" href="$webwork_htdocs_url/js/vendor/FontAwesome/css/font-awesome.css">!;
 
 	print qq!<link href="$webwork_htdocs_url/node_modules/jquery-ui-themes/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
 

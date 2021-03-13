@@ -30,11 +30,6 @@
 	border: none; /* 1px solid grey; */
 }
 
-a.table-summary,
-a.table-summary:visited {
-    color:black;
-    text-decoration:none;
-}
 .table-input {
 	width:15em;
     font-size:75%;

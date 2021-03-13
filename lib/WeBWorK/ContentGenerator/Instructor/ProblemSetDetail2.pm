@@ -751,7 +751,8 @@ sub FieldHTML {
 		}) : "",
 		$r->maketext($properties{name}).
 		($properties{help_text} ? "&nbsp;".CGI::a({class=>'help-popup',href=>'#',
-						  'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
+					'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},
+				CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, '')) : ''),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);

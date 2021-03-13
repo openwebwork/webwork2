@@ -139,7 +139,7 @@ legend {
 	color: black;
 }
 
-#loginstatus a .icon-signout {
+#loginstatus a .fa-sign-out-alt {
 	font-size: 1em;
 }
 
@@ -1211,6 +1211,11 @@ table#grades_table pre{
     margin-right:1.5ex;
 }
 
+#config-form i.icon.fa-question-circle {
+	float: right;
+	padding-left: 0.1em;
+}
+
 .file-manager-btn {
     margin-bottom:.5ex;
     margin-top:.5ex;
@@ -1328,6 +1333,10 @@ table#grades_table pre{
 
 .nav-list li {
     font-size:small;
+}
+
+.nav-list li i.fa-question-circle {
+    font-size: 16px;
 }
 
 /* Equation editor bugfixes */

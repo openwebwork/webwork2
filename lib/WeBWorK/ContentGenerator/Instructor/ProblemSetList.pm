@@ -2230,8 +2230,8 @@ sub recordEditHTML {
         my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
+	my $imageLink = CGI::a({href => $problemSetListURL},
+		CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }));
 	
 	my @tableCells;
 	my %fakeRecord;
@@ -2241,7 +2241,7 @@ sub recordEditHTML {
 #	$fakeRecord{set_id} = CGI::font({class=>$visibleClass}, $set_id) . ($editMode ? "" : $imageLink);
 	$fakeRecord{set_id} = $editMode 
 					? CGI::a({href=>$problemListURL}, "$set_id") 
-					: CGI::font({class=>$visibleClass}, $set_id) . $imageLink;
+					: CGI::font({class=>$visibleClass}, $set_id) . " " . $imageLink;
 	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
 					? "$problems"
 					: CGI::a({href=>$problemListURL}, "$problems");
@@ -2268,7 +2268,7 @@ sub recordEditHTML {
 	if ($editMode) {
 		push @tableCells, CGI::a({href=>$problemListURL}, "$set_id");
 	} else {		
-	push @tableCells, CGI::font({class=>$visibleClass}, $set_id . $imageLink);
+	push @tableCells, CGI::font({class=>$visibleClass}, $set_id . " " . $imageLink);
 	}
 
 	# Problems link
