@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Logout.pm,v 1.17 2012/06/08 22:50:50 wheeler Exp $
+# Copyright &copy; 2000-2020 The WeBWorK Project, https://openwebworkorg.wordpress.com/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -27,7 +26,6 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::Cookie;
 use WeBWorK::Localize;
 
 
@@ -38,20 +36,6 @@ sub pre_header_initialize {
 	my $db = $r->db;
 	my $authen = $r->authen;
 	
-	# get rid of stored authentication info (this is kind of a hack. i have a better way
-	# in mind but it requires pretty much rewriting Authen/Login/Logout. :-( FIXME)
-#	$authen->forget_verification;
-#	
-#	my $cookie = WeBWorK::Cookie->new($r,
-#		-name => "WeBWorKAuthentication",
-#		-value => "",
-#		-expires => "-1D",
-#		-domain => $r->hostname,
-#		-path => $ce->{webworkURLRoot},
-#		-secure => 0,
-#	);
-#	$r->headers_out->set("Set-Cookie" => $cookie->as_string);
-#
 	my $userID = $r->param("user_id");
 	my $keyError = '';
 #	eval { $db->deleteKey($userID) };
