@@ -1,6 +1,7 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2020 The WeBWorK Project, https://openwebworkorg.wordpress.com/
+# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
+# $CVSHeader: webwork2/lib/WeBWorK/Cookie.pm,v 1.1 2006/06/29 21:10:52 sh002i Exp $
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -17,7 +18,7 @@ package WeBWorK::Cookie;
 
 =head1 NAME
 
-WeBWorK::Cookie - inherit from either Apache::Cookie or CGI::Cookie
+WeBWorK::Cookie - inherit from either Apache::Cookie or Apache2::Cookie
 depending on mod_perl version.
 
 =head1 SYNOPSIS
@@ -34,13 +35,13 @@ use warnings;
 
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-# This class inherits from Apache::Cookie under mod_perl and CGI::Cookie under mod_perl2
+# This class inherits from Apache::Cookie under mod_perl and Apache2::Cookie under mod_perl2
 BEGIN {
 	if (MP2) {
-		#require APR::Request::Error;
-		require CGI::Cookie;
-		CGI::Cookie->import;
-		push @WeBWorK::Cookie::ISA, "CGI::Cookie";
+		require Apache2::Cookie;
+        require APR::Request::Error;
+		Apache2::Cookie->import;
+		push @WeBWorK::Cookie::ISA, "Apache2::Cookie";
 	} else {
 		require Apache::Cookie;
 		Apache::Cookie->import;
