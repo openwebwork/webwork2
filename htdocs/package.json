@@ -9,6 +9,7 @@
     "dependencies": {
         "jquery": "3.5.1",
         "jquery-ui-dist": "1.12.1",
-        "jquery-ui-themes": "1.12.0"
+        "jquery-ui-themes": "1.12.0",
+        "nestedSortable": "^1.3.4"
     }
 }
