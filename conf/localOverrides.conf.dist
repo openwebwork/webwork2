@@ -318,7 +318,6 @@ $pg{options}{periodicRandomizationPeriod} = 5;
 # "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 ################################################################################
 
- $pg{specialPGEnvironmentVars}{DragMath} = 0;
  $pg{specialPGEnvironmentVars}{CAPA_Tools}             = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_Tools/",
  $pg{specialPGEnvironmentVars}{CAPA_MCTools}           = "$courseDirs{templates}/Contrib/CAPA/macros/CAPA_MCTools/",
  $pg{specialPGEnvironmentVars}{CAPA_GraphicsDirectory} = "$courseDirs{templates}/Contrib/CAPA/CAPA_Graphics/",
