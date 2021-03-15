@@ -238,8 +238,8 @@ sub body {
 		foreach my $item (@items) {
 		    # Print each item's name, count, and description
 		    print CGI::start_div({class=>"achievement-item"});
-		    if ($itemCounts{$item->id()} > 1)    {print CGI::h3($r->maketext($item->name() . ' (' . $itemCounts{$item->id()} . ' remaining)'))}
-		    elsif ($itemCounts{$item->id()} < 0) {print CGI::h3($r->maketext($item->name() . ' (unlimited reusability)'))}
+		    if ($itemCounts{$item->id()} > 1) {print CGI::h3($r->maketext($item->name()) . ' (' . $r->maketext('[_1] remaining', $itemCounts{$item->id()}) . ')')}
+		    elsif ($itemCounts{$item->id()} < 0) {print CGI::h3($r->maketext($item->name()) . ' (' . $r->maketext('unlimited reusability') . ')')}
                     else {print CGI::h3($r->maketext($item->name()))};
 
 		    print CGI::p($r->maketext($item->description()));
