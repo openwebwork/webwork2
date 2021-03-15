@@ -868,25 +868,8 @@ sub links {
 					if (defined $problemID) {
 					    print CGI::start_li();
 					    print CGI::start_ul();
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>$r->maketext("[_1] (old editor)", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
-							if $ce->{showeditors}->{pgproblemeditor1};
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
-							if $ce->{showeditors}->{pgproblemeditor2};;
-
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
-						if $ce->{showeditors}->{pgproblemeditor3};;
-
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-						if $ce->{showeditors}->{simplepgeditor};;
+						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"));
 					    print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-							if $ce->{showeditors}->{simplepgeditor};;
-						print CGI::end_ul();
 					    print CGI::end_li();
 					}
 

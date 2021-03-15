@@ -1279,7 +1279,7 @@ sub write_problem_tex {
 	my $problem_desc;
 	if ($pg->{warnings} ne "" or $pg->{flags}->{error_flag}) {
 		my $edit_urlpath = $r->urlpath->newFromModule(
-			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			courseID  => $r->urlpath->arg("courseID"),
 			setID     => $MergedProblem->set_id,
 			problemID => $MergedProblem->problem_id,

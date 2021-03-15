@@ -342,12 +342,6 @@ $mail{feedbackRecipients}    = [
 #$showeditors{problemsetdetail1} = 1;
 #$showeditors{librarybrowsernojs} = 1;
 
-# This will enable the PG problem editor 3
-
-#$showeditors{pgproblemeditor3} = 1;
-#$showeditors{pgproblemeditor2} = 0;
-#$showeditors{simplepgeditor}   = 0;
-
 # Similar changes can be made in the same way for other editors.
 # Look at the relevant section of default.config to
 # see the default settings for each editor.
