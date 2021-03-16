@@ -1343,7 +1343,7 @@ sub write_problem_tex {
 			print $FH " {\\bf\\footnotesize($problemValue $points)}";
 		}
 
-		if ($self->{can_show_source_file}) {
+		if ($self->{can_show_source_file} && $r->param("show_source_file") eq "Yes") {
 			print $FH " {\\footnotesize\\path|" . $MergedProblem->source_file . "|}";
 		}
 
