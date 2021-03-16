@@ -139,6 +139,11 @@ sub pre_header_initialize {
 
 	# this should never happen, but apparently it did once (see bug #714), so we check for it
 	die "Parameter 'user' not defined -- this should never happen" unless defined $userID;
+
+	# Check to see if the user is authorized to view source file paths.
+	$self->{can_show_source_file} = ($db->getPermissionLevel($userID)->permission >=
+		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
+		|| grep($_ eq $userID, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}}));
 	
 	if ($generate_hardcopy) {
 		my $validation_failed = 0;
@@ -371,9 +376,6 @@ sub display_form {
 	my $perm_view_hidden = $authz->hasPermissions($userID, "view_hidden_sets");
 	my $perm_view_answers = $authz->hasPermissions($userID, "show_correct_answers_before_answer_date");
 	my $perm_view_solutions = $authz->hasPermissions($userID, "show_solutions_before_answer_date");
-	$self->{can_show_source_file} = ($db->getPermissionLevel($userID)->permission >=
-		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
-		|| grep($_ eq $userID, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}}));
 	
 	# get formats
 	my @formats;
