@@ -1310,13 +1310,34 @@ sub write_problem_tex {
 
 	my $body_text = $pg->{body_text};
 
-	if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
-		# Use the pretty problem number if its a jitar problem
-	    my $id = $MergedProblem->problem_id;
-	    my $prettyID = join('.',jitar_id_to_seq($id));
-		print $FH ("{\\bf Problem $prettyID.}");
-	} elsif ($MergedProblem->problem_id != 0) {
-		print $FH ("{\\bf Problem " . ($versioned ? $versioned : $MergedProblem->problem_id) . ".}");
+	if ($problemID) {
+		if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
+			# Use the pretty problem number if its a jitar problem
+			my $id = $MergedProblem->problem_id;
+			my $prettyID = join('.',jitar_id_to_seq($id));
+			print $FH "{\\bf " . $r->maketext("Problem [_1].", $prettyID) . "}";
+		} elsif ($MergedProblem->problem_id != 0) {
+			print $FH "{\\bf " . $r->maketext("Problem [_1].", $versioned ? $versioned : $MergedProblem->problem_id) . "}";
+		}
+
+		my $problemValue = $MergedProblem->value;
+		if (defined($problemValue)) {
+			my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+			print $FH " {\\bf\\footnotesize($problemValue $points)}";
+		}
+
+		my %inlist;
+		grep($inlist{$_}++, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+
+		# This uses the permission level and user id of the user assigned to the problem.
+		my $problemUser = $MergedProblem->user_id;
+		if ($db->getPermissionLevel($problemUser)->permission >=
+			$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
+			|| defined($inlist{$problemUser}) && ($inlist{$problemUser} > 0)) {
+			print $FH " {\\footnotesize\\path|" . $MergedProblem->source_file . "|}";
+		}
+
+		print $FH "\\smallskip\n\n";
 	}
 
 	print $FH $body_text;

@@ -341,19 +341,48 @@ sub can_showOldAnswers {
 sub title {
 	my ($self) = @_;
 	my $r = $self->r;
-	# using the url arguments won't break if the set/problem are invalid
-	my $setID =  $self->r->urlpath->arg("setID");
+	my $db = $r->db;
+
+	# Using the url arguments won't break if the set/problem are invalid
+	my $setID = $self->r->urlpath->arg("setID");
 	my $problemID = $self->r->urlpath->arg("problemID");
 
-	my $set = $r->db->getGlobalSet($setID);
-
+	my $set = $db->getGlobalSet($setID);
 	$setID = WeBWorK::ContentGenerator::underscore2nbsp($setID);
 	if ($set && $set->assignment_type eq 'jitar') {
 	    $problemID = join('.',jitar_id_to_seq($problemID));
 	}
+	my $out = $r->maketext("[_1]: Problem [_2] Show Me Another", $setID, $problemID);
 
+	# Return here if we don't have the requisite information.
+	return $out if ($self->{invalidSet} || $self->{invalidProblem});
 
-	return $r->maketext("[_1]: Problem [_2] Show Me Another",$setID, $problemID);
+	my $ce = $r->ce;
+	my $problem = $self->{problem};
+
+	$out .= CGI::start_div({ class => "problem-sub-header" });
+
+	# FIXME: Should the show me another show points?
+	my $problemValue = $problem->value;
+	if (defined($problemValue)) {
+		my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+		$out .= "($problemValue $points)";
+	}
+
+	my %inlist;
+	grep($inlist{$_}++, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+
+	# This uses the permission level and user id of the user assigned to the problem.
+	my $problemUser = $problem->user_id;
+	if ($db->getPermissionLevel($problemUser)->permission >=
+		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
+		|| defined($inlist{$problemUser}) && ($inlist{$problemUser} > 0)) {
+		$out .= " " . $problem->source_file;
+	}
+
+	$out .= CGI::end_div();
+
+	return $out;
 }
 
 sub nav {

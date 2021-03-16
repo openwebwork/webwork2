@@ -2043,6 +2043,7 @@ sub body {
 		#    $showAttemptAnswers), $showSummary, $showAttemptPreview (or-ed
 		#    with zero)
 		my $problemNumber = 0;
+		my $effectiveUserPermission = $db->getPermissionLevel($effectiveUser)->permission;
 
 		foreach my $i (0 .. $#pg_results) {
 			my $pg = $pg_results[$probOrder[$i]];
@@ -2083,7 +2084,28 @@ sub body {
 
 				print CGI::start_div({class=>"gwProblem"});
 				print CGI::div({-id=>"prob$i"},"");
-				print CGI::h2($r->maketext("Problem [_1].",$problemNumber)), $recordMessage;
+
+				# Output the problem header.
+				print CGI::h2($r->maketext("Problem [_1].", $problemNumber)), $recordMessage;
+
+				print CGI::start_span({ class => "problem-sub-header" });
+
+				my $problemValue = $problems[$probOrder[$i]]->value;
+				if (defined($problemValue)) {
+					my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+					print "($problemValue $points)";
+				}
+
+				my %inlist;
+				grep($inlist{$_}++, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+
+				# This uses the permission level and user id of the user assigned to the set.
+				if ($effectiveUserPermission >= $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
+					|| defined($inlist{$effectiveUser}) && ($inlist{$effectiveUser} > 0)) {
+					print " " . $problems[$probOrder[$i]]->source_file;
+				}
+
+				print CGI::end_span();
 
 				my $instructor_comment = $self->get_instructor_comment($problems[$probOrder[$i]]);
 				if ($instructor_comment) {
