@@ -370,7 +370,10 @@ sub display_form {
 	my $perm_unopened = $authz->hasPermissions($userID, "view_unopened_sets");
 	my $perm_view_hidden = $authz->hasPermissions($userID, "view_hidden_sets");
 	my $perm_view_answers = $authz->hasPermissions($userID, "show_correct_answers_before_answer_date");
-        my $perm_view_solutions = $authz->hasPermissions($userID, "show_solutions_before_answer_date");
+	my $perm_view_solutions = $authz->hasPermissions($userID, "show_solutions_before_answer_date");
+	$self->{can_show_source_file} = ($db->getPermissionLevel($userID)->permission >=
+		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
+		|| grep($_ eq $userID, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}}));
 	
 	# get formats
 	my @formats;
@@ -614,6 +617,18 @@ sub display_form {
 				),
 			),
 		       ),
+		$self->{can_show_source_file} ?
+		CGI::Tr({},
+			CGI::td({ colspan => 2, class => "ButtonRow" },
+				CGI::b($r->maketext("Show Problem Source File:")), " ",
+				CGI::radio_group(
+					-name    => "show_source_file",
+					-values  => ["Yes", "No"],
+					-default => "Yes",
+					-labels  => { Yes => $r->maketext("Yes"), No => $r->maketext("No")},
+				),
+			),
+		) : '',
 		$perm_change_theme ?
 		 CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
@@ -1326,14 +1341,7 @@ sub write_problem_tex {
 			print $FH " {\\bf\\footnotesize($problemValue $points)}";
 		}
 
-		my %inlist;
-		grep($inlist{$_}++, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
-
-		# This uses the permission level and user id of the user assigned to the problem.
-		my $problemUser = $MergedProblem->user_id;
-		if ($db->getPermissionLevel($problemUser)->permission >=
-			$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
-			|| defined($inlist{$problemUser}) && ($inlist{$problemUser} > 0)) {
+		if ($self->{can_show_source_file}) {
 			print $FH " {\\footnotesize\\path|" . $MergedProblem->source_file . "|}";
 		}
 

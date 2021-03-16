@@ -2096,12 +2096,11 @@ sub body {
 					print "($problemValue $points)";
 				}
 
-				my %inlist;
-				grep($inlist{$_}++, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+				my $inlist = grep($_ eq $effectiveUser, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
 
 				# This uses the permission level and user id of the user assigned to the set.
 				if ($effectiveUserPermission >= $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
-					|| defined($inlist{$effectiveUser}) && ($inlist{$effectiveUser} > 0)) {
+					|| $inlist) {
 					print " " . $problems[$probOrder[$i]]->source_file;
 				}
 

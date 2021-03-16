@@ -1275,14 +1275,13 @@ sub title {
 		$out .= "($problemValue $points)";
 	}
 
-	my %inlist;
-	grep($inlist{$_}++, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
-
 	# This uses the permission level and user id of the user assigned to the problem.
 	my $problemUser = $problem->user_id;
+	my $inList = grep($_ eq $problemUser, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+
+	my $problemUser = $problem->user_id;
 	if ($db->getPermissionLevel($problemUser)->permission >=
-		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
-		|| defined($inlist{$problemUser}) && ($inlist{$problemUser} > 0)) {
+		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} || $inList) {
 		$out .= " " . $problem->source_file;
 	}
 
