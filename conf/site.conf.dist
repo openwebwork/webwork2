@@ -190,8 +190,8 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 #	"MariaDB" for the DBD:mysql driver
 
 # Select the desired DB driver:
-$database_driver="mysql";
-#$database_driver="MariaDB";
+#$database_driver="mysql";
+$database_driver="MariaDB";
 
 $database_host="localhost";
 $database_port="3306";
