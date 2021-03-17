@@ -2318,13 +2318,34 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
+	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
+	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
+	# which can be set in course.conf (the value should be an anonomous array).
+	my %cssFiles;
+	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
+		$cssFiles{$_} = 1 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+	}
+	for my $pg (@{$self->{ra_pg_results}}) {
+		next unless ref($pg);
+		if (ref($pg->{flags}{extra_css_files}) eq "ARRAY") {
+			$cssFiles{$_} = 1 for @{$pg->{flags}{extra_css_files}};
+		}
+	}
+	for (keys(%cssFiles)) {
+		if (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
+			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
+		} else {
+			print "<!-- $_ is not available in htdocs/ on this server -->\n";
+		}
+	}
+
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 
 	# This is for MathView.
 	if ($self->{will}->{useMathView}) {
 		if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-			print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
+			print qq{<link href="$site_url/js/apps/MathView/mathview.css" rel="stylesheet" />};
 			print CGI::start_script({type=>"text/javascript"});
 			print "mathView_basepath = \"$site_url/images/mathview/\";";
 			print CGI::end_script();
@@ -2350,8 +2371,8 @@ sub output_JS{
 
 	# MathQuill interface
 	if ($self->{will}->{useMathQuill}) {
-		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />";
-		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />";
+		print qq{<link href="$site_url/js/apps/MathQuill/mathquill.css" rel="stylesheet" />};
+		print qq{<link href="$site_url/js/apps/MathQuill/mqeditor.css" rel="stylesheet" />};
 		print CGI::start_script({type=>"text/javascript",
 				src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript",
@@ -2371,29 +2392,27 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 
 	# This is for the image dialog
-	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
+	print qq{<link href="$site_url/js/apps/ImageView/imageview.css" rel="stylesheet" />};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
 	for my $pg (@{$self->{ra_pg_results}}) {
 		next unless ref($pg);
-		if (defined($pg->{flags}{extra_js_files})) {
+		if (ref($pg->{flags}{extra_js_files}) eq "ARRAY") {
 			# Avoid duplicates
-			for (@{$pg->{flags}{extra_js_files}}) {
-				$jsFiles{$_->{file}} = $_->{local};
-			}
+			$jsFiles{$_->{file}} = $_->{local} for @{$pg->{flags}{extra_js_files}};
 		}
 	}
 	for (keys(%jsFiles)) {
-		if ($jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/js/$_") {
+		if ($jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
 			print CGI::start_script({type => "text/javascript",
-					src => "$site_url/js/$_"}), CGI::end_script();
+					src => "$site_url/$_"}), CGI::end_script();
 		} elsif (!$jsFiles{$_}) {
 			print CGI::start_script({type => "text/javascript",
-					src => "$_"}), CGI::end_script();
+					src => $_}), CGI::end_script();
 		} else {
-			print "<!-- $_ is not available in htdocs/js/ on this server -->\n";
+			print "<!-- $_ is not available in htdocs/ on this server -->\n";
 		}
 	}
 
