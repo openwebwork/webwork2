@@ -7,6 +7,7 @@
         "url": "https://github.com/openwebwork/webwork2"
     },
     "dependencies": {
+        "codemirror": "^5.14.3",
         "jquery": "3.5.1",
         "jquery-ui-dist": "1.12.1",
         "jquery-ui-themes": "1.12.0",
