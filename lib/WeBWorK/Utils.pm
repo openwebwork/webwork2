@@ -31,7 +31,6 @@ use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
-use Encode qw(encode_utf8 decode_utf8);
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
 use Time::Zone;
@@ -206,7 +205,7 @@ sub readFile($) {
 			# use the following instead
 			if (open my $dh, "<:raw", $fileName){
 				$result = <$dh>;
-				decode_utf8($result) or die "failed to decode $fileName";
+				Encode::decode("UTF-8",$result) or die "failed to decode $fileName";
 				close $dh;
 			} else {
 				print STDERR "File $fileName cannot be read."; # this is not a fatal error.
@@ -215,9 +214,10 @@ sub readFile($) {
 		if ($@) {
 			print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
 		}
-		my $prevent_error_message = utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ". 
-		 "is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n". 
-		 "While this is not fatal you should fix it\n";
+		my $prevent_error_message = utf8::decode($result) or warn join("",
+			"Non-fatal warning: file $fileName contains at least one character code which ",
+			"is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n",
+			"While this is not fatal you should fix it\n");
 		# FIXME
 		# utf8::decode($result) raises an error about the copyright sign
 		# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
@@ -942,7 +942,7 @@ sub decodeAnswers($) {
 }
 
 sub decode_utf8_base64 {
-    return decode_utf8(decode_base64(shift));
+    return Encode::decode("UTF-8",decode_base64(shift));
 }
 
 sub OLD_encodeAnswers(\%\@) {
@@ -965,7 +965,7 @@ sub encodeAnswers(\%\@) {
 }
 
 sub encode_utf8_base64 {
-    return encode_base64(encode_utf8(shift));
+    return encode_base64(Encode::encode("UTF-8",shift));
 }
 
 sub nfreeze_base64 {
