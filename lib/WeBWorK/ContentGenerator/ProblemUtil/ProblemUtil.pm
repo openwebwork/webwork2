@@ -21,7 +21,6 @@
 package WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
-use Encode qw(encode_utf8 encode);
 
 =head1 NAME
 
@@ -200,7 +199,7 @@ sub process_and_log_answer{
 					);
 
 				my $caliper_sensor = Caliper::Sensor->new($self->{ce});
-				if ($caliper_sensor->caliperEnabled()) {
+				if ($caliper_sensor->caliperEnabled() && defined($answer_log) && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
 					my $startTime = $r->param('startTime');
 					my $endTime = time();
 
@@ -267,15 +266,15 @@ sub process_and_log_answer{
 				  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 				  if ($LTIGradeMode eq 'course') {
 				    if ($grader->submit_course_grade($problem->user_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  } elsif ($LTIGradeMode eq 'homework') {
 				    if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  }
 				}
@@ -519,12 +518,15 @@ sub output_footer{
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
+		courseId           => $courseName,	
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
 		problemPath        => $problem->source_file,
 		randomSeed         => $problem->problem_seed,
 		emailAddress       => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
-		emailableURL       => $self->generateURLs('absolute'),
+		emailableURL       => $self->generateURLs(url_type => 'absolute',
+		                                          set_id => $self->{set}->set_id,
+		                                          problem_id => $problem->problem_id),
 		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
@@ -611,7 +613,7 @@ sub jitar_send_warning_email {
 	# Encode the user name using "MIME-Header" encoding, (RFC 2047) which
 	# allows UTF-8 encoded names to be encoded inside the mail header using
 	# a special format.
-	$sender = encode("MIME-Header", $user->full_name);
+	$sender = Encode::encode("MIME-Header", $user->full_name);
     } else {
 	$sender = $userID;
     }
@@ -635,7 +637,7 @@ sub jitar_send_warning_email {
 
     # If in the future any fields in the subject can contain non-ASCII characters
     # then we will also need:
-    # $subject = encode("MIME-Header", $subject);
+    # $subject = Encode::encode("MIME-Header", $subject);
     # at present, this does not seem to be necessary.
 
 
@@ -683,7 +685,7 @@ Comment:    $comment
 /;
 
 	# Encode the body in UTF-8 when adding it.
-	$email->body_set(encode_utf8($msg));
+	$email->body_set(Encode::encode("UTF-8",$msg));
 
 		## try to send the email
 

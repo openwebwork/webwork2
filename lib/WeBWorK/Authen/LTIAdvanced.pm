@@ -36,6 +36,8 @@ use URI::Escape;
 use Net::OAuth;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
+use constant TIME_DIFF_THRESHOLD => 5; # seconds, threshold to report different between system time and oauth_timestamp time
+
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 BEGIN {
@@ -132,6 +134,22 @@ sub get_credentials {
       $parameter_report .= "$key => ".$r->param($key). "\n";
     }
     warn ("===== parameters received =======\n", $parameter_report);
+  }
+
+  my $oauth_time = $r->param("oauth_timestamp");
+  my $curr_time = time();
+  my $delta_time = $curr_time - $oauth_time;
+  my $delta_min = (0.0 + $delta_time) / (60.0);
+  if ( $ce->{debug_lti_parameters} ||
+	 ( abs($delta_time) > TIME_DIFF_THRESHOLD ) ) {
+    warn join("\n",
+	"============================",
+	"===== timestamp info =======",
+	"oauth_nonce        = $oauth_time",
+	"WW_server_time     = $curr_time",
+	"diff(server-oauth) = $delta_time seconds ($delta_min minutes)",
+	"============================"
+    );
   }
 
   #disable password login
@@ -659,8 +677,11 @@ sub maybe_update_user {
 
 package WeBWorK::Authen::LTIAdvanced::Nonce;
 
-# This controls how often the key database is scrubbed for old nonce's 
-use constant NONCE_LIFETIME => 86400; #24 hours
+# This controls how often the key database is scrubbed for old nonce's
+use constant NONCE_PURGE_FREQUENCY => 7200; # 2 hours
+
+# This controls how old a nonce is before it is purged
+use constant NONCE_LIFETIME => 21600; # 6 hours
 
 sub new {
   my ($invocant, $r, $nonce, $timestamp) = @_;
@@ -681,30 +702,29 @@ sub ok {
   my $db = $self->{r}->{db};
 
   $self->maybe_purge_nonces();
-  
+
   if ($self->{timestamp} < time() - $ce->{NonceLifeTime}) {
     if ( $ce->{debug_lti_parameters} ) {
       warn("Nonce Expired.  Your NonceLifeTime may be too short");
     }
     return 0;
   }
-  
+
   my $Key = $db->getKey($self->{nonce});
-  # If we *haven't* used this nonce before then we are OK. 
+  # If we *haven't* used this nonce before then we are OK.
   if (! defined($Key) ) {
     # nonce, timestamp are ok.	Add the nonce so its not used again
-    $Key = $db->newKey(user_id=>$self->{nonce}, 
-		       key=>"nonce", 
+    $Key = $db->newKey(user_id=>$self->{nonce},
+		       key=>"nonce",
 		       timestamp=>$self->{"timestamp"},
 		      );
     $db->addKey($Key);
     return 1;
-  } elsif ( $Key->timestamp <  $self->{"timestamp"} ) {
-    # nonce, timestamp pair is OK.  Update timestamp
+  } else {
+    # The nonce is in the database - so was used "recently" so should NOT be allowed
+    # Update timestamp - so deletion will be delayed from now and not from original timestamp.
     $Key->timestamp($self->{"timestamp"});
     $db->put($Key);
-    return 1;
-  } else {
     return 0;
   }
 }
@@ -717,8 +737,8 @@ sub maybe_purge_nonces {
   my $time = time;
   my $lastPurge = $db->getSettingValue('lastNoncePurge');
 
-  # only purge if the last purge was never or over NONCE_LIFETIME ago
-  if (!defined($lastPurge) || ($time-$lastPurge > NONCE_LIFETIME)) {
+  # only purge if the last purge was never or over NONCE_PURGE_FREQUENCY ago
+  if ( !defined($lastPurge) || ( $time - $lastPurge > NONCE_PURGE_FREQUENCY ) ) {
     my @userIDs = $db->listKeys();
     my @Keys = $db->getKeys(@userIDs);
 

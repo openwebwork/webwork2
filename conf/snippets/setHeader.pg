@@ -29,7 +29,7 @@ TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
 %   {\large \bf { Section: \{protect_underbar($sectionName)\} } }
 \par
 \noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  due $formatedDueDate}}
-\par\noindent \bigskip
+\par\noindent
 % Uncomment and edit the line below if this course has a web page. Note that this is a comment in TeX mode.
 %See the course web page for information http://yoururl/yourcourse
 

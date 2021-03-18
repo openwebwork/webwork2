@@ -34,7 +34,6 @@ use Email::Simple;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP qw();
 use Try::Tiny;
-use Encode qw(encode_utf8 encode);
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
 
@@ -312,7 +311,7 @@ sub initialize {
 	    }
 
 	    if ($version) {
-		$APACHE24 = version->parse($version) >= version->parse('2.4');
+		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
 	    }
 	}
 	# If its apache 2.4 then the API has changed
@@ -569,7 +568,7 @@ sub print_preview {
 		    # In a real mails we would UTF-8 encode the message
 		    # and give the Content-Type header, for the preview which
 		    # is displayed - just add the header, but do NOT use
-		    # encode_utf8($msg) as it will be done late.
+		    # Encode::encode("UTF-8",$msg) as it will be done late.
 		    "Content-Type: text/plain; charset=UTF-8\n\n",
 		    $msg, # will be in HTML output, and gets encoded to UTF-8 later on
 		    "\n"
@@ -897,7 +896,7 @@ sub mail_message_to_recipients {
 					From => $from,
 					Subject => $subject,
 					"Content-Type" => "text/plain; charset=UTF-8" ],
-				body => encode_utf8($msg)
+				body => Encode::encode("UTF-8",$msg)
 			);
 			$email->header_set("X-Remote-Host: ",$self->{remote_host});
 
@@ -954,7 +953,7 @@ sub email_notification {
 			Subject => $subject,
 			"Content-Type" => "text/plain; charset=UTF-8"
 		],
-		body => encode_utf8($result_message),
+		body => Encode::encode("UTF-8",$result_message),
 	);
 	$email->header_set("X-Remote-Host: ",$self->{remote_host});
 

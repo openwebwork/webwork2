@@ -1351,6 +1351,8 @@ var saneKeyboardEvents = (function() {
 
     // -*- event handlers -*- //
     function onKeydown(e) {
+      if (e.target !== textarea[0]) return;
+
       keydown = e;
       keypress = null;
 
@@ -1366,6 +1368,8 @@ var saneKeyboardEvents = (function() {
     }
 
     function onKeypress(e) {
+      if (e.target !== textarea[0]) return;
+
       // call the key handler for repeated keypresses.
       // This excludes keypresses that happen directly
       // after keydown.  In that case, there will be
@@ -1377,6 +1381,8 @@ var saneKeyboardEvents = (function() {
       checkTextareaFor(typedText);
     }
     function onKeyup(e) {
+      if (e.target !== textarea[0]) return;
+
       // Handle case of no keypress event being sent
       if (!!keydown && !keypress) checkTextareaFor(typedText);
     }
@@ -1412,6 +1418,8 @@ var saneKeyboardEvents = (function() {
     function onBlur() { keydown = keypress = null; }
 
     function onPaste(e) {
+      if (e.target !== textarea[0]) return;
+
       // browsers are dumb.
       //
       // In Linux, middle-click pasting causes onPaste to be called,
@@ -1678,6 +1686,10 @@ Controller.open(function(_) {
     });
     ctrlr.blurred = true;
     cursor.hide().parent.blur();
+  };
+  _.unbindFocusBlurEvents = function() {
+    var ctrlr = this;
+    ctrlr.textarea.unbind('focus blur');
   };
 });
 
@@ -2161,6 +2173,21 @@ Controller.open(function(_) {
     this.container.prepend(textareaSpan);
     this.focusBlurEvents();
   };
+  _.unbindEditablesEvents = function() {
+    var ctrlr = this, textarea = ctrlr.textarea,
+      textareaSpan = ctrlr.textareaSpan;
+      
+      this.selectFn = function(text) {
+        textarea.val(text);
+        if (text) textarea.select();
+      };
+      textareaSpan.remove();
+      
+      this.unbindFocusBlurEvents();
+      
+      ctrlr.blurred = true;
+      textarea.bind('cut paste', false);
+  };
   _.typedText = function(ch) {
     if (ch === '\n') return this.handle('enter');
     var cursor = this.notify().cursor;
@@ -2282,22 +2309,7 @@ Controller.open(function(_, super_) {
   };
   _.writeLatex = function(latex) {
     var cursor = this.notify('edit').cursor;
-
-    var all = Parser.all;
-    var eof = Parser.eof;
-
-    var block = latexMathParser.skip(eof).or(all.result(false)).parse(latex);
-
-    if (block && !block.isEmpty() && block.prepareInsertionAt(cursor)) {
-      block.children().adopt(cursor.parent, cursor[L], cursor[R]);
-      var jQ = block.jQize();
-      jQ.insertBefore(cursor.jQ);
-      cursor[L] = block.ends[R];
-      block.finalizeInsert(cursor.options, cursor);
-      if (block.ends[R][R].siblingCreated) block.ends[R][R].siblingCreated(cursor.options, L);
-      if (block.ends[L][L].siblingCreated) block.ends[L][L].siblingCreated(cursor.options, R);
-      cursor.parent.bubble('reflow');
-    }
+    cursor.parent.writeLatex(cursor, latex);
 
     return this;
   };
@@ -2877,6 +2889,25 @@ var MathBlock = P(MathElement, function(_, super_) {
     }
   };
 
+  _.writeLatex = function(cursor, latex) {
+
+    var all = Parser.all;
+    var eof = Parser.eof;
+
+    var block = latexMathParser.skip(eof).or(all.result(false)).parse(latex);
+
+    if (block && !block.isEmpty() && block.prepareInsertionAt(cursor)) {
+      block.children().adopt(cursor.parent, cursor[L], cursor[R]);
+      var jQ = block.jQize();
+      jQ.insertBefore(cursor.jQ);
+      cursor[L] = block.ends[R];
+      block.finalizeInsert(cursor.options, cursor);
+      if (block.ends[R][R].siblingCreated) block.ends[R][R].siblingCreated(cursor.options, L);
+      if (block.ends[L][L].siblingCreated) block.ends[L][L].siblingCreated(cursor.options, R);
+      cursor.parent.bubble('reflow');
+    }
+  };
+
   _.focus = function() {
     this.jQ.addClass('mq-hasCursor');
     this.jQ.removeClass('mq-empty');
@@ -2908,13 +2939,13 @@ API.StaticMath = function(APIClasses) {
     _.init = function() {
       super_.init.apply(this, arguments);
       this.__controller.root.postOrder(
-        'registerInnerField', this.innerFields = [], APIClasses.MathField);
+        'registerInnerField', this.innerFields = [], APIClasses.InnerMathField);
     };
     _.latex = function() {
       var returned = super_.latex.apply(this, arguments);
       if (arguments.length > 0) {
         this.__controller.root.postOrder(
-          'registerInnerField', this.innerFields = [], APIClasses.MathField);
+          'registerInnerField', this.innerFields = [], APIClasses.InnerMathField);
       }
       return returned;
     };
@@ -2931,6 +2962,23 @@ API.MathField = function(APIClasses) {
       super_.__mathquillify.call(this, 'mq-editable-field mq-math-mode');
       delete this.__controller.root.reflow;
       return this;
+    };
+  });
+};
+
+API.InnerMathField = function(APIClasses) {
+  return P(APIClasses.MathField, function(_, super_) {
+    _.makeStatic = function() {
+      this.__controller.editable = false;
+      this.__controller.root.blur();
+      this.__controller.unbindEditablesEvents();
+      this.__controller.container.removeClass('mq-editable-field');
+    };
+    _.makeEditable = function() {
+      this.__controller.editable = true;
+      this.__controller.editablesTextareaEvents();
+      this.__controller.cursor.insAtRightEnd(this.__controller.root);
+      this.__controller.container.addClass('mq-editable-field');
     };
   });
 };
@@ -2963,16 +3011,15 @@ var TextBlock = P(Node, function(_, super_) {
     var textBlock = this;
     super_.createLeftOf.call(this, cursor);
 
-    textBlock.postOrder('reflow');
-    if (textBlock[R].siblingCreated) textBlock[R].siblingCreated(cursor.options, L);
-    if (textBlock[L].siblingCreated) textBlock[L].siblingCreated(cursor.options, R);
-    textBlock.bubble('reflow');
-
     cursor.insAtRightEnd(textBlock);
 
     if (textBlock.replacedText)
       for (var i = 0; i < textBlock.replacedText.length; i += 1)
         textBlock.write(cursor, textBlock.replacedText.charAt(i));
+
+    if (textBlock[R].siblingCreated) textBlock[R].siblingCreated(cursor.options, L);
+    if (textBlock[L].siblingCreated) textBlock[L].siblingCreated(cursor.options, R);
+    textBlock.bubble('reflow');
   };
 
   _.parser = function() {
@@ -2983,11 +3030,11 @@ var TextBlock = P(Node, function(_, super_) {
     var regex = Parser.regex;
     var optWhitespace = Parser.optWhitespace;
     return optWhitespace
-      .then(string('{')).then(regex(/^[^}]*/)).skip(string('}'))
+      .then(string('{')).then(regex(/^(\\}|[^}])*/)).skip(string('}'))
       .map(function(text) {
         if (text.length === 0) return Fragment();
 
-        TextPiece(text).adopt(textBlock, 0, 0);
+        TextPiece(text.replace(/\\{/g, '{').replace(/\\}/g, '}')).adopt(textBlock, 0, 0);
         return textBlock;
       })
     ;
@@ -3052,8 +3099,14 @@ var TextBlock = P(Node, function(_, super_) {
       leftPc.adopt(leftBlock, 0, 0);
 
       cursor.insLeftOf(this);
-      super_.createLeftOf.call(leftBlock, cursor);
+      super_.createLeftOf.call(leftBlock, cursor); // micro-optimization, not for correctness
     }
+    this.bubble('reflow');
+  };
+  _.writeLatex = function(cursor, latex) {
+    if (!cursor[L]) TextPiece(latex).createLeftOf(cursor);
+    else cursor[L].appendText(latex);
+    this.bubble('reflow');
   };
 
   _.seek = function(pageX, cursor) {
@@ -3786,7 +3839,7 @@ LatexCmds['^'] = P(SupSub, function(_, super_) {
     +   '<span class="mq-sup">&0</span>'
     + '</span>'
   ;
-  _.textTemplate = [ '^(', ')' ];
+  _.textTemplate = ['^(', ')'];
   _.finalizeTree = function() {
     this.upInto = this.sup = this.ends[R];
     this.sup.downOutOf = insLeftOfMeUnlessAtEnd;
@@ -4410,8 +4463,26 @@ LatexCmds.nsupersete = LatexCmds.nsuperseteq =
 LatexCmds.notsupersete = LatexCmds.notsuperseteq =
   bind(BinaryOperator,'\\not\\supseteq ','&#8841;');
 
-
 //the canonical sets of numbers
+LatexCmds.mathbb = P(MathCommand, function(_) {
+  _.createLeftOf = noop;
+  _.numBlocks = function() { return 1; };
+  _.parser = function() {
+    var string = Parser.string;
+    var regex = Parser.regex;
+    var optWhitespace = Parser.optWhitespace;
+    return optWhitespace.then(string('{'))
+          .then(optWhitespace)
+          .then(regex(/^[NPZQRCH]/))
+          .skip(optWhitespace)
+          .skip(string('}'))
+          .map(function(c) {
+              // instantiate the class for the matching char
+              return LatexCmds[c]();
+    });
+  };
+});
+
 LatexCmds.N = LatexCmds.naturals = LatexCmds.Naturals =
   bind(VanillaSymbol,'\\mathbb{N}','&#8469;');
 
@@ -4695,9 +4766,12 @@ var Variable = P(Symbol, function(_, super_) {
     var text = this.ctrlSeq;
     if (this.isPartOfOperator) {
       if (text[0] == '\\') {
-        text = text.slice(1, text.length);
+        if (text.startsWith('\\operatorname{')) 
+          text = text.slice(14, text.length);
+        else
+          text = text.slice(1, text.length);
       }
-      else if (text[text.length-1] == ' ') {
+      else if (text[text.length-1] == ' ' || text[text.length-1] == '}') {
         text = text.slice (0, -1);
       }
     }

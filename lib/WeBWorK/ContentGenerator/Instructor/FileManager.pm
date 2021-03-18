@@ -23,7 +23,6 @@ use WeBWorK::Upload;
 use File::Path;
 use File::Copy;
 use File::Spec;
-use Encode qw(encode_utf8 decode_utf8);
 
 use String::ShellQuote;
 
@@ -434,7 +433,7 @@ sub View {
 	# Don't follow symbolic links
 	#
 	if ($self->isSymLink($file)) {
-	  $self->addbadmessage($r->maketext("That symbolic link takes you outside your course directory"));
+	  $self->addbadmessage($r->maketext("You may not follow symbolic links"));
 	  $self->Refresh; return;
 	}
 
@@ -1012,7 +1011,7 @@ sub getFile {
 	}
 	my $pwd = $self->checkPWD($self->{pwd} || $self->r->param('pwd') || HOME) || '.';
 	if ($self->isSymLink($pwd.'/'.$files[0])) {
-		$self->addbadmessage($r->maketext("That symbolic link takes you outside your course directory"));
+		$self->addbadmessage($r->maketext("You may not follow symbolc links"));
 		$self->Refresh unless $action eq 'download';
 		return;
 	}
@@ -1110,11 +1109,6 @@ sub isSymLink {
 	#
 	$link =~ s!(^|/)(\.(/|$))+!$1!g;
 	while ($link =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
-
-	#
-	# Link is OK if it is in the course directory
-	#
-	return 0 if substr($link,0,length($courseRoot)) eq $courseRoot;
 
 	#
 	# Look through the list of valid paths to see if this link is OK
