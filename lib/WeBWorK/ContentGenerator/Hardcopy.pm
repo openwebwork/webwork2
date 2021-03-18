@@ -1140,13 +1140,15 @@ sub write_set_tex {
 		    
 	# write set header
 	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header); # 0 => pg file specified directly
+
+	print $FH "\\medskip\\hrule\\nobreak\\smallskip";
        
 	# write each problem
 	# for versioned problem sets (gateway tests) we like to include 
 	#   problem numbers
 	my $i = 1;
 	while (my $problemID = shift @problemIDs) {
-		$self->write_tex_file($FH, $divider);
+		$self->write_tex_file($FH, $divider) if $i > 1;
 		$self->{versioned} = $i if $versioned;
 		$self->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
 		$i++;
