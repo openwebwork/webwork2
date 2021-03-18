@@ -71,7 +71,6 @@ my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
 
 $dbuser = shell_quote($dbuser);
-$dbpass = shell_quote($dbpass);
 $db = shell_quote($db);
 
 $ENV{'MYSQL_PWD'}=$dbpass;

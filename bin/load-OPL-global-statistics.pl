@@ -64,7 +64,6 @@ EOS
   $dbh->commit();
 
   $dbuser = shell_quote($dbuser);
-  $dbpass = shell_quote($dbpass);
   $db = shell_quote($db);
 
   $ENV{'MYSQL_PWD'}=$dbpass;

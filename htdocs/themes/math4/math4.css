@@ -262,6 +262,12 @@ h2.page-title {
 	border-bottom: 1px solid #ccc;
 }
 
+.problem-sub-header {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 20px;
+}
+
 #info-panel-right {
 	margin-bottom: 0.5em;
 /*	width: 25%; 8*/
@@ -288,6 +294,15 @@ h2.page-title {
 	margin-bottom:1ex;
 	display: inline-block;
 	
+}
+
+.problem-nav .user-nav {
+	margin-bottom: 5px;
+}
+
+.user-nav .student-nav-selector .dropdown-menu {
+	max-height: 60vh;
+	overflow-y: auto;
 }
 
 /* Message section */
@@ -767,6 +782,12 @@ table.attemptResults td.ResultsWithoutError { background-color:#8F8;}
 span.ResultsWithErrorInResultsTable { color: inherit; background-color: inherit; } /* used to override the older red on white span */ 
 table.attemptResults td.ResultsWithError { background-color:#D69191; color: #000000} /* red */
 
+table.attemptResults span.answer-preview {
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+}
+
 /*styles for the instructor comment box */
 
 .answerComments {
@@ -1110,7 +1131,8 @@ div.problem_sets_options {
     padding-left: 0px;
 }
 
-#psd_list li {
+#psd_list li.ui-sortable-placeholder,
+#psd_list li.psd_list_row {
     list-style-type: none;
 }
 
@@ -1275,6 +1297,31 @@ table#grades_table pre{
     border-bottom: 1px solid #d5d5d5;
     margin-bottom:2px;
     padding-bottom:5px;
+}
+
+.problem-grader-table {
+	border-collapse: separate;
+	border-spacing: 2px
+}
+
+.problem-grader-table input {
+	margin-left: 0px;
+}
+
+.problem-grader-table .preview {
+	margin-top: 2px;
+}
+
+.problem-grader-table .problem-grader-message {
+	padding: 2px;
+	font-weight: bold;
+}
+
+.problem-grader-table .problem-grader-message.ResultsWithoutError { background-color: #88ff88; }
+.problem-grader-table .problem-grader-message.ResultsWithError { background-color: #d69191; }
+.problem-grader-table .problem-grader-message.ResultsWithError {
+	border-radius: 3px;
+	color: black;
 }
 
 .tab-pane {

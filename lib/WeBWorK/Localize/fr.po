@@ -9555,7 +9555,7 @@ msgstr "Votre résultat a été enregistré"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1892
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:290
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:296
-msgid "Your score was not successfully sent to the LMS"
+msgid "Your score was not successfully sent to the LMS."
 msgstr ""
 
 #
@@ -9566,7 +9566,7 @@ msgstr "Votre résultat a été enregistré"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1891
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:288
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:294
-msgid "Your score was successfully sent to the LMS"
+msgid "Your score was successfully sent to the LMS."
 msgstr ""
 
 # avant: msgstr "Le résultat final est : %1.  %2"

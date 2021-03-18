@@ -598,7 +598,7 @@ sub grade_set {
 			# now $newOrder[i] = pNum-1, where pNum is the problem
 			#    number to display in the ith position on the test
 			#    for sorting, invert this mapping:
-			my %pSort = map {($newOrder[$_]+1)=>$_} (0..$#newOrder);
+			my %pSort = map { $problemRecords[$newOrder[$_]]->problem_id => $_ } (0 .. $#newOrder);
 
 			@problemRecords = sort {$pSort{$a->problem_id} <=> $pSort{$b->problem_id}} @problemRecords;
 		}

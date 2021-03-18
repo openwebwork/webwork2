@@ -1,8 +1,8 @@
-function WWDatePicker(name,reduced) {
+function WWDatePicker(name, reduced) {
 
-	var open_rule = $('#' + name + '\\.open_date_id');
-	var due_rule = $('#' + name + '\\.due_date_id');
-	var answer_rule = $('#' + name + '\\.answer_date_id');
+	var open_rule = $('input[id="' + name + '.open_date_id"]');
+	var due_rule = $('input[id="' + name + '.due_date_id"]');
+	var answer_rule = $('input[id="' + name + '.answer_date_id"]');
 
 	var toggleChanged = function(e) {
 		var elt = $(this);
@@ -18,7 +18,7 @@ function WWDatePicker(name,reduced) {
 		.blur(function() {update();});
 
 	if (reduced) {
-		var reduced_rule = $('#' + name + '\\.reduced_scoring_date_id');
+		var reduced_rule = $('input[id="' + name + '.reduced_scoring_date_id"]');
 		reduced_rule.change({ orig_value: reduced_rule.val() }, toggleChanged)
 			.blur(function() {update();});
 	}
@@ -32,6 +32,7 @@ function WWDatePicker(name,reduced) {
 		constrainInput: false,
 		onClose: update,
 	});
+    open_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
 
 	due_rule.datetimepicker({
 		showOn: "button",
@@ -42,6 +43,7 @@ function WWDatePicker(name,reduced) {
 		constrainInput: false,
 		onClose: update,
 	});
+    due_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
 
 	answer_rule.datetimepicker({
 		showOn: "button",
@@ -52,6 +54,7 @@ function WWDatePicker(name,reduced) {
 		constrainInput: false,
 		onClose: update,
 	});
+    answer_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
 
 	if (reduced) {
 		reduced_rule.datetimepicker({
@@ -63,7 +66,8 @@ function WWDatePicker(name,reduced) {
 			constrainInput: false,
 			onClose: update,
 		});
-	}
+        reduced_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
+    }
 
 	var getDate = function(element) {
 

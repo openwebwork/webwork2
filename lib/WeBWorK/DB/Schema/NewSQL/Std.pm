@@ -356,6 +356,29 @@ sub _add_column_field_stmt {
 	my $sql_field_type = $self->field_data->{$field_name}{type};		
 	return "Alter table `$sql_table_name` add column `$sql_field_name` $sql_field_type";
 }
+
+####################################################
+# deleting Field column
+####################################################
+
+sub drop_column_field {
+	my $self = shift;
+	my $field_name = shift;
+	my $stmt = $self->_drop_column_field_stmt($field_name);
+	#warn "database command $stmt";
+	my $result = $self->dbh->do($stmt);
+	#warn "result of add column is $result";
+	#return  ($result eq "0E0") ? 0 : 1;    # failed result is 0E0
+	return 1;   #FIXME  how to determine if database update was successful???
+}
+
+sub _drop_column_field_stmt {
+	my $self = shift;	
+	my $field_name=shift;
+	my $sql_table_name = $self->sql_table_name;
+	my $sql_field_name = $self->sql_field_name($field_name);		
+	return "Alter table `$sql_table_name` drop column if exists `$sql_field_name` ";
+}
 ####################################################
 # checking Tables
 ####################################################

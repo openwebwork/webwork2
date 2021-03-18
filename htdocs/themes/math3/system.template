@@ -34,7 +34,10 @@
 	<!--#output_CSS-->
 <!--#endif-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/math3.css"/>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
 <!-- Minimal bootstrap for newer features -->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/themes/math3/bootstrap/js/bootstrap.js"></script>
 
@@ -44,8 +47,8 @@
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math3/codemirror2/mode/math/math.css">
 -->
 <!--#if can="output_jquery_ui"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
-	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
+	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <!--#endif-->
 
 <!--#if can="output_achievement_CSS"-->
@@ -58,6 +61,7 @@
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math3.js" defer></script>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>
@@ -143,6 +147,11 @@
 					</div>
 					<!--#endif-->
 					
+					<!--#if can="output_grader" "-->
+					<div>
+						<!--#output_grader-->
+					</div>
+					<!--#endif-->
 
 					<!--#if can="output_form_start"-->
 						<!--#output_form_start-->

@@ -111,7 +111,6 @@ use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
 use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
-use Encode qw(encode_utf8 decode_utf8 decode);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils::DetermineProblemLangAndDirection;
@@ -442,7 +441,7 @@ sub xml_utf_decode { # Do UTF-8 decoding where xml_filter applied encoding
 					# Get the original name back
 					my $new_item = $item;
 					$new_item =~ s/^xmlrpc_UTF8_encoded_//;
-					$input->{$new_item} = decode("UTF-8", $filtered_value);
+					$input->{$new_item} = Encode::decode("UTF-8", $filtered_value);
 					delete( $input->{$item} ); # remove the temporary encoded value with the modified key
 				} else {
 					$input->{$item} = $filtered_value; # No decoding needed
