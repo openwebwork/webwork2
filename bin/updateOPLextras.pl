@@ -31,7 +31,7 @@ Rebuild the subject tree and write to a JSON file.
 
 Rebuild the directory tree and write to a JSON file.
 
-=item B<-v> I<--directories>
+=item B<-v> I<--verbosity>
 
 Turn on verbosity mode.
 
