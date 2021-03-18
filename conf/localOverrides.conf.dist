@@ -527,25 +527,36 @@ $mail{feedbackRecipients}    = [
 # (on Ubuntu this is in the texlive-xetex package).
 # Note: restrict options to only pdflatex options, or only xelatex options,
 # and not both types.
-# Then set $externalPrograms{pdflatex} to use either pdflatex or xelatex,
-# depending on which flavor
+# Set $externalPrograms{pdflatex} to use either pdflatex or xelatex,
+# depending on which flavor of themes you are enabling.
+# Using --no-shell-escape is important for security reasons.
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
 
-# Hardcopy theme names (pretty names for themes)
+# Available Hardcopy themes (located in snippets)
+# (their "internal" name and their pretty name for end users)
 #$hardcopyThemeNames = {
-#	oneColumn => 'One Column',
-#	twoColumn => 'Two Columns',
-#	XeLaTeX-oneColumn => 'English - one Column',
-#	XeLaTeX-twoColumn => 'English - two Columns',
-#	XeLaTeX-Hebrew-oneColumn => 'Hebrew/English - one Column',
-#	XeLaTeX-Hebrew-twoColumn => 'Hebrew/English - two Columns',
+	#oneColumn => 'One Column',
+	#twoColumn => 'Two Columns',
+	#XeLaTeX-oneColumn => 'English - one Column',
+	#XeLaTeX-twoColumn => 'English - two Columns',
+	#XeLaTeX-Hebrew-oneColumn => 'Hebrew/English - one Column',
+	#XeLaTeX-Hebrew-twoColumn => 'Hebrew/English - two Columns',
 #};
 
-$hardcopyThemes = [ keys %{$hardcopyThemeNames} ];
+# This is needed to enforce an order that the options are presented when making a hardcopy
+#$hardcopyThemes = [
+	#'oneColumn',
+	#'twoColumn',
+	#'XeLaTeX-oneColumn',
+	#'XeLaTeX-twoColumn',
+	#'XeLaTeX-Hebrew-oneColumn',
+	#'XeLaTeX-Hebrew-twoColumn',
+#];
 
-# Change default Hardcopy theme - in order to use an XeLaTeX theme, we must set
-# $externalPrograms{pdflatex} to use xelatex (here or in site.conf) !!!
+
+# Change default Hardcopy theme
+# Be sure to choose one that is enabled!
 #$hardcopyTheme = "XeLaTeX-twoColumn";
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
 
 ################################################################################
 
