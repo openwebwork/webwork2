@@ -14,7 +14,7 @@ updateOPLextras [options]
    -d --directories      (rebuild directory tree)
    -a --all              (rebuild all trees)
    -h --help             (display this text)
- 
+   -v --verbose          (turn on verbosity mode) 
 =head1 OPTIONS
  
 =over 8
@@ -30,7 +30,11 @@ Rebuild the subject tree and write to a JSON file.
 =item B<-d> I<--directories>
 
 Rebuild the directory tree and write to a JSON file.
-  
+
+=item B<-v> I<--directories>
+
+Turn on verbosity mode.
+
 =back
  
 =head1 DESCRIPTION
