@@ -576,7 +576,7 @@ sub pre_header_initialize {
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.
 	$submitAnswers = 0, $self->{resubmitDetected} = 1
-	if ($submitAnswers && (!defined($formFields->{num_attempts}) ||
+	if ($set->set_id ne 'Undefined_Set' && $submitAnswers && (!defined($formFields->{num_attempts}) ||
 			(defined($formFields->{num_attempts}) &&
 				$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect)));
 
@@ -1270,7 +1270,7 @@ sub title {
 	$out .= CGI::start_div({ class => "problem-sub-header" });
 
 	my $problemValue = $problem->value;
-	if (defined($problemValue)) {
+	if (defined($problemValue) && $problemValue ne "") {
 		my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
 		$out .= "($problemValue $points)";
 	}
