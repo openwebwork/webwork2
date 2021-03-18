@@ -540,7 +540,18 @@ $mail{feedbackRecipients}    = [
 #	XeLaTeX-Hebrew-twoColumn => 'Hebrew/English - two Columns',
 #};
 
-$hardcopyThemes = [ keys %{$hardcopyThemeNames} ];
+# The next line will put the themes in alphabetical order as options when building a hardcopy
+$hardcopyThemes = [ sort (keys %{$hardcopyThemeNames}) ];
+# If you would like some specific order, do so explicitly like this:
+#$hardcopyThemes = [
+#	"twoColumn",
+#	"oneColumn",
+#	"XeLaTeX-twoColumn",
+#	"XeLaTeX-oneColumn",
+#	"XeLaTeX-Hebrew-twoColumn",
+#	"XeLaTeX-Hebrew-oneColumn",
+#];
+
 
 # Change default Hardcopy theme - in order to use an XeLaTeX theme, we must set
 # $externalPrograms{pdflatex} to use xelatex (here or in site.conf) !!!
