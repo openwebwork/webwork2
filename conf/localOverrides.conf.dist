@@ -318,8 +318,6 @@ $mail{feedbackRecipients}    = [
 # "Special" PG environment variables. (Stuff that doesn't fit in anywhere else.)
 ################################################################################
 
-# $pg{specialPGEnvironmentVars}{DragMath} = 0;
-
 # Determines whether or not MathObjects contexts will parse the alternative tokens
 # listed in the "alternatives" property (mostly for unicode alternatives for parse tokens).
 # $pg{specialPGEnvironmentVars}{parseAlternatives} = 1;

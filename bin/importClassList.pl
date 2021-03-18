@@ -31,8 +31,6 @@ use WeBWorK::File::Classlist;
 #use WeBWorK::Utils qw(readFile readDirectory cryptPassword x);
 use WeBWorK::Utils qw(cryptPassword);
 
-use Encode qw(decode_utf8 encode_utf8);
-
 use strict;
 use warnings;
 

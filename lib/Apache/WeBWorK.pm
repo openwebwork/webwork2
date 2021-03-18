@@ -75,9 +75,9 @@ sub handler($) {
 	my $uri = $r->uri;
 
 
-	# We set the bimode for print to utf8 because some language options
+	# We set the binmode for print to utf8 because some language options
 	# use utf8 characters
-	binmode(STDOUT, "encoding(UTF-8)");
+	binmode(STDOUT, ":encoding(UTF-8)");
 	# the warning handler accumulates warnings in $r->notes("warnings") for
 	# later cumulative reporting
 	my $warning_handler;
@@ -86,11 +86,11 @@ sub handler($) {
 			my ($warning) = @_;
 			chomp $warning;
 			my $warnings = $r->notes->get("warnings");
-			$warnings = Encode::decode_utf8($warnings);
+			$warnings = Encode::decode("UTF-8",$warnings);
 			$warnings .= "$warning\n";
 			#my $backtrace = join("\n",backtrace());
 			#$warnings .= "$backtrace\n\n";
-			$warnings = Encode::encode_utf8($warnings);
+			$warnings = Encode::encode("UTF-8",$warnings);
 			$r->notes->set(warnings => $warnings);
 
 			$log->warn("[$uri] $warning");
