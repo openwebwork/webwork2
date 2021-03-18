@@ -262,6 +262,12 @@ h2.page-title {
 	border-bottom: 1px solid #ccc;
 }
 
+.problem-sub-header {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 20px;
+}
+
 #info-panel-right {
 	margin-bottom: 0.5em;
 /*	width: 25%; 8*/
