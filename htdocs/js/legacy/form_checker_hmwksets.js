@@ -13,6 +13,6 @@ function check_form_hmwk_sets() {
 }
 
 
-addOnLoadEvent(function (){
-	document.getElementById("take_action").onclick = check_form_hmwk_sets;
+$(function (){
+    document.getElementById("take_action").onclick = check_form_hmwk_sets;
 });

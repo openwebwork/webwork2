@@ -46,43 +46,43 @@ $(function(){
     
 });
 
-addOnLoadEvent( function () {
-    $('#submit_button_id').on('click',function() {
-	/* NOTE:  This makes a lot of the updateTarget()/setTarget() JS
-	   in the main pgeditor3 code superfluous.  Since we are doing a 
-	   just in time check to see what the target should be, it doesn't
-	   matter if we keep the target up to date before submit is pressed.
-	*/
+window.addEventListener("DOMContentLoaded", function () {
+	$('#submit_button_id').on('click', function() {
+		// NOTE:  This makes a lot of the updateTarget()/setTarget() JS
+		// in the main pgeditor3 code superfluous.  Since we are doing a
+		// just in time check to see what the target should be, it doesn't
+		// matter if we keep the target up to date before submit is pressed.
 
-	// action0 = view
-	// action1 = update
-	// action2 = new version
-	// action3 = append
-	// action 4 = revert
-	
-	var inWindow = $("#newWindow").attr('checked');
-	var target = "pg_editor_frame";
-	if (inWindow) {
-	    if ($('#action2').attr('checked') ||
-		$('#action3').attr('checked') ||
-		$('#action4').attr('checked')) {
-		target = "WW_New_Edit";
-	    } else {
-		target = "WW_View";
-	    }
-	} 
-	else if ($('#action2').attr('checked')
-		 || $('#action3').attr('checked') 
-		 || $('#action4').attr('checked'))
-	{
-	    target = "";
-	}
-	$("#editor").attr('target',target);
-	
-	if ($('#editor').attr('target') == "pg_editor_frame") {
-	    $('#render-modal').modal('show');
-	}
+		// action0 = view
+		// action1 = update
+		// action2 = new version
+		// action3 = append
+		// action 4 = revert
 
-    });
-        
-})
+		var action2 = document.getElementById('action2');
+		var action3 = document.getElementById('action3');
+		var action4 = document.getElementById('action4');
+
+		var target = "pg_editor_frame";
+		if (document.getElementById("newWindow").checked) {
+			if ((action2 && action2.checked) ||
+				(action3 && action3.checked) ||
+				(action4 && action4.checked)) {
+				target = "WW_New_Edit";
+			} else {
+				target = "WW_View";
+			}
+		}
+		else if ((action2 && action2.checked) ||
+			(action3 && action3.checked) ||
+			(action4 && action4.checked)) {
+			target = "";
+		}
+
+		$("#editor").attr('target', target);
+
+		if ($('#editor').attr('target') == "pg_editor_frame") {
+			$('#render-modal').modal('show');
+		}
+	});
+});

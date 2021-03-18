@@ -2147,6 +2147,7 @@ sub body {
 	print $self->hidden_authen_fields;
 	print CGI::input({type=>"hidden", id=>"hidden_course_id", name=>"courseID", value=>$courseID});
 	print CGI::input({type=>"hidden", id=>"hidden_set_id", name=>"setID", value=>$setID});
+	print CGI::input({type=>"hidden", id=>"hidden_version_id", name=>"versionID", value=>$editingSetVersion}) if $editingSetVersion;
 	print CGI::input({type=>"submit", id=>"submit_changes_1", name=>"submit_changes", value=>$r->maketext("Save Changes")});
 	print CGI::input({type=>"submit", name=>"undo_changes", value => $r->maketext("Reset Form")});
 
@@ -2603,29 +2604,31 @@ sub output_JS {
 	my $timezone = $self->{timezone_shortname};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-	    print "\n\n<!-- add to header ProblemSetDetail.pm -->";
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style>
 	.ui-datepicker{font-size:85%}
 	.auto-changed{background-color: #ffffcc}
 	.changed {background-color: #ffffcc}
-    </style>!,"\n";
+	</style>!,"\n";
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
-  print "\n";
+
+	print qq!<link rel="stylesheet" type="text/css" href="$site_url/js/apps/ImageView/imageview.css"/>!;
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+
+	print "\n";
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 	print qq{
-           <link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-           <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+	<link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
 	print "\n";
-    	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.nestedSortable.js"}), CGI::end_script();
-    	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
 
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";

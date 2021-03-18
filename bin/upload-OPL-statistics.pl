@@ -46,7 +46,6 @@ my $output_file = "$domainname-$time-opl.sql";
 print "Dumping local OPL statistics\n";
 
 $dbuser = shell_quote($dbuser);
-$dbpass = shell_quote($dbpass);
 $db = shell_quote($db);
 
 $ENV{'MYSQL_PWD'}=$dbpass;

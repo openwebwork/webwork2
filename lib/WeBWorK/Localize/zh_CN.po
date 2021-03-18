@@ -8531,7 +8531,7 @@ msgstr "您的成绩已记录。"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1892
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:290
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:296
-msgid "Your score was not successfully sent to the LMS"
+msgid "Your score was not successfully sent to the LMS."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:261
@@ -8541,7 +8541,7 @@ msgstr "您的成绩已记录。"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1891
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:288
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:294
-msgid "Your score was successfully sent to the LMS"
+msgid "Your score was successfully sent to the LMS."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Authen.pm:553

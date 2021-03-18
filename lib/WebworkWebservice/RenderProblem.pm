@@ -278,6 +278,8 @@ sub renderProblem {
 	# determine the set name and the set problem number
 	my $setName       =  (defined($rh->{set_id}) ) ? $rh->{set_id} : 
 	    (defined($rh->{envir}->{setNumber}) ? $rh->{envir}->{setNumber}  : '');
+
+	my $setVersionId = $rh->{version_id} || 0;
 	
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
@@ -289,7 +291,9 @@ sub renderProblem {
 	my $problemAttempted = ($num_correct || $num_incorrect);
 	my $lastAnswer    = '';
 	
+	debug("effectiveUserName: " . $effectiveUserName);
 	debug("setName: " . $setName);
+	debug("setVersionId: " . $setVersionId);
 	debug("problemNumber: ". $problemNumber);
 	debug("problemSeed:" . $problemSeed);
 	debug("psvn: " . $psvn);
@@ -297,8 +301,10 @@ sub renderProblem {
 	debug("problemValue: " . $problemValue);
 
 
+	my $setRecord = $setVersionId
+		? $db->getMergedSetVersion($effectiveUserName, $setName, $setVersionId)
+		: $db->getMergedSet($effectiveUserName, $setName);
 
-	my $setRecord = $db->getMergedSet($effectiveUserName, $setName);
  	unless (defined($setRecord) and ref($setRecord) ) {
 		# if a User Set does not exist for this user and this set
 		# then we check the Global Set
@@ -323,7 +329,9 @@ sub renderProblem {
 	}
 	#warn "set Record is $setRecord";
 	# obtain the merged problem for $effectiveUser
-	my $problemRecord = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); 
+	my $problemRecord = $setVersionId
+		? $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionId, $problemNumber)
+		: $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 	
 	# if that is not yet defined obtain the global problem,
 	# convert it to a user problem, and add fake user data
@@ -407,7 +415,7 @@ sub renderProblem {
         # if reference is not defined then the path is obtained 
         # from the problem object.
         permissionLevel => $rh->{envir}->{permissionLevel} || 0,
-		effectivePermissionLevel => $rh->{envir}->{effectivePermissionlevel} 
+		effectivePermissionLevel => $rh->{envir}->{effectivePermissionLevel} 
 		                            || $rh->{envir}->{permissionLevel} || 0,
 	};
 	
