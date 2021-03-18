@@ -91,12 +91,12 @@ msgid "%1 title and institution changed from %2 to %3 and from %4 to %5"
 msgstr "%1 כותרת ומוסד שונו מ%2 ל%3 ומ%4 ל%5"
 
 #. (scalar @userIDsToExport, $dir, $fileName)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1189
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1188
 msgid "%1 users exported to file %2/%3"
 msgstr "%1 משתמשים יוצאו לקובץ %2/%3"
 
 #. ($numReplaced, $numAdded, $numSkipped, join (", ", @$skipped)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1100
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1099
 msgid ""
 "%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
 msgstr ""
@@ -167,12 +167,12 @@ msgstr "הסיסמה של %1 שונתה"
 
 #. ($setID, $problemID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:61
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1261
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1262
 msgid "%1: Problem %2"
 msgstr "%1: שאלה %2"
 
 #. ($setID, $problemID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:356
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:355
 msgid "%1: Problem %2 Show Me Another"
 msgstr "%1: שאלה %2 תראה לי עוד אחת"
 
@@ -187,12 +187,12 @@ msgid "%quant(%1,course was, courses were) successfully unhidden."
 msgstr "%quant(%1,קורס נהפך לגלוי, קורסים נהפכו לגלויים) בהצלחה."
 
 #. ($num)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:297
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:303
 msgid "%quant(%1,error) occured while generating hardcopy:"
 msgstr "%quant(%1,שגיאה קרתה, שגיאות קרו) בזמן ההכנה להדפסה:"
 
 #. ($n)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:808
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:807
 msgid "%quant(%1,file) unpacked successfully"
 msgstr "%quant(%1,קובץ נפרק,קבצים נפרקו) נפרק בהצלחה"
 
@@ -223,28 +223,28 @@ msgid ""
 "of attempts:"
 msgstr "(צפייה ברמז למדריך: הראה לתלמיד את הרמז לאחר מספר זה של נסיונות:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1801
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1828
 msgid "(This problem will not count towards your grade.)"
 msgstr "(שאלה זו לא תחשב בחישוב הציון לגליון.)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1923
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1925
 msgid ""
 "(This test is overtime because it was not submitted in the allowed time.)"
 msgstr "(מבחן זה הוגש באיחור מכיוון שהוא לא הוגש בזמן המוגדר.)"
 
 # $testNoun is either "test" or "submission"
 #. ($testNoun, $self->formatDateTime($set->answer_date)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1815
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1817
 msgid "(Your score on this %1 is not available until %2.)"
 msgstr "(הניקוד שלך על זה %1 לא זמין עד %2.)"
 
 # $testNoun is either "test" or "submission"
 #. ($testNoun)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1817
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1819
 msgid "(Your score on this %1 is not available.)"
 msgstr "(הניקוד שלך על זה  %1 לא זמין.)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1263
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1365
 msgid "(correct)"
 msgstr "(נכון)"
 
@@ -252,12 +252,12 @@ msgstr "(נכון)"
 msgid "(gw/quiz) After version answer date"
 msgstr "(מחסום/בוחן) אחרי תאריך התשובות של הגירסה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1265
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1367
 msgid "(incorrect)"
 msgstr "(לא נכון)"
 
 #. ($recScore)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1267
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1369
 msgid "(score %1)"
 msgstr "(ניקוד %1)"
 
@@ -373,12 +373,12 @@ msgid ""
 "allowed."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1222
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1246
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1221
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1245
 msgid "A file with that name already exists"
 msgstr "כבר קיים קובץ עם שם זה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:303
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:309
 msgid ""
 "A hardcopy file was generated, but it may not be complete or correct. Please "
 "check that no problems are missing and that they are all legible. If not, "
@@ -395,7 +395,7 @@ msgid ""
 msgstr "קבר קיים מיקום בשם %1 במסד הנתונים. האם התכוונת לערוך אותו?"
 
 #. ($subject, $number_of_recipients, $courseName, $failed_messages)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:924
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:923
 msgid ""
 "A message with the subject line \"%1\" has been sent to %quant(%2,recipient) "
 "in the class %3.  There were %4 message(s) that could not be sent."
@@ -467,23 +467,23 @@ msgstr ""
 msgid "ADJ STATUS"
 msgstr "סטטוס מותאם"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2072
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2075
 msgid "ANSWERS NOT RECORDED"
 msgstr "התשובות לא נשמרו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2060
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2063
 msgid "ANSWERS NOT RECORDED --"
 msgstr "התשובות לא נשמרו --"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2071
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2074
 msgid "ANSWERS ONLY CHECKED -- "
 msgstr "התשובות נבדקו בלבד --"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2054
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2081
 msgid "ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"
 msgstr "התשובות נבדקו בלבד --  תשובות לא נשמרו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2076
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2103
 msgid ""
 "ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version "
 "if neccessary)."
@@ -493,8 +493,8 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1417
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1464
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1167
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1195
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1270
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1194
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1269
 msgid "Abandon changes"
 msgstr "בטל שינויים"
 
@@ -503,7 +503,7 @@ msgstr "בטל שינויים"
 msgid "Abandon export"
 msgstr "בטל יצוא"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:432
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:450
 #, fuzzy
 msgid ""
 "Account creation is currently disabled in this course.  Please speak to your "
@@ -594,11 +594,11 @@ msgstr "מתחזה ל- %1."
 
 #. ($actionID)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:392
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:359
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:358
 msgid "Action %1 not found"
 msgstr "פעולה %1 לא נמצאה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1712
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1711
 msgid "Active"
 msgstr "פעיל"
 
@@ -657,7 +657,7 @@ msgstr "הוסף מבחן חדש לאיזה בוחן מחסום?"
 msgid "Add as what filetype?"
 msgstr "איזה סוג קובץ להוסיף?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1004
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1003
 msgid "Add how many students?"
 msgstr "כמה סטודנטים להוסיף?"
 
@@ -670,7 +670,7 @@ msgstr "הוסף שאלות ל-"
 msgid "Add to what set?"
 msgstr "הוסף לאיזה גליון?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1051
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1050
 msgid "Add which new users?"
 msgstr "איזה משתמשים להוסיף?"
 
@@ -782,7 +782,7 @@ msgstr "הוסף 48 שעות לתאריך סגירת שיעורי הבית."
 msgid "Adjusted Status"
 msgstr "סטטוס מותאם"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:64
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:65
 msgid "Adobe PDF"
 msgstr ""
 
@@ -836,7 +836,7 @@ msgstr "כל האוספים הם מוחבאים מכל התלמדים"
 msgid "All sets made visible for all students"
 msgstr "כל האוספים הם ניתנים לצפייה לכל התלמידים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:719
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:718
 msgid "All students in course"
 msgstr "כל התלמידים בקורס"
 
@@ -949,7 +949,7 @@ msgstr "רשימת תשובות"
 msgid "Answer Preview"
 msgstr "תצוגה מקדימה של תשובות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1270
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1372
 msgid "Answer(s) submitted:"
 msgstr "תשובה/ות שנשלחו:"
 
@@ -958,12 +958,12 @@ msgid "Answer:"
 msgstr "תשובה:"
 
 # Leave out spaces
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1539
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1566
 msgid "AnswerGroupInfo"
 msgstr "מידע קבוצת תשובות"
 
 # Leave out spaces
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1576
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1603
 msgid "AnswerHashInfo"
 msgstr "מידע גיבוב תשובות"
 
@@ -1029,12 +1029,12 @@ msgid "Archive"
 msgstr "הוסף לארכיון"
 
 #. ($archive, $n)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:776
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:775
 msgid "Archive '%1' created successfully (%quant( %2, file))"
 msgstr "ארכיון '%1\" נוצר בהצלחה  (%quant( %2, קובץ))"
 
 #. ($name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:953
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:952
 msgid "Archive '%1' deleted"
 msgstr "ארכיון '%1' נמחק"
 
@@ -1062,7 +1062,7 @@ msgid "Archived Courses"
 msgstr "קרוסים בארכיון"
 
 #. ($courseID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:204
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:203
 msgid "Archiving course as %1.tar.gz. Reload FileManager to see it."
 msgstr ""
 "מוסיף את הקורס לארכיון בתור %1.tar.gz. רענן את מנהל הקבצים כדי לראות אותו."
@@ -1116,7 +1116,7 @@ msgid "Assigned"
 msgstr "הוקצה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1784
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1863
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1862
 msgid "Assigned Sets"
 msgstr "אוספים שהוקצו"
 
@@ -1166,8 +1166,8 @@ msgstr "ניסיונות"
 msgid "Audit"
 msgstr "צופה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:274
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:280
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:292
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:298
 msgid "Authentication failed.  Please speak to your instructor."
 msgstr "האימות נכשל. אנא פנה למדריך."
 
@@ -1177,7 +1177,7 @@ msgstr "האימות נכשל. אנא פנה למדריך."
 msgid "Author Info"
 msgstr "מידע על הכותב"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:378
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:377
 msgid "Automatic"
 msgstr "אוטומטי"
 
@@ -1192,7 +1192,7 @@ msgid "Automatically render problems on page load"
 msgstr "הצג שאלות ישירוצ לאחר טעינת העמוד"
 
 #. ($emailDirectory,$old_default_msg_file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:416
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:415
 msgid "Backup file <code>%1/%2</code> created."
 msgstr "גיבוי לקובץ <code>%1/%2</code> נוצר."
 
@@ -1200,7 +1200,7 @@ msgstr "גיבוי לקובץ <code>%1/%2</code> נוצר."
 msgid "Basic Search"
 msgstr "חיפוש בסיסי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:378
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:377
 msgid "Binary"
 msgstr "בינארי"
 
@@ -1266,12 +1266,12 @@ msgid "Can submit answers for a student"
 msgstr "יכול לשלוח תשבות בשם תלמיד"
 
 #. ($!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:627
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:626
 msgid "Can't copy file: %1"
 msgstr "לא יכול לההעתיק את הקובץ: %1"
 
 #. ($archive,systemError($?)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:778
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:777
 msgid "Can't create archive '%1': command returned %2"
 msgstr "לא יכול ליצור את הארכיון '%1': פקודה החזירה %2"
 
@@ -1281,22 +1281,22 @@ msgid "Can't create course environment for %1 because %2"
 msgstr "לא יכול ליצור סביבת קורס עבור %1 בגלל ש%2"
 
 #. ($!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:853
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:852
 msgid "Can't create directory: %1"
 msgstr "לא יכול ליצור תקייה: %1"
 
 #. ($name, $!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:944
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:943
 msgid "Can't create file '%1': %2"
 msgstr "לא יכול לצור את הקובץ '%1': %2"
 
 #. ($!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:832
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:831
 msgid "Can't create file: %1"
 msgstr "לא יכול ליצור קובץ: %1"
 
 #. ($name, $!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:954
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:953
 msgid "Can't delete archive '%1': %2"
 msgstr "לא יכול למחוק את הארכיון '%1': %2"
 
@@ -1311,7 +1311,7 @@ msgid "Can't get password record for user '%1': %2"
 msgstr "לא יכול להשיג היסטורית סיסמאות עבור המשתמש '%1': %2"
 
 #. ($filePath)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:822
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:821
 msgid "Can't open %1"
 msgstr "לא יכול לפתוח את %1"
 
@@ -1321,12 +1321,12 @@ msgid "Can't open file %1"
 msgstr "לא יכול לפתוח את הקובץ %1"
 
 #. ($merge_file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:461
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:460
 msgid "Can't read merge file %1. No message sent"
 msgstr "לא יכול לקרוא את קובץ האיחוד %1. לא נשלחה שום הודעה"
 
 #. ($!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:652
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:651
 msgid "Can't rename file: %1"
 msgstr "לא יכול לשנות את שם הקובץ: %1"
 
@@ -1335,26 +1335,26 @@ msgid "Can't rename to the same name."
 msgstr "לא יכול לשנות שם לאותו השם."
 
 #. ($archive,systemError($?)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:811
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:810
 msgid "Can't unpack '%1': command returned %2"
 msgstr "לא יכול לפרוק '%1': פקודה החזירה %2"
 
 #. ($!)
 #. ($fullPath)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:551
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:550
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail.pm:1611
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:1825
 msgid "Can't write to file %1"
 msgstr "לא יכול לכתוב בקובץ %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:156
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:591
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:899
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:983
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:155
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:590
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:898
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:982
 msgid "Cancel"
 msgstr "ביטול"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:370
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:369
 msgid "Cancel E-mail"
 msgstr "ביטול דוא\"ל"
 
@@ -1429,8 +1429,8 @@ msgstr "שנה את מוסד הקורס מ%1 ל%2"
 msgid "Change title from %1 to %2"
 msgstr "שנה את כתרת הקורס מ%1 ל%2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1213
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1288
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1212
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1287
 msgid "Changes abandoned"
 msgstr "שינויים בוטלו"
 
@@ -1440,7 +1440,7 @@ msgid "Changes in this file have not yet been permanently saved."
 msgstr "שינויי בקובץ זה עוד לא נשמרו."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Config.pm:630
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1264
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1263
 msgid "Changes saved"
 msgstr "שינויים נשמרו"
 
@@ -1455,27 +1455,27 @@ msgstr "משנה את גרעין השאלות עבור התצוגה, אבל לא
 msgid "Chapter:"
 msgstr "פרק:"
 
-#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:438
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1693
+#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:437
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1720
 msgid "Check Answers"
 msgstr "בדוק תשובות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2169
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2192
 msgid "Check Test"
 msgstr "בדוק מבחן"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:220
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:219
 msgid "Check that it's permissions are set correctly."
 msgstr "בדוק שההרשאות מוגדרות כנדרש"
 
 #. ($emailDirectory)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:227
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:226
 msgid ""
 "Check whether it exists and whether the directory %1 can be read by the "
 "webserver."
 msgstr "בדוק אם קיים והאם התקייה %1 ניתנת לקריאה על ידי השרת."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1929
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1956
 msgid "Checking additional error messages"
 msgstr "בודק הודעות שגיאה נוספות"
 
@@ -1532,7 +1532,7 @@ msgstr ""
 "הכותרות כדי למיין את הטבלה."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:583
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:558
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:557
 msgid ""
 "Click on the login name to edit individual problem set data, (e.g. due "
 "dates) for these students."
@@ -1616,12 +1616,12 @@ msgstr "הסתר הכל"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:800
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:819
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:850
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1871
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:285
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:761
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:784
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:807
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:836
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1870
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:284
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:760
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:783
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:806
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:835
 msgid "Comment"
 msgstr "הערה"
 
@@ -1630,11 +1630,11 @@ msgid "Comment:"
 msgstr ""
 
 #. ($self->formatDateTime($set->answer_date)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1961
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1963
 msgid "Completed results for this assignment are not available until %1"
 msgstr "תוצאות עבור מטלה זו אינן זמינות עד %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1963
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1965
 msgid "Completed results for this assignment are not available."
 msgstr "תוצאות עבור מטלה זו אינן זמינות."
 
@@ -1671,13 +1671,13 @@ msgstr "המשך"
 msgid "Copied auxiliary files from %1 to new location at %2"
 msgstr "הועתקו קבצים משניים מ%1 למיקום חדש ב%2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:162
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:356
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:631
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:161
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:355
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:630
 msgid "Copy"
 msgstr "העתק"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:631
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:630
 msgid "Copy file as:"
 msgstr "העתק קובץ בשם:"
 
@@ -1689,7 +1689,7 @@ msgstr "העתק תבנית מ-:"
 msgid "Copy this Problem"
 msgstr "העתק שאלה זו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1894
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1896
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:395
 msgid "Correct"
 msgstr "נכון"
@@ -1702,7 +1702,7 @@ msgstr "תקן סטטוס מותאם"
 msgid "Correct Answer"
 msgstr "תשובה נכונה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1285
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1387
 msgid "Correct Answers:"
 msgstr "תשובות נכונות:"
 
@@ -1710,7 +1710,7 @@ msgstr "תשובות נכונות:"
 msgid "Correct Status"
 msgstr "תקן סטטוס"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:589
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:595
 msgid "Correct answers"
 msgstr "תשובות נכונות"
 
@@ -1719,7 +1719,7 @@ msgstr "תשובות נכונות"
 msgid "Correct: %1/%2"
 msgstr "נכון: %1/%2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1503
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1530
 msgid "CorrectAnswers"
 msgstr "תשובות נכונות"
 
@@ -1819,7 +1819,7 @@ msgstr "שם קורס:"
 msgid "Course Title:"
 msgstr "כותרת קורס:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:206
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:205
 msgid "Course archived."
 msgstr "הקורס הוכנס לארכיון."
 
@@ -1957,8 +1957,8 @@ msgstr "זמן ברירת המחדל שבו יש להגיש את המטלה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1540
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:636
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:164
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:357
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:163
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:356
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:1067
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:948
 msgid "Delete"
@@ -1985,7 +1985,7 @@ msgid "Delete course:"
 msgstr "מחק קורס:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1037
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:945
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:944
 msgid "Delete how many?"
 msgstr "כמה למחוק?"
 
@@ -2047,21 +2047,21 @@ msgstr "תמנע מ-"
 msgid "Description"
 msgstr "תיאור"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:498
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:497
 msgid "Didn't recognize action"
 msgstr "פעולה לא זוהתה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:157
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:156
 msgid "Directory"
 msgstr "תיקייה"
 
 #. ($file, $!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:685
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:684
 msgid "Directory '%1' not removed: %2"
 msgstr "התקייה '%1' לא הוסרה: %2"
 
 #. ($file, $removed)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:684
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:683
 msgid "Directory '%1' removed (items deleted: %2)"
 msgstr "התיקייה '%1' הוסרה (פריטים שנמחקו: %2)"
 
@@ -2185,9 +2185,9 @@ msgstr "אל תשתמש הישג"
 msgid "Done"
 msgstr "בוצע"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:161
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:354
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:72
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:160
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:353
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:71
 msgid "Download"
 msgstr "הורד"
 
@@ -2196,7 +2196,7 @@ msgstr "הורד"
 msgid "Download %1"
 msgstr "הורד %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:305
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:311
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:261
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:267
 msgid "Download Hardcopy"
@@ -2216,7 +2216,7 @@ msgid "Download PDF or TeX Hardcopy for Selected Sets"
 msgstr "הורד גרסת הדפסה כ-PDF או TeX של האוספים שנבחרו"
 
 #. ($selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:560
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:566
 msgid "Download hardcopy of set %1 for %2?"
 msgstr "הורד קובץ להדפסה של גליון %1 עבור %2?"
 
@@ -2264,7 +2264,7 @@ msgstr ""
 msgid "E-Mail"
 msgstr "דוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:345
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:344
 msgid "E-mail Instructor"
 msgstr "שלח דוא\"ל למדריך"
 
@@ -2282,7 +2282,7 @@ msgstr "דוא\"ל משוב מתלמידים נשלח אוטומטית לדרג�
 msgid "E-mail verbosity level"
 msgstr "אורך פורמט הדוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:365
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:364
 msgid "E-mail:"
 msgstr "דוא\"ל:"
 
@@ -2293,8 +2293,8 @@ msgstr "הושג"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1355
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1356
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:380
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:160
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:353
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:159
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:352
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:380
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:381
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:409
@@ -2355,7 +2355,7 @@ msgstr "ערוך את מידע הגליון"
 msgid "Edit Target Set"
 msgstr "ערוך את הגליון הנבחר"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:851
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:850
 msgid "Edit Which Users?"
 msgstr "ערוך איזה משתמשים?"
 
@@ -2397,17 +2397,17 @@ msgid "Edit which sets?"
 msgstr "איזה אוספים לערוך?"
 
 # Edit with a number 1 after with no space
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1449
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1476
 msgid "Edit1"
 msgstr "עריכה1"
 
 # Edit with a number 2 after with no space
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1455
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1482
 msgid "Edit2"
 msgstr "עריכה2"
 
 # Edit with a number 3 after with no space
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1461
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1488
 msgid "Edit3"
 msgstr "עריכה3"
 
@@ -2438,12 +2438,12 @@ msgstr "עורך את המידע של גליון השאלות %1 עבור התל
 msgid "Editor"
 msgstr "עורך"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:704
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:703
 msgid "Editor rows:"
 msgstr "עורך שורות:"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:411
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1519
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1518
 #: /opt/webwork/webwork2/lib/WeBWorK/URLPath.pm:665
 msgid "Email"
 msgstr "דוא\"ל"
@@ -2456,11 +2456,11 @@ msgstr "דוא\"ל"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:795
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:814
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:845
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:280
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:279
 msgid "Email Address"
 msgstr "כתובת דוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:773
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:772
 msgid "Email Body:"
 msgstr "גוף הדוא\"ל"
 
@@ -2468,11 +2468,11 @@ msgstr "גוף הדוא\"ל"
 msgid "Email Instructor On Failed Attempt"
 msgstr "שלח דוא\"ל למדריך בכל נסיון כושל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1866
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1865
 msgid "Email Link"
 msgstr "קישור דוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:745
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:744
 msgid "Email address"
 msgstr "כתובת דוא\"ל"
 
@@ -2483,7 +2483,7 @@ msgid "Email instructor"
 msgstr "שלח דוא\"ל למדריך"
 
 #. (scalar(@{$self->{ra_send_to}})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:528
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:527
 msgid ""
 "Email is being sent to %quant(%1,recipient). You will be notified by email "
 "when the task is completed.  This may take several minutes if the class is "
@@ -2492,7 +2492,7 @@ msgstr ""
 "שולח דוא\"ל ל%quant(%1,נמען, נמענים). תקבל הודעה כאשר המשימה תושלם. זה עשוי "
 "לקחת כמה דקות אם הכיתה גדולה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:589
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:588
 msgid "Emails to be sent to the following:"
 msgstr "דוא\"ל נשלח ל-:"
 
@@ -2582,7 +2582,7 @@ msgstr ""
 msgid "Enrolled"
 msgstr "רשום"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:744
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:743
 msgid "Enrolled, Drop, etc."
 msgstr "רשום, פרש, וכו'."
 
@@ -2590,14 +2590,14 @@ msgstr "רשום, פרש, וכו'."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:797
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:816
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:847
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:758
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:781
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:804
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:833
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:757
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:780
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:803
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:832
 msgid "Enrollment Status"
 msgstr "סטטוס רישום"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1132
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1131
 msgid "Enter filename below"
 msgstr "הכנס שם קובץ כאן"
 
@@ -2643,7 +2643,7 @@ msgstr "שגיאה בהשגת סיסמת משגיח גליון ישנה ממסד
 msgid "Error message:"
 msgstr "הודעת שגיאה:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2143
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2162
 msgid "Error messages"
 msgstr "הודעות שגיאה"
 
@@ -2685,7 +2685,7 @@ msgstr "שגיאה: תאריך תשובות לא יכולל להיות יותר 
 msgid "Error: close date cannot be more than 10 years from now in set %1"
 msgstr "שיגאה: תאריך סגירה לא יכול להיות יותר מ-10 שנים מהיום בגליון %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:552
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:551
 msgid "Error: no file data was submitted!"
 msgstr ""
 
@@ -2697,7 +2697,7 @@ msgid "Error: open date cannot be more than 10 years from now in set %1"
 msgstr "שגיאה: תאריך פתיחה לא יכול להיות יותר מ-10 שנים מהיום בגליון %1"
 
 #. ($problem_desc, $problem_name, CGI::br()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1232
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1322
 msgid ""
 "Errors encountered while processing %1. This %2 has been omitted from the "
 "hardcopy. Error text: %3"
@@ -2779,7 +2779,7 @@ msgstr "יצא הישגים שנבחרו."
 msgid "Export selected sets"
 msgstr "יצא את האוספים שנבחרו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1128
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1127
 msgid "Export to what kind of file?"
 msgstr "איזה סוג קובץ ליצא?"
 
@@ -2787,7 +2787,7 @@ msgstr "איזה סוג קובץ ליצא?"
 msgid "Export which sets?"
 msgstr "איזה אוספים ליצא?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1111
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1110
 msgid "Export which users?"
 msgstr "איזה משתמשים ליצא?"
 
@@ -2869,7 +2869,7 @@ msgid "Failed to open %1"
 msgstr "פתיחת %1 נכשלה"
 
 #. ($@)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:549
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:548
 msgid "Failed to save: %1"
 msgstr "השמירה נכשלה: %1"
 
@@ -2878,7 +2878,7 @@ msgstr "השמירה נכשלה: %1"
 msgid "False"
 msgstr " לא נכון"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1724
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1751
 msgid "Feature exhausted for this problem"
 msgstr "האפשרותת כבר נוצלה עד תומה עבור שאלה זו"
 
@@ -2928,22 +2928,22 @@ msgstr ""
 "הקובץ של שאלה זו באופן ידני מדף 'עורך גליון שיעורי בית'."
 
 #. ($file,$!)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:688
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:687
 msgid "File '%1' not removed: %2"
 msgstr "הקובץ '%1' לא הוסר: %2"
 
 #. ($file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:687
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:686
 msgid "File '%1' successfully removed"
 msgstr "הקובץ '%1' הוסר בהצלחה"
 
 #. ($name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:950
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:949
 msgid "File '%1' uploaded successfully"
 msgstr ""
 
 #. ($name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:910
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:909
 msgid "File <b>%1</b> already exists. Overwrite it, or rename it as:"
 msgstr "קובץ <b>%1</b> כבר קיים.  שמור עליו, או שנה את שמו ל-:"
 
@@ -2955,28 +2955,28 @@ msgstr "השווה קבצים"
 msgid "File Manager"
 msgstr "מנהל קבצים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:550
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:549
 msgid "File saved"
 msgstr "הקובץ נשמר"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:625
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:624
 msgid "File successfully copied"
 msgstr "הקובץ הועתק בהצלחה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:650
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:649
 msgid "File successfully renamed"
 msgstr "שם הקובץ שונה בהצלחה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1142
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1141
 msgid "Filename"
 msgstr "שם קובץ"
 
 #. ($extension,$location)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1178
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1177
 msgid "Files with extension '.%1' usually belong in '%2'"
 msgstr "קבצים עם הסיומת '.%1' בדרכ כלל שייכים ל-'%2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:668
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:667
 msgid "Filter by what text?"
 msgstr "לפי אזה טקסט לסנן?"
 
@@ -2998,20 +2998,20 @@ msgstr "ראשון"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:793
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:812
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:843
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1864
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:278
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:755
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:778
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:801
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:830
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1863
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:277
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:754
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:777
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:800
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:829
 msgid "First Name"
 msgstr "שם פרטי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:740
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:739
 msgid "First name"
 msgstr "שם פרטי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:257
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:256
 msgid ""
 "For security reasons, you cannot specify a message file from a directory "
 "higher than the email directory (you can't use ../blah/blah for example). "
@@ -3033,7 +3033,7 @@ msgid ""
 msgstr ""
 "אלץ מספור עוקב של של השאלות החל ממספר אחד ( זה תמיד נעשה כשמסדרים בעיות מחדש)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:377
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:376
 msgid "Format"
 msgstr "פורמט"
 
@@ -3055,12 +3055,12 @@ msgstr "לא נמצאו תיקיות המכילות שאלות."
 msgid "From This Course"
 msgstr "מהקורס הזה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:435
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:434
 msgid "From field must contain one valid email address."
 msgstr "שדה הנמען חייב להכיל לפחות כתובת דוא\"ל תקינה אחת."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:357
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:690
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:356
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:689
 msgid "From:"
 msgstr "שולח:"
 
@@ -3092,11 +3092,11 @@ msgstr "כללי"
 msgid "General Information"
 msgstr "מידע כללי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:472
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:478
 msgid "Generate Hardcopy"
 msgstr "תיצור קובץ להדפסה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:472
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:478
 msgid "Generate hardcopy for selected sets and selected users"
 msgstr "צור קובץ להדפסה עבור האוספים והמשתמשים שנבחרו."
 
@@ -3117,7 +3117,7 @@ msgstr "קבל גרסה חדשה של שאלה זו."
 msgid "Give new password to"
 msgstr "תן סיסמה חדשה ל-"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:898
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:897
 msgid "Give new password to which users?"
 msgstr "לאיזה משתמשים לתת סיסמה חדשה?"
 
@@ -3148,7 +3148,7 @@ msgstr "שאלה גלובאלית %1 עבור גליון %2 לא נמצאה."
 msgid "Global set data will be shown instead of user specific data"
 msgstr "מידע ??? גלובאלי על הגליון יופיע במקום מידע משתמש ספציפי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:158
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:157
 msgid "Go"
 msgstr "התחל"
 
@@ -3172,7 +3172,7 @@ msgstr "נקד"
 msgid "Grade Problem"
 msgstr "נקד שאלה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2167
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2190
 msgid "Grade Test"
 msgstr "נקד מבחן"
 
@@ -3204,11 +3204,11 @@ msgstr "כרך ההארה הגדול"
 msgid "Guest Login"
 msgstr "כניסת אורח"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2159
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2178
 msgid "HTTP Headers"
 msgstr "קידומות HTTP"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:607
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:613
 msgid "Hardcopy Format:"
 msgstr "פורמט קובץ להדפסה:"
 
@@ -3226,7 +3226,7 @@ msgstr "יוצר הקבצים להדפסה"
 msgid "Hardcopy Header"
 msgstr "קידומת גירסת הדפסה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:619
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:637
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:170
 msgid "Hardcopy Theme"
 msgstr "עיצוב גרסת הדפסה"
@@ -3244,7 +3244,7 @@ msgstr "קידומות"
 msgid "Help"
 msgstr "עזרה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:481
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:507
 msgid "Here is a new version of your problem."
 msgstr "הנה גרסה חדשה של השאלה."
 
@@ -3282,15 +3282,15 @@ msgstr "החבא את כל הכתובות"
 msgid "Hide path:"
 msgstr "החבא כתובת:"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1559
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1558
 msgid "Hint:"
 msgstr "רמז:"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1559
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1558
 msgid "Hint: "
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:595
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:601
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:392
 msgid "Hints"
 msgstr "רמזים"
@@ -3322,7 +3322,7 @@ msgstr "אייקון"
 msgid "Icon File"
 msgstr "קוץ אייקון"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:554
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:553
 msgid ""
 "If a password field is left blank, the student's current password will be "
 "maintained."
@@ -3375,7 +3375,7 @@ msgid "If you come back to it later, it may revert to its original version."
 msgstr ""
 
 #. ($file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:690
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:689
 msgid "Illegal file '%1' specified"
 msgstr "נבחר קובץ לא חוקי '%1' "
 
@@ -3405,7 +3405,7 @@ msgstr "כמה אוספים ליבא?"
 msgid "Import sets with names"
 msgstr "יבא אוספים עם שמות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1021
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1020
 msgid "Import users from what file?"
 msgstr "מאיזה קובץ ליבא משתמשים?"
 
@@ -3419,7 +3419,7 @@ msgstr "יבא Imported %quant(%1,הישג, הישגים)"
 msgid "In progress: %1/%2"
 msgstr "בתהליך: %1/%2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1712
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1711
 msgid "Inactive"
 msgstr "לא פעיל"
 
@@ -3431,7 +3431,7 @@ msgstr "זמן אי-פעילות לפני שהמשתמש נדרש להתחבר �
 msgid "Include Success Index"
 msgstr "הוסף תיבת הצלחה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1894
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1896
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:401
 msgid "Incorrect"
 msgstr "לא נכון"
@@ -3442,7 +3442,7 @@ msgid "Incorrect: %1/%2"
 msgstr "לא נכון: %1/%2"
 
 # Short for Initial
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:173
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:172
 msgid "Init"
 msgstr "התחל"
 
@@ -3450,7 +3450,7 @@ msgstr "התחל"
 msgid "Institution:"
 msgstr "מוסד:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2091
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2114
 msgid "Instructor Comment:"
 msgstr ""
 
@@ -3462,12 +3462,12 @@ msgstr "כלי מדריך"
 msgid "Instructor solution preview: show the student solution after due date."
 msgstr "הצגת פתרון למדריך: הראה לתלמיד פתרון לאחר מועד ההגשה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:443
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:442
 msgid "Invalid Reply-to address."
 msgstr "כתובת משוב לא תקינה."
 
 #. ($output_file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:260
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:259
 msgid ""
 "Invalid file name. The file name \"%1\" does not have a \".msg\" extension "
 "All email file names must end in the extension \".msg\" choose a file name "
@@ -3502,12 +3502,12 @@ msgstr ""
 msgid "Items"
 msgstr "חפצים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2010
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2012
 msgid "Jump to Page:"
 msgstr "קפוץ לעמוד:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2032
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2035
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2034
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2037
 msgid "Jump to Problem:"
 msgstr "קפוץ לשאלה:"
 
@@ -3548,20 +3548,20 @@ msgstr "תשובה אחרונה"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:794
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:813
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:844
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1865
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:279
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:756
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:779
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:802
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:831
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1864
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:278
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:755
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:778
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:801
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:830
 msgid "Last Name"
 msgstr "שם משפחה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:748
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:747
 msgid "Last column of merge file"
 msgstr "עמודה אחרונה של קובץ האיחוד"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:741
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:740
 msgid "Last name"
 msgstr "שם משפחה"
 
@@ -3696,7 +3696,7 @@ msgstr "התחבר ל-%1"
 msgid "Logged in as %1."
 msgstr "מחובר בתור %1."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:746
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:745
 msgid "Login"
 msgstr "התחבר"
 
@@ -3713,18 +3713,18 @@ msgstr "נתוני התחברות"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:792
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:811
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:842
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1861
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:277
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:754
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:777
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:800
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:829
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1860
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:276
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:753
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:776
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:799
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:828
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Login Name"
 msgstr "שם התחברות"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1783
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1862
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1861
 msgid "Login Status"
 msgstr "סטטוס התחברות"
 
@@ -3740,8 +3740,8 @@ msgstr "תפריט ראשי"
 msgid "Make"
 msgstr "צור"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:165
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:358
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:164
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:357
 msgid "Make Archive"
 msgstr " צור ארכיון"
 
@@ -3800,7 +3800,7 @@ msgstr ""
 "מספר מקסימאלי של פעמים שניתן להשתמש בכפתור \"תראה לי עוד אחת\" עבור כל שאלה "
 "(-1 => לא מוגבל)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:681
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:680
 msgid "Merge file:"
 msgstr "קובץ איחוד"
 
@@ -3808,17 +3808,17 @@ msgstr "קובץ איחוד"
 msgid "Message"
 msgstr "הודעה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:672
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:671
 msgid "Message file:"
 msgstr "קובץ הודעה:"
 
 #. ($emailDirectory, $output_file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:423
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:422
 msgid "Message saved to file <code>%1/%2</code>."
 msgstr "הודעה נשמרה לקובץ <code>%1/%2</code>."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2157
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2232
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2176
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2251
 msgid "Method"
 msgstr "Method"
 
@@ -3839,7 +3839,7 @@ msgstr "הזז"
 
 # Msg is short for message
 #. ($recipient, $ur->email_address)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:915
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:914
 msgid "Msg sent to %1 at %2."
 msgstr "הודעה נשלח ל%2 ב%2."
 
@@ -3891,15 +3891,15 @@ msgstr "מדליון בעל האוב"
 msgid "Never"
 msgstr "אף פעם"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:168
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:360
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:836
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:167
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:359
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:835
 msgid "New File"
 msgstr "קובץ חדש"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:167
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:361
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:857
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:166
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:360
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:856
 msgid "New Folder"
 msgstr "תיקייה חדשה"
 
@@ -3907,20 +3907,20 @@ msgstr "תיקייה חדשה"
 msgid "New Name:"
 msgstr "שם חדש:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1722
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1876
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1721
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1875
 msgid "New Password"
 msgstr "סיסמה חדשה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:836
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:835
 msgid "New file name:"
 msgstr "שם קובץ חדש:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:857
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:856
 msgid "New folder name:"
 msgstr "שם תיקייה חדש:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1331
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1330
 msgid "New passwords saved"
 msgstr "סיסמאות חדשות נשמרו"
 
@@ -3944,8 +3944,8 @@ msgstr "שאלה הבאה"
 msgid "Next Student"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1255
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1256
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1257
 msgid "Next Test"
 msgstr ""
 
@@ -3954,6 +3954,7 @@ msgstr ""
 msgid "Next page"
 msgstr "הדף הבא"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:630
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1282
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:138
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:148
@@ -4023,7 +4024,7 @@ msgstr "לא הוגדר מזהה קורס"
 msgid "No data exists for set %1 and problem %2"
 msgstr "לא קיימים נתונים עבור גליון %1 ושאלה %2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:246
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:245
 msgid "No filename was specified for saving!  The message was not saved."
 msgstr "לא פורט שם קובץ לשמירה! ההודעה לא נשמרה."
 
@@ -4040,7 +4041,7 @@ msgstr "לא פורט מיקום לערוך?! אנה בדוק את הנתוני�
 msgid "No location with name %1 exists in the database"
 msgstr "לא קיים מיקום עם השם %1 במסד הנתונים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:460
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:459
 msgid "No merge data file"
 msgstr "לא קיים קובץ נתוני איחוד"
 
@@ -4054,7 +4055,7 @@ msgstr "לא פורט מזהה הישג חדש. לא נוצר הישג חדש. �
 msgid "No problems matched the given parameters."
 msgstr "לא נמצאו שאלות שתואמות לפאראמטרים שנתנו."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:451
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:450
 msgid ""
 "No recipients selected. Please select one or more recipients from the list "
 "below."
@@ -4110,7 +4111,7 @@ msgstr "לא פורט מסלול קובץ מקור"
 msgid "No source_file for problem in .def file"
 msgstr "אין קובץ מקור לשאלה בקובץ ה-def."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1909
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1908
 msgid ""
 "No students shown.  Choose one of the options above to list the students in "
 "the course."
@@ -4160,8 +4161,8 @@ msgstr "לאף אחד מהמשתמשים הנבחרים לא הוקצה הגלי
 msgid "Not logged in."
 msgstr "לא מחובר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2097
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1395
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2120
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1422
 msgid "Note"
 msgstr "הערה"
 
@@ -4170,7 +4171,7 @@ msgstr "הערה"
 msgid "Note:"
 msgstr "הערה:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2171
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2194
 msgid ""
 "Note: grading the test grades all problems, not just those on this page."
 msgstr "שים לב: ניקוד המבחן מנקד את כל השאלות, לא רק מהדף הזה."
@@ -4225,7 +4226,7 @@ msgid ""
 "instructor."
 msgstr "רק רמת ההיתר הזאת ומעלה מקבלים גישה לכפתור לשליחת דוא\"ל למדריך."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:673
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:672
 msgid "Open"
 msgstr "פתח"
 
@@ -4303,12 +4304,12 @@ msgstr "מתוך"
 msgid "Over time, closed."
 msgstr "הזמן חלף, סגור."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:908
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:910
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:907
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:909
 msgid "Overwrite"
 msgstr "דרוס"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:386
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:385
 msgid "Overwrite existing files silently"
 msgstr "דרוס קבצים קיימים באופן שקט"
 
@@ -4338,7 +4339,7 @@ msgid "PG warning messages"
 msgstr "הודעות אזהרה של PG"
 
 # Doesn't need to be translated
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1595
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1622
 msgid "PGInfo"
 msgstr "מידע PG"
 
@@ -4363,8 +4364,8 @@ msgstr "PGML"
 msgid "POD"
 msgstr "POD"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2080
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2068
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2083
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2095
 msgid "PREVIEW ONLY -- ANSWERS NOT RECORDED"
 msgstr "תצוגה מקדימה בלבד -- התשובות לא נשמרות"
 
@@ -4435,12 +4436,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:801
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:820
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:851
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1872
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:286
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:762
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:785
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:808
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:837
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1871
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:285
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:761
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:784
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:807
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:836
 msgid "Permission Level"
 msgstr "רמת הרשאה"
 
@@ -4512,11 +4513,11 @@ msgstr "אנא בחר שם מיקום למחיקה."
 msgid "Please select action to be performed."
 msgstr "אנא בחר פעולה לבצע"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:179
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:185
 msgid "Please select at least one set and try again."
 msgstr "אנא בחר לפחות גליון אחד ונסה שוב."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:170
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:176
 msgid "Please select at least one user and try again."
 msgstr "אנא בחר לפחות משתמש אחד ונסה שוב."
 
@@ -4542,24 +4543,24 @@ msgstr "פרטי בדיקה מקדימה"
 msgid "Preview Comment"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:723
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:722
 msgid "Preview Message"
 msgstr "צפייה מוקדמת בהודעה"
 
-#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:436
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1691
+#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:435
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1718
 msgid "Preview My Answers"
 msgstr "צפייה מוקדמת בתשובות שלי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2165
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2188
 msgid "Preview Test"
 msgstr "צפייה מוקדמת במבחן"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:723
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:722
 msgid "Preview message"
 msgstr "צפייה מוקדמת בהודעה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:722
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:721
 msgid "Preview set to:"
 msgstr "הצג גליון עבור:"
 
@@ -4573,8 +4574,8 @@ msgstr "שאלה קודמת"
 msgid "Previous Student"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1223
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1224
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1225
 msgid "Previous Test"
 msgstr ""
 
@@ -4587,12 +4588,12 @@ msgstr "עמוד קודם"
 msgid "Primary sort"
 msgstr "מיון ראשי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1938
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1940
 msgid "Print Test"
 msgstr "הדפס מבחן"
 
 # Short for Problem
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1888
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1890
 msgid "Prob"
 msgstr "שאלה"
 
@@ -4622,7 +4623,11 @@ msgid "Problem %1"
 msgstr "שאלה %1"
 
 #. ($problemNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2086
+#. ($prettyID)
+#. ($versioned ? $versioned : $MergedProblem->problem_id)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2091
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1337
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1339
 msgid "Problem %1."
 msgstr "שאלה %1."
 
@@ -4676,7 +4681,7 @@ msgstr "מציג השאלות"
 msgid "Problem source is drawn from a grouping set"
 msgstr "השאלה נבחרת באופן אקראי מתוך קבוצת שאלות ייעודיות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1521
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1548
 msgid "ProblemGrader"
 msgstr ""
 
@@ -4750,12 +4755,12 @@ msgstr "תרגול"
 msgid "Read only"
 msgstr "קריאה בלבד"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:741
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:740
 msgid "Really delete the items listed above?"
 msgstr "אתה באמת רוצה למחוק את הפריטים לעיל?"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:743
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:742
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:152
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:153
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:155
@@ -4767,12 +4772,12 @@ msgstr "אתה באמת רוצה למחוק את הפריטים לעיל?"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:799
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:818
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:849
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1870
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:284
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:760
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:783
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:806
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:835
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1869
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:283
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:759
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:782
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:805
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:834
 msgid "Recitation"
 msgstr "תרגול"
 
@@ -4806,8 +4811,8 @@ msgstr "הפעלת ניקוד מופחת"
 msgid "Reduced:"
 msgstr "מופחת:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:155
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:362
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:154
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:361
 msgid "Refresh"
 msgstr "רענן"
 
@@ -4838,16 +4843,16 @@ msgstr "נותר"
 msgid "Remember Me"
 msgstr "זכור אותי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:482
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:508
 msgid "Remember to return to your original problem when you're finished here!"
 msgstr "זכור לחזור לשאלה המקורית כשסיימת כאן!"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1173
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:163
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:355
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:656
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:904
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:910
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:162
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:354
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:655
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:903
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:909
 msgid "Rename"
 msgstr "שנה שם"
 
@@ -4862,7 +4867,7 @@ msgstr "שנה את שם %1 ל-%2"
 msgid "Rename Course"
 msgstr "שנה שם לקורס"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:656
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:655
 msgid "Rename file as:"
 msgstr "שנה שם קובץ ל-:"
 
@@ -4901,11 +4906,11 @@ msgstr "סדר מחדש שאלות בלבד"
 msgid "Replace current problem: %1"
 msgstr "החלףשאלה נוכחית: %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1033
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1032
 msgid "Replace which users?"
 msgstr "איזה משתמשים להחליף?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:694
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:693
 msgid "Reply-To:"
 msgstr "השב ל-:"
 
@@ -4932,16 +4937,16 @@ msgstr "דווח עבור קורס %1:"
 msgid "Report on database structure for course %1:"
 msgstr "דווח מבנה מסד נתונים עבור קורס %1:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1687
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1714
 msgid "Request New Version"
 msgstr "בקש גרסה חדשה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2154
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2229
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2173
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2248
 msgid "Request information"
 msgstr "בקש מידע"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1770
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1797
 msgid "Request new version now."
 msgstr "בקש גרסה חדשה כעת"
 
@@ -5049,7 +5054,7 @@ msgstr "הגבל ל-"
 msgid "Restrict release by set(s)"
 msgstr "הגבל פרסום לפי אוספים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1890
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1892
 #: /opt/webwork/webwork2/lib/WeBWorK/Utils/AttemptsTable.pm:317
 msgid "Result"
 msgstr "תוצאות"
@@ -5059,7 +5064,7 @@ msgid "Result of last action performed"
 msgstr "התוצאה של הפעולה האחרונה שבוצעה"
 
 #. (CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:371
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:370
 msgid "Result of last action performed: %1"
 msgstr "התוצאה של הפעולה האחרונה שבוצעה: %1"
 
@@ -5083,12 +5088,12 @@ msgstr "החזר איזה בוחן מחסום?"
 msgid "Retitled"
 msgstr "כותרת שונתה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:300
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:299
 msgid "Return to your work"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:170
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:592
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:169
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:591
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:134
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:135
 msgid "Revert"
@@ -5126,10 +5131,10 @@ msgstr "מזהה תלמיד"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:44
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:219
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:172
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:593
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:171
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:592
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:385
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:782
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:781
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:209
 msgid "Save"
 msgstr "שמור"
@@ -5141,8 +5146,8 @@ msgstr "שמור %1"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:45
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:526
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:171
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:594
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:170
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:593
 msgid "Save As"
 msgstr "שמור בשם"
 
@@ -5154,11 +5159,11 @@ msgstr "שמור בשם"
 msgid "Save Changes"
 msgstr "שמור שינויים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:783
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:782
 msgid "Save as"
 msgstr "שמור בשם"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:786
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:785
 msgid "Save as Default"
 msgstr "שמור כברירת מחדל"
 
@@ -5169,14 +5174,14 @@ msgstr "שמור כברירת מחדל"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:363
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1190
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1263
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1219
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1294
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1218
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1293
 msgid "Save changes"
 msgstr "שמור שינויים"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:1747
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:1819
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:679
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:678
 msgid "Save file to:"
 msgstr "שמור קובץ ב-:"
 
@@ -5227,7 +5232,7 @@ msgstr "ציון שנדרש עבור פרסום"
 msgid "Score selected set(s) and save to:"
 msgstr "נקד את האוספים שנבחרו ושמור ב-:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1886
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1888
 msgid "Score summary for last submit:"
 msgstr "סיכום ניקוד עבור שליחה אחרונה:"
 
@@ -5270,7 +5275,7 @@ msgstr "מיון משני"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementUserEditor.pm:158
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemGrader.pm:214
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:742
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:741
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats.pm:151
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:152
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:154
@@ -5282,12 +5287,12 @@ msgstr "מיון משני"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:798
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:817
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:848
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1869
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:283
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:759
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:782
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:805
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:834
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:282
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:758
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:804
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:833
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UsersAssignedToSet.pm:132
 msgid "Section"
 msgstr "קבוצה"
@@ -5366,7 +5371,7 @@ msgstr "בחר את כל המשתמשים"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:285
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:564
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:509
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:508
 msgid "Select an action to perform"
 msgstr "בחר בפעולה לבצע"
 
@@ -5412,7 +5417,7 @@ msgstr ""
 "רשומים ברשימת הקורסים של WeBWorK בדף השער. כדי לגשת לקורס, מדריך או תלמיד "
 "חייבים לדעת את כתובת ה-URL המלאה של הקורס."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:489
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:495
 msgid ""
 "Select the homework sets for which to generate hardcopy versions. You may "
 "also select multiple users from the users list. You will receive hardcopy "
@@ -5427,19 +5432,19 @@ msgid ""
 "choice."
 msgstr "בחר משתמש/ים ו/או גליון/ים ולחץ על כפתור הפעולה לפי בחירתך."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:719
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:718
 msgid "Selected students"
 msgstr "תלמידים שנבחרו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:368
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:367
 msgid "Send E-mail"
 msgstr "שלח דוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:780
 msgid "Send Email"
 msgstr "שלח דוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:716
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:715
 msgid "Send to:"
 msgstr "שלח ל-:"
 
@@ -5583,7 +5588,7 @@ msgid ""
 "automatically use Full Width characters for parentheses and commas."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:496
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:502
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:368
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:425
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:196
@@ -5611,15 +5616,15 @@ msgstr "הזז תאריכים כך שהמוקדם ביותר הוא"
 msgid "Show"
 msgstr "הצג"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1557
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1584
 msgid "Show Auxiliary Resources"
 msgstr "הצג מקורות מישניים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:327
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:326
 msgid "Show Date & Size"
 msgstr "הצג תאריך וגודל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1617
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1644
 msgid "Show Hints"
 msgstr "הראה רמזים"
 
@@ -5627,10 +5632,14 @@ msgstr "הראה רמזים"
 msgid "Show Me Another"
 msgstr "תראה לי עוד אחת"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2205
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2241
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2228
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2268
 msgid "Show Past Answers"
 msgstr "הראה תשובות מהעבר"
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:625
+msgid "Show Problem Source File:"
+msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:282
 msgid "Show Problems on Finished Tests"
@@ -5640,8 +5649,8 @@ msgstr "הראה שאלות במבחנים שבוצעו"
 msgid "Show Scores on Finished Assignments?"
 msgstr "הראה ציונים על מטלות שבוצעו?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2153
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1641
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2176
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1668
 msgid "Show Solutions"
 msgstr "הראה פתרונות"
 
@@ -5649,7 +5658,7 @@ msgstr "הראה פתרונות"
 msgid "Show Total Homework Grade on Grades Page"
 msgstr "הראה ציון בסך כל שיעורי הבית בעמוד הציונים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:635
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:634
 msgid "Show Which Users?"
 msgstr "אזה משתמשים להציג?"
 
@@ -5658,18 +5667,18 @@ msgstr "אזה משתמשים להציג?"
 msgid "Show all paths"
 msgstr "הראה את כל המסלולים"
 
-#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:437
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2146
+#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:436
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2169
 msgid "Show correct answers"
 msgstr "הראה תשובות נכונות"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:341
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1712
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1739
 msgid "Show me another"
 msgstr "הראה לי עוד אחת"
 
 #. ($exhausted)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1725
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1752
 msgid "Show me another %1"
 msgstr "הראה לי עוד אחת %1"
 
@@ -5678,7 +5687,7 @@ msgstr "הראה לי עוד אחת %1"
 msgid "Show path ..."
 msgstr "הראה מסלול ..."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2160
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2183
 msgid "Show problem graders"
 msgstr ""
 
@@ -5693,12 +5702,12 @@ msgstr "איזה אוספים להציג?"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:264
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:527
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:414
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:472
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:471
 msgid "Show/Hide Site Description"
 msgstr "הצג/החבא תיאור אתר"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:579
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1497
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:585
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1524
 msgid "Show:"
 msgstr "הראה:"
 
@@ -5713,7 +5722,7 @@ msgid "Showing %1 out of %2 sets."
 msgstr "מראה %1 מתוך %2 אוספים."
 
 #. (scalar @Users, scalar @allUserIDs)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:552
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:551
 msgid "Showing %1 out of %2 users"
 msgstr "מראה %1 מתוך %2 אוספים"
 
@@ -5733,16 +5742,16 @@ msgstr "תיאור אתר"
 msgid "Skip archiving this course"
 msgstr "דלג על הוספת קורס זה לארכיון"
 
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1554
 #: /opt/webwork/pg/macros/PGbasicmacros.pl:1555
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1556
 msgid "Solution:"
 msgstr "פתרון:"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:1554
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:1553
 msgid "Solution: "
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:601
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:607
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:394
 msgid "Solutions"
 msgstr "פתרונות"
@@ -5751,7 +5760,7 @@ msgstr "פתרונות"
 msgid "Some answers will be graded later."
 msgstr "חלק מהתשובות ינוקדו מאוחר יותר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:739
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:738
 msgid ""
 "Some of these files are directories. Only delete directories if you really "
 "know what you are doing. You can seriously damage your course if you delete "
@@ -5794,13 +5803,13 @@ msgstr ""
 "למדריך שלך"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:2862
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1933
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1932
 msgid "Sort"
 msgstr "מיין"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:775
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:767
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:748
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:747
 msgid "Sort by"
 msgstr "מיין לפי"
 
@@ -5864,14 +5873,14 @@ msgstr "סטטיסטיקה עבור %1 גליון %2.  נסגר ב-%3"
 msgid "Statistics for %1 student %2"
 msgstr "סטטיסטיקה עבור %1 סטודנט %2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1889
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1891
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:372
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1095
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1109
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1789
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:302
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1868
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:282
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1867
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:281
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:417
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:246
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:247
@@ -5891,19 +5900,19 @@ msgid "Stop archiving courses"
 msgstr "הפסק להוסיף קורסים לארכיון"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm:181
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:739
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:738
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1788
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:301
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:777
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:796
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:815
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:846
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1867
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:281
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:757
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:780
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:803
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:832
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1866
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:280
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:756
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:779
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:802
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:831
 msgid "Student ID"
 msgstr "מזהה תלמיד"
 
@@ -5929,7 +5938,7 @@ msgstr "התקדמות התלמיד עבור %1 גליון %2.  נסגר ב-%3"
 msgid "Student Progress for %1 student %2"
 msgstr "התקדמות התלמיד עבור %1 תלמיד %2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:583
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:589
 msgid "Student answers"
 msgstr "תשובות התלמידים"
 
@@ -5938,7 +5947,7 @@ msgstr "תשובות התלמידים"
 msgid "Subject:"
 msgstr "נושא:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:698
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:697
 msgid "Subject: "
 msgstr "נושא:"
 
@@ -5950,12 +5959,12 @@ msgstr "זמן הגשה:"
 msgid "Submit"
 msgstr "שלח"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1702
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1729
 msgid "Submit Answers"
 msgstr "שלח תשובות"
 
 #. ($effectiveUser)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1699
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1726
 msgid "Submit Answers for %1"
 msgstr "שלח תשובות עבור %1"
 
@@ -6050,7 +6059,7 @@ msgstr "בצע את מבחן %1."
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList.pm:582
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:607
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:570
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:546
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:545
 msgid "Take Action!"
 msgstr "בצע פעולה!"
 
@@ -6058,7 +6067,7 @@ msgstr "בצע פעולה!"
 msgid "Target Set:"
 msgstr "הגליון שנבחר:"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:63
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:64
 msgid "TeX Source"
 msgstr ""
 
@@ -6078,7 +6087,7 @@ msgstr "זמן המבחן"
 msgid "Test Time Limit (min; 0=Close Date)"
 msgstr "הגבלת הזמן של המבחן (דק'; 0=תאריך הסגירה)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:378
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:377
 msgid "Text"
 msgstr "טקסט"
 
@@ -6210,7 +6219,7 @@ msgid ""
 msgstr ""
 "ברירת המחדל למספר הנסיונות בין רנדומיזציות מחדש של השאלה ( 0 => אף פעם )"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:253
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:252
 msgid "The directory you specified doesn't exist"
 msgstr "התיקייה שציינת  לא קיימת"
 
@@ -6238,19 +6247,19 @@ msgid "The evaluator for %1 has been renamed to '%2'."
 msgstr "שם המעריך עבור %1 שונה ל-'%2'."
 
 #. ($emailDirectory, $openfilename)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:405
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:404
 msgid ""
 "The file %1/%2 already exists and cannot be overwritten. The message was not "
 "saved"
 msgstr "הקובץ %1/%2 כבר קיים ולא ניתן לדרוס אותו. ההודע לא נשמרה"
 
 #. ($emailDirectory, $openfilename)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:226
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:225
 msgid "The file %1/%2 cannot be found."
 msgstr "הקובץ %1/%2 לא נמצא."
 
 #. ($emailDirectory,$openfilename)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:219
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:218
 msgid "The file %1/%2 is not readable by the webserver."
 msgstr "הקובץ %1/%2 לא ניתן לקריאה על ידי שרת הרשת."
 
@@ -6284,11 +6293,11 @@ msgstr "הקובץ '%1' הוא תיקייה!"
 msgid "The file '%1' is protected!"
 msgstr "הקובץ '%1' הוא מוגן!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:520
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:519
 msgid "The file does not appear to be a text file"
 msgstr "הקובץ איננו קובץ טקסט"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:97
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:96
 msgid "The file you are trying to download doesn't exist"
 msgstr "הקובץ שאת/ה מנסה להוריד אינו קיים"
 
@@ -6314,14 +6323,14 @@ msgid ""
 msgstr "למשתמשים הבאים לא הוקצה הגליון הזה ולכן נתעלם מהם: %1"
 
 #. (join('.', @{$problemSeqs[$children_counts_indexs[0]]})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1860
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1887
 msgid ""
 "The grade for this problem is the larger of the score for this problem, or "
 "the score of problem %1."
 msgstr "הציון עבור שאלה זו זה הגדול מבין ניקוד השאלה, וניקוד השאלה %1."
 
 #. (join(', ', map({join('.', @{$problemSeqs[$_]})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1862
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1889
 msgid ""
 "The grade for this problem is the larger of the score for this problem, or "
 "the weighted average of the problems: %1."
@@ -6358,7 +6367,7 @@ msgid "The institution associated with the course %1 is now %2"
 msgstr "המוסד שמיוחס לקורס %1 הוא כעת %2"
 
 #. ($userID)
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:530
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:548
 msgid ""
 "The instructor account with user id %1 does not exist.  Please create the "
 "account manually via WeBWorK."
@@ -6435,12 +6444,12 @@ msgid ""
 msgstr "אחוז הסטודנטים עם ניקוד כזה לפחות. הציון הממוצע הוא בעמודת 50%."
 
 #. ($recScore,$totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1838
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1840
 msgid "The recorded score for this test is  %1/%2."
 msgstr "הציון המוזן למבחן זה הוא %1/%2."
 
 #. ($recScore, $totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1848
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1850
 msgid "The recorded score for this test is %1/%2."
 msgstr "הציון המוזן למבחן זה הוא %1/%2."
 
@@ -6464,7 +6473,7 @@ msgid ""
 msgstr "תאריך הניקוד המופחת צריך להיות בין תאריך הפתיחה לתאריך הסגירה."
 
 #. (join('.',@seq)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1883
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1910
 msgid "The score for this problem can count towards score of problem %1."
 msgstr "הניקוד לשאלה זו יכול להספר לניקוד של שאלה %1."
 
@@ -6502,7 +6511,7 @@ msgstr "שם הגליון '%1' כבר נמצא בשימוש. בחר שם אחר 
 msgid "The set-version (%1, version %2) is not assigned to user %3."
 msgstr "גרסת-הגליון (%1, גרסה %2) לא משויכת למשתמש %3."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:485
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:511
 msgid "The solution has been removed."
 msgstr "הפתרון הוסר."
 
@@ -6514,7 +6523,7 @@ msgid ""
 msgstr "קוד המקור ל'גליון %1 / שאלה %2' שונה מ-'%3' ל-'%4'"
 
 #. ($versionNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1928
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1930
 msgid "The test (which is number %1) may  no longer be submitted for a grade."
 msgstr "כבר לא ניתן להגיש את המבחן (מספר %1) לניקוד."
 
@@ -6619,8 +6628,8 @@ msgstr "עיצוב (רענן את העמוד לאחר שמירת השינויי�
 
 # Context is "Sort by ____ Then by _____"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:796
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:771
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:794
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:770
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:793
 msgid "Then by"
 msgstr "ואז לפי"
 
@@ -6747,7 +6756,7 @@ msgstr "יש גרסה חדשה של PG."
 msgid "There is a new version of WeBWorK available."
 msgstr "יש גרסה חדשה של WeBWorK."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:474
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:500
 msgid "There is a written solution available."
 msgstr ""
 
@@ -6769,29 +6778,29 @@ msgid ""
 "update."
 msgstr "לא קיים קובץ עץ סיפרייה עבור ספרייה זו, אתה תצטרך להריץ OPL-update. "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:740
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:739
 msgid "There is no undo for deleting files or directories!"
 msgstr "אי אפשר לחזור בך ממחיקת קבצים או תיקייות!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:476
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:502
 #, fuzzy
 msgid ""
 "There is no written solution available for this problem, but you can still "
 "view the correct answers."
 msgstr "לא קיים פתרון כתוב לשאלה זו, אבל עדיין ניתן לצפות בתשובות נכונות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:478
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:504
 msgid "There is no written solution available for this problem."
 msgstr "לא קיים פתרון כתוב לשאלה זו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2178
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2197
 msgid ""
 "There may be something wrong with this question. Please inform your "
 "instructor including the warning messages below."
 msgstr ""
 "ייתכן שישנה בעיה בשאלה. אנא עדכן את המדריך שלך, לרבות בהודעות השגיאה שלהלן."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:355
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:373
 msgid ""
 "There was an error during the login process.  Please speak to your "
 "instructor or system administrator if this recurs."
@@ -6799,13 +6808,13 @@ msgstr ""
 "הייתה שגיאה בתהליך ההתחברות. אנה פנה למדריך שלך או עם מנהל מערכת במידה "
 "והבעיה הזאת נמשכת."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:251
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:267
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:407
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:414
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:441
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:451
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:472
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:269
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:285
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:425
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:432
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:459
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:469
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIAdvanced.pm:490
 msgid ""
 "There was an error during the login process.  Please speak to your "
 "instructor or system administrator."
@@ -6835,11 +6844,11 @@ msgstr "הקורס הזה תומך במשתמשים אורחים. לחץ %1 כד
 msgid "This homework set contains no problems."
 msgstr "גליון שיעורי הבית לא מכיל שאלות."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1786
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1813
 msgid "This homework set is closed."
 msgstr "גליון שיעורי הבית הוא סגור"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1784
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1811
 msgid "This homework set is not yet open."
 msgstr "גליון שיעורי הבית הזה עדיין לא פתוח"
 
@@ -6954,7 +6963,7 @@ msgid ""
 "according to correctness."
 msgstr ""
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:3114
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:3084
 msgid "This problem contains a video which must be viewed online."
 msgstr "השאלה מכילה וידיאו שיש לראות באופן מקוון."
 
@@ -6962,8 +6971,8 @@ msgstr "השאלה מכילה וידיאו שיש לראות באופן מקוו
 msgid "This problem has more than one part."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1857
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2109
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1884
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2136
 msgid ""
 "This problem has open subproblems.  You can visit them by using the links to "
 "the left or visiting the set page."
@@ -6983,12 +6992,12 @@ msgid "This problem will not count towards your grade."
 msgstr "שאלה זו לא תיחשב לציון שלך."
 
 #. ($EMAIL)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:1047
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:1046
 msgid "This sample mail would be sent to %1"
 msgstr "דוא\"ל דוגמה זה ישלח ל-%1"
 
 #. (join('.',@seq)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1886
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1913
 msgid ""
 "This score for this problem does not count for the score of problem %1 or "
 "for the set."
@@ -7143,8 +7152,8 @@ msgstr ""
 "נסיונות בוצעו, כמה נסיונות נותרו, השווי בנקודות, וסטטוס ההשלמה. לחץ על "
 "הקישור בשם השאלה כדי להגיע לד, השאלה. "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2156
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2231
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2175
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2250
 msgid "Time"
 msgstr "זמן"
 
@@ -7153,7 +7162,7 @@ msgid "Time Interval for New Test Versions (min; 0=infty)"
 msgstr "מרווח זמנים לגרסאות מבחן חדשות (מינימום; 0=אינסוף)"
 
 #. ($elapsedTime,$allowed)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1919
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1921
 msgid "Time taken on test: %1 min (%2 min allowed)."
 msgstr "זמן שנלקח לבחינה: %1 דקות (%2 דקות מורשות)."
 
@@ -7274,8 +7283,8 @@ msgstr "שתי עמודות"
 msgid "Type"
 msgstr "סוג"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2158
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2233
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2177
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2252
 msgid "URI"
 msgstr "URI"
 
@@ -7357,11 +7366,11 @@ msgstr ""
 "הסר נעילה מגרסה נוספית של מבחן השער. אם ניסית טרם תאריך הסגירה של מבחן השער, "
 "הנ\"ל יאפשר לך ליצור גרסה חדשה של המבחן."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:166
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:165
 msgid "Unpack"
 msgstr "לפרוק"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:389
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:388
 msgid "Unpack archives automatically"
 msgstr "לפרוק ארכיונים אוטומטית"
 
@@ -7390,8 +7399,8 @@ msgstr "עדכן תצוגה"
 msgid "Update Menus"
 msgstr "עדכן תפריטים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:632
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:707
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:631
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:706
 msgid "Update settings and refresh page"
 msgstr "עדכן הגדרות ורענן עמוד"
 
@@ -7424,8 +7433,8 @@ msgstr "עדכן קורסים"
 msgid "Upgrade process completed"
 msgstr "עדכן תהליכים שהושלמו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:169
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:374
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:168
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:373
 msgid "Upload"
 msgstr "העלה"
 
@@ -7451,7 +7460,7 @@ msgstr "השתמש בפריט"
 msgid "Use System Default"
 msgstr "השתמש בברירת המחדל של המערכת"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:588
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:587
 msgid "Use browser back button to return from preview mode"
 msgstr "השתמש בכפתור חזרה של הדפדפן כדי לחזור ממצב תצוגה מקדימה"
 
@@ -7484,7 +7493,7 @@ msgstr ""
 "השתמש בממשק שלהלן על מנת לגשת בקלות לכלי מדריך נפוצים בשימוש, או בחר כלי "
 "מהרשימה שמשמאל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:362
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:361
 msgid ""
 "Use this form to report to your professor a problem with the WeBWorK system "
 "or an error in a problem you are attempting. Along with your message, "
@@ -7542,7 +7551,7 @@ msgstr "שם משתמש"
 msgid "Username presented:  %1"
 msgstr "שם משתמש שמוצג: %1"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:495
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:501
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1355
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:367
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:424
@@ -7553,7 +7562,7 @@ msgstr "משתמשים"
 msgid "Users Assigned to Set %2"
 msgstr "משתמש מוקצה לגליון %2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1886
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1885
 msgid "Users List"
 msgstr "רשימת משתמשים"
 
@@ -7576,7 +7585,7 @@ msgstr ""
 "מורשים לשנות את סיסמתם."
 
 #. ($names{$primary}, $names{$secondary}, $names{$ternary})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:840
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:839
 msgid "Users sorted by %1, then by %2, then by %3"
 msgstr "משתמשים מוינו לפי %1, לאחר מכן לפי %2, ואז לפי %3"
 
@@ -7602,7 +7611,7 @@ msgstr ""
 "ההרשאות \"אף אחד\"."
 
 #. ($default_msg_file)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:228
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:227
 msgid "Using contents of the default message %1 instead."
 msgstr "משתמש בתוכן של הודעת ברירת המחדל %1 במקום."
 
@@ -7629,8 +7638,8 @@ msgstr "תיעוד משתנה"
 msgid "Versions of a set can only be edited for one user at a time."
 msgstr "גרסאות של גליון ניתנות לעריכה עבור משתמש אחד בלבד כל פעם."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:159
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:352
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:158
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:351
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor2.pm:130
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor3.pm:131
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:2286
@@ -7678,7 +7687,7 @@ msgstr "הצג התקדמות תלמיד לפי תלמיד"
 msgid "View/Edit"
 msgstr "הצג/ערוך"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2192
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:2219
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:267
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:91
 msgid "Viewing temporary file:"
@@ -7702,22 +7711,22 @@ msgstr "ניתן לצפייה"
 msgid "Visible to Students"
 msgstr "גלוי לסטודנטים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2177
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:736
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2196
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:735
 msgid "Warning"
 msgstr "אזהרה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2227
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2246
 msgid "Warning messages"
 msgstr "הודעות אזהרה"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1033
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:941
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:940
 msgid "Warning: Deletion destroys all user-related data and is not undoable!"
 msgstr "זהירות: מחיקה הורסת את כל המידע שנוגע למשתמשים והיא בלתי הפיכה!"
 
 #. ($problem_desc , CGI::br()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1225
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1315
 msgid "Warnings encountered while processing %1. Error text: %2"
 msgstr "אזהרות שעלו במהלך עיבוד %1. הודעת שגיאה: %2"
 
@@ -7726,11 +7735,11 @@ msgstr "אזהרות שעלו במהלך עיבוד %1. הודעת שגיאה: %
 msgid "WeBWorK &copy; %1| theme: %2 | ww_version: %3 | pg_version %4|"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2140
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2159
 msgid "WeBWorK Error"
 msgstr "שגיאת WeBWorK"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2225
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2244
 msgid "WeBWorK Warnings"
 msgstr "אזהרות WeBWorK"
 
@@ -7754,7 +7763,7 @@ msgstr ""
 "בשאלה עצמה. אם אתה תלמיד, דווח על הודעת שגיאה זו למרצה שלך כדי שיתקן את "
 "השאלה. אם אתה המרצה, אנא פנה לפלט השגיאה למטה למידע נוסף."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2226
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2245
 msgid ""
 "WeBWorK has encountered warnings while processing your request. If this "
 "occured when viewing a problem, it was likely caused by an error or "
@@ -7768,7 +7777,7 @@ msgstr ""
 "במערכת ה-WeBWorK עצמה. אם אתה תלמיד, דווח על הודעת שגיאה זו למרצה שלך כדי "
 "שיתקן את השאלה. אם אתה המרצה, אנא פנה לפלט השגיאה למטה למידע נוסף."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:493
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:519
 msgid ""
 "WeBWorK was unable to generate a different version of this problem; close "
 "this tab, and return to the original problem."
@@ -7776,7 +7785,7 @@ msgstr ""
 "WeBWorK לא הצליחה ליצור גרסה חדשה של שאלה זו. סגור חלון זה, וחזור לשאלה "
 "המקורית."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:309
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:315
 msgid ""
 "WeBWorK was unable to generate a paper copy of this homework set.  Please "
 "inform your instructor. "
@@ -7796,7 +7805,7 @@ msgstr "!WebWork ברוכים הבאים ל-"
 msgid "What could be inside?"
 msgstr "מה יכל להיות בפנים?"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:655
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:654
 msgid "What field should filtered users match on?"
 msgstr "באיזה שדה תלמידים צריכים להתאים?"
 
@@ -7924,6 +7933,7 @@ msgid ""
 "changes can be made."
 msgstr "הרשאות כתיבה לא הופעלו בתיקיית התבניות. לא ניתן לבצע שינויים"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:630
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:1282
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:137
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetDetail2.pm:147
@@ -7942,7 +7952,7 @@ msgstr "הרשאות כתיבה לא הופעלו בתיקיית התבניות.
 msgid "Yes"
 msgstr "כן"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:457
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:483
 msgid ""
 "You are currently checking answers to a different version of your problem - "
 "these will not be recorded, and you should remember to return to your "
@@ -7951,7 +7961,7 @@ msgstr ""
 "אתה כרגע בודק תשובות לגרסה אחרת של השאלה - אלו לא יישמרו, ואתה צריך לזכור "
 "לחזור לשאלה המקורית לאחר שתסיים כאן."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:462
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:488
 msgid ""
 "You are currently previewing answers to a different version of your problem "
 "- these will not be recorded, and you should remember to return to your "
@@ -7961,7 +7971,7 @@ msgstr ""
 "המקורית כשתסיים כאן."
 
 #. ($userSet->set_id, $r->connection->remote_ip)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:253
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:259
 msgid ""
 "You are not allowed to generate a hardcopy for %1 from your IP address, %2."
 msgstr "אתה לא רשאי ליצר גרסת הדפסה של %1 מכתובת ה-IP שלך, %2."
@@ -7978,7 +7988,7 @@ msgstr "אתה לא רשאי להשתמש בכלי המדריך."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:321
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:435
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:257
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:256
 msgid "You are not authorized to access the instructor tools."
 msgstr "אתה לא רשאי לגשת לכלי המדריך"
 
@@ -7997,27 +8007,27 @@ msgstr "אתה לא רשאי לשנות שאלות."
 msgid "You are not authorized to modify set definition files."
 msgstr "אתה לא רשאי לשנות קבצי הגדרה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:324
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:330
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:323
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:329
 msgid "You are not authorized to modify student data"
 msgstr "אתה לא רשאי לשנות פרטי תלמיד."
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:406
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:375
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:374
 msgid "You are not authorized to perform this action."
 msgstr "אתה לא רשאי לבצע פעולה זו."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:246
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:252
 msgid ""
 "You are not permitted to generate a hardcopy for a set with hidden work."
 msgstr "אתה לא רשאי ליצר גרסת הדפסה של גליון עם עבודה מוחבאת."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:234
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:240
 msgid "You are not permitted to generate a hardcopy for an unopened set."
 msgstr "אתה לא רשאי ליצר גרסת הדפסה של אוף שלא נפתח."
 
 #. ($showMeAnother{MaxReps},$solutionShown)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:486
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:512
 msgid ""
 "You are only allowed to click on Show Me Another %quant(%1,time,times) per "
 "problem. %2 Close this tab, and return to the original problem."
@@ -8025,11 +8035,11 @@ msgstr ""
 "אתה רשאי ללחוץ על \"תראה לי עוד אחת\" %quant(%1,פעם,פעמים) לכל שאלה. %2 סגור "
 "חלון זה, וחזור לשאלה המקורית."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1876
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1878
 msgid "You are out of time.  Press grade now!"
 msgstr "נגמר לך הזמן. לחץ על נקד עכשיו!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:316
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:322
 msgid "You can also examine the following temporary files: "
 msgstr "אתה יכול לצפות גם בקבצים הזמניים הבאים:"
 
@@ -8041,29 +8051,29 @@ msgstr "ניתן לקבל ניקוד חלקי בשאלה זו"
 msgid "You can get a new version of this problem after the due date."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1248
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1247
 msgid "You can not specify an absolute path"
 msgstr "אתה לא יכול לתת מסלול מוחלט"
 
 #. ($action)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1004
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1003
 msgid "You can only %1 one file at a time."
 msgstr "אתה יכול %1 רק קובץ אחד בכל פעם."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:101
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:100
 msgid "You can only download regular files."
 msgstr "ניתן להוריד רק קבצים רגילים."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:513
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:512
 msgid "You can only edit text files"
 msgstr "ניתן לערוך רק קבצי טקסט"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:792
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:791
 msgid "You can only unpack files ending in '.tgz', '.tar' or '.tar.gz'"
 msgstr "ניתן לפרוק רק קבצים עם הסיומות '.tgz', '.tar' או '.tar.gz'"
 
 #. (($showMeAnother{MaxReps}>=$showMeAnother{Count})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1712
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1739
 msgid ""
 "You can use this feature %quant(%1,more time,more times,as many times as you "
 "want) on this problem"
@@ -8071,19 +8081,19 @@ msgstr ""
 "אתה יכול להשתמש באפשרות זו %quant(%1,עוד פעם, עוד פעמים, כמה פעמים שתרצה) על "
 "שאלה זו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:872
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:871
 msgid "You can't download directories"
 msgstr "לא ניתן להוריד תיקייות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:873
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:872
 msgid "You can't download files of that type"
 msgstr "לא ניתן להוריד קבצים מסוג זה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:506
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:505
 msgid "You can't edit a directory"
 msgstr "לא ניתן לערוך תיקיות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:450
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:449
 msgid "You can't view files of that type"
 msgstr "לא ניתן לצפות בקבצים מסוג זה"
 
@@ -8095,7 +8105,7 @@ msgstr "לא ניתן להוסיף לארכיון את הקורס שבו אתה 
 msgid "You cannot delete the course you are currently using."
 msgstr "אתה לא יכול למחוק את הקורס בו אתה משתמש כרגע."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:984
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:983
 msgid "You cannot delete yourself!"
 msgstr "אתה לא יכול למחוק את עצמך!"
 
@@ -8111,7 +8121,7 @@ msgstr ""
 msgid "You did not specify a new set name."
 msgstr "לא מלאת שם לגליון החדש."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:293
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:292
 msgid "You didn't enter any message."
 msgstr "לא מלאת את תוכן ההודעה."
 
@@ -8120,7 +8130,7 @@ msgstr "לא מלאת את תוכן ההודעה."
 msgid "You do not have permission to change email addresses."
 msgstr "אין לך את ההרשאות לשנות כתובות דוא\"ל"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:163
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:169
 msgid "You do not have permission to change the hardcopy theme."
 msgstr "אין לך את ההרשאות הדרושות כדי לשנות את עיצוב גרסת ההדפסה."
 
@@ -8129,16 +8139,16 @@ msgstr "אין לך את ההרשאות הדרושות כדי לשנות את ע
 msgid "You do not have permission to change your password."
 msgstr "אין לך את ההרשאות לשנות את "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:500
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:499
 msgid "You do not have permission to edit this file."
 msgstr "אין לך הרשאות לערוך את הקובץ הזה."
 
 #. ($hardcopy_format)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:156
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:162
 msgid "You do not have permission to generate hardcopy in %1 format."
 msgstr "אין לך את ההרשאות הדרושות כדי ליצור גרסת הדפסה בפורמט %1."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1471
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1498
 msgid "You do not have permission to view the details of this error."
 msgstr "אין לך את ההרשאות לצפות בפרטים של השגיאה זו."
 
@@ -8150,29 +8160,29 @@ msgstr "אין שום מידע על הישכים עבורך!"
 msgid "You don't have any items!"
 msgstr "אין לך שום חפצים!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1908
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1910
 msgid "You exceeded the allowed time."
 msgstr "עברת את הזמן המותר."
 
 #. ($numLeft)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1883
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1885
 msgid "You have %1 attempt(s) remaining on this test."
 msgstr "נשארו לך %1 ניסיון/ות למבחן זה."
 
 #. ($attemptsLeft)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1810
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1837
 msgid "You have %negquant(%1,unlimited attempts,attempt,attempts) remaining."
 msgstr "נותר לך %negquant(%1,נסיונות לא מוגבלים,נסיון,ניסיונות)."
 
 #. ($attempts_before_rr)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1767
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1794
 msgid ""
 "You have %quant(%1,attempt,attempts) left before new version will be "
 "requested."
 msgstr "נותרו לך %quant(%1,ניסיון,ניסיונות) לפני שתקבל גרסה חדשה."
 
 #. ($attempts)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1804
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1831
 msgid "You have attempted this problem %quant(%1,time,times)."
 msgstr "ניסית שאלה זו %quant(%1,פעם,פעמים)."
 
@@ -8180,27 +8190,27 @@ msgstr "ניסית שאלה זו %quant(%1,פעם,פעמים)."
 msgid "You have been logged out of WeBWorK."
 msgstr "התנתקת מ-WeBWorK."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1872
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1874
 msgid "You have less than 1 minute to complete this test."
 msgstr "נותר לך פחות מדקה 1 לפתרון מבחן זה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:888
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:887
 msgid "You have not chosen a file to upload."
 msgstr "לא בחרת קובץ להעלות."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:736
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:735
 msgid "You have requested that the following items be deleted"
 msgstr "בקשת שהפריטים הבאים ימחקו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1020
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1019
 msgid "You have specified an illegal file"
 msgstr "בחרת קובץ לא חוקי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1247
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1246
 msgid "You have specified an illegal path"
 msgstr "בחרת מסלול לא חוקי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:467
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:493
 msgid ""
 "You may check your answers to this problem without affecting the maximum "
 "number of tries to your original problem."
@@ -8209,7 +8219,7 @@ msgstr ""
 "של השאלה המקורית."
 
 #. ($phrase_for_privileged_users)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:577
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:583
 msgid ""
 "You may choose to show any of the following data. Correct answers, hints, "
 "and solutions are only available %1 after the answer date of the homework "
@@ -8222,21 +8232,21 @@ msgstr ""
 msgid "You may not change your answers when going on to the next part!"
 msgstr "לא ניתן לשנות תשובות כאשר אתה מתקדם לחלק הבא!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1718
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1717
 msgid "You may not change your own password here!"
 msgstr "לא ניתן לשנות את הסיסמה שלך כאן!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1015
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:437
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1014
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:436
 msgid "You may not follow symbolic links"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1929
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1931
 msgid "You may still check your answers."
 msgstr "אתה עדיין יכול לבדוק את התשובות שלך."
 
 #. ($showMeAnother{TriesNeeded})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:488
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:514
 msgid ""
 "You must attempt this problem %quant(%1,time,times) before Show Me Another "
 "is available."
@@ -8245,7 +8255,7 @@ msgstr ""
 "אחת\"."
 
 #. ($showMeAnother{TriesNeeded})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1724
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1751
 msgid ""
 "You must attempt this problem %quant(%1,time,times) before this feature is "
 "available"
@@ -8272,11 +8282,11 @@ msgstr "אתה חייב למלא מזהה משתמש, מזהה גליון, ומ�
 msgid "You must select a course to rename."
 msgstr "אתה חייב לבחור קורס שאת שמו תרצה לשנות."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:765
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:764
 msgid "You must select at least one file for the archive"
 msgstr "אתה חייב לבחור לפחות קובץ אחד להוספה לארכיון"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:669
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:668
 msgid "You must select at least one file to delete"
 msgstr "אתה חייב לבחור לפחות קובץ אחד למחיקה"
 
@@ -8285,7 +8295,7 @@ msgid "You must select one or more sets for scoring!"
 msgstr "אתה חייב לבחור לפחות גליון אחד לניקוד!"
 
 #. ($object)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1226
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1225
 msgid "You must specify a %1 name"
 msgstr "אתה חייב למלא שם של %1"
 
@@ -8302,7 +8312,7 @@ msgstr "אתה חייב למלא מזהה קורס."
 msgid "You must specify a course name."
 msgstr "אתה חייב למלא שם קורס"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1250
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1249
 msgid "You must specify a file name"
 msgstr "אתה חיב למלא שם קובץ"
 
@@ -8358,7 +8368,7 @@ msgid "You need to select a \"Target Set\" before you can edit it."
 msgstr "אתה צריך לבחור גליון שאותו תרצה לערוך."
 
 #. ($action)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1009
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1008
 msgid "You need to select a file to %1."
 msgstr "אתה צריך לבחור קובץ כדי לבצע %1"
 
@@ -8376,13 +8386,13 @@ msgstr "אתה צריך לבחור גליון לצפייה"
 
 #. (wwRound(0, $problemResult->{score} * 100)
 #. (wwRound(0, $pg->{result}->{score} * 100)
-#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:315
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1805
+#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:314
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1832
 msgid "You received a score of %1 for this attempt."
 msgstr "קיבלת ציון %1 עבור ניסיון זה"
 
 #. (join('.',@{$problemSeqs[$next_id]})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1873
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1900
 msgid ""
 "You will not be able to proceed to problem %1 until you have completed, or "
 "run out of attempts, for this problem and its graded subproblems."
@@ -8391,24 +8401,24 @@ msgstr ""
 "המוכלות שמזכות נקודות."
 
 #. (join('.',@{$problemSeqs[$next_id]})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1876
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1903
 msgid ""
 "You will not be able to proceed to problem %1 until you have completed, or "
 "run out of attempts, for this problem."
 msgstr "לא תוכל להמשיך לשאלה %1 עד שהשלמת, או שנגמר לך הניסיונות, של שאלה."
 
 #. ($object)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1223
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1222
 msgid "Your %1 name contains illegal characters"
 msgstr "שם ה-%1 שלך מכיל תוים לא חוקיים."
 
 #. ($object)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1224
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1223
 msgid "Your %1 name may not begin with a dot"
 msgstr "שם ה-%1 לא יכול להתחיל בנקודה"
 
 #. ($object)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1225
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1224
 msgid "Your %1 name may not contain a path component"
 msgstr "שם ה-%1 לא יכול להכיל מרכיב מסלול"
 
@@ -8430,7 +8440,7 @@ msgid ""
 "instructor if you need help."
 msgstr "האימות שלך נכשל. אנא נסה שוב. אנא פנה למדריך שלך אם אתה צריך עזרה."
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:3109
+#: /opt/webwork/pg/macros/PGbasicmacros.pl:3079
 msgid "Your browser does not support the video tag."
 msgstr "הדפדפן שלך לא תומך ב-video tag."
 
@@ -8459,7 +8469,7 @@ msgstr "אפשרויות התצוגה נשמרו."
 msgid "Your email address has been changed."
 msgstr "כתובת הדוא\"ל שלך שונתה."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1249
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:1248
 msgid "Your file name contains illegal characters"
 msgstr "שם הקובץ מכיל תוים לא חוקיים."
 
@@ -8468,17 +8478,17 @@ msgstr "שם הקובץ מכיל תוים לא חוקיים."
 msgid "Your file name is not valid! "
 msgstr "שם הקובץ שנתת אינו תקני! "
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:299
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Feedback.pm:298
 msgid "Your message was sent successfully."
 msgstr "ההודעה שלך נשלח בהצלחה."
 
 #. ($lastScore,$notCountedMessage)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1808
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1835
 msgid "Your overall recorded score is %1.  %2"
 msgstr "סה\"כ הניקוד שלך הוא %1. %2"
 
 #. ($versionNumber, wwRound(2,$recordedScore)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1906
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1908
 msgid "Your recorded score on this test (number %1) is %2/%3."
 msgstr "הציון שלך במבחן זה (מספר %1) הוא %2/%3."
 
@@ -8488,57 +8498,57 @@ msgstr ""
 
 # $testNounNum is either "test (#)" or "submission (#)"
 #. ($testNounNum)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1806
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1808
 msgid "Your score on this %1 WAS recorded."
 msgstr "הציון שלך ב-%1 הזה נשמרה."
 
 # $testNoun is either "test" or "submission"
 #. ($testNoun,$attemptScore,$totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1811
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1813
 msgid "Your score on this %1 is %2/%3."
 msgstr "הציון שלך ב-%1 זה הוא %2/%3."
 
 # $testNounNum is either "test (#)" or "submission (#)
 #. ($testNounNum)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1802
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1804
 msgid "Your score on this %1 was NOT recorded."
 msgstr "הניקוד שלך ב-%1 זה לא נשמרה."
 
 #. ($attemptScore,$totPossible)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1846
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1848
 msgid "Your score on this (checked, not recorded) submission is %1/%2."
 msgstr "הניקוד שלך על הגשה זו (נבדקה, לא נשמרה) הוא %1/%2."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1461
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1792
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2058
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1463
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1794
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2061
 msgid "Your score on this problem was recorded."
 msgstr "הניקוד שלך בשאלה זו נשמר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1463
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:184
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1465
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:183
 msgid ""
 "Your score was not recorded because there was a failure in storing the "
 "problem record to the database."
 msgstr "הניקוד שלך לא נשמר בגלל שהיה כישלון בשמירת נתוני השאלה במסד הנתונים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:285
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:284
 msgid "Your score was not recorded because this homework set is closed."
 msgstr "הניקוד שלך לא נשמר בגלל שגליון שיעורי בית זה הוא סגור."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:291
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:290
 msgid ""
 "Your score was not recorded because this problem has not been assigned to "
 "you."
 msgstr "הניקוד שלך לא נשמר בגלל ששאלה זו לא הוקצאה אליך."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1487
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1489
 msgid ""
 "Your score was not recorded because this problem set version is not open."
 msgstr "הניקוד שלך לא נשמר בגלל שגירסת גליון השאלות הזאת לא פתוחה."
 
 #. ($elapsed, $allowed)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1502
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1504
 msgid ""
 "Your score was not recorded because you have exceeded the time limit for "
 "this test. (Time taken: %1 min; allowed: %2 min.)"
@@ -8546,31 +8556,31 @@ msgstr ""
 "הציון שלך לא נשמר כי עברת את הגבלת הזמן של מבחן זה. (זמן שעבר: %1 דק', הגבלת "
 "זמן: %2 דק'.)"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1490
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1492
 msgid ""
 "Your score was not recorded because you have no attempts remaining on this "
 "set version."
 msgstr "הניקוד שלך לא נשמר כי אין לך עוד ניסיונות לגרסת הגליון הזאת."
 
-#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:321
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1505
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:287
+#: /opt/webwork/webwork2/lib/FormatRenderedProblem.pm:320
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1507
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:286
 msgid "Your score was not recorded."
 msgstr "הניקוד שלך לא נשמר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1827
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:272
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:278
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1829
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:271
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:277
 msgid "Your score was not successfully sent to the LMS."
 msgstr "הניקוד שלך לא נשלח בהצלחה ל-LMS."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:182
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:181
 msgid "Your score was recorded."
 msgstr "הניקוד שלך נשמר."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1826
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:270
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:276
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1828
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:269
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemUtil/ProblemUtil.pm:275
 msgid "Your score was successfully sent to the LMS."
 msgstr "הניקוד לך נשלח בהצלחה ל-LMS."
 
@@ -8582,8 +8592,8 @@ msgstr "נותקת עקב חוסר פעילות. אנא התחבר שוב."
 msgid "Your systems are up to date!"
 msgstr "המערוכות שלך עדכניות!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1224
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1231
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1314
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1321
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:308
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:99
 msgid "[Edit]"
@@ -8597,7 +8607,7 @@ msgstr "_תיאור_עורך_הישגים"
 msgid "_ANSWER_LOG_DESCRIPTION"
 msgstr "_תיאור_רשימת_תשובות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:473
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:472
 msgid "_CLASSLIST_EDITOR_DESCRIPTION"
 msgstr "_תיאור_עורך_רשימת_כיתה"
 
@@ -8625,12 +8635,12 @@ msgstr "_הודעת_היתחברות"
 msgid "_PROBLEM_SET_SUMMARY"
 msgstr "_תקציר_גליון_שאלות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2141
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator.pm:2160
 msgid "_REQUEST_ERROR"
 msgstr "_שגיאת_בקשה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1881
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1883
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1880
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1882
 msgid "_USER_TABLE_SUMMARY"
 msgstr "_תקציר_טבלת_משתמשים"
 
@@ -8679,7 +8689,7 @@ msgstr "הוסף שאלות"
 msgid "addGlobalSet %1 in ProblemSetList:  %2"
 msgstr "הוסף גליון גלובלי %1 ברשימת שאלות ??? האוסף: %2"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:456
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:455
 msgid "added missing permission level for user"
 msgstr "נוספה רמת ההרשאות החסרה למשתמש"
 
@@ -8728,10 +8738,10 @@ msgstr "כל התלמדים"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:663
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:868
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:911
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1117
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:641
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:857
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:904
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1116
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:640
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:856
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:903
 msgid "all users"
 msgstr "כל המשתמשים"
 
@@ -8760,8 +8770,8 @@ msgstr ""
 msgid "answer"
 msgstr "תשובה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1039
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1057
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1038
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1056
 msgid "any users"
 msgstr "כל משתמש"
 
@@ -8819,7 +8829,7 @@ msgstr "סגור"
 msgid "column"
 msgstr "עמודה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:705
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:704
 msgid "columns:"
 msgstr "עמודות:"
 
@@ -8838,7 +8848,7 @@ msgid "deleted %1 sets"
 msgstr "נמחקו %1 אוספים"
 
 #. ($num)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:998
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:997
 msgid "deleted %1 users"
 msgstr "נמחקו %1 משתמשים"
 
@@ -8850,7 +8860,7 @@ msgstr "עורך את כל ההישגים"
 msgid "editing all sets"
 msgstr "עורך את כל האוספים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:875
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:874
 msgid "editing all users"
 msgstr "עורך את כל המשתמשים"
 
@@ -8862,7 +8872,7 @@ msgstr "עורך את ההישגים שנבחרו"
 msgid "editing selected sets"
 msgstr "עורך את האוספים שנבחרו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:881
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:880
 msgid "editing selected users"
 msgstr "עורך את המשתמשים שנבחרו"
 
@@ -8870,7 +8880,7 @@ msgstr "עורך את המשתמשים שנבחרו"
 msgid "editing visible sets"
 msgstr "עורך את האוספים שניתנים לצפייה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:878
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:877
 msgid "editing visible users"
 msgstr "עורך את המשתמשים שניתנים לצפייה"
 
@@ -8943,15 +8953,15 @@ msgstr "עבור תלמידים"
 msgid "from"
 msgstr "מקור"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:922
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:921
 msgid "giving new passwords to all users"
 msgstr "נותן סיסמה חדשה לכל המשתמשים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:928
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:927
 msgid "giving new passwords to selected users"
 msgstr "נותן סיסמה חדשה למשתמשים שנבחרו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:925
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:924
 msgid "giving new passwords to visible users"
 msgstr "נותן סיסמה חדשה למשתמשים שנבחרו"
 
@@ -9014,8 +9024,8 @@ msgstr "i"
 msgid "if"
 msgstr "if"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1380
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1474
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1379
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1473
 msgid "illegal character in input: '/'"
 msgstr "תו לא חוקי בקלט : '/'"
 
@@ -9041,7 +9051,7 @@ msgstr "מדד"
 msgid "input set location %1 already exists for set %2."
 msgstr "מיקום הגליון שהוכנס %1 כבר קיים עבור גליון %2."
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:738
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:737
 msgid "list of insertable macros"
 msgstr "רשימת קיצורי המאקרו שניתן להכניס"
 
@@ -9118,10 +9128,10 @@ msgstr "אין תלמידים"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementList.pm:784
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:664
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:954
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1042
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1058
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:642
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:951
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1041
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1057
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:641
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:950
 msgid "no users"
 msgstr "שום משתמשים"
 
@@ -9131,11 +9141,11 @@ msgstr "שום משתמשים"
 msgid "nobody"
 msgstr "אף אחד"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:747
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:746
 msgid "nth colum of merge file"
 msgstr "העמודה ה-n של קובץ האיחוד"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:210
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:209
 msgid "number of students not defined"
 msgstr "מספר התלמידים שלא הוגדרו"
 
@@ -9195,27 +9205,33 @@ msgid "part"
 msgstr "חלק"
 
 #. ($userID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1234
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1233
 msgid "permissions for %1 not defined"
 msgstr "הההרשאות של %1 לא מוגדרות"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1930
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1957
 msgid "pg debug"
 msgstr "דיבאג PG"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1932
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1959
 msgid "pg internal errors"
 msgstr "שגיאות פנימיות של PG"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1931
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1958
 msgid "pg warning"
 msgstr "הזהרת PG"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2481
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2097
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1344
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1274
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:368
 msgid "point"
 msgstr "נקודה"
 
-#: /opt/webwork/pg/macros/PGbasicmacros.pl:2479
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2097
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1344
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1274
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ShowMeAnother.pm:368
 msgid "points"
 msgstr "קודות"
 
@@ -9223,7 +9239,7 @@ msgstr "קודות"
 msgid "preserve existing data"
 msgstr "שמר מידע קיים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2098
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:2121
 msgid "preview answers"
 msgstr "צפה בתשובות"
 
@@ -9260,8 +9276,8 @@ msgid "record for user %1 not found"
 msgstr "רישם לא נמצא עבור משתמש %1"
 
 #. ($userID)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1232
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1305
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1231
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1304
 msgid "record for visible user %1 not found"
 msgstr "רישום לא נמצא עבור משתמש גלוי %1 לא נמצא"
 
@@ -9323,12 +9339,12 @@ msgstr "אוספים שנבחרו"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:870
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:913
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:956
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1041
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1119
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:643
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:859
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:906
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:953
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1040
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1118
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:642
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:858
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:905
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:952
 msgid "selected users"
 msgstr "משתמשים שנבחרו"
 
@@ -9366,7 +9382,7 @@ msgstr "אוספים עם מזההים תואמים"
 msgid "showing all sets"
 msgstr "מציג את כל האוספים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:696
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:695
 msgid "showing all users"
 msgstr "מציג את כל המשתמשים"
 
@@ -9381,7 +9397,7 @@ msgstr "מראה אוספים מוחבאים"
 msgid "showing matching sets"
 msgstr "מראה אוספים תואמים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:705
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:704
 msgid "showing matching users"
 msgstr "מציג את המשתמשים התואמים"
 
@@ -9389,7 +9405,7 @@ msgstr "מציג את המשתמשים התואמים"
 msgid "showing no sets"
 msgstr "לא מציג שום אוספים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:699
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:698
 msgid "showing no users"
 msgstr "לא מציג שום משתמשים"
 
@@ -9397,7 +9413,7 @@ msgstr "לא מציג שום משתמשים"
 msgid "showing selected sets"
 msgstr "מציג אוספי שנבחרו"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:702
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:701
 msgid "showing selected users"
 msgstr "מציג משתמשים שנבחרו"
 
@@ -9423,12 +9439,12 @@ msgstr "תלמיד"
 msgid "students"
 msgstr "תלמידים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1779
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1781
 msgid "submission"
 msgstr "הגשה"
 
 #. ($versionNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1783
 msgid "submission (test %1)"
 msgstr "הגשה (מבחן %1)"
 
@@ -9440,12 +9456,12 @@ msgstr "תקציר"
 msgid "ta"
 msgstr "עוזר מורה"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1779
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1781
 msgid "test"
 msgstr "מבחן"
 
 #. ($versionNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1781
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1783
 msgid "test (%1)"
 msgstr "מבחן (%1)"
 
@@ -9477,7 +9493,7 @@ msgstr "המסלול המקורי לקבוץ הוא %1"
 msgid "then by"
 msgstr "ואז לפי"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:391
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm:390
 msgid "then delete them"
 msgstr "ואז תמחק אותם"
 
@@ -9485,7 +9501,7 @@ msgstr "ואז תמחק אותם"
 msgid "there are no set definition files in this course to look at."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1758
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1785
 msgid "time"
 msgstr "זמן"
 
@@ -9493,12 +9509,12 @@ msgstr "זמן"
 msgid "time limit exceeded"
 msgstr "עברה מגבלת הזמן"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1758
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Problem.pm:1785
 msgid "times"
 msgstr "מספר פעמים"
 
 # Context is Assign ____ to _____
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:782
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SendMail.pm:781
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1109
 msgid "to"
 msgstr "ל-"
@@ -9545,7 +9561,7 @@ msgstr "שם משתמש, שם משפחה, שם פרטי, קבוצה, רמת הי
 msgid "users"
 msgstr "משתמשים"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:644
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:643
 msgid "users who match on selected field"
 msgstr "משתמשים שתאמו בשדות שנבחרו"
 
@@ -9576,10 +9592,10 @@ msgstr "ניתן לצפייה לתלמידים"
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:1104
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:869
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:912
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1040
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1118
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:858
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:905
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1039
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1117
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:857
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:904
 msgid "visible users"
 msgstr "משתמשים שניתנים לצפייה"
 
@@ -9594,7 +9610,7 @@ msgstr "עם אוספים בשם:"
 
 #. ($dir, $fileName)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1700
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1381
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm:1380
 msgid "won't be able to read from file %1/%2: does it exist? is it readable?"
 msgstr "לא קריאה מקובץ %1/%2 לא תצליח: האם הוא קיים? האם הוא ניתן לקריאה?"
 
