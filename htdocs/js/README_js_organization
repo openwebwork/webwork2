@@ -1,25 +1,20 @@
 This is the README file for the WeBWorK htdocs/js folder. 
 
-Please follow these guidelines for putting javascript in your webwork pages. 
+Please follow these guidelines for javascript used by WeBWorK.
 
+js/app: This directory contain first party WeBWorK javascript.
+        Each library/app should have its own directory.
+        Eventually the `app` sub-directory will be removed and
+        js will directly contain all first party WeBWorK
+        javascript.
 
-app:    This directory contain the "new" finished apps for WeBWork. 
-  	     Each app should have its own directory.
+js/vendor: Old third party javascript libraries not yet migrated to npm.
+           Eventually this sub-directory will be removed.
 
-app-dev: A directory for apps that are being developed.  
+js/legacy: Old first javascript files that eventually will be removed.
+           Eventually this sub-directory will be removed.
 
-lib:	 Common files for the web apps. 
-   |_    models:  directory for the models
-   |
-   |_    views: directory for the views. 
-
-
-All javascript and css libraries are now being handled by bower (https://github.com/bower/bower).  To run bower read the
-instructions on github.  You will only need this if you are adding or changing libraries.  
-
-If a library is needed, add it to bower.json and the desired version.  Then type:
-
-#  bower install
-
-and bower will fetch all of the libraries (and update if you've changed the version #) and store everything in the  "bower_components" directory.  The location of each library in each subdirectory SHOULD stay stable, so you shouldn't need to 
-update template or other files. 
+All third party javascript and css libraries will be installed by npm.
+Run `npm install libname` in the htdocs directory to install a new library.
+Run `npm install` in the htdocs directory to install existing libraries.
+The resulting libraries are install in htdocs/node_modules.

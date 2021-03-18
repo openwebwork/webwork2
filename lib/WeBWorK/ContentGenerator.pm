@@ -1267,7 +1267,7 @@ sub warnings {
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
-	$warnings = Encode::decode_utf8($warnings);
+	$warnings = Encode::decode("UTF-8",$warnings);
 	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 

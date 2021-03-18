@@ -218,6 +218,13 @@ $LMSManageUserData=1;
 
 $LTIGradeOnSubmit = 1;
 
+# Should WW try to check the current LMS grade before sending a grade update.
+# This is intended to reduce LMS records when no real grade change occurred.
+# It requires a 2 round process, first querying the current grade from the LMS
+# and then when needed making the grade submission.
+
+$lti_check_prior = 0; # default is off - old setting - always update with no check
+
 # The system periodically updates student grades on the LMS.  This
 # variable controls how often that happens.  Set to -1 to disable.  
 

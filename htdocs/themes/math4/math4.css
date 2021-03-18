@@ -262,6 +262,12 @@ h2.page-title {
 	border-bottom: 1px solid #ccc;
 }
 
+.problem-sub-header {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 20px;
+}
+
 #info-panel-right {
 	margin-bottom: 0.5em;
 /*	width: 25%; 8*/
@@ -1125,7 +1131,8 @@ div.problem_sets_options {
     padding-left: 0px;
 }
 
-#psd_list li {
+#psd_list li.ui-sortable-placeholder,
+#psd_list li.psd_list_row {
     list-style-type: none;
 }
 

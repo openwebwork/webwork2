@@ -2628,7 +2628,7 @@ sub output_JS {
 	<link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
 	<script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
 	print "\n";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.nestedSortable.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
 
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";

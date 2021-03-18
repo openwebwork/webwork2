@@ -910,7 +910,7 @@ $dbh->disconnect;
 if ($ce->{problemLibrary}{showLibraryLocalStats} ||
     $ce->{problemLibrary}{showLibraryGlobalStats}) {
   print "\nUpdating Library Statistics.\n";
-  do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics';
+  do $ENV{WEBWORK_ROOT}.'/bin/update-OPL-statistics.pl';
 
   print "\nLoading global statistics (if possible).\n";
   do $ENV{WEBWORK_ROOT}.'/bin/load-OPL-global-statistics.pl';

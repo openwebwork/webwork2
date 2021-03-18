@@ -94,6 +94,9 @@ eval "use lib '$pg_dir/lib'"; die $@ if $@;
 $WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
 $ENV{PG_ROOT} = $pg_dir;
 
+# Location of common tex input files for hardcopy generation
+$ENV{TEXINPUTS} = ".:$webwork_dir/conf/snippets/hardcopyThemes/common:";
+
 #################################################################
 # Modify the manner in which errors are reported.
 # Uncommenting $ENV{MIN_HTML_ERRORS} = 1; will minimize the data provided
@@ -214,27 +217,27 @@ if ($webwork_url eq "") {
 ####################################################################
 # WebworkSOAP handlers (for integration with moodle)
 ####################################################################
- PerlModule WebworkSOAP
+#PerlModule WebworkSOAP
 
- # WEBWORK SOAP CONFIGURATION
- <Location /webwork2_rpc>
-         PerlHandler Apache::SOAP
-         SetHandler perl-script
-         PerlSetVar dispatch_to "WebworkSOAP"
-         PerlSetVar options "compress_threshold => 10000"
-         Require all granted
- </Location>
+# WEBWORK SOAP CONFIGURATION
+#<Location /webwork2_rpc>
+#        PerlHandler Apache::SOAP
+#        SetHandler perl-script
+#        PerlSetVar dispatch_to "WebworkSOAP"
+#        PerlSetVar options "compress_threshold => 10000"
+#        Require all granted
+#</Location>
 
 ####################################################################
 # WebworkSOAP WSDL HANDLER :: TO BE REPLACED WITH A FILE FOR PRODUCTION SERVERS
 ####################################################################
- <Location /webwork2_wsdl>
-         PerlSetVar dispatch_to "WebworkSOAP::WSDL"
-         PerlSetVar options "compress_threshold => 10000"
-         PerlHandler WebworkSOAP::WSDL
-         SetHandler perl-script
-         Require all granted
- </Location>
+#<Location /webwork2_wsdl>
+#        PerlSetVar dispatch_to "WebworkSOAP::WSDL"
+#        PerlSetVar options "compress_threshold => 10000"
+#        PerlHandler WebworkSOAP::WSDL
+#        SetHandler perl-script
+#        Require all granted
+#</Location>
 
 
 ####################################################################
