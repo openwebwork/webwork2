@@ -132,25 +132,8 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	$('.answerComments').addClass('well');
 	$('#SMA_button').addClass('btn btn-primary');
 
-
-	// this finds the wztooltips object entries and adds
-	// bootstrap styling using popover to them
-	// check first that popover is defined
-	// (work around for sage interacts which remove popover for some reason)
-	$("table.attemptResults td[onmouseover*='Tip']").each(function(index,elem) {
-		var data = $(this).attr('onmouseover').match(/Tip\('(.*)'/);	
-		if (data) { data = data[1] }; // not sure I understand this, but sometimes the match fails 
-		//on the presentation of a matrix  and then causes errors throughout the rest of the script
-		if ($.fn.popover) { 
-			$(this).attr('onmouseover','');
-			if (data) {
-				$(this).wrapInner('<div class="results-popover" />');
-				var popdiv = $('div', this);
-				popdiv.popover({placement:'bottom', html:'true', trigger:'click',content:data});	
-			}
-		} 
-
-	});
+	// Set up popovers in the attemptResults table.
+	if ($.fn.popover) { $("table.attemptResults td span.answer-preview").popover({ trigger: 'click' }); }
 
 	// sets up problems to rescale the image accoring to attr height width
 	// and not native height width.  
