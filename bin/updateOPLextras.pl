@@ -76,15 +76,35 @@ use OPLUtils qw/build_library_directory_tree build_library_subject_tree build_li
 
 my $ce = new WeBWorK::CourseEnvironment({webwork_dir=>$ENV{WEBWORK_ROOT}});
 
+# decide whether the mysql installation can handle 
+# utf8mb4 and that should be used for the OPL
+
+my $ENABLE_UTF8MB4 = ($ce->{ENABLE_UTF8MB4})?1:0;
+print  "using utf8mb4 \n\n" if $ENABLE_UTF8MB4;
+
+# The DBD::MariaDB driver should not get the
+#    mysql_enable_utf8mb4 or mysql_enable_utf8 settings,
+# but DBD::mysql should.
+my %utf8_parameters = ();
+
+if ( $ce->{database_driver} =~ /^mysql$/i ) {
+	# Only needed for older DBI:mysql driver
+	if ( $ENABLE_UTF8MB4 ) {
+		$utf8_parameters{mysql_enable_utf8mb4} = 1;
+	} else {
+		$utf8_parameters{mysql_enable_utf8} = 1;
+	}
+}
+
 my $dbh = DBI->connect(
-				$ce->{problemLibrary_db}->{dbsource},
-				$ce->{problemLibrary_db}->{user},
-				$ce->{problemLibrary_db}->{passwd},
-				{
-						PrintError => 0,
-						RaiseError => 1,
-						($ce->{ENABLE_UTF8MB4})?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
-				},
+	$ce->{problemLibrary_db}->{dbsource},
+	$ce->{problemLibrary_db}->{user},
+	$ce->{problemLibrary_db}->{passwd},
+	{
+		PrintError => 0,
+		RaiseError => 1,
+		%utf8_parameters,
+	},
 );
 
 build_library_textbook_tree($ce,$dbh,$verbose) if ($all || $textbooks);
