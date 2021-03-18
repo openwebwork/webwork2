@@ -529,7 +529,8 @@ $mail{feedbackRecipients}    = [
 # and not both types.
 # Set $externalPrograms{pdflatex} to use either pdflatex or xelatex,
 # depending on which flavor of themes you are enabling.
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex";
+# Using --no-shell-escape is important for security reasons.
+#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
 
 # Available Hardcopy themes (located in snippets)
 # (their "internal" name and their pretty name for end users)
