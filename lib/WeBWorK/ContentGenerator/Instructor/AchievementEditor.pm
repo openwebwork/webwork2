@@ -34,7 +34,7 @@ use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
-use WeBWorK::Utils::Tasks qw(fake_user fake_set renderProblems);
+use WeBWorK::Utils::Tasks qw(fake_user fake_set);
 use Data::Dumper;
 use Fcntl;
 

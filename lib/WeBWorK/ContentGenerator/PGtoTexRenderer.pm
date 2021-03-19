@@ -25,7 +25,6 @@ use base qw(WeBWorK::ContentGenerator);
 
 use WeBWorK::DB;
 use Data::Dumper;
-use WeBWorK::Utils::Tasks qw(renderProblems);
 use Parser;
 use AlgParser;
 use HTML::Entities;

@@ -113,7 +113,6 @@ use XMLRPC::Lite;
 use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use WeBWorK::PG::ImageGenerator;
 use HTML::Entities;
 use WeBWorK::Localize;
@@ -254,7 +253,6 @@ our $result;
 
 
 
-
 sub xmlrpcCall {
 	my $self = shift;
 	my $command = shift;
@@ -263,7 +261,7 @@ sub xmlrpcCall {
 	$command   = 'listLibraries' unless defined $command;
 	my $default_inputs = $self->default_inputs();
 	$requestObject = {%$default_inputs, %$input};  #input values can override default inputs
-	  
+
 	$self->request_object($requestObject);   # store the request object for later
 	
 	my $requestResult; 
@@ -344,6 +342,9 @@ sub xmlrpcCall {
 			}
 			if ( defined($final_result->{header_text}) ) {
 				$final_result->{header_text} = decode_utf8_base64($final_result->{header_text});
+			}
+			if ( defined($final_result->{post_header_text}) ) {
+				$final_result->{post_header_text} = decode_utf8_base64($final_result->{post_header_text});
 			}
 			# Need to parse the entire object to apply UTF-8 decoding to strings which were encoded
 			$final_result = xml_utf_decode($final_result);
@@ -606,17 +607,17 @@ sub environment {
 	my $self = shift;
 	my $envir = {
 		answerDate  => '4014438528',
-		CAPA_Graphics_URL=>'http://webwork-db.math.rochester.edu/capa_graphics/',
-		CAPA_GraphicsDirectory =>'/ww/webwork/CAPA/CAPA_Graphics/',
-		CAPA_MCTools=>'/ww/webwork/CAPA/CAPA_MCTools/',
-		CAPA_Tools=>'/ww/webwork/CAPA/CAPA_Tools/',
+		CAPA_Graphics_URL=>'/webwork2_files/CAPA_Graphics/',
+		CAPA_GraphicsDirectory =>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/',
+		CAPA_MCTools=>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/macros/CAPA_MCTools/',
+		CAPA_Tools=>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/macros/CAPA_Tools/',
 		cgiDirectory=>'Not defined',
 		cgiURL => 'foobarNot defined',
 		classDirectory=> 'Not defined',
 		courseName=>'Not defined',
 		courseScriptsDirectory=>'not defined',
-		displayMode=>$self->{inputs_ref}->{displayMode}//"no display mode defined in WebworkClient-> environment",
-		dueDate=> '4014438528',
+		displayMode => $self->{inputs_ref}{displayMode} // "MathJax",
+		dueDate => '4014438528',
 		effectivePermissionLevel => 10,
 		externalGif2EpsPath=>'not defined',
 		externalPng2EpsPath=>'not defined',
@@ -645,29 +646,29 @@ sub environment {
 		numZeroLevelDefault =>0.000001,
 		numZeroLevelTolDefault =>0.000001,
 		openDate=> '3014438528',
-		permissionLevel =>10,
-		PRINT_FILE_NAMES_FOR => [ 'gage'],
+		permissionLevel => $self->{inputs_ref}{permissionLevel} // 0,
+		PRINT_FILE_NAMES_FOR => [],
 		probFileName => 'WebworkClient.pm:: define probFileName in environment',
-		problemSeed  => $self->{inputs_ref}->{problemSeed}//3333,
-		problemUUID  => $self->{inputs_ref}->{problemUUID}//0,
+		problemSeed  => $self->{inputs_ref}{problemSeed} // 3333,
+		problemUUID  => $self->{inputs_ref}{problemUUID} // 0,
 		problemValue =>1,
-		probNum => 13,
-		psvn => $self->{inputs_ref}->{psvn}//54321,
+		probNum => $self->{inputs_ref}{probNum} // 1,
+		psvn => $self->{inputs_ref}{psvn} // 54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
-		sectionName => 'Gage',
+		sectionName => '',
 		sectionNumber => 1,
 		server_root_url =>"foobarfoobar", 
 		sessionKey=> 'Not defined',
-		setNumber =>'not defined',
-		studentLogin =>'gage',
-		studentName => 'Mike Gage',
+		setNumber => $self->{inputs_ref}{setNumber} // 'not defined',
+		studentLogin =>'',
+		studentName => '',
 		tempDirectory => 'not defined',
 		templateDirectory=>'not defined',
 		tempURL=>'not defined',
 		webworkDocsURL => 'not defined',
-		showHints => 1,               # extra options -- usually passed from the input form
-		showSolutions => 1,
+		showHints => $self->{inputs_ref}{showHints} // 0, # extra options -- usually passed from the input form
+		showSolutions => $self->{inputs_ref}{showSolutions} // 0,
 		@_,
 	};
 	$envir;

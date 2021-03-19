@@ -1,14 +1,8 @@
-$(function() {
-
-
+(function() {
 	//Problem set detail 2
 	$('#problemset_detail_list').addClass('container-fluid');
 
-	//This sets ajax coos to be synchronous so as to not overwhelm the server
-	//$.ajax({async : false});
-
-
-	//This uses the nextedSortable jquery-ui module to drive the
+	// This uses the nestedSortable jquery-ui module to drive the
 	// problem list, if its enabled
 
 	$('#psd_list').nestedSortable({
@@ -25,7 +19,6 @@ $(function() {
 		isTree: true,
 		startCollapsed: true,
 		maxLevels: 6,
-
 	});
 
 	//Problem Set Detail 2  (the page doesn't render properly without some sort
@@ -86,39 +79,48 @@ $(function() {
 				container:this});
 		}
 
-	})
-		.each(function() {
-			$(this).tooltip({title:$(this).attr('data-expand-text'),
-				container: this});
-		})
-		.click(function (event) {
-		});
+	}).each(function() {
+		$(this).tooltip({title:$(this).attr('data-expand-text'),
+			container: this});
+	});
 
+	// Set up already rendered problems
+	$("iframe[id^=psr_render_iframe_]").each(function() {
+		iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5' }, this);
+		this.addEventListener('load', function() { this.contentWindow.document.querySelector('.container-fluid').style.padding = '0px'; });
+	});
 
 	// This is for the render buttons
 	$('.pdr_render').click(function(event) {
 		event.preventDefault();
 		var id = this.id.match(/^pdr_render_(\d+)/)[1];
-		if ($('#psr_render_area_'+id).html()) {
-			$('#psr_render_area_'+id).html('');
+		var renderArea = $('#psr_render_area_' + id);
+		var iframe = renderArea.find('#psr_render_iframe_' + id);
+		if (iframe[0] && iframe[0].iFrameResizer) {
+			iframe[0].iFrameResizer.close();
+		} else if (renderArea.html() != "") {
+			renderArea.html('')
 		} else {
-			$('#psr_render_area_'+id).html('Loading Please Wait...');
+			renderArea.html("Loading Please Wait...");
 			render(id);
 		}
 	});
 
-	$('#psd_render_all').addClass('btn').click(function (event) {
+	$('#psd_render_all').addClass('btn').click(async function (event) {
 		event.preventDefault();
-		$('.pdr_render').each(function () {
-			var id = this.id.match(/^pdr_render_(\d+)/)[1];
-			$('#psr_render_area_'+id).html('Loading Please Wait...');
-			render(id);
-		});
+		var renderAreas = $('.psr_render_area');
+		for (var renderArea of renderAreas) {
+			$(renderArea).html('Loading Please Wait...');
+			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+		}
 	});
 
 	$('#psd_hide_all').addClass('btn').click(function (event) {
 		event.preventDefault();
-		$('.psr_render_area').html('');
+		$('.psr_render_area').each(function() {
+			var iframe = $(this).find('[id^=psr_render_iframe_]');
+			if (iframe[0] && iframe[0].iFrameResizer) iframe[0].iFrameResizer.close();
+		});
 	});
 
 	// This is for collapsing and expanding the tree
@@ -227,12 +229,10 @@ $(function() {
 			if (!has_children) {
 				$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').addClass('hidden');
 			}
-
-
 		});
 	}
 
-	//Actually run disabled fields on page load.
+	// Actually run disabled fields on page load.
 	disable_fields();
 
 	$('#psd_list').on('sortupdate', set_prob_num_fields);
@@ -242,121 +242,116 @@ $(function() {
 		set_prob_num_fields();
 	});
 
-});
+	var basicWebserviceURL = "/webwork2/html2xml";
 
-// This is the WeBWorK XML interface code for rendering problems
-var basicRequestObject = {
-	"xml_command":"listLib",
-	"pw":"",
-	"password":'change-me',
-	"session_key":'change-me',
-	"user":"user-needs-to-be-defined",
-	"library_name":"Library",
-	"courseID":'change-me',
-	"set":"set0",
-	"new_set_name":"new set",
-	"command":"buildtree"
-};
-
-var basicWebserviceURL = "/webwork2/instructorXMLHandler";
-
-
-function init_webservice(command) {
-	var myUser = $('#hidden_user').val();
-	var myCourseID = $('#hidden_course_id').val();
-	var mySessionKey = $('#hidden_key').val();
-	var mySetID = $('#hidden_set_id').val();
-	var mydefaultRequestObject = {
-	};
-
-	if (myUser && mySessionKey && myCourseID) {
-		mydefaultRequestObject.user = myUser;
-		mydefaultRequestObject.session_key = mySessionKey;
-		mydefaultRequestObject.courseID = myCourseID;
-		mydefaultRequestObject.set_id = mySetID;
-	} else {
-		alert("missing hidden credentials: user "
-			+ myUser + " session_key " + mySessionKey+ " courseID "
-			+ myCourseID, "alert-error");
-		return null;
-	}
-	mydefaultRequestObject.xml_command = command;
-	return mydefaultRequestObject;
-}
-
-function render(id) {
-	var ro = init_webservice('renderProblem');
-
-	if ($('#problem\\.'+id+'\\.problem_seed_id').length > 0) {
-		ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed_id').val();
-	} else {
-		ro.problemSeed = 1;
-	}
-	var source_file
-
-	if ($('#problem\\.'+id+'\\.source_file_id').val()) {
-		source_file = $('#problem\\.'+id+'\\.source_file_id').val();
-	} else {
-		source_file = $('#problem_'+id+'_default_source_file').val();
+	// Render all problems on page load if requested.
+	if ($('#auto_render').is(':checked')) {
+		(async function() {
+			var renderAreas = $('.psr_render_area');
+			for (var renderArea of renderAreas) {
+				$(renderArea).html('Loading Please Wait...');
+				await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+			}
+		})();
 	}
 
-	if (/^group/.test(source_file)) {
-		$('#psr_render_area_'+id).html( $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text("Problem source is drawn from a grouping set."));
-		return false;
+	async function render(id) {
+		return new Promise(function(resolve, reject) {
+			var renderArea = $('#psr_render_area_' + id);
+
+			var ro = {
+				userID: $('#hidden_user').val(),
+				courseID: $('#hidden_course_id').val(),
+				session_key: $('#hidden_key').val()
+			};
+
+			if (!(ro.userID && ro.courseID && ro.session_key)) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					.text("Missing hidden credentials: user, session_key, courseID"));
+				resolve();
+				return;
+			}
+
+			if ($('#problem\\.' + id + '\\.problem_seed_id').length > 0) {
+				ro.problemSeed = $('#problem\\.' + id + '\\.problem_seed_id').val();
+			} else {
+				ro.problemSeed = 1;
+			}
+
+			if ($('#problem\\.' + id + '\\.source_file_id').val()) {
+				ro.sourceFilePath = $('#problem\\.' + id + '\\.source_file_id').val();
+			} else {
+				ro.sourceFilePath = $('#problem_' + id + '_default_source_file').val();
+			}
+
+			if (ro.sourceFilePath.startsWith('group')) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError'})
+					.text("Problem source is drawn from a grouping set."));
+				resolve();
+				return;
+			}
+
+			var editForUserInputs = $('input[name=editForUser]');
+			if (editForUserInputs.length == 1) ro.effectiveUser = editForUserInputs.val();
+
+			var versionIDInput = $('#hidden_version_id');
+			if (versionIDInput.length) ro.version_id = versionIDInput.val();
+
+			ro.outputformat = 'simple';
+			ro.showAnswerNumbers = 0;
+			ro.set_id = $('#hidden_set_id').val();
+			ro.probNum = id;
+			ro.showHints = 1;
+			ro.showSolutions = 1;
+			ro.permissionLevel = 10;
+			ro.noprepostambles = 1;
+			ro.processAnswers = 0;
+			ro.showFooter = "no";
+			ro.displayMode = $('#problem_displaymode').val();
+
+			$.ajax({type:'post',
+				url: basicWebserviceURL,
+				data: ro,
+				timeout: 10000, //milliseconds
+			}).done(function (data) {
+				// Give nicer file not found error
+				if (/this problem file was empty/i.test(data)) {
+					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text('No Such File or Directory!'));
+					resolve();
+					return;
+				}
+				// Give nicer session timeout error
+				if (/Can\'t authenticate -- session may have timed out/i.test(data) ||
+					/Webservice.pm: Error when trying to authenticate./i.test(data)) {
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text("Can't authenticate -- session may have timed out."));
+					resolve();
+					return;
+				}
+				// Give nicer problem rendering error
+				if (/error caught by translator while processing problem/i.test(data) ||
+					/error message for command: renderproblem/i.test(data)) {
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text('There was an error rendering this problem!'));
+					resolve();
+					return;
+				}
+
+				renderArea.html("<iframe id='psr_render_iframe_" + id +
+					"' src='about:blank' frameBorder='0'></iframe>");
+				var iframe = renderArea.find('#psr_render_iframe_' + id);
+				iframe[0].contentWindow.document.open();
+				iframe[0].contentWindow.document.write(data);
+				iframe[0].contentWindow.document.close();
+				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5' }, iframe[0]);
+				iframe[0].addEventListener('load', function() { iframe[0].contentWindow.document.querySelector('.container-fluid').style.padding = '0px'; });
+				resolve();
+			}).fail(function (data) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					.text(basicWebserviceURL + ': ' + data.statusText));
+				resolve();
+			});
+		});
 	}
-
-	ro.problemPath = source_file;
-
-	var editForUserInputs = $('input[name=editForUser]');
-	if (editForUserInputs.length == 1) ro.effectiveUser = editForUserInputs.val();
-
-	var versionIDInput = $('#hidden_version_id');
-	if (versionIDInput.length) ro.version_id = versionIDInput.val();
-
-	ro.set = ro.problemPath;
-	ro.probNum = id;
-	ro.showHints = 1;
-	ro.showSolutions = 1;
-	ro.permissionLevel = 'professor';
-	ro.noprepostambles = 1;
-	ro.processAnswers = 0;
-	var displayMode = $('#problem_displaymode').val();
-	ro.displayMode = displayMode;
-	$.ajax({type:'post',
-		url: basicWebserviceURL,
-		data: ro,
-		timeout: 10000, //milliseconds
-		success: function (data) {
-			var response = data;
-			// Give nicer file not found error
-			if (/No such file or directory at/i.test(response) ||
-				/Can\'t read file/i.test(response)) {
-				response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('No Such File or Directory!');
-			}
-			if (/"server_response":"","result_data":""/i.test(response)) {
-				response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('There was an error rendering this problem!');
-			}
-
-			$('#psr_render_area_'+id).html(response);
-			// run typesetter depending on the displaymode
-			if(displayMode=='MathJax')
-				MathJax.startup.promise = MathJax.startup.promise.then(function() { return MathJax.typesetPromise(); });
-			if(displayMode=='jsMath')
-				jsMath.ProcessBeforeShowing(el);
-
-			if(displayMode=='asciimath') {
-				//processNode(el);
-				translate();
-			}
-			if(displayMode=='LaTeXMathML') {
-				AMprocessNode(document.getElementsByTagName("body")[0], false);
-			}
-			//console.log(data);
-		},
-		error: function (data) {
-			alert(basicWebserviceURL+': '+data.statusText);
-		},
-	});
-
-	return false;
-}
+})();

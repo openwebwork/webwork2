@@ -36,7 +36,7 @@ use WeBWorK::Utils qw(readDirectory max sortByName wwRound x);
 use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Utils::Tags;
 use WeBWorK::Utils::LibraryStats;
-use WeBWorK::Utils::DetermineProblemLangAndDirection;
+use WeBWorK::Utils::LanguageAndDirection;
 use File::Find;
 use MIME::Base64 qw(encode_base64);
 use Encode;
@@ -964,7 +964,7 @@ sub make_data_row {
 	my $ce = $r->{ce};
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
-	my $pg = shift;
+	my $pg_file = shift;
 	my $isstatic = $sourceFileData->{static};
 	my $isMO = $sourceFileData->{MO};
 	if (not defined $isMO) {
@@ -986,26 +986,8 @@ sub make_data_row {
 	     $localSet ne $r->maketext(NO_LOCAL_SET_STRING) ) {
 		$setRecord = $db->getGlobalSet( $localSet );
 	}
-	my $isGatewaySet = ( defined($setRecord) && 
-			     $setRecord->assignment_type =~ /gateway/ );
+	my $isGatewaySet = (defined($setRecord) && $setRecord->assignment_type =~ /gateway/);
 
-	my %problem_div_settings = ( class=>"RenderSolo", id=>"render$cnt" );
-        # Add what is needed for lang and dir settings
-	my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
-	my $to_set_tag;
-	my $to_set_val;
-	while ( scalar(@to_set_lang_dir) > 0 ) {
-	  $to_set_tag = shift( @to_set_lang_dir );
-	  $to_set_val = shift( @to_set_lang_dir );
-	  if ( defined( $to_set_val ) ) {
-	    $problem_div_settings{ "$to_set_tag" } = "$to_set_val";
-	  }
-	}
-
-	my $problem_output = $pg->{flags}->{error_flag} ?
-		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div( \%problem_div_settings, $pg->{body_text});
-	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
@@ -1078,7 +1060,7 @@ sub make_data_row {
 
 	my $level =0;
 
-	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="fas fa-random"></i></span>';
+	my $rerand = $isstatic ? '' : qq{<span style="display: inline-block" class="rerandomize_problem_button" data-target-problem="$cnt" title="Randomize"><i class="fas fa-random"></i></span>};
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
@@ -1141,7 +1123,7 @@ sub make_data_row {
 		#CGI::br(),
 		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
                 $tagwidget,
-		CGI::div($problem_output)
+		CGI::div(CGI::div({ class => "psr_render_area", id => "psr_render_area_$cnt", data_pg_file => $pg_file }))
 	));
 	print $mltend;
 }
@@ -1634,6 +1616,7 @@ sub body {
 	my $db = $r->db;		# database
 	my $j;			# garden variety counter
 
+	my $courseID = $self->r->urlpath->arg("courseID");
 	my $userName = $r->param('user');
 
 	my $user = $db->getUser($userName); # checked
@@ -1665,18 +1648,7 @@ sub body {
 	my @pg_files = @{$self->{pg_files}};
 	my @all_db_sets = @{$self->{all_db_sets}};
 
-	my @pg_html;
-	if ($last_index >= $first_index) {
-		my @plist = map {$_->{filepath}} @pg_files[$first_index..$last_index];
-		@pg_html = renderProblems(
-			r=> $r,
-			user => $user,
-			problem_list => [@plist],
-			displayMode => $r->param('mydisplayMode'),
-			showHints => $showHints,
-			showSolutions => $showSolutions,
-		);
-	}
+	my @plist = map {$_->{filepath}} @pg_files[$first_index..$last_index];
 
 	my %isInSet;
 	my $setName = $r->param("local_sets");
@@ -1694,7 +1666,6 @@ sub body {
 	$self->{isInSet} = \%isInSet;
 
 	##########	Top part
-        my $courseID = $self->r->urlpath->arg("courseID");
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
@@ -1720,13 +1691,13 @@ sub body {
 
 	########## Now print problems
 	my ($jj,$mltnumleft)=(0,-1);
-	for ($jj=0; $jj<scalar(@pg_html); $jj++) { 
+	for ($jj=0; $jj<scalar(@plist); $jj++) {
 		$pg_files[$jj+$first_index]->{filepath} =~ s|^$ce->{courseDirs}->{templates}/?||;
 		# For MLT boxes, need to know if we are at the end of a group
 		# make_data_row can't figure this out since it only sees one file
 		$mltnumleft--;
 		my $sourceFileData = $pg_files[$jj+$first_index];
-		$self->make_data_row($sourceFileData, $pg_html[$jj], $jj+1,$mltnumleft);
+		$self->make_data_row($sourceFileData, $plist[$jj], $jj+1,$mltnumleft);
 		$mltnumleft = scalar(@{$sourceFileData->{children}}) if($sourceFileData->{children});
 	}
 
@@ -1756,37 +1727,36 @@ sub body {
 }
 
 sub output_JS {
-  my ($self) = @_;
-  my $ce = $self->r->ce;
-  my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
+	my ($self) = @_;
+	my $ce = $self->r->ce;
+	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-  print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
-  print "\n";
-  print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
-  print "\n";
-  print qq!<script src="$webwork_htdocs_url/js/apps/ImageView/imageview.js"></script>!;
-  print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
-  print "\n";
-  if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
-	if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
-		my $taxo = '[]';
-		$taxo = join("", <TAXONOMY>); 
-		close TAXONOMY;
-		print qq!\n<script>var taxo = $taxo ;</script>!;
-	} else {
-		print qq!\n<script>var taxo = [] ;</script>!;
-		print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+	print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
+	print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
+	print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
+	print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
+	print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
+	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
+
+	print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
+
+	print qq!<script src="$webwork_htdocs_url/js/apps/ImageView/imageview.js"></script>!;
+	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
+	print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
+	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
+		my $site_url = $ce->{webworkURLs}->{htdocs};
+		print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
+		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+			my $taxo = '[]';
+			$taxo = join("", <TAXONOMY>); 
+			close TAXONOMY;
+			print qq!\n<script>var taxo = $taxo ;</script>!;
+		} else {
+			print qq!\n<script>var taxo = [] ;</script>!;
+			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+		}
 	}
-  }
-  return '';
-
+	return '';
 }
 
 

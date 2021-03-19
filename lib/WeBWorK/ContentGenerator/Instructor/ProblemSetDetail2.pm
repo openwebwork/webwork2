@@ -433,9 +433,6 @@ use constant FIELD_PROPERTIES => {
 		labels    => { '1' => "Yes", '0' =>"No", },
                 help_text => x("If this flag is set then this problem will count towards the grade of its parent problem.  In general the adjusted status on a problem is the larger of the problem's status and the weighted average of the status of its child problems which have this flag enabled."),
 	},
-
-
-
 };
 
 use constant FIELD_PROPERTIES_GWQUIZ => {
@@ -2431,19 +2428,6 @@ sub body {
 		my $error = $self->checkFile($problemFile, undef);
 		my $this_set = $db->getMergedSet($userToShow, $setID);
 
-		my @problem_html;
-		if (!$error && $r->param('auto_render')) {
-		    @problem_html = renderProblems(
-			r=> $r,
-			user => $db->getUser($userToShow),
-			displayMode=> $default_problem_mode,
-			problem_number=> $problemID,
-			this_set => $this_set,
-			problem_seed => $forOneUser ? $problemRecord->problem_seed : 0,
-			problem_list => [$problemFile],     #  [$problemRecord->source_file],
-			);
-		}
-
 		# we want to show the "Try It" and "Edit It" links if there's a
 		#    well defined problem to view; this is when we're editing a
 		#    homework set, or if we're editing a gateway set version, or
@@ -2503,14 +2487,15 @@ sub body {
 						     "source_file"
 		    );
 
-		$source_file_string[3] = CGI::br().CGI::input({type=>'hidden',id=>"problem_".$problemID."_default_source_file",value=>$GlobalProblems{$problemID}->source_file()}).$source_file_string[3];
+		$source_file_string[3] = CGI::input({type=>'hidden',id=>"problem_".$problemID."_default_source_file",value=>$GlobalProblems{$problemID}->source_file()}).$source_file_string[3];
 
-		my $pdr_block_3 = CGI::div({class=>"pdr_block_3"},
-					   join ('',@source_file_string) .
-					   CGI::br() .
-					   ($repeatFile ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $repeatFile) : '') .
-					   CGI::div({class=> "psr_render_area", id=>"psr_render_area_$problemID"}, ($error ? CGI::div({class=>"ResultsWithError", style=>"font-weight: bold"}, $error) :  $problem_html[0]->{body_text})
-					   ));
+		my $pdr_block_3 = CGI::div({ class => "pdr_block_3" },
+			join ('',@source_file_string) .
+			CGI::br() .
+			($repeatFile ? CGI::div({ class => "ResultsWithError", style => "font-weight: bold" }, $repeatFile) : '') .
+			CGI::div({ class => "psr_render_area", id => "psr_render_area_$problemID" },
+				$error ? CGI::div({class => "ResultsWithError", style => "font-weight: bold"}, $error) : "")
+		);
 
 		push @problemRow, CGI::div({class=>"problem_detail_row"},
 					   $pdr_block_1.
@@ -2628,8 +2613,11 @@ sub output_JS {
 	<link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
 	<script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
 	print "\n";
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
+
+	print CGI::script({ src=>"$site_url/js/apps/ProblemSetDetail2/problemsetdetail2.js", defer => "" }, "");
 
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";

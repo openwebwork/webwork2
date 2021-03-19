@@ -220,42 +220,41 @@ use JSON;
 #  authentication and authorization
 ###########################################################################
 
-sub initiate_session {    # close to being a "new" subroutine
+# close to being a "new" subroutine
+sub initiate_session {
 	my ($invocant, @args) = @_;
 	my $class = ref $invocant || $invocant;
+
 	######### trace commands ######
- 	    my @caller = caller(1);  # caller data
- 	    my $calling_function = $caller[3];
- 	    #print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
-    ###############################
-	
+	my @caller = caller(1);  # caller data
+	my $calling_function = $caller[3];
+	#print STDERR  "\n\nWebworkWebservice.pm ".__LINE__." initiate_session called from $calling_function\n";
+	###############################
+
 	my $rh_input     = $args[0];
 	my $permission = $args[1] // "proctor_quiz_login"; # usually level 2
-###########################################################################
-# identify course 
-###########################################################################
- 
-if ($UNIT_TESTS_ON) {
-	print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
-	print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
-}    
+
+	# identify course 
+	if ($UNIT_TESTS_ON) {
+		print STDERR  "WebworkWebservice.pl ".__LINE__." site_password  is " , $rh_input->{site_password},"\n";
+		print STDERR  "WebworkWebservice.pl ".__LINE__." course_password  is " , $rh_input->{course_password},"\n";
+		print STDERR  "WebworkWebservice.pl ".__LINE__." courseID  is " , $rh_input->{courseID},"\n";
+		print STDERR  "WebworkWebservice.pl ".__LINE__." userID  is " , $rh_input->{userID},"\n";
+		print STDERR  "WebworkWebservice.pl ".__LINE__." session_key  is " , $rh_input->{session_key},"\n";
+	}    
 
 
-# create fake version of Apache::Request object
-# This abstracts some of the work that used to be done by the webworkXMLRPC object
-# It also allows WeBWorK::FakeRequest to inherit cleanly from WeBWorK::Request
-# The $fake_r value returned actually contains subroutines that the WebworkWebservice packages
-# need to operate.  It may be possible to pass $fake_r instead of $self in those routines.
- 
-my $fake_r = WeBWorK::FakeRequest->new($rh_input, 'xmlrpc_module'); # need to specify authentication module
-my $authen = $fake_r->authen;
-my $authz  = $fake_r->authz;
+	# create fake version of Apache::Request object
+	# This abstracts some of the work that used to be done by the webworkXMLRPC object
+	# It also allows WeBWorK::FakeRequest to inherit cleanly from WeBWorK::Request
+	# The $fake_r value returned actually contains subroutines that the WebworkWebservice packages
+	# need to operate.  It may be possible to pass $fake_r instead of $self in those routines.
 
-# Create WebworkXMLRPC object
-	
+	my $fake_r = WeBWorK::FakeRequest->new($rh_input, 'xmlrpc_module'); # need to specify authentication module
+	my $authen = $fake_r->authen;
+	my $authz  = $fake_r->authz;
+
+	# Create WebworkXMLRPC object
 	my $self = {
 		courseName	=>  $rh_input ->{courseID},
 		user_id		=>  $rh_input ->{userID},
@@ -265,25 +264,23 @@ my $authz  = $fake_r->authz;
 	};	
 	$self = bless $self, $class;
 	if ($UNIT_TESTS_ON) {
- 	   print STDERR  "WebworkWebservice.pm ".__LINE__." initiate data:\n  "; 
- 	   print STDERR  "class type is ", $class, "\n";
- 	   print STDERR  "Self has type ", ref($self), "\n";
- 	   print STDERR   "self has data: \n", format_hash_ref($self), "\n";
- 	   print STDERR   "authen has type ", ref($authen), "\n";
- 	   print STDERR   "authz  has type ", ref($authz), "\n";
+		print STDERR  "WebworkWebservice.pm ".__LINE__." initiate data:\n  "; 
+		print STDERR  "class type is ", $class, "\n";
+		print STDERR  "Self has type ", ref($self), "\n";
+		print STDERR   "self has data: \n", format_hash_ref($self), "\n";
+		print STDERR   "authen has type ", ref($authen), "\n";
+		print STDERR   "authz  has type ", ref($authz), "\n";
 	}
-	
+
 	die "Please use 'course_password' instead of 'password' as the key for submitting
-		passwords to this webservice\n" 
-	  if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
-#   we need to trick some of the methods within the webwork framework 
-#   since we are not coming in with a standard apache request
-#   FIXME:  can/should we change this????
-#
-#   We are borrowing tricks from the AuthenWeBWorK.pm module
-#
-# 	
-	
+	passwords to this webservice\n" 
+	if exists($rh_input ->{password}) and not exists($rh_input ->{course_password});
+	#   we need to trick some of the methods within the webwork framework 
+	#   since we are not coming in with a standard apache request
+	#   FIXME:  can/should we change this????
+	#
+	#   We are borrowing tricks from the AuthenWeBWorK.pm module
+
 	# now, here's the problem... WeBWorK::Authen looks at $r->params directly, whereas we
 	# need to look at $user and $sent_pw. this is a perfect opportunity for a mixin, i think.
 	my $authenOK;
@@ -292,19 +289,14 @@ my $authz  = $fake_r->authz;
 	my $session_key = $rh_input->{session_key};
 	eval {
 		no warnings 'redefine';
-# 		local *WeBWorK::Authen::get_credentials   = \&WebworkXMLRPC::get_credentials;
-# 		local *WeBWorK::Authen::maybe_send_cookie = \&WebworkXMLRPC::noop;
-# 		local *WeBWorK::Authen::maybe_kill_cookie = \&WebworkXMLRPC::noop;
-# 		local *WeBWorK::Authen::set_params        = \&WebworkXMLRPC::noop;
-# 		local *WeBWorK::Authen::write_log_entry   = \&WebworkXMLRPC::noop; # maybe fix this to log interactions FIXME
 		$authenOK = $authen->verify;
 	} or do {
 		my $e;
 		if (Exception::Class->caught('WeBWorK::DB::Ex::TableMissing')) {
 			# was asked to authenticate into a non-existent course
 			die SOAP::Fault
-				->faultcode('404')
-				->faultstring("WebworkWebservice: Course |$courseName| not found.")
+			->faultcode('404')
+			->faultstring("WebworkWebservice: Course |$courseName| not found.")
 		}
 		# this next bit is a Hack to catch errors when the session key has timed out
 		# and an error message which is approximately 
@@ -312,50 +304,50 @@ my $authz  = $fake_r->authz;
 		if ($e = Exception::Class->caught() and $e =~/object\s+with\s+no\s+.r.\s+key/ ) {
 			# was asked to authenticate into a non-existent course
 			die SOAP::Fault
-				->faultcode('404')
-				->faultstring("WebworkWebservice: Can't authenticate -- session may have timed out.")
+			->faultcode('404')
+			->faultstring("WebworkWebservice: Can't authenticate -- session may have timed out.")
 		}
 		die "Webservice.pm: Error when trying to authenticate. $e\n";
 	};
-###########################################################################
-# security check -- check that the user is in fact at least a proctor in the course
-###########################################################################
-	
+	###########################################################################
+	# security check -- check that the user is in fact at least a proctor in the course
+	###########################################################################
+
 	$self->{authenOK}  = $authenOK;
 	$self->{authzOK}   = $authz->hasPermissions($self->{user_id}, $permission);
-	
-# Update the credentials -- in particular the session_key may have changed.
- 	$self->{session_key} = $authen->{session_key};
 
- 	if ($UNIT_TESTS_ON) {
-  		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
-      	print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n"; 
-  		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
-  		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
-  	} 
- # Is there a way to transmit a number as well as a message?
- # Could be useful for handling errors.
- 	debug("initialize webworkXMLRPC object in: ", format_hash_ref($rh_input),"\n") if $UNIT_TESTS_ON;
- 	debug("fake_r :", format_hash_ref($fake_r),"\n") if $UNIT_TESTS_ON;
- 	die "Could not authenticate user $user_id with key $session_key"  unless $self->{authenOK};
- 	die "User $user_id does not have sufficient privileges in this course $courseName" unless $self->{authzOK};
- 	return $self;
+	# Update the credentials -- in particular the session_key may have changed.
+	$self->{session_key} = $authen->{session_key};
+
+	if ($UNIT_TESTS_ON) {
+		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication for ",$self->{user_id}, " in course ", $self->{courseName}, " is = ", $self->{authenOK},"\n";
+		print STDERR  "WebworkWebservice.pm ".__LINE__."authorization as instructor for ", $self->{user_id}, " is ", $self->{authzOK},"\n"; 
+		print STDERR  "WebworkWebservice.pm ".__LINE__." authentication contains ", format_hash_ref($authen),"\n";
+		print STDERR   "self has new data \n", format_hash_ref($self), "\n";
+	}
+
+	# Is there a way to transmit a number as well as a message?
+	# Could be useful for handling errors.
+	debug("initialize webworkXMLRPC object in: ", format_hash_ref($rh_input),"\n") if $UNIT_TESTS_ON;
+	debug("fake_r :", format_hash_ref($fake_r),"\n") if $UNIT_TESTS_ON;
+	die "Could not authenticate user $user_id with key $session_key"  unless $self->{authenOK};
+	die "User $user_id does not have sufficient privileges in this course $courseName" unless $self->{authzOK};
+	return $self;
 }
 
-
-
-sub do {   # process and return result
-           # make sure that credentials are returned
-           # for every call
-           # $result -> xmlrpcCall(command, in);
-           # $result->return_object->{foo} is defined for foo = courseID userID and session_key
+# process and return result
+# make sure that credentials are returned
+# for every call
+# $result -> xmlrpcCall(command, in);
+# $result->return_object->{foo} is defined for foo = courseID userID and session_key
+sub do {
 	my $self = shift;
 	my $result = shift;
-	
-    $result->{session_key}  = $self->{session_key};
-    $result->{userID}       = $self->{user_id};
-    $result->{courseID}     = $self->{courseName};
-    debug("output is ", format_hash_ref($result), "\n" ) if $UNIT_TESTS_ON;
+
+	$result->{session_key}  = $self->{session_key};
+	$result->{userID}       = $self->{user_id};
+	$result->{courseID}     = $self->{courseName};
+	debug("output is ", format_hash_ref($result), "\n" ) if $UNIT_TESTS_ON;
 	return($result);
 }
 

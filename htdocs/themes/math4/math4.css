@@ -839,6 +839,10 @@ table.attemptResults td.Message {
 .attemptResultsSummary { margin-bottom: 10px; }
 .parsehilight { color: inherit; background-color: yellow; }
 
+.problem-main-form {
+	margin-bottom: 0px;
+}
+
 .problem-main-form input {
     margin-left:.5ex;
     margin-right:.5ex;
@@ -1143,6 +1147,10 @@ div.problem_sets_options {
     list-style-type: none;
 }
 
+.problem_detail_row {
+	padding: 0.75em;
+}
+
 .pdr_placeholder {
     height: 100px;
     width: 90%;
@@ -1199,8 +1207,12 @@ div.problem_sets_options {
 }
 
 .psr_render_area {
-    margin-top: 10px;
-    overflow: hidden;
+	margin-top: 10px;
+}
+
+.psr_render_area iframe {
+	width: 100%;
+	border-radius: 5px;
 }
 
 .ScrollingRecordList > input[type='submit'] {
