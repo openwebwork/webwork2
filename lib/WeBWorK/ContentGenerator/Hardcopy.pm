@@ -14,7 +14,10 @@
 # Artistic License for more details.
 ################################################################################
 
-BEGIN { $ENV{TEXINPUTS} = ".:$ENV{WEBWORK_ROOT}/conf/snippets/hardcopyThemes/common:"; }
+BEGIN {
+	$ENV{TEXINPUTS} = ".:$ENV{WEBWORK_ROOT}/conf/snippets/hardcopyThemes/common:"
+	unless defined($ENV{TEXINPUTS});
+}
 
 package WeBWorK::ContentGenerator::Hardcopy;
 use base qw(WeBWorK::ContentGenerator);
