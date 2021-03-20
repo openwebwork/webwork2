@@ -381,7 +381,7 @@ sub get_credentials {
 # else   use cookieKey for verification
 # else    use cookie user name but use password provided by request.
 
-		if (defined $r -> param("key")) {
+		if (defined $r->param("key")) {
 			$self->{user_id} = $r->param("user");
 			$self->{session_key} = $r->param("key");
 			$self->{password} = $r->param("passwd");
@@ -398,19 +398,24 @@ sub get_credentials {
 			$self->{login_type} = "normal";
 			$self->{credential_source} = "cookie";
 			$self->{user_id}     = trim($self->{user_id});
-			debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			debug(  "cookie user '", $self->{user_id},
+				"' key '", $self->{session_key},
+				"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+			);
 			return 1;
 		} else {
-			$self -> {user_id} = $cookieUser;
-			$self -> {session_key} = $cookieKey; # will be undefined
-			$self -> {password} = $r->param("passwd");
-			$self -> {cookie_timestamp} = $cookieTimeStamp;
-			$self -> {login_type} = "normal";
-			$self -> {credential_source} = "params_and_cookie";
+			$self->{user_id} = $cookieUser;
+			$self->{session_key} = $cookieKey; # will be undefined
+			$self->{password} = $r->param("passwd");
+			$self->{cookie_timestamp} = $cookieTimeStamp;
+			$self->{login_type} = "normal";
+			$self->{credential_source} = "params_and_cookie";
 			$self->{user_id}     = trim($self->{user_id});
 			$self->{password}    = trim($self->{password});
-			debug("params and cookie user '", $self->{user_id}, "' params and cookie session key = '",
-				 $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			debug(  "params and cookie user '", $self->{user_id},
+				"' params and cookie session key = '", $self->{session_key},
+				"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+			);
 			return 1;
 		}	
 	}
@@ -435,7 +440,10 @@ sub get_credentials {
 		$self->{login_type} = "normal";
 		$self->{credential_source} = "cookie";
 		$self->{user_id}     = trim($self->{user_id});
-		debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+		debug(  "cookie user '", $self->{user_id},
+			"' key '", $self->{session_key},
+			"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+		);
 		return 1;
 	}
 }
@@ -784,16 +792,22 @@ sub check_session {
 
 	my $Key = $db->getKey($userID); # checked
 	return 0 unless defined $Key;
+
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
-	
-	my $timestampValid=0;
+
+	my $time_now = time();
+
+	# Want key not be too old. Use timestamp from DB and
+	# sessionKeyTimeout to determine this even when using cookies
+	# as we do not trust the timestamp provided by a user's browser.
+	my $timestampValid  = ( $time_now <= $Key->timestamp() + $ce->{sessionKeyTimeout} );
+
 # first part of if clause is disabled for now until we figure out long term fix for using cookies
 # safely (see pull request #576)   This means that the database key time is always being used
 # even when in "session_cookie" mode
 #	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
 #		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
 #	} else {
-		$timestampValid = ( time <= $Key->timestamp() + $ce->{sessionKeyTimeout} );
 		if ($keyMatches and $timestampValid and $updateTimestamp) {
 			$Key->timestamp(time);
 			$db->putKey($Key);
@@ -820,14 +834,14 @@ sub killSession {
 		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
 	}
 
-	$self -> forget_verification;
-	if ($ce -> {session_management_via} eq "session_cookie")  {
-		$self -> killCookie();
+	$self->forget_verification;
+	if ($ce->{session_management_via} eq "session_cookie")  {
+		$self->killCookie();
 	}
 
 	my $userID = $r -> param("user");
 	if (defined($userID)) {
-		 $db -> deleteKey($userID);
+		 $db->deleteKey($userID);
 	}
 }
 
@@ -854,7 +868,7 @@ sub fetchCookie {
 		my ($userID, $key, $timestamp) = split "\t", $cookie->value;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
-			return $userID, $key, $timestamp;
+			return( $userID, $key, $timestamp );
 		} else {
 			debug("malformed cookie. returning nothing.");
 			return;
@@ -876,6 +890,7 @@ sub sendCookie {
 
 	my $sameSite  = $ce->{CookieSameSite};
 	my $secure    = $ce->{CookieSecure};    # Warning: use 1 only if using https
+	# At present the CookieLifeTime / CookieLifeTime2 only effects how long the browser is to told to retain the cookie.
 	my $lifetime  = $ce->{CookieLifeTime};  # for when session_management_via is session_cookie
 	my $lifetime2 = $ce->{CookieLifeTime2}; # for when session_management_via is NOT session_cookie
 

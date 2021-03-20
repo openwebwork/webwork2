@@ -516,6 +516,10 @@ $mail{feedbackRecipients}    = [
 # Set the value of the secure cookie attribute:
 #$CookieSecure = 1;
 
+# At present the CookieLifeTime / CookieLifeTime2 only effect how long the
+# browser is to supposed to retain the cookie.
+#     https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
+
 # Set cookie lifetime for when $session_management_via eq "session_cookie"
 #$CookieLifeTime = "+7d";
 
