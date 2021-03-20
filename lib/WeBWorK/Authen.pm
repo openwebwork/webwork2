@@ -787,16 +787,18 @@ sub check_session {
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
 	
 	my $timestampValid=0;
-	if ( $ce->{session_management_via} eq "session_cookie"
-		&& $ce->{CookieSecure} && defined($self->{cookie_timestamp}) ) {
-		$timestampValid = ( time <= $self->{cookie_timestamp} + $ce->{CookieLifeTime} );
-	} else {
+# first part of if clause is disabled for now until we figure out long term fix for using cookies
+# safely (see pull request #576)   This means that the database key time is always being used
+# even when in "session_cookie" mode
+#	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
+#		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
+#	} else {
 		$timestampValid = ( time <= $Key->timestamp() + $ce->{sessionKeyTimeout} );
 		if ($keyMatches and $timestampValid and $updateTimestamp) {
 			$Key->timestamp(time);
 			$db->putKey($Key);
 		}
-	}
+#	}
 	return (1, $keyMatches, $timestampValid);
 }
 
