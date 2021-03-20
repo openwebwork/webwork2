@@ -890,9 +890,6 @@ sub sendCookie {
 
 	my $sameSite  = $ce->{CookieSameSite};
 	my $secure    = $ce->{CookieSecure};    # Warning: use 1 only if using https
-	# At present the CookieLifeTime / CookieLifeTime2 only effects how long the browser is to told to retain the cookie.
-	my $lifetime  = $ce->{CookieLifeTime};  # for when session_management_via is session_cookie
-	my $lifetime2 = $ce->{CookieLifeTime2}; # for when session_management_via is NOT session_cookie
 
 	my $cookie = WeBWorK::Cookie->new(
 		-name     => "WeBWorKCourseAuthen.$courseID",
@@ -902,13 +899,19 @@ sub sendCookie {
 		-secure   => $secure,
 	);
 
-	if ($ce->{session_management_via} ne "session_cookie") {
-		$cookie->expires( $lifetime2 );
-		$cookie->max_age( $lifetime2 );
-	} else {
+	# Set how long the browser should retain the cookie. Using max_age is now recommended,
+	# and overrides expires, but some very old browser only support expires.
+	my $lifetime  = $ce->{CookieLifeTime};
+	if ( $lifetime ne 'session' ) {
 		$cookie->expires( $lifetime );
 		$cookie->max_age( $lifetime );
-	}
+	} # as when $lifetime eq 'session' the cookie should be a "session cookie"
+	  # and expire when the browser session is closed.
+	# At present the CookieLifeTime setting only effects how long the browser is to told to retain the cookie.
+	# Ideally, when $ce->{session_management_via} eq "session_cookie", and if the timestamp in the cookie was
+	# secured again client-side tampering, the timestamp and lifetime could be used to provide ongoing session
+	# authentication.
+
  	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
 		$cookie->domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
 	}
