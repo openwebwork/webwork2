@@ -177,7 +177,12 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # The database DSN is the path to the WeBWorK database which you have created.
 
 # Modern database DSN format:
-#	DBI:driver:database=$database;host=$hostname;port=$port
+#    DBI:driver:database=$database;host=$hostname;port=$port  (when DB not on localhost)
+# or DBI:driver:database=$database;host=127.0.0.1;port=$port  (when DB on localhost, using TCP)
+#         See: https://metacpan.org/pod/DBD::MariaDB#port
+#              "To connect to a MariaDB or MySQL server on localhost using TCP/IP,
+#		you must specify the host as 127.0.0.1 with the optional port, e.g. 3306."
+# or DBI:driver:database=$database                            (when DB on localhost, using socket)
 
 # One thing on which it depends is the driver name, which you may want to modify.
 # It also depends on the database name, which may be non-standard in some settings,
@@ -195,7 +200,19 @@ $database_host="localhost";
 $database_port="3306";
 $database_name="webwork";
 
-$database_dsn="DBI:$database_driver:database=$database_name;host=$database_host;port=$database_port";
+# For a DB on localhost - default to using Unix socket.
+# Change to 0 to use a TCP connection to 127.0.0.1.
+$database_use_socket_if_localhost=1;
+
+if ( $database_host eq "localhost" ) {
+	if ( $database_use_socket_if_localhost ) {
+		$database_dsn="DBI:$database_driver:database=$database_name";
+	} else {
+		$database_dsn="DBI:$database_driver:database=$database_name;host=127.0.0.1;port=$database_port";
+	}
+} else {
+	$database_dsn="DBI:$database_driver:database=$database_name;host=$database_host;port=$database_port";
+}
 
 # The default storange engine to use is set here:
 $database_storage_engine = 'myisam';
