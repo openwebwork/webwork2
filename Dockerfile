@@ -124,6 +124,7 @@ RUN apt-get update \
 	dvipng \
 	gcc \
 	libapache2-request-perl \
+	libarchive-zip-perl \
 	libcgi-pm-perl \
 	libcrypt-ssleay-perl \
 	libdatetime-perl \
@@ -195,7 +196,6 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
-	libmoox-options-perl \
 	make \
 	netpbm \
 	preview-latex-style \

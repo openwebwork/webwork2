@@ -2004,12 +2004,14 @@ sub readSetDef {
 			}
 		}
 
-		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
-		    warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
-		} elsif ( $reducedScoringDate == 0 && $enableReducedScoring ne 'Y' ) {
-			# In this case - the date in the file was Unix epoch 0 (or treated as such),
-			# and unless $enableReducedScoring eq 'Y' we will leave it as 0.
-		} elsif (!$reducedScoringDate) {
+		if ($reducedScoringDate) {
+			if ($reducedScoringDate < $time1 || $reducedScoringDate > $time2) {
+				warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
+			} elsif ( $reducedScoringDate == 0 && $enableReducedScoring ne 'Y' ) {
+				# In this case - the date in the file was Unix epoch 0 (or treated as such),
+				# and unless $enableReducedScoring eq 'Y' we will leave it as 0.
+			}
+		} else {
 		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}
 

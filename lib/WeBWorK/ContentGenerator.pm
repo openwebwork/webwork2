@@ -1261,7 +1261,7 @@ sub warnings {
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
-	$warnings = Encode::decode_utf8($warnings);
+	$warnings = Encode::decode("UTF-8",$warnings);
 	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
 
@@ -1867,8 +1867,16 @@ authentication.
 
 sub url_authen_args {
 	my ($self) = @_;
+	my $ce = $self->r->ce;
 
-	return $self->url_args("user", "effectiveUser", "key", "theme");
+	# When cookie based session management is in use, there should be no need
+	# to reveal the user and key in the URL. Putting it there makes session
+	# hijacking easier, in particular should a student share such a URL.
+	if ( $ce->{session_management_via} eq "session_cookie" ) {
+		return $self->url_args("effectiveUser", "theme");
+	} else {
+		return $self->url_args("user", "effectiveUser", "key", "theme");
+	}
 }
 
 =item url_state_args()
@@ -2003,9 +2011,20 @@ sub systemLink {
 
 	my $authen = exists $options{authen} ? $options{authen} : 1;
 	if ($authen) {
-		$params{user}          = undef unless exists $params{user};
+
+		# When cookie based session management is in use, there should be no need
+		# to reveal the user and key in the URL. Putting it there makes session
+		# hijacking easier, in particular should a student share such a URL.
+
+		if ( $r->ce->{session_management_via} eq "session_cookie" ) {
+			undef( $params{user} ) if exists $params{user};
+			undef( $params{key} )  if exists $params{key};
+		} else {
+			$params{user}          = undef unless exists $params{user};
+			$params{key}           = undef unless exists $params{key};
+		}
+
 		$params{effectiveUser} = undef unless exists $params{effectiveUser};
-		$params{key}           = undef unless exists $params{key};
 		$params{theme}         = undef unless exists $params{theme};
 	}
 

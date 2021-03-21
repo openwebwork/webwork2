@@ -10,7 +10,7 @@ my @applicationsList = qw(
 	mv
 	mysql
 	tar
-        git
+	git
 	gzip
 	latex
 	pdflatex
@@ -40,6 +40,7 @@ my @apache2ModulesList = qw(
 
 
 my @modulesList = qw(
+	Archive::Zip
 	Array::Utils
 	Benchmark
 	Carp
@@ -58,9 +59,9 @@ my @modulesList = qw(
 	Digest::MD5
 	Digest::SHA
 	Email::Address::XS
-	Email::Simple
 	Email::Sender::Simple
 	Email::Sender::Transport::SMTP
+	Email::Simple
 	Errno
 	Exception::Class
 	File::Copy
@@ -77,6 +78,7 @@ my @modulesList = qw(
 	HTML::Scrubber
 	HTML::Tagset
 	HTML::Template
+	HTTP::Async
 	IO::File
 	IO::Socket::SSL
 	Iterator
@@ -87,8 +89,6 @@ my @modulesList = qw(
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
-	Moo
-	MooX::Options
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
@@ -121,7 +121,6 @@ my @modulesList = qw(
 	XML::Writer
 	XMLRPC::Lite
 	YAML
-    HTTP::Async
 );
 
 my %moduleVersion = (

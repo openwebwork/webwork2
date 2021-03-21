@@ -1123,6 +1123,7 @@ sub pre_header_initialize {
 	$self->{endProb} = $endProb;
 	$self->{numPages} = $numPages;
 	$self->{pageNumber} = $pageNumber;
+	$self->{ra_problem_numbers} = \@problemNumbers;
 	$self->{ra_probOrder} = \@probOrder;
 }
 
@@ -1339,6 +1340,7 @@ sub body {
 	my $endProb = $self->{endProb};
 	my $numPages = $self->{numPages};
 	my $pageNumber = $self->{pageNumber};
+	my @problemNumbers = @{$self->{ra_problem_numbers}};
 	my @probOrder = @{$self->{ra_probOrder}};
 
 	my $setName  = $set->set_id;
@@ -1436,7 +1438,7 @@ sub body {
 				($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) =
 				WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses($self, $pg_results[$i]);
 			} else {
-				my $prefix = sprintf('Q%04d_',$i+1);
+				my $prefix = sprintf('Q%04d_', $problemNumbers[$i]);
 				my @fields = sort grep {/^(?!previous).*$prefix/} (keys %{$self->{formFields}});
 				my %answersToStore = map {$_ => $self->{formFields}->{$_}} @fields;
 				my @answer_order = @fields;
@@ -1567,7 +1569,7 @@ sub body {
 		}
 
 		my $caliper_sensor = Caliper::Sensor->new($self->{ce});
-		if ($caliper_sensor->caliperEnabled()) {
+		if ($caliper_sensor->caliperEnabled() && defined($answer_log)) {
 			my $events = [];
 
 			my $startTime = $r->param('startTime');
@@ -2043,6 +2045,7 @@ sub body {
 		#    $showAttemptAnswers), $showSummary, $showAttemptPreview (or-ed
 		#    with zero)
 		my $problemNumber = 0;
+		my $effectiveUserPermission = $db->getPermissionLevel($effectiveUser)->permission;
 
 		foreach my $i (0 .. $#pg_results) {
 			my $pg = $pg_results[$probOrder[$i]];
@@ -2082,8 +2085,28 @@ sub body {
 				}
 
 				print CGI::start_div({class=>"gwProblem"});
-				print CGI::div({-id=>"prob$i"},"");
-				print CGI::h2($r->maketext("Problem [_1].",$problemNumber)), $recordMessage;
+				print CGI::div({-id=>"prob$i"}, $recordMessage);
+
+				# Output the problem header.
+				print CGI::h2($r->maketext("Problem [_1].", $problemNumber));
+
+				print CGI::start_span({ class => "problem-sub-header" });
+
+				my $problemValue = $problems[$probOrder[$i]]->value;
+				if (defined($problemValue)) {
+					my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+					print "($problemValue $points)";
+				}
+
+				my $inlist = grep($_ eq $effectiveUser, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+
+				# This uses the permission level and user id of the user assigned to the set.
+				if ($effectiveUserPermission >= $ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
+					|| $inlist) {
+					print " " . $problems[$probOrder[$i]]->source_file;
+				}
+
+				print CGI::end_span();
 
 				my $instructor_comment = $self->get_instructor_comment($problems[$probOrder[$i]]);
 				if ($instructor_comment) {
@@ -2120,7 +2143,7 @@ sub body {
 				print CGI::div({-id=>"prob$i"},""), "\n";
 				# and print out hidden fields with the current
 				#    last answers
-				my $curr_prefix = 'Q' . sprintf("%04d", $probOrder[$i]+1) . '_';
+				my $curr_prefix = 'Q' . sprintf("%04d", $problemNumbers[$probOrder[$i]]) . '_';
 				my @curr_fields = grep {/^(?!previous).*$curr_prefix/} keys %{$self->{formFields}};
 				foreach my $curr_field (@curr_fields) {
 					foreach (split(/\0/, $self->{formFields}->{$curr_field} // '')) {

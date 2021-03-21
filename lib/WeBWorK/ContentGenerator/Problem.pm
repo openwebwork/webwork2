@@ -49,7 +49,7 @@ use WeBWorK::Utils::AttemptsTable;
 
 use utf8;
 #use open ':encoding(utf8)';
-binmode(STDOUT, ":utf8");
+binmode(STDOUT, ":encoding(UTF-8)");
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
 ################################################################################
@@ -576,7 +576,7 @@ sub pre_header_initialize {
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.
 	$submitAnswers = 0, $self->{resubmitDetected} = 1
-	if ($submitAnswers && (!defined($formFields->{num_attempts}) ||
+	if ($set->set_id ne 'Undefined_Set' && $submitAnswers && (!defined($formFields->{num_attempts}) ||
 			(defined($formFields->{num_attempts}) &&
 				$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect)));
 
@@ -1248,17 +1248,44 @@ sub path {
 sub title {
 	my ($self) = @_;
 	my $r = $self->r;
-	# using the url arguments won't break if the set/problem are invalid
+	my $db = $r->db;
+
+	# Using the url arguments won't break if the set/problem are invalid
 	my $setID = $self->r->urlpath->arg("setID");
 	my $problemID = $self->r->urlpath->arg("problemID");
 
-	my $set = $r->db->getGlobalSet($setID);
+	my $set = $db->getGlobalSet($setID);
 	$setID = WeBWorK::ContentGenerator::underscore2nbsp($setID);
 	if ($set && $set->assignment_type eq 'jitar') {
 	    $problemID = join('.',jitar_id_to_seq($problemID));
 	}
+	my $out = $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
 
-	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
+	# Return here if we don't have the requisite information.
+	return $out if ($self->{invalidSet} || $self->{invalidProblem});
+
+	my $ce = $r->ce;
+	my $problem = $self->{problem};
+
+	$out .= CGI::start_div({ class => "problem-sub-header" });
+
+	my $problemValue = $problem->value;
+	if (defined($problemValue) && $problemValue ne "") {
+		my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+		$out .= "($problemValue $points)";
+	}
+
+	# This uses the permission level and user id of the user assigned to the problem.
+	my $problemUser = $problem->user_id;
+	my $inList = grep($_ eq $problemUser, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+	if ($db->getPermissionLevel($problemUser)->permission >=
+		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} || $inList) {
+		$out .= " " . $problem->source_file;
+	}
+
+	$out .= CGI::end_div();
+
+	return $out;
 }
 
 # now altered to outsource most output operations to the template, main functions now are simply error checking and answer processing - ghe3
@@ -2321,9 +2348,6 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
 
 	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
 	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
