@@ -37,7 +37,6 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 # This class inherits from Apache::Cookie under mod_perl and CGI::Cookie under mod_perl2
 BEGIN {
 	if (MP2) {
-		#require APR::Request::Error;
 		require CGI::Cookie;
 		CGI::Cookie->import;
 		push @WeBWorK::Cookie::ISA, "CGI::Cookie";

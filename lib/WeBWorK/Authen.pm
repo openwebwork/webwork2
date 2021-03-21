@@ -76,7 +76,6 @@ our $GENERIC_ERROR_MESSAGE = "";  # define in new
 ## WeBWorK-tr end modification 
 #####################
 
-# Replaced constant COOKIE_LIFESPAN with a course environment setting which defaults to 30 days.
 #use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
 
 
@@ -888,15 +887,12 @@ sub sendCookie {
 
  	my $timestamp = time();
 
-	my $sameSite  = $ce->{CookieSameSite};
-	my $secure    = $ce->{CookieSecure};    # Warning: use 1 only if using https
-
 	my $cookie = WeBWorK::Cookie->new(
 		-name     => "WeBWorKCourseAuthen.$courseID",
 		-value    => "$userID\t$key\t$timestamp",
 		-path     => $ce->{webworkURLRoot},
-		-samesite => $sameSite,
-		-secure   => $secure,
+		-samesite => $ce->{CookieSameSite};
+		-secure   => $ce->{CookieSecure};    # Warning: use 1 only if using https
 	);
 
 	# Set how long the browser should retain the cookie. Using max_age is now recommended,
@@ -928,17 +924,14 @@ sub killCookie {
 
 	my $courseID = $r->urlpath->arg("courseID");
 
-	my $sameSite  = $ce->{CookieSameSite};
-	my $secure    = $ce->{CookieSecure};    # Warning: use 1 only if using https
-
 	my $cookie = WeBWorK::Cookie->new(
 		-name      => "WeBWorKCourseAuthen.$courseID",
 		-value     => "\t",
 		'-max-age' => "-1d", # 1 day ago
 		-expires   => "-1d", # 1 day ago
 		-path      => $ce->{webworkURLRoot},
-		-samesite  => $sameSite,
-		-secure    => $secure,
+		-samesite  => $ce->{CookieSameSite};
+		-secure    => $ce->{CookieSecure};    # Warning: use 1 only if using https
 	);
  	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
 		$cookie -> domain($r->hostname);  # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
