@@ -869,7 +869,7 @@ sub generate_hardcopy_tex {
 
 	# Copy the common tex files into the bundle directory
 	my $ce = $self->r->ce;
-	my $commonTeXDir = "$ce->{webworkDirs}{conf}/snippets/hardcopyThemes/common";
+	my $commonTeXDir = $ENV{TEXINPUTS} =~ s/^\.:([^:]*):$/$1/r;
 	for (qw{packages.tex CAPA.tex PGML.tex}) {
 		my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$commonTeXDir/$_", $bundle_path);
 		my $cp_out = readpipe $cp_cmd;
