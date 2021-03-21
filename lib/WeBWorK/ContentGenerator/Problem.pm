@@ -2393,14 +2393,14 @@ sub output_JS{
 	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
 		# Avoid duplicates
-		$jsFiles{$_->{file}} = $_->{local} for @{$self->{pg}{flags}{extra_js_files}};
+		$jsFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_js_files}};
 		for (keys(%jsFiles)) {
-			if ($jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-				print CGI::start_script({type => "text/javascript",
-						src => "$site_url/$_"}), CGI::end_script();
-			} elsif (!$jsFiles{$_}) {
+			if ($jsFiles{$_}) {
 				print CGI::start_script({type => "text/javascript",
 						src => $_}), CGI::end_script();
+			} elsif (!$jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
+				print CGI::start_script({type => "text/javascript",
+						src => "$site_url/$_"}), CGI::end_script();
 			} else {
 				print "<!-- $_ is not available in htdocs/ on this server -->\n";
 			}
@@ -2440,13 +2440,15 @@ sub output_CSS {
 	my %cssFiles;
 	# Avoid duplicates
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 1 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
 	}
 	if (ref($self->{pg}{flags}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 1 for @{$self->{pg}{flags}{extra_css_files}};
+		$cssFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_css_files}};
 	}
 	for (keys(%cssFiles)) {
-		if (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
+		if ($cssFiles{$_}) {
+			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$_\" />\n";
+		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
 			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
 		} else {
 			print "<!-- $_ is not available in htdocs/ on this server -->\n";

@@ -2323,16 +2323,18 @@ sub output_JS{
 	# which can be set in course.conf (the value should be an anonomous array).
 	my %cssFiles;
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 1 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
 	}
 	for my $pg (@{$self->{ra_pg_results}}) {
 		next unless ref($pg);
 		if (ref($pg->{flags}{extra_css_files}) eq "ARRAY") {
-			$cssFiles{$_} = 1 for @{$pg->{flags}{extra_css_files}};
+			$cssFiles{$_->{file}} = $_->{external} for @{$pg->{flags}{extra_css_files}};
 		}
 	}
 	for (keys(%cssFiles)) {
-		if (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
+		if ($cssFiles{$_}) {
+			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$_\" />\n";
+		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
 			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
 		} else {
 			print "<!-- $_ is not available in htdocs/ on this server -->\n";
@@ -2401,16 +2403,16 @@ sub output_JS{
 		next unless ref($pg);
 		if (ref($pg->{flags}{extra_js_files}) eq "ARRAY") {
 			# Avoid duplicates
-			$jsFiles{$_->{file}} = $_->{local} for @{$pg->{flags}{extra_js_files}};
+			$jsFiles{$_->{file}} = $_->{external} for @{$pg->{flags}{extra_js_files}};
 		}
 	}
 	for (keys(%jsFiles)) {
-		if ($jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-			print CGI::start_script({type => "text/javascript",
-					src => "$site_url/$_"}), CGI::end_script();
-		} elsif (!$jsFiles{$_}) {
+		if ($jsFiles{$_}) {
 			print CGI::start_script({type => "text/javascript",
 					src => $_}), CGI::end_script();
+		} elsif (!$jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
+			print CGI::start_script({type => "text/javascript",
+					src => "$site_url/$_"}), CGI::end_script();
 		} else {
 			print "<!-- $_ is not available in htdocs/ on this server -->\n";
 		}
