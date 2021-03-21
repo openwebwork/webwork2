@@ -75,7 +75,7 @@ sub UserItems {
 
     # ugly eval to get a new item object for each type of item.  
     foreach my $item (@{+ITEMS}) {
-	push (@items, eval("WeBWorK::AchievementItems::${item}->new")) if
+	push (@items, [eval("WeBWorK::AchievementItems::${item}->new"),$globalData->{$item}]) if
 	    ($globalData->{$item});
     }
 
@@ -167,7 +167,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
 
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -251,7 +251,7 @@ sub use_item {
 
     $db->putUserSet($userSet);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -335,7 +335,7 @@ sub use_item {
 
     $db->putUserSet($userSet);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -430,7 +430,7 @@ sub use_item {
 
     $db->putUserSet($userSet);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -518,7 +518,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -629,7 +629,7 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -742,7 +742,7 @@ sub use_item {
     $problem->value($globalproblem->value*2);
     $db->putUserProblem($problem);
 
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -858,7 +858,7 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -948,7 +948,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1059,7 +1059,7 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1144,7 +1144,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1269,7 +1269,7 @@ sub use_item {
 
     $db->putUserProblem($problem2);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1420,7 +1420,7 @@ sub use_item {
     
     $db->putUserSet($userSet);
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1535,7 +1535,7 @@ sub use_item {
 
     }
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
     
@@ -1624,7 +1624,7 @@ sub use_item {
 
     $db->putUserSet($set);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
     

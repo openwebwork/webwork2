@@ -2085,10 +2085,10 @@ sub body {
 				}
 
 				print CGI::start_div({class=>"gwProblem"});
-				print CGI::div({-id=>"prob$i"},"");
+				print CGI::div({-id=>"prob$i"}, $recordMessage);
 
 				# Output the problem header.
-				print CGI::h2($r->maketext("Problem [_1].", $problemNumber)), $recordMessage;
+				print CGI::h2($r->maketext("Problem [_1].", $problemNumber));
 
 				print CGI::start_span({ class => "problem-sub-header" });
 
