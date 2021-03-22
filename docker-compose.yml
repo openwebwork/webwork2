@@ -64,35 +64,34 @@ services:
     # Set a fixed container name, so it does not depend on the directory name
     container_name: webwork2_app_1
 
-    # Select the appropriate "build:" block:
-
-    # For use/building when docker-compose.yml is in the webwork2 directory
-    build: .
-
-    # For use/building when docker-compose.yml is OUTSIDE the webwork2 directory.
-    # For example, if multiple hosts use a NFS shared webwork2/ directory, and
-    # each one needs customized values in docker-compose.yml.
-    # Under typical use, the Dockerfile should not need to be customized per host,
-    # but may contain some changes/additions relative to the standard webwork image.
-    #
-    #build:
-    #  context: /Path_To/webwork2/
-    #  dockerfile: /Path_To/Dockerfile
+    # Set up the "build:" configuration:
+    build:
+        # For use/building when docker-compose.yml is in the webwork2 directory
+        context: .
+        # For use/building when docker-compose.yml is OUTSIDE the webwork2 directory.
+        # For example, if multiple hosts use a NFS shared webwork2/ directory, and
+        # each one needs customized values in docker-compose.yml.
+        # Under typical use, the Dockerfile should not need to be customized per host,
+        # but may contain some changes/additions relative to the standard webwork image.
+        #
+        #  context: /Path_To/webwork2/
+        #  dockerfile: /Path_To/Dockerfile
+        args:
+            # build args specifying the branches for webwork2 and pg used to build the image
+            # To use the master branches of webwork2 and pg 
+            #- ARG WEBWORK2_BRANCH=master
+            #- ARG PG_BRANCH=master
+            # To use the 2.15 branches of webwork2 and pg from the "official" GitHub repositories
+            - WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
+            - WEBWORK2_BRANCH=develop
+            - PG_GIT_URL=https://github.com/openwebwork/pg.git
+            - PG_BRANCH=develop
 
     depends_on:
       - db
       - r
 
     volumes:
-
-      # You must enable this (with the potential attendant security risks) for
-      # the current TikZ support from https://github.com/openwebwork/pg/pull/541
-      # to work. The file gives "coder" "read" rights to PDF files.
-      #- "./docker-config/ImageMagick-6-policy.xml:/etc/ImageMagick-6/policy.xml"
-
-      # The Lite.pm patch for proper UTF-8 support
-      - "./docker-config/Lite.pm:/usr/share/perl5/XMLRPC/Lite.pm"
-
       # ======================================================================
 
       # If you are using locally modified webwork2 files, then
