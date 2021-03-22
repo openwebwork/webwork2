@@ -46,8 +46,6 @@ my @modulesList = qw(
 	Carp
 	CGI
 	Class::Accessor
-	Dancer
-	Dancer::Plugin::Database
 	Data::Dump
 	Data::Dumper
 	Data::UUID

@@ -131,8 +131,6 @@ RUN apt-get update \
 	libarchive-zip-perl \
 	libcrypt-ssleay-perl \
 	libdatetime-perl \
-	libdancer-perl \
-	libdancer-plugin-database-perl \
 	libdbd-mysql-perl \
 	libemail-address-xs-perl \
 	libexception-class-perl \
