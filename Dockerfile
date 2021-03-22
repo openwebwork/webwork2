@@ -128,8 +128,6 @@ RUN apt-get update \
 	libcgi-pm-perl \
 	libcrypt-ssleay-perl \
 	libdatetime-perl \
-	libdancer-perl \
-	libdancer-plugin-database-perl \
 	libdbd-mysql-perl \
 	libdbd-mariadb-perl \
 	libemail-address-xs-perl \
@@ -278,7 +276,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 
 # Phase 6 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
 
-RUN cpanm install Statistics::R::IO \
+# Ubuntu 18.04 has CGI.pm 4.38-1 which is too old to support the cookie samesite attribute added in CGI.pm 4.45 - so install CGI::Cookie here to get an upgraded version.
+
+RUN cpanm install Statistics::R::IO CGI::Cookie \
     && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # Now installed from Ubuntu packages:

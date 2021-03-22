@@ -499,6 +499,35 @@ $mail{feedbackRecipients}    = [
 #$session_management_via = "key";
 
 ################################################################################
+# Cookie control settings
+################################################################################
+
+# The following variables can be set to control cookie behavior.
+
+# Set the value of the samesite attribute of the WeBWorK cookie:
+#    See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
+#         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+#         https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
+
+#$CookieSameSite = "None";
+#$CookieSameSite = "Strict";
+#$CookieSameSite = "Lax";
+
+# Set the value of the secure cookie attribute:
+#$CookieSecure = 1;
+
+# At present the CookieLifeTime setting only effect how long the
+# browser is to supposed to retain the cookie.
+#     https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
+#$CookieLifeTime = "+7d";
+#$CookieLifeTime = "session";
+
+# NOTE: In general the cookie lifespan settings use the CGI.pm relative time settings.
+# Search for "30 seconds from now" at https://metacpan.org/pod/CGI to see the various options.
+# A WW option is to set it to "session", in which case the Cookie will expire when the
+# browser session ends (a "session cookie").
+
+################################################################################
 # Searching for set.def files to import
 ################################################################################
 ## Uncomment below so that when the homework sets editor searches for set def
@@ -557,6 +586,12 @@ $mail{feedbackRecipients}    = [
 # Change default Hardcopy theme
 # Be sure to choose one that is enabled!
 #$hardcopyTheme = "XeLaTeX-twoColumn";
+
+# Location of the common tex input files packages.tex, CAPA.tex, and PGML.tex
+# used for hardcopy generation.  Uncomment the following line and adjust the
+# path as needed to customize the TeX input files used for all themes in
+# hardcopy generation.  This location must contain the three files named above.
+#$webworkDirs{texinputs_common} = "$webworkDirs{root}/conf/snippets/hardcopyThemes/common";
 
 ################################################################################
 

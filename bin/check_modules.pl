@@ -32,7 +32,6 @@ my @apache1ModulesList = qw(
 
 my @apache2ModulesList = qw(
 	Apache2::Request
-	Apache2::Cookie
 	Apache2::ServerRec
 	Apache2::ServerUtil
 );
@@ -45,9 +44,8 @@ my @modulesList = qw(
 	Benchmark
 	Carp
 	CGI
+	CGI::Cookie
 	Class::Accessor
-	Dancer
-	Dancer::Plugin::Database
 	Data::Dump
 	Data::Dumper
 	Data::UUID
