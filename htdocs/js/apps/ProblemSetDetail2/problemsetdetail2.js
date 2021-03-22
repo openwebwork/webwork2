@@ -42,24 +42,24 @@ $(function() {
 	$('#psd_toolbar').addClass('btn-group');
 
 	$('.psd_view').addClass('btn btn-mini')
-		.html('<i class="icon-eye-open" />')
+		.html('<i class="far fa-eye" />')
 		.tooltip();
 	$('.psd_edit').addClass('btn btn-mini')
-		.html('<i class="icon-pencil" />')
+		.html('<i class="fas fa-pencil-alt" />')
 		.tooltip();
 	$('.pdr_render').addClass('btn btn-mini')
-		.html('<i class="icon-picture" />')
+		.html('<i class="far fa-image" />')
 		.tooltip();
 
 	$('.pdr_grader').addClass('btn btn-mini')
-		.html('<i class="icon-edit">')
+		.html('<i class="fas fa-edit">')
 		.tooltip();
 
 	if (!$('#psd_list').hasClass('disable_renumber')) {
 		$('.pdr_handle').each(function () {
-			var iconclass = "icon-resize-vertical";
+			var iconclass = "fas fa-arrows-alt-v";
 			if ($(this).attr('is-jitar') == 1) {
-				iconclass = "icon-move";
+				iconclass = "fas fa-arrows-alt";
 			}
 			$(this).append($('<i/>').addClass(iconclass)
 				.tooltip({title:$(this).attr('data-move-text'),
@@ -125,8 +125,8 @@ $(function() {
 	$('#psd_expand_all').addClass('btn').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');
-		$('i.icon-plus-sign').removeClass('icon-plus-sign')
-			.addClass('icon-minus-sign');
+		$('i.fas.fa-plus').removeClass('fa-plus')
+			.addClass('fa-minus');
 
 		$('.pdr_collapse').each(function () {
 			$(this).tooltip('destroy');
@@ -138,8 +138,8 @@ $(function() {
 	$('#psd_collapse_all').addClass('btn').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').addClass('mjs-nestedSortable-collapsed').removeClass('mjs-nestedSortable-expanded');
-		$('i.icon-minus-sign').addClass('icon-plus-sign')
-			.removeClass('icon-minus-sign');
+		$('i.fas.fa-minus').addClass('fa-plus')
+			.removeClass('fa-minus');
 
 		$('.pdr_collapse').each(function () {
 			$(this).tooltip('destroy');
@@ -184,9 +184,9 @@ $(function() {
 		recurse_on_heirarchy(heirarchy,array);
 
 		$('.pdr_handle').each(function () {
-			var iconclass = "icon-resize-vertical";
+			var iconclass = "fas fa-arrows-alt-v";
 			if ($(this).attr('is-jitar') == 1) {
-				iconclass = "icon-move";
+				iconclass = "fas fa-arrows-alt";
 			}
 			$(this).html($(this).html().slice(0,-1));
 			$(this).append($('<i/>').addClass(iconclass)

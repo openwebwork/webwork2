@@ -25,7 +25,7 @@ function WWDatePicker(name, reduced) {
 
 	open_rule.datetimepicker({
 		showOn: "button",
-		buttonText: "<i class='icon-calendar'></i>",
+		buttonText: "<i class='fas fa-calendar-alt'></i>",
 		ampm: true,
 		timeFormat: 'hh:mmtt',
 		separator: ' at ',
@@ -36,7 +36,7 @@ function WWDatePicker(name, reduced) {
 
 	due_rule.datetimepicker({
 		showOn: "button",
-		buttonText: "<i class='icon-calendar'></i>",
+		buttonText: "<i class='fas fa-calendar-alt'></i>",
 		ampm: true,
 		timeFormat: 'hh:mmtt',
 		separator: ' at ',
@@ -47,7 +47,7 @@ function WWDatePicker(name, reduced) {
 
 	answer_rule.datetimepicker({
 		showOn: "button",
-		buttonText: "<i class='icon-calendar'></i>",
+		buttonText: "<i class='fas fa-calendar-alt'></i>",
 		ampm: true,
 		timeFormat: 'hh:mmtt',
 		separator: ' at ',
@@ -59,7 +59,7 @@ function WWDatePicker(name, reduced) {
 	if (reduced) {
 		reduced_rule.datetimepicker({
 			showOn: "button",
-			buttonText: "<i class='icon-calendar'></i>",
+			buttonText: "<i class='fas fa-calendar-alt'></i>",
 			ampm: true,
 			timeFormat: 'hh:mmtt',
 			separator: ' at ',

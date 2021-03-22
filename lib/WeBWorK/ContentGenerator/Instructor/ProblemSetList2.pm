@@ -1234,7 +1234,7 @@ sub import_form {
 	    $datescript = <<EOS;
 \$('#import_date_shift').datetimepicker({
   showOn: "button",
-  buttonText: "<i class='icon-calendar'></i>",
+  buttonText: "<i class='fas fa-calendar-alt'></i>",
   ampm: true,
   timeFormat: 'hh:mmtt',
   separator: ' at ',
