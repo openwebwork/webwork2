@@ -14,11 +14,6 @@
 # Artistic License for more details.
 ################################################################################
 
-BEGIN {
-	$ENV{TEXINPUTS} = ".:$ENV{WEBWORK_ROOT}/conf/snippets/hardcopyThemes/common:"
-	unless defined($ENV{TEXINPUTS});
-}
-
 package WeBWorK::ContentGenerator::Hardcopy;
 use base qw(WeBWorK::ContentGenerator);
 
@@ -869,12 +864,11 @@ sub generate_hardcopy_tex {
 
 	# Copy the common tex files into the bundle directory
 	my $ce = $self->r->ce;
-	my $commonTeXDir = $ENV{TEXINPUTS} =~ s/^\.:([^:]*):$/$1/r;
 	for (qw{packages.tex CAPA.tex PGML.tex}) {
-		my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$commonTeXDir/$_", $bundle_path);
+		my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{texinputs_common}/$_", $bundle_path);
 		my $cp_out = readpipe $cp_cmd;
 		if ($?) {
-			$self->add_errors("Failed to copy '" . CGI::code(CGI::escapeHTML("$commonTeXDir/$_")) .
+			$self->add_errors("Failed to copy '" . CGI::code(CGI::escapeHTML("$ce->{webworkDirs}{texinputs_common}/$_")) .
 				"' into directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "':" . CGI::br()
 				. CGI::pre(CGI::escapeHTML($cp_out)));
 		}
@@ -938,10 +932,11 @@ sub generate_hardcopy_tex {
 
 sub generate_hardcopy_pdf {
 	my ($self, $temp_dir_path, $final_file_basename) = @_;
-	
+
 	# call pdflatex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
 	my $pdflatex_cmd = "cd " . shell_quote($temp_dir_path) . " && "
+		. "TEXINPUTS=.:" . shell_quote($self->r->ce->{webworkDirs}{texinputs_common}) . ": "
 		. $self->r->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
 	if (my $rawexit = system $pdflatex_cmd) {

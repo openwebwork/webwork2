@@ -558,6 +558,12 @@ $mail{feedbackRecipients}    = [
 # Be sure to choose one that is enabled!
 #$hardcopyTheme = "XeLaTeX-twoColumn";
 
+# Location of the common tex input files packages.tex, CAPA.tex, and PGML.tex
+# used for hardcopy generation.  Uncomment the following line and adjust the
+# path as needed to customize the TeX input files used for all themes in
+# hardcopy generation.  This location must contain the three files named above.
+#$webworkDirs{texinputs_common} = "$webworkDirs{root}/conf/snippets/hardcopyThemes/common";
+
 ################################################################################
 
 
