@@ -1246,7 +1246,7 @@ table#grades_table pre{
     font-size:small;
 }
 
-#mainform i.icon-random {
+#mainform i.fas.fa-random {
     cursor: pointer;
 }
 

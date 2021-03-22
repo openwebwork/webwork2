@@ -348,7 +348,7 @@ clear: both;
 	font-size: smaller;
 } 
 
-#mainform i.icon-random {
+#mainform i.fas.fa-random {
     cursor: pointer;
 }
 

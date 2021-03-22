@@ -1041,7 +1041,7 @@ sub make_data_row {
 		), target=>"WW_View", 
 			title=>"Try it",
 			id=>"tryit$cnt",
-			style=>"text-decoration: none"}, '<i class="icon-eye-open" ></i>');
+			style=>"text-decoration: none"}, '<i class="far fa-eye" ></i>');
 
 	my $inSet = ($self->{isInSet}{$sourceFileName})?" (in target set)" : "&nbsp;";
 	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
@@ -1079,7 +1079,7 @@ sub make_data_row {
 
 	my $level =0;
 
-	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="icon-random"></i></span>';
+	my $rerand = $isstatic ? '' : '<span style="display: inline-block" onclick="randomize(\''.$sourceFileName.'\',\'render'.$cnt.'\')" title="Randomize"><i class="fas fa-random"></i></span>';
 	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
