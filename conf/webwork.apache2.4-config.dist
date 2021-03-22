@@ -94,14 +94,6 @@ eval "use lib '$pg_dir/lib'"; die $@ if $@;
 $WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
 $ENV{PG_ROOT} = $pg_dir;
 
-# Location of common tex input files for hardcopy generation.  Uncomment the
-# following line and adjust the path between the two colons as needed to
-# customize the TeX input files used for all themes in hardcopy generation.
-# There are three required files that must be located in this path.  Those are
-# packages.tex, CAPA.tex, and PGML.tex.
-
-#$ENV{TEXINPUTS} = ".:$webwork_dir/conf/snippets/hardcopyThemes/common:";
-
 #################################################################
 # Modify the manner in which errors are reported.
 # Uncommenting $ENV{MIN_HTML_ERRORS} = 1; will minimize the data provided
