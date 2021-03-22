@@ -224,7 +224,7 @@ sub _get_db_info {
 	my $test_for_column_statistics = `$mysqldump_command --help | grep 'column-statistics'`;
 	if ( $test_for_column_statistics ) {
 		$column_statistics_off = "[mysqldump]\ncolumn-statistics=0\n";
-warn "Setting in the temporary mysql config file for table dump/restore:\n$column_statistics_off\n\n";
+		#warn "Setting in the temporary mysql config file for table dump/restore:\n$column_statistics_off\n\n";
 	}
 
 	# doing this securely is kind of a hassle...
