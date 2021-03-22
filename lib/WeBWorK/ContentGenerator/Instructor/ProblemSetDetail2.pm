@@ -751,7 +751,8 @@ sub FieldHTML {
 		}) : "",
 		$r->maketext($properties{name}).
 		($properties{help_text} ? "&nbsp;".CGI::a({class=>'help-popup',href=>'#',
-						  'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
+					'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},
+				CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, '')) : ''),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);
@@ -2480,7 +2481,7 @@ sub body {
 
 		my $pdr_block_1 =  CGI::div({class=>"pdr_block_1"},
 			CGI::start_table({border => 0, cellpadding => 1}) .
-			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, $problemNumber).$collapseButton.
+			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, "$problemNumber ").$collapseButton.
 					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$lastProblemNumber}).
 					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .
              	        CGI::Tr({}, CGI::td({},

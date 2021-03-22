@@ -1647,11 +1647,11 @@ sub recordEditHTML {
 
 	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
 
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = '';
+	my $imageLink = '';
 
 	if ($authz->hasPermissions($user, "modify_student_data")) {
-	  $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0, alt=>"Link to Edit Page for ".$User->user_id}));
+	  $imageLink = CGI::a({href => $userListURL}, CGI::i({ class => 'icon fas fa-pencil-alt',
+				  data_alt => "Link to Edit Page for " . $User->user_id, aria_hidden => "true" }, ""));
 	}
 	
 	my @tableCells;
@@ -1668,9 +1668,9 @@ sub recordEditHTML {
 			# -label => "",
 		my $label = "";
 		if ( FIELD_PERMS()->{act_as} and not $authz->hasPermissions($user, FIELD_PERMS()->{act_as}) ){
-			$label = $User->user_id . $imageLink;
+			$label = $User->user_id . " " . $imageLink;
 		} else {
-			$label = CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
+			$label = CGI::a({href=>$changeEUserURL}, $User->user_id) . " " . $imageLink;
 		}
 		
 		push @tableCells, CGI::input({

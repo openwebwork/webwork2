@@ -1234,7 +1234,7 @@ sub import_form {
 	    $datescript = <<EOS;
 \$('#import_date_shift').datetimepicker({
   showOn: "button",
-  buttonText: "<i class='icon-calendar'></i>",
+  buttonText: "<i class='fas fa-calendar-alt'></i>",
   ampm: true,
   timeFormat: 'hh:mmtt',
   separator: ' at ',
@@ -2593,11 +2593,11 @@ sub recordEditHTML {
 	$prettySetID =~ s/_/ /g;
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail2', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list2', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = '';
+	my $imageLink = '';
 
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-	  $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
+		$imageLink = CGI::a({href => $problemSetListURL},
+			CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
 	}
 	
 	my @tableCells;
@@ -2608,7 +2608,7 @@ sub recordEditHTML {
 #	$fakeRecord{set_id} = CGI::font({class=>$visibleClass}, $set_id) . ($editMode ? "" : $imageLink);
 	$fakeRecord{set_id} = $editMode 
 					? CGI::a({href=>$problemListURL}, "$set_id") 
-					: CGI::font({class=>$visibleClass}, $set_id) . $imageLink;
+					: CGI::font({class=>$visibleClass}, $set_id) . " " . $imageLink;
 	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
 					? "$problems"
 					: CGI::a({href=>$problemListURL}, "$problems");
@@ -2631,7 +2631,7 @@ sub recordEditHTML {
 		if ($editMode) {
 			$label = CGI::a({href=>$problemListURL}, $prettySetID);
 		} else {		
-			$label = CGI::a({class=>"set-label $visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $prettySetID) . $imageLink;
+			$label = CGI::a({class=>"set-label $visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $prettySetID) . " " . $imageLink;
 		}
 		
 		push @tableCells, CGI::input({

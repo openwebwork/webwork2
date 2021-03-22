@@ -13,18 +13,18 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 
 	var hideSidebar = function () {
 		$('#site-navigation').remove();
-		$('#toggle-sidebar-icon').removeClass('icon-chevron-left').addClass('icon-chevron-right');	
+		$('#toggle-sidebar-icon i').removeClass('fa-chevron-left').addClass('fa-chevron-right');
 		$('#content').removeClass('span10').addClass('span11');
 	};
 
 	var showSidebar = function () {
 		$('#body-row').prepend(navigation_element);
-		$('#toggle-sidebar-icon').addClass('icon-chevron-left').removeClass('icon-chevron-right');
+		$('#toggle-sidebar-icon i').addClass('fa-chevron-left').removeClass('fa-chevron-right');
 		$('#content').addClass('span10').removeClass('span11');	
 	};
 
 	var toggleSidebar = function () {
-		if ($('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+		if ($('#toggle-sidebar-icon i').hasClass('fa-chevron-left')) {
 			hideSidebar();
 		} else {
 			showSidebar();
@@ -52,9 +52,9 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 		$(window).resize(function(){
 			if ($(window).width() != windowwidth) {
 				windowwidth = $(window).width();
-				if(windowwidth < threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-left')) {
+				if(windowwidth < threshold && $('#toggle-sidebar-icon i').hasClass('fa-chevron-left')) {
 					hideSidebar();
-				} else if (windowwidth >= threshold && $('#toggle-sidebar-icon').hasClass('icon-chevron-right')) {	
+				} else if (windowwidth >= threshold && $('#toggle-sidebar-icon i').hasClass('fa-chevron-right')) {
 					showSidebar();
 				}
 			}
@@ -82,22 +82,9 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	// Make grey_buttons disabled buttons
 	$('.gray_button').addClass('btn disabled').removeClass('gray_button');
 
-	// replace pencil gifs by something prettier
-	$('td a:has(img[src$="edit.gif"])').each(function () { $(this).html($(this).html().replace(/<img.*>/," <span class='icon icon-pencil' data-alt='edit'></span>")); });
-	$('img[src$="question_mark.png"]').replaceWith('<span class="icon icon-question-sign" data-alt="help" style="font-size:16px; margin-right:5px"></span>');
-
-	// Turn summaries and help boxes into popovers
-	// Not sure there are any table-summary classes
-	// loading Sage interacts removes the popover function 
-	//(loads older version of bootstrap?)
-	// so we'll work around that for now
+	// Turn help boxes into popovers
 	if ($.fn.popover) {
-		$('a.table-summary').popover({trigger : 'hover'}).click(function (event) {
-			event.preventDefault();
-		});
-		$('a.help-popup').popover({trigger : 'hover'}).click(function (event) {
-			event.preventDefault();
-		}).html('<i class="icon-question-sign"/><span class="sr-only">Help Icon</span>');
+		$('a.help-popup').popover({trigger : 'hover'}).click(function (e) { e.preventDefault(); });
 	}
 	// Sets login form input to bigger size
 	$('#login_form input').addClass('input-large');
@@ -272,30 +259,14 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 		$('.codeshard').attr('aria-label','answer');
 	}
 
-	/* Glyphicon accessibility */
-	jQuery('span.icon').each(function() {
-		/*
-		 * The glyphicon needs to be formatted as follows.
-		 * <span class="icon icon-close" data-alt="close"></span>
-		 *
-		 * The script takes the contents of the data-alt attribute and presents it as alternative content for screen reader users.
-		 *
-		 */
-		$(this).attr('aria-hidden', 'true'); // hide the pseudo-element from screen readers
-		var alt = jQuery(this).data('alt') // get the data-alt attribute
-		var textSize = jQuery(this).css('font-size'); // get the font size of the glyphicon
-		// if the data-alt attribute exists, write the contents of the attributwe
+	// Accessibility
+	// Present the contents of the data-alt attribute as alternative content for screen reader users.
+	// The icon should be formatted as <i class="icon fas fa-close" data-alt="close"></i>
+	jQuery('i.icon').each(function() {
+		var alt = jQuery(this).data('alt')
 		if (typeof alt !== "undefined") {
-			// if the glyphicon font is loaded, write the contents of the data-alt to off-screen screen reader only text
-			// and size the "hidden" text to be the same size as the glyphicon
-			if ($(this).css('font-family') == 'FontAwesome') {
-				$(this).after('<span style="font-size:'+ textSize +'" class="sr-only-glyphicon">' + alt + '</span>');
-
-			} else { // if the glyphicon font is NOT loaded, write the contents of the data-alt to on-screen text because the font is not displaying correctly
-				$(this).after('<span>' + alt + '</span>');
-				$(this).addClass('sr-only'); // make the failing glyphicon hidden off screen so it will not confuse users
-			}
+			var textSize = jQuery(this).css('font-size'); // Get the font size of the icon.
+			$(this).after('<span style="font-size:'+ textSize +'" class="sr-only-glyphicon">' + alt + '</span>');
 		}
 	});
-
 })();

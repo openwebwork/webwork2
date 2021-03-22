@@ -1269,8 +1269,6 @@ sub recordEditHTML {
 		});
 	    
 	    my $AchievementEditURL = $self->systemLink($urlpath->new(type=>'instructor_achievement_list', args=>{courseID => $courseName})) . "&editMode=1&selected_achievements=" . $achievement_id;
-	    my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-	    my $imageLink = CGI::a({href => $AchievementEditURL}, CGI::img({src=>$imageURL, border=>0}));
 
             my @fields = @{VIEW_FIELD_ORDER()};
 	    foreach my $field (@fields) {
@@ -1281,7 +1279,8 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enabled/;
 		if ($field =~ /achievement_id/) {
-		    $fieldValue .= $imageLink;
+			$fieldValue .= " " . CGI::a({ href => $AchievementEditURL },
+				CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }));
 		    $fieldValue = CGI::div({class=>'label-with-edit-icon'},$fieldValue);
 		}
 		push @tableCells, CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));

@@ -951,7 +951,8 @@ sub links {
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
 					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				print CGI::li({}, $self->helpMacro('instructor_links',$r->maketext('Help')),$self->help() );
+				print CGI::li({}, $self->helpMacro('instructor_links', $r->maketext('Help')));
+				print CGI::li({}, $self->help());
 				if ($authz->hasPermissions($userID, "manage_course_files") # show this only on the FileManager page
 				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
 				    my %augmentedSystemLinks = %systemlink_args;
@@ -1006,12 +1007,17 @@ sub loginstatus {
 			params=>$extraStopActingParams);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
 
+		my $signOutIcon = CGI::i({ class=> "icon fas fa-sign-out-alt", aria_hidden => "true", data_alt => "signout" }, "");
+
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) .
+				CGI::a({ href => $logoutURL, class => "btn btn-small" }, $r->maketext("Log Out") . " " . $signOutIcon);
 		} else {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) .
+				CGI::a({ href => $logoutURL, class => "btn btn-small" }, $r->maketext("Log Out") . " " . $signOutIcon);
 			print CGI::br();
-			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
+			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID)) .
+				CGI::a({ href => $stopActingURL, class => "btn btn-small" }, $r->maketext("Stop Acting") . " " . $signOutIcon);
 		}
 	} else {
 		print $r->maketext("Not logged in.");
@@ -1614,20 +1620,22 @@ helpFiles  directory.  Currently the link is made to the file $name.html
 =cut
 
 sub helpMacro {
-    my $self = shift;
+	my $self = shift;
 	my $name = shift;
-	my $label  = shift; #optional
+	my $label = shift; #optional
+
 	my $ce   = $self->r->ce;
-	my $basePath = $ce->{webworkDirs}->{local_help};
-	$name        = 'no_help' unless -e "$basePath/$name.html";
-	my $path     = "$basePath/$name.html";
-	my $url = $ce->{webworkURLs}->{local_help}."/$name.html";
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/question_mark.png";
-	$label    = CGI::img({src=>$imageURL, alt=>" ? "}) unless defined $label;
-	return CGI::a({href      => $url,
-	               target    => 'ww_help',
-	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=yes')"},
-	               $label);
+	$name = 'no_help' unless -e "$ce->{webworkDirs}{local_help}/$name.html";
+
+	return CGI::a({
+			href => $ce->{webworkURLs}{local_help} . "/$name.html",
+			target => 'ww_help',
+			# FIXME: Replace inline javascript
+			onclick => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=yes')"
+		},
+		defined($label) ? $label
+		: CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => " ? " }, '')
+	);
 }
 
 =item sub optionsMacro
