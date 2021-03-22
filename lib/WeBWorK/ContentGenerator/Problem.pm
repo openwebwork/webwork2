@@ -576,7 +576,7 @@ sub pre_header_initialize {
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.
 	$submitAnswers = 0, $self->{resubmitDetected} = 1
-	if ($submitAnswers && (!defined($formFields->{num_attempts}) ||
+	if ($set->set_id ne 'Undefined_Set' && $submitAnswers && (!defined($formFields->{num_attempts}) ||
 			(defined($formFields->{num_attempts}) &&
 				$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect)));
 
@@ -1270,7 +1270,7 @@ sub title {
 	$out .= CGI::start_div({ class => "problem-sub-header" });
 
 	my $problemValue = $problem->value;
-	if (defined($problemValue)) {
+	if (defined($problemValue) && $problemValue ne "") {
 		my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
 		$out .= "($problemValue $points)";
 	}
@@ -1463,29 +1463,15 @@ sub output_editorLink{
 	# format as "[edit]" like we're doing with course info file, etc.
 	# add edit link for set as well.
 	my $editorLink = "";
-	my $editorLink2 = "";
-	my $editorLink3 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
-	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor1}) {
+	if ($authz->hasPermissions($user, "modify_problem_sets")) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor1'}, $r->maketext("Edit1")));
-	}
-	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
-			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
-		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink2 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit2")));
-	}
-	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor3}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3", $r,
-			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
-		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
+		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit")));
 	}
 	##### translation errors? #####
 
@@ -1493,14 +1479,14 @@ sub output_editorLink{
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink, " ", $editorLink2, " ", $editorLink3;
+			print $editorLink;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink, " ", $editorLink2, " ", $editorLink3;
+		print $editorLink;
 	}
 	return "";
 }
@@ -2417,21 +2403,19 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
-	if (defined($self->{pg}{flags}{extra_js_files})) {
+	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
 		# Avoid duplicates
-		for (@{$self->{pg}{flags}{extra_js_files}}) {
-			$jsFiles{$_->{file}} = $_->{local};
-		}
+		$jsFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_js_files}};
 		for (keys(%jsFiles)) {
-			if ($jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/js/$_") {
+			if ($jsFiles{$_}) {
 				print CGI::start_script({type => "text/javascript",
-						src => "$site_url/js/$_"}), CGI::end_script();
-			} elsif (!$jsFiles{$_}) {
+						src => $_}), CGI::end_script();
+			} elsif (!$jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
 				print CGI::start_script({type => "text/javascript",
-						src => "$_"}), CGI::end_script();
+						src => "$site_url/$_"}), CGI::end_script();
 			} else {
-				print "<!-- $_ is not available in htdocs/js/ on this server -->\n";
+				print "<!-- $_ is not available in htdocs/ on this server -->\n";
 			}
 		}
 	}
@@ -2464,32 +2448,23 @@ sub output_CSS {
 	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
-	# or via a setting of $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
-	# which can be set in course.conf (the value should be an anon array).
-	my $pg = $self->{pg};
-	if ( defined( $pg->{flags}{extra_css_files} ) ||
-	     ( defined(  $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}  ) &&
-	       scalar( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}} ) > 0   )
-	   ) {
-		my $baseDir = $ce->{webwork_htdocs_url};
-		my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
-		my $cssFile;
-		my %cssFiles;
-		# Avoid duplicates
-		my @courseCssRequests = ();
-		if ( defined($ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files} ) ) {
-			@courseCssRequests = ( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
-} );
-		}
-		foreach $cssFile ( @courseCssRequests, @{$pg->{flags}{extra_css_files}} ) {
-			$cssFiles{$cssFile} = 1;
-		}
-		foreach $cssFile ( keys( %cssFiles ) ) {
-			if ( -f "$webwork_dir/htdocs/css/$cssFile" ) { # FIXME - test for existence
-				print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${baseDir}/css/$cssFile\" />\n";
-			} else {
-				print "<!-- $cssFile is not available in htdocs/css/ on this server -->\n";
-			}
+	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
+	# which can be set in course.conf (the value should be an anonomous array).
+	my %cssFiles;
+	# Avoid duplicates
+	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
+		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+	}
+	if (ref($self->{pg}{flags}{extra_css_files}) eq "ARRAY") {
+		$cssFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_css_files}};
+	}
+	for (keys(%cssFiles)) {
+		if ($cssFiles{$_}) {
+			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$_\" />\n";
+		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
+			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
+		} else {
+			print "<!-- $_ is not available in htdocs/ on this server -->\n";
 		}
 	}
 

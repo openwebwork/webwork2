@@ -1009,7 +1009,7 @@ sub make_data_row {
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-				$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r, 
+				$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
 					courseID =>$urlpath->arg("courseID"),
 					setID=>"Undefined_Set",
 					problemID=>"1"),
@@ -1017,8 +1017,7 @@ sub make_data_row {
 					problemSeed=> $problem_seed}
 			), 
 			id=> "editit$cnt",
-			target=>"WW_Editor", title=>"Edit it"},
-		CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
+			target=>"WW_Editor", title=>"Edit it"}, CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
 	
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
