@@ -40,32 +40,21 @@
 FROM alpine/git AS base
 
 # build args specifying the branches for webwork2 and pg used to build the image
-
-# To use the master branches of webwork2 and pg 
-#ARG WEBWORK2_BRANCH=master
-#ARG PG_BRANCH=master
-# To use the 2.15 branches of webwork2 and pg from the "official" GitHub repositories
-ARG WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
-ARG WEBWORK2_BRANCH=develop
-ARG PG_GIT_URL=https://github.com/openwebwork/pg.git
-ARG PG_BRANCH=develop
-
-# assign the build args to the ENV variables
-ENV WEBWORK2_GIT_URL_ENV ${WEBWORK2_GIT_URL}
-ENV WEBWORK2_BRANCH_ENV ${WEBWORK2_BRANCH}
-ENV PG_GIT_URL_ENV ${PG_GIT_URL}
-ENV PG_BRANCH_ENV ${PG_BRANCH}
+ARG WEBWORK2_GIT_URL
+ARG WEBWORK2_BRANCH
+ARG PG_GIT_URL
+ARG PG_BRANCH
 
 WORKDIR /opt/base
 
-RUN echo Cloning branch $WEBWORK2_BRANCH_ENV from $WEBWORK2_GIT_URL_ENV \
-  && echo git clone --single-branch --branch ${WEBWORK2_BRANCH_ENV} --depth 1 $WEBWORK2_GIT_URL_ENV \
-  && git clone --single-branch --branch ${WEBWORK2_BRANCH_ENV} --depth 1 $WEBWORK2_GIT_URL_ENV \
+RUN echo Cloning branch $WEBWORK2_BRANCH from $WEBWORK2_GIT_URL \
+  && echo git clone --single-branch --branch ${WEBWORK2_BRANCH} --depth 1 $WEBWORK2_GIT_URL \
+  && git clone --single-branch --branch ${WEBWORK2_BRANCH} --depth 1 $WEBWORK2_GIT_URL \
   && rm -rf webwork2/.git webwork2/{*ignore,Dockerfile,docker-compose.yml,docker-config}
 
-RUN echo Cloning branch $PG_BRANCH_ENV branch from $PG_GIT_URL_ENV \
-  && echo git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 $PG_GIT_URL_ENV \
-  && git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 $PG_GIT_URL_ENV \
+RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
+  && echo git clone --single-branch --branch ${PG_BRANCH} --depth 1 $PG_GIT_URL \
+  && git clone --single-branch --branch ${PG_BRANCH} --depth 1 $PG_GIT_URL \
   && rm -rf  pg/.git
 
 RUN git clone --single-branch --branch master --depth 1 https://github.com/mathjax/MathJax \
@@ -196,6 +185,7 @@ RUN apt-get update \
 	libcpanel-json-xs-perl \
 	make \
 	netpbm \
+	patch \
 	preview-latex-style \
 	texlive \
 	texlive-latex-extra \
@@ -296,6 +286,10 @@ RUN cpanm install Statistics::R::IO CGI::Cookie \
 # Always provide the dummy default-ssl.conf file:
 COPY docker-config/ssl/default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
 
+# Patch files that are applied below
+COPY docker-config/xmlrpc-lite-utf8-fix.patch /tmp
+COPY docker-config/imagemagick-allow-pdf-read.patch /tmp
+
 # However SSL will only be enabled at container startup via docker-entrypoint.sh.
 
 RUN cd $APP_ROOT/webwork2/conf \
@@ -323,7 +317,11 @@ RUN cd $APP_ROOT/webwork2/conf \
 	PerlPassEnv WEBWORK_SMTP_SERVER\n\
 	PerlPassEnv WEBWORK_SMTP_SENDER\n\
 	PerlPassEnv WEBWORK_TIMEZONE\n\
-	\n<Perl>/' /etc/apache2/conf-enabled/webwork.conf
+	\n<Perl>/' /etc/apache2/conf-enabled/webwork.conf \
+	&& patch -p1 -d / < /tmp/xmlrpc-lite-utf8-fix.patch \
+	&& rm /tmp/xmlrpc-lite-utf8-fix.patch \
+	&& patch -p1 -d / < /tmp/imagemagick-allow-pdf-read.patch \
+	&& rm /tmp/imagemagick-allow-pdf-read.patch
 
 EXPOSE 80
 WORKDIR $APP_ROOT
