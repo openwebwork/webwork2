@@ -143,8 +143,7 @@ sub body {
 
 	if ( $externalAuth ) {
 	   	print 
-		CGI::p({}, CGI::b($courseID), "uses an external", 
-		"authentication system.  Please go there to login again.");
+		CGI::p($r->maketext("The course [_1] uses an external authentication system ([_2]). Please go there to login again.", CGI::b($courseID), $ce->{LMS_name}));
 	} else {
 		print CGI::start_form(-method=>"POST", -action=>$loginURL);
 	#	print CGI::hidden("user", $userID);  ### Line Commented out to suppress error message when this button is used.  WHW
