@@ -6,6 +6,11 @@
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
+# This is a string that is used to name the LMS for end users,
+# for example in a message telling users to sign in through their LMS.
+$LMS_name = 'e.g., Blackboard, Canvas, Moodle, etc.';
+#$LMS_name = 'Desire2Learn';
+
 # Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
