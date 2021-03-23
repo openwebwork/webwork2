@@ -290,7 +290,7 @@ sub body {
 	@vSets = sortByName(["set_id", "version_id"], @vSets);
 
 # put together a complete list of sorted sets to consider
-	@sets = (@nonGWsets, @gwSets );
+	@sets = sort byUrgency (@nonGWsets, @gwSets );
 	
 	debug("End preparing merged sets");
 
@@ -303,12 +303,14 @@ sub body {
 		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
 			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db);
 		}
-	}
-	foreach my $set (@vSets) {
-		die "set $set not defined" unless $set;
-		
-		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
-			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$set->{set_id}}, "ethet" );  # 1 = gateway, versioned set
+		if (defined($gwSetNames{$set->set_id})) {
+			foreach my $vset (@vSets) {
+				die "set $vset not defined" unless $vset;
+				if (($set->set_id eq $vset->set_id) && ($vset->visible || $authz->hasPermissions($user, "view_hidden_sets"))) {
+					print $self->setListRow($vset, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$vset->{set_id}});  # 1 = gateway, versioned set
+				}
+			}
+
 		}
 	}
 	
