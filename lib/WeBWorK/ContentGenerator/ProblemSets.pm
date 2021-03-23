@@ -456,7 +456,7 @@ sub setListRow {
 	    # reset the link to give the test number
 	    my $vnum = $set->version_id;
 	    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
-				  $r->maketext("[_1] (test [_2])", $display_name, $vnum));
+				  $r->maketext("[_1] (version [_2])", $display_name, $vnum));
 	  } else {
 	    my $t = time();
 	    if ( $t < $set->open_date() ) {
@@ -468,9 +468,9 @@ sub setListRow {
 	      }  
 	      if ( $preOpenSets ) {
 		# reset the link
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
 	      } else {
-		$interactive = $r->maketext("Take [_1] test", $display_name);
+		$interactive = $r->maketext("Start a version of [_1]", $display_name);
 	      }
 	      $control = "";
 	      
@@ -496,20 +496,20 @@ sub setListRow {
 	      if ($setIsOpen ||  $preOpenSets ) {
 		# reset the link
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
-				      $r->maketext("Take [_1] test.", $display_name));
+				      $r->maketext("Start a version of [_1].", $display_name));
 		$control = "";
 	      } else {
 		$control = "";
-		$interactive = $r->maketext("Take [_1] test.", $display_name);
+		$interactive = $r->maketext("Start a version of [_1].", $display_name);
 	      }
 	    } else {
 	      $status = $r->maketext("Closed.");
 	    
 	      if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
 	      
 	      } else {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
 	      }
 	    }
 	  } 
