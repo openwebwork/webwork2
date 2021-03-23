@@ -560,7 +560,7 @@ sub display_form {
  			(defined($mergedSet) && after($mergedSet->answer_date));
  		}
 	        # make display for versioned sets a bit nicer
-		$selected_set_id =~ s/,v(\d+)$/ (test $1)/;
+		$selected_set_id =~ s/,v(\d+)$/ (version $1)/;
 	
 		# FIXME!	
 		print CGI::p($r->maketext("Download hardcopy of set [_1] for [_2]?", $selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name));

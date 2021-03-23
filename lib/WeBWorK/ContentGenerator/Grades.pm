@@ -311,7 +311,7 @@ sub displayStudentStats {
 		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
 		       ( $set->hide_score eq 'Y' || 
 			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
-			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(test_" . $set->version_id . ")")), 
+			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(version_" . $set->version_id . ")")),
 					     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("Display of scores for this set is not allowed.")))) );
 			next;
 		}
@@ -407,7 +407,7 @@ sub displayStudentStats {
 		# Otherwise we just add the set to the running course total
 		if ($setIsVersioned) {
 		  # prettify versioned set display
-		  $setName =~ s/(.+),v(\d+)$/${1}_(test_$2)/;
+		  $setName =~ s/(.+),v(\d+)$/${1}_(version_$2)/;
 		  my $gatewayName = $1;
 		  my $currentVersion = $2;
 

@@ -345,7 +345,7 @@ sub body {
 		                                editForUser   => $editForUserID,
 		});
 
-		my $setName = ( $setVersion ) ? "$setID (test $setVersion)" : $setID;
+		my $setName = ( $setVersion ) ? "$setID (version $setVersion)" : $setID;
 
 		print CGI::Tr(
 			CGI::td({ -align => "center" }, [
