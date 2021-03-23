@@ -1603,8 +1603,8 @@ sub recordEditHTML {
 
 	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
 
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0}));
+	my $imageLink = CGI::a({ href => $userListURL },
+		CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
 	
 	my @tableCells;
 	

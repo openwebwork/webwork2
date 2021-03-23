@@ -102,13 +102,15 @@ sub insertGrader {
 			print CGI::Tr({ align => "left" },
 				CGI::th($self->maketext("Answer [_1] Score (%):", $part + 1) . " " .
 					CGI::a({
-							class => 'help-popup', href => '#',
+							class => 'help-popup',
 							data_content => $self->maketext("The initial value is the answer sub score for the " .
 								"answer that is currently shown.  If this is modified, it will be used to compute " .
 								"the total problem score below.  This score is not saved, and will reset to the " .
 								"score for the shown answer if the page is reloaded."),
 							data_placement => 'top', data_toggle => 'popover'
-						}, '&#9072')
+						}, 
+						CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, '')
+					)
 				) .
 				CGI::td(CGI::input({ type => 'number',
 							min => 0, max => 100, autocomplete => "off",
@@ -129,7 +131,7 @@ sub insertGrader {
 		CGI::th(
 			$self->maketext("Problem Score (%):") . " " .
 			CGI::a({
-					class => 'help-popup', href => '#',
+					class => 'help-popup',
 					data_content => $self->maketext("The initial value is the currently saved score for this student.") . (
 						@{$self->{pg}{flags}{ANSWER_ENTRY_ORDER}} > 1
 						? " " . $self->maketext("This is the only part of the score that is actually saved. " .
@@ -139,7 +141,10 @@ sub insertGrader {
 						: ""
 					),
 					data_placement => 'top', data_toggle => 'popover'
-				}, '&#9072')
+				},
+				CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, '') .
+				CGI::span({ class => "sr-only-glyphicon" }, "Help Icon")
+			)
 		) .
 		CGI::td(CGI::input({ type => 'number', id => "score_problem$self->{problem_id}", class => 'problem-score',
 					min => 0, max => 100, autocomplete => "off",

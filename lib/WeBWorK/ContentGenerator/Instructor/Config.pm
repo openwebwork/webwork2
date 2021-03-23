@@ -97,19 +97,15 @@ sub what_string {
 	my $self = shift;
 	my $r = $self->{Module}->r;
 	return(CGI::td(
-		CGI::a({href=>$self->{Module}->systemLink(
-			$r->urlpath->new(type=>'instructor_config',
-				args=>{courseID => $r->urlpath->arg("courseID")}),
-				params=>{show_long_doc=>1,
-					var_name=>"$self->{var}"}),
-			target=>"_blank"},
-			CGI::img({src=>$r->{ce}->{webworkURLs}->{htdocs}.
-				"/images/question_mark.png",
-				border=>"0", alt=>"$self->{var}", 
-				style=>"float: right; padding-left: 0.1em;"})
-		) .
-		$r->maketext($self->{doc}) 
-	));
+			CGI::a({href=>$self->{Module}->systemLink(
+						$r->urlpath->new(type=>'instructor_config',
+							args=>{courseID => $r->urlpath->arg("courseID")}),
+						params=>{show_long_doc=>1, var_name=>"$self->{var}"}),
+					target=>"_blank"},
+				CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "help" }, '')
+			) .
+			$r->maketext($self->{doc}) 
+		));
 }
 
 ########################### configtext

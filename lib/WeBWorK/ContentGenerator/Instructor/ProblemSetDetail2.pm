@@ -751,7 +751,8 @@ sub FieldHTML {
 		}) : "",
 		$r->maketext($properties{name}).
 		($properties{help_text} ? "&nbsp;".CGI::a({class=>'help-popup',href=>'#',
-						  'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},'&#9072') : ''),
+					'data-content'=>$r->maketext($properties{help_text}),'data-placement'=>'top', 'data-toggle'=>'popover'},
+				CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, '')) : ''),
 		$inputType,
 		$forUsers ? " $gDisplVal" : "",
 	);
@@ -2262,7 +2263,7 @@ sub body {
 
 		foreach my $headerType (@headers) {
 
-			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
+			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
 			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
 
 			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });
@@ -2386,7 +2387,7 @@ sub body {
 		my ( $editProblemPage, $editProblemLink, $viewProblemPage,
 		     $viewProblemLink );
 		if ( $isGatewaySet ) {
-		    $editProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+		    $editProblemPage = $urlpath->new(type =>'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 		    $viewProblemPage =
 			$urlpath->new(type =>'gateway_quiz',
@@ -2405,7 +2406,7 @@ sub body {
 							   problemSeed => $seed,
 							   sourceFilePath => $file });
 		} else {
-		    $editProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+		    $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 		    # FIXME: should we have an "act as" type link here when editing for multiple users?
 		    $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
@@ -2480,7 +2481,7 @@ sub body {
 
 		my $pdr_block_1 =  CGI::div({class=>"pdr_block_1"},
 			CGI::start_table({border => 0, cellpadding => 1}) .
-			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, $problemNumber).$collapseButton.
+			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, "$problemNumber ").$collapseButton.
 					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$lastProblemNumber}).
 					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .
              	        CGI::Tr({}, CGI::td({},
