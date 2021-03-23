@@ -207,9 +207,9 @@ sub body {
 	if ($externalAuth ) {
 		if ($authen_error) {
 			if ($r -> authen() eq "WeBWorK::Authen::LTIBasic") {
-				print CGI::p({}, $r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $ce->{LMS_name}));
+				print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $ce->{LMS_name}));
 			} else {
-				print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course)));
+				print CGI::p($r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course), $ce->{LMS_name}));
 			}
 		} else {
 			print CGI::p({}, $r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $ce->{LMS_name}));
