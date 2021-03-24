@@ -444,85 +444,124 @@ sub setListRow {
 	my $setIsOpen = 0;
 	my $status = '';
 	if ( $gwtype ) {
-	  if ( $gwtype == 1 ) {
-	    unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
-	    if ( $set->attempts_per_version() &&
-		 $problemRecords[0]->num_correct() + 
-		 $problemRecords[0]->num_incorrect() >= 
-		 $set->attempts_per_version()) {
-	      $status = $r->maketext("Completed.");
-	    } elsif ( time() > $set->due_date() + 
-		      $self->r->ce->{gatewayGracePeriod} ) {
-	      $status = $r->maketext("Over time, closed.");
-	    } else {
-	      $status = $self->set_due_msg($set,1);
-	    }
-	    # we let people go back to old tests
-	    $setIsOpen = 1;
-	    
-	    # reset the link to give the test number
-	    my $vnum = $set->version_id;
-	    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
-				  $r->maketext("(version\xA0[_1])",, $vnum));
-	  } else {
-	    my $t = time();
-	    if ( $t < $set->open_date() ) {
-	      $status = $r->maketext("Will open on [_1].", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
-	      
-	      if (@restricted) {
-		my $restriction = ($set->restricted_status)*100;
-		$status .= restricted_progression_msg($r,1, $restriction, @restricted);
-	      }  
-	      if ( $preOpenSets ) {
-		# reset the link
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
-	      } else {
-		$interactive = $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name);
-	      }
-	      $control = "";
-	      
-	    } elsif ( $t < $set->due_date() ) {
-	      
-	      $status = $self->set_due_msg($set,0);
-	      
-	      if (@restricted) {
-		my $restriction = ($set->restricted_status)*100;
-		$control = "" unless $preOpenSets;
-		$interactive = $display_name unless $preOpenSets;
-		$setIsOpen = 0;
-		$status .= restricted_progression_msg($r,0,$restriction,@restricted);
-	      } elsif ($LTIRestricted) {
-		$status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");   
-		$control = "" unless $preOpenSets;
-		$interactive = $display_name unless $preOpenSets;
-		$setIsOpen = 0;
-	      } else {
-	      	$setIsOpen = 1;
-	      }
-	      
-	      if ($setIsOpen ||  $preOpenSets ) {
-		# reset the link
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
-				      $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
-		$control = "";
-	      } else {
-		$control = "";
-		$interactive = $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name);
-	      }
-	    } else {
-	      $status = $r->maketext("Closed.");
-	    
-	      if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
-	      
-	      } else {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
-	      }
-	    }
-	  } 
-	  # old conditional
+		if ( $gwtype == 1 ) {
+			unless (ref($problemRecords[0]) ) {warn "Error: problem not defined in set $display_name"; return()}
+			if ($set->attempts_per_version() && $problemRecords[0]->num_correct() + $problemRecords[0]->num_incorrect() >= $set->attempts_per_version()) {
+				$status = $r->maketext("Completed.");
+			} elsif ( time() > $set->due_date() + $self->r->ce->{gatewayGracePeriod} ) {
+				$status = $r->maketext("Over time, closed.");
+			} else {
+				$status = $self->set_due_msg($set,1);
+			}
+			# we let people go back to old tests
+			$setIsOpen = 1;
+			# reset the link to give the test number
+			my $vnum = $set->version_id;
+			$interactive = CGI::a(
+				{
+					class=>"set-id-tooltip gw-parenthetical",
+					"data-toggle"=>"tooltip",
+					"data-placement"=>"right",
+					title=>"",
+					"data-original-title"=>$globalSet->description(),
+					href=>$interactiveURL
+				},
+				$r->maketext("(version\xA0[_1])", $vnum)
+			);
+		} else {
+			my $t = time();
+			if ($set->{version_time_limit} > 0 && $t < $set->due_date()) {
+				$display_name = CGI::i({class=>"far fa-clock", title=>$r->maketext("This is a quiz with a time limit")}, '') . ' ' . $display_name;
+			}
+			if ( $t < $set->open_date() ) {
+				$status = $r->maketext("Will open on [_1].", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
+				if (@restricted) {
+					my $restriction = ($set->restricted_status)*100;
+					$status .= restricted_progression_msg($r,1, $restriction, @restricted);
+				}
+				if ( $preOpenSets ) {
+					# reset the link
+					$interactive = CGI::a(
+						{
+							class=>"set-id-tooltip",
+							"data-toggle"=>"tooltip",
+							"data-placement"=>"right",
+							title=>"",
+							"data-original-title"=>$globalSet->description(),
+							href=>$interactiveURL
+						},
+						$display_name
+					);
+				} else {
+					$interactive = $display_name;
+				}
+				$control = "";
+			} elsif ( $t < $set->due_date() ) {
+				$status = $self->set_due_msg($set,0);
+				if (@restricted) {
+					my $restriction = ($set->restricted_status)*100;
+					$control = "" unless $preOpenSets;
+					$interactive = $display_name unless $preOpenSets;
+					$setIsOpen = 0;
+					$status .= restricted_progression_msg($r,0,$restriction,@restricted);
+				} elsif ($LTIRestricted) {
+					$status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");
+					$control = "" unless $preOpenSets;
+					$interactive = $display_name unless $preOpenSets;
+					$setIsOpen = 0;
+				} else {
+					$setIsOpen = 1;
+				}
+				if ($setIsOpen ||  $preOpenSets ) {
+					# reset the link
+					$interactive = CGI::a(
+						{
+							class=>"set-id-tooltip",
+							"data-toggle"=>"tooltip",
+							"data-placement"=>"right",
+							title=>"",
+							"data-original-title"=>$globalSet->description(),
+							href=>$interactiveURL
+						},
+						$display_name
+					);
+					$control = "";
+				} else {
+					$control = "";
+					$interactive = $display_name;
+				}
+			} else {
+				$status = $r->maketext("Closed.");
+				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
+					$interactive = CGI::a(
+						{
+							class=>"set-id-tooltip",
+							"data-toggle"=>"tooltip",
+							"data-placement"=>"right",
+							title=>"",
+							"data-original-title"=>$globalSet->description(),
+							href=>$interactiveURL
+						},
+						$display_name
+					);
+				} else {
+					$interactive = CGI::a(
+						{
+							class=>"set-id-tooltip",
+							"data-toggle"=>"tooltip",
+							"data-placement"=>"right",
+							title=>"",
+							"data-original-title"=>$globalSet->description(),
+							href=>$interactiveURL
+						},
+						$display_name
+					);
+				}
+			}
+		}
+	# old conditional
 	} elsif (time < $set->open_date) {
-	  $status = $r->maketext("Will open on [_1].", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
+		$status = $r->maketext("Will open on [_1].", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
 	  
 	  if (@restricted) {
 	    my $restriction = ($set->restricted_status)*100;

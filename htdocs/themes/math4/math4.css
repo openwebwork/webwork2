@@ -413,6 +413,10 @@ table.classlist-table .tbody {
 	padding-left:40px;
 }
 
+.problem_set_table a.gw-parenthetical {
+	font-weight:normal;
+}
+
 /* these are for indenting problems on jitar sets */
 .problem_set_table .nested-problem-1 {
     margin-left: 10px;
