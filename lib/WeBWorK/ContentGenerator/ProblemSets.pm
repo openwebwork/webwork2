@@ -463,7 +463,7 @@ sub setListRow {
 	    # reset the link to give the test number
 	    my $vnum = $set->version_id;
 	    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
-				  $r->maketext("(version\xA0[_2])", $display_name, $vnum));
+				  $r->maketext("(version\xA0[_1])",, $vnum));
 	  } else {
 	    my $t = time();
 	    if ( $t < $set->open_date() ) {
@@ -690,7 +690,7 @@ sub set_due_msg {
   if ($enable_reduced_scoring &&
       $t < $reduced_scoring_date) {
     
-    $status .= $r->maketext("Open, due [_1], afterward reduced credit can be earned until [_2].", $beginReducedScoringPeriod, $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
+    $status .= $r->maketext("Open, due [_1].",$beginReducedScoringPeriod) . CGI::br() . $r->maketext("Afterward reduced credit can be earned until [_1].", $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
   } else {
     if ($gwversion) {
       $status = $r->maketext("Open, complete by [_1].",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
@@ -700,7 +700,7 @@ sub set_due_msg {
 
     if ($enable_reduced_scoring && $reduced_scoring_date &&
 	$t > $reduced_scoring_date) {
-      $status = $r->maketext("Due date [_1] has passed, reduced credit can still be earned until [_2].", $beginReducedScoringPeriod, $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
+      $status = $r->maketext("Due date [_1] has passed.",$beginReducedScoringPeriod) . CGI::br() . $r->maketext("Reduced credit can still be earned until [_1].", $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
     }
   }
 
