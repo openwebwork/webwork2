@@ -478,9 +478,9 @@ sub setListRow {
 	      }  
 	      if ( $preOpenSets ) {
 		# reset the link
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
 	      } else {
-		$interactive = $r->maketext("Start a version of [_1]", $display_name);
+		$interactive = $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name);
 	      }
 	      $control = "";
 	      
@@ -506,20 +506,20 @@ sub setListRow {
 	      if ($setIsOpen ||  $preOpenSets ) {
 		# reset the link
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
-				      $r->maketext("Start a version of [_1].", $display_name));
+				      $r->maketext("Start a version of[_1][_2].", CGI::br(), $display_name));
 		$control = "";
 	      } else {
 		$control = "";
-		$interactive = $r->maketext("Start a version of [_1].", $display_name);
+		$interactive = $r->maketext("Start a version of[_1][_2].", CGI::br(), $display_name);
 	      }
 	    } else {
 	      $status = $r->maketext("Closed.");
 	    
 	      if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
 	      
 	      } else {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
 	      }
 	    }
 	  } 
@@ -639,7 +639,7 @@ sub setListRow {
 	  
 	  return CGI::Tr(($gwtype == 1) ? {class => 'gw-version'} : {},
 		  CGI::td($control).
-		  CGI::td(($gwtype == 1) ? {class => 'gw-version'} : {},$interactive).
+		  CGI::td(($gwtype == 1) ? {class => 'gw-version'} : ($gwtype == 2) ? {class => 'gw-template'} : {},$interactive).
 		  CGI::td([$status,$score,$startTime]));
 	}
       }
