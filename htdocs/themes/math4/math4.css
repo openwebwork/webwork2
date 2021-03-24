@@ -409,6 +409,9 @@ table.classlist-table .tbody {
     white-space: nowrap;
 }
 
+.problem_set_table tr.gw-version td.gw-version {
+	padding-left:40px;
+}
 
 /* these are for indenting problems on jitar sets */
 .problem_set_table .nested-problem-1 {

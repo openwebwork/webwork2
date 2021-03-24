@@ -266,9 +266,9 @@ sub body {
 	    print CGI::Tr(
 		CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		CGI::th({-scope=>"col"},$nameHeader),
-		CGI::th({-scope=>"col"},$r->maketext("Test Score")),
-		CGI::th({-scope=>"col"},$r->maketext("Test Date")),
 		CGI::th({-scope=>"col"},$statusHeader),
+		CGI::th({-scope=>"col"},$r->maketext("Score")),
+		CGI::th({-scope=>"col"},$r->maketext("Start Date")),
 	        );
 	}
 
@@ -280,23 +280,31 @@ sub body {
 	@gwSets = grep {$_->assignment_type !~ /proctored/ || $viewPr} @gwSets;
 	
 	if ( $sort eq 'name' ) {
-	    @nonGWsets = sortByName("set_id", @nonGWsets);
-	    @gwSets = sortByName("set_id", @gwSets);
+		@sets = sortByName("set_id", @nonGWsets, @gwSets);
 	} elsif ( $sort eq 'status' ) {
-	    @nonGWsets = sort byUrgency  @nonGWsets;
-	    @gwSets = sort byUrgency @gwSets;
+		@sets = sort byUrgency (@nonGWsets, @gwSets );
 	}
-# we sort set versions by name
+# build a tree for set versions
+# first sort set versions by parent set name, then by version
 	@vSets = sortByName(["set_id", "version_id"], @vSets);
+	my %vSetTree = ();
+	# initialize keys as the parent GW set ids
+	for my $vset (@vSets) {
+		$vSetTree{$vset->set_id} = [];
+	}
+	#push in versioned sets as values
+	for my $vset (@vSets) {
+		push(@{$vSetTree{$vset->set_id}},$vset);
+	}
 
-# put together a complete list of sorted sets to consider
-	@sets = sort byUrgency (@nonGWsets, @gwSets );
-	
 	debug("End preparing merged sets");
 
-# we do regular sets and the gateway set templates separately
-# from the actual set-versions, to avoid managing a tricky test
-# for a version number that may not exist
+# Regular sets and gateway template sets are merged, but sorted either by name or urgency.
+# Immediately following a gateway template set comes its set versions.
+# Note: this assumes that the set_id of a versioned GW set cannot differ from all of the corresponding GW versions.
+# In a future version of WeBWorK where instructors can change names of sets, that may not be a safe assumption.
+# Similarly, properties like visibility of a set version are directly interpreted from that property of the template set.
+# If that changes in the future, then this needs to be revisited.
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
 		
@@ -304,7 +312,7 @@ sub body {
 			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db);
 		}
 		if (defined($gwSetNames{$set->set_id})) {
-			foreach my $vset (@vSets) {
+			foreach my $vset (@{$vSetTree{$set->set_id}}) {
 				die "set $vset not defined" unless $vset;
 				if (($set->set_id eq $vset->set_id) && ($vset->visible || $authz->hasPermissions($user, "view_hidden_sets"))) {
 					print $self->setListRow($vset, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$vset->{set_id}});  # 1 = gateway, versioned set
@@ -458,7 +466,7 @@ sub setListRow {
 	    # reset the link to give the test number
 	    my $vnum = $set->version_id;
 	    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
-				  $r->maketext("[_1] (version [_2])", $display_name, $vnum));
+				  $r->maketext("(version\xA0[_2])", $display_name, $vnum));
 	  } else {
 	    my $t = time();
 	    if ( $t < $set->open_date() ) {
@@ -629,13 +637,10 @@ sub setListRow {
 	    $score = $startTime;
 	  }
 	  
-	  return CGI::Tr(CGI::td([
-				  $control,
-				  $interactive,
-				  $score,
-				  $startTime,
-				  $status,
-				 ]));
+	  return CGI::Tr(($gwtype == 1) ? {class => 'gw-version'} : {},
+		  CGI::td($control).
+		  CGI::td(($gwtype == 1) ? {class => 'gw-version'} : {},$interactive).
+		  CGI::td([$status,$score,$startTime]));
 	}
       }
 
