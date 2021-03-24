@@ -199,7 +199,7 @@ sub _get_db_info {
 	my %dsn;
 	if (      $dsn =~ s/^dbi:mariadb://i ) {
 		my ($dbi,$dbtype,$temp1) = split(':',$dsn);
-		( $dsn{database}, $dsn{host}, $dsn{port} ) = split(';',$db);
+		( $dsn{database}, $dsn{host}, $dsn{port} ) = split(';',$temp1);
 		$dsn{database} =~ s/database=//;
 		$dsn{host} =~ s/host=// if ( defined $dsn{host} );
 		$dsn{port} =~ s/port=// if ( defined $dsn{port} );
