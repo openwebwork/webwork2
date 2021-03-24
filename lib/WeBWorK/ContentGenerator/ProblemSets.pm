@@ -583,7 +583,12 @@ sub setListRow {
 	    
 	    my $link = $self->systemLink($hardcopyPage,
 					 params=>{selected_sets=>$n});
-	    $control = CGI::a({class=>"hardcopy-link", href=>$link},CGI::span({class=>"icon icon-download", title=>$r->maketext("Download [_1]",$set->set_id), 'data-alt'=>$r->maketext("Download [_1]",$set->set_id)}));
+	    $control = CGI::a({class=>"hardcopy-link", href=>$link},
+			CGI::i({
+					class => "icon far fa-arrow-alt-circle-down", aria_hidden => "true",
+					title => $r->maketext("Download [_1]", $set->set_id =~ s/_/ /gr),
+					data_alt => $r->maketext("Download [_1]", $set->set_id =~ s/_/ /gr)
+				}, ''));
 	  } else {
 	    $control = '';
 	  }
