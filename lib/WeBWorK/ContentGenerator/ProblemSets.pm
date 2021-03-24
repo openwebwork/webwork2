@@ -284,8 +284,8 @@ sub body {
 	} elsif ( $sort eq 'status' ) {
 		@sets = sort byUrgency (@nonGWsets, @gwSets );
 	}
-# build a tree for set versions
-# first sort set versions by parent set name, then by version
+	# build a tree for set versions
+	# first sort set versions by parent set name, then by version
 	@vSets = sortByName(["set_id", "version_id"], @vSets);
 	my %vSetTree = ();
 	# initialize keys as the parent GW set ids
@@ -299,12 +299,9 @@ sub body {
 
 	debug("End preparing merged sets");
 
-# Regular sets and gateway template sets are merged, but sorted either by name or urgency.
-# Immediately following a gateway template set comes its set versions.
-# Note: this assumes that the set_id of a versioned GW set cannot differ from all of the corresponding GW versions.
-# In a future version of WeBWorK where instructors can change names of sets, that may not be a safe assumption.
-# Similarly, properties like visibility of a set version are directly interpreted from that property of the template set.
-# If that changes in the future, then this needs to be revisited.
+	# Regular sets and gateway template sets are merged, but sorted either by name or urgency.
+	# Immediately following a gateway template set comes its set versions.
+	# Note: this assumes that the set_id of a versioned GW set cannot differ from all of the corresponding GW versions.
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
 		
