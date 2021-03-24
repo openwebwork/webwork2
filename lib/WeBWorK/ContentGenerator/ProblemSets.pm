@@ -506,11 +506,11 @@ sub setListRow {
 	      if ($setIsOpen ||  $preOpenSets ) {
 		# reset the link
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
-				      $r->maketext("Start a version of[_1][_2].", CGI::br(), $display_name));
+				      $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name));
 		$control = "";
 	      } else {
 		$control = "";
-		$interactive = $r->maketext("Start a version of[_1][_2].", CGI::br(), $display_name);
+		$interactive = $r->maketext("Start a version of[_1][_2]", CGI::br(), $display_name);
 	      }
 	    } else {
 	      $status = $r->maketext("Closed.");
