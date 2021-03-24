@@ -53,12 +53,10 @@ BEGIN {
 
 our $GENERIC_ERROR_MESSAGE = 
 	"Your authentication failed.  Please return to "
-	. "your Course Management System (e.g., Oncourse, Moodle, "
-	. "Blackboard, Canvas, Sakai, etc.)  and login again.";
+	. "your Course Management System ([_1]) and login again.";
 our $GENERIC_MISSING_USER_ID_ERROR_MESSAGE = 
 	"Your authentication failed.  Please return to "
-	. "your Course Management System (e.g., Oncourse, Moodle, "
-	. "Blackboard, Canvas, Sakai, etc.)  and login again.";
+	. "your Course Management System ([_1]) and login again.";
 our $GENERIC_DENIED_LOGIN_ERROR_MESSAGE = 
 	"You are not permitted to login into this site at this time. "
 	. "Please speak with your instructor.";
@@ -322,7 +320,7 @@ sub check_user {
 
 	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
 		$self->{log_error} .= "no user id specified";
-		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE);
+		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE, $ce->{LMS_name});
 		return 0;
 	}
 	
@@ -439,7 +437,7 @@ sub authenticate
 		{
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
 		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
-				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor");
+				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor", $ce->{LMS_name});
 		return 0;
 		}
 	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
@@ -766,7 +764,7 @@ sub authenticate
 		}
 	}
 	#debug("LTIBasic is returning a failed authentication");
-	$self -> {error} = $r->maketext($GENERIC_ERROR_MESSAGE);
+	$self -> {error} = $r->maketext($GENERIC_ERROR_MESSAGE, $ce->{LMS_name});
 	return(0);
 }
 

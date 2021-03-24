@@ -100,7 +100,7 @@ sub negquant {
 	    
 	    "_GUEST_LOGIN_MESSAGE"   => x(q{This course supports guest logins. Click [_1] to log into this course as a guest.}),
 
-	    "_EXTERNAL_AUTH_MESSAGE" => x(q{[_1] uses an external authentication system.  You've authenticated through that system, but aren't allowed to log in to this course.}),
+	    "_EXTERNAL_AUTH_MESSAGE" => x(q{The course [_1] uses an external authentication system ([_2]). You've authenticated through that system, but aren't allowed to log in to this course.}),
 	    
 	    "_PROBLEM_SET_SUMMARY"   => x(q{This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to.}),
 	    
