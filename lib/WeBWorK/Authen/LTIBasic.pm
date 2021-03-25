@@ -320,7 +320,8 @@ sub check_user {
 
 	if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
 		$self->{log_error} .= "no user id specified";
-		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE, $ce->{LMS_name});
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
+		$self->{error} = $r->maketext($GENERIC_MISSING_USER_ID_ERROR_MESSAGE, $LMS);
 		return 0;
 	}
 	
@@ -433,13 +434,13 @@ sub authenticate
 	# Check nonce to see whether request is legitimate
 	#debug("Nonce = |" . $self-> {oauth_nonce} . "|");
 	my $nonce = WeBWorK::Authen::LTIBasic::Nonce -> new($r, $self -> {oauth_nonce}, $self -> {oauth_timestamp}); 
-	if (!($nonce -> ok ) )
-		{
+	if (!($nonce -> ok ) ) {
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
 		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
-				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor", $ce->{LMS_name});
+				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor", $LMS);
 		return 0;
-		}
+	}
 	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
 	my %request_hash;
 	my @keys = keys %{$r-> {paramcache}};

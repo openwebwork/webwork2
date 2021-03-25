@@ -205,15 +205,12 @@ sub body {
 	}
 
 	if ($externalAuth ) {
-		if ($authen_error) {
-			if ($r -> authen() eq "WeBWorK::Authen::LTIBasic") {
-				print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $ce->{LMS_name}));
-			} else {
-				print CGI::p($r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course), $ce->{LMS_name}));
-			}
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
+		if (!$authen_error || $r->authen() eq "WeBWorK::Authen::LTIBasic") {
+			print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $LMS));
 		} else {
-			print CGI::p({}, $r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $ce->{LMS_name}));
-		} 
+			print CGI::p($r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course), $LMS));
+		}
 	} else {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
 		if ($ce -> {session_management_via} ne "session_cookie") {
