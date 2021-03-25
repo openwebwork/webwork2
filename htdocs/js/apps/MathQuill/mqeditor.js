@@ -33,8 +33,8 @@ $("[id^=MaThQuIlL_]").each(function() {
 	};
 
 	// Merge options that are set by the problem.
-	if (this.id + '_Opts' in window)
-		$.extend(cfgOptions, cfgOptions, window[this.id + '_Opts']);
+	var optOverrides = answerQuill.latexInput.data("mq-opts");
+	if (typeof(optOverrides) == 'object') $.extend(cfgOptions, optOverrides);
 
 	// This is after the option merge to prevent handlers from being overridden.
 	cfgOptions.handlers = {

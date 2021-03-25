@@ -364,7 +364,7 @@ sub create_ans_str_from_responses {
 sub insert_mathquill_responses {
 	my ($self, $pg) = @_;
 	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
-		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}{rh_ans}{mathQuillOpts};
+		my $mq_opts = $pg->{pgcore}{PG_ANSWERS_HASH}{$answerLabel}{ans_eval}{rh_ans}{mathQuillOpts} // "";
 		next if ($mq_opts && $mq_opts =~ /\s*disabled\s*/);
 		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
 		for my $response ($response_obj->response_labels) {
@@ -373,8 +373,7 @@ sub insert_mathquill_responses {
 			push(@{$response_obj->{response_order}}, $name);
 			$response_obj->{responses}{$name} = '';
 			my $value = defined($self->{formFields}{$name}) ? $self->{formFields}{$name} : '';
-			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
-			$pg->{body_text} .= "<script>var ${name}_Opts = {$mq_opts}</script>" if ($mq_opts);
+			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value, data_mq_opts => "$mq_opts" });
 		}
 	}
 }
