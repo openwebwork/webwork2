@@ -52,15 +52,11 @@ my $global_sql_file = $ce->{problemLibrary}{root}.'/OPL_global_statistics.sql';
 
 if (-e $global_sql_file) {
 
-  my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
-  
-  $host = 'localhost' unless $host;
-
-  $port = 3306 unless $port;
-  
+  my $db     = $ce->{database_name};
+  my $host   = $ce->{database_host};
+  my $port   = $ce->{database_port};
   my $dbuser = $ce->{database_username};
   my $dbpass = $ce->{database_password};
-
   
   $dbh->do(<<EOS);
 DROP TABLE IF EXISTS OPL_global_statistics;
@@ -68,7 +64,6 @@ EOS
   $dbh->commit();
 
   $dbuser = shell_quote($dbuser);
-  $dbpass = shell_quote($dbpass);
   $db = shell_quote($db);
 
   $ENV{'MYSQL_PWD'}=$dbpass;

@@ -196,7 +196,7 @@ sub body {
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
 	my $authen_error = MP2 ? $r->notes->get("authen_error") : $r->notes("authen_error");
-	$authen_error = Encode::decode_utf8($authen_error);
+	$authen_error = Encode::decode("UTF-8",$authen_error);
 
 	if ($authen_error) {
 		print CGI::div({class=>"ResultsWithError", tabindex=>'0'},
@@ -205,15 +205,12 @@ sub body {
 	}
 
 	if ($externalAuth ) {
-		if ($authen_error) {
-			if ($r -> authen() eq "WeBWorK::Authen::LTIBasic") {
-				print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
-			} else {
-				print CGI::p({}, $r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($r->maketext($course))));
-			}
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
+		if (!$authen_error || $r->authen() eq "WeBWorK::Authen::LTIBasic") {
+			print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $LMS));
 		} else {
-		    print CGI::p({}, $r->maketext('[_1] uses an external authentication system (e.g., Oncourse,  CAS,  Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try again.', CGI::strong($course)));
-		} 
+			print CGI::p($r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course), $LMS));
+		}
 	} else {
 		print CGI::p($r->maketext("Please enter your username and password for [_1] below:", CGI::b($course)));
 		if ($ce -> {session_management_via} ne "session_cookie") {

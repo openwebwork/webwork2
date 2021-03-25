@@ -42,10 +42,13 @@ FROM alpine/git AS base
 # build args specifying the branches for webwork2 and pg used to build the image
 
 # To use the master branches of webwork2 and pg 
+#ARG WEBWORK2_BRANCH=master
+#ARG PG_BRANCH=master
+# To use the 2.15 branches of webwork2 and pg from the "official" GitHub repositories
 ARG WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
-ARG WEBWORK2_BRANCH=master
+ARG WEBWORK2_BRANCH=develop
 ARG PG_GIT_URL=https://github.com/openwebwork/pg.git
-ARG PG_BRANCH=master
+ARG PG_BRANCH=develop
 
 # assign the build args to the ENV variables
 ENV WEBWORK2_GIT_URL_ENV ${WEBWORK2_GIT_URL}
@@ -65,7 +68,7 @@ RUN echo Cloning branch $PG_BRANCH_ENV branch from $PG_GIT_URL_ENV \
   && git clone --single-branch --branch ${PG_BRANCH_ENV} --depth 1 $PG_GIT_URL_ENV \
   && rm -rf  pg/.git
 
-RUN git clone --single-branch --branch legacy-v2 --depth 1 https://github.com/mathjax/MathJax \
+RUN git clone --single-branch --branch master --depth 1 https://github.com/mathjax/MathJax \
   && rm -rf MathJax/.git
 
 # Optional - include OPL (also need to uncomment further below when an included OPL is desired):
@@ -79,6 +82,8 @@ RUN git clone --single-branch --branch legacy-v2 --depth 1 https://github.com/ma
 # we need to change FROM before setting the ENV variables
 
 FROM ubuntu:18.04
+# Once ubuntu 20.04 is used, CGI.pm and CGI::Cookie will be new enough to
+# drop the cpanm install of CGI::Cookie which is needed to upgrade it.
 
 ENV WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \
@@ -125,10 +130,9 @@ RUN apt-get update \
 	dvipng \
 	gcc \
 	libapache2-request-perl \
+	libarchive-zip-perl \
 	libcrypt-ssleay-perl \
 	libdatetime-perl \
-	libdancer-perl \
-	libdancer-plugin-database-perl \
 	libdbd-mysql-perl \
 	libemail-address-xs-perl \
 	libexception-class-perl \
@@ -148,6 +152,8 @@ RUN apt-get update \
 	libpath-class-perl \
 	libphp-serialization-perl \
 	libxml-simple-perl \
+	libnet-https-nb-perl \
+	libhttp-async-perl \
 	libsoap-lite-perl \
 	libsql-abstract-perl \
 	libstring-shellquote-perl \
@@ -190,7 +196,8 @@ RUN apt-get update \
 	libuniversal-isa-perl \
 	libtest-fatal-perl \
 	libjson-xs-perl \
-	libmoox-options-perl \
+	libjson-maybexs-perl \
+	libcpanel-json-xs-perl \
 	make \
 	netpbm \
 	preview-latex-style \
@@ -215,6 +222,7 @@ RUN apt-get update \
 	lmodern \
 	zip \
 	jq \
+	npm \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/*
 
@@ -245,6 +253,7 @@ COPY --from=base /opt/base/MathJax $APP_ROOT/MathJax
 # 3. Some chown/chmod for material INSIDE the image.
 # 4. Build some standard locales.
 # 5. Set the default system timezone to be UTC.
+# 6. Install third party javascript files.
 
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
@@ -256,7 +265,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
       && echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
       && debconf-set-selections /tmp/preseed.txt \
     && rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
-      &&   dpkg-reconfigure -f noninteractive tzdata
+      &&   dpkg-reconfigure -f noninteractive tzdata \
+    && cd $WEBWORK_ROOT/htdocs \
+      && npm install
 
 # These lines were moved into docker-entrypoint.sh so the bind mount of courses will be available
 #RUN cd $APP_ROOT/webwork2/courses.dist \
@@ -267,7 +278,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
 
 # Phase 6 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
 
-RUN cpanm install Statistics::R::IO \
+# Ubuntu 18.04 has CGI.pm 4.38-1 which is too old to support the cookie samesite attribute added in CGI.pm 4.45 - so install CGI::Cookie here to get an upgraded version.
+
+RUN cpanm install Statistics::R::IO CGI::Cookie \
     && rm -fr ./cpanm /root/.cpanm /tmp/*
 
 # Now installed from Ubuntu packages:

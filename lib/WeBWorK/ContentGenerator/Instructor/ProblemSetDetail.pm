@@ -2068,7 +2068,7 @@ sub body {
 		
 		foreach my $headerType (@headers) {
 	
-			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
+			my $editHeaderPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $setID, problemID => 0 });
 			my $editHeaderLink = $self->systemLink($editHeaderPage, params => { file_type => $headerType, make_local_copy => 1 });
 
 			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });	
@@ -2183,7 +2183,7 @@ sub body {
 			my ( $editProblemPage, $editProblemLink, $viewProblemPage,
 			     $viewProblemLink );
 			if ( $isGatewaySet ) {
-				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 				$viewProblemPage =
 					$urlpath->new(type =>'gateway_quiz',
@@ -2202,7 +2202,7 @@ sub body {
 							    problemSeed => $seed,
 							    sourceFilePath => $file });
 			} else {
-				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
 				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
 			# FIXME: should we have an "act as" type link here when editing for multiple users?		
 				$viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
@@ -2353,21 +2353,22 @@ sub output_JS {
 	my $timezone = $self->{timezone_shortname};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-	    print "\n\n<!-- add to header ProblemSetDetail.pm -->";
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style> 
 	.ui-datepicker{font-size:85%} 
 	.auto-changed{background-color: #ffffcc} 
 	.changed {background-color: #ffffcc}
-    </style>!,"\n";
-    
+	</style>!,"\n";
+
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-    	
+
+	print qq!<link rel="stylesheet" type="text/css" href="$site_url/js/apps/ImageView/imageview.css"/>!,"\n";
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+
 	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }

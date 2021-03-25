@@ -38,6 +38,7 @@ use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::PG::IO;
 use WeBWorK::PG::ImageGenerator;
+use Encode qw(encode);
 use Benchmark;
 
 #print "rereading Webwork\n";
@@ -277,10 +278,11 @@ sub renderProblem {
 	# determine the set name and the set problem number
 	my $setName       =  (defined($rh->{set_id}) ) ? $rh->{set_id} : 
 	    (defined($rh->{envir}->{setNumber}) ? $rh->{envir}->{setNumber}  : '');
+
+	my $setVersionId = $rh->{version_id} || 0;
 	
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
 	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
-#	$problemSeed = $rh->{problemSeed} || $problemSeed;
 	my $psvn          =  (defined($rh->{envir}->{psvn})      )    ? $rh->{envir}->{psvn}         : 1234 ;
 	my $problemStatus =  $rh->{problem_state}->{recorded_score}|| 0 ;
 	my $problemValue  =  (defined($rh->{envir}->{problemValue}))   ? $rh->{envir}->{problemValue}  : 1 ;
@@ -289,7 +291,9 @@ sub renderProblem {
 	my $problemAttempted = ($num_correct || $num_incorrect);
 	my $lastAnswer    = '';
 	
+	debug("effectiveUserName: " . $effectiveUserName);
 	debug("setName: " . $setName);
+	debug("setVersionId: " . $setVersionId);
 	debug("problemNumber: ". $problemNumber);
 	debug("problemSeed:" . $problemSeed);
 	debug("psvn: " . $psvn);
@@ -297,8 +301,10 @@ sub renderProblem {
 	debug("problemValue: " . $problemValue);
 
 
+	my $setRecord = $setVersionId
+		? $db->getMergedSetVersion($effectiveUserName, $setName, $setVersionId)
+		: $db->getMergedSet($effectiveUserName, $setName);
 
-	my $setRecord = $db->getMergedSet($effectiveUserName, $setName);
  	unless (defined($setRecord) and ref($setRecord) ) {
 		# if a User Set does not exist for this user and this set
 		# then we check the Global Set
@@ -323,7 +329,9 @@ sub renderProblem {
 	}
 	#warn "set Record is $setRecord";
 	# obtain the merged problem for $effectiveUser
-	my $problemRecord = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); 
+	my $problemRecord = $setVersionId
+		? $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionId, $problemNumber)
+		: $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 	
 	# if that is not yet defined obtain the global problem,
 	# convert it to a user problem, and add fake user data
@@ -407,7 +415,7 @@ sub renderProblem {
         # if reference is not defined then the path is obtained 
         # from the problem object.
         permissionLevel => $rh->{envir}->{permissionLevel} || 0,
-		effectivePermissionLevel => $rh->{envir}->{effectivePermissionlevel} 
+		effectivePermissionLevel => $rh->{envir}->{effectivePermissionLevel} 
 		                            || $rh->{envir}->{permissionLevel} || 0,
 	};
 	
@@ -415,7 +423,7 @@ sub renderProblem {
 	my $key        = $rh->{envir}->{key} || '';
 
 	local $ce->{pg}{specialPGEnvironmentVars}{problemPreamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
-    local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
+	local $ce->{pg}{specialPGEnvironmentVars}{problemPostamble} = {TeX=>'',HTML=>''} if($rh->{noprepostambles});
 	
 	#check definitions
 	#warn "setRecord is ", WebworkWebservice::pretty_print_rh($setRecord);
@@ -537,9 +545,40 @@ sub xml_filter {
 	} elsif( $type =~/HASH/i or "$input"=~/HASH/i) {
 		print DEBUGCODE "HASH reference ($input) with ".%{$input}." elements will be investigated\n" if $debugXmlCode;
 		$level++;
-		foreach my $item (keys %{$input}) {
+		my @keys_to_process = keys %{$input};
+		foreach my $item ( @keys_to_process ) {
 			print DEBUGCODE "  "x$level."$item is " if $debugXmlCode;
-		    $input->{$item} = xml_filter($input->{$item},$level);   
+
+			next if ( $item =~ /^xmlrpc_UTF8_encoded_/ ); # avoid double processing
+
+			# Until 2020 - ALL scalar values were left unchanged.
+			# However, since the release of WeBWorK 2.15 (late 2019) there
+			# can be Unicode values of hash entires, and they trigger failures
+			# of the XMLRPC system. For now, based on current experience
+			# we are ONLY handling the values stored in the hashes, under the
+			# assumption that key names will be ASCII, and that arrays are not
+			# going to contain Unicode values. When a hash value is encoded,
+			# we prefix the key name with "xmlrpc_UTF8_encoded_" so it can
+			# be detected for the decode on the other side.
+
+			my $filtered_value = xml_filter($input->{$item},$level);
+			my $item_type = ref( $input->{$item} );
+			if (!defined($item_type) or !$item_type ) {
+				# This is a scalar object
+				# Values which are string containing Unicode wide-characters make problems
+				if ( ! Scalar::Util::looks_like_number( $filtered_value ) &&
+				     $filtered_value =~ /[^\x00-\x7f]/ # Some non 7-bit character included
+				   ) {
+					# UTF-8 encoding needed
+					$input->{"xmlrpc_UTF8_encoded_$item"} = encode("UTF-8", $filtered_value );
+					delete( $input->{$item} ); # remove the original value
+				} else {
+					$input->{$item} = $filtered_value; # No encoding needed
+				}
+			} else {
+				# Not a scalar object - default handling
+				$input->{$item} = $filtered_value;
+			}
 		}
 		$level--;
 		print DEBUGCODE "  "x$level."HASH reference completed \n" if $debugXmlCode;

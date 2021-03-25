@@ -1234,7 +1234,7 @@ sub import_form {
 	    $datescript = <<EOS;
 \$('#import_date_shift').datetimepicker({
   showOn: "button",
-  buttonText: "<i class='icon-calendar'></i>",
+  buttonText: "<i class='fas fa-calendar-alt'></i>",
   ampm: true,
   timeFormat: 'hh:mmtt',
   separator: ' at ',
@@ -2004,12 +2004,14 @@ sub readSetDef {
 			}
 		}
 
-		if ($reducedScoringDate && ($reducedScoringDate < $time1 || $reducedScoringDate > $time2)) {
-		    warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
-		} elsif ( $reducedScoringDate == 0 && $enableReducedScoring ne 'Y' ) {
-			# In this case - the date in the file was Unix epoch 0 (or treated as such),
-			# and unless $enableReducedScoring eq 'Y' we will leave it as 0.
-		} elsif (!$reducedScoringDate) {
+		if ($reducedScoringDate) {
+			if ($reducedScoringDate < $time1 || $reducedScoringDate > $time2) {
+				warn $r->maketext("The reduced credit date should be between the open date [_1] and close date [_2]", $openDate, $dueDate);
+			} elsif ( $reducedScoringDate == 0 && $enableReducedScoring ne 'Y' ) {
+				# In this case - the date in the file was Unix epoch 0 (or treated as such),
+				# and unless $enableReducedScoring eq 'Y' we will leave it as 0.
+			}
+		} else {
 		    $reducedScoringDate = $time2 - 60*$r->{ce}->{pg}{ansEvalDefaults}{reducedScoringPeriod};
 		}
 
@@ -2591,11 +2593,11 @@ sub recordEditHTML {
 	$prettySetID =~ s/_/ /g;
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail2', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $problemSetListURL = $self->systemLink($urlpath->new(type=>'instructor_set_list2', args=>{courseID => $courseName, setID => $Set->set_id})) . "&editMode=1&visible_sets=" . $Set->set_id;
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = '';
+	my $imageLink = '';
 
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-	  $imageLink = CGI::a({href => $problemSetListURL}, CGI::img({src=>$imageURL, border=>0}));
+		$imageLink = CGI::a({href => $problemSetListURL},
+			CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
 	}
 	
 	my @tableCells;
@@ -2606,7 +2608,7 @@ sub recordEditHTML {
 #	$fakeRecord{set_id} = CGI::font({class=>$visibleClass}, $set_id) . ($editMode ? "" : $imageLink);
 	$fakeRecord{set_id} = $editMode 
 					? CGI::a({href=>$problemListURL}, "$set_id") 
-					: CGI::font({class=>$visibleClass}, $set_id) . $imageLink;
+					: CGI::font({class=>$visibleClass}, $set_id) . " " . $imageLink;
 	$fakeRecord{problems} = (FIELD_PERMS()->{problems} and not $authz->hasPermissions($user, FIELD_PERMS()->{problems}))
 					? "$problems"
 					: CGI::a({href=>$problemListURL}, "$problems");
@@ -2629,7 +2631,7 @@ sub recordEditHTML {
 		if ($editMode) {
 			$label = CGI::a({href=>$problemListURL}, $prettySetID);
 		} else {		
-			$label = CGI::a({class=>"set-label $visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $prettySetID) . $imageLink;
+			$label = CGI::a({class=>"set-label $visibleClass set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$Set->description()}, $prettySetID) . " " . $imageLink;
 		}
 		
 		push @tableCells, CGI::input({
@@ -2828,24 +2830,22 @@ sub output_JS{
 	my $setID   = $r->urlpath->arg("setID");
 	my $timezone = $ce->{siteDefaults}{timezone};
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-    
-    print "\n\n<!-- add to header ProblemSetList2.pm -->";
-        
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/vendor/jquery-ui-themes-1.10.3/themes/smoothness/jquery-ui.css">!,"\n";
+
+	print "\n\n<!-- add to header ProblemSetList2.pm -->";
+
 	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
 
 	print q!<style> 
 	.ui-datepicker{font-size:85%} 
 	.auto-changed{background-color: #ffffcc} 
 	.changed {background-color: #ffffcc}
-    </style>!,"\n";
-    
+	</style>!,"\n";
+
 	# print javaScript for dateTimePicker	
 	# jquery ui printed seperately
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();

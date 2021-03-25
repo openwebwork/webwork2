@@ -77,7 +77,6 @@ use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
 use constant VIEW_FORMS => [qw(filter sort edit password import export add delete)];
-use Encode qw(decode_utf8 encode_utf8);
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
 		saveEdit => "modify_student_data",
@@ -1648,11 +1647,11 @@ sub recordEditHTML {
 
 	my $userListURL = $self->systemLink($urlpath->new(type=>'instructor_user_list2', args=>{courseID => $courseName} )) . "&editMode=1&visible_users=" . $User->user_id;
 
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-        my $imageLink = '';
+	my $imageLink = '';
 
 	if ($authz->hasPermissions($user, "modify_student_data")) {
-	  $imageLink = CGI::a({href => $userListURL}, CGI::img({src=>$imageURL, border=>0, alt=>"Link to Edit Page for ".$User->user_id}));
+	  $imageLink = CGI::a({href => $userListURL}, CGI::i({ class => 'icon fas fa-pencil-alt',
+				  data_alt => "Link to Edit Page for " . $User->user_id, aria_hidden => "true" }, ""));
 	}
 	
 	my @tableCells;
@@ -1669,9 +1668,9 @@ sub recordEditHTML {
 			# -label => "",
 		my $label = "";
 		if ( FIELD_PERMS()->{act_as} and not $authz->hasPermissions($user, FIELD_PERMS()->{act_as}) ){
-			$label = $User->user_id . $imageLink;
+			$label = $User->user_id . " " . $imageLink;
 		} else {
-			$label = CGI::a({href=>$changeEUserURL}, $User->user_id) . $imageLink;
+			$label = CGI::a({href=>$changeEUserURL}, $User->user_id) . " " . $imageLink;
 		}
 		
 		push @tableCells, CGI::input({
@@ -1753,7 +1752,7 @@ sub recordEditHTML {
 		my $fieldValue = $User->$field;
 # FIXME  utf8, utf8mb4 debugging codes
 #		warn "user values ".join(" ", $User->user_id,$User->first_name, $User->last_name)."\n";
-#		warn "variants". join(" ",$User->user_id, decode_utf8($User->first_name), decode_utf8($User->last_name))."\n";
+#		warn "variants". join(" ",$User->user_id, Encode::decode("UTF-8",$User->first_name), Encode::decode("UTF-8",$User->last_name))."\n";
 #		warn "is_utf8 flag, first_name, last_name ".join(" ", utf8::is_utf8($User->first_name)?1:0, utf8::is_utf8($User->last_name)?1:0   )."\n";
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 	        next if $properties{access} eq 'hidden';
@@ -1920,7 +1919,6 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/classlist_handlers.js"}), CGI::end_script();

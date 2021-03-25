@@ -32,7 +32,6 @@ use WeBWorK::PG::ImageGenerator;
 use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
 use XML::Simple qw(XMLout);
 use WeBWorK::Utils::DetermineProblemLangAndDirection;
-use Encode qw(encode_utf8 decode_utf8);
 use JSON;
 
 our $UNIT_TESTS_ON  = 0; 
@@ -437,11 +436,6 @@ EOS
 	my $STRING_ShowCorrect = $mt->maketext("Show correct answers");
 	my $STRING_Submit      = $mt->maketext("Check Answers");
 
-# With these values - things work, but the button text is English
-# with the localized values, or any answers in UTF-8 - thing break
-$STRING_Preview = "Preview My Answers";
-$STRING_ShowCorrect = "Show correct answers";
-$STRING_Submit = "Check Answers";
 
 ######################################################
 # Return interpolated problem template
@@ -449,7 +443,7 @@ $STRING_Submit = "Check Answers";
 
 	my $format_name = $self->{inputs_ref}->{outputformat}//'standard';
 
-        # The json output format is special and cannot be handled by the
+        # The json and raw output formats are special and cannot be handled by the
 	# the standard code
 	if ( $format_name eq "json" ) {
 	  my %output_data_hash;
@@ -477,11 +471,27 @@ $STRING_Submit = "Check Answers";
 	  }
 	  $output_data_hash{score} = $json_score;
 
-	  my $json_output_data = to_json( \%output_data_hash ,{pretty=>1, canonical=>1});
+	  my $json_output_data = JSON->new->utf8->canonical->pretty->encode(\%output_data_hash);
 	  # FIXME: Should set header of response to content_type("text/json; charset=utf-8");
 	  return $json_output_data;
 	}
 
+	# This format returns javascript object notation corresponding to the perl hash
+	# with everything that a client-side application could use to work with the problem.
+	# There is no wrapping HTML "_format" template.
+	if ( $format_name eq "raw") {
+	  $output = {};
+	  # Everything that ships out with other formats can be constructed from these
+	  $output->{rh_result} = {%{$rh_result}};
+	  $output->{inputs_ref} = {%{$self->{inputs_ref}}};
+	  $output->{input} = {%{$self->{input}}};
+	  # The following could be constructed from the above, but this is a convenience
+	  $output->{answerTemplate} = $answerTemplate if ($answerTemplate);
+	  $output->{lang} = $PROBLEM_LANG_AND_DIR[2];
+	  $output->{dir} = $PROBLEM_LANG_AND_DIR[6];
+	  # Convert to JSON
+	  return JSON->new->utf8->canonical->pretty->encode($output);
+	}
 
 	# find the appropriate template in WebworkClient folder
 	my $template = do("WebworkClient/${format_name}_format.pl");

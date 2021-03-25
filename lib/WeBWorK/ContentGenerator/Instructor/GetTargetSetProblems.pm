@@ -67,7 +67,7 @@ use constant LIB2_DATA => {
 my %problib;	## This is configured in defaults.conf
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,
+	'headers' => 1, 'macros' => 1, 'graphics'=>1, 'email' => 1, '.svn' => 1,
 );
 
 sub prepare_activity_entry {
@@ -121,7 +121,7 @@ sub make_myset_data_row {
 	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),

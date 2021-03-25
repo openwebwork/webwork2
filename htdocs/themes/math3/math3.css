@@ -30,11 +30,6 @@
 	border: none; /* 1px solid grey; */
 }
 
-a.table-summary,
-a.table-summary:visited {
-    color:black;
-    text-decoration:none;
-}
 .table-input {
 	width:15em;
     font-size:75%;
@@ -353,7 +348,7 @@ clear: both;
 	font-size: smaller;
 } 
 
-#mainform i.icon-random {
+#mainform i.fas.fa-random {
     cursor: pointer;
 }
 
@@ -676,6 +671,12 @@ table.attemptResults th {
 	padding: 2px 5px 2px 5px;
 	color: inherit;
 	background-color: #DDDDDD;
+}
+
+table.attemptResults span.answer-preview {
+	display: inline-block;
+	width: 100%;
+	height: 100%;
 }
 
 /*styles for the instructor comment box */

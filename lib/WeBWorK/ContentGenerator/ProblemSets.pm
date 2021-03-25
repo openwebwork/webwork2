@@ -91,7 +91,7 @@ sub info {
 				$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:").' ', $course_info_path));
 			}
 			
-			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",  $r, courseID => $courseID);
+			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",  $r, courseID => $courseID);
 			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 		}
 		
@@ -456,7 +456,7 @@ sub setListRow {
 	    # reset the link to give the test number
 	    my $vnum = $set->version_id;
 	    $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(), href=>$interactiveURL},
-				  $r->maketext("[_1] (test [_2])", $display_name, $vnum));
+				  $r->maketext("[_1] (version [_2])", $display_name, $vnum));
 	  } else {
 	    my $t = time();
 	    if ( $t < $set->open_date() ) {
@@ -468,9 +468,9 @@ sub setListRow {
 	      }  
 	      if ( $preOpenSets ) {
 		# reset the link
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
 	      } else {
-		$interactive = $r->maketext("Take [_1] test", $display_name);
+		$interactive = $r->maketext("Start a version of [_1]", $display_name);
 	      }
 	      $control = "";
 	      
@@ -485,7 +485,7 @@ sub setListRow {
 		$setIsOpen = 0;
 		$status .= restricted_progression_msg($r,0,$restriction,@restricted);
 	      } elsif ($LTIRestricted) {
-		$status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");   
+		$status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System ([_1]).", $ce->{LMS_name});
 		$control = "" unless $preOpenSets;
 		$interactive = $display_name unless $preOpenSets;
 		$setIsOpen = 0;
@@ -496,20 +496,20 @@ sub setListRow {
 	      if ($setIsOpen ||  $preOpenSets ) {
 		# reset the link
 		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL},
-				      $r->maketext("Take [_1] test.", $display_name));
+				      $r->maketext("Start a version of [_1].", $display_name));
 		$control = "";
 	      } else {
 		$control = "";
-		$interactive = $r->maketext("Take [_1] test.", $display_name);
+		$interactive = $r->maketext("Start a version of [_1].", $display_name);
 	      }
 	    } else {
 	      $status = $r->maketext("Closed.");
 	    
 	      if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
 	      
 	      } else {
-		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Take [_1] test", $display_name));
+		$interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, $r->maketext("Start a version of [_1]", $display_name));
 	      }
 	    }
 	  } 
@@ -538,7 +538,7 @@ sub setListRow {
 	    
 	    $setIsOpen = 0;
 	  } elsif ($LTIRestricted) {
-	    $status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System (e.g. Blackboard, Moodle, etc...).");   
+	    $status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System ([_1]).", $ce->{LMS_name});
 	    $control = "" unless $preOpenSets;
 	    $interactive = $display_name unless $preOpenSets;
 	    $setIsOpen = 0;

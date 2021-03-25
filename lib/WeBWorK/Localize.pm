@@ -100,7 +100,7 @@ sub negquant {
 	    
 	    "_GUEST_LOGIN_MESSAGE"   => x(q{This course supports guest logins. Click [_1] to log into this course as a guest.}),
 
-	    "_EXTERNAL_AUTH_MESSAGE" => x(q{[_1] uses an external authentication system.  You've authenticated through that system, but aren't allowed to log in to this course.}),
+	    "_EXTERNAL_AUTH_MESSAGE" => x(q{The course [_1] uses an external authentication system ([_2]). You've authenticated through that system, but aren't allowed to log in to this course.}),
 	    
 	    "_PROBLEM_SET_SUMMARY"   => x(q{This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to.}),
 	    
@@ -289,6 +289,11 @@ my $ConfigStrings = [
 		doc2 => x('The default number of attempts before the problem is re-randomized. ( 0 => never )'),
 		type => 'number'
 	},
+	{	var => 'pg{options}{showCorrectOnRandomize}',
+		doc => 'Show the correct answer to the current problem before re-randomization.',
+		doc2 => 'Show the correct answer to the current problem on the last attempt before a new version is requestion.',
+		type => 'boolean'
+	},
  	],		  
 	[x('Permissions'),
 		{ var => 'permissionLevels{login}',
@@ -379,9 +384,19 @@ my $ConfigStrings = [
 		  type => 'boolean'
 		},
 
-		{ var => 'pg{ansEvalDefaults}{useOldAnswerMacros}',
+		{ var => 'pg{specialPGEnvironmentVars}{useOldAnswerMacros}',
 		  doc => x('Use older answer checkers'),
 		  doc2 => x('During summer 2005, a newer version of the answer checkers was implemented for answers which are functions and numbers.  The newer checkers allow more functions in student answers, and behave better in certain cases.  Some problems are specifically coded to use new (or old) answer checkers.  However, for the bulk of the problems, you can choose what the default will be here.  <p>Choosing <i>false</i> here means that the newer answer checkers will be used by default, and choosing <i>true</i> means that the old answer checkers will be used by default.'),
+		  type => 'boolean'
+		  },
+		{ var => 'pg{specialPGEnvironmentVars}{parseAlternatives}',
+		  doc => x('Allow Unicode alternatives in student answers'),
+		  doc2 => x('Set to true to allow students to enter Unicode versions of some characters (like U+2212 for the minus sign) in their answers.  One reason to allow this is that copying and pasting output from MathJax can introduce these characters, but it is also getting easier to enter these characters directory from the keyboard.'),
+		  type => 'boolean'
+		  },
+		{ var => 'pg{specialPGEnvironmentVars}{convertFullWidthCharacters}',
+		  doc => x('Automatically convert Full Width Unicode characters to their ASCII equivalents'),
+		  doc2 => x('Set to true to have Full Width Unicode character (U+FF01 to U+FF5E) converted to their ASCII equivalents (U+0021 to U+007E) automatically in MathObjects.  This may be valuable for Chinese keyboards, for example, that automatically use Full Width characters for parentheses and commas.'),
 		  type => 'boolean'
 		  },
 

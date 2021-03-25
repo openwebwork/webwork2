@@ -108,16 +108,6 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
  instructor_problem_editor_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor/$setID/$problemID/
-                                     
- instructor_problem_editor2           /$courseID/instructor/pgProblemEditor2/
- instructor_problem_editor2_withset   /$courseID/instructor/pgProblemEditor2/$setID/
- instructor_problem_editor2_withset_withproblem
-                                     /$courseID/instructor/pgProblemEditor2/$setID/$problemID/
- 
- instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
- instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
- instructor_problem_editor3_withset_withproblem /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
- 
 
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
@@ -345,7 +335,7 @@ our %pathTypes = (
 		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2
 		    instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
+			instructor_problem_editor
 			instructor_set_maker instructor_set_maker2 instructor_set_maker3 instructor_set_maker_no_js
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
@@ -571,46 +561,10 @@ our %pathTypes = (
 		produce => 'pgProblemEditor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
-	instructor_problem_editor2 => {
-		name    => x('Problem Editor2'),
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_problem_editor2_withset/ ],
-		match   => qr|^pgProblemEditor2/|,
-		capture => [ qw// ],
-		produce => 'pgProblemEditor2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
-	},
-	instructor_problem_editor3 => {
-		name    => x('Problem Editor3'),
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_problem_editor3_withset/ ],
-		match   => qr|^pgProblemEditor3/|,
-		capture => [ qw// ],
-		produce => 'pgProblemEditor3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
-	},
 	instructor_problem_editor_withset => {
 		name    => '[_2]',
 		parent  => 'instructor_problem_editor',
 		kids    => [ qw/instructor_problem_editor_withset_withproblem/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => undef,
-	},
-	instructor_problem_editor2_withset => {
-		name    => '[_2]',
-		parent  => 'instructor_problem_editor2',
-		kids    => [ qw/instructor_problem_editor2_withset_withproblem/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => undef,
-	},
-	instructor_problem_editor3_withset => {
-		name    => '[_2]',
-		parent  => 'instructor_problem_editor3',
-		kids    => [ qw/instructor_problem_editor3_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
@@ -624,24 +578,6 @@ our %pathTypes = (
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
-	},
-	instructor_problem_editor2_withset_withproblem => {
-		name    => '[_3]',
-		parent  => 'instructor_problem_editor2_withset',
-		kids    => [ qw// ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/problemID/ ],
-		produce => '$problemID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
-	},
-	instructor_problem_editor3_withset_withproblem => {
-		name    => '[_3]',
-		parent  => 'instructor_problem_editor3_withset',
-		kids    => [ qw// ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/problemID/ ],
-		produce => '$problemID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
 	instructor_scoring => {
 		name    => x('Scoring Tools'),
