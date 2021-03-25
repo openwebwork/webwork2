@@ -695,7 +695,7 @@ sub pre_header_initialize {
 	$rerandomizePeriod = $problem->{prPeriod}
 	if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 
-	$prEnabled = 0 if ($rerandomizePeriod < 1);
+	$prEnabled = 0 if ($rerandomizePeriod < 1 || $self->{editMode});
 	if ($prEnabled) {
 		$problem->{prCount} = 0
 		if !defined($problem->{prCount}) || $problem->{prCount} =~ /^\s*$/;

@@ -193,10 +193,8 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	});
 	$('#problem_set_form input[name="refresh"]').removeClass("btn-primary");
 
-	//PG editor styling
-	$('#editor').addClass('form-inline span9');
-	$('#editor a').addClass('btn btn-small btn-info');
-	$('#editor > div').each(function () { $(this).html($(this).html().replace(/\|/g,"")); });
+	//PG Problem Editor
+	$('.reference-link').tooltip();
 
 	//Achievement Editor
 	$('#achievement-list').addClass('form-inline user-list-form');
