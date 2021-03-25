@@ -275,15 +275,21 @@ sub _get_db_info {
 		# Expect DBI:MariaDB:database=webwork;host=db;port=3306
 		# or DBI:mysql:database=webwork;host=db;port=3306
 		# The host and port are optional.
-		my ($dbi,$dbtype,$temp1) = split(':',$dsn);
-		( $dsn{database}, $dsn{host}, $dsn{port} ) = split(';',$temp1);
-		$dsn{database} =~ s/database=//;
-		$dsn{host} =~ s/host=// if ( defined $dsn{host} );
-		$dsn{port} =~ s/port=// if ( defined $dsn{port} );
+		my ($dbi, $dbtype, $dsn_opts) = split(':', $dsn);
+		while (length($dsn_opts)) {
+			if ($dsn_opts =~ /^([^=]*)=([^;]*);(.*)$/) {
+				$dsn{$1} = $2;
+				$dsn_opts = $3;
+			} else {
+				my ($var, $val) = $dsn_opts =~ /^([^=]*)=([^;]*)$/;
+				$dsn{$var} = $val;
+				$dsn_opts = '';
+			}
+		}
 	} else {
 		die "Can't call dump_table or restore_table on a table with a non-MySQL/MariaDB source";
 	}
-	
+
 	die "no database specified in DSN!" unless defined $dsn{database};
 
 	my $mysqldump = $self->{params}{mysqldump_path};
