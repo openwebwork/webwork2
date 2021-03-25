@@ -365,6 +365,7 @@ sub insert_mathquill_responses {
 	my ($self, $pg) = @_;
 	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
 		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}{rh_ans}{mathQuillOpts};
+		next if ($mq_opts && $mq_opts =~ /\s*disabled\s*/);
 		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
 		for my $response ($response_obj->response_labels) {
 			next if (ref($response_obj->{responses}{$response}));

@@ -32,7 +32,7 @@ span[id^=mq-answer]
     margin-left: 0
 }
 
-input[type=text].codeshard
+input[type=text].codeshard.mq-edit
 {
     display: none !important;
 }

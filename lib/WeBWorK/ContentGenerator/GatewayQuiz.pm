@@ -2398,10 +2398,8 @@ sub output_JS{
 	if ($self->{will}->{useMathQuill}) {
 		print qq{<link href="$site_url/js/apps/MathQuill/mathquill.css" rel="stylesheet" />};
 		print qq{<link href="$site_url/js/apps/MathQuill/mqeditor.css" rel="stylesheet" />};
-		print CGI::start_script({type=>"text/javascript",
-				src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript",
-				src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
 	}
 
 	print CGI::start_script({type=>"text/javascript",
