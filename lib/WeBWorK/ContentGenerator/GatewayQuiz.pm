@@ -1219,7 +1219,7 @@ sub nav {
 								currentPage => $self->{pageNumber},
 								showProblemGrader => $self->{will}{showProblemGrader} }), $prevTest->{setVersion}),
 					data_toggle => "tooltip", data_placement => "top",
-					title => "$prevTest->{displayName} (test $prevTest->{setVersion})",
+					title => "$prevTest->{displayName} (version $prevTest->{setVersion})",
 					class => "nav_button student-nav-button"
 				}, $r->maketext("Previous Test"))
 			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Test")),
@@ -1227,7 +1227,7 @@ sub nav {
 			CGI::start_span({ class => "btn-group student-nav-selector" }),
 			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
 				$userRecords[$currentTestIndex]{displayName} .
-				" (test $userRecords[$currentTestIndex]{setVersion}) " .
+				" (version $userRecords[$currentTestIndex]{setVersion}) " .
 				CGI::span({ class => "caret" }, "")),
 			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
 			(
@@ -1237,7 +1237,7 @@ sub nav {
 						href => sprintf($self->systemLink($setPage, params => { effectiveUser => $_->user_id,
 									currentPage => $self->{pageNumber},
 									showProblemGrader => $self->{will}{showProblemGrader} }), $_->{setVersion}) },
-					"$_->{displayName} (test $_->{setVersion})" )
+					"$_->{displayName} (version $_->{setVersion})" )
 					)
 				}
 				@userRecords[$minTestIndex ..  $maxTestIndex]
@@ -1251,7 +1251,7 @@ sub nav {
 								currentPage => $self->{pageNumber},
 								showProblemGrader => $self->{will}{showProblemGrader} }), $nextTest->{setVersion}),
 					data_toggle => "tooltip", data_placement => "top",
-					title => "$nextTest->{displayName} (test $nextTest->{setVersion})",
+					title => "$nextTest->{displayName} (version $nextTest->{setVersion})",
 					class => "nav_button student-nav-button"
 				}, $r->maketext("Next Test"))
 			: CGI::span({ class => "gray_button" }, $r->maketext("Next Test")),
@@ -1780,7 +1780,7 @@ sub body {
 	# a handy noun for when referring to a test
 	my $testNoun = (($set->attempts_per_version || 0) > 1) ? $r->maketext("submission") : $r->maketext("test");
 	my $testNounNum = (($set->attempts_per_version ||0) > 1)
-		? $r->maketext("submission (test [_1])",$versionNumber) : $r->maketext("test ([_1])",$versionNumber);
+		? $r->maketext("submission (version [_1])",$versionNumber) : $r->maketext("version ([_1])",$versionNumber);
 
 	##### start output of test headers:
 	##### display information about recorded and checked scores
@@ -1837,7 +1837,7 @@ sub body {
 			$recordedScore != $attemptScore && $can{showScore}) {
 			print CGI::start_div({class=>'gwMessage'});
 			my $recScore = wwRound(2,$recordedScore);
-			print $r->maketext("The recorded score for this test is  [_1]/[_2].",$recScore,$totPossible);
+			print $r->maketext("The recorded score for this version is  [_1]/[_2].",$recScore,$totPossible);
 			print CGI::end_div();
 		}
 
@@ -1847,7 +1847,7 @@ sub body {
 			print CGI::strong($r->maketext("Your score on this (checked, not recorded) submission is [_1]/[_2].",
 					$attemptScore,$totPossible)), CGI::br();
 			my $recScore = wwRound(2,$recordedScore);
-			print $r->maketext("The recorded score for this test is [_1]/[_2].",$recScore, $totPossible);
+			print $r->maketext("The recorded score for this version is [_1]/[_2].",$recScore, $totPossible);
 			print CGI::end_div();
 		}
 	}
@@ -1904,7 +1904,7 @@ sub body {
 			if ($can{showScore}) {
 				print CGI::start_div({class=>'gwMessage'});
 
-				my $scMsg = $r->maketext("Your recorded score on this test (number [_1]) is [_2]/[_3].",
+				my $scMsg = $r->maketext("Your recorded score on this test (version [_1]) is [_2]/[_3].",
 					$versionNumber, wwRound(2,$recordedScore), $totPossible);
 				if ($exceededAllowedTime && $recordedScore == 0) {
 					$scMsg .= $r->maketext("You exceeded the allowed time.");
@@ -1927,7 +1927,7 @@ sub body {
 		}
 
 		if ($canShowWork && $set->set_id ne "Undefined_Set") {
-			print $r->maketext("The test (which is number [_1]) may  no longer be submitted for a grade.",$versionNumber);
+			print $r->maketext("The test (which is version [_1]) may  no longer be submitted for a grade.",$versionNumber);
 			print "" . (($can{showScore}) ? $r->maketext("You may still check your answers.") : ".") ;
 
 			# print a "printme" link if we're allowed to see our

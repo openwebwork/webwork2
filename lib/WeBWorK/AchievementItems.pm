@@ -114,11 +114,16 @@ sub print_form {
     my @openSetCount;
     my $maxProblems=0;
 
-    #Find all of the closed sets and put them in form
+    #Find all of the closed sets or sets that are past their reduced scoring date and put them in form
 
     for (my $i=0; $i<=$#$sets; $i++) {
 	if (after($$sets[$i]->due_date()) & $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
+	}
+	elsif (defined($$sets[$i]->reduced_scoring_date())) {
+		if (after($$sets[$i]->reduced_scoring_date()) & $$sets[$i]->assignment_type eq "default") {
+			push(@openSets,$$sets[$i]->set_id);
+		}
 	}
     }
 

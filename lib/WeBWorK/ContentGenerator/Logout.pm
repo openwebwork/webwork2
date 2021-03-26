@@ -142,9 +142,9 @@ sub body {
 	print CGI::p($r->maketext("You have been logged out of WeBWorK."));
 
 	if ( $externalAuth ) {
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
 	   	print 
-		CGI::p({}, CGI::b($courseID), "uses an external", 
-		"authentication system.  Please go there to login again.");
+		CGI::p($r->maketext("The course [_1] uses an external authentication system ([_2]). Please go there to log in again.", CGI::b($courseID), $LMS));
 	} else {
 		print CGI::start_form(-method=>"POST", -action=>$loginURL);
 	#	print CGI::hidden("user", $userID);  ### Line Commented out to suppress error message when this button is used.  WHW

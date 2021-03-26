@@ -61,6 +61,15 @@ sub new($$$) {
 	
 	my $self = $proto->SUPER::new($source, $params);
 	
+	# The DBD::MariaDB driver should not get the
+	#    mysql_enable_utf8mb4 or mysql_enable_utf8 settings,
+	# but DBD::mysql should.
+	my %utf8_parameters = ();
+	if ( $source =~ /DBI:mysql/ ) {
+	  $utf8_parameters{mysql_enable_utf8mb4} = 1;
+	  $utf8_parameters{mysql_enable_utf8} = 1;
+	}
+
 	# add handle
 	$self->{handle} = DBI->connect_cached(
 		$source,
@@ -70,8 +79,7 @@ sub new($$$) {
 			PrintError => 0,
 			RaiseError => 1,
 
-			mysql_enable_utf8mb4 => 1,
-			mysql_enable_utf8 => 1,  # for older versions of DBD-mysql Perl modules
+			%utf8_parameters,
 		},
 	);
 	die $DBI::errstr unless defined $self->{handle};

@@ -6,6 +6,16 @@
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
+# This is a string that is used to name the LMS for end users,
+# for example in a message telling users to sign in through their LMS.
+$LMS_name = 'e.g., Blackboard, Canvas, Moodle, etc.';
+#$LMS_name = 'Desire2Learn';
+
+# This is a URL that should take users to a place they can log in to their LMS.
+# It will use the text from $LMS_name, but use $LMS_url as the href.
+# If $LMS_url is empty or undefined, the text from $LMS_name is used with no link.
+#$LMS_url = 'https://myschool.edu/lms/';
+
 # Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters

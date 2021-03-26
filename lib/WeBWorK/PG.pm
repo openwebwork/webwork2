@@ -177,6 +177,7 @@ sub defineProblemEnvir {
 	$envir{language}            = $ce->{language};
 	$envir{language_subroutine} = WeBWorK::Localize::getLoc($envir{language}); 
 	$envir{reducedScoringDate} = $set->reduced_scoring_date;
+	$envir{formattedReducedScoringDate} = formatDateTime($envir{reducedScoringDate}, $ce->{siteDefaults}{timezone});
 	
 	# Student Information
 	# ADDED: studentID
