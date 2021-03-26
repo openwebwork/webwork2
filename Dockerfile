@@ -57,9 +57,6 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
   && git clone --single-branch --branch ${PG_BRANCH} --depth 1 $PG_GIT_URL \
   && rm -rf  pg/.git
 
-RUN git clone --single-branch --branch master --depth 1 https://github.com/mathjax/MathJax \
-  && rm -rf MathJax/.git
-
 # Optional - include OPL (also need to uncomment further below when an included OPL is desired):
 #RUN git clone --single-branch --branch master --depth 1 https://github.com/openwebwork/webwork-open-problem-library.git \
 #  && rm -rf  webwork-open-problem-library/.git
@@ -219,14 +216,13 @@ RUN apt-get update \
 
 # ==================================================================
 
-# Phase 4 - Install webwork2, pg, MathJaX which were downloaded to /opt/base/ in phase 1
+# Phase 4 - Install webwork2 and pg which were downloaded to /opt/base/ in phase 1
 #   Option: Install the OPL in the image also (about 850 MB)
 
 RUN mkdir -p $APP_ROOT/courses $APP_ROOT/libraries $APP_ROOT/libraries/webwork-open-problem-library $APP_ROOT/webwork2 /www/www/html
 
 COPY --from=base /opt/base/webwork2 $APP_ROOT/webwork2
 COPY --from=base /opt/base/pg $APP_ROOT/pg
-COPY --from=base /opt/base/MathJax $APP_ROOT/MathJax
 
 # Optional - include OPL (also need to uncomment above to clone from GitHub when needed):
 # ??? could/should this include the main OPL = /opt/base/webwork-open-problem-library/OpenProblemLibrary and not Contrib and Pending ???
