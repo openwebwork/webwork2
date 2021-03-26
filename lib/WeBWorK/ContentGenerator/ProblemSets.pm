@@ -466,7 +466,7 @@ sub setListRow {
 					"data-original-title"=>$globalSet->description(),
 					href=>$interactiveURL
 				},
-				$r->maketext("(version\xA0[_1])", $vnum)
+				$r->maketext("(version&nbsp;[_1])", $vnum)
 			);
 		} else {
 			my $t = time();

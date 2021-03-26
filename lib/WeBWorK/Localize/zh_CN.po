@@ -49,11 +49,6 @@ msgstr ""
 msgid "%1 (old editor)"
 msgstr ""
 
-#. ($display_name, $vnum)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:459
-msgid "%1 (test %2)"
-msgstr ""
-
 #. ($achievement->{points})
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Achievements.pm:319
 msgid "%1 Points:"
@@ -100,21 +95,6 @@ msgstr ""
 msgid ""
 "%1 users replaced, %2 users added, %3 users skipped. Skipped users: (%4)"
 msgstr "%1个用户已替换，%2个用户已添加，%3个用户已跳过。跳过的用户有：(%4)"
-
-#. (CGI::strong($course)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:210
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:215
-msgid ""
-"%1 uses an external authentication system (e.g., Oncourse,  CAS,  "
-"Blackboard, Moodle, Canvas, etc.).  Please return to system you used and try "
-"again."
-msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:104
-msgid ""
-"%1 uses an external authentication system.  You've authenticated through "
-"that system, but aren't allowed to log in to this course."
-msgstr ""
 
 #. ($levelpercentage)
 #. ($percentage)
@@ -251,6 +231,11 @@ msgstr ""
 #. ($recScore)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:1369
 msgid "(score %1)"
+msgstr ""
+
+#. ($vnum)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:469
+msgid "(version&nbsp;%1)"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor.pm:622
@@ -585,7 +570,7 @@ msgstr ""
 msgid "Add WeBWorK administrators to new course"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1387
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1392
 msgid "Add a new test for which Gateway?"
 msgstr ""
 
@@ -691,11 +676,11 @@ msgid ""
 "ranges (e.g., 192.168.1.101-192.168.1.150)):"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:191
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:196
 msgid "Adds 24 hours to the close date of a homework."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:275
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:280
 msgid "Adds 48 hours to the close date of a homework."
 msgstr ""
 
@@ -719,6 +704,11 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm:362
 msgid ""
 "After the reduced scoring period begins all work counts for %1% of its value."
+msgstr ""
+
+#. ($self->formatDateTime($set->due_date()
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:737
+msgid "Afterward reduced credit can be earned until %1."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:717
@@ -819,7 +809,7 @@ msgstr ""
 msgid "Allowed to view problems in sets which are not open yet"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1444
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1449
 msgid "Amulet of Extension"
 msgstr ""
 
@@ -1114,7 +1104,7 @@ msgstr ""
 msgid "Binary"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1166
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1171
 msgid "Box of Transmogrification"
 msgstr ""
 
@@ -1150,7 +1140,7 @@ msgstr ""
 msgid "CLOSE TIME"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:453
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:458
 msgid "Cake of Enlargement"
 msgstr ""
 
@@ -1277,19 +1267,19 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:454
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:459
 msgid ""
 "Cause the selected homework set to count for twice as many points as it "
 "normally would."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1167
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1172
 msgid ""
 "Causes a homework problem to become a clone of another problem from the same "
 "set."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:652
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:657
 msgid "Causes a single homework problem to be worth twice as much."
 msgstr ""
 
@@ -1383,22 +1373,22 @@ msgstr ""
 msgid "Checking additional error messages"
 msgstr "检查额外的错误信息"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:480
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:485
 msgid "Choose the set which you would like to be worth twice as much."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:389
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:394
 msgid "Choose the set which you would like to enable partial credit for."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1107
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:126
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:906
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1112
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:131
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:911
 msgid "Choose the set which you would like to resurrect."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:217
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:301
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:222
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:306
 msgid "Choose the set whose close date you would like to extend."
 msgstr ""
 
@@ -1419,7 +1409,7 @@ msgstr ""
 msgid "Classlist Editor"
 msgstr "课程名单编辑"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:324
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:331
 msgid "Clear"
 msgstr "清除"
 
@@ -1441,7 +1431,7 @@ msgid ""
 msgstr "点击用户名去修改该用户的作业信息(比如截至日期)。"
 
 #. ($clientIP->ip()
-#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:552
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:553
 msgid ""
 "Client ip address %1 is not allowed to work this assignment, because the "
 "assignment has ip address restrictions and there are no allowed locations "
@@ -1464,20 +1454,20 @@ msgstr ""
 msgid "Close Date"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:554
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:600
 msgid "Closed, answers available."
 msgstr ""
 
 #. ($self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:550
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:596
 msgid "Closed, answers on %1."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:552
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:598
 msgid "Closed, answers recently available."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:506
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:534
 msgid "Closed."
 msgstr ""
 
@@ -1536,7 +1526,7 @@ msgstr ""
 msgid "Completed results for this assignment are not available."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:446
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:450
 msgid "Completed."
 msgstr ""
 
@@ -1558,7 +1548,7 @@ msgstr ""
 msgid "Congratulations, you earned a new level!"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:273
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:270
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/LoginProctor.pm:291
 msgid "Continue"
 msgstr "继续"
@@ -1582,7 +1572,7 @@ msgstr ""
 msgid "Copy templates from:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1221
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1226
 msgid "Copy this Problem"
 msgstr ""
 
@@ -1775,7 +1765,7 @@ msgid ""
 "application."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:651
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:656
 msgid "Cupcake of Enlargement"
 msgstr ""
 
@@ -2078,8 +2068,9 @@ msgstr ""
 msgid "Download"
 msgstr ""
 
-#. ($set->set_id)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:579
+#. ($set->set_id =~ s/_/ /gr)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:628
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:629
 msgid "Download %1"
 msgstr ""
 
@@ -2090,7 +2081,7 @@ msgid "Download Hardcopy"
 msgstr ""
 
 #. ($pl)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:317
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:324
 msgid "Download Hardcopy for Selected %plural(%1,Set,Sets)"
 msgstr "下载选中的 %plural(%1,作业,作业)"
 
@@ -2098,7 +2089,7 @@ msgstr "下载选中的 %plural(%1,作业,作业)"
 msgid "Download PDF or TeX Hardcopy for Current Set"
 msgstr "下载当前作业的PDF或者TeX文件"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:325
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:332
 msgid "Download PDF or TeX Hardcopy for Selected Sets"
 msgstr "下载已选定的作业的PDF或者TeX文件"
 
@@ -2120,9 +2111,9 @@ msgstr "退课"
 msgid "Due %1, after which reduced scoring is available until %2"
 msgstr ""
 
-#. ($beginReducedScoringPeriod, $self->formatDateTime($set->due_date()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:699
-msgid "Due date %1 has passed, reduced credit can still be earned until %2."
+#. ($beginReducedScoringPeriod)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:747
+msgid "Due date %1 has passed."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ProblemSetList2.pm:1586
@@ -2386,7 +2377,7 @@ msgstr ""
 msgid "Enable periodic re-randomization of problems"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:361
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:366
 msgid ""
 "Enable reduced scoring for a homework set.  This will allow you to submit "
 "answers for partial credit for 24 hours after the close date."
@@ -2632,11 +2623,11 @@ msgstr "导出哪些用户？"
 msgid "Exported achievements to %1"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1488
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1493
 msgid "Extend the close date for which Gateway?"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1445
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1450
 msgid ""
 "Extends the close date of a gateway test by 24 hours. Note: The test must "
 "still be open for this to work."
@@ -2899,9 +2890,9 @@ msgstr "来自于："
 msgid "GLOBAL Usage"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1388
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1489
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1592
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1393
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1494
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1597
 msgid "Gateway Name "
 msgstr ""
 
@@ -2952,19 +2943,19 @@ msgstr ""
 msgid "Give new password to which users?"
 msgstr "为哪些用户设置新密码？"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:971
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:976
 msgid "Gives full credit on a single homework problem."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1082
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1087
 msgid "Gives full credit on every problem in a set."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:765
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:770
 msgid "Gives half credit on a single homework problem."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:881
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:886
 msgid "Gives half credit on every problem in a set."
 msgstr ""
 
@@ -3023,15 +3014,15 @@ msgstr ""
 msgid "Grading assignment:"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:970
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:975
 msgid "Greater Rod of Revelation"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1081
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1086
 msgid "Greater Tome of Enlightenment"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:299
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:296
 msgid "Guest Login"
 msgstr "游客登录"
 
@@ -3140,7 +3131,7 @@ msgstr "作业"
 msgid "Homework Totals"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1311
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1316
 msgid "I couldn't find the file [ACHEVDIR]/surprise_message.txt!"
 msgstr ""
 
@@ -3390,11 +3381,11 @@ msgid ""
 "instead of 60*60 for one hour"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:764
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:769
 msgid "Lesser Rod of Revelation"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:880
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:885
 msgid "Lesser Tome of Enlightenment"
 msgstr ""
 
@@ -3649,7 +3640,7 @@ msgstr ""
 msgid "My Problems"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1291
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1296
 msgid "Mysterious Package (with Ribbons)"
 msgstr ""
 
@@ -3682,7 +3673,7 @@ msgstr ""
 msgid "Name the new set"
 msgstr "命名新作业"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1557
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1562
 msgid "Necromancers Charm"
 msgstr ""
 
@@ -3993,7 +3984,7 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1343
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1348
 msgid "Oil of Cleansing"
 msgstr ""
 
@@ -4048,18 +4039,18 @@ msgid "Open in new window"
 msgstr ""
 
 #. ($self->formatDateTime($set->due_date()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:694
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:742
 msgid "Open, closes %1."
 msgstr ""
 
 #. ($self->formatDateTime($set->due_date()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:692
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:740
 msgid "Open, complete by %1."
 msgstr ""
 
-#. ($beginReducedScoringPeriod, $self->formatDateTime($set->due_date()
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:689
-msgid "Open, due %1, afterward reduced credit can be earned until %2."
+#. ($beginReducedScoringPeriod)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:737
+msgid "Open, due %1."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:35
@@ -4092,7 +4083,7 @@ msgstr ""
 msgid "Out Of"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:449
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:452
 msgid "Over time, closed."
 msgstr ""
 
@@ -4167,7 +4158,7 @@ msgstr "填补栏"
 msgid "Page generated at %1"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:267
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:264
 msgid "Password"
 msgstr "密码"
 
@@ -4231,31 +4222,31 @@ msgid ""
 "appear in the Course Administration listing."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1019
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1024
 msgid ""
 "Please choose the set name and problem number of the question which should "
 "be given full credit."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:814
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:819
 msgid ""
 "Please choose the set name and problem number of the question which should "
 "be given half credit."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:590
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:595
 msgid ""
 "Please choose the set name and problem number of the question which should "
 "have its incorrect attempt count reset."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:701
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:706
 msgid ""
 "Please choose the set name and problem number of the question which should "
 "have its weight doubled."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1217
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1222
 msgid ""
 "Please choose the set, the problem you would like to copy, and the problem "
 "you would like to copy it to."
@@ -4270,7 +4261,7 @@ msgid "Please enter in a value to match in the filter field."
 msgstr ""
 
 #. (CGI::b($course)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:218
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:215
 msgid "Please enter your username and password for %1 below:"
 msgstr "请在下面%1处输入你的用户名和密码 :"
 
@@ -4301,7 +4292,7 @@ msgstr "请指定要保存到的文件。"
 msgid "Points"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:540
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:545
 msgid "Potion of Forgetfulness"
 msgstr ""
 
@@ -4413,10 +4404,10 @@ msgstr "题目列表"
 msgid "Problem Number"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1023
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:594
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:705
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:818
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1028
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:599
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:710
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:823
 msgid "Problem Number "
 msgstr ""
 
@@ -4500,6 +4491,14 @@ msgstr ""
 msgid "Publish"
 msgstr "发布"
 
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:474
+msgid "Quiz with time limit"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:474
+msgid "Quiz with time limit."
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:34
 msgid "RECITATION"
 msgstr ""
@@ -4560,6 +4559,11 @@ msgstr ""
 msgid "Reduced Scoring Enabled"
 msgstr ""
 
+#. ($self->formatDateTime($set->due_date()
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:747
+msgid "Reduced credit can still be earned until %1."
+msgstr ""
+
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm:36
 msgid "Reduced:"
 msgstr ""
@@ -4591,7 +4595,7 @@ msgstr ""
 msgid "Remaining"
 msgstr "剩余"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:270
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:267
 msgid "Remember Me"
 msgstr "自动登录"
 
@@ -4639,7 +4643,7 @@ msgstr ""
 msgid "Renumber Problems"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1558
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1563
 msgid ""
 "Reopens any gateway test for an additional 24 hours. This allows you to take "
 "a test even if the close date has past. This item does not allow you to take "
@@ -4761,7 +4765,7 @@ msgstr ""
 msgid "Reset Form"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:541
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:546
 msgid "Resets the number of incorrect attempts on a single homework problem."
 msgstr ""
 
@@ -4820,7 +4824,7 @@ msgstr "最后一次操作的结果"
 msgid "Results of last action performed: "
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1591
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1596
 msgid "Resurrect which Gateway?"
 msgstr ""
 
@@ -4843,11 +4847,11 @@ msgstr "恢复"
 msgid "Revert to %1"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:358
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:363
 msgid "Ring of Reduction"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:274
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:279
 msgid "Robe of Longevity"
 msgstr ""
 
@@ -4952,6 +4956,7 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Stats_old.pm:545
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:837
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:865
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:270
 msgid "Score"
 msgstr "成绩"
 
@@ -5243,18 +5248,18 @@ msgstr "作业清单"
 msgid "Set Name"
 msgstr "作业名"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1020
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1108
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1218
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:127
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:218
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:302
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:390
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:481
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:591
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:702
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:815
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:907
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1025
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1113
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1223
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:132
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:223
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:307
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:395
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:486
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:596
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:707
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:820
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:912
 msgid "Set Name "
 msgstr ""
 
@@ -5503,7 +5508,7 @@ msgid ""
 "List_of_zoneinfo_time_zones\">TimeZoneFiles</a>"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:483
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:482
 msgid ""
 "Something was wrong with your LTI parameters.  If this recurs, please speak "
 "with your instructor"
@@ -5553,6 +5558,10 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:424
 msgid "Standard"
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:271
+msgid "Start Date"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:385
@@ -5741,20 +5750,6 @@ msgstr ""
 msgid "Table is ok"
 msgstr ""
 
-#. ($display_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:471
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:473
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:509
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:512
-msgid "Take %1 test"
-msgstr ""
-
-#. ($display_name)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:499
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:503
-msgid "Take %1 test."
-msgstr ""
-
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2641
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:2855
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/AchievementEditor.pm:289
@@ -5774,14 +5769,6 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Hardcopy.pm:64
 msgid "TeX Source"
 msgstr ""
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:270
-msgid "Test Date"
-msgstr "考试日期"
-
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:269
-msgid "Test Score"
-msgstr "考试成绩"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:868
 msgid "Test Time"
@@ -5873,6 +5860,27 @@ msgstr ""
 msgid ""
 "The configuration module did not find the data it needs to function.  Have "
 "your site administrator check that Constants.pm is up to date."
+msgstr ""
+
+#. (CGI::b($courseID)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Logout.pm:147
+msgid ""
+"The course %1 uses an external authentication system (%2). Please go there "
+"to log in again."
+msgstr ""
+
+#. (CGI::strong($course)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:210
+msgid ""
+"The course %1 uses an external authentication system (%2). Please return to "
+"that system to access this course."
+msgstr ""
+
+#: /opt/webwork/webwork2/lib/WeBWorK/Localize.pm:104
+msgid ""
+"The course %1 uses an external authentication system (%2). You've "
+"authenticated through that system, but aren't allowed to log in to this "
+"course."
 msgstr ""
 
 #. ($archive_courseID, $archive_path)
@@ -6104,12 +6112,12 @@ msgstr ""
 
 #. ($recScore,$totPossible)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1840
-msgid "The recorded score for this test is  %1/%2."
+msgid "The recorded score for this version is  %1/%2."
 msgstr ""
 
 #. ($recScore, $totPossible)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1850
-msgid "The recorded score for this test is %1/%2."
+msgid "The recorded score for this version is %1/%2."
 msgstr ""
 
 #. ($origReducedScoringDate)
@@ -6182,7 +6190,7 @@ msgstr "'作业 [_1] / 题目 [_2]'的源文件已从[_3] 变为 '[_4]'。"
 
 #. ($versionNumber)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1930
-msgid "The test (which is number %1) may  no longer be submitted for a grade."
+msgid "The test (which is version %1) may  no longer be submitted for a grade."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/PGProblemEditor.pm:1722
@@ -6740,12 +6748,12 @@ msgid "Timezone for the course"
 msgstr ""
 
 #. (sprintf("%.0f",$restriction)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:715
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:763
 msgid "To access this set you must score at least %1% on set %2."
 msgstr ""
 
 #. (sprintf("%.0f",$restriction)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:717
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:765
 msgid ""
 "To access this set you must score at least %1% on the following sets: %2."
 msgstr ""
@@ -6795,7 +6803,7 @@ msgid ""
 "another file."
 msgstr "要修改这个文本你必须使用下方的'另存为'操作将其保存到另外一个文件。"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1223
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1228
 msgid "To this Problem"
 msgstr ""
 
@@ -6825,7 +6833,7 @@ msgstr ""
 msgid "Try it"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:190
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:195
 msgid "Tunic of Extension"
 msgstr ""
 
@@ -6909,7 +6917,7 @@ msgstr ""
 msgid "Unhide Courses"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1344
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1349
 msgid ""
 "Unlock an additional version of a Gateway Test.  If used before the close "
 "date of the Gateway Test this will allow you to generate a new version of "
@@ -7087,12 +7095,12 @@ msgid ""
 "database corruption."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:265
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:262
 msgid "Username"
 msgstr ""
 
 #. ($user_id)
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:341
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:340
 msgid "Username presented:  %1"
 msgstr ""
 
@@ -7319,7 +7327,7 @@ msgstr ""
 msgid "Welcome to WeBWorK!"
 msgstr "欢迎来到WebWorK!"
 
-#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1292
+#: /opt/webwork/webwork2/lib/WeBWorK/AchievementItems.pm:1297
 msgid "What could be inside?"
 msgstr ""
 
@@ -7397,8 +7405,8 @@ msgid ""
 msgstr ""
 
 #. ($self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat})
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:463
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:518
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:477
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:564
 msgid "Will open on %1."
 msgstr ""
 
@@ -7749,11 +7757,10 @@ msgstr "您已经试过这个题目%quant(%1,次,次)。"
 msgid "You must confirm the password for the initial instructor."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:488
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:541
-msgid ""
-"You must log into this set via your Learning Management System (e.g. "
-"Blackboard, Moodle, etc...)."
+#. ($ce->{LMS_name})
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:508
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm:587
+msgid "You must log into this set via your Learning Management System (%1)."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/ShowAnswers.pm:76
@@ -7835,11 +7842,11 @@ msgstr ""
 msgid "You must specify an file name in order to save a new file."
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:488
+#. ($LMS)
+#: /opt/webwork/webwork2/lib/WeBWorK/Authz.pm:489
 msgid ""
-"You must use your Learning Managment System (E.G. Blackboard, Moodle, "
-"Canvas, etc...) to access this set.  Try logging in to the Learning "
-"Managment System and visiting the set from there."
+"You must use your Learning Managment System (%1) to access this set.  Try "
+"logging in to the Learning Managment System and visiting the set from there."
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm:1276
@@ -7899,14 +7906,14 @@ msgstr ""
 msgid "Your %1 name may not contain a path component"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:494
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:493
 msgid ""
 "Your LTI OAuth verification failed.  If this recurs, please speak with your "
 "instructor"
 msgstr ""
 
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:482
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:493
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:481
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:492
 msgid "Your authentication failed.  Please return to Oncourse and login again."
 msgstr ""
 
@@ -7965,7 +7972,7 @@ msgstr ""
 
 #. ($versionNumber, wwRound(2,$recordedScore)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1908
-msgid "Your recorded score on this test (number %1) is %2/%3."
+msgid "Your recorded score on this test (version %1) is %2/%3."
 msgstr ""
 
 #: /opt/webwork/pg/macros/compoundProblem.pl:603
@@ -8097,7 +8104,7 @@ msgid "_EXTERNAL_AUTH_MESSAGE"
 msgstr "[_1]使用外部身份验证系统。您已授权使用那个系统，但没有权限登录这门课。"
 
 #. (CGI::b($r->maketext("Guest Login")
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:298
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:295
 msgid "_GUEST_LOGIN_MESSAGE"
 msgstr "这门课支持以游客身份登录。 点击[_1]以游客身份登陆这门课。"
 
@@ -8111,7 +8118,7 @@ msgstr ""
 "底部的“确认执行！”。 该页的下方是一个显示作业以及它们相关信息的表格。"
 
 #. (CGI::b($r->maketext("Remember Me")
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:220
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Login.pm:217
 msgid "_LOGIN_MESSAGE"
 msgstr ""
 "如果您选中 %1，您的登录信息将会被您当前使用的浏览器记录，这样下次您访问"
@@ -8922,7 +8929,7 @@ msgstr ""
 
 #. ($versionNumber)
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1783
-msgid "submission (test %1)"
+msgid "submission (version %1)"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Scoring.pm:664
@@ -8935,11 +8942,6 @@ msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1781
 msgid "test"
-msgstr ""
-
-#. ($versionNumber)
-#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1783
-msgid "test (%1)"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/StudentProgress.pm:786
@@ -9025,7 +9027,7 @@ msgid "unlimited reusability"
 msgstr ""
 
 #. ($userID)
-#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:563
+#: /opt/webwork/webwork2/lib/WeBWorK/Authen/LTIBasic.pm:562
 msgid "userID: %1 --"
 msgstr ""
 
@@ -9045,6 +9047,11 @@ msgstr "匹配所选字段的用户"
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/UserList.pm:667
 msgid "users who match:"
+msgstr ""
+
+#. ($versionNumber)
+#: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm:1783
+msgid "version (%1)"
 msgstr ""
 
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm:1426
@@ -9099,6 +9106,12 @@ msgstr ""
 #: /opt/webwork/webwork2/lib/WeBWorK/ContentGenerator/Instructor/Index.pm:411
 msgid "your students"
 msgstr ""
+
+#~ msgid "Test Date"
+#~ msgstr "考试日期"
+
+#~ msgid "Test Score"
+#~ msgstr "考试成绩"
 
 #, fuzzy
 #~ msgid "Message:"
