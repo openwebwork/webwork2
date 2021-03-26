@@ -743,7 +743,7 @@ sub do_add_course {
 	}
 	
 	# add initial instructor if desired
-	if ($add_initial_userID ne "") {
+	if ($add_initial_userID =~ /\S/) {
 		my $User = $db->newUser(
 			user_id       => $add_initial_userID,
 			first_name    => $add_initial_firstName,
@@ -818,7 +818,7 @@ sub do_add_course {
 	    ));
 	    # add contact to admin course as student?
 	    # FIXME -- should we do this?
-	    if ($add_initial_userID ne "") {
+	    if ($add_initial_userID =~ /\S/) {
 	        my $composite_id = "${add_initial_userID}_${add_courseID}"; # student id includes school name and contact
 			my $User = $db->newUser(
 			user_id       => $composite_id,          # student id includes school name and contact

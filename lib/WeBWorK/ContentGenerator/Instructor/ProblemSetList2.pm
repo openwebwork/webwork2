@@ -84,7 +84,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName jitar_id_to_seq seq_to_jitar_id x);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortByName jitar_id_to_seq seq_to_jitar_id x);
 
 use WeBWorK::Utils::DatePickerScripts;
 
