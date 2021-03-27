@@ -97,6 +97,12 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
+# capture names for maketext
+# (gettext only takes the last one if the use constant is not here)
+use constant mk_filter => x('Filter');
+use constant mk_sort => x('Sort');
+use constant mk_publish => x('Publish');
+
 use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
 use constant EXPORT_FIELD_ORDER => [ qw( select set_id problems users) ];
@@ -566,43 +572,38 @@ sub body {
 	my @formsToShow;
 	if ($editMode) {
 		@formsToShow = @{ EDIT_FORMS() };
+	} elsif ($exportMode) {
+		@formsToShow = @{ EXPORT_FORMS() };
 	} else {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
 	
-	if ($exportMode) {
-		@formsToShow = @{ EXPORT_FORMS() };
-	}
-	
-	my $i = 0;
-	my @divArr = ();
+	my @tabArr;
+	my @contentArr;
+	my $default_choice;
 
 	foreach my $actionID (@formsToShow) {
 		# Check permissions
 		next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
+
 		my $actionForm = "${actionID}_form";
-		#my $onChange = "document.problemsetlist.action[$i].checked=true";
-		my $onChange = "";
-		my %actionParams = $self->getActionParams($actionID);
-		
-		# print CGI::Tr({-valign=>"top"},
-			# CGI::td({}, CGI::input({-type=>"radio", -name=>"action", -value=>$actionID})),
-			# CGI::td({}, $self->$actionForm($onChange, %actionParams))
-		# );
-		
-		push @divArr, join("",
-			CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
-			CGI::span({-class=>"radio_span"}, WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
-			$self->$actionForm($onChange, %actionParams),
-		);
-		$i++;
+		my $id = "${actionID}_id";
+
+		my $active = "";
+		$active = "active", $default_choice = $actionID unless $default_choice;
+
+		push(@tabArr, CGI::li({ class => $active },
+				CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
+					$r->maketext(ucfirst(WeBWorK::split_cap($actionID))))));
+		push(@contentArr, CGI::div({ class => "tab-pane $active", id => $id },
+				$self->$actionForm($self->getActionParams($actionID))));
 	}
 	
-	my $divArrRef = \@divArr;
-	
-	print CGI::div({-class=>"tabber"},
-		CGI::div({-class=>"tabbertab"},$divArrRef)
-		);
+	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $formsToShow[0]);
+	print CGI::div({ class => "tabbable" },
+		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
+		CGI::div({ class => "tab-content" }, @contentArr)
+	);
 	
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 
@@ -666,7 +667,7 @@ sub getTableParams {
 # actions are shown in edit mode.
 
 sub filter_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join("", 
@@ -686,7 +687,6 @@ sub filter_form {
 						unvisible => $r->maketext("hidden sets"), 
 						match_ids => $r->maketext("enter matching set IDs below"),
 					},
-					-onchange => $onChange,
 				}
 			),
 			CGI::br(),
@@ -700,7 +700,6 @@ sub filter_form {
 					-name => "action.filter.set_ids",
 					-value => $actionParams{"action.filter.set_ids"}->[0] || "",,
 					-width => "50",
-					-onchange => $onChange,
 					'aria-required' => 'true',
 				}
 			), CGI::span({-id=>"filter_err_msg", -class=>"ResultsWithError"}, $r->maketext("Please enter in a value to match in the filter field.")),
@@ -766,7 +765,7 @@ sub filter_handler {
 }
 
 sub sort_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return join ("",
 		WeBWorK::CGI_labeled_input(
@@ -786,7 +785,6 @@ sub sort_form {
 					answer_date	=> $r->maketext("Answer Date"),
 					visible	=> $r->maketext("Visibility"),
 				},
-				-onchange => $onChange,
 			}
 		),
 		CGI::br(),
@@ -805,7 +803,6 @@ sub sort_form {
 					answer_date	=> $r->maketext("Answer Date"),
 					visible	=> $r->maketext("Visibility"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -834,7 +831,7 @@ sub sort_handler {
 
 
 sub edit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join("",
@@ -851,7 +848,6 @@ sub edit_form {
 					visible => $r->maketext("visible sets"),
 					selected => $r->maketext("selected sets"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -880,7 +876,7 @@ sub edit_handler {
 }
 
 sub publish_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join ("",
@@ -895,10 +891,8 @@ sub publish_form {
 				-labels => {
 					none => $r->maketext("no sets"),
 					all => $r->maketext("all sets"),
-#					visible => "visible sets",
 					selected => $r->maketext("selected sets"),
 				},
-				-onchange => $onChange,
 			}
 		),
 		CGI::br(),
@@ -914,7 +908,6 @@ sub publish_form {
 					0 => $r->maketext("Hidden"),
 					1 => $r->maketext("Visible"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -965,7 +958,7 @@ sub publish_handler {
 }
 
 sub score_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join ("",
@@ -982,7 +975,6 @@ sub score_form {
 					all => $r->maketext("all sets"),
 					selected => $r->maketext("selected sets"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -1026,7 +1018,7 @@ sub score_handler {
 
 
 sub delete_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join("",
@@ -1044,7 +1036,6 @@ sub delete_form {
 					#visible => "visible sets.",
 					selected => $r->maketext("selected sets"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -1085,7 +1076,7 @@ sub delete_handler {
 }
 
 sub create_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r      = $self->r;
 	
 	return join("",
@@ -1097,7 +1088,6 @@ sub create_form {
 				-name => "action.create.name",
 				-value => $actionParams{"action.create.name"}->[0] || "",
 				-width => "50",
-				-onchange => $onChange,
 				-'aria-required'=>'true',
 			}
 		),
@@ -1114,7 +1104,6 @@ sub create_form {
 					empty => $r->maketext("a new empty set"),
 					copy => $r->maketext("a duplicate of the first selected set"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -1213,7 +1202,7 @@ sub create_handler {
 }
 
 sub import_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	
 	my $r = $self->r;
 	my $authz = $r->authz;
@@ -1256,7 +1245,7 @@ EOS
 					1 => $r->maketext("a single set"),
 					8 => $r->maketext("multiple sets"),
 				},
-				-onchange => "$onChange;$importScript",
+				-onchange => "$importScript",
 			}
 		),
 		CGI::br(),
@@ -1270,7 +1259,6 @@ EOS
 				-labels => { "" => $r->maketext("Enter filenames below") },
 				-default => defined($actionParams{"action.import.source"}) ? $actionParams{"action.import.source"} : "",
 				-size => $actionParams{"action.import.number"}->[0] || "1",
-				-onchange => $onChange,
 				defined($actionParams{"action.import.number"}->[0]) && $actionParams{"action.import.number"}->[0] == 8 ?
 				    ('-multiple', 'multiple') : ()
 			},
@@ -1285,7 +1273,6 @@ EOS
 				-name => "action.import.name",
 				-value => $actionParams{"action.import.name"}->[0] || "",
 				-width => "50",
-				-onchange => $onChange,
 			}
 		),
 		    CGI::br(),
@@ -1293,11 +1280,11 @@ EOS
 		      -type=>"text",
 		      -id=>"import_date_shift",
 		      -label_text=>$r->maketext("Shift dates so that the earliest is").": ",
-		      -input_attr=>{
-			  -name => "action.import.start.date",
-			  -size => "27",
-                          -value => $actionParams{"action.import.start.date"}->[0] || "",
-			  -onchange => $onChange,})),
+			  -input_attr=>{
+				  -name => "action.import.start.date",
+				  -size => "27",
+				  -value => $actionParams{"action.import.start.date"}->[0] || "",
+			  })),
 		CGI::br(),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
 			?
@@ -1313,7 +1300,6 @@ EOS
 						all => $r->maketext("all current users").".",
 						user => $r->maketext("only")." ".$user.".",
 					},
-					-onchange => $onChange,
 				}
 			)
 			:
@@ -1350,7 +1336,7 @@ sub import_handler {
 }
 
 sub export_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join("",
@@ -1367,7 +1353,6 @@ sub export_form {
 					visible => $r->maketext("visible sets"),
 					selected => $r->maketext("selected sets"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -1398,7 +1383,7 @@ sub export_handler {
 }
 
 sub cancelExport_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Abandon export"));
 }
@@ -1422,7 +1407,7 @@ sub cancelExport_handler {
 }
 
 sub saveExport_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Export selected sets"));
 }
@@ -1459,7 +1444,7 @@ sub saveExport_handler {
 }
 
 sub cancelEdit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Abandon changes"));
 }
@@ -1483,7 +1468,7 @@ sub cancelEdit_handler {
 }
 
 sub saveEdit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Save changes"));
 }
@@ -1572,7 +1557,7 @@ sub saveEdit_handler {
 }
 
 sub duplicate_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 
 	my $r = $self->r;
 	my @visible_sets = $r->param('visible_sets');
@@ -1588,7 +1573,6 @@ sub duplicate_form {
 				-name => "action.duplicate.name",
 				-value => $actionParams{"action.duplicate.name"}->[0] || "",
 				-width => "50",
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -2846,7 +2830,7 @@ sub output_JS{
 
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
@@ -2854,16 +2838,6 @@ sub output_JS{
 	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";
 }
-
-# Just tells template to output the stylesheet for Tabber
-sub output_tabber_CSS{
-  # capture names for maketext
-  x('Filter');
-  x('Sort');
-  x('Publish');
-  return "";
-}
-
 
 1;
 

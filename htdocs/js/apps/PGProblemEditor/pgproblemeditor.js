@@ -36,12 +36,6 @@
 		$('#render-modal').modal('show');
 	});
 
-	$('.action-link').click(function() {
-		var actionLink = $(this);
-		actionLink.blur();
-		document.getElementById("current_action").value = actionLink.data('action');
-	});
-
 	$('#submit_button_id').on('click', function() {
 		var actionView = document.getElementById('action_view');
 		var actionSave = document.getElementById('action_save');

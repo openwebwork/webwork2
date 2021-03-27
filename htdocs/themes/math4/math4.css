@@ -973,6 +973,9 @@ table caption{
     margin-bottom:.5ex;
 }
 
+.achievement_list_action_div {
+	height: 40px;
+}
 
 #none{
 	/*Please do not do anything with elements with id "none"*/

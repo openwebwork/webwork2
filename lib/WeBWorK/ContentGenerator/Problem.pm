@@ -861,12 +861,6 @@ sub head {
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
 
-	# Keys dont really work well anymore.  So I'm removing this for now GG
-#	print qq{
-#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-#	};
-
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
 }
@@ -2304,6 +2298,8 @@ sub output_hidden_info {
 	       );
     return "";
 }
+
+# output_JS subroutine
 
 # outputs all of the Javascript needed for this page.
 # The main javascript needed here is color.js, which colors input fields based on whether or not

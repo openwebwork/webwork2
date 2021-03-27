@@ -77,6 +77,12 @@ use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
 use constant VIEW_FORMS => [qw(filter sort edit password import export add delete)];
+
+# capture names for maketext
+# (gettext only takes the last one if the use constant is not here)
+use constant mk_filter => x('Filter');
+use constant mk_sort => x('Sort');
+
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
 		saveEdit => "modify_student_data",
@@ -504,7 +510,6 @@ sub body {
 	
 	########## print action forms
 	
-	# print CGI::start_table({});
 	print CGI::p($r->maketext("Select an action to perform").":");
 	
 	my @formsToShow;
@@ -516,35 +521,36 @@ sub body {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
 	
-	print CGI::start_div({-class=>"tabber"});
+	my @tabArr;
+	my @contentArr;
+	my $default_choice;
 
-	my $i = 0;
-	foreach my $actionID (@formsToShow) {
-
+	for my $actionID (@formsToShow) {
 	    # Check permissions
 	    next if FORM_PERMS()->{$actionID} and not $authz->hasPermissions($user, FORM_PERMS()->{$actionID});
+
 	    my $actionForm = "${actionID}_form";
-	    my $onChange = "document.userlist.action[$i].checked=true";
-	    my %actionParams = $self->getActionParams($actionID);
-	    
-	    print CGI::div({-class=>"tabbertab"},
-			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
-			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
-			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
-                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),
-			    $self->$actionForm($onChange, %actionParams));
-		
-		$i++;
+		my $id = "${actionID}_id";
+
+		my $active = "";
+		$active = "active", $default_choice = $actionID unless $default_choice;
+
+		push(@tabArr, CGI::li({ class => $active },
+				CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
+					$r->maketext(ucfirst(WeBWorK::split_cap($actionID))))));
+		push(@contentArr, CGI::div({ class => "tab-pane $active", id => $id },
+				$self->$actionForm($self->getActionParams($actionID))));
 	}
 
-
-	print CGI::end_div();
+	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
+	print CGI::div({ class => "tabbable" },
+		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
+		CGI::div({ class => "tab-content" }, @contentArr)
+	);
 
 	print CGI::start_div();
-
 	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
 	print CGI::end_div();
-	# print CGI::end_table();
 	
 	########## print table
 	
@@ -610,7 +616,7 @@ sub getTableParams {
 # actions are shown in edit mode.
 
 sub filter_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	#return CGI::table({}, CGI::Tr({-valign=>"top"},
 	#	CGI::td({}, 
 	my $r = $self->r;
@@ -642,7 +648,6 @@ sub filter_form {
 						selected => $r->maketext("selected users"),
 						match_regex => $r->maketext("users who match on selected field"),
 					},
-					-onchange => $onChange,
 				}
 			),
 			CGI::br(),
@@ -657,7 +662,6 @@ sub filter_form {
 					-value => \@fields,
 					-default => $actionParams{"action.filter.field"}->[0] || "user_id",
 					-labels => \%prettyFieldNames,
-					-onchange => $onChange
 				}
 			),
 			CGI::br(),
@@ -669,7 +673,6 @@ sub filter_form {
 					-name => "action.filter.user_ids",
 					-value => $actionParams{"action.filter.user_ids"}->[0] || "",,
 					-width => "50",
-					-onchange => $onChange,
 					-'aria-required' => 'true', 
 				}
 			),
@@ -737,7 +740,7 @@ sub filter_handler {
 }
 
 sub sort_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	
 	return join ("",
@@ -760,7 +763,6 @@ sub sort_form {
 					comment		=> $r->maketext("Comment"),
 					permission	=> $r->maketext("Permission Level")
 				},
-				-onchange => $onChange,
 			},
 		),
 		CGI::br(),
@@ -783,7 +785,6 @@ sub sort_form {
 					comment		=> $r->maketext("Comment"),
 					permission	=> $r->maketext("Permission Level")
 				},
-				-onchange => $onChange,
 			},
 		),
 		CGI::br(),
@@ -806,7 +807,6 @@ sub sort_form {
 					comment		=> $r->maketext("Comment"),
 					permission	=> $r->maketext("Permission Level")
 				},
-				-onchange => $onChange,
 			},
 		),
 	);
@@ -840,7 +840,7 @@ sub sort_handler {
 }
 
 sub edit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join("",
@@ -857,7 +857,6 @@ sub edit_form {
 					visible => $r->maketext("visible users"),
 					selected => $r->maketext("selected users")
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -887,7 +886,7 @@ sub edit_handler {
 
 
 sub password_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join("",
@@ -904,7 +903,6 @@ sub password_form {
 					visible => $r->maketext("visible users"),
 					selected => $r->maketext("selected users")
 				},
-				-onchange => $onChange,
 			},
 		),
 	);
@@ -933,7 +931,7 @@ sub password_handler {
 }
 
 sub delete_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join("",
@@ -951,7 +949,6 @@ sub delete_form {
 					# visible  => "visible users",
 					selected => $r->maketext("selected users")
 				},
-				-onchange => $onChange,
 			},
 		),
 	);
@@ -997,7 +994,7 @@ sub delete_handler {
 	return $error ? $error : $r->maketext("deleted [_1] users", $num);
 }
 sub add_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return WeBWorK::CGI_labeled_input(-type=>"text", -id=>"add_entry", -label_text=>$r->maketext("Add how many students?").CGI::span({class=>"required-field"},'*').": ", -input_attr=>{name=>'number_of_students', value=>1,size => 3,'aria-required'=>'true'});
@@ -1010,7 +1007,7 @@ sub add_handler {
 }
 
 sub import_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	
 	return join(" ",
@@ -1022,7 +1019,6 @@ sub import_form {
 				-name => "action.import.source",
 				-values => [ $self->getCSVList() ],
 				-default => $actionParams{"action.import.source"}->[0] || "",
-				-onchange => $onChange,
 			}
 		),
 		CGI::br(),
@@ -1040,7 +1036,6 @@ sub import_form {
 					selected => $r->maketext("selected users"),
 					none => $r->maketext("no users"),
 				},
-				-onchange => $onChange,
 			}
 		),
 		CGI::br(),
@@ -1056,7 +1051,6 @@ sub import_form {
 					any => $r->maketext("any users"),
 					none => $r->maketext("no users"),
 				},
-				-onchange => $onChange,
 			}
 		),
 	);
@@ -1100,7 +1094,7 @@ sub import_handler {
 }
 
 sub export_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	
 	return join("",
@@ -1117,7 +1111,6 @@ sub export_form {
 					visible => $r->maketext("visible users"),
 					selected => $r->maketext("selected users")
 				},
-				-onchange => $onChange,
 			}
 		),
 		CGI::br(),
@@ -1130,7 +1123,6 @@ sub export_form {
 				-values => [ "new", $self->getCSVList() ],
 				-labels => { new => $r->maketext("Enter filename below") },
 				-default => $actionParams{"action.export.target"}->[0] || "",
-				-onchange => $onChange,
 			}
 		),
 		CGI::br(),
@@ -1143,7 +1135,6 @@ sub export_form {
 				-name => "action.export.new",
 				-value => $actionParams{"action.export.new"}->[0] || "",,
 				-width => "50",
-				-onchange => $onChange,
 				-'aria-required' => 'true',
 			}
 		),
@@ -1189,7 +1180,7 @@ sub export_handler {
 }
 
 sub cancelEdit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Abandon changes"));
 }
@@ -1213,7 +1204,7 @@ sub cancelEdit_handler {
 }
 
 sub saveEdit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Save changes"));
 }
@@ -1264,7 +1255,7 @@ sub saveEdit_handler {
 }
 
 sub cancelPassword_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Abandon changes"));
 }
@@ -1288,7 +1279,7 @@ sub cancelPassword_handler {
 }
 
 sub savePassword_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return CGI::span($r->maketext("Save changes"));
 }
@@ -1920,22 +1911,14 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/classlist_handlers.js"}), CGI::end_script();
 	return "";
-}
-
-# Just tells template to output the stylesheet for Tabber
-sub output_tabber_CSS{
-  # capture names for maketext
-  x('Filter');
-  x('Sort');
-  return "";
 }
 
 #Tells template to output stylesheet for Jquery-UI
 sub output_jquery_ui_CSS{
 	return "";
 }
-1;
 
+1;
