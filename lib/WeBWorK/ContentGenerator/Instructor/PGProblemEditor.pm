@@ -631,29 +631,30 @@ sub body {
 
 	my @formsToShow = @{ ACTION_FORMS() };
 	my %actionFormTitles = %{ACTION_FORM_TITLES()};
-	my $default_choice = $formsToShow[0];
+	my $default_choice;
 
-	my @liArr;
-	my @divArr;
+	my @tabArr;
+	my @contentArr;
 
 	for my $actionID (@formsToShow) {
 		my $actionForm = "${actionID}_form";
 		my $line_contents = $self->$actionForm($self->getActionParams($actionID));
-		my $active = $actionID eq $default_choice ? "active" : "";
+		my $active = "";
 		my $id = "action_$actionID";
 
 		if ($line_contents) {
-			push(@liArr, CGI::li({ class => $active },
+			$active = "active", $default_choice = $actionID unless $default_choice;
+			push(@tabArr, CGI::li({ class => $active },
 					CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
 						$r->maketext($actionFormTitles{$actionID}))));
-			push(@divArr, CGI::div({ class => "tab-pane pg_editor_action_div $active", id => $id }, $line_contents, ));
+			push(@contentArr, CGI::div({ class => "tab-pane pg_editor_action_div $active", id => $id }, $line_contents, ));
 		}
 	}
 
 	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
 	print CGI::div({ class => "tabbable" },
-		CGI::ul({ class => "nav nav-tabs" }, @liArr),
-		CGI::div({ class => "tab-content" }, @divArr)
+		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
+		CGI::div({ class => "tab-content" }, @contentArr)
 	);
 
 	print CGI::div(WeBWorK::CGI_labeled_input(-type => "submit", -id => "submit_button_id",

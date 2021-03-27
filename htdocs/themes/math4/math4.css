@@ -1051,8 +1051,8 @@ table caption{
 
 #render-modal.modal {
 	box-sizing: border-box;
-    width: 86vw;
-    left: 7vw;
+	width: 86vw;
+	left: 7vw;
 	height: 86vh;
 	top: 7vh;
 	margin-top: 0px;
