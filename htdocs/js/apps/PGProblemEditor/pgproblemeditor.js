@@ -60,6 +60,5 @@
 				'</div>');
 			$('body').append(busyIndicator);
 		}
-
 	});
 })();
