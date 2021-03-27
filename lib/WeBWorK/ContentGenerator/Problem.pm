@@ -274,7 +274,7 @@ sub can_showMeAnother {
 	# get the hash of information about showMeAnother
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
-	if (after($Set->open_date)) {
+	if (after($Set->open_date) or $self->r->authz->hasPermissions($self->r->param('user'), "can_use_show_me_another_early")) {
 		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
 		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 
@@ -1751,7 +1751,7 @@ sub output_submit_buttons{
 					"data-toggle"=>"tooltip",
 					"data-placement"=>"right",
 					title=>"",
-					"data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
+					"data-original-title"=>(before($r->db->getGlobalSet($self->{set}->set_id)->open_date)) ? $r->maketext("The problem set is not yet open") : ($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
 				},
 				$r->maketext("Show me another [_1]",$exhausted)
 			);
