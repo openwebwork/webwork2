@@ -37,9 +37,9 @@
 	});
 
 	$('.action-link').click(function() {
-		$(this).blur();
-		var action = $(this).data('action');
-		document.getElementById("current_action").value = action;
+		var actionLink = $(this);
+		actionLink.blur();
+		document.getElementById("current_action").value = actionLink.data('action');
 	});
 
 	$('#submit_button_id').on('click', function() {

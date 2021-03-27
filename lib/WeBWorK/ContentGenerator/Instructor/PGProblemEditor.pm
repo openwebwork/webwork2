@@ -647,7 +647,7 @@ sub body {
 			push(@tabArr, CGI::li({ class => $active },
 					CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
 						$r->maketext($actionFormTitles{$actionID}))));
-			push(@contentArr, CGI::div({ class => "tab-pane pg_editor_action_div $active", id => $id }, $line_contents, ));
+			push(@contentArr, CGI::div({ class => "tab-pane pg_editor_action_div $active", id => $id }, $line_contents));
 		}
 	}
 

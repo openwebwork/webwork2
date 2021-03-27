@@ -182,7 +182,6 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	$('.set-list-form input:reset').addClass('btn btn-info');
 	$('.set-list-form').wrapInner('<div />');
 	$('.set_table').addClass('small-table-text table-bordered table table-condensed');
-	$('#show_hide').addClass('btn btn-info');
 	$('#problem_set_form').addClass('form-inline');
 	$('#user-set-form').addClass('form-inline user-assign-form');
 	$('#set-user-form').addClass('form-inline user-assign-form');
@@ -201,7 +200,6 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	$('.user-list-form input:button').addClass('btn btn-info');
 	$('.user-list-form input:reset').addClass('btn btn-info');
 	$('.user-list-form').wrapInner('<div />');
-	$('#show_hide').addClass('btn btn-info');
 	$('#user-achievement-form').addClass('form-inline user-assign-form');
 
 	//email page
