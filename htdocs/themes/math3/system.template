@@ -66,9 +66,6 @@
 <!--#head-->
 </head>
 <body style="background-color: white;">
-<!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
-	<!--#output_wztooltip_JS-->
-<!--#endif-->
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->

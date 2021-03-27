@@ -82,9 +82,6 @@ var tabberOptions = {manualStartup:true};
 
 <body>
 <a href="#page-title" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
-<!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
-	<!--#output_wztooltip_JS-->
-<!--#endif-->
 
 <!-- Bootstrap Fluid Layout Scaffolding start -->
 <div id="bs-container" class="container-fluid">
