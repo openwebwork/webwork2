@@ -593,6 +593,15 @@ sub create_user {
   }
   $self->{numberOfSetsAssigned} = scalar @setsToAssign;
 
+	# Assign all existing achievements
+	my @achievementIDs = $db->listAchievements;
+	foreach my $achievementID (@achievementIDs) {
+		my $userAchievement = $db->newUserAchievement();
+		$userAchievement->user_id($userID);
+		$userAchievement->achievement_id($achievementID);
+		$db->addUserAchievement($userAchievement);
+	}
+
   # Give schools the chance to modify newly added sets 
   if (defined($ce->{LTI_modify_user_set})) {
     foreach my $globalSet (@setsToAssign) {
