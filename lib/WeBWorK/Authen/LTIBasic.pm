@@ -399,12 +399,14 @@ sub verify_normal_user
 		#debug("About to call create_session.");
 		$self->{session_key} = $self->create_session($user_id);
 		#debug("session_key=|" . $self -> {session_key} . "|.");
+		$self->write_log_entry("LOGIN OK");
 		return 1;
 		}
 	else  
 		{
 		$self->{error} = $r->maketext($auth_result);
 		$self-> {log_error} .= "$user_id - authentication failed: ". $self->{error};
+		$self->write_log_entry("LOGIN FAILED");
 		return 0;
 		} 
 }
@@ -439,6 +441,7 @@ sub authenticate
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
 		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
 				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor", $LMS);
+		$self->write_log_entry("AUTH LTI: Nonce error");
 		return 0;
 	}
 	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
@@ -481,6 +484,7 @@ sub authenticate
 		$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
 		$self -> {error} .= $r->maketext("Something was wrong with your LTI parameters.  If this recurs, please speak with your instructor");
 		$self -> {log_error} .= "Construction of OAuth request record failed";
+		$self->write_log_entry("AUTH LTI: LTI parameters error");
 		return 0;
 		}
 	else
@@ -492,6 +496,7 @@ sub authenticate
 			$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
 			$self -> {error} .= $r->maketext("Your LTI OAuth verification failed.  If this recurs, please speak with your instructor");
 			$self -> {log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
+			$self->write_log_entry("AUTH LTI: OAuth verification error");
 			return 0;
 			}
 		else
@@ -761,11 +766,13 @@ sub authenticate
 			}
 			$self -> {initial_login} = 1;
 			}
+			$self->write_log_entry("AUTH LTI: user authenticated");
 			return 1;
 		}
 	}
 	#debug("LTIBasic is returning a failed authentication");
 	$self -> {error} = $r->maketext($GENERIC_ERROR_MESSAGE, $ce->{LMS_name});
+	$self->write_log_entry("AUTH LTI: failed to authenticate");
 	return(0);
 }
 
