@@ -1,7 +1,7 @@
 if (!window.MathJax) {
 	window.MathJax = {
 		tex: {
-			autoload: { color: [], colorV2: ['color'] },
+			autoload: { color: [], colorv2: ['color'] },
 			packages: {'[+]': ['noerrors']}
 		},
 		loader: { load: ['input/asciimath', '[tex]/noerrors'] },
