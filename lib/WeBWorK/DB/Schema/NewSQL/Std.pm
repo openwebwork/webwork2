@@ -271,22 +271,25 @@ sub _get_db_info {
 	my $password = $self->{params}{password};
 
 	my %dsn;
-	if (      $dsn =~ m/^dbi:mariadb:/i ) {
+	if ($dsn =~ m/^dbi:mariadb:/i || $dsn =~ m/^dbi:mysql:/i) {
 		# Expect DBI:MariaDB:database=webwork;host=db;port=3306
-		my ($dbi,$dbtype,$temp1) = split(':',$dsn);
-		( $dsn{database}, $dsn{host}, $dsn{port} ) = split(';',$temp1);
-		$dsn{database} =~ s/database=//;
-		$dsn{host} =~ s/host=// if ( defined $dsn{host} );
-		$dsn{port} =~ s/port=// if ( defined $dsn{port} );
-	} elsif ( $dsn =~ m/^dbi:mysql:/i ) {
-		# This code works for DBD::mysql
-		# this is an internal function which we probably shouldn't be using here
-		# but it's quick and gets us what we want (FIXME what about sockets, etc?)
-		DBD::mysql->_OdbcParse($dsn, \%dsn, ['database', 'host', 'port']);
+		# or DBI:mysql:database=webwork;host=db;port=3306
+		# The host and port are optional.
+		my ($dbi, $dbtype, $dsn_opts) = split(':', $dsn);
+		while (length($dsn_opts)) {
+			if ($dsn_opts =~ /^([^=]*)=([^;]*);(.*)$/) {
+				$dsn{$1} = $2;
+				$dsn_opts = $3;
+			} else {
+				my ($var, $val) = $dsn_opts =~ /^([^=]*)=([^;]*)$/;
+				$dsn{$var} = $val;
+				$dsn_opts = '';
+			}
+		}
 	} else {
 		die "Can't call dump_table or restore_table on a table with a non-MySQL/MariaDB source";
 	}
-	
+
 	die "no database specified in DSN!" unless defined $dsn{database};
 
 	my $mysqldump = $self->{params}{mysqldump_path};
