@@ -2337,171 +2337,187 @@ sub body {
 	    # the spacing and formatting is done via bootstrap.  Bootstrap classes are added
 	    # in the problemsetdetail2.js file
 
-	    print CGI::h2($r->maketext("Problems"));
-	    print CGI::div(CGI::div({id=>"psd_toolbar"}, ($forOneUser ? '' : CGI::a({href=>"#", id=>"psd_renumber"}, $r->maketext("Renumber Problems"))).
-		CGI::a({href=>"#", id=>"psd_render_all"},
-		       $r->maketext("Render All")).
-		CGI::a({href=>"#", id=>"psd_hide_all"},
-		       $r->maketext("Hide All")).
-		($isJitarSet ? CGI::a({href=>"#", id=>"psd_expand_all"},
-		       $r->maketext("Expand All")) : '').
-		($isJitarSet ? CGI::a({href=>"#", id=>"psd_collapse_all"},
-		       $r->maketext("Collapse All")) : '')).
-		       CGI::span($r->maketext("Display Mode:")) .
-			      CGI::popup_menu(-name => "problem.displaymode",
-					      -id => "problem_displaymode",
-					      -values => \@active_modes, -default => $default_problem_mode));
+		print CGI::h2($r->maketext("Problems"));
+		print CGI::div(CGI::div({ id => "psd_toolbar", class => "btn-group" },
+				($forOneUser ? '' : CGI::a({ href => "#", id => "psd_renumber", class => "btn" }, $r->maketext("Renumber Problems"))) .
+				CGI::a({ href => "#", id => "psd_render_all", class => "btn" }, $r->maketext("Render All")) .
+				CGI::a({ href => "#", id => "psd_hide_all", class => "btn" }, $r->maketext("Hide All")) .
+				($isJitarSet ? CGI::a({ href => "#", id => "psd_expand_all", class => "btn" }, $r->maketext("Expand All")) : '') .
+				($isJitarSet ? CGI::a({ href => "#", id => "psd_collapse_all", class => "btn" }, $r->maketext("Collapse All")) : '')) .
+			CGI::span($r->maketext("Display Mode:")) . " " .
+			CGI::popup_menu(-name => "problem.displaymode",
+				-id => "problem_displaymode",
+				-values => \@active_modes, -default => $default_problem_mode));
 
 
 
-	    print CGI::start_div({id=>"problemset_detail_list"});
+	    print CGI::start_div({ id => "problemset_detail_list", class => "container-fluid" });
 
 	    my %shownYet;
 	    my $repeatFile;
 	    my @problemRow;
 
-	    foreach my $problemID (@problemIDList) {
+		foreach my $problemID (@problemIDList) {
 
-		my $problemRecord;
-		if ($forOneUser) {
-		    #$problemRecord = $db->getMergedProblem($editForUser[0], $setID, $problemID);
-		    $problemRecord = $MergedProblems{$problemID}; # already fetched above --sam
-		} else {
-		    #$problemRecord = $db->getGlobalProblem($setID, $problemID);
-		    $problemRecord = $GlobalProblems{$problemID}; # already fetched above --sam
-		}
+			my $problemRecord;
+			if ($forOneUser) {
+				#$problemRecord = $db->getMergedProblem($editForUser[0], $setID, $problemID);
+				$problemRecord = $MergedProblems{$problemID}; # already fetched above --sam
+			} else {
+				#$problemRecord = $db->getGlobalProblem($setID, $problemID);
+				$problemRecord = $GlobalProblems{$problemID}; # already fetched above --sam
+			}
 
-		#$self->addgoodmessage("");
-		#$self->addbadmessage($problemRecord->toString());
+			#$self->addgoodmessage("");
+			#$self->addbadmessage($problemRecord->toString());
 
-		# when we're editing a set version, we want to be sure to
-		#    use the merged problem in the edit, because we could
-		#    be using problem groups (for which the problem is generated
-		#    and then stored in the problem version)
-		my $problemToShow = ( $editingSetVersion ) ?
-		    $MergedProblems{$problemID} : $UserProblems{$problemID};
+			# when we're editing a set version, we want to be sure to
+			#    use the merged problem in the edit, because we could
+			#    be using problem groups (for which the problem is generated
+			#    and then stored in the problem version)
+			my $problemToShow = ( $editingSetVersion ) ?
+			$MergedProblems{$problemID} : $UserProblems{$problemID};
 
-		my ( $editProblemPage, $editProblemLink, $viewProblemPage,
-		     $viewProblemLink );
-		if ( $isGatewaySet ) {
-		    $editProblemPage = $urlpath->new(type =>'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
-		    $viewProblemPage =
-			$urlpath->new(type =>'gateway_quiz',
-				      args => { courseID => $courseID,
+			my ( $editProblemPage, $editProblemLink, $viewProblemPage,
+				$viewProblemLink );
+			if ( $isGatewaySet ) {
+				$editProblemPage = $urlpath->new(type =>'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+				$viewProblemPage =
+				$urlpath->new(type =>'gateway_quiz',
+					args => { courseID => $courseID,
 						setID => "Undefined_Set",
 						problemID => "1" } );
 
-		    my $seed = $problemToShow ? $problemToShow->problem_seed : "";
-		    my $file = $problemToShow ? $problemToShow->source_file :
-			$GlobalProblems{$problemID}->source_file;
+				my $seed = $problemToShow ? $problemToShow->problem_seed : "";
+				my $file = $problemToShow ? $problemToShow->source_file :
+				$GlobalProblems{$problemID}->source_file;
 
-		    $viewProblemLink =
-			$self->systemLink( $viewProblemPage,
-					   params => { effectiveUser =>
-							   ($forOneUser ? $editForUser[0] : $userID),
-							   problemSeed => $seed,
-							   sourceFilePath => $file });
-		} else {
-		    $editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
-		    # FIXME: should we have an "act as" type link here when editing for multiple users?
-		    $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
-		    $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
-		}
+				$viewProblemLink =
+				$self->systemLink( $viewProblemPage,
+					params => { effectiveUser =>
+						($forOneUser ? $editForUser[0] : $userID),
+						problemSeed => $seed,
+						sourceFilePath => $file });
+			} else {
+				$editProblemPage = $urlpath->new(type => 'instructor_problem_editor_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+				$editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+				# FIXME: should we have an "act as" type link here when editing for multiple users?
+				$viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
+				$viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
+			}
 
 
-		my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
-		$problemFile =~ s|^/||;
-		$problemFile =~ s|\.\.||g;
-		# warn of repeat problems
-		if (defined $shownYet{$problemFile}) {
-		    my $prettyID = $shownYet{$problemFile};
-		    $prettyID = join('.',jitar_id_to_seq($prettyID)) if
-			$isJitarSet;
-		    $repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $prettyID);
-		} else {
-		    $shownYet{$problemFile} = $problemID;
-		    $repeatFile = "";
-		}
+			my $problemFile = $r->param("problem.$problemID.source_file") || $problemRecord->source_file;
+			$problemFile =~ s|^/||;
+			$problemFile =~ s|\.\.||g;
+			# warn of repeat problems
+			if (defined $shownYet{$problemFile}) {
+				my $prettyID = $shownYet{$problemFile};
+				$prettyID = join('.',jitar_id_to_seq($prettyID)) if
+				$isJitarSet;
+				$repeatFile = $r->maketext("This problem uses the same source file as number [_1].", $prettyID);
+			} else {
+				$shownYet{$problemFile} = $problemID;
+				$repeatFile = "";
+			}
 
-		my $error = $self->checkFile($problemFile, undef);
-		my $this_set = $db->getMergedSet($userToShow, $setID);
+			my $error = $self->checkFile($problemFile, undef);
+			my $this_set = $db->getMergedSet($userToShow, $setID);
 
-		# we want to show the "Try It" and "Edit It" links if there's a
-		#    well defined problem to view; this is when we're editing a
-		#    homework set, or if we're editing a gateway set version, or
-		#    if we're editing a gateway set and the problem is not a
-		#    group problem
-		# we also want "grade problem" links for problems which
-		# have essay questions.
+			# we want to show the "Try It" and "Edit It" links if there's a
+			#    well defined problem to view; this is when we're editing a
+			#    homework set, or if we're editing a gateway set version, or
+			#    if we're editing a gateway set and the problem is not a
+			#    group problem
+			# we also want "grade problem" links for problems which
+			# have essay questions.
 
-		my $showLinks = ( ! $isGatewaySet ||
-				  ( $editingSetVersion || $problemFile !~ /^group/ ));
+			my $showLinks = ( ! $isGatewaySet ||
+				( $editingSetVersion || $problemFile !~ /^group/ ));
 
-		my $gradingLink = "";
-		if ($showLinks) {
+			my $gradingLink = "";
+			if ($showLinks) {
+				if ($problemRecord->flags =~ /essay/) {
+					my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+					$gradingLink = CGI::a({
+							class => "pdr_grader btn btn-mini", href => $self->systemLink($gradeProblemPage), 'data-toggle' => "tooltip",
+							'data-placement' => "top", 'data-original-title' => $r->maketext("Grade Problem")
+						}, CGI::i({ class => "icon fas fa-edit", data_alt => $r->maketext("Grade") }, ""));
+				}
+			}
 
-		    if ($problemRecord->flags =~ /essay/) {
-			my $gradeProblemPage = $urlpath->new(type => 'instructor_problem_grader', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
-			$gradingLink = CGI::a({class=>"pdr_grader", href => $self->systemLink($gradeProblemPage),'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Grade Problem")}, $r->maketext("Grade"));
-		    }
-
-		}
-
-		my $problemNumber = $problemID;
-		my $lastProblemNumber = $problemID;
-		my $parentID = '';
-                my $collapseButton = '';
-		if ($isJitarSet) {
-		    my @seq = jitar_id_to_seq($problemNumber);
-		    $problemNumber = join('.',@seq);
-		    $lastProblemNumber = pop @seq;
-		    $parentID = seq_to_jitar_id(@seq) if @seq;
-                    $collapseButton = CGI::span({class=>"pdr_collapse",
+			my $problemNumber = $problemID;
+			my $lastProblemNumber = $problemID;
+			my $parentID = '';
+			my $collapseButton = '';
+			if ($isJitarSet) {
+				my @seq = jitar_id_to_seq($problemNumber);
+				$problemNumber = join('.',@seq);
+				$lastProblemNumber = pop @seq;
+				$parentID = seq_to_jitar_id(@seq) if @seq;
+				$collapseButton = CGI::span({class=>"pdr_collapse",
 						"data-expand-text"=>$r->maketext("Expand"),
 						"data-collapse-text"=>$r->maketext("Collapse")},"");
+			}
+
+			my $pdr_block_1 =  CGI::div({ class => "pdr_block_1 span2" },
+				CGI::start_table({border => 0, cellpadding => 1}) .
+				CGI::Tr(
+					CGI::td(
+						CGI::span({ class => "pdr_handle", id => "pdr_handle_$problemID" },
+							CGI::span({ class => "pdr_problem_number" }, "$problemNumber") . " " .
+							($forUsers ? "" : CGI::i({ class => $isJitarSet ? "fas fa-arrows-alt" : "fas fa-arrows-alt-v", data_title => $r->maketext('Move') }, ""))
+						) .
+						$collapseButton .
+						CGI::input({ type => "hidden", name => "prob_num_$problemID", id => "prob_num_$problemID", value => $lastProblemNumber }) .
+						CGI::input({ type => "hidden", name => "prob_parent_id_$problemID", id => "prob_parent_id_$problemID", value => $parentID }))) .
+				CGI::Tr(
+					CGI::td(
+						CGI::a({
+								href => "#", class => "pdr_render btn btn-mini", id => "pdr_render_$problemID", 'data-toggle' => "tooltip",
+								'data-placement' => "top", 'data-original-title' => $r->maketext("Render Problem")
+							}, CGI::i({ class => "icon far fa-image", data_alt => $r->maketext("Render") }, "")).
+						($showLinks ? CGI::a({
+									class => "psd_edit btn btn-mini", href => $editProblemLink, target => "WW_Editor", 'data-toggle' => "tooltip",
+									'data-placement' => "top", 'data-original-title' => $r->maketext("Edit Problem")
+								}, CGI::i({ class => "icon fas fa-pencil-alt", data_alt => $r->maketext("Edit") }, "")) : "")  .
+						($showLinks ? CGI::a({
+									class => "psd_view btn btn-mini", href => $viewProblemLink, target => "WW_View", 'data-toggle' => "tooltip",
+									'data-placement' => "top", 'data-original-title' => $r->maketext("Open in New Window")
+								}, CGI::i({ class => "icon far fa-eye", data_alt => $r->maketext("View") }, "")) : "") .
+						$gradingLink)).
+				($forUsers ? "" : CGI::Tr(CGI::td(CGI::checkbox({ name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?") })))) .
+				($forOneUser ? "" : CGI::Tr(CGI::td(CGI::checkbox({ name => "markCorrect", id => "problem." . $problemID . ".mark_correct", value => $problemID, label => $r->maketext("Mark Correct?") })))) .
+				CGI::end_table());
+			my $pdr_block_2 = CGI::div({ class => "pdr_block_2 span3" },
+				$self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()));
+
+			my @source_file_string = $self->FieldHTML(
+				$userToShow,
+				$setID,
+				$problemID,
+				$GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
+				$problemToShow, # pass previously fetched user record to FieldHTML --sam
+				"source_file"
+			);
+
+			$source_file_string[3] = CGI::input({type=>'hidden',id=>"problem_".$problemID."_default_source_file",value=>$GlobalProblems{$problemID}->source_file()}).$source_file_string[3];
+
+			my $pdr_block_3 = CGI::div({ class => "pdr_block_3 span7" },
+				join ('', @source_file_string) .
+				CGI::br() .
+				($repeatFile ? CGI::div({ class => "ResultsWithError", style => "font-weight: bold" }, $repeatFile) : '') .
+				CGI::div({ class => "psr_render_area", id => "psr_render_area_$problemID" },
+					$error ? CGI::div({class => "ResultsWithError", style => "font-weight: bold"}, $error) : "")
+			);
+
+			push @problemRow, CGI::div({ class => "row-fluid" },
+				CGI::div({ class => "problem_detail_row well span12" },
+					$pdr_block_1.
+					$pdr_block_2.
+					$pdr_block_3 ));
 		}
-
-		my $pdr_block_1 =  CGI::div({class=>"pdr_block_1"},
-			CGI::start_table({border => 0, cellpadding => 1}) .
-			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, "$problemNumber ").$collapseButton.
-					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$lastProblemNumber}).
-					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .
-             	        CGI::Tr({}, CGI::td({},
-					    CGI::a({href=>"#", class=>"pdr_render", id=>"pdr_render_$problemID",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Render Problem")}, $r->maketext('Render')).
-					    ($showLinks ? CGI::a({class=>"psd_edit", href => $editProblemLink, target=>"WW_Editor",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Edit Problem")}, $r->maketext("Edit")) : "")  .
-					    ($showLinks ? CGI::a({class=>"psd_view", href => $viewProblemLink, target=>"WW_View",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Open in New Window")}, $r->maketext("View")) : "") .
-					    $gradingLink )).
-			  ($forUsers ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "deleteProblem", value => $problemID, label => $r->maketext("Delete it?")})))) .
-			  ($forOneUser ? "" : CGI::Tr({}, CGI::td({}, CGI::checkbox({name => "markCorrect", id => "problem.".$problemID.".mark_correct", value => $problemID, label => $r->maketext("Mark Correct?")})))) .
-				CGI::end_table()));
-		my $pdr_block_2 = CGI::div({class=>"pdr_block_2"}, $self->FieldTable($userToShow, $setID, $problemID, $GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()));
-
-		my @source_file_string = $self->FieldHTML(
-						     $userToShow,
-						     $setID,
-						     $problemID,
-						     $GlobalProblems{$problemID}, # pass previously fetched global record to FieldHTML --sam
-						     $problemToShow, # pass previously fetched user record to FieldHTML --sam
-						     "source_file"
-		    );
-
-		$source_file_string[3] = CGI::input({type=>'hidden',id=>"problem_".$problemID."_default_source_file",value=>$GlobalProblems{$problemID}->source_file()}).$source_file_string[3];
-
-		my $pdr_block_3 = CGI::div({ class => "pdr_block_3" },
-			join ('',@source_file_string) .
-			CGI::br() .
-			($repeatFile ? CGI::div({ class => "ResultsWithError", style => "font-weight: bold" }, $repeatFile) : '') .
-			CGI::div({ class => "psr_render_area", id => "psr_render_area_$problemID" },
-				$error ? CGI::div({class => "ResultsWithError", style => "font-weight: bold"}, $error) : "")
-		);
-
-		push @problemRow, CGI::div({class=>"problem_detail_row"},
-					   $pdr_block_1.
-					   $pdr_block_2.
-					   $pdr_block_3 );
-	    }
 
 
 	    # If a jitar set then print nested lists, otherwise print an unordered list.

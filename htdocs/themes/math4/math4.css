@@ -1149,6 +1149,7 @@ div.problem_sets_options {
 
 .problem_detail_row {
 	padding: 0.75em;
+	max-width: 1000px;
 }
 
 .pdr_placeholder {
@@ -1163,25 +1164,30 @@ div.problem_sets_options {
 }
 
 .pdr_handle {    
-    cursor: move;
     margin-right:2px;
     font-size:large;
 }
 
+#psd_list:not(.disable_renumber) .pdr_handle {
+	cursor: move;
+}
+
 .pdr_collapse {
     cursor: pointer;
-    width: 10px;
     font-size:large;
     display: none;
-    font-family: FontAwesome;
 }
 
 .psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f054';
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900;
+	content: '\f054';
 }
 
 .psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f078';
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900;
+	content: '\f078';
 }
 
 

@@ -1,7 +1,4 @@
 (function() {
-	//Problem set detail 2
-	$('#problemset_detail_list').addClass('container-fluid');
-
 	// This uses the nestedSortable jquery-ui module to drive the
 	// problem list, if its enabled
 
@@ -21,47 +18,11 @@
 		maxLevels: 6,
 	});
 
-	//Problem Set Detail 2  (the page doesn't render properly without some sort
-	// of css to format the divs. This does that.)
-	// This adds soem bootstrap elements to the page to format it
-	$('.problem_detail_row').addClass('well span11')
-		.wrap('<div class="row-fluid" />')
-		.after('<div class="span1" />');
-
-	$('.pdr_block_1').addClass('span2');
-	$('.pdr_block_2').addClass('span3');
-	$('.pdr_block_3').addClass('span7');
-
-	$('#psd_toolbar').addClass('btn-group');
-
-	$('.psd_view').addClass('btn btn-mini')
-		.html('<i class="far fa-eye" />')
-		.tooltip();
-	$('.psd_edit').addClass('btn btn-mini')
-		.html('<i class="fas fa-pencil-alt" />')
-		.tooltip();
-	$('.pdr_render').addClass('btn btn-mini')
-		.html('<i class="far fa-image" />')
-		.tooltip();
-
-	$('.pdr_grader').addClass('btn btn-mini')
-		.html('<i class="fas fa-edit">')
-		.tooltip();
-
-	if (!$('#psd_list').hasClass('disable_renumber')) {
-		$('.pdr_handle').each(function () {
-			var iconclass = "fas fa-arrows-alt-v";
-			if ($(this).attr('is-jitar') == 1) {
-				iconclass = "fas fa-arrows-alt";
-			}
-			$(this).append($('<i/>').addClass(iconclass)
-				.tooltip({title:$(this).attr('data-move-text'),
-					container:this})
-			);
-		});
-	} else {
-		$('.pdr_handle').css('margin-right','5px');
-	}
+	$('.psd_view').tooltip();
+	$('.psd_edit').tooltip();
+	$('.pdr_render').tooltip();
+	$('.pdr_grader').tooltip();
+	$('.pdr_handle > i').tooltip();
 
 	if ($('#psd_list').hasClass('disable_renumber')) {
 		$('#psd_list').nestedSortable({ disabled:true});
@@ -72,11 +33,9 @@
 		$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
 		$(this).tooltip('destroy');
 		if ($(this).closest('li').hasClass('mjs-nestedSortable-collapsed')) {
-			$(this).tooltip({title:$(this).attr('data-expand-text'),
-				container:this});
+			$(this).tooltip({ title: $(this).attr('data-expand-text'), container: this });
 		} else {
-			$(this).tooltip({title:$(this).attr('data-collapse-text'),
-				container:this});
+			$(this).tooltip({ title: $(this).attr('data-collapse-text'), container: this });
 		}
 
 	}).each(function() {
@@ -106,7 +65,7 @@
 		}
 	});
 
-	$('#psd_render_all').addClass('btn').click(async function (event) {
+	$('#psd_render_all').click(async function (event) {
 		event.preventDefault();
 		var renderAreas = $('.psr_render_area');
 		for (var renderArea of renderAreas) {
@@ -115,7 +74,7 @@
 		}
 	});
 
-	$('#psd_hide_all').addClass('btn').click(function (event) {
+	$('#psd_hide_all').click(function (event) {
 		event.preventDefault();
 		$('.psr_render_area').each(function() {
 			var iframe = $(this).find('[id^=psr_render_iframe_]');
@@ -124,12 +83,9 @@
 	});
 
 	// This is for collapsing and expanding the tree
-	$('#psd_expand_all').addClass('btn').click(function (event) {
+	$('#psd_expand_all').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');
-		$('i.fas.fa-plus').removeClass('fa-plus')
-			.addClass('fa-minus');
-
 		$('.pdr_collapse').each(function () {
 			$(this).tooltip('destroy');
 			$(this).tooltip({title:$(this).attr('data-collapse-text'),
@@ -137,12 +93,9 @@
 		});
 	});
 
-	$('#psd_collapse_all').addClass('btn').click(function (event) {
+	$('#psd_collapse_all').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').addClass('mjs-nestedSortable-collapsed').removeClass('mjs-nestedSortable-expanded');
-		$('i.fas.fa-minus').addClass('fa-plus')
-			.removeClass('fa-minus');
-
 		$('.pdr_collapse').each(function () {
 			$(this).tooltip('destroy');
 			$(this).tooltip({title:$(this).attr('data-expand-text'),
@@ -160,8 +113,8 @@
 
 			$('#prob_num_'+id).val(i+1);
 
-			$('#psd_list_'+id).find('.pdr_handle').each(function () {
-				$(this).html($(this).html()+(i+1)+'.');
+			$('#psd_list_' + id).find('.pdr_handle > span').each(function() {
+				$(this).html($(this).html() + (i + 1) + '.');
 			});
 
 			for (var j=0; j < array.length; j++) {
@@ -182,28 +135,18 @@
 		var array = $('#psd_list').nestedSortable("toArray");
 		var heirarchy = $('#psd_list').nestedSortable("toHierarchy");
 
-		$('.pdr_handle').html('');
+		$('.pdr_handle > span').html('');
 		recurse_on_heirarchy(heirarchy,array);
 
-		$('.pdr_handle').each(function () {
-			var iconclass = "fas fa-arrows-alt-v";
-			if ($(this).attr('is-jitar') == 1) {
-				iconclass = "fas fa-arrows-alt";
-			}
-			$(this).html($(this).html().slice(0,-1));
-			$(this).append($('<i/>').addClass(iconclass)
-				.tooltip({title:$(this).attr('data-move-text'),
-					container:this})
-			);
+		$('.pdr_handle > span').each(function() {
+			$(this).html($(this).html().slice(0, -1));
 		});
 		disable_fields();
-
 	};
 
 	// This enables and disables problem fields that don't make sense
 	// based on the position of the problem
 	var disable_fields = function () {
-
 		var array = $('#psd_list').nestedSortable("toArray");
 
 		$('.psd_list_row').each(function () {
@@ -222,9 +165,7 @@
 					} else {
 						$('#problem\\.'+id+'\\.counts_parent_grade_id').parents('tr:first').removeClass('hidden');
 					}
-
 				}
-
 			}
 			if (!has_children) {
 				$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').addClass('hidden');
@@ -237,7 +178,7 @@
 
 	$('#psd_list').on('sortupdate', set_prob_num_fields);
 
-	$('#psd_renumber').addClass('btn').tooltip().click(function (event) {
+	$('#psd_renumber').click(function (event) {
 		event.preventDefault();
 		set_prob_num_fields();
 	});
