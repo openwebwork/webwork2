@@ -5,7 +5,8 @@ use warnings;
 use version;
 
 my @applicationsList = qw(
-        curl
+	convert
+	curl
 	mkdir
 	mv
 	mysql
