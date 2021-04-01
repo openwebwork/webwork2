@@ -102,20 +102,22 @@ $externalPrograms{git} = "/usr/bin/git";
 ####################################################
 # equation rendering/hardcopy utiltiies
 ####################################################
-$externalPrograms{latex}    ="/usr/bin/latex";
+$externalPrograms{latex}    = "/usr/bin/latex --no-shell-escape";
 
-$externalPrograms{pdflatex} ="/usr/bin/pdflatex --no-shell-escape";
+$externalPrograms{pdflatex} = "/usr/bin/pdflatex --no-shell-escape";
 # Note that --no-shell-escape is important for security reasons.
 # Consider using xelatex instead of pdflatex for multilingual use, and
 # use polyglossia and fontspec packages (which require xelatex or lualatex).
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --no-shell-escape";
+#$externalPrograms{pdflatex} = "/usr/bin/xelatex --no-shell-escape";
 
-$externalPrograms{dvipng}   ="/usr/bin/dvipng";
+$externalPrograms{dvipng}   = "/usr/bin/dvipng";
 
 # In order to use imagemagick convert you need to change the rights for PDF files from
 # "none" to "read" in the policy file /etc/ImageMagick-6/policy.xml.  This has possible
 # security implications for the server.
-$externalPrograms{convert}  ="/usr/bin/convert";
+$externalPrograms{convert}  = "/usr/bin/convert";
+
+$externalPrograms{dvisvgm}  = "/usr/bin/dvisvgm";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
