@@ -154,7 +154,7 @@ go() then attempts to call the method initialize(). This method may be
 implemented in subclasses which must do processing after the HTTP header is sent
 but before any content is sent.
 
-=item 6
+=item 5
 
 The method content() is called to send the page content to client.
 
@@ -2294,8 +2294,6 @@ sub read_scoring_file {
 	return parse_scoring_file($self->r->ce->{courseDirs}{scoring}."/$fileName");
 }
 
-=back
-
 =item createEmailSenderTransportSMTP
 
 Wrapper that creates an Email::Sender::Transport::SMTP object
@@ -2332,6 +2330,8 @@ sub createEmailSenderTransportSMTP {
 
     return $transport;
 }
+=back
+
 =head1 AUTHOR
 
 Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu and Sam Hathaway,

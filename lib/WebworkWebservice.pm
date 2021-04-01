@@ -943,8 +943,6 @@ sub getUserProblem {
 	return $self->do(WebworkWebservice::ProblemActions::getUserProblem($self, $in));
 }
 
-=back
-
 =item putUserProblem
 
 =cut
@@ -966,8 +964,6 @@ sub putProblemVersion {
 	my $self = $class->initiate_session($in, "modify_student_data");
 	return $self->do(WebworkWebservice::ProblemActions::putProblemVersion($self, $in));
 }
-
-=back
 
 =item putPastAnswer
 

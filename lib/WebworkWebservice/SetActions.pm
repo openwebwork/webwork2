@@ -543,6 +543,8 @@ sub updateUserSet {
   return $out;
 }
 
+=over
+
 =item getUserSets($setID)
 
 gets all user sets for set $setID
@@ -830,5 +832,9 @@ sub read_set_def {
 	@pg_files = map { $self->munge_pg_file_path($_, $filePathOrig) } @pg_files;
 	return(@pg_files);
 }
+
+=back
+
+=cut
 
 1;

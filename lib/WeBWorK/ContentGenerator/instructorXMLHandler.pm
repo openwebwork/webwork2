@@ -41,15 +41,12 @@ use JSON;
 
 =head1 Description
 
-
-#################################################
-  instructorXMLHandler -- a front end for the Webservice that accepts HTML forms
+ instructorXMLHandler -- a front end for the Webservice that accepts HTML forms
 
  receives WeBWorK problems presented as HTML forms, usually created with js xmlhttprequests,
  packages the form variables into an XML_RPC request
  suitable for all of the webservices in WebworkWebservices
  returns xml resutls
-#################################################
 
 =cut
  

@@ -118,6 +118,8 @@ sub param {    # imitate get behavior of the request object params method
 	$self->{$param};
 }
 
+=back
+
 =head1 METHODS inherited from WeBWorK::Request
 
 =over

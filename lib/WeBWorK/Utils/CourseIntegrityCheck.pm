@@ -80,7 +80,7 @@ sub DESTROY {
 
 ##################################################################
 
-
+=over
 
 =item $CIchecker->checkCourseTables($courseName);
 
@@ -190,10 +190,6 @@ sub updateCourseTables {
 	$str;
 	
 }
-
-=cut
-
-
 
 =item  $CIchecker->checkTableFields($courseName, $table);
 
@@ -484,18 +480,8 @@ sub ask_permission_stdio {
 	}
 }
 
+=back
 
-# 
-# 
-# =item checkCourseDirectories($courseName)
-# 
-# Checks the course files and directories to make sure they exist and have the correct permissions.
-# 
-# =cut
-# 
-# 
-# 
-
-
+=cut
 
 1;

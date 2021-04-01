@@ -1076,6 +1076,8 @@ sub unarchiveCourseHelper {
 Perform database-layout specific operations for initializing non-native database tables
 that are not associated with a particular course
 
+=back
+
 =cut
 
 sub initNonNativeTables {
@@ -1179,14 +1181,13 @@ sub callHelperIfExists {
 	}
 }
 
-=over
-
 =item getHelperRef($helperName, $dbLayoutName)
 
 Call a database-specific helper function, if a database-layout specific helper
 class exists and contains a function named "${helperName}Helper".
 
 =cut
+
 sub getHelperRef {
 	my ($helperName, $dbLayoutName) = @_;
 	
@@ -1234,6 +1235,8 @@ sub protectQString {
 Writes a course.conf file to $fh, a file handle, using defaults from the course
 environment object $ce and overrides from %options. %options can contain any of
 the pairs accepted in %courseOptions by addCourse(), above.
+
+=back
 
 =cut
 
