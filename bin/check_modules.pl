@@ -7,6 +7,7 @@ use version;
 my @applicationsList = qw(
 	convert
 	curl
+	dvisvgm
 	mkdir
 	mv
 	mysql
