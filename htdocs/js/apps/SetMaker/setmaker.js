@@ -28,43 +28,6 @@ function badmsg(msg) {
 	$(".Message").html('<div class="ResultsWithError">'+msg+"</div>");
 }
 
-
-function settoggle(id, text1, text2) {
-	var elt = $('#' + id);
-	elt.click(function() {
-		if (elt.html() == text1) elt.html(text2);
-		else elt.html(text1);
-	});
-	return true;
-}
-
-function togglepaths() {
-	var toggle_from = $('#toggle_path_current')[0].value;
-	var new_text = $('#showtext');
-	nomsg();
-	if(toggle_from == 'show') {
-		new_text = $('#hidetext')[0].value;
-		$('#toggle_path_current').val('hide');
-		$("[id*=filepath]").each(function() {
-			// If showing, trigger
-			if(this.textContent.match('^Show')) {
-				this.click();
-			}
-		});
-	} else {
-		new_text = $('#showtext')[0].value;
-		$('#toggle_path_current').val('show');
-		$("[id*=filepath]").each(function() {
-			// If hidden, trigger
-			if(! this.textContent.match('^Show')) {
-				this.click();
-			}
-		});
-	}
-	$('#toggle_paths').prop('value',new_text);
-	return false;
-}
-
 function init_webservice(command) {
 	var myUser = $('#hidden_user').val();
 	var myCourseID = $('#hidden_courseID').val();
@@ -468,7 +431,8 @@ window.addEventListener('DOMContentLoaded', async function() {
 					iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5' }, iframe[0]);
 					iframe[0].addEventListener('load', function() {
 						var container = iframe[0].contentWindow.document.querySelector('.container-fluid');
-						if (container) container.style.padding = '0px'; });
+						if (container) container.style.padding = '0px';
+					});
 				}
 				iframe[0].contentWindow.document.open();
 				iframe[0].contentWindow.document.write(data.html);

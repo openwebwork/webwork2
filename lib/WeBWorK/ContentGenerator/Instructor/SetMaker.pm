@@ -430,7 +430,7 @@ sub browse_local_panel {
 		my %labels = map { my($l)=$_=~/^$lib\/(.*)$/;$_=>$l } @$list_of_prob_dirs;
 		push @popup_menu_args, -labels => \%labels;
 	}
-	print CGI::Tr({}, CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("[_1] Problems:", $name).' ',
+	print CGI::Tr({}, CGI::td({-class=>"InfoPanel"}, $r->maketext("[_1] Problems:", $name).' ',
 		              CGI::popup_menu(@popup_menu_args),
 		              CGI::br(), 
 		              $view_problem_line,
@@ -454,7 +454,7 @@ sub browse_mysets_panel {
 
 	my $view_problem_line = view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r);
 	print CGI::Tr({},
-		CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:").' ',
+		CGI::td({-class=>"InfoPanel"}, $r->maketext("Browse from:").' ',
 		CGI::popup_menu(-name=> 'library_sets', 
 		                -values=>$list_of_local_sets, 
 		                -default=> $library_selected),
@@ -529,7 +529,7 @@ sub browse_library_panel1 {
 
 	my $view_problem_line = view_problems_line('lib_view', $r->maketext('View Problems'), $self->r);
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, 
+	print CGI::Tr(CGI::td({-class=>"InfoPanel"},
 		CGI::start_table(),
 			CGI::Tr({},
 				CGI::td([$r->maketext("Chapter:"),
@@ -581,7 +581,7 @@ sub browse_library_panel2 {
 	}
 
 	print CGI::Tr({},
-	    CGI::td({-class=>"InfoPanel", -align=>"left"}, 
+	    CGI::td({-class=>"InfoPanel"},
 		CGI::hidden(-name=>"library_is_basic", -default=>1,-override=>1),
 		CGI::start_table({-width=>"100%"}),
 		CGI::Tr({},
@@ -710,7 +710,7 @@ sub browse_library_panel2adv {
 	$mylevelline .= '</tr></table>';
 
 	print CGI::Tr({},
-	  CGI::td({-class=>"InfoPanel", -align=>"left"},
+	  CGI::td({-class=>"InfoPanel"},
 		CGI::hidden(-name=>"library_is_basic", -default=>2,-override=>1),
 		CGI::start_table({-width=>"100%"}),
 		# Html done by hand since it is temporary
@@ -811,7 +811,7 @@ sub browse_setdef_panel {
 	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
 		$popupetc = $r->maketext("there are no set definition files in this course to look at.")
 	}
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Browse from:")." ",
+	print CGI::Tr(CGI::td({-class=>"InfoPanel"}, $r->maketext("Browse from:")." ",
 		$popupetc
 	));
 }
@@ -854,7 +854,7 @@ sub make_top_row {
 	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
         my $courseID = $self->r->urlpath->arg("courseID");
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"left"}, $r->maketext("Add problems to").' ',
+	print CGI::Tr(CGI::td({-class=>"InfoPanel"}, $r->maketext("Add problems to").' ',
 		CGI::b($r->maketext("Target Set:").' '),
 		CGI::popup_menu(-name=> 'local_sets', 
 						-values=>$list_of_local_sets, 
@@ -883,7 +883,7 @@ sub make_top_row {
 		shift @{$list_of_local_sets};
 	}
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel", -align=>"center"},
+	print CGI::Tr(CGI::td({-class=>"InfoPanel"},
 		$r->maketext("Browse").' ',
 		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
 		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
@@ -910,7 +910,6 @@ sub make_top_row {
 
     # For next/previous buttons
 	my ($next_button, $prev_button) = ("", "");
-	my $show_hide_path_button = "";
 	my $first_shown = $self->{first_shown};
 	my $last_shown = $self->{last_shown}; 
 	my $first_index = $self->{first_index};
@@ -925,36 +924,20 @@ sub make_top_row {
 		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
 						 -value=>$r->maketext("Next page"));
 	}
-	if (scalar(@pg_files)) {
-		$show_hide_path_button = CGI::submit(-id=>"toggle_paths", -style=>"width:16ex",
-		                         -value=>$r->maketext("Show all paths"),
-								 -id =>"toggle_paths",
-								 -onClick=>'return togglepaths()');
-		$show_hide_path_button .= " ".CGI::hidden(-name=>"toggle_path_current", -id=>"toggle_path_current", -default=>'show');
-		$show_hide_path_button .= " ".CGI::hidden(-name=>"hidetext", -id=>"hidetext", -default=>$r->maketext("Hide all paths"));
-		$show_hide_path_button .= " ".CGI::hidden(-name=>"showtext", -id=>"showtext", -default=>$r->maketext("Show all paths"));
-	}
 
 	print CGI::Tr({},
-	        CGI::td({-class=>"InfoPanel", -align=>"center"},
-		      CGI::start_table({-border=>"0"}),
-		        CGI::Tr({}, CGI::td({ -align=>"center"},
-			       CGI::button(-name=>"select_all", -style=>$these_widths,
-                                    -onClick=>'return addme("", "all")',
-			            -value=>$r->maketext("Add All")),
-		           CGI::submit(-name=>"cleardisplay", 
-		                -style=>$these_widths,
-		                -value=>$r->maketext("Clear Problem Display")),
-			$prev_button, " ", $next_button, " ", $show_hide_path_button
-		     )), 
-	#	CGI::Tr({}, 
-	#	 CGI::td({},
-
-		    #CGI::submit(-name=>"rerandomize", 
-		    #            -style=>$these_widths,
-		    #            -value=>"Rerandomize"),
-	#)), 
-	CGI::end_table()));
+		CGI::td({-class=>"InfoPanel"},
+			CGI::start_table({-border=>"0"}),
+			CGI::Tr({}, CGI::td({ -align=>"center"},
+					CGI::button(-name=>"select_all", -style=>$these_widths,
+						-onClick=>'return addme("", "all")',
+						-value=>$r->maketext("Add All")),
+					CGI::submit(-name=>"cleardisplay",
+						-style=>$these_widths,
+						-value=>$r->maketext("Clear Problem Display")),
+					$prev_button, " ", $next_button
+				)),
+			CGI::end_table()));
 }
 
 
@@ -1024,8 +1007,8 @@ sub make_data_row {
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="far fa-eye" ></i>');
 
-	my $inSet = ($self->{isInSet}{$sourceFileName})?" (in target set)" : "&nbsp;";
-	$inSet = CGI::span({-id=>"inset$cnt", -style=>"text-align: right"}, CGI::i(CGI::b($inSet)));
+	my $inSet = CGI::span({ class => "lb-inset", id => "inset$cnt" },
+		CGI::i(CGI::b($self->{isInSet}{$sourceFileName} ? " (in target set)" : "&nbsp;")));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
 	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
@@ -1103,29 +1086,26 @@ sub make_data_row {
 	print $mltstart;
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
-		CGI::div({-class=>"lb-problem-header"},
-			$mltstart eq "" ? CGI::hr() : "",
-		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
-		      -value=>$r->maketext("Add"),
-			-title=>"Add problem to target set",
-		      -onClick=>"return addme(\"$sourceFileName\", \'one\')")),
-			"\n",CGI::span({-class=>"lb-problem-path"},CGI::span({id=>"filepath$cnt"},$r->maketext("Show path ..."))),"\n",
-			 '<script type="text/javascript">settoggle("filepath'.$cnt.'", "'.$r->maketext("Show path ...").'", "'.$r->maketext("Hide path:")." $sourceFileName.".'")</script>',
-			CGI::span({-class=>"lb-problem-icons"}, 
-				$inSet, $MOtag, $mlt, $rerand,
-                        $edit_link, " ", $try_link,
-			CGI::span({-name=>"dont_show", 
-				-title=>"Hide this problem",
-				-style=>"cursor: pointer",
-				   -onClick=>"return delrow($cnt)"}, "X")),
-                         $problem_stats,
-
-			  ), 
-		#CGI::br(),
-		CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
-                $tagwidget,
-		CGI::div(CGI::div({ class => "psr_render_area", id => "psr_render_area_$cnt", data_pg_file => $pg_file }))
-	));
+			CGI::div({-class=>"lb-problem-header"},
+				$mltstart eq "" ? CGI::hr() : "",
+				CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me",
+						-value=>$r->maketext("Add"),
+						-title=>"Add problem to target set",
+						-onClick=>"return addme(\"$sourceFileName\", \'one\')")),
+				CGI::span({-class=>"lb-problem-icons"},
+					$MOtag, $mlt, $rerand,
+					$edit_link, " ", $try_link,
+					CGI::span({-name=>"dont_show",
+							-title=>"Hide this problem",
+							-style=>"cursor: pointer",
+							-onClick=>"return delrow($cnt)"}, "X")),
+				$problem_stats,
+			),
+			CGI::div({ class => "lb-problem-sub-header" }, CGI::span({ class => "lb-problem-path" }, $sourceFileName) . $inSet),
+			CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
+			$tagwidget,
+			CGI::div(CGI::div({ class => "psr_render_area", id => "psr_render_area_$cnt", data_pg_file => $pg_file }))
+		));
 	print $mltend;
 }
 

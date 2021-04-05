@@ -537,11 +537,17 @@ table.classlist-table .tbody {
 
 /* Library Browser */
 .library-browser-table {
-	width: 90%;
+	width: 100%;
 }
 
-.library-browser-table .InfoPanel table {
-	max-width: 740px;
+.library-browser-table td.InfoPanel {
+	text-align: center;
+	max-width: 800px;
+}
+
+.library-browser-table td.InfoPanel table {
+	text-align: center;
+	max-width: 800px;
 	margin: auto;
 }
 
@@ -570,7 +576,7 @@ table.classlist-table .tbody {
 	margin-top: 20px;
 }
 
-.lb-mlt-group .lb-problem-header:first-child {
+.lb-mlt-group tr:nth-child(2) .lb-problem-header {
 	margin-top: 0px;
 }
 
@@ -578,9 +584,18 @@ table.classlist-table .tbody {
     text-align: left;
 }
 
+.lb-problem-sub-header {
+	width: 100%;
+}
+
 .lb-problem-path {
     text-align: left; 
-    cursor: pointer;
+}
+
+.lb-inset {
+	float: right;
+	text-align: right;
+	margin-right: 0.8em;
 }
 
 .lb-problem-icons {
