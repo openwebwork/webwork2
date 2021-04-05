@@ -535,8 +535,7 @@ sub browse_library_panel1 {
 				CGI::td([$r->maketext("Chapter:"),
 					CGI::popup_menu(-name=> 'library_chapters', 
 					                -values=>\@chaps,
-					                -default=> $chapter_selected,
-					                -onchange=>"lib_update('sections', 'get');return true"
+					                -default=> $chapter_selected
 					),
 					CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
 			CGI::Tr({},
@@ -588,8 +587,7 @@ sub browse_library_panel2 {
 			CGI::td([$r->maketext("Subject:"),
 				CGI::popup_menu(-name=> 'library_subjects', 
 					            -values=>\@subjs,
-					            -default=> $subject_selected,
-					            -onchange=>"lib_update('chapters', 'get');return true"
+					            -default=> $subject_selected
 				)]),
 #			CGI::td({-colspan=>2, -align=>"right"},
 #				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists"))
@@ -600,16 +598,14 @@ sub browse_library_panel2 {
 			CGI::td([$r->maketext("Chapter:"),
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
-					            -default=> $chapter_selected,
-					            -onchange=>"lib_update('sections', 'get');return true"
+					            -default=> $chapter_selected
 		    )]),
 		),
 		CGI::Tr({},
 			CGI::td([$r->maketext("Section:"),
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
-					        -default=> $section_selected,
-						-onchange=>"lib_update('count', 'clear');return true"
+					        -default=> $section_selected
 		    )]),
 		 ),
 		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
@@ -703,7 +699,6 @@ sub browse_library_panel2adv {
 		my $selected = '';
 		$selected = ' checked' if(defined($selected_levels{$j}));
 		$mylevelline .= "<td><label><input type='checkbox' name='level' value='$j' ";
-		$mylevelline .= q/onchange="lib_update('count', 'clear');return true" /;
 		$mylevelline .= "$selected />$j</label></td>";
 	}
 	$mylevelline .= "<td>".$self->helpMacro("Levels")."</td>";
@@ -719,8 +714,7 @@ sub browse_library_panel2adv {
 			CGI::td([$r->maketext("Subject:"),
 				CGI::popup_menu(-name=> 'library_subjects', 
 					            -values=>\@subjs,	
-					            -default=> $selected{dbsubject},
-					            -onchange=>"lib_update('chapters', 'get');return true"
+					            -default=> $selected{dbsubject}
 				)]),
 			CGI::td({-colspan=>2, -align=>"right"},
 				CGI::submit(-name=>"lib_select_subject", -value=>$r->maketext("Update Menus"),
@@ -729,8 +723,7 @@ sub browse_library_panel2adv {
 			CGI::td([$r->maketext("Chapter:"),
 				CGI::popup_menu(-name=> 'library_chapters', 
 					            -values=>\@chaps,
-					            -default=> $selected{dbchapter},
-					            -onchange=>"lib_update('sections', 'get');return true"
+					            -default=> $selected{dbchapter}
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
 					CGI::submit(-name=>"library_reset", -value=>$r->maketext("Reset"),
@@ -740,8 +733,7 @@ sub browse_library_panel2adv {
 			CGI::td([$r->maketext("Section:"),
 			CGI::popup_menu(-name=> 'library_sections', 
 					        -values=>\@sects,
-					        -default=> $selected{dbsection},
-							-onchange=>"lib_update('count', 'clear');return true"
+					        -default=> $selected{dbsection}
 		    )]),
 			CGI::td({-colspan=>2, -align=>"right"},
 					CGI::submit(-name=>"library_basic", -value=>$r->maketext("Basic Search"),
@@ -859,7 +851,6 @@ sub make_top_row {
 		CGI::popup_menu(-name=> 'local_sets', 
 						-values=>$list_of_local_sets, 
 						-default=> $set_selected,
-                                                -onchange=> "return markinset()",
 						-override=>1),
 		CGI::submit(-name=>"edit_local", -value=>$r->maketext("Edit Target Set")),
 		CGI::hidden(-name=>"selfassign", -default=>0,-override=>1).
@@ -930,7 +921,6 @@ sub make_top_row {
 			CGI::start_table({-border=>"0"}),
 			CGI::Tr({}, CGI::td({ -align=>"center"},
 					CGI::button(-name=>"select_all", -style=>$these_widths,
-						-onClick=>'return addme("", "all")',
 						-value=>$r->maketext("Add All")),
 					CGI::submit(-name=>"cleardisplay",
 						-style=>$these_widths,
@@ -1019,7 +1009,7 @@ sub make_data_row {
 	$noshowclass = 'MLT'.$sourceFileData->{morelt} if $sourceFileData->{morelt};
 	if($sourceFileData->{children}) {
 		my $numchild = scalar(@{$sourceFileData->{children}});
-		$mlt = "<span id='mlt$cnt' onclick='togglemlt($cnt,\"$noshowclass\")' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
+		$mlt = "<span class='lb-mlt-parent' id='mlt$cnt' data-mlt-cnt='$cnt' data-mlt-noshow-class='$noshowclass' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
 		$mltstart = "<tr><td><table id='mlt-table$cnt' class='lb-mlt-group'><tr><td>\n";
 	}
@@ -1088,17 +1078,18 @@ sub make_data_row {
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
 			CGI::div({-class=>"lb-problem-header"},
 				$mltstart eq "" ? CGI::hr() : "",
-				CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me",
-						-value=>$r->maketext("Add"),
-						-title=>"Add problem to target set",
-						-onClick=>"return addme(\"$sourceFileName\", \'one\')")),
+				CGI::span({ class => "lb-problem-add" },
+					CGI::button(-name=>"add_me",
+						value => $r->maketext("Add"),
+						title => "Add problem to target set",
+						data_source_file => $sourceFileName)),
 				CGI::span({-class=>"lb-problem-icons"},
 					$MOtag, $mlt, $rerand,
 					$edit_link, " ", $try_link,
-					CGI::span({-name=>"dont_show",
-							-title=>"Hide this problem",
-							-style=>"cursor: pointer",
-							-onClick=>"return delrow($cnt)"}, "X")),
+					CGI::span({
+							name => "dont_show", title => "Hide this problem",
+							style => "cursor: pointer", data_row_cnt => $cnt
+						}, "X")),
 				$problem_stats,
 			),
 			CGI::div({ class => "lb-problem-sub-header" }, CGI::span({ class => "lb-problem-path" }, $sourceFileName) . $inSet),
@@ -1715,7 +1706,6 @@ sub output_JS {
 	print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
 	print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
 	print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-	print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/modernizr-2.0.6.js"></script>!;
 	print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
 	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 
@@ -1723,7 +1713,7 @@ sub output_JS {
 
 	print qq!<script src="$webwork_htdocs_url/js/apps/ImageView/imageview.js"></script>!;
 	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
-	print qq!<script src="$webwork_htdocs_url/js/apps/SetMaker/setmaker.js"></script>!;
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => "" }, "");
 	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
 		my $site_url = $ce->{webworkURLs}->{htdocs};
 		print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
