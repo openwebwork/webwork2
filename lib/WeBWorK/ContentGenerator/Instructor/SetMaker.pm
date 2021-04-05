@@ -1671,10 +1671,7 @@ sub body {
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
-			'<div align="center">',
-	CGI::start_table({class=>"library-browser-table"});
-	$self->make_top_row('all_db_sets'=>\@all_db_sets, 
-				 'browse_which'=> $browse_which);
+			'<div align="center">';
 	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
 		CGI::hidden(-name=>'problem_seed', -value=>$problem_seed, -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
@@ -1688,6 +1685,9 @@ sub body {
 	print CGI::hidden(-name=>'first_index', -value=>$first_index);
 	print CGI::hidden(-name=>'last_index', -value=>$last_index);
 	print CGI::hidden(-name=>'total_probs', -value=>$total_probs);
+
+	print CGI::start_table({class=>"library-browser-table"});
+	$self->make_top_row('all_db_sets'=>\@all_db_sets, 'browse_which'=> $browse_which);
 
 	########## Now print problems
 	my ($jj,$mltnumleft)=(0,-1);

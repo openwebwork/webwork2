@@ -536,6 +536,15 @@ table.classlist-table .tbody {
 }
 
 /* Library Browser */
+.library-browser-table {
+	width: 90%;
+}
+
+.library-browser-table .InfoPanel table {
+	max-width: 740px;
+	margin: auto;
+}
+
 .library-browser-table td {
 	padding-top: 0.2em;
 	padding-bottom: 0.2em;
@@ -552,9 +561,17 @@ table.classlist-table .tbody {
 .lb-problem-header {
     overflow:auto;
     background-color: #FFFFFF; 
-    margin: 0px auto;
+    margin: 20px auto 0px;
     min-height:30px;
     display:block;
+}
+
+.lb-mlt-group {
+	margin-top: 20px;
+}
+
+.lb-mlt-group .lb-problem-header:first-child {
+	margin-top: 0px;
 }
 
 .lb-problem-add {
