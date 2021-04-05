@@ -1104,6 +1104,7 @@ sub make_data_row {
 	# Print the cell
 	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
 		CGI::div({-class=>"lb-problem-header"},
+			$mltstart eq "" ? CGI::hr() : "",
 		    CGI::span({-class=>"lb-problem-add"},CGI::button(-name=>"add_me", 
 		      -value=>$r->maketext("Add"),
 			-title=>"Add problem to target set",
