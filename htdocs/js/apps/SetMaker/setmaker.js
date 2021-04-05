@@ -434,9 +434,7 @@ window.addEventListener('DOMContentLoaded', async function() {
 						if (container) container.style.padding = '0px';
 					});
 				}
-				iframe[0].contentWindow.document.open();
-				iframe[0].contentWindow.document.write(data.html);
-				iframe[0].contentWindow.document.close();
+				iframe[0].srcdoc = data.html;
 				resolve();
 			}).fail(function (data) {
 				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
