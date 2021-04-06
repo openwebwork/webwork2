@@ -564,20 +564,23 @@ table.classlist-table .tbody {
     padding-left: 0.2em;
 }
 
-.lb-problem-header {
-    overflow:auto;
-    background-color: #FFFFFF; 
-    margin: 20px auto 0px;
-    min-height:30px;
-    display:block;
+.lb-problem-row div.well {
+	margin-top: 10px;
+	margin-bottom: 0px;
 }
 
 .lb-mlt-group {
-	margin-top: 20px;
+	margin-top: 10px;
 }
 
-.lb-mlt-group tr:nth-child(2) .lb-problem-header {
+.lb-mlt-group tr:first-child.lb-problem-row > td > div.well {
 	margin-top: 0px;
+}
+
+.lb-problem-header {
+    overflow:auto;
+    min-height:30px;
+    display:block;
 }
 
 .lb-problem-add {

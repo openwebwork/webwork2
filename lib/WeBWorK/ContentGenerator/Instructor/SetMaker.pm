@@ -1011,9 +1011,9 @@ sub make_data_row {
 		my $numchild = scalar(@{$sourceFileData->{children}});
 		$mlt = "<span class='lb-mlt-parent' id='mlt$cnt' data-mlt-cnt='$cnt' data-mlt-noshow-class='$noshowclass' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
 		$noshowclass = "NS$cnt";
-		$mltstart = "<tr><td><table id='mlt-table$cnt' class='lb-mlt-group'><tr><td>\n";
+		$mltstart = "<tr><td><table id='mlt-table$cnt' class='lb-mlt-group'>\n";
 	}
-	$mltend = "</td></tr></table></td></tr>\n" if($mltnumleft==0);
+	$mltend = "</table></td></tr>\n" if($mltnumleft==0);
 	my $noshow = '';
 	$noshow = 'display: none' if($sourceFileData->{noshow});
 
@@ -1075,27 +1075,28 @@ sub make_data_row {
 
 	print $mltstart;
 	# Print the cell
-	print CGI::Tr({-align=>"left", -id=>"pgrow$cnt", -style=>$noshow, class=>$noshowclass }, CGI::td(
-			CGI::div({-class=>"lb-problem-header"},
-				$mltstart eq "" ? CGI::hr() : "",
-				CGI::span({ class => "lb-problem-add" },
-					CGI::button(-name=>"add_me",
-						value => $r->maketext("Add"),
-						title => "Add problem to target set",
-						data_source_file => $sourceFileName)),
-				CGI::span({-class=>"lb-problem-icons"},
-					$MOtag, $mlt, $rerand,
-					$edit_link, " ", $try_link,
-					CGI::span({
-							name => "dont_show", title => "Hide this problem",
-							style => "cursor: pointer", data_row_cnt => $cnt
-						}, "X")),
-				$problem_stats,
-			),
-			CGI::div({ class => "lb-problem-sub-header" }, CGI::span({ class => "lb-problem-path" }, $sourceFileName) . $inSet),
-			CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
-			$tagwidget,
-			CGI::div(CGI::div({ class => "psr_render_area", id => "psr_render_area_$cnt", data_pg_file => $pg_file }))
+	print CGI::Tr({ align => "left", id => "pgrow$cnt", style => $noshow, class => "lb-problem-row $noshowclass" },
+		CGI::td(CGI::div({ class => 'well' },
+				CGI::div({-class=>"lb-problem-header"},
+					CGI::span({ class => "lb-problem-add" },
+						CGI::button(-name=>"add_me",
+							value => $r->maketext("Add"),
+							title => "Add problem to target set",
+							data_source_file => $sourceFileName)),
+					CGI::span({-class=>"lb-problem-icons"},
+						$MOtag, $mlt, $rerand,
+						$edit_link, " ", $try_link,
+						CGI::span({
+								name => "dont_show", title => "Hide this problem",
+								style => "cursor: pointer", data_row_cnt => $cnt
+							}, "X")),
+					$problem_stats,
+				),
+				CGI::div({ class => "lb-problem-sub-header" }, CGI::span({ class => "lb-problem-path" }, $sourceFileName) . $inSet),
+				CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
+				$tagwidget,
+				CGI::div(CGI::div({ class => "psr_render_area", id => "psr_render_area_$cnt", data_pg_file => $pg_file }))
+			)
 		));
 	print $mltend;
 }
