@@ -2,7 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -265,7 +265,7 @@ sub formatRenderedProblem {
 	# Show the footer unless it is explicity disabled.
 	my $showFooter = $self->{inputs_ref}{showFooter} // "";
 	my $footer = $showFooter && $showFooter eq "no" ? ''
-		: "<div id='footer'>WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: math4</div>";
+		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: math4</div>";
 
 	# Execute and return the interpolated problem template
 	my $format_name = $self->{inputs_ref}{outputformat} // 'simple';

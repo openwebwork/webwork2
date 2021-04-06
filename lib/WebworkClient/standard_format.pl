@@ -80,7 +80,7 @@ $debug_messages
 <h3> internal errors </h3>
 $internal_debug_messages
 <div id="footer">
-WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: standard | theme: math4
+WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: standard | theme: math4
 </div>
 
 </body>

@@ -75,7 +75,7 @@ $LTIGradeMessage
 
 <!-- Skip the footer
 <div id="footer">
-WeBWorK &copy; 1996-2020 | host: $SITE_URL | course: $courseID | format: simple2 | theme: math4
+WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: simple2 | theme: math4
 </div>
 -->
 

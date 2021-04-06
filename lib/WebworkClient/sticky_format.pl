@@ -87,7 +87,7 @@ $LTIGradeMessage
 </div>
 </div>
 <div id="footer">
-WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: sticky | theme: math4
+WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: sticky | theme: math4
 </div>
 <!-- Activate local storage js -->
 <script type="text/javascript">WWLocalStorage();</script>
