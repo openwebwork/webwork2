@@ -283,9 +283,11 @@
 					"' src='about:blank' frameBorder='0'></iframe>");
 				var iframe = renderArea.find('#psr_render_iframe_' + id);
 				iframe[0].srcdoc = data;
-				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5' }, iframe[0]);
+				iFrameResize({
+						checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5',
+						onResized: function() { resolve(); }
+					}, iframe[0]);
 				iframe[0].addEventListener('load', function() { iframe[0].contentWindow.document.querySelector('.container-fluid').style.padding = '0px'; });
-				resolve();
 			}).fail(function (data) {
 				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
 					.text(basicWebserviceURL + ': ' + data.statusText));

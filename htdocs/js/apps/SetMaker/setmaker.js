@@ -337,131 +337,120 @@
 
 	var basicRendererURL = "/webwork2/html2xml";
 
-	window.addEventListener('DOMContentLoaded', async function() {
-		// Set up the problem rerandomization buttons.
-		$(".rerandomize_problem_button").click(function() {
-			var targetProblem = $(this).data('target-problem');
-			render(targetProblem);
-		});
+	async function render(id) {
+		return new Promise(function(resolve, reject) {
+			var renderArea = $('#psr_render_area_' + id);
 
-		// Render problems on page load
-		var renderAreas = $('.psr_render_area');
-		for (var renderArea of renderAreas) {
-			$(renderArea).html('Loading Please Wait...');
-			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
-		}
+			var iframe = renderArea.find('#psr_render_iframe_' + id);
+			if (iframe[0] && iframe[0].iFrameResizer) {
+				iframe[0].contentDocument.location.replace('about:blank');
+			}
 
-		async function render(id) {
-			return new Promise(function(resolve, reject) {
-				var renderArea = $('#psr_render_area_' + id);
+			var ro = {
+				userID: $('#hidden_user').val(),
+				courseID: $('#hidden_courseID').val(),
+				session_key: $('#hidden_key').val()
+			};
 
-				var iframe = renderArea.find('#psr_render_iframe_' + id);
-				if (iframe[0] && iframe[0].iFrameResizer) {
-					iframe[0].contentDocument.location.replace('about:blank');
+			if (!(ro.userID && ro.courseID && ro.session_key)) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					.text("Missing hidden credentials: user, session_key, courseID"));
+				resolve();
+				return;
+			}
+
+			ro.sourceFilePath = renderArea.data('pg-file');
+			ro.outputformat = 'simple';
+			ro.showAnswerNumbers = 0;
+			ro.problemSeed = Math.floor((Math.random()*10000));
+			ro.showHints = $('input[name=showHints]').is(':checked') ? 1 : 0;
+			ro.showSolutions = $('input[name=showSolutions]').is(':checked') ? 1 : 0;
+			ro.noprepostambles = 1;
+			ro.processAnswers = 0;
+			ro.showFooter = "no";
+			ro.displayMode = $('select[name=mydisplayMode]').val();
+			ro.send_pg_flags = 1;
+
+			$.ajax({type:'post',
+				url: basicRendererURL,
+				data: ro,
+				dataType: "json",
+				timeout: 10000, //milliseconds
+			}).done(function (data) {
+				// Give nicer session timeout error
+				if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
+					/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text("Can't authenticate -- session may have timed out."));
+					resolve();
+					return;
 				}
-
-				var ro = {
-					userID: $('#hidden_user').val(),
-					courseID: $('#hidden_courseID').val(),
-					session_key: $('#hidden_key').val()
-				};
-
-				if (!(ro.userID && ro.courseID && ro.session_key)) {
+				// Give nicer file not found error
+				if (/this problem file was empty/i.test(data.html)) {
 					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
-						.text("Missing hidden credentials: user, session_key, courseID"));
+						.text('No Such File or Directory!'));
+					resolve();
+					return;
+				}
+				// Give nicer problem rendering error
+				if ((data.pg_flags && data.pg_flags.error_flag) ||
+					/error caught by translator while processing problem/i.test(data.html) ||
+					/error message for command: renderproblem/i.test(data.html)) {
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text('There was an error rendering this problem!'));
 					resolve();
 					return;
 				}
 
-				ro.sourceFilePath = renderArea.data('pg-file');
-				ro.outputformat = 'simple';
-				ro.showAnswerNumbers = 0;
-				ro.problemSeed = Math.floor((Math.random()*10000));
-				ro.showHints = $('input[name=showHints]').is(':checked') ? 1 : 0;
-				ro.showSolutions = $('input[name=showSolutions]').is(':checked') ? 1 : 0;
-				ro.noprepostambles = 1;
-				ro.processAnswers = 0;
-				ro.showFooter = "no";
-				ro.displayMode = $('select[name=mydisplayMode]').val();
-				ro.send_pg_flags = 1;
-
-				$.ajax({type:'post',
-					url: basicRendererURL,
-					data: ro,
-					dataType: "json",
-					timeout: 10000, //milliseconds
-				}).done(function (data) {
-					// Give nicer session timeout error
-					if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
-						/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
-						renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
-							.text("Can't authenticate -- session may have timed out."));
-						resolve();
-						return;
-					}
-					// Give nicer file not found error
-					if (/this problem file was empty/i.test(data.html)) {
-						renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
-							.text('No Such File or Directory!'));
-						resolve();
-						return;
-					}
-					// Give nicer problem rendering error
-					if ((data.pg_flags && data.pg_flags.error_flag) ||
-						/error caught by translator while processing problem/i.test(data.html) ||
-						/error message for command: renderproblem/i.test(data.html)) {
-						renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
-							.text('There was an error rendering this problem!'));
-						resolve();
-						return;
-					}
-
-					if (!(iframe[0] && iframe[0].iFrameResizer)) {
-						renderArea.html("<iframe id='psr_render_iframe_" + id +
-							"' src='about:blank' frameBorder='0'></iframe>");
-						iframe = renderArea.find('#psr_render_iframe_' + id);
-						if (data.pg_flags && data.pg_flags.comment) iframe.after($(data.pg_flags.comment));
-						iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5' }, iframe[0]);
-						iframe[0].addEventListener('load', function() {
-							var container = iframe[0].contentWindow.document.querySelector('.container-fluid');
-							if (container) container.style.padding = '0px';
-						});
-					}
-					iframe[0].srcdoc = data.html;
-					resolve();
-				}).fail(function (data) {
-					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
-						.text(basicRendererURL + ': ' + data.statusText));
-					resolve();
-				});
+				if (!(iframe[0] && iframe[0].iFrameResizer)) {
+					renderArea.html("<iframe id='psr_render_iframe_" + id +
+						"' src='about:blank' frameBorder='0'></iframe>");
+					iframe = renderArea.find('#psr_render_iframe_' + id);
+					if (data.pg_flags && data.pg_flags.comment) iframe.after($(data.pg_flags.comment));
+					iFrameResize({
+						checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5',
+						onResized: function() { resolve(); }
+					}, iframe[0]);
+					iframe[0].addEventListener('load', function() {
+						var container = iframe[0].contentWindow.document.querySelector('.container-fluid');
+						if (container) container.style.padding = '0px';
+					});
+				}
+				iframe[0].srcdoc = data.html;
+			}).fail(function (data) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					.text(basicRendererURL + ': ' + data.statusText));
+				resolve();
 			});
-		}
-	});
+		});
+	}
 
-	function togglemlt(cnt, noshowclass) {
+	async function togglemlt(cnt, noshowclass) {
 		nomsg();
-		var count = $('.' + noshowclass).length;
+		let unshownAreas = $('.' + noshowclass);
+		var count = unshownAreas.length;
 		var n1 = $('#lastshown').text();
 		var n2 = $('#totalshown').text();
 
 		if($('#mlt' + cnt).text() == 'M') {
-			$('.' + noshowclass).show();
-			$('.' + noshowclass).each(function() {
-				var iframe = $(this).find('iframe[id^=psr_render_iframe_]');
+			unshownAreas.show();
+			// Render any problems that were hidden that have not yet been rendered.
+			for (let area of unshownAreas) {
+				let iframe = $(area).find('iframe[id^=psr_render_iframe_]');
 				if (iframe[0] && iframe[0].iFrameResizer) iframe[0].iFrameResizer.resize();
-			});
+				else await render(area.id.match(/^pgrow(\d+)/)[1]);
+			}
 			$('#mlt' + cnt).text("L");
 			$('#mlt' + cnt).attr("title", "Show less like this");
 			count = -count;
 		} else {
-			$('.' + noshowclass).hide();
+			unshownAreas.hide();
 			$('#mlt' + cnt).text("M");
-			$('#mlt' + cnt).attr("title", "Show " + $('.' + noshowclass).length + " more like this");
+			$('#mlt' + cnt).attr("title", "Show " + unshownAreas.length + " more like this");
 		}
 		$('#lastshown').text(n1 - count);
 		$('#totalshown').text(n2 - count);
 		$('[name="last_shown"]').val($('[name="last_shown"]').val() - count);
-		return false;
 	}
 
 	function showpglist() {
@@ -481,6 +470,28 @@
 			.html(data)
 			.dialog({width:'70%'});
 	}
+
+	// Set up the problem rerandomization buttons.
+	$(".rerandomize_problem_button").click(function() {
+		var targetProblem = $(this).data('target-problem');
+		render(targetProblem);
+	});
+
+	// Find all render areas
+	var renderAreas = $('.psr_render_area');
+
+	// Add the loading message to all render areas.
+	for (var renderArea of renderAreas) {
+		$(renderArea).html('Loading Please Wait...');
+	}
+
+	// Render all visible problems on the page
+	(async function() {
+		for (let renderArea of renderAreas) {
+			if (!$(renderArea).is(':visible')) continue;
+			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+		}
+	})();
 
 	$("select[name=library_chapters]").on("change", function() { lib_update('sections', 'get'); });
 	$("select[name=library_subjects]").on("change", function() { lib_update('chapters', 'get'); });
