@@ -21,7 +21,7 @@ latin1 to utf8mb4.
 
 =head1 SYNOPSIS
  
-  upgrade-database.pl [options]
+  upgrade-database-to-utf8mb4.pl [options]
  
   Options:
     -c|--course-id [course]   Course id to upgrade the database for.
