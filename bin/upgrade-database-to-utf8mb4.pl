@@ -164,6 +164,8 @@ my $port   = $ce->{database_port};
 my $dbuser = shell_quote($ce->{database_username});
 my $dbpass = $ce->{database_password};
 
+$ENV{'MYSQL_PWD'} = $dbpass;
+
 if (!$no_backup) {
 	# Backup the database
 	$dump_file = "./webwork.sql" if !$dump_file || $dump_file eq "";
