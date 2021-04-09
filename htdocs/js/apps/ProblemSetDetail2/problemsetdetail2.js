@@ -43,12 +43,6 @@
 			container: this});
 	});
 
-	// Set up already rendered problems
-	$("iframe[id^=psr_render_iframe_]").each(function() {
-		iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5' }, this);
-		this.addEventListener('load', function() { this.contentWindow.document.querySelector('.container-fluid').style.padding = '0px'; });
-	});
-
 	// This is for the render buttons
 	$('.pdr_render').click(function(event) {
 		event.preventDefault();
@@ -249,6 +243,7 @@
 			ro.processAnswers = 0;
 			ro.showFooter = "no";
 			ro.displayMode = $('#problem_displaymode').val();
+			ro.extra_header_text = "<style>html{overflow-y:hidden;}body{padding:0;background:#f5f5f5;.container-fluid{padding:0px;}</style>";
 
 			$.ajax({type:'post',
 				url: basicWebserviceURL,
@@ -279,15 +274,12 @@
 					return;
 				}
 
-				renderArea.html("<iframe id='psr_render_iframe_" + id +
-					"' src='about:blank' frameBorder='0'></iframe>");
-				var iframe = renderArea.find('#psr_render_iframe_' + id);
+				var iframe = $("<iframe/>", { id: "psr_render_iframe_" + id });
+				renderArea.html(iframe);
+				iframe[0].style.border = 'none';
 				iframe[0].srcdoc = data;
-				iFrameResize({
-						checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5',
-						onResized: function() { resolve(); }
-					}, iframe[0]);
-				iframe[0].addEventListener('load', function() { iframe[0].contentWindow.document.querySelector('.container-fluid').style.padding = '0px'; });
+				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
+				iframe[0].addEventListener('load', function() { resolve(); });
 			}).fail(function (data) {
 				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
 					.text(basicWebserviceURL + ': ' + data.statusText));

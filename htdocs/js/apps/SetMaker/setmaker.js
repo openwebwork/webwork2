@@ -370,6 +370,7 @@
 			ro.showFooter = "no";
 			ro.displayMode = $('select[name=mydisplayMode]').val();
 			ro.send_pg_flags = 1;
+			ro.extra_header_text = "<style>html{overflow-y:hidden;}body{padding:0;background:#f5f5f5;.container-fluid{padding:0px;}</style>";
 
 			$.ajax({type:'post',
 				url: basicRendererURL,
@@ -403,18 +404,12 @@
 				}
 
 				if (!(iframe[0] && iframe[0].iFrameResizer)) {
-					renderArea.html("<iframe id='psr_render_iframe_" + id +
-						"' src='about:blank' frameBorder='0'></iframe>");
-					iframe = renderArea.find('#psr_render_iframe_' + id);
+					iframe = $("<iframe/>", { id: "psr_render_iframe_" + id });
+					iframe[0].style.border = 'none';
+					renderArea.html(iframe);
 					if (data.pg_flags && data.pg_flags.comment) iframe.after($(data.pg_flags.comment));
-					iFrameResize({
-						checkOrigin: false, warningTimeout: 20000, scrolling: true, bodyPadding: 0, bodyBackground: '#f5f5f5',
-						onResized: function() { resolve(); }
-					}, iframe[0]);
-					iframe[0].addEventListener('load', function() {
-						var container = iframe[0].contentWindow.document.querySelector('.container-fluid');
-						if (container) container.style.padding = '0px';
-					});
+					iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
+					iframe[0].addEventListener('load', function() { resolve(); });
 				}
 				iframe[0].srcdoc = data.html;
 			}).fail(function (data) {
