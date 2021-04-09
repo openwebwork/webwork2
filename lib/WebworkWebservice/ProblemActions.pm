@@ -82,7 +82,10 @@ sub putUserProblem {
 	}
 
 	eval { $db->putUserProblem($userProblem) };
-	if ($@) { return { text => encode_utf8_base64("putUserProblem: " . $@) }; }
+	if ($@) {
+		warn "putUserProblem: $@";
+		return { text => encode_utf8_base64("Errors occured in putUserProblem.") };
+	}
 
 	return {
 		ra_out => $userProblem,
@@ -111,7 +114,11 @@ sub putProblemVersion {
 	}
 
 	eval { $db->putProblemVersion($problemVersion) };
-	if ($@) { return { text => encode_utf8_base64("putProblemVersion: " . $@) }; }
+	if ($@) {
+		warn "putProblemVersion: $@";
+		return { text => encode_utf8_base64("Errors occured in putProblemVersion.") };
+	}
+
 
 	return {
 		ra_out => $problemVersion,
@@ -137,7 +144,10 @@ sub putPastAnswer {
 	}
 
 	eval { $db->putPastAnswer($pastAnswer) };
-	if ($@) { return { text => encode_utf8_base64("putPastAnswer " . $@) }; }
+	if ($@) {
+		warn "putPastAnswer: $@";
+		return { text => encode_utf8_base64("Errors occured in putPastAnswer.") };
+	}
 
 	return {
 		ra_out => $pastAnswer,
