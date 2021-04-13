@@ -301,7 +301,10 @@ sub renderProblem {
 
 	# initialize problem source
 	$rh->{sourceFilePath} = $rh->{path} unless defined $rh->{sourceFilePath};
+
 	if ($UNIT_TESTS_ON) {
+		print STDERR "setRecord is ", WebworkWebservice::pretty_print_rh($setRecord);
+
 		print STDERR "template directory path ", $ce->{courseDirs}->{templates},"\n";
 		print STDERR "RenderProblem.pm: source file is ", $rh->{sourceFilePath},"\n";
 		print STDERR "RenderProblem.pm: problem source is included in the request \n" if defined($rh->{source}) and $rh->{source};
@@ -425,14 +428,17 @@ sub renderProblem {
 
 	$out2 = xml_filter($out2); # check this -- it might not be working correctly
 
-	print DEBUGCODE "\n\nStop xml encoding\n";
-	close(DEBUGCODE) if $debugXmlCode;
-	# END XML DEBUGGING CODE
-
 	$out2->{flags}{PROBLEM_GRADER_TO_USE} = undef;
 
 	my $endTime = new Benchmark;
 	$out2->{compute_time} = logTimingInfo($beginTime, $endTime);
+
+	if ($debugXmlCode) {
+		print DEBUGCODE "\n\nStop xml encoding\n";
+		close(DEBUGCODE);
+		warn "flags are", WebworkWebservice::pretty_print_rh($pg->{flags});
+	}
+	# END XML DEBUGGING CODE
 
 	return $out2;
 }
