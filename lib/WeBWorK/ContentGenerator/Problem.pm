@@ -695,7 +695,7 @@ sub pre_header_initialize {
 	$rerandomizePeriod = $problem->{prPeriod}
 	if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 
-	$prEnabled = 0 if ($rerandomizePeriod < 1);
+	$prEnabled = 0 if ($rerandomizePeriod < 1 || $self->{editMode});
 	if ($prEnabled) {
 		$problem->{prCount} = 0
 		if !defined($problem->{prCount}) || $problem->{prCount} =~ /^\s*$/;
@@ -860,12 +860,6 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-
-	# Keys dont really work well anymore.  So I'm removing this for now GG
-#	print qq{
-#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-#	};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -2306,20 +2300,6 @@ sub output_hidden_info {
 }
 
 # output_JS subroutine
-
-# prints out the wz_tooltip.js script for the current site.
-
-sub output_wztooltip_JS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
-	return "";
-}
 
 # outputs all of the Javascript needed for this page.
 # The main javascript needed here is color.js, which colors input fields based on whether or not

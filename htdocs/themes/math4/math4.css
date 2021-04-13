@@ -980,6 +980,9 @@ table caption{
     margin-bottom:.5ex;
 }
 
+.achievement_list_action_div {
+	height: 40px;
+}
 
 #none{
 	/*Please do not do anything with elements with id "none"*/
@@ -987,34 +990,9 @@ table caption{
 
 /*Styles for the PGProblemEditor Page*/
 
-#editor{
+#editor {
 	background-color: #FFFFFF;
-}
-
-#editor #source_and_options{
-	float: left;
-	width: 50%;
-}
-
-#editor #problemContents_label{
-	text-align: center;
-	font-weight: bold;
-	text-decoration: underline;
-	margin-left: 30%;
-}
-
-#editor #problemContents_id{
-	width: 100%;
-	height: 50%;
-}
-
-#editor .editor_form{
-	margin-left: 40px;
-}
-
-#editor #form_div{
-	float: left;
-	width: 100%;
+	margin-left: 0px;
 }
 
 /*Styles specifically for the problem viewer*/
@@ -1065,36 +1043,73 @@ table caption{
 	width: 750px;
 }
 
-#editor .pg_editor_input_span{
-	margin-bottom: 10px;
-	display: none;
-}
-
-#editor .pg_editor_input_div{
-	margin-top: 20px;
+#editor .pg_editor_action_div {
 	margin-left: 50px;
 }
 
-#editor #submit_input_div{
-	margin-top: 10px;
-	clear: both;
+#editor .pg_editor_new_window_div {
+	margin-top: 5px;
 }
 
-#pg_editor_frame_id{
-    width:95%;
-    height:590px;
-    overflow:scroll;
+#editor .pg_editor_new_window_div input {
+	margin: 0px 3px 0px 0px;
+}
+
+#editor .tab-content {
+	height: 140px;
 }
 
 #render-modal.modal {
-    width:1024px;
-    left:25%;
+	box-sizing: border-box;
+	width: 86vw;
+	left: 7vw;
+	height: 86vh;
+	top: 7vh;
+	margin-top: 0px;
+	margin-left: 0px;
 }
 
 #render-modal .modal-body {
-    height:95%;
-    width:95%;
-    max-height:600px;
+	overflow: hidden;
+	padding: 0;
+	max-height: unset;
+	height: calc(100% - 103px);
+}
+
+#pg_editor_frame_id{
+	overflow: auto;
+	border: none;
+	width: 100%;
+	height: 100%;
+}
+
+/* Page loading busy indicator */
+/* Currently only used on the problem editor page. */
+.page-loading-busy-indicator {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	background: rgba(0, 0, 0, .5);
+	z-index: 105;
+}
+
+.page-loading-busy-indicator .busy-text {
+	position: relative;
+	color: white;
+	font-size: 1.4em;
+	top: calc(50% - 4em);
+	margin: auto;
+	width: 100%;
+	text-align: center;
+}
+
+.page-loading-busy-indicator i {
+	color: white;
+	position: absolute;
+	left: calc(50% - 30px);
+	top: calc(50% - 30px);
 }
 
 .radio_span, 
