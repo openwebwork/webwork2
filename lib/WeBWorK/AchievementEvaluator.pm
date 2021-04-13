@@ -88,9 +88,10 @@ sub checkForAchievements {
     # updated $problem with the new results from $pg.  So we cheat and update the 
     # important bits here.  The only thing that gets left behind is last_answer, which is
     # still the previous last answer. 
-    # 
     
-    $problem->status($pg->{state}->{recorded_score});
+    # $pg->{result} reflects the current submission, $pg->{state} holds the best result 
+    # close the unlimited achievement points loophole by only using the current result!
+    $problem->status($pg->{result}->{score});
     $problem->sub_status($pg->{state}->{sub_recorded_score});
     $problem->attempted(1);
     $problem->num_correct($pg->{state}->{num_of_correct_ans});
