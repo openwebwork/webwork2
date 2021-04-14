@@ -83,7 +83,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortByName);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortByName);
 
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_VISIBILITY_STATE => 1;

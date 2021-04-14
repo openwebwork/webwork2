@@ -51,7 +51,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortAchievements);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements);
 use DateTime;
 use Text::CSV;
 

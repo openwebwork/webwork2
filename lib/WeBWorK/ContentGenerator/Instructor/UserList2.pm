@@ -1294,18 +1294,20 @@ sub savePassword_handler {
 		my $User = $db->getUser($userID); # checked
 		die $r->maketext("record for visible user [_1] not found", $userID) unless $User;
 		my $param = "user.${userID}.new_password";
-			if ((defined $tableParams->{$param}->[0]) and ($tableParams->{$param}->[0])) {
-			  my $newP = $tableParams->{$param}->[0];
-			  my $Password = eval {$db->getPassword($User->user_id)}; # checked
-			  my 	$cryptPassword = cryptPassword($newP);											 				if (!defined($Password)) {
-			    $Password = $db->newPassword();
-			    $Password->user_id($userID);
-			    $Password->password(cryptPassword($newP));
-			    eval { $db->addPassword($Password) };		             		} else { 
-			      
-			      $Password->password(cryptPassword($newP));
-			      eval { $db->putPassword($Password) };		             		}
+		if ((defined $tableParams->{$param}->[0]) and ($tableParams->{$param}->[0])) {
+			my $newP = $tableParams->{$param}->[0];
+			my $Password = eval {$db->getPassword($User->user_id)}; # checked
+			my $cryptPassword = cryptPassword($newP);
+			if (!defined($Password)) {
+				$Password = $db->newPassword();
+				$Password->user_id($userID);
+				$Password->password(cryptPassword($newP));
+				eval { $db->addPassword($Password) };
+			} else {
+				$Password->password(cryptPassword($newP));
+				eval { $db->putPassword($Password) };
 			}
+		}
 	}
 	
 	if (defined $r->param("prev_visible_users")) {
