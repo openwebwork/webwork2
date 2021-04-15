@@ -9,6 +9,12 @@ function graphTool(containerId, options) {
     // Do nothing if the graph has already been created.
 	if (document.getElementById(containerId + "_graph")) return;
 
+	var graphContainer = $('#' + containerId);
+	if (graphContainer.css('width') == '0px') {
+		setTimeout(function() { graphTool(containerId, options); }, 100);
+		return;
+	}
+
 	var gt = {};
 
 	// Semantic color control
@@ -1212,7 +1218,6 @@ function graphTool(containerId, options) {
     };
 
     // Create the tools and html elements.
-    var graphContainer = $('#' + containerId);
     var graphDiv = $("<div id='" + containerId + "_graph' class='jxgbox graphtool-graph'></div>");
     graphContainer.append(graphDiv);
 

@@ -22,7 +22,7 @@ require.config({
         "Backbone": "/webwork2_files/js/vendor/backbone/backbone",  //ok
         "underscore": "/webwork2_files/js/vendor/underscore/underscore", // ok
         "jquery": "/webwork2_files/js/vendor/jquery/jquery", // ok
-        "jquery-ui": "/webwork2_files/js/legacy/jquery-ui-1.8.16.custom.min", //FIXMEJS
+        "jquery-ui": "/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js", //FIXMEJS
         "touch-pinch": "/webwork2_files/js/vendor/jquery/modules/jquery.ui.touch-punch", //ok
         "tabs": "/webwork2_files/js/vendor/jquery/modules/ui.tabs.closable", //ok
         //this is important:

@@ -1639,7 +1639,6 @@ sub body {
 
 	##########	Top part
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-	print qq!<script src="$webwork_htdocs_url/js/legacy/vendor/wz_tooltip.js"></script>!;
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
 		$self->hidden_authen_fields,
                 CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
