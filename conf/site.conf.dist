@@ -118,6 +118,7 @@ $externalPrograms{dvipng}   = "/usr/bin/dvipng";
 $externalPrograms{convert}  = "/usr/bin/convert";
 
 $externalPrograms{dvisvgm}  = "/usr/bin/dvisvgm";
+$externalPrograms{pdf2svg}  = "/usr/bin/pdf2svg";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
