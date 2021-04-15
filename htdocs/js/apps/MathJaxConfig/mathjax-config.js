@@ -28,7 +28,8 @@ if (!window.MathJax) {
 						doc.math.push(math);
 					});
 				}, '']
-			}
+			},
+			ignoreHtmlClass: 'tex2jax_ignore'
 		}
 
 	};
