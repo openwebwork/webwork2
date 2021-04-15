@@ -1,4 +1,14 @@
-# checks to see if a studen finished a set between 5AM and 7AM
+# checks to see if a student finished a set between 5AM and 7AM
+
+# Check that this is not a repeated submission of problem which has
+# been solved before.
+# Do not consider this achievement if this is a repeated submission
+# of previously solved problem.
+
+return 0 if $problem->status != 1 or $problem->num_correct != 1;
+
+# now check the time
+
     my @timeData = localtime(time);
 
     if ($timeData[2] < 5 || $timeData[2] > 6) {
