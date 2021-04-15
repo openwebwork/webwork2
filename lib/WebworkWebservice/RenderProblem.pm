@@ -122,15 +122,9 @@ sub renderProblem {
 
 	# Grab the course name, if this request is going to depend on
 	# some course other than the default course
-	my $courseName;
 	my $ce;
 	my $db;
-	my $user;
 	my $beginTime = new Benchmark;
-
-	if (defined($self->{courseName}) and $self->{courseName} ) {
-		$courseName = $self->{courseName};
-	}
 
 	# It's better not to get the course in too many places. :-)
 	# High level information about the course should come from $self
@@ -224,7 +218,6 @@ sub renderProblem {
 	my $setVersionId = $rh->{version_id} || 0;
 
 	my $problemNumber =  (defined($rh->{envir}->{probNum})   )    ? $rh->{envir}->{probNum}      : 1 ;
-	my $problemSeed   =  (defined($rh->{envir}->{problemSeed}))   ? $rh->{envir}->{problemSeed}  : 1 ;
 	my $psvn          =  (defined($rh->{envir}->{psvn})      )    ? $rh->{envir}->{psvn}         : 1234 ;
 	my $problemStatus =  $rh->{problem_state}->{recorded_score}|| 0 ;
 	my $problemValue  =  (defined($rh->{envir}->{problemValue}))   ? $rh->{envir}->{problemValue}  : 1 ;
@@ -274,9 +267,13 @@ sub renderProblem {
 		? $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionId, $problemNumber)
 		: $db->getMergedProblem($effectiveUserName, $setName, $problemNumber);
 
-	# if that is not yet defined obtain the global problem,
-	# convert it to a user problem, and add fake user data
-	unless (defined $problemRecord) {
+	if (defined $problemRecord) {
+		# If a problem from the database is used, the passed in problem seed is ignored.
+		# So save the actual seed used and pass that on to the renderer.
+		$problemSeed = $problemRecord->problem_seed;
+	} else {
+		# If that is not yet defined obtain the global problem,
+		# convert it to a user problem, and add fake user data
 		my $userProblemClass = $db->{problem_user}->{record};
 		my $globalProblem = $db->getGlobalProblem($setName, $problemNumber); # checked
 		# if the global problem doesn't exist either, bail!
@@ -410,6 +407,8 @@ sub renderProblem {
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},
 		flags						=> $pg->{flags},
+		# Pass the seed that was actually used to the renderer.
+		problem_seed                => $problemSeed,
 		warning_messages            => $pgwarning_messages,
 		debug_messages              => $pgdebug_messages,
 		internal_debug_messages     => $internal_debug_messages,

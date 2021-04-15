@@ -108,6 +108,7 @@ send them to a (local) webservice running webworkXMLRPC.
 sub pretty_print_rh { 
     shift if UNIVERSAL::isa($_[0] => __PACKAGE__);
 	my $rh = shift;
+	return "" unless defined $rh;
 	my $indent = shift || 0;
 
 	my $out = "";
