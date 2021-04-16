@@ -536,6 +536,21 @@ table.classlist-table .tbody {
 }
 
 /* Library Browser */
+.library-browser-table {
+	width: 100%;
+}
+
+.library-browser-table td.InfoPanel {
+	text-align: center;
+	max-width: 800px;
+}
+
+.library-browser-table td.InfoPanel table {
+	text-align: center;
+	max-width: 800px;
+	margin: auto;
+}
+
 .library-browser-table td {
 	padding-top: 0.2em;
 	padding-bottom: 0.2em;
@@ -549,10 +564,21 @@ table.classlist-table .tbody {
     padding-left: 0.2em;
 }
 
+.lb-problem-row div.well {
+	margin-top: 10px;
+	margin-bottom: 0px;
+}
+
+.lb-mlt-group {
+	margin-top: 10px;
+}
+
+.lb-mlt-group tr:first-child.lb-problem-row > td > div.well {
+	margin-top: 0px;
+}
+
 .lb-problem-header {
     overflow:auto;
-    background-color: #FFFFFF; 
-    margin: 0px auto;
     min-height:30px;
     display:block;
 }
@@ -561,9 +587,18 @@ table.classlist-table .tbody {
     text-align: left;
 }
 
+.lb-problem-sub-header {
+	width: 100%;
+}
+
 .lb-problem-path {
     text-align: left; 
-    cursor: pointer;
+}
+
+.lb-inset {
+	float: right;
+	text-align: right;
+	margin-right: 0.8em;
 }
 
 .lb-problem-icons {
@@ -838,6 +873,10 @@ table.attemptResults td.Message {
 }
 .attemptResultsSummary { margin-bottom: 10px; }
 .parsehilight { color: inherit; background-color: yellow; }
+
+.problem-main-form {
+	margin-bottom: 0px;
+}
 
 .problem-main-form input {
     margin-left:.5ex;
@@ -1158,6 +1197,11 @@ div.problem_sets_options {
     list-style-type: none;
 }
 
+.problem_detail_row {
+	padding: 0.75em;
+	max-width: 1000px;
+}
+
 .pdr_placeholder {
     height: 100px;
     width: 90%;
@@ -1170,25 +1214,30 @@ div.problem_sets_options {
 }
 
 .pdr_handle {    
-    cursor: move;
     margin-right:2px;
     font-size:large;
 }
 
+#psd_list:not(.disable_renumber) .pdr_handle {
+	cursor: move;
+}
+
 .pdr_collapse {
     cursor: pointer;
-    width: 10px;
     font-size:large;
     display: none;
-    font-family: FontAwesome;
 }
 
 .psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f054';
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900;
+	content: '\f054';
 }
 
 .psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f078';
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900;
+	content: '\f078';
 }
 
 
@@ -1214,8 +1263,12 @@ div.problem_sets_options {
 }
 
 .psr_render_area {
-    margin-top: 10px;
-    overflow: hidden;
+	margin-top: 10px;
+}
+
+.psr_render_area iframe {
+	width: 100%;
+	border-radius: 5px;
 }
 
 .ScrollingRecordList > input[type='submit'] {
