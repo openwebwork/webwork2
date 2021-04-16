@@ -371,6 +371,7 @@
 			ro.displayMode = $('select[name=mydisplayMode]').val();
 			ro.send_pg_flags = 1;
 			ro.extra_header_text = "<style>html{overflow-y:hidden;}body{padding:0;background:#f5f5f5;.container-fluid{padding:0px;}</style>";
+			if (window.location.port) ro.forcePortNumber = window.location.port;
 
 			$.ajax({type:'post',
 				url: basicRendererURL,
