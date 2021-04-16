@@ -268,6 +268,9 @@ sub formatRenderedProblem {
 	my $footer = $showFooter && $showFooter eq "no" ? ''
 		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: math4</div>";
 
+	# For debugging purposes add $pretty_print_self to the output format in use and uncomment below.
+	#my $pretty_print_self = WebworkClient::pretty_print($self);
+
 	# Execute and return the interpolated problem template
 	my $format_name = $self->{inputs_ref}{outputformat} // 'simple';
 
