@@ -108,6 +108,7 @@ RUN apt-get update \
 	apache2 \
 	curl \
 	dvipng \
+	dvisvgm \
 	gcc \
 	libapache2-request-perl \
 	libarchive-zip-perl \
@@ -183,6 +184,7 @@ RUN apt-get update \
 	make \
 	netpbm \
 	patch \
+	pdf2svg \
 	preview-latex-style \
 	texlive \
 	texlive-latex-extra \
