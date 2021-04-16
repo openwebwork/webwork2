@@ -22,6 +22,7 @@ WebworkClient.pm
 
 
 =head1 SYNPOSIS
+
 	our $xmlrpc_client = new WebworkClient (
 		url                    => $ce->{server_site_url}, 
 		form_action_url        => $FORM_ACTION_URL,
@@ -405,7 +406,9 @@ sub jsXmlrpcCall {
 
 
 =head2 xml_utf_decode
+
 	Parse the structure to UTF-8 decode where needed.
+
 =cut
 
 sub xml_utf_decode { # Do UTF-8 decoding where xml_filter applied encoding
@@ -473,6 +476,7 @@ sub xml_utf_decode { # Do UTF-8 decoding where xml_filter applied encoding
 }
 
 =head2  Accessor methods
+
 	encodeSource  # encode source string with utf8 and base64 and store in encoded_source
 	encoded_source
 	request_object
@@ -598,6 +602,8 @@ sub default_inputs {
 	$out;
 }
 
+=over
+
 =item environment
 
 =cut
@@ -711,14 +717,14 @@ sub formatRenderedProblem {
 
 =item writeRenderLogEntry()
 
-# $ce - a WeBWork::CourseEnvironment object
-# $function - fully qualified function name
-# $details - any information, do not use the characters '[' or ']'
-# $beginEnd - the string "begin", "intermediate", or "end"
-# use the intermediate step begun or completed for INTERMEDIATE
-# use an empty string for $details when calling for END
-# Information printed in format:
-# [formatted date & time ] processID unixTime BeginEnd $function  $details
+ $ce - a WeBWork::CourseEnvironment object
+ $function - fully qualified function name
+ $details - any information, do not use the characters '[' or ']'
+ $beginEnd - the string "begin", "intermediate", or "end"
+ use the intermediate step begun or completed for INTERMEDIATE
+ use an empty string for $details when calling for END
+ Information printed in format:
+ [formatted date & time ] processID unixTime BeginEnd $function  $details
 
 =cut 
 

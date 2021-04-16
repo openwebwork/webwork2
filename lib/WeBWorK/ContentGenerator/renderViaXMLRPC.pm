@@ -40,16 +40,13 @@ use CGI;
 
 =head1 Description
 
+ renderViaXMLRPC -- a front end for the Webservice that accepts HTML forms
 
-#################################################
-  renderViaXMLRPC -- a front end for the Webservice that accepts HTML forms
-
-  receives WeBWorK problems presented as HTML forms,
-  packages the form variables into an XML_RPC request
+ receives WeBWorK problems presented as HTML forms,
+ packages the form variables into an XML_RPC request
  suitable for the Webservice/RenderProblem.pm
  takes the answer returned by the webservice (which has HTML format) and 
  returns it to the browser.
-#################################################
 
 =cut
  

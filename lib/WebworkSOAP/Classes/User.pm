@@ -1,18 +1,15 @@
 package WebworkSOAP::Classes::User;
 
-=pod
-=begin WSDL
-        _ATTR user_id       $string user_id
-        _ATTR first_name    $string first_name
-        _ATTR last_name     $string last_name
-        _ATTR email_address $string email_address
-        _ATTR student_id    $string student_id
-        _ATTR status        $string status
-        _ATTR section       $string section
-        _ATTR recitation    $string recitation
-        _ATTR comment       $string comment
-=end WSDL
-=cut
+# _ATTR user_id       $string user_id
+# _ATTR first_name    $string first_name
+# _ATTR last_name     $string last_name
+# _ATTR email_address $string email_address
+# _ATTR student_id    $string student_id
+# _ATTR status        $string status
+# _ATTR section       $string section
+# _ATTR recitation    $string recitation
+# _ATTR comment       $string comment
+
 sub new {
     my $self = shift;
     my $data = shift;
