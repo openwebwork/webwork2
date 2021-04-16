@@ -450,9 +450,11 @@ sub xml_filter {
 	# protect against modules defined in Safe which can't find their stringify procedure.
 	my $dummy = eval { "$input"  };
 	if ($@ ) {
-		print DEBUGCODE "Unable to determine stringify for this item\n";
-		print DEBUGCODE $@, "\n";
-		return;
+		if ($debugXmlCode) {
+			print DEBUGCODE "Unable to determine stringify for this item\n";
+			print DEBUGCODE $@, "\n";
+		}
+		return "";
 	}
 	my $type = ref($input);
 	
@@ -462,7 +464,7 @@ sub xml_filter {
 	} elsif( $type =~/HASH/i or "$input"=~/HASH/i) {
 		eval { my %test = %{$input}; };
 		if ($@) {
-			print DEBUGCODE "($input) looks like a HASH reference but is not (type is $type)\n" if $debugXmlCode;
+			print DEBUGCODE "($input) misunderstood as a HASH reference but is not (type is $type)\n" if $debugXmlCode;
 			$input = "HASH reference";
 		} else {
 			print DEBUGCODE "HASH reference ($input) with ".%{$input}." elements will be investigated\n" if $debugXmlCode;
@@ -472,6 +474,7 @@ sub xml_filter {
 				print DEBUGCODE "  "x$level."$item is " if $debugXmlCode;
 
 				next if ( $item =~ /^xmlrpc_UTF8_encoded_/ ); # avoid double processing
+				next unless defined $input->{$item};
 
 				# Until 2020 - ALL scalar values were left unchanged.
 				# However, since the release of WeBWorK 2.15 (late 2019) there
@@ -508,7 +511,7 @@ sub xml_filter {
 	} elsif( $type=~/ARRAY/i or "$input"=~/ARRAY/i) {
 		eval { my @test = @{$input}; };
 		if ($@) {
-			print DEBUGCODE "($input) looks like an ARRAY reference but is not (type is $type)\n" if $debugXmlCode;
+			print DEBUGCODE "($input) misunderstood as an ARRAY reference but is not (type is $type)\n" if $debugXmlCode;
 			$input = "ARRAY reference";
 		} else {
 			print DEBUGCODE "  "x$level."ARRAY reference with ".@{$input}." elements will be investigated\n" if $debugXmlCode;
