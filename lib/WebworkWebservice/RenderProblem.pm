@@ -239,11 +239,15 @@ sub renderProblem {
 		? $db->getMergedSetVersion($effectiveUserName, $setName, $setVersionId)
 		: $db->getMergedSet($effectiveUserName, $setName);
 
-	# if a User Set does not exist for this user and this set
-	# then we check the Global Set
-	# if that does not exist we create a fake set
-	# if it does, we add fake user data
-	unless (defined($setRecord) and ref($setRecord)) {
+	if (defined($setRecord) and ref($setRecord)) {
+		# If an actual set from the database is used, the passed in psvn is ignored.
+		# So save the actual psvn used and pass that on to the renderer.
+		$psvn = $setRecord->psvn;
+	} else {
+		# if a User Set does not exist for this user and this set
+		# then we check the Global Set
+		# if that does not exist we create a fake set
+		# if it does, we add fake user data
 		my $userSetClass = $db->{set_user}->{record};
 		my $globalSet = $db->getGlobalSet($setName); # checked
 
@@ -407,7 +411,8 @@ sub renderProblem {
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},
 		flags						=> $pg->{flags},
-		# Pass the seed that was actually used to the renderer.
+		# Pass the psvn and seed that were actually used to the renderer.
+		psvn                        => $psvn,
 		problem_seed                => $problemSeed,
 		warning_messages            => $pgwarning_messages,
 		debug_messages              => $pgdebug_messages,
