@@ -44,7 +44,7 @@ sub checkForAchievements {
     my $cheevoMessage = '';
     my $user_id = $problem->user_id;
     my $set_id = $problem->set_id;
-    our $set = $db->getGlobalSet($problem->set_id);
+    our $set = $db->getMergedSet($user_id,$problem->set_id);
     my @allAchievementIDs = $db->listAchievements; 
     my @achievements = $db->getAchievements(@allAchievementIDs);
     @achievements = sortAchievements(@achievements);
