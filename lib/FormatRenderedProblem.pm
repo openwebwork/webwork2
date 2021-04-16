@@ -165,7 +165,8 @@ sub formatRenderedProblem {
 
 	$problemHeadText .= $rh_result->{header_text} // '';
 	$problemHeadText .= $rh_result->{post_header_text} // '';
-	$problemHeadText .= $self->{inputs_ref}{extra_header_text} // '';
+	$extra_header_text = $self->{inputs_ref}{extra_header_text} // '';
+	$problemHeadText .= $extra_header_text;
 
 	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
 		$problemHeadText .= qq{<link href="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mathquill.css" rel="stylesheet" />} .

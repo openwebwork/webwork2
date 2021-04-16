@@ -65,6 +65,7 @@ $LTIGradeMessage
 		   <input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">
 		   <input type="hidden" name="showFooter" value="$showFooter">
 		   <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
+		   <input type="hidden" name="extra_header_text" value="$extra_header_text">
 		   <p>
 		      <input type="submit" name="preview"  value="$STRING_Preview" />
 		      <input type="submit" name="WWsubmit" value="$STRING_Submit"/>
