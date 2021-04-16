@@ -82,9 +82,9 @@ ENDPROBLEMTEMPLATE
 
 $json_output->{body_part790} = "</p>";
 
-$json_output->{body_part999} = <<'ENDPROBLEMTEMPLATE';
+$json_output->{body_part999_VI} = <<'ENDPROBLEMTEMPLATE';
 </form></div></div></div>
-<div id="footer" lang="en" dir="ltr">WeBWorK &copy; 1996-2019</div>
+$footer
 </body></html>
 ENDPROBLEMTEMPLATE
 
@@ -104,7 +104,10 @@ $json_output->{hidden_input_field_session_key} = '$session_key';
 $json_output->{hidden_input_field_outputformat} = 'json';
 $json_output->{hidden_input_field_language} = '$formLanguage';
 $json_output->{hidden_input_field_showSummary} = '$showSummary';
+$json_output->{hidden_input_field_showAnswerNumbers} = '$showAnswerNumbers';
+$json_output->{hidden_input_field_showFooter} = '$showFooter';
 $json_output->{hidden_input_field_forcePortNumber} = '$forcePortNumber';
+$json_output->{hidden_input_field_extraHeaderText} = '$extra_header_text';
 
 # These are the real WeBWorK server URLs which the intermediate needs to use
 # to communicate with WW, while the distant client must use URLs of the

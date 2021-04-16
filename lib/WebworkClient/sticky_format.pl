@@ -44,6 +44,7 @@ $problemHeadText
 <div class="span12 problem">	
 <hr/>		
 $answerTemplate
+$color_input_blanks_script
 <hr/>
 <form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
 <div id="problem_body" class="problem-content" $PROBLEM_LANG_AND_DIR>
@@ -75,6 +76,8 @@ $LTIGradeMessage
 <input type="hidden" name="outputformat" value="sticky">
 <input type="hidden" name="language" value="$formLanguage">
 <input type="hidden" name="showSummary" value="$showSummary">
+<input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">
+<input type="hidden" name="showFooter" value="$showFooter">
 <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
 
 <p>
@@ -86,9 +89,7 @@ $LTIGradeMessage
 </div>
 </div>
 </div>
-<div id="footer">
-WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: sticky | theme: math4
-</div>
+$footer
 <!-- Activate local storage js -->
 <script type="text/javascript">WWLocalStorage();</script>
 </body>

@@ -33,13 +33,14 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
-<title>WeBWorK using host: $SITE_URL, format: simple seed: $problemSeed</title>
+<title>WeBWorK using host: $SITE_URL, format: simple2 seed: $problemSeed</title>
 </head>
 <body>
 <div class="container-fluid">
 <div class="row-fluid">
 <div class="span12 problem">			
 		    $answerTemplate
+		    $color_input_blanks_script
 	<form id="problemMainForm" class="problem-main-form" name="problemMainForm" action="$FORM_ACTION_URL" method="post">
 <div id="problem_body" class="problem-content" $PROBLEM_LANG_AND_DIR>
 			$problemText
@@ -54,8 +55,8 @@ $LTIGradeMessage
 	       <input type="hidden" name="problemUUID" value="$problemUUID"> 
 	       <input type="hidden" name="psvn" value="$psvn">
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
-	       <input type="hidden" name=courseName value="$courseID">
-	       <input type="hidden" name=courseID value="$courseID">
+	       <input type="hidden" name="courseName" value="$courseID">
+	       <input type="hidden" name="courseID" value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
 	       <input type="hidden" name="course_password" value="$course_password">
 	       <input type="hidden" name="displayMode" value="$displayMode">
@@ -63,7 +64,10 @@ $LTIGradeMessage
 	       <input type="hidden" name="outputformat" value="simple2">
 	       <input type="hidden" name="language" value="$formLanguage">
 	       <input type="hidden" name="showSummary" value="$showSummary">
+	       <input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">
+	       <input type="hidden" name="showFooter" value="$showFooter">
 	       <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
+	       <input type="hidden" name="extra_header_text" value="$extra_header_text">
 		   <p>
 		      <input type="submit" name="preview"  value="$STRING_Preview" />
 		      <input type="submit" name="WWsubmit" value="$STRING_Submit"/>
@@ -72,13 +76,7 @@ $LTIGradeMessage
 	</form>
 </div>
 </div></div>
-
-<!-- Skip the footer
-<div id="footer">
-WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: simple2 | theme: math4
-</div>
--->
-
+$footer
 </body>
 </html>
 

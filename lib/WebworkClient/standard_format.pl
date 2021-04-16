@@ -52,8 +52,8 @@ $LTIGradeMessage
 	       <input type="hidden" name="problemUUID" value="$problemUUID"> 
 	       <input type="hidden" name="psvn" value="$psvn">
 	       <input type="hidden" name="pathToProblemFile" value="$fileName">
-	       <input type="hidden" name=courseName value="$courseID">
-	       <input type="hidden" name=courseID value="$courseID">
+	       <input type="hidden" name="courseName" value="$courseID">
+	       <input type="hidden" name="courseID" value="$courseID">
 	       <input type="hidden" name="userID" value="$userID">
 	       <input type="hidden" name="course_password" value="$course_password">
 	       <input type="hidden" name="displayMode" value="$displayMode">
@@ -61,8 +61,10 @@ $LTIGradeMessage
 	       <input type="hidden" name="outputformat" value="standard">
 	       <input type="hidden" name="language" value="$formLanguage">
 	       <input type="hidden" name="showSummary" value="$showSummary">
+	       <input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">
+	       <input type="hidden" name="showFooter" value="$showFooter">
 	       <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
-	
+	       <input type="hidden" name="extra_header_text" value="$extra_header_text">
 		   <p>
 			<input type="submit" name="preview"  value="$STRING_Preview" />
 			<input type="submit" name="WWsubmit" value="$STRING_Submit"/>
@@ -79,10 +81,7 @@ $PG_warning_messages;
 $debug_messages
 <h3> internal errors </h3>
 $internal_debug_messages
-<div id="footer">
-WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: standard | theme: math4
-</div>
-
+$footer
 </body>
 </html>
 

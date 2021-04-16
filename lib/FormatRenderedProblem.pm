@@ -212,7 +212,7 @@ sub formatRenderedProblem {
 		summary             => $problemResult->{summary} // '', # can be set by problem grader
 	);
 	my $answerTemplate = $tbl->answerTemplate;
-	my $color_input_blanks_script = $tbl->color_answer_blanks;
+	my $color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
 	# Score summary
