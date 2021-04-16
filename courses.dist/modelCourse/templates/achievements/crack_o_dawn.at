@@ -5,7 +5,7 @@
 # Do not consider this achievement if this is a repeated submission
 # of previously solved problem.
 
-return 0 if $problem->status != 1 or $problem->num_correct != 1;
+return 0 unless ($problem->status == 1 && $problem->num_correct == 1);
 
 # now check the time
 
