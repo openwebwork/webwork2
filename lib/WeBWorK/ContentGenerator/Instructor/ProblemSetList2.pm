@@ -1133,7 +1133,7 @@ sub create_handler {
 
 	my $dueDate = time+2*ONE_WEEK();
 	my $display_tz = $ce->{siteDefaults}{timezone};
-	my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
+	my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P",'en_US');
 	my $dueTime = $ce->{pg}{timeAssignDue};
 
 	# We replace the due time by the one from the config variable
@@ -2675,7 +2675,7 @@ sub recordEditHTML {
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = "readonly" unless $editMode;
 		
-		$fieldValue = $self->formatDateTime($fieldValue,'','%m/%d/%Y at %I:%M%P') if $field =~ /_date/;
+		$fieldValue = $self->formatDateTime($fieldValue,'','%m/%d/%Y at %I:%M%P','en_US') if $field =~ /_date/;
 		
 		$fieldValue =~ s/ /&nbsp;/g unless $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /visible/ and not $editMode;

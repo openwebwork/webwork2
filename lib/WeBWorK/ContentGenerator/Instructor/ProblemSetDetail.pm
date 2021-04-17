@@ -608,9 +608,9 @@ sub FieldHTML {
 	$userValue = (defined($userValue)) ? ($labels{$userValue // ""} || $userValue) : $blankfield; # this allows for a label if value is 0
 
 	if ($field =~ /_date/) {
-		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P') if defined $globalValue && $globalValue ne $labels{""};
+		$globalValue = $self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P', 'en_US') if defined $globalValue && $globalValue ne $labels{""};
 		# this is still fragile, but the check for blank (as opposed to 0) $userValue seems to prevent errors when no user has been assigned.
-		$userValue = $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') if defined $userValue && $userValue =~/\S/ && $userValue ne $labels{""};
+		$userValue = $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P', 'en_US') if defined $userValue && $userValue =~/\S/ && $userValue ne $labels{""};
 	}
 
 	if ( defined($properties{convertby}) && $properties{convertby} ) {

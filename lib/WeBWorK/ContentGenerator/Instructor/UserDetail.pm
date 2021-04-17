@@ -496,7 +496,7 @@ sub DBFieldTable {
 					(CGI::input({ -name=>"$recordType.$recordID.$field",
 							-id =>"$recordType.$recordID.${field}_id",
 							-type=> "text",
-							-value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
+							-value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P','en_US') : "",
 							-onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
 							-onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
 							-placeholder => x("None Specified"),
@@ -504,7 +504,7 @@ sub DBFieldTable {
 								. "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
 							-size => 25})
 					) : "",
-				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),
+				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P','en_US'),
 			]
 
 	}
