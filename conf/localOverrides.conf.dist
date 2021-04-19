@@ -339,6 +339,9 @@ $mail{feedbackRecipients}    = [
 # images.
 #$pg{specialPGEnvironmentVars}{tikzSVGMethod} = "dvisvgm";
 
+# When ImageMagick is used for image conversions, default options
+#$pg{specialPGEnvironmentVars}{convertOptions} = [{density => 200}, {quality => 80}];
+
 ################################################################################
 #  Configuring the display of different versions of the editors
 ################################################################################
