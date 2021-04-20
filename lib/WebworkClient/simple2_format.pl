@@ -12,9 +12,11 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
+<link rel="stylesheet" href="$themeDir/math4.css"/>
+<link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
+<link rel="stylesheet" href="$themeDir/math4-overrides.css"/>
 
 <!-- JS Loads -->
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
@@ -29,8 +31,9 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>	
 <script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
+<script src="$themeDir/math4.js" defer></script>
+<script src="$themeDir/math4-overrides.js" defer></script>
 $problemHeadText
 
 <title>WeBWorK using host: $SITE_URL, format: simple2 seed: $problemSeed</title>
@@ -62,6 +65,7 @@ $LTIGradeMessage
 	       <input type="hidden" name="displayMode" value="$displayMode">
 	       <input type="hidden" name="session_key" value="$session_key">
 	       <input type="hidden" name="outputformat" value="simple2">
+	       <input type="hidden" name="theme" value="$theme">
 	       <input type="hidden" name="language" value="$formLanguage">
 	       <input type="hidden" name="showSummary" value="$showSummary">
 	       <input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">

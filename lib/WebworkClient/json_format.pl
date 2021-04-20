@@ -16,18 +16,20 @@ $json_output->{head_part010} = <<'ENDPROBLEMTEMPLATE';
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 ENDPROBLEMTEMPLATE
 
-$json_output->{head_part100} = <<'ENDPROBLEMTEMPLATE';
+$json_output->{head_part100_VI} = <<'ENDPROBLEMTEMPLATE';
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
+<link rel="stylesheet" href="$themeDir/math4.css"/>
+<link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
+<link rel="stylesheet" href="$themeDir/math4-overrides.css"/>
 ENDPROBLEMTEMPLATE
 
-$json_ouput{head_part200} = <<'ENDPROBLEMTEMPLATE';
+$json_ouput{head_part200_VI} = <<'ENDPROBLEMTEMPLATE';
 <!-- JS Loads -->
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
@@ -41,8 +43,8 @@ $json_ouput{head_part200} = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>
 <script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
+<script src="$themeDir/math4/math4.js" defer></script>
 ENDPROBLEMTEMPLATE
 
 $json_output->{head_part300_VI} = '$problemHeadText';
@@ -102,6 +104,7 @@ $json_output->{hidden_input_field_course_password} = '$course_password';
 $json_output->{hidden_input_field_displayMode} = '$displayMode';
 $json_output->{hidden_input_field_session_key} = '$session_key';
 $json_output->{hidden_input_field_outputformat} = 'json';
+$json_output->{hidden_input_field_theme} = '$theme';
 $json_output->{hidden_input_field_language} = '$formLanguage';
 $json_output->{hidden_input_field_showSummary} = '$showSummary';
 $json_output->{hidden_input_field_showAnswerNumbers} = '$showAnswerNumbers';

@@ -125,6 +125,10 @@ sub formatRenderedProblem {
 	my $fileName = $self->{input}{envir}{fileName} // "";
 	my $encoded_source = $self->encoded_source // "";
 
+	# Select the theme and theme directory
+	my $theme = $self->{inputs_ref}{theme} || $ce->{defaultTheme};
+	my $themeDir = "$ce->{webworkURLs}{htdocs}/themes/$theme";
+
 	# Set up the header text
 	my $problemHeadText = '';
 
@@ -267,7 +271,7 @@ sub formatRenderedProblem {
 	# Show the footer unless it is explicity disabled.
 	my $showFooter = $self->{inputs_ref}{showFooter} // "";
 	my $footer = $showFooter && $showFooter eq "no" ? ''
-		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: math4</div>";
+		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: $theme</div>";
 
 	# For debugging purposes add $pretty_print_self to the output format in use and uncomment below.
 	#my $pretty_print_self = WebworkClient::pretty_print($self);
