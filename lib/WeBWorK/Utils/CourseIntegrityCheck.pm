@@ -238,7 +238,7 @@ sub checkTableFields {
 			if ($field_name eq "published") {  #hack to stop warning about residual "published" fields.
 				warn "Harmless: $table_name has extra column 'published' for older course. We'll try to delete it\n";
 				if ( $db->{$table}->can("drop_column_field") ) {
-					warn "dropping field $field_name in  table $table\n";
+					warn "dropping field $field_name in  table $table_name\n";
 					$db->{$table}->drop_column_field($field_name);
 				}
 				next;
