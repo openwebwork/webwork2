@@ -339,8 +339,11 @@ $mail{feedbackRecipients}    = [
 # images.
 #$pg{specialPGEnvironmentVars}{tikzSVGMethod} = "dvisvgm";
 
-# When ImageMagick is used for image conversions, default options
-#$pg{specialPGEnvironmentVars}{convertOptions} = [{density => 200}, {quality => 80}];
+# When ImageMagick is used for image conversions, this sets the default options.
+# See https://imagemagick.org/script/convert.php for a full list of options.
+# convert will be called as:
+# convert <input options> file.ext1 <output options> file.ext2
+#$pg{specialPGEnvironmentVars}{tikzConvertOptions} = {input => {density => 72}, output => {quality => 92}};
 
 ################################################################################
 #  Configuring the display of different versions of the editors
