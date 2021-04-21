@@ -1,14 +1,5 @@
-$(function() {
-
-
-	//Problem set detail 2
-	$('#problemset_detail_list').addClass('container-fluid');
-
-	//This sets ajax coos to be synchronous so as to not overwhelm the server
-	//$.ajax({async : false});
-
-
-	//This uses the nextedSortable jquery-ui module to drive the
+(function() {
+	// This uses the nestedSortable jquery-ui module to drive the
 	// problem list, if its enabled
 
 	$('#psd_list').nestedSortable({
@@ -25,50 +16,13 @@ $(function() {
 		isTree: true,
 		startCollapsed: true,
 		maxLevels: 6,
-
 	});
 
-	//Problem Set Detail 2  (the page doesn't render properly without some sort
-	// of css to format the divs. This does that.)
-	// This adds soem bootstrap elements to the page to format it
-	$('.problem_detail_row').addClass('well span11')
-		.wrap('<div class="row-fluid" />')
-		.after('<div class="span1" />');
-
-	$('.pdr_block_1').addClass('span2');
-	$('.pdr_block_2').addClass('span3');
-	$('.pdr_block_3').addClass('span7');
-
-	$('#psd_toolbar').addClass('btn-group');
-
-	$('.psd_view').addClass('btn btn-mini')
-		.html('<i class="far fa-eye" />')
-		.tooltip();
-	$('.psd_edit').addClass('btn btn-mini')
-		.html('<i class="fas fa-pencil-alt" />')
-		.tooltip();
-	$('.pdr_render').addClass('btn btn-mini')
-		.html('<i class="far fa-image" />')
-		.tooltip();
-
-	$('.pdr_grader').addClass('btn btn-mini')
-		.html('<i class="fas fa-edit">')
-		.tooltip();
-
-	if (!$('#psd_list').hasClass('disable_renumber')) {
-		$('.pdr_handle').each(function () {
-			var iconclass = "fas fa-arrows-alt-v";
-			if ($(this).attr('is-jitar') == 1) {
-				iconclass = "fas fa-arrows-alt";
-			}
-			$(this).append($('<i/>').addClass(iconclass)
-				.tooltip({title:$(this).attr('data-move-text'),
-					container:this})
-			);
-		});
-	} else {
-		$('.pdr_handle').css('margin-right','5px');
-	}
+	$('.psd_view').tooltip();
+	$('.psd_edit').tooltip();
+	$('.pdr_render').tooltip();
+	$('.pdr_grader').tooltip();
+	$('.pdr_handle > i').tooltip();
 
 	if ($('#psd_list').hasClass('disable_renumber')) {
 		$('#psd_list').nestedSortable({ disabled:true});
@@ -79,55 +33,53 @@ $(function() {
 		$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
 		$(this).tooltip('destroy');
 		if ($(this).closest('li').hasClass('mjs-nestedSortable-collapsed')) {
-			$(this).tooltip({title:$(this).attr('data-expand-text'),
-				container:this});
+			$(this).tooltip({ title: $(this).attr('data-expand-text'), container: this });
 		} else {
-			$(this).tooltip({title:$(this).attr('data-collapse-text'),
-				container:this});
+			$(this).tooltip({ title: $(this).attr('data-collapse-text'), container: this });
 		}
 
-	})
-		.each(function() {
-			$(this).tooltip({title:$(this).attr('data-expand-text'),
-				container: this});
-		})
-		.click(function (event) {
-		});
-
+	}).each(function() {
+		$(this).tooltip({title:$(this).attr('data-expand-text'),
+			container: this});
+	});
 
 	// This is for the render buttons
 	$('.pdr_render').click(function(event) {
 		event.preventDefault();
 		var id = this.id.match(/^pdr_render_(\d+)/)[1];
-		if ($('#psr_render_area_'+id).html()) {
-			$('#psr_render_area_'+id).html('');
+		var renderArea = $('#psr_render_area_' + id);
+		var iframe = renderArea.find('#psr_render_iframe_' + id);
+		if (iframe[0] && iframe[0].iFrameResizer) {
+			iframe[0].iFrameResizer.close();
+		} else if (renderArea.html() != "") {
+			renderArea.html('')
 		} else {
-			$('#psr_render_area_'+id).html('Loading Please Wait...');
+			renderArea.html("Loading Please Wait...");
 			render(id);
 		}
 	});
 
-	$('#psd_render_all').addClass('btn').click(function (event) {
+	$('#psd_render_all').click(async function (event) {
 		event.preventDefault();
-		$('.pdr_render').each(function () {
-			var id = this.id.match(/^pdr_render_(\d+)/)[1];
-			$('#psr_render_area_'+id).html('Loading Please Wait...');
-			render(id);
+		var renderAreas = $('.psr_render_area');
+		for (var renderArea of renderAreas) {
+			$(renderArea).html('Loading Please Wait...');
+			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+		}
+	});
+
+	$('#psd_hide_all').click(function (event) {
+		event.preventDefault();
+		$('.psr_render_area').each(function() {
+			var iframe = $(this).find('[id^=psr_render_iframe_]');
+			if (iframe[0] && iframe[0].iFrameResizer) iframe[0].iFrameResizer.close();
 		});
 	});
 
-	$('#psd_hide_all').addClass('btn').click(function (event) {
-		event.preventDefault();
-		$('.psr_render_area').html('');
-	});
-
 	// This is for collapsing and expanding the tree
-	$('#psd_expand_all').addClass('btn').click(function (event) {
+	$('#psd_expand_all').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');
-		$('i.fas.fa-plus').removeClass('fa-plus')
-			.addClass('fa-minus');
-
 		$('.pdr_collapse').each(function () {
 			$(this).tooltip('destroy');
 			$(this).tooltip({title:$(this).attr('data-collapse-text'),
@@ -135,12 +87,9 @@ $(function() {
 		});
 	});
 
-	$('#psd_collapse_all').addClass('btn').click(function (event) {
+	$('#psd_collapse_all').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').addClass('mjs-nestedSortable-collapsed').removeClass('mjs-nestedSortable-expanded');
-		$('i.fas.fa-minus').addClass('fa-plus')
-			.removeClass('fa-minus');
-
 		$('.pdr_collapse').each(function () {
 			$(this).tooltip('destroy');
 			$(this).tooltip({title:$(this).attr('data-expand-text'),
@@ -158,8 +107,8 @@ $(function() {
 
 			$('#prob_num_'+id).val(i+1);
 
-			$('#psd_list_'+id).find('.pdr_handle').each(function () {
-				$(this).html($(this).html()+(i+1)+'.');
+			$('#psd_list_' + id).find('.pdr_handle > span').each(function() {
+				$(this).html($(this).html() + (i + 1) + '.');
 			});
 
 			for (var j=0; j < array.length; j++) {
@@ -180,28 +129,18 @@ $(function() {
 		var array = $('#psd_list').nestedSortable("toArray");
 		var heirarchy = $('#psd_list').nestedSortable("toHierarchy");
 
-		$('.pdr_handle').html('');
+		$('.pdr_handle > span').html('');
 		recurse_on_heirarchy(heirarchy,array);
 
-		$('.pdr_handle').each(function () {
-			var iconclass = "fas fa-arrows-alt-v";
-			if ($(this).attr('is-jitar') == 1) {
-				iconclass = "fas fa-arrows-alt";
-			}
-			$(this).html($(this).html().slice(0,-1));
-			$(this).append($('<i/>').addClass(iconclass)
-				.tooltip({title:$(this).attr('data-move-text'),
-					container:this})
-			);
+		$('.pdr_handle > span').each(function() {
+			$(this).html($(this).html().slice(0, -1));
 		});
 		disable_fields();
-
 	};
 
 	// This enables and disables problem fields that don't make sense
 	// based on the position of the problem
 	var disable_fields = function () {
-
 		var array = $('#psd_list').nestedSortable("toArray");
 
 		$('.psd_list_row').each(function () {
@@ -220,143 +159,133 @@ $(function() {
 					} else {
 						$('#problem\\.'+id+'\\.counts_parent_grade_id').parents('tr:first').removeClass('hidden');
 					}
-
 				}
-
 			}
 			if (!has_children) {
 				$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').addClass('hidden');
 			}
-
-
 		});
 	}
 
-	//Actually run disabled fields on page load.
+	// Actually run disabled fields on page load.
 	disable_fields();
 
 	$('#psd_list').on('sortupdate', set_prob_num_fields);
 
-	$('#psd_renumber').addClass('btn').tooltip().click(function (event) {
+	$('#psd_renumber').click(function (event) {
 		event.preventDefault();
 		set_prob_num_fields();
 	});
 
-});
+	var basicWebserviceURL = "/webwork2/html2xml";
 
-// This is the WeBWorK XML interface code for rendering problems
-var basicRequestObject = {
-	"xml_command":"listLib",
-	"pw":"",
-	"password":'change-me',
-	"session_key":'change-me',
-	"user":"user-needs-to-be-defined",
-	"library_name":"Library",
-	"courseID":'change-me',
-	"set":"set0",
-	"new_set_name":"new set",
-	"command":"buildtree"
-};
-
-var basicWebserviceURL = "/webwork2/instructorXMLHandler";
-
-
-function init_webservice(command) {
-	var myUser = $('#hidden_user').val();
-	var myCourseID = $('#hidden_course_id').val();
-	var mySessionKey = $('#hidden_key').val();
-	var mySetID = $('#hidden_set_id').val();
-	var mydefaultRequestObject = {
-	};
-
-	if (myUser && mySessionKey && myCourseID) {
-		mydefaultRequestObject.user = myUser;
-		mydefaultRequestObject.session_key = mySessionKey;
-		mydefaultRequestObject.courseID = myCourseID;
-		mydefaultRequestObject.set_id = mySetID;
-	} else {
-		alert("missing hidden credentials: user "
-			+ myUser + " session_key " + mySessionKey+ " courseID "
-			+ myCourseID, "alert-error");
-		return null;
-	}
-	mydefaultRequestObject.xml_command = command;
-	return mydefaultRequestObject;
-}
-
-function render(id) {
-	var ro = init_webservice('renderProblem');
-
-	if ($('#problem\\.'+id+'\\.problem_seed_id').length > 0) {
-		ro.problemSeed = $('#problem\\.'+id+'\\.problem_seed_id').val();
-	} else {
-		ro.problemSeed = 1;
-	}
-	var source_file
-
-	if ($('#problem\\.'+id+'\\.source_file_id').val()) {
-		source_file = $('#problem\\.'+id+'\\.source_file_id').val();
-	} else {
-		source_file = $('#problem_'+id+'_default_source_file').val();
+	// Render all problems on page load if requested.
+	if ($('#auto_render').is(':checked')) {
+		(async function() {
+			var renderAreas = $('.psr_render_area');
+			for (var renderArea of renderAreas) {
+				$(renderArea).html('Loading Please Wait...');
+				await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+			}
+		})();
 	}
 
-	if (/^group/.test(source_file)) {
-		$('#psr_render_area_'+id).html( $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text("Problem source is drawn from a grouping set."));
-		return false;
+	async function render(id) {
+		return new Promise(function(resolve, reject) {
+			var renderArea = $('#psr_render_area_' + id);
+
+			var ro = {
+				userID: $('#hidden_user').val(),
+				courseID: $('#hidden_course_id').val(),
+				session_key: $('#hidden_key').val()
+			};
+
+			if (!(ro.userID && ro.courseID && ro.session_key)) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					.text("Missing hidden credentials: user, session_key, courseID"));
+				resolve();
+				return;
+			}
+
+			if ($('#problem\\.' + id + '\\.problem_seed_id').length > 0) {
+				ro.problemSeed = $('#problem\\.' + id + '\\.problem_seed_id').val();
+			} else {
+				ro.problemSeed = 1;
+			}
+
+			if ($('#problem\\.' + id + '\\.source_file_id').val()) {
+				ro.sourceFilePath = $('#problem\\.' + id + '\\.source_file_id').val();
+			} else {
+				ro.sourceFilePath = $('#problem_' + id + '_default_source_file').val();
+			}
+
+			if (ro.sourceFilePath.startsWith('group')) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError'})
+					.text("Problem source is drawn from a grouping set."));
+				resolve();
+				return;
+			}
+
+			var editForUserInputs = $('input[name=editForUser]');
+			if (editForUserInputs.length == 1) ro.effectiveUser = editForUserInputs.val();
+
+			var versionIDInput = $('#hidden_version_id');
+			if (versionIDInput.length) ro.version_id = versionIDInput.val();
+
+			ro.outputformat = 'simple';
+			ro.showAnswerNumbers = 0;
+			ro.set_id = $('#hidden_set_id').val();
+			ro.probNum = id;
+			ro.showHints = 1;
+			ro.showSolutions = 1;
+			ro.permissionLevel = 10;
+			ro.noprepostambles = 1;
+			ro.processAnswers = 0;
+			ro.showFooter = "no";
+			ro.displayMode = $('#problem_displaymode').val();
+			ro.extra_header_text = "<style>html{overflow-y:hidden;}body{padding:0;background:#f5f5f5;.container-fluid{padding:0px;}</style>";
+			if (window.location.port) ro.forcePortNumber = window.location.port;
+
+			$.ajax({type:'post',
+				url: basicWebserviceURL,
+				data: ro,
+				timeout: 10000, //milliseconds
+			}).done(function (data) {
+				// Give nicer file not found error
+				if (/this problem file was empty/i.test(data)) {
+					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text('No Such File or Directory!'));
+					resolve();
+					return;
+				}
+				// Give nicer session timeout error
+				if (/Can\'t authenticate -- session may have timed out/i.test(data) ||
+					/Webservice.pm: Error when trying to authenticate./i.test(data)) {
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text("Can't authenticate -- session may have timed out."));
+					resolve();
+					return;
+				}
+				// Give nicer problem rendering error
+				if (/error caught by translator while processing problem/i.test(data) ||
+					/error message for command: renderproblem/i.test(data)) {
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+						.text('There was an error rendering this problem!'));
+					resolve();
+					return;
+				}
+
+				var iframe = $("<iframe/>", { id: "psr_render_iframe_" + id });
+				renderArea.html(iframe);
+				iframe[0].style.border = 'none';
+				iframe[0].srcdoc = data;
+				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
+				iframe[0].addEventListener('load', function() { resolve(); });
+			}).fail(function (data) {
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					.text(basicWebserviceURL + ': ' + data.statusText));
+				resolve();
+			});
+		});
 	}
-
-	ro.problemPath = source_file;
-
-	var editForUserInputs = $('input[name=editForUser]');
-	if (editForUserInputs.length == 1) ro.effectiveUser = editForUserInputs.val();
-
-	var versionIDInput = $('#hidden_version_id');
-	if (versionIDInput.length) ro.version_id = versionIDInput.val();
-
-	ro.set = ro.problemPath;
-	ro.probNum = id;
-	ro.showHints = 1;
-	ro.showSolutions = 1;
-	ro.permissionLevel = 'professor';
-	ro.noprepostambles = 1;
-	ro.processAnswers = 0;
-	var displayMode = $('#problem_displaymode').val();
-	ro.displayMode = displayMode;
-	$.ajax({type:'post',
-		url: basicWebserviceURL,
-		data: ro,
-		timeout: 10000, //milliseconds
-		success: function (data) {
-			var response = data;
-			// Give nicer file not found error
-			if (/No such file or directory at/i.test(response) ||
-				/Can\'t read file/i.test(response)) {
-				response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('No Such File or Directory!');
-			}
-			if (/"server_response":"","result_data":""/i.test(response)) {
-				response = $('<div/>',{style:'font-weight:bold','class':'ResultsWithError'}).text('There was an error rendering this problem!');
-			}
-
-			$('#psr_render_area_'+id).html(response);
-			// run typesetter depending on the displaymode
-			if(displayMode=='MathJax')
-				MathJax.startup.promise = MathJax.startup.promise.then(function() { return MathJax.typesetPromise(); });
-			if(displayMode=='jsMath')
-				jsMath.ProcessBeforeShowing(el);
-
-			if(displayMode=='asciimath') {
-				//processNode(el);
-				translate();
-			}
-			if(displayMode=='LaTeXMathML') {
-				AMprocessNode(document.getElementsByTagName("body")[0], false);
-			}
-			//console.log(data);
-		},
-		error: function (data) {
-			alert(basicWebserviceURL+': '+data.statusText);
-		},
-	});
-
-	return false;
-}
+})();

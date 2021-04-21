@@ -111,7 +111,7 @@ sub importUsersFromCSV {
 		
 		# set password from student ID if password field is "empty"
 		if (not defined $record{password} or $record{password} eq "") {
-			if (defined $record{student_id} and $record{student_id} ne "") {
+			if (defined $record{student_id} and $record{student_id} =~ /\S/) {
 				# crypt the student ID and use that
 				$record{password} = cryptPassword($record{student_id});
 			} else {

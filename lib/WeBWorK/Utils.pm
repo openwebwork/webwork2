@@ -846,7 +846,7 @@ sub writeTimingLogEntry($$$$) {
 sub trim_spaces {
 	my $in = shift;
 	return '' unless $in;  # skip blank spaces
-	$in =~ s/^\s*(.*?)\s*$/$1/;
+	$in =~ s/^\s*|\s*$//g;
 	return($in);
 }
 sub list2hash(@) {
@@ -1023,7 +1023,7 @@ sub cryptPassword($) {
 	    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
 	}
 
-	my $cryptPassword = crypt($clearPassword, $salt);
+	my $cryptPassword = crypt(trim_spaces($clearPassword), $salt);
 	return $cryptPassword;
 }
 
@@ -1764,7 +1764,7 @@ sub generateURLs {
 	if ($userName) {
 		my $modulePath;
 		my @args;
-		if ($params{set_id}) {
+		if (defined $params{set_id} && $params{set_id} ne "") {
 			if ($params{problem_id}) {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
 					courseID => $r->urlpath->arg("courseID"),

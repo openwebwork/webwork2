@@ -15,6 +15,7 @@ updateOPLextras [options]
    -a --all              (rebuild all trees)
    -h --help             (display this text)
    -v --verbose          (turn on verbosity mode) 
+
 =head1 OPTIONS
  
 =over 8

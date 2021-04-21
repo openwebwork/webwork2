@@ -1,22 +1,20 @@
 package WebworkSOAP::Classes::UserProblem;
 
-=pod
-=begin WSDL
-        _ATTR user_id       $string user_id
-        _ATTR set_id        $string set_id
-        _ATTR problem_id    $string problem_id
-        _ATTR source_file   $string source_file
-        _ATTR value         $string value
-        _ATTR max_attempts  $string max_attempts
-        _ATTR showMeAnother  $string showMeAnother
-        _ATTR showMeAnotherCount  $string showMeAnotherCount
-        _ATTR problem_seed  $string problem_seed
-        _ATTR status        $string status
-        _ATTR attempted     $string attempted
-        _ATTR last_answer   $string last_answer
-        _ATTR num_correct   $string num_correct
-        _ATTR num_incorrect $string num_incorrect
-=cut
+# _ATTR user_id       $string user_id
+# _ATTR set_id        $string set_id
+# _ATTR problem_id    $string problem_id
+# _ATTR source_file   $string source_file
+# _ATTR value         $string value
+# _ATTR max_attempts  $string max_attempts
+# _ATTR showMeAnother  $string showMeAnother
+# _ATTR showMeAnotherCount  $string showMeAnotherCount
+# _ATTR problem_seed  $string problem_seed
+# _ATTR status        $string status
+# _ATTR attempted     $string attempted
+# _ATTR last_answer   $string last_answer
+# _ATTR num_correct   $string num_correct
+# _ATTR num_incorrect $string num_incorrect
+
 sub new {
     my $self = shift;
     my $data = shift;

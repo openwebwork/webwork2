@@ -1,5 +1,4 @@
 $simple_format = <<'ENDPROBLEMTEMPLATE';
-
 <!DOCTYPE html>
 <html $COURSE_LANG_AND_DIR>
 <head>
@@ -23,7 +22,6 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
 <script type="text/javascript" src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/java_init.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/InputColor/color.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Base64/Base64.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
@@ -31,7 +29,7 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
 <script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>	
-<script type="text/javascript" src="/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
+<script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 $problemHeadText
 
 <title>WeBWorK using host: $SITE_URL, format: simple seed: $problemSeed</title>
@@ -64,7 +62,10 @@ $LTIGradeMessage
 	       <input type="hidden" name="outputformat" value="simple">
 	       <input type="hidden" name="language" value="$formLanguage">
 	       <input type="hidden" name="showSummary" value="$showSummary">
-	       <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
+		   <input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">
+		   <input type="hidden" name="showFooter" value="$showFooter">
+		   <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
+		   <input type="hidden" name="extra_header_text" value="$extra_header_text">
 		   <p>
 		      <input type="submit" name="preview"  value="$STRING_Preview" />
 		      <input type="submit" name="WWsubmit" value="$STRING_Submit"/>
@@ -73,15 +74,9 @@ $LTIGradeMessage
 	</form>
 </div>
 </div></div>
-
-<div id="footer">
-WeBWorK &copy; 1996-2019 | host: $SITE_URL | course: $courseID | format: simple | theme: math4
-</div>
-
-
+$footer
 </body>
 </html>
-
 ENDPROBLEMTEMPLATE
 
 $simple_format;

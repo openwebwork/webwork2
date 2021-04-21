@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +42,7 @@ require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
-use WeBWorK::Utils::DetermineProblemLangAndDirection;
+use WeBWorK::Utils::LanguageAndDirection;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
 
@@ -695,7 +694,7 @@ sub pre_header_initialize {
 	$rerandomizePeriod = $problem->{prPeriod}
 	if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 
-	$prEnabled = 0 if ($rerandomizePeriod < 1);
+	$prEnabled = 0 if ($rerandomizePeriod < 1 || $self->{editMode});
 	if ($prEnabled) {
 		$problem->{prCount} = 0
 		if !defined($problem->{prCount}) || $problem->{prCount} =~ /^\s*$/;
@@ -860,12 +859,6 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-
-	# Keys dont really work well anymore.  So I'm removing this for now GG
-#	print qq{
-#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-#	};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1369,30 +1362,10 @@ sub output_form_start{
 # needed by the PROBLEM language
 
 sub output_problem_lang_and_dir {
-    my $self = shift;
-    my $pg = $self->{pg};
-
-    my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
-    my $to_set_tag;
-    my $to_set_val;
-
-    # String with the HTML attributes to add
-    my $to_set = " ";
-
-    # Put the requested tags and values into the string format
-    while ( scalar(@to_set_lang_dir) > 0 ) {
-	$to_set_tag = shift( @to_set_lang_dir );
-	$to_set_val = shift( @to_set_lang_dir );
-	if ( defined( $to_set_val ) ) {
-	    $to_set .= " ${to_set_tag}=\"${to_set_val}\"";
-	}
-    }
-
-    print "$to_set";
-    return "";
+	my $self = shift;
+	print " " . get_problem_lang_and_dir($self->{pg}{flags}, $self->r->ce->{perProblemLangAndDirSettingMode}, $self->r->ce->{language});
+	return "";
 }
-
-
 
 # output_problem_body subroutine
 
@@ -2307,20 +2280,6 @@ sub output_hidden_info {
 
 # output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
-
-sub output_wztooltip_JS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
-	return "";
-}
-
 # outputs all of the Javascript needed for this page.
 # The main javascript needed here is color.js, which colors input fields based on whether or not
 # they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification
@@ -2334,9 +2293,6 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
@@ -2366,8 +2322,8 @@ sub output_JS{
 
 	# MathQuill live rendering 
 	if ($self->{will}->{useMathQuill}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
 	}
 	
 	# This is for knowls

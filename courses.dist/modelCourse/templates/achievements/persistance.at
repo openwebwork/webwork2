@@ -1,7 +1,7 @@
 #This checks to see if the student has solved the problem after a certain
 # number of incorrect attempts
 
-     if ($problem->status == 1 && $problem->num_incorrect >= 20) {
+     if ($problem->status == 1 && $problem->num_correct == 1 && $problem->num_incorrect >= 20) {
 	return 1
      }    else {
 	return 0;

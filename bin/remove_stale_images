@@ -58,6 +58,8 @@ To remove all which have not been accessed in the past 10 days, use
 
   remove_stale_images --delete --days=10
 
+=back
+
 =cut
 
 use strict;

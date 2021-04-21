@@ -123,11 +123,11 @@ use Fcntl;
 
 #hiding add_problem option to see if its needed
 use constant ACTION_FORMS => [qw(view save save_as add_problem revert)];
-use constant ACTION_FORM_TITLES => { # for use with tabber it is important that the titles have no spaces
+use constant ACTION_FORM_TITLES => { # editor tabs
 	view        => x("View"),
 	add_problem => x("Append"),
 	save        => x("Update"),
-	save_as     => x("NewVersion"),
+	save_as     => x("New Version"),
 	revert      => x("Revert"),
 };
 
@@ -525,23 +525,22 @@ sub body {
 			label   => $r->maketext('Report Bugs in this Problem'),
 			url     => $BUGZILLA,
 			target  => 'bug_report',
-			tooltip => 'Report bugs in a WeBWorK question/problem using this link.<br>' .
+			tooltip => 'Report bugs in a WeBWorK question/problem using this link. ' .
 			'The very first time you do this you will need to register with an email address so that ' .
 			'information on the bug fix can be reported back to you.',
 		},
 	);
-	my $PG_Editor_Reference_String = '';
+
+	my @PG_Editor_References;
 	foreach my $link (@PG_Editor_Reference_Links) {
-		$PG_Editor_Reference_String .= ' | '.
-		CGI::a({-href=>$link->{url} ,-target=> $link->{target},
-				-onmouseover=>q!Tip('! .  $link->{tooltip} .
-				q!',SHADOW, true,
-				DELAY, 100, FADEIN, 300, FADEOUT, 300, STICKY, 0, OFFSETX, -20,  CLICKCLOSE, true,
-				BGCOLOR, '#F4FF91', TITLE, 'Reference:',TITLEBGCOLOR, '#F4FF91', TITLEFONTCOLOR, '#000000')!
-			},
-			'&nbsp;'.$link->{label}.'&nbsp;');
+		push(@PG_Editor_References,
+			CGI::a({
+					href => $link->{url}, target => $link->{target}, title => $link->{tooltip},
+					class => "reference-link btn btn-small btn-info", data_toggle => "tooltip", data_placement => 'bottom'
+				}, $link->{label})
+		);
 	}
-	$PG_Editor_Reference_String .=' | ';
+
 	#########################################################################
 	# Find the text for the problem, either in the tmp file, if it exists
 	# or in the original file in the template directory
@@ -611,16 +610,16 @@ sub body {
 	my $force_field = (not_blank( $self->{sourceFilePath})) ?
 		CGI::hidden(-name=>'sourceFilePath', -default=>$self->{sourceFilePath}) : '';
 
-	my $target = 'WW_View'; #"problem$edit_level"; # increasing edit_level gives you a new window with each edit.
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print qq!<script type="text/javascript" src="$site_url/js/legacy/vendor/wz_tooltip.js"></script>!;
-
 	print CGI::p($header),
-		CGI::start_form({method=>"POST", id=>"editor", name=>"editor", action=>"$uri", enctype=>"application/x-www-form-urlencoded"}),
+	CGI::start_form({
+			method => "POST", id => "editor", name => "editor",
+			action => $uri, enctype => "application/x-www-form-urlencoded",
+			class => "form-inline span9"
+		}),
 		$self->hidden_authen_fields,
 		$force_field,
 		CGI::hidden(-name=>'file_type',-default=>$self->{file_type}),
-		CGI::div({},$PG_Editor_Reference_String),
+		CGI::div({}, @PG_Editor_References),
 		CGI::p(
 			CGI::textarea( -id => "problemContents",
 				-name => 'problemContents', -default => $problemContents, -class => 'latexentryfield',
@@ -632,43 +631,34 @@ sub body {
 
 	my @formsToShow = @{ ACTION_FORMS() };
 	my %actionFormTitles = %{ACTION_FORM_TITLES()};
-	my $default_choice = $formsToShow[0];
-	my $i = 0;
+	my $default_choice;
 
-	my @divArr = ();
+	my @tabArr;
+	my @contentArr;
 
-	foreach my $actionID (@formsToShow) {
-
+	for my $actionID (@formsToShow) {
 		my $actionForm = "${actionID}_form";
-		my %actionParams = $self->getActionParams($actionID);
-		my $line_contents = $self->$actionForm(%actionParams);
-		my $radio_params = {-type=>"radio", -name=>"action", -value=>$actionID};
-		$radio_params->{checked}=1 if ($actionID eq $default_choice);
-		$radio_params->{onclick} = "setNewWindowStatus(this)";
-		$radio_params->{id} = "action$i";
+		my $line_contents = $self->$actionForm($self->getActionParams($actionID));
+		my $active = "";
+		my $id = "action_$actionID";
 
-		if($line_contents){
-			my $title = $r->maketext($actionFormTitles{$actionID});
-			push @divArr, join("",
-				CGI::h3($title),
-				CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br()),
-				CGI::div({-class=>"pg_editor_input_div"},$line_contents),
-				CGI::br())
+		if ($line_contents) {
+			$active = "active", $default_choice = $actionID unless $default_choice;
+			push(@tabArr, CGI::li({ class => $active },
+					CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
+						$r->maketext($actionFormTitles{$actionID}))));
+			push(@contentArr, CGI::div({ class => "tab-pane pg_editor_action_div $active", id => $id }, $line_contents));
 		}
-		$i++;
 	}
 
-	my $divArrRef = \@divArr;
-
-	print CGI::div({-class=>"tabber"},
-		CGI::div({-class=>"tabbertab"},$divArrRef)
+	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
+	print CGI::div({ class => "tabbable" },
+		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
+		CGI::div({ class => "tab-content" }, @contentArr)
 	);
 
-	my $checkbox = WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"newWindow", -label_text=>$r->maketext("Open in new window"));
-	$checkbox =~ s/\n//; # remove unwanted linebreak
-	print CGI::div({-class=>"pd_editor_input_div", -id=>"submit_input_div"}, $checkbox, CGI::br(),
-		WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submit_button_id",
-			-input_attr=>{-name=>'submit', -value=>$r->maketext("Take Action!")}));
+	print CGI::div(WeBWorK::CGI_labeled_input(-type => "submit", -id => "submit_button_id",
+			-input_attr => { -name => 'submit', -value => $r->maketext("Take Action!") }));
 
 	print  CGI::end_form();
 
@@ -678,8 +668,7 @@ sub body {
 	print CGI::h3($r->maketext("Problem Viewer"));
 	print CGI::end_div();
 	print CGI::start_div({class=>"modal-body"});
-	print CGI::start_iframe({id=>"pg_editor_frame_id", name=>"pg_editor_frame"});
-	print CGI::end_iframe();
+	print CGI::iframe({ id => "pg_editor_frame_id", name => "pg_editor_frame"}, "");
 	print CGI::end_div();
 	print CGI::start_div({-class=>"modal-footer"});
 	print CGI::button({type=>"button", value=>$r->maketext("Close"), "data-dismiss"=>"modal"});
@@ -1171,12 +1160,15 @@ sub view_form {
 	return "" if $file_type eq 'hardcopy_header';  # these can't yet be edited from temporary files #FIXME
 	my $output_string = "";
 	unless ($file_type eq 'course_info' || $file_type eq 'options_info') {
-		$output_string .= join(" ",
+		$output_string .= join("",
 			WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_view_seed_id", -label_text=>$r->maketext("Using what seed?: "),
 				-input_attr=>{-name=>'action.view.seed',-value=>$self->{problemSeed}}),
 			CGI::br(),
 			WeBWorK::CGI_labeled_input(-type=>"select", -id=>"action_view_displayMode_id", -label_text=>$r->maketext("Using what display mode?: "),
-				-input_attr=>{-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, -default=>$self->{displayMode}}),CGI::br(),
+				-input_attr=>{-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, -default=>$self->{displayMode}}),
+			CGI::br(),
+			CGI::div({ class => "pg_editor_new_window_div" },
+				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindow", -label_text => $r->maketext("Open in new window")))
 		);
 	}
 
@@ -1471,7 +1463,9 @@ sub save_form {
 		return "";  #Can't save blank problems without changing names
 	} elsif (-w $self->{editFilePath}) {
 
-		return $r->maketext("Save to [_1] and View", CGI::b($self->shortPath($self->{editFilePath})));
+		return $r->maketext("Save to [_1] and View", CGI::b($self->shortPath($self->{editFilePath}))) .
+			CGI::div({ class => "pg_editor_new_window_div" },
+				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindow", -label_text => $r->maketext("Open in new window")));
 
 	} else {
 		return ""; #"Can't save -- No write permission";
@@ -1885,7 +1879,6 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 
 	if ($ce->{options}->{PGMathView}) {
 		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
@@ -1904,8 +1897,8 @@ sub output_JS{
 	if ($ce->{options}->{PGMathQuill}) {
 		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mathquill.css\"/>";
 		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mqeditor.css\"/>";
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => ""}, "");
 	}
 
 	if ($ce->{options}->{PGCodeMirror}) {
@@ -1918,14 +1911,13 @@ sub output_JS{
 	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/ImageView/imageview.css\"/>";
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor/pgproblemeditor.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
+	print CGI::script({ src => "$site_url/js/apps/PGProblemEditor/pgproblemeditor.js", defer => "" }, "");
 
 	return "";
 }
 
 # Tells template to output stylesheet and js for Jquery-UI
 sub output_jquery_ui { return ""; }
-
-sub output_tabber_CSS { return ""; }
 
 1;

@@ -54,9 +54,6 @@
 <!--#if can="output_achievement_CSS"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/themes/math4/achievements.css"/>
 <!--#endif-->
-<!--#if can="output_tabber_CSS"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
-<!--#endif-->
 
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
@@ -66,9 +63,6 @@
 <!--#head-->
 </head>
 <body style="background-color: white;">
-<!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
-	<!--#output_wztooltip_JS-->
-<!--#endif-->
 <div id="masthead">
 	<div id="loginstatus">
 		<!--#loginstatus-->

@@ -362,7 +362,7 @@ sub previewAnswer {
 	} elsif ($displayMode eq "images") {
 		$imgGen->add($tex);
 	} elsif ($displayMode eq "MathJax") {
-		return '\['.$tex.'\]';
+		return '<script type="math/tex; mode=display">' . $tex . '</script>';
 	}
 }
 
@@ -384,7 +384,7 @@ sub previewCorrectAnswer {
 		$imgGen->add($tex);
 		# warn "adding $tex";
 	} elsif ($displayMode eq "MathJax") {
-		return '\['.$tex.'\]';
+		return '<script type="math/tex; mode=display">' . $tex . '</script>';
 	}
 }
 

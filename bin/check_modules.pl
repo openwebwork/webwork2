@@ -15,6 +15,7 @@ my @applicationsList = qw(
 	git
 	gzip
 	latex
+	pdf2svg
 	pdflatex
 	dvipng
 	giftopnm

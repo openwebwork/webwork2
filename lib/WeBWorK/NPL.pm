@@ -618,8 +618,4 @@ sub match_textbook {
 	return -1;
 }
 
-=back
-
-=cut
-
 1;
