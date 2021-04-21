@@ -331,6 +331,14 @@ $mail{feedbackRecipients}    = [
 # (U+FF01 to U+FF5E) to their corresponding ASCII characters (U+0021 to U+007E) automatically.
 # $pg{specialPGEnvironmentVars}{convertFullWidthCharacters} = 1;
 
+# Application that the PGtikz.pl macro will use to create svg images.
+# This should be either 'pdf2svg' or 'dvisvgm'.  The default is 'pdf2svg'.
+# If the system version of latex is 3.14159265-2.6-1.40.20 (TeX Live 2019) or newer
+# and the system version of dvisvgm is 2.8.1 or newer, then change this to 'dvisvgm'
+# by uncommenting the line below.  'dvisvgm' will generally create better 'svg'
+# images.
+#$pg{specialPGEnvironmentVars}{tikzSVGMethod} = "dvisvgm";
+
 ################################################################################
 #  Configuring the display of different versions of the editors
 ################################################################################
