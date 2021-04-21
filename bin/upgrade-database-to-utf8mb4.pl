@@ -191,6 +191,8 @@ if (!$no_backup) {
 	if ($replace eq 'Y') {
 		print "Backing up database to '$dump_file'.\n" if $verbose;
 		`$ce->{externalPrograms}{mysqldump} --host=$host --port=$port --user=$dbuser $dbname > $dump_file`;
+		die("There was an error creating a database backup.\n" .
+			"Please make a manual backup if needed before proceeding.") if $?;
 	}
 }
 
@@ -220,8 +222,8 @@ sub checkAndUpdateTableColumnTypes {
 	my $schema_field_data = $db->{$table_type}{record}->FIELD_DATA;
 	for my $field (keys %$schema_field_data) {
 		my $field_name = $db->{$table_type}{params}{fieldOverride}{$field} || $field;
-		my @name_type = $dbh->selectall_array("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS " .
-			"WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$table' AND COLUMN_NAME='$field_name';");
+		my @name_type = @{$dbh->selectall_arrayref("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS " .
+			"WHERE TABLE_SCHEMA='$dbname' AND TABLE_NAME='$table' AND COLUMN_NAME='$field_name';")};
 
 		print("\t\tThe '$field_name' column is missing from '$table'.\n" .
 			"\t\tYou should upgrade the course via course administration to fix this.\n" .
@@ -256,9 +258,9 @@ sub checkAndChangeTableCharacterSet {
 	my $table = shift;
 
 	print "\tChecking character set for '$table'\n" if $verbose;
-	my @table_data = $dbh->selectall_array("SELECT CCSA.character_set_name FROM information_schema.TABLES T, " .
+	my @table_data = @{$dbh->selectall_arrayref("SELECT CCSA.character_set_name FROM information_schema.TABLES T, " .
 		"information_schema.COLLATION_CHARACTER_SET_APPLICABILITY CCSA " .
-		"WHERE CCSA.collation_name = T.table_collation AND T.table_schema = '$dbname' AND T.table_name = '$table'");
+		"WHERE CCSA.collation_name = T.table_collation AND T.table_schema = '$dbname' AND T.table_name = '$table'")};
 	for (@table_data) {
 		if ($_->[0] ne 'utf8mb4') {
 			print "\t\tConverting '$table' character set to utf8mb4\n" if $verbose;
@@ -283,8 +285,8 @@ for my $course (@courses) {
 	print "Checking tables for '$course'\n" if $verbose;
 	for my $table_type (@table_types) {
 		my $table = "${course}_$table_type";
-		next unless $dbh->selectall_array("SELECT * FROM INFORMATION_SCHEMA.TABLES " .
-			"WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$table';");
+		next unless @{$dbh->selectall_arrayref("SELECT * FROM INFORMATION_SCHEMA.TABLES " .
+			"WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$table';")};
 
 	   	checkAndUpdateTableColumnTypes($table, $table_type);
 		checkAndChangeTableCharacterSet($table);
@@ -298,8 +300,8 @@ if ($upgrade_non_native) {
 	my @native_tables = grep { $db->{$_}{params}{non_native} } keys %$db;
 	for my $native_table (@native_tables) {
 		# Skip the fake tables
-		next unless $dbh->selectall_array("SELECT * FROM INFORMATION_SCHEMA.TABLES " .
-			"WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$native_table';");
+		next unless @{$dbh->selectall_arrayref("SELECT * FROM INFORMATION_SCHEMA.TABLES " .
+			"WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME='$native_table';")};
 
 		checkAndUpdateTableColumnTypes($native_table, $native_table);
 		checkAndChangeTableCharacterSet($native_table);
