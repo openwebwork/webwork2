@@ -120,6 +120,8 @@ sub process_pod {
 		$pod_name =~ s/\.pm$//;
 		$pod_name =~ s|/+|::|g;
 		$filename =~ s/\.pm$/.html/;
+	} elsif ($filename !~ /\.html$/) {
+		$filename .= ".html";
 	}
 
 	$pod_name =~ s/^(\/|::)//;
