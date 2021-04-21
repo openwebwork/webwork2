@@ -1,0 +1,18 @@
+This folder contains the files necessary for the which started as a clone of the math4  theme.  These files are
+tracked by git and any changes made to them will be overwritten when you 
+upgrade.  The two exceptions are libretexts-overrides.css and libretexts-overrides.js.  
+
+These files do not need to be present, but if they are they will be included 
+in system.conf and will override the libretexts.css and libretexts.js theme.  They can 
+created by copying libretexts-overrides.css.dist and libretexts-overrides.js.dist.  This 
+is similar to how localOverrides.conf interacts with defaults.conf and 
+localOverrides.conf.dist.  In particular if you upgrade your server
+libretexts-overrides.js and libretexts-overrides.css  will not change, but their .dist 
+versions and the other math4 theme files may change. This might cause problems 
+until you merge the changes. 
+
+If you want to customize libretexts you should only change libretexts-overrides.css and
+libretexts-overrides.js.  Note: Because you can include arbitrary jQuery in 
+ilbretexts-overrides.js you can actually change pretty much anything, including 
+adding new html or changing existing html. 
+
