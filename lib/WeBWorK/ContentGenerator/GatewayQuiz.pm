@@ -941,8 +941,10 @@ sub pre_header_initialize {
 				&& ($submitAnswers || $checkAnswers)),
 		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showHints          => $r->param("showHints") || $ce->{pg}->{options}->{showHints},
-		showSolutions      => ($r->param("showSolutions") || $ce->{pg}->{options}->{showSolutions}) &&
-			($submitAnswers || $checkAnswers),
+		# showProblemGrader implies showSolutions.  Another convenience for grading.
+		showSolutions      => $r->param('showProblemGrader') ||
+			(($r->param("showSolutions") || $ce->{pg}->{options}->{showSolutions})
+				&& ($submitAnswers || $checkAnswers)),
 		recordAnswers      => $submitAnswers && !$authz->hasPermissions($userName, "avoid_recording_answers"),
 		# we also want to check answers if we were checking answers and are
 		#    switching between pages
@@ -2172,7 +2174,7 @@ sub body {
 		if ($can{showSolutions}) {
 			print CGI::checkbox(
 				-name    => "showSolutions",
-				-checked => $will{showSolutions},
+				-checked => $will{showSolutions} || $want{showProblemGrader},
 				-label   => $r->maketext("Show Solutions"),
 			);
 		}
