@@ -343,9 +343,8 @@ sub verify_normal_user {
       $self->write_log_entry("LOGIN OK");
       return 1;
     } else {
+      $self->{log_error} .= "$user_id - authentication failed: ". $self->{error};
       $self->{error} = $auth_result;
-      $self-> {log_error} .= "$user_id - authentication failed: ". $self->{error};
-      $self->write_log_entry("LOGIN FAILED");
       return 0;
     } 
 }
@@ -372,9 +371,9 @@ sub authenticate {
   debug("Nonce = |" . $self-> {oauth_nonce} . "|");
   my $nonce = WeBWorK::Authen::LTIAdvanced::Nonce->new($r, $self->{oauth_nonce}, $self->{oauth_timestamp}); 
   if (!($nonce->ok ) ) {
+    $self->{log_error} .= "AUTH LTI: Nonce error";
     $self->{error} .=  $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator if this recurs.");
     debug("Failed to verify nonce");
-    $self->write_log_entry("AUTH LTI: Nonce error");
     return 0;
   }
 
@@ -427,7 +426,6 @@ sub authenticate {
 
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
       $self->{log_error} .= "Construction of OAuth request record failed";
-      $self->write_log_entry("AUTH LTI: OAuth error");
       return 0;
     } elsif (! $request->verify && ! $altrequest->verify) {
       debug("LTIAdvanced::authenticate request-> verify failed");
@@ -438,7 +436,6 @@ sub authenticate {
       if ( $ce->{debug_lti_parameters} ) {
 	warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the LMS url then you have https in \$server_root_url in site.conf");
       }
-      $self->write_log_entry("AUTH LTI: LTI parameters error");
       return 0;
     } else {
       debug("OAuth verification SUCCEEDED !!");
@@ -457,7 +454,6 @@ sub authenticate {
 			if ( $ce->{debug_lti_parameters} ) {
 				warn("Account creation is currently disabled in this course.  Please speak to your instructor or system administrator.");
 			}
-			$self->write_log_entry("AUTH LTI: account creation blocked");
 			return 0;
 		} else {
 			# Attempt to create the user, and warn if that fails.
@@ -495,7 +491,7 @@ sub authenticate {
   
   debug("LTIAdvanced is returning a failed authentication");
   $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-  $self->write_log_entry("AUTH LTI: failed to authenticate");
+  $self->{login_error} .= "AUTH LTI: failed to authenticate";
   return(0);
 }
 

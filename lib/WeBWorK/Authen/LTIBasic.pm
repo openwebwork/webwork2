@@ -405,8 +405,7 @@ sub verify_normal_user
 	else  
 		{
 		$self->{error} = $r->maketext($auth_result);
-		$self-> {log_error} .= "$user_id - authentication failed: ". $self->{error};
-		$self->write_log_entry("LOGIN FAILED");
+		$self->{log_error} .= "$user_id - authentication failed: ". $self->{error};
 		return 0;
 		} 
 }
@@ -439,9 +438,9 @@ sub authenticate
 	if (!($nonce -> ok ) ) {
 		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
 		#debug( "eval failed: ", $@, "<br /><br />"; print_keys($r);); 
-		$self -> {error} .= $r->maketext($GENERIC_ERROR_MESSAGE
+		$self->{error} .= $r->maketext($GENERIC_ERROR_MESSAGE
 				. ":  Something was wrong with your Nonce LTI parameters.  If this recurs, please speak with your instructor", $LMS);
-		$self->write_log_entry("AUTH LTI: Nonce error");
+		$self->{log_error} .= "AUTH LTI: Nonce error";
 		return 0;
 	}
 	#debug( "r->param(oauth_signature) = |" . $r -> param("oauth_signature") . "|");
@@ -484,7 +483,6 @@ sub authenticate
 		$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
 		$self -> {error} .= $r->maketext("Something was wrong with your LTI parameters.  If this recurs, please speak with your instructor");
 		$self -> {log_error} .= "Construction of OAuth request record failed";
-		$self->write_log_entry("AUTH LTI: LTI parameters error");
 		return 0;
 		}
 	else
@@ -496,7 +494,6 @@ sub authenticate
 			$self -> {error} .= $r->maketext("Your authentication failed.  Please return to Oncourse and login again.");
 			$self -> {error} .= $r->maketext("Your LTI OAuth verification failed.  If this recurs, please speak with your instructor");
 			$self -> {log_error} .= "OAuth verification failed.  Check the Consumer Secret.";
-			$self->write_log_entry("AUTH LTI: OAuth verification error");
 			return 0;
 			}
 		else
@@ -772,7 +769,7 @@ sub authenticate
 	}
 	#debug("LTIBasic is returning a failed authentication");
 	$self -> {error} = $r->maketext($GENERIC_ERROR_MESSAGE, $ce->{LMS_name});
-	$self->write_log_entry("AUTH LTI: failed to authenticate");
+	$self->{log_error} .= "AUTH LTI: failed to authenticate";
 	return(0);
 }
 
