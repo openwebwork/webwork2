@@ -193,8 +193,8 @@ package configboolean;
 sub display_value {
   my ($self, $val) = @_;
   my $r = $self->{Module}->r;
-  return $r->maketext('True') if $val;
-  return $r->maketext('False');
+  return 'True' if $val;
+  return 'False';
 }
 
 sub save_string {
@@ -204,14 +204,14 @@ sub save_string {
 	my $newval = $self->convert_newval_source($newvalsource);
 	my $displayoldval = $self->comparison_value($oldval);
 	return '' if($displayoldval eq $newval);
-	return('$'. $varname . " = " . ($newval eq $r->maketext("True") ? 1 : 0) .";\n");
+	return('$'. $varname . " = " . ($newval eq "True" ? 1 : 0) .";\n");
 }
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $r = $self->{Module}->r;
-	my $true = $r->maketext('True');
-	my $false = $r->maketext('False');
+	my $true = 'True';
+	my $false = 'False';
 	return CGI::popup_menu(
 		-name => $name,
 		-default => ($default ? $true: $false),
@@ -229,11 +229,11 @@ package configpermission;
 sub display_value {
   my ($self, $val) = @_;
   my $r = $self->{Module}->r;
-  return $r->maketext('nobody') if not defined($val);
+  return 'nobody' if not defined($val);
   my %userRoles = %{$self->{Module}->{r}->{ce}->{userRoles}};
   my %reverseUserRoles = reverse %userRoles;
-  return $r->maketext($reverseUserRoles{$val}) if defined($reverseUserRoles{$val});
-  return $r->maketext($val);
+  return $reverseUserRoles{$val} if defined($reverseUserRoles{$val});
+  return $val;
 }
 
 sub save_string {
@@ -244,7 +244,7 @@ sub save_string {
 	my $r = $self->{Module}->r;
 	return '' if($displayoldval eq $newval);
 	my $str = '$'. $varname . " = '$newval';\n";
-	$str = '$'. $varname . " = undef;\n" if $newval eq $r->maketext('nobody');
+	$str = '$'. $varname . " = undef;\n" if $newval eq 'nobody';
 	return($str);
 }
 
@@ -265,7 +265,7 @@ sub entry_widget {
 
 	my @values = sort { $userRoles{$a} <=> $userRoles{$b} } keys %userRoles;
 
-	my %labels = map {$_ => $r->maketext($_)} @values;
+	my %labels = map {$_ => $_} @values;
 	return CGI::popup_menu(-name=>$name, -values => \@values,
 		-default=>$default, -labels => \%labels);
 }
@@ -401,7 +401,7 @@ sub display_value {
 	$val = 'ur' if not defined($val);
 
 	if ($self->{labels}->{$val}) {
-	    return join(CGI::br(), $r->maketext($self->{labels}->{$val}));
+	    return join(CGI::br(), $self->{labels}->{$val});
 	}
 
 	return join(CGI::br(), $val);
@@ -437,7 +437,7 @@ sub save_string {
 sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $r = $self->{Module}->r;
-	my %labels = map {$_ => $r->maketext($self->{labels}->{$_} // $_)} @{$self->{values}};
+	my %labels = map {$_ => $self->{labels}->{$_} // $_} @{$self->{values}};
 	
 	return CGI::popup_menu(
 		-name => $name,
