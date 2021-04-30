@@ -471,7 +471,11 @@ sub setListRow {
 		} else {
 			my $t = time();
 			if ($set->{version_time_limit} > 0 && $t < $set->due_date()) {
-				$display_name = CGI::i({class=>"icon far fa-clock", title=>$r->maketext("Quiz with time limit"), data_alt => $r->maketext("Quiz with time limit.")}, '') . ' ' . $display_name;
+				$display_name = CGI::i({
+						class => "icon far fa-clock",
+						title => $r->maketext("Quiz with time limit"),
+						data_alt => $r->maketext("Quiz with time limit.")
+					}, '') . ' ' . CGI::span({ class => 'gwquiz-info', data_time_limit => $set->{version_time_limit} }, $display_name);
 			}
 			if ( $t < $set->open_date() ) {
 				$status = $r->maketext("Will open on [_1].", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
@@ -764,7 +768,11 @@ sub restricted_progression_msg {
   return $status;
 }
 
+sub output_JS {
+	my $self = shift;
+	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-  
+	print CGI::script({ src => "$site_url/js/apps/ProblemSets/problemsets.js", defer => '' }, "");
+}
 
 1;
