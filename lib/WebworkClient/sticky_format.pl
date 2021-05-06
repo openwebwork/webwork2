@@ -80,13 +80,16 @@ $LTIGradeMessage
 <input type="hidden" name="language" value="$formLanguage">
 <input type="hidden" name="showSummary" value="$showSummary">
 <input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">
+<input type="hidden" name="showPreviewButton" value="$showPreviewButton">
+<input type="hidden" name="showCheckAnswersButton" value="$showCheckAnswersButton">
+<input type="hidden" name="showCorrectAnswersButton" value="$showCorrectAnswersButton">
 <input type="hidden" name="showFooter" value="$showFooter">
 <input type="hidden" name="forcePortNumber" value="$forcePortNumber">
 
 <p>
-<input type="submit" name="preview"  value="$STRING_Preview" />
-<input type="submit" name="WWsubmit" value="$STRING_Submit"/>
-<input type="submit" name="WWcorrectAns" value="$STRING_ShowCorrect"/>
+$previewButton
+$checkAnswersButton
+$correctAnswersButton
 </p>
 </form>
 </div>

@@ -240,10 +240,16 @@ sub formatRenderedProblem {
 	$localStorageMessages .= CGI::p('Your overall score for this problem is&nbsp;' . CGI::span({ id => 'problem-overall-score' }, ''));
 	$localStorageMessages .= CGI::end_div();
 
-	# Submit buttons
-	my $STRING_Preview = $mt->maketext("Preview My Answers");
-	my $STRING_ShowCorrect = $mt->maketext("Show correct answers");
-	my $STRING_Submit = $mt->maketext("Check Answers");
+	# Submit buttons (all are shown by default)
+	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // "";
+	my $previewButton = $showPreviewButton eq "no" ? '' :
+		'<input type="submit" name="preview" value="' . $mt->maketext("Preview My Answers") . '">';
+	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // "";
+	my $checkAnswersButton = $showCheckAnswersButton eq "no" ? '' :
+		'<input type="submit" name="WWsubmit" value="' . $mt->maketext("Check Answers") . '">';
+	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // "";
+	my $correctAnswersButton = $showCorrectAnswersButton eq "no" ? '' :
+		'<input type="submit" name="WWcorrectAns" value="' . $mt->maketext("Show Correct Answers") . '">';
 
 	# Regular Perl warning messages generated with warn.
 	my $warnings = '';

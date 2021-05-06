@@ -72,17 +72,7 @@ $json_output->{body_part590} = "</div>";
 
 $json_output->{body_part650_VI} = '$scoreSummary';
 
-$json_output->{body_part710_VI} =  <<'ENDPROBLEMTEMPLATE';
-<p>
-<input type="submit" name="preview"  value="$STRING_Preview" />
-<input type="submit" name="WWsubmit" value="$STRING_Submit"/>
-ENDPROBLEMTEMPLATE
-
-$json_output->{body_part780_optional_VI} = <<'ENDPROBLEMTEMPLATE';
-<input type="submit" name="WWcorrectAns" value="$STRING_ShowCorrect"/>
-ENDPROBLEMTEMPLATE
-
-$json_output->{body_part790} = "</p>";
+$json_output->{body_part700_VI} = '<p>$previewButton $checkAnswersButton $correctAnswersButton</p>';
 
 $json_output->{body_part999_VI} = <<'ENDPROBLEMTEMPLATE';
 </form></div></div></div>
@@ -108,6 +98,9 @@ $json_output->{hidden_input_field_theme} = '$theme';
 $json_output->{hidden_input_field_language} = '$formLanguage';
 $json_output->{hidden_input_field_showSummary} = '$showSummary';
 $json_output->{hidden_input_field_showAnswerNumbers} = '$showAnswerNumbers';
+$json_output->{hidden_input_field_showPreviewButton} = '$showPreviewButton';
+$json_output->{hidden_input_field_showCheckAnswersButton} = '$showCheckAnswersButton';
+$json_output->{hidden_input_field_showCorrectAnswersButton} = '$showCorrectAnswersButton';
 $json_output->{hidden_input_field_showFooter} = '$showFooter';
 $json_output->{hidden_input_field_forcePortNumber} = '$forcePortNumber';
 $json_output->{hidden_input_field_extraHeaderText} = '$extra_header_text';
