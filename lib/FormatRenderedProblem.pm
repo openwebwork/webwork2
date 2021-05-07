@@ -253,9 +253,13 @@ sub formatRenderedProblem {
 
 	# Regular Perl warning messages generated with warn.
 	my $warnings = '';
-	if (defined($rh_result->{WARNINGS}) and $rh_result->{WARNINGS}) {
-		$warnings = qq{<div style="background-color:pink"><p >WARNINGS</p><p>} .
-			decode_utf8_base64($rh_result->{WARNINGS}) . "</p></div>";
+	if ($rh_result->{pg_warnings}) {
+		$warnings .= qq{<div style="background-color:pink">PG WARNINGS<br>} .
+			decode_utf8_base64($rh_result->{pg_warnings}) . "</div>";
+	}
+	if ($rh_result->{translator_warnings}) {
+		$warnings .= qq{<div style="background-color:pink"><p>TRANSLATOR WARNINGS</p><p>} .
+			decode_utf8_base64($rh_result->{translator_warnings}) . "</p></div>";
 	}
 
 	# PG debug messages generated with DEBUG_message();
@@ -274,13 +278,14 @@ sub formatRenderedProblem {
 
 	my $debug_messages = $rh_result->{debug_messages};
 
+	# For debugging purposes (only used in the debug format)
+	my $clientDebug = $self->{inputs_ref}{clientDebug} // "";
+	my $client_debug_data = $clientDebug ? "<h3>Webwork client data</h3>" . WebworkClient::pretty_print($self) : '';
+
 	# Show the footer unless it is explicity disabled.
 	my $showFooter = $self->{inputs_ref}{showFooter} // "";
 	my $footer = $showFooter && $showFooter eq "no" ? ''
 		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: $theme</div>";
-
-	# For debugging purposes add $pretty_print_self to the output format in use and uncomment below.
-	#my $pretty_print_self = WebworkClient::pretty_print($self);
 
 	# Execute and return the interpolated problem template
 	my $format_name = $self->{inputs_ref}{outputformat} // 'simple';
