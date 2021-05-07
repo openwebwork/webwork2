@@ -293,8 +293,12 @@ sub formatRenderedProblem {
 	# The json format
 	if ($format_name eq "json") {
 		my $json_output = do("WebworkClient/json_format.pl");
+		for my $key (keys %{$json_output->{hidden_input_field}}) {
+			$json_output->{hidden_input_field}{$key} =~ s/(\$\w+)/$1/gee;
+		}
+
 		for my $key (keys %$json_output) {
-			if (($key =~ /^hidden_input_field/) ||
+			if (
 				($key =~ /^real_webwork/) ||
 				($key =~ /^internal/) ||
 				($key =~ /_A?VI$/)

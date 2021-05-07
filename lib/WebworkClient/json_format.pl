@@ -5,7 +5,7 @@
 # Most parts which need variable interpolation end in "_VI".
 # Parts ending in "_AVI" are references to anonymous arrays whose entries need variable interpolation.
 # Other parts which need variable interpolation are:
-#	hidden_input_field_*
+#	hidden_input_field}{*
 #	real_webwork_*
 
 # NOTE: When a variable needs to be interpolated later, the string should be in single quotes not in double quotes.
@@ -88,30 +88,33 @@ $footer
 </body></html>
 ENDPROBLEMTEMPLATE
 
-$json_output->{hidden_input_field_answersSubmitted} = '1';
-$json_output->{hidden_input_field_sourceFilePath} = '$sourceFilePath';
-$json_output->{hidden_input_field_problemSource} = '$encoded_source';
-$json_output->{hidden_input_field_problemSeed} = '$problemSeed';
-$json_output->{hidden_input_field_problemUUID} = '$problemUUID';
-$json_output->{hidden_input_field_psvn} = '$psvn';
-$json_output->{hidden_input_field_pathToProblemFile} = '$fileName';
-$json_output->{hidden_input_field_courseName} = '$courseID';
-$json_output->{hidden_input_field_courseID} = '$courseID';
-$json_output->{hidden_input_field_userID} = '$userID';
-$json_output->{hidden_input_field_course_password} = '$course_password';
-$json_output->{hidden_input_field_displayMode} = '$displayMode';
-$json_output->{hidden_input_field_session_key} = '$session_key';
-$json_output->{hidden_input_field_outputformat} = 'json';
-$json_output->{hidden_input_field_theme} = '$theme';
-$json_output->{hidden_input_field_language} = '$formLanguage';
-$json_output->{hidden_input_field_showSummary} = '$showSummary';
-$json_output->{hidden_input_field_showAnswerNumbers} = '$showAnswerNumbers';
-$json_output->{hidden_input_field_showPreviewButton} = '$showPreviewButton';
-$json_output->{hidden_input_field_showCheckAnswersButton} = '$showCheckAnswersButton';
-$json_output->{hidden_input_field_showCorrectAnswersButton} = '$showCorrectAnswersButton';
-$json_output->{hidden_input_field_showFooter} = '$showFooter';
-$json_output->{hidden_input_field_forcePortNumber} = '$forcePortNumber';
-$json_output->{hidden_input_field_extraHeaderText} = '$extra_header_text';
+$json_output->{hidden_input_field} = {};
+
+
+$json_output->{hidden_input_field}{answersSubmitted} = '1';
+$json_output->{hidden_input_field}{sourceFilePath} = '$sourceFilePath';
+$json_output->{hidden_input_field}{problemSource} = '$encoded_source';
+$json_output->{hidden_input_field}{problemSeed} = '$problemSeed';
+$json_output->{hidden_input_field}{problemUUID} = '$problemUUID';
+$json_output->{hidden_input_field}{psvn} = '$psvn';
+$json_output->{hidden_input_field}{pathToProblemFile} = '$fileName';
+$json_output->{hidden_input_field}{courseName} = '$courseID';
+$json_output->{hidden_input_field}{courseID} = '$courseID';
+$json_output->{hidden_input_field}{userID} = '$userID';
+$json_output->{hidden_input_field}{course_password} = '$course_password';
+$json_output->{hidden_input_field}{displayMode} = '$displayMode';
+$json_output->{hidden_input_field}{session_key} = '$session_key';
+$json_output->{hidden_input_field}{outputformat} = 'json';
+$json_output->{hidden_input_field}{theme} = '$theme';
+$json_output->{hidden_input_field}{language} = '$formLanguage';
+$json_output->{hidden_input_field}{showSummary} = '$showSummary';
+$json_output->{hidden_input_field}{showAnswerNumbers} = '$showAnswerNumbers';
+$json_output->{hidden_input_field}{showPreviewButton} = '$showPreviewButton';
+$json_output->{hidden_input_field}{showCheckAnswersButton} = '$showCheckAnswersButton';
+$json_output->{hidden_input_field}{showCorrectAnswersButton} = '$showCorrectAnswersButton';
+$json_output->{hidden_input_field}{showFooter} = '$showFooter';
+$json_output->{hidden_input_field}{forcePortNumber} = '$forcePortNumber';
+$json_output->{hidden_input_field}{extraHeaderText} = '$extra_header_text';
 
 # These are the real WeBWorK server URLs which the intermediate needs to use
 # to communicate with WW, while the distant client must use URLs of the
