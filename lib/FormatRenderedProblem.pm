@@ -242,13 +242,13 @@ sub formatRenderedProblem {
 
 	# Submit buttons (all are shown by default)
 	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // "";
-	my $previewButton = $showPreviewButton eq "no" ? '' :
+	my $previewButton = $showPreviewButton eq "0" ? '' :
 		'<input type="submit" name="preview" value="' . $mt->maketext("Preview My Answers") . '">';
 	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // "";
-	my $checkAnswersButton = $showCheckAnswersButton eq "no" ? '' :
+	my $checkAnswersButton = $showCheckAnswersButton eq "0" ? '' :
 		'<input type="submit" name="WWsubmit" value="' . $mt->maketext("Check Answers") . '">';
 	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // "";
-	my $correctAnswersButton = $showCorrectAnswersButton eq "no" ? '' :
+	my $correctAnswersButton = $showCorrectAnswersButton eq "0" ? '' :
 		'<input type="submit" name="WWcorrectAns" value="' . $mt->maketext("Show Correct Answers") . '">';
 
 	# Regular Perl warning messages generated with warn.
@@ -284,7 +284,7 @@ sub formatRenderedProblem {
 
 	# Show the footer unless it is explicity disabled.
 	my $showFooter = $self->{inputs_ref}{showFooter} // "";
-	my $footer = $showFooter && $showFooter eq "no" ? ''
+	my $footer = $showFooter eq "0" ? ''
 		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: $theme</div>";
 
 	# Execute and return the interpolated problem template
