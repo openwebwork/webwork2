@@ -297,12 +297,16 @@ sub formatRenderedProblem {
 			if (($key =~ /^hidden_input_field/) ||
 				($key =~ /^real_webwork/) ||
 				($key =~ /^internal/) ||
-				($key =~ /_VI$/)
+				($key =~ /_A{0,1}VI$/)
 			) {
 				# Interpolate values
-				$json_output->{$key} =~ s/(\$\w+)/$1/gee;
-				if ($key =~ /_VI$/) {
-					my $new_key = $key =~ s/_VI$//gr;
+				if ($key =~ /_AVI$/) {
+					map { s/(\$\w+)/$1/gee } @{$json_output->{$key}};
+				} else {
+					$json_output->{$key} =~ s/(\$\w+)/$1/gee;
+				}
+				if ( ($key =~ /_A{0,1}VI$/) || ($key =~ /_AVI$/) ) {
+					my $new_key = $key =~ s/_A{0,1}VI$//r;
 					$json_output->{$new_key} = $json_output->{$key};
 					delete $json_output->{$key};
 				}

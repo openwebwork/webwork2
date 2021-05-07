@@ -3,9 +3,12 @@
 # variable interpolation.
 
 # Most parts which need variable interpolation end in "_VI".
+# Parts ending in "_AVI" are references to anonymous arrays whose entries need variable interpolation.
 # Other parts which need variable interpolation are:
 #	hidden_input_field_*
 #	real_webwork_*
+
+# NOTE: When a variable needs to be interpolated later, the string should be in single quotes not in double quotes.
 
 $json_output = { head_part001_VI => '<!DOCTYPE html><html $COURSE_LANG_AND_DIR>' };
 
@@ -16,36 +19,42 @@ $json_output->{head_part010} = <<'ENDPROBLEMTEMPLATE';
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 ENDPROBLEMTEMPLATE
 
-$json_output->{head_part100_VI} = <<'ENDPROBLEMTEMPLATE';
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
-<link rel="stylesheet" href="$themeDir/math4.css"/>
-<link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
-<link rel="stylesheet" href="$themeDir/math4-overrides.css"/>
-ENDPROBLEMTEMPLATE
+# CSS loads - as an array of href values
+$json_output->{head_part100_AVI} = [
+	"/webwork2_files/js/vendor/bootstrap/css/bootstrap.css",
+	"/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css",
+	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css",
+	"/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+	"/webwork2_files/css/knowlstyle.css",
+	"/webwork2_files/js/apps/ImageView/imageview.css",
+	'$themeDir/math4.css',
+	'$themeDir/math4-coloring.css',
+	'$themeDir/math4-overrides.css',
+];
 
-$json_ouput{head_part200_VI} = <<'ENDPROBLEMTEMPLATE';
-<!-- JS Loads -->
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/es5/tex-chtml.js" id="MathJax-script" defer></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/InputColor/color.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/Base64/Base64.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-<script src="$themeDir/math4/math4.js" defer></script>
-ENDPROBLEMTEMPLATE
+# JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
+$json_output->{head_part200_AVI} = [
+	"/webwork2_files/node_modules/jquery/dist/jquery.min.js",
+	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
+	"/webwork2_files/js/vendor/bootstrap/js/bootstrap.js",
+	"/webwork2_files/js/apps/InputColor/color.js",
+	"/webwork2_files/js/apps/Base64/Base64.js",
+	"/webwork2_files/js/vendor/underscore/underscore.js",
+	"/webwork2_files/js/legacy/vendor/knowl.js",
+	"/webwork2_files/js/apps/Problem/problem.js",
+	"/webwork2_files/js/apps/ImageView/imageview.js",
+	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
+];
+
+# JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
+#     mathjax/es5/tex-chtml.js also needs id="MathJax-script" in the <script> tag
+
+$json_output->{head_part201_AVI} = [
+        "https://polyfill.io/v3/polyfill.min.js?features=es6",
+        "/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
+        "/webwork2_files/mathjax/es5/tex-chtml.js",
+        '$themeDir/math4/math4.js',
+];
 
 $json_output->{head_part300_VI} = '$problemHeadText';
 
