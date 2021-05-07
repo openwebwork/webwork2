@@ -297,7 +297,7 @@ sub formatRenderedProblem {
 			if (($key =~ /^hidden_input_field/) ||
 				($key =~ /^real_webwork/) ||
 				($key =~ /^internal/) ||
-				($key =~ /_A{0,1}VI$/)
+				($key =~ /_A?VI$/)
 			) {
 				# Interpolate values
 				if ($key =~ /_AVI$/) {
@@ -305,8 +305,8 @@ sub formatRenderedProblem {
 				} else {
 					$json_output->{$key} =~ s/(\$\w+)/$1/gee;
 				}
-				if ( ($key =~ /_A{0,1}VI$/) || ($key =~ /_AVI$/) ) {
-					my $new_key = $key =~ s/_A{0,1}VI$//r;
+				if (($key =~ /_A?VI$/)) {
+					my $new_key = $key =~ s/_A?VI$//r;
 					$json_output->{$new_key} = $json_output->{$key};
 					delete $json_output->{$key};
 				}

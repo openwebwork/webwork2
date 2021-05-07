@@ -14,8 +14,9 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
-<script src="$themeDir/math4.js" defer></script>
-<script src="$themeDir/math4-overrides.js" defer></script>
+<link rel="stylesheet" href="$themeDir/math4.css"/>
+<link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
+<link rel="stylesheet" href="$themeDir/math4-overrides.css"/>
 
 <!-- JS Loads -->
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
@@ -43,8 +44,8 @@ $problemHeadText
 <body>
 <div class="container-fluid">
 <div class="row-fluid">
-<div class="span12 problem">	
-<hr/>		
+<div class="span12 problem">
+<hr/>
 $answerTemplate
 $color_input_blanks_script
 <hr/>
@@ -62,10 +63,10 @@ $localStorageMessages
 
 $LTIGradeMessage
 
-<input type="hidden" name="answersSubmitted" value="1"> 
+<input type="hidden" name="answersSubmitted" value="1">
 <input type="hidden" name="sourceFilePath" value = "$sourceFilePath">
-<input type="hidden" name="problemSource" value="$encoded_source"> 
-<input type="hidden" name="problemSeed" value="$problemSeed"> 
+<input type="hidden" name="problemSource" value="$encoded_source">
+<input type="hidden" name="problemSeed" value="$problemSeed">
 <input type="hidden" name="problemUUID" value="$problemUUID">
 <input type="hidden" name="psvn" value="$psvn">
 <input type="hidden" name="pathToProblemFile" value="$fileName">

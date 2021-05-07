@@ -48,12 +48,11 @@ $json_output->{head_part200_AVI} = [
 
 # JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
 #     mathjax/es5/tex-chtml.js also needs id="MathJax-script" in the <script> tag
-
 $json_output->{head_part201_AVI} = [
-        "https://polyfill.io/v3/polyfill.min.js?features=es6",
-        "/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
-        "/webwork2_files/mathjax/es5/tex-chtml.js",
-        '$themeDir/math4/math4.js',
+	"https://polyfill.io/v3/polyfill.min.js?features=es6",
+	"/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
+	"/webwork2_files/mathjax/es5/tex-chtml.js",
+	'$themeDir/math4/math4.js',
 ];
 
 $json_output->{head_part300_VI} = '$problemHeadText';
