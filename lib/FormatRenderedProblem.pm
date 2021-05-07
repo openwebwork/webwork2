@@ -243,7 +243,7 @@ sub formatRenderedProblem {
 	# Submit buttons (all are shown by default)
 	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // "";
 	my $previewButton = $showPreviewButton eq "0" ? '' :
-		'<input type="submit" name="preview" value="' . $mt->maketext("Preview My Answers") . '">';
+		'<input type="submit" name="preview" id="previewAnswers_id" value="' . $mt->maketext("Preview My Answers") . '">';
 	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // "";
 	my $checkAnswersButton = $showCheckAnswersButton eq "0" ? '' :
 		'<input type="submit" name="WWsubmit" value="' . $mt->maketext("Check Answers") . '">';
