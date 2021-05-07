@@ -49,7 +49,7 @@ sub initialize {
 		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
 		foreach my $i (1..$numberOfStudents) {
 		    my $new_user_id  = trim_spaces($r->param("new_user_id_$i"));
-		    my $new_password = cryptPassword($new_user_id);
+		    my $new_password = cryptPassword($r->param("student_id_$i"));
 		    next unless defined($new_user_id) and $new_user_id;
 			push @userIDs, $new_user_id;
 		    
