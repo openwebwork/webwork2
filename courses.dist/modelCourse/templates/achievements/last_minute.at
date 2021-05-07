@@ -1,4 +1,11 @@
-# checks to see if a studen finished a set close to the due date
+# checks to see if a student finished a set close to the due date
+
+# Check that this is not a repeated submission of problem which has
+# been solved before.
+# Do not consider this achievement if this is a repeated submission
+# of previously solved problem.
+
+return 0 unless ($problem->status == 1 && $problem->num_correct == 1);
 
     #test to see if it is within 30 min of the due date
     if (($set->due_date - time()) > 1800) {

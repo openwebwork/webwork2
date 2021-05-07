@@ -1764,7 +1764,7 @@ sub generateURLs {
 	if ($userName) {
 		my $modulePath;
 		my @args;
-		if ($params{set_id}) {
+		if (defined $params{set_id} && $params{set_id} ne "") {
 			if ($params{problem_id}) {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
 					courseID => $r->urlpath->arg("courseID"),

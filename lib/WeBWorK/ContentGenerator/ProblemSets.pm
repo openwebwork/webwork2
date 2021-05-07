@@ -258,17 +258,17 @@ sub body {
 	print CGI::caption($r->maketext("Homework Sets"));
 	if ( ! $existVersions ) {
 	    print CGI::Tr({},
-		    CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		    CGI::th({-scope=>"col"},$nameHeader),
 		    CGI::th({-scope=>"col"},$statusHeader),
+			CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 	        );
 	} else {
 	    print CGI::Tr(
-		CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 		CGI::th({-scope=>"col"},$nameHeader),
 		CGI::th({-scope=>"col"},$statusHeader),
 		CGI::th({-scope=>"col"},$r->maketext("Score")),
 		CGI::th({-scope=>"col"},$r->maketext("Start Date")),
+		CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
 	        );
 	}
 
@@ -639,10 +639,7 @@ sub setListRow {
 	
 	# check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {
-	  return CGI::Tr(CGI::td([ $control,
-				   $interactive,
-				   $status,
-				 ]));
+	  return CGI::Tr(CGI::td([$interactive, $status, $control]));
 	} else {
 	  my ( $startTime, $score );
 	  
@@ -679,9 +676,8 @@ sub setListRow {
 	  }
 	  
 	  return CGI::Tr(($gwtype == 1) ? {class => 'gw-version'} : {},
-		  CGI::td($control).
 		  CGI::td(($gwtype == 1) ? {class => 'gw-version'} : ($gwtype == 2) ? {class => 'gw-template'} : {},$interactive).
-		  CGI::td([$status,$score,$startTime]));
+		  CGI::td([$status, $score, $startTime, $control]));
 	}
       }
 
