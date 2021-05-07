@@ -229,7 +229,7 @@ sub formatRenderedProblem {
 
 	# Answer hash in XML format used by the PTX format.
 	my $answerhashXML = XMLout($rh_result->{answers} // {}, RootName => 'answerhashes')
-	if $rh_result->{inputs_ref}{outputformat} // "" eq "ptx";
+	if $self->{inputs_ref}{outputformat} // "" eq "ptx";
 
 	# Sticky format local storage messages
 	my $localStorageMessages = CGI::start_div({ id => 'local-storage-messages' });
