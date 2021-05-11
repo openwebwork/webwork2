@@ -251,6 +251,9 @@ sub formatRenderedProblem {
 	my $correctAnswersButton = $showCorrectAnswersButton eq "0" ? '' :
 		'<input type="submit" name="WWcorrectAns" value="' . $mt->maketext("Show Correct Answers") . '">';
 
+	my $showSolutions = $self->{inputs_ref}{showSolutions} // "";
+	my $showHints = $self->{inputs_ref}{showHints} // "";
+
 	# Regular Perl warning messages generated with warn.
 	my $warnings = '';
 	if ($rh_result->{pg_warnings}) {

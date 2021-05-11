@@ -69,6 +69,8 @@ $LTIGradeMessage
 <input type="hidden" name="theme" value="$theme">
 <input type="hidden" name="language" value="$formLanguage">
 <input type="hidden" name="showSummary" value="$showSummary">
+<input type="hidden" name="showHints" value="$showHints">
+<input type="hidden" name="showSolutions" value="$showSolutions">
 <input type="hidden" name="showAnswerNumbers" value="$showAnswerNumbers">
 <input type="hidden" name="showPreviewButton" value="$showPreviewButton">
 <input type="hidden" name="showCheckAnswersButton" value="$showCheckAnswersButton">
