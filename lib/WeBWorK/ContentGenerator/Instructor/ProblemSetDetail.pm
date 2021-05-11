@@ -2921,8 +2921,9 @@ sub output_JS {
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::script({ src => "$site_url/js/apps/Base64/Base64.js" }, "");
+
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/Knowls/knowl.css" });
-	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js" }, "");
+	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js", defer => undef }, '');
 
 	print CGI::script({ src => "$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js" }, "");
 	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
