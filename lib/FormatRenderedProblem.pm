@@ -125,6 +125,10 @@ sub formatRenderedProblem {
 	my $fileName = $self->{input}{envir}{fileName} // "";
 	my $encoded_source = $self->encoded_source // "";
 
+	# Select the theme and theme directory
+	my $theme = $self->{inputs_ref}{theme} || $ce->{defaultTheme};
+	my $themeDir = "$ce->{webworkURLs}{htdocs}/themes/$theme";
+
 	# Set up the header text
 	my $problemHeadText = '';
 
@@ -212,7 +216,7 @@ sub formatRenderedProblem {
 		summary             => $problemResult->{summary} // '', # can be set by problem grader
 	);
 	my $answerTemplate = $tbl->answerTemplate;
-	my $color_input_blanks_script = $tbl->color_answer_blanks;
+	my $color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
 	# Score summary
@@ -236,16 +240,29 @@ sub formatRenderedProblem {
 	$localStorageMessages .= CGI::p('Your overall score for this problem is&nbsp;' . CGI::span({ id => 'problem-overall-score' }, ''));
 	$localStorageMessages .= CGI::end_div();
 
-	# Submit buttons
-	my $STRING_Preview = $mt->maketext("Preview My Answers");
-	my $STRING_ShowCorrect = $mt->maketext("Show correct answers");
-	my $STRING_Submit = $mt->maketext("Check Answers");
+	# Submit buttons (all are shown by default)
+	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // "";
+	my $previewButton = $showPreviewButton eq "0" ? '' :
+		'<input type="submit" name="preview" id="previewAnswers_id" value="' . $mt->maketext("Preview My Answers") . '">';
+	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // "";
+	my $checkAnswersButton = $showCheckAnswersButton eq "0" ? '' :
+		'<input type="submit" name="WWsubmit" value="' . $mt->maketext("Check Answers") . '">';
+	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // "";
+	my $correctAnswersButton = $showCorrectAnswersButton eq "0" ? '' :
+		'<input type="submit" name="WWcorrectAns" value="' . $mt->maketext("Show Correct Answers") . '">';
+
+	my $showSolutions = $self->{inputs_ref}{showSolutions} // "";
+	my $showHints = $self->{inputs_ref}{showHints} // "";
 
 	# Regular Perl warning messages generated with warn.
 	my $warnings = '';
-	if (defined($rh_result->{WARNINGS}) and $rh_result->{WARNINGS}) {
-		$warnings = qq{<div style="background-color:pink"><p >WARNINGS</p><p>} .
-			decode_utf8_base64($rh_result->{WARNINGS}) . "</p></div>";
+	if ($rh_result->{pg_warnings}) {
+		$warnings .= qq{<div style="background-color:pink">PG WARNINGS<br>} .
+			decode_utf8_base64($rh_result->{pg_warnings}) . "</div>";
+	}
+	if ($rh_result->{translator_warnings}) {
+		$warnings .= qq{<div style="background-color:pink"><p>TRANSLATOR WARNINGS</p><p>} .
+			decode_utf8_base64($rh_result->{translator_warnings}) . "</p></div>";
 	}
 
 	# PG debug messages generated with DEBUG_message();
@@ -264,13 +281,14 @@ sub formatRenderedProblem {
 
 	my $debug_messages = $rh_result->{debug_messages};
 
+	# For debugging purposes (only used in the debug format)
+	my $clientDebug = $self->{inputs_ref}{clientDebug} // "";
+	my $client_debug_data = $clientDebug ? "<h3>Webwork client data</h3>" . WebworkClient::pretty_print($self) : '';
+
 	# Show the footer unless it is explicity disabled.
 	my $showFooter = $self->{inputs_ref}{showFooter} // "";
-	my $footer = $showFooter && $showFooter eq "no" ? ''
-		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: math4</div>";
-
-	# For debugging purposes add $pretty_print_self to the output format in use and uncomment below.
-	#my $pretty_print_self = WebworkClient::pretty_print($self);
+	my $footer = $showFooter eq "0" ? ''
+		: "<div id='footer'>WeBWorK &copy; 2000-2021 | host: $SITE_URL | course: $courseID | format: $self->{inputs_ref}{outputformat} | theme: $theme</div>";
 
 	# Execute and return the interpolated problem template
 	my $format_name = $self->{inputs_ref}{outputformat} // 'simple';
@@ -278,16 +296,24 @@ sub formatRenderedProblem {
 	# The json format
 	if ($format_name eq "json") {
 		my $json_output = do("WebworkClient/json_format.pl");
+		for my $key (keys %{$json_output->{hidden_input_field}}) {
+			$json_output->{hidden_input_field}{$key} =~ s/(\$\w+)/$1/gee;
+		}
+
 		for my $key (keys %$json_output) {
-			if (($key =~ /^hidden_input_field/) ||
+			if (
 				($key =~ /^real_webwork/) ||
 				($key =~ /^internal/) ||
-				($key =~ /_VI$/)
+				($key =~ /_A?VI$/)
 			) {
 				# Interpolate values
-				$json_output->{$key} =~ s/(\$\w+)/$1/gee;
-				if ($key =~ /_VI$/) {
-					my $new_key = $key =~ s/_VI$//gr;
+				if ($key =~ /_AVI$/) {
+					map { s/(\$\w+)/$1/gee } @{$json_output->{$key}};
+				} else {
+					$json_output->{$key} =~ s/(\$\w+)/$1/gee;
+				}
+				if (($key =~ /_A?VI$/)) {
+					my $new_key = $key =~ s/_A?VI$//r;
 					$json_output->{$new_key} = $json_output->{$key};
 					delete $json_output->{$key};
 				}
