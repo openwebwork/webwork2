@@ -523,6 +523,7 @@ sub setListRow {
 							class=>"set-id-tooltip",
 							"data-toggle"=>"tooltip",
 							"data-placement"=>"right",
+							data_open => $setIsOpen && $effectiveUser eq $user,
 							title=>"",
 							"data-original-title"=>$globalSet->description(),
 							href=>$interactiveURL

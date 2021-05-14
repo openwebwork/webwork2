@@ -1,9 +1,11 @@
 (function() {
 	var gwTemplates = document.querySelectorAll('.gw-template');
 	gwTemplates.forEach(function(template) {
-		template.addEventListener('click', function(e) {
-			var quizInfo = template.querySelector('.gwquiz-info');
-			if (!quizInfo || !quizInfo.dataset.timeLimit) return;
+		var quizInfo = template.querySelector('.gwquiz-info');
+		var interactive = template.querySelector('a[data-open="1"]');
+		if (!quizInfo || !quizInfo.dataset.timeLimit || !interactive) return;
+
+		interactive.addEventListener('click', function(e) {
 			e.preventDefault();
 
 			var date = new Date(0);
@@ -25,7 +27,7 @@
 				'<button type="button" class="close" data-dismiss="modal" aria-label="close">' +
 				'<span aria-hidden="true">&times;</span>' +
 				'</button>' +
-				'<h3>' + (template.firstChild.dataset.originalTitle || 'Confirm Start of Timed Quiz') + '</h3>' +
+				'<h3>' + (interactive.dataset.originalTitle || 'Confirm Start of Timed Quiz') + '</h3>' +
 				'</div>' +
 				'<div class="modal-body">' +
 				'<p>' + quizInfo.textContent + ' is a timed quiz.<p>' +
@@ -41,7 +43,7 @@
 
 			var jqModal = $(modal);
 			var beginQuiz = document.getElementById('gw-quiz-confirm-start');
-			beginQuiz.addEventListener('click', function() { jqModal.modal('hide'); window.location = template.firstChild.href; });
+			beginQuiz.addEventListener('click', function() { jqModal.modal('hide'); window.location = interactive.href; });
 			jqModal.on('hidden', function() { modal.remove(); })
 			jqModal.modal('show');
 		});
