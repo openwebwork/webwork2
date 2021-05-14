@@ -404,9 +404,8 @@ sub renderProblem {
 		post_header_text            => encode_utf8_base64( $pg->{post_header_text} ),
 		answers 					=> $pg->{answers},
 		errors         				=> $pg->{errors},
-		WARNINGS	   				=> encode_utf8_base64(
-			"WARNINGS\n".$warning_messages."\n<br/>More<br/>\n".$pg->{warnings}
-		),
+		translator_warnings         => encode_utf8_base64($pg->{warnings}),
+		pg_warnings                 => encode_utf8_base64($warning_messages),
 		PG_ANSWERS_HASH             => $pg->{pgcore}->{PG_ANSWERS_HASH},
 		problem_result 				=> $pg->{result},
 		problem_state				=> $pg->{state},

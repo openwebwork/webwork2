@@ -3,9 +3,12 @@
 # variable interpolation.
 
 # Most parts which need variable interpolation end in "_VI".
+# Parts ending in "_AVI" are references to anonymous arrays whose entries need variable interpolation.
 # Other parts which need variable interpolation are:
-#	hidden_input_field_*
+#	hidden_input_field}{*
 #	real_webwork_*
+
+# NOTE: When a variable needs to be interpolated later, the string should be in single quotes not in double quotes.
 
 $json_output = { head_part001_VI => '<!DOCTYPE html><html $COURSE_LANG_AND_DIR>' };
 
@@ -16,34 +19,41 @@ $json_output->{head_part010} = <<'ENDPROBLEMTEMPLATE';
 <link rel="shortcut icon" href="/webwork2_files/images/favicon.ico"/>
 ENDPROBLEMTEMPLATE
 
-$json_output->{head_part100} = <<'ENDPROBLEMTEMPLATE';
-<!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/themes/math4/math4.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
-ENDPROBLEMTEMPLATE
+# CSS loads - as an array of href values
+$json_output->{head_part100_AVI} = [
+	"/webwork2_files/js/vendor/bootstrap/css/bootstrap.css",
+	"/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css",
+	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css",
+	"/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+	"/webwork2_files/css/knowlstyle.css",
+	"/webwork2_files/js/apps/ImageView/imageview.css",
+	'$themeDir/math4.css',
+	'$themeDir/math4-coloring.css',
+	'$themeDir/math4-overrides.css',
+];
 
-$json_ouput{head_part200} = <<'ENDPROBLEMTEMPLATE';
-<!-- JS Loads -->
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
-<script type="text/javascript" src="/webwork2_files/mathjax/es5/tex-chtml.js" id="MathJax-script" defer></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/InputColor/color.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/Base64/Base64.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
-<script type="text/javascript" src="/webwork2_files/themes/math4/math4.js" defer></script>
-<script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
-ENDPROBLEMTEMPLATE
+# JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
+$json_output->{head_part200_AVI} = [
+	"/webwork2_files/node_modules/jquery/dist/jquery.min.js",
+	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
+	"/webwork2_files/js/vendor/bootstrap/js/bootstrap.js",
+	"/webwork2_files/js/apps/InputColor/color.js",
+	"/webwork2_files/js/apps/Base64/Base64.js",
+	"/webwork2_files/js/vendor/underscore/underscore.js",
+	"/webwork2_files/js/legacy/vendor/knowl.js",
+	"/webwork2_files/js/apps/Problem/problem.js",
+	"/webwork2_files/js/apps/ImageView/imageview.js",
+	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
+];
+
+# JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
+#     mathjax/es5/tex-chtml.js also needs id="MathJax-script" in the <script> tag
+$json_output->{head_part201_AVI} = [
+	"https://polyfill.io/v3/polyfill.min.js?features=es6",
+	"/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
+	"/webwork2_files/mathjax/es5/tex-chtml.js",
+	'$themeDir/math4/math4.js',
+];
 
 $json_output->{head_part300_VI} = '$problemHeadText';
 
@@ -70,41 +80,43 @@ $json_output->{body_part590} = "</div>";
 
 $json_output->{body_part650_VI} = '$scoreSummary';
 
-$json_output->{body_part710_VI} =  <<'ENDPROBLEMTEMPLATE';
-<p>
-<input type="submit" name="preview"  value="$STRING_Preview" />
-<input type="submit" name="WWsubmit" value="$STRING_Submit"/>
-ENDPROBLEMTEMPLATE
+$json_output->{body_part700_VI} = '<p>$previewButton $checkAnswersButton $correctAnswersButton</p>';
 
-$json_output->{body_part780_optional_VI} = <<'ENDPROBLEMTEMPLATE';
-<input type="submit" name="WWcorrectAns" value="$STRING_ShowCorrect"/>
-ENDPROBLEMTEMPLATE
-
-$json_output->{body_part790} = "</p>";
-
-$json_output->{body_part999} = <<'ENDPROBLEMTEMPLATE';
+$json_output->{body_part999_VI} = <<'ENDPROBLEMTEMPLATE';
 </form></div></div></div>
-<div id="footer" lang="en" dir="ltr">WeBWorK &copy; 1996-2019</div>
+$footer
 </body></html>
 ENDPROBLEMTEMPLATE
 
-$json_output->{hidden_input_field_answersSubmitted} = '1';
-$json_output->{hidden_input_field_sourceFilePath} = '$sourceFilePath';
-$json_output->{hidden_input_field_problemSource} = '$encoded_source';
-$json_output->{hidden_input_field_problemSeed} = '$problemSeed';
-$json_output->{hidden_input_field_problemUUID} = '$problemUUID';
-$json_output->{hidden_input_field_psvn} = '$psvn';
-$json_output->{hidden_input_field_pathToProblemFile} = '$fileName';
-$json_output->{hidden_input_field_courseName} = '$courseID';
-$json_output->{hidden_input_field_courseID} = '$courseID';
-$json_output->{hidden_input_field_userID} = '$userID';
-$json_output->{hidden_input_field_course_password} = '$course_password';
-$json_output->{hidden_input_field_displayMode} = '$displayMode';
-$json_output->{hidden_input_field_session_key} = '$session_key';
-$json_output->{hidden_input_field_outputformat} = 'json';
-$json_output->{hidden_input_field_language} = '$formLanguage';
-$json_output->{hidden_input_field_showSummary} = '$showSummary';
-$json_output->{hidden_input_field_forcePortNumber} = '$forcePortNumber';
+$json_output->{hidden_input_field} = {};
+
+
+$json_output->{hidden_input_field}{answersSubmitted} = '1';
+$json_output->{hidden_input_field}{sourceFilePath} = '$sourceFilePath';
+$json_output->{hidden_input_field}{problemSource} = '$encoded_source';
+$json_output->{hidden_input_field}{problemSeed} = '$problemSeed';
+$json_output->{hidden_input_field}{problemUUID} = '$problemUUID';
+$json_output->{hidden_input_field}{psvn} = '$psvn';
+$json_output->{hidden_input_field}{pathToProblemFile} = '$fileName';
+$json_output->{hidden_input_field}{courseName} = '$courseID';
+$json_output->{hidden_input_field}{courseID} = '$courseID';
+$json_output->{hidden_input_field}{userID} = '$userID';
+$json_output->{hidden_input_field}{course_password} = '$course_password';
+$json_output->{hidden_input_field}{displayMode} = '$displayMode';
+$json_output->{hidden_input_field}{session_key} = '$session_key';
+$json_output->{hidden_input_field}{outputformat} = 'json';
+$json_output->{hidden_input_field}{theme} = '$theme';
+$json_output->{hidden_input_field}{language} = '$formLanguage';
+$json_output->{hidden_input_field}{showSummary} = '$showSummary';
+$json_output->{hidden_input_field}{showHints} = '$showHints';
+$json_output->{hidden_input_field}{showSolution} = '$showSolution';
+$json_output->{hidden_input_field}{showAnswerNumbers} = '$showAnswerNumbers';
+$json_output->{hidden_input_field}{showPreviewButton} = '$showPreviewButton';
+$json_output->{hidden_input_field}{showCheckAnswersButton} = '$showCheckAnswersButton';
+$json_output->{hidden_input_field}{showCorrectAnswersButton} = '$showCorrectAnswersButton';
+$json_output->{hidden_input_field}{showFooter} = '$showFooter';
+$json_output->{hidden_input_field}{forcePortNumber} = '$forcePortNumber';
+$json_output->{hidden_input_field}{extraHeaderText} = '$extra_header_text';
 
 # These are the real WeBWorK server URLs which the intermediate needs to use
 # to communicate with WW, while the distant client must use URLs of the
