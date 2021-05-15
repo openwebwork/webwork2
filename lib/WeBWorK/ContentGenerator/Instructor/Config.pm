@@ -677,6 +677,7 @@ sub body {
 	$tabnumber =~ s/tab//;
 	my @configSectionArray = @{$ConfigValues->[$tabnumber]};
 	my $configTitle = shift @configSectionArray;
+	print CGI::h2(CGI::b($r->maketext($configTitle)));
 
 	print CGI::start_table({-border=>"1"});
 	print '<tr>'.CGI::th($r->maketext('Setting')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
