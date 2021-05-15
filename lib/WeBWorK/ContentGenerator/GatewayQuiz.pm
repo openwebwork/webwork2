@@ -1166,7 +1166,7 @@ sub nav {
 	if ($r->authz->hasPermissions($user, "become_student") && $effectiveUser ne $user) {
 		my $setName = $self->{set}->set_id;
 
-		return "" if $setName eq "Undefined_Set";
+		return "" if $setName eq "Undefined_Set" || $self->{invalidSet};
 
 		my $setVersion = $self->{set}->version_id;
 		my $courseName = $self->{ce}{courseName};
