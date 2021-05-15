@@ -134,6 +134,7 @@ legend {
 
 #loginstatus a {
 	color: black;
+	margin-bottom:5px;
 }
 
 #loginstatus a .fa-sign-out-alt {
