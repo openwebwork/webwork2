@@ -739,7 +739,7 @@ function graphTool(containerId, options) {
     // doesn't need to be done with.
     function GenericTool(container, name, tooltip) {
         this.button = $("<button type=button class='btn gt-button gt-tool-button gt-" +
-            name + "-tool' data-tooltip='" + tooltip + "'>&nbsp;</button>");
+            name + "-tool' data-toggle='tooltip' title='" + tooltip + "'>&nbsp;</button>");
         var this_tool = this;
         this.button.on('click', function () { this_tool.activate(); });
         container.append(this.button);
@@ -1142,54 +1142,72 @@ function graphTool(containerId, options) {
     }
 
     // Delete the selected object.
-    function deleteObject() {
-        this.blur();
-        if (!gt.selectedObj) return;
+	function deleteObject() {
+		this.blur();
+		if (!gt.selectedObj) return;
 
-        $("<div>Do you want to delete the selected object?</div>").dialog({
-            title: "Delete Selected Object", width: 'auto', height: 'auto',
-            modal: true, resizable: false,
-            buttons: {
-                Yes: function() {
-                    for (var i = 0; i < gt.graphedObjs.length; ++i) {
-                        if (gt.graphedObjs[i].id() === gt.selectedObj.id()) {
-                            gt.graphedObjs[i].remove();
-                            gt.graphedObjs.splice(i, 1);
-                            break;
-                        }
-                    }
-                    gt.selectedObj = null;
-                    gt.updateObjects();
-                    gt.updateText();
-                    $(this).dialog("close");
-                },
-                No: function() { $(this).dialog("close"); }
-            },
-            close: function() { $(this).remove(); }
-        });
-    }
+		var modal = $('<div class="modal" tabindex="-1" role="dialog" aria-labelledby="deleteObjectDialog" aria-hidden="true">'
+			+ '<div class="modal-header">'
+			+ '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>'
+			+ '<h3 id="deleteObjectDialog">Delete Selected Object</h3>'
+			+ '</div>'
+			+ '<div class="modal-body">'
+			+ '<div>Do you want to delete the selected object?</div>'
+			+ '</div>'
+			+ '<div class="modal-footer">'
+			+ '<button class="btn btn-primary" id="gt-confirm-delete">Yes</button>'
+			+ '<button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">No</button>'
+			+ '</div>'
+			+ '</div>');
+		modal.modal('show');
+		$('.modal-backdrop').css('opacity', '0.2');
+		modal.on('hidden', function() { modal.remove(); });
+
+		$('#gt-confirm-delete').on('click', function() {
+			for (var i = 0; i < gt.graphedObjs.length; ++i) {
+				if (gt.graphedObjs[i].id() === gt.selectedObj.id()) {
+					gt.graphedObjs[i].remove();
+					gt.graphedObjs.splice(i, 1);
+					break;
+				}
+			}
+			gt.selectedObj = null;
+			gt.updateObjects();
+			gt.updateText();
+			modal.modal('hide');
+		});
+	}
 
     // Remove all graphed objects.
     function clearGraph() {
         this.blur();
         if (gt.graphedObjs.length == 0) return;
 
-        $("<div>Do you want to remove all graphed objects?</div>").dialog({
-            title: "Clear Graph", width: 'auto', height: 'auto',
-            modal: true, resizable: false,
-            buttons: {
-                Yes: function() {
-                    gt.graphedObjs.forEach(function(obj) { obj.remove(); });
-                    gt.graphedObjs = [];
-                    gt.selectedObj = null;
-                    gt.selectTool.activate();
-                    gt.html_input.value = "";
-                    $(this).dialog("close");
-                },
-                No: function() { $(this).dialog("close"); }
-            },
-            close: function() { $(this).remove(); }
-        });
+		var modal = $('<div class="modal" tabindex="-1" role="dialog" aria-labelledby="clearGraphDialog" aria-hidden="true">'
+			+ '<div class="modal-header">'
+			+ '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>'
+			+ '<h3 id="clearGraphDialog">Delete Selected Object</h3>'
+			+ '</div>'
+			+ '<div class="modal-body">'
+			+ '<div>Do you want to remove all graphed objects?</div>'
+			+ '</div>'
+			+ '<div class="modal-footer">'
+			+ '<button class="btn btn-primary" id="gt-confirm-clear">Yes</button>'
+			+ '<button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">No</button>'
+			+ '</div>'
+			+ '</div>');
+		modal.modal('show');
+		$('.modal-backdrop').css('opacity', '0.2');
+		modal.on('hidden', function() { modal.remove(); });
+
+		$('#gt-confirm-clear').on('click', function() {
+			gt.graphedObjs.forEach(function(obj) { obj.remove(); });
+			gt.graphedObjs = [];
+			gt.selectedObj = null;
+			gt.selectTool.activate();
+			gt.html_input.value = "";
+			modal.modal('hide');
+		});
     }
 
     function SolidDashTool(container) {
@@ -1197,12 +1215,12 @@ function graphTool(containerId, options) {
         // The draw solid button is active by default.
         gt.solidButton =
             $("<button type=button class='btn gt-button gt-tool-button gt-solid-tool' " +
-                "data-tooltip='Make Selected Object Solid' disabled>&nbsp;</button>")
+                "data-toggle='tooltip' title='Make Selected Object Solid' disabled>&nbsp;</button>")
             .on('click', { solid: true }, toggleSolidity);
         solidDashBox.append(gt.solidButton);
         gt.dashedButton =
             $("<button type=button class='btn gt-button gt-tool-button gt-dashed-tool' " +
-                "data-tooltip='Make Selected Object Dashed'>&nbsp;</button>")
+                "data-toggle='tooltip' title='Make Selected Object Dashed'>&nbsp;</button>")
             .on('click', { solid: false }, toggleSolidity);
         solidDashBox.append(gt.dashedButton);
         container.append(solidDashBox);
@@ -1221,8 +1239,7 @@ function graphTool(containerId, options) {
     var graphDiv = $("<div id='" + containerId + "_graph' class='jxgbox graphtool-graph'></div>");
     graphContainer.append(graphDiv);
 
-    if (!gt.isStatic)
-    {
+    if (!gt.isStatic) {
         var buttonBox = $("<div class='gt-toolbar-container'></div>");
         gt.selectTool = new SelectTool(buttonBox);
 
@@ -1289,27 +1306,15 @@ function graphTool(containerId, options) {
         });
 
         buttonBox.append($("<button type=button class='btn gt-button' " +
-            "data-tooltip='Delete Selected Object'>Delete</button>")
+            "data-toggle='tooltip' title='Delete Selected Object'>Delete</button>")
             .on('click', deleteObject));
         buttonBox.append($("<button type=button class='btn gt-button' " +
-            "data-tooltip='Clear All Objects From Graph'>Clear</button>")
+            "data-toggle='tooltip' title='Clear All Objects From Graph'>Clear</button>")
             .on('click', clearGraph));
 
         graphContainer.append(buttonBox);
 
-        // Avoid conflicts with bootstrap.
-        $.widget.bridge('uitooltip', $.ui.tooltip);
-
-        $(".gt-button").uitooltip({
-            items: "[data-tooltip]",
-            position: {my: "center top", at: "center bottom+5px"},
-            show: {delay: 1000, effect: "none"},
-            hide: {delay: 0, effect: "none"},
-            content: function() {
-                var element = $(this);
-                if (element.is("[data-tooltip]")) { return element.attr("data-tooltip"); }
-            }
-        });
+		$('.gt-button[data-toggle="tooltip"]').tooltip({ trigger: 'hover', placement: 'bottom', delay: { show: 1000, hide: 0 } });
     }
 
     setupBoard();
