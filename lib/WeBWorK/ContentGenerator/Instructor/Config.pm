@@ -499,13 +499,15 @@ sub print_navigation_tabs {
 	my $str = '';
 	for my $tab (0..(scalar(@tab_names)-1)) {
 		if($current_tab eq "tab$tab") {
-			$tab_names[$tab] = $r->maketext($tab_names[$tab]);
+			$tab_names[$tab] = CGI::span({class => 'current'}, $r->maketext($tab_names[$tab]));
 		} else {
-			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]));
+			$tab_names[$tab] = CGI::span({class => 'other'},
+				CGI::a({href => $self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]))
+			);
 		}
 	}
 	print CGI::p() .
-		'<div align="center">' . join('&nbsp;|&nbsp;', @tab_names) .'</div>'.
+		CGI::div({class=>'config-tabs'}, join('', @tab_names)) .
 		CGI::p();
 }
 
@@ -675,7 +677,6 @@ sub body {
 	$tabnumber =~ s/tab//;
 	my @configSectionArray = @{$ConfigValues->[$tabnumber]};
 	my $configTitle = shift @configSectionArray;
-	print CGI::p(CGI::div({-align=>'center'}, CGI::b($r->maketext($configTitle))));
 
 	print CGI::start_table({-border=>"1"});
 	print '<tr>'.CGI::th($r->maketext('Setting')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));
