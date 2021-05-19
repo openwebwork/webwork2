@@ -1289,6 +1289,38 @@ table#grades_table pre{
     font-size:105%;
 }
 
+.config-tabs {
+	text-align: center;
+	margin-bottom: 40pt;
+}
+
+.config-tabs span {
+	padding: 10px;
+	font-weight: bold;
+}
+
+.config-tabs span.current {
+	background-color: #003388;
+	color: white;
+}
+
+.config-tabs span.other {
+	background-color: #f6f6f6;
+
+}
+
+.config-tabs span.other:hover {
+	background-color: #e1e1e1;
+}
+
+.config-tabs > span > a {
+	padding: 10px;
+	margin: -10px;
+	color: inherit;
+	text-decoration: none;
+
+}
+
 #config-form input[type="checkbox"] {
     margin-right:1.5ex;
 }

@@ -356,7 +356,7 @@ my $ConfigStrings = [
 		  type => 'permission'
 		},
 	],
-	[x('PG - Problem Display/Answer Checking'),
+	[x('Problem Display/Answer Checking'),
 		{ var => 'pg{displayModes}',
 		  doc => x('List of display modes made available to students'),
 		  doc2 => x('<p>When viewing a problem, users may choose different methods of rendering formulas via an options box in the left panel. Here, you can adjust what display modes are listed.</p><p>Some display modes require other software to be installed on the server. Be sure to check that all display modes selected here work from your server.</p><p>The display modes are <ul><li> plainText: shows the raw LaTeX srings for formulas.<li> images: produces images using the external programs LaTeX and dvipng.<li> MathJax: a successor to jsMath, uses javascript to place render mathematics.</ul></p></p>You must use at least one display mode. If you select only one, then the options box will not give a choice of modes (since there will only be one active).</p>'),
