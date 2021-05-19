@@ -107,18 +107,3 @@
 .gt-tool-button.gt-fill-tool {
 	background-image: url("images/FillTool.svg");
 }
-
-.ui-tooltip.ui-widget.ui-widget-content {
-	padding: 5px;
-	background: black;
-	border: 1px solid black;
-	border-radius: 4px;
-	display: inline-block;
-}
-
-.ui-tooltip-content {
-	text-align: center;
-	font-size: 0.7em;
-	background: black;
-	color: white;
-}
