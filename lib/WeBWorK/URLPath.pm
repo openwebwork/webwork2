@@ -324,7 +324,7 @@ our %pathTypes = (
 			instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor
-			instructor_set_maker instructor_set_maker2 instructor_set_maker3 instructor_set_maker_no_js
+			instructor_set_maker
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
