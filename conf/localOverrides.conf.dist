@@ -345,23 +345,6 @@ $mail{feedbackRecipients}    = [
 # convert <input options> file.ext1 <output options> file.ext2
 #$pg{specialPGEnvironmentVars}{tikzConvertOptions} = {input => {density => 72}, output => {quality => 92}};
 
-################################################################################
-#  Configuring the display of different versions of the editors
-################################################################################
-# These configurations can be placed in course.conf file to tune the behavior for individual courses
-
-# These will enable the versions of the problem set detail page and library browser page
-# that do not use the xmlrpc pathway
-
-#$showeditors{problemsetdetail1} = 1;
-#$showeditors{librarybrowsernojs} = 1;
-
-# Similar changes can be made in the same way for other editors.
-# Look at the relevant section of default.config to
-# see the default settings for each editor.
-# (The syntax is slightly different there because the configurations
-# for all of the editors are being set in the configuration hash.)
-
 ###############################################################################
 # Math entry assistance
 ###############################################################################
