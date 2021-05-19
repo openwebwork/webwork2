@@ -90,29 +90,30 @@ legend {
 #masthead {
 	background-color: #038;
 	margin: 0;
-	padding: 5px 0px 5px 0px;
+	padding: 0;
 }
 
 .webwork_logo {
+	padding: 5px 0;
 	background-color: #1048ae;
-	font-size: 1.6em;
-	font-weight: 500;
-	border: 1px solid #5577b0;
-	padding: 2px 10px 0 6px; /* attempt to even out the blank space so that
-								the logo & text doesn't look lopsided */
 }
 
 .webwork_logo img {
-	padding-right: 5px; /* distance itself to the Webwork text */
-}
-
-.maa_logo img {
-	vertical-align: center;
+	height: 57px;
 }
 
 .webwork_logo a,
 .maa_logo a {
     display:block;
+}
+
+.maa_logo {
+	height: 58px;
+	padding: 5px 0;
+}
+
+.maa_logo img {
+	padding: 5px;
 }
 
 #masthead a {
@@ -124,19 +125,19 @@ legend {
 }
 
 #loginstatus {
-        padding-top:.5ex;
-        padding-right: .5em;
+	padding: 5px 5px 5px 0;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
-#loginstatus a.btn {
-    margin-bottom:.5ex;
-}
 
 #loginstatus a {
 	color: black;
+}
+
+#loginstatus a:first-child {
+	margin-bottom: 5px;
 }
 
 #loginstatus a .fa-sign-out-alt {
