@@ -126,3 +126,8 @@ ul.courses-list a:hover {
 .cheevoinnerbar {
     background-color: #0088CC;
 }
+
+/* Config tab coloring */
+.config-tabs span.current {
+	background-color: #880000;
+}
