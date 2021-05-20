@@ -109,3 +109,31 @@ function WWDatePicker(name, reduced) {
 
 	}
 }
+
+window.addEventListener("DOMContentLoaded", function() {
+	// This will make the popup menu alternate between a single selection and a multiple selection menu.
+	// Note: search by name is required since document.problemsetlist.action.import.number is not seen as
+	// a valid reference to the object named 'action.import.number'
+	var importAmtSelect = document.getElementById("import_amt_select");
+	if (importAmtSelect) {
+		importAmtSelect.addEventListener("change", function() {
+			var number = document.getElementsByName('action.import.number')[0].value;
+			document.getElementsByName('action.import.source')[0].size = number;
+			document.getElementsByName('action.import.source')[0].multiple = (number > 1 ? true : false);
+			document.getElementsByName('action.import.name')[0].value = (number > 1 ? '(taken from filenames)' : '');
+		});
+	}
+
+	var importDateShift = $('#import_date_shift');
+	if (importDateShift.length && importDateShift.data('enable-datepicker') == "1") {
+		importDateShift.datetimepicker({
+			showOn: "button",
+			buttonText: "<i class='fas fa-calendar-alt'></i>",
+			ampm: true,
+			timeFormat: 'hh:mmtt',
+			separator: ' at ',
+			constrainInput: false, 
+		});
+		importDateShift.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
+	}
+});

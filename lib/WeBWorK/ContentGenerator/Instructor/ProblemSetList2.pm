@@ -1209,29 +1209,6 @@ sub import_form {
 	my $user = $r->param('user');
 	my $ce = $r->ce;
 
-	# this will make the popup menu alternate between a single selection and a multiple selection menu
-	# Note: search by name is required since document.problemsetlist.action.import.number is not seen as
-	# a valid reference to the object named 'action.import.number'
-	my $importScript = join (" ",
-				"var number = document.getElementsByName('action.import.number')[0].value;",
-				"document.getElementsByName('action.import.source')[0].size = number;",
-				"document.getElementsByName('action.import.source')[0].multiple = (number > 1 ? true : false);",
-				"document.getElementsByName('action.import.name')[0].value = (number > 1 ? '(taken from filenames)' : '');",
-			);
-	my $datescript = "";
-	if ($ce->{options}{useDateTimePicker}) {
-	    $datescript = <<EOS;
-\$('#import_date_shift').datetimepicker({
-  showOn: "button",
-  buttonText: "<i class='fas fa-calendar-alt'></i>",
-  ampm: true,
-  timeFormat: 'hh:mmtt',
-  separator: ' at ',
-  constrainInput: false, 
- });
-EOS
-	}
-
 	return join(" ",
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1244,8 +1221,7 @@ EOS
 				-labels => {
 					1 => $r->maketext("a single set"),
 					8 => $r->maketext("multiple sets"),
-				},
-				-onchange => "$importScript",
+				}
 			}
 		),
 		CGI::br(),
@@ -1277,14 +1253,15 @@ EOS
 		),
 		    CGI::br(),
 		    CGI::div(WeBWorK::CGI_labeled_input(
-		      -type=>"text",
-		      -id=>"import_date_shift",
-		      -label_text=>$r->maketext("Shift dates so that the earliest is").": ",
-			  -input_attr=>{
-				  -name => "action.import.start.date",
-				  -size => "27",
-				  -value => $actionParams{"action.import.start.date"}->[0] || "",
-			  })),
+				-type => "text",
+				-id => "import_date_shift",
+				-label_text => $r->maketext("Shift dates so that the earliest is").": ",
+				-input_attr => {
+					name => "action.import.start.date",
+					size => "27",
+					value => $actionParams{"action.import.start.date"}->[0] || "",
+					data_enable_datepicker => $ce->{options}{useDateTimePicker}
+				})),
 		CGI::br(),
 		($authz->hasPermissions($user, "assign_problem_sets")) 
 			?
@@ -1304,8 +1281,6 @@ EOS
 			)
 			:
 			"",	#user does not have permissions to assign problem sets
-		    CGI::script({-type=>"text/javascript"},$datescript),
-
 	);
 }
 
