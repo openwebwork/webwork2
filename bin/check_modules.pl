@@ -105,7 +105,7 @@ my @modulesList = qw(
 	Scalar::Util
 	SOAP::Lite
 	Socket
-	SQL::Abstract
+	SQL::Abstract::Classic
 	Statistics::R::IO
 	String::ShellQuote
 	Template

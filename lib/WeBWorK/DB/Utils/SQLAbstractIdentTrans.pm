@@ -15,11 +15,11 @@
 ################################################################################
 
 package WeBWorK::DB::Utils::SQLAbstractIdentTrans;
-use base qw(SQL::Abstract);
+use base qw(SQL::Abstract::Classic);
 
 =head1 NAME
 
-WeBWorK::DB::Utils::SQLAbstractIdentTrans - subclass of SQL::Abstract that
+WeBWorK::DB::Utils::SQLAbstractIdentTrans - subclass of SQL::Abstract::Classic that
 allows custom hooks to transform identifiers.
 
 =cut
@@ -87,7 +87,7 @@ sub _order_by {
     my @vals = $ref eq 'ARRAY'  ? @{$_[0]} :
                $ref eq 'SCALAR' ? $_[0]    : # modification: don't dereference scalar refs
                $ref eq ''       ? $_[0]    :
-               SQL::Abstract::puke "Unsupported data struct $ref for ORDER BY";
+               SQL::Abstract::Classic::puke "Unsupported data struct $ref for ORDER BY";
 
     # modification: if an item is a scalar ref, don't quote it, only dereference it
     my $val = join ', ', map { ref $_ eq "SCALAR" ? $$_ : $self->_quote($_) } @vals;
