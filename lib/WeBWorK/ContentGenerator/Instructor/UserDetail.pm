@@ -208,7 +208,7 @@ sub body {
  	my $setCount = $db->countUserSets($editForUserID);
 # 	my $userCountMessage =  CGI::a({href=>$editSetsAssignedToUserURL}, $setCount . " sets.");
 # 	$userCountMessage = "The user " . CGI::b($userName . " ($editForUserID)") . " has been assigned " . $userCountMessage;
-	my $basicInfoPage = $urlpath->new(type =>'instructor_user_list2',
+	my $basicInfoPage = $urlpath->new(type =>'instructor_user_list',
 					args =>{
 						courseID => $courseID,
 	                }
@@ -334,7 +334,7 @@ sub body {
 			$UserSetVersionRecords{$setID}->[$setVersion-1];
 		my $MergedSetRecord = (! $setVersion) ?  $MergedSetRecords{$setID} :
 			$UserSetMergedVersionRecords{$setID}->[$setVersion-1];
-		my $setListPage = $urlpath->new(type =>'instructor_set_detail2',
+		my $setListPage = $urlpath->new(type =>'instructor_set_detail',
 					args =>{
 						courseID => $courseID,
 						setID    => $fullSetID
