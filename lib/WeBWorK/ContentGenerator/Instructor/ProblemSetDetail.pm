@@ -34,7 +34,6 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-use WeBWorK::Utils::DatePickerScripts;
 
 # Important Note: the following two sets of constants may seem similar
 # 	but they are functionally and semantically different
@@ -703,6 +702,8 @@ sub FieldHTML {
 				onChange => $onChange,
 				onkeyup => $onKeyUp,
 				onblur => $uncheckBox,
+				class => $field eq "open_date" ? "datepicker-group" : "",
+				data_enable_datepicker => $r->ce->{options}{useDateTimePicker}
 		}));
 
 	} elsif ($choose) {
@@ -2179,24 +2180,6 @@ sub body {
 
 	print CGI::end_table();
 
-	#datepicker scripts.
-	# we try to provide the date picker scripts with the global set
-	# if we aren't looking at a specific students set and the merged
-	# one otherwise.
-	if ($ce->{options}->{useDateTimePicker}) {
-	    my $tempSet;
-	    if ($forUsers) {
-		$tempSet = $db->getMergedSet($userToShow, $setID);
-	    } else {
-		$tempSet = $setRecord;
-	    }
-
-	    print CGI::start_script({-type=>"text/javascript"}),"\n";
-	    print q!$(".ui-datepicker").draggable();!,"\n";
-	    print WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $tempSet),"\n";
-	    print CGI::end_script();
-	}
-
 	# spacing
 	print CGI::start_p();
 
@@ -2600,42 +2583,27 @@ sub output_jquery_ui{
 
 sub output_JS {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $setID   = $r->urlpath->arg("setID");
-	my $timezone = $self->{timezone_shortname};
-	my $site_url = $ce->{webworkURLs}->{htdocs};
+	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
+	# Print javaScript and style for dateTimePicker	
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/jquery-ui-timepicker-addon.css" });
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/DatePicker/datepicker.css" });
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => undef }, "");
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef}, "");
 
-	print q!<style>
-	.ui-datepicker{font-size:85%}
-	.auto-changed{background-color: #ffffcc}
-	.changed {background-color: #ffffcc}
-	</style>!,"\n";
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/ImageView/imageview.css" });
+	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js" }, "");
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
-
-	print qq!<link rel="stylesheet" type="text/css" href="$site_url/js/apps/ImageView/imageview.css"/>!;
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
-
-	print "\n";
 	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
-	print qq{
-	<link href="$site_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-	<script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
-	print "\n";
+	print CGI::script({ src => "$site_url/js/apps/Base64/Base64.js" }, "");
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/knowlstyle.css" });
+	print CGI::script({ src => "$site_url/js/legacy/vendor/knowl.js" }, "");
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js" }, "");
 	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
 
-	print CGI::script({ src=>"$site_url/js/apps/ProblemSetDetail/problemsetdetail.js", defer => "" }, "");
+	print CGI::script({ src=>"$site_url/js/apps/ProblemSetDetail/problemsetdetail.js", defer => undef }, "");
 
-	print "\n\n<!-- END add to header ProblemSetDetail-->\n\n";
 	return "";
 }
 
