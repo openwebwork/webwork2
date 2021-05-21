@@ -33,7 +33,6 @@ use WeBWorK::Utils::Tasks qw(renderProblems);
 use WeBWorK::Debug;
 # IP RESTRICT
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
-use WeBWorK::Utils::DatePickerScripts;
 
 # Important Note: the following two sets of constants may seem similar 
 # 	but they are functionally and semantically different
@@ -1979,24 +1978,6 @@ sub body {
 	]));
 
 	print CGI::end_table();	
-
-	#datepicker scripts.  
-	# we try to provide the date picker scripts with the global set
-	# if we aren't looking at a specific students set and the merged
-	# one otherwise. 
-	if ($ce->{options}->{useDateTimePicker}) {
-	    my $tempSet; 
-	    if ($forUsers) {
-		$tempSet = $db->getMergedSet($userToShow, $setID); 
-	    } else {
-		$tempSet = $setRecord;
-	    }
-	    
-	    print CGI::start_script({-type=>"text/javascript"}),"\n";
-	    print q!$(".ui-datepicker").draggable();!,"\n";
-	    print WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $tempSet),"\n";	
-	    print CGI::end_script();
-	}
 
 	# spacing
 	print CGI::start_p();

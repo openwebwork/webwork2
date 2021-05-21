@@ -86,8 +86,6 @@ use WeBWorK::CGI;
 use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortByName jitar_id_to_seq seq_to_jitar_id x);
 
-use WeBWorK::Utils::DatePickerScripts;
-
 use constant HIDE_SETS_THRESHOLD => 500;
 use constant DEFAULT_VISIBILITY_STATE => 1;
 use constant DEFAULT_ENABLED_REDUCED_SCORING_STATE => 0;
@@ -2428,31 +2426,13 @@ sub fieldEditHTML {
 		return $value;
 	}
 	
-	if ($type eq "number" or $type eq "text") {
-		my $id = $fieldName."_id";
-		my $out = CGI::input({type=>"text", name=>$fieldName, id=>$id, value=>$value, size=>$size, class=>"table-input"});
-		my $content = "";
-		my $bareName = "";
-		my $timezone = substr($value, -3);
-		
-		if(index($fieldName, ".open_date") != -1){
-			my @temp = split(/.open_date/, $fieldName);
-			$bareName = $temp[0];
-			$bareName =~ s/\./\\\\\./g;
-		}
-		elsif(index($fieldName, ".due_date") != -1){
-			my @temp = split(/.due_date/, $fieldName);
-			$bareName = $temp[0];
-			$bareName =~ s/\./\\\\\./g;
-		}
-		elsif(index($fieldName, ".answer_date") != -1){
-			my @temp = split(/.answer_date/, $fieldName);
-			$bareName = $temp[0];
-			$bareName =~ s/\./\\\\\./g;
-		}
-		
-
-		return $out;
+	if ($type eq "number" || $type eq "text") {
+		return CGI::input({
+				type => "text", name => $fieldName, id => "${fieldName}_id", value => $value, size => $size,
+				class => "table-input " . ($fieldName =~ /\.open_date/ ? " datepicker-group" : ""),
+				placeholder => $fieldName =~ /\.(open_date|due_date|answer_date)/ ? $self->r->maketext("None Specified") : "",
+				data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker}
+			});
 	}
 	
 	if ($type eq "filelist") {
@@ -2657,17 +2637,9 @@ sub recordEditHTML {
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enable_reduced_scoring/ and not $editMode;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /hide_hint/ and not $editMode;
 		push @tableCells, CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
-
-		#$fakeRecord{$field} = CGI::font({class=>$visibleClass}, $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
 	}
 		
-	my $out = CGI::Tr({}, CGI::td({}, \@tableCells));
-	my $scripts = '';
-	if ($ce->{options}->{useDateTimePicker}) {
-	    $scripts = CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $Set).CGI::end_script();
-	}
-
-	return $out.$scripts;
+	return CGI::Tr({}, CGI::td({}, \@tableCells));
 }
 
 sub printTableHTML {
@@ -2784,33 +2756,19 @@ sub output_jquery_ui{
 
 sub output_JS{
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $setID   = $r->urlpath->arg("setID");
-	my $timezone = $ce->{siteDefaults}{timezone};
-	my $site_url = $ce->{webworkURLs}->{htdocs};
+	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	print "\n\n<!-- add to header ProblemSetList2.pm -->";
+	# Print javaScript and style for dateTimePicker	
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/jquery-ui-timepicker-addon.css" });
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/DatePicker/datepicker.css" });
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => "" }, "");
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => ""}, "");
 
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
-
-	print q!<style> 
-	.ui-datepicker{font-size:85%} 
-	.auto-changed{background-color: #ffffcc} 
-	.changed {background-color: #ffffcc}
-	</style>!,"\n";
-
-	# print javaScript for dateTimePicker	
-	# jquery ui printed seperately
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
 	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/form_checker_hmwksets.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/hmwksets_handlers.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/legacy/form_checker_hmwksets.js" }, "");
+	print CGI::script({ src => "$site_url/js/legacy/hmwksets_handlers.js" }, "");
+	print CGI::script({ src => "$site_url/js/apps/ShowHide/show_hide.js" }, "");
 
-	print "\n\n<!-- END add to header ProblemSetList2.pm -->";
 	return "";
 }
 
