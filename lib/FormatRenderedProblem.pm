@@ -155,14 +155,17 @@ sub formatRenderedProblem {
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($rh_result->{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
-		$jsFiles{$_->{file}} = $_->{external} for @{$rh_result->{flags}{extra_js_files}};
-		for (keys(%jsFiles)) {
-			if ($jsFiles{$_}) {
-				$problemHeadText .= qq{<script src="$_"></script>}
-			} elsif (!$jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-				$problemHeadText .= qq{<script src="$ce->{webworkURLs}{htdocs}/$_"></script>};
+		for my $jsFile (@{$rh_result->{flags}{extra_js_files}}) {
+			next if $jsFiles{$jsFile->{file}};
+			$jsFiles{$jsFile->{file}} = 1;
+			my $attributes = ref($jsFile->{attributes}) eq "HASH"
+				? join(" ", map { qq!$_="$jsFile->{attributes}{$_}"! } keys %{$jsFile->{attributes}}) : ();
+			if ($jsFile->{external}) {
+				$problemHeadText .= qq{<script src="$jsFile->{file}" $attributes></script>}
+			} elsif (!$jsFile->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$jsFile->{file}") {
+				$problemHeadText .= qq{<script src="$ce->{webworkURLs}{htdocs}/$jsFile->{file}" $attributes></script>};
 			} else {
-				$problemHeadText .= qq{<!-- $_ is not available in htdocs/ on this server -->};
+				$problemHeadText .= qq{<!-- $jsFile->{file} is not available in htdocs/ on this server -->};
 			}
 		}
 	}
