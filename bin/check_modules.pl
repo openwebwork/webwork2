@@ -28,7 +28,7 @@ check_modules.pl [options]
    -a|--apache-version	 Which apache version to use.  Defaults to 2. 
    -m|--modules          Lists the perl modules needed to be installed. 
    -p|--programs       	 Lists the programs/applications that are needed. 
-   -A|--all         		 checks both programs and modules (Default if -m or -p is not selected)
+   -A|--all         		 checks both programs and modules (Default if -m or -p is not selected)	
 
 =head1 DESCRIPTION
  
@@ -39,6 +39,7 @@ use strict;
 use warnings;
 use version;
 use Getopt::Long qw(:config bundling);
+use Pod::Usage;
 
 my @applicationsList = qw(
 	convert
@@ -165,16 +166,18 @@ my %moduleVersion = (
     'IO::Socket::SSL' => 2.007
 );
 
-my ($test_programs,$test_modules);
+my ($test_programs,$test_modules,$show_help);
 my $test_all = 1; 
-my $apache_version = "2"; 
+my $apache_version = "2";
+
 GetOptions(
 	'a|apache-version=s' => \$apache_version,
 	'm|modules'      => \$test_modules,
 	'p|programs'			 => \$test_programs,
 	'A|all'   			 => \$test_all,
+	'h|help'					=> \$show_help,
 );
-
+pod2usage(2) if $show_help; 
 
 if ($apache_version eq "1") {
 	push @modulesList, @apache1ModulesList;
@@ -259,11 +262,13 @@ sub checkSQLabstract {
 	my $sql_abstract_classic = not($@);
 
 	if($sql_abstract_classic) {
-		print "You have SQL::Abstract::Classic installed.  This package will be used.\n";
+		print qq/ You have SQL::Abstract::Classic installed. This package will be used if either 
+ the installed version of SQL::Abstract is version > 1.87 or if that package is not installed.\n/;
 	} elsif ($sql_abstract && $sql_abstract_version <= 1.87) {
 		print "You have version $sql_abstract_version of SQL::Abstract installed.  This will be used";
 	} else {
-		print "You need either SQL::Abstract version 1.87 or SQL::Abstract::Classic installed.\n";
+		print qq/You need either SQL::Abstract version <= 1.87 or need to install SQL::Abstract::Classic. 
+ If you are using cpan or cpanm, it is recommended to install SQL::Abstract::Classic.\n/;
 	}
 }
 
