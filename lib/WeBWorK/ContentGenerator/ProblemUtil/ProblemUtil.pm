@@ -83,36 +83,26 @@ sub process_and_log_answer{
     my ($encoded_last_answer_string, $scores2, $isEssay2);
 	my $scoreRecordedMessage = "";
 
-	if ( defined($answer_log ) and defined($pureProblem)) {
-		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+	if (defined($answer_log) && defined($pureProblem) && $submitAnswers) {
+		my $past_answers_string;
+		($past_answers_string, $encoded_last_answer_string, $scores2, $isEssay2) =
+			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses($self, $pg);
 
-################################################################
-# new code for past answers (input is $pg)
-#########################################
-
-	my ($past_answers_string);
-	($past_answers_string,$encoded_last_answer_string, $scores2, $isEssay2) =
-	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
-	      $self, $pg
-	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
-	        # ref($pg) eq "WeBWorK::PG::Local";
-# end new code (output is $past_answers_string, $encoded_last_answer_string,$scores, $isEssay)
-################################################################
-
-# store in answer_log   past answers file (user_id,set_id,problem_id,courseID,answerString,scores,source_file)
+		if (!$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+			# store in answer_log
 			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
-			        join("",
-						'|', $problem->user_id,
-						'|', $problem->set_id,
-						'|', $problem->problem_id,
-						'|', $scores2, "\t",
-						$timestamp,"\t",
-						$past_answers_string,
-					),
+				join("",
+					'|', $problem->user_id,
+					'|', $problem->set_id,
+					'|', $problem->problem_id,
+					'|', $scores2, "\t",
+					$timestamp,"\t",
+					$past_answers_string,
+				),
 			);
 
-# add to PastAnswer db
+			# add to PastAnswer db
 			my $pastAnswer = $db->newPastAnswer();
 			$pastAnswer->course_id($courseID);
 			$pastAnswer->user_id($problem->user_id);
@@ -123,8 +113,6 @@ sub process_and_log_answer{
 			$pastAnswer->answer_string($past_answers_string);
 			$pastAnswer->source_file($problem->source_file);
 			$db->addPastAnswer($pastAnswer);
-
-
 		}
 	}
 
