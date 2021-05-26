@@ -774,6 +774,8 @@ sub output_JS {
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
 	print CGI::script({ src => "$site_url/js/apps/ProblemSets/problemsets.js", defer => '' }, "");
+
+	return "";
 }
 
 1;
