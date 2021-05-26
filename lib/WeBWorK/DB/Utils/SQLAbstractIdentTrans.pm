@@ -15,7 +15,13 @@
 ################################################################################
 
 package WeBWorK::DB::Utils::SQLAbstractIdentTrans;
-use base qw(SQL::Abstract::Classic);
+BEGIN {
+	if ($SQL::Abstract::VERSION>1.87) {
+		use base qw(SQL::Abstract::Classic);
+	} else {
+		use base qw(SQL::Abstract);
+	}
+}
 
 =head1 NAME
 
