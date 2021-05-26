@@ -262,12 +262,12 @@ sub checkSQLabstract {
 	my $sql_abstract_classic = not($@);
 
 	if($sql_abstract_classic) {
-		print qq/ You have SQL::Abstract::Classic installed. This package will be used if either 
+		print qq/ You have SQL::Abstract::Classic installed. This package will be used if either
  the installed version of SQL::Abstract is version > 1.87 or if that package is not installed.\n/;
 	} elsif ($sql_abstract && $sql_abstract_version <= 1.87) {
-		print "You have version $sql_abstract_version of SQL::Abstract installed.  This will be used";
+		print "You have version $sql_abstract_version of SQL::Abstract installed.  This will be used\n";
 	} else {
-		print qq/You need either SQL::Abstract version <= 1.87 or need to install SQL::Abstract::Classic. 
+		print qq/You need either SQL::Abstract version <= 1.87 or need to install SQL::Abstract::Classic.
  If you are using cpan or cpanm, it is recommended to install SQL::Abstract::Classic.\n/;
 	}
 }
