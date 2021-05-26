@@ -28,7 +28,6 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(sortByName x);
-use WeBWorK::Utils::DatePickerScripts;
 use WeBWorK::Debug;
 
 # We use the x function to mark strings for localizaton
@@ -493,16 +492,19 @@ sub DBFieldTable {
 					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || ($isVersioned && $field ne 'reduced_scoring_date')) ? 1 : 0
 				}) : "",
 				defined $UserRecord ?
-					(CGI::input({ -name=>"$recordType.$recordID.$field",
-							-id =>"$recordType.$recordID.${field}_id",
-							-type=> "text",
-							-value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
-							-onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
-							-onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
-							-placeholder => x("None Specified"),
-							-onblur => "if (this.value == '')"
-								. "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
-							-size => 25})
+					(CGI::input({
+							name => "$recordType.$recordID.$field",
+							id => "$recordType.$recordID.${field}_id",
+							type => "text",
+							value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
+							onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
+							onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
+							placeholder => x("None Specified"),
+							onblur => "if (this.value == '') \$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
+							size => 25,
+							class => $field eq "open_date" ? "datepicker-group" : "",
+							data_enable_datepicker => $ce->{options}{useDateTimePicker}
+						})
 					) : "",
 				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),
 			]
@@ -514,15 +516,7 @@ sub DBFieldTable {
 		push @table, CGI::Tr(CGI::td({-align => "center"}, $row));
 	}
 
-	# set up date picker scripts.  We have to spoof the set name if its
-	# a versioned set.
-	my $script = '';
-	if ($ce->{options}->{useDateTimePicker}) {
-	    $GlobalRecord->set_id($recordID) if $isVersioned;
-	    print CGI::start_script({-type=>"text/javascript"}).WeBWorK::Utils::DatePickerScripts::date_scripts($ce, $GlobalRecord).CGI::end_script();
-	}
-
-	return (CGI::start_table({class => 'UserDetail-date-table', border=> 0}), @table, CGI::end_table(), $script);
+	return CGI::start_table({class => 'UserDetail-date-table', border=> 0}), @table, CGI::end_table();
 }
 
 #Tells template to output stylesheet and js for Jquery-UI
@@ -530,26 +524,15 @@ sub output_jquery_ui{
 	return "";
 }
 
-sub output_JS{
+sub output_JS {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $site_url = $ce->{webworkURLs}->{htdocs};
+	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	# print javaScript for dateTimePicker
-	# jquery ui printed seperately
-
-	print "\n\n<!-- add to header ProblemSetDetail.pm -->";
-	print qq!<link rel="stylesheet" media="all" type="text/css" href="$site_url/css/jquery-ui-timepicker-addon.css">!,"\n";
-
-	print q!<style>
-	.ui-datepicker{font-size:85%}
-	.auto-changed{background-color: #ffffcc}
-	.changed {background-color: #ffffcc}
-        </style>!,"\n";
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/DatePicker/datepicker.js"}), CGI::end_script();
+	# Print javaScript and style for dateTimePicker	
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/jquery-ui-timepicker-addon.css" });
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/DatePicker/datepicker.css" });
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => undef }, "");
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef}, "");
 
 	return "";
 
