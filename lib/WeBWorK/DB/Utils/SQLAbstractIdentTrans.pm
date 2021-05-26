@@ -15,13 +15,20 @@
 ################################################################################
 
 package WeBWorK::DB::Utils::SQLAbstractIdentTrans;
+my $BASE;
 BEGIN {
-	if ($SQL::Abstract::VERSION>1.87) {
-		use base qw(SQL::Abstract::Classic);
-	} else {
-		use base qw(SQL::Abstract);
-	}
+	my $sql_abstract = eval {
+		require SQL::Abstract;
+		if ($SQL::Abstract::VERSION > 1.87) {
+			0;
+		} else {
+			1;
+		};
+	};
+	$BASE = qw(SQL::Abstract) if $sql_abstract;
+	$BASE = qw(SQL::Abstract::Classic) unless $sql_abstract;
 }
+use base $BASE;
 
 =head1 NAME
 
@@ -93,7 +100,7 @@ sub _order_by {
     my @vals = $ref eq 'ARRAY'  ? @{$_[0]} :
                $ref eq 'SCALAR' ? $_[0]    : # modification: don't dereference scalar refs
                $ref eq ''       ? $_[0]    :
-               SQL::Abstract::Classic::puke "Unsupported data struct $ref for ORDER BY";
+			   $self->SUPER::puke("Unsupported data struct $ref for ORDER BY");
 
     # modification: if an item is a scalar ref, don't quote it, only dereference it
     my $val = join ', ', map { ref $_ eq "SCALAR" ? $$_ : $self->_quote($_) } @vals;
