@@ -2361,15 +2361,14 @@ sub output_JS{
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
-		# Avoid duplicates
-		$jsFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_js_files}};
-		for (keys(%jsFiles)) {
-			if ($jsFiles{$_}) {
-				print CGI::start_script({type => "text/javascript",
-						src => $_}), CGI::end_script();
-			} elsif (!$jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-				print CGI::start_script({type => "text/javascript",
-						src => "$site_url/$_"}), CGI::end_script();
+		for (@{$self->{pg}{flags}{extra_js_files}}) {
+			next if %jsFiles{$_->{file}};
+			$jsFiles{$_->{file}} = 1;
+			my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
+			if ($_->{external}) {
+				print CGI::script({ src => $_->{file} , %attributes }, "");
+			} elsif (!$_->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}") {
+				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
 			} else {
 				print "<!-- $_ is not available in htdocs/ on this server -->\n";
 			}

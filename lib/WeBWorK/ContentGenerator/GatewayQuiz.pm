@@ -2425,19 +2425,19 @@ sub output_JS{
 	for my $pg (@{$self->{ra_pg_results}}) {
 		next unless ref($pg);
 		if (ref($pg->{flags}{extra_js_files}) eq "ARRAY") {
-			# Avoid duplicates
-			$jsFiles{$_->{file}} = $_->{external} for @{$pg->{flags}{extra_js_files}};
-		}
-	}
-	for (keys(%jsFiles)) {
-		if ($jsFiles{$_}) {
-			print CGI::start_script({type => "text/javascript",
-					src => $_}), CGI::end_script();
-		} elsif (!$jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-			print CGI::start_script({type => "text/javascript",
-					src => "$site_url/$_"}), CGI::end_script();
-		} else {
-			print "<!-- $_ is not available in htdocs/ on this server -->\n";
+			for (@{$pg->{flags}{extra_js_files}}) {
+				next if $jsFiles{$_->{file}};
+				$jsFiles{$_->{file}} = 1;
+
+				my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
+				if ($_->{external}) {
+					print CGI::script({ src => $_->{file}, %attributes }, "");
+				} elsif (!$_->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}") {
+					print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
+				} else {
+					print "<!-- $_ is not available in htdocs/ on this server -->\n";
+				}
+			}
 		}
 	}
 
