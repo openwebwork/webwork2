@@ -294,7 +294,13 @@ h2.page-title {
 .problem-nav {
 	margin-bottom:1ex;
 	display: inline-block;
+}
 	
+.row-fluid.sticky, .user-nav {
+	z-index: 1;
+	position: sticky;
+	top: 0;
+	background-color: white;
 }
 
 .problem-nav .user-nav {
