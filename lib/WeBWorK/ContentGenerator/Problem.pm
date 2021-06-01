@@ -2362,7 +2362,7 @@ sub output_JS{
 	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
 		for (@{$self->{pg}{flags}{extra_js_files}}) {
-			next if %jsFiles{$_->{file}};
+			next if $jsFiles{$_->{file}};
 			$jsFiles{$_->{file}} = 1;
 			my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
 			if ($_->{external}) {
