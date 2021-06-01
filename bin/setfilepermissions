@@ -50,6 +50,22 @@ chomp($me);
 #my $serverid =  $ce->{server_userID};
 my $servergroup =  $ce->{server_groupID};
 
+if ( ! $me ) {
+	# In a bash shell in a Docker container running webwork, the login name is usually not available.
+	if ( `/usr/bin/grep -c www-data /etc/passwd`) {
+		warn "No login name available, using www-data as the user name for the chown calls.";
+		$me = "www-data";
+	} elsif ( `/usr/bin/grep -c apache /etc/passwd`) {
+		warn "No login name available, using apache as the user name for the chown calls.";
+		$me = "apache";
+	} else {
+		die "Aborting: No login name available, and cannot fall back to www-data or apache for the chown calls.";
+	}
+}
+if ( ! $servergroup ) {
+	die "Aborting: server_groupID not set - so cannot do the chgrp calls. Check your conf/site.conf file.";
+}
+
 my $wwroot = $ENV{WEBWORK_ROOT};
 
 # Course directories
