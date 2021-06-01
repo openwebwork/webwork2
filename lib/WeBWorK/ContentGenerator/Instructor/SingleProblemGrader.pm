@@ -158,7 +158,7 @@ sub insertGrader {
 			CGI::th($self->maketext("Comment:")) .
 			CGI::td(CGI::textarea({ id => "comment_problem$self->{problem_id}", class => 'grader-problem-comment',
 						data_problem_id => $self->{problem_id},
-						value => $self->{comment_string}, rows => 3, cols => 30 }) .
+						value => $self->{comment_string}, rows => 3, cols => 70 }) .
 				CGI::br() .
 				CGI::input({ class => 'preview btn', type => 'button',
 						value => $self->maketext("Preview Comment") }))

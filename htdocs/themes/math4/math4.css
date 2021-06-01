@@ -1,5 +1,5 @@
 /* WeBWorK Online Homework Delivery System
- * Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+ * Copyright &copy; 2000-2021 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
@@ -738,7 +738,7 @@ input.correct[type="text"]{ /* green */
     outline: thin dotted \9;
     /* IE6-9 */
     
-    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81, ,.6);
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
     -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
     
@@ -1414,7 +1414,19 @@ table#grades_table pre{
 
 .problem-grader-table {
 	border-collapse: separate;
-	border-spacing: 2px
+	border-spacing: 2px;
+	width: 100%;
+}
+
+.problem-grader-table tr th {
+	width: 160px;
+	min-width: 160px;
+}
+
+.problem-grader-table textarea.grader-problem-comment {
+	width: 100%;
+	min-height: 100px;
+	box-sizing: border-box;
 }
 
 .problem-grader-table input {
