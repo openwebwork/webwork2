@@ -380,7 +380,7 @@ sub _drop_column_field_stmt {
 	my $field_name=shift;
 	my $sql_table_name = $self->sql_table_name;
 	my $sql_field_name = $self->sql_field_name($field_name);		
-	return "Alter table `$sql_table_name` drop column if exists `$sql_field_name` ";
+	return "Alter table `$sql_table_name` drop column";
 }
 ####################################################
 # checking Tables
