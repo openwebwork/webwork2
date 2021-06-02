@@ -465,13 +465,17 @@ sub authenticate {
 		}
       }  elsif ($ce->{LMSManageUserData}) {
 		# Existing user.  Possibly modify demographic information and permission level.
-		unless ($self->maybe_update_user()) {
+		if ($self->maybe_update_user()) {
+			$self->{initial_login} = 1; # Set here so login gets logged, even for accounts which maybe_update_user() would not modify
+		} else {
 			$r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
 			  $self->{log_error} .= "Failed to update user $userID.";
 			if ( $ce->{debug_lti_parameters} ) {
 				warn("Failed to updateuser $userID.");
 			}
 		}
+      } else {
+	$self->{initial_login} = 1; # Set here so login gets logged when $ce->{LMSManageUserData} is false
       }
 
       # If we are using grade passback then make sure the data
@@ -664,8 +668,6 @@ sub maybe_update_user {
       warn "Existing user: $userID updated.\n"
 	if ( $ce->{debug_lti_parameters} );
     }
-      
-    $self->{initial_login} = 1;
   }
 
   return 1;
