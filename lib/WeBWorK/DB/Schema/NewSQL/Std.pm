@@ -311,7 +311,7 @@ sub _get_db_info {
 	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!"; # File::Temp objects stringify with ->filename
 	print $my_cnf "[client]\n";
 
-	# note: the quotes below are needed for special characters (and others) are passed to the database correctly. 
+	# note: the quotes below are needed for special characters (and others) so they are passed to the database correctly. 
 
 	print $my_cnf "user=\"$username\"\n" if defined $username and length($username) > 0;
 	print $my_cnf "password=\"$password\"\n" if defined $password and length($password) > 0;
