@@ -7,10 +7,8 @@
 
 return 0 unless ($problem->status == 1 && $problem->num_correct == 1);
 
-    my @timeData = localtime(time);
-
     #test to see if it is between midnight and 2am
-    if ($timeData[2] > 1) {
+    if ($courseDateTime[2] > 1) {
 	return 0;
     }
 
@@ -90,3 +88,7 @@ return 0 unless ($problem->status == 1 && $problem->num_correct == 1);
 #         $globalData you need to either write your code so it doesnt matter which
 #         order the evaluators are run in, or you need to pay very close attention
 #         to which evaluators are run and when. 
+#
+#   - @courseDateTime - array of time information in course timezone
+#         (sec,min,hour,day,month,year,day_of_week) as produced by
+#         https://metacpan.org/pod/DateTime

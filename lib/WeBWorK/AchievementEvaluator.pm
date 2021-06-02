@@ -28,6 +28,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(before after readFile sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::Tags;
+use DateTime;
 
 use WWSafe;
 
@@ -39,6 +40,15 @@ sub checkForAchievements {
     my %options = @_;
     my $db = $r->db;
     my $ce = $r->ce;
+
+    my $course_display_tz = $ce->{siteDefaults}{timezone};
+    # the following line from Utils.pm
+    $course_display_tz ||= "local";    # do our best to provide default vaules
+
+    # Date and time for course timezone (may differ from the server timezone)
+    # Saved into separate array
+    # https://metacpan.org/pod/DateTime
+    my $dtCourseTime = DateTime->from_epoch( epoch => time(), time_zone  => $course_display_tz);
 
     #set up variables and get achievements
     my $cheevoMessage = '';
@@ -110,6 +120,7 @@ sub checkForAchievements {
     our $globalData = {};
     our $tags;
     our @setProblems = ();
+    our @courseDateTime = ($dtCourseTime->sec,$dtCourseTime->min,$dtCourseTime->hour,$dtCourseTime->day,$dtCourseTime->month,$dtCourseTime->year,$dtCourseTime->day_of_week);
 
     my $compartment = new WWSafe;
 
@@ -196,9 +207,10 @@ sub checkForAchievements {
     # $set - the set data
     # $achievementPoints - the number of achievmeent points
     # $tags -this is the tag data associated to the problem from the problem library
+    # @courseDateTime - array of time information in course timezone (sec,min,hour,day,month,year,day_of_week)
 
     $compartment->share(qw( $problem @setProblems $localData $maxCounter 
-             $globalData $counter $nextLevelPoints $set $achievementPoints $tags));
+             $globalData $counter $nextLevelPoints $set $achievementPoints $tags @courseDateTime));
 
     #load any preamble code
     # this line causes the whole file to be read into one string
