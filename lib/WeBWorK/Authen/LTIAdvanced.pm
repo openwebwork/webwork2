@@ -464,15 +464,12 @@ sub authenticate {
 			}
 		}
       }  elsif ($ce->{LMSManageUserData}) {
-		# Existing user.  Possibly modify demographic information and permission level.
-		if ($self->maybe_update_user()) {
-			$self->{initial_login} = 1; # Set here so login gets logged, even for accounts which maybe_update_user() would not modify
-		} else {
-			$r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-			  $self->{log_error} .= "Failed to update user $userID.";
-			if ( $ce->{debug_lti_parameters} ) {
-				warn("Failed to updateuser $userID.");
-			}
+		$self->{initial_login} = 1; # Set here so login gets logged, even for accounts which maybe_update_user() would not modify or when it fails to update
+		# Existing user. Possibly modify demographic information and permission level.
+		unless ( $self->maybe_update_user() ) {
+			# Do not fail the login if data update failed
+			# FIXME - In the future we would like the message below (and other warn messages in this file) to be sent via maketext.
+			warn("The system failed to update some of your account information. Please speak to your instructor or system administrator.");
 		}
       } else {
 	$self->{initial_login} = 1; # Set here so login gets logged when $ce->{LMSManageUserData} is false
@@ -625,8 +622,10 @@ sub maybe_update_user {
   my $user = $db->getUser($userID);
   my $permissionLevel = $db->getPermissionLevel($userID);
   # We don't alter records of users with too high a permission
-  unless (defined($permissionLevel->permission) &&
-	  $permissionLevel->permission > $ce->{userRoles}->{$ce->{LTIAccountCreationCutoff}}) {  
+  if (defined($permissionLevel->permission) &&
+	$permissionLevel->permission > $ce->{userRoles}->{$ce->{LTIAccountCreationCutoff}}) {
+    return 1; # Treat as OK as not allowed to modify
+  } else {
     # Create a temp user and run it through the create process
     my $tempUser = $db->newUser();
     $tempUser->user_id($userID);
@@ -638,7 +637,7 @@ sub maybe_update_user {
     $tempUser->first_name($first_name);
     $tempUser->email_address($self->{email});
     $tempUser->status("C");
-    $tempUser-> section($self->{section} // "");
+    $tempUser->section($self->{section} // "");
     $tempUser->recitation($self->{recitation} // "");
     $tempUser->student_id($self->{student_id} // "");
     
@@ -647,8 +646,8 @@ sub maybe_update_user {
       $ce->{LTI_modify_user}($self,$tempUser);
     }
 
-    my @elements = qw(last_name first_name 
-		      email_address status 
+    my @elements = qw(last_name first_name
+		      email_address status
 		      section recitation student_id);
 
     my $change_made = 0;
@@ -656,21 +655,29 @@ sub maybe_update_user {
     for my $element (@elements) {
       if ($user->$element ne $tempUser->$element) {
 	$change_made = 1;
-	warn "WeBWorK User has $element: ".$user->$element." but LMS user has $element ".$tempUser->$element."\n" 
+	warn "WeBWorK User has $element: ".$user->$element." but LMS user has $element ".$tempUser->$element."\n"
 	  if ( $ce->{debug_lti_parameters} );
       }
     }
 
     if ($change_made) {
       $tempUser->comment(formatDateTime(time, "local"));
-      $db->putUser($tempUser);
-      $self->write_log_entry("Demographic data for user $userID modified via LTIAdvanced login");
-      warn "Existing user: $userID updated.\n"
-	if ( $ce->{debug_lti_parameters} );
+      eval { $db->putUser($tempUser) };
+      if ($@) {
+        $self->write_log_entry("Failed to update user $userID in LTIAdvanced login: $@");
+        warn "Failed to update user $userID in LTIAdvanced login.\n"
+	  if ( $ce->{debug_lti_parameters} );
+        return 0;
+      } else {
+        $self->write_log_entry("Demographic data for user $userID modified via LTIAdvanced login");
+        warn "Existing user: $userID updated.\n"
+	  if ( $ce->{debug_lti_parameters} );
+	return 1;
+      }
+    } else {
+      return 1; # No changes needed
     }
   }
-
-  return 1;
 }
 
 ################################################################################
