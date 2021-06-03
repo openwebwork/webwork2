@@ -100,6 +100,11 @@ unless ($server_root_url) {
 	die "unable to determine apache server url using course environment |$seed_ce|.".
 	    "check that the variable \$server_root_url has been properly set in conf/site.conf\n";
 }
+my $xmlrpc_root_url = $seed_ce->{xmlrpc_root_url} || $server_root_url;
+unless ($xmlrpc_root_url) {
+        die "unable to determine xmlrpc server url using course environment |$seed_ce|.".
+            "check that the variable \$xmlrpc_root_url has been properly set in conf/site.conf\n";
+}
 
 ############################
 # These variables are set when the child process is started
@@ -114,8 +119,8 @@ our ($SITE_URL, $FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 
 
-	$SITE_URL            =  "$server_root_url" ; 
-	$FORM_ACTION_URL     =  "$server_root_url/webwork2/instructorXMLHandler";
+	$SITE_URL            =  "$xmlrpc_root_url" ; 
+	$FORM_ACTION_URL     =  "$xmlrpc_root_url/webwork2/instructorXMLHandler";
 
 use constant DISPLAYMODE   => 'images'; #  Mathjax  is another possibilities.
 
