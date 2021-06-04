@@ -596,11 +596,19 @@ sub create_user {
 	# Assign all existing achievements
 	my @achievementIDs = $db->listAchievements;
 	foreach my $achievementID (@achievementIDs) {
-		my $userAchievement = $db->newUserAchievement();
-		$userAchievement->user_id($userID);
-		$userAchievement->achievement_id($achievementID);
-		$db->addUserAchievement($userAchievement);
+		my $achievement = $db->getAchievement($achievementID);
+		if ($achievement->enabled) {
+			my $userAchievement = $db->newUserAchievement();
+			$userAchievement->user_id($userID);
+			$userAchievement->achievement_id($achievementID);
+			$db->addUserAchievement($userAchievement);
+		}
 	}
+	# Initialize global achievement data
+	my $globalUserAchievement = $db->newGlobalUserAchievement();
+        $globalUserAchievement->user_id($userID);
+        $globalUserAchievement->achievement_points(0);
+        $db->addGlobalUserAchievement($globalUserAchievement);
 
   # Give schools the chance to modify newly added sets 
   if (defined($ce->{LTI_modify_user_set})) {
