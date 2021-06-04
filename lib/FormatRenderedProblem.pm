@@ -329,7 +329,7 @@ sub formatRenderedProblem {
 		}
 		$json_output->{score} = $json_score;
 
-		return JSON->new->utf8->encode($json_output);
+		return JSON->new->utf8(0)->encode($json_output);
 	}
 
 	# Raw format
@@ -350,7 +350,7 @@ sub formatRenderedProblem {
 		$output->{dir} = $PROBLEM_LANG_AND_DIR{dir};
 
 		# Convert to JSON
-		return JSON->new->utf8->canonical->pretty->encode($output);
+		return JSON->new->utf8(0)->encode($output);
 	}
 
 	# Find and execute the appropriate template in the WebworkClient folder.
@@ -361,7 +361,7 @@ sub formatRenderedProblem {
 	$template =~ s/(\$\w+)/$1/gee;
 
 	return $template unless $self->{inputs_ref}{send_pg_flags};
-	return JSON->new->utf8->encode({ html => $template, pg_flags => $rh_result->{flags} });
+	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags} });
 }
 
 sub saveGradeToLTI {
