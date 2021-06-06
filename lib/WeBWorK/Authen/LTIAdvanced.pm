@@ -105,9 +105,9 @@ sub  request_has_data_for_this_verification_module {
 
   # We need at least these things to verify an oauth request
   if (!(defined $r->param("oauth_consumer_key"))
-      or !(defined $r->param("oauth_signature"))
-      or !(defined $r->param("oauth_nonce"))
-      or !(defined $r->param("oauth_timestamp")) ) {
+      || !(defined $r->param("oauth_signature"))
+      || !(defined $r->param("oauth_nonce"))
+      || !(defined $r->param("oauth_timestamp")) ) {
     debug("LTIAdvanced returning that it has insufficent data");
     return(0);
   } else {
@@ -213,7 +213,7 @@ sub get_credentials {
       # after @
 
       if (!defined($self->{user_id})
-	  || ( $self->{email} ne "" # modified to ne "" as fallback value defined above
+	  || ( $self->{email} ne ""
 	       && defined($ce->{preferred_source_of_username})
 	       && $ce->{preferred_source_of_username} eq "lis_person_contact_email_primary")) {
 	$self->{user_id} = $self->{email};
@@ -287,7 +287,7 @@ sub check_user {
     return $self->SUPER::check_user(@_);
   }
 
-  if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
+  if (!defined($user_id) || (defined $user_id and $user_id eq "")) {
     $self->{log_error} .= "no user id specified";
     $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
     return 0;
@@ -297,11 +297,12 @@ sub check_user {
 
   if (!$User) {
     if (    defined($r->param("lis_person_sourcedid"))
-	 or defined($r->param("lis_person_sourced_id"))
-	 or defined($r->param("lis_person_source_id"))
-	 or defined($r->param("lis_person_sourceid"))
-	 or defined($r->param("lis_person_contact_email_primary"))
-         or $ce->{allow_lti_to_use_provided_user_id}
+	 || defined($r->param("lis_person_sourced_id"))
+	 || defined($r->param("lis_person_source_id"))
+	 || defined($r->param("lis_person_sourceid"))
+	 || defined($r->param("lis_person_contact_email_primary"))
+	 || $ce->{allow_lti_to_use_provided_user_id}
+	 || $ce->{force_lti_to_use_provided_user_id}
        ) {
       debug("User |$user_id| is unknown but may be an new user from an LSM via LTI. About to return a 1");
       return 1;  #This may be a new user coming in from a LMS via LTI.
@@ -498,7 +499,6 @@ sub authenticate {
 		}
       }  elsif ($ce->{LMSManageUserData}) {
 		$self->{initial_login} = 1; # Set here so login gets logged, even for accounts which maybe_update_user() would not modify or when it fails to update
-		$self->{was_LTI} = 1;
 		# Existing user. Possibly modify demographic information and permission level.
 		unless ( $self->maybe_update_user() ) {
 			# Do not fail the login if data update failed
@@ -507,7 +507,6 @@ sub authenticate {
 		}
       } else {
 	$self->{initial_login} = 1; # Set here so login gets logged when $ce->{LMSManageUserData} is false
-	$self->{was_LTI} = 1;
       }
 
       # If we are using grade passback then make sure the data
@@ -641,7 +640,6 @@ sub create_user {
   }
 
   $self->{initial_login} = 1;
-  $self->{was_LTI} = 1;
 
   return 1;
 }
