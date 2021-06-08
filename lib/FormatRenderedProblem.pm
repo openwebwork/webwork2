@@ -75,7 +75,7 @@ sub formatRenderedProblem {
 	my $rh_result   = $self->return_object() || {};  # wrap problem in formats
 	$problemText    = "No output from rendered Problem" unless $rh_result;
 
-	my $forbidGradePassback = 0; # 1 = feature blocked, 2 = due to rendering error
+	my $forbidGradePassback = 1; # 1 = feature blocked, 2 = due to rendering error
 
 	if (ref($rh_result) and $rh_result->{text}) {
 		$problemText = $rh_result->{text};
@@ -96,6 +96,13 @@ sub formatRenderedProblem {
 		});
 
 	my $mt = WeBWorK::Localize::getLangHandle($self->{inputs_ref}{language} // 'en');
+
+	if ( $forbidGradePassback == 1 &&
+	     defined( $ce->{html2xmlAllowGradePassback} ) &&
+	     $ce->{html2xmlAllowGradePassback} eq "This course intentionally enables the insecure LTI grade pass-back feature of html2xml." ) {
+		# It is strongly recommended that you clarify the security risks of enabling the current version of this feature before using it.
+		$forbidGradePassback = 0;
+	}
 
 	my $SITE_URL = $self->site_url // '';
 	my $FORM_ACTION_URL = $self->{form_action_url} // '';
@@ -382,7 +389,7 @@ sub formatRenderedProblem {
 sub saveGradeToLTI {
 	my ($self, $ce, $rh_result, $forbidGradePassback) = @_;
 	# When $forbidGradePassback is set, we will block the actual submission,
-	# but we still provide the data in the hidden fields.
+	# but we still provide the LTI data in the hidden fields.
 
 	return "" if !(defined($self->{inputs_ref}{lis_outcome_service_url}) &&
 		defined($self->{inputs_ref}{'oauth_consumer_key'}) &&
