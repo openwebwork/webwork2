@@ -28,6 +28,7 @@ use WeBWorK::Utils qw(wwRound decode_utf8_base64);
 use XML::Simple qw(XMLout);
 use WeBWorK::Utils::LanguageAndDirection;
 use JSON;
+use Digest::SHA qw(sha1_base64);
 
 sub new {
     my $invocant = shift;
@@ -75,9 +76,9 @@ sub formatRenderedProblem {
 	my $rh_result   = $self->return_object() || {};  # wrap problem in formats
 	$problemText    = "No output from rendered Problem" unless $rh_result;
 
-	my $forbidGradePassback = 1; # 1 = feature blocked, 2 = due to rendering error
+	my $forbidGradePassback = 1; # 1 = feature blocked, 2 = due to rendering error, 3 = not in submit mode
 
-	if (ref($rh_result) and $rh_result->{text}) {
+	if (ref($rh_result) && $rh_result->{text}) {
 		$problemText = $rh_result->{text};
 	} else {
 		$problemText .= "Unable to decode problem text:<br>$self->{error_string}<br>" .
@@ -251,6 +252,9 @@ sub formatRenderedProblem {
 
 		$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded.")) unless $hideWasNotRecordedMessage;
 		$scoreSummary .= CGI::hidden({id => 'problem-result-score', name => 'problem-result-score', value => $problemResult->{score}});
+	}
+	if ( !$forbidGradePassback && !$submitMode ) {
+		$forbidGradePassback = 3;
 	}
 	if ( $forbidGradePassback == 2 ) {
 		$scoreSummary  = '<!-- No scoreSummary on errors. -->';
