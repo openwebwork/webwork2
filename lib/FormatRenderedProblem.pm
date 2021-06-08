@@ -75,11 +75,15 @@ sub formatRenderedProblem {
 	my $rh_result   = $self->return_object() || {};  # wrap problem in formats
 	$problemText    = "No output from rendered Problem" unless $rh_result;
 
+	my $forbidGradePassback = 0; # 1 = feature blocked, 2 = due to rendering error
+
 	if (ref($rh_result) and $rh_result->{text}) {
 		$problemText = $rh_result->{text};
 	} else {
 		$problemText .= "Unable to decode problem text:<br>$self->{error_string}<br>" .
 			format_hash_ref($rh_result);
+		$rh_result->{problem_result}->{score} = 0; # force score to 0 for such errors.
+		$forbidGradePassback = 2; # 2 = due to error
 	}
 
 	my $courseID = $self->{courseID} // "";
@@ -115,6 +119,7 @@ sub formatRenderedProblem {
 	my $psvn = $rh_result->{psvn} // $self->{inputs_ref}{psvn} // 54321;
 	my $session_key = $rh_result->{session_key} // "";
 	my $displayMode = $self->{inputs_ref}{displayMode};
+	my $hideWasNotRecordedMessage = $ce->{hideWasNotRecordedMessage} // 0;
 
 	# HTML document language settings
 	my $formLanguage = $self->{inputs_ref}{language} // 'en';
@@ -203,9 +208,13 @@ sub formatRenderedProblem {
 	my $showAnswerNumbers = $self->{inputs_ref}{showAnswerNumbers} // 1;
 
 	# Attempts table
+	my $answerTemplate = "";
 
-	# Increase indent below - to make coming changes easier to track
-
+	if ( $forbidGradePassback == 2 ) {
+		# Do not produce an AttemptsTable when we had a rendering error.
+		$answerTemplate = '<!-- No AttemptsTable on errors like this. --> ';
+		$problemResult = 0; # avoid making an incorrect $scoreSummary
+	} else {
 		my $tbl = WeBWorK::Utils::AttemptsTable->new(
 			$rh_result->{answers} // {},
 			answersSubmitted    => $self->{inputs_ref}{answersSubmitted} // 0,
@@ -221,10 +230,10 @@ sub formatRenderedProblem {
 			maketext            => WeBWorK::Localize::getLoc($formLanguage),
 			summary             => $problemResult->{summary} // '', # can be set by problem grader
 		);
-		my $answerTemplate = $tbl->answerTemplate;
+		$answerTemplate = $tbl->answerTemplate;
 		my $color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
 		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
-
+	}
 	# Score summary
 	my $scoreSummary = '';
 
@@ -233,8 +242,11 @@ sub formatRenderedProblem {
 				wwRound(0, $problemResult->{score} * 100) . '%'));
 		$scoreSummary .= CGI::p($problemResult->{msg}) if ($problemResult->{msg});
 
-		$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded."));
+		$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded.")) unless $hideWasNotRecordedMessage;
 		$scoreSummary .= CGI::hidden({id => 'problem-result-score', name => 'problem-result-score', value => $problemResult->{score}});
+	}
+	if ( $forbidGradePassback == 2 ) {
+		$scoreSummary  = '<!-- No scoreSummary on errors. -->';
 	}
 
 	# Answer hash in XML format used by the PTX format.
@@ -282,8 +294,8 @@ sub formatRenderedProblem {
 	# up before the bug occurs.  In general don't use these unless necessary.
 	my $internal_debug_messages = join("<br>", @{$rh_result->{internal_debug_messages} || []});
 
-	# Try to save the grade to an LTI if one provided us data
-	my $LTIGradeMessage = saveGradeToLTI($self, $ce, $rh_result);
+	# Try to save the grade to an LTI if one provided us data (depending on $forbidGradePassback)
+	my $LTIGradeMessage = saveGradeToLTI($self, $ce, $rh_result, $forbidGradePassback);
 
 	my $debug_messages = $rh_result->{debug_messages};
 
@@ -368,7 +380,9 @@ sub formatRenderedProblem {
 }
 
 sub saveGradeToLTI {
-	my ($self, $ce, $rh_result) = @_;
+	my ($self, $ce, $rh_result, $forbidGradePassback) = @_;
+	# When $forbidGradePassback is set, we will block the actual submission,
+	# but we still provide the data in the hidden fields.
 
 	return "" if !(defined($self->{inputs_ref}{lis_outcome_service_url}) &&
 		defined($self->{inputs_ref}{'oauth_consumer_key'}) &&
@@ -383,8 +397,9 @@ sub saveGradeToLTI {
 	my $consumer_secret = $ce->{'LISConsumerKeyHash'}{$consumer_key};
 	my $score = $rh_result->{problem_result} ? $rh_result->{problem_result}{score} : 0;
 
+	my $LTIGradeMessage = '';
 
-		# Increase indent below - to make coming changes easier to track
+        if ( ! $forbidGradePassback ) {
 
 		# This is boilerplate XML used to submit the $score for $sourcedid
 		my $replaceResultXML = <<EOS;
@@ -449,8 +464,6 @@ EOS
 
 		my $response = LWP::UserAgent->new->request($HTTPRequest);
 
-
-		my $LTIGradeMessage = '';
 		if ($response->is_success) {
 			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
 			my $message = $1;
@@ -464,6 +477,7 @@ EOS
 			$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$response->message);
 			$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
 		}
+	}
 
 	# save parameters for next time
 	$LTIGradeMessage .= CGI::input({type => 'hidden', name => 'lis_outcome_service_url', value => $request_url});
