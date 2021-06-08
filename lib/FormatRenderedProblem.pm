@@ -203,24 +203,27 @@ sub formatRenderedProblem {
 	my $showAnswerNumbers = $self->{inputs_ref}{showAnswerNumbers} // 1;
 
 	# Attempts table
-	my $tbl = WeBWorK::Utils::AttemptsTable->new(
-		$rh_result->{answers} // {},
-		answersSubmitted    => $self->{inputs_ref}{answersSubmitted} // 0,
-		answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
-		displayMode         => $displayMode,
-		showAnswerNumbers   => $showAnswerNumbers,
-		ce                  => $ce,
-		showAttemptPreviews => $previewMode || $submitMode || $showCorrectMode,
-		showAttemptResults  => $submitMode || $showCorrectMode,
-		showCorrectAnswers  => $showCorrectMode,
-		showMessages        => $previewMode || $submitMode || $showCorrectMode,
-		showSummary         => (($showSummary and ($submitMode or $showCorrectMode)) // 0) ? 1 : 0,
-		maketext            => WeBWorK::Localize::getLoc($formLanguage),
-		summary             => $problemResult->{summary} // '', # can be set by problem grader
-	);
-	my $answerTemplate = $tbl->answerTemplate;
-	my $color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
-	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+
+	# Increase indent below - to make coming changes easier to track
+
+		my $tbl = WeBWorK::Utils::AttemptsTable->new(
+			$rh_result->{answers} // {},
+			answersSubmitted    => $self->{inputs_ref}{answersSubmitted} // 0,
+			answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
+			displayMode         => $displayMode,
+			showAnswerNumbers   => $showAnswerNumbers,
+			ce                  => $ce,
+			showAttemptPreviews => $previewMode || $submitMode || $showCorrectMode,
+			showAttemptResults  => $submitMode || $showCorrectMode,
+			showCorrectAnswers  => $showCorrectMode,
+			showMessages        => $previewMode || $submitMode || $showCorrectMode,
+			showSummary         => (($showSummary and ($submitMode or $showCorrectMode)) // 0) ? 1 : 0,
+			maketext            => WeBWorK::Localize::getLoc($formLanguage),
+			summary             => $problemResult->{summary} // '', # can be set by problem grader
+		);
+		my $answerTemplate = $tbl->answerTemplate;
+		my $color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
+		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 
 	# Score summary
 	my $scoreSummary = '';
@@ -380,8 +383,11 @@ sub saveGradeToLTI {
 	my $consumer_secret = $ce->{'LISConsumerKeyHash'}{$consumer_key};
 	my $score = $rh_result->{problem_result} ? $rh_result->{problem_result}{score} : 0;
 
-	# This is boilerplate XML used to submit the $score for $sourcedid
-	my $replaceResultXML = <<EOS;
+
+		# Increase indent below - to make coming changes easier to track
+
+		# This is boilerplate XML used to submit the $score for $sourcedid
+		my $replaceResultXML = <<EOS;
 <?xml version = "1.0" encoding = "UTF-8"?>
 <imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
   <imsx_POXHeader>
@@ -408,56 +414,56 @@ sub saveGradeToLTI {
 </imsx_POXEnvelopeRequest>
 EOS
 
-	my $bodyhash = sha1_base64($replaceResultXML);
+		my $bodyhash = sha1_base64($replaceResultXML);
 
-	# since sha1_base64 doesn't pad we have to do so manually
-	while (length($bodyhash) % 4) {
-		$bodyhash .= '=';
-	}
-
-	my $requestGen = Net::OAuth->request("consumer");
-
-	$requestGen->add_required_message_params('body_hash');
-
-	my $gradeRequest = $requestGen->new(
-		request_url => $request_url,
-		request_method => "POST",
-		consumer_secret => $consumer_secret,
-		consumer_key => $consumer_key,
-		signature_method => $signature_method,
-		nonce => int(rand( 2**32)),
-		timestamp => time(),
-		body_hash => $bodyhash
-	);
-	$gradeRequest->sign();
-
-	my $HTTPRequest = HTTP::Request->new(
-		$gradeRequest->request_method,
-		$gradeRequest->request_url,
-		[
-			'Authorization' => $gradeRequest->to_authorization_header,
-			'Content-Type'  => 'application/xml',
-		],
-		$replaceResultXML,
-	);
-
-	my $response = LWP::UserAgent->new->request($HTTPRequest);
-
-
-	my $LTIGradeMessage = '';
-	if ($response->is_success) {
-		$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
-		my $message = $1;
-		if ($message ne 'success') {
-			$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$message);
-			$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
-		} else {
-			$LTIGradeMessage = CGI::p("Grade sucessfully saved.");
+		# since sha1_base64 doesn't pad we have to do so manually
+		while (length($bodyhash) % 4) {
+			$bodyhash .= '=';
 		}
-	} else {
-		$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$response->message);
-		$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
-	}
+
+		my $requestGen = Net::OAuth->request("consumer");
+
+		$requestGen->add_required_message_params('body_hash');
+
+		my $gradeRequest = $requestGen->new(
+			request_url => $request_url,
+			request_method => "POST",
+			consumer_secret => $consumer_secret,
+			consumer_key => $consumer_key,
+			signature_method => $signature_method,
+			nonce => int(rand( 2**32)),
+			timestamp => time(),
+			body_hash => $bodyhash
+		);
+		$gradeRequest->sign();
+
+		my $HTTPRequest = HTTP::Request->new(
+			$gradeRequest->request_method,
+			$gradeRequest->request_url,
+			[
+				'Authorization' => $gradeRequest->to_authorization_header,
+				'Content-Type'  => 'application/xml',
+			],
+			$replaceResultXML,
+		);
+
+		my $response = LWP::UserAgent->new->request($HTTPRequest);
+
+
+		my $LTIGradeMessage = '';
+		if ($response->is_success) {
+			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+			my $message = $1;
+			if ($message ne 'success') {
+				$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$message);
+				$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
+			} else {
+				$LTIGradeMessage = CGI::p("Grade sucessfully saved.");
+			}
+		} else {
+			$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$response->message);
+			$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
+		}
 
 	# save parameters for next time
 	$LTIGradeMessage .= CGI::input({type => 'hidden', name => 'lis_outcome_service_url', value => $request_url});
