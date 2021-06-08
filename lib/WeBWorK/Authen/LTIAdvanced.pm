@@ -248,7 +248,7 @@ sub get_credentials {
       # User id and address is at this point
       if ( $ce->{debug_lti_parameters} ) {
 	warn "=========== summary ============";
-	my $tmpIDmsg = ( $used_LMS_user_id == 1 ) ? " was the remote LMS LTI provided user_id\n" : "\n" ;
+	my $tmpIDmsg = ( $used_LMS_user_id == 1 ) ? " (the remote LMS LTI provided user_id)\n" : "\n" ;
 	warn "User id is |$self->{user_id}| $tmpIDmsg";
 	warn "User mail address is |$self->{email}|\n";
 	warn "Student id is |", $self->{student_id}//'undefined',"|\n";
@@ -287,7 +287,7 @@ sub check_user {
     return $self->SUPER::check_user(@_);
   }
 
-  if (!defined($user_id) || (defined $user_id and $user_id eq "")) {
+  if (!defined($user_id) || (defined $user_id && $user_id eq "")) {
     $self->{log_error} .= "no user id specified";
     $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
     return 0;
@@ -453,13 +453,9 @@ sub authenticate {
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
       $self->{log_error} .= "Construction of OAuth request record failed";
       return 0;
-  } # was an elsif here, but we would have returned in the case that the if condition held
+  }
 
-  $verifyOK = $request->verify || $altrequest->verify;
-
-  # Space for future LTI verification options
-
-  if ( ! $verifyOK ) {
+  if ( ! $request->verify && ! $altrequest->verify) {
       debug("LTIAdvanced::authenticate request-> verify failed");
       debug("OAuth verification Failed ");
 
