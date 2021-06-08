@@ -54,6 +54,8 @@ use WeBWorK::Debug;
 use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements);
 use DateTime;
 use Text::CSV;
+use Encode;
+use open IO => ':encoding(UTF-8)';
 
 #constants for forms and the various handlers
 use constant BLANK_ACHIEVEMENT => "blankachievement.at";
