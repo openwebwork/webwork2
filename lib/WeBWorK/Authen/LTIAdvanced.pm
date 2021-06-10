@@ -105,9 +105,9 @@ sub  request_has_data_for_this_verification_module {
 
   # We need at least these things to verify an oauth request
   if (!(defined $r->param("oauth_consumer_key"))
-      or !(defined $r->param("oauth_signature"))
-      or !(defined $r->param("oauth_nonce"))
-      or !(defined $r->param("oauth_timestamp")) ) {
+      || !(defined $r->param("oauth_signature"))
+      || !(defined $r->param("oauth_nonce"))
+      || !(defined $r->param("oauth_timestamp")) ) {
     debug("LTIAdvanced returning that it has insufficent data");
     return(0);
   } else {
@@ -184,7 +184,6 @@ sub get_credentials {
 	 ['oauth_timestamp', 'oauth_timestamp'],
 	 ['section', 'custom_section'],
 	 ['recitation', 'custom_recitation'],
-	 ['student_id', 'custom_student_id'],
 	);
 
       # Some LMS's misspell the lis_person_sourcedid parameter name
@@ -198,10 +197,13 @@ sub get_credentials {
       } elsif (defined($r->param("lis_person_sourceid"))) {
 	$self->{user_id} = $r->param("lis_person_sourceid"); 
       } else {
-	undef($self ->{user_id});
+	undef($self->{user_id});
       }
-      
-      $self->{email} = uri_unescape($r->param("lis_person_contact_email_primary"));
+
+      $self->{email} = ""; # set an initial value to avoid warnings when not provided
+      if ( defined( $r->param("lis_person_contact_email_primary") ) ) {
+        $self->{email} = uri_unescape($r->param("lis_person_contact_email_primary")) // "";
+      }
 
       # if preferred_source_of_username eq "lis_person_contact_email_primary"
       # or if the user_id is still undefined at this point 
@@ -210,19 +212,19 @@ sub get_credentials {
       # after @
 
       if (!defined($self->{user_id})
-	  or (defined($self->{email})  
-	      and defined($ce->{preferred_source_of_username})
-	      and $ce->{preferred_source_of_username} eq "lis_person_contact_email_primary")) {
+	  || ($self->{email} ne ""
+	      && defined($ce->{preferred_source_of_username})
+	      && $ce->{preferred_source_of_username} eq "lis_person_contact_email_primary")) {
 	$self->{user_id} = $self->{email};
-	$self->{user_id} =~ s/@.*$// if
-	  $ce->{strip_address_from_email};
+	$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
       }
 
-     if (!defined($self->{student_id})
-         and defined($ce->{preferred_source_of_student_id})) {
-       my $user_id_lti_param_name = $ce->{preferred_source_of_student_id};
-       $self->{student_id} = $r->param($user_id_lti_param_name);
-     }
+      if (defined($ce->{preferred_source_of_student_id})
+	&& defined($r->param($ce->{preferred_source_of_student_id}))) {
+	$self->{student_id} = $r->param($ce->{preferred_source_of_student_id});
+      } else {
+	$self->{student_id} = ""; # fall back to avoid a warning when debug_lti_parameters enabled
+      }
       
       # For setting up its helpful to print out what the system think the
       # User id and address is at this point 
@@ -230,7 +232,7 @@ sub get_credentials {
 	warn "=========== summary ============";
 	warn "User id is |$self->{user_id}|\n";
 	warn "User mail address is |$self->{email}|\n";
-	warn "Student id is |", $self->{student_id}//'undefined',"|\n";
+	warn "Student id is |$self->{student_id}|\n";
 	warn "preferred_source_of_username is |", $ce->{preferred_source_of_username}//'undefined',"|\n";
 	warn "preferred_source_of_student_id is |", $ce->{preferred_source_of_student_id}//'undefined',"|\n";
 	warn "================================\n";
@@ -264,7 +266,7 @@ sub check_user {
     return $self->SUPER::check_user(@_);
   }
   
-  if (!defined($user_id) or (defined $user_id and $user_id eq "")) {
+  if (!defined($user_id) || (defined $user_id && $user_id eq "")) {
     $self->{log_error} .= "no user id specified";
     $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
     return 0;
@@ -274,10 +276,11 @@ sub check_user {
   
   if (!$User) {
     if ( defined($r->param("lis_person_sourcedid"))
-	 or defined($r->param("lis_person_sourced_id"))
-	 or defined($r->param("lis_person_source_id"))
-	 or defined($r->param("lis_person_sourceid")) 
-	 or defined($r->param("lis_person_contact_email_primary")) ) {
+	 || defined($r->param("lis_person_sourced_id"))
+	 || defined($r->param("lis_person_source_id"))
+	 || defined($r->param("lis_person_sourceid"))
+	 || defined($r->param("lis_person_contact_email_primary"))
+       ) {
       debug("User |$user_id| is unknown but may be an new user from an LSM via LTI. About to return a 1");
       return 1;  #This may be a new user coming in from a LMS via LTI.
     } else {
@@ -425,7 +428,9 @@ sub authenticate {
       $self->{error} .= $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
       $self->{log_error} .= "Construction of OAuth request record failed";
       return 0;
-    } elsif (! $request->verify && ! $altrequest->verify) {
+  }
+
+  if (! $request->verify && ! $altrequest->verify) {
       debug("LTIAdvanced::authenticate request-> verify failed");
       debug("OAuth verification Failed ");
       
@@ -435,7 +440,7 @@ sub authenticate {
 	warn("OAuth verification failed.  Check the Consumer Secret and that the URL in the LMS exactly matches the WeBWorK URL as defined in site.conf. E.G. Check that if you have https in the LMS url then you have https in \$server_root_url in site.conf");
       }
       return 0;
-    } else {
+  } else {
       debug("OAuth verification SUCCEEDED !!");
       
       my $userID = $self->{user_id};
@@ -485,7 +490,7 @@ sub authenticate {
       }
 
       return 1;
-    }
+  }
   
   debug("LTIAdvanced is returning a failed authentication");
   $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
