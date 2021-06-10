@@ -63,9 +63,8 @@ our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for 
 our %HC_FORMATS = (
 	tex => { name => x("TeX Source"), subr => "generate_hardcopy_tex" },
 	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf" },
-# Not ready for prime time
-#	tikz =>{ name => "TikZ PDF file", subr => "generate_hardcopy_tigz"},
 );
+our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 
 # custom fields used in $self hash
 # FOR HEAVEN'S SAKE, PLEASE KEEP THIS UP-TO-DATE!
@@ -379,7 +378,7 @@ sub display_form {
 	
 	# get formats
 	my @formats;
-	foreach my $format (keys %HC_FORMATS) {
+	foreach my $format (@HC_FORMAT_DISPLAY_ORDER) {
 		push @formats, $format if $authz->hasPermissions($userID, "download_hardcopy_format_$format");
 	}
 	
