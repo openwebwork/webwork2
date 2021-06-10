@@ -157,6 +157,10 @@ legend {
     border:0px;
 }
 
+ul.nav {
+	margin-top: 0;
+}
+
 ul.nav li a:hover {
 	background: #e1e1e1;	
 }
@@ -235,6 +239,7 @@ div.unattempted-progress {
     height:20px;
     padding-top:8px;
     padding-bottom:8px;
+    margin-right: 5px;
 }
 
 #breadcrumb-navigation {
@@ -284,6 +289,7 @@ h2.page-title {
 
 .breadcrumb {
 	border: 1px solid #e6e6e6;
+	margin-bottom: 10px;
 }
 
 .Warnings {
@@ -304,14 +310,18 @@ h2.page-title {
 	background-color: white;
 	margin-bottom: 1rem;
 	padding: 0.25rem;
-	border-radius: 4px;
-	box-shadow: 0 0 0.25rem 1px gray;
+	border-radius: 0 0 4px 4px;
+	box-shadow: 0 0.1rem 0.2rem 1px gray;
 	box-sizing: border-box;
 }
 
 .sticky-nav > a,
 .sticky-nav > div {
-	margin: 0.25rem auto 0.25rem 0.25rem;
+	margin: 0.25rem;
+}
+
+.sticky-nav > div:first-child {
+	margin-right: auto;
 }
 
 .user-nav .student-nav-selector .dropdown-menu {

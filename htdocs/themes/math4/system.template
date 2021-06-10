@@ -90,6 +90,27 @@
 	</div>
 </div>
 
+<!-- Breadcrumb -->
+<div id="breadcrumb-row" class="row-fluid">
+	<div class="span12">
+		<a href="#" class="btn btn-primary btn" id="toggle-sidebar">
+			<span id="toggle-sidebar-icon">
+				<i class="icon fas fa-chevron-left" aria-hidden="true" data-alt="close sidebar"></i>
+			</span>
+		</a>
+		<div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
+			<ul class="breadcrumb">
+				<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
+			</ul>
+		</div>
+	</div>
+</div>
+
+<!-- Run breadcrumb js since it gets loaded early -->
+<script type="text/javascript">
+	$('#toggle-sidebar').removeClass('btn-primary')
+</script>
+
 <div id="body-row" class="row-fluid">
 
 <!-- Navigation -->
@@ -131,25 +152,13 @@
 
 <!-- Main Content Area -->
 <div id="content" class="span10" >
-	<!-- Breadcrumb -->
-	<div id="breadcrumb-row" class="row-fluid">
-	  <div class="span12">
-	    <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
-			<span id="toggle-sidebar-icon">
-				<i class="icon fas fa-chevron-left" aria-hidden="true" data-alt="close sidebar"></i>
-			</span>
-	    </a>
-	    <div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
-	      <ul class="breadcrumb">
-			<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
-	      </ul>
-	    </div>
-	</div></div>
-	<!-- Run breadcrumb js since it gets loaded early -->
-	<script type="text/javascript"> 
-	  $('#toggle-sidebar').removeClass('btn-primary')
-	</script>
-	
+	<!--#if can="nav"-->
+	<div class="problem-nav row-fluid sticky-nav" role="navigation" aria-label="problem navigation">
+		<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
+		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
+	</div>
+	<!--#endif-->
+
 	<!-- Page Title -->
 	<!--#if can="title"-->
 	<div class="row-fluid"><div class="span12">
@@ -161,13 +170,6 @@
 	<div id="Message" class="Message row-fluid">
 		<!-- Message for the user -->
 		<!--#message-->
-	</div>
-	<!--#endif-->
-
-	<!--#if can="nav"--> 
-	<div class="problem-nav row-fluid sticky-nav" role="navigation" aria-label="problem navigation">
-		<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
-		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
 	</div>
 	<!--#endif-->
 
