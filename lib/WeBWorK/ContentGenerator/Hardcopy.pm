@@ -64,7 +64,7 @@ our %HC_FORMATS = (
 	tex => { name => x("TeX Source"), subr => "generate_hardcopy_tex" },
 	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf" },
 );
-our @HC_FORMAT_TYPES = ('tex', 'pdf');
+our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 
 # custom fields used in $self hash
 # FOR HEAVEN'S SAKE, PLEASE KEEP THIS UP-TO-DATE!
@@ -378,7 +378,7 @@ sub display_form {
 	
 	# get formats
 	my @formats;
-	foreach my $format (@HC_FORMAT_TYPES) {
+	foreach my $format (@HC_FORMAT_DISPLAY_ORDER) {
 		push @formats, $format if $authz->hasPermissions($userID, "download_hardcopy_format_$format");
 	}
 	
