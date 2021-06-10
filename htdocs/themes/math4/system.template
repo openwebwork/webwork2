@@ -157,21 +157,17 @@
 	</div></div>
 	<!--#endif-->
 
-	<!--#if can="nav" can="message"--> 
-	<div class="row-fluid sticky">
-	  <div id="problem-nav" class="problem-nav span7" role="navigation" aria-label="problem navigation">
-	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
-	<!--#if can="nav"-->
+	<!--#if can="message"--> 
+	<div id="Message" class="Message row-fluid">
+		<!-- Message for the user -->
+		<!--#message-->
+	</div>
+	<!--#endif-->
+
+	<!--#if can="nav"--> 
+	<div class="problem-nav row-fluid sticky-nav" role="navigation" aria-label="problem navigation">
+		<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
 		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
-	<!--#endif-->
-	  </div>
-	  
-	  <div id="Message" class="Message span4 offset1">
-	    <!-- Message for the user -->
-	    <!--#if can="message"-->
-	        <!--#message-->
-	<!--#endif-->
-	  </div>
 	</div>
 	<!--#endif-->
 

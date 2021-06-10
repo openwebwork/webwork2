@@ -1208,7 +1208,7 @@ sub nav {
 		if defined $self->{will}->{showOldAnswers};
 	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
 		if defined $self->{will}{showProblemGrader};
-	return $userNav . $self->navMacro($args, $tail, @links);
+	return $userNav . CGI::div($self->navMacro($args, $tail, @links));
 }
 
 sub path {

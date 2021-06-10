@@ -245,6 +245,10 @@ div.unattempted-progress {
 }
 
 /* Main Content */
+body {
+	padding: 0;
+}
+
 .body {
 	display: inline-block;
 	float: left;
@@ -291,20 +295,23 @@ h2.page-title {
 }
 
 /* Question nav section */
-.problem-nav {
-	margin-bottom:1ex;
-	display: inline-block;
-}
-	
-.row-fluid.sticky, .user-nav {
+.sticky-nav {
+	display: flex;
+	flex-wrap: wrap;
 	z-index: 1;
 	position: sticky;
 	top: 0;
 	background-color: white;
+	margin-bottom: 1rem;
+	padding: 0.25rem;
+	border-radius: 4px;
+	box-shadow: 0 0 0.25rem 1px gray;
+	box-sizing: border-box;
 }
 
-.problem-nav .user-nav {
-	margin-bottom: 5px;
+.sticky-nav > a,
+.sticky-nav > div {
+	margin: 0.25rem auto 0.25rem 0.25rem;
 }
 
 .user-nav .student-nav-selector .dropdown-menu {
