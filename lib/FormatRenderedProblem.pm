@@ -215,6 +215,8 @@ sub formatRenderedProblem {
 	my $showSummary = $self->{inputs_ref}{showSummary} // 1;
 	my $showAnswerNumbers = $self->{inputs_ref}{showAnswerNumbers} // 1;
 
+	my $color_input_blanks_script = "";
+
 	# Attempts table
 	my $answerTemplate = "";
 
@@ -239,7 +241,7 @@ sub formatRenderedProblem {
 			summary             => $problemResult->{summary} // '', # can be set by problem grader
 		);
 		$answerTemplate = $tbl->answerTemplate;
-		my $color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
+		$color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
 		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	}
 	# Score summary
@@ -410,7 +412,7 @@ sub saveGradeToLTI {
 
 	my $LTIGradeMessage = '';
 
-        if ( ! $forbidGradePassback ) {
+	if ( ! $forbidGradePassback ) {
 
 		# This is boilerplate XML used to submit the $score for $sourcedid
 		my $replaceResultXML = <<EOS;
