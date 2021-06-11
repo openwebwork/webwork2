@@ -74,7 +74,7 @@ $authen{user_module} = [
 ################################################################################
 
 ################################################################################
-# LTI Preferred Source of Username
+# LTI preferred and fallback source of WW user_id
 ################################################################################
 
 # If both lis_person_sourcedid (or one of its variants)
@@ -107,10 +107,21 @@ $authen{user_module} = [
 #$preferred_source_of_username = "lis_person_sourcedid";
 $preferred_source_of_username = "lis_person_contact_email_primary";
 
+# You can use any parameter the LMS will provide for the
+# $preferred_source_of_username, ex:
+#$preferred_source_of_username = "user_id";
+
+# You can also optionally provide a $fallback_source_of_username
+# which will only be used if WW is unable to determine a user_id
+# using $preferred_source_of_username.
+# Ex:
+#$fallback_source_of_username = "lis_person_sourcedid";
+
 # Some LMS systems, Blackboard in particular, do not send lis_person_sourcedid
-# if you enable this flag and have $preferred_source_of_username set to
-# lis_person_contact_email_primary, then webwork will strip off the address 
-# portion of the email and just use the username.  
+# if you enable this flag and have $preferred_source_of_username or
+# $fallback_source_of_username set to lis_person_contact_email_primary,
+# and the email is being used as the WW user_id, then WW will strip off
+# the domain portion of the email (after the '@') and just use the username.
 
 #$strip_address_from_email = 1;
 
