@@ -93,13 +93,11 @@
 	<!--#endif-->
 	
 	<!--#if can="nav"-->
-	<div class="problem-nav row-fluid sticky-nav" role="navigation" aria-label="problem navigation">
-		<!--#nav separator="  "-->
-	</div>
+	<!--#nav separator="  "-->
 	<!--#endif-->
 	
 	<!--#if can="title"-->
-	<h1 id="content"><!--#title--></h1>
+	<h1><!--#title--></h1>
 	<!--#endif-->
 	
 	<!--#if can="message"-->
