@@ -93,7 +93,7 @@
 <!-- Breadcrumb -->
 <div id="breadcrumb-row" class="row-fluid">
 	<div class="span12">
-		<a href="#" class="btn btn-primary btn" id="toggle-sidebar">
+		<a href="#" class="btn" id="toggle-sidebar">
 			<span id="toggle-sidebar-icon">
 				<i class="icon fas fa-chevron-left" aria-hidden="true" data-alt="close sidebar"></i>
 			</span>
@@ -105,11 +105,6 @@
 		</div>
 	</div>
 </div>
-
-<!-- Run breadcrumb js since it gets loaded early -->
-<script type="text/javascript">
-	$('#toggle-sidebar').removeClass('btn-primary')
-</script>
 
 <div id="body-row" class="row-fluid">
 
