@@ -1909,9 +1909,7 @@ sub body {
 				my $scMsg = $r->maketext("Your recorded score on this test (version [_1]) is [_2]/[_3].",
 					$versionNumber, wwRound(2,$recordedScore), $totPossible);
 				if ($exceededAllowedTime && $recordedScore == 0) {
-					$scMsg .= $r->maketext("You exceeded the allowed time.");
-				} else {
-					$scMsg .= ".  ";
+					$scMsg .= " " . $r->maketext("You exceeded the allowed time.");
 				}
 				print CGI::strong($scMsg), CGI::br();
 				print CGI::end_div();
@@ -1930,7 +1928,7 @@ sub body {
 
 		if ($canShowWork && $set->set_id ne "Undefined_Set") {
 			print $r->maketext("The test (which is version [_1]) may  no longer be submitted for a grade.",$versionNumber);
-			print "" . (($can{showScore}) ? $r->maketext("You may still check your answers.") : ".") ;
+			print " " . $r->maketext("You may still check your answers.") if $can{showScore};
 
 			# print a "printme" link if we're allowed to see our
 			#    work
