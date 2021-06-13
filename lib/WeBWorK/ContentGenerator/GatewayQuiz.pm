@@ -1997,9 +1997,9 @@ sub body {
 		for my $i (0 .. $#pg_results) {
 			my $pn = $i + 1;
 			if ($i >= $startProb && $i <= $endProb) {
-				push(@$probRow, CGI::a({-href=>"#", -onclick => "jumpTo($pn);return false;"}, "$pn"));
+				push(@$probRow, CGI::a({-href=>"#", -onclick => "jumpTo($pn);return false;"}, $pn));
 			} else {
-				push(@$probRow, "$pn");
+				push(@$probRow, $pn);
 			}
 			my $score = $probStatus[$probOrder[$i]];
 			$score = ($score == 1) ? "\x{1F4AF}" : wwRound(0,100*$score);
@@ -2014,7 +2014,7 @@ sub body {
 				my $pn = ($i == $pageNumber) ? $i : 
 					CGI::a({-href=>'javascript:document.gwquiz.pageChangeHack.value=1;' .
 							"document.gwquiz.newPage.value=\"$i\";" .
-							'document.gwquiz.previewAnswers.click();'}, "&nbsp;$i&nbsp;");
+							'document.gwquiz.previewAnswers.click();'}, $i);
 				my $class = ($i == $pageNumber) ? 'page active' : 'page';
 				push(@pages, CGI::td({-colspan => $numProbPerPage, -class => $class}, $pn));
 			}
