@@ -2027,7 +2027,7 @@ sub body {
 			push (@cols, (CGI::colgroup({class => 'page'}, CGI::col({class => 'problem'}) x ($#pg_results + 1))));
 			@tableRows = (CGI::Tr(CGI::th($r->maketext("Jump to Problem:")), CGI::td({class => "problem"}, $probRow)));
 		}
-		push (@tableRows, CGI::Tr(CGI::th($r->maketext("% Score:")), CGI::td({class => "score"}, $scoreRow))) if $canShowProblemScores;
+		push (@tableRows, CGI::Tr(CGI::th($r->maketext("% Score:")), CGI::td({class => "score"}, $scoreRow))) if ($canShowProblemScores && $set->version_last_attempt_time);
 		$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, @cols, @tableRows);
 		print $jumpLinks,"\n";
 
