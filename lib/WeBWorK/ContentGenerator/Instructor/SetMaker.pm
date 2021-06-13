@@ -1924,7 +1924,7 @@ sub pre_header_initialize {
 		} else {
 			my $newSetName = $r->param('new_set_name');
 			# if we want to munge the input set name, do it here
-			$newSetName =~ s/\s/_/g;
+			$newSetName = WeBWorK::ContentGenerator::Instructor::format_set_name($newSetName);
 			debug("local_sets was ", $r->param('local_sets'));
 			$r->param('local_sets',$newSetName);  ## use of two parameter param
 			debug("new value of local_sets is ", $r->param('local_sets'));

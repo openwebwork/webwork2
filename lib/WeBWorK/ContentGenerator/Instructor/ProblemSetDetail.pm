@@ -1378,7 +1378,10 @@ sub initialize {
 				    $param = $self->parseDateTime($param) unless (defined $unlabel || !$param);
 				}
 				if ($field =~ /restricted_release/) {
-				    $self->check_sets($db,$param) if $param;
+					if ($param) {
+						$param = WeBWorK::ContentGenerator::Instructor::format_set_name($param);
+						$self->check_sets($db,$param) if $param;
+					}
 				}
 				if (defined($properties{$field}->{convertby}) && $properties{$field}->{convertby} && $param) {
 					$param = $param*$properties{$field}->{convertby};

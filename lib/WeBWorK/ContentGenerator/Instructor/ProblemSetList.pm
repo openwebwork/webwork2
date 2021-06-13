@@ -706,7 +706,10 @@ sub filter_handler {
 		$self->{visibleSetIDs} = $genericParams->{selected_sets};
 	} elsif ($scope eq "match_ids") {
 		$result = $r->maketext("showing matching sets");
-		$self->{visibleSetIDs} = [ split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}[0] ];
+		my @searchTerms = map{WeBWorK::ContentGenerator::Instructor::format_set_name($_)} (split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0]);
+		my $regexTerms = join('|', @searchTerms);
+		my @setIDs = grep { /$regexTerms/i } (@{$self->{allSetIDs}});
+		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "visible") {
 		$result = $r->maketext("showing visible sets");
 		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 1 }) ];
@@ -1127,7 +1130,7 @@ sub create_handler {
 	my $db     = $r->db;
 	my $ce     = $r->ce;
 
-	my $newSetID = $actionParams->{"action.create.name"}->[0];
+	my $newSetID = WeBWorK::ContentGenerator::Instructor::format_set_name($actionParams->{"action.create.name"}->[0]);
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 		$r->maketext("Failed to create new set: set name cannot exceed 100 characters."))
 		if (length($newSetID) > 100);
@@ -1349,7 +1352,7 @@ sub import_handler {
 	my $r = $self->r;
 
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
-	my $newSetName = $actionParams->{"action.import.name"}->[0];
+	my $newSetName = WeBWorK::ContentGenerator::Instructor::format_set_name($actionParams->{"action.import.name"}->[0]);
 	$newSetName = "" if $actionParams->{"action.import.number"}->[0] > 1; # cannot assign set names to multiple imports
 	my $assign = $actionParams->{"action.import.assign"}->[0];
 	my $startdate = 0;
