@@ -728,8 +728,9 @@ sub filter_handler {
 		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
 	} elsif ($scope eq "match_ids") {
                 $result = $r->maketext("showing matching sets");
-		#my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
-		my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
+		my @searchTerms = map{WeBWorK::ContentGenerator::Instructor::format_set_name($_)} (split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0]);
+		my $regexTerms = join('|', @searchTerms);
+		my @setIDs = grep { /$regexTerms/i } (@{$self->{allSetIDs}});
 		$self->{visibleSetIDs} = \@setIDs;
 	} elsif ($scope eq "match_open_date") {
                 $result = $r->maketext("showing matching sets");
@@ -1115,7 +1116,7 @@ sub create_handler {
 	my $db     = $r->db;
 	my $ce     = $r->ce;
 
-	my $newSetID = $actionParams->{"action.create.name"}->[0];
+	my $newSetID = WeBWorK::ContentGenerator::Instructor::format_set_name($actionParams->{"action.create.name"}->[0]);
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
 	return CGI::div({class => "ResultsWithError"},
 			$r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetID)
@@ -1287,7 +1288,7 @@ sub import_handler {
 	my $r = $self->r;
 
 	my @fileNames = @{ $actionParams->{"action.import.source"} };
-	my $newSetName = $actionParams->{"action.import.name"}->[0];
+	my $newSetName = WeBWorK::ContentGenerator::Instructor::format_set_name($actionParams->{"action.import.name"}->[0]);
 	$newSetName = "" if $actionParams->{"action.import.number"}->[0] > 1; # cannot assign set names to multiple imports
 	my $assign = $actionParams->{"action.import.assign"}->[0];
 	my $startdate = 0;

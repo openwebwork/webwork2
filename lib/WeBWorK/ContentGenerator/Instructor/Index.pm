@@ -238,19 +238,20 @@ sub pre_header_initialize {
 	};
 	
 	defined param $r "create_set" and do {
-	  my $setname = $r->param("new_set_name");
-	  if ($setname && $setname ne 'Name for new set here') {
-		if ($setname =~ /^[\w.-]*$/) {
-		$module = "${ipfx}::SetMaker";
-		$params{new_local_set} = "Create a New Set in this Course";
-		$params{new_set_name} = $setname;
-		$params{selfassign} = 1;
-		  } else {
-		push @error, E_BAD_NAME;
-		  }
-	  } else {
-		push @error, E_SET_NAME;
-	  }
+		my $setname = $r->param("new_set_name");
+		if ($setname && $setname ne 'Name for new set here') {
+			if ($setname =~ /^[\w .-]*$/) {
+				$setname = WeBWorK::ContentGenerator::Instructor::format_set_name($setname);
+				$module = "${ipfx}::SetMaker";
+				$params{new_local_set} = "Create a New Set in this Course";
+				$params{new_set_name} = $setname;
+				$params{selfassign} = 1;
+			} else {
+				push @error, E_BAD_NAME;
+			}
+		} else {
+			push @error, E_SET_NAME;
+		}
 	};
 
 	defined param $r "add_users" and do {
