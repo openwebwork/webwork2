@@ -1453,7 +1453,7 @@ table#grades_table pre{
     margin-bottom:10px;
 }
 
-.tab-pane select, input {
+.tab-pane select, .tab-pane input {
 	margin-left: 0.5rem;
 }
 
