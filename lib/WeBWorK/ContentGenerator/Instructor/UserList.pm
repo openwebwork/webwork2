@@ -636,7 +636,7 @@ sub filter_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"filter_select",
-				-label_text=>$r->maketext("Show Which Users?").": ",
+				-label_text=>$r->maketext("Show which users?"),
 				-input_attr=>{
 					-name => "action.filter.scope",
 					-values => [qw(all none selected match_regex)],
@@ -655,7 +655,7 @@ sub filter_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"filter_type_select",
-				-label_text=>$r->maketext("What field should filtered users match on?").": ",
+				-label_text=>$r->maketext("What field should filtered users match on?"),
 				-input_attr=>{
 					-name => "action.filter.field",
 					-value => \@fields,
@@ -667,7 +667,7 @@ sub filter_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"text",
 				-id=>"filter_text",
-				-label_text=>$r->maketext("Filter by what text?").CGI::span({class=>"required-field"},'*').": ",
+				-label_text=>$r->maketext("Filter by what text?").CGI::span({class=>"required-field"},'*'),
 				-input_attr=>{
 					-name => "action.filter.user_ids",
 					-value => $actionParams{"action.filter.user_ids"}->[0] || "",,
@@ -746,7 +746,7 @@ sub sort_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_1",
-			-label_text=>$r->maketext("Sort by").": ",
+			-label_text=>$r->maketext("Sort by").":",
 			-input_attr=>{
 				-name => "action.sort.primary",
 				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
@@ -768,7 +768,7 @@ sub sort_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_2",
-			-label_text=>$r->maketext("Then by").": ",
+			-label_text=>$r->maketext("Then by").":",
 			-input_attr=>{
 				-name => "action.sort.secondary",
 				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
@@ -790,7 +790,7 @@ sub sort_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_3",
-			-label_text=>$r->maketext("Then by").": ",
+			-label_text=>$r->maketext("Then by").":",
 			-input_attr=>{
 				-name => "action.sort.ternary",
 				-values => [qw(user_id first_name last_name student_id status section recitation comment permission)],
@@ -846,7 +846,7 @@ sub edit_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"edit_select",
-			-label_text=>$r->maketext("Edit Which Users?").": ",
+			-label_text=>$r->maketext("Edit which users?"),
 			-input_attr=>{
 				-name => "action.edit.scope",
 				-values => [qw(all visible selected)],
@@ -892,7 +892,7 @@ sub password_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"password_select",
-			-label_text=>$r->maketext("Give new password to which users?").": ",
+			-label_text=>$r->maketext("Give new password to which users?"),
 			-input_attr=>{
 				-name => "action.password.scope",
 				-values => [qw(all visible selected)],
@@ -938,7 +938,7 @@ sub delete_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"delete_select",
-			-label_text=>$r->maketext("Delete how many?").": ",
+			-label_text=>$r->maketext("Delete which users?"),
 			-input_attr=>{
 				-name => "action.delete.scope",
 				-values => [qw(none selected)],
@@ -996,7 +996,7 @@ sub add_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
-	return WeBWorK::CGI_labeled_input(-type=>"text", -id=>"add_entry", -label_text=>$r->maketext("Add how many students?").CGI::span({class=>"required-field"},'*').": ", -input_attr=>{name=>'number_of_students', value=>1,size => 3,'aria-required'=>'true'});
+	return WeBWorK::CGI_labeled_input(-type=>"text", -id=>"add_entry", -label_text=>$r->maketext("Add how many users?").CGI::span({class=>"required-field"},'*'), -input_attr=>{name=>'number_of_students', value=>1,size => 3,'aria-required'=>'true'});
 }
 
 sub add_handler {
@@ -1013,7 +1013,7 @@ sub import_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_source",
-			-label_text=>$r->maketext("Import users from what file?").": ",
+			-label_text=>$r->maketext("Import users from what file?"),
 			-input_attr=>{
 				-name => "action.import.source",
 				-values => [ $self->getCSVList() ],
@@ -1024,7 +1024,7 @@ sub import_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_replace",
-			-label_text=>$r->maketext("Replace which users?").": ",
+			-label_text=>$r->maketext("Replace which users?"),
 			-input_attr=>{
 				-name => "action.import.replace",
 				-values => [qw(any visible selected none)],
@@ -1041,7 +1041,7 @@ sub import_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_select_add",
-			-label_text=>$r->maketext("Add which new users?").": ",
+			-label_text=>$r->maketext("Add which new users?"),
 			-input_attr=>{
 				-name => "action.import.add",
 				-values => [qw(any none)],
@@ -1100,7 +1100,7 @@ sub export_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"export_select_scope",
-			-label_text=>$r->maketext("Export which users?").": ",
+			-label_text=>$r->maketext("Export which users?"),
 			-input_attr=>{
 				-name => "action.export.scope",
 				-values => [qw(all visible selected)],
@@ -1116,7 +1116,7 @@ sub export_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"export_select_target",
-			-label_text=>$r->maketext("Export to what kind of file?").": ",
+			-label_text=>$r->maketext("Export to what kind of file?"),
 			-input_attr=>{
 				-name=>"action.export.target",
 				-values => [ "new", $self->getCSVList() ],
@@ -1129,7 +1129,7 @@ sub export_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"export_filename",
-			-label_text=>$r->maketext("Filename").CGI::span({class=>"required-field"},'*').": ",
+			-label_text=>$r->maketext("Filename").CGI::span({class=>"required-field"},'*').":",
 			-input_attr=>{
 				-name => "action.export.new",
 				-value => $actionParams{"action.export.new"}->[0] || "",,
