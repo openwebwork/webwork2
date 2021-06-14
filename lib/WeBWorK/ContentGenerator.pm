@@ -529,6 +529,21 @@ sub output_course_lang_and_dir{
 	return "";
 }
 
+=item institution_logo()
+
+Create the link to the host institution with a logo and alt text
+
+=cut
+
+sub institution_logo {
+	my $self = shift;
+	print CGI::a(
+		{href => $self->r->ce->{institutionURL}},
+		CGI::img({src => "/webwork2_files/images/" . $self->r->ce->{institutionLogo}, alt => "to " . $self->r->ce->{institutionName} . " main web site"},'')
+	);
+	return "";
+}
+
 =item content()
 
 Defined in this package.
