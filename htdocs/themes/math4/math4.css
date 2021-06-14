@@ -1453,6 +1453,10 @@ table#grades_table pre{
     margin-bottom:10px;
 }
 
+.tab-pane select, input {
+	margin-left: 0.5rem;
+}
+
 .small-table-text,
 .small-table-text td {
     font-size:small;
