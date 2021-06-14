@@ -254,22 +254,32 @@ sub body {
 # and send the start of the table
 # UPDATE - ghe3
 # This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
-	print CGI::start_table({ -class=>"problem_set_table", -summary=>$r->maketext("This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the linkx next to the problem set names, and then clicking on the 'Download PDF or TeX Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.")});
+	print CGI::start_table({ -class=>"problem_set_table", -summary=>$r->maketext("This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework sets to take you to the problems in that homework set.  Clicking on the links in the table headings will sort the table by the field it corresponds to.  You can also select sets for download to PDF or TeX format using the linkx next to the problem set names, and then clicking on the 'Download Hardcopy for Selected Sets' button at the end of the table.  There is also a clear button and an Email instructor button at the end of the table.")});
 	print CGI::caption($r->maketext("Homework Sets"));
 	if ( ! $existVersions ) {
-	    print CGI::Tr({},
-		    CGI::th({-scope=>"col"},$nameHeader),
-		    CGI::th({-scope=>"col"},$statusHeader),
-			CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
-	        );
+		print CGI::Tr(
+			CGI::th({-scope=>"col"},$nameHeader),
+			CGI::th({-scope=>"col"},$statusHeader),
+			CGI::th({-scope=>"col", class=>"hardcopy"},CGI::i({
+				class => "icon far fa-arrow-alt-circle-down",
+				aria_hidden => "true",
+				title => $r->maketext("Download"),
+				data_alt => $r->maketext("Download")
+			}, '')),
+		);
 	} else {
-	    print CGI::Tr(
-		CGI::th({-scope=>"col"},$nameHeader),
-		CGI::th({-scope=>"col"},$statusHeader),
-		CGI::th({-scope=>"col"},$r->maketext("Score")),
-		CGI::th({-scope=>"col"},$r->maketext("Start Date")),
-		CGI::th({-scope=>"col"},CGI::div({class=>"sr-only"},$r->maketext("Download Hardcopy"))),
-	        );
+		print CGI::Tr(
+			CGI::th({-scope=>"col"},$nameHeader),
+			CGI::th({-scope=>"col"},$statusHeader),
+			CGI::th({-scope=>"col"},$r->maketext("Score")),
+			CGI::th({-scope=>"col"},$r->maketext("Start Date")),
+			CGI::th({-scope=>"col", class=>"hardcopy"},CGI::i({
+				class => "icon far fa-arrow-alt-circle-down",
+				aria_hidden => "true",
+				title => $r->maketext("Download"),
+				data_alt => $r->maketext("Download")
+			}, '')),
+		);
 	}
 
 	debug("Begin sorting merged sets");
@@ -329,7 +339,7 @@ sub body {
 	if ($authz->hasPermissions($user, "view_multiple_sets")) {
 	    print CGI::start_div({-class=>"problem_set_options"});
 	    print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear", -input_attr=>{ -value=>$r->maketext("Clear")}).CGI::end_p();
-	    print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"hardcopy",-input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download PDF or TeX Hardcopy for Selected Sets")}).CGI::end_p();
+	    print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"hardcopy",-input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Download Hardcopy for Selected Sets")}).CGI::end_p();
 	    print CGI::end_div();
 	    print CGI::end_form();
 	}
@@ -644,7 +654,7 @@ sub setListRow {
 	
 	# check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {
-	  return CGI::Tr(CGI::td([$interactive, $status, $control]));
+	  return CGI::Tr(CGI::td([$interactive, $status]),CGI::td({class => "hardcopy"}, $control));
 	} else {
 	  my ( $startTime, $score );
 	  
@@ -682,7 +692,8 @@ sub setListRow {
 	  
 	  return CGI::Tr(($gwtype == 1) ? {class => 'gw-version'} : {},
 		  CGI::td(($gwtype == 1) ? {class => 'gw-version'} : ($gwtype == 2) ? {class => 'gw-template'} : {},$interactive).
-		  CGI::td([$status, $score, $startTime, $control]));
+		  CGI::td([$status, $score, $startTime]),
+		  CGI::td({class => "hardcopy"}, $control));
 	}
       }
 
