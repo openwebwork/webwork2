@@ -76,8 +76,8 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/^\$database_host="localhost"/$database_host = $ENV{"WEBWORK_DB_HOST"}/' \
                     -e 's/^\$database_port="3306"/$database_port = $ENV{"WEBWORK_DB_PORT"}/' \
                     -e 's/^\$database_name="webwork"/$database_name = $ENV{"WEBWORK_DB_NAME"}/' \
-                    -e 's/database_username ="webworkWrite"/$database_username =$ENV{"WEBWORK_DB_USER"}/' \
-                    -e 's/database_password ='\''passwordRW'\''/$database_password =$ENV{"WEBWORK_DB_PASSWORD"}/' \
+                    -e 's/database_username ="webworkWrite"/database_username =$ENV{"WEBWORK_DB_USER"}/' \
+                    -e 's/database_password ='\''passwordRW'\''/database_password =$ENV{"WEBWORK_DB_PASSWORD"}/' \
                     -e 's/mail{smtpServer} = '\'''\''/mail{smtpServer} = $ENV{"WEBWORK_SMTP_SERVER"}/' \
                     -e 's/mail{smtpSender} = '\'''\''/mail{smtpSender} = $ENV{"WEBWORK_SMTP_SENDER"}/' \
                     -e 's/siteDefaults{timezone} = "America\/New_York"/siteDefaults{timezone} = $ENV{"WEBWORK_TIMEZONE"}/' \
