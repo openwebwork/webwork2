@@ -71,7 +71,7 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/server_root_url   = '\'''\''/server_root_url   = $ENV{"WEBWORK_ROOT_URL"}/' \
                     -e 's/database_dsn ="dbi:mysql:webwork"/database_dsn =$ENV{"WEBWORK_DB_DSN"}/' \
                     -e 's/database_username ="webworkWrite"/database_username =$ENV{"WEBWORK_DB_USER"}/' \
-                    -e 's/database_password ='passwordRW'/database_password =$ENV{"WEBWORK_DB_PASSWORD"}/' \
+                    -e 's/database_password ="passwordRW"/database_password =$ENV{"WEBWORK_DB_PASSWORD"}/' \
                     -e 's/mail{smtpServer} = '\'''\''/mail{smtpServer} = $ENV{"WEBWORK_SMTP_SERVER"}/' \
                     -e 's/mail{smtpSender} = '\'''\''/mail{smtpSender} = $ENV{"WEBWORK_SMTP_SENDER"}/' \
                     -e 's/siteDefaults{timezone} = "America\/New_York"/siteDefaults{timezone} = $ENV{"WEBWORK_TIMEZONE"}/' \
