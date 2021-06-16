@@ -157,6 +157,10 @@ legend {
     border:0px;
 }
 
+ul.nav {
+	margin-top: 0;
+}
+
 ul.nav li a:hover {
 	background: #e1e1e1;	
 }
@@ -235,6 +239,7 @@ div.unattempted-progress {
     height:20px;
     padding-top:8px;
     padding-bottom:8px;
+    margin-right: 5px;
 }
 
 #breadcrumb-navigation {
@@ -245,6 +250,10 @@ div.unattempted-progress {
 }
 
 /* Main Content */
+body {
+	padding: 0;
+}
+
 .body {
 	display: inline-block;
 	float: left;
@@ -280,6 +289,7 @@ h2.page-title {
 
 .breadcrumb {
 	border: 1px solid #e6e6e6;
+	margin-bottom: 10px;
 }
 
 .Warnings {
@@ -291,14 +301,27 @@ h2.page-title {
 }
 
 /* Question nav section */
-.problem-nav {
-	margin-bottom:1ex;
-	display: inline-block;
-	
+.sticky-nav {
+	display: flex;
+	flex-wrap: wrap;
+	z-index: 1;
+	position: sticky;
+	top: 0;
+	background-color: white;
+	margin-bottom: 1rem;
+	padding: 0.25rem;
+	border-radius: 0 0 4px 4px;
+	box-shadow: 0 0.1rem 0.2rem 1px gray;
+	box-sizing: border-box;
 }
 
-.problem-nav .user-nav {
-	margin-bottom: 5px;
+.sticky-nav > a,
+.sticky-nav > div {
+	margin: 0.25rem;
+}
+
+.sticky-nav > div:first-child {
+	margin-right: auto;
 }
 
 .user-nav .student-nav-selector .dropdown-menu {
