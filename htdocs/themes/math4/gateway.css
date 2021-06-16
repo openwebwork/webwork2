@@ -103,7 +103,7 @@ div.gwProblem
 	text-align: center;
 }
 
-.gwNavigation th, td {
+.gwNavigation th, .gwNavigation td {
 	padding: 0 0.5rem;
 }
 
