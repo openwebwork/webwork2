@@ -45,7 +45,7 @@ sub pre_header_initialize {
 #	}
 
 	$authen -> killSession;
-	$self->WeBWorK::Authen::write_log_entry("LOGGED OUT");
+	$authen->WeBWorK::Authen::write_log_entry("LOGGED OUT");
 
 	# also check to see if there is a proctor key associated with this 
 	#    login.  if there is a proctor user, then we must have a 
