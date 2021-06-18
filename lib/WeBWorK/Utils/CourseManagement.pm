@@ -337,8 +337,6 @@ sub addCourse {
 					my $core = $? & 128;
 					warn "Failed to copy simple.conf from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
 				}
-			} else {
-				warn "Failed to copy simple.conf from course '$sourceCourse': file '$sourceFile' does not exist.\n";
 			}
 		}
 
