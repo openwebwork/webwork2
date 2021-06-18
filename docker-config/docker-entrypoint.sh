@@ -61,8 +61,6 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
 
   # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it.  It also updates the two files with webwork problem usage statistics
   touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
-  ./$APP_ROOT/webwork2/bin/upload-OPL-statistics.pl
-  ./$APP_ROOT/webwork2/bin/load-OPL-global-statistics.pl
 fi
 
 if [ "$1" = 'apache2' ]; then
@@ -161,7 +159,7 @@ if [ "$1" = 'apache2' ]; then
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
         $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
-        #$WEBWORK_ROOT/bin/update-OPL-statistics.pl
+        $WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
