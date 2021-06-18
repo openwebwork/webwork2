@@ -79,7 +79,7 @@
 <!-- Header -->
 <div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
-		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_logo.svg" alt="to courses page" /></a>
+		<!--#webwork_logo-->
 	</div>
 	<div class="span6 institution_logo">
 		<!--#institution_logo-->

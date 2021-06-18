@@ -529,6 +529,29 @@ sub output_course_lang_and_dir{
 	return "";
 }
 
+=item webwork_logo()
+
+Create the link to the webwork installation landing page with a logo and alt text
+
+=cut
+
+sub webwork_logo {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	print CGI::a(
+		{href => '/'},
+		CGI::img({
+			src => "/webwork2_files/themes/$theme/images/webwork_logo.svg",
+			alt => $r->maketext("to courses page")
+		},'')
+	);
+	return "";
+}
+
+=item content()
+
 =item institution_logo()
 
 Create the link to the host institution with a logo and alt text
@@ -537,9 +560,15 @@ Create the link to the host institution with a logo and alt text
 
 sub institution_logo {
 	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
 	print CGI::a(
-		{href => $self->r->ce->{institutionURL}},
-		CGI::img({src => "/webwork2_files/images/" . $self->r->ce->{institutionLogo}, alt => "to " . $self->r->ce->{institutionName} . " main web site"},'')
+		{href => $ce->{institutionURL}},
+		CGI::img({
+			src => "/webwork2_files/themes/$theme/images/" . $ce->{institutionLogo},
+			alt => $r->maketext("to [_1] main web site", $ce->{institutionName})
+		},'')
 	);
 	return "";
 }
