@@ -551,8 +551,6 @@ sub webwork_logo {
 	return "";
 }
 
-=item content()
-
 =item institution_logo()
 
 Create the link to the host institution with a logo and alt text
