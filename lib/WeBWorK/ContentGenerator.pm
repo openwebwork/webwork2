@@ -542,7 +542,7 @@ sub webwork_logo {
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
 	my $htdocs = $ce->{webwork_htdocs_url};
 	print CGI::a(
-		{href => '/'},
+		{href => $ce->{webwork_url}},
 		CGI::img({
 			src => "$htdocs/themes/$theme/images/webwork_logo.svg",
 			alt => $r->maketext("to courses page")
