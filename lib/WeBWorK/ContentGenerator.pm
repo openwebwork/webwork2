@@ -540,10 +540,11 @@ sub webwork_logo {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	my $htdocs = $ce->{webwork_htdocs_url};
 	print CGI::a(
 		{href => '/'},
 		CGI::img({
-			src => "/webwork2_files/themes/$theme/images/webwork_logo.svg",
+			src => "$htdocs/themes/$theme/images/webwork_logo.svg",
 			alt => $r->maketext("to courses page")
 		},'')
 	);
@@ -563,10 +564,11 @@ sub institution_logo {
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	my $htdocs = $ce->{webwork_htdocs_url};
 	print CGI::a(
 		{href => $ce->{institutionURL}},
 		CGI::img({
-			src => "/webwork2_files/themes/$theme/images/" . $ce->{institutionLogo},
+			src => "$htdocs/themes/$theme/images/" . $ce->{institutionLogo},
 			alt => $r->maketext("to [_1] main web site", $ce->{institutionName})
 		},'')
 	);
