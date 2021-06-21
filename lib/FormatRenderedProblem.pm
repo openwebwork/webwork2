@@ -360,8 +360,42 @@ sub formatRenderedProblem {
 	# Interpolate values into the template
 	$template =~ s/(\$\w+)/$1/gee;
 
-	return $template unless $self->{inputs_ref}{send_pg_flags};
-	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags} });
+	return $template unless ( $self->{inputs_ref}{send_pg_flags} || $self->{inputs_ref}{standalone_style} );
+	if ( $self->{inputs_ref}{send_pg_flags} ) {
+		return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags} });
+	}
+	if ( $self->{inputs_ref}{standalone_style} ) {
+		# Build a JSON output object as similar to the standalone renderer output as reasonably possible
+		my $output = {};
+		$output->{renderedHTML} = $template;
+		$output->{answers} = $rh_result->{answers};
+		$output->{debug} = {
+			# We use what can be seen in the raw output, which differs from Standalone
+			# In the future - map to Standalone output names if possible
+			translator_warnings => $rh_result->{translator_warnings},
+			errors => $rh_result->{errors},
+			debug_messages => $rh_result->{debug_messages},
+			pg_warnings => $rh_result->{pg_warnings},
+			warning_messages => $rh_result->{warning_messages},
+			internal_debug_messages => $rh_result->{internal_debug_messages},
+		};
+		$output->{flags} = $rh_result->{flags};
+		$output->{flags}{language} = $PROBLEM_LANG_AND_DIR{lang};
+		$output->{flags}{textdirection} = $PROBLEM_LANG_AND_DIR{dir};
+		$output->{form_data} = $self->{inputs_ref};
+
+		# Hide the following data from the response
+		delete($output->{form_data}{courseID} );
+		delete($output->{form_data}{userID});
+		delete($output->{form_data}{course_password});
+		delete($output->{form_data}{standalone_style});
+
+		$output->{problem_result} = $rh_result->{problem_result};
+		$output->{problem_state} = $rh_result->{problem_state};
+
+		# Convert to JSON
+		return JSON->new->utf8(0)->encode($output);
+	}
 }
 
 sub saveGradeToLTI {
