@@ -101,8 +101,15 @@ my $seed_ce = new WeBWorK::CourseEnvironment({ webwork_dir => $webwork_dir });
 my $server_root_url = $seed_ce->{server_root_url};
 unless ($server_root_url) {
 	die "unable to determine apache server url using course environment |$seed_ce|.".
-	    "check that the variable \$server_root_url has been properly set in conf/site.conf\n";
+			"check that the variable \$server_root_url has been properly set in conf/site.conf\n";
 }
+
+my $xmlrpc_root_url = $seed_ce->{xmlrpc_root_url} || $server_root_url;
+unless ($xmlrpc_root_url) {
+	die "unable to determine xmlrpc server url using course environment |$seed_ce|.".
+			"check that the variable \$xmlrpc_root_url has been properly set in conf/site.conf\n";
+}
+
 
 ############################
 # These variables are set when the child process is started
@@ -117,8 +124,8 @@ our ($SITE_URL,$FORM_ACTION_URL, $XML_PASSWORD, $XML_COURSE);
 
 
 
-	$SITE_URL             =  "$server_root_url"; 
-	$FORM_ACTION_URL     =  "$server_root_url/webwork2/html2xml";
+	$SITE_URL             =  "$xmlrpc_root_url"; 
+	$FORM_ACTION_URL     =  "$xmlrpc_root_url/webwork2/html2xml";
 
 
 our @COMMANDS = qw( listLibraries    renderProblem  ); #listLib  readFile tex2pdf 
@@ -157,19 +164,19 @@ sub pre_header_initialize {
 	# rather than trying to set defaults such as displaymode
 	unless ( $user_id && $courseName && $displayMode && $problemSeed) {
 		print CGI::ul( 
-		      CGI::h1("Missing essential data in web dataform:"),
-			  CGI::li(CGI::escapeHTML([
-		      	"userID: |$user_id|", 
-		      	"courseID: |$courseName|",	
-		        "displayMode: |$displayMode|", 
-		        "problemSeed: |$problemSeed|"
-		      ])));
+					CGI::h1("Missing essential data in web dataform:"),
+				CGI::li(CGI::escapeHTML([
+						"userID: |$user_id|", 
+						"courseID: |$courseName|",	
+						"displayMode: |$displayMode|", 
+						"problemSeed: |$problemSeed|"
+					])));
 		return;
 	}
-    #######################
-    #  setup xmlrpc client
-    #######################
-    my $xmlrpc_client = new WebworkClient;
+		#######################
+		#  setup xmlrpc client
+		#######################
+		my $xmlrpc_client = new WebworkClient;
 
 	$xmlrpc_client ->encoded_source($r->param('problemSource')) ; # this source has already been encoded
 	$xmlrpc_client-> site_url($SITE_URL);
@@ -203,9 +210,9 @@ sub pre_header_initialize {
  }
 
 sub content {
-   ###########################
-   # Return content of rendered problem to the browser that requested it
-   ###########################
+	 ###########################
+	 # Return content of rendered problem to the browser that requested it
+	 ###########################
 	my $self = shift;
 	$self->{r}->content_type("application/json; charset=utf-8") if $self->{wantsjson};
 	print $self->{output};
