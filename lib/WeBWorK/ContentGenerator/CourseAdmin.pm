@@ -3155,11 +3155,7 @@ sub do_hide_inactive_course {
 	}	
 	
 	if ($succeeded_count) {
-		if ($succeeded_count < 6) {
-			$succeeded_message = $r->maketext("The following courses were successfully hidden: [_1]", @succeeded_courses);
-		} else {
-			$succeeded_message = $r->maketext("[quant_1, course was, courses were] successfully hidden.", $succeeded_count);
-		}
+		$succeeded_message = $r->maketext("The following courses were successfully hidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
 	}
 	if ($succeeded_count or $already_hidden_count) {
 			print CGI::div({class=>"ResultsWithoutError"},
@@ -3225,11 +3221,7 @@ sub do_unhide_inactive_course {
 	}	
 	
 	if ($succeeded_count) {
-		if ($succeeded_count < 6) {
-			$succeeded_message = $r->maketext("The following courses were successfully unhidden: [_1]", @succeeded_courses);
-		} else {
-			$succeeded_message = $r->maketext("[quant,_1,course was, courses were] successfully unhidden.", $succeeded_count);
-		}
+		$succeeded_message = $r->maketext("The following courses were successfully unhidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
 	}
 	if ($succeeded_count or $already_visible_count) {
 		print CGI::div({class=>"ResultsWithoutError"},
