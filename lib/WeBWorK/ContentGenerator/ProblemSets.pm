@@ -314,19 +314,27 @@ sub body {
 	# Note: this assumes that the set_id of a versioned GW set cannot differ from all of the corresponding GW versions.
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
-		
-		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
-			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db);
-		}
+
+		# Generate the versioned quiz rows, but delay printing them until after the template is printed.  On this pass
+		# the gw_quiz_version_in_progress flag will be set if a quiz is currently in progress, in which case the quiz
+		# begin dialog is disabled for the template.
+		my @versions;
 		if (defined($gwSetNames{$set->set_id})) {
 			foreach my $vset (@{$vSetTree{$set->set_id}}) {
 				die "set $vset not defined" unless $vset;
 				if (($set->set_id eq $vset->set_id) && ($vset->visible || $authz->hasPermissions($user, "view_hidden_sets"))) {
-					print $self->setListRow($vset, $authz->hasPermissions($user, "view_multiple_sets"), $authz->hasPermissions($user, "view_unopened_sets"),$existVersions,$db,1, $gwSetsBySetID{$vset->{set_id}});  # 1 = gateway, versioned set
+					push(@versions, $self->setListRow($vset, $authz->hasPermissions($user, "view_multiple_sets"),
+							$authz->hasPermissions($user, "view_unopened_sets"), $existVersions, $db, 1,
+							$gwSetsBySetID{$vset->{set_id}})); # 1 = gateway, versioned set
 				}
 			}
-
 		}
+		if ($set->visible || $authz->hasPermissions($user, "view_hidden_sets")) {
+			print $self->setListRow($set, $authz->hasPermissions($user, "view_multiple_sets"),
+				$authz->hasPermissions($user, "view_unopened_sets"), $existVersions, $db);
+		}
+		print $_ for @versions;
+		delete $self->{gw_quiz_version_in_progress};
 	}
 	
 	print CGI::end_table();
@@ -461,6 +469,7 @@ sub setListRow {
 			} elsif ( time() > $set->due_date() + $self->r->ce->{gatewayGracePeriod} ) {
 				$status = $r->maketext("Over time, closed.");
 			} else {
+				$self->{gw_quiz_version_in_progress} = 1;
 				$status = $self->set_due_msg($set,1);
 			}
 			# we let people go back to old tests
@@ -533,7 +542,7 @@ sub setListRow {
 							class=>"set-id-tooltip",
 							"data-toggle"=>"tooltip",
 							"data-placement"=>"right",
-							data_open => $setIsOpen && $effectiveUser eq $user,
+							data_open => $setIsOpen && $effectiveUser eq $user && !$self->{gw_quiz_version_in_progress},
 							title=>"",
 							"data-original-title"=>$globalSet->description(),
 							href=>$interactiveURL
