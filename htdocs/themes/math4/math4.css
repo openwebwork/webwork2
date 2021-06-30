@@ -346,6 +346,10 @@ h2.page-title {
     text-align:center;
 }
 
+.new-course-options label span {
+	vertical-align: middle;
+}
+
 /* Home Page */
 ul.courses-list {
 	list-style-type: none;
