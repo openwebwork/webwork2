@@ -672,7 +672,7 @@ sub filter_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"filter_select",
-				-label_text=>$r->maketext("Show which sets?").": ",
+				-label_text=>$r->maketext("Show which sets?"),
 				-input_attr=>{
 					-name => "action.filter.scope",
 					-values => [qw(all none selected match_ids visible unvisible)],
@@ -693,7 +693,7 @@ sub filter_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"text",
 				-id=>"filter_text",
-				-label_text=>$r->maketext("Match on what? (separate multiple IDs with commas)").CGI::span({class=>"required-field"},'*').": ",
+				-label_text=>$r->maketext("Match on what? (separate multiple IDs with commas)").CGI::span({class=>"required-field"},'*'),
 				-input_attr=>{
 					-name => "action.filter.set_ids",
 					-value => $actionParams{"action.filter.set_ids"}->[0] || "",,
@@ -769,7 +769,7 @@ sub sort_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_1",
-			-label_text=>$r->maketext("Sort by").": ",
+			-label_text=>$r->maketext("Sort by").":",
 			-input_attr=>{
 				-name => "action.sort.primary",
 				-values => [qw(set_id open_date due_date answer_date visible)],
@@ -789,7 +789,7 @@ sub sort_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"sort_select_2",
-			-label_text=>$r->maketext("Then by").": ",
+			-label_text=>$r->maketext("Then by").":",
 			-input_attr=>{
 				-name => "action.sort.secondary",
 				-values => [qw(set_id open_date due_date answer_date visible)],
@@ -836,7 +836,7 @@ sub edit_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"edit_select",
-			-label_text=>$r->maketext("Edit which sets?").": ",
+			-label_text=>$r->maketext("Edit which sets?"),
 			-input_attr=>{
 				-name => "action.edit.scope",
 				-values => [qw(all visible selected)],
@@ -881,7 +881,7 @@ sub publish_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"publish_filter_select",
-			-label_text=>$r->maketext("Choose which sets to be affected").": ",
+			-label_text=>$r->maketext("Choose which sets to be affected").":",
 			-input_attr=>{
 				-name => "action.publish.scope",
 				-values => [ qw(none all selected) ],
@@ -897,7 +897,7 @@ sub publish_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"publish_visibility_select",
-			-label_text=>$r->maketext("Choose visibility of the sets to be affected").": ",
+			-label_text=>$r->maketext("Choose visibility of the sets to be affected").":",
 			-input_attr=>{
 				-name => "action.publish.value",
 				-values => [ 0, 1 ],
@@ -963,7 +963,7 @@ sub score_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"score_select",
-			-label_text=>$r->maketext("Score which sets?").": ",
+			-label_text=>$r->maketext("Score which sets?"),
 			-input_attr=>{
 				-name => "action.score.scope",
 				-values => [qw(none all selected)],
@@ -1024,7 +1024,7 @@ sub delete_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"delete_select",
-			-label_text=>$r->maketext("Delete how many?").": ",
+			-label_text=>$r->maketext("Delete how many?"),
 			-input_attr=>{
 				-name => "action.delete.scope",
 				-values => [qw(none selected)],
@@ -1081,7 +1081,7 @@ sub create_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"create_text",
-			-label_text=>$r->maketext("Name the new set").CGI::span({class=>"required-field"},'*').": ",
+			-label_text=>$r->maketext("Name the new set").CGI::span({class=>"required-field"},'*').":",
 			-input_attr=>{
 				-name => "action.create.name",
 				-value => $actionParams{"action.create.name"}->[0] || "",
@@ -1093,7 +1093,7 @@ sub create_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"create_select",
-			-label_text=>$r->maketext("Create as what type of set?").": ",
+			-label_text=>$r->maketext("Create as what type of set?"),
 			-input_attr=>{
 				-name => "action.create.type",
 				-values => [qw(empty copy)],
@@ -1211,7 +1211,7 @@ sub import_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_amt_select",
-			-label_text=>$r->maketext("Import how many sets?").": ",
+			-label_text=>$r->maketext("Import how many sets?"),
 			-input_attr=>{
 				-name => "action.import.number",
 				-values => [ 1, 8 ],
@@ -1226,7 +1226,7 @@ sub import_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"import_source_select",
-			-label_text=>$r->maketext("Import from where?").": ",
+			-label_text=>$r->maketext("Import from where?"),
 			-input_attr=>{
 				-name => "action.import.source",
 				-values => [ "", $self->getDefList() ],
@@ -1242,7 +1242,7 @@ sub import_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"text",
 			-id=>"import_text",
-			-label_text=>$r->maketext("Import sets with names").": ",
+			-label_text=>$r->maketext("Import sets with names").":",
 			-input_attr=>{
 				-name => "action.import.name",
 				-value => $actionParams{"action.import.name"}->[0] || "",
@@ -1253,7 +1253,7 @@ sub import_form {
 		    CGI::div(WeBWorK::CGI_labeled_input(
 				-type => "text",
 				-id => "import_date_shift",
-				-label_text => $r->maketext("Shift dates so that the earliest is").": ",
+				-label_text => $r->maketext("Shift dates so that the earliest is").":",
 				-input_attr => {
 					name => "action.import.start.date",
 					size => "27",
@@ -1266,7 +1266,7 @@ sub import_form {
 			WeBWorK::CGI_labeled_input(
 				-type=>"select",
 				-id=>"import_users_select",
-				-label_text=>$r->maketext("Assign this set to which users?").": ",
+				-label_text=>$r->maketext("Assign this set to which users?"),
 				-input_attr=>{
 					-name => "action.import.assign",
 					-value => [qw(user all)],
@@ -1316,7 +1316,7 @@ sub export_form {
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
 			-id=>"export_select",
-			-label_text=>$r->maketext("Export which sets?").": ",
+			-label_text=>$r->maketext("Prepare which sets for export?"),
 			-input_attr=>{
 				-name => "action.export.scope",
 				-values => [qw(all visible selected)],
@@ -1340,14 +1340,13 @@ sub export_handler {
 	
 	my $scope = $actionParams->{"action.export.scope"}->[0];
 	if ($scope eq "all") {
-		$result = $r->maketext("exporting all sets");
+		$result = $r->maketext("All sets were selected for export.");
 		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $self->{allSetIDs};
-
 	} elsif ($scope eq "visible") {
-		$result = $r->maketext("exporting visible sets");
+		$result = $r->maketext("Visible sets were selected for export.");
 		$self->{selectedSetIDs} = $self->{visibleSetIDs};
 	} elsif ($scope eq "selected") {
-		$result = $r->maketext("exporting selected sets");
+		$result = $r->maketext("Sets were selected for export.");
 		$self->{selectedSetIDs} = $self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
 	}
 	$self->{exportMode} = 1;
@@ -1382,7 +1381,7 @@ sub cancelExport_handler {
 sub saveExport_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	return CGI::span($r->maketext("Export selected sets"));
+	return CGI::span($r->maketext("Confirm which sets to export."));
 }
 
 sub saveExport_handler {
