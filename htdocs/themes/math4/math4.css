@@ -495,8 +495,13 @@ table.classlist-table .tbody {
     padding-left: 35px;
 }
 
-.problem_set_table .hardcopy-link {
-    font-size:16px;
+.problem_set_table .hardcopy, .problem_set_table .hardcopy-link {
+	font-size: 16px;
+	text-align: center;
+}
+
+.problem_set_table .hardcopy input[type="checkbox"] {
+	margin-right: 0;
 }
 
 /* Info Box */
