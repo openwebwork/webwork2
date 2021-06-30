@@ -259,49 +259,49 @@ sub can_useMathQuill {
 
 
 sub can_showMeAnother {
-    # PURPOSE: subroutine to check if showMeAnother
-    #          button should be allowed; note that this is done
-    #          *before* the check to see if showMeAnother is
-    #          possible.
+	# PURPOSE: subroutine to check if showMeAnother
+	# button should be allowed; note that this is done
+	# *before* the check to see if showMeAnother is
+	# possible.
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
-    my $ce = $self->r->ce;
+	my $ce = $self->r->ce;
 
-    # if the showMeAnother button isn't enabled in the course configuration,
-    # don't show it under any circumstances (not even for the instructor)
-    return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
+	# if the showMeAnother button isn't enabled in the course configuration,
+	# don't show it under any circumstances (not even for the instructor)
+	return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
 
-    # get the hash of information about showMeAnother
+	# get the hash of information about showMeAnother
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
-    if (after($Set->open_date)) {
-        # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+	if (after($Set->open_date) or $self->r->authz->hasPermissions($self->r->param('user'), "can_use_show_me_another_early")) {
+		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
+		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 
-	    # if SMA is just not permitted for the problem, don't show it
-	    return 0 unless ($showMeAnother{TriesNeeded} > -1);
+		# if SMA is just not permitted for the problem, don't show it
+		return 0 unless ($showMeAnother{TriesNeeded} > -1);
 
-        my $thisAttempt = $submitAnswers ? 1 : 0;
-	    my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
+		my $thisAttempt = $submitAnswers ? 1 : 0;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
 
-        # if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
-	    # inititialized meaning that the student hasn't pushed it yet and it should be 0
-        $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
+		# if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
+		# inititialized meaning that the student hasn't pushed it yet and it should be 0
+		$showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
 
-	 # if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
-        # to be equal to showMeAnother{MaxReps}
-        $showMeAnother{Count}-- if(defined($showMeAnother{CheckAnswers} && $showMeAnother{CheckAnswers}) or (defined($showMeAnother{Preview}) && $showMeAnother{Preview}));
+		# if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
+		# to be equal to showMeAnother{MaxReps}
+		$showMeAnother{Count}-- if(defined($showMeAnother{CheckAnswers} && $showMeAnother{CheckAnswers}) or (defined($showMeAnother{Preview}) && $showMeAnother{Preview}));
 
-	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
-	    # not submitted enough answers yet or has used the SMA button too many times
-	    if ($attempts_used < $showMeAnother{TriesNeeded}
-	        or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
-          return 0;
-        } else {
-          return 1;
-        }
-    } else {
-      # otherwise the set hasn't been opened yet, so we can't use showMeAnother
-      return 0;}
+		# if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
+		# not submitted enough answers yet or has used the SMA button too many times
+		if ($attempts_used < $showMeAnother{TriesNeeded} or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
+			return 0;
+		} else {
+			return 1;
+		}
+	} else {
+		# otherwise the set hasn't been opened yet, so we can't use showMeAnother
+		return 0;
+	}
 }
 
 ################################################################################
@@ -1690,28 +1690,46 @@ sub output_submit_buttons{
         		# WTF???
         	}
         }
-        if ($can{showMeAnother}) {
-            # only output showMeAnother button if we're not on the showMeAnother page
-	    my $SMAURL = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::ShowMeAnother", $r,courseID => $courseID, setID => $problem->set_id, problemID =>$problem->problem_id));
-
-	    print CGI::a({href=>$SMAURL, class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", id=>"SMA_button", title=>"", target=>"_wwsma",
-				   "data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")}, $r->maketext("Show me another"));
-        } else {
-            # if showMeAnother is available for the course, and for the current problem (but not yet
-            # because the student hasn't tried enough times) then gray it out; otherwise display nothing
-
-	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
-
-            if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
-                my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
-                print CGI::span({class=>"gray_button set-id-tooltip",
-                                "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"",
-                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
-                                }, $r->maketext("Show me another [_1]",$exhausted));
-              }
+	if ($can{showMeAnother}) {
+		# only output showMeAnother button if we're not on the showMeAnother page
+		my $SMAURL = $self->systemLink($urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ShowMeAnother",
+			$r,courseID => $courseID,
+			setID => $problem->set_id,
+			problemID =>$problem->problem_id
+		));
+		print CGI::a(
+			{
+				href=>$SMAURL,
+				class=>"set-id-tooltip",
+				"data-toggle"=>"tooltip",
+				"data-placement"=>"right",
+				id=>"SMA_button",
+				title=>"",
+				target=>"_wwsma",
+				"data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")
+			},
+			$r->maketext("Show me another")
+		);
+	} else {
+		# if showMeAnother is available for the course, and for the current problem (but not yet
+		# because the student hasn't tried enough times) then gray it out; otherwise display nothing
+		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
+		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+		if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
+			my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
+			print CGI::span(
+				{
+					class=>"gray_button set-id-tooltip",
+					"data-toggle"=>"tooltip",
+					"data-placement"=>"right",
+					title=>"",
+					"data-original-title"=>(before($r->db->getGlobalSet($self->{set}->set_id)->open_date)) ? $r->maketext("The problem set is not yet open") : ($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
+				},
+				$r->maketext("Show me another [_1]",$exhausted)
+			);
+		}
 	}
-
 	return "";
 }
 
