@@ -158,7 +158,7 @@ if [ "$1" = 'apache2' ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
-        $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
+        #$WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
         #$WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
