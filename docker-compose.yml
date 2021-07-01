@@ -88,7 +88,7 @@ services:
             - PG_BRANCH=PG-2.16
 
         # If you are using the 2 stage build process uncomment the next line
-        #dockerfile: DockerfileStage2
+        dockerfile: DockerfileStage2
         # and first run
         #     docker build --tag webwork-base:forWW216 -f DockerfileStage1 .
         # and then
@@ -225,7 +225,7 @@ services:
       #ADD_LOCALES: "he_IL ISO-8859-8\nhe_IL.UTF-8 UTF-8\n"
 
       # Extra Ubuntu packages to install during startup
-      #ADD_APT_PACKAGES: vim telnet
+      ADD_APT_PACKAGES: vim less 
 
       # The system timezone for the container can be set using
       #SYSTEM_TIMEZONE: zone/city
