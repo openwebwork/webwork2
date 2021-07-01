@@ -59,7 +59,7 @@ if [ ! -d "$APP_ROOT/libraries/webwork-open-problem-library/OpenProblemLibrary" 
   cd $APP_ROOT/libraries/
   /usr/bin/git clone -v --progress --single-branch --branch master https://github.com/openwebwork/webwork-open-problem-library.git
 
-  # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it
+  # The next line forces the system to run OPL-update or load saved OPL tables below, as we just installed it.  It also updates the two files with webwork problem usage statistics
   touch "$APP_ROOT/libraries/Restore_or_build_OPL_tables"
 fi
 
@@ -158,8 +158,8 @@ if [ "$1" = 'apache2' ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
-        #$WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
-        #$WEBWORK_ROOT/bin/update-OPL-statistics.pl
+        $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
+        $WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
           echo "Restoring JSON files from JSON-SAVED directory"
@@ -208,8 +208,8 @@ if [ "$1" = 'apache2' ]; then
     # This change significantly speeds up Docker startup time on production
     # servers with many files/courses (on Linux).
 
-    chown -R www-data:www-data logs tmp DATA
-    chmod -R ug+w logs tmp DATA
+    chown -R www-data:www-data logs tmp DATA htdocs/tmp
+    chmod -R ug+w logs tmp DATA htdocs/tmp
 
     # Symbolic links which have no target outside the Docker container
     # cause problems duringt the rebuild process on some systems.

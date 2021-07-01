@@ -1,6 +1,6 @@
 .section-div > .accordion-heading > a.accordion-toggle {
 	color: #212121;
-	padding: 2px 1.25rem;
+	padding: 2px 1.25rem 2px 0;
 	border: 1px solid #AAAAAA;
 	border-top-left-radius: 3.3px;
 	border-top-right-radius: 3.3px;
@@ -10,6 +10,12 @@
 
 .section-div > .accordion-heading > .accordion-toggle span.section-title {
 	padding-top: 2px;
+}
+
+.section-div > .accordion-heading > .accordion-toggle span.section-number {
+	padding: 2px 0.25rem;
+	min-width: 0.75rem;
+	font-weight: bold;
 }
 
 .section-div > .accordion-heading > a.accordion-toggle.collapsed {
@@ -67,4 +73,8 @@
 	padding: 1rem 1.25rem;
 	border-bottom-left-radius: 3.3px;
 	border-bottom-right-radius: 3.3px;
+}
+
+.section-div > .accordion-body .section-div {
+	margin-right: calc(-1.25rem - 1px);
 }

@@ -1214,6 +1214,7 @@ sub nav {
 
 		# Set up the student nav.
 		print join("",
+			CGI::start_div({ class => "row-fluid sticky-nav", role => "navigation", aria_label => "user navigation"}),
 			CGI::start_div({ class => 'user-nav' }),
 			$prevTest
 			? CGI::a({
@@ -1257,6 +1258,7 @@ sub nav {
 					class => "nav_button student-nav-button"
 				}, $r->maketext("Next Test"))
 			: CGI::span({ class => "gray_button" }, $r->maketext("Next Test")),
+			CGI::end_div(),
 			CGI::end_div()
 		);
 	}
