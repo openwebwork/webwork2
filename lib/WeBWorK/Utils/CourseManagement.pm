@@ -323,6 +323,23 @@ sub addCourse {
 		} else {
 			warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
 		}
+		## copy config files ##
+		#  this copies the simple.conf file if desired
+		if (exists $options{copySimpleConfig}) {
+			my $sourceFile = $sourceCE->{courseFiles}->{simpleConfig};
+			if (-e $sourceFile) {
+				my $destFile = $ce->{courseFiles}{simpleConfig};
+				my $cp_cmd = join(" ", ("2>&1", $ce->{externalPrograms}{cp}, shell_quote($sourceFile), shell_quote($destFile)));
+				my $cp_out = readpipe $cp_cmd;
+				if ($?) {
+					my $exit = $? >> 8;
+					my $signal = $? & 127;
+					my $core = $? & 128;
+					warn "Failed to copy simple.conf from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
+				}
+			}
+		}
+
 	}
 	######## set 6: copy html/achievements contents ##############
 }
@@ -1076,6 +1093,8 @@ sub unarchiveCourseHelper {
 Perform database-layout specific operations for initializing non-native database tables
 that are not associated with a particular course
 
+=back
+
 =cut
 
 sub initNonNativeTables {
@@ -1179,14 +1198,13 @@ sub callHelperIfExists {
 	}
 }
 
-=over
-
 =item getHelperRef($helperName, $dbLayoutName)
 
 Call a database-specific helper function, if a database-layout specific helper
 class exists and contains a function named "${helperName}Helper".
 
 =cut
+
 sub getHelperRef {
 	my ($helperName, $dbLayoutName) = @_;
 	
@@ -1234,6 +1252,8 @@ sub protectQString {
 Writes a course.conf file to $fh, a file handle, using defaults from the course
 environment object $ce and overrides from %options. %options can contain any of
 the pairs accepted in %courseOptions by addCourse(), above.
+
+=back
 
 =cut
 

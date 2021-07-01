@@ -118,10 +118,11 @@ $preferred_source_of_username = "lis_person_contact_email_primary";
 # LTI Preferred source of Student Id
 ################################################################################
 
-# If preferred_source_of_student_id is not set, WeBWorK will look in the LTI
-# parameter 'custom_student_id.' If preferred_source_of_student_id is set, then
-# WeBWorK will look in the LTI parameter specified below. This parameter may be
-# dependendent on the LMS. E.G., In D2L, student_id is stored in OrgDefinedId and
+# If preferred_source_of_student_id is not set, WeBWorK will set student_id
+# to be an empty string. You should use debug_lti_parameters in order to determine
+# the value to use for your LMS.
+#
+# For example, in D2L, student_id is stored in OrgDefinedId and
 # the corresponding LTI parameter is called ext_d2l_orgdefinedid.
 
 #$preferred_source_of_student_id = "ext_d2l_orgdefinedid";

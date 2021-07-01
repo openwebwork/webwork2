@@ -80,7 +80,7 @@ sub DESTROY {
 
 ##################################################################
 
-
+=over
 
 =item $CIchecker->checkCourseTables($courseName);
 
@@ -191,10 +191,6 @@ sub updateCourseTables {
 	
 }
 
-=cut
-
-
-
 =item  $CIchecker->checkTableFields($courseName, $table);
 
 Checks the course tables in the mysql database and insures that they are the same as the ones specified by the databaseLayout
@@ -242,7 +238,7 @@ sub checkTableFields {
 			if ($field_name eq "published") {  #hack to stop warning about residual "published" fields.
 				warn "Harmless: $table_name has extra column 'published' for older course. We'll try to delete it\n";
 				if ( $db->{$table}->can("drop_column_field") ) {
-					warn "dropping field $field_name in  table $table\n";
+					warn "dropping field $field_name in table $table_name\n";
 					$db->{$table}->drop_column_field($field_name);
 				}
 				next;
@@ -484,18 +480,8 @@ sub ask_permission_stdio {
 	}
 }
 
+=back
 
-# 
-# 
-# =item checkCourseDirectories($courseName)
-# 
-# Checks the course files and directories to make sure they exist and have the correct permissions.
-# 
-# =cut
-# 
-# 
-# 
-
-
+=cut
 
 1;

@@ -83,9 +83,9 @@ services:
             #- ARG PG_BRANCH=master
             # To use the 2.15 branches of webwork2 and pg from the "official" GitHub repositories
             - WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
-            - WEBWORK2_BRANCH=develop
+            - WEBWORK2_BRANCH=WeBWorK-2.16
             - PG_GIT_URL=https://github.com/openwebwork/pg.git
-            - PG_BRANCH=develop
+            - PG_BRANCH=PG-2.16
 
     depends_on:
       - db

@@ -16,7 +16,7 @@ my $newLevelThreshold = 900;
 
 if ($achievementPoints >= $nextLevelPoints) {
     #set new threshold and return 1 
-    $globalData->{FullCreditProb} = 1;
+    $globalData->{FullCreditProb}++;
     $nextLevelPoints = $newLevelThreshold;
     return 1;
 } else {

@@ -322,3 +322,8 @@ div#gwScoreSummary {
 .cheevoinnerbar {
     background-color: #0157E8;
 }
+
+/* Config tab coloring */
+.config-tabs span.current {
+	background-color: #003388;
+}

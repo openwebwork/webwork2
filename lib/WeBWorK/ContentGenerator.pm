@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2012 The WeBWorK Project, http://github.com/openwebwork
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -154,7 +153,7 @@ go() then attempts to call the method initialize(). This method may be
 implemented in subclasses which must do processing after the HTTP header is sent
 but before any content is sent.
 
-=item 6
+=item 5
 
 The method content() is called to send the page content to client.
 
@@ -517,49 +516,17 @@ HTTP header is sent but before any content is sent.
 
 =item output_course_lang_and_dir()
 
-Defined in this package.
+Output the LANG and DIR tags in the main HTML tag of a generated web page when
+a template files calls this function.
 
-Sets the LANG attribute and when needed the DIR attribute based
-on the language set in the course configuration.
-
-The intended use is to set these tags in the main HTML tag of the generated
-web page when the template files calls this function.
-
-It selects the language based on the setting in the course configuration
-file (when it is set) and otherwise defaults back to
-	lang="en-US"
-which was the old hard-coded setting.
-
-When the language chosen is a known right to left language, it will also set
-the DIR attribute to "rtl". Currently, only Hebrew ("heb" or "he") and
-Arabic ("ar") trigger the RTL direction setting.
+This calls WeBWorK::Utils::LanguageAndDirection::get_lang_and_dir.
 
 =cut
 
 sub output_course_lang_and_dir{
-        my $self = shift;
-        my $master_lang_setting = "lang=\"en-US\""; # default setting
-        my $master_dir_setting  = "";               # default is NOT set
-
-        my $ce_lang = $self->r->ce->{language};
-
-        if ( $ce_lang eq "en" ) {
-          $master_lang_setting = "lang=\"en-US\""; # as in default
-        } elsif ( $ce_lang =~ /^he/i ) { # supports also the current "heb" option
-          # Hebrew - requires RTL direction
-          $master_lang_setting = "lang=\"he\""; # Hebrew
-          $master_dir_setting  = "dir=\"rtl\""; # RTL
-        } elsif ( $ce_lang =~ /^ar/i ) {
-          # Hebrew - requires RTL direction
-          $master_lang_setting = "lang=\"ar\""; # Arabic
-          $master_dir_setting  = "dir=\"rtl\""; # RTL
-        } else {
-          # use the language setting of the course, with NO direction setting
-          $master_lang_setting = "lang=\"${ce_lang}\"";
-        }
-
-        print "$master_lang_setting $master_dir_setting";
-        return "";
+	my $self = shift;
+	print WeBWorK::Utils::LanguageAndDirection::get_lang_and_dir($self->r->ce->{language});
+	return "";
 }
 
 =item content()
@@ -837,33 +804,19 @@ sub links {
 				print CGI::start_ul();
 
                 #class list editor
-				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor1};
-				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor2};
+				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 
 				# Homework Set Editor
-				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor1};
-
-				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor2};
+				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 				    print CGI::start_li();
 				    print CGI::start_ul();
-				    if ($ce->{showeditors}->{problemsetdetail1}) {
-					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>$r->maketext("[_1] (old editor)", $prettySetID), urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
-                     		        print CGI::end_li();
-				    }
 
-				    if ($ce->{showeditors}->{problemsetdetail2}) {
-					print CGI::start_li(); # $setID (2)
-					print &$makelink("${pfx}ProblemSetDetail2", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
-                     		        print CGI::end_li();
-				    }
+					print CGI::start_li();
+					print &$makelink("${pfx}ProblemSetDetail", text => "$prettySetID", urlpath_args => { %args, setID => $setID }, systemlink_args => \%systemlink_args);
+					print CGI::end_li();
 
 					if (defined $problemID) {
 					    print CGI::start_li();
@@ -877,15 +830,8 @@ sub links {
 				    print CGI::end_li();
 				}
 
-				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser1};
-				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser2};
-				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser3};
-				print CGI::li(&$makelink("${pfx}SetMakernojs", text=>$r->maketext("Orig. Lib. Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowsernojs};
-#print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
@@ -2294,8 +2240,6 @@ sub read_scoring_file {
 	return parse_scoring_file($self->r->ce->{courseDirs}{scoring}."/$fileName");
 }
 
-=back
-
 =item createEmailSenderTransportSMTP
 
 Wrapper that creates an Email::Sender::Transport::SMTP object
@@ -2332,6 +2276,8 @@ sub createEmailSenderTransportSMTP {
 
     return $transport;
 }
+=back
+
 =head1 AUTHOR
 
 Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu and Sam Hathaway,

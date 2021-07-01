@@ -4,7 +4,7 @@
 
 /* update margins to reflect missing left column */
 #content {
-	margin: 1em 1em 1em 0; 
+	margin: 0 1em 1em 0;
 }
 
 div.gwMessage { 
@@ -98,12 +98,28 @@ div.gwProblem
 }
 
 .gwNavigation {
-    margin-top: 1em;	
-    margin-bottom: 1em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	text-align: center;
+}
+
+.gwNavigation th, .gwNavigation td {
+	padding: 0 0.5rem;
 }
 
 .gwNavigation th {
     text-align:right;
+    font-weight: bold;
+    padding-right: 1rem;
+}
+
+.gwNavigation colgroup.page {
+	border-left: solid 1pt black;
+	border-right: solid 1pt black;
+}
+
+.gwNavigation .page.active {
+	background-color: #ffeeaa;
 }
 
 div.gwDivider {

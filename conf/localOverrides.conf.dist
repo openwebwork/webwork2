@@ -331,22 +331,19 @@ $mail{feedbackRecipients}    = [
 # (U+FF01 to U+FF5E) to their corresponding ASCII characters (U+0021 to U+007E) automatically.
 # $pg{specialPGEnvironmentVars}{convertFullWidthCharacters} = 1;
 
-################################################################################
-#  Configuring the display of different versions of the editors
-################################################################################
-# These configurations can be placed in course.conf file to tune the behavior for individual courses
+# Application that the PGtikz.pl macro will use to create svg images.
+# This should be either 'pdf2svg' or 'dvisvgm'.  The default is 'pdf2svg'.
+# If the system version of latex is 3.14159265-2.6-1.40.20 (TeX Live 2019) or newer
+# and the system version of dvisvgm is 2.8.1 or newer, then change this to 'dvisvgm'
+# by uncommenting the line below.  'dvisvgm' will generally create better 'svg'
+# images.
+#$pg{specialPGEnvironmentVars}{tikzSVGMethod} = "dvisvgm";
 
-# These will enable the versions of the problem set detail page and library browser page
-# that do not use the xmlrpc pathway
-
-#$showeditors{problemsetdetail1} = 1;
-#$showeditors{librarybrowsernojs} = 1;
-
-# Similar changes can be made in the same way for other editors.
-# Look at the relevant section of default.config to
-# see the default settings for each editor.
-# (The syntax is slightly different there because the configurations
-# for all of the editors are being set in the configuration hash.)
+# When ImageMagick is used for image conversions, this sets the default options.
+# See https://imagemagick.org/script/convert.php for a full list of options.
+# convert will be called as:
+# convert <input options> file.ext1 <output options> file.ext2
+#$pg{specialPGEnvironmentVars}{tikzConvertOptions} = {input => {density => 72}, output => {quality => 92}};
 
 ###############################################################################
 # Math entry assistance
@@ -502,6 +499,11 @@ $mail{feedbackRecipients}    = [
 #    See: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
 #         https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 #         https://tools.ietf.org/html/draft-west-cookie-incrementalism-00
+
+# Notes about the $CookieSameSite options:
+#   The "None" setting should only be used with HTTPS and when $CookieSecure = 1; is set below. The "None" setting is also less secure and can allow certain types of cross-site attacks.
+#   The "Strict" setting can break the links in the system generated feedback emails when read in a web mail client.
+#   Due to those factors, the "Lax" setting is probably the optimal choice for typical WeBWorK servers.
 
 #$CookieSameSite = "None";
 #$CookieSameSite = "Strict";

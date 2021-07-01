@@ -40,9 +40,6 @@
 <!--#if can="output_achievement_CSS"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
 <!--#endif-->
-<!--#if can="output_tabber_CSS"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
-<!--#endif-->
 <!--#if can="output_CSS"-->
 	<!--#output_CSS-->
 <!--#endif-->
@@ -62,17 +59,12 @@
 	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <!--#endif-->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-<!--#if can="output_tabber_CSS"-->
-<script type="text/javascript">
-var tabberOptions = {manualStartup:true};
-</script>
-<!--#endif-->
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
 <script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
 <!--#if exists="math4-overrides.js"-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>	
 <!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
@@ -82,22 +74,35 @@ var tabberOptions = {manualStartup:true};
 
 <body>
 <a href="#page-title" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
-<!--#if can="output_wztooltip_JS"--> <!-- Please remind this -->
-	<!--#output_wztooltip_JS-->
-<!--#endif-->
 
 <!-- Bootstrap Fluid Layout Scaffolding start -->
 <div id="bs-container" class="container-fluid">
 <!-- Header -->
 <div id = "masthead" class="row-fluid" role="banner">
 	<div class="span2 webwork_logo">
-		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_transparent_logo_small.png" alt="to courses page" />WeBWorK</a>
+		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_logo.svg" alt="to courses page" /></a>
 	</div>
-	<div class="span4 maa_logo">
+	<div class="span6 maa_logo">
 		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="to MAA (Mathematical Association of America) main web site" /></a>
 	</div>
-	<div id="loginstatus" class="offset3 span3">
+	<div id="loginstatus" class="span4">
 		<!--#loginstatus-->
+	</div>
+</div>
+
+<!-- Breadcrumb -->
+<div id="breadcrumb-row" class="row-fluid">
+	<div class="span12">
+		<a href="#" class="btn" id="toggle-sidebar">
+			<span id="toggle-sidebar-icon">
+				<i class="icon fas fa-chevron-left" aria-hidden="true" data-alt="close sidebar"></i>
+			</span>
+		</a>
+		<div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
+			<ul class="breadcrumb">
+				<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
+			</ul>
+		</div>
 	</div>
 </div>
 
@@ -142,25 +147,13 @@ var tabberOptions = {manualStartup:true};
 
 <!-- Main Content Area -->
 <div id="content" class="span10" >
-	<!-- Breadcrumb -->
-	<div id="breadcrumb-row" class="row-fluid">
-	  <div class="span12">
-	    <a href="#" class="btn btn-primary btn" id="toggle-sidebar">
-			<span id="toggle-sidebar-icon">
-				<i class="icon fas fa-chevron-left" aria-hidden="true" data-alt="close sidebar"></i>
-			</span>
-	    </a>
-	    <div id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation">
-	      <ul class="breadcrumb">
-			<!--#path style="bootstrap" text="<li><span aria-hidden='true' class='divider'>/</span></li>"-->
-	      </ul>
-	    </div>
-	</div></div>
-	<!-- Run breadcrumb js since it gets loaded early -->
-	<script type="text/javascript"> 
-	  $('#toggle-sidebar').removeClass('btn-primary')
-	</script>
-	
+	<!--#if can="nav"-->
+	<div class="problem-nav row-fluid sticky-nav" role="navigation" aria-label="problem navigation">
+		<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
+		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
+	</div>
+	<!--#endif-->
+
 	<!-- Page Title -->
 	<!--#if can="title"-->
 	<div class="row-fluid"><div class="span12">
@@ -168,21 +161,10 @@ var tabberOptions = {manualStartup:true};
 	</div></div>
 	<!--#endif-->
 
-	<!--#if can="nav" can="message"--> 
-	<div class="row-fluid">
-	  <div id="problem-nav" class="problem-nav span7" role="navigation" aria-label="problem navigation">
-	<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
-	<!--#if can="nav"-->
-		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
-	<!--#endif-->
-	  </div>
-	  
-	  <div id="Message" class="Message span4 offset1">
-	    <!-- Message for the user -->
-	    <!--#if can="message"-->
-	        <!--#message-->
-	<!--#endif-->
-	  </div>
+	<!--#if can="message"--> 
+	<div id="Message" class="Message row-fluid">
+		<!-- Message for the user -->
+		<!--#message-->
 	</div>
 	<!--#endif-->
 

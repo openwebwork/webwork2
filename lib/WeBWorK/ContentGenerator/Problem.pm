@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +42,7 @@ require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
-use WeBWorK::Utils::DetermineProblemLangAndDirection;
+use WeBWorK::Utils::LanguageAndDirection;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
 
@@ -260,49 +259,49 @@ sub can_useMathQuill {
 
 
 sub can_showMeAnother {
-    # PURPOSE: subroutine to check if showMeAnother
-    #          button should be allowed; note that this is done
-    #          *before* the check to see if showMeAnother is
-    #          possible.
+	# PURPOSE: subroutine to check if showMeAnother
+	# button should be allowed; note that this is done
+	# *before* the check to see if showMeAnother is
+	# possible.
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
-    my $ce = $self->r->ce;
+	my $ce = $self->r->ce;
 
-    # if the showMeAnother button isn't enabled in the course configuration,
-    # don't show it under any circumstances (not even for the instructor)
-    return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
+	# if the showMeAnother button isn't enabled in the course configuration,
+	# don't show it under any circumstances (not even for the instructor)
+	return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
 
-    # get the hash of information about showMeAnother
+	# get the hash of information about showMeAnother
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
-    if (after($Set->open_date)) {
-        # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+	if (after($Set->open_date) or $self->r->authz->hasPermissions($self->r->param('user'), "can_use_show_me_another_early")) {
+		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
+		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 
-	    # if SMA is just not permitted for the problem, don't show it
-	    return 0 unless ($showMeAnother{TriesNeeded} > -1);
+		# if SMA is just not permitted for the problem, don't show it
+		return 0 unless ($showMeAnother{TriesNeeded} > -1);
 
-        my $thisAttempt = $submitAnswers ? 1 : 0;
-	    my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
+		my $thisAttempt = $submitAnswers ? 1 : 0;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
 
-        # if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
-	    # inititialized meaning that the student hasn't pushed it yet and it should be 0
-        $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
+		# if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
+		# inititialized meaning that the student hasn't pushed it yet and it should be 0
+		$showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
 
-	 # if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
-        # to be equal to showMeAnother{MaxReps}
-        $showMeAnother{Count}-- if(defined($showMeAnother{CheckAnswers} && $showMeAnother{CheckAnswers}) or (defined($showMeAnother{Preview}) && $showMeAnother{Preview}));
+		# if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
+		# to be equal to showMeAnother{MaxReps}
+		$showMeAnother{Count}-- if(defined($showMeAnother{CheckAnswers} && $showMeAnother{CheckAnswers}) or (defined($showMeAnother{Preview}) && $showMeAnother{Preview}));
 
-	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
-	    # not submitted enough answers yet or has used the SMA button too many times
-	    if ($attempts_used < $showMeAnother{TriesNeeded}
-	        or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
-          return 0;
-        } else {
-          return 1;
-        }
-    } else {
-      # otherwise the set hasn't been opened yet, so we can't use showMeAnother
-      return 0;}
+		# if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
+		# not submitted enough answers yet or has used the SMA button too many times
+		if ($attempts_used < $showMeAnother{TriesNeeded} or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
+			return 0;
+		} else {
+			return 1;
+		}
+	} else {
+		# otherwise the set hasn't been opened yet, so we can't use showMeAnother
+		return 0;
+	}
 }
 
 ################################################################################
@@ -695,7 +694,7 @@ sub pre_header_initialize {
 	$rerandomizePeriod = $problem->{prPeriod}
 	if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 
-	$prEnabled = 0 if ($rerandomizePeriod < 1);
+	$prEnabled = 0 if ($rerandomizePeriod < 1 || $self->{editMode});
 	if ($prEnabled) {
 		$problem->{prCount} = 0
 		if !defined($problem->{prCount}) || $problem->{prCount} =~ /^\s*$/;
@@ -860,12 +859,6 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-
-	# Keys dont really work well anymore.  So I'm removing this for now GG
-#	print qq{
-#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-#	};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1215,7 +1208,7 @@ sub nav {
 		if defined $self->{will}->{showOldAnswers};
 	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
 		if defined $self->{will}{showProblemGrader};
-	return $userNav . $self->navMacro($args, $tail, @links);
+	return $userNav . CGI::div($self->navMacro($args, $tail, @links));
 }
 
 sub path {
@@ -1369,30 +1362,10 @@ sub output_form_start{
 # needed by the PROBLEM language
 
 sub output_problem_lang_and_dir {
-    my $self = shift;
-    my $pg = $self->{pg};
-
-    my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
-    my $to_set_tag;
-    my $to_set_val;
-
-    # String with the HTML attributes to add
-    my $to_set = " ";
-
-    # Put the requested tags and values into the string format
-    while ( scalar(@to_set_lang_dir) > 0 ) {
-	$to_set_tag = shift( @to_set_lang_dir );
-	$to_set_val = shift( @to_set_lang_dir );
-	if ( defined( $to_set_val ) ) {
-	    $to_set .= " ${to_set_tag}=\"${to_set_val}\"";
-	}
-    }
-
-    print "$to_set";
-    return "";
+	my $self = shift;
+	print " " . get_problem_lang_and_dir($self->{pg}{flags}, $self->r->ce->{perProblemLangAndDirSettingMode}, $self->r->ce->{language});
+	return "";
 }
-
-
 
 # output_problem_body subroutine
 
@@ -1717,28 +1690,46 @@ sub output_submit_buttons{
         		# WTF???
         	}
         }
-        if ($can{showMeAnother}) {
-            # only output showMeAnother button if we're not on the showMeAnother page
-	    my $SMAURL = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::ShowMeAnother", $r,courseID => $courseID, setID => $problem->set_id, problemID =>$problem->problem_id));
-
-	    print CGI::a({href=>$SMAURL, class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", id=>"SMA_button", title=>"", target=>"_wwsma",
-				   "data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")}, $r->maketext("Show me another"));
-        } else {
-            # if showMeAnother is available for the course, and for the current problem (but not yet
-            # because the student hasn't tried enough times) then gray it out; otherwise display nothing
-
-	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
-
-            if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
-                my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
-                print CGI::span({class=>"gray_button set-id-tooltip",
-                                "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"",
-                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
-                                }, $r->maketext("Show me another [_1]",$exhausted));
-              }
+	if ($can{showMeAnother}) {
+		# only output showMeAnother button if we're not on the showMeAnother page
+		my $SMAURL = $self->systemLink($urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ShowMeAnother",
+			$r,courseID => $courseID,
+			setID => $problem->set_id,
+			problemID =>$problem->problem_id
+		));
+		print CGI::a(
+			{
+				href=>$SMAURL,
+				class=>"set-id-tooltip",
+				"data-toggle"=>"tooltip",
+				"data-placement"=>"right",
+				id=>"SMA_button",
+				title=>"",
+				target=>"_wwsma",
+				"data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")
+			},
+			$r->maketext("Show me another")
+		);
+	} else {
+		# if showMeAnother is available for the course, and for the current problem (but not yet
+		# because the student hasn't tried enough times) then gray it out; otherwise display nothing
+		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
+		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+		if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
+			my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
+			print CGI::span(
+				{
+					class=>"gray_button set-id-tooltip",
+					"data-toggle"=>"tooltip",
+					"data-placement"=>"right",
+					title=>"",
+					"data-original-title"=>(before($r->db->getGlobalSet($self->{set}->set_id)->open_date)) ? $r->maketext("The problem set is not yet open") : ($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
+				},
+				$r->maketext("Show me another [_1]",$exhausted)
+			);
+		}
 	}
-
 	return "";
 }
 
@@ -2307,20 +2298,6 @@ sub output_hidden_info {
 
 # output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
-
-sub output_wztooltip_JS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
-	return "";
-}
-
 # outputs all of the Javascript needed for this page.
 # The main javascript needed here is color.js, which colors input fields based on whether or not
 # they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification
@@ -2334,9 +2311,6 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
 
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
@@ -2366,8 +2340,8 @@ sub output_JS{
 
 	# MathQuill live rendering 
 	if ($self->{will}->{useMathQuill}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
 	}
 	
 	# This is for knowls
@@ -2405,15 +2379,14 @@ sub output_JS{
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
-		# Avoid duplicates
-		$jsFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_js_files}};
-		for (keys(%jsFiles)) {
-			if ($jsFiles{$_}) {
-				print CGI::start_script({type => "text/javascript",
-						src => $_}), CGI::end_script();
-			} elsif (!$jsFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-				print CGI::start_script({type => "text/javascript",
-						src => "$site_url/$_"}), CGI::end_script();
+		for (@{$self->{pg}{flags}{extra_js_files}}) {
+			next if $jsFiles{$_->{file}};
+			$jsFiles{$_->{file}} = 1;
+			my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
+			if ($_->{external}) {
+				print CGI::script({ src => $_->{file} , %attributes }, "");
+			} elsif (!$_->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}") {
+				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
 			} else {
 				print "<!-- $_ is not available in htdocs/ on this server -->\n";
 			}

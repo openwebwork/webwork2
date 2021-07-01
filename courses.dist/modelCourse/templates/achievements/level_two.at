@@ -17,7 +17,7 @@ my $newLevelThreshold = 300;
 if ($achievementPoints >= $nextLevelPoints) {
     #set new threshold and return 1 
     $nextLevelPoints = $newLevelThreshold;
-    $globalData->{ResetIncorrectAttempts} = 1;
+    $globalData->{ResetIncorrectAttempts}++;
     return 1;
 } else {
     return 0;

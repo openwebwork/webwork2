@@ -1,5 +1,5 @@
 /* WeBWorK Online Homework Delivery System
- * Copyright � 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
+ * Copyright &copy; 2000-2021 The WeBWorK Project, http://openwebwork.sf.net/
  * $CVSHeader: webwork2/conf/templates/math2/math2.css,v 1.1.2.1 2008/06/24 17:17:36 gage Exp $
  * 
  * This program is free software; you can redistribute it and/or modify it under
@@ -90,29 +90,30 @@ legend {
 #masthead {
 	background-color: #038;
 	margin: 0;
-	padding: 5px 0px 5px 0px;
+	padding: 0;
 }
 
 .webwork_logo {
+	padding: 5px 0;
 	background-color: #1048ae;
-	font-size: 1.6em;
-	font-weight: 500;
-	border: 1px solid #5577b0;
-	padding: 2px 10px 0 6px; /* attempt to even out the blank space so that
-								the logo & text doesn't look lopsided */
 }
 
 .webwork_logo img {
-	padding-right: 5px; /* distance itself to the Webwork text */
-}
-
-.maa_logo img {
-	vertical-align: center;
+	height: 57px;
 }
 
 .webwork_logo a,
 .maa_logo a {
     display:block;
+}
+
+.maa_logo {
+	height: 58px;
+	padding: 5px 0;
+}
+
+.maa_logo img {
+	padding: 5px;
 }
 
 #masthead a {
@@ -124,19 +125,19 @@ legend {
 }
 
 #loginstatus {
-        padding-top:.5ex;
-        padding-right: .5em;
+	padding: 5px 5px 5px 0;
 	color: white;
 	text-align: right;
 	font-size: 0.85em;
 	font-weight: normal;
 } 
-#loginstatus a.btn {
-    margin-bottom:.5ex;
-}
 
 #loginstatus a {
 	color: black;
+}
+
+#loginstatus a:first-child {
+	margin-bottom: 5px;
 }
 
 #loginstatus a .fa-sign-out-alt {
@@ -154,6 +155,10 @@ legend {
 
 #site-links ul ul {
     border:0px;
+}
+
+ul.nav {
+	margin-top: 0;
 }
 
 ul.nav li a:hover {
@@ -234,6 +239,7 @@ div.unattempted-progress {
     height:20px;
     padding-top:8px;
     padding-bottom:8px;
+    margin-right: 5px;
 }
 
 #breadcrumb-navigation {
@@ -244,6 +250,10 @@ div.unattempted-progress {
 }
 
 /* Main Content */
+body {
+	padding: 0;
+}
+
 .body {
 	display: inline-block;
 	float: left;
@@ -279,6 +289,7 @@ h2.page-title {
 
 .breadcrumb {
 	border: 1px solid #e6e6e6;
+	margin-bottom: 10px;
 }
 
 .Warnings {
@@ -290,14 +301,27 @@ h2.page-title {
 }
 
 /* Question nav section */
-.problem-nav {
-	margin-bottom:1ex;
-	display: inline-block;
-	
+.sticky-nav {
+	display: flex;
+	flex-wrap: wrap;
+	z-index: 1;
+	position: sticky;
+	top: 0;
+	background-color: white;
+	margin-bottom: 1rem;
+	padding: 0.25rem;
+	border-radius: 0 0 4px 4px;
+	box-shadow: 0 0.1rem 0.2rem 1px gray;
+	box-sizing: border-box;
 }
 
-.problem-nav .user-nav {
-	margin-bottom: 5px;
+.sticky-nav > a,
+.sticky-nav > div {
+	margin: 0.25rem;
+}
+
+.sticky-nav > div:first-child {
+	margin-right: auto;
 }
 
 .user-nav .student-nav-selector .dropdown-menu {
@@ -320,6 +344,10 @@ h2.page-title {
     width:60%;
     padding: 10px;
     text-align:center;
+}
+
+.new-course-options label span {
+	vertical-align: middle;
 }
 
 /* Home Page */
@@ -467,8 +495,13 @@ table.classlist-table .tbody {
     padding-left: 35px;
 }
 
-.problem_set_table .hardcopy-link {
-    font-size:16px;
+.problem_set_table .hardcopy, .problem_set_table .hardcopy-link {
+	font-size: 16px;
+	text-align: center;
+}
+
+.problem_set_table .hardcopy input[type="checkbox"] {
+	margin-right: 0;
 }
 
 /* Info Box */
@@ -536,6 +569,21 @@ table.classlist-table .tbody {
 }
 
 /* Library Browser */
+.library-browser-table {
+	width: 100%;
+}
+
+.library-browser-table td.InfoPanel {
+	text-align: center;
+	max-width: 800px;
+}
+
+.library-browser-table td.InfoPanel table {
+	text-align: center;
+	max-width: 800px;
+	margin: auto;
+}
+
 .library-browser-table td {
 	padding-top: 0.2em;
 	padding-bottom: 0.2em;
@@ -549,10 +597,21 @@ table.classlist-table .tbody {
     padding-left: 0.2em;
 }
 
+.lb-problem-row div.well {
+	margin-top: 10px;
+	margin-bottom: 0px;
+}
+
+.lb-mlt-group {
+	margin-top: 10px;
+}
+
+.lb-mlt-group tr:first-child.lb-problem-row > td > div.well {
+	margin-top: 0px;
+}
+
 .lb-problem-header {
     overflow:auto;
-    background-color: #FFFFFF; 
-    margin: 0px auto;
     min-height:30px;
     display:block;
 }
@@ -561,9 +620,18 @@ table.classlist-table .tbody {
     text-align: left;
 }
 
+.lb-problem-sub-header {
+	width: 100%;
+}
+
 .lb-problem-path {
     text-align: left; 
-    cursor: pointer;
+}
+
+.lb-inset {
+	float: right;
+	text-align: right;
+	margin-right: 0.8em;
 }
 
 .lb-problem-icons {
@@ -702,7 +770,7 @@ input.correct[type="text"]{ /* green */
     outline: thin dotted \9;
     /* IE6-9 */
     
-    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81, ,.6);
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
     -moz-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(81,153,81,.6);
     
@@ -838,6 +906,10 @@ table.attemptResults td.Message {
 }
 .attemptResultsSummary { margin-bottom: 10px; }
 .parsehilight { color: inherit; background-color: yellow; }
+
+.problem-main-form {
+	margin-bottom: 0px;
+}
 
 .problem-main-form input {
     margin-left:.5ex;
@@ -980,6 +1052,9 @@ table caption{
     margin-bottom:.5ex;
 }
 
+.achievement_list_action_div {
+	height: 40px;
+}
 
 #none{
 	/*Please do not do anything with elements with id "none"*/
@@ -987,34 +1062,9 @@ table caption{
 
 /*Styles for the PGProblemEditor Page*/
 
-#editor{
+#editor {
 	background-color: #FFFFFF;
-}
-
-#editor #source_and_options{
-	float: left;
-	width: 50%;
-}
-
-#editor #problemContents_label{
-	text-align: center;
-	font-weight: bold;
-	text-decoration: underline;
-	margin-left: 30%;
-}
-
-#editor #problemContents_id{
-	width: 100%;
-	height: 50%;
-}
-
-#editor .editor_form{
-	margin-left: 40px;
-}
-
-#editor #form_div{
-	float: left;
-	width: 100%;
+	margin-left: 0px;
 }
 
 /*Styles specifically for the problem viewer*/
@@ -1065,36 +1115,73 @@ table caption{
 	width: 750px;
 }
 
-#editor .pg_editor_input_span{
-	margin-bottom: 10px;
-	display: none;
-}
-
-#editor .pg_editor_input_div{
-	margin-top: 20px;
+#editor .pg_editor_action_div {
 	margin-left: 50px;
 }
 
-#editor #submit_input_div{
-	margin-top: 10px;
-	clear: both;
+#editor .pg_editor_new_window_div {
+	margin-top: 5px;
 }
 
-#pg_editor_frame_id{
-    width:95%;
-    height:590px;
-    overflow:scroll;
+#editor .pg_editor_new_window_div input {
+	margin: 0px 3px 0px 0px;
+}
+
+#editor .tab-content {
+	height: 140px;
 }
 
 #render-modal.modal {
-    width:1024px;
-    left:25%;
+	box-sizing: border-box;
+	width: 86vw;
+	left: 7vw;
+	height: 86vh;
+	top: 7vh;
+	margin-top: 0px;
+	margin-left: 0px;
 }
 
 #render-modal .modal-body {
-    height:95%;
-    width:95%;
-    max-height:600px;
+	overflow: hidden;
+	padding: 0;
+	max-height: unset;
+	height: calc(100% - 103px);
+}
+
+#pg_editor_frame_id{
+	overflow: auto;
+	border: none;
+	width: 100%;
+	height: 100%;
+}
+
+/* Page loading busy indicator */
+/* Currently only used on the problem editor page. */
+.page-loading-busy-indicator {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	background: rgba(0, 0, 0, .5);
+	z-index: 105;
+}
+
+.page-loading-busy-indicator .busy-text {
+	position: relative;
+	color: white;
+	font-size: 1.4em;
+	top: calc(50% - 4em);
+	margin: auto;
+	width: 100%;
+	text-align: center;
+}
+
+.page-loading-busy-indicator i {
+	color: white;
+	position: absolute;
+	left: calc(50% - 30px);
+	top: calc(50% - 30px);
 }
 
 .radio_span, 
@@ -1133,7 +1220,7 @@ div.problem_sets_options {
     color: #000000;
 }
 
-/* ProblemSetDetail2 css */
+/* ProblemSetDetail css */
 #psd_list {
     padding-left: 0px;
 }
@@ -1141,6 +1228,11 @@ div.problem_sets_options {
 #psd_list li.ui-sortable-placeholder,
 #psd_list li.psd_list_row {
     list-style-type: none;
+}
+
+.problem_detail_row {
+	padding: 0.75em;
+	max-width: 1000px;
 }
 
 .pdr_placeholder {
@@ -1155,25 +1247,30 @@ div.problem_sets_options {
 }
 
 .pdr_handle {    
-    cursor: move;
     margin-right:2px;
     font-size:large;
 }
 
+#psd_list:not(.disable_renumber) .pdr_handle {
+	cursor: move;
+}
+
 .pdr_collapse {
     cursor: pointer;
-    width: 10px;
     font-size:large;
     display: none;
-    font-family: FontAwesome;
 }
 
 .psd_list_row.mjs-nestedSortable-collapsed > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f054';
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900;
+	content: '\f054';
 }
 
 .psd_list_row.mjs-nestedSortable-expanded > div > div > div > table > tbody > tr > td > span.pdr_collapse:after {
-    content: '\f078';
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900;
+	content: '\f078';
 }
 
 
@@ -1199,8 +1296,12 @@ div.problem_sets_options {
 }
 
 .psr_render_area {
-    margin-top: 10px;
-    overflow: hidden;
+	margin-top: 10px;
+}
+
+.psr_render_area iframe {
+	width: 100%;
+	border-radius: 5px;
 }
 
 .ScrollingRecordList > input[type='submit'] {
@@ -1219,6 +1320,38 @@ table#grades_table pre{
 .grades-course-total th {
     font-weight: bold;
     font-size:105%;
+}
+
+.config-tabs {
+	text-align: center;
+	margin-bottom: 40pt;
+}
+
+.config-tabs span {
+	padding: 10px;
+	font-weight: bold;
+}
+
+.config-tabs span.current {
+	background-color: #003388;
+	color: white;
+}
+
+.config-tabs span.other {
+	background-color: #f6f6f6;
+
+}
+
+.config-tabs span.other:hover {
+	background-color: #e1e1e1;
+}
+
+.config-tabs > span > a {
+	padding: 10px;
+	margin: -10px;
+	color: inherit;
+	text-decoration: none;
+
 }
 
 #config-form input[type="checkbox"] {
@@ -1313,7 +1446,19 @@ table#grades_table pre{
 
 .problem-grader-table {
 	border-collapse: separate;
-	border-spacing: 2px
+	border-spacing: 2px;
+	width: 100%;
+}
+
+.problem-grader-table tr th {
+	width: 160px;
+	min-width: 160px;
+}
+
+.problem-grader-table textarea.grader-problem-comment {
+	width: 100%;
+	min-height: 100px;
+	box-sizing: border-box;
 }
 
 .problem-grader-table input {
@@ -1338,6 +1483,10 @@ table#grades_table pre{
 
 .tab-pane {
     margin-bottom:10px;
+}
+
+.tab-pane select, .tab-pane input {
+	margin-left: 0.5rem;
 }
 
 .small-table-text,

@@ -251,9 +251,11 @@ sub htmlMessage($$$@) {
 	my $uri = htmlEscape(  $r->uri );
 	my $headers = do {
 		my %headers = MP2 ? %{$r->headers_in} : $r->headers_in;
-		# Was getting warnings about the value of "sec-ch-ua" in my testing...
-		$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
-		$headers{"sec-ch-ua"} =~ s/\"//g;
+		if (defined($headers{"sec-ch-ua"})) {
+			# Was getting warnings about the value of "sec-ch-ua" in my testing...
+			$headers{"sec-ch-ua"} = join("",$headers{"sec-ch-ua"});
+			$headers{"sec-ch-ua"} =~ s/\"//g;
+		}
 
 		join("",
 			"<tr><th id=\"header_key\"><small>Key</small></th><th id=\"header_value\"><small>Value</small></th></tr>\n",

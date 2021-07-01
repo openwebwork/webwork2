@@ -27,7 +27,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Localize;
-
+use WeBWorK::Authen qw(write_log_entry);
 
 sub pre_header_initialize {
 	my ($self) = @_;
@@ -45,6 +45,7 @@ sub pre_header_initialize {
 #	}
 
 	$authen -> killSession;
+	$authen->WeBWorK::Authen::write_log_entry("LOGGED OUT");
 
 	# also check to see if there is a proctor key associated with this 
 	#    login.  if there is a proctor user, then we must have a 

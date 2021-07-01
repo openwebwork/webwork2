@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/renderViaXMLRPC.pm,v 1.1 2010/05/11 15:27:08 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,16 +39,13 @@ use CGI;
 
 =head1 Description
 
+ renderViaXMLRPC -- a front end for the Webservice that accepts HTML forms
 
-#################################################
-  renderViaXMLRPC -- a front end for the Webservice that accepts HTML forms
-
-  receives WeBWorK problems presented as HTML forms,
-  packages the form variables into an XML_RPC request
+ receives WeBWorK problems presented as HTML forms,
+ packages the form variables into an XML_RPC request
  suitable for the Webservice/RenderProblem.pm
  takes the answer returned by the webservice (which has HTML format) and 
  returns it to the browser.
-#################################################
 
 =cut
  
@@ -187,6 +183,8 @@ sub pre_header_initialize {
 	$xmlrpc_client->{sourceFilePath}  = $inputs_ref{sourceFilePath};
 	$xmlrpc_client->{inputs_ref} = \%inputs_ref;  # contains form data
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
+
+	$self->{wantsjson} = 1 if $inputs_ref{outputformat} eq 'json' || $inputs_ref{send_pg_flags};
 	
 	##############################
 	# xmlrpc_client calls webservice to have problem rendered
@@ -209,6 +207,7 @@ sub content {
    # Return content of rendered problem to the browser that requested it
    ###########################
 	my $self = shift;
+	$self->{r}->content_type("application/json; charset=utf-8") if $self->{wantsjson};
 	print $self->{output};
 }
 

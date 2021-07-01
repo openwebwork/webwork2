@@ -16,7 +16,7 @@ my $newLevelThreshold = 750;
 
 if ($achievementPoints >= $nextLevelPoints) {
     #set new threshold and return 1 
-    $globalData->{DuplicateProb} = 1;
+    $globalData->{DuplicateProb}++;
     $nextLevelPoints = $newLevelThreshold;
     return 1;
 } else {

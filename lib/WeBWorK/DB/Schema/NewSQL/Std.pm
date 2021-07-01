@@ -72,7 +72,7 @@ sub sql_init {
 	my $self = shift;
 	
 	# transformation functions for table and field names: these allow us to pass
-	# the WeBWorK table/field names to SQL::Abstract, and have it translate them
+	# the WeBWorK table/field names to SQL::Abstract::Classic, and have it translate them
 	# to the SQL table/field names from tableOverride and fieldOverride.
 	# (Without this, it would be hard to translate field names in WHERE
 	# structures, since they're so convoluted.)
@@ -271,22 +271,25 @@ sub _get_db_info {
 	my $password = $self->{params}{password};
 
 	my %dsn;
-	if (      $dsn =~ m/^dbi:mariadb:/i ) {
+	if ($dsn =~ m/^dbi:mariadb:/i || $dsn =~ m/^dbi:mysql:/i) {
 		# Expect DBI:MariaDB:database=webwork;host=db;port=3306
-		my ($dbi,$dbtype,$temp1) = split(':',$dsn);
-		( $dsn{database}, $dsn{host}, $dsn{port} ) = split(';',$temp1);
-		$dsn{database} =~ s/database=//;
-		$dsn{host} =~ s/host=// if ( defined $dsn{host} );
-		$dsn{port} =~ s/port=// if ( defined $dsn{port} );
-	} elsif ( $dsn =~ m/^dbi:mysql:/i ) {
-		# This code works for DBD::mysql
-		# this is an internal function which we probably shouldn't be using here
-		# but it's quick and gets us what we want (FIXME what about sockets, etc?)
-		DBD::mysql->_OdbcParse($dsn, \%dsn, ['database', 'host', 'port']);
+		# or DBI:mysql:database=webwork;host=db;port=3306
+		# The host and port are optional.
+		my ($dbi, $dbtype, $dsn_opts) = split(':', $dsn);
+		while (length($dsn_opts)) {
+			if ($dsn_opts =~ /^([^=]*)=([^;]*);(.*)$/) {
+				$dsn{$1} = $2;
+				$dsn_opts = $3;
+			} else {
+				my ($var, $val) = $dsn_opts =~ /^([^=]*)=([^;]*)$/;
+				$dsn{$var} = $val;
+				$dsn_opts = '';
+			}
+		}
 	} else {
 		die "Can't call dump_table or restore_table on a table with a non-MySQL/MariaDB source";
 	}
-	
+
 	die "no database specified in DSN!" unless defined $dsn{database};
 
 	my $mysqldump = $self->{params}{mysqldump_path};
@@ -302,14 +305,18 @@ sub _get_db_info {
 	}
 
 	# doing this securely is kind of a hassle...
+
 	my $my_cnf = new File::Temp;
 	$my_cnf->unlink_on_destroy(1);
 	chmod 0600, $my_cnf or die "failed to chmod 0600 $my_cnf: $!"; # File::Temp objects stringify with ->filename
 	print $my_cnf "[client]\n";
-	print $my_cnf "user=$username\n" if defined $username and length($username) > 0;
-	print $my_cnf "password=$password\n" if defined $password and length($password) > 0;
-	print $my_cnf "host=$dsn{host}\n" if defined $dsn{host} and length($dsn{host}) > 0;
-	print $my_cnf "port=$dsn{port}\n" if defined $dsn{port} and length($dsn{port}) > 0;
+
+	# note: the quotes below are needed for special characters (and others) so they are passed to the database correctly. 
+
+	print $my_cnf "user=\"$username\"\n" if defined $username and length($username) > 0;
+	print $my_cnf "password=\"$password\"\n" if defined $password and length($password) > 0;
+	print $my_cnf "host=\"$dsn{host}\"\n" if defined $dsn{host} and length($dsn{host}) > 0;
+	print $my_cnf "port=\"$dsn{port}\"\n" if defined $dsn{port} and length($dsn{port}) > 0;
 	print $my_cnf "$column_statistics_off" if $test_for_column_statistics;
 
 	return ($my_cnf, $dsn{database});
@@ -377,7 +384,7 @@ sub _drop_column_field_stmt {
 	my $field_name=shift;
 	my $sql_table_name = $self->sql_table_name;
 	my $sql_field_name = $self->sql_field_name($field_name);		
-	return "Alter table `$sql_table_name` drop column if exists `$sql_field_name` ";
+	return "Alter table `$sql_table_name` drop column `$sql_field_name` ";
 }
 ####################################################
 # checking Tables

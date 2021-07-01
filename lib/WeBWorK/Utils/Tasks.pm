@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -43,7 +43,6 @@ use strict;
 use warnings;
 use Carp;
 use WeBWorK::PG; 
-use WeBWorK::PG::ImageGenerator; 
 use WeBWorK::DB::Utils qw(global2user); 
 use WeBWorK::Form;
 use WeBWorK::Debug;
@@ -184,13 +183,14 @@ sub fake_user {
 	);
 }
 
-=item render_problems
+=item renderProblems
 
- render_problems(r => $r, user => $User, problem_list => \@problem_list);
+ renderProblems({ r => $r, user => $User, problem_list => \@problem_list });
 
-Given an Apache request object, the current user, and a list of problem files,
-return a list of WeBWorK::PG objects which contain rendered versions of the
-problems.
+Given a hash that contains an Apache request object, the current user, and a
+list of problem files, return a list of WeBWorK::PG objects which contain
+rendered versions of the problems.
+
 
 Options:
 
@@ -292,7 +292,7 @@ sub renderProblems {
 	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
 	
 	my @output;
-	
+
 	foreach my $onefile (@problem_list) {
 		my $translationOptions = {
 			displayMode     => $displayMode,
@@ -316,7 +316,7 @@ sub renderProblems {
 			$key,
 			$set,
 			$problem,
-			123, # PSVN (practically unused in PG)
+			123,
 			$formFields,
 			$translationOptions,
         );
