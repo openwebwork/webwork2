@@ -1086,6 +1086,7 @@ sub create_form {
 				-name => "action.create.name",
 				-value => $actionParams{"action.create.name"}->[0] || "",
 				-width => "50",
+				-maxlength => "100",
 				-'aria-required'=>'true',
 			}
 		),
@@ -1116,6 +1117,7 @@ sub create_handler {
 	my $ce     = $r->ce;
 
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
+	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: set name cannot exceed 100 characters.")) if (length($newSetID) > 100);
 	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
 	return CGI::div({class => "ResultsWithError"},
 			$r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetID)
