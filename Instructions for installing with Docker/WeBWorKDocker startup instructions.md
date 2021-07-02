@@ -64,26 +64,36 @@
 
     * *we're using non-standard repos so in docker-compose.yml set*
 
-      *`WEBWORK2_GIT_url=https:///github.com/mgage/webwork2.git`*
+      * `WEBWORK2_GIT_url=https:///github.com/mgage/webwork2.git`*
 
-      *`WEBWORK2_BRANCH=ww216_patch_quotes`*
+      * `WEBWORK2_BRANCH=ww216_patch_quotes`*
 
     * *set `hostname meg.org`  or what ever you use, if anything*
 
-  * sanity checks:
+* sanity checks:
 
-    * git branch  should return WeBWorK-2.16
-    * git status should show that the files `webwork2/.env` and `webwork2/docker-compose.yml` have been modified
-    * `git diff .env` should show only the new password has been changed
-    * `git diff docker-compose.yml` should show that only the new password has been changed.
+	* git branch  should return WeBWorK-2.16
+	* git status should show that the files `webwork2/.env` and `webwork2/docker-compose.yml` have been modified
+	* `git diff .env` should show only the new password has been changed
+	* `git diff docker-compose.yml` should show that only the new password has been changed.
+	
+	* did you change the database passwords for root and for webworkWrite in the files `webwork2/docker-compose.yml` and in `.env`
 
-  * we're ready to build
+* we're ready to build
 
-    * make sure you are in the `webwork2` directory
-    * type `docker-compose up`
-    * wait -- and watch the messages fly by.
-
-* build
+    * stage 1 type `docker build --tag webwork-base:forWW216 -f DockerfileStage1 .` 
+	 * wait -- and watch the messages fly by.
+	* This builds the underlying unix layer of the WeBWorK stack
+	* if you are r**ebuilding this underlying** layer use `docker build --no-cache--tag webwork-base:forWW216 -f DockerfileStage1 .` instead to make sure that everything is rebuilt.
+    * stage2
+	    * make sure that the line `dockerfile: DockerfileStage2` is uncommented (careful there is also an empty `dockerfile:` line -- ignore it)
+    	* type `docker-compose build`
+    	* a short wait while more lines fly by.
+    	* hopefully this build ends without errors
+  * final stage
+		* type `docker-compose up`
+		* watch more lines fly by
+		* a successful build ends with
 
 * the build ends with   
 
