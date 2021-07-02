@@ -323,6 +323,23 @@ sub addCourse {
 		} else {
 			warn "Failed to copy html from course '$sourceCourse': html directory '$sourceDir' does not exist.\n";
 		}
+		## copy config files ##
+		#  this copies the simple.conf file if desired
+		if (exists $options{copySimpleConfig}) {
+			my $sourceFile = $sourceCE->{courseFiles}->{simpleConfig};
+			if (-e $sourceFile) {
+				my $destFile = $ce->{courseFiles}{simpleConfig};
+				my $cp_cmd = join(" ", ("2>&1", $ce->{externalPrograms}{cp}, shell_quote($sourceFile), shell_quote($destFile)));
+				my $cp_out = readpipe $cp_cmd;
+				if ($?) {
+					my $exit = $? >> 8;
+					my $signal = $? & 127;
+					my $core = $? & 128;
+					warn "Failed to copy simple.conf from course '$sourceCourse' with command '$cp_cmd' (exit=$exit signal=$signal core=$core): $cp_out\n";
+				}
+			}
+		}
+
 	}
 	######## set 6: copy html/achievements contents ##############
 }

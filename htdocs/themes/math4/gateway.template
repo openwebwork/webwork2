@@ -93,11 +93,11 @@
 	<!--#endif-->
 	
 	<!--#if can="nav"-->
-		<!--#nav separator="  "-->
+	<!--#nav separator="  "-->
 	<!--#endif-->
 	
 	<!--#if can="title"-->
-	<h1 id="content"><!--#title--></h1>
+	<h1><!--#title--></h1>
 	<!--#endif-->
 	
 	<!--#if can="message"-->

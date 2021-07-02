@@ -1174,7 +1174,10 @@ sub checkFileLocation {
 	return if $dir =~ m/^$location$/;
 	$location =~ s!/\.\*!!;
 	return if $dir =~ m/^$location$/;
-	$self->addbadmessage($r->maketext("Files with extension '.[_1]' usually belong in '[_2]'",$extension,$location));
+	$self->addbadmessage(
+		$r->maketext("Files with extension '.[_1]' usually belong in '[_2]'",$extension,$location)
+		. (($extension eq 'csv') ? $r->maketext(". If this is a class roster, rename it to have extension '.lst'") : '')
+	);
 }
 
 ##################################################

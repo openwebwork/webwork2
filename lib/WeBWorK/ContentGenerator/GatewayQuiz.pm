@@ -1214,6 +1214,7 @@ sub nav {
 
 		# Set up the student nav.
 		print join("",
+			CGI::start_div({ class => "row-fluid sticky-nav", role => "navigation", aria_label => "user navigation"}),
 			CGI::start_div({ class => 'user-nav' }),
 			$prevTest
 			? CGI::a({
@@ -1257,6 +1258,7 @@ sub nav {
 					class => "nav_button student-nav-button"
 				}, $r->maketext("Next Test"))
 			: CGI::span({ class => "gray_button" }, $r->maketext("Next Test")),
+			CGI::end_div(),
 			CGI::end_div()
 		);
 	}
@@ -1909,9 +1911,7 @@ sub body {
 				my $scMsg = $r->maketext("Your recorded score on this test (version [_1]) is [_2]/[_3].",
 					$versionNumber, wwRound(2,$recordedScore), $totPossible);
 				if ($exceededAllowedTime && $recordedScore == 0) {
-					$scMsg .= $r->maketext("You exceeded the allowed time.");
-				} else {
-					$scMsg .= ".  ";
+					$scMsg .= " " . $r->maketext("You exceeded the allowed time.");
 				}
 				print CGI::strong($scMsg), CGI::br();
 				print CGI::end_div();
@@ -1930,7 +1930,7 @@ sub body {
 
 		if ($canShowWork && $set->set_id ne "Undefined_Set") {
 			print $r->maketext("The test (which is version [_1]) may  no longer be submitted for a grade.",$versionNumber);
-			print "" . (($can{showScore}) ? $r->maketext("You may still check your answers.") : ".") ;
+			print " " . $r->maketext("You may still check your answers.") if $can{showScore};
 
 			# print a "printme" link if we're allowed to see our
 			#    work
@@ -1980,7 +1980,7 @@ sub body {
 		# subsequent pages of a multipage test
 		print CGI::hidden({-name=>'pageChangeHack', -value=>''}),
 			CGI::br();
-        print CGI::hidden({-name=>'startTime', -value=>$startTime});
+		print CGI::hidden({-name=>'startTime', -value=>$startTime});
 		if ($numProbPerPage && $numPages > 1) { 
 			print CGI::hidden({-name=>'newPage', -value=>''});
 			print CGI::hidden({-name=>'currentPage', -value=>$pageNumber});
@@ -1995,50 +1995,42 @@ sub body {
 		# set up links between problems and, for multi-page tests, pages
 		my $jumpLinks = '';
 		my $probRow = [ ];
+		my $scoreRow = [ ];
 		for my $i (0 .. $#pg_results) {
-
 			my $pn = $i + 1;
 			if ($i >= $startProb && $i <= $endProb) {
-				push(@$probRow, CGI::b(" [ ")) if ($i == $startProb);
-				push(@$probRow, " &nbsp;" .
-					CGI::a({-href=>"#",
-							-onclick=>"jumpTo($pn);return false;"},
-						"$pn") . "&nbsp; ");
-				push(@$probRow, CGI::b(" ] ")) if ($i == $endProb);
-			} elsif (!($i % $numProbPerPage)) {
-				push(@$probRow, " &nbsp;&nbsp; ",
-					" &nbsp;&nbsp; ", " &nbsp;&nbsp; ");
+				push(@$probRow, CGI::a({-href=>"#", -onclick => "jumpTo($pn);return false;"}, $pn));
+			} else {
+				push(@$probRow, $pn);
 			}
+			my $score = $probStatus[$probOrder[$i]];
+			$score = ($score == 1) ? "\x{1F4AF}" : wwRound(0,100*$score);
+			push(@$scoreRow, $score);
 		}
+		my @tableRows;
+		my @cols = (CGI::colgroup(CGI::col({class => 'header'})));
 		if ($numProbPerPage && $numPages > 1) {
-			my $pageRow = [ CGI::th( {scope=>"row"}, CGI::b($r->maketext('Jump to Page:'))),
-					CGI::td(CGI::b(' [ ' )) ];
+			push (@cols, (CGI::colgroup({class => 'page'},CGI::col({class => 'problem'}) x $numProbPerPage) x $numPages));
+			my @pages;
 			for my $i (1 .. $numPages) {
 				my $pn = ($i == $pageNumber) ? $i : 
 					CGI::a({-href=>'javascript:document.gwquiz.pageChangeHack.value=1;' .
 							"document.gwquiz.newPage.value=\"$i\";" .
-							'document.gwquiz.previewAnswers.click();'}, "&nbsp;$i&nbsp;");
-
-				my $colspan =  0;
-				if ($i == $pageNumber) {
-					$colspan = ($#pg_results - ($i-1)*$numProbPerPage > $numProbPerPage)
-						? $numProbPerPage : $#pg_results - ($i-1)*$numProbPerPage + 1;
-				} else {
-					$colspan = 1;
-				}
-				push(@$pageRow, CGI::td({-colspan=>$colspan, -align=>'center'}, $pn));
-				push(@$pageRow, CGI::td([CGI::b(' ] '), CGI::b(' [ ')]))
-				if ($i != $numPages);
+							'document.gwquiz.previewAnswers.click();'}, $i);
+				my $class = ($i == $pageNumber) ? 'page active' : 'page';
+				push(@pages, CGI::td({-colspan => $numProbPerPage, -class => $class}, $pn));
 			}
-			push(@$pageRow, CGI::td(CGI::b(' ] ')));
-			$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"},
-				CGI::Tr(@$pageRow),
-				CGI::Tr(CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow)));
+			if ($numProbPerPage == 1) {
+				@tableRows = (CGI::Tr(CGI::th( {scope=>"row"}, $r->maketext('Move to Problem:')), @pages));
+			} else {
+				@tableRows = (CGI::Tr(CGI::th( {scope=>"row"}, $r->maketext('Move to Page:')), @pages), CGI::Tr(CGI::th($r->maketext("Jump to Problem:")), CGI::td({class => "problem"}, $probRow)));
+			}
 		} else {
-			$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"},
-				CGI::Tr(CGI::th(CGI::b($r->maketext("Jump to Problem:"))), CGI::td($probRow)));
+			push (@cols, (CGI::colgroup({class => 'page'}, CGI::col({class => 'problem'}) x ($#pg_results + 1))));
+			@tableRows = (CGI::Tr(CGI::th($r->maketext("Jump to Problem:")), CGI::td({class => "problem"}, $probRow)));
 		}
-
+		push (@tableRows, CGI::Tr(CGI::th($r->maketext("% Score:")), CGI::td({class => "score"}, $scoreRow))) if ($canShowProblemScores && $set->version_last_attempt_time);
+		$jumpLinks = CGI::table({class=>"gwNavigation", role=>"navigation", 'aria-label'=>"problem navigation"}, @cols, @tableRows);
 		print $jumpLinks,"\n";
 
 		# print out problems and attempt results, as appropriate

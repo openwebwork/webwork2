@@ -510,9 +510,21 @@ sub add_course_form {
 		),
 	);
 	
-	print CGI::p($r->maketext("To add the WeBWorK administrators to the new course (as administrators) check the box below."));
 	my @checked = ($add_admin_users) ?(checked=>1): ();  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
-	print CGI::p({},CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, $r->maketext("Add WeBWorK administrators to new course")));
+	print CGI::div(
+		{class => 'new-course-options'},
+		CGI::p($r->maketext("To add the WeBWorK administrators to the new course (as administrators) check the box below.")),
+		CGI::label(
+			{for => "add_admin_users"},
+			CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, ''),
+			CGI::span($r->maketext("Add WeBWorK administrators to new course"))
+		),
+		CGI::label(
+			{for => "add_config_file"},
+			CGI::input({-type=>'checkbox', -name=>"add_config_file", @checked }, ''),
+			CGI::span($r->maketext("Copy simple configuration file to new course"))
+		),
+	);
 
 	print CGI::p($r->maketext("To add an additional instructor to the new course, specify user information below. The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.\n"));
 	
@@ -622,6 +634,7 @@ sub add_course_validate {
 	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
 	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
 	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
+	my $add_config_file                  = trim_spaces( $r->param("add_config_file") ) || "";
 	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
 	
 	
@@ -698,6 +711,7 @@ sub do_add_course {
 	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
 	
 	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
+	my $add_config_file                  = trim_spaces( $r->param("add_config_file") ) || "";
 	
 	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
 	
@@ -770,6 +784,9 @@ sub do_add_course {
 	my %optional_arguments;
 	if ($add_templates_course ne "") {
 		$optional_arguments{templatesFrom} = $add_templates_course;
+	}
+	if ($add_config_file ne "") {
+		$optional_arguments{copySimpleConfig} = $add_config_file;
 	}
 	if ($add_courseTitle ne "") {
 		$optional_arguments{courseTitle} = $add_courseTitle;
@@ -3138,11 +3155,7 @@ sub do_hide_inactive_course {
 	}	
 	
 	if ($succeeded_count) {
-		if ($succeeded_count < 6) {
-			$succeeded_message = $r->maketext("The following courses were successfully hidden: [_1]", @succeeded_courses);
-		} else {
-			$succeeded_message = $r->maketext("[quant_1, course was, courses were] successfully hidden.", $succeeded_count);
-		}
+		$succeeded_message = $r->maketext("The following courses were successfully hidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
 	}
 	if ($succeeded_count or $already_hidden_count) {
 			print CGI::div({class=>"ResultsWithoutError"},
@@ -3208,11 +3221,7 @@ sub do_unhide_inactive_course {
 	}	
 	
 	if ($succeeded_count) {
-		if ($succeeded_count < 6) {
-			$succeeded_message = $r->maketext("The following courses were successfully unhidden: [_1]", @succeeded_courses);
-		} else {
-			$succeeded_message = $r->maketext("[quant,_1,course was, courses were] successfully unhidden.", $succeeded_count);
-		}
+		$succeeded_message = $r->maketext("The following courses were successfully unhidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
 	}
 	if ($succeeded_count or $already_visible_count) {
 		print CGI::div({class=>"ResultsWithoutError"},
