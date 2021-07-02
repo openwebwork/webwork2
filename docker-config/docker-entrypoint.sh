@@ -82,14 +82,11 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/mail{smtpSender} = '\'''\''/mail{smtpSender} = $ENV{"WEBWORK_SMTP_SENDER"}/' \
                     -e 's/siteDefaults{timezone} = "America\/New_York"/siteDefaults{timezone} = $ENV{"WEBWORK_TIMEZONE"}/' \
                     -e 's/^# $server_userID     = '\''www-data/$server_userID     = '\''www-data/'  \
-                    -e 's/^# $server_groupID    = '\''www-data/$server_groupID    = '\''www-data/' \
-                    $WEBWORK_ROOT/conf/site.conf
+                    -e 's/^# $server_groupID    = '\''www-data/$server_groupID    = '\''www-data/' $WEBWORK_ROOT/conf/site.conf
             fi
 
              if [ $i == 'localOverrides.conf' ]; then
-                sed -i \ 
-                    -e 's/# $pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/' \
-                    $WEBWORK_ROOT/conf/localOverrides.conf
+                sed -i -e 's/#$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/' $WEBWORK_ROOT/conf/localOverrides.conf
             fi
         fi
         
@@ -226,7 +223,7 @@ if [ "$1" = 'apache2' ]; then
     
     # even if the admin and courses directories already existed their permissions might not have been correct
     # chown www-data:www-data  $APP_ROOT/courses
-      chown www-data:www-data  $APP_ROOT/courses/admin/*    
+    chown www-data:www-data  $APP_ROOT/courses/admin/*    
 
     # Symbolic links which have no target outside the Docker container
     # cause problems duringt the rebuild process on some systems.
