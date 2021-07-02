@@ -103,9 +103,9 @@ if [ "$1" = 'apache2' ]; then
         $WEBWORK_ROOT/bin/addcourse admin --db-layout=sql_single --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
-	$WEBWORK_ROOT/bin/upgrade_admin_db.pl
-	$WEBWORK_ROOT/wwsh admin ./addadmin
-	echo "user: admin password: admin added to course admin and tables upgraded"
+		$WEBWORK_ROOT/bin/upgrade_admin_db.pl
+		$WEBWORK_ROOT/wwsh admin ./addadmin
+		echo "user: admin password: admin added to course admin and tables upgraded"
     fi
     # modelCourses link if not existing
     if [ ! -d "$APP_ROOT/courses/modelCourse" ]; then
@@ -223,6 +223,10 @@ if [ "$1" = 'apache2' ]; then
     chmod -R ug+w logs tmp DATA 
     chown  www-data:www-data htdocs/tmp
     chmod ug+w htdocs/tmp
+    
+    # even if the admin and courses directories already existed their permissions might not have been correct
+    # chown www-data:www-data  $APP_ROOT/courses
+      chown www-data:www-data  $APP_ROOT/courses/admin/*    
 
     # Symbolic links which have no target outside the Docker container
     # cause problems duringt the rebuild process on some systems.
