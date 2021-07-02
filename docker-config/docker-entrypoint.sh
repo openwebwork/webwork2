@@ -103,8 +103,8 @@ if [ "$1" = 'apache2' ]; then
         $WEBWORK_ROOT/bin/addcourse admin --db-layout=sql_single --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
-	$WEBWORK_ROOT/bin/upgrade_admin_db.pl
-	$WEBWORK_ROOT/wwsh admin ./addadmin
+	#$WEBWORK_ROOT/bin/upgrade_admin_db.pl
+	#$WEBWORK_ROOT/wwsh admin ./addadmin
 	echo "user: admin password: admin added to course admin and tables upgraded"
     fi
     # modelCourses link if not existing
