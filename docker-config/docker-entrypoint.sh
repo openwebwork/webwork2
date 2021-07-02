@@ -85,7 +85,14 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/^# $server_groupID    = '\''www-data/$server_groupID    = '\''www-data/' \
                     $WEBWORK_ROOT/conf/site.conf
             fi
+
+             if [ $i == 'localOverrides.conf' ]; then
+                sed -i \ 
+                    -e 's/# $pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/' \
+                    $WEBWORK_ROOT/conf/localOverrides.conf
+            fi
         fi
+        
     done
     # create admin course if not existing
     if [ ! -d "$APP_ROOT/courses/admin"  ]; then
@@ -208,8 +215,11 @@ if [ "$1" = 'apache2' ]; then
     # This change significantly speeds up Docker startup time on production
     # servers with many files/courses (on Linux).
 
-    chown -R www-data:www-data logs tmp DATA
-    chmod -R ug+w logs tmp DATA
+
+    chown -R www-data:www-data logs tmp DATA 
+    chmod -R ug+w logs tmp DATA 
+    chown  www-data:www-data htdocs/tmp
+    chmod ug+w htdocs/tmp
 
     # Symbolic links which have no target outside the Docker container
     # cause problems duringt the rebuild process on some systems.
