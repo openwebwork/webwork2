@@ -114,8 +114,8 @@ if [ "$1" = 'apache2' ]; then
     
     
 #     echo "check admin tables"
-#     echo $WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}
-#     ADMIN_TABLE_EXISTS=`$WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}`
+#     echo $WEBWORK_ROOT/bin/courseUserTableExists.sh admin  $WEBWORK_DB_USER $WEBWORK_DB_PASSWORD
+#     ADMIN_TABLE_EXISTS=`$WEBWORK_ROOT/bin/courseUserTableExists.sh  admin  $WEBWORK_DB_USER $WEBWORK_DB_PASSWORD`
 # 
 #     if [ $ADMIN_TABLE_EXISTS ]; then
 #         echo "admin course db tables need updating"
