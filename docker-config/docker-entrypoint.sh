@@ -83,16 +83,21 @@ if [ "$1" = 'apache2' ]; then
                     -e 's/siteDefaults{timezone} = "America\/New_York"/siteDefaults{timezone} = $ENV{"WEBWORK_TIMEZONE"}/' \
                     -e 's/^# $server_userID     = '\''www-data/$server_userID     = '\''www-data/'  \
                     -e 's/^# $server_groupID    = '\''www-data/$server_groupID    = '\''www-data/' $WEBWORK_ROOT/conf/site.conf
+                
+                echo "$WEBWORK_ROOT/conf/$i has been modified."
             fi
 
-             if [ $i == 'localOverrides.conf' ]; then
+            if [ $i == 'localOverrides.conf' ]; then
                 sed -i -e 's/#$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/' $WEBWORK_ROOT/conf/localOverrides.conf
+                echo "$WEBWORK_ROOT/conf/$i has been modified."
             fi
         fi
         
     done
     # create admin course if not existing
-    if [ ! -d "$APP_ROOT/courses/admin"  ]; then
+    # check first if the admin courses directory exists then check that at 
+    # least one of the ables associated with the course (the admin_user table) exists
+    if [ ! -d "$APP_ROOT/courses/admin" ]; then
         newgrp www-data
         umask 2
         cd $APP_ROOT/courses
@@ -100,10 +105,34 @@ if [ "$1" = 'apache2' ]; then
         $WEBWORK_ROOT/bin/addcourse admin --db-layout=sql_single --users=$WEBWORK_ROOT/courses.dist/adminClasslist.lst --professors=admin
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
-		$WEBWORK_ROOT/bin/upgrade_admin_db.pl
-		$WEBWORK_ROOT/wwsh admin ./addadmin
-		echo "user: admin password: admin added to course admin and tables upgraded"
+        echo "user: admin password: admin added to course admin and tables upgraded"
     fi
+    
+    
+    
+    
+    
+    
+    echo "check admin tables"
+    echo `$WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}`
+    ADMIN_TABLE_EXITS=`$WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}`
+
+    if [ $ADMIN_TABLE_EXITS ]; then
+        echo "admin course db tables need updating"
+        $WEBWORK_ROOT/bin/upgrade_admin_db.pl
+        $WEBWORK_ROOT/bin/wwsh admin ./addadmin
+    fi
+    
+    # use case for the extra check for the admin:
+    # In rebuilding a docker box one might clear out the docker containers, 
+    # images and volumes including mariaDB, BUT leave the 
+    # contents of ww-docker-data directory in place.  It now holds the shell of the courses 
+    # including the admin course directory. This means that once you rebuild the box 
+    # you can't access the admin course (be cause the user_admin table is missing) 
+    # and you need to run bin/upgrade_admin_db.pl from inside the container. 
+    # This check insures that if the admin_user table is missing the whole admin course is rebuilt 
+    # even if the admin directory is in place. 
+
     # modelCourses link if not existing
     if [ ! -d "$APP_ROOT/courses/modelCourse" ]; then
       echo "create modelCourse subdirectory"
@@ -165,7 +194,7 @@ if [ "$1" = 'apache2' ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
-        $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
+        #$WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
         #$WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
@@ -214,7 +243,6 @@ if [ "$1" = 'apache2' ]; then
     # and SKIPS the deletion of symbolic links.
     # This change significantly speeds up Docker startup time on production
     # servers with many files/courses (on Linux).
-
 
     chown -R www-data:www-data logs tmp DATA 
     chmod -R ug+w logs tmp DATA 
