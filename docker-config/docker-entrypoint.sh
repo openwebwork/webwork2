@@ -113,15 +113,15 @@ if [ "$1" = 'apache2' ]; then
     
     
     
-    echo "check admin tables"
-    echo `$WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}`
-    ADMIN_TABLE_EXITS=`$WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}`
-
-    if [ $ADMIN_TABLE_EXITS ]; then
-        echo "admin course db tables need updating"
-        $WEBWORK_ROOT/bin/upgrade_admin_db.pl
-        $WEBWORK_ROOT/bin/wwsh admin ./addadmin
-    fi
+#     echo "check admin tables"
+#     echo $WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}
+#     ADMIN_TABLE_EXISTS=`$WEBWORK_ROOT/bin/courseUserTableExists.sh admin $ENV{"WEBWORK_DB_PASSWORD"}`
+# 
+#     if [ $ADMIN_TABLE_EXISTS ]; then
+#         echo "admin course db tables need updating"
+#         $WEBWORK_ROOT/bin/upgrade_admin_db.pl
+#         $WEBWORK_ROOT/bin/wwsh admin ./addadmin
+#     fi
     
     # use case for the extra check for the admin:
     # In rebuilding a docker box one might clear out the docker containers, 
