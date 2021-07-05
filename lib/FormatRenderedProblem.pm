@@ -76,17 +76,6 @@ sub formatRenderedProblem {
 	my $rh_result   = $self->return_object() || {};  # wrap problem in formats
 	$problemText    = "No output from rendered Problem" unless $rh_result;
 
-	my $forbidGradePassback = 1; # 1 = feature blocked, 2 = due to rendering error, 3 = not in submit mode
-
-	if (ref($rh_result) && $rh_result->{text}) {
-		$problemText = $rh_result->{text};
-	} else {
-		$problemText .= "Unable to decode problem text:<br>$self->{error_string}<br>" .
-			format_hash_ref($rh_result);
-		$rh_result->{problem_result}->{score} = 0; # force score to 0 for such errors.
-		$forbidGradePassback = 2; # 2 = due to error
-	}
-
 	my $courseID = $self->{courseID} // "";
 
 	# Create a course environment
@@ -98,11 +87,24 @@ sub formatRenderedProblem {
 
 	my $mt = WeBWorK::Localize::getLangHandle($self->{inputs_ref}{language} // 'en');
 
-	if ( $forbidGradePassback == 1 &&
-	     defined( $ce->{html2xmlAllowGradePassback} ) &&
+	my $forbidGradePassback = 1; # Default is to forbid, due to the security issue
+
+	if ( defined( $ce->{html2xmlAllowGradePassback} ) &&
 	     $ce->{html2xmlAllowGradePassback} eq "This course intentionally enables the insecure LTI grade pass-back feature of html2xml." ) {
 		# It is strongly recommended that you clarify the security risks of enabling the current version of this feature before using it.
 		$forbidGradePassback = 0;
+	}
+
+	my $renderErrorOccurred = 0;
+
+	if (ref($rh_result) && $rh_result->{text}) {
+		$problemText = $rh_result->{text};
+	} else {
+		$problemText .= "Unable to decode problem text:<br>$self->{error_string}<br>" .
+			format_hash_ref($rh_result);
+		$rh_result->{problem_result}->{score} = 0; # force score to 0 for such errors.
+		$renderErrorOccurred = 1;
+		$forbidGradePassback = 1; # due to render error
 	}
 
 	my $SITE_URL = $self->site_url // '';
@@ -220,10 +222,9 @@ sub formatRenderedProblem {
 	# Attempts table
 	my $answerTemplate = "";
 
-	if ( $forbidGradePassback == 2 ) {
+	if ($renderErrorOccurred) {
 		# Do not produce an AttemptsTable when we had a rendering error.
 		$answerTemplate = '<!-- No AttemptsTable on errors like this. --> ';
-		$problemResult = 0; # avoid making an incorrect $scoreSummary
 	} else {
 		my $tbl = WeBWorK::Utils::AttemptsTable->new(
 			$rh_result->{answers} // {},
@@ -247,19 +248,20 @@ sub formatRenderedProblem {
 	# Score summary
 	my $scoreSummary = '';
 
-	if ($submitMode && $problemResult) {
-		$scoreSummary = CGI::p($mt->maketext("You received a score of [_1] for this attempt.",
+	if ($submitMode) {
+		if ($renderErrorOccurred) {
+			$scoreSummary  = '<!-- No scoreSummary on errors. -->';
+		} elsif ($problemResult) {
+			$scoreSummary = CGI::p($mt->maketext("You received a score of [_1] for this attempt.",
 				wwRound(0, $problemResult->{score} * 100) . '%'));
-		$scoreSummary .= CGI::p($problemResult->{msg}) if ($problemResult->{msg});
+			$scoreSummary .= CGI::p($problemResult->{msg}) if ($problemResult->{msg});
 
-		$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded.")) unless $hideWasNotRecordedMessage;
-		$scoreSummary .= CGI::hidden({id => 'problem-result-score', name => 'problem-result-score', value => $problemResult->{score}});
+			$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded.")) unless $hideWasNotRecordedMessage;
+			$scoreSummary .= CGI::hidden({id => 'problem-result-score', name => 'problem-result-score', value => $problemResult->{score}});
+		}
 	}
 	if ( !$forbidGradePassback && !$submitMode ) {
-		$forbidGradePassback = 3;
-	}
-	if ( $forbidGradePassback == 2 ) {
-		$scoreSummary  = '<!-- No scoreSummary on errors. -->';
+		$forbidGradePassback = 1;
 	}
 
 	# Answer hash in XML format used by the PTX format.
