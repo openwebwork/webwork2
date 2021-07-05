@@ -83,7 +83,46 @@ Lists the courses defined.
 sub listCourses {
 	my ($ce) = @_;
 	my $coursesDir = $ce->{webworkDirs}->{courses};
-	return grep { not (m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
+
+	# We connect to the database and collect table names which end in "_user":
+	my $dbh = DBI->connect(
+		$ce->{database_dsn},
+		$ce->{database_username},
+		$ce->{database_password},
+		{
+			PrintError => 0,
+			RaiseError => 1,
+		},
+        );
+
+	my $dbname = ${ce}->{database_name};
+	my $stmt_bad = 0;
+	my $stmt = $dbh->prepare("show tables") or ( $stmt_bad = 1 );
+	my %user_tables_seen; # Will also include problem_user, set_user, achievement_user, set_locations_user
+	if ( ! $stmt_bad ) {
+		$stmt->execute() or ( $stmt_bad = 1 );
+		my @row;
+		while (@row = $stmt->fetchrow_array) {
+			if ( $row[0] =~  /_user$/ ) {
+				$user_tables_seen{ $row[0] } = 1;
+			}
+		}
+		$stmt->finish();
+	}
+	$dbh->disconnect();
+
+	# Collect directories which may be course directories
+	my @cdirs = grep { not (m/^\./ or m/^CVS$/) and -d "$coursesDir/$_" } readDirectory($coursesDir);
+	if ( $stmt_bad ) {
+		# Fall back to old method listing all directories.
+		return @cdirs;
+	} else {
+		my @courses;
+		foreach my $cname ( @cdirs ) {
+			push(@courses,$cname) if $user_tables_seen{"${cname}_user"};
+		}
+		return @courses;
+	}
 }
 
 =item listArchivedCourses($ce)
