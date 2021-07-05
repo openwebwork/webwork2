@@ -97,6 +97,10 @@ if [ "$1" = 'apache2' ]; then
     # create admin course if not existing
     # check first if the admin courses directory exists then check that at 
     # least one of the ables associated with the course (the admin_user table) exists
+    
+    echo "check admin course and admin tables"
+    ADMIN_TABLE_EXISTS=`mysql -u $WEBWORK_DB_USER  -p$WEBWORK_DB_PASSWORD -B -N -h db -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';"  2>/dev/null`
+ 
     if [ ! -d "$APP_ROOT/courses/admin" ]; then
         newgrp www-data
         umask 2
@@ -106,22 +110,19 @@ if [ "$1" = 'apache2' ]; then
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
         echo "user: admin password: admin added to course admin and tables upgraded"
+    elif [ ! $ADMIN_TABLE_EXISTS ]; then
+        echo "admin course db tables need updating"
+        $WEBWORK_ROOT/bin/upgrade_admin_db.pl
+        $WEBWORK_ROOT/bin/wwsh admin ./addadmin
+        echo "admin course tables created with one user: admin   whose password is admin"
+    else 
+        echo "using pre-existing admin course and admin tables"
     fi
     
-    
-    
-    
-    
-    
-#     echo "check admin tables"
-#     echo $WEBWORK_ROOT/bin/courseUserTableExists.sh admin  $WEBWORK_DB_USER $WEBWORK_DB_PASSWORD
-#     ADMIN_TABLE_EXISTS=`$WEBWORK_ROOT/bin/courseUserTableExists.sh  admin  $WEBWORK_DB_USER $WEBWORK_DB_PASSWORD`
-# 
-#     if [ $ADMIN_TABLE_EXISTS ]; then
-#         echo "admin course db tables need updating"
-#         $WEBWORK_ROOT/bin/upgrade_admin_db.pl
-#         $WEBWORK_ROOT/bin/wwsh admin ./addadmin
-#     fi
+#    echo $WEBWORK_ROOT/bin/courseUserTableExists.sh admin  $WEBWORK_DB_USER $WEBWORK_DB_PASSWORD
+#    echo mysql -u $ENV{WEBWORK_DB_USER}  -pENV{$WEBWORK_DB_PASSWORD} -B -N -h db -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';"  2>/dev/null
+#    
+   
     
     # use case for the extra check for the admin:
     # In rebuilding a docker box one might clear out the docker containers, 
