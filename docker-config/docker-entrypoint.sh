@@ -24,7 +24,7 @@ a2enmod headers
 
 # Build more locales
 if [ "$ADD_LOCALES" != "0" ]; then
-  echo "Rebulding locales - adding: $ADD_LOCALES"
+  echo "Rebuilding locales - adding: $ADD_LOCALES"
   cp -a /etc/locale.gen /etc/locale.gen.orig
   /bin/echo -e "en_US ISO-8859-1\nen_US.UTF-8 UTF-8\n$ADD_LOCALES" > /etc/locale.gen.tmp
   /usr/bin/tr "," "\n" < /etc/locale.gen.tmp > /etc/locale.gen
@@ -239,6 +239,21 @@ if [ "$1" = 'apache2' ]; then
 
     echo "end fixing ownership and permissions"
 
+    # "touch" and "chown" some file to prevent some warnings
+    cd /opt/webwork/webwork2/htdocs/themes/math4
+    /usr/bin/touch math4-overrides.css math4-overrides.js math4-coloring.css
+    chown www-data:www-data math4-overrides.css math4-overrides.js math4-coloring.css
 fi
 
-exec "$@"
+# The code below allows to use
+#    docker container exec -it webwork2_app_1 /usr/sbin/apachectl graceful
+# to restart Apache in the container in a "nice" way.
+
+trap "exit 0" SIGWINCH
+# code added here
+while true
+do
+    exec "$@" &
+    wait $!
+done
+
