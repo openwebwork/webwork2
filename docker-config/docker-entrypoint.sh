@@ -96,9 +96,10 @@ if [ "$1" = 'apache2' ]; then
     done
     # create admin course if not existing
     # check first if the admin courses directory exists then check that at 
-    # least one of the ables associated with the course (the admin_user table) exists
+    # least one of the tables associated with the course (the admin_user table) exists
     
     echo "check admin course and admin tables"
+    wait_for_db
     ADMIN_TABLE_EXISTS=`mysql -u $WEBWORK_DB_USER  -p$WEBWORK_DB_PASSWORD -B -N -h db -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';"  2>/dev/null`
  
     if [ ! -d "$APP_ROOT/courses/admin" ]; then
@@ -113,23 +114,18 @@ if [ "$1" = 'apache2' ]; then
     elif [ ! $ADMIN_TABLE_EXISTS ]; then
         echo "admin course db tables need updating"
         $WEBWORK_ROOT/bin/upgrade_admin_db.pl
-        $WEBWORK_ROOT/bin/wwsh admin ./addadmin
+        $WEBWORK_ROOT/bin/wwsh admin $WEBWORK_ROOT/bin/addadmin
         echo "admin course tables created with one user: admin   whose password is admin"
     else 
         echo "using pre-existing admin course and admin tables"
     fi
-    
-#    echo $WEBWORK_ROOT/bin/courseUserTableExists.sh admin  $WEBWORK_DB_USER $WEBWORK_DB_PASSWORD
-#    echo mysql -u $ENV{WEBWORK_DB_USER}  -pENV{$WEBWORK_DB_PASSWORD} -B -N -h db -e "select count(*) from information_schema.tables where table_schema='webwork' and table_name = 'admin_user';"  2>/dev/null
-#    
-   
     
     # use case for the extra check for the admin:
     # In rebuilding a docker box one might clear out the docker containers, 
     # images and volumes including mariaDB, BUT leave the 
     # contents of ww-docker-data directory in place.  It now holds the shell of the courses 
     # including the admin course directory. This means that once you rebuild the box 
-    # you can't access the admin course (be cause the user_admin table is missing) 
+    # you can't access the admin course (because the admin_user table is missing) 
     # and you need to run bin/upgrade_admin_db.pl from inside the container. 
     # This check insures that if the admin_user table is missing the whole admin course is rebuilt 
     # even if the admin directory is in place. 
@@ -195,7 +191,7 @@ if [ "$1" = 'apache2' ]; then
         echo "Restoring OPL tables from the TABLE-DUMP/OPL-tables.sql file"
         wait_for_db
         $WEBWORK_ROOT/bin/restore-OPL-tables.pl
-        #$WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
+        $WEBWORK_ROOT/bin/load-OPL-global-statistics.pl
         #$WEBWORK_ROOT/bin/update-OPL-statistics.pl
         if [ -d $APP_ROOT/libraries/webwork-open-problem-library/JSON-SAVED ]; then
           # Restore saved JSON files
