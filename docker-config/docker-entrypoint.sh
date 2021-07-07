@@ -88,7 +88,7 @@ if [ "$1" = 'apache2' ]; then
 
             if [ $i == 'localOverrides.conf' ]; then
                 sed -i -e 's/#$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/$pg{specialPGEnvironmentVars}{Rserve} = {host => "r"};/' \
-                       -e 's/$problemLibrary{showLibraryLocalStats} = 1;/$problemLibrary{showLibraryLocalStats} = 0;/' $WEBWORK_ROOT/conf/localOverrides.conf
+                       -e 's/#$problemLibrary{showLibraryLocalStats} = 0;/$problemLibrary{showLibraryLocalStats} = 0;/' $WEBWORK_ROOT/conf/localOverrides.conf
                 echo "$WEBWORK_ROOT/conf/$i has been modified."
             fi
         fi
@@ -111,7 +111,7 @@ if [ "$1" = 'apache2' ]; then
         chown www-data:www-data -R $APP_ROOT/courses
         echo "Admin course is created."
         echo "user: admin password: admin added to course admin and tables upgraded"
-    elif [ ! $ADMIN_TABLE_EXISTS ]; then
+    elif [ $ADMIN_TABLE_EXISTS == 0 ]; then
         echo "admin course db tables need updating"
         $WEBWORK_ROOT/bin/upgrade_admin_db.pl
         $WEBWORK_ROOT/bin/wwsh admin $WEBWORK_ROOT/bin/addadmin
