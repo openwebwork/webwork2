@@ -1,5 +1,6 @@
 *.conf
 *-config
+.env
 applets
 tmp
 logs
