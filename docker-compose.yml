@@ -40,7 +40,7 @@ services:
       # When the MariaDB container is first started it will set the
       # the MYSQL_ROOT_PASSWORD if there is no mysql database in the
       # data volume.
-      MYSQL_ROOT_PASSWORD: sqlRootPasswordSetThisPasswordBEFOREfirstStartingTheDBcontainer
+      MYSQL_ROOT_PASSWORD: ${WEBWORK_MYSQL_ROOT_PASSWORD}
 
       # When the MariaDB container is first started it will create
       #    the WW database and WW DB user based on:
