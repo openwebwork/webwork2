@@ -135,8 +135,8 @@ my $ConfigStrings = [
 		{ 
 		  var => 'defaultTheme',
 		  doc => x('Theme (refresh page after saving changes to reveal new theme.)'),
-		  doc2 => x('There are currently two themes (or skins) to choose from: math3 and math4.  The theme specifies a unified look and feel for the WeBWorK course web pages.'),
-		  values => [qw(math3 math4)],
+		  doc2 => x('There is one main theme to choose from: math4. It has two variants, math4-green and math4-red. The theme specifies a unified look and feel for the WeBWorK course web pages.'),
+		  values => [qw(math4 math4-green math4-red)],
 		  type => 'popuplist',
 		  hashVar => '{defaultTheme}'
 		},

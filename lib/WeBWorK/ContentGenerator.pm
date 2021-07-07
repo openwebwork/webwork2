@@ -529,6 +529,50 @@ sub output_course_lang_and_dir{
 	return "";
 }
 
+=item webwork_logo()
+
+Create the link to the webwork installation landing page with a logo and alt text
+
+=cut
+
+sub webwork_logo {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	my $htdocs = $ce->{webwork_htdocs_url};
+	print CGI::a(
+		{href => $ce->{webwork_url}},
+		CGI::img({
+			src => "$htdocs/themes/$theme/images/webwork_logo.svg",
+			alt => $r->maketext("to courses page")
+		},'')
+	);
+	return "";
+}
+
+=item institution_logo()
+
+Create the link to the host institution with a logo and alt text
+
+=cut
+
+sub institution_logo {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	my $htdocs = $ce->{webwork_htdocs_url};
+	print CGI::a(
+		{href => $ce->{institutionURL}},
+		CGI::img({
+			src => "$htdocs/themes/$theme/images/" . $ce->{institutionLogo},
+			alt => $r->maketext("to [_1] main web site", $ce->{institutionName})
+		},'')
+	);
+	return "";
+}
+
 =item content()
 
 Defined in this package.

@@ -64,10 +64,10 @@
 <!-- Header -->
 <div id = "masthead" class="row-fluid">
 	<div class="span2 webwork_logo">
-		<a href="<!--#url type="webwork" name="root"-->"><img src="<!--#url type="webwork" name="htdocs"-->/images/webwork_logo.svg" alt="to courses page" /></a>
+		<!--#webwork_logo-->
 	</div>
-	<div class="span6 maa_logo">
-		<a href="http://www.maa.org"><img src="<!--#url type="webwork" name="htdocs"-->/images/maa_logo_small.png" alt="image link to MAA (Mathematical Association of America) main web site" /></a>
+	<div class="span6 institution_logo">
+		<!--#institution_logo-->
 	</div>
 	<div id="loginstatus" class="span4">
 		<!--#loginstatus-->

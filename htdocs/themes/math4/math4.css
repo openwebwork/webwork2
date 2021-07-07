@@ -103,17 +103,17 @@ legend {
 }
 
 .webwork_logo a,
-.maa_logo a {
-    display:block;
+.institution_logo a {
+	display:block;
 }
 
-.maa_logo {
-	height: 58px;
-	padding: 5px 0;
+.institution_logo {
+	padding: 8px 0;
+	height: 67px;
 }
 
-.maa_logo img {
-	padding: 5px;
+.institution_logo img {
+	max-height: 51px;
 }
 
 #masthead a {
