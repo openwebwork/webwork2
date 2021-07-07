@@ -28,6 +28,7 @@ use WeBWorK::Utils qw(wwRound decode_utf8_base64);
 use XML::Simple qw(XMLout);
 use WeBWorK::Utils::LanguageAndDirection;
 use JSON;
+use Digest::SHA qw(sha1_base64);
 
 sub new {
     my $invocant = shift;
@@ -75,13 +76,6 @@ sub formatRenderedProblem {
 	my $rh_result   = $self->return_object() || {};  # wrap problem in formats
 	$problemText    = "No output from rendered Problem" unless $rh_result;
 
-	if (ref($rh_result) and $rh_result->{text}) {
-		$problemText = $rh_result->{text};
-	} else {
-		$problemText .= "Unable to decode problem text:<br>$self->{error_string}<br>" .
-			format_hash_ref($rh_result);
-	}
-
 	my $courseID = $self->{courseID} // "";
 
 	# Create a course environment
@@ -92,6 +86,26 @@ sub formatRenderedProblem {
 		});
 
 	my $mt = WeBWorK::Localize::getLangHandle($self->{inputs_ref}{language} // 'en');
+
+	my $forbidGradePassback = 1; # Default is to forbid, due to the security issue
+
+	if ( defined( $ce->{html2xmlAllowGradePassback} ) &&
+	     $ce->{html2xmlAllowGradePassback} eq "This course intentionally enables the insecure LTI grade pass-back feature of html2xml." ) {
+		# It is strongly recommended that you clarify the security risks of enabling the current version of this feature before using it.
+		$forbidGradePassback = 0;
+	}
+
+	my $renderErrorOccurred = 0;
+
+	if (ref($rh_result) && $rh_result->{text}) {
+		$problemText = $rh_result->{text};
+	} else {
+		$problemText .= "Unable to decode problem text:<br>$self->{error_string}<br>" .
+			format_hash_ref($rh_result);
+		$rh_result->{problem_result}->{score} = 0; # force score to 0 for such errors.
+		$renderErrorOccurred = 1;
+		$forbidGradePassback = 1; # due to render error
+	}
 
 	my $SITE_URL = $self->site_url // '';
 	my $FORM_ACTION_URL = $self->{form_action_url} // '';
@@ -115,6 +129,7 @@ sub formatRenderedProblem {
 	my $psvn = $rh_result->{psvn} // $self->{inputs_ref}{psvn} // 54321;
 	my $session_key = $rh_result->{session_key} // "";
 	my $displayMode = $self->{inputs_ref}{displayMode};
+	my $hideWasNotRecordedMessage = $ce->{hideWasNotRecordedMessage} // 0;
 
 	# HTML document language settings
 	my $formLanguage = $self->{inputs_ref}{language} // 'en';
@@ -202,36 +217,51 @@ sub formatRenderedProblem {
 	my $showSummary = $self->{inputs_ref}{showSummary} // 1;
 	my $showAnswerNumbers = $self->{inputs_ref}{showAnswerNumbers} // 1;
 
-	# Attempts table
-	my $tbl = WeBWorK::Utils::AttemptsTable->new(
-		$rh_result->{answers} // {},
-		answersSubmitted    => $self->{inputs_ref}{answersSubmitted} // 0,
-		answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
-		displayMode         => $displayMode,
-		showAnswerNumbers   => $showAnswerNumbers,
-		ce                  => $ce,
-		showAttemptPreviews => $previewMode || $submitMode || $showCorrectMode,
-		showAttemptResults  => $submitMode || $showCorrectMode,
-		showCorrectAnswers  => $showCorrectMode,
-		showMessages        => $previewMode || $submitMode || $showCorrectMode,
-		showSummary         => (($showSummary and ($submitMode or $showCorrectMode)) // 0) ? 1 : 0,
-		maketext            => WeBWorK::Localize::getLoc($formLanguage),
-		summary             => $problemResult->{summary} // '', # can be set by problem grader
-	);
-	my $answerTemplate = $tbl->answerTemplate;
-	my $color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
-	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	my $color_input_blanks_script = "";
 
+	# Attempts table
+	my $answerTemplate = "";
+
+	if ($renderErrorOccurred) {
+		# Do not produce an AttemptsTable when we had a rendering error.
+		$answerTemplate = '<!-- No AttemptsTable on errors like this. --> ';
+	} else {
+		my $tbl = WeBWorK::Utils::AttemptsTable->new(
+			$rh_result->{answers} // {},
+			answersSubmitted    => $self->{inputs_ref}{answersSubmitted} // 0,
+			answerOrder         => $rh_result->{flags}{ANSWER_ENTRY_ORDER} // [],
+			displayMode         => $displayMode,
+			showAnswerNumbers   => $showAnswerNumbers,
+			ce                  => $ce,
+			showAttemptPreviews => $previewMode || $submitMode || $showCorrectMode,
+			showAttemptResults  => $submitMode || $showCorrectMode,
+			showCorrectAnswers  => $showCorrectMode,
+			showMessages        => $previewMode || $submitMode || $showCorrectMode,
+			showSummary         => (($showSummary and ($submitMode or $showCorrectMode)) // 0) ? 1 : 0,
+			maketext            => WeBWorK::Localize::getLoc($formLanguage),
+			summary             => $problemResult->{summary} // '', # can be set by problem grader
+		);
+		$answerTemplate = $tbl->answerTemplate;
+		$color_input_blanks_script = (!$previewMode && ($checkMode || $submitMode)) ? $tbl->color_answer_blanks : "";
+		$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
+	}
 	# Score summary
 	my $scoreSummary = '';
 
-	if ($submitMode && $problemResult) {
-		$scoreSummary = CGI::p($mt->maketext("You received a score of [_1] for this attempt.",
+	if ($submitMode) {
+		if ($renderErrorOccurred) {
+			$scoreSummary  = '<!-- No scoreSummary on errors. -->';
+		} elsif ($problemResult) {
+			$scoreSummary = CGI::p($mt->maketext("You received a score of [_1] for this attempt.",
 				wwRound(0, $problemResult->{score} * 100) . '%'));
-		$scoreSummary .= CGI::p($problemResult->{msg}) if ($problemResult->{msg});
+			$scoreSummary .= CGI::p($problemResult->{msg}) if ($problemResult->{msg});
 
-		$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded."));
-		$scoreSummary .= CGI::hidden({id => 'problem-result-score', name => 'problem-result-score', value => $problemResult->{score}});
+			$scoreSummary .= CGI::p($mt->maketext("Your score was not recorded.")) unless $hideWasNotRecordedMessage;
+			$scoreSummary .= CGI::hidden({id => 'problem-result-score', name => 'problem-result-score', value => $problemResult->{score}});
+		}
+	}
+	if ( !$forbidGradePassback && !$submitMode ) {
+		$forbidGradePassback = 1;
 	}
 
 	# Answer hash in XML format used by the PTX format.
@@ -279,8 +309,8 @@ sub formatRenderedProblem {
 	# up before the bug occurs.  In general don't use these unless necessary.
 	my $internal_debug_messages = join("<br>", @{$rh_result->{internal_debug_messages} || []});
 
-	# Try to save the grade to an LTI if one provided us data
-	my $LTIGradeMessage = saveGradeToLTI($self, $ce, $rh_result);
+	# Try to save the grade to an LTI if one provided us data (depending on $forbidGradePassback)
+	my $LTIGradeMessage = saveGradeToLTI($self, $ce, $rh_result, $forbidGradePassback);
 
 	my $debug_messages = $rh_result->{debug_messages};
 
@@ -365,7 +395,9 @@ sub formatRenderedProblem {
 }
 
 sub saveGradeToLTI {
-	my ($self, $ce, $rh_result) = @_;
+	my ($self, $ce, $rh_result, $forbidGradePassback) = @_;
+	# When $forbidGradePassback is set, we will block the actual submission,
+	# but we still provide the LTI data in the hidden fields.
 
 	return "" if !(defined($self->{inputs_ref}{lis_outcome_service_url}) &&
 		defined($self->{inputs_ref}{'oauth_consumer_key'}) &&
@@ -380,8 +412,12 @@ sub saveGradeToLTI {
 	my $consumer_secret = $ce->{'LISConsumerKeyHash'}{$consumer_key};
 	my $score = $rh_result->{problem_result} ? $rh_result->{problem_result}{score} : 0;
 
-	# This is boilerplate XML used to submit the $score for $sourcedid
-	my $replaceResultXML = <<EOS;
+	my $LTIGradeMessage = '';
+
+	if ( ! $forbidGradePassback ) {
+
+		# This is boilerplate XML used to submit the $score for $sourcedid
+		my $replaceResultXML = <<EOS;
 <?xml version = "1.0" encoding = "UTF-8"?>
 <imsx_POXEnvelopeRequest xmlns = "http://www.imsglobal.org/services/ltiv1p1/xsd/imsoms_v1p0">
   <imsx_POXHeader>
@@ -408,55 +444,54 @@ sub saveGradeToLTI {
 </imsx_POXEnvelopeRequest>
 EOS
 
-	my $bodyhash = sha1_base64($replaceResultXML);
+		my $bodyhash = sha1_base64($replaceResultXML);
 
-	# since sha1_base64 doesn't pad we have to do so manually
-	while (length($bodyhash) % 4) {
-		$bodyhash .= '=';
-	}
-
-	my $requestGen = Net::OAuth->request("consumer");
-
-	$requestGen->add_required_message_params('body_hash');
-
-	my $gradeRequest = $requestGen->new(
-		request_url => $request_url,
-		request_method => "POST",
-		consumer_secret => $consumer_secret,
-		consumer_key => $consumer_key,
-		signature_method => $signature_method,
-		nonce => int(rand( 2**32)),
-		timestamp => time(),
-		body_hash => $bodyhash
-	);
-	$gradeRequest->sign();
-
-	my $HTTPRequest = HTTP::Request->new(
-		$gradeRequest->request_method,
-		$gradeRequest->request_url,
-		[
-			'Authorization' => $gradeRequest->to_authorization_header,
-			'Content-Type'  => 'application/xml',
-		],
-		$replaceResultXML,
-	);
-
-	my $response = LWP::UserAgent->new->request($HTTPRequest);
-
-
-	my $LTIGradeMessage = '';
-	if ($response->is_success) {
-		$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
-		my $message = $1;
-		if ($message ne 'success') {
-			$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$message);
-			$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
-		} else {
-			$LTIGradeMessage = CGI::p("Grade sucessfully saved.");
+		# since sha1_base64 doesn't pad we have to do so manually
+		while (length($bodyhash) % 4) {
+			$bodyhash .= '=';
 		}
-	} else {
-		$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$response->message);
-		$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
+
+		my $requestGen = Net::OAuth->request("consumer");
+
+		$requestGen->add_required_message_params('body_hash');
+
+		my $gradeRequest = $requestGen->new(
+			request_url => $request_url,
+			request_method => "POST",
+			consumer_secret => $consumer_secret,
+			consumer_key => $consumer_key,
+			signature_method => $signature_method,
+			nonce => int(rand( 2**32)),
+			timestamp => time(),
+			body_hash => $bodyhash
+		);
+		$gradeRequest->sign();
+
+		my $HTTPRequest = HTTP::Request->new(
+			$gradeRequest->request_method,
+			$gradeRequest->request_url,
+			[
+				'Authorization' => $gradeRequest->to_authorization_header,
+				'Content-Type'  => 'application/xml',
+			],
+			$replaceResultXML,
+		);
+
+		my $response = LWP::UserAgent->new->request($HTTPRequest);
+
+		if ($response->is_success) {
+			$response->content =~ /<imsx_codeMajor>\s*(\w+)\s*<\/imsx_codeMajor>/;
+			my $message = $1;
+			if ($message ne 'success') {
+				$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$message);
+				$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
+			} else {
+				$LTIGradeMessage = CGI::p("Grade sucessfully saved.");
+			}
+		} else {
+			$LTIGradeMessage = CGI::p("Unable to update LMS grade. Error: ".$response->message);
+			$rh_result->{debug_messages} .= CGI::escapeHTML($response->content);
+		}
 	}
 
 	# save parameters for next time
