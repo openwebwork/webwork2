@@ -273,6 +273,7 @@ sub get_credentials {
 	warn "=========== summary ============";
 	warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
 	warn "User mail address is |$self->{email}|\n";
+	warn "strip_address_from_email is |", $ce->{strip_address_from_email}//0,"|\n";
 	warn "Student id is |$self->{student_id}|\n";
 	warn "preferred_source_of_username is |$ce->{preferred_source_of_username}|\n";
 	warn "fallback_source_of_username is |", $ce->{fallback_source_of_username}//'undefined',"|\n";
@@ -280,7 +281,7 @@ sub get_credentials {
 	warn "================================\n";
       }
       if (!defined($self->{user_id})) {
-	croak "LTIAdvanced was unable to create a username from the user_id or from the mail address. Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
+	croak "LTIAdvanced was unable to create a username from the data provided with the current settings. Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
       }
 
       $self->{login_type} = "normal";
