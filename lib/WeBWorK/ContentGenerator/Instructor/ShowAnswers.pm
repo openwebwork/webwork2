@@ -570,7 +570,10 @@ sub body {
 	}
       	      
 	print CGI::h2($r->maketext('No problems matched the given parameters.')) unless $foundMatches;
-
+	
+	my $json = JSON->new->allow_nonref;
+	$self->{entries_json} = $json->encode($self->{entries});
+	
 	if ($ce->{showAnswerLog}) {
 		print CGI::script("\$(function() {\$('button.show_render_modal').hide();});") unless $foundMatches;
 		my $site_url = $ce->{webworkURLs}->{htdocs};
