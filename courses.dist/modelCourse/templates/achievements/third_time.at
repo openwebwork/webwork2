@@ -1,6 +1,6 @@
 #This checks to see if the student has a certain number of attempts
 
-    if ($problem->num_correct == 1 and $problem->num_incorrect == 2) {
+    if ($problem->num_correct == 1 and $problem->num_incorrect == 2 and $problem->status == 1) {
 	return 1;
     }    else {
 	return 0;

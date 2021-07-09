@@ -1,0 +1,146 @@
+# This is the Stage 1 Dockerfile, which builds a base OS image (webwork-base)
+# on top of which the WeBWorK parts will be installed by the Stage 2 Dockerfile.
+
+FROM ubuntu:20.04
+
+# ==================================================================
+
+# Phase 1 - set base OS image install stage ENV variables
+#
+# We only need install time ENV variables, not those needed by the WeBWorK system
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true
+
+# ==================================================================
+
+# Phase 2 - Ubuntu 20.04 base image + required packages
+
+# Packages changes/added for ubuntu 20.04:
+#       libcgi-pm-perl (for CGI::Cookie), libdbd-mariadb-perl
+
+# Do NOT include "apt-get -y upgrade"
+# see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+	apache2 \
+	curl \
+	dvipng \
+	dvisvgm \
+	gcc \
+	libapache2-request-perl \
+	libarchive-zip-perl \
+	libcgi-pm-perl \
+	libcrypt-ssleay-perl \
+	libdatetime-perl \
+	libdbd-mysql-perl \
+	libdbd-mariadb-perl \
+	libemail-address-xs-perl \
+	libexception-class-perl \
+	libextutils-xsbuilder-perl \
+	libfile-find-rule-perl-perl \
+	libgd-perl \
+	libhtml-scrubber-perl \
+	libjson-perl \
+	liblocale-maketext-lexicon-perl \
+	libmail-sender-perl \
+	libmime-tools-perl \
+	libnet-ip-perl \
+	libnet-ldap-perl \
+	libnet-oauth-perl \
+	libossp-uuid-perl \
+	libpadwalker-perl \
+	libpath-class-perl \
+	libphp-serialization-perl \
+	libxml-simple-perl \
+	libnet-https-nb-perl \
+	libhttp-async-perl \
+	libsoap-lite-perl \
+	libsql-abstract-perl \
+	libstring-shellquote-perl \
+	libtemplate-perl \
+	libtext-csv-perl \
+	libtimedate-perl \
+	libuuid-tiny-perl \
+	libxml-parser-perl \
+	libxml-writer-perl \
+	libxmlrpc-lite-perl \
+	libapache2-reload-perl \
+	cpanminus \
+	libxml-parser-easytree-perl \
+	libiterator-perl \
+	libiterator-util-perl \
+	libpod-wsdl-perl \
+	libtest-xml-perl \
+	libmodule-build-perl \
+	libxml-semanticdiff-perl \
+	libxml-xpath-perl \
+	libpath-tiny-perl \
+	libarray-utils-perl \
+	libhtml-template-perl \
+	libtest-pod-perl \
+	libemail-sender-perl \
+	libmail-sender-perl \
+	libmodule-pluggable-perl \
+	libemail-date-format-perl \
+	libcapture-tiny-perl \
+	libthrowable-perl \
+	libdata-dump-perl \
+	libfile-sharedir-install-perl \
+	libclass-tiny-perl \
+	libtest-requires-perl \
+	libtest-mockobject-perl \
+	libtest-warn-perl \
+	libsub-uplevel-perl \
+	libtest-exception-perl \
+	libuniversal-can-perl \
+	libuniversal-isa-perl \
+	libtest-fatal-perl \
+	libjson-xs-perl \
+	libjson-maybexs-perl \
+	libcpanel-json-xs-perl \
+	make \
+	netpbm \
+	patch \
+	pdf2svg \
+	preview-latex-style \
+	texlive \
+	texlive-latex-extra \
+	texlive-plain-generic \
+	texlive-xetex \
+	texlive-latex-recommended \
+	texlive-lang-other \
+	texlive-lang-arabic \
+	libc6-dev \
+	git \
+	mysql-client \
+	tzdata \
+	apt-utils \
+	locales \
+	debconf-utils \
+	ssl-cert \
+	ca-certificates \
+	culmus \
+	fonts-linuxlibertine \
+	lmodern \
+	zip \
+	iputils-ping \
+	imagemagick \
+	jq \
+	npm \
+    && apt-get clean \
+    && rm -fr /var/lib/apt/lists/* /tmp/*
+
+# Developers may want to add additional packages inside the image
+# such as: telnet vim mc file
+
+# ==================================================================
+
+# Phase 3 - install additional Perl modules from CPAN (not packaged for Ubuntu or outdated in Ubuntu)
+
+RUN cpanm install Statistics::R::IO \
+    && rm -fr ./cpanm /root/.cpanm /tmp/*
+
+# ==================================================================
+

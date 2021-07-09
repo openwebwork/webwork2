@@ -2,18 +2,45 @@ version: '3.5'
 services:
   db:
     image: mariadb:10.4
+
+    # Set a fixed container name, so it does not depend on the directory name
+    container_name: webwork2_db_1
+
     volumes:
       - mysql:/var/lib/mysql
 
       # Set up UTF8MB4 in config file for the container.
       # Needs to be done BEFORE the database is created.
+      # *** Some other MariaDB settings were modified in the sample file:
+      #        wait_timeout,  interactive_timeout, max_connections, net_read_timeout
+      #        + skip-name-resolve
+      # Note: It seems different versions of the MariaDB container need
+      #       this file in different locations. Put in in both places.
       - "./docker-config/db/mariadb.cnf:/etc/mysql/conf.d/mariadb.cnf"
+      - "./docker-config/db/mariadb.cnf:/etc/mysql/mariadb.cnf"
+
+      # Tuning MariaDB config - sample file
+      # The sample file modifies wait_timeout, and adds skip-name-resolve
+      #- "./docker-config/db/my.cnf:/etc/mysql/my.cnf"
+
+      # Adjust open file limits for MariaDB/mySQL - sample file
+      #- "./docker-config/db/limits.conf:/etc/security/limits.conf"
+
+      # Provides read only access to the host system's /etc/localtime - tested on Linux hosts
+      #- "/etc/localtime:/etc/localtime:ro"
+
+      # The ulimits lines were only tested on Linux hosts in conjuction woth the limits.conf file
+#    ulimits:
+#      nofile:
+#        soft: 4096
+#        hard: 4096
+
     restart: always
     environment:
       # When the MariaDB container is first started it will set the
       # the MYSQL_ROOT_PASSWORD if there is no mysql database in the
       # data volume.
-      MYSQL_ROOT_PASSWORD: sqlRootPasswordSetThisPasswordBEFOREfirstStartingTheDBcontainer
+      MYSQL_ROOT_PASSWORD: ${WEBWORK_MYSQL_ROOT_PASSWORD}
 
       # When the MariaDB container is first started it will create
       #    the WW database and WW DB user based on:
@@ -21,30 +48,57 @@ services:
       MYSQL_USER: ${WEBWORK_DB_USER}
       MYSQL_PASSWORD: ${WEBWORK_DB_PASSWORD}
 
+      # A timezone for the DB server can be set:
+      #TZ: zone/city
+      # where zone/city must be a valid setting.
+      # "/usr/bin/timedatectl list-timezones" on an Ubuntu system with
+      # that tool installed will find valid values.
+      # See: https://stackoverflow.com/questions/39172652/using-docker-compose-to-set-containers-timezones
+
   app:
+    # Modifying the image name can be helpful to create a new image instead of
+    # overwriting the "standard" one during testing.
     image: webwork
 
-    # Select the appropriate "build:" block:
 
-    # For use/building when docker-compose.yml is in the webwork2 directory
-    build: .
+    # Set a fixed container name, so it does not depend on the directory name
+    container_name: webwork2_app_1
 
-    # For use/building when docker-compose.yml is OUTSIDE the webwork2 directory.
-    # For example, if multiple hosts use a NFS shared webwork2/ directory, and
-    # each one needs customized values in docker-compose.yml.
-    # Under typical use, the Dockerfile should not need to be customized per host,
-    # but may contain some changes/additions relative to the standard webwork image.
-    #
-    #build:
-    #  context: /Path_To/webwork2/
-    #  dockerfile: /Path_To/Dockerfile
+    # Set up the "build:" configuration:
+    build:
+        # For use/building when docker-compose.yml is in the webwork2 directory
+        context: .
+        # For use/building when docker-compose.yml is OUTSIDE the webwork2 directory.
+        # For example, if multiple hosts use a NFS shared webwork2/ directory, and
+        # each one needs customized values in docker-compose.yml.
+        # Under typical use, the Dockerfile should not need to be customized per host,
+        # but may contain some changes/additions relative to the standard webwork image.
+        #
+        #  context: /Path_To/webwork2/
+        #  dockerfile: /Path_To/Dockerfile
+        args:
+            # build args specifying the branches for webwork2 and pg used to build the image
+            # To use the master branches of webwork2 and pg 
+            #- ARG WEBWORK2_BRANCH=master
+            #- ARG PG_BRANCH=master
+            # To use the 2.15 branches of webwork2 and pg from the "official" GitHub repositories
+            - WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
+            - WEBWORK2_BRANCH=WeBWorK-2.16
+            - PG_GIT_URL=https://github.com/openwebwork/pg.git
+            - PG_BRANCH=PG-2.16
+
+        # If you are using the 2 stage build process uncomment the next line
+        dockerfile: DockerfileStage2
+        # and first run
+        #     docker build --tag webwork-base:forWW216 -f DockerfileStage1 .
+        # and then
+        #     docker-compose build
 
     depends_on:
       - db
       - r
 
     volumes:
-
       # ======================================================================
 
       # If you are using locally modified webwork2 files, then
@@ -130,6 +184,8 @@ services:
 
     # For a production machine
     #restart: always
+    stop_signal: SIGWINCH
+    stop_grace_period: 30s
 
     environment:
 
@@ -138,15 +194,14 @@ services:
       APACHE_RUN_GROUP: www-data
 
       # Standard database environment variables needed by WeBWorK:
+
+      # Select which DBD driver to use
+      WEBWORK_DB_DRIVER: MariaDB
+      # WEBWORK_DB_DRIVER: mysql
+
       WEBWORK_DB_HOST: db
       WEBWORK_DB_PORT: 3306
       WEBWORK_DB_NAME: webwork
-      WEBWORK_DB_DSN: DBI:mysql:webwork:db:3306
-      # We currently need to put the same data in the WEBWORK_DB_DSN line above
-      # as we cannot use the following form, as it would be done before the values
-      # needed are available.
-      # NO GOOD # WEBWORK_DB_DSN: DBI:mysql${WEBWORK_DB_NAME}:${WEBWORK_DB_HOST}:${WEBWORK_DB_PORT}
-
 
       # These are set in the .env file and import values from there
       WEBWORK_DB_PASSWORD: ${WEBWORK_DB_PASSWORD}
@@ -158,14 +213,19 @@ services:
       # To turn on SSL in the running container
       #SSL: 1
 
+      # Control settings for error message handling by webwork2/lib/WeBWorK.pm
+      # The standard behavior is with both of these set to 0
+      MIN_HTML_ERRORS: 0
+      JSON_ERROR_LOG: 0
+
       # Change to A4 paper
       #PAPERSIZE: a4
 
       # Use to build additional locales in the running container at startup. Ex:
-      #ADD_LOCALES: he_IL ISO-8859-8,he_IL.UTF-8 UTF-8
+      #ADD_LOCALES: "he_IL ISO-8859-8\nhe_IL.UTF-8 UTF-8\n"
 
       # Extra Ubuntu packages to install during startup
-      #ADD_APT_PACKAGES: vim telnet
+      ADD_APT_PACKAGES: nano less 
 
       # The system timezone for the container can be set using
       #SYSTEM_TIMEZONE: zone/city
@@ -191,4 +251,8 @@ services:
 
 volumes:
   oplVolume:
+    driver: local
+    name: webwork2_oplVolume
   mysql:
+    driver: local
+    name: webwork2_mysql

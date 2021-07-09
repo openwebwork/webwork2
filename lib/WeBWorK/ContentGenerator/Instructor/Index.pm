@@ -100,7 +100,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_users" and do {
 		if ($nusers >= 1) {
-			$module = "${ipfx}::UserList2";
+			$module = "${ipfx}::UserList";
 			$params{visible_users} = \@selectedUserIDs;
 			$params{editMode} = 1;
 		} else {
@@ -110,7 +110,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_sets" and do {
 		if ($nsets == 1) {
-			$module = "${ipfx}::ProblemSetDetail2";
+			$module = "${ipfx}::ProblemSetDetail";
 			$args{setID} = $firstSetID;
 		} else {
 			push @error, E_ONE_SET;
@@ -227,7 +227,7 @@ sub pre_header_initialize {
 	
 	defined param $r "edit_set_for_users" and do {
 		if ($nusers >= 1 and $nsets == 1) {
-			$module = "${ipfx}::ProblemSetDetail2";
+			$module = "${ipfx}::ProblemSetDetail";
 			$args{setID} = $firstSetID;
 			$params{editForUser} = \@selectedUserIDs;
 		} else {

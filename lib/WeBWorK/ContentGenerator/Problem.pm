@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -18,6 +17,7 @@ package WeBWorK::ContentGenerator::Problem;
 #use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
 use  WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;  # not needed?
+use WeBWorK::ContentGenerator::Instructor::SingleProblemGrader;
 
 =head1 NAME
 
@@ -42,13 +42,13 @@ require WeBWorK::Utils::ListingDB;
 use URI::Escape;
 use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
-use WeBWorK::Utils::DetermineProblemLangAndDirection;
+use WeBWorK::Utils::LanguageAndDirection;
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
 
 use utf8;
 #use open ':encoding(utf8)';
-binmode(STDOUT, ":utf8");
+binmode(STDOUT, ":encoding(UTF-8)");
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
 ################################################################################
@@ -118,6 +118,16 @@ sub can_showCorrectAnswers {
 		$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")
 		;
 }
+
+sub can_showProblemGrader {
+	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
+	my $authz = $self->r->authz;
+
+	return ($authz->hasPermissions($User->user_id, "access_instructor_tools") &&
+		$authz->hasPermissions($User->user_id, "score_sets") &&
+		$Set->set_id ne 'Undefined_Set' && !$self->{invalidSet});
+}
+
 sub can_showAnsGroupInfo {
 	my ($self, $User, $EffectiveUser, $Set, $Problem) = @_;
 	my $authz = $self->r->authz;
@@ -249,49 +259,49 @@ sub can_useMathQuill {
 
 
 sub can_showMeAnother {
-    # PURPOSE: subroutine to check if showMeAnother
-    #          button should be allowed; note that this is done
-    #          *before* the check to see if showMeAnother is
-    #          possible.
+	# PURPOSE: subroutine to check if showMeAnother
+	# button should be allowed; note that this is done
+	# *before* the check to see if showMeAnother is
+	# possible.
 	my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
-    my $ce = $self->r->ce;
+	my $ce = $self->r->ce;
 
-    # if the showMeAnother button isn't enabled in the course configuration,
-    # don't show it under any circumstances (not even for the instructor)
-    return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
+	# if the showMeAnother button isn't enabled in the course configuration,
+	# don't show it under any circumstances (not even for the instructor)
+	return 0 unless($ce->{pg}->{options}->{enableShowMeAnother});
 
-    # get the hash of information about showMeAnother
+	# get the hash of information about showMeAnother
 	my %showMeAnother = %{ $self->{showMeAnother} };
 
-    if (after($Set->open_date)) {
-        # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-        $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+	if (after($Set->open_date) or $self->r->authz->hasPermissions($self->r->param('user'), "can_use_show_me_another_early")) {
+		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
+		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
 
-	    # if SMA is just not permitted for the problem, don't show it
-	    return 0 unless ($showMeAnother{TriesNeeded} > -1);
+		# if SMA is just not permitted for the problem, don't show it
+		return 0 unless ($showMeAnother{TriesNeeded} > -1);
 
-        my $thisAttempt = $submitAnswers ? 1 : 0;
-	    my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
+		my $thisAttempt = $submitAnswers ? 1 : 0;
+		my $attempts_used = $Problem->num_correct + $Problem->num_incorrect + $thisAttempt;
 
-        # if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
-	    # inititialized meaning that the student hasn't pushed it yet and it should be 0
-        $showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
+		# if $showMeAnother{Count} is somehow not an integer, it probably means that the database was never
+		# inititialized meaning that the student hasn't pushed it yet and it should be 0
+		$showMeAnother{Count} = 0 unless ($showMeAnother{Count} =~ /^[+-]?\d+$/);
 
-	 # if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
-        # to be equal to showMeAnother{MaxReps}
-        $showMeAnother{Count}-- if(defined($showMeAnother{CheckAnswers} && $showMeAnother{CheckAnswers}) or (defined($showMeAnother{Preview}) && $showMeAnother{Preview}));
+		# if the student is *preview*ing or *check*ing their answer to SMA then showMeAnother{Count} IS ALLOWED
+		# to be equal to showMeAnother{MaxReps}
+		$showMeAnother{Count}-- if(defined($showMeAnother{CheckAnswers} && $showMeAnother{CheckAnswers}) or (defined($showMeAnother{Preview}) && $showMeAnother{Preview}));
 
-	    # if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
-	    # not submitted enough answers yet or has used the SMA button too many times
-	    if ($attempts_used < $showMeAnother{TriesNeeded}
-	        or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
-          return 0;
-        } else {
-          return 1;
-        }
-    } else {
-      # otherwise the set hasn't been opened yet, so we can't use showMeAnother
-      return 0;}
+		# if we've gotten this far, the button is enabled globally and for the problem; check if the student has either
+		# not submitted enough answers yet or has used the SMA button too many times
+		if ($attempts_used < $showMeAnother{TriesNeeded} or ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1)) {
+			return 0;
+		} else {
+			return 1;
+		}
+	} else {
+		# otherwise the set hasn't been opened yet, so we can't use showMeAnother
+		return 0;
+	}
 }
 
 ################################################################################
@@ -565,7 +575,7 @@ sub pre_header_initialize {
 	# Check for a page refresh which causes a cached form resubmission.  In that case this is
 	# not a valid submission of answers.
 	$submitAnswers = 0, $self->{resubmitDetected} = 1
-	if ($submitAnswers && (!defined($formFields->{num_attempts}) ||
+	if ($set->set_id ne 'Undefined_Set' && $submitAnswers && (!defined($formFields->{num_attempts}) ||
 			(defined($formFields->{num_attempts}) &&
 				$formFields->{num_attempts} != $problem->num_correct + $problem->num_incorrect)));
 
@@ -612,18 +622,21 @@ sub pre_header_initialize {
 	#       needs to be treated as if it is not set.
 	my %want = (
 		showOldAnswers     => $user->showOldAnswers ne '' ? $user->showOldAnswers  : $ce->{pg}->{options}->{showOldAnswers},
-		showCorrectAnswers => $r->param('showCorrectAnswers') || $ce->{pg}->{options}->{showCorrectAnswers},
+		# showProblemGrader implies showCorrectAnswers.  This is a convenience for grading.
+		showCorrectAnswers => $r->param('showCorrectAnswers') || $r->param('showProblemGrader')
+		                      || $ce->{pg}->{options}->{showCorrectAnswers},
+		showProblemGrader  => $r->param('showProblemGrader') || 0,
 		showAnsGroupInfo     => $r->param('showAnsGroupInfo') || $ce->{pg}->{options}->{showAnsGroupInfo},
 		showAnsHashInfo    => $r->param('showAnsHashInfo') || $ce->{pg}->{options}->{showAnsHashInfo},
 		showPGInfo         => $r->param('showPGInfo') || $ce->{pg}->{options}->{showPGInfo},
 		showResourceInfo   => $r->param('showResourceInfo') || $ce->{pg}->{options}->{showResourceInfo},
-		showHints          => $r->param("showHints")          || $ce->{pg}->{options}{use_knowls_for_hints}
-		                      || $ce->{pg}->{options}->{showHints},     #set to 0 in defaults.config
+		showHints          => $r->param("showHints") || $ce->{pg}->{options}{use_knowls_for_hints}
+		                      || $ce->{pg}->{options}->{showHints}, #set to 0 in defaults.config
 		showSolutions      => $r->param("showSolutions") || $ce->{pg}->{options}{use_knowls_for_solutions}
-							  || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
-	        useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
-	        useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
-	        useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
+		                      || $ce->{pg}->{options}->{showSolutions}, #set to 0 in defaults.config
+		useMathView        => $user->useMathView ne '' ? $user->useMathView : $ce->{pg}->{options}->{useMathView},
+		useWirisEditor     => $user->useWirisEditor ne '' ? $user->useWirisEditor : $ce->{pg}->{options}->{useWirisEditor},
+		useMathQuill       => $user->useMathQuill ne '' ? $user->useMathQuill : $ce->{pg}->{options}->{useMathQuill},
 		recordAnswers      => $submitAnswers,
 		checkAnswers       => $checkAnswers,
 		getSubmitButton    => 1,
@@ -633,9 +646,10 @@ sub pre_header_initialize {
 	my %must = (
 		showOldAnswers     => 0,
 		showCorrectAnswers => 0,
-		showAnsGroupInfo     => 0,
+		showProblemGrader  => 0,
+		showAnsGroupInfo   => 0,
 		showAnsHashInfo    => 0,
-		showPGInfo		   => 0,
+		showPGInfo         => 0,
 		showResourceInfo   => 0,
 		showHints          => 0,
 		showSolutions      => 0,
@@ -643,30 +657,31 @@ sub pre_header_initialize {
 		checkAnswers       => 0,
 		showMeAnother      => 0,
 		getSubmitButton    => 0,
-	    useMathView        => 0,
-	    useWirisEditor     => 0,
-	    useMathQuill       => 0,
+		useMathView        => 0,
+		useWirisEditor     => 0,
+		useMathQuill       => 0,
 	);
 
 	# does the user have permission to use certain options?
 	my @args = ($user, $effectiveUser, $set, $problem);
 
 	my %can = (
-		showOldAnswers           => $self->can_showOldAnswers(@args),
-		showCorrectAnswers       => $self->can_showCorrectAnswers(@args),
-		showAnsGroupInfo         => $self->can_showAnsGroupInfo(@args),
-		showAnsHashInfo          => $self->can_showAnsHashInfo(@args),
-		showPGInfo           	 => $self->can_showPGInfo(@args),
-		showResourceInfo         => $self->can_showResourceInfo(@args),
-		showHints                => $self->can_showHints(@args),
-		showSolutions            => $self->can_showSolutions(@args),
-		recordAnswers            => $self->can_recordAnswers(@args, 0),
-		checkAnswers             => $self->can_checkAnswers(@args, $submitAnswers),
-		showMeAnother            => $self->can_showMeAnother(@args, $submitAnswers),
-		getSubmitButton          => $self->can_recordAnswers(@args, $submitAnswers),
-	    useMathView              => $self->can_useMathView(@args),
-	    useWirisEditor           => $self->can_useWirisEditor(@args),
-	    useMathQuill              => $self->can_useMathQuill(@args),
+		showOldAnswers     => $self->can_showOldAnswers(@args),
+		showCorrectAnswers => $self->can_showCorrectAnswers(@args),
+		showProblemGrader  => $self->can_showProblemGrader(@args),
+		showAnsGroupInfo   => $self->can_showAnsGroupInfo(@args),
+		showAnsHashInfo    => $self->can_showAnsHashInfo(@args),
+		showPGInfo         => $self->can_showPGInfo(@args),
+		showResourceInfo   => $self->can_showResourceInfo(@args),
+		showHints          => $self->can_showHints(@args),
+		showSolutions      => $self->can_showSolutions(@args),
+		recordAnswers      => $self->can_recordAnswers(@args, 0),
+		checkAnswers       => $self->can_checkAnswers(@args, $submitAnswers),
+		showMeAnother      => $self->can_showMeAnother(@args, $submitAnswers),
+		getSubmitButton    => $self->can_recordAnswers(@args, $submitAnswers),
+		useMathView        => $self->can_useMathView(@args),
+		useWirisEditor     => $self->can_useWirisEditor(@args),
+		useMathQuill       => $self->can_useMathQuill(@args),
 	);
 
 	# re-randomization based on the number of attempts and specified period
@@ -679,7 +694,7 @@ sub pre_header_initialize {
 	$rerandomizePeriod = $problem->{prPeriod}
 	if (defined($problem->{prPeriod}) && $problem->{prPeriod} > -1);
 
-	$prEnabled = 0 if ($rerandomizePeriod < 1);
+	$prEnabled = 0 if ($rerandomizePeriod < 1 || $self->{editMode});
 	if ($prEnabled) {
 		$problem->{prCount} = 0
 		if !defined($problem->{prCount}) || $problem->{prCount} =~ /^\s*$/;
@@ -844,12 +859,6 @@ sub head {
 	my $ce = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 	return "" if ( $self->{invalidSet} );
-
-	# Keys dont really work well anymore.  So I'm removing this for now GG
-#	print qq{
-#		<link rel="stylesheet" href="$webwork_htdocs_url/js/legacy/vendor/keys/keys.css">
-#		<script src="$webwork_htdocs_url/js/legacy/vendor/keys/keys.js"></script>
-#	};
 
 	return $self->{pg}->{head_text} if $self->{pg}->{head_text};
 
@@ -1045,9 +1054,92 @@ sub nav {
 	return "" if ( $self->{invalidSet} );
 
 	my $courseID = $urlpath->arg("courseID");
-	my $setID = $self->{set}->set_id if !($self->{invalidSet});
+	my $setID = $self->{set}->set_id;
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
+	my $userID = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
+
+	# Set up a student navigation for those that have permission to act as a student.
+	my $userNav = "";
+	if ($authz->hasPermissions($userID, "become_student") && $eUserID ne $userID) {
+		# Find all users for this set (except the current user).
+		my @userRecords = $db->getUsers(grep { $_ ne $userID } $db->listSetUsers($setID));
+
+		# Sort by last name, then first name, then user_id.
+		@userRecords = sort {
+			lc($a->last_name) cmp lc($b->last_name) ||
+			lc($a->first_name) cmp lc($b->first_name) ||
+			lc($a->user_id) cmp lc($b->user_id)
+		} @userRecords;
+
+		# Find the previous, current, and next users, and format the student names for display.
+		my $currentUserIndex = 0;
+		for (0 .. $#userRecords) {
+			$currentUserIndex = $_ if $userRecords[$_]->user_id eq $eUserID;
+			# Construct a display name.
+			$userRecords[$_]{displayName} = ($userRecords[$_]->last_name || $userRecords[$_]->first_name
+				? $userRecords[$_]->last_name . ", " . $userRecords[$_]->first_name
+				: $userRecords[$_]->user_id);
+		}
+		my $prevUser = $currentUserIndex > 0 ? $userRecords[$currentUserIndex - 1] : 0;
+		my $nextUser = $currentUserIndex < $#userRecords ? $userRecords[$currentUserIndex + 1] : 0;
+
+		# Mark the current user.
+		$userRecords[$currentUserIndex]{currentUser} = 1;
+
+		my $problemPage = $urlpath->newFromModule(__PACKAGE__, $r,
+			courseID => $courseID, setID => $setID, problemID => $problemID);
+
+		# Cap the number of students shown to at most 200.
+		my $numAfter = $#userRecords - $currentUserIndex;
+		my $numBefore = 200 - ($numAfter < 100 ? $numAfter : 100);
+		my $minStudentIndex = $currentUserIndex < $numBefore ? 0 : $currentUserIndex - $numBefore;
+		my $maxStudentIndex = $minStudentIndex + 200 < $#userRecords ? $minStudentIndex + 200 : $#userRecords;
+
+		# Set up the student nav.
+		$userNav = join("",
+			CGI::start_div({ class => 'user-nav' }),
+			$prevUser
+			? CGI::a({
+					href => $self->systemLink($problemPage, params => { effectiveUser => $prevUser->user_id,
+							showProblemGrader => $self->{will}{showProblemGrader} }),
+					data_toggle => "tooltip", data_placement => "top",
+					title => $prevUser->{displayName},
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Previous Student"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Student")),
+			$args->{separator},
+			CGI::start_span({ class => "btn-group student-nav-selector" }),
+			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
+				$userRecords[$currentUserIndex]{displayName} . " " . CGI::span({ class => "caret" }, "")),
+			CGI::start_ul({ class => "dropdown-menu", role => "menu", aria_labelledby => "studentSelector" }),
+			(
+				map {
+					CGI::li(
+						CGI::a({ tabindex => "-1", style => $_->{currentUser} ? "background-color: #8F8" : "",
+							href => $self->systemLink($problemPage, params => { effectiveUser => $_->user_id,
+									showProblemGrader => $self->{will}{showProblemGrader} }) },
+						$_->{displayName})
+					)
+				}
+				@userRecords[$minStudentIndex .. $maxStudentIndex]
+			),
+			CGI::end_ul(),
+			CGI::end_span(),
+			$args->{separator},
+			$nextUser
+			? CGI::a({
+					href => $self->systemLink($problemPage, params => { effectiveUser => $nextUser->user_id,
+							showProblemGrader => $self->{will}{showProblemGrader} }),
+					data_toggle => "tooltip", data_placement => "top",
+					title => $nextUser->{displayName},
+					class => "nav_button student-nav-button"
+				}, $r->maketext("Next Student"))
+			: CGI::span({ class => "gray_button" }, $r->maketext("Next Student")),
+			CGI::end_div()
+		);
+	}
+
 	my $mergedSet = $db->getMergedSet($eUserID,$setID);
 	return "" unless $mergedSet;
 
@@ -1083,8 +1175,6 @@ sub nav {
 		$nextID = '' if ($isJitarSet && $nextID
 				 && !$authz->hasPermissions($eUserID, "view_unopened_sets")
 				 && is_jitar_problem_closed($db,$ce, $eUserID,$setID,$nextID));
-
-
 	}
 
 	my @links;
@@ -1116,7 +1206,9 @@ sub nav {
 	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
-	return $self->navMacro($args, $tail, @links);
+	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
+		if defined $self->{will}{showProblemGrader};
+	return $userNav . CGI::div($self->navMacro($args, $tail, @links));
 }
 
 sub path {
@@ -1149,17 +1241,44 @@ sub path {
 sub title {
 	my ($self) = @_;
 	my $r = $self->r;
-	# using the url arguments won't break if the set/problem are invalid
+	my $db = $r->db;
+
+	# Using the url arguments won't break if the set/problem are invalid
 	my $setID = $self->r->urlpath->arg("setID");
 	my $problemID = $self->r->urlpath->arg("problemID");
 
-	my $set = $r->db->getGlobalSet($setID);
+	my $set = $db->getGlobalSet($setID);
 	$setID = WeBWorK::ContentGenerator::underscore2nbsp($setID);
 	if ($set && $set->assignment_type eq 'jitar') {
 	    $problemID = join('.',jitar_id_to_seq($problemID));
 	}
+	my $out = $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
 
-	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
+	# Return here if we don't have the requisite information.
+	return $out if ($self->{invalidSet} || $self->{invalidProblem});
+
+	my $ce = $r->ce;
+	my $problem = $self->{problem};
+
+	$out .= CGI::start_div({ class => "problem-sub-header" });
+
+	my $problemValue = $problem->value;
+	if (defined($problemValue) && $problemValue ne "") {
+		my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+		$out .= "($problemValue $points)";
+	}
+
+	# This uses the permission level and user id of the user assigned to the problem.
+	my $problemUser = $problem->user_id;
+	my $inList = grep($_ eq $problemUser, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}});
+	if ($db->getPermissionLevel($problemUser)->permission >=
+		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL} || $inList) {
+		$out .= " " . $problem->source_file;
+	}
+
+	$out .= CGI::end_div();
+
+	return $out;
 }
 
 # now altered to outsource most output operations to the template, main functions now are simply error checking and answer processing - ghe3
@@ -1190,6 +1309,7 @@ sub body {
 	$self ->output_tag_info;
 	$self ->output_custom_edit_message;
 	$self ->output_summary;
+	$self ->output_grader;
 	$self ->output_hidden_info;
 	$self ->output_form_start();
 	$self ->output_problem_body;
@@ -1230,7 +1350,7 @@ sub output_form_start{
 	my $r = $self->r;
 	my $startTime = $r->param('startTime') || time();
 
-	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm", onsubmit=>"submitAction()");
+	print CGI::start_form(-method=>"POST", -action=> $r->uri, -id=>"problemMainForm", -name=>"problemMainForm");
 	print $self->hidden_authen_fields;
 	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	return "";
@@ -1242,30 +1362,10 @@ sub output_form_start{
 # needed by the PROBLEM language
 
 sub output_problem_lang_and_dir {
-    my $self = shift;
-    my $pg = $self->{pg};
-
-    my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
-    my $to_set_tag;
-    my $to_set_val;
-
-    # String with the HTML attributes to add
-    my $to_set = " ";
-
-    # Put the requested tags and values into the string format
-    while ( scalar(@to_set_lang_dir) > 0 ) {
-	$to_set_tag = shift( @to_set_lang_dir );
-	$to_set_val = shift( @to_set_lang_dir );
-	if ( defined( $to_set_val ) ) {
-	    $to_set .= " ${to_set_tag}=\"${to_set_val}\"";
-	}
-    }
-
-    print "$to_set";
-    return "";
+	my $self = shift;
+	print " " . get_problem_lang_and_dir($self->{pg}{flags}, $self->r->ce->{perProblemLangAndDirSettingMode}, $self->r->ce->{language});
+	return "";
 }
-
-
 
 # output_problem_body subroutine
 
@@ -1296,6 +1396,22 @@ sub output_message{
 	return "";
 }
 
+# output_grader subroutine
+
+# displays the problem grader if the user has permissions to grade problems
+
+sub output_grader {
+	my $self = shift;
+
+	if ($self->{will}{showProblemGrader}) {
+		my $grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader(
+			$self->r, $self->{pg}, $self->{problem});
+		$grader->insertGrader;
+	}
+
+	return "";
+}
+
 # output_editorLink subroutine
 
 # processes and prints out the correct link to the editor of the current problem
@@ -1320,29 +1436,15 @@ sub output_editorLink{
 	# format as "[edit]" like we're doing with course info file, etc.
 	# add edit link for set as well.
 	my $editorLink = "";
-	my $editorLink2 = "";
-	my $editorLink3 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
-	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor1}) {
+	if ($authz->hasPermissions($user, "modify_problem_sets")) {
 		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor1'}, $r->maketext("Edit1")));
-	}
-	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor2}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
-			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
-		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink2 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor2'}, $r->maketext("Edit2")));
-	}
-	if ($authz->hasPermissions($user, "modify_problem_sets") and $ce->{showeditors}->{pgproblemeditor3}) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor3", $r,
-			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
-		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
-		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
+		$editorLink = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor'}, $r->maketext("Edit")));
 	}
 	##### translation errors? #####
 
@@ -1350,14 +1452,14 @@ sub output_editorLink{
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink, " ", $editorLink2, " ", $editorLink3;
+			print $editorLink;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink, " ", $editorLink2, " ", $editorLink3;
+		print $editorLink;
 	}
 	return "";
 }
@@ -1394,6 +1496,24 @@ sub output_checkboxes{
 			:
 			{
 				-name    => "showCorrectAnswers",
+				-value   => 1,
+			}
+		),"&nbsp;";
+	}
+	if ($can{showProblemGrader}) {
+		print WeBWorK::CGI_labeled_input(
+			-type        => "checkbox",
+			-id          => "showProblemGrader_id",
+			-label_text  => $r->maketext("ProblemGrader"),
+			-input_attr  => $will{showProblemGrader} ?
+			{
+				-name    => "showProblemGrader",
+				-checked => "checked",
+				-value   => 1,
+			}
+			:
+			{
+				-name    => "showProblemGrader",
 				-value   => 1,
 			}
 		),"&nbsp;";
@@ -1522,10 +1642,10 @@ sub output_checkboxes{
 	  }
 	}
 
-
-	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or
-	    $can{showHints} or $can{showSolutions} or # needed to put buttons on newline
-	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo}) {
+	# needed to put buttons on newline
+	if ($can{showCorrectAnswers} or $can{showProblemGrader} or $can{showAnsGroupInfo} or
+		$can{showHints} or $can{showSolutions} or $can{showAnsHashInfo} or
+		$can{showPGInfo} or $can{showResourceInfo}) {
 		print CGI::br();
 	}
 
@@ -1570,28 +1690,46 @@ sub output_submit_buttons{
         		# WTF???
         	}
         }
-        if ($can{showMeAnother}) {
-            # only output showMeAnother button if we're not on the showMeAnother page
-	    my $SMAURL = $self->systemLink($urlpath->newFromModule("WeBWorK::ContentGenerator::ShowMeAnother", $r,courseID => $courseID, setID => $problem->set_id, problemID =>$problem->problem_id));
-
-	    print CGI::a({href=>$SMAURL, class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", id=>"SMA_button", title=>"", target=>"_wwsma",
-				   "data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")}, $r->maketext("Show me another"));
-        } else {
-            # if showMeAnother is available for the course, and for the current problem (but not yet
-            # because the student hasn't tried enough times) then gray it out; otherwise display nothing
-
-	  # if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
-	  $showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
-
-            if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
-                my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
-                print CGI::span({class=>"gray_button set-id-tooltip",
-                                "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"",
-                                "data-original-title"=>($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
-                                }, $r->maketext("Show me another [_1]",$exhausted));
-              }
+	if ($can{showMeAnother}) {
+		# only output showMeAnother button if we're not on the showMeAnother page
+		my $SMAURL = $self->systemLink($urlpath->newFromModule(
+			"WeBWorK::ContentGenerator::ShowMeAnother",
+			$r,courseID => $courseID,
+			setID => $problem->set_id,
+			problemID =>$problem->problem_id
+		));
+		print CGI::a(
+			{
+				href=>$SMAURL,
+				class=>"set-id-tooltip",
+				"data-toggle"=>"tooltip",
+				"data-placement"=>"right",
+				id=>"SMA_button",
+				title=>"",
+				target=>"_wwsma",
+				"data-original-title"=>$r->maketext("You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem",($showMeAnother{MaxReps}>=$showMeAnother{Count})?($showMeAnother{MaxReps}-$showMeAnother{Count}):"")
+			},
+			$r->maketext("Show me another")
+		);
+	} else {
+		# if showMeAnother is available for the course, and for the current problem (but not yet
+		# because the student hasn't tried enough times) then gray it out; otherwise display nothing
+		# if $showMeAnother{TriesNeeded} is somehow not an integer or if its -2, use the default value
+		$showMeAnother{TriesNeeded} = $ce->{pg}->{options}->{showMeAnotherDefault} if ($showMeAnother{TriesNeeded} !~ /^[+-]?\d+$/ || $showMeAnother{TriesNeeded} == -2);
+		if($ce->{pg}->{options}->{enableShowMeAnother} and $showMeAnother{TriesNeeded} >-1 ){
+			my $exhausted = ($showMeAnother{Count}>=$showMeAnother{MaxReps} and $showMeAnother{MaxReps}>-1) ? "exhausted" : "";
+			print CGI::span(
+				{
+					class=>"gray_button set-id-tooltip",
+					"data-toggle"=>"tooltip",
+					"data-placement"=>"right",
+					title=>"",
+					"data-original-title"=>(before($r->db->getGlobalSet($self->{set}->set_id)->open_date)) ? $r->maketext("The problem set is not yet open") : ($exhausted eq "exhausted") ? $r->maketext("Feature exhausted for this problem") : $r->maketext("You must attempt this problem [quant,_1,time,times] before this feature is available",$showMeAnother{TriesNeeded}),
+				},
+				$r->maketext("Show me another [_1]",$exhausted)
+			);
+		}
 	}
-
 	return "";
 }
 
@@ -1859,28 +1997,12 @@ sub output_comments{
 	if ($userPastAnswerID) {
 		my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
 		if ($userPastAnswer->comment_string) {
-
-		    my $comment = $userPastAnswer->comment_string;
-		    $comment = CGI::escapeHTML($comment);
-		    my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
-		   		    print CGI::start_div({id=>"answerComment", class=>"answerComments"});
-		    print CGI::b("Instructor Comment:"),  CGI::br();
-		    print $comment;
-		    print <<EOS;
-				<script type="text/javascript">
-					MathJax.Hub.Register.StartupHook('AsciiMath Jax Config', function () {
-					var AM = MathJax.InputJax.AsciiMath.AM;
-					for (var i=0; i< AM.symbols.length; i++) {
-						if (AM.symbols[i].input == '**') {
-						AM.symbols[i] = {input:"**", tag:"msup", output:"^", tex:null, ttype: AM.TOKEN.INFIX};
-						}
-					}
-									 });
-				MathJax.Hub.Config(["input/Tex","input/AsciiMath","output/HTML-CSS"]);
-
-				MathJax.Hub.Queue([ "Typeset", MathJax.Hub,'answerComment']);
-				</script>
-EOS
+			my $comment = $userPastAnswer->comment_string;
+			$comment = CGI::escapeHTML($comment);
+			my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+			print CGI::start_div({id=>"answerComment", class=>"answerComments"});
+			print CGI::b("Instructor Comment:"),  CGI::br();
+			print $comment;
 		}
 	}
 
@@ -1931,8 +2053,8 @@ sub output_summary{
 		);
 	    print $results;
 
-	} elsif ($will{checkAnswers}) {
-	    # print this if user previewed answers
+	} elsif ($will{checkAnswers} || $self->{will}{showProblemGrader}) {
+	    # print this if user checked answers
 	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
 	    print $self->attemptResults($pg,
 	    	1, # showAttemptAnswers
@@ -1993,18 +2115,15 @@ sub output_summary{
     }
 
 
-    if (!$previewAnswers) {    # only color answers if not previewing
-        if ($checkAnswers or $showPartialCorrectAnswers) { # color answers when partialCorrectAnswers is set
-                                                           # or when checkAnswers is submitted
-	    print CGI::start_script({type=>"text/javascript"}),
-	            "addOnLoadEvent(function () {color_inputs([\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{correct_ids}||[]}),
-	            "\n],[\n  ",
-		      join(",\n  ",map {"'$_'"} @{$self->{incorrect_ids}||[]}),
-	            "]\n)});",
-	          CGI::end_script();
+	if (!$previewAnswers && ($checkAnswers || $showPartialCorrectAnswers)) {
+		# Only color answers if not previewing and when partialCorrectAnswers is set or when
+		# checkAnswers is submitted.
+		print CGI::start_script({type=>"text/javascript"}),
+			"\$(function () {color_inputs([",
+			join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],[",
+			join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "])});",
+			CGI::end_script();
 	}
-    }
 	return "";
 }
 
@@ -2151,7 +2270,9 @@ sub output_email_instructor{
 		problemPath        => $problem->source_file,
 		randomSeed         => $problem->problem_seed,
 		notifyAddresses    => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
-		emailableURL       => $self->generateURLs('absolute'),
+		emailableURL       => $self->generateURLs(url_type => 'absolute',
+		                                          set_id => $self->{set}->set_id,
+		                                          problem_id => $self->{problem}->problem_id),
 		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
@@ -2177,20 +2298,6 @@ sub output_hidden_info {
 
 # output_JS subroutine
 
-# prints out the wz_tooltip.js script for the current site.
-
-sub output_wztooltip_JS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
-	return "";
-}
-
 # outputs all of the Javascript needed for this page.
 # The main javascript needed here is color.js, which colors input fields based on whether or not
 # they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification
@@ -2205,15 +2312,6 @@ sub output_JS{
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-	# This adds the dragmath functionality
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/dragmath.js"}), CGI::end_script();
-
-	# This file declares a function called addOnLoadEvent which allows multiple different scripts to add to a single onLoadEvent handler on a page.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
-
-	# This is a file which initializes the proper JAVA applets should they be needed for the current problem.
-	print CGI::start_script({type=>"tesxt/javascript", src=>"$site_url/js/legacy/java_init.js"}), CGI::end_script();
-
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
 
@@ -2223,7 +2321,6 @@ sub output_JS{
 	# This is for MathView.
 	if ($self->{will}->{useMathView}) {
 	    if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript"});
 		print "mathView_basepath = \"$site_url/images/mathview/\";";
 		print CGI::end_script();
@@ -2243,8 +2340,8 @@ sub output_JS{
 
 	# MathQuill live rendering 
 	if ($self->{will}->{useMathQuill}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mathquill.min.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathQuill/mqeditor.js"}), CGI::end_script();
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
+		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
 	}
 	
 	# This is for knowls
@@ -2267,8 +2364,34 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 	}
 
+	# This is for the problem grader
+	if ($self->{will}{showProblemGrader}) {
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}),
+			CGI::end_script();
+	}
+
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Problem/problem.js"}), CGI::end_script();
+
+	# This is for the image dialog
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+
+	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
+	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
+		my %jsFiles;
+		for (@{$self->{pg}{flags}{extra_js_files}}) {
+			next if $jsFiles{$_->{file}};
+			$jsFiles{$_->{file}} = 1;
+			my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
+			if ($_->{external}) {
+				print CGI::script({ src => $_->{file} , %attributes }, "");
+			} elsif (!$_->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}") {
+				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
+			} else {
+				print "<!-- $_ is not available in htdocs/ on this server -->\n";
+			}
+		}
+	}
 
 	return "";
 }
@@ -2294,33 +2417,27 @@ sub output_CSS {
 		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />\n";
 	}
 
+	# Style for the image dialog
+	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
+
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
-	# or via a setting of $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
-	# which can be set in course.conf (the value should be an anon array).
-	my $pg = $self->{pg};
-	if ( defined( $pg->{flags}{extra_css_files} ) ||
-	     ( defined(  $ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}  ) &&
-	       scalar( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}} ) > 0   )
-	   ) {
-		my $baseDir = $ce->{webwork_htdocs_url};
-		my $webwork_dir  = $WeBWorK::Constants::WEBWORK_DIRECTORY;
-		my $cssFile;
-		my %cssFiles;
-		# Avoid duplicates
-		my @courseCssRequests = ();
-		if ( defined($ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files} ) ) {
-			@courseCssRequests = ( @{$ce->{pg}->{specialPGEnvironmentVars}->{extra_css_files}
-} );
-		}
-		foreach $cssFile ( @courseCssRequests, @{$pg->{flags}{extra_css_files}} ) {
-			$cssFiles{$cssFile} = 1;
-		}
-		foreach $cssFile ( keys( %cssFiles ) ) {
-			if ( -f "$webwork_dir/htdocs/css/$cssFile" ) { # FIXME - test for existence
-				print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${baseDir}/css/$cssFile\" />\n";
-			} else {
-				print "<!-- $cssFile is not available in htdocs/css/ on this server -->\n";
-			}
+	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
+	# which can be set in course.conf (the value should be an anonomous array).
+	my %cssFiles;
+	# Avoid duplicates
+	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
+		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+	}
+	if (ref($self->{pg}{flags}{extra_css_files}) eq "ARRAY") {
+		$cssFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_css_files}};
+	}
+	for (keys(%cssFiles)) {
+		if ($cssFiles{$_}) {
+			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$_\" />\n";
+		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
+			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
+		} else {
+			print "<!-- $_ is not available in htdocs/ on this server -->\n";
 		}
 	}
 

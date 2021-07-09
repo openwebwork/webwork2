@@ -32,10 +32,11 @@ are more than 10 seconds old.
 
 =head1 OPTIONS
 
+=over
+
 =item course
 
 Course for which old nonces should be deleted.
-
 
 =back
 

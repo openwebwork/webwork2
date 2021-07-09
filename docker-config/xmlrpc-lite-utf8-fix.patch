@@ -1,0 +1,11 @@
+--- a/usr/share/perl5/XMLRPC/Lite.pm	2013-05-16 21:02:00.000000000 -0500
++++ b/usr/share/perl5/XMLRPC/Lite.pm	2021-03-22 10:30:40.498229670 -0500
+@@ -52,7 +52,7 @@
+ 
+     return $class->SUPER::new(
+         typelookup => {
+-            base64 => [10, sub {$_[0] =~ /[^\x09\x0a\x0d\x20-\x7f]/}, 'as_base64'],
++            base64 => [10, sub {$_[0] =~ /[^\x09\x0a\x0d\x20-\x7f]/ && !utf8::is_utf8($_[0])}, 'as_base64'],
+             int    => [20, sub {$_[0] =~ /^[+-]?\d+$/}, 'as_int'],
+             double => [30, sub {$_[0] =~ /^(-?(?:\d+(?:\.\d*)?|\.\d+)|([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?)$/}, 'as_double'],
+             dateTime => [35, sub {$_[0] =~ /^\d{8}T\d\d:\d\d:\d\d$/}, 'as_dateTime'],

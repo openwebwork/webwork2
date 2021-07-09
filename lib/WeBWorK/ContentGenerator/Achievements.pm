@@ -61,15 +61,14 @@ sub initialize {
 
 	$self->{globalData} = $globalUserAchievement;
 
-	#Checks to see if user items are enavbled and if the user has
+	#Checks to see if user items are enabled and if the user has
 	# achievement data
 
 	if ($ce->{achievementItemsEnabled} && defined $globalUserAchievement) {
 	    
-	    my $items = WeBWorK::AchievementItems::UserItems($effectiveUserName, $db, $ce);
+	    my $itemsWithCounts = WeBWorK::AchievementItems::UserItems($effectiveUserName, $db, $ce);
+            $self->{achievementItems} = $itemsWithCounts;
 
-	    $self->{achievementItems} = $items;
-	    
 	    my $usedItem = $r->param('useditem');
 	    
 	    # if the useditem parameter is defined then the student wanted to
@@ -77,11 +76,12 @@ sub initialize {
 	    # use method and printing results
 
 	    if (defined $usedItem) {
-		my $error = $$items[$usedItem]->use_item($effectiveUserName, $r);
+		my $error = $itemsWithCounts->[$usedItem]->[0]->use_item($effectiveUserName, $r);
 		if ($error) {
 		    $self->addmessage(CGI::div({class=>"ResultsWithError"}, $error ));
 		} else {
-		    splice(@$items, $usedItem, 1);
+                    if ($itemsWithCounts->[$usedItem]->[1] != 1)    {$itemsWithCounts->[$usedItem]->[1]--}
+                    else {splice(@$itemsWithCounts, $usedItem, 1)};
 		    $self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $r->maketext("Item Used Successfully!") ));
 		}	
 	    }
@@ -201,7 +201,14 @@ sub body {
 
 	#print any items they have if they have items
 	if ($ce->{achievementItemsEnabled} && $self->{achievementItems}) {
-	    my @items = @{$self->{achievementItems}};
+	    my @itemsWithCounts = @{$self->{achievementItems}};
+            # remove count data so @items is structured as originally designed
+            my @items = ();
+            my %itemCounts = ();
+            for my $item (@itemsWithCounts) {
+                push (@items, $item->[0]);
+                $itemCounts{$item->[0]->id()} = $item->[1];
+            };
 	    my $urlpath = $r->urlpath;
 	    my @setIDs = $db->listUserSets($userID);
 	    my @setProblemCount;
@@ -229,9 +236,12 @@ sub body {
 			    
 		my $itemnumber = 0;
 		foreach my $item (@items) {
-		    # Print each items name and description 
+		    # Print each item's name, count, and description
 		    print CGI::start_div({class=>"achievement-item"});
-		    print CGI::h3($r->maketext($item->name()));
+		    if ($itemCounts{$item->id()} > 1) {print CGI::h3($r->maketext($item->name()) . ' (' . $r->maketext('[_1] remaining', $itemCounts{$item->id()}) . ')')}
+		    elsif ($itemCounts{$item->id()} < 0) {print CGI::h3($r->maketext($item->name()) . ' (' . $r->maketext('unlimited reusability') . ')')}
+                    else {print CGI::h3($r->maketext($item->name()))};
+
 		    print CGI::p($r->maketext($item->description()));
 		    # Print a modal popup for each item which contains the form
 		    # necessary to get the data to use the item.  Print the 

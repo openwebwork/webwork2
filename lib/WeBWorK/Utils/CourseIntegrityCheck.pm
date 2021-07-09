@@ -80,7 +80,7 @@ sub DESTROY {
 
 ##################################################################
 
-
+=over
 
 =item $CIchecker->checkCourseTables($courseName);
 
@@ -191,10 +191,6 @@ sub updateCourseTables {
 	
 }
 
-=cut
-
-
-
 =item  $CIchecker->checkTableFields($courseName, $table);
 
 Checks the course tables in the mysql database and insures that they are the same as the ones specified by the databaseLayout
@@ -239,10 +235,16 @@ sub checkTableFields {
  	my %database_field_names =  map {${$_}[0]=>[$_]} @$result;             # drill down in the result to the field name level
                                                            #  result is array:  Field      | Type     | Null | Key | Default | Extra 
  	foreach my $field_name (sort keys %database_field_names) {
- 	    if ($field_name eq "published") {  #hack to stop warning about residual "published" fields.
- 	    	warn "Harmless: $table_name has extra column 'published' for older course. \n";
- 	        next;
- 	    }
+			if ($field_name eq "published") {  #hack to stop warning about residual "published" fields.
+				warn "Harmless: $table_name has extra column 'published' for older course. We'll try to delete it\n";
+				if ( $db->{$table}->can("drop_column_field") ) {
+					warn "dropping field $field_name in table $table_name\n";
+					$db->{$table}->drop_column_field($field_name);
+				}
+				next;
+			} 
+ 	
+
  		my $exists = exists($schema_override_field_names{$field_name} );
  		$fields_ok=0 unless $exists;
  		$fieldStatus{$field_name} = [ONLY_IN_B] unless $exists;
@@ -274,11 +276,13 @@ sub updateTableFields {
     my ($fields_ok, $fieldStatus) = $self->checkTableFields($courseName,$table);
     # add fields
     foreach my $field_name (keys %$fieldStatus) {
-     	next unless $fieldStatus->{$field_name}->[0] == ONLY_IN_A; 
-     	my $schema_obj = $db->{$table};
-     	if ( $schema_obj->can("add_column_field") ) {
-     		$msg.= "Added column '$field_name' to table '$table'".CGI::br() if $schema_obj->add_column_field($field_name);
-     	}
+     	if ( $fieldStatus->{$field_name}->[0] == ONLY_IN_A) { 
+     		my $schema_obj = $db->{$table};
+			if ( $schema_obj->can("add_column_field") ) {
+				$msg.= "Added column '$field_name' to table '$table'".CGI::br() if $schema_obj->add_column_field($field_name);
+			}
+		}
+		
     }
 	return $msg;
 	
@@ -476,18 +480,8 @@ sub ask_permission_stdio {
 	}
 }
 
+=back
 
-# 
-# 
-# =item checkCourseDirectories($courseName)
-# 
-# Checks the course files and directories to make sure they exist and have the correct permissions.
-# 
-# =cut
-# 
-# 
-# 
-
-
+=cut
 
 1;

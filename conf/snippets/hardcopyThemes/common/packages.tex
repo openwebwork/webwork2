@@ -1,0 +1,29 @@
+\usepackage{amsmath,amsfonts,amssymb,multicol}
+\usepackage{booktabs,tabularx,colortbl,caption,xcolor}
+\usepackage{path}
+\discretionaries |~!@$%^&*()_+`-=#{"}[]:;'<>,.?\/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789|
+
+\usepackage{iftex}
+\ifXeTeX
+  \usepackage{graphicx}
+\else
+  \usepackage[pdftex]{graphicx}
+  \usepackage{epstopdf} % allows use of eps files with pdftex
+  \usepackage[utf8]{inputenc}
+  \usepackage{eurosym} % the euro symbol
+  \DeclareUnicodeCharacter{20AC}{\euro} % make it possible to use the UTF-8 character for the euro symbol in problems
+\fi
+
+\usepackage{epsf}
+\usepackage{epsfig}
+\usepackage{pslatex}
+
+\pagestyle{plain}
+
+\def\endline{\bigskip\hrule width \hsize height 0.8pt }
+\newcommand{\lt}{<}
+\newcommand{\gt}{>}
+\newcommand{\less}{<}
+\newcommand{\grt}{>}
+
+\parindent=0pt

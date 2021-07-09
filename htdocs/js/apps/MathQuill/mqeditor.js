@@ -1,18 +1,21 @@
+"use strict"
+
 // initialize MathQuill
 var MQ = MathQuill.getInterface(2);
-answerQuills = {};
+var answerQuills = {};
 
 // Avoid conflicts with bootstrap.
 $.widget.bridge('uitooltip', $.ui.tooltip);
 
-function createAnswerQuill() {
+$("[id^=MaThQuIlL_]").each(function() {
 	var answerLabel = this.id.replace(/^MaThQuIlL_/, "");
 	var input = $("#" + answerLabel);
 	var inputType = input.attr('type');
-	if (typeof(inputType) != 'string' || inputType.toLowerCase() !== "text") return;
+	if (typeof(inputType) != 'string' || inputType.toLowerCase() !== "text" || !input.hasClass('codeshard')) return;
 
 	var answerQuill = $("<span id='mq-answer-" + answerLabel + "'></span>");
 	answerQuill.input = input;
+	input.addClass('mq-edit');
 	answerQuill.latexInput = $(this);
 
 	input.after(answerQuill);
@@ -30,8 +33,8 @@ function createAnswerQuill() {
 	};
 
 	// Merge options that are set by the problem.
-	if (this.id + '_Opts' in window)
-		$.extend(cfgOptions, cfgOptions, window[this.id + '_Opts']);
+	var optOverrides = answerQuill.latexInput.data("mq-opts");
+	if (typeof(optOverrides) == 'object') $.extend(cfgOptions, optOverrides);
 
 	// This is after the option merge to prevent handlers from being overridden.
 	cfgOptions.handlers = {
@@ -173,6 +176,4 @@ function createAnswerQuill() {
 	}
 
 	answerQuills[answerLabel] = answerQuill;
-}
-
-$(function() { $("[id^=MaThQuIlL_]").each(createAnswerQuill); });
+});

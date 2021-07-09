@@ -18,4 +18,4 @@ echo "Updating $WEBWORK_ROOT/webwork2.pot"
 
 xgettext.pl -o webwork2.pot -D $WEBWORK_ROOT/lib -D $PG_ROOT/lib -D $PG_ROOT/macros
 
-find $LOCDIR -name '*.po' -exec bash -c "echo \"Updating {}\"; msgmerge -qU {} webwork2.pot" \;
+find $LOCDIR -name '*.po' -exec bash -c "echo \"Updating {}\"; msgmerge -qUN {} webwork2.pot" \;

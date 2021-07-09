@@ -75,7 +75,7 @@ sub UserItems {
 
     # ugly eval to get a new item object for each type of item.  
     foreach my $item (@{+ITEMS}) {
-	push (@items, eval("WeBWorK::AchievementItems::${item}->new")) if
+	push (@items, [eval("WeBWorK::AchievementItems::${item}->new"),$globalData->{$item}]) if
 	    ($globalData->{$item});
     }
 
@@ -114,11 +114,16 @@ sub print_form {
     my @openSetCount;
     my $maxProblems=0;
 
-    #Find all of the closed sets and put them in form
+    #Find all of the closed sets or sets that are past their reduced scoring date and put them in form
 
     for (my $i=0; $i<=$#$sets; $i++) {
 	if (after($$sets[$i]->due_date()) & $$sets[$i]->assignment_type eq "default") {
 	    push(@openSets,$$sets[$i]->set_id);
+	}
+	elsif (defined($$sets[$i]->reduced_scoring_date())) {
+		if (after($$sets[$i]->reduced_scoring_date()) & $$sets[$i]->assignment_type eq "default") {
+			push(@openSets,$$sets[$i]->set_id);
+		}
 	}
     }
 
@@ -167,7 +172,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
 
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -245,13 +250,13 @@ sub use_item {
     my $userSet = $db->getUserSet($userName,$setID);
     
     #add time to the reduced scoring date, due date, and answer date; remove item from inventory
-    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date());
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
     $userSet->due_date($set->due_date()+86400);
     $userSet->answer_date($set->answer_date()+86400);
 
     $db->putUserSet($userSet);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -329,13 +334,13 @@ sub use_item {
     my $userSet = $db->getUserSet($userName,$setID);
     
     #add time to the reduced scoring date, due date, and answer date; remove item from inventory
-    $userSet->reduced_scoring_date($set->reduced_scoring_date()+172800) if defined($set->reduced_scoring_date());
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+172800) if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
     $userSet->due_date($set->due_date()+172800);
     $userSet->answer_date($set->answer_date()+172800);
 
     $db->putUserSet($userSet);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -430,7 +435,7 @@ sub use_item {
 
     $db->putUserSet($userSet);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -518,7 +523,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -629,7 +634,7 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -742,7 +747,7 @@ sub use_item {
     $problem->value($globalproblem->value*2);
     $db->putUserProblem($problem);
 
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -858,7 +863,7 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -948,7 +953,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1059,7 +1064,7 @@ sub use_item {
 
     $db->putUserProblem($problem);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1144,7 +1149,7 @@ sub use_item {
 	$db->putUserProblem($problem);
     }
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1269,7 +1274,7 @@ sub use_item {
 
     $db->putUserProblem($problem2);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1420,7 +1425,7 @@ sub use_item {
     
     $db->putUserSet($userSet);
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
@@ -1516,7 +1521,7 @@ sub use_item {
     my $userSet = $db->getUserSet($userName,$setID);
     
     #add time to the reduced scoring date, due date, and answer date
-    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date());
+    $userSet->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
     $userSet->due_date($set->due_date()+86400);
     $userSet->answer_date($set->answer_date()+86400);
 
@@ -1528,14 +1533,14 @@ sub use_item {
     foreach my $version (@versions) {
 
 	$set = $db->getSetVersion($userName,$setID,$version);
-	$set->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date());
+	$set->reduced_scoring_date($set->reduced_scoring_date()+86400) if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
 	$set->due_date($set->due_date()+86400);
 	$set->answer_date($set->answer_date()+86400);
 	$db->putSetVersion($set);
 
     }
     
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
     
@@ -1618,13 +1623,13 @@ sub use_item {
 	($set);
     
     #add time to the reduced scoring date, due date, and answer date; remove item from inventory
-    $set->reduced_scoring_date(time()+86400) if defined($set->reduced_scoring_date());
+    $set->reduced_scoring_date(time()+86400) if defined($set->reduced_scoring_date()) && $set->reduced_scoring_date();
     $set->due_date(time()+86400);
     $set->answer_date(time()+86400);
 
     $db->putUserSet($set);
 	
-    $globalData->{$self->{id}} = 0;
+    $globalData->{$self->{id}}--;
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
     
