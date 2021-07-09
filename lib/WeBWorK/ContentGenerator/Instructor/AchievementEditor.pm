@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Skeleton.pm,v 1.5 2006/07/08 14:07:34 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +33,7 @@ use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(has_aux_files not_blank);
 use File::Copy;
-use WeBWorK::Utils::Tasks qw(fake_user fake_set renderProblems);
+use WeBWorK::Utils::Tasks qw(fake_user fake_set);
 use Data::Dumper;
 use Fcntl;
 
@@ -225,13 +224,6 @@ sub body {
 		CGI::hidden(-name=>'sourceFilePath',
 		            -default=>$self->{sourceFilePath}) : '';
 
-		print CGI::script(<<EOF);
-		function setRadio(i) {
-		  document.getElementById('action'+i).checked = true;
-		}
-EOF
-
-
 	print CGI::p($header),
 
 		CGI::start_form({method=>"POST", id=>"editor", name=>"editor", action=>"$uri", enctype=>"application/x-www-form-urlencoded"}),
@@ -247,53 +239,43 @@ EOF
 			),
 		);
 
-
-	
-######### print action forms
-		
+	######### print action forms
 	my @formsToShow = @{ ACTION_FORMS() };
 	my %actionFormTitles = %{ ACTION_FORM_TITLES() };
-	my $default_choice = $formsToShow[0];
-	my $i = 0;
-	my @divArr = ();
-	
-	foreach my $actionID (@formsToShow) {
+	my $default_choice;
 
-	    my $actionForm = "${actionID}_form";
-	    my %actionParams = $self->getActionParams($actionID);
-	    my $line_contents = $self->$actionForm( %actionParams);
-	    my $radio_params = {-type=>"radio", -name=>"action", -value=>$actionID};
-	    $radio_params->{checked}="checked" if ($actionID eq $default_choice) ;
+	my @tabArr;
+	my @contentArr;
 
-	    if($line_contents){
+	for my $actionID (@formsToShow) {
+		my $actionForm = "${actionID}_form";
+		my $line_contents = $self->$actionForm($self->getActionParams($actionID));
+		my $active = "";
 
-	      my $title = $r->maketext($actionFormTitles{$actionID});
+		if ($line_contents) {
+			my $title = $r->maketext($actionFormTitles{$actionID});
+			my $id = "${actionForm}_id";
+			$active = "active", $default_choice = $actionID unless $default_choice;
 
-		push @divArr, join("",
-				   CGI::h3($title),
-				   CGI::div({-class=>"pg_editor_input_span"},WeBWorK::CGI_labeled_input(-type=>"radio", -id=>$actionForm."_id", -label_text=>ucfirst(WeBWorK::underscore_to_whitespace($actionForm)), -input_attr=>$radio_params),CGI::br()),
-				   CGI::div({-class=>"pg_editor_input_div"},$line_contents),
-				   CGI::br())
-	    }
-
-	    $i++;
+			push(@tabArr, CGI::li({ class => $active },
+					CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
+						ucfirst(WeBWorK::underscore_to_whitespace($actionForm)))));
+			push(@contentArr, CGI::div({ class => "tab-pane pg_editor_action_div $active", id => $id }, $line_contents));
+		}
 	}
-	
-	my $divArrRef = \@divArr;
-	
-	print CGI::div({-class=>"tabber"},
-		       CGI::div({-class=>"tabbertab"},$divArrRef)
-	    );
-	
+
+	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
+	print CGI::div({ class => "tabbable" },
+		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
+		CGI::div({ class => "tab-content" }, @contentArr)
+	);
+
 	print CGI::div($r->maketext("Select above then:"),
-				  CGI::submit(-name=>'submit', -value=>$r->maketext("Take Action!")),
-				  );
+		CGI::submit(-name=>'submit', -value=>$r->maketext("Take Action!")));
 	
 	print  CGI::end_form();
 
 	return "";
-
-
 }
 
 #
@@ -678,26 +660,17 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
 
 	if ($ce->{options}->{PGCodeMirror}) {
-	  
-	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/codemirror.js"}), CGI::end_script();
-	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PGaddons.js"}), CGI::end_script();
-	  print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/codemirror/PG.js"}), CGI::end_script();
-	  print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/codemirror/codemirror.css\"/>";
-	  
+		print qq{<link rel="stylesheet" type="text/css" href="$site_url/node_modules/codemirror/lib/codemirror.css"/>};
+		print CGI::start_script({src=>"$site_url/node_modules/codemirror/lib/codemirror.js"}), CGI::end_script();
+		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PGaddons.js"}), CGI::end_script();
+		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PG.js"}), CGI::end_script();
 	}
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AchievementEditor/achievementeditor.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
+	print CGI::script({ src => "$site_url/js/apps/AchievementEditor/achievementeditor.js", defer => "" }, "");
 
-
-	
-	return "";
-}
-
-sub output_tabber_CSS{
 	return "";
 }
 

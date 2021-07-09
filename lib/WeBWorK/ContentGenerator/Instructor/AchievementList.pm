@@ -51,9 +51,11 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive cryptPassword sortAchievements);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements);
 use DateTime;
 use Text::CSV;
+use Encode;
+use open IO => ':encoding(UTF-8)';
 
 #constants for forms and the various handlers
 use constant BLANK_ACHIEVEMENT => "blankachievement.at";
@@ -287,37 +289,38 @@ sub body {
 	my @formsToShow;
 	if ($editMode) {
 		@formsToShow = @{ EDIT_FORMS() };
+	} elsif ($exportMode) {
+		@formsToShow = @{ EXPORT_FORMS() };
 	} else {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
 	
-	if ($exportMode) {
-		@formsToShow = @{ EXPORT_FORMS() };
-	}
-	
-	print CGI::start_div({-class=>"tabber"});
+	my @tabArr;
+	my @contentArr;
 
-	my $i = 0;
-	foreach my $actionID (@formsToShow) {
-
+	for my $actionID (@formsToShow) {
 		my $actionForm = "${actionID}_form";
-		my $onChange = "document.achievementlist.action[$i].checked=true";
-		my %actionParams = $self->getActionParams($actionID);
-		
-		print CGI::div({-class=>"tabbertab"},
-			   CGI::h3($r->maketext(ucfirst(WeBWorK::split_cap($actionID)))),
-			   CGI::span({-class=>"radio_span"},  WeBWorK::CGI_labeled_input(-type=>"radio", 
-			   -id=>$actionID."_id", -label_text=>$r->maketext(ucfirst(WeBWorK::split_cap($actionID))), 
-                           -input_attr=>{-name=>"action", -value=>$actionID}, -label_attr=>{-class=>"radio_label"})),			       
-			       $self->$actionForm($onChange, %actionParams)
-		    );
-		
-		$i++;
+		my $id = "${actionID}_id";
+
+		push(@tabArr, CGI::li($actionID eq $formsToShow[0] ? { class => "active" } : {},
+				CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
+					$r->maketext(ucfirst(WeBWorK::split_cap($actionID))))));
+		push(@contentArr, CGI::div({
+					class => "tab-pane achievement_list_action_div" . ($actionID eq $formsToShow[0] ? " active" : ""),
+					id => $id
+				},
+				$self->$actionForm($self->getActionParams($actionID))));
 	}
 	
-	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"take_action", -input_attr=>{-value=>$r->maketext("Take Action!"), -class=>"button_input"}).CGI::br().CGI::br();
+	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $formsToShow[0]);
+	print CGI::div({ class => "tabbable" },
+		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
+		CGI::div({ class => "tab-content" }, @contentArr)
+	);
 
-	print CGI::end_div();
+	print WeBWorK::CGI_labeled_input(-type => "submit", -id => "take_action",
+		-input_attr => { value => $r->maketext("Take Action!"), class => "button_input" }) .
+		CGI::br() . CGI::br();
 	
 	########## print table
 
@@ -374,7 +377,7 @@ sub getTableParams {
 
 #form for edition achievements
 sub edit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return join("",
 		$r->maketext("Edit")." ",
@@ -386,7 +389,6 @@ sub edit_form {
 				all => $r->maketext("all achievements"),
 				selected => $r->maketext("selected achievements"),
 			},
-			-onchange => $onChange,
 		),
 	);
 }
@@ -411,7 +413,7 @@ sub edit_handler {
 
 #form for assigning achievemetns to users
 sub assign_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return $r->maketext("Assign [_1] to all users, create global data, and [_2].",
@@ -423,7 +425,6 @@ sub assign_form {
 				all => $r->maketext("all achievements"),
 				selected => $r->maketext("selected achievements"),
 			},
-			-onchange => $onChange,
 		),
    		CGI::popup_menu(
 			-name => "action.assign.overwrite",
@@ -433,7 +434,6 @@ sub assign_form {
 				everything => $r->maketext("overwrite all data"),
 				new_only => $r->maketext("preserve existing data"),
 			},
-			-onchange => $onChange,
 		)
 	);
 }
@@ -506,7 +506,7 @@ sub assign_handler {
 
 #form for scoring
 sub score_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 
 	return join ("",
@@ -520,7 +520,6 @@ sub score_form {
 				all => $r->maketext("all achievements"),
 				selected => $r->maketext("selected achievements"),
 			},
-			-onchange => $onChange,
 		),
 	);
 
@@ -629,7 +628,7 @@ sub score_handler {
 
 #form for delete action
 sub delete_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return join("",
 		CGI::div({class=>"ResultsWithError"}, 
@@ -642,7 +641,6 @@ sub delete_form {
 					none => $r->maketext("no achievements."),
 					selected => $r->maketext("selected achievements."),
 				},
-				-onchange => $onChange,
 			),' ',
 			CGI::em($r->maketext("Deletion destroys all achievement-related data and is not undoable!")),
 		)
@@ -686,7 +684,7 @@ sub delete_handler {
 
 #form for creating achievement
 sub create_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 
 	my $r      = $self->r;
 	
@@ -695,7 +693,6 @@ sub create_form {
 			-name => "action.create.id",
 			-value => $actionParams{"action.create.name"}->[0] || "",
 			-width => "60",
-			-onchange => $onChange,
 		),
 		" ".$r->maketext("as")." ",
 		CGI::popup_menu(
@@ -706,7 +703,6 @@ sub create_form {
 				empty => $r->maketext("a new empty achievement."),
 				copy => $r->maketext("a duplicate of the first selected achievement."),
 			},
-			-onchange => $onChange,
 		);
 			
 }
@@ -761,7 +757,7 @@ sub create_handler {
 
 #form for importing achievements
 sub import_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	
 	my $r = $self->r;
 	my $authz = $r->authz;
@@ -773,7 +769,6 @@ sub import_form {
 			-values => [ "", $self->getAxpList() ],
 			-labels => { "" => $r->maketext("the following file") },
 			-default => $actionParams{"action.import.source"}->[0] || "",
-		        -onchange => $onChange,
 		),
 		    CGI::popup_menu(
 			-name => "action.import.assign",
@@ -783,7 +778,6 @@ sub import_form {
 			    all => $r->maketext("all current users"),
 			    none => $r->maketext("no users"),
 			},
-			-onchange => $onChange,
 		   )
 	);
 }
@@ -881,7 +875,7 @@ sub import_handler {
 
 #form for exporting 
 sub export_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	my $r = $self->r;
 	return join("",
 		$r->maketext("Export").' ',
@@ -893,7 +887,6 @@ sub export_form {
 			    all => $r->maketext("all achievements"),
 			    selected => $r->maketext("selected achievements"),
 			},
-			-onchange => $onChange,
 		),
 	);
 }
@@ -921,7 +914,7 @@ sub export_handler {
 
 #form and hanlder for leaving the export page
 sub cancelExport_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	return $self->r->maketext("Abandon export");
 }
 
@@ -936,7 +929,7 @@ sub cancelExport_handler {
 
 #handler and form for actually exporting
 sub saveExport_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	return $self->r->maketext("Export selected achievements.");
 }
 
@@ -994,7 +987,7 @@ sub saveExport_handler {
 
 #form and handler for cancelling edits
 sub cancelEdit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	return $self->r->maketext("Abandon changes");
 }
 
@@ -1009,7 +1002,7 @@ sub cancelEdit_handler {
 
 #form and handler for saving edits
 sub saveEdit_form {
-	my ($self, $onChange, %actionParams) = @_;
+	my ($self, %actionParams) = @_;
 	return $self->r->maketext("Save changes");
 }
 
@@ -1269,8 +1262,6 @@ sub recordEditHTML {
 		});
 	    
 	    my $AchievementEditURL = $self->systemLink($urlpath->new(type=>'instructor_achievement_list', args=>{courseID => $courseName})) . "&editMode=1&selected_achievements=" . $achievement_id;
-	    my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/edit.gif";
-	    my $imageLink = CGI::a({href => $AchievementEditURL}, CGI::img({src=>$imageURL, border=>0}));
 
             my @fields = @{VIEW_FIELD_ORDER()};
 	    foreach my $field (@fields) {
@@ -1281,7 +1272,8 @@ sub recordEditHTML {
 		$fieldValue =~ s/ /&nbsp;/g;
 		$fieldValue = ($fieldValue) ? $r->maketext("Yes") : $r->maketext("No") if $field =~ /enabled/;
 		if ($field =~ /achievement_id/) {
-		    $fieldValue .= $imageLink;
+			$fieldValue .= " " . CGI::a({ href => $AchievementEditURL },
+				CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }));
 		    $fieldValue = CGI::div({class=>'label-with-edit-icon'},$fieldValue);
 		}
 		push @tableCells, CGI::font( $self->fieldEditHTML($fieldName, $fieldValue, \%properties));
@@ -1403,15 +1395,9 @@ sub output_JS{
 	my $ce = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ShowHide/show_hide.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
 
-	return "";
-}
-
-# Just tells template to output the stylesheet for Tabber
-sub output_tabber_CSS{
 	return "";
 }
 

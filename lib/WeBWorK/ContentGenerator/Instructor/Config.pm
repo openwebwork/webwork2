@@ -48,10 +48,10 @@ sub display_value {
 	return $val;
 }
 
-# Stringified version for comparison (with html param return value)
+# This should return the value to compare to the new value.  This is *not* what is displayed.
 sub comparison_value {
 	my ($self, $val) = @_;
-	return $self->display_value($val);
+	return $val;
 }
 
 sub convert_newval_source {
@@ -75,8 +75,8 @@ sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->display_value($oldval);
-	return '' if($displayoldval eq $newval);
+	my $cmpoldval = $self->comparison_value($oldval);
+	return '' if($cmpoldval eq $newval);
 	return('$'. $varname . " = '$newval';\n");
 }
 
@@ -97,19 +97,15 @@ sub what_string {
 	my $self = shift;
 	my $r = $self->{Module}->r;
 	return(CGI::td(
-		CGI::a({href=>$self->{Module}->systemLink(
-			$r->urlpath->new(type=>'instructor_config',
-				args=>{courseID => $r->urlpath->arg("courseID")}),
-				params=>{show_long_doc=>1,
-					var_name=>"$self->{var}"}),
-			target=>"_blank"},
-			CGI::img({src=>$r->{ce}->{webworkURLs}->{htdocs}.
-				"/images/question_mark.png",
-				border=>"0", alt=>"$self->{var}", 
-				style=>"float: right; padding-left: 0.1em;"})
-		) .
-		$r->maketext($self->{doc}) 
-	));
+			CGI::a({href=>$self->{Module}->systemLink(
+						$r->urlpath->new(type=>'instructor_config',
+							args=>{courseID => $r->urlpath->arg("courseID")}),
+						params=>{show_long_doc=>1, var_name=>"$self->{var}"}),
+					target=>"_blank"},
+				CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "help" }, '')
+			) .
+			$r->maketext($self->{doc}) 
+		));
 }
 
 ########################### configtext
@@ -120,10 +116,10 @@ sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->comparison_value($oldval);
-	return '' if($displayoldval eq $newval);
+	my $cmpoldval = $self->comparison_value($oldval);
+	return '' if($cmpoldval eq $newval);
 	# Remove quotes from the string, we will have a new type for text with quotes
-	$newval =~ s/['"`]//g; #`"'geditsucks
+	$newval =~ s/['"`]//g;
 	return('$'. $varname . " = '$newval';\n");
 }
 
@@ -139,8 +135,8 @@ sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->comparison_value($oldval);
-	return '' if($displayoldval eq $newval);
+	my $cmpoldval = $self->comparison_value($oldval);
+	return '' if($cmpoldval eq $newval);
 	if(not DateTime::TimeZone->is_valid_name($newval)) {
 		$self->{Module}->addbadmessage("String '$newval' is not a valid time zone.  Reverting to the system default value.");
 		return '';
@@ -159,8 +155,8 @@ sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->comparison_value($oldval);
-	return '' if($displayoldval eq $newval);
+	my $cmpoldval = $self->comparison_value($oldval);
+	return '' if($cmpoldval eq $newval);
 
 	if($newval !~ /^(01|1|02|2|03|3|04|4|05|5|06|6|07|7|08|8|09|9|10|11|12):[0-5]\d(am|pm|AM|PM)$/) {
 		$self->{Module}->addbadmessage("String '$newval' is not a valid time.  Reverting to the system default value.");
@@ -178,7 +174,7 @@ sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->comparison_value($oldval);
+	my $cmpoldval = $self->comparison_value($oldval);
 	# Remove quotes from the string, we will have a new type for text with quotes
 	$newval =~ s/['"`]//g; #`"'geditsucks
 	my $newval2 = eval($newval);
@@ -186,13 +182,15 @@ sub save_string {
 		$self->{Module}->addbadmessage("Syntax error in numeric value '$newval' for variable \$$self->{var}.  Reverting to the system default value.");
 		return '';
 	}
-	return '' if($displayoldval == $newval2);
+	return '' if($cmpoldval == $newval2);
 	return('$'. $varname . " = $newval;\n");
 }
 
 ########################### configboolean
 package configboolean;
 @configboolean::ISA = qw(configobject);
+
+sub comparison_value { return $_[1] ? 1 : 0; }
 
 sub display_value {
   my ($self, $val) = @_;
@@ -204,22 +202,20 @@ sub display_value {
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $r = $self->{Module}->r;
-	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->comparison_value($oldval);
-	return '' if($displayoldval eq $newval);
-	return('$'. $varname . " = " . ($newval eq $r->maketext("True") ? 1 : 0) .";\n");
+	my $cmpoldval = $self->comparison_value($oldval);
+	return '' if $cmpoldval eq $newval;
+	return "\$$self->{var} = $newval;\n";
 }
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
 	my $r = $self->{Module}->r;
-	my $true = $r->maketext('True');
-	my $false = $r->maketext('False');
 	return CGI::popup_menu(
 		-name => $name,
-		-default => ($default ? $true: $false),
-		-values => [$true,$false],
+		-default => $default,
+		-values => [1, 0],
+		-labels => { 1 => $r->maketext('True'), 0 => $r->maketext('False') }
 	);
 }
 
@@ -227,6 +223,11 @@ sub entry_widget {
 ########################### configpermission
 package configpermission;
 @configpermission::ISA = qw(configobject);
+
+sub comparison_value {
+	my ($self, $val) = @_;
+	return $val // "nobody";
+}
 
 # This tries to produce a string from a permission number.  If you feed it
 # a string, that's what you get back.
@@ -242,14 +243,11 @@ sub display_value {
 
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
-	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->comparison_value($oldval);
+	my $cmpoldval = $self->comparison_value($oldval);
 	my $r = $self->{Module}->r;
-	return '' if($displayoldval eq $newval);
-	my $str = '$'. $varname . " = '$newval';\n";
-	$str = '$'. $varname . " = undef;\n" if $newval eq $r->maketext('nobody');
-	return($str);
+	return '' if($cmpoldval eq $newval);
+	return "\$$self->{var} = $newval;\n";
 }
 
 sub entry_widget {
@@ -258,14 +256,11 @@ sub entry_widget {
 	my $r = $self->{Module}->r;
 	my $permHash = {};
 	my %userRoles = %{$ce->{userRoles}};
-	$userRoles{nobody} = 99999999; # insure that nobody comes at the end #FIXME? this is set in defaults.config
 	my %reverseUserRoles = reverse %userRoles;
 
 	# the value of a permission can be undefined (for nobody),
 	# a standard permission number, or some other number
-	if(not defined($default)) {
-		$default = 'nobody';
-	}
+	$default = 'nobody' unless defined($default);
 
 	my @values = sort { $userRoles{$a} <=> $userRoles{$b} } keys %userRoles;
 
@@ -400,7 +395,7 @@ package configpopuplist;
 @configpopuplist::ISA = qw(configobject);
 
 sub display_value {
-        my ($self, $val) = @_;
+	my ($self, $val) = @_;
   	my $r = $self->{Module}->r;
 	$val = 'ur' if not defined($val);
 
@@ -411,32 +406,14 @@ sub display_value {
 	return join(CGI::br(), $val);
 }
 
-# if there are labels we need to make sure not to save the label of the value
-# version of comparison value
-
-# Stringified version for comparison (with html param return value)
-sub comparison_value {
-	my ($self, $val) = @_;
-	return $val;
-}
-
-
-
 sub save_string {
 	my ($self, $oldval, $newvalsource) = @_;
 	my $varname = $self->{var};
 	my $newval = $self->convert_newval_source($newvalsource);
-	my $displayoldval = $self->comparison_value($oldval);
-	return '' if($displayoldval eq $newval);
+	my $cmpoldval = $self->comparison_value($oldval);
+	return '' if $cmpoldval eq $newval;
 	return('$'. $varname . " = " . "'$newval';\n");
 }
-
-# sub comparison_value {
-# 	my ($self, $val) = @_;
-# 	$val = 'ur' if not defined($val);
-# 	my $str = join(',', @{$val});
-# 	return($str);
-# }
 
 sub entry_widget {
 	my ($self, $name, $default) = @_;
@@ -447,8 +424,7 @@ sub entry_widget {
 		-name => $name,
 		-values => $self->{values},
 		-default => $default,
-	        -labels => \%labels,
-
+		-labels => \%labels,
 	);
 }
 
@@ -523,13 +499,15 @@ sub print_navigation_tabs {
 	my $str = '';
 	for my $tab (0..(scalar(@tab_names)-1)) {
 		if($current_tab eq "tab$tab") {
-			$tab_names[$tab] = $r->maketext($tab_names[$tab]);
+			$tab_names[$tab] = CGI::span({class => 'current'}, $r->maketext($tab_names[$tab]));
 		} else {
-			$tab_names[$tab] = CGI::a({href=>$self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]));
+			$tab_names[$tab] = CGI::span({class => 'other'},
+				CGI::a({href => $self->systemLink($r->urlpath, params=>{section_tab=>"tab$tab"})}, $r->maketext($tab_names[$tab]))
+			);
 		}
 	}
 	print CGI::p() .
-		'<div align="center">' . join('&nbsp;|&nbsp;', @tab_names) .'</div>'.
+		CGI::div({class=>'config-tabs'}, join('', @tab_names)) .
 		CGI::p();
 }
 
@@ -699,7 +677,7 @@ sub body {
 	$tabnumber =~ s/tab//;
 	my @configSectionArray = @{$ConfigValues->[$tabnumber]};
 	my $configTitle = shift @configSectionArray;
-	print CGI::p(CGI::div({-align=>'center'}, CGI::b($r->maketext($configTitle))));
+	print CGI::h2(CGI::b($r->maketext($configTitle)));
 
 	print CGI::start_table({-border=>"1"});
 	print '<tr>'.CGI::th($r->maketext('Setting')). CGI::th($r->maketext('Default')) .CGI::th($r->maketext('Current'));

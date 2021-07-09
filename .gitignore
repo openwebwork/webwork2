@@ -1,5 +1,6 @@
 *.conf
 *-config
+.env
 applets
 tmp
 logs
@@ -29,6 +30,9 @@ WeBWorK.sublime-workspace
 conf/*.apache-config
 math4-overrides.css
 math4-overrides.js
+htdocs/themes/math4/images/*
+htdocs/themes/math4-green/images/*
+htdocs/themes/math4-red/images/*
 DATA/*
 *.swp
 .dump_past_answers_salt

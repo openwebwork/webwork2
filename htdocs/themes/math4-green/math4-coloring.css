@@ -128,3 +128,7 @@ ul.courses-list a:hover {
     background-color:#708e74;
 }
 
+/* Config tab coloring */
+.config-tabs span.current {
+	background-color: #283F2B;
+}

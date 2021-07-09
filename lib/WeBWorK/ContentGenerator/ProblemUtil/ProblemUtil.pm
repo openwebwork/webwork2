@@ -21,7 +21,6 @@
 package WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
-use Encode qw(encode_utf8 encode);
 
 =head1 NAME
 
@@ -84,36 +83,26 @@ sub process_and_log_answer{
     my ($encoded_last_answer_string, $scores2, $isEssay2);
 	my $scoreRecordedMessage = "";
 
-	if ( defined($answer_log ) and defined($pureProblem)) {
-		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+	if (defined($answer_log) && defined($pureProblem) && $submitAnswers) {
+		my $past_answers_string;
+		($past_answers_string, $encoded_last_answer_string, $scores2, $isEssay2) =
+			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses($self, $pg);
 
-################################################################
-# new code for past answers (input is $pg)
-#########################################
-
-	my ($past_answers_string);
-	($past_answers_string,$encoded_last_answer_string, $scores2, $isEssay2) =
-	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
-	      $self, $pg
-	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
-	        # ref($pg) eq "WeBWorK::PG::Local";
-# end new code (output is $past_answers_string, $encoded_last_answer_string,$scores, $isEssay)
-################################################################
-
-# store in answer_log   past answers file (user_id,set_id,problem_id,courseID,answerString,scores,source_file)
+		if (!$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+			# store in answer_log
 			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
-			        join("",
-						'|', $problem->user_id,
-						'|', $problem->set_id,
-						'|', $problem->problem_id,
-						'|', $scores2, "\t",
-						$timestamp,"\t",
-						$past_answers_string,
-					),
+				join("",
+					'|', $problem->user_id,
+					'|', $problem->set_id,
+					'|', $problem->problem_id,
+					'|', $scores2, "\t",
+					$timestamp,"\t",
+					$past_answers_string,
+				),
 			);
 
-# add to PastAnswer db
+			# add to PastAnswer db
 			my $pastAnswer = $db->newPastAnswer();
 			$pastAnswer->course_id($courseID);
 			$pastAnswer->user_id($problem->user_id);
@@ -124,8 +113,6 @@ sub process_and_log_answer{
 			$pastAnswer->answer_string($past_answers_string);
 			$pastAnswer->source_file($problem->source_file);
 			$db->addPastAnswer($pastAnswer);
-
-
 		}
 	}
 
@@ -200,7 +187,7 @@ sub process_and_log_answer{
 					);
 
 				my $caliper_sensor = Caliper::Sensor->new($self->{ce});
-				if ($caliper_sensor->caliperEnabled()) {
+				if ($caliper_sensor->caliperEnabled() && defined($answer_log) && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
 					my $startTime = $r->param('startTime');
 					my $endTime = time();
 
@@ -267,15 +254,15 @@ sub process_and_log_answer{
 				  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 				  if ($LTIGradeMode eq 'course') {
 				    if ($grader->submit_course_grade($problem->user_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  } elsif ($LTIGradeMode eq 'homework') {
 				    if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  }
 				}
@@ -365,7 +352,8 @@ sub create_ans_str_from_responses {
 sub insert_mathquill_responses {
 	my ($self, $pg) = @_;
 	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
-		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}{rh_ans}{mathQuillOpts};
+		my $mq_opts = $pg->{pgcore}{PG_ANSWERS_HASH}{$answerLabel}{ans_eval}{rh_ans}{mathQuillOpts} // "";
+		next if ($mq_opts && $mq_opts =~ /\s*disabled\s*/);
 		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
 		for my $response ($response_obj->response_labels) {
 			next if (ref($response_obj->{responses}{$response}));
@@ -373,8 +361,7 @@ sub insert_mathquill_responses {
 			push(@{$response_obj->{response_order}}, $name);
 			$response_obj->{responses}{$name} = '';
 			my $value = defined($self->{formFields}{$name}) ? $self->{formFields}{$name} : '';
-			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
-			$pg->{body_text} .= "<script>var ${name}_Opts = {$mq_opts}</script>" if ($mq_opts);
+			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value, data_mq_opts => "$mq_opts" });
 		}
 	}
 }
@@ -408,7 +395,7 @@ sub process_editorLink{
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, "Edit this problem"));
@@ -429,21 +416,6 @@ sub process_editorLink{
 		return $editorLink;
 	}
 }
-
-# output_JS subroutine
-
-# prints out the legacy/vendor/wz_tooltip.js script for the current site.
-
-sub output_JS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
-}
-
 
 # output_main_form subroutine.
 
@@ -519,12 +491,15 @@ sub output_footer{
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
+		courseId           => $courseName,	
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
 		problemPath        => $problem->source_file,
 		randomSeed         => $problem->problem_seed,
 		emailAddress       => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
-		emailableURL       => $self->generateURLs('absolute'),
+		emailableURL       => $self->generateURLs(url_type => 'absolute',
+		                                          set_id => $self->{set}->set_id,
+		                                          problem_id => $problem->problem_id),
 		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
@@ -611,7 +586,7 @@ sub jitar_send_warning_email {
 	# Encode the user name using "MIME-Header" encoding, (RFC 2047) which
 	# allows UTF-8 encoded names to be encoded inside the mail header using
 	# a special format.
-	$sender = encode("MIME-Header", $user->full_name);
+	$sender = Encode::encode("MIME-Header", $user->full_name);
     } else {
 	$sender = $userID;
     }
@@ -635,7 +610,7 @@ sub jitar_send_warning_email {
 
     # If in the future any fields in the subject can contain non-ASCII characters
     # then we will also need:
-    # $subject = encode("MIME-Header", $subject);
+    # $subject = Encode::encode("MIME-Header", $subject);
     # at present, this does not seem to be necessary.
 
 
@@ -683,7 +658,7 @@ Comment:    $comment
 /;
 
 	# Encode the body in UTF-8 when adding it.
-	$email->body_set(encode_utf8($msg));
+	$email->body_set(Encode::encode("UTF-8",$msg));
 
 		## try to send the email
 

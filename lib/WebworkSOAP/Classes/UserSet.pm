@@ -1,27 +1,25 @@
 package WebworkSOAP::Classes::UserSet;
 
-=pod
-=begin WSDL
-        _ATTR user_id                   $string user_id
-        _ATTR set_id                    $string set_id
-        _ATTR psvn                      $string psvn
-        _ATTR set_header                $string set_header
-        _ATTR hardcopy_header           $string hardcopy_header
-        _ATTR open_date                 $string open_date
-        _ATTR due_date                  $string due_date
-        _ATTR answer_date               $string answer_date
-        _ATTR visible                   $string visible
-        _ATTR enable_reduced_scoring    $string enable_reduced_scoring
-        _ATTR assignment_type           $string assignment_type
-        _ATTR attempts_per_version      $string attempts_per_version
-        _ATTR time_interval             $string time_interval
-        _ATTR versions_per_interval     $string versions_per_interval
-        _ATTR version_time_limit        $string version_time_limit
-        _ATTR version_creation_time     $string version_creation_time
-        _ATTR problem_randorder         $string problem_randorder
-        _ATTR version_last_attempt_time $string version_last_attempt_time
-        _ATTR problems_per_page         $string problems_per_page
-=cut
+# _ATTR user_id                   $string user_id
+# _ATTR set_id                    $string set_id
+# _ATTR psvn                      $string psvn
+# _ATTR set_header                $string set_header
+# _ATTR hardcopy_header           $string hardcopy_header
+# _ATTR open_date                 $string open_date
+# _ATTR due_date                  $string due_date
+# _ATTR answer_date               $string answer_date
+# _ATTR visible                   $string visible
+# _ATTR enable_reduced_scoring    $string enable_reduced_scoring
+# _ATTR assignment_type           $string assignment_type
+# _ATTR attempts_per_version      $string attempts_per_version
+# _ATTR time_interval             $string time_interval
+# _ATTR versions_per_interval     $string versions_per_interval
+# _ATTR version_time_limit        $string version_time_limit
+# _ATTR version_creation_time     $string version_creation_time
+# _ATTR problem_randorder         $string problem_randorder
+# _ATTR version_last_attempt_time $string version_last_attempt_time
+# _ATTR problems_per_page         $string problems_per_page
+
 sub new() {
         my $self = shift;
         my $data = shift;

@@ -28,6 +28,7 @@ use warnings;
 use WeBWorK::CGI;
 use WeBWorK::Utils qw(before after readFile sortAchievements nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::Tags;
+use DateTime;
 
 use WWSafe;
 
@@ -40,11 +41,24 @@ sub checkForAchievements {
     my $db = $r->db;
     my $ce = $r->ce;
 
+    my $course_display_tz = $ce->{siteDefaults}{timezone};
+    # the following line from Utils.pm
+    $course_display_tz ||= "local";    # do our best to provide default vaules
+
+    # Date and time for course timezone (may differ from the server timezone)
+    # Saved into separate array
+    # https://metacpan.org/pod/DateTime
+    my $dtCourseTime = DateTime->from_epoch( epoch => time(), time_zone  => $course_display_tz);
+
     #set up variables and get achievements
     my $cheevoMessage = '';
     my $user_id = $problem->user_id;
     my $set_id = $problem->set_id;
-    our $set = $db->getGlobalSet($problem->set_id);
+    # exit early if the set is to be ignored by achievements
+    foreach my $excludedSet (@{ $ce->{achievementExcludeSet} }) {
+	return '' if $set_id eq $excludedSet;
+    }
+    our $set = $db->getMergedSet($user_id,$problem->set_id);
     my @allAchievementIDs = $db->listAchievements; 
     my @achievements = $db->getAchievements(@allAchievementIDs);
     @achievements = sortAchievements(@achievements);
@@ -88,9 +102,10 @@ sub checkForAchievements {
     # updated $problem with the new results from $pg.  So we cheat and update the 
     # important bits here.  The only thing that gets left behind is last_answer, which is
     # still the previous last answer. 
-    # 
     
-    $problem->status($pg->{state}->{recorded_score});
+    # $pg->{result} reflects the current submission, $pg->{state} holds the best result 
+    # close the unlimited achievement points loophole by only using the current result!
+    $problem->status($pg->{result}->{score});
     $problem->sub_status($pg->{state}->{sub_recorded_score});
     $problem->attempted(1);
     $problem->num_correct($pg->{state}->{num_of_correct_ans});
@@ -105,6 +120,7 @@ sub checkForAchievements {
     our $globalData = {};
     our $tags;
     our @setProblems = ();
+    our @courseDateTime = ($dtCourseTime->sec,$dtCourseTime->min,$dtCourseTime->hour,$dtCourseTime->day,$dtCourseTime->month,$dtCourseTime->year,$dtCourseTime->day_of_week);
 
     my $compartment = new WWSafe;
 
@@ -191,9 +207,10 @@ sub checkForAchievements {
     # $set - the set data
     # $achievementPoints - the number of achievmeent points
     # $tags -this is the tag data associated to the problem from the problem library
+    # @courseDateTime - array of time information in course timezone (sec,min,hour,day,month,year,day_of_week)
 
     $compartment->share(qw( $problem @setProblems $localData $maxCounter 
-             $globalData $counter $nextLevelPoints $set $achievementPoints $tags));
+             $globalData $counter $nextLevelPoints $set $achievementPoints $tags @courseDateTime));
 
     #load any preamble code
     # this line causes the whole file to be read into one string

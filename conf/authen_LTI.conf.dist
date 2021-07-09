@@ -6,6 +6,16 @@
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
+# This is a string that is used to name the LMS for end users,
+# for example in a message telling users to sign in through their LMS.
+$LMS_name = 'e.g., Blackboard, Canvas, Moodle, etc.';
+#$LMS_name = 'Desire2Learn';
+
+# This is a URL that should take users to a place they can log in to their LMS.
+# It will use the text from $LMS_name, but use $LMS_url as the href.
+# If $LMS_url is empty or undefined, the text from $LMS_name is used with no link.
+#$LMS_url = 'https://myschool.edu/lms/';
+
 # Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
@@ -108,10 +118,11 @@ $preferred_source_of_username = "lis_person_contact_email_primary";
 # LTI Preferred source of Student Id
 ################################################################################
 
-# If preferred_source_of_student_id is not set, WeBWorK will look in the LTI
-# parameter 'custom_student_id.' If preferred_source_of_student_id is set, then
-# WeBWorK will look in the LTI parameter specified below. This parameter may be
-# dependendent on the LMS. E.G., In D2L, student_id is stored in OrgDefinedId and
+# If preferred_source_of_student_id is not set, WeBWorK will set student_id
+# to be an empty string. You should use debug_lti_parameters in order to determine
+# the value to use for your LMS.
+#
+# For example, in D2L, student_id is stored in OrgDefinedId and
 # the corresponding LTI parameter is called ext_d2l_orgdefinedid.
 
 #$preferred_source_of_student_id = "ext_d2l_orgdefinedid";
@@ -217,6 +228,13 @@ $LMSManageUserData=1;
 # a drain on the server.
 
 $LTIGradeOnSubmit = 1;
+
+# Should WW try to check the current LMS grade before sending a grade update.
+# This is intended to reduce LMS records when no real grade change occurred.
+# It requires a 2 round process, first querying the current grade from the LMS
+# and then when needed making the grade submission.
+
+$lti_check_prior = 0; # default is off - old setting - always update with no check
 
 # The system periodically updates student grades on the LMS.  This
 # variable controls how often that happens.  Set to -1 to disable.  

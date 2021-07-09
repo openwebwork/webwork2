@@ -34,12 +34,13 @@ use WeBWorK::CGI;
 use File::Path;
 use File::Temp qw/tempdir/;
 use String::ShellQuote;
+use Archive::Zip qw(:ERROR_CODES);
 use WeBWorK::DB::Utils qw/user2global/;
 use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::HTML::ScrollingRecordList qw/scrollingRecordList/;
 use WeBWorK::PG;
-use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after/;
+use WeBWorK::Utils qw/readFile decodeAnswers jitar_id_to_seq is_restricted after x/;
 use PGrandom;
 
 =head1 CONFIGURATION VARIABLES
@@ -60,11 +61,10 @@ our $PreserveTempFiles = 0 unless defined $PreserveTempFiles;
 
 our $HC_DEFAULT_FORMAT = "pdf"; # problems if this is not an allowed format for the user...
 our %HC_FORMATS = (
-	tex => { name => "TeX Source", subr => "generate_hardcopy_tex" },
-	pdf => { name => "Adobe PDF",  subr => "generate_hardcopy_pdf" },
-# Not ready for prime time
-#	tikz =>{ name => "TikZ PDF file", subr => "generate_hardcopy_tigz"},
+	tex => { name => x("TeX Source"), subr => "generate_hardcopy_tex" },
+	pdf => { name => x("Adobe PDF"),  subr => "generate_hardcopy_pdf" },
 );
+our @HC_FORMAT_DISPLAY_ORDER = ('tex', 'pdf');
 
 # custom fields used in $self hash
 # FOR HEAVEN'S SAKE, PLEASE KEEP THIS UP-TO-DATE!
@@ -138,6 +138,11 @@ sub pre_header_initialize {
 
 	# this should never happen, but apparently it did once (see bug #714), so we check for it
 	die "Parameter 'user' not defined -- this should never happen" unless defined $userID;
+
+	# Check to see if the user is authorized to view source file paths.
+	$self->{can_show_source_file} = ($db->getPermissionLevel($userID)->permission >=
+		$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_PERMISSION_LEVEL}
+		|| grep($_ eq $userID, @{$ce->{pg}{specialPGEnvironmentVars}{PRINT_FILE_NAMES_FOR}}));
 	
 	if ($generate_hardcopy) {
 		my $validation_failed = 0;
@@ -369,11 +374,11 @@ sub display_form {
 	my $perm_unopened = $authz->hasPermissions($userID, "view_unopened_sets");
 	my $perm_view_hidden = $authz->hasPermissions($userID, "view_hidden_sets");
 	my $perm_view_answers = $authz->hasPermissions($userID, "show_correct_answers_before_answer_date");
-        my $perm_view_solutions = $authz->hasPermissions($userID, "show_solutions_before_answer_date");
+	my $perm_view_solutions = $authz->hasPermissions($userID, "show_solutions_before_answer_date");
 	
 	# get formats
 	my @formats;
-	foreach my $format (keys %HC_FORMATS) {
+	foreach my $format (@HC_FORMAT_DISPLAY_ORDER) {
 		push @formats, $format if $authz->hasPermissions($userID, "download_hardcopy_format_$format");
 	}
 	
@@ -554,7 +559,7 @@ sub display_form {
  			(defined($mergedSet) && after($mergedSet->answer_date));
  		}
 	        # make display for versioned sets a bit nicer
-		$selected_set_id =~ s/,v(\d+)$/ (test $1)/;
+		$selected_set_id =~ s/,v(\d+)$/ (version $1)/;
 	
 		# FIXME!	
 		print CGI::p($r->maketext("Download hardcopy of set [_1] for [_2]?", $selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name));
@@ -613,6 +618,18 @@ sub display_form {
 				),
 			),
 		       ),
+		$self->{can_show_source_file} ?
+		CGI::Tr({},
+			CGI::td({ colspan => 2, class => "ButtonRow" },
+				CGI::b($r->maketext("Show Problem Source File:")), " ",
+				CGI::radio_group(
+					-name    => "show_source_file",
+					-values  => ["Yes", "No"],
+					-default => "Yes",
+					-labels  => { Yes => $r->maketext("Yes"), No => $r->maketext("No")},
+				),
+			),
+		) : '',
 		$perm_change_theme ?
 		 CGI::Tr({},
 			CGI::td({colspan=>2, class=>"ButtonRow"},
@@ -811,44 +828,114 @@ sub delete_temp_dir {
 	}
 }
 
-# format subroutines
-# 
-# assume that TeX source is located at $temp_dir_path/hardcopy.tex
-# the generated file will being with $final_file_basename
-# first element of return value is the name of the generated file (relative to $temp_dir_path)
-# rest of return value elements are names of temporary files that may be of interest in the
-#   case of an error, relative to $temp_dir_path. these are returned whether or not an error
-#   actually occured.
+# Hardcopy generation subroutines
+#
+# These subroutines assume that the TeX source file is located at $temp_dir_path/hardcopy.tex The
+# subroutines return a list whose first entry is the generated file name in $temp_dir_path, and
+# whose remaining elements are names of temporary files that may be of interest in the case of an
+# error (also located in $temp_dir_path).  These are returned whether or not an error actually
+# occured.
 
 sub generate_hardcopy_tex {
 	my ($self, $temp_dir_path, $final_file_basename) = @_;
-	
-	my $final_file_name;
-	
-	# try to rename tex file
+
 	my $src_name = "hardcopy.tex";
-	my $dest_name = "$final_file_basename.tex";
-	my $mv_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{mv} . " " . shell_quote("$temp_dir_path/$src_name", "$temp_dir_path/$dest_name");
-	my $mv_out = readpipe $mv_cmd;
-	if ($?) {
-		$self->add_errors("Failed to rename '".CGI::code(CGI::escapeHTML($src_name))."' to '"
-			.CGI::code(CGI::escapeHTML($dest_name))."' in directory '"
-			.CGI::code(CGI::escapeHTML($temp_dir_path))."':".CGI::br()
-			.CGI::pre(CGI::escapeHTML($mv_out)));
-		$final_file_name = $src_name;
-	} else {
-		$final_file_name = $dest_name;
+	my $bundle_path = "$temp_dir_path/$final_file_basename";
+
+	# Create directory for the tex bundle
+	if (!mkdir $bundle_path) {
+		$self->add_errors("Failed to create directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "': " .
+			CGI::br() . CGI::pre(CGI::escapeHTML($!)));
+		return $src_name;
 	}
-	
-	return $final_file_name;
+
+	# Move the tex file into the bundle directory
+	my $mv_cmd = "2>&1 " . $self->r->ce->{externalPrograms}{mv} . " " .
+		shell_quote("$temp_dir_path/$src_name", $bundle_path);
+	my $mv_out = readpipe $mv_cmd;
+
+	if ($?) {
+		$self->add_errors("Failed to move '" . CGI::code(CGI::escapeHTML($src_name)) . "' into directory '"
+			. CGI::code(CGI::escapeHTML($bundle_path)) . "':" . CGI::br()
+			. CGI::pre(CGI::escapeHTML($mv_out)));
+		return $src_name;
+	}
+
+	# Copy the common tex files into the bundle directory
+	my $ce = $self->r->ce;
+	for (qw{packages.tex CAPA.tex PGML.tex}) {
+		my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$ce->{webworkDirs}{texinputs_common}/$_", $bundle_path);
+		my $cp_out = readpipe $cp_cmd;
+		if ($?) {
+			$self->add_errors("Failed to copy '" . CGI::code(CGI::escapeHTML("$ce->{webworkDirs}{texinputs_common}/$_")) .
+				"' into directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "':" . CGI::br()
+				. CGI::pre(CGI::escapeHTML($cp_out)));
+		}
+	}
+
+	# Attempt to copy image files used into the bundle directory
+	# For security reasons only files in the $ce->{courseDirs}{html_temp}/images are included.
+	# The file names of the images are only allowed to contain alphanumeric characters, underscores, dashes, and
+	# periods.  No spaces or slashes, etc.  This will usually be all of the included images.
+	if (open(my $in_fh,  "<", "$bundle_path/$src_name")) {
+		local $/;
+		my $data = <$in_fh>;
+		close($in_fh);
+
+		# Extract the included image file names and strip the absolute path in the tex file.
+		my @image_files;
+		my $image_tmp_dir = $ce->{courseDirs}{html_temp} . "/images/";
+		$data =~ s{\\includegraphics\[([^]]*)\]\{$image_tmp_dir([^\}]*)\}}
+			{push @image_files, $2; "\\includegraphics[$1]{$2}"}ge;
+
+		# Rewrite the tex file with the image paths stripped.
+		open(my $out_fh, ">", "$bundle_path/$src_name")
+			or warn "Can't open $bundle_path/$src_name for writing.";
+		print $out_fh $data;
+		close $out_fh;
+
+		for (@image_files) {
+			# This is a little protection in case a student enters an answer like
+			# \includegraphics[]{$ce->{courseDirs}{html_temp}/images/malicious code or absolute system file name}
+			$self->add_errors("Unable to safely copy image '" . CGI::code(CGI::escapeHTML("$image_tmp_dir$_")) .
+				"' into directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "'."),
+			warn "Invalid image file name '$_' detected.  Possible malicious activity?",
+		   	next unless $_ =~ /^[\w._-]*$/ && -f "$image_tmp_dir$_";
+
+			# Copy the image file into the bundle directory.
+			my $cp_cmd = "2>&1 $ce->{externalPrograms}{cp} " . shell_quote("$image_tmp_dir$_", $bundle_path);
+			my $cp_out = readpipe $cp_cmd;
+			if ($?) {
+				$self->add_errors("Failed to copy image '" . CGI::code(CGI::escapeHTML("$image_tmp_dir$_")) .
+					"' into directory '" . CGI::code(CGI::escapeHTML($bundle_path)) . "':" . CGI::br()
+					. CGI::pre(CGI::escapeHTML($cp_out)));
+			}
+	   	}
+	} else {
+		$self->add_errors("Failed to open '" . CGI::code(CGI::escapeHTML("$bundle_path/$src_name")) . "' for reading.");
+	}
+
+	# Create a zip archive of the bundle directory
+	my $zip = Archive::Zip->new();
+	$zip->addTree($temp_dir_path);
+
+	my $zip_file = "$final_file_basename.zip";
+	unless ($zip->writeToFileNamed("$temp_dir_path/$zip_file") == AZ_OK) {
+		$self->add_errors("Failed to create zip archive of directory '" .
+			CGI::code(CGI::escapeHTML($bundle_path)) . "'");
+		return "$bundle_path/$src_name";
+	}
+
+	return $zip_file;
 }
 
 sub generate_hardcopy_pdf {
 	my ($self, $temp_dir_path, $final_file_basename) = @_;
-	
+
 	# call pdflatex - we don't want to chdir in the mod_perl process, as
 	# that might step on the feet of other things (esp. in Apache 2.0)
 	my $pdflatex_cmd = "cd " . shell_quote($temp_dir_path) . " && "
+		. "TEXINPUTS=.:" . shell_quote($self->r->ce->{webworkDirs}{texinputs_common}) . ": "
 		. $self->r->ce->{externalPrograms}{pdflatex}
 		. " >pdflatex.stdout 2>pdflatex.stderr hardcopy";
 	if (my $rawexit = system $pdflatex_cmd) {
@@ -1052,13 +1139,15 @@ sub write_set_tex {
 		    
 	# write set header
 	$self->write_problem_tex($FH, $TargetUser, $MergedSet, 0, $header); # 0 => pg file specified directly
+
+	print $FH "\\medskip\\hrule\\nobreak\\smallskip";
        
 	# write each problem
 	# for versioned problem sets (gateway tests) we like to include 
 	#   problem numbers
 	my $i = 1;
 	while (my $problemID = shift @problemIDs) {
-		$self->write_tex_file($FH, $divider);
+		$self->write_tex_file($FH, $divider) if $i > 1;
 		$self->{versioned} = $i if $versioned;
 		$self->write_problem_tex($FH, $TargetUser, $MergedSet, $problemID);
 		$i++;
@@ -1187,7 +1276,7 @@ sub write_problem_tex {
 	my $problem_desc;
 	if ($pg->{warnings} ne "" or $pg->{flags}->{error_flag}) {
 		my $edit_urlpath = $r->urlpath->newFromModule(
-			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor2", $r,
+			"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 			courseID  => $r->urlpath->arg("courseID"),
 			setID     => $MergedProblem->set_id,
 			problemID => $MergedProblem->problem_id,
@@ -1237,17 +1326,29 @@ sub write_problem_tex {
 	# if we got here, there were no errors (because errors cause a return above)
 	$self->{at_least_one_problem_rendered_without_error} = 1;
 
-	print $FH "{\\bf Problem $versioned.}\n" 
-		if ( $versioned && $MergedProblem->problem_id != 0 );
-
 	my $body_text = $pg->{body_text};
 
-	# Use the pretty problem number if its a jitar problem
-	if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
-	    my $id = $MergedProblem->problem_id;
-	    my $prettyID = join('.',jitar_id_to_seq($id));
-	    
-	    $body_text =~ s/$id/$prettyID/;
+	if ($problemID) {
+		if (defined($MergedSet) && $MergedSet->assignment_type eq 'jitar') {
+			# Use the pretty problem number if its a jitar problem
+			my $id = $MergedProblem->problem_id;
+			my $prettyID = join('.',jitar_id_to_seq($id));
+			print $FH "{\\bf " . $r->maketext("Problem [_1].", $prettyID) . "}";
+		} elsif ($MergedProblem->problem_id != 0) {
+			print $FH "{\\bf " . $r->maketext("Problem [_1].", $versioned ? $versioned : $MergedProblem->problem_id) . "}";
+		}
+
+		my $problemValue = $MergedProblem->value;
+		if (defined($problemValue)) {
+			my $points = $problemValue == 1 ? $r->maketext('point') : $r->maketext('points');
+			print $FH " {\\bf\\footnotesize($problemValue $points)}";
+		}
+
+		if ($self->{can_show_source_file} && $r->param("show_source_file") eq "Yes") {
+			print $FH " {\\footnotesize\\path|" . $MergedProblem->source_file . "|}";
+		}
+
+		print $FH "\\smallskip\n\n";
 	}
 
 	print $FH $body_text;
@@ -1271,7 +1372,7 @@ sub write_problem_tex {
 			  "}\n" .
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
-			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans};
+			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans} // "";
 			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";

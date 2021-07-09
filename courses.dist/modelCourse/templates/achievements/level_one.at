@@ -12,7 +12,7 @@
 #Threshold for level 2
 my $newLevelThreshold = 150;
 
-$globalData->{HalfCreditProb} = 1;
+$globalData->{HalfCreditProb}++;
 
 #Code
 

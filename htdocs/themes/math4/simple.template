@@ -12,8 +12,7 @@
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/templates/math3/system.template,v 1.2 2008/06/26 19:46:02 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -32,16 +31,13 @@
 <!-- CSS Loads -->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/vendor/font-awesome/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
 <!--#if can="output_jquery_ui"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/jquery-ui-1.8.18.custom.css"/>
+	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <!--#endif-->
 <!--#if can="output_achievement_CSS"-->
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
-<!--#endif-->
-<!--#if can="output_tabber_CSS"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/css/tabber.css"/>
 <!--#endif-->
 <!--#if can="output_CSS"-->
 	<!--#output_CSS-->
@@ -54,23 +50,20 @@
 <!--#endif-->
 
 <!-- JS Loads -->
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/jquery/jquery.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
+<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
 <!--#if can="output_jquery_ui"-->
-	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/jquery-ui-1.9.0.js"></script>
+	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <!--#endif-->
 <script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-<!--#if can="output_tabber_CSS"-->
-<script type="text/javascript">
-var tabberOptions = {manualStartup:true};
-</script>
-<!--#endif-->
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js"></script>	
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
 <!--#if exists="math4-overrides.js"-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js"></script>	
+<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>	
 <!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>

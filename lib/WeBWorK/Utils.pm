@@ -31,7 +31,6 @@ use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
-use Encode qw(encode_utf8 decode_utf8);
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
 use Time::Zone;
@@ -206,7 +205,7 @@ sub readFile($) {
 			# use the following instead
 			if (open my $dh, "<:raw", $fileName){
 				$result = <$dh>;
-				decode_utf8($result) or die "failed to decode $fileName";
+				Encode::decode("UTF-8",$result) or die "failed to decode $fileName";
 				close $dh;
 			} else {
 				print STDERR "File $fileName cannot be read."; # this is not a fatal error.
@@ -215,9 +214,10 @@ sub readFile($) {
 		if ($@) {
 			print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
 		}
-		my $prevent_error_message = utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ". 
-		 "is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n". 
-		 "While this is not fatal you should fix it\n";
+		my $prevent_error_message = utf8::decode($result) or warn join("",
+			"Non-fatal warning: file $fileName contains at least one character code which ",
+			"is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n",
+			"While this is not fatal you should fix it\n");
 		# FIXME
 		# utf8::decode($result) raises an error about the copyright sign
 		# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
@@ -846,7 +846,7 @@ sub writeTimingLogEntry($$$$) {
 sub trim_spaces {
 	my $in = shift;
 	return '' unless $in;  # skip blank spaces
-	$in =~ s/^\s*(.*?)\s*$/$1/;
+	$in =~ s/^\s*|\s*$//g;
 	return($in);
 }
 sub list2hash(@) {
@@ -942,7 +942,7 @@ sub decodeAnswers($) {
 }
 
 sub decode_utf8_base64 {
-    return decode_utf8(decode_base64(shift));
+    return Encode::decode("UTF-8",decode_base64(shift));
 }
 
 sub OLD_encodeAnswers(\%\@) {
@@ -965,7 +965,7 @@ sub encodeAnswers(\%\@) {
 }
 
 sub encode_utf8_base64 {
-    return encode_base64(encode_utf8(shift));
+    return encode_base64(Encode::encode("UTF-8",shift));
 }
 
 sub nfreeze_base64 {
@@ -1023,7 +1023,7 @@ sub cryptPassword($) {
 	    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
 	}
 
-	my $cryptPassword = crypt($clearPassword, $salt);
+	my $cryptPassword = crypt(trim_spaces($clearPassword), $salt);
 	return $cryptPassword;
 }
 
@@ -1742,19 +1742,21 @@ sub fetchEmailRecipients {
 	return @recipients;
 }
 
-# requires a CG object and an optional string
-# 'relative' or 'absolute' to return a single URL
-# or NULL to return an array containing both URLs
-# this subroutine could be expanded to
+# Requires a CG object.
+# The following optional parameters may be passed:
+# set_id: A problem set name
+# problem_id: Number of a problem in the set
+# url_type:  This should a string with the value 'relative' or 'absolute' to
+# return a single URL, or undefined to return an array containing both URLs
+# this subroutine could be expanded to.
 
 sub generateURLs {
-	my ($self, $urlRequested) = @_;
+	my $self = shift;
+	my %params = @_;
 	my $r = $self->r;
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 	my $userName = $r->param("user");
-	my $setName = $urlpath->arg("setID");
-	my $problemNumber = $urlpath->arg("problemID");
 
 	# generate context URLs
 	my $emailableURL;
@@ -1762,18 +1764,18 @@ sub generateURLs {
 	if ($userName) {
 		my $modulePath;
 		my @args;
-		if ($setName) {
-			if ($problemNumber) {
+		if (defined $params{set_id} && $params{set_id} ne "") {
+			if ($params{problem_id}) {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
 					courseID => $r->urlpath->arg("courseID"),
-					setID => $setName,
-					problemID => $problemNumber,
+					setID => $params{set_id},
+					problemID => $params{problem_id},
 				);
 				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
 			} else {
 				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
 					courseID => $r->urlpath->arg("courseID"),
-					setID => $setName,
+					setID => $params{set_id},
 				);
 				@args = ();
 			}
@@ -1796,8 +1798,8 @@ sub generateURLs {
 		$emailableURL = "(not available)";
 		$returnURL = "";
 	}
-	if ($urlRequested) {
-		if ($urlRequested eq 'relative') {
+	if ($params{url_type}) {
+		if ($params{url_type} eq 'relative') {
 			return $returnURL;
 		} else {
 			return $emailableURL; # could include other types of URL here...
