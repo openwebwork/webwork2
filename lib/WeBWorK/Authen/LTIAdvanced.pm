@@ -181,7 +181,7 @@ sub get_credentials {
   # Determine the WW user_id to use, if possible
 
   if ( ! $ce->{preferred_source_of_username} ) {
-    warn "LTI is not properly configured. Please contact your instructor or system administrator.";
+    warn "LTI is not properly configured (no preferred_source_of_username). Please contact your instructor or system administrator.";
     $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
     debug("No preferred_source_of_username in " . $r->ce->{'courseName'} . " so LTIAdvanced::get_credentials is returning a 0\n");
     return 0;
@@ -244,7 +244,7 @@ sub get_credentials {
 	}
   }
 
-  # if at least the user ID is available in request parameters
+  # if we were able to set a user_id
   if ( defined($self->{user_id}) && $self->{user_id} ne "" ) {
       map {$self->{$_->[0]} = $r->param($_->[1]);}
 	(
@@ -289,7 +289,7 @@ sub get_credentials {
       debug("LTIAdvanced::get_credentials is returning a 1\n");
       return 1;
     }
-  warn "LTI is not properly configured. Please contact your instructor or system administrator.";
+  warn "LTI is not properly configured (failed to set user_id from preferred_source_of_username or fallback_source_of_username). Please contact your instructor or system administrator.";
   $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
   debug("LTIAdvanced::get_credentials is returning a 0\n");
   return 0;
