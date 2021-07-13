@@ -189,6 +189,10 @@ sub addCourse {
 	croak "Invalid characters in course ID: '$courseID' (valid characters are [-A-Za-z0-9_])"
 		unless $courseID =~ m/^[-A-Za-z0-9_]*$/;
 	
+	# fail if requested course ID is too long
+	croak "Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters."
+		if ( length($courseID) > $ce->{maxCourseIdLength} );
+
 	# if we didn't get a database layout, use the default one
 	if (not defined $dbLayoutName) {
 		$dbLayoutName = $ce->{dbLayoutName};
@@ -417,6 +421,10 @@ sub renameCourse {
 	if (-e $newCourseDir) {
 		croak "$newCourseID: course exists";
 	}
+
+	# fail if the target courseID is too long
+	croak "New course ID cannot exceed " . $oldCE->{maxCourseIdLength} . " characters."
+		if ( length($newCourseID) > $oldCE->{maxCourseIdLength} );
 	
 	# fail if the source course does not exist
 	unless (-e $oldCourseDir) {
@@ -838,6 +846,11 @@ sub unarchiveCourse {
 		die "Cannot overwrite existing course $coursesDir/$newCourseID";
 	}
 	
+	# fail if the target courseID is too long
+	croak "New course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters."
+		if ( length($newCourseID) > $ce->{maxCourseIdLength} );
+
+
 	##### step 1: move a conflicting course away #####
 	
 	# if this function returns undef, it means there was no course in the way
