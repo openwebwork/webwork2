@@ -163,6 +163,7 @@ sub body {
 	my $ce = $r->ce;
 	my $db = $r->db;
 	my $authz = $r->authz;
+	my $userID = $r->param('user');
 	my $urlpath = $r->urlpath;
 	
 	my $user            = $r->param("user");
@@ -173,6 +174,15 @@ sub body {
 	
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",  $r, courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
+
+	# prevent showing anything in the body and instead display message that you must view assignments from the LMS links
+	unless ($authz->hasPermissions($userID, "navigation_allowed")) {
+		print CGI::start_div({id=>'warningRestrictedProblemSetsView'});
+		print CGI::h3({},"You must view your problems through your LMS (i.e. Blackboard, D2L, Moodle, etc).");
+		print "Login to your LMS and click on the problem set links there.";
+		print CGI::end_div();
+		return "";
+	}
 	
 # we have to get sets and versioned sets separately
 	# DBFIXME don't get ID lists, use WHERE clauses and iterators

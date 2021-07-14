@@ -1511,3 +1511,9 @@ table#grades_table pre{
     min-height:35px;
     min-width:43px;
 }
+
+#warningRestrictedProblemSetsView {
+	border: red 3px solid;
+	border-radius:10px;
+	padding: 0 10px 15px 10px;
+}
