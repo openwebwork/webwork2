@@ -64,17 +64,13 @@ my $prepared_OPL_tables_file = "$prepared_OPL_tables_dir/OPL-tables.sql";
 
 # Get DB connection settings
 
-my ($dbi,$dbtype,$db,$host,$port) = split(':',$ce->{database_dsn});
-
-$host = 'localhost' unless $host;
-
-$port = 3306 unless $port;
-
+my $db     = $ce->{database_name};
+my $host   = $ce->{database_host};
+my $port   = $ce->{database_port};
 my $dbuser = $ce->{database_username};
 my $dbpass = $ce->{database_password};
 
 $dbuser = shell_quote($dbuser);
-$dbpass = shell_quote($dbpass);
 $db = shell_quote($db);
 
 $ENV{'MYSQL_PWD'}=$dbpass;
@@ -101,7 +97,17 @@ my $OPL_tables_to_dump = "OPL_DBsubject OPL_DBchapter OPL_DBsection OPL_author O
 
 print "Dumping OPL tables\n";
 
-`$mysqldump_command --host=$host --port=$port --user=$dbuser --default-character-set=$character_set $db $OPL_tables_to_dump  > $prepared_OPL_tables_file`;
+# Conditionally add --column-statistics=0 as MariaDB databases do not support it
+# see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
+#      https://github.com/drush-ops/drush/issues/4410
+
+my $column_statistics_off = "";
+my $test_for_column_statistics = `$mysqldump_command --help | grep 'column-statistics'`;
+if ( $test_for_column_statistics ) {
+  $column_statistics_off = " --column-statistics=0 ";
+}
+
+`$mysqldump_command --host=$host --port=$port --user=$dbuser --default-character-set=$character_set $column_statistics_off $db $OPL_tables_to_dump  > $prepared_OPL_tables_file`;
 
 print "OPL database dump created: $prepared_OPL_tables_file\n";
 

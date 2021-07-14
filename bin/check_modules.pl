@@ -1,18 +1,58 @@
 #!/usr/bin/env perl
 #
+
+################################################################################
+# WeBWorK Online Homework Delivery System
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of either: (a) the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version, or (b) the "Artistic License" which comes with this package.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+# Artistic License for more details.
+################################################################################
+
+=head1 NAME
+
+check_modules.pl - check to ensure that all applications and perl modules are installed. 
+
+=head1 SYNOPSIS
+ 
+check_modules.pl [options]
+ 
+ Options:
+   -a|--apache-version	 Which apache version to use.  Defaults to 2. 
+   -m|--modules          Lists the perl modules needed to be installed. 
+   -p|--programs       	 Lists the programs/applications that are needed. 
+   -A|--all         		 checks both programs and modules (Default if -m or -p is not selected)	
+
+=head1 DESCRIPTION
+ 
+Lists all needed applications for webwork as well as a perl modules.
+ 
+=cut
 use strict;
 use warnings;
 use version;
+use Getopt::Long qw(:config bundling);
+use Pod::Usage;
 
 my @applicationsList = qw(
-        curl
+	convert
+	curl
+	dvisvgm
 	mkdir
 	mv
 	mysql
 	tar
-        git
+	git
 	gzip
 	latex
+	pdf2svg
 	pdflatex
 	dvipng
 	giftopnm
@@ -32,7 +72,6 @@ my @apache1ModulesList = qw(
 
 my @apache2ModulesList = qw(
 	Apache2::Request
-	Apache2::Cookie
 	Apache2::ServerRec
 	Apache2::ServerUtil
 );
@@ -40,13 +79,13 @@ my @apache2ModulesList = qw(
 
 
 my @modulesList = qw(
+	Archive::Zip
 	Array::Utils
 	Benchmark
 	Carp
 	CGI
+	CGI::Cookie
 	Class::Accessor
-	Dancer
-	Dancer::Plugin::Database
 	Data::Dump
 	Data::Dumper
 	Data::UUID
@@ -58,9 +97,9 @@ my @modulesList = qw(
 	Digest::MD5
 	Digest::SHA
 	Email::Address::XS
-	Email::Simple
 	Email::Sender::Simple
 	Email::Sender::Transport::SMTP
+	Email::Simple
 	Errno
 	Exception::Class
 	File::Copy
@@ -77,17 +116,17 @@ my @modulesList = qw(
 	HTML::Scrubber
 	HTML::Tagset
 	HTML::Template
+	HTTP::Async
 	IO::File
 	IO::Socket::SSL
 	Iterator
 	Iterator::Util
 	JSON
+	JSON::MaybeXS
 	Locale::Maketext::Lexicon
 	Locale::Maketext::Simple
 	LWP::Protocol::https
 	MIME::Base64
-	Moo
-	MooX::Options
 	Net::IP
 	Net::LDAPS
 	Net::OAuth
@@ -103,7 +142,6 @@ my @modulesList = qw(
 	Scalar::Util
 	SOAP::Lite
 	Socket
-	SQL::Abstract
 	Statistics::R::IO
 	String::ShellQuote
 	Template
@@ -128,35 +166,39 @@ my %moduleVersion = (
     'IO::Socket::SSL' => 2.007
 );
 
-# modules used by disabled code
-#	RQP::Render (RQP)
+my ($test_programs,$test_modules,$show_help);
+my $test_all = 1; 
+my $apache_version = "2";
 
-#main
+GetOptions(
+	'a|apache-version=s' => \$apache_version,
+	'm|modules'      => \$test_modules,
+	'p|programs'			 => \$test_programs,
+	'A|all'   			 => \$test_all,
+	'h|help'					=> \$show_help,
+);
+pod2usage(2) if $show_help; 
 
-my $apache_version = shift @ARGV;
-unless (defined $apache_version and $apache_version =~ /^apache[12]$/) {
-	warn "invalid apache version specified -- assuming apache2\n";
-	warn "usage: $0 { apache1 | apache2 }\n";
-	sleep 1;
-	$apache_version = "apache2";
-}
-
-if ($apache_version eq "apache1") {
+if ($apache_version eq "1") {
 	push @modulesList, @apache1ModulesList;
-} elsif ($apache_version eq "apache2") {
+} elsif ($apache_version eq "2") {
 	push @modulesList, @apache2ModulesList;
 }
 
 my @PATH = split(/:/, $ENV{PATH});
-check_apps(@applicationsList);
 
-check_modules(@modulesList);
+if ($test_all or $test_programs) {
+	check_apps(@applicationsList);
+}
+
+if ($test_all or $test_modules) {
+	check_modules(@modulesList);
+}
 
 sub check_apps {
 	my @applicationsList = @_;
 	print "\nChecking your \$PATH for executables required by WeBWorK...\n";
-#	print "\$PATH=", shift @PATH, "\n";    # this throws away the first item -- usually /bin
-        print "\$PATH=";
+	print "\$PATH=";
 	print join ("\n", map("      $_", @PATH)), "\n\n";
 
 	foreach my $app (@applicationsList)  {
@@ -205,4 +247,29 @@ sub check_modules {
 			print "   $module found and loaded\n";
 		}
 	}
+	checkSQLabstract(); 
 }
+
+## this is specialized code to check for either SQL::Abstract or SQL::Abstract::Classic
+
+sub checkSQLabstract {
+	print "\n checking for SQL::Abstract\n\n";
+	eval "use SQL::Abstract";
+	my $sql_abstract = not($@); 
+	my $sql_abstract_version = $SQL::Abstract::VERSION if $sql_abstract; 
+
+	eval "use SQL::Abstract::Classic";
+	my $sql_abstract_classic = not($@);
+
+	if($sql_abstract_classic) {
+		print qq/ You have SQL::Abstract::Classic installed. This package will be used if either
+ the installed version of SQL::Abstract is version > 1.87 or if that package is not installed.\n/;
+	} elsif ($sql_abstract && $sql_abstract_version <= 1.87) {
+		print "You have version $sql_abstract_version of SQL::Abstract installed.  This will be used\n";
+	} else {
+		print qq/You need either SQL::Abstract version <= 1.87 or need to install SQL::Abstract::Classic.
+ If you are using cpan or cpanm, it is recommended to install SQL::Abstract::Classic.\n/;
+	}
+}
+
+1;

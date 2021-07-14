@@ -2,8 +2,7 @@
 
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WebworkClient.pm,v 1.1 2010/06/08 11:46:38 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -22,6 +21,7 @@ WebworkClient.pm
 
 
 =head1 SYNPOSIS
+
 	our $xmlrpc_client = new WebworkClient (
 		url                    => $ce->{server_site_url}, 
 		form_action_url        => $FORM_ACTION_URL,
@@ -111,10 +111,8 @@ use lib "$WeBWorK::Constants::WEBWORK_DIRECTORY/lib";
 use lib "$WeBWorK::Constants::PG_DIRECTORY/lib";
 use XMLRPC::Lite;
 use WeBWorK::Utils qw( wwRound encode_utf8_base64 decode_utf8_base64);
-use Encode qw(encode_utf8 decode_utf8);
 use WeBWorK::Utils::AttemptsTable;
 use WeBWorK::CourseEnvironment;
-use WeBWorK::Utils::DetermineProblemLangAndDirection;
 use WeBWorK::PG::ImageGenerator;
 use HTML::Entities;
 use WeBWorK::Localize;
@@ -182,11 +180,13 @@ sub new {   #WebworkClient constructor
 		site_password   => '',
 		courseID        => '',
 		userID          => '',
-		inputs_ref      => {		 AnSwEr0001 => '',
-				 					 AnSwEr0002 => '',
-				 					 AnSwEr0003 => '',
-				 					 displayMode     => 'no displayMode defined',
-						forcePortNumber => '',
+		inputs_ref      => {
+			AnSwEr0001 => '',
+			AnSwEr0002 => '',
+			AnSwEr0003 => '',
+			displayMode     => 'no displayMode defined',
+			forcePortNumber => '',
+			internal_WW2_secret => 'BAD',
 		},
 		@_,               # options and overloads
 	};
@@ -253,7 +253,6 @@ our $result;
 
 
 
-
 sub xmlrpcCall {
 	my $self = shift;
 	my $command = shift;
@@ -262,7 +261,7 @@ sub xmlrpcCall {
 	$command   = 'listLibraries' unless defined $command;
 	my $default_inputs = $self->default_inputs();
 	$requestObject = {%$default_inputs, %$input};  #input values can override default inputs
-	  
+
 	$self->request_object($requestObject);   # store the request object for later
 	
 	my $requestResult; 
@@ -296,55 +295,65 @@ sub xmlrpcCall {
     	print STDERR  "\tWebworkClient.pm ".__LINE__." xmlrpcCall $command initiated webwork webservice object $requestResult\n";
     }
  		
-	  local( $result);
-	  # use eval to catch errors
-	  #print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
-	  eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
-	  # result is of type XMLRPC::SOM
-	  print STDERR "There were a lot of errors\n" if $@;
-	  print STDERR "Errors: \n $@\n End Errors\n" if $@;
-
-          print CGI::h2("WebworkClient Errors") if $@;
-	  print CGI::p("Errors:",CGI::br(),CGI::blockquote({style=>"color:red"},CGI::code($@)),CGI::br(),"End Errors") if $@;
+	local( $result);
+	# use eval to catch errors
+	#print STDERR "WebworkClient: issue command ", REQUEST_CLASS.'.'.$command, " ",join(" ", %$input),"\n";
+	eval { $result = $requestResult->call(REQUEST_CLASS.'.'.$command, $self->request_object ) };
+	# result is of type XMLRPC::SOM
+	if ( $@ ) {
+		print STDERR (
+			"There were a lot of errors\n",
+			"Errors: \n $@\n End Errors\n" );
+		print CGI::h2("WebworkClient Errors");
+		print CGI::p("Errors:",CGI::br(),CGI::blockquote({style=>"color:red"},CGI::code($@)),CGI::br(),"End Errors");
+	}
 	  
-	  if (not ref($result) ) {
-	  	my $error_string = "xmlrpcCall to $command returned no result for ". 
-	  	     ($self->{sourceFilePath}//'')."\n";
-	  	print STDERR $error_string;
-	  	$self->error_string($error_string);
-	  	$self->fault(1);
-	  	return $self;
-	  } elsif ( $result->fault  ) { # report errors
+	if (not ref($result) ) {
+		my $error_string = "xmlrpcCall to $command returned no result for ".
+			($self->{sourceFilePath}//'')."\n";
+		print STDERR $error_string;
+		$self->error_string($error_string);
+		$self->fault(1);
+		return $self;
+	} elsif ( $result->fault  ) { # report errors
 		my $error_string = 'Error message for '.
-		  join( ' ',
-			  "command:",
-			  $command,
-			  "\n<br/>faultcode:",
-			  $result->faultcode, 
-			  "\n<br/>faultstring:",
-			  $result->faultstring, "\n<br/>End error message<br/>\n"
-		  );
+		join( ' ',
+			"command:",
+			$command,
+			"\n<br/>faultcode:",
+			$result->faultcode,
+			"\n<br/>faultstring:",
+			$result->faultstring, "\n<br/>End error message<br/>\n"
+		);
 
-		  print STDERR $error_string;
-		  $self->return_object($result->result());
-		  $self->error_string($error_string);
-		  $self->fault(1); # set fault flag to true
-		  return $self;  
-	  } else {
-	      if (ref($result->result())=~/HASH/ and defined($result->result()->{text}) ) {
-		  $result->result()->{text} = decode_utf8_base64($result->result()->{text});
-	      }
-	      if (ref($result->result())=~/HASH/ and defined($result->result()->{header_text}) ) {
-		  $result->result()->{header_text} = decode_utf8_base64($result->result()->{header_text});
-	      }
-
+		$result->{score} = 0; # Set score to 0 when a fault occurred.
+		print STDERR $error_string;
 		$self->return_object($result->result());
-		# print "\n retrieve result ",  keys %{$self->return_object};
-		return $self->return_object; # $result->result();  
-		# would it be better to return the entire $result?
-		# probably not, there is no hash directly available from the $result object. 
-	  } 
+		$self->error_string($error_string);
+		$self->fault(1); # set fault flag to true
+		return $self;
+	} else {
+		# Do UTF-8 + base64 "decoding"
+		my $final_result = {}; # init as an empty hash reference
+		if ( ref($result->result())=~/HASH/ ) {
+			$final_result = $result->result(); # Gets the Perl structure from the XMLRPC::SOM object
+			if ( defined($final_result->{text}) ) {
+				$final_result->{text} = decode_utf8_base64($final_result->{text});
+			}
+			if ( defined($final_result->{header_text}) ) {
+				$final_result->{header_text} = decode_utf8_base64($final_result->{header_text});
+			}
+			if ( defined($final_result->{post_header_text}) ) {
+				$final_result->{post_header_text} = decode_utf8_base64($final_result->{post_header_text});
+			}
+			# Need to parse the entire object to apply UTF-8 decoding to strings which were encoded
+			$final_result = xml_utf_decode($final_result);
+		}
 
+		$self->return_object( $final_result );
+		# print "\n retrieve result ",  keys %{$self->return_object};
+		return $self->return_object;
+	}
 }
 
 
@@ -396,8 +405,78 @@ sub jsXmlrpcCall {
 }
 
 
+=head2 xml_utf_decode
+
+	Parse the structure to UTF-8 decode where needed.
+
+=cut
+
+sub xml_utf_decode { # Do UTF-8 decoding where xml_filter applied encoding
+	my $input = shift;
+	my $level = shift || 0;
+	my $space="  ";
+	my $type = ref($input);
+
+	if (!defined($type) or !$type ) {
+		# scalars get returned as is
+	} elsif( $type =~/HASH/i or "$input"=~/HASH/i) {
+		$level++;
+		foreach my $item (keys %{$input}) {
+			# We need to decode the values which were encoded by xml_filter().
+			# Explantaion from xml_filter():
+			#
+			# Until 2020 - ALL scalar values were left unchanged.
+			# However, since the release of WeBWorK 2.15 (late 2019) there
+			# can be Unicode values of hash entires, and they trigger failures
+			# of the XMLRPC system. For now, based on current experience
+			# we are ONLY handling the values stored in the hashes, under the
+			# assumption that key names will be ASCII, and that arrays are not
+			# going to contain Unicode values. When a hash value is encoded,
+			# we prefix the key name with "xmlrpc_UTF8_encoded_" so it can
+			# be detected for the decode on the other side.
+
+			my $item_type = ref( $input->{$item} );
+			my $filtered_value = xml_utf_decode($input->{$item},$level);
+
+			if (!defined($item_type) or !$item_type ) {
+				# This is a scalar object
+				if ( $item =~ /^xmlrpc_UTF8_encoded_/ ) {
+					# Get the original name back
+					my $new_item = $item;
+					$new_item =~ s/^xmlrpc_UTF8_encoded_//;
+					$input->{$new_item} = Encode::decode("UTF-8", $filtered_value);
+					delete( $input->{$item} ); # remove the temporary encoded value with the modified key
+				} else {
+					$input->{$item} = $filtered_value; # No decoding needed
+				}
+				# This is a scalar object
+			} else {
+				# Not a scalar object - default recursive handling
+				$input->{$item} = $filtered_value;
+			}
+		}
+		$level--;
+	} elsif( $type=~/ARRAY/i or "$input"=~/ARRAY/i) {
+		# arrays get processed recursively, just as by xml_filter().
+		$level++;
+		my $tmp = [];
+		foreach my $item (@{$input}) {
+			$item = xml_utf_decode($item,$level);
+			push @$tmp, $item;
+		}
+		$input = $tmp;
+		$level--;
+	} elsif($type =~ /CODE/i or "$input" =~/CODE/i) {
+		# code get returned as is (probably just says "CODE reference" from the call to xml_filter().
+	} else {
+		# leave this case alone also - would have been made into a string in xml_filter().
+		#      "$type reference";
+	}
+	$input;
+}
 
 =head2  Accessor methods
+
 	encodeSource  # encode source string with utf8 and base64 and store in encoded_source
 	encoded_source
 	request_object
@@ -523,6 +602,8 @@ sub default_inputs {
 	$out;
 }
 
+=over
+
 =item environment
 
 =cut
@@ -531,17 +612,17 @@ sub environment {
 	my $self = shift;
 	my $envir = {
 		answerDate  => '4014438528',
-		CAPA_Graphics_URL=>'http://webwork-db.math.rochester.edu/capa_graphics/',
-		CAPA_GraphicsDirectory =>'/ww/webwork/CAPA/CAPA_Graphics/',
-		CAPA_MCTools=>'/ww/webwork/CAPA/CAPA_MCTools/',
-		CAPA_Tools=>'/ww/webwork/CAPA/CAPA_Tools/',
+		CAPA_Graphics_URL=>'/webwork2_files/CAPA_Graphics/',
+		CAPA_GraphicsDirectory =>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/',
+		CAPA_MCTools=>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/macros/CAPA_MCTools/',
+		CAPA_Tools=>'/opt/webwork/libraries/webwork-open-problem-library/Contrib/CAPA/macros/CAPA_Tools/',
 		cgiDirectory=>'Not defined',
 		cgiURL => 'foobarNot defined',
 		classDirectory=> 'Not defined',
 		courseName=>'Not defined',
 		courseScriptsDirectory=>'not defined',
-		displayMode=>$self->{inputs_ref}->{displayMode}//"no display mode defined in WebworkClient-> environment",
-		dueDate=> '4014438528',
+		displayMode => $self->{inputs_ref}{displayMode} // "MathJax",
+		dueDate => '4014438528',
 		effectivePermissionLevel => 10,
 		externalGif2EpsPath=>'not defined',
 		externalPng2EpsPath=>'not defined',
@@ -570,29 +651,29 @@ sub environment {
 		numZeroLevelDefault =>0.000001,
 		numZeroLevelTolDefault =>0.000001,
 		openDate=> '3014438528',
-		permissionLevel =>10,
-		PRINT_FILE_NAMES_FOR => [ 'gage'],
+		permissionLevel => $self->{inputs_ref}{permissionLevel} // 0,
+		PRINT_FILE_NAMES_FOR => [],
 		probFileName => 'WebworkClient.pm:: define probFileName in environment',
-		problemSeed  => $self->{inputs_ref}->{problemSeed}//3333,
-		problemUUID  => $self->{inputs_ref}->{problemUUID}//0,
+		problemSeed  => $self->{inputs_ref}{problemSeed} // 3333,
+		problemUUID  => $self->{inputs_ref}{problemUUID} // 0,
 		problemValue =>1,
-		probNum => 13,
-		psvn => $self->{inputs_ref}->{psvn}//54321,
+		probNum => $self->{inputs_ref}{probNum} // 1,
+		psvn => $self->{inputs_ref}{psvn} // 54321,
 		questionNumber => 1,
 		scriptDirectory => 'Not defined',
-		sectionName => 'Gage',
+		sectionName => '',
 		sectionNumber => 1,
 		server_root_url =>"foobarfoobar", 
 		sessionKey=> 'Not defined',
-		setNumber =>'not defined',
-		studentLogin =>'gage',
-		studentName => 'Mike Gage',
+		setNumber => $self->{inputs_ref}{setNumber} // 'not defined',
+		studentLogin =>'',
+		studentName => '',
 		tempDirectory => 'not defined',
 		templateDirectory=>'not defined',
 		tempURL=>'not defined',
 		webworkDocsURL => 'not defined',
-		showHints => 1,               # extra options -- usually passed from the input form
-		showSolutions => 1,
+		showHints => $self->{inputs_ref}{showHints} // 0, # extra options -- usually passed from the input form
+		showSolutions => $self->{inputs_ref}{showSolutions} // 0,
 		@_,
 	};
 	$envir;
@@ -636,14 +717,14 @@ sub formatRenderedProblem {
 
 =item writeRenderLogEntry()
 
-# $ce - a WeBWork::CourseEnvironment object
-# $function - fully qualified function name
-# $details - any information, do not use the characters '[' or ']'
-# $beginEnd - the string "begin", "intermediate", or "end"
-# use the intermediate step begun or completed for INTERMEDIATE
-# use an empty string for $details when calling for END
-# Information printed in format:
-# [formatted date & time ] processID unixTime BeginEnd $function  $details
+ $ce - a WeBWork::CourseEnvironment object
+ $function - fully qualified function name
+ $details - any information, do not use the characters '[' or ']'
+ $beginEnd - the string "begin", "intermediate", or "end"
+ use the intermediate step begun or completed for INTERMEDIATE
+ use an empty string for $details when calling for END
+ Information printed in format:
+ [formatted date & time ] processID unixTime BeginEnd $function  $details
 
 =cut 
 

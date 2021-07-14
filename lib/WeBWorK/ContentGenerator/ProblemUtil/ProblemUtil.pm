@@ -21,7 +21,6 @@
 package WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil;
 use base qw(WeBWorK);
 use base qw(WeBWorK::ContentGenerator);
-use Encode qw(encode_utf8 encode);
 
 =head1 NAME
 
@@ -51,6 +50,9 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP qw();
 use Try::Tiny;
 
+use Caliper::Sensor;
+use Caliper::Entity;
+
 
 # process_and_log_answer subroutine.
 
@@ -78,92 +80,29 @@ sub process_and_log_answer{
 	my $pureProblem = $db->getUserProblem($problem->user_id, $problem->set_id, $problem->problem_id); # checked
 	my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
 
-# 	my $isEssay = 0;
-# 	my $scores2='';
-# 	my $isEssay2=0;
-#
-# 	my %answersToStore2;
-# 	my @answer_order2;
-    my ($encoded_answer_string, $scores2, $isEssay2);
+    my ($encoded_last_answer_string, $scores2, $isEssay2);
 	my $scoreRecordedMessage = "";
 
-	if ( defined($answer_log ) and defined($pureProblem)) {
-		if ($submitAnswers && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+	if (defined($answer_log) && defined($pureProblem) && $submitAnswers) {
+		my $past_answers_string;
+		($past_answers_string, $encoded_last_answer_string, $scores2, $isEssay2) =
+			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses($self, $pg);
 
-################################################################
-# new code (input is $pg)
-#########################################
-#
-# 			my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
-#    			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-#    				$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
-#    				$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
-#    				foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
-#    					$answersToStore2{$response_id} = $self->{formFields}->{$response_id};
-#    				    push @answer_order2, $response_id;
-#    				 }
-#    			}
-#    			my $answerString2 = '';
-#    			foreach my $response_id (@answer_order2) {
-#    				$answerString2.=($answersToStore2{$response_id}//'')."\t";
-#    			}
-#    			$answerString2=~s/\t$//; # remove last tab
-	my ($answerString2);
-	($answerString2,$encoded_answer_string, $scores2, $isEssay2) =
-	    WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::create_ans_str_from_responses(
-	      $self, $pg
-	    );  # ref($self) eq WeBWorK::ContentGenerator::Problem
-	        # ref($pg) eq "WeBWorK::PG::Local";
-# end new code (output is answerString2, $scores, $isEssay)
-################################################################
-# 		    my $answerString = ""; my $scores = "";
-# 			my %answerHash = %{ $pg->{answers} };
-# 			# FIXME  this is the line 552 error.  make sure original student ans is defined.
-# 			# The fact that it is not defined is probably due to an error in some answer evaluator.
-# 			# But I think it is useful to suppress this error message in the log.
-# 			foreach (sortByName(undef, keys %answerHash)) {
-# 				my $orig_ans = $answerHash{$_}->{original_student_ans};
-# 				my $student_ans = defined $orig_ans ? $orig_ans : '';
-# 				$answerString  .= $student_ans."\t";
-# 				# answer score *could* actually be a float, and this doesnt
-# 				# allow for fractional answers :(
-# 				$scores .= ($answerHash{$_}->{score}//0) >= 1 ? "1" : "0";
-# 				$isEssay = 1 if ($answerHash{$_}->{type}//'') eq 'essay';
-#
-# 			}
-#
-# 			$answerString = '' unless defined($answerString); # insure string is defined.
-
-##############################################################################
-# check new code
-			# experimental fix for past answers
-			# notice that it grabs the student response from the html form fields rather than
-			# from "original_student_ans" in the answerHash
-			# The answer hash is inside ans_id.ans_eval.rh_ans
-			#
-#    			warn "answerString1: $answerString";
-# 			warn "answerString2: $answerString2";
-# 			warn "scores1: $scores";
-# 			warn "scores2: $scores2";
-# 			warn "isEssay1: $isEssay";
-# 			warn "isEssay2: $isEssay2";
-
-            # end experimental fix for past answers
-##############################################################################
-# store in answer_log   past answers file (user_id,set_id,problem_id,courseID,answerString,scores,source_file)
+		if (!$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+			# store in answer_log
 			my $timestamp = time();
 			writeCourseLog($self->{ce}, "answer_log",
-			        join("",
-						'|', $problem->user_id,
-						'|', $problem->set_id,
-						'|', $problem->problem_id,
-						'|', $scores2, "\t",
-						$timestamp,"\t",
-						$answerString2,
-					),
+				join("",
+					'|', $problem->user_id,
+					'|', $problem->set_id,
+					'|', $problem->problem_id,
+					'|', $scores2, "\t",
+					$timestamp,"\t",
+					$past_answers_string,
+				),
 			);
 
-# add to PastAnswer db
+			# add to PastAnswer db
 			my $pastAnswer = $db->newPastAnswer();
 			$pastAnswer->course_id($courseID);
 			$pastAnswer->user_id($problem->user_id);
@@ -171,11 +110,9 @@ sub process_and_log_answer{
 			$pastAnswer->problem_id($problem->problem_id);
 			$pastAnswer->timestamp($timestamp);
 			$pastAnswer->scores($scores2);
-			$pastAnswer->answer_string($answerString2);
+			$pastAnswer->answer_string($past_answers_string);
 			$pastAnswer->source_file($problem->source_file);
 			$db->addPastAnswer($pastAnswer);
-
-
 		}
 	}
 
@@ -190,40 +127,10 @@ sub process_and_log_answer{
 		if (defined $pureProblem) {
 			# store answers in DB for sticky answers
 			my %answersToStore;
-			#my %answerHash = %{ $pg->{answers} };
-			# may not need to store answerHash explicitly since
-			# it (usually?) has the same name as the first of the responses
-			# $answersToStore{$_} = $self->{formFields}->{$_} foreach (keys %answerHash);
-			# $answerHash{$_}->{original_student_ans} -- this may have been modified for fields with multiple values.
-			# Don't use it!!
-# 			my @answer_order;
-# 			my %answerHash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
-#    			foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-#    				foreach my $response_id ($answerHash{$ans_id}->response_obj->response_labels) {
-#    					$answersToStore{$response_id} = $self->{formFields}->{$response_id};
-#    				    push @answer_order, $response_id;
-#    				 }
-#    			}
-#
-			# There may be some more answers to store -- one which are auxiliary entries to a primary answer.  Evaluating
-			# matrices works in this way, only the first answer triggers an answer evaluator, the rest are just inputs
-			# however we need to store them.  Fortunately they are still in the input form.
-			#my @extra_answer_names  = @{ $pg->{flags}->{KEPT_EXTRA_ANSWERS}//[]};
-			#$answersToStore{$_} = $self->{formFields}->{$_} foreach  (@extra_answer_names);
-
-			# Now let's encode these answers to store them -- append the extra answers to the end of answer entry order
-			#my @answer_order = (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]}, @extra_answer_names);
-			# %answerToStore and @answer_order are passed as references
-			# because of profile for encodeAnswers
-
-			# encodeAnswers creates a hash and uses Storage::nfreeze to serialize it
-			# replaced by $encoded_answer_string
-# 			my $answerString3 = encodeAnswers(%answersToStore2,
-# 							 @answer_order2);
-
+			
 			# store last answer to database for use in "sticky" answers
-			$problem->last_answer($encoded_answer_string);
-			$pureProblem->last_answer($encoded_answer_string);
+			$problem->last_answer($encoded_last_answer_string);
+			$pureProblem->last_answer($encoded_last_answer_string);
 			$db->putUserProblem($pureProblem);
 
 			# store state in DB if it makes sense
@@ -279,6 +186,67 @@ sub process_and_log_answer{
 					$pureProblem->num_incorrect
 					);
 
+				my $caliper_sensor = Caliper::Sensor->new($self->{ce});
+				if ($caliper_sensor->caliperEnabled() && defined($answer_log) && !$authz->hasPermissions($effectiveUser, "dont_log_past_answers")) {
+					my $startTime = $r->param('startTime');
+					my $endTime = time();
+
+					my $completed_question_event = {
+						'type' => 'AssessmentItemEvent',
+						'action' => 'Completed',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_user(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg
+						),
+						'generated' => Caliper::Entity::answer(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->problem_id(),
+							$problem->user_id(),
+							$pg,
+							$startTime,
+							$endTime
+						),
+					};
+					my $submitted_set_event = {
+						'type' => 'AssessmentEvent',
+						'action' => 'Submitted',
+						'profile' => 'AssessmentProfile',
+						'object' => Caliper::Entity::problem_set(
+							$self->{ce},
+							$db,
+							$problem->set_id()
+						),
+						'generated' => Caliper::Entity::problem_set_attempt(
+							$self->{ce},
+							$db,
+							$problem->set_id(),
+							0, #version is 0 for non-gateway problems
+							$problem->user_id(),
+							$startTime,
+							$endTime
+						),
+					};
+					my $tool_use_event = {
+						'type' => 'ToolUseEvent',
+						'action' => 'Used',
+						'profile' => 'ToolUseProfile',
+						'object' => Caliper::Entity::webwork_app(),
+					};
+					$caliper_sensor->sendEvents($r, [$completed_question_event, $submitted_set_event, $tool_use_event]);
+
+					# reset start time
+					$r->param('startTime', '');
+				}
+
 				#Try to update the student score on the LMS
 				# if that option is enabled.
 				my $LTIGradeMode = $self->{ce}->{LTIGradeMode} // '';
@@ -286,15 +254,15 @@ sub process_and_log_answer{
 				  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
 				  if ($LTIGradeMode eq 'course') {
 				    if ($grader->submit_course_grade($problem->user_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  } elsif ($LTIGradeMode eq 'homework') {
 				    if ($grader->submit_set_grade($problem->user_id, $problem->set_id)) {
-				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was successfully sent to the LMS.");
 				    } else {
-				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS");
+				      $scoreRecordedMessage .= $r->maketext("Your score was not successfully sent to the LMS.");
 				    }
 				  }
 				}
@@ -317,11 +285,20 @@ sub process_and_log_answer{
 }
 
 # create answer string from responses hash
-# ($ansString, $encoded_ans_string, $scores, $isEssay) = create_ans_str_from_responses($problem, $pg)
+# ($past_answers_string, $encoded_last_answer_string, $scores, $isEssay) = create_ans_str_from_responses($problem, $pg)
 #
 # input: ref($pg)eq 'WeBWorK::PG::Local'
 #        ref($problem)eq 'WeBWorK::ContentGenerator::Problem
 # output:  (str, str, str)
+
+
+# 2020_05 MEG  -- previous version seems to have omitted saving $pg->{flags}->{KEPT_EXTRA_ANSWERS} which also
+# labels stored in $PG->{PERSISTANCE_HASH}
+# 2020_05a MEG -- past_answers_string is being created for use in the past_answer table
+# and other persistant objects need not be included.
+# The extra persistence objects do need to be included in problem->last_answer
+# in order to keep those objects persistant -- as long as RECORD_FORM_ANSWER
+# is used to preserve objects by piggy backing on the persistence mechanism for answers.
 
 sub create_ans_str_from_responses {
 	my $problem = shift;  #  ref($problem) eq 'WeBWorK::ContentGenerator::Problem'
@@ -330,30 +307,41 @@ sub create_ans_str_from_responses {
 	#warn "create_ans_str_from_responses pg has type ", ref($pg);
 	my $scores2='';
 	my $isEssay2=0;
-	my %answersToStore2;
-	my @answer_order2;
-	my @answer_order3;
+	my %answers_to_store;
+	my @past_answers_order;
+	my @last_answer_order;
 
-	my %answerHash2 = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
+	my %pg_answers_hash = %{ $pg->{pgcore}->{PG_ANSWERS_HASH}};
 	foreach my $ans_id (@{$pg->{flags}->{ANSWER_ENTRY_ORDER}//[]} ) {
-		$scores2.= ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
-		$isEssay2 = 1 if ($answerHash2{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
-		foreach my $response_id ($answerHash2{$ans_id}->response_obj->response_labels) {
-			$answersToStore2{$response_id} = $problem->{formFields}->{$response_id};
-			push @answer_order2, $response_id unless ($response_id =~ /^MaThQuIlL_/);
-			push @answer_order3, $response_id;
+		$scores2.= ($pg_answers_hash{$ans_id}->{ans_eval}{rh_ans}{score}//0) >= 1 ? "1" : "0";
+		$isEssay2 = 1 if ($pg_answers_hash{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
+		foreach my $response_id ($pg_answers_hash{$ans_id}->response_obj->response_labels) {
+			$answers_to_store{$response_id} = $problem->{formFields}->{$response_id};
+			#Math quill response items do not need to be stored -- they duplicate other response items
+			push @past_answers_order, $response_id unless ($response_id =~ /^MaThQuIlL_/);
+			push @last_answer_order, $response_id;
 		 }
 	}
-	my $answerString2 = '';
-	foreach my $response_id (@answer_order2) {
-		$answerString2.=($answersToStore2{$response_id}//'')."\t";
+	# KEPT_EXTRA_ANSWERS need to be stored in last_answer in order to preserve persistence items
+	# the persistence items do not need to be stored in past_answers_string
+	foreach my $entry_id (@{ $pg->{flags}->{KEPT_EXTRA_ANSWERS} }) {
+		next if exists( $answers_to_store{$entry_id}  );
+		$answers_to_store{$entry_id}= $problem->{formFields}->{$entry_id};
+		push @last_answer_order, $entry_id;
 	}
-	$answerString2=~s/\t$//; # remove last tab
 
-	my $encoded_answer_string = encodeAnswers(%answersToStore2,
-							 @answer_order3);
+	my $past_answers_string = '';
+	foreach my $response_id (@past_answers_order) {
+		$past_answers_string.=($answers_to_store{$response_id}//'')."\t";
+	}
+	$past_answers_string=~s/\t$//; # remove last tab
 
-	return ($answerString2,$encoded_answer_string, $scores2,$isEssay2);
+	my $encoded_last_answer_string = encodeAnswers(%answers_to_store,
+							 @last_answer_order);
+	# warn "$encoded_last_answer_string", $encoded_last_answer_string;
+    # past_answers_string is stored in past_answer table
+    # encoded_last_answer_string is used in `last_answer` entry of the problem_user table
+	return ($past_answers_string,$encoded_last_answer_string, $scores2,$isEssay2);
 }
 
 # insert_mathquill_responses subroutine
@@ -364,7 +352,8 @@ sub create_ans_str_from_responses {
 sub insert_mathquill_responses {
 	my ($self, $pg) = @_;
 	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
-		my $mq_opts = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->{ans_eval}{rh_ans}{mathQuillOpts};
+		my $mq_opts = $pg->{pgcore}{PG_ANSWERS_HASH}{$answerLabel}{ans_eval}{rh_ans}{mathQuillOpts} // "";
+		next if ($mq_opts && $mq_opts =~ /\s*disabled\s*/);
 		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
 		for my $response ($response_obj->response_labels) {
 			next if (ref($response_obj->{responses}{$response}));
@@ -372,8 +361,7 @@ sub insert_mathquill_responses {
 			push(@{$response_obj->{response_order}}, $name);
 			$response_obj->{responses}{$name} = '';
 			my $value = defined($self->{formFields}{$name}) ? $self->{formFields}{$name} : '';
-			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value });
-			$pg->{body_text} .= "<script>var ${name}_Opts = {$mq_opts}</script>" if ($mq_opts);
+			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value, data_mq_opts => "$mq_opts" });
 		}
 	}
 }
@@ -407,7 +395,7 @@ sub process_editorLink{
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
 		($set->set_id eq 'Undefined_Set');
 	if ($authz->hasPermissions($user, "modify_problem_sets")) {
-		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",
+		my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			courseID => $courseName, setID => $set->set_id, problemID => $problem->problem_id);
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink = CGI::p(CGI::a({href=>$editorURL,target =>'WW_Editor'}, "Edit this problem"));
@@ -429,104 +417,6 @@ sub process_editorLink{
 	}
 }
 
-# output_JS subroutine
-
-# prints out the legacy/vendor/wz_tooltip.js script for the current site.
-
-sub output_JS{
-
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/wz_tooltip.js"}), CGI::end_script();
-}
-
-# output_summary subroutine
-
-# prints out summary information for the problem pages.
-
-# sub output_summary{
-# 
-# 	my $self = shift;
-# 
-# 	my $editMode = $self->{editMode};
-# 	my $problem = $self->{problem};
-# 	my $pg = $self->{pg};
-# 	my $submitAnswers = $self->{submitAnswers};
-# 	my %will = %{ $self->{will} };
-# 	my $checkAnswers = $self->{checkAnswers};
-# 	my $previewAnswers = $self->{previewAnswers};
-# 
-# 	my $r = $self->r;
-# 
-# 	my $authz = $r->authz;
-# 	my $user = $r->param('user');
-# 
-# 	# custom message for editor
-# 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
-# 		if ($editMode eq "temporaryFile") {
-# 			print CGI::p(CGI::div({class=>'temporaryFile'}, "Viewing temporary file: ", $problem->source_file));
-# 		} elsif ($editMode eq "savedFile") {
-# 			# taken care of in the initialization phase
-# 		}
-# 	}
-# 	print CGI::start_div({class=>"problemHeader"});
-# 
-# 
-# 	# attempt summary
-# 	#FIXME -- the following is a kludge:  if showPartialCorrectAnswers is negative don't show anything.
-# 	# until after the due date
-# 	# do I need to check $will{showCorrectAnswers} to make preflight work??
-# 	if (($pg->{flags}->{showPartialCorrectAnswers} >= 0 and $submitAnswers) ) {
-# 		# print this if user submitted answers OR requested correct answers
-# 
-# 		print $self->attemptResults($pg, 1,
-# 			$will{showCorrectAnswers},
-# 			$pg->{flags}->{showPartialCorrectAnswers}, 1, 1);
-# 	} elsif ($checkAnswers) {
-# 		# print this if user previewed answers
-# 		print CGI::div({class=>'ResultsWithError'},"ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED"), CGI::br();
-# 		print $self->attemptResults($pg, 1, $will{showCorrectAnswers}, 1, 1, 1);
-# 			# show attempt answers
-# 			# show correct answers if asked
-# 			# show attempt results (correctness)
-# 			# show attempt previews
-# 	} elsif ($previewAnswers) {
-# 		# print this if user previewed answers
-# 		print CGI::div({class=>'ResultsWithError'},"PREVIEW ONLY -- ANSWERS NOT RECORDED"),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
-# 			# show attempt answers
-# 			# don't show correct answers
-# 			# don't show attempt results (correctness)
-# 			# show attempt previews
-# 	}
-# 
-# 	print CGI::end_div();
-# }
-
-# output_CSS subroutine
-
-# prints the CSS scripts to page.  Does some PERL trickery to form the styles
-# for the correct answers and the incorrect answers (which may be substituted with JS sometime in the future).
-
-# sub output_CSS{
-#
-# 	my $self = shift;
-# 	my $r = $self->r;
-# 	my $ce = $r->ce;
-# 	my $pg = $self->{pg};
-#
-# 	# always show colors for checkAnswers
-# 	# show colors for submit answer if
-# 	if (($self->{checkAnswers}) or ($self->{submitAnswers} and $pg->{flags}->{showPartialCorrectAnswers}) ) {
-# 		print CGI::start_style({type=>"text/css"});
-# 		print	'#'.join(', #', @{ $self->{correct_ids} }), $ce->{pg}{options}{correct_answer}   if ref( $self->{correct_ids}  )=~/ARRAY/;   #correct  green
-# 		print	'#'.join(', #', @{ $self->{incorrect_ids} }), $ce->{pg}{options}{incorrect_answer} if ref( $self->{incorrect_ids})=~/ARRAY/; #incorrect  reddish
-# 		print	CGI::end_style();
-# 	}
-# }
-
 # output_main_form subroutine.
 
 # prints out the main form for the page.  This particular subroutine also takes in $editorLink and $scoreRecordedMessage as required parameters. Also uses CGI_labeled_input for its input elements for accessibility reasons.  Also prints out the score summary where applicable.
@@ -541,6 +431,7 @@ sub output_main_form{
 	my $problem = $self->{problem};
 	my $set = $self->{set};
 	my $submitAnswers = $self->{submitAnswers};
+	my $startTime = $r->param('startTime') || time();
 
 	my $db = $r->db;
 	my $ce = $r->ce;
@@ -553,6 +444,7 @@ sub output_main_form{
 	print "\n";
 	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
 	print $self->hidden_authen_fields;
+	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	print CGI::end_form();
 }
 
@@ -599,8 +491,16 @@ sub output_footer{
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
+		courseId           => $courseName,	
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
+		problemPath        => $problem->source_file,
+		randomSeed         => $problem->problem_seed,
+		emailAddress       => join(";",$self->fetchEmailRecipients('receive_feedback',$user)),
+		emailableURL       => $self->generateURLs(url_type => 'absolute',
+		                                          set_id => $self->{set}->set_id,
+		                                          problem_id => $problem->problem_id),
+		studentName        => $user->full_name,
 		displayMode        => $self->{displayMode},
 		showOldAnswers     => $will{showOldAnswers},
 		showCorrectAnswers => $will{showCorrectAnswers},
@@ -674,21 +574,8 @@ sub jitar_send_warning_email {
 				courseID => $courseID, setID => $setID, problemID => $problemID), params=>{effectiveUser=>$userID}, use_abs_url=>1);
 
 
-	my @recipients;
-        # send to all users with permission to score_sets an email address
-	# DBFIXME iterator?
-	foreach my $rcptName ($db->listUsers()) {
-		if ($authz->hasPermissions($rcptName, "score_sets")) {
-			my $rcpt = $db->getUser($rcptName); # checked
-			next if $ce->{feedback_by_section} and defined $user
-			    and defined $rcpt->section and defined $user->section
-			    and $rcpt->section ne $user->section;
-			if ($rcpt and $rcpt->email_address) {
-			    # rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
-			    push @recipients, $rcpt->rfc822_mailbox;
-			}
-		}
-	}
+	  my @recipients = $self->fetchEmailRecipients("score_sets", $user);
+        # send to all users with permission to score_sets and an email address
 
     my $sender;
     if ($user->email_address) {
@@ -699,7 +586,7 @@ sub jitar_send_warning_email {
 	# Encode the user name using "MIME-Header" encoding, (RFC 2047) which
 	# allows UTF-8 encoded names to be encoded inside the mail header using
 	# a special format.
-	$sender = encode("MIME-Header", $user->full_name);
+	$sender = Encode::encode("MIME-Header", $user->full_name);
     } else {
 	$sender = $userID;
     }
@@ -723,18 +610,11 @@ sub jitar_send_warning_email {
 
     # If in the future any fields in the subject can contain non-ASCII characters
     # then we will also need:
-    # $subject = encode("MIME-Header", $subject);
+    # $subject = Encode::encode("MIME-Header", $subject);
     # at present, this does not seem to be necessary.
 
 
-# 		my $transport = Email::Sender::Transport::SMTP->new({
-# 			host => $ce->{mail}->{smtpServer},
-# 			ssl => $ce->{mail}->{tls_allowed}//1, ## turn on ssl security
-# 			timeout => $ce->{mail}->{smtpTimeout}
-# 		});
-# 
-
-#           createEmailSenderTransportSMTP is defined in ContentGenerator
+#       createEmailSenderTransportSMTP is defined in ContentGenerator
 		my $transport = $self->createEmailSenderTransportSMTP();
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
@@ -778,7 +658,7 @@ Comment:    $comment
 /;
 
 	# Encode the body in UTF-8 when adding it.
-	$email->body_set(encode_utf8($msg));
+	$email->body_set(Encode::encode("UTF-8",$msg));
 
 		## try to send the email
 

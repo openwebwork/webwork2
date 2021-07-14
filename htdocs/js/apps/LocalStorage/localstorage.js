@@ -19,26 +19,25 @@ var WWLocalStorage = function(givenContainer) {
 	storedData = {};
     }
 
-    var storeData = function () {
-	//event.preventDefault();
-
-	if (!storedData['inputs']) {
-	    storedData['inputs'] = {};
-	}
-	
-	var inputs = $(container).find(":input")
-	    .each(function(index,input) {
-		if ($(input).attr('type').toUpperCase() == 'RADIO') {
-		    var name = $(input).attr('name');
-		    storedData['inputs'][name] = $('input[name="'+name+'"]:checked').val();
-		} else if (/AnSwEr/.test($(input).attr('name'))) {
-		    
-		    storedData['inputs'][$(input).attr('name')] = $(input).val();
+	var storeData = function () {
+		if (!storedData['inputs']) {
+			storedData['inputs'] = {};
 		}
-	    });
 
-	$.jStorage.set(identifier,storedData);
-    }
+		var inputs = $(container).find(":input")
+			.each(function(index) {
+				var input = $(this);
+				var type = input.attr('type');
+				if (type && type.toUpperCase() == 'RADIO') {
+					var name = input.attr('name');
+					storedData['inputs'][name] = $('input[name="'+name+'"]:checked').val();
+				} else if (/AnSwEr/.test(input.attr('name'))) {
+					storedData['inputs'][input.attr('name')] = $(input).val();
+				}
+			});
+
+		$.jStorage.set(identifier,storedData);
+	}
 
     $(container).find(":submit").click(storeData);
 

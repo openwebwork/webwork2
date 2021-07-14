@@ -41,15 +41,12 @@ use JSON;
 
 =head1 Description
 
-
-#################################################
-  instructorXMLHandler -- a front end for the Webservice that accepts HTML forms
+ instructorXMLHandler -- a front end for the Webservice that accepts HTML forms
 
  receives WeBWorK problems presented as HTML forms, usually created with js xmlhttprequests,
  packages the form variables into an XML_RPC request
  suitable for all of the webservices in WebworkWebservices
  returns xml resutls
-#################################################
 
 =cut
  
@@ -173,91 +170,12 @@ sub pre_header_initialize {
 
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 
-	my $input = {#can I just use $->param? it looks like a hash
-
-#		    pw                      => $r->param('pw') ||undef,
-		    session_key             => $r->param("session_key") ||undef,
-		    userID                  => $r->param("user") ||undef,
-		    courseID                => $r->param('courseID'),
-		    library_name            => $r->param("library_name") ||undef,
-		    user        	        => $r->param("user") ||undef,
-		    set                     => $r->param("set") ||undef,
-		    fileName                => $r->param("file_name") ||undef,
-		    new_set_name	        => $r->param("new_set_name") ||undef,
-		    probList		        => $r->param("probList") ||undef,
-		    command     	        => $r->param("command") ||undef,
-		    subcommand		        => $r->param("subcommand") ||undef,
-		    maxdepth		        => $r->param("maxdepth") || 0,
-		    problemSeed	            => $r->param("problemSeed") || 0,
-		    problemUUID             => $r->param("problemUUID") // 0,
-		    displayMode	            => $r->param("displayMode") || undef,
-		    noprepostambles	        => $r->param("noprepostambles") || undef,
-		    library_subjects	    => $r->param("library_subjects") ||undef,
-		    library_chapters	    => $r->param("library_chapters") ||undef,
-		    library_sections	    => $r->param("library_sections") ||undef,
-		    library_levels		    => $r->param("library_levels") ||undef,
-		    library_status		    => $r->param("library_status") ||undef,
-		    library_textbook	    => $r->param("library_textbook") ||undef,
-		    library_keywords	    => $r->param("library_keywords") ||undef,
-		    library_textchapter     => $r->param("library_textchapter") ||undef,
-		    library_textsection     => $r->param("library_textsection") ||undef,
-		    source			        =>  '',
-
-		     #course stuff
-		    first_name       		=> $r->param('first_name') || undef,
-            last_name       		=> $r->param('last_name') || undef,
-            student_id     			=> $r->param('student_id') || undef,
-            id             			=> $r->param('user_id') || undef,
-            email_address  			=> $r->param('email_address') || undef,
-            permission     			=> $r->param('permission') // 0,	# valid values from %userRoles in defaults.config
-            status         			=> $r->param('status') || undef,#'Enrolled, audit, proctor, drop
-            section        			=> $r->param('section') || undef,
-            recitation     			=> $r->param('recitation') || undef,
-            comment        			=> $r->param('comment') || undef,
-            new_password   			=> $r->param('new_password') || undef,
-            userpassword   			=> $r->param('userpassword') || undef,	# defaults to studentid if empty
-	     	set_props	    		=> $r->param('set_props') || undef,
-	     	set_id	    			=> not_null($r->param('set_id')) ? $r->param('set_id') : undef,
-	     	due_date	    		=> $r->param('due_date') || undef,
-	     	set_header     		   	=> $r->param('set_header') || undef,
-	        hardcopy_header 	   	=> $r->param('hardcopy_header') || undef,
-	     	open_date       	   	=> $r->param('open_date') || undef,
-            due_date        	   	=> $r->param('due_date') || undef,
-            answer_date     	   	=> $r->param('answer_date') || undef,
-            visible         	   	=> $r->param('visible') || 0,
-            enable_reduced_scoring 	=> $r->param('enable_reduced_scoring') || 0,
-            assignment_type        	=> $r->param('assignment_type') || undef,
-            attempts_per_version   	=> $r->param('attempts_per_version') || undef,
-            time_interval         	=> $r->param('time_interval') || undef,
-            versions_per_interval  	=> $r->param('versions_per_interval') || undef,
-            version_time_limit     	=> $r->param('version_time_limit') || undef,
-            version_creation_time  	=> $r->param('version_creation_time') || undef,
-            problem_randorder      	=> $r->param('problem_randorder') || undef,
-            version_last_attempt_time => $r->param('version_last_attempt_time') || undef,
-            problems_per_page      	=> $r->param('problems_per_page') || undef,
-            hide_score             	=> $r->param('hide_score') || undef,
-            hide_score_by_problem  	=> $r->param('hide_score_by_problem') || undef,
-            hide_work              	=> $r->param('hide_work') || undef,
-            time_limit_cap         	=> $r->param('time_limit_cap') || undef,
-            restrict_ip            	=> $r->param('restrict_ip') || undef,
-            relax_restrict_ip      	=> $r->param('relax_restrict_ip') || undef,
-            restricted_login_proctor => $r->param('restricted_login_proctor') || undef,
-            var 					=> $r->param('var') || undef,
-            value   				=> $r->param('value') || undef,
-            users 					=> $r->param('users') || undef,
-            place 					=> $r->param('place') || undef,
-            path 					=> $r->param('path') || undef, 
-            selfassign 			    => $r->param('selfassign') || undef, 
-            pgCode					=> $r->param('pgCode') || undef,
-            sendViaJSON				=> $r->param('sendViaJSON') || undef,
-            assigned_users	        => $r->param('assigned_users') || undef,
-            overrides				=> $r->param('overrides') || undef,
-			showHints				=> $r->param('showHints') || 0,
-			showSolutions			=> $r->param('showSolutions') || 0,
-		    processAnswers => defined($r->param('processAnswers')) ? $r->param('processAnswers') : 1,
-	};
-
-
+	my $input = { map { $_ => $r->param($_) } $r->param };
+	delete $input->{user};
+	delete $input->{user_id};
+	$input->{userID} = $r->param("user") || undef;
+	$input->{source} = '';
+	$input->{id} = $r->param('user_id') || undef;
 
 	if ($UNIT_TESTS_ON) {
 		print STDERR "\tinstructorXMLHandler.pm ".__LINE__." values obtained from form parameters\n\t",

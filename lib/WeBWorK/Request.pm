@@ -61,7 +61,7 @@ sub mutable_param {
 	    my @names = $self->SUPER::param();
 	    foreach my $name (@names) {
 		my @params = $self->SUPER::param($name);
-		@params = map {Encode::decode_utf8($_)} @params;
+		@params = map {Encode::decode("UTF-8",$_)} @params;
 		$self->{paramcache}{$name} = [@params];
 	    }
 	}

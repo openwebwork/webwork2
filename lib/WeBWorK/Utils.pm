@@ -31,7 +31,6 @@ use DateTime;
 use DateTime::TimeZone;
 use Date::Parse;
 use Date::Format;
-use Encode qw(encode_utf8 decode_utf8);
 use File::Copy;
 use File::Spec::Functions qw(canonpath);
 use Time::Zone;
@@ -117,6 +116,8 @@ our @EXPORT_OK = qw(
         is_jitar_problem_closed
         jitar_problem_adjusted_status
         jitar_problem_finished
+	fetchEmailRecipients
+	generateURLs
 	x
 );
 
@@ -190,7 +191,7 @@ sub readFile($) {
 	my $fileName = shift;
 	# debugging code: found error in CourseEnvironment.pm with this
 # 	if ($fileName =~ /___/ or $fileName =~ /the-course-should-be-determined-at-run-time/) {
-# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n", 
+# 		print STDERR "File $fileName not found.\n Usually an unnecessary call to readFile from\n",
 # 		join("\t ", caller()), "\n";
 # 		return();
 # 	}
@@ -204,7 +205,7 @@ sub readFile($) {
 			# use the following instead
 			if (open my $dh, "<:raw", $fileName){
 				$result = <$dh>;
-				decode_utf8($result) or die "failed to decode $fileName";
+				Encode::decode("UTF-8",$result) or die "failed to decode $fileName";
 				close $dh;
 			} else {
 				print STDERR "File $fileName cannot be read."; # this is not a fatal error.
@@ -213,9 +214,10 @@ sub readFile($) {
 		if ($@) {
 			print STDERR "reading $fileName:  error in Utils::readFile: $@\n";
 		}
-		my $prevent_error_message = utf8::decode($result) or  warn  "Non-fatal warning: file $fileName contains at least one character code which ". 
-		 "is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n". 
-		 "While this is not fatal you should fix it\n";
+		my $prevent_error_message = utf8::decode($result) or warn join("",
+			"Non-fatal warning: file $fileName contains at least one character code which ",
+			"is not valid in UTF-8. (The copyright sign is often a culprit -- use '&amp;copy;' instead.)\n",
+			"While this is not fatal you should fix it\n");
 		# FIXME
 		# utf8::decode($result) raises an error about the copyright sign
 		# decode_utf8 and Encode::decode_utf8 do not -- which is doing the right thing?
@@ -844,7 +846,7 @@ sub writeTimingLogEntry($$$$) {
 sub trim_spaces {
 	my $in = shift;
 	return '' unless $in;  # skip blank spaces
-	$in =~ s/^\s*(.*?)\s*$/$1/;
+	$in =~ s/^\s*|\s*$//g;
 	return($in);
 }
 sub list2hash(@) {
@@ -940,7 +942,7 @@ sub decodeAnswers($) {
 }
 
 sub decode_utf8_base64 {
-    return decode_utf8(decode_base64(shift));
+    return Encode::decode("UTF-8",decode_base64(shift));
 }
 
 sub OLD_encodeAnswers(\%\@) {
@@ -963,7 +965,7 @@ sub encodeAnswers(\%\@) {
 }
 
 sub encode_utf8_base64 {
-    return encode_base64(encode_utf8(shift));
+    return encode_base64(Encode::encode("UTF-8",shift));
 }
 
 sub nfreeze_base64 {
@@ -1021,7 +1023,7 @@ sub cryptPassword($) {
 	    $salt .= ('.','/','0'..'9','A'..'Z','a'..'z')[rand 64];
 	}
 
-	my $cryptPassword = crypt($clearPassword, $salt);
+	my $cryptPassword = crypt(trim_spaces($clearPassword), $salt);
 	return $cryptPassword;
 }
 
@@ -1710,6 +1712,102 @@ sub jitar_problem_finished {
 
     # if we got here then the problem is finished
     return 1;
+}
+
+# requires a CG object, and a permission type
+# a user may also be submitted, in case we need to filter by section
+# could require the db, course environment and authz separately... why tho?
+
+sub fetchEmailRecipients {
+	my ($self, $permissionType, $sender) = @_; # sender argument is optional
+	my $r = $self->r;
+	my $db = $r->db;
+	my $ce = $r->ce;
+	my $authz = $r->authz;
+	my @recipients;
+
+  return unless $permissionType;
+
+	foreach my $potentialRecipient ($db->listUsers()) {
+		if ($authz->hasPermissions($potentialRecipient, $permissionType)) {
+			my $validRecipient = $db->getUser($potentialRecipient);
+			next if $ce->{feedback_by_section} and defined $sender
+					and defined $validRecipient->section and defined $sender->section
+					and $validRecipient->section ne $sender->section;
+			if ($validRecipient and $validRecipient->email_address) {
+					push @recipients, $validRecipient->rfc822_mailbox;
+			}
+		}
+	}
+	return @recipients;
+}
+
+# Requires a CG object.
+# The following optional parameters may be passed:
+# set_id: A problem set name
+# problem_id: Number of a problem in the set
+# url_type:  This should a string with the value 'relative' or 'absolute' to
+# return a single URL, or undefined to return an array containing both URLs
+# this subroutine could be expanded to.
+
+sub generateURLs {
+	my $self = shift;
+	my %params = @_;
+	my $r = $self->r;
+	my $db = $r->db;
+	my $urlpath = $r->urlpath;
+	my $userName = $r->param("user");
+
+	# generate context URLs
+	my $emailableURL;
+	my $returnURL;
+	if ($userName) {
+		my $modulePath;
+		my @args;
+		if (defined $params{set_id} && $params{set_id} ne "") {
+			if ($params{problem_id}) {
+				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::Problem", $r,
+					courseID => $r->urlpath->arg("courseID"),
+					setID => $params{set_id},
+					problemID => $params{problem_id},
+				);
+				@args = qw/displayMode showOldAnswers showCorrectAnswers showHints showSolutions/;
+			} else {
+				$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
+					courseID => $r->urlpath->arg("courseID"),
+					setID => $params{set_id},
+				);
+				@args = ();
+			}
+		} else {
+			$modulePath = $r->urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
+				courseID => $r->urlpath->arg("courseID"),
+			);
+			@args = ();
+		}
+		$emailableURL = $self->systemLink($modulePath,
+			authen => 0,
+			params => [ "effectiveUser", @args ],
+			use_abs_url => 1,
+		);
+		$returnURL = $self->systemLink($modulePath,
+			authen => 1,
+			params => [ @args ],
+		);
+	} else {
+		$emailableURL = "(not available)";
+		$returnURL = "";
+	}
+	if ($params{url_type}) {
+		if ($params{url_type} eq 'relative') {
+			return $returnURL;
+		} else {
+			return $emailableURL; # could include other types of URL here...
+		}
+	} else {
+		return ($emailableURL, $returnURL);
+	}
+	return;
 }
 
 # This is a dummy function used to mark strings for localization

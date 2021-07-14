@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created by manually editing webwork_square.svg -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="240"
+   height="65"
+   id="svg2"
+   viewBox="0 0 240 65"
+   version="1.1">
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     transform="translate(-137.21391,-210.45965)">
+    <g
+       id="g5899">
+      <g
+         id="g5972"
+         transform="translate(-61.042075,-18.507438)">
+        <g
+           transform="translate(-0.11138,1.2987676)"
+           id="g5816">
+          <g
+             id="g5922">
+            <g
+               id="g5932" />
+            <g
+               id="g5961">
+              <g
+                 id="g5951">
+                <path
+                   id="path4218"
+                   d="m 224.2781,233.62123 c 0.42645,5.38525 0.53172,10.78991 -2.46322,14.62117 -4.41017,5.55354 -16.72809,10.29041 -16.66061,10.12704 0,0 11.43376,4.24683 15.51724,9.31035 4.08349,5.06352 8.16696,17.80399 8.16696,17.80399 0,0 3.17736,-10.35947 12.02941,-13.60571 8.11384,-2.97553 27.77228,0.82982 27.77228,0.82982 0,0 -8.93054,-6.17148 -11.87065,-12.86839 -2.94011,-6.69692 -1.30671,-22.3775 -1.30671,-22.3775 0,0 -8.65699,3.92015 -15.19057,4.41016 -6.53357,0.49002 -15.99413,-8.25093 -15.99413,-8.25093 z"
+                   style="fill:#ffffcc;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:5;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-mid:none;marker-end:none" />
+                <path
+                   style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   d="m 206.21826,258.27235 29.97049,-1.5363"
+                   id="path4220"/>
+                <path
+                   style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   d="m 224.26497,233.37852 11.27042,23.19419"
+                   id="path4222"/>
+                <path
+                   style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   d="m 255.29946,237.78868 -8.8253,10.62302 -10.71601,8.11452"
+                   id="path4224"/>
+                <path
+                   style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   d="m 266.86967,271.85578 -8.21249,-3.94348 -22.79511,-11.17625"
+                   id="path4226"/>
+                <path
+                   style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+                   d="m 228.83848,284.50374 2.77775,-13.8908 4.24584,-14.53025"
+                   id="path4228"/>
+                <path
+                   style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:bevel;stroke-opacity:1"
+                   d="m 228.02178,240.89213 c 0.21306,1.67416 2.07245,6.77696 -0.72048,10.98053 -3.01023,4.53061 -6.95647,5.68009 -6.95647,5.68009 0,0 2.77677,0.98003 6.53357,4.73684 3.75681,3.7568 4.61999,8.90361 4.61999,8.90361 0,0 3.96475,-4.03192 7.73116,-5.31984 5.51947,-1.88738 14.56431,-0.44999 14.56431,-0.44999 0,0 -1.05352,-0.75601 -5.73429,-7.29732 -3.62703,-5.06874 -1.09688,-10.27745 -1.09688,-10.27745 0,0 -4.53348,0.64703 -10.15092,0.15041 -5.21371,-0.46093 -8.78999,-7.10688 -8.78999,-7.10688 z"
+                   id="path4230"/>
+              </g>
+            </g>
+          </g>
+        </g>
+        <text
+           xml:space="preserve"
+           style="font-size:30px;font-style:normal;font-variant:small-caps;font-weight:500;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#FFFFFF;fill-opacity:1;stroke:none;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif"
+           x="270"
+           y="270"
+           id="text5893">WeBWorK</text>
+      </g>
+    </g>
+  </g>
+</svg>

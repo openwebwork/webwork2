@@ -1,14 +1,13 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/site.conf.dist,v 1.225 2010/05/18 18:03:31 apizer Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, http://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -26,7 +25,7 @@
 # This file is used to set up the basic paths and URLs specific to your
 # installation of WeBWorK, with the exception of the $webwork_dir variable which
 # is set in the WeBWorK Apache configuration file (webwork.apache2-config).
-# Any customization of global WeBWorK settings should be done in localOverrides.conf. 
+# Any customization of global WeBWorK settings should be done in localOverrides.conf.
 
 ################################################################################
 # site.conf  -- this file
@@ -52,11 +51,17 @@ $server_root_url   = '';   # e.g.  'https://webwork.yourschool.edu' or 'http://l
 # The following two variables must match the user ID and group ID respectively
 # under which apache is running.
 # In the apache configuration file (often called httpd.conf) you will find
-# User www-data   --- this is the $server_userID -- of course it may be wwhttpd or some other name
-# Group wwdata   --- this is the $server_groupID -- this will have different names also
+# User www-data or apache  --- this is the $server_userID
+# Group www-data or apache   --- this is the $server_groupID
 
-$server_userID     = 'www-data';
-$server_groupID    = 'wwdata';
+# uncomment (or change) the following depending on your OS
+
+# $server_userID     = 'www-data'; # standard for ubuntu
+# $server_userID     = 'apache'; # standard for RHEL/CentOS
+
+
+# $server_groupID    = 'www-data'; # standard for ubuntu
+# $server_groupID    = 'apache'; # standard for RHEL/CentOS
 
 
 #  Uncomment out the following line to set your apache version number manually.
@@ -81,6 +86,9 @@ $server_groupID    = 'wwdata';
 
 
 $webwork_server_admin_email ='';
+# password strings (or any other string allowing special characters) should be specified inside single quotes
+# otherwise a string such as "someone@nowhere" will interpolate the contents of the array @nowhere -- which is probably
+# empty, but still not what you want.  Similar things happen with % and $
 ################################################################################
 # Paths to external programs
 ################################################################################
@@ -103,14 +111,23 @@ $externalPrograms{git} = "/usr/bin/git";
 ####################################################
 # equation rendering/hardcopy utiltiies
 ####################################################
-$externalPrograms{latex}    ="/usr/bin/latex";
+$externalPrograms{latex}    = "/usr/bin/latex --no-shell-escape";
 
-$externalPrograms{pdflatex} ="/usr/bin/pdflatex --shell-escape";
+$externalPrograms{pdflatex} = "/usr/bin/pdflatex --no-shell-escape";
+# Note that --no-shell-escape is important for security reasons.
 # Consider using xelatex instead of pdflatex for multilingual use, and
 # use polyglossia and fontspec packages (which require xelatex or lualatex).
-#$externalPrograms{pdflatex} ="/usr/bin/xelatex --shell-escape";
+#$externalPrograms{pdflatex} = "/usr/bin/xelatex --no-shell-escape";
 
-$externalPrograms{dvipng}   ="/usr/bin/dvipng";
+$externalPrograms{dvipng}   = "/usr/bin/dvipng";
+
+# In order to use imagemagick convert you need to change the rights for PDF files from
+# "none" to "read" in the policy file /etc/ImageMagick-6/policy.xml.  This has possible
+# security implications for the server.
+$externalPrograms{convert}  = "/usr/bin/convert";
+
+$externalPrograms{dvisvgm}  = "/usr/bin/dvisvgm";
+$externalPrograms{pdf2svg}  = "/usr/bin/pdf2svg";
 
 ####################################################
 # NetPBM - basic image manipulation utilities
@@ -128,7 +145,7 @@ $externalPrograms{pngtopnm} = "$netpbm_prefix/pngtopnm";
 ####################################################
 # set timeout time (-t 40 sec) to be less than timeout for problem (usually 60 seconds)
 $externalPrograms{checkurl}     = "/usr/bin/lwp-request -d -t 40 -mHEAD "; # or "/usr/local/bin/w3c -head "
-$externalPrograms{curlCommand}  = "/usr/bin/curl";
+$externalPrograms{curl}  = "/usr/bin/curl";
 
 ####################################################
 # image conversions utiltiies
@@ -155,6 +172,7 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # Database options
 ################################################################################
 
+# $database_debug = 0;
 
 # Standard permissions command used to initialize the webwork database
 # GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, INDEX, LOCK TABLES ON webwork.* TO webworkWrite@localhost IDENTIFIED BY 'passwordRW';
@@ -168,23 +186,58 @@ $externalPrograms{mysqldump} ="/usr/bin/mysqldump";
 # Edit the $database_password line and replace 'passwordRW' by the actual password used in the GRANT command above
 ################################################################################
 
-# The database dsn is the path to the WeBWorK database which you have created.
-# Unless you have given the database a different name or the database resides on another
-# server you do not need to change this first value.
-# The format is dbi:mysql:[databasename] for databases on the local machine
-# For a remote database the format is dbi:mysql:[databasename]:[hostname]:[port]
-$database_dsn ="dbi:mysql:webwork";
+# The database DSN is the path to the WeBWorK database which you have created.
+
+# Modern database DSN format:
+#    DBI:driver:database=$database;host=$hostname;port=$port  (when DB not on localhost)
+# or DBI:driver:database=$database;host=127.0.0.1;port=$port  (when DB on localhost, using TCP)
+#         See: https://metacpan.org/pod/DBD::MariaDB#port
+#              "To connect to a MariaDB or MySQL server on localhost using TCP/IP,
+#		you must specify the host as 127.0.0.1 with the optional port, e.g. 3306."
+# or DBI:driver:database=$database                            (when DB on localhost, using socket)
+
+# One thing on which it depends is the driver name, which you may want to modify.
+# It also depends on the database name, which may be non-standard in some settings,
+# as may be the hostname and port of the database server.
+
+# driver should be one of:
+#	"mysql"   for the DBD:mysql driver
+#	"MariaDB" for the DBD:mysql driver
+
+# Select the desired DB driver:
+#$database_driver="mysql";
+$database_driver="MariaDB";
+
+$database_host="localhost";
+$database_port="3306";
+$database_name="webwork";
+
+# For a DB on localhost - default to using Unix socket.
+# Change to 0 to use a TCP connection to 127.0.0.1.
+$database_use_socket_if_localhost=1;
+
+if ( $database_host eq "localhost" ) {
+	if ( $database_use_socket_if_localhost ) {
+		$database_dsn="DBI:$database_driver:database=$database_name";
+	} else {
+		$database_dsn="DBI:$database_driver:database=$database_name;host=127.0.0.1;port=$database_port";
+	}
+} else {
+	$database_dsn="DBI:$database_driver:database=$database_name;host=$database_host;port=$database_port";
+}
+
+# The default storange engine to use is set here:
 $database_storage_engine = 'myisam';
 
 #########################
 # MYSQL compatibility settings for handling international Unicode characters (utf8 and utf8mb)
 #########################
-# These set the way characters are encoded in mysql and will depend on the version of mysqld being used.  
-# the default is to use latin1.  With version 2.15 we will move to 
+# These set the way characters are encoded in mysql and will depend on the version of mysqld being used.
+# the default is to use latin1.  With version 2.15 we will move to
 # encoding utf8mb4 which allows the encoding of characters from many languages
 # including chinese, arabic and hebrew.
 
-$ENABLE_UTF8MB4 =1;    # setting this to 1 enables utf8mb4 encoding, setting this to 
+$ENABLE_UTF8MB4 =1;    # setting this to 1 enables utf8mb4 encoding, setting this to
 					   # 0 sets this for older mysql (pre 5.3) which cannot
 					   # handle utf8mb4 characters.
 
@@ -194,7 +247,10 @@ $database_character_set=($ENABLE_UTF8MB4) ? 'utf8mb4' : 'utf8';
 # DATABASE login information
 # The following two variables must match the GRANT statement run on the mysql server as described above.
 $database_username ="webworkWrite";
-$database_password ="passwordRW";
+$database_password ='passwordRW';
+# password strings (or any other string allowing special characters) should be specified inside single quotes
+# otherwise a string such as "someone@nowhere" will interpolate the contents of the array @nowhere -- which is probably
+# empty, but still not what you want.  Similar things happen with % and $
 
 #################################################################################
 # These variables describe the locations of various components of WeBWorK on your
@@ -235,7 +291,7 @@ $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
 # Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
 
 # Seconds to wait before timing out when connecting to the SMTP server.
-#  the default is 120 seconds.  
+#  the default is 120 seconds.
 # Change it by uncommenting the following line
 # set it to 5 for testing, 30 or larger for production
 
@@ -248,7 +304,7 @@ $mail{smtpTimeout}           = 30;
 # Set this value to 0 to avoid checking certificates.
 # Set it to 0 to trouble shoot an inability to verify certificates with the smtp server
 
-$mail{tls_allowed} = 0;  
+$mail{tls_allowed} = 0;
 
 #$tls_allowed=0;  #old method -- this variable no longer works.
 

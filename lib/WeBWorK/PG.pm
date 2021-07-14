@@ -177,6 +177,7 @@ sub defineProblemEnvir {
 	$envir{language}            = $ce->{language};
 	$envir{language_subroutine} = WeBWorK::Localize::getLoc($envir{language}); 
 	$envir{reducedScoringDate} = $set->reduced_scoring_date;
+	$envir{formattedReducedScoringDate} = formatDateTime($envir{reducedScoringDate}, $ce->{siteDefaults}{timezone});
 	
 	# Student Information
 	# ADDED: studentID
@@ -208,7 +209,7 @@ sub defineProblemEnvir {
 	$envir{externalPng2EpsPath}  = $ce->{externalPrograms}->{png2eps};
 	$envir{externalGif2PngPath}  = $ce->{externalPrograms}->{gif2png};
 	$envir{externalCheckUrl}     = $ce->{externalPrograms}->{checkurl};
-	$envir{externalCurlCommand}  = $ce->{externalPrograms}->{curlCommand};
+	#$envir{externalCurlCommand}  = $ce->{externalPrograms}->{curl};
 	# Directories and URLs
 	# REMOVED: courseName
 	# ADDED: dvipngTempDir

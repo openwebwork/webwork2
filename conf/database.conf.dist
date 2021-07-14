@@ -1,8 +1,7 @@
 #!perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/conf/database.conf.dist,v 1.38 2007/08/13 22:59:51 sh002i Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, http://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -80,11 +79,20 @@ my %sqlParams = (
 	username => $database_username,
 	password => $database_password,
 	debug    => $database_debug,
-    ($ENABLE_UTF8MB)?(mysql_enable_utf8mb4 =>1):(mysql_enable_utf8 => 1),
 	# kinda hacky, but needed for table dumping
 	mysql_path     => $externalPrograms{mysql},
 	mysqldump_path => $externalPrograms{mysqldump},
 );
+
+if ( $ce->{database_driver} =~ /^mysql$/i ) {
+	# The extra UTF8 connection setting is ONLY needed for older DBD:mysql driver
+	# and forbidden by the newer DBD::MariaDB driver
+	if ( $ENABLE_UTF8MB4 ) {
+		$sqlParams{mysql_enable_utf8mb4} = 1; # Full 4-bit UTF-8
+	} else {
+		$sqlParams{mysql_enable_utf8} = 1; # Only the partial 3-bit mySQL UTF-8
+	}
+}
 
 $dbLayouts{sql_single} = {
         locations => {

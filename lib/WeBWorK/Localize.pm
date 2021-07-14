@@ -93,18 +93,21 @@ sub negquant {
 	    
 	    '_LOGIN_MESSAGE' => x(q{If you check [_1] your login information will be remembered by the browser you are using, allowing you to visit WeBWorK pages without typing your user name and password (until your session expires). This feature is not safe for public workstations, untrusted machines, and machines over which you do not have direct control.}),
 	    
-	    '_HMWKSETS_EDITOR_DESCRIPTION' => x(q{This is the homework sets editor page where you can view and edit the homework sets that exist in this course and the problems that they contain. The top of the page contains forms which allow you to filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, publish homework sets, import/export sets from/to an external file, score sets, or create/delete sets.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table displaying the sets and several pieces of relevant information.}),
-	    "_CLASSLIST_EDITOR_DESCRIPTION" => x(q{This is the classlist editor page, where you can view and edit the records of all the students currently enrolled in this course.  The top of the page contains forms which allow you to filter which students to view, sort your students in a chosen order, edit student records, give new passwords to students, import/export student records from/to external files, or add/delete students.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the \"Take Action!\" button at the bottom of the form.  The bottom of the page contains a table containing the student usernames and their information.}),
+	    '_HMWKSETS_EDITOR_DESCRIPTION' => x(q{This is the homework sets editor page where you can view and edit the homework sets that exist in this course and the problems that they contain. The top of the page contains forms which allow you to filter which sets to display in the table, sort the sets in a chosen order, edit homework sets, publish homework sets, import/export sets from/to an external file, score sets, or create/delete sets.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the "Take Action!" button at the bottom of the form.  The bottom of the page contains a table displaying the sets and several pieces of relevant information.}),
+
+	    "_CLASSLIST_EDITOR_DESCRIPTION" => x(q{This is the classlist editor page, where you can view and edit the records of all the students currently enrolled in this course.  The top of the page contains forms which allow you to filter which students to view, sort your students in a chosen order, edit student records, give new passwords to students, import/export student records from/to external files, or add/delete students.  To use, please select the action you would like to perform, enter in the relevant information in the fields below, and hit the "Take Action!" button at the bottom of the form.  The bottom of the page contains a table containing the student usernames and their information.}),
 
 	    "_ACHIEVEMENTS_EDITOR_DESCRIPTION" => x(q{This is the Achievement Editor.  It is used to edit the achievements available to students.  Please keep in mind the following facts: Achievments are displayed, and evaluated, in the order they are listed. The "secret" category creates achievements which are not visible to students until they are earned.  The "level" category is used for the achievements associated to a users level.}),
 	    
 	    "_GUEST_LOGIN_MESSAGE"   => x(q{This course supports guest logins. Click [_1] to log into this course as a guest.}),
 
-	    "_EXTERNAL_AUTH_MESSAGE" => x(q{[_1] uses an external authentication system.  You've authenticated through that system, but aren't allowed to log in to this course.}),
+	    "_EXTERNAL_AUTH_MESSAGE" => x(q{The course [_1] uses an external authentication system ([_2]). You've authenticated through that system, but aren't allowed to log in to this course.}),
 	    
 	    "_PROBLEM_SET_SUMMARY"   => x(q{This is a table showing the current Homework sets for this class.  The fields from left to right are: Edit Set Data, Edit Problems, Edit Assigned Users, Visibility to students, Reduced Credit Enabled, Date it was opened, Date it is due, and the Date during which the answers are posted.  The Edit Set Data field contains checkboxes for selection and a link to the set data editing page.  The cells in the Edit Problems fields contain links which take you to a page where you can edit the containing problems, and the cells in the edit assigned users field contains links which take you to a page where you can edit what students the set is assigned to.}),
 	    
 	    "_USER_TABLE_SUMMARY"    => x(q{A table showing all the current users along with several fields of user information. The fields from left to right are: Login Name, Login Status, Assigned Sets, First Name, Last Name, Email Address, Student ID, Enrollment Status, Section, Recitation, Comments, and Permission Level.  Clicking on the links in the column headers will sort the table by the field it corresponds to. The Login Name fields contain checkboxes for selecting the user.  Clicking the link of the name itself will allow you to act as the selected user.  There will also be an image link following the name which will take you to a page where you can edit the selected user's information.  Clicking the emails will allow you to email the corresponding user.  Clicking the links in the entries in the assigned sets columns will take you to a page where you can view and reassign the sets for the selected user.}),
+
+		"_ANSWER_LOG_DESCRIPTION" => x(q{This is the past answer viewer.  Students can only see their answers, and they will not be able to see which parts are correct.  Instructors can view any users answers using the form below and the answers will be colored according to correctness.}),
 
 	    "_ONE_COLUMN" => x('One Column'),
 
@@ -132,8 +135,8 @@ my $ConfigStrings = [
 		{ 
 		  var => 'defaultTheme',
 		  doc => x('Theme (refresh page after saving changes to reveal new theme.)'),
-		  doc2 => x('There are currently two themes (or skins) to choose from: math3 and math4.  The theme specifies a unified look and feel for the WeBWorK course web pages.'),
-		  values => [qw(math3 math4)],
+		  doc2 => x('There is one main theme to choose from: math4. It has two variants, math4-green and math4-red. The theme specifies a unified look and feel for the WeBWorK course web pages.'),
+		  values => [qw(math4 math4-green math4-red)],
 		  type => 'popuplist',
 		  hashVar => '{defaultTheme}'
 		},
@@ -146,7 +149,8 @@ my $ConfigStrings = [
 		{ var => 'perProblemLangAndDirSettingMode',
 		  doc => x('Mode in which the LANG and DIR settings for a single problem are determined.'),
 		  # doc2 is very long so is being commented out here for now
-		  # doc2 => x('Mode in which the LANG and DIR settings for a single problem are determined.<p>The system will set the LANGuage attribute to either a value determined from the problem, a course-wide default, or the system default of en-US, depending on the mode selected. The tag will only be added to the DIV enclosing the problem if it is different than the value which should be set in the main HTML tag set for the entire course based on the course language.<p>There are two options for the DIRection attribute: \"ltr\" for left-to-write sripts, and \"rtl\" for right-to-left scripts like Arabic and Hebrew.<p>The DIRection attribute is needed to trigger proper display of the question text when the problem text-direction is different than that used by the current language of the course. For example, English problems from the library browser would display improperly in RTL mode for a Hebrew course, unless the problen Direction is set to LTR.<p>The feature to set a problem language and direction was only added in 2018 to the PG language, so most problems will not declare their language, and the system needs to fall back to determining the language and direction in a different manner. The OPL itself is all English, so the system wide fallback is to en-US in LTR mode.<p>Since the defaults fall back to the LTR direction, most sites should be fine with the \"auto::\" mode, but may want to select the one which matches their course language. The mode \"force::ltr\" would also be an option for a course which runs into trouble with the \"auto\" modes.<p>Modes:<br><ul><li> \"none\" prevents any additional LANG and/or DIR tag being added. The browser will use the main setting which was applied to the entire HTML page. This is likely to cause trouble when a problem of the other direction is displayed.</li><li> \"auto::\" allows the system to make the settings based on the language and direction reported by the problem (a new feature, so not set in almost all existing problems) and falling back to the expected default of en-US in LTR mode. </li><li> \"auto:LangCode:Dir\" allows the system to make the settings based on the language and direction reported by the problem (a new feature, so not set in almost all existing problems) but falling back to the language with the given LangCode and the direction Dir when problem settings are not available from PG.</li><li> \"auto::Dir\" for problems without PG settings, this will use the default en=english language, but force the direction to Dir. Problems with PG settings will get those settings.</li><li> \"auto:LangCode:\" for problems without PG settings, this will use the default LTR direction, but will set the language to LangCode.Problems with PG settings will get those settings.</li><li> \"force:LangCode:Dir\" will <b>ignore</b> any setting made by the PG code of the problem, and will force the system to set the language with the given LangCode and the direction to Dir for <b>all</b> problems.</li><li> \"force::Dir\" will <b>ignore</b> any setting made by the PG code of the problem, and will force the system to set the direction to Dir for <b>all</b> problems, but will avoid setting any language attribute for individual problem.</li></ul>'),
+		  # (it is not marked as translatable so that xgettext.pl ignores it)
+		  # doc2 => 'Mode in which the LANG and DIR settings for a single problem are determined.<p>The system will set the LANGuage attribute to either a value determined from the problem, a course-wide default, or the system default of en-US, depending on the mode selected. The tag will only be added to the DIV enclosing the problem if it is different than the value which should be set in the main HTML tag set for the entire course based on the course language.<p>There are two options for the DIRection attribute: \"ltr\" for left-to-write sripts, and \"rtl\" for right-to-left scripts like Arabic and Hebrew.<p>The DIRection attribute is needed to trigger proper display of the question text when the problem text-direction is different than that used by the current language of the course. For example, English problems from the library browser would display improperly in RTL mode for a Hebrew course, unless the problen Direction is set to LTR.<p>The feature to set a problem language and direction was only added in 2018 to the PG language, so most problems will not declare their language, and the system needs to fall back to determining the language and direction in a different manner. The OPL itself is all English, so the system wide fallback is to en-US in LTR mode.<p>Since the defaults fall back to the LTR direction, most sites should be fine with the \"auto::\" mode, but may want to select the one which matches their course language. The mode \"force::ltr\" would also be an option for a course which runs into trouble with the \"auto\" modes.<p>Modes:<br><ul><li> \"none\" prevents any additional LANG and/or DIR tag being added. The browser will use the main setting which was applied to the entire HTML page. This is likely to cause trouble when a problem of the other direction is displayed.</li><li> \"auto::\" allows the system to make the settings based on the language and direction reported by the problem (a new feature, so not set in almost all existing problems) and falling back to the expected default of en-US in LTR mode. </li><li> \"auto:LangCode:Dir\" allows the system to make the settings based on the language and direction reported by the problem (a new feature, so not set in almost all existing problems) but falling back to the language with the given LangCode and the direction Dir when problem settings are not available from PG.</li><li> \"auto::Dir\" for problems without PG settings, this will use the default en=english language, but force the direction to Dir. Problems with PG settings will get those settings.</li><li> \"auto:LangCode:\" for problems without PG settings, this will use the default LTR direction, but will set the language to LangCode.Problems with PG settings will get those settings.</li><li> \"force:LangCode:Dir\" will <b>ignore</b> any setting made by the PG code of the problem, and will force the system to set the language with the given LangCode and the direction to Dir for <b>all</b> problems.</li><li> \"force::Dir\" will <b>ignore</b> any setting made by the PG code of the problem, and will force the system to set the direction to Dir for <b>all</b> problems, but will avoid setting any language attribute for individual problem.</li></ul>',
 		  values => [qw(none auto:: force::ltr force::rtl force:en:ltr auto:en:ltr force:tr:ltr auto:tr:ltr force:es:ltr auto:es:ltr force:fr:ltr auto:fr:ltr force:zh_hk:ltr auto:zh_hk:ltr force:he:rtl auto:he:rtl   )],
 		  type => 'popuplist'
 		},
@@ -289,6 +293,11 @@ my $ConfigStrings = [
 		doc2 => x('The default number of attempts before the problem is re-randomized. ( 0 => never )'),
 		type => 'number'
 	},
+	{	var => 'pg{options}{showCorrectOnRandomize}',
+		doc => 'Show the correct answer to the current problem before re-randomization.',
+		doc2 => 'Show the correct answer to the current problem on the last attempt before a new version is requestion.',
+		type => 'boolean'
+	},
  	],		  
 	[x('Permissions'),
 		{ var => 'permissionLevels{login}',
@@ -347,7 +356,7 @@ my $ConfigStrings = [
 		  type => 'permission'
 		},
 	],
-	[x('PG - Problem Display/Answer Checking'),
+	[x('Problem Display/Answer Checking'),
 		{ var => 'pg{displayModes}',
 		  doc => x('List of display modes made available to students'),
 		  doc2 => x('<p>When viewing a problem, users may choose different methods of rendering formulas via an options box in the left panel. Here, you can adjust what display modes are listed.</p><p>Some display modes require other software to be installed on the server. Be sure to check that all display modes selected here work from your server.</p><p>The display modes are <ul><li> plainText: shows the raw LaTeX srings for formulas.<li> images: produces images using the external programs LaTeX and dvipng.<li> MathJax: a successor to jsMath, uses javascript to place render mathematics.</ul></p></p>You must use at least one display mode. If you select only one, then the options box will not give a choice of modes (since there will only be one active).</p>'),
@@ -379,9 +388,19 @@ my $ConfigStrings = [
 		  type => 'boolean'
 		},
 
-		{ var => 'pg{ansEvalDefaults}{useOldAnswerMacros}',
+		{ var => 'pg{specialPGEnvironmentVars}{useOldAnswerMacros}',
 		  doc => x('Use older answer checkers'),
 		  doc2 => x('During summer 2005, a newer version of the answer checkers was implemented for answers which are functions and numbers.  The newer checkers allow more functions in student answers, and behave better in certain cases.  Some problems are specifically coded to use new (or old) answer checkers.  However, for the bulk of the problems, you can choose what the default will be here.  <p>Choosing <i>false</i> here means that the newer answer checkers will be used by default, and choosing <i>true</i> means that the old answer checkers will be used by default.'),
+		  type => 'boolean'
+		  },
+		{ var => 'pg{specialPGEnvironmentVars}{parseAlternatives}',
+		  doc => x('Allow Unicode alternatives in student answers'),
+		  doc2 => x('Set to true to allow students to enter Unicode versions of some characters (like U+2212 for the minus sign) in their answers.  One reason to allow this is that copying and pasting output from MathJax can introduce these characters, but it is also getting easier to enter these characters directory from the keyboard.'),
+		  type => 'boolean'
+		  },
+		{ var => 'pg{specialPGEnvironmentVars}{convertFullWidthCharacters}',
+		  doc => x('Automatically convert Full Width Unicode characters to their ASCII equivalents'),
+		  doc2 => x('Set to true to have Full Width Unicode character (U+FF01 to U+FF5E) converted to their ASCII equivalents (U+0021 to U+007E) automatically in MathObjects.  This may be valuable for Chinese keyboards, for example, that automatically use Full Width characters for parentheses and commas.'),
 		  type => 'boolean'
 		  },
 

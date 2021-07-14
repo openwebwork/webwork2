@@ -1,0 +1,109 @@
+.graphtool-container {
+	width: 400px;
+}
+
+.graphtool-container .graphtool-graph {
+	width: 400px;
+	height: 400px;
+}
+
+.graphtool-answer-container {
+	width: 100%;
+}
+
+.graphtool-answer-container .graphtool-graph {
+	margin: auto;
+	width: 200px;
+	height: 200px;
+}
+
+@media only screen and (max-width: 600px) {
+	.graphtool-container {
+		width: 300px;
+	}
+	.graphtool-container .graphtool-graph {
+		width: 300px;
+		height: 300px;
+	}
+	.graphtool-answer-container .graphtool-graph {
+		width: 150px;
+		height: 150px;
+	}
+}
+
+.gt-toolbar-container {
+	margin: 8px 0 8px 0;
+	text-align: right;
+	width: 100%;
+	padding: 0;
+}
+
+.gt-toolbar-container .gt-button {
+	box-sizing: border-box;
+	height: 34px;
+	text-align: center;
+	padding: 1px;
+	margin: 2px;
+	border-radius: 4px;
+}
+
+.gt-toolbar-container .gt-tool-button {
+	width: 34px;
+	background-position: 0;
+}
+
+.gt-toolbar-container .gt-tool-button:disabled{
+	box-shadow: inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);
+	outline: 0;
+	opacity: unset;
+}
+
+.gt-toolbar-container .gt-solid-dash-box {
+	display: inline-block;
+	box-sizing: border-box;
+	height: 34px;
+	width: 34px;
+	padding: 0;
+	margin: 2px;
+	vertical-align: middle;
+}
+
+.gt-toolbar-container .gt-solid-tool {
+	display: block;
+	height: 16px;
+	margin: 0 0 2px 0;
+	border-radius: 4px 4px 0 0;
+	background-image: url("images/SolidTool.svg");
+}
+
+.gt-toolbar-container .gt-dashed-tool {
+	display: block;
+	height: 16px;
+	margin: 2px 0 0 0;
+	border-radius: 0 0 4px 4px;
+	background-image: url("images/DashTool.svg");
+}
+
+.gt-tool-button.gt-select-tool {
+	background-image: url("images/SelectTool.svg");
+}
+
+.gt-tool-button.gt-line-tool {
+	background-image: url("images/LineTool.svg");
+}
+
+.gt-tool-button.gt-circle-tool {
+	background-image: url("images/CircleTool.svg");
+}
+
+.gt-tool-button.gt-vertical-parabola-tool {
+	background-image: url("images/VerticalParabolaTool.svg");
+}
+
+.gt-tool-button.gt-horizontal-parabola-tool {
+	background-image: url("images/HorizontalParabolaTool.svg");
+}
+
+.gt-tool-button.gt-fill-tool {
+	background-image: url("images/FillTool.svg");
+}

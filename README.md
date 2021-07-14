@@ -16,8 +16,8 @@ WeBWorK is an open-source online homework system for math and sciences courses. 
 
 New users interested in getting started with their own WeBWorK server, or instructors looking to learn more about how to use WeBWorK in their classes, should take a look at one of the following resources: 
 *  [WeBWorK wiki](http://webwork.maa.org/wiki/Main_Page) - The main WeBWorK wiki
-  *  [Instructors](http://webwork.maa.org/wiki/Instructors) - Information for Instructors
-  *  [Problem Authors](http://webwork.maa.org/wiki/Authors) - Information for Problem Authors
+*  [Instructors](http://webwork.maa.org/wiki/Instructors) - Information for Instructors
+*  [Problem Authors](http://webwork.maa.org/wiki/Authors) - Information for Problem Authors
 *  [WW_Install](http://github.com/aubreyja/ww_install) - Information for using the WW_install script
 *  [Forum](http://webwork.maa.org/moodle/mod/forum/index.php?id=3) - The WeBWorK Forum
 *  [Frequently Asked Questions](https://github.com/openwebwork/webwork2/wiki/Frequently-Asked-Questions) - A list of frequently asked questions.  

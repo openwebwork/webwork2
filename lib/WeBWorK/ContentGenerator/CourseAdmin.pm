@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/CourseAdmin.pm,v 1.91 2010/06/13 02:25:51 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, http://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -380,7 +379,7 @@ sub body {
 	);
 	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
-	
+
 	my @errors = @{$self->{errors}};
 	
 	
@@ -493,7 +492,7 @@ sub add_course_form {
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p($r->maketext("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores."));
+	print CGI::p($r->maketext("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores, and may have at most [_1] characters.", $ce->{maxCourseIdLength}));
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
@@ -510,9 +509,21 @@ sub add_course_form {
 		),
 	);
 	
-	print CGI::p($r->maketext("To add the WeBWorK administrators to the new course (as administrators) check the box below."));
 	my @checked = ($add_admin_users) ?(checked=>1): ();  # workaround because CGI::checkbox seems to have a bug -- it won't default to checked.
-	print CGI::p({},CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, $r->maketext("Add WeBWorK administrators to new course")));
+	print CGI::div(
+		{class => 'new-course-options'},
+		CGI::p($r->maketext("To add the WeBWorK administrators to the new course (as administrators) check the box below.")),
+		CGI::label(
+			{for => "add_admin_users"},
+			CGI::input({-type=>'checkbox', -name=>"add_admin_users", @checked }, ''),
+			CGI::span($r->maketext("Add WeBWorK administrators to new course"))
+		),
+		CGI::label(
+			{for => "add_config_file"},
+			CGI::input({-type=>'checkbox', -name=>"add_config_file", @checked }, ''),
+			CGI::span($r->maketext("Copy simple configuration file to new course"))
+		),
+	);
 
 	print CGI::p($r->maketext("To add an additional instructor to the new course, specify user information below. The user ID may contain only numbers, letters, hyphens, periods (dots), commas,and underscores.\n"));
 	
@@ -622,6 +633,7 @@ sub add_course_validate {
 	my $add_initial_lastName             = trim_spaces( $r->param("add_initial_lastName") ) || "";
 	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
 	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
+	my $add_config_file                  = trim_spaces( $r->param("add_config_file") ) || "";
 	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
 	
 	
@@ -640,7 +652,10 @@ sub add_course_validate {
 	if (grep { $add_courseID eq $_ } listCourses($ce)) {
 		push @errors, $r->maketext("A course with ID [_1] already exists.", $add_courseID);
 	}
-	
+	if ( length($add_courseID) > $ce->{maxCourseIdLength} ) {
+                @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
+	}
+
 	if ($add_initial_userID ne "") {
 		if ($add_initial_password eq "") {
 			push @errors, $r->maketext("You must specify a password for the initial instructor.");
@@ -698,6 +713,7 @@ sub do_add_course {
 	my $add_initial_email                = trim_spaces( $r->param("add_initial_email") ) || "";
 	
 	my $add_templates_course             = trim_spaces( $r->param("add_templates_course") ) || "";
+	my $add_config_file                  = trim_spaces( $r->param("add_config_file") ) || "";
 	
 	my $add_dbLayout                     = trim_spaces( $r->param("add_dbLayout") ) || "";
 	
@@ -743,7 +759,7 @@ sub do_add_course {
 	}
 	
 	# add initial instructor if desired
-	if ($add_initial_userID ne "") {
+	if ($add_initial_userID =~ /\S/) {
 		my $User = $db->newUser(
 			user_id       => $add_initial_userID,
 			first_name    => $add_initial_firstName,
@@ -770,6 +786,9 @@ sub do_add_course {
 	my %optional_arguments;
 	if ($add_templates_course ne "") {
 		$optional_arguments{templatesFrom} = $add_templates_course;
+	}
+	if ($add_config_file ne "") {
+		$optional_arguments{copySimpleConfig} = $add_config_file;
 	}
 	if ($add_courseTitle ne "") {
 		$optional_arguments{courseTitle} = $add_courseTitle;
@@ -818,7 +837,7 @@ sub do_add_course {
 	    ));
 	    # add contact to admin course as student?
 	    # FIXME -- should we do this?
-	    if ($add_initial_userID ne "") {
+	    if ($add_initial_userID =~ /\S/) {
 	        my $composite_id = "${add_initial_userID}_${add_courseID}"; # student id includes school name and contact
 			my $User = $db->newUser(
 			user_id       => $composite_id,          # student id includes school name and contact
@@ -1211,6 +1230,9 @@ sub rename_course_validate {
 	}
 	if ($rename_oldCourseID eq $rename_newCourseID and $rename_newCourseID_checkbox eq 'on') {
 		push @errors, $r->maketext("Can't rename to the same name.");
+	}
+	if ($rename_newCourseID_checkbox eq 'on' && length($rename_newCourseID) > $ce->{maxCourseIdLength} ) {
+		push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
 	unless ($rename_newCourseID =~ /^[\w-]*$/) { # regex copied from CourseAdministration.pm
 		push @errors, $r->maketext("Course ID may only contain letters, numbers, hyphens, and underscores.");
@@ -2149,6 +2171,8 @@ sub unarchive_course_validate {
 	} elsif ( -d $ce->{webworkDirs}->{courses}."/$courseID" ) {
 	    #Check that a directory for this course doesn't already exist
 		push @errors, $r->maketext("A directory already exists with the name [_1]. You must first delete this existing course before you can unarchive.",$courseID);
+	} elsif ( length($courseID) > $ce->{maxCourseIdLength} ) {
+		push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
 
 	
@@ -3138,11 +3162,7 @@ sub do_hide_inactive_course {
 	}	
 	
 	if ($succeeded_count) {
-		if ($succeeded_count < 6) {
-			$succeeded_message = $r->maketext("The following courses were successfully hidden: [_1]", @succeeded_courses);
-		} else {
-			$succeeded_message = $r->maketext("[quant_1, course was, courses were] successfully hidden.", $succeeded_count);
-		}
+		$succeeded_message = $r->maketext("The following courses were successfully hidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
 	}
 	if ($succeeded_count or $already_hidden_count) {
 			print CGI::div({class=>"ResultsWithoutError"},
@@ -3208,11 +3228,7 @@ sub do_unhide_inactive_course {
 	}	
 	
 	if ($succeeded_count) {
-		if ($succeeded_count < 6) {
-			$succeeded_message = $r->maketext("The following courses were successfully unhidden: [_1]", @succeeded_courses);
-		} else {
-			$succeeded_message = $r->maketext("[quant,_1,course was, courses were] successfully unhidden.", $succeeded_count);
-		}
+		$succeeded_message = $r->maketext("The following courses were successfully unhidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
 	}
 	if ($succeeded_count or $already_visible_count) {
 		print CGI::div({class=>"ResultsWithoutError"},
@@ -3470,101 +3486,49 @@ sub display_registration_form {
 	return 0  if $registeredQ or $register_site or $registration_subDisplay;     #otherwise return registration form
 	return  q! 
 	<center>
-	<table class="admin-messagebox"><tr><td>
+	<div class="admin-messagebox">
 	!,
-	CGI::p("If you are using your WeBWorK server for courses please help us out by registering your server."),
-	CGI::p("We are often asked how many institutions are using WeBWorK and how many students are using
-	WeBWorK.  Since WeBWorK is open source and can be freely downloaded from ".
-	CGI::a({href=>'http://webwork.maa.org'},'http://webwork.maa.org' ). " or ".
-	CGI::a({href=> 'http://webwork.maa.org/wiki'},'http://webwork.maa.org/wiki'). ", it is frequently 
-	 difficult for us to give a reasonable answer to this  question."),
-	CGI::p("You can help by registering your current version of WeBWorK -- click the button, answer a few
-	questions (the ones you can answer easily) and submit the form to the MAA.  
-	It takes less than two minutes.  Thank you!. -- The WeBWorK Team"),
+	CGI::p(join(" ",
+		"<strong>Please consider registering for the WW-security-announce Google group / mailing list</strong> using the ",
+		"join group link on the ",
+		CGI::a({href=>$ce->{webworkURLs}{wwSecurityAnnounce}, target=>"_blank"},"group page"),
+		" which appears when you are logged in to a Google account <strong>or</strong> by sending an email using ",
+		CGI::a({href=> join("",
+			'mailto:', $ce->{webworkSecListManagers} , '?subject=Joining%20ww-security-announce&',
+			'body=Server%20URL%3A%20' , uri_escape($ce->{apache_root_url}),
+			'%0AWeBWorK%20version%3A%20' , uri_escape($ce->{WW_VERSION}),
+			'%0AInstitution%20name%3A%20%0A' ) }, ,"this mailto link."),
+		"<br>This list will help us keep you updated about security issues and patches, and important related announcements.",
+		"<hr>")),
+	CGI::p(join("",
+		"We are often asked how many institutions are using WeBWorK and how many students are using ",
+		"WeBWorK.  Since WeBWorK is open source and can be freely downloaded from ",
+		CGI::a({href=>$ce->{webworkURLs}{GitHub}, target=>"_blank"}, $ce->{webworkURLs}{GitHub}),
+		", it is frequently difficult for us to give a reasonable answer to this question.")),
+	CGI::p(join("",
+		"You can help by ",
+		CGI::a({href=>$ce->{webworkURLs}{serverRegForm}, target=>"_blank"}, "registering your current version of WeBWorK"),
+		". Please complete the Google form as best you can and submit your answers ",
+		"to the WeBWorK Project team. It takes just 2-3 minutes.  Thank you!. -- The WeBWorK Project")),
+	CGI::p(join("",
+		"Eventually your site will be listed along with all of the others on the ",
+		CGI::a({href=>$ce->{webworkURLs}{SiteMap}, target=>"_blank"}, "site map"),
+		" on the main ",
+		CGI::a({href=>$ce->{webworkURLs}{WikiMain}, target=>"_blank"}, "WeBWorK Wiki"),".<hr>")),
+	CGI::p('You can hide this "registration" banner for the future by clicking the button below.'),
+	CGI::start_form(-method=>"POST", id=>"return_to_main_page", -action=>$self->r->uri),
+	$self->hidden_authen_fields,
+	CGI::hidden(-name=>'subDisplay', -value=>"registration"),
+	CGI::p({style=>"text-align: center"}, CGI::submit(-id => "register_site", -name=>"register_site", -label=>"Hide the banner.")),
+	CGI::end_form(),
 	q!
-	</td>
-	</tr>
-	<tr><td align="center">
-	!,
-	CGI::a({href=>$self->systemLink($self->r->urlpath, params=>{subDisplay=>"registration"})}, "Register"),
-	q!
-	</td></tr>
-	</table>
+	</div>
 	</center>
 	!;
 }
 
 sub registration_form {
-	my $self = shift;
-	my $ce = $self->r->ce;
-	
-	print "<center>";
-
-# 	"\nPlease ",
-# 	CGI::a({href=>'mailto:gage@math.rochester.edu?'
-# 	.'subject=WeBWorK%20Server%20Registration'
-# 	.'&body='
-# 	.uri_escape("Thanks for registering your WeBWorK server.  We'd appreciate if you would answer
-# 	as many of these questions as you can conveniently.  We need this data so we can better 
-# 	answer questions such as 'How many institutions have webwork servers?' and 'How many students
-# 	use WeBWorK?'.  Your email and contact information  will be kept private.  We will 
-# 	list your institution as one that uses WeBWorK unless you tell us to keep that private as well.
-# 	\n\nThank you. \n\n--Mike Gage \n\n
-# 	")
-# 	.uri_escape("Server URL: ".$ce->{apache_root_url}." \n\n")
-# 	.uri_escape("WeBWorK version: $main::VERSION \n\n")
-# 	.uri_escape("Institution name (e.g. University of Rochester): \n\n")
-# 	.uri_escape("Contact person name: \n\n")
-# 	.uri_escape("Contact email: \n\n")
-# 	.uri_escape("Approximate number of courses run each term: \n\n")
-# 	.uri_escape("Approximate number of students using this server each term: \n\n")
-# 	.uri_escape("Other institutions who use WeBWorK courses hosted on this server: \n\n")
-# 	.uri_escape("Other comments: \n\n")
-# 	},
-# 	'click here'),
-# 	q! to open your email application.  There are a few questions, some of which have already
-# 	been filled in for your installation.  Fill in the other questions which you can answer easily and send
-# 	the email to gage@math.rochester.edu
-# 	!
-	print  "\n",
-		CGI::iframe({src => "http://forms.maa.org/r/WebworkSoftware/add.aspx", 
-		   style=>"width:100%;height:700px", id=>"maa_content"}, "Your browser cannot use iframes"),
-# 		CGI::p({style=>"text-align: left; width:60%"},
-# 			"Please click on ",
-# 			CGI::a({ href=>"http://forms.maa.org/r/WebworkSoftware/add.aspx" }, " this link "), 
-# 			"and  fill out the form.",
-# 		),
-		"\n",
-		 CGI::p({style=>"text-align: left; width:60%"},
-	 		"The form will be sent to the MAA and your site will be listed along with all of the others on the  ",
-	  		CGI::a({href=>"http://webwork.maa.org/wiki/WeBWorK_Sites"}, "site map"),
-			"on the main WeBWorK Wiki.",
-		);
-	
-	
-	
-	print  "\n",CGI::p({style=>"text-align: left; width:60%"},q!Once you have submitted your registration information you can hide the "registration" banner 
-	for successive visits by clicking
-	the button below. It writes an empty file (!.CGI::code('registered_versionNumber').q!) to the directory !.CGI::code('..../courses/admin')
-	);
-	
-	print "</center>";
-	print CGI::start_form(-method=>"POST", id=>"return_to_main_page", -action=>$self->r->uri);
-	print $self->hidden_authen_fields;
-	print $self->hidden_fields("subDisplay");
-	print CGI::p({style=>"text-align: center"}, CGI::submit(-id => "register_site", -name=>"register_site", -label=>"Site has been registered"));
-	print CGI::end_form();
-#	print q!<script type="text/javascript">
-# 			$("#maa_content").load( alert("loaded") );
-#  	     	$("#return_to_main_page").append(
-#  	     		"<center><p>hey site is registered cool</p></center>"
-#  	     	);
-#  	     	
-#  	        </script>
-#  	        !;
 }
-
-
 
 sub do_registration {
 	my $self = shift;
@@ -3572,9 +3536,9 @@ sub do_registration {
 	my $registered_file_path = $ce->{courseDirs}->{root}."/$registered_file_name";
 	# warn qq!`echo "info" >$registered_file_path`!;
 	`echo "info" >$registered_file_path`;
-	
-	print  "\n<center>",CGI::p({style=>"text-align: left; width:60%"},q{Registration action completed.  Thank you very much for registering WeBWorK!"});
-	
+
+	print  "\n<center>",CGI::p({style=>"text-align: left; width:60%"},q{Registration banner has been hidden. We appreciate your registering your server with the WeBWorK Project!"});
+
 	print CGI::start_form(-method=>"POST", -action=>$self->r->uri);
 	print $self->hidden_authen_fields;
 	print CGI::p({style=>"text-align: center"}, CGI::submit(-name=>"registration_completed", -label=>"Continue"));

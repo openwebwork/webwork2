@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/SetMaker.pm,v 1.85 2008/07/01 13:18:52 glarose Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -34,7 +33,7 @@ use WeBWorK::Debug;
 use WeBWorK::Form;
 use WeBWorK::Utils qw(readDirectory max sortByName);
 use WeBWorK::Utils::Tasks qw(renderProblems);
-use WeBWorK::Utils::DetermineProblemLangAndDirection;
+use WeBWorK::Utils::LanguageAndDirection;
 use File::Find;
 
 require WeBWorK::Utils::ListingDB;
@@ -67,7 +66,7 @@ use constant LIB2_DATA => {
 my %problib;	## This is configured in defaults.conf
 my %ignoredir = (
 	'.' => 1, '..' => 1, 'Library' => 1, 'CVS' => 1, 'tmpEdit' => 1,
-	'headers' => 1, 'macros' => 1, 'email' => 1, '.svn' => 1,
+	'headers' => 1, 'macros' => 1, 'graphics'=>1, 'email' => 1, '.svn' => 1,
 );
 
 sub prepare_activity_entry {
@@ -99,18 +98,12 @@ sub make_myset_data_row {
 	my $isGatewaySet = ( defined($setRecord) && 
 			     $setRecord->assignment_type =~ /gateway/ );
 
-	my %problem_div_settings = ( -class=>"RenderSolo", -dir=>"ltr" );
-        # Add what is needed for lang and dir settings
-	my @to_set_lang_dir = get_problem_lang_and_dir( $self, $pg );
-	my $to_set_tag;
-	my $to_set_val;
-	while ( scalar(@to_set_lang_dir) > 0 ) {
-	  $to_set_tag = shift( @to_set_lang_dir );
-	  $to_set_val = shift( @to_set_lang_dir );
-	  if ( defined( $to_set_val ) ) {
-	    $problem_div_settings{ "$to_set_tag" } = "$to_set_val";
-	  }
-	}
+	my %problem_div_settings = (
+		-class=>"RenderSolo",
+		-dir=>"ltr",
+		# Add what is needed for lang and dir settings
+		get_problem_lang_and_dir($pg->{flags}, $self->r->ce->{perProblemLangAndDirSettingMode}, $self->r->ce->{language})
+	);
 
 	my $problem_output = $pg->{flags}->{error_flag} ?
 		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
@@ -121,7 +114,7 @@ sub make_myset_data_row {
 	#if($self->{r}->param('browse_which') ne 'browse_npl_library') {
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor2",
+		 $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",
 			  courseID =>$urlpath->arg("courseID"),
 			  setID=>"Undefined_Set",
 			  problemID=>"1"),
