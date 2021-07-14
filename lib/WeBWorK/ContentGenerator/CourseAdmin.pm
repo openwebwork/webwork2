@@ -380,7 +380,7 @@ sub body {
 	);
 	
 	print( CGI::p({style=>"text-align: center"}, $self->display_registration_form() ) ) if $self->display_registration_form();
-	
+
 	my @errors = @{$self->{errors}};
 	
 	
@@ -493,7 +493,7 @@ sub add_course_form {
 	print $self->hidden_authen_fields;
 	print $self->hidden_fields("subDisplay");
 	
-	print CGI::p($r->maketext("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores."));
+	print CGI::p($r->maketext("Specify an ID, title, and institution for the new course. The course ID may contain only letters, numbers, hyphens, and underscores, and may have at most [_1] characters.", $ce->{maxCourseIdLength}));
 	
 	print CGI::table({class=>"FormLayout"},
 		CGI::Tr({},
@@ -653,7 +653,10 @@ sub add_course_validate {
 	if (grep { $add_courseID eq $_ } listCourses($ce)) {
 		push @errors, $r->maketext("A course with ID [_1] already exists.", $add_courseID);
 	}
-	
+	if ( length($add_courseID) > $ce->{maxCourseIdLength} ) {
+                @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
+	}
+
 	if ($add_initial_userID ne "") {
 		if ($add_initial_password eq "") {
 			push @errors, $r->maketext("You must specify a password for the initial instructor.");
@@ -1228,6 +1231,9 @@ sub rename_course_validate {
 	}
 	if ($rename_oldCourseID eq $rename_newCourseID and $rename_newCourseID_checkbox eq 'on') {
 		push @errors, $r->maketext("Can't rename to the same name.");
+	}
+	if ($rename_newCourseID_checkbox eq 'on' && length($rename_newCourseID) > $ce->{maxCourseIdLength} ) {
+		push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
 	unless ($rename_newCourseID =~ /^[\w-]*$/) { # regex copied from CourseAdministration.pm
 		push @errors, $r->maketext("Course ID may only contain letters, numbers, hyphens, and underscores.");
@@ -2166,6 +2172,8 @@ sub unarchive_course_validate {
 	} elsif ( -d $ce->{webworkDirs}->{courses}."/$courseID" ) {
 	    #Check that a directory for this course doesn't already exist
 		push @errors, $r->maketext("A directory already exists with the name [_1]. You must first delete this existing course before you can unarchive.",$courseID);
+	} elsif ( length($courseID) > $ce->{maxCourseIdLength} ) {
+		push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
 
 	

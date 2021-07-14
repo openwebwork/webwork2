@@ -189,6 +189,11 @@ $ce = WeBWorK::CourseEnvironment->new({
 	courseName => $courseID
 });
 
+# Do not attempt to create a course whose name is too long.
+if ( length($courseID) > $ce->{maxCourseIdLength} ) {
+	die "Aborting addcourse: Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters.";
+}
+
 if ($dbLayout) {
 	die "Database layout $dbLayout does not exist in the course environment.",
 			" (It must be defined in defaults.config.)\n"
