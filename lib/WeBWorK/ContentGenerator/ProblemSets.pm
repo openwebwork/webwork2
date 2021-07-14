@@ -126,6 +126,13 @@ sub help {   # non-standard help, since the file path includes the course name
 sub templateName {
 	my $self = shift;
 	my $r = $self->r;
+	my $authz = $r->authz;
+	my $userID = $r->param('user');
+	# override templateName with lms template
+	unless ($authz->hasPermissions($userID, "navigation_allowed")) {
+		$self->{templateName} = "lms";
+		return "lms";
+	}
 	my $templateName = $r->param('templateName')//'system';
 	$self->{templateName}= $templateName;
 	$templateName;

@@ -70,6 +70,21 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 # problem object for current problem (if from Problem)
 # display options (if from Problem)
 
+sub templateName {
+	my $self = shift;
+	my $r = $self->r;
+	my $authz = $r->authz;
+	my $userID = $r->param('user');
+	# override templateName with lms template
+	unless ($authz->hasPermissions($userID, "navigation_allowed")) {
+		$self->{templateName} = "lms";
+		return "lms";
+	}
+	my $templateName = $r->param('templateName')//'system';
+	$self->{templateName}= $templateName;
+	$templateName;
+}
+
 sub body {
 	my ($self) = @_;
 	my $r = $self->r;

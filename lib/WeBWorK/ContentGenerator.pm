@@ -785,6 +785,22 @@ sub links {
 	print CGI::start_li({class => "nav-header"});
 	print CGI::h2($r->maketext("Main Menu"));
 	print CGI::end_li();
+
+	unless ($authz->hasPermissions($userID, "navigation_allowed")){
+		if (defined $courseID) {
+			if ($authen->was_verified) {
+				
+				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				if ($authz->hasPermissions($userID, "manage_course_files")) {
+					$pfx .= "Instructor::";
+					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				}
+				print CGI::end_ul();
+				}
+			}
+			return "";
+		}
+
 	print CGI::start_li(); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
 	print CGI::end_li(); # end Courses
@@ -1074,10 +1090,13 @@ associated with the current request.
 sub path {
 	my ($self, $args) = @_;
 	my $r = $self->r;
+	my $authz = $r->authz;
 
 	my @path;
 
 	my $urlpath = $r->urlpath;
+	my $courseID = $urlpath->arg("courseID");
+	my $userID = $r->param('user');
 	do {
 	    my $name = $urlpath->name;
 	    # If its a problemid for a jitar set (something which requires
@@ -1094,6 +1113,15 @@ sub path {
 	} while ($urlpath = $urlpath->parent);
 
 	$path[$#path] = ""; # we don't want the last path element to be a link
+
+	# restrict navigation capabilities if not allowed
+	if (defined $courseID) {
+		unless ($authz->hasPermissions($userID, "navigation_allowed")) {
+			# add single li to make ul element look better since it's hard to remove it completely.
+			# print(CGI::li()); 
+			return "";
+		}
+	}
 
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
 	print $self->pathMacro($args, @path);

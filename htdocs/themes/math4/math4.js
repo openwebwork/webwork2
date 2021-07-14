@@ -265,4 +265,18 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 			$(this).after('<span style="font-size:'+ textSize +'" class="sr-only-glyphicon">' + alt + '</span>');
 		}
 	});
+
+	if ( window.location !== window.parent.location ) {
+		// The page is in an iframe, show the GoBack button if it exists.   By default, it's hidden so set display to block.
+		$('#restrictedNavigationGoBackButton').css({'display':'block'});
+	} else {
+		// The page is not in an iframe, do nothing because GoBack button is automatically hidden.  User will use browser controls for navigation.		
+	}
+
+	//Restricted Navigation in LMS
+	$('#restrictedNavigationNavControls').css({'height':'38px', 'margin-bottom':'10px'});
+	$('#restrictedNavigationGoBackButton').addClass('btn btn-primary').click(function() {
+		window.history.back();
+	});
 })();
+

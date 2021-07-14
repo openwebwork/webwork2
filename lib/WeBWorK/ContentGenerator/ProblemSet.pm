@@ -112,7 +112,6 @@ sub nav {
 	my $courseID = $urlpath->arg("courseID");
 	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
 	my $problemSetsPage = $urlpath->parent;
-
 	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("Homework Sets"));
 	return $self->navMacro($args, '', @links);
 }
@@ -150,6 +149,13 @@ sub title {
 sub templateName {
 	my $self = shift;
 	my $r = $self->r;
+	my $authz = $r->authz;
+	my $userID = $r->param('user');
+	# override templateName with lms template
+	unless ($authz->hasPermissions($userID, "navigation_allowed")) {
+		$self->{templateName} = "lms";
+		return "lms";
+	}
 	my $templateName = $r->param('templateName')//'system';
 	$self->{templateName}= $templateName;
 	$templateName;
@@ -167,6 +173,11 @@ sub siblings {
 	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
+
+	# restrict navigation to other problem sets if not allowed
+	unless ($authz->hasPermissions($user, "navigation_allowed")) {
+		return "";
+	}
 
 	# note that listUserSets does not list versioned sets
 	# DBFIXME do filtering in WHERE clause, use iterator for results :)
