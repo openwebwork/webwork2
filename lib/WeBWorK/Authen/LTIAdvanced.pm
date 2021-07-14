@@ -92,6 +92,15 @@ sub new {
 #	  $Key->key = "nonce"
 #	  $Key->timestamp = the nonce's timestamp
 
+# Some LMS's misspell the lis_person_sourcedid parameter name
+# so we use a list of variations when needed.
+our @lis_person_sourcedid_options = (
+	"lis_person_sourcedid", # from spec at https://www.imsglobal.org/specs/ltiv1p1/implementation-guide#toc-3
+	"lis_person_sourced_id",
+	"lis_person_source_id",
+	"lis_person_sourceid"
+);
+
 sub  request_has_data_for_this_verification_module {
   debug("LTIAdvanced has been called for data verification");
   my $self = shift;
@@ -122,7 +131,7 @@ sub get_credentials {
   my $ce = $r->{ce};
 
   debug("LTIAdvanced::get_credentials has been called\n");
-	
+
   ## Printing parameters to main page can help people set things up
   ## so we dont use the debug channel here
   if ( $ce->{debug_lti_parameters} ) {
@@ -169,9 +178,74 @@ sub get_credentials {
     return $self->SUPER::get_credentials(@_);
   }
 
-  # if at least the user ID is available in request parameters
-  if (defined $r->param("user_id"))
-    {
+  # Determine the WW user_id to use, if possible
+
+  if ( ! $ce->{preferred_source_of_username} ) {
+    warn "LTI is not properly configured (no preferred_source_of_username). Please contact your instructor or system administrator.";
+    $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
+    debug("No preferred_source_of_username in " . $r->ce->{'courseName'} . " so LTIAdvanced::get_credentials is returning a 0\n");
+    return 0;
+  }
+
+  my $user_id_source = "";
+  my $type_of_source = "";
+
+  $self->{email} = ""; # set an initial value to avoid warnings when not provided
+  if ( defined( $r->param("lis_person_contact_email_primary") ) ) {
+	$self->{email} = uri_unescape($r->param("lis_person_contact_email_primary")) // "";
+  }
+
+  if ( $ce->{preferred_source_of_username} eq "lis_person_sourcedid" ) {
+	foreach my $key ( @lis_person_sourcedid_options ) {
+		if ( $r->param($key) ) {
+			$user_id_source = $key;
+			$type_of_source = "preferred_source_of_username";
+			$self->{user_id} = $r->param($key);
+			last;
+		}
+	}
+  } elsif ( $ce->{preferred_source_of_username} eq "lis_person_contact_email_primary"
+	&& $self->{email} ne "" ) {
+	$user_id_source = "lis_person_contact_email_primary";
+	$type_of_source = "preferred_source_of_username";
+	$self->{user_id} = $self->{email};
+
+	# Strip off the part of the address after @ if requested to do so:
+	$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
+  } elsif ( $r->param($ce->{preferred_source_of_username}) ) {
+	$user_id_source = $ce->{preferred_source_of_username};
+	$type_of_source = "preferred_source_of_username";
+	$self->{user_id} = $r->param($ce->{preferred_source_of_username});
+  }
+
+  # Fallback if necessary
+  if ( !defined( $self->{user_id} ) && $ce->{fallback_source_of_username} ) {
+	if ( $ce->{fallback_source_of_username} eq "lis_person_sourcedid" ) {
+		foreach my $key ( @lis_person_sourcedid_options ) {
+			if ( $r->param($key) ) {
+				$user_id_source = $key;
+				$type_of_source = "fallback_source_of_username";
+				$self->{user_id} = $r->param($key);
+				last;
+			}
+		}
+	} elsif ( $ce->{fallback_source_of_username} eq "lis_person_contact_email_primary"
+		&& $self->{email} ne "" ) {
+		$user_id_source = "lis_person_contact_email_primary";
+		$type_of_source = "fallback_source_of_username";
+		$self->{user_id} = $self->{email};
+
+		# Strip off the part of the address after @ if requested to do so:
+		$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
+	} elsif ( $r->param($ce->{fallback_source_of_username}) ) {
+		$user_id_source = $ce->{fallback_source_of_username};
+		$type_of_source = "fallback_source_of_username";
+		$self->{user_id} = $r->param($ce->{fallback_source_of_username});
+	}
+  }
+
+  # if we were able to set a user_id
+  if ( defined($self->{user_id}) && $self->{user_id} ne "" ) {
       map {$self->{$_->[0]} = $r->param($_->[1]);}
 	(
 	 ['role', 'roles'],
@@ -186,39 +260,6 @@ sub get_credentials {
 	 ['recitation', 'custom_recitation'],
 	);
 
-      # Some LMS's misspell the lis_person_sourcedid parameter name
-      # so we try a number of variations here
-      if (defined($r->param("lis_person_sourced_id"))) {
-	$self->{user_id} = $r->param("lis_person_sourced_id");
-      } elsif (defined($r->param("lis_person_sourcedid"))) {
-	$self->{user_id} = $r->param("lis_person_sourcedid");
-      } elsif (defined($r->param("lis_person_source_id"))) {
-	$self->{user_id} = $r->param("lis_person_source_id");
-      } elsif (defined($r->param("lis_person_sourceid"))) {
-	$self->{user_id} = $r->param("lis_person_sourceid");
-      } else {
-	undef($self->{user_id});
-      }
-
-      $self->{email} = ""; # set an initial value to avoid warnings when not provided
-      if ( defined( $r->param("lis_person_contact_email_primary") ) ) {
-        $self->{email} = uri_unescape($r->param("lis_person_contact_email_primary")) // "";
-      }
-
-      # if preferred_source_of_username eq "lis_person_contact_email_primary"
-      # or if the user_id is still undefined at this point
-      # then replace the user_id with the full email address.
-      # if strip_address_from_email ==1  strip off the part of the address
-      # after @
-
-      if (!defined($self->{user_id})
-	  || ($self->{email} ne ""
-	      && defined($ce->{preferred_source_of_username})
-	      && $ce->{preferred_source_of_username} eq "lis_person_contact_email_primary")) {
-	$self->{user_id} = $self->{email};
-	$self->{user_id} =~ s/@.*$// if $ce->{strip_address_from_email};
-      }
-
       if (defined($ce->{preferred_source_of_student_id})
 	&& defined($r->param($ce->{preferred_source_of_student_id}))) {
 	$self->{student_id} = $r->param($ce->{preferred_source_of_student_id});
@@ -230,15 +271,17 @@ sub get_credentials {
       # User id and address is at this point
       if ( $ce->{debug_lti_parameters} ) {
 	warn "=========== summary ============";
-	warn "User id is |$self->{user_id}|\n";
+	warn "User id is |$self->{user_id}| (obtained from $user_id_source which was $type_of_source)\n";
 	warn "User mail address is |$self->{email}|\n";
+	warn "strip_address_from_email is |", $ce->{strip_address_from_email}//0,"|\n";
 	warn "Student id is |$self->{student_id}|\n";
-	warn "preferred_source_of_username is |", $ce->{preferred_source_of_username}//'undefined',"|\n";
+	warn "preferred_source_of_username is |$ce->{preferred_source_of_username}|\n";
+	warn "fallback_source_of_username is |", $ce->{fallback_source_of_username}//'undefined',"|\n";
 	warn "preferred_source_of_student_id is |", $ce->{preferred_source_of_student_id}//'undefined',"|\n";
 	warn "================================\n";
       }
       if (!defined($self->{user_id})) {
-	croak "LTIAdvanced was unable to create a username from the user_id or from the mail address. Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
+	croak "LTIAdvanced was unable to create a username from the data provided with the current settings. Set \$debug_lti_parameters=1 in authen_LTI.conf to debug";
       }
 
       $self->{login_type} = "normal";
@@ -246,6 +289,8 @@ sub get_credentials {
       debug("LTIAdvanced::get_credentials is returning a 1\n");
       return 1;
     }
+  warn "LTI is not properly configured (failed to set user_id from preferred_source_of_username or fallback_source_of_username). Please contact your instructor or system administrator.";
+  $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
   debug("LTIAdvanced::get_credentials is returning a 0\n");
   return 0;
 }
@@ -275,19 +320,30 @@ sub check_user {
   my $User = $db->getUser($user_id);
 
   if (!$User) {
-    if ( defined($r->param("lis_person_sourcedid"))
-	 || defined($r->param("lis_person_sourced_id"))
-	 || defined($r->param("lis_person_source_id"))
-	 || defined($r->param("lis_person_sourceid"))
-	 || defined($r->param("lis_person_contact_email_primary"))
-       ) {
-      debug("User |$user_id| is unknown but may be an new user from an LSM via LTI. About to return a 1");
-      return 1;  #This may be a new user coming in from a LMS via LTI.
-    } else {
-      $self->{log_error} .= " $user_id - user unknown";
-      $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
-      return 0;
+    my %options;
+    $options{$ce->{preferred_source_of_username}} = 1 if ($ce->{preferred_source_of_username});
+    $options{$ce->{fallback_source_of_username}}  = 1 if ($ce->{fallback_source_of_username});
+
+    # May need to add alternate "spellings" for lis_person_sourcedid
+    my $use_lis_person_sourcedid_options = 0;
+    if ( defined($ce->{preferred_source_of_username})
+	&& $ce->{preferred_source_of_username} eq "lis_person_sourcedid" ) {
+	$use_lis_person_sourcedid_options = 1;
+    } elsif ( defined($ce->{fallback_source_of_username})
+	&& $ce->{fallback_source_of_username} eq "lis_person_sourcedid" ) {
+	$use_lis_person_sourcedid_options = 1;
     }
+
+    foreach my $key ( keys( %options ), ( $use_lis_person_sourcedid_options ? @lis_person_sourcedid_options : () ) ) {
+	if ( defined($r->param($key)) ) {
+		debug("User |$user_id| is unknown but may be an new user from an LSM via LTI. Saw a value for $key About to return a 1");
+		return 1;  #This may be a new user coming in from a LMS via LTI.
+	}
+    }
+
+    $self->{log_error} .= " $user_id - user unknown";
+    $self->{error} = $r->maketext("There was an error during the login process.  Please speak to your instructor or system administrator.");
+    return 0;
   }
 
   unless ($ce->status_abbrev_has_behavior($User->status, "allow_course_access")) {
@@ -302,7 +358,7 @@ sub check_user {
     return 0;
   }
 
-  debug("LTIAdvanced::check_user is about to return a 1.");	
+  debug("LTIAdvanced::check_user is about to return a 1.");
   return 1;
 }
 
@@ -329,7 +385,7 @@ sub verify_normal_user {
 
   my $auth_result = $self->authenticate;
 
-  debug("auth_result=|${auth_result}|");	
+  debug("auth_result=|${auth_result}|");
 
   # Parameters CANNOT be modified until after LTIAdvanced authentication
   # has been done, because the parameters passed with the request
@@ -384,7 +440,7 @@ sub authenticate {
   foreach my $key (@keys) {
     $request_hash{$key} =  $r->param($key);
     debug("$key->|" . $request_hash{$key} . "|");
-  }	
+  }
   my $requestHash = \%request_hash;
 
   # We need to provide the request URL when verifying the OAuth request.
@@ -521,7 +577,7 @@ sub create_user {
       join("\n--", @LTIroles), "\n",
       "Any initial ^urn:lti:.*:ims/lis/ segments have been stripped off.\n",
       "The user will be assigned the highest role defined for them\n",
-      "========================\n"		
+      "========================\n"
     }
 
   my $nr = scalar(@LTIroles);
@@ -538,7 +594,7 @@ sub create_user {
       next unless defined $wwRole;
       if ($LTI_webwork_permissionLevel < $ce->{userRoles}->{$wwRole}) {
 	$LTI_webwork_permissionLevel = $ce->{userRoles}->{$wwRole};
-      }	
+      }
     }
   }
 
