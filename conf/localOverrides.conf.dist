@@ -122,6 +122,13 @@ $mail{feedbackRecipients}    = [
 #$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/ASimpleCombinedHeaderFile.pg";
 #$webworkFiles{screenSnippets}{setHeader} = "$courseDirs{templates}/ASimpleScreenHeaderFile.pg";
 
+################################################################################
+# Settings for the admin course
+################################################################################
+
+# Provide a list of model courses which are not real courses, but from which
+# the templates for a new course can be copied.
+#$modelCoursesForCopy = [ "modelCourse", "anotherModelCourse", "aThirdOne" ];
 
 ################################################################################
 # OpenProblemLibrary
