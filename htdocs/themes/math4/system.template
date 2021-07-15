@@ -194,37 +194,37 @@
 		  <div id="problem_body" class="Body span12">
 
 			<!--#if can="output_custom_edit_message"-->
-			<div id="custom_edit_message" class="row-fluid"><div class="span10">
+			<div id="custom_edit_message" class="row-fluid"><div class="span12">
 				<!--#output_custom_edit_message-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 			<!--#if can="output_summary"-->
-			<div class="row-fluid"><div id="output_summary" class="span10">
+			<div class="row-fluid"><div id="output_summary" class="span12">
 					<!--#output_summary-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 
 			<!--#if can="output_achievement_message"-->
-			<div class="row-fluid"><div id="output_achievement_message" class="span10">
+			<div class="row-fluid"><div id="output_achievement_message" class="span12">
 					<!--#output_achievement_message-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 			
 			<!--#if can="output_comments" "-->
-			<div class="row-fluid"><div id="output_comments" class="span10">
+			<div class="row-fluid"><div id="output_comments" class="span12">
 				  <!--#output_comments-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 
 			<!--#if can="output_grader"-->
-			<div class="row-fluid"><div id="output_grader" class="span10">
+			<div class="row-fluid"><div id="output_grader" class="span12">
 				<!--#output_grader-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 
 			<!--#if can="output_form_start"-->
 			<div class="row-fluid">
-			  <div class="span10">
+			  <div class="span12">
 				<!--#output_form_start-->
 			    <!--#if can="output_hidden_info"-->
 				     <!--#output_hidden_info-->
@@ -278,7 +278,7 @@
 			</div>
 		<!--#endif-->
 
-		</div><div class="span2"></div></div>
+		</div></div>
                 </div></div>
 
 	<!-- ====  end printing body parts   -->

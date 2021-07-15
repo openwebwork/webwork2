@@ -14,13 +14,13 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	var hideSidebar = function () {
 		$('#site-navigation').remove();
 		$('#toggle-sidebar-icon i').removeClass('fa-chevron-left').addClass('fa-chevron-right');
-		$('#content').removeClass('span10').addClass('span11');
+		$('#content').removeClass('span10').addClass('span12').css('margin-left', '0');
 	};
 
 	var showSidebar = function () {
 		$('#body-row').prepend(navigation_element);
 		$('#toggle-sidebar-icon i').addClass('fa-chevron-left').removeClass('fa-chevron-right');
-		$('#content').addClass('span10').removeClass('span11');	
+		$('#content').addClass('span10').removeClass('span12').css('margin-left', '');
 	};
 
 	var toggleSidebar = function () {
@@ -34,7 +34,7 @@ if ($.fn.button.noConflict) $.fn.bootstrapBtn = $.fn.button.noConflict();
 	// if no fish eye then collapse site-navigation 
 	if($('#site-links').length > 0 && !$('#site-links').html().match(/[^\s]/)) {
 		$('#site-navigation').remove();
-		$('#content').removeClass('span10').addClass('span11');
+		$('#content').removeClass('span10').addClass('span12').css('margin-left', '0');
 		$('#toggle-sidebar').addClass('hidden');
 		$('#breadcrumb-navigation').width('100%');
 	} else {
