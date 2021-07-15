@@ -484,6 +484,7 @@ sub add_course_form {
 	#});
 	
 	my @existingCourses = listCourses($ce);
+	push @existingCourses, 'modelCourse';
 	@existingCourses = sort { lc($a) cmp lc ($b) } @existingCourses; #make sort case insensitive 
 	
 	print CGI::h2($r->maketext("Add Course"));
