@@ -32,6 +32,8 @@ use WeBWorK::Utils qw(sortByName jitar_id_to_seq seq_to_jitar_id);
 use PGcore;
 use Text::CSV;
 
+use JSON;
+
 use constant PAST_ANSWERS_FILENAME => 'past_answers';
 
 sub initialize {
@@ -248,7 +250,10 @@ sub initialize {
 	    close($fh) or warn "Couldn't Close $fullFilename";
 	    
 	    }
-
+		if($ce->{showAnswerLog}) {
+			$self->{entries} = [ () ];
+			$self->{entries_json} = '';
+		}
 }
 
 
@@ -435,6 +440,21 @@ sub body {
 	      CGI::checkbox(-label=>$r->maketext('Create CSV'), -name => 'createCSV', -id => 'createCSV', -checked => $r->param('createCSV')//0 ),' &nbsp; ',
 		$scoringDownloadMessage;
 	    
+		if ($ce->{showAnswerLog}) {
+			print CGI::start_div({id=>"answer-log-modal", class=>"modal show fade"});
+			print CGI::start_div({class=>'modal-header'});
+			print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
+			print CGI::h3($r->maketext("Answer Log Viewer"));
+			print CGI::end_div();
+			print CGI::start_div({id=>"log-body", class=>"modal-body"});
+			print CGI::end_div();
+			print CGI::start_div({class=>"modal-footer"});
+			print '<button type="button" class="btn csv">CSV</button>';
+			print CGI::end_div();
+			print CGI::end_div();
+			print '<button type="button" class="btn show_answer_log_modal">Answer Log Modal</button>';
+		}
+		
 	    print CGI::end_form();
 	}
 
@@ -520,6 +540,18 @@ sub body {
 		  }
 		  
 		  push(@row,CGI::td({width=>20}),CGI::td($td,$answerstring));
+		  
+		  if ($ce->{showAnswerLog}) {
+			  my $entry = {};
+			  $entry->{studentUser} = $studentUser;
+			  $entry->{setName} = $setName;
+			  $entry->{answerID} = $answerID; # pschan I'm assuming this is incremented chronologically?
+			  $entry->{pSetNum} = "$setName-$prettyProblemNumber-$i";
+			  $entry->{score} = $score;
+			  $entry->{answer} = $score ? "** $answer **" : "$answer";
+			  $entry->{time} = $time;
+			  push @{ $self->{entries} } , $entry;
+		  }
 		}
 		
 		if ($record{comment}) {
@@ -538,7 +570,17 @@ sub body {
 	}
       	      
 	print CGI::h2($r->maketext('No problems matched the given parameters.')) unless $foundMatches;
-
+	
+	my $json = JSON->new->allow_nonref;
+	$self->{entries_json} = $json->encode($self->{entries});
+	
+	if ($ce->{showAnswerLog}) {
+		print CGI::script("\$(function() {\$('button.show_render_modal').hide();});") unless $foundMatches;
+		my $site_url = $ce->{webworkURLs}->{htdocs};
+		print CGI::script("var entriesJSON = $self->{entries_json};");
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/LogParser/logparser.js"}), CGI::end_script();
+		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/LogParser/table2csv.js"}), CGI::end_script();
+	}
 	return "";
 }
 
