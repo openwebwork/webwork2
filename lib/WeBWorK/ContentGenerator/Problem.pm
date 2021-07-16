@@ -373,6 +373,13 @@ sub attemptResults {
 sub templateName {
 	my $self = shift;
 	my $r = $self->r;
+	my $authz = $r->authz;
+	my $userID = $r->param('user');
+	# override templateName with lms template
+	unless ($authz->hasPermissions($userID, "navigation_allowed")) {
+		$self->{templateName} = "lms";
+		return "lms";
+	}
 	my $templateName = $r->param('templateName')//'system';
 	$self->{templateName}= $templateName;
 	$templateName;
@@ -1041,6 +1048,13 @@ sub siblings {
 	return "";
 }
 
+# This function is called by lms.template in the problem set navbar only.  It uses a different name because nav exists inside ProblemSet.pm, too.  However, we want to prevent
+# the problem navbar from being drawn on the ProblemSet page.  
+sub lmsNav {
+	my ($self, $args) = @_;
+	$self->nav($args);
+}
+
 sub nav {
 	my ($self, $args) = @_;
 	my $r = $self->r;
@@ -1219,12 +1233,23 @@ sub path {
 	my $setName       = $urlpath->arg("setID") || '';
 	my $problemNumber = $urlpath->arg("problemID") || '';
 	my $prettyProblemNumber = $problemNumber;
+	my $authz = $r->authz;
+	my $userID = $r->param('user');
 
 	if ($setName) {
 	    my $set = $r->db->getGlobalSet($setName);
 	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
 		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
 	    }
+	}
+
+	unless ($authz->hasPermissions($userID, "navigation_allowed")) {
+		print CGI::button(
+			-id=>'restrictedNavigationGoBackButton',
+			-class=>'nav_button',
+			-value=>'Go Back',
+			-style=>'display:none;');
+		return "";
 	}
 
 	my @path = ( 'WeBWorK', $r->location,
