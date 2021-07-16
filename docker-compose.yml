@@ -77,15 +77,23 @@ services:
         #  context: /Path_To/webwork2/
         #  dockerfile: /Path_To/Dockerfile
         args:
-            # build args specifying the branches for webwork2 and pg used to build the image
-            # To use the master branches of webwork2 and pg 
-            #- ARG WEBWORK2_BRANCH=master
-            #- ARG PG_BRANCH=master
-            # To use the 2.15 branches of webwork2 and pg from the "official" GitHub repositories
+            # Build args to set the source Git repositories. Here we set the main repositories:
             - WEBWORK2_GIT_URL=https://github.com/openwebwork/webwork2.git
-            - WEBWORK2_BRANCH=WeBWorK-2.16
             - PG_GIT_URL=https://github.com/openwebwork/pg.git
-            - PG_BRANCH=PG-2.16
+
+            # Build args specifying the branches of webwork2 and pg to install.
+
+            # Exactly one pair of settings should be left uncommented and all the others
+            # should be commented out.
+
+            # main branches:
+            #- WEBWORK2_BRANCH=main
+            #- PG_BRANCH=main
+
+            # WeBWorK/PG develop branches
+            #    (other valid branches can also be used in a similar manner)
+            - WEBWORK2_BRANCH=develop
+            - PG_BRANCH=develop
 
         # If you are using the 2 stage build process uncomment the next line
         dockerfile: DockerfileStage2
@@ -225,6 +233,7 @@ services:
       #ADD_LOCALES: "he_IL ISO-8859-8\nhe_IL.UTF-8 UTF-8\n"
 
       # Extra Ubuntu packages to install during startup
+      # Commenting the following line out will speed up container startup time.
       ADD_APT_PACKAGES: nano less 
 
       # The system timezone for the container can be set using

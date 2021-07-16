@@ -58,6 +58,12 @@ sub create {
 		$out->{message} = "Insufficient permission level.";
 		return $out
 	}
+	if ( length($newcourse) > $ce->{maxCourseIdLength} ) {
+		debug("Course creation attempt failed: course ID was too long.");
+		$out->{status} = "failure";
+		$out->{message} = "Course ID cannot exceed " . $ce->{maxCourseIdLength} . " characters.";
+		return $out
+	}
 	
 	# declare params
 	my @professors = ();
