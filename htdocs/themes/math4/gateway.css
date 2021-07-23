@@ -4,7 +4,7 @@
 
 /* update margins to reflect missing left column */
 #content {
-	margin: 1em 1em 1em 0; 
+	margin: 0 1em 1em 0;
 }
 
 div.gwMessage { 
@@ -64,26 +64,24 @@ div#gwScoreSummary {
     margin-left:.2em;
 }
 
-span.resultsWithError, .ResultsWithoutError {
+table.attemptResults { width: unset; }
+
+span.resultsWithError, span.resultsWithoutError {
 	padding: 0.2em 1em;
 	box-shadow: 2px 2px 3px darkgray;
 	margin-bottom: 0.5em;
 	margin-right: 1em;
 	border-radius: 3px;
 }
-span.resultsWithError { 
-	background-color: #d69191;
-}
-.ResultsWithoutError 
-{ 
-	background-color: #88ff88;  
-}
-div.gwCorrect { background-color: #88ff88; }
-div.gwIncorrect { background-color: #d69191; }
-div.gwCorrect, div.gwIncorrect {
+span.resultsWithError { background-color: #d69191; }
+span.resultsWithoutError { background-color: #88ff88;  }
+div.ResultsWithoutError { background-color: #88ff88; }
+div.ResultsWithError { background-color: #d69191; }
+div.ResultsWithoutError, div.ResultsWithError {
 	padding: 0.5em;
 	box-shadow: 3px 3px 3px darkgray;
 	border-radius: 3px;
+	color: black;
 }
 
 div.gwProblem 
@@ -100,18 +98,31 @@ div.gwProblem
 }
 
 .gwNavigation {
-    margin-top: 1em;	
-    margin-bottom: 1em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	text-align: center;
+}
+
+.gwNavigation th, .gwNavigation td {
+	padding: 0 0.5rem;
 }
 
 .gwNavigation th {
     text-align:right;
+    font-weight: bold;
+    padding-right: 1rem;
 }
 
+.gwNavigation colgroup.page {
+	border-left: solid 1pt black;
+	border-right: solid 1pt black;
+}
 
-hr 
-{ 
-	border: none;
+.gwNavigation .page.active {
+	background-color: #ffeeaa;
+}
+
+div.gwDivider {
 	margin: 0px 0px 10px 0px;
 }
 
@@ -161,7 +172,13 @@ div.gwPrintMe a:hover, p.gwPreview a:hover {
 */
 
 /* Fix checkbox input's label text not aligned with the checkbox. */
-label input[type='checkbox'] {
-	margin: 0 0.2em 0.1em 0;
+label.checkbox input[type='checkbox'] {
+	margin-top: 2px;
 
+}
+
+/* Put the show correct and show solutions checkboxes on separate lines. */
+.form-inline label.checkbox {
+	display: block;
+	margin-bottom: 5px;
 }

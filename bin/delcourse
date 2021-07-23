@@ -96,7 +96,7 @@ use lib "$ENV{PG_ROOT}/lib";
 
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
-use WeBWorK::Utils qw(runtime_use readFile cryptPassword);
+use WeBWorK::Utils qw(runtime_use readFile);
 use WeBWorK::Utils::CourseManagement qw(addCourse deleteCourse listCourses);
 
 sub usage {

@@ -115,6 +115,8 @@ sub getDB {
 	return($dbh);
 }
 
+=over
+
 =item getProblemTags($path) and setProblemTags($path, $subj, $chap, $sect)
 Get and set tags using full path and Tagging module
                                                                                 
@@ -418,17 +420,13 @@ sub getAllDBsections {
 	return @results;
 }
 
-=item getDBSectionListings($r)                             
+=item getDBListings($r)                             
 Returns an array of hash references with the keys: path, filename.              
                                                                                 
 $r is an Apache request object that has all needed data inside of it
 
 Here, we search on all known fields out of r
                                                                                 
-=cut
-
-=item 
-
 =cut
 
 sub getDBListings {
@@ -517,7 +515,7 @@ sub getDBListings {
 
 	my $pg_id_ref;
 	
-	$dbh->do(qq{SET NAMES 'utf8mb4';}) if $ce->{ENABLE_UTF8MB};
+	$dbh->do(qq{SET NAMES 'utf8mb4';}) if $ce->{ENABLE_UTF8MB4};
 	if($haveTextInfo) {
 		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
 			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
@@ -888,6 +886,8 @@ sub indirectSortByName {
 1;
 
 __END__
+
+=back
 
 =head1 DESCRIPTION
 

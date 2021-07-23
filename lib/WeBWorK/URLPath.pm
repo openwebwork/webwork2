@@ -53,7 +53,7 @@ Note:  Only database keyfield values can be used as path parameters.
  course_admin                        /admin/ -> logout, options, instructor_tools
  html2xml                            /html2xml/
  pgtotex                             /pgtotex/
- instructorXMLHandler     			     /instructorXMLHandler/
+ instructorXMLHandler                /instructorXMLHandler/
  set_list                            /$courseID/
  
  equation_display                    /$courseID/equation/
@@ -67,7 +67,7 @@ Note:  Only database keyfield values can be used as path parameters.
  logout                              /$courseID/logout/
  options                             /$courseID/options/
  #test                               /$courseID/test/
- #render                              /$courseID/render/
+ #render                             /$courseID/render/
  
  instructor_tools                    /$courseID/instructor/
  
@@ -75,30 +75,17 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_user_detail              /$courseID/instructor/users/$userID/
  instructor_sets_assigned_to_user    /$courseID/instructor/users/$userID/sets/
  
- instructor_user_list2                /$courseID/instructor/users2/
- instructor_user_detail2              /$courseID/instructor/users2/$userID/ #not created yet
- instructor_sets_assigned_to_user2    /$courseID/instructor/users2/$userID/sets/ #not created yet
- 
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
  instructor_users_assigned_to_set    /$courseID/instructor/sets/$setID/users/
  
- instructor_set_list2                 /$courseID/instructor/sets2/
- instructor_set_detail2               /$courseID/instructor/sets2/$setID/
- instructor_users_assigned_to_set2    /$courseID/instructor/sets2/$setID/users/ #not created yet
-
-
- instructor_problem_grader                /$courseID/instructor/grader/$setID/$problemID
-
+ instructor_problem_grader           /$courseID/instructor/grader/$setID/$problemID
  
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
  instructor_file_transfer            /$courseID/instructor/files/
  instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
- instructor_set_maker2               /$courseID/instructor/setmaker2/
- instructor_set_maker3               /$courseID/instructor/setmaker3/
- instructor_set_maker_no_js          /$courseID/instructor/setmakernojs/
  instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
  instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
@@ -108,35 +95,25 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
  instructor_problem_editor_withset_withproblem
                                      /$courseID/instructor/pgProblemEditor/$setID/$problemID/
-                                     
- instructor_problem_editor2           /$courseID/instructor/pgProblemEditor2/
- instructor_problem_editor2_withset   /$courseID/instructor/pgProblemEditor2/$setID/
- instructor_problem_editor2_withset_withproblem
-                                     /$courseID/instructor/pgProblemEditor2/$setID/$problemID/
- 
- instructor_problem_editor3           /$courseID/instructor/pgProblemEditor3/
- instructor_problem_editor3_withset   /$courseID/instructor/pgProblemEditor3/$setID/
- instructor_problem_editor3_withset_withproblem /$courseID/instructor/pgProblemEditor3/$setID/$problemID/
- 
 
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
  
- instructor_preflight               /$courseID/instructor/preflight/
+ instructor_preflight                /$courseID/instructor/preflight/
  
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
  
- instructor_progress                  /$courseID/instructor/StudentProgress/
- instructor_set_progress              /$courseID/instructor/StudentProgress/set/$setID/
- instructor_user_progress             /$courseID/instructor/StudentProgress/student/$userID/
+ instructor_progress                 /$courseID/instructor/StudentProgress/
+ instructor_set_progress             /$courseID/instructor/StudentProgress/set/$setID/
+ instructor_user_progress            /$courseID/instructor/StudentProgress/student/$userID/
  
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
  show_me_another                     /$courseID/$setID/$problemID/show_me_another
-answer_log                           /$courseID/show_answers/
+ answer_log                          /$courseID/show_answers/
  achievements                        /$courseID/achievements
  instructor_achievement_list         /$courseID/instructor/achievement_list
  instructor_achievement_editor       /$courseID/instructor/achievement_list/$achievementID/editor
@@ -342,18 +319,19 @@ our %pathTypes = (
 	instructor_tools => {
 		name    => x('Instructor Tools'),
 		parent  => 'set_list',
-		kids    => [ qw/instructor_user_list instructor_user_list2 instructor_set_list instructor_set_list2
-		    instructor_add_users instructor_achievement_list 
+		kids    => [ qw/
+			instructor_user_list instructor_set_list
+			instructor_add_users instructor_achievement_list 
 			instructor_set_assigner instructor_file_manager
-			instructor_problem_editor instructor_problem_editor2 instructor_problem_editor3
-			instructor_set_maker instructor_set_maker2 instructor_set_maker3 instructor_set_maker_no_js
+			instructor_problem_editor
+			instructor_set_maker
 			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_preflight instructor_statistics
 			instructor_progress			
-                        instructor_problem_grader
-		/ ],
+			instructor_problem_grader
+			/ ],
 		match   => qr|^instructor/|,
 		capture => [ qw// ],
 		produce => 'instructor/',
@@ -363,7 +341,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_user_list => {
-		name    => x('Old Classlist Editor'),
+		name    => x('Classlist Editor'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_user_detail/ ],
 		match   => qr|^users/|,
@@ -371,18 +349,9 @@ our %pathTypes = (
 		produce => 'users/',
 		display => 'WeBWorK::ContentGenerator::Instructor::UserList',
 	},
-	instructor_user_list2 => {
-		name    => x('Classlist Editor'),
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_user_detail/ ],
-		match   => qr|^users2/|,
-		capture => [ qw// ],
-		produce => 'users2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::UserList2',
-	},
 	instructor_user_detail => {
 		name    => x('Sets assigned to [_1]'),
-		parent  => 'instructor_user_list2',
+		parent  => 'instructor_user_list',
 		kids    => [ qw/instructor_sets_assigned_to_user/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/userID/ ],
@@ -402,7 +371,7 @@ our %pathTypes = (
 	################################################################################
 	
 	instructor_set_list => {
-		name    => x('Old Hmwk Sets Editor'),
+		name    => x('Hmwk Sets Editor'),
 		parent  => 'instructor_tools',
 		kids    => [ qw/instructor_set_detail/ ],
 		match   => qr|^sets/|,
@@ -410,33 +379,15 @@ our %pathTypes = (
 		produce => 'sets/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList',
 	},
-	instructor_set_list2 => {
-		name    => x('Hmwk Sets Editor'),
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_set_detail2/ ],
-		match   => qr|^sets2/|,
-		capture => [ qw// ],
-		produce => 'sets2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetList2',
-	},
+
 	instructor_set_detail => {
 		name    => x('Set Detail for set [_2]'),
-		parent  => 'instructor_set_list2',
+		parent  => 'instructor_set_list',
 		kids    => [ qw/instructor_users_assigned_to_set/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetDetail',
-	},
-
-	instructor_set_detail2 => {
-		name    => x('Set Detail 2 for set [_2]'),
-		parent  => 'instructor_set_list2',
-		kids    => [ qw/instructor_users_assigned_to_set/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::ProblemSetDetail2',
 	},
 
 	instructor_users_assigned_to_set => {
@@ -508,33 +459,6 @@ our %pathTypes = (
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
 	},
-	instructor_set_maker_no_js => {
-		name    => x('Library Browser no js'),
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^setmakernojs/|,
-		capture => [ qw// ],
-		produce => 'setmakernojs/',
-		display => 'WeBWorK::ContentGenerator::Instructor::SetMakernojs',
-	},
-	instructor_set_maker2 => {
-		name    => x('Library Browser 2'),
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^setmaker2/|,
-		capture => [ qw// ],
-		produce => 'setmaker2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker2',
-	},
-		instructor_set_maker3 => {
-		name    => x('Library Browser 3'),
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^setmaker3/|,
-		capture => [ qw// ],
-		produce => 'setmaker3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker3',
-	},
 	instructor_get_target_set_problems => {
 		name    => x('Get Target Set Problems'),
 		parent  => 'instructor_tools',
@@ -571,46 +495,10 @@ our %pathTypes = (
 		produce => 'pgProblemEditor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
 	},
-	instructor_problem_editor2 => {
-		name    => x('Problem Editor2'),
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_problem_editor2_withset/ ],
-		match   => qr|^pgProblemEditor2/|,
-		capture => [ qw// ],
-		produce => 'pgProblemEditor2/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
-	},
-	instructor_problem_editor3 => {
-		name    => x('Problem Editor3'),
-		parent  => 'instructor_tools',
-		kids    => [ qw/instructor_problem_editor3_withset/ ],
-		match   => qr|^pgProblemEditor3/|,
-		capture => [ qw// ],
-		produce => 'pgProblemEditor3/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
-	},
 	instructor_problem_editor_withset => {
 		name    => '[_2]',
 		parent  => 'instructor_problem_editor',
 		kids    => [ qw/instructor_problem_editor_withset_withproblem/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => undef,
-	},
-	instructor_problem_editor2_withset => {
-		name    => '[_2]',
-		parent  => 'instructor_problem_editor2',
-		kids    => [ qw/instructor_problem_editor2_withset_withproblem/ ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/setID/ ],
-		produce => '$setID/',
-		display => undef,
-	},
-	instructor_problem_editor3_withset => {
-		name    => '[_2]',
-		parent  => 'instructor_problem_editor3',
-		kids    => [ qw/instructor_problem_editor3_withset_withproblem/ ],
 		match   => qr|^([^/]+)/|,
 		capture => [ qw/setID/ ],
 		produce => '$setID/',
@@ -624,24 +512,6 @@ our %pathTypes = (
 		capture => [ qw/problemID/ ],
 		produce => '$problemID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor',
-	},
-	instructor_problem_editor2_withset_withproblem => {
-		name    => '[_3]',
-		parent  => 'instructor_problem_editor2_withset',
-		kids    => [ qw// ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/problemID/ ],
-		produce => '$problemID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor2',
-	},
-	instructor_problem_editor3_withset_withproblem => {
-		name    => '[_3]',
-		parent  => 'instructor_problem_editor3_withset',
-		kids    => [ qw// ],
-		match   => qr|^([^/]+)/|,
-		capture => [ qw/problemID/ ],
-		produce => '$problemID/',
-		display => 'WeBWorK::ContentGenerator::Instructor::PGProblemEditor3',
 	},
 	instructor_scoring => {
 		name    => x('Scoring Tools'),

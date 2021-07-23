@@ -6,6 +6,16 @@
 # To enable this file, uncomment the appropriate lines in localOverrides.conf
 #############################################################################
 
+# This is a string that is used to name the LMS for end users,
+# for example in a message telling users to sign in through their LMS.
+$LMS_name = 'e.g., Blackboard, Canvas, Moodle, etc.';
+#$LMS_name = 'Desire2Learn';
+
+# This is a URL that should take users to a place they can log in to their LMS.
+# It will use the text from $LMS_name, but use $LMS_url as the href.
+# If $LMS_url is empty or undefined, the text from $LMS_name is used with no link.
+#$LMS_url = 'https://myschool.edu/lms/';
+
 # Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
@@ -64,54 +74,104 @@ $authen{user_module} = [
 ################################################################################
 
 ################################################################################
-# LTI Preferred Source of Username
+# LTI preferred and fallback source of WW user_id
 ################################################################################
 
-# If both lis_person_sourcedid (or one of its variants)
-# and lis_person_contact_email_primary are present,
-# then one needs to state which one is preferred
-# as the WeBWorK username.
-# The considerations are (1) ensuring that usernames
-# are unique and (2) being as compatible as possible with the practices
-# of the institutions that are being served in a site.
-# If a site is only being used be students from a single
-# institution and the value  lis_person_sourcedid  is
-# unique across the population and matches the  logon username
-# at that institution, then lis_person_sourcedid is
-# probably the better choice.
-# On the other hand, if a site is serving a population
-# from several institutions and  lis_person_sourcedid  is not
-# necessarily unique across the population, then
-# lis_person_contact_email_primary is the better choice.
-# Because the WeBWorK username must be unique across
-# the population served by a site, the default if
-# neither line is uncommented will be the value of
-# lis_person_contact_email_primary.
+# You MUST set what LTI field is used to set the WeBWorK user_id.
+#
+# The lis_person_sourcedid (or one of its variants) is formally an OPTIONAL field
+#    https://www.imsglobal.org/specs/ltiv1p1/implementation-guide
+# but is relatively consistently available.
+# However, some LMS systems, Blackboard in particular, do not send lis_person_sourcedid.
+#
+# The email address lis_person_contact_email_primary is often a more understandable
+# value but may not exist.
+#
+# The LTI standard recommends providing a "user_id" value, which needs to be a unique
+# indentifier for each student in the LMS. The value is not expected to be people
+# friendly by may be available when neither of the others are.
+#
+# You need to make sure to use a setting such that
+#    (1) usernames are unique and
+#    (2) the setting is as compatible as possible with the practices
+#        of the institutions that are being served in a site.
+#
+# If each course is only being used be students from a single institution
+# and the value  lis_person_sourcedid is unique across that population
+# and matches the logon username at that institution, then lis_person_sourcedid
+# is probably the better choice.
+#
+# On the other hand, if a site is serving a population from several institutions
+# or if the lis_person_sourcedid is not necessarily unique across the population,
+# then lis_person_contact_email_primary is the better choice.
+#
+# NOTE: As of WeBWorK 2.16 some setting MUST be made.
+#
+#       If no setting is made, all LTI logins will fail and an error will be reported.
+#
+#       See the comment further down on how to get WeBWorK 2.16 to behave similarly to
+#       the prior behavior.
 
-# NOTE: Even if a course management system sends 
-# one of the common misspellings of "lis_person_sourcedid", i.e.,
-# lis_person_sourced_id, lis_person_source_id, and
-# lis_person_sourceid, one must nevertheless use
-# the correct spelling here, i.e. "lis_person_sourcedid".
+# NOTE: Even if a course management system sends one of the common misspellings of
+# "lis_person_sourcedid", i.e.,
+# lis_person_sourced_id, lis_person_source_id, and lis_person_sourceid,
+# one must nevertheless use the correct spelling "lis_person_sourcedid" here.
 
 #$preferred_source_of_username = "lis_person_sourcedid";
 $preferred_source_of_username = "lis_person_contact_email_primary";
 
-# Some LMS systems, Blackboard in particular, do not send lis_person_sourcedid
-# if you enable this flag and have $preferred_source_of_username set to
-# lis_person_contact_email_primary, then webwork will strip off the address 
-# portion of the email and just use the username.  
+# You can use any parameter the LMS will provide for the
+# $preferred_source_of_username, ex:
+#$preferred_source_of_username = "user_id";
+
+# You can also optionally provide a $fallback_source_of_username
+# which will only be used if WW is unable to determine a user_id
+# using $preferred_source_of_username.
+
+# Warning: This can be dangerous, as if it the fallback was used
+# for some student, and then on a later connection by that student
+# the LMS provided a value for the $preferred_source_of_username
+# field, then the student will get a new WeBWorK account and lose
+# access to their prior account and the prior scores will not be
+# associated with their account any longer.
+#
+# Thus, this feature should be used carefully!
+#
+# Ex:
+#$fallback_source_of_username = "lis_person_sourcedid";
+
+# Stripping the domain when creating user_id from an email address:
+#
+#   If you set either $preferred_source_of_username or $fallback_source_of_username
+#   to lis_person_contact_email_primary, and the email is being used as the WeBWorK
+#   user_id, then if the following setting is enabled, then WeBWorK will strip off
+#   the domain portion of the email (after the '@') and just use the username.
 
 #$strip_address_from_email = 1;
+
+# This feature should not be used if emails could collide after the domain is removed.
+
+# To get WeBWorK 2.16 to handle LTI authentication using an approach
+# roughly the same as was used until WeBWorK 2.15, you can set one of the 2 pairs of
+# settings:
+#
+# Option 1: Primary choice is lis_person_contact_email_primary, fallback to lis_person_sourcedid:
+#$preferred_source_of_username = "lis_person_contact_email_primary";
+#$fallback_source_of_username = "lis_person_sourcedid";
+#
+# Option 2: Primary choice is lis_person_sourcedid, fallback to lis_person_contact_email_primary:
+#$preferred_source_of_username = "lis_person_sourcedid";
+#$fallback_source_of_username = "lis_person_contact_email_primary";
 
 ################################################################################
 # LTI Preferred source of Student Id
 ################################################################################
 
-# If preferred_source_of_student_id is not set, WeBWorK will look in the LTI
-# parameter 'custom_student_id.' If preferred_source_of_student_id is set, then
-# WeBWorK will look in the LTI parameter specified below. This parameter may be
-# dependendent on the LMS. E.G., In D2L, student_id is stored in OrgDefinedId and
+# If preferred_source_of_student_id is not set, WeBWorK will set student_id
+# to be an empty string. You should use debug_lti_parameters in order to determine
+# the value to use for your LMS.
+#
+# For example, in D2L, student_id is stored in OrgDefinedId and
 # the corresponding LTI parameter is called ext_d2l_orgdefinedid.
 
 #$preferred_source_of_student_id = "ext_d2l_orgdefinedid";
@@ -217,6 +277,13 @@ $LMSManageUserData=1;
 # a drain on the server.
 
 $LTIGradeOnSubmit = 1;
+
+# Should WW try to check the current LMS grade before sending a grade update.
+# This is intended to reduce LMS records when no real grade change occurred.
+# It requires a 2 round process, first querying the current grade from the LMS
+# and then when needed making the grade submission.
+
+$lti_check_prior = 0; # default is off - old setting - always update with no check
 
 # The system periodically updates student grades on the LMS.  This
 # variable controls how often that happens.  Set to -1 to disable.  

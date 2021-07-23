@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2012 The WeBWorK Project, http://github.com/openwebwork
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator.pm,v 1.196 2009/06/04 01:33:15 gage Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -23,9 +22,9 @@ WeBWorK::ContentGenerator - base class for modules that generate page content.
 =head1 SYNOPSIS
 
  # start with a WeBWorK::Request object: $r
- 
+
  use WeBWorK::ContentGenerator::SomeSubclass;
- 
+
  my $cg = WeBWorK::ContentGenerator::SomeSubclass->new($r);
  my $result = $cg->go();
 
@@ -59,9 +58,9 @@ use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VE
 use Scalar::Util qw(weaken);
 use HTML::Entities;
 use HTML::Scrubber;
-use WeBWorK::Utils qw(jitar_id_to_seq);
+use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
-use Encode; 
+use Encode;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -154,7 +153,7 @@ go() then attempts to call the method initialize(). This method may be
 implemented in subclasses which must do processing after the HTTP header is sent
 but before any content is sent.
 
-=item 6
+=item 5
 
 The method content() is called to send the page content to client.
 
@@ -173,10 +172,10 @@ sub go {
 	if ($ce->{LTIGradeMode} and ref($r->{db}//'')  ) {
 
 	  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
-	  
+
 	  my $post_connection_action = sub {
 	    my $grader = shift;
-	    
+
 	    # catch exceptions generated during the sending process
 	    my $result_message = eval { $grader->mass_update() };
 	    if ($@) {
@@ -200,9 +199,9 @@ sub go {
 	#    check $self->{invalidSet} and react correctly)
 	my $authz = $r->authz;
 	$self->{invalidSet} = $authz->checkSet();
-	
+
 	my $returnValue = MP2 ? Apache2::Const::OK : Apache::Constants::OK;
-	
+
 	# We only write to the activity log if it has been defined and if
 	# we are in a specific course.  The latter check is to prevent attempts
 	# to write to a course log file when viewing the top-level list of
@@ -212,26 +211,26 @@ sub go {
 			$r->ce->{courseFiles}->{logs}->{activity_log});
 
 	$self->pre_header_initialize(@_) if $self->can("pre_header_initialize");
-	
+
 	# send a file instead of a normal reply (reply_with_file() sets this field)
 	defined $self->{reply_with_file} and do {
 		return $self->do_reply_with_file($self->{reply_with_file});
 	};
-	
+
 	# send a Location: header instead of a normal reply (reply_with_redirect() sets this field)
 	defined $self->{reply_with_redirect} and do {
 		return $self->do_reply_with_redirect($self->{reply_with_redirect});
 	};
-	
+
 	my $headerReturn = $self->header(@_);
 	$returnValue = $headerReturn if defined $headerReturn;
 	# FIXME: we won't need noContent after reply_with_redirect() is adopted
 	return $returnValue if $r->header_only or $self->{noContent};
-	
+
 	$self->initialize() if $self->can("initialize");
-	
+
 	$self->content();
-	
+
 	return $returnValue;
 }
 
@@ -244,7 +243,7 @@ instance.
 
 sub r {
 	my ($self) = @_;
-	
+
 	return $self->{r};
 }
 
@@ -257,43 +256,43 @@ Handler for reply_with_file(), used by go(). DO NOT CALL THIS METHOD DIRECTLY.
 sub do_reply_with_file {
 	my ($self, $fileHash) = @_;
 	my $r = $self->r;
-	
+
 	my $type = $fileHash->{type};
 	my $source = $fileHash->{source};
 	my $name = $fileHash->{name};
 	my $delete_after = $fileHash->{delete_after};
-	
+
 	# if there was a problem, we return here and let go() worry about sending the reply
 	return MP2 ? Apache2::Const::NOT_FOUND : Apache::Constants::NOT_FOUND unless -e $source;
 	return MP2 ? Apache2::Const::FORBIDDEN : Apache::Constants::FORBIDDEN unless -r $source;
-	
+
 	my $fh;
 	if (!MP2) {
 		# open the file now, so we can send the proper error status is we fail
 		open $fh, "<", $source or return Apache::Constants::SERVER_ERROR;
 	}
-	
+
 	# send our custom HTTP header
 	$r->content_type($type);
 	$r->headers_out->{"Content-Disposition"} = "attachment; filename=\"$name\"";
 	$r->send_http_header unless MP2;
-	
+
 	# send the file
 	if (MP2) {
 		$r->sendfile($source);
 	} else {
 		$r->send_fd($fh);
 	}
-	
+
 	if (!MP2) {
 		# close the file and go home
 		close $fh;
 	}
-	
+
 	if ($delete_after) {
 		unlink $source or warn "failed to unlink $source after sending: $!";
 	}
-	
+
 	return; # (see comment on return statement in do_reply_with_redirect, below.)
 }
 
@@ -306,17 +305,17 @@ Handler for reply_with_redirect(), used by go(). DO NOT CALL THIS METHOD DIRECTL
 sub do_reply_with_redirect {
 	my ($self, $url) = @_;
 	my $r = $self->r;
-	
+
 	$r->status(MP2 ? Apache2::Const::REDIRECT : Apache::Constants::REDIRECT);
 	$r->headers_out->{"Location"} = $url;
 	$r->send_http_header unless MP2;
-	
+
 	return; # we need to explicitly return noting here, otherwise we return $url under Apache2.
 	        # the return value from the mod_perl handler is used to set the HTTP status code,
 	        # but we're setting it explicitly above. i think we should dispense with setting it
 	        # with the return value altogether, and always do it with $r->status. the other way
 	        # is too oblique and error-prone. this is probably a FIXME.
-	        # 
+	        #
 	        # Apache::WeBWorK::handler always returns the value it got from WeBWorK::dispatch
 	        # WeBWorK::dispatch always returns the value it got from WW::ContentGenerator::go
 	        # WW::ContentGenerator::go works like this:
@@ -358,7 +357,7 @@ pre_header_initialize().
 sub reply_with_file {
 	my ($self, $type, $source, $name, $delete_after) = @_;
 	$delete_after ||= "";
-	
+
 	$self->{reply_with_file} = {
 		type => $type,
 		source => $source,
@@ -379,7 +378,7 @@ pre_header_initialize().
 
 sub reply_with_redirect {
 	my ($self, $url) = @_;
-	
+
 	$self->{reply_with_redirect} = $url;
 }
 
@@ -395,9 +394,9 @@ Must be called before the message() template escape is invoked.
 
 
 sub addmessage {
-    #addmessages takes html so we use htmlscrubber to get rid of 
+    #addmessages takes html so we use htmlscrubber to get rid of
     # any scripts or html comments.  However, we leave everything else
-    # by default. 
+    # by default.
 
 	my ($self, $message) = @_;
 	return unless defined($message);
@@ -445,11 +444,11 @@ sub addbadmessage {
 }
 
 =item prepare_activity_entry()
-                                                                                
+
 Prepare a string to be sent to the activity log, if it is turned on.
 This can be overriden by different modules.
-                                                                                
-=cut                                                                            
+
+=cut
 
 
 sub prepare_activity_entry {
@@ -498,7 +497,7 @@ type.
 sub header {
 	my $self = shift;
 	my $r = $self->r;
-	
+
 	$r->content_type("text/html; charset=utf-8");
 	$r->send_http_header unless MP2;
 	return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
@@ -517,49 +516,61 @@ HTTP header is sent but before any content is sent.
 
 =item output_course_lang_and_dir()
 
-Defined in this package.
+Output the LANG and DIR tags in the main HTML tag of a generated web page when
+a template files calls this function.
 
-Sets the LANG attribute and when needed the DIR attribute based
-on the language set in the course configuration.
-
-The intended use is to set these tags in the main HTML tag of the generated
-web page when the template files calls this function.
-
-It selects the language based on the setting in the course configuration
-file (when it is set) and otherwise defaults back to
-	lang="en-US"
-which was the old hard-coded setting.
-
-When the language chosen is a known right to left language, it will also set
-the DIR attribute to "rtl". Currently, only Hebrew ("heb" or "he") and
-Arabic ("ar") trigger the RTL direction setting.
+This calls WeBWorK::Utils::LanguageAndDirection::get_lang_and_dir.
 
 =cut
 
 sub output_course_lang_and_dir{
-        my $self = shift;
-        my $master_lang_setting = "lang=\"en-US\""; # default setting
-        my $master_dir_setting  = "";               # default is NOT set
+	my $self = shift;
+	print WeBWorK::Utils::LanguageAndDirection::get_lang_and_dir($self->r->ce->{language});
+	return "";
+}
 
-        my $ce_lang = $self->r->ce->{language};
+=item webwork_logo()
 
-        if ( $ce_lang eq "en" ) {
-          $master_lang_setting = "lang=\"en-US\""; # as in default
-        } elsif ( $ce_lang =~ /^he/i ) { # supports also the current "heb" option
-          # Hebrew - requires RTL direction
-          $master_lang_setting = "lang=\"he\""; # Hebrew
-          $master_dir_setting  = "dir=\"rtl\""; # RTL
-        } elsif ( $ce_lang =~ /^ar/i ) {
-          # Hebrew - requires RTL direction
-          $master_lang_setting = "lang=\"ar\""; # Arabic
-          $master_dir_setting  = "dir=\"rtl\""; # RTL
-        } else {
-          # use the language setting of the course, with NO direction setting
-          $master_lang_setting = "lang=\"${ce_lang}\"";
-        }
+Create the link to the webwork installation landing page with a logo and alt text
 
-        print "$master_lang_setting $master_dir_setting";
-        return "";
+=cut
+
+sub webwork_logo {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	my $htdocs = $ce->{webwork_htdocs_url};
+	print CGI::a(
+		{href => $ce->{webwork_url}},
+		CGI::img({
+			src => "$htdocs/themes/$theme/images/webwork_logo.svg",
+			alt => $r->maketext("to courses page")
+		},'')
+	);
+	return "";
+}
+
+=item institution_logo()
+
+Create the link to the host institution with a logo and alt text
+
+=cut
+
+sub institution_logo {
+	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	my $htdocs = $ce->{webwork_htdocs_url};
+	print CGI::a(
+		{href => $ce->{institutionURL}},
+		CGI::img({
+			src => "$htdocs/themes/$theme/images/" . $ce->{institutionLogo},
+			alt => $r->maketext("to [_1] main web site", $ce->{institutionName})
+		},'')
+	);
+	return "";
 }
 
 =item content()
@@ -581,7 +592,7 @@ sub content {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	
+
 	my $themesDir = $ce->{webworkDirs}{themes};
 	my $theme = $r->param("theme") || $ce->{defaultTheme};
 	$theme = $ce->{defaultTheme} if $theme =~ m!(?:^|/)\.\.(?:/|$)!;
@@ -601,10 +612,10 @@ sub content {
 	   		"simple.conf and on the course configuration page.\n"
 	   	} else {
 			$theme = HTML::Entities::encode_entities($theme);
-	   		die "Neither the theme $theme nor the defaultTheme math4 are available.  ".  
+	   		die "Neither the theme $theme nor the defaultTheme math4 are available.  ".
 	   		"Please notify your site administrator that the structure of the ".
 	   		"themes directory needs attention.";
-	   	
+
 	   	}
 	}
 	template($templateFile, $self);
@@ -666,10 +677,10 @@ sub links {
 	my $authen = $r->authen;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
-	
+
 	# we don't currently have any links to display if the user's not logged in. this may change, though.
 	#return "" unless $authen->was_verified;
-	
+
 	# grab some interesting data from the request
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param('user');
@@ -682,7 +693,7 @@ sub links {
 	my $prettyAchievementID = $achievementID;
 	$prettySetID =~ s/_/ /g if defined $prettySetID;
 	$prettyAchievementID =~ s/_/ /g if defined $prettyAchievementID;
-	
+
 	my $prettyProblemID = $problemID;
 
 	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
@@ -700,25 +711,25 @@ sub links {
 			$problemID = undef;
 		}
 	}
-	
+
 	# experimental subroutine for generating links, to clean up the rest of the
 	# code. ignore for now. (this is a closure over $self.)
 	my $makelink = sub {
 		my ($module, %options) = @_;
-		
+
 		my $urlpath_args = $options{urlpath_args} || {};
 		my $systemlink_args = $options{systemlink_args} || {};
 		my $text = HTML::Entities::encode_entities($options{text});
 		my $active = $options{active};
 		my %target = ($options{target} ? (target => $options{target}) : ());
-		
+
 		my $new_urlpath = $self->r->urlpath->newFromModule($module, $r, %$urlpath_args);
 		my $new_systemlink = $self->systemLink($new_urlpath, %$systemlink_args);
 
 		defined $text or $text = $new_urlpath->name;  #too clever
-		
-		
-		# try to set $active automatically by comparing 
+
+
+		# try to set $active automatically by comparing
 		if (not defined $active) {
 			if ($urlpath->module eq $new_urlpath->module) {
 				my @args = sort keys %{{$urlpath->args}};
@@ -736,7 +747,7 @@ sub links {
 				$active = 0;
 			}
 		}
-		
+
 		my $new_anchor;
 		if ($active) {
 			# add active class for current location
@@ -744,14 +755,14 @@ sub links {
 		} else {
 			$new_anchor = CGI::a({href=>$new_systemlink, %target}, "$text");
 		}
-		
+
 		return $new_anchor;
 	};
-	
+
 	# to make things more concise
 	my $pfx = "WeBWorK::ContentGenerator::";
 	my %args = ( courseID => $courseID );
-	
+
 	# we'd like to preserve displayMode and showOldAnswers between pages, and we
 	# don't have a general way of preserving non-authen params between requests,
 	# so here is the hack:
@@ -769,7 +780,7 @@ sub links {
 	# always this value before using it.
 	my %systemlink_args;
 	$systemlink_args{params} = \%params if %params;
-	
+
 	print CGI::start_ul();
 	print CGI::start_li({class => "nav-header"});
 	print CGI::h2($r->maketext("Main Menu"));
@@ -777,7 +788,7 @@ sub links {
 	print CGI::start_li(); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
 	print CGI::end_li(); # end Courses
-	
+
 	if (defined $courseID) {
 		if ($authen->was_verified) {
 			print CGI::start_li(); # Homework Sets
@@ -808,7 +819,7 @@ sub links {
 				    print CGI::start_li();
 					print CGI::start_ul();
 					print CGI::start_li(); # $problemID
-					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);					
+					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
 				    print CGI::end_li();
@@ -817,92 +828,54 @@ sub links {
 			    print CGI::end_li(); # end Homework Sets
 			}
 
-			
+
 				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-					
+
 			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-			
+
 			if ($ce->{achievementsEnabled}) {
-			    print CGI::li(&$makelink("${pfx}Achievements", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args)); 
+			    print CGI::li(&$makelink("${pfx}Achievements", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 
 			}
 
 			if ($authz->hasPermissions($userID, "access_instructor_tools")) {
 				$pfx .= "Instructor::";
-				
+
 				print CGI::start_li(); # Instructor Tools
 				print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				print CGI::end_li();
 				print CGI::start_li();
 				print CGI::start_ul();
-				
-                #class list editor
-				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor1};
-				print CGI::li(&$makelink("${pfx}UserList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{classlisteditor2};
-				
-				# Homework Set Editor
-				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor1};
 
-				print CGI::li(&$makelink("${pfx}ProblemSetList2", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{homeworkseteditor2};
+                #class list editor
+				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+
+				# Homework Set Editor
+				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
 				    print CGI::start_li();
 				    print CGI::start_ul();
-				    if ($ce->{showeditors}->{problemsetdetail1}) {
-					print CGI::start_li(); # $setID
-					print &$makelink("${pfx}ProblemSetDetail", text=>$r->maketext("[_1] (old editor)", $prettySetID), urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
-                     		        print CGI::end_li();
-				    }
 
-				    if ($ce->{showeditors}->{problemsetdetail2}) {
-					print CGI::start_li(); # $setID (2)
-					print &$makelink("${pfx}ProblemSetDetail2", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
-                     		        print CGI::end_li();
-				    }
+					print CGI::start_li();
+					print &$makelink("${pfx}ProblemSetDetail", text => "$prettySetID", urlpath_args => { %args, setID => $setID }, systemlink_args => \%systemlink_args);
+					print CGI::end_li();
 
 					if (defined $problemID) {
 					    print CGI::start_li();
 					    print CGI::start_ul();
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>$r->maketext("[_1] (old editor)", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor1"))
-							if $ce->{showeditors}->{pgproblemeditor1};
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor2", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor2"))
-							if $ce->{showeditors}->{pgproblemeditor2};;
-					    
-					    print CGI::li(&$makelink("${pfx}PGProblemEditor3", text=>"--$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor3"))
-						if $ce->{showeditors}->{pgproblemeditor3};;
-	
-					    print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-						if $ce->{showeditors}->{simplepgeditor};;
+						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"));
 					    print CGI::end_ul();
 					    print CGI::end_li();
 					}
-					if (defined $problemID) {
-					    print CGI::start_li();
-						print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}SimplePGEditor", text=>"----$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"Simple_Editor"))
-							if $ce->{showeditors}->{simplepgeditor};;
-						print CGI::end_ul();
-					    print CGI::end_li();
-					}
-					
+
 					print CGI::end_ul();
 				    print CGI::end_li();
 				}
-				
-				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser1};
-				print CGI::li(&$makelink("${pfx}SetMaker2", text=>$r->maketext("Library Browser 2"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser2};
-				print CGI::li(&$makelink("${pfx}SetMaker3", text=>$r->maketext("Library Browser 3"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowser3};
-				print CGI::li(&$makelink("${pfx}SetMakernojs", text=>$r->maketext("Orig. Lib. Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args))
-					if $ce->{showeditors}->{librarybrowsernojs};
-#print CGI::li(&$makelink("${pfx}Compare", text=>"Compare", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+
+				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+
 				print CGI::start_li(); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
@@ -920,7 +893,7 @@ sub links {
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Stats
-				
+
 				print CGI::start_li(); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
@@ -938,11 +911,11 @@ sub links {
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Student Progress
-				
+
 				if ($authz->hasPermissions($userID, "score_sets")) {
 					print CGI::li(&$makelink("${pfx}Scoring", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				
+
 				#Show achievement editor for instructors
 				if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, "edit_achievements")) {
 				    print CGI::li(&$makelink("${pfx}AchievementList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
@@ -954,21 +927,22 @@ sub links {
 					print CGI::end_ul();
 					print CGI::end_li();
 				    }
-				    
+
 				}
 
 				if ($authz->hasPermissions($userID, "send_mail")) {
 					print CGI::li(&$makelink("${pfx}SendMail", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				
+
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
 					print CGI::li(&$makelink("${pfx}FileManager", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				
+
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
 					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 				}
-				print CGI::li({}, $self->helpMacro('instructor_links',$r->maketext('Help')),$self->help() );
+				print CGI::li({}, $self->helpMacro('instructor_links', $r->maketext('Help')));
+				print CGI::li({}, $self->help());
 				if ($authz->hasPermissions($userID, "manage_course_files") # show this only on the FileManager page
 				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
 				    my %augmentedSystemLinks = %systemlink_args;
@@ -978,19 +952,19 @@ sub links {
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools
 			} # /* access_instructor_tools */
-			
+
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
 				print CGI::li({class=>'divider', 'aria-hidden'=>'true'},"");
 				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
 			}
-	
+
 		} # /* authentication was_verified */
-				
+
 	} # /* defined $courseID */
 
 	print CGI::end_ul();
-		
+
 
 	return "";
 }
@@ -1010,30 +984,35 @@ sub loginstatus {
 	my $authen = $r->authen;
 	my $urlpath = $r->urlpath;
 	#This will contain any extra parameters which are needed to make
-	# the page function properly.  This will normally be empty.  
+	# the page function properly.  This will normally be empty.
 	my $extraStopActingParams = $r->{extraStopActingParams};
 
 	if ($authen and $authen->was_verified) {
 		my $courseID = $urlpath->arg("courseID");
 		my $userID = $r->param("user");
 		my $eUserID = $r->param("effectiveUser");
-		
+
 		$extraStopActingParams->{effectiveUser} = $userID;
 		my $stopActingURL = $self->systemLink($urlpath, # current path
 			params=>$extraStopActingParams);
 		my $logoutURL = $self->systemLink($urlpath->newFromModule(__PACKAGE__ . "::Logout", $r, courseID => $courseID));
-		
+
+		my $signOutIcon = CGI::i({ class=> "icon fas fa-sign-out-alt", aria_hidden => "true", data_alt => "signout" }, "");
+
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) .
+				CGI::a({ href => $logoutURL, class => "btn btn-small" }, $r->maketext("Log Out") . " " . $signOutIcon);
 		} else {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) . CGI::a({href=>$logoutURL}, $r->maketext("Log Out"));
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) .
+				CGI::a({ href => $logoutURL, class => "btn btn-small" }, $r->maketext("Log Out") . " " . $signOutIcon);
 			print CGI::br();
-			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID)) . CGI::a({href=>$stopActingURL}, $r->maketext("Stop Acting"));
+			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID)) .
+				CGI::a({ href => $stopActingURL, class => "btn btn-small" }, $r->maketext("Stop Acting") . " " . $signOutIcon);
 		}
 	} else {
 		print $r->maketext("Not logged in.");
 	}
-	
+
 	return "";
 }
 
@@ -1095,9 +1074,9 @@ associated with the current request.
 sub path {
 	my ($self, $args) = @_;
 	my $r = $self->r;
-	
+
 	my @path;
-	
+
 	my $urlpath = $r->urlpath;
 	do {
 	    my $name = $urlpath->name;
@@ -1113,13 +1092,13 @@ sub path {
 	    }
 	    unshift @path, $name, $r->location . $urlpath->path;
 	} while ($urlpath = $urlpath->parent);
-	
+
 	$path[$#path] = ""; # we don't want the last path element to be a link
-	
+
 	#print "\n<!-- BEGIN " . __PACKAGE__ . "::path -->\n";
 	print $self->pathMacro($args, @path);
 	#print "<!-- END " . __PACKAGE__ . "::path -->\n";
-	
+
 	return "";
 }
 
@@ -1136,7 +1115,7 @@ Print links to siblings of the current object.
 =item footer()
 
 	-by ghe3
-	
+
 	combines timestamp() and other elements of the footer, including the copyright, into one output subroutine,
 =cut
 
@@ -1149,15 +1128,15 @@ sub footer(){
 	my $theme = $ce->{defaultTheme}||"unknown -- set defaultTheme in localOverides.conf";
 	my $copyright_years = $ce->{WW_COPYRIGHT_YEARS}||"1996-2019";
 	print CGI::div({-id=>"last-modified"}, $r->maketext("Page generated at [_1]", timestamp($self)));
-	print CGI::div({-id=>"copyright"}, $r->maketext("WeBWorK &copy; [_1]| theme: [_2] | ww_version: [_3] | pg_version [_4]|", 
-	                $copyright_years,$theme, $ww_version, $pg_version), 
-	                CGI::a({-href=>"http://webwork.maa.org/"}, 
+	print CGI::div({-id=>"copyright"}, $r->maketext("WeBWorK &copy; [_1]| theme: [_2] | ww_version: [_3] | pg_version [_4]|",
+	                $copyright_years,$theme, $ww_version, $pg_version),
+	                CGI::a({-href=>"http://webwork.maa.org/"},
 	                $r->maketext("The WeBWorK Project"), ));
 
 	return ""
 }
 
- 
+
 =item timestamp()
 
 Defined in this package.
@@ -1197,13 +1176,13 @@ $self->{status_message}, if it is present.
 
 sub message {
 	my ($self) = @_;
-	
+
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
 	print $self->{status_message}
 	    if exists $self->{status_message};
-	
+
 	print "<!-- END " . __PACKAGE__ . "::message -->\n";
-	
+
 	return "";
 }
 
@@ -1226,7 +1205,7 @@ sub title {
 	my $urlpath = $r->urlpath;
 
 	# If the urlpath name is the courseID, and if the course has
-	# a course title then display that instead. 
+	# a course title then display that instead.
 	if (defined($urlpath->arg("courseID")) &&
 	    $urlpath->name eq $urlpath->arg("courseID") &&
 	    $db->settingExists('courseTitle')) {
@@ -1240,7 +1219,7 @@ sub title {
 	    print $name;
 	    #print "<!-- END " . __PACKAGE__ . "::title -->\n";
 	}
-	
+
 	return "";
 }
 
@@ -1261,10 +1240,10 @@ sub warnings {
 	print CGI::p("Entering ContentGenerator::warnings") if $TRACE_WARNINGS;
 	print "\n<!-- BEGIN " . __PACKAGE__ . "::warnings -->\n";
 	my $warnings = MP2 ? $r->notes->get("warnings") : $r->notes("warnings");
-	$warnings = Encode::decode_utf8($warnings);
+	$warnings = Encode::decode("UTF-8",$warnings);
 	print $self->warningOutput($warnings) if $warnings;
 	print "<!-- END " . __PACKAGE__ . "::warnings -->\n";
-	
+
 	return "";
 }
 
@@ -1309,7 +1288,7 @@ sub url {
 	my $ce = $self->r->ce;
 	my $type = $args->{type};
 	my $name = $args->{name};
-	
+
 	if ($type eq "webwork") {
 	    # we have to build this here (and not in say defaults.conf) because
 	    # defaultTheme will chage as late as simple.conf
@@ -1355,7 +1334,7 @@ template:
 
  sub if_can {
  	my ($self, $arg) = @_;
- 	
+
  	if ($arg eq "floobar") {
  		return 0;
  	} else {
@@ -1367,7 +1346,7 @@ template:
 
 sub if_can {
 	my ($self, $arg) = @_;
-	
+
 	return $self->can($arg) ? 1 : 0;
 }
 
@@ -1390,7 +1369,7 @@ retrieve the result of the last call to WeBWorK::Authen::verify().
 
 sub if_loggedin {
 	my ($self, $arg) = @_;
-	
+
 	#return $arg;
 	return 0 unless $self->r->authen;
 	return $self->r->authen->was_verified() ? $arg : !$arg;
@@ -1409,7 +1388,7 @@ redefined to handle that variance:
 
  sub if_message {
  	my ($self, $arg) = @_;
- 	
+
  	my $status = $self->{processReturnValue};
  	if ($status != 0) {
  		return $arg;
@@ -1422,7 +1401,7 @@ redefined to handle that variance:
 
 sub if_message {
 	my ($self, $arg) = @_;
-	
+
 	if (exists $self->{status_message}) {
 		return $arg;
 	} else {
@@ -1445,8 +1424,8 @@ sub if_warnings {
 	my ($self, $arg) = @_;
 	my $r = $self->r;
 
-	if ( (MP2 ? $r->notes->get("warnings") : $r->notes("warnings")) 
-	     or ($self->{pgerrors}) )  
+	if ( (MP2 ? $r->notes->get("warnings") : $r->notes("warnings"))
+	     or ($self->{pgerrors}) )
 	{
 		return $arg;
 	} else {
@@ -1513,7 +1492,7 @@ sub pathMacro {
 	my $r = $self->r;
 	my %args = %$args;
 	$args{style} = "text" if $args{textonly};
-	
+
 	my $auth = $self->url_authen_args;
 	my $sep;
 	if ($args{style} eq "image") {
@@ -1521,7 +1500,7 @@ sub pathMacro {
 	} else {
 		$sep = $args{text};
 	}
-	
+
 	my @result;
 	while (@path) {
 		my $name = shift @path;
@@ -1541,7 +1520,7 @@ sub pathMacro {
 			}
 		}
 	}
-	
+
 	return join($sep, @result), "\n";
 }
 
@@ -1564,10 +1543,10 @@ we have systemLink().
 
 sub siblingsMacro {
 	my ($self, @siblings) = @_;
-	
+
 	my $auth = $self->url_authen_args;
 	my $sep = CGI::br();
-	
+
 	my @result;
 	while (@siblings) {
 		my $name = shift @siblings;
@@ -1578,7 +1557,7 @@ sub siblingsMacro {
 			? CGI::span( {id=>$id}, CGI::a({-href=>"$url?$auth"}, $name) )
 			: CGI::span( {id=>$id},$name );
 	}
-	
+
 	return join($sep, @result) . "\n";
 }
 
@@ -1619,7 +1598,7 @@ sub navMacro {
 		  ? CGI::a({-href=>"$url?$auth$tail", -class=>"nav_button"}, $html)
 		  : CGI::span({-class=>"gray_button"}, $html);
 	      }
-	
+
 	return join($args{separator}, @result) . "\n";
 }
 
@@ -1631,20 +1610,22 @@ helpFiles  directory.  Currently the link is made to the file $name.html
 =cut
 
 sub helpMacro {
-    my $self = shift;
+	my $self = shift;
 	my $name = shift;
-	my $label  = shift; #optional
+	my $label = shift; #optional
+
 	my $ce   = $self->r->ce;
-	my $basePath = $ce->{webworkDirs}->{local_help};
-	$name        = 'no_help' unless -e "$basePath/$name.html";
-	my $path     = "$basePath/$name.html";
-	my $url = $ce->{webworkURLs}->{local_help}."/$name.html";
-	my $imageURL = $ce->{webworkURLs}->{htdocs}."/images/question_mark.png";
-	$label    = CGI::img({src=>$imageURL, alt=>" ? "}) unless defined $label;
-	return CGI::a({href      => $url,
-	               target    => 'ww_help',
-	               onclick   => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=yes')"},
-	               $label);
+	$name = 'no_help' unless -e "$ce->{webworkDirs}{local_help}/$name.html";
+
+	return CGI::a({
+			href => $ce->{webworkURLs}{local_help} . "/$name.html",
+			target => 'ww_help',
+			# FIXME: Replace inline javascript
+			onclick => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=yes')"
+		},
+		defined($label) ? $label
+		: CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => " ? " }, '')
+	);
 }
 
 =item sub optionsMacro
@@ -1670,10 +1651,10 @@ sub feedbackMacro {
 	my $r = $self->r;
 	my $authz = $r->authz;
 	my $userID = $r->param("user");
-	
+
 	# don't do anything unless the user has permission to
 	return "" unless $authz->hasPermissions($userID, "submit_feedback");
-	
+
 	my $feedbackURL = $r->ce->{courseURLs}{feedbackURL};
 	my $feedbackFormURL = $r->ce->{courseURLs}{feedbackFormURL};
 	if (defined $feedbackURL and $feedbackURL ne "") {
@@ -1691,26 +1672,26 @@ sub feedbackMacro_email {
 	my $ce = $r->ce;
 	my $urlpath = $r->urlpath;
 	my $courseID = $urlpath->arg("courseID");
-	
+
 	# feedback form url
 	my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",  $r, courseID => $courseID);
 	my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
-	
+
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackURL) . "\n";
 	#This is being used on forms with hidden_authen_fields already included
 	# in many pages so we need to change the fields to be hidden
 	my $hiddenFields = $self->hidden_authen_fields;
 	$hiddenFields =~ s/\"hidden_/\"email-hidden_/g;
 	$result .=  $hiddenFields."\n";
-	
+
 	while (my ($key, $value) = each %params) {
 	    next if $key eq 'pg_object';    # not used in internal feedback mechanism
 		$result .= CGI::hidden($key, $value) . "\n";
 	}
 	$result .= CGI::p(CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
 	$result .= CGI::end_form() . "\n";
-	
+
 	return $result;
 }
 
@@ -1718,19 +1699,17 @@ sub feedbackMacro_form {
 	my ($self, $feedbackFormURL, %params) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $urlpath = $r->urlpath;
-	my $courseID = $urlpath->arg("courseID");
-	
+
 	# feedback form url
 	my $feedbackName = $r->maketext($ce->{feedback_button_name}) || $r->maketext("Email instructor");
-	
+
 	my $result = CGI::start_form(-method=>"POST", -action=>$feedbackFormURL,-target=>"WW_info") . "\n";
 
-	$result .= $self->hidden_authen_fields . "\n";	
+	$result .= $self->hidden_authen_fields . "\n";
 
 	while (my ($key, $value) = each %params) {
 	    if ($key eq 'pg_object') {
-	        my $tmp = $value->{body_text}; 
+	        my $tmp = $value->{body_text};
 	        $tmp .= CGI::p(CGI::b("Note: "). CGI::i($value->{result}->{msg})) if $value->{result}->{msg} ;
 	        $result .= CGI::hidden($key, encode_base64($tmp, "") );
 	    } else {
@@ -1739,7 +1718,7 @@ sub feedbackMacro_form {
 	}
 	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
 	$result .= CGI::end_form() . "\n";
-	
+
 	return $result;
 }
 
@@ -1773,16 +1752,16 @@ list is empty), taking data from the current request.
 sub hidden_fields {
 	my ($self, @fields) = @_;
 	my $r = $self->r;
-	
+
 	@fields = $r->param unless @fields;
-	
+
 	my $html = "";
 	foreach my $param (@fields) {
 	    my @values = $r->param($param);
 	    foreach my $value (@values) {
 		next unless defined($value);
-#		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI) 
-		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI) 
+#		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI)
+		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI)
 	    }
 	}
 
@@ -1798,7 +1777,7 @@ authentication.
 
 sub hidden_authen_fields {
 	my ($self) = @_;
-	
+
 	return $self->hidden_fields("user", "effectiveUser", "key", "theme");
 }
 
@@ -1828,9 +1807,9 @@ fields.
 
 sub hidden_state_fields {
 	my ($self) = @_;
-	
+
 	return $self->hidden_authen_fields();
-	
+
 	# other things that may be state data:
 	#$self->hidden_fields("displayMode", "showOldAnswers", "showCorrectAnswers", "showHints", "showSolutions");
 }
@@ -1846,9 +1825,9 @@ the current request.
 sub url_args {
 	my ($self, @fields) = @_;
 	my $r = $self->r;
-	
+
 	@fields = $r->param unless @fields;
-	
+
 	my @pairs;
 	foreach my $param (@fields) {
 		my @values = $r->param($param);
@@ -1856,7 +1835,7 @@ sub url_args {
 			push @pairs, uri_escape_utf8($param) . "=" . uri_escape($value);
 		}
 	}
-	
+
 	return join("&", @pairs);
 }
 
@@ -1869,8 +1848,16 @@ authentication.
 
 sub url_authen_args {
 	my ($self) = @_;
-	
-	return $self->url_args("user", "effectiveUser", "key", "theme");
+	my $ce = $self->r->ce;
+
+	# When cookie based session management is in use, there should be no need
+	# to reveal the user and key in the URL. Putting it there makes session
+	# hijacking easier, in particular should a student share such a URL.
+	if ( $ce->{session_management_via} eq "session_cookie" ) {
+		return $self->url_args("effectiveUser", "theme");
+	} else {
+		return $self->url_args("user", "effectiveUser", "key", "theme");
+	}
 }
 
 =item url_state_args()
@@ -1882,9 +1869,9 @@ state. Currently includes authentication fields and display option fields.
 
 sub url_state_args {
 	my ($self) = @_;
-	
+
 	return $self->url_authen_args;
-	
+
 	# other things that may be state data:
 	#$self->url_args("displayMode", "showOldAnswers", "showCorrectAnswers", "showHints", "showSolutions");
 }
@@ -1900,7 +1887,7 @@ sub url_state_args {
 #
 #sub url_display_args {
 #	my ($self) = @_;
-#	
+#
 #	return $self->url_args("displayMode", "showOldAnswer");
 #}
 
@@ -1919,7 +1906,7 @@ sub url_state_args {
 #	my ($self, $begin, $middle, $end, $qr_omit) = @_;
 #	my $r=$self->r;
 #	my @form_data = $r->param;
-#	
+#
 #	my $return_string = "";
 #	foreach my $name (@form_data) {
 #		next if ($qr_omit and $name =~ /$qr_omit/);
@@ -1933,7 +1920,7 @@ sub url_state_args {
 #			$return_string .= "$begin$name$middle$value$end";
 #		}
 #	}
-#	
+#
 #	return $return_string;
 #}
 
@@ -1990,7 +1977,7 @@ via email.
 sub systemLink {
 	my ($self, $urlpath, %options) = @_;
 	my $r = $self->r;
-	
+
 	my %params = ();
 	if (exists $options{params}) {
 		if (ref $options{params} eq "HASH") {
@@ -2002,24 +1989,35 @@ sub systemLink {
 			croak "option 'params' is not a hashref or an arrayref";
 		}
 	}
-	
+
 	my $authen = exists $options{authen} ? $options{authen} : 1;
 	if ($authen) {
-		$params{user}          = undef unless exists $params{user};
+
+		# When cookie based session management is in use, there should be no need
+		# to reveal the user and key in the URL. Putting it there makes session
+		# hijacking easier, in particular should a student share such a URL.
+
+		if ( $r->ce->{session_management_via} eq "session_cookie" ) {
+			undef( $params{user} ) if exists $params{user};
+			undef( $params{key} )  if exists $params{key};
+		} else {
+			$params{user}          = undef unless exists $params{user};
+			$params{key}           = undef unless exists $params{key};
+		}
+
 		$params{effectiveUser} = undef unless exists $params{effectiveUser};
-		$params{key}           = undef unless exists $params{key};
 		$params{theme}         = undef unless exists $params{theme};
 	}
-	
+
 	my $url;
-	
+
 	$url = $r->ce->{apache_root_url} if $options{use_abs_url};
 	$url .= $r->location . $urlpath->path;
 	my $first = 1;
-	
+
 	foreach my $name (keys %params) {
 		my $value = $params{$name};
-		
+
 		my @values;
 		if (defined $value) {
 			if (ref $value eq "ARRAY") {
@@ -2040,7 +2038,7 @@ sub systemLink {
 		    warn "Parameters are ", join("|",$r->param());
 
 		}
-		 
+
 		if (@values) {
 			if ($first) {
 				$url .= "?";
@@ -2051,7 +2049,7 @@ sub systemLink {
 			$url .= join "&", map { "$name=".HTML::Entities::encode_entities($_) } @values;
 		}
 	}
-	
+
 	return $url;
 }
 
@@ -2134,7 +2132,7 @@ sub errorOutput($$$) {
 	if (ref($details) =~ /SCALAR/i) {
 		$details = [$$details];
 	} elsif (ref($details) =~/ARRAY/i) {
-		# no change needed	
+		# no change needed
 	} else {
 	   $details = [$details];
 	}
@@ -2146,13 +2144,13 @@ sub errorOutput($$$) {
 
 		CGI::p(CGI::code($error)),
 		CGI::h3("Error details"),
-		
+
 		CGI::start_code(), CGI::start_p(),
 		@{ $details },
-		#CGI::code(CGI::p(@expandedDetails)), 
+		#CGI::code(CGI::p(@expandedDetails)),
 		# not using inclusive CGI calls here saves about 30Meg of memory!
 		CGI::end_p(),CGI::end_code(),
-		
+
 		CGI::h3($r->maketext("Request information")),
 		CGI::table({border=>"1"},
 			CGI::Tr({},CGI::td($r->maketext("Time")), CGI::td($time)),
@@ -2162,8 +2160,8 @@ sub errorOutput($$$) {
 				CGI::table($headers),
 			)),
 		),
-	;  
-	
+	;
+
 }
 
 =item warningMessage
@@ -2175,10 +2173,10 @@ Used to print out a generic warning message at the top of the page
 sub warningMessage {
   my $self = shift;
   my $r = $self->r;
-  
+
   return CGI::b($r->maketext("Warning")), ' -- ',
     $r->maketext("There may be something wrong with this question. Please inform your instructor including the warning messages below.");
-  
+
 }
 
 
@@ -2206,15 +2204,15 @@ sub warningOutput($$) {
 		'*' => 1,
 	    }
 	    );
-	
+
 	foreach my $warning (@warnings) {
             # Since these warnings have html they look better scrubbed
-	    #$warning = HTML::Entities::encode_entities($warning);  
+	    #$warning = HTML::Entities::encode_entities($warning);
 	    $warning = $scrubber->scrub($warning);
 	    $warning = CGI::li(CGI::code($warning));
 	}
 	$warnings = join("", @warnings);
-	
+
 	my $time = time2str("%a %b %d %H:%M:%S %Y", time);
 	my $method = $r->method;
 	my $uri = $r->uri;
@@ -2222,7 +2220,7 @@ sub warningOutput($$) {
 	#	my %headers = $r->headers_in;
 	#	join("", map { CGI::Tr(CGI::td(CGI::small($_)), CGI::td(CGI::small($headers{$_}))) } keys %headers);
 	#};
-	
+
 	return
 		CGI::h2($r->maketext("WeBWorK Warnings")),
 		CGI::p($r->maketext('WeBWorK has encountered warnings while processing your request. If this occured when viewing a problem, it was likely caused by an error or ambiguity in that problem. Otherwise, it may indicate a problem with the WeBWorK system itself. If you are a student, report these warnings to your professor to have them corrected. If you are a professor, please consult the warning output below for more information.')),
@@ -2286,8 +2284,6 @@ sub read_scoring_file {
 	return parse_scoring_file($self->r->ce->{courseDirs}{scoring}."/$fileName");
 }
 
-=back
-
 =item createEmailSenderTransportSMTP
 
 Wrapper that creates an Email::Sender::Transport::SMTP object
@@ -2317,13 +2313,15 @@ sub createEmailSenderTransportSMTP {
 			# debug => 1,
 		});
 	}
-# 		warn "port is ", $transport->port(); 
-# 		warn "ssl is ", $transport->ssl(); 
+# 		warn "port is ", $transport->port();
+# 		warn "ssl is ", $transport->ssl();
 # 		warn "tls_allowed is ", $ce->{mail}->{tls_allowed}//'';
 #         warn " smtpPort is set to ", $ce->{mail}->{smtpPort}//'';
-    
+
     return $transport;
 }
+=back
+
 =head1 AUTHOR
 
 Written by Dennis Lambe Jr., malsyned (at) math.rochester.edu and Sam Hathaway,

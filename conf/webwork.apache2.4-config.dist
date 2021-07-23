@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright Â© 2000-2010 The WeBWorK Project, http://openwebwork.sf.net/
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -40,6 +40,9 @@ ScriptAliasMatch /webwork2_course_files/([^/]*)/show-source.cgi/(.*) /opt/webwor
 PerlChildInitHandler "sub { srand }"
 
 PerlModule mod_perl2
+
+PerlPassEnv MIN_HTML_ERRORS
+PerlPassEnv JSON_ERROR_LOG
 
 <Perl>
 
@@ -90,6 +93,28 @@ $ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
 eval "use lib '$pg_dir/lib'"; die $@ if $@;
 $WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
 $ENV{PG_ROOT} = $pg_dir;
+
+#################################################################
+# Modify the manner in which errors are reported.
+# Uncommenting $ENV{MIN_HTML_ERRORS} = 1; will minimize the data provided
+#    on HTML error pages, which some security reviews request, as in particular
+#    the older output provided backtrace information which could help idenfify
+#    the code and version of the code being used on the server.
+#    The useful information will be in the Apache error.log file, with a UID
+#    displayed also in the HTML error page to help match up records.
+# Warning: The Apache error.log is available to system adminstrators but not to
+#    users with staff level accounts in the courses, so using the more secure
+#    settings requires more cooperation from the system administrators when
+#    debugging data is needed.
+# Uncommenting $ENV{JSON_ERROR_LOG} = 1; will change the output format in the
+#    Apache error.log file to be JSON based, which will make programmatic
+#    processing of the error reports easier, but can break the functionality
+#    of existing scripts which parse error.log.
+#################################################################
+
+#$ENV{MIN_HTML_ERRORS} = 1;
+#$ENV{JSON_ERROR_LOG} = 1;
+
 #################################################################
 # report server setup when child process starts up -- for example when restarting the server
 #################################################################
@@ -122,20 +147,6 @@ if (exists(($ce->{mail}->{smtpPort})) )  { # port not chosen automatically
 
 
 require Apache::WeBWorK; # force compilation of pretty much everything
-
-print "Check in with MAA site\n";
-system("ping -c1 -s100 webwork.maa.org "); # check MAA site
-print "End connectivity check\n";
-# this snippet checks the connectivity with the internet.
-
-# it also alerts MAA that a webwork site is starting up.
-# The MAA site runs the following command
-#   tcpdump -l icmp |grep 100 >tcpdump.txt 
-# to collect pings with packet length 108 (8 more bytes then sent)
-# icmp says listen for pings only. -l says to output tcpdump one line
-# a time. One of the items in the line is "length 108"
-
-# This stores the ip address of a webwork site each time it starts up.
 
 # At this point, the following configuration variables should be present for use
 # in wiring WeBWorK into Apache:
@@ -189,27 +200,27 @@ if ($webwork_url eq "") {
 ####################################################################
 # WebworkSOAP handlers (for integration with moodle)
 ####################################################################
- PerlModule WebworkSOAP
+#PerlModule WebworkSOAP
 
- # WEBWORK SOAP CONFIGURATION
- <Location /webwork2_rpc>
-         PerlHandler Apache::SOAP
-         SetHandler perl-script
-         PerlSetVar dispatch_to "WebworkSOAP"
-         PerlSetVar options "compress_threshold => 10000"
-         Require all granted
- </Location>
+# WEBWORK SOAP CONFIGURATION
+#<Location /webwork2_rpc>
+#        PerlHandler Apache::SOAP
+#        SetHandler perl-script
+#        PerlSetVar dispatch_to "WebworkSOAP"
+#        PerlSetVar options "compress_threshold => 10000"
+#        Require all granted
+#</Location>
 
 ####################################################################
 # WebworkSOAP WSDL HANDLER :: TO BE REPLACED WITH A FILE FOR PRODUCTION SERVERS
 ####################################################################
- <Location /webwork2_wsdl>
-         PerlSetVar dispatch_to "WebworkSOAP::WSDL"
-         PerlSetVar options "compress_threshold => 10000"
-         PerlHandler WebworkSOAP::WSDL
-         SetHandler perl-script
-         Require all granted
- </Location>
+#<Location /webwork2_wsdl>
+#        PerlSetVar dispatch_to "WebworkSOAP::WSDL"
+#        PerlSetVar options "compress_threshold => 10000"
+#        PerlHandler WebworkSOAP::WSDL
+#        SetHandler perl-script
+#        Require all granted
+#</Location>
 
 
 ####################################################################
@@ -229,6 +240,25 @@ PerlModule WebworkWebservice
         Require all granted
 </Location>
 
+########### For "raw" json format ###########
+# If a remote site is using this WW server to process WW problems
+# and embed them into web pages, the web browser might not permit
+# the WW problems to be displayed, as it violates security policy
+# to mix content from different originis without an explicit
+# directive from the WW server that it is safe.
+# Uncomment the following to set the header to enable Cross-Origin
+# Resource Sharing (CORS).
+# You will also need to enable headers via something like:
+# sudo a2enmod headers
+# to use this. 
+# This is not actually needed to use the client formats unless
+# they are accessed from a *remote* server. 
+
+#<IfModule mod_headers.c>
+#    <Location /webwork2/html2xml>
+#        Header set Access-Control-Allow-Origin "*"
+#    </Location>
+#</IfModule>
 
 
 ########## WebworkWebservice SOAP handler ##########

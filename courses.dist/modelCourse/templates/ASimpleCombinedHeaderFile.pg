@@ -7,7 +7,9 @@ DOCUMENT();
 loadMacros(
 	"PG.pl",
 	"PGbasicmacros.pl",
-
+	# "source.pl",
+	"PGcourse.pl",
+	"PGML.pl"
 );
 
 TEXT($BEGIN_ONE_COLUMN);
@@ -29,7 +31,7 @@ TEXT(MODES(TeX =>EV3(<<'EOT'),HTML=>""));
 %   {\large \bf { Section: \{protect_underbar($sectionName)\} } }
 \par
 \noindent{\large \bf {Assignment \{protect_underbar($setNumber)\}  closes $formatedDueDate}}
-\par\noindent \bigskip
+\par\noindent
 % Uncomment and edit the line below if this course has a web page. Note that this is a comment in TeX mode.
 %See the course web page for information http://yoururl/yourcourse
 
@@ -78,9 +80,9 @@ EOT
 #
 ####################################################
 
-BEGIN_TEXT
+BEGIN_PGML
 
-END_TEXT
+END_PGML
 
 
 TEXT($END_ONE_COLUMN);

@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/Authen.pm,v 1.63 2012/06/06 22:03:15 wheeler Exp $
-# 
+# Copyright &copy; 2000-2020 The WeBWorK Project, https://openwebworkorg.wordpress.com/
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -64,6 +63,9 @@ use Scalar::Util qw(weaken);
 
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
+use Caliper::Sensor;
+use Caliper::Entity;
+
 #####################
 ## WeBWorK-tr modification
 ## If GENERIC_ERROR_MESSAGE is constant, we can't translate it
@@ -74,7 +76,6 @@ our $GENERIC_ERROR_MESSAGE = "";  # define in new
 ## WeBWorK-tr end modification 
 #####################
 
-use constant COOKIE_LIFESPAN => 60*60*24*30; # 30 days
 #use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
 
 
@@ -248,6 +249,17 @@ sub verify {
 		}
 	}
 	
+	my $caliper_sensor = Caliper::Sensor->new($self->{r}->ce);
+	if ($caliper_sensor->caliperEnabled() && $result && $self->{initial_login}) {
+		my $login_event = {
+			'type' => 'SessionEvent',
+			'action' => 'LoggedIn',
+			'profile' => 'SessionProfile',
+			'object' => Caliper::Entity::webwork_app()
+		};
+		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
+	}
+
 	debug("END VERIFY");
 	debug("result $result");
 	return $result;
@@ -336,9 +348,9 @@ sub get_credentials {
 		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
 		my @GuestUsers = $db->getUsers(@guestUserIDs);
 		my @allowedGuestUsers = grep { $ce->status_abbrev_has_behavior($_->status, "allow_course_access") } @GuestUsers;
-		my @allowedGestUserIDs = map { $_->user_id } @allowedGuestUsers;
+		my @allowedGuestUserIDs = map { $_->user_id } @allowedGuestUsers;
 
-		foreach my $userID (List::Util::shuffle(@allowedGestUserIDs)) {
+		foreach my $userID (List::Util::shuffle(@allowedGuestUserIDs)) {
 			if (not $self->unexpired_session_exists($userID)) {
 				my $newKey = $self->create_session($userID);
 				$self->{initial_login} = 1;
@@ -364,32 +376,11 @@ sub get_credentials {
 			#croak ("cookieUser = $cookieUser and paramUser = ". $r->param("user") . " are different.");
 			$self->maybe_kill_cookie; # use parameter "user" rather than cookie "user";
 		}
-# I don't understand this next segment.
-# If both key and $cookieKey exist then why not just ignore the cookieKey?
-
-# 		if (defined $cookieKey and defined $r->param("key")) {
-# 			$self -> {user_id} = $cookieUser;
-# 			$self -> {password} = $r->param("passwd");
-# 			$self -> {login_type} = "normal";
-# 			$self -> {credential_source} = "params_and_cookie";
-# 			$self -> {session_key} = $cookieKey;
-# 			$self -> {cookie_timestamp} = $cookieTimeStamp;
-# 			if ($cookieKey ne $r->param("key")) {
-# 				warn ("cookieKey = $cookieKey and param key = " . $r -> param("key") . " are different, perhaps"
-# 					 ." because you opened several windows for the same site and then backed up from a newer one to an older one."
-# 					 ."  Avoid doing so.");
-# 			$self -> {credential_source} = "conflicting_params_and_cookie";
-# 			}
-# 			debug("params and cookie user '", $self->{user_id}, "' credential_source = '", $self->{credential_source},
-# 				"' params and cookie session key = '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
-# 			return 1;
-# 		} els
-
 # Use session key for verification
 # else   use cookieKey for verification
 # else    use cookie user name but use password provided by request.
 
-		if (defined $r -> param("key")) {
+		if (defined $r->param("key")) {
 			$self->{user_id} = $r->param("user");
 			$self->{session_key} = $r->param("key");
 			$self->{password} = $r->param("passwd");
@@ -406,19 +397,24 @@ sub get_credentials {
 			$self->{login_type} = "normal";
 			$self->{credential_source} = "cookie";
 			$self->{user_id}     = trim($self->{user_id});
-			debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			debug(  "cookie user '", $self->{user_id},
+				"' key '", $self->{session_key},
+				"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+			);
 			return 1;
 		} else {
-			$self -> {user_id} = $cookieUser;
-			$self -> {session_key} = $cookieKey; # will be undefined
-			$self -> {password} = $r->param("passwd");
-			$self -> {cookie_timestamp} = $cookieTimeStamp;
-			$self -> {login_type} = "normal";
-			$self -> {credential_source} = "params_and_cookie";
+			$self->{user_id} = $cookieUser;
+			$self->{session_key} = $cookieKey; # will be undefined
+			$self->{password} = $r->param("passwd");
+			$self->{cookie_timestamp} = $cookieTimeStamp;
+			$self->{login_type} = "normal";
+			$self->{credential_source} = "params_and_cookie";
 			$self->{user_id}     = trim($self->{user_id});
 			$self->{password}    = trim($self->{password});
-			debug("params and cookie user '", $self->{user_id}, "' params and cookie session key = '",
-				 $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+			debug(  "params and cookie user '", $self->{user_id},
+				"' params and cookie session key = '", $self->{session_key},
+				"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+			);
 			return 1;
 		}	
 	}
@@ -443,7 +439,10 @@ sub get_credentials {
 		$self->{login_type} = "normal";
 		$self->{credential_source} = "cookie";
 		$self->{user_id}     = trim($self->{user_id});
-		debug("cookie user '", $self->{user_id}, "' key '", $self->{session_key}, "' cookie_timestamp '", $self->{cookieTimeStamp}, "'");
+		debug(  "cookie user '", $self->{user_id},
+			"' key '", $self->{session_key},
+			"' cookie_timestamp '", $self->{cookieTimeStamp}, "' "
+		);
 		return 1;
 	}
 }
@@ -792,16 +791,22 @@ sub check_session {
 
 	my $Key = $db->getKey($userID); # checked
 	return 0 unless defined $Key;
+
 	my $keyMatches = (defined $possibleKey and $possibleKey eq $Key->key);
-	
-	my $timestampValid=0;
+
+	my $time_now = time();
+
+	# Want key not be too old. Use timestamp from DB and
+	# sessionKeyTimeout to determine this even when using cookies
+	# as we do not trust the timestamp provided by a user's browser.
+	my $timestampValid  = ( $time_now <= $Key->timestamp() + $ce->{sessionKeyTimeout} );
+
 # first part of if clause is disabled for now until we figure out long term fix for using cookies
 # safely (see pull request #576)   This means that the database key time is always being used
 # even when in "session_cookie" mode
 #	if ($ce -> {session_management_via} eq "session_cookie" and defined($self->{cookie_timestamp})) {
 #		$timestampValid = (time <= $self -> {cookie_timestamp} + $ce->{sessionKeyTimeout});
 #	} else {
-		$timestampValid = (time <= $Key->timestamp()+$ce->{sessionKeyTimeout});
 		if ($keyMatches and $timestampValid and $updateTimestamp) {
 			$Key->timestamp(time);
 			$db->putKey($Key);
@@ -817,14 +822,25 @@ sub killSession {
 	my $ce = $r -> {ce};
 	my $db = $r -> {db};
 
-	$self -> forget_verification;
-	if ($ce -> {session_management_via} eq "session_cookie")  {
-		$self -> killCookie();
+	my $caliper_sensor = Caliper::Sensor->new($ce);
+	if ($caliper_sensor->caliperEnabled()) {
+		my $login_event = {
+			'type' => 'SessionEvent',
+			'action' => 'LoggedOut',
+			'profile' => 'SessionProfile',
+			'object' => Caliper::Entity::webwork_app()
+		};
+		$caliper_sensor->sendEvents($self->{r}, [$login_event]);
+	}
+
+	$self->forget_verification;
+	if ($ce->{session_management_via} eq "session_cookie")  {
+		$self->killCookie();
 	}
 
 	my $userID = $r -> param("user");
 	if (defined($userID)) {
-		 $db -> deleteKey($userID);
+		 $db->deleteKey($userID);
 	}
 }
 
@@ -841,42 +857,17 @@ sub fetchCookie {
 	
 	my $courseID = $urlpath->arg("courseID");
 	
-	# AP2 - Apache2::Cookie needs $r, Apache::Cookie doesn't
-    #my %cookies = WeBWorK::Cookie->fetch( MP2 ? $r : () );
-    #my $cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
-	
 	my $cookie = undef;
-	if (MP2) {
-		
-		my $jar = undef;
- 		eval {
-       			$jar = $r->jar; #table of cookies
-  		};
-  		if (ref $@ and $@->isa("APR::Request::Error") ) {
-			debug("Error parsing cookies, will use a partial result");
-     			$jar = $@->jar; # table of successfully parsed cookies
-  		};
-		if ($jar) {
-			$cookie = uri_unescape($jar->get("WeBWorKCourseAuthen.$courseID"));
-		};
-	} else {
-		my %cookies = WeBWorK::Cookie->fetch();
-		$cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
-		if ($cookie) {
-			debug("found a cookie for this course: '", $cookie->as_string, "'");
-			$cookie = $cookie->value;
-		}
-	}
+	my %cookies = WeBWorK::Cookie->fetch();
+	$cookie = $cookies{"WeBWorKCourseAuthen.$courseID"};
 
 	if ($cookie) {
-        #debug("found a cookie for this course: '", $cookie->as_string, "'");
-        #debug("cookie has this value: '", $cookie->value, "'");
-        #my ($userID, $key) = split "\t", $cookie->value;
-        debug("cookie has this value: '", $cookie, "'");
-        my ($userID, $key, $timestamp) = split "\t", $cookie;
+		#debug("found a cookie for this course: '", $cookie->as_string, "'");
+	        debug("cookie has this value: '", $cookie->value, "'");
+		my ($userID, $key, $timestamp) = split "\t", $cookie->value;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
- 			return $userID, $key, $timestamp;
+			return( $userID, $key, $timestamp );
 		} else {
 			debug("malformed cookie. returning nothing.");
 			return;
@@ -891,27 +882,37 @@ sub sendCookie {
 	my ($self, $userID, $key) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
-	
+
 	my $courseID = $r->urlpath->arg("courseID");
-	
+
  	my $timestamp = time();
-	
-	my $cookie = WeBWorK::Cookie->new($r,
-		-name    => "WeBWorKCourseAuthen.$courseID",
- 		-value   => "$userID\t$key\t$timestamp",
-		-path    => $ce->{webworkURLRoot},
-		-secure  => 0,
+
+	my $cookie = WeBWorK::Cookie->new(
+		-name     => "WeBWorKCourseAuthen.$courseID",
+		-value    => "$userID\t$key\t$timestamp",
+		-path     => $ce->{webworkURLRoot},
+		-samesite => $ce->{CookieSameSite},
+		-secure   => $ce->{CookieSecure}    # Warning: use 1 only if using https
 	);
 
-	if ($ce->{session_management_via} ne "session_cookie") {
-		my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time+COOKIE_LIFESPAN, "GMT");
-		$cookie -> expires($expires);
-	}
+	# Set how long the browser should retain the cookie. Using max_age is now recommended,
+	# and overrides expires, but some very old browser only support expires.
+	my $lifetime  = $ce->{CookieLifeTime};
+	if ( $lifetime ne 'session' ) {
+		$cookie->expires( $lifetime );
+		$cookie->max_age( $lifetime );
+	} # as when $lifetime eq 'session' the cookie should be a "session cookie"
+	  # and expire when the browser session is closed.
+	# At present the CookieLifeTime setting only effects how long the browser is to told to retain the cookie.
+	# Ideally, when $ce->{session_management_via} eq "session_cookie", and if the timestamp in the cookie was
+	# secured again client-side tampering, the timestamp and lifetime could be used to provide ongoing session
+	# authentication.
+
  	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
- 		$cookie -> domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
+		$cookie->domain($r->hostname);    # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
 	}
-	
-	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
+
+#	debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
  	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
  	if ($@) {croak $@; }
 }
@@ -920,21 +921,22 @@ sub killCookie {
 	my ($self) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
-	
+
 	my $courseID = $r->urlpath->arg("courseID");
-	
-	my $expires = time2str("%a, %d-%h-%Y %H:%M:%S %Z", time-60*60*24, "GMT");
-	my $cookie = WeBWorK::Cookie->new($r,
-		-name => "WeBWorKCourseAuthen.$courseID",
-		-value => "\t",
-		-expires => $expires,
-		-path => $ce->{webworkURLRoot},
-		-secure => 0,
+
+	my $cookie = WeBWorK::Cookie->new(
+		-name      => "WeBWorKCourseAuthen.$courseID",
+		-value     => "\t",
+		'-max-age' => "-1d", # 1 day ago
+		-expires   => "-1d", # 1 day ago
+		-path      => $ce->{webworkURLRoot},
+		-samesite  => $ce->{CookieSameSite},
+		-secure    => $ce->{CookieSecure}    # Warning: use 1 only if using https
 	);
  	if ($r->hostname ne "localhost" && $r->hostname ne "127.0.0.1") {
- 		$cookie -> domain($r->hostname);  # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
+		$cookie -> domain($r->hostname);  # if $r->hostname = "localhost" or "127.0.0.1", then this must be omitted.
 	}
-	
+
 	#debug( "killCookie is about to set an expired cookie");
 	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
  	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
@@ -972,7 +974,7 @@ sub write_log_entry {
 	    }
 
 	    if ($version) {
-		$APACHE24 = version->parse($version) >= version->parse('2.4');
+		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
 	    }
 	}
 	# If its apache 2.4 then the API has changed

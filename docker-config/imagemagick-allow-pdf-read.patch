@@ -1,0 +1,10 @@
+--- a/etc/ImageMagick-6/policy.xml	2020-11-22 14:46:53.591198189 -0600
++++ b/etc/ImageMagick-6/policy.xml	2021-03-22 10:35:12.821990590 -0500
+@@ -91,6 +91,6 @@
+   <policy domain="coder" rights="none" pattern="PS2" />
+   <policy domain="coder" rights="none" pattern="PS3" />
+   <policy domain="coder" rights="none" pattern="EPS" />
+-  <policy domain="coder" rights="none" pattern="PDF" />
++  <policy domain="coder" rights="read" pattern="PDF" />
+   <policy domain="coder" rights="none" pattern="XPS" />
+ </policymap>

@@ -485,7 +485,8 @@ sub checkSet {
 	my $LTIGradeMode = $ce->{LTIGradeMode} // '';
 
 	if ($LTIGradeMode eq 'homework' && !$self->hasPermissions($userName, "view_unopened_sets")) {
-	  return $r->maketext("You must use your Learning Managment System (E.G. Blackboard, Moodle, Canvas, etc...) to access this set.  Try logging in to the Learning Managment System and visiting the set from there.")
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
+		return $r->maketext("You must use your Learning Managment System ([_1]) to access this set.  Try logging in to the Learning Managment System and visiting the set from there.",$LMS)
 	    unless $set->lis_source_did;
 	}
 	

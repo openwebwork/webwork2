@@ -116,9 +116,9 @@ sub debug {
 		my $date = time2str("%a %b %d %H:%M:%S.$msec %Y", $sec);
 		my $finalMessage = "[$date] $subroutine: " . join("", @message);
 		$finalMessage .= "\n" unless $finalMessage =~ m/\n$/;
-		
+
 		if ($WeBWorK::Debug::Logfile ne "") {
-			if (open my $fh, ">>", $Logfile) {
+			if (open my $fh, ">>:encoding(UTF-8)", $Logfile) {
 				print $fh $finalMessage;
 				close $fh;
 			} else {
