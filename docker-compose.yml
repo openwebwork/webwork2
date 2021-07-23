@@ -87,13 +87,13 @@ services:
             # should be commented out.
 
             # main branches:
-            - WEBWORK2_BRANCH=main
-            - PG_BRANCH=main
+            #- WEBWORK2_BRANCH=main
+            #- PG_BRANCH=main
 
             # WeBWorK/PG develop branches
             #    (other valid branches can also be used in a similar manner)
-            #- WEBWORK2_BRANCH=develop
-            #- PG_BRANCH=develop
+            - WEBWORK2_BRANCH=develop
+            - PG_BRANCH=develop
 
         # If you are using the 2 stage build process uncomment the next line
         dockerfile: DockerfileStage2
