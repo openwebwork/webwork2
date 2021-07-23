@@ -1,4 +1,3 @@
-console.log('dragndrop loaded');
 (function() {
 class DragNDropBucket {
     constructor(pgData) {
