@@ -56,7 +56,11 @@ class DragNDropBucket {
             $(this).find('li.dd-item').each(function() {
                 list.push($(this).attr('data-shuffled-index'));
             });
-            buckets.push('(' + list.join(",") + ')');
+            if (list.length) {
+                buckets.push('(' + list.join(",") + ')');
+            } else {
+                buckets.push('(-1)');
+            }
         });
         
         $("#" +  this.answerInputId).val(buckets.join(","));
@@ -97,11 +101,6 @@ class DragNDropBucket {
                     $bucketPool.append($bucket);
                 });
                 
-                $bucketPool.find('.dd').each(function() {
-                    if ($(this).find('.dd-empty').length == 0 && $(this).find('li').length == 0) {
-                        $(this).append('<div class="dd-empty"></div>');
-                    }               
-                });                
                 $bucketPool.find('.dd').nestable({
                     group: el.answerInputId,
                     maxDepth: 1,
