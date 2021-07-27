@@ -5,11 +5,10 @@ class DragNDropBucket {
         this.bucketId = pgData['bucketId'];
         this.label = pgData['label'] || '';
         this.removable = pgData['removable'];
-        this.default = pgData['default'];
         this.bucketPool = $('.bucket_pool[data-ans="' + this.answerInputId + '"]').first()[0];
         
         var $bucketPool = $(this.bucketPool);
-        var $newBucket = this._newBucket(this.bucketId, this.label, this.removable);
+        var $newBucket = this._newBucket(this.bucketId, this.label, this.removable, $bucketPool.find('.hidden.past_answers.bucket[data-bucket-id="' + this.bucketId + '"]'));
         $bucketPool.append($newBucket);
         
         var el = this;
@@ -17,13 +16,13 @@ class DragNDropBucket {
             group: el.answerInputId,
             maxDepth: 1,
             scroll: true,
-            callback: function() {el._nestableUpdate()}
+            callback: function() {el._nestableUpdate();}
         });  
         this._nestableUpdate();
         this._ddUpdate();
     }
     
-    _newBucket(bucketId, label, removable, isDefault = 0) {
+    _newBucket(bucketId, label, removable, $bucketHtmlElement) {
         var $bucketPool = $(this.bucketPool);
         var $newBucket = $('<div id="nestable-' + bucketId + '-container" class="dd-container"></div>').attr('data-bucket-id', bucketId);
     
@@ -34,11 +33,9 @@ class DragNDropBucket {
             $newBucket.append($('<a class="btn remove_bucket">Remove</a>'));
         }
         
-        var query = isDefault ==  1 ? '.hidden.default.bucket[data-bucket-id="' + bucketId + '"] ol.answer li' : '.hidden.past_answers.bucket[data-bucket-id="' + bucketId + '"] ol.answer li' 
-        
-        if ($bucketPool.find(query).length) {
+        if ($bucketHtmlElement.find('ol.answer li').length) {
             var $ddList = $('<ol class="dd-list"></ol>');
-            $bucketPool.find(query).each(function(index) {
+            $bucketHtmlElement.find('ol.answer li').each(function(index) {
                 var $item = $('<li><div class="dd-handle">' + $(this).html() + '</div></li>');
                 $item.addClass('dd-item').attr('data-shuffled-index', $(this).attr('data-shuffled-index'));
                 $ddList.append($item);
@@ -97,7 +94,7 @@ class DragNDropBucket {
                 $bucketPool.find('div.hidden.default.bucket').each(function() {
                     var bucketId = $(this).attr('data-bucket-id');
                     var label = $(this).find('.label').first().html() || '';
-                    var $bucket = el._newBucket($(this).attr('data-bucket-id'), $(this).find('.label').first().html(), $(this).attr('data-removable'), 1);                    
+                    var $bucket = el._newBucket($(this).attr('data-bucket-id'), $(this).find('.label').first().html(), $(this).attr('data-removable'), $bucketPool.find('.hidden.default.bucket[data-bucket-id="' + bucketId + '"]'));                    
                     $bucketPool.append($bucket);
                 });
                 
@@ -105,7 +102,7 @@ class DragNDropBucket {
                     group: el.answerInputId,
                     maxDepth: 1,
                     scroll: true,
-                    callback: function() {el._nestableUpdate()}
+                    callback: function() {el._nestableUpdate();}
                 });  
                 el._nestableUpdate();
             });
@@ -123,7 +120,6 @@ $('div.bucket_pool').each(function() {
                 bucketId : $(this).attr('data-bucket-id'),
                 label : $(this).find('.label').html(),
                 removable : $(this).attr('data-removable'),
-                default: false,
             });
         });
     } 
