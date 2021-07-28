@@ -36,7 +36,7 @@ use URI::Escape;
 use Net::OAuth;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-use constant TIME_DIFF_THRESHOLD => 5; # seconds, threshold to report different between system time and oauth_timestamp time
+use constant TIME_DIFF_THRESHOLD => 15; # seconds, threshold to report different between system time and oauth_timestamp time
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
