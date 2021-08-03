@@ -128,6 +128,25 @@ command -v python >/dev/null 2>&1 ||
 cd $LIBRARY_DIR
 #verify_git_clean
 
+######################################################################
+#
+# Test whether ARCHIVE_FORMATS contains at least one valid format
+#
+
+FOUND_VALID_FORMAT=0
+VALID_ARCHIVE_FORMATS='.tar.gz .tar.bz2 .zip'
+for VALID_FORMAT in $VALID_ARCHIVE_FORMATS
+do
+	if [[ $ARCHIVE_FORMATS =~ $VALID_FORMAT ]]
+	then
+		FOUND_VALID_FORMAT=1;
+	fi;
+done;
+if [[ $FOUND_VALID_FORMAT == "0" ]]
+then
+	warning "No valid archive format specified. You should set an environment variable ARCHIVE_FORMATS before with suitable values before running the script." ;
+	exit 1;
+fi;
 
 ######################################################################
 #
@@ -257,7 +276,7 @@ fi
 #
 
 # check if release already exists
-response=$(curl -s -S -X GET "$API_URL/tags/$TAG?access_token=$TOKEN")
+response=$(curl -s -S -X GET "$API_URL/tags/$TAG" -H "Authorization: token $TOKEN")
 MESSAGE=$(json_get_key message)
 RELEASE_ID=$(json_get_key id)
 
@@ -267,7 +286,7 @@ elif [ x"$RELEASE_ID" != x ] ; then
     # release already exists -> error out or delete it
     if [ "x$FORCE" = xyes ] ; then
         notice "Deleting existing release $TAG from GitHub"
-        response=$(curl --fail -s -S -X DELETE "$API_URL/$RELEASE_ID?access_token=$TOKEN")
+        response=$(curl --fail -s -S -X DELETE "$API_URL/$RELEASE_ID" -H "Authorization: token $TOKEN")
         MESSAGE=
     else
         error "release $TAG already exists on GitHub, aborting (use --force to override this)"
@@ -292,7 +311,7 @@ EOF
 
 notice "Creating new release $TAG on GitHub"
 response=$(curl -s -S -H "Content-Type: application/json" \
- -X POST --data "$DATA" "$API_URL?access_token=$TOKEN")
+ -X POST --data "$DATA" "$API_URL" -H "Authorization: token $TOKEN")
 
 MESSAGE=$(json_get_key message)
 if [ x"$MESSAGE" != x ] ; then
@@ -304,25 +323,6 @@ if [ x"$RELEASE_ID" = x ] ; then
 fi
 
 
-######################################################################
-#
-# Test whether ARCHIVE_FORMATS contains at least one valid format
-#
-
-FOUND_VALID_FORMAT=0
-VALID_ARCHIVE_FORMATS='.tar.gz .tar.bz2 .zip'
-for VALID_FORMAT in $VALID_ARCHIVE_FORMATS
-do
-	if [[ $ARCHIVE_FORMATS =~ $VALID_FORMAT ]]
-	then
-		FOUND_VALID_FORMAT=1;
-	fi;
-done;
-if [[ $FOUND_VALID_FORMAT == "0" ]]
-then
-	warning "No valid archive format specified." ;
-	exit 1;
-fi;
 
 ######################################################################
 #
