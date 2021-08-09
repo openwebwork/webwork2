@@ -36,8 +36,6 @@ use URI::Escape;
 use Net::OAuth;
 use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
-use constant TIME_DIFF_THRESHOLD => 5; # seconds, threshold to report different between system time and oauth_timestamp time
-
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
 BEGIN {
@@ -149,8 +147,7 @@ sub get_credentials {
   my $curr_time = time();
   my $delta_time = $curr_time - $oauth_time;
   my $delta_min = (0.0 + $delta_time) / (60.0);
-  if ( $ce->{debug_lti_parameters} ||
-	 ( abs($delta_time) > TIME_DIFF_THRESHOLD ) ) {
+  if ( $ce->{debug_lti_parameters} ) {
     warn join("\n",
 	"============================",
 	"===== timestamp info =======",
