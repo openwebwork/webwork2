@@ -3,8 +3,9 @@
                                    Version 2.*
                         Branch:  github.com/openwebwork 
 
-	          http://webwork.maa.org/wiki/Release_notes_for_WeBWorK_2.14
-                    Copyright 2000-2019, The WeBWorK Project
+             https://webwork.maa.org/wiki/Release_notes_for_WeBWorK_2.16
+                    Copyright 2000-2021, The WeBWorK Project
+                             https://openwebwork.org/
                              http://webwork.maa.org
                               All rights reserved.  
                                                           
@@ -15,6 +16,7 @@ WeBWorK is an open-source online homework system for math and sciences courses. 
 ## Information for Users
 
 New users interested in getting started with their own WeBWorK server, or instructors looking to learn more about how to use WeBWorK in their classes, should take a look at one of the following resources: 
+*  The [WeBWorK project home page](https://openwebwork.org/) - General information and resources including announcements of events and important project news
 *  [WeBWorK wiki](http://webwork.maa.org/wiki/Main_Page) - The main WeBWorK wiki
 *  [Instructors](http://webwork.maa.org/wiki/Instructors) - Information for Instructors
 *  [Problem Authors](http://webwork.maa.org/wiki/Authors) - Information for Problem Authors
@@ -24,7 +26,9 @@ New users interested in getting started with their own WeBWorK server, or instru
 
 ## Information for downloading
 
-* The current version is WeBWorK-2.15 and its companion PG-2.15
+* The current version is WeBWorK-2.16 and its companion PG-2.16
+
+* Installation manuals can be found at https://webwork.maa.org/wiki/Category:Installation_Manuals
 
 * If you would prefer to download a previous release, say WeBWorK 2.14, then run the following commands:
 
@@ -32,7 +36,7 @@ New users interested in getting started with their own WeBWorK server, or instru
 cd /opt/webwork/webwork2
 git checkout -b WeBWorK2.14+ WeBWorK2.14+
 ```
-* If you want to pull the PG-2.15 branch of pg then run:
+* If you want to pull the PG-2.14 branch of pg then run:
 
 ```
 cd /opt/webwork/pg
