@@ -184,7 +184,7 @@ sub pre_header_initialize {
 	$xmlrpc_client->{inputs_ref} = \%inputs_ref;  # contains form data
 	# print STDERR WebworkClient::pretty_print($r->{paramcache});
 
-	$self->{wantsjson} = 1 if $inputs_ref{outputformat} eq 'json' || $inputs_ref{send_pg_flags};
+	$self->{wantsjson} = 1 if $inputs_ref{outputformat} eq 'json' || $inputs_ref{send_pg_flags} || $inputs_ref{standalone_style};
 	
 	##############################
 	# xmlrpc_client calls webservice to have problem rendered
