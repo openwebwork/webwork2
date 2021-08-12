@@ -131,6 +131,15 @@ sub formatRenderedProblem {
 	my $displayMode = $self->{inputs_ref}{displayMode};
 	my $hideWasNotRecordedMessage = $ce->{hideWasNotRecordedMessage} // 0;
 
+	# Provide an option to hide the authentication data when ht2ml2xml is being used
+	# by a man-in-the-middle system.
+	if ( $ce->{hideAuthData} ) {
+		$course_password = "hidden";
+		$session_key = "hidden";
+		$userID = "hidden";
+		$courseID = "hidden";
+	}
+
 	# HTML document language settings
 	my $formLanguage = $self->{inputs_ref}{language} // 'en';
 	my $COURSE_LANG_AND_DIR = get_lang_and_dir($formLanguage);
