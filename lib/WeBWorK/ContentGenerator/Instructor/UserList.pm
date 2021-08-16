@@ -77,10 +77,21 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
 use constant VIEW_FORMS => [qw(filter sort edit password import export add delete)];
 
-# capture names for maketext
-# (gettext only takes the last one if the use constant is not here)
-use constant mk_filter => x('Filter');
-use constant mk_sort => x('Sort');
+# Prepare the tab titles for translation by maketext
+use constant FORM_TITLES => {
+	saveEdit       => x("Save Edit"),
+	cancelEdit     => x("Cancel Edit"),
+	filter         => x("Filter"),
+	sort           => x("Sort"),
+	edit           => x("Edit"),
+	password       => x("Password"),
+	import         => x("Import"),
+	export         => x("Export"),
+	add            => x("Add"),
+	delete         => x("Delete"),
+        savePassword   => x("Save Password"),
+        cancelPassword => x("Cancel Password")
+};
 
 # permissions needed to perform a given action
 use constant FORM_PERMS => {
@@ -519,6 +530,7 @@ sub body {
 	} else {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
+	my %formTitles = %{ FORM_TITLES() };
 	
 	my @tabArr;
 	my @contentArr;
@@ -536,7 +548,7 @@ sub body {
 
 		push(@tabArr, CGI::li({ class => $active },
 				CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
-					$r->maketext(ucfirst(WeBWorK::split_cap($actionID))))));
+					$r->maketext($formTitles{$actionID}))));
 		push(@contentArr, CGI::div({ class => "tab-pane $active", id => $id },
 				$self->$actionForm($self->getActionParams($actionID))));
 	}

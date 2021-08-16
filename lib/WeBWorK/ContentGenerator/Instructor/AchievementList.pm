@@ -51,7 +51,7 @@ use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements);
+use WeBWorK::Utils qw(timeToSec readFile listFilesRecursive sortAchievements x);
 use DateTime;
 use Text::CSV;
 use Encode;
@@ -64,6 +64,21 @@ use constant DEFAULT_ENABLED_STATE => 0;
 use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(edit assign import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
+
+# Prepare the tab titles for translation by maketext
+use constant FORM_TITLES => {
+	saveEdit       => x("Save Edit"),
+	cancelEdit     => x("Cancel Edit"),
+	edit           => x("Edit"),
+	assign         => x("Assign"),
+	import         => x("Import"),
+	export         => x("Export"),
+	score          => x("Score"),
+	create         => x("Create"),
+	delete         => x("Delete"),
+	saveExport     => x("Save Export"),
+	cancelExport   => x("Cancel Export")
+};
 
 use constant VIEW_FIELD_ORDER => [ qw( enabled achievement_id name number category ) ];
 use constant EDIT_FIELD_ORDER => [ qw( icon achievement_id name number assignment_type category enabled points max_counter description icon_file test_file) ];
@@ -294,6 +309,7 @@ sub body {
 	} else {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
+	my %formTitles = %{ FORM_TITLES() };
 	
 	my @tabArr;
 	my @contentArr;
@@ -304,7 +320,7 @@ sub body {
 
 		push(@tabArr, CGI::li($actionID eq $formsToShow[0] ? { class => "active" } : {},
 				CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
-					$r->maketext(ucfirst(WeBWorK::split_cap($actionID))))));
+					$r->maketext($formTitles{$actionID}))));
 		push(@contentArr, CGI::div({
 					class => "tab-pane achievement_list_action_div" . ($actionID eq $formsToShow[0] ? " active" : ""),
 					id => $id
