@@ -91,7 +91,7 @@ sub parse_classlist($) {
 sub write_classlist($@) {
 	my ($file, @records) = @_;
 	
-	my $fh = new IO::File($file, ">")
+	my $fh = new IO::File($file, '>:encoding(UTF-8)')
 		or die "Failed to open classist '$file' for writing: $!\n";
 	
 	my $csv = Text::CSV->new({ binary => 1});
