@@ -1895,8 +1895,8 @@ sub output_JS{
 
 
 	if ($ce->{options}->{PGMathQuill}) {
-		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mathquill.css\"/>";
-		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/vendor/mathquill/mqeditor.css\"/>";
+		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/mathquill/mathquill.css\"/>";
+		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/mathquill/mqeditor.css\"/>";
 		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
 		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => ""}, "");
 	}
