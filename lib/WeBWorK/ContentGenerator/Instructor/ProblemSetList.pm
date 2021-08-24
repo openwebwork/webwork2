@@ -95,11 +95,22 @@ use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant VIEW_FORMS => [qw(filter sort edit publish import export score create delete)];
 use constant EXPORT_FORMS => [qw(saveExport cancelExport)];
 
-# capture names for maketext
-# (gettext only takes the last one if the use constant is not here)
-use constant mk_filter => x('Filter');
-use constant mk_sort => x('Sort');
-use constant mk_publish => x('Publish');
+# Prepare the tab titles for translation by maketext
+use constant FORM_TITLES => {
+	saveEdit       => x("Save Edit"),
+	cancelEdit     => x("Cancel Edit"),
+	filter         => x("Filter"),
+	sort           => x("Sort"),
+	edit           => x("Edit"),
+	publish        => x("Publish"),
+	import         => x("Import"),
+	export         => x("Export"),
+	score          => x("Score"),
+	create         => x("Create"),
+	delete         => x("Delete"),
+	saveExport     => x("Save Export"),
+	cancelExport   => x("Cancel Export")
+};
 
 use constant VIEW_FIELD_ORDER => [ qw( set_id problems users visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
 use constant EDIT_FIELD_ORDER => [ qw( set_id visible enable_reduced_scoring open_date reduced_scoring_date due_date answer_date) ];
@@ -575,6 +586,7 @@ sub body {
 	} else {
 		@formsToShow = @{ VIEW_FORMS() };
 	}
+	my %formTitles = %{ FORM_TITLES() };
 	
 	my @tabArr;
 	my @contentArr;
@@ -592,7 +604,7 @@ sub body {
 
 		push(@tabArr, CGI::li({ class => $active },
 				CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
-					$r->maketext(ucfirst(WeBWorK::split_cap($actionID))))));
+					$r->maketext($formTitles{$actionID}))));
 		push(@contentArr, CGI::div({ class => "tab-pane $active", id => $id },
 				$self->$actionForm($self->getActionParams($actionID))));
 	}
