@@ -378,6 +378,7 @@
 				'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
 				'</style>';
 			if (window.location.port) ro.forcePortNumber = window.location.port;
+			if (document.documentElement.lang !== 'en-US') ro.language = document.documentElement.lang;
 
 			$.ajax({type:'post',
 				url: basicRendererURL,
