@@ -654,7 +654,7 @@ sub add_course_validate {
 		push @errors, $r->maketext("A course with ID [_1] already exists.", $add_courseID);
 	}
 	if ( length($add_courseID) > $ce->{maxCourseIdLength} ) {
-                @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
+                push @errors, $r->maketext("Course ID cannot exceed [_1] characters.", $ce->{maxCourseIdLength});
 	}
 
 	if ($add_initial_userID ne "") {
