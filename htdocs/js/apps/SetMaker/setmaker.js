@@ -473,21 +473,24 @@
 		render(targetProblem);
 	});
 
-	// Find all render areas
-	var renderAreas = $('.psr_render_area');
+	// Render all problems if the display mode is not set to None
+	if ($('select[name=mydisplayMode]').val() !== "None") {
+		// Find all render areas
+		var renderAreas = $('.psr_render_area');
 
-	// Add the loading message to all render areas.
-	for (var renderArea of renderAreas) {
-		$(renderArea).html('Loading Please Wait...');
-	}
-
-	// Render all visible problems on the page
-	(async function() {
-		for (let renderArea of renderAreas) {
-			if (!$(renderArea).is(':visible')) continue;
-			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+		// Add the loading message to all render areas.
+		for (var renderArea of renderAreas) {
+			$(renderArea).html('Loading Please Wait...');
 		}
-	})();
+
+		// Render all visible problems on the page
+		(async function() {
+			for (let renderArea of renderAreas) {
+				if (!$(renderArea).is(':visible')) continue;
+				await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+			}
+		})();
+	}
 
 	$("select[name=library_chapters]").on("change", function() { lib_update('sections', 'get'); });
 	$("select[name=library_subjects]").on("change", function() { lib_update('chapters', 'get'); });
