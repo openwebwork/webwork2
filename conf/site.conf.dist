@@ -287,6 +287,8 @@ $mail{smtpServer} = '';  # e.g. 'mail.yourschool.edu' or 'localhost'
 # message. It can really be anything, but some mail servers require it contain
 # a valid mail domain, or at least be well-formed.
 $mail{smtpSender} = '';  # e.g.  'webwork@yourserver.yourschool.edu'
+$mail{set_return_path}="noreply\@your.school.edu"; # or to read bounce errors set to  $mail{smptSender}
+
 
 # Be sure to use single quotes for the address or the @ sign will be interpreted as an array.
 
