@@ -150,7 +150,6 @@ sub body {
 		} else {
 			$sender = $from;
 		}
-
 		# sanity checks
 		unless ($sender) {
 			$self->feedbackForm($user, $returnURL,
@@ -222,15 +221,16 @@ sub body {
 		my $email_address = $user->email_address;
 		my $transport = $self->createEmailSenderTransportSMTP();
 		my $return_path_for_errors = $ce->{mail}->{set_return_path}; 
-	# createEmailSenderTransportSMTP is defined in ContentGenerator
-	# $set_return_path is the address used to report returned email. It is an argument 
-	# used in sendmail() (aka Email::Simple::sendmail).
-	# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then 
-	# uses that to set "Return-Path".
-	# references:
-	#  stackoverflow: https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
-	#  Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
-	#
+		# createEmailSenderTransportSMTP is defined in ContentGenerator
+		# return_path_for_errors is the address used to report returned email. It is an argument 
+		# used in sendmail() (aka Email::Simple::sendmail).
+		# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then 
+		# uses that to set "Return-Path".
+		# references:
+		#  stackoverflow:
+		#     https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
+		#  Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+
 		my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
 			"From" => $sender,
@@ -293,7 +293,13 @@ $emailableURL
     $email->body_set(Encode::encode("UTF-8",$msg));
 
 		try {
-			sendmail($email,{transport => $transport, from=>$return_path_for_errors});
+			if ($return_path_for_errors) {
+				sendmail($email,{transport => $transport, from=>$return_path_for_errors});
+			}
+			else {
+				sendmail($email,{transport => $transport});
+			}
+                        
 			print CGI::p($r->maketext("Your message was sent successfully."));
 			print CGI::p(CGI::a({-href => $returnURL}, $r->maketext("Return to your work")));
 			print CGI::pre(wrap("", "", $feedback));
@@ -301,8 +307,9 @@ $emailableURL
 				$self->feedbackForm($user, $returnURL,
 					"Failed to send message: $_");
 		};
-
-
+	} else {
+               # just print the feedback form, with no message
+               $self->feedbackForm($user, $returnURL, "");
 	}
 
 	return "";
