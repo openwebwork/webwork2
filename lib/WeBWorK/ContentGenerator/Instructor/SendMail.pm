@@ -882,18 +882,18 @@ sub mail_message_to_recipients {
 			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 
 			#createEmailSenderTransportSMTP is defined in ContentGenerator
-    			my $transport = $self->createEmailSenderTransportSMTP();
-    			my $return_path_for_errors = $ce->{mail}->{set_return_path};
-		        # createEmailSenderTransportSMTP is defined in ContentGenerator
-    			# return_path_for_errors is the address used to report returned email. It is an argument
-    			# used in sendmail() (aka Email::Simple::sendmail).
-    			# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then
-    			# uses that to set "Return-Path".
-    			# references:
-                        #  stackoverflow:
-                        #    https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
-                        #  Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
-    
+			my $transport = $self->createEmailSenderTransportSMTP();
+			my $return_path_for_errors = $ce->{mail}->{set_return_path};
+			# createEmailSenderTransportSMTP is defined in ContentGenerator
+			# return_path_for_errors is the address used to report returned email. It is an argument
+			# used in sendmail() (aka Email::Simple::sendmail).
+			# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then
+			# uses that to set "Return-Path".
+			# references:
+			#   stackoverflow:
+			#     https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
+			#   Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+
 			my $transport = $self->createEmailSenderTransportSMTP();
 			my $return_path_for_errors = $ce->{mail}->{set_return_path};
 			my $email = Email::Simple->create(
@@ -908,12 +908,12 @@ sub mail_message_to_recipients {
 
 
 			try {
-	                       if ($return_path_for_errors) {
-        	                     sendmail($email,{transport => $transport, from=>$return_path_for_errors});
-                	       }
-                    	       else {
-                      	              sendmail($email,{transport => $transport});
- 	             	       }
+				if ($return_path_for_errors) {
+					sendmail($email,{transport => $transport, from=>$return_path_for_errors});
+				}
+				else {
+					sendmail($email,{transport => $transport});
+				}
 				debug "email sent successfully to " . $ur->email_address;
 			} catch {
 				  debug "error sending email: $_";
@@ -947,7 +947,7 @@ sub email_notification {
 
 	my $mailing_errors = "";
 
-#      createEmailSenderTransportSMTP is defined in ContentGenerator
+	# createEmailSenderTransportSMTP is defined in ContentGenerator
 	my $transport = $self->createEmailSenderTransportSMTP();
 
 	my $return_path_for_errors = $ce->{mail}->{set_return_path};
@@ -963,12 +963,12 @@ sub email_notification {
 	$email->header_set("X-Remote-Host: ",$self->{remote_host});
 
 	try {
-             if ($return_path_for_errors) {
-                 sendmail($email,{transport => $transport, from=>$return_path_for_errors});
-             }
-             else {
-                 sendmail($email,{transport => $transport});
-             }
+		if ($return_path_for_errors) {
+			sendmail($email,{transport => $transport, from=>$return_path_for_errors});
+		}
+		else {
+			sendmail($email,{transport => $transport});
+		}
 	} catch {
 			warn "Error sending email: $_";
 			next;
