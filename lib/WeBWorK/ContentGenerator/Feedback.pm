@@ -150,6 +150,7 @@ sub body {
 		} else {
 			$sender = $from;
 		}
+
 		# sanity checks
 		unless ($sender) {
 			$self->feedbackForm($user, $returnURL,
@@ -217,14 +218,13 @@ sub body {
 		}
 
 
-#           createEmailSenderTransportSMTP is defined in ContentGenerator
+		# createEmailSenderTransportSMTP is defined in ContentGenerator
 		my $email_address = $user->email_address;
 		my $transport = $self->createEmailSenderTransportSMTP();
-		my $return_path_for_errors = $ce->{mail}->{set_return_path}; 
-		# createEmailSenderTransportSMTP is defined in ContentGenerator
-		# return_path_for_errors is the address used to report returned email. It is an argument 
+		my $return_path_for_errors = $ce->{mail}->{set_return_path};
+		# return_path_for_errors is the address used to report returned email. It is an argument
 		# used in sendmail() (aka Email::Simple::sendmail).
-		# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then 
+		# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then
 		# uses that to set "Return-Path".
 		# references:
 		#  stackoverflow:
@@ -299,7 +299,7 @@ $emailableURL
 			else {
 				sendmail($email,{transport => $transport});
 			}
-                        
+
 			print CGI::p($r->maketext("Your message was sent successfully."));
 			print CGI::p(CGI::a({-href => $returnURL}, $r->maketext("Return to your work")));
 			print CGI::pre(wrap("", "", $feedback));
@@ -308,8 +308,8 @@ $emailableURL
 					"Failed to send message: $_");
 		};
 	} else {
-               # just print the feedback form, with no message
-               $self->feedbackForm($user, $returnURL, "");
+		# just print the feedback form, with no message
+		$self->feedbackForm($user, $returnURL, "");
 	}
 
 	return "";
@@ -411,7 +411,6 @@ sub format_user {
 
 	return $result;
 }
-
 
 sub format_userset {
 	my ($self, $Set) = @_;
