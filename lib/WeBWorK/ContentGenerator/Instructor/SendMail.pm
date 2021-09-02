@@ -905,12 +905,12 @@ sub mail_message_to_recipients {
 
 
 			try {
-	                       if ($return_path_for_errors) {
-        	                     sendmail($email,{transport => $transport, from=>$return_path_for_errors});
-                	       }
-                    	       else {
-                      	              sendmail($email,{transport => $transport});
- 	             	       }
+				if ($return_path_for_errors) {
+					sendmail($email,{transport => $transport, from=>$return_path_for_errors});
+				}
+				else {
+					sendmail($email,{transport => $transport});
+				}
 				debug "email sent successfully to " . $ur->email_address;
 			} catch {
 				  debug "error sending email: $_";
@@ -944,7 +944,7 @@ sub email_notification {
 
 	my $mailing_errors = "";
 
-#      createEmailSenderTransportSMTP is defined in ContentGenerator
+	# createEmailSenderTransportSMTP is defined in ContentGenerator
 	my $transport = $self->createEmailSenderTransportSMTP();
 
 	my $return_path_for_errors = $ce->{mail}->{set_return_path};
@@ -960,12 +960,12 @@ sub email_notification {
 	$email->header_set("X-Remote-Host: ",$self->{remote_host});
 
 	try {
-             if ($return_path_for_errors) {
-                 sendmail($email,{transport => $transport, from=>$return_path_for_errors});
-             }
-             else {
-                 sendmail($email,{transport => $transport});
-             }
+		if ($return_path_for_errors) {
+			sendmail($email,{transport => $transport, from=>$return_path_for_errors});
+		}
+		else {
+			sendmail($email,{transport => $transport});
+		}
 	} catch {
 			warn "Error sending email: $_";
 			next;
