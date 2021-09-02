@@ -881,7 +881,6 @@ sub mail_message_to_recipients {
 			my $msg = eval { $self->process_message($ur,$rh_merge_data) };
 			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
 
-			#createEmailSenderTransportSMTP is defined in ContentGenerator
     			my $transport = $self->createEmailSenderTransportSMTP();
     			my $return_path_for_errors = $ce->{mail}->{set_return_path};
 		        # createEmailSenderTransportSMTP is defined in ContentGenerator
@@ -894,8 +893,6 @@ sub mail_message_to_recipients {
                         #    https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
                         #  Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
     
-			my $transport = $self->createEmailSenderTransportSMTP();
-			my $return_path_for_errors = $ce->{mail}->{set_return_path};
 			my $email = Email::Simple->create(
 				header => [
 					To => $ur->email_address,
