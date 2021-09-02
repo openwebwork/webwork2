@@ -41,9 +41,10 @@
 		var actionSave = document.getElementById('action_save');
 
 		var target = "_self";
-		if ((actionView && actionView.classList.contains('active')) || (actionSave && actionSave.classList.contains('active'))) {
-			target = document.getElementById("newWindow").checked ? "WW_View" : "pg_editor_frame";
-		}
+		if (actionView && actionView.classList.contains('active'))
+			target = document.getElementById("newWindowView").checked ? "WW_View" : "pg_editor_frame";
+		else if (actionSave && actionSave.classList.contains('active'))
+			target = document.getElementById("newWindowSave").checked ? "WW_View" : "pg_editor_frame";
 
 		$("#editor").attr('target', target);
 
