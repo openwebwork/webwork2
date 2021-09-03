@@ -6,7 +6,7 @@
 			this.label = pgData['label'] || '';
 			this.removable = pgData['removable'];
 			this.bucketPool = $('.bucket_pool[data-ans="' + this.answerInputId + '"]').first()[0];
-			
+
 			var $bucketPool = $(this.bucketPool);
 			var $newBucket = this._newBucket(
 				this.bucketId,
@@ -15,7 +15,7 @@
 				$bucketPool.find('.hidden.past_answers.bucket[data-bucket-id="' + this.bucketId + '"]')
 			);
 			$bucketPool.append($newBucket);
-			
+
 			var el = this;
 			$newBucket.find('.dd').nestable({
 				group: el.answerInputId,
@@ -26,20 +26,20 @@
 			this._nestableUpdate();
 			this._ddUpdate();
 		}
-		
+
 		_newBucket(bucketId, label, removable, $bucketHtmlElement) {
 			var $bucketPool = $(this.bucketPool);
 			var $newBucket = $('<div id="nestable-' + bucketId + '-container" class="dd-container"></div>');
-			
+
 			$newBucket.attr('data-bucket-id', bucketId);
-			
+
 			$newBucket.append($('<div class="nestable-label">' + label + '</div>'));
 			$newBucket.append($('<div class="dd" data-bucket-id="' + bucketId + '"></div>'));
-			
+
 			if (removable != 0) {
 				$newBucket.append($('<a class="btn remove_bucket">Remove</a>'));
 			}
-			
+
 			if ($bucketHtmlElement.find('ol.answer li').length) {
 				var $ddList = $('<ol class="dd-list"></ol>');
 				$bucketHtmlElement.find('ol.answer li').each(function(index) {
@@ -52,7 +52,7 @@
 			$newBucket.css('background-color', 'hsla(' + ((100 + (bucketId)*100) % 360) + ', 40%, 90%, 1)');
 			return $newBucket;
 		}
-		
+
 		_nestableUpdate(e) {
 			var buckets = [];
 			$(this.bucketPool).find('.dd').each(function() {
@@ -66,10 +66,10 @@
 					buckets.push('(-1)');
 				}
 			});
-			
+
 			$("#" +  this.answerInputId).val(buckets.join(","));
 		}
-		
+
 		_ddUpdate() {
 			var answerInputId = this.answerInputId;
 			var $bucketPool = $('.bucket_pool[data-ans="' + answerInputId + '"]').first();
@@ -109,7 +109,7 @@
 						);
 						$bucketPool.append($bucket);
 					});
-					
+
 					$bucketPool.find('.dd').nestable({
 						group: el.answerInputId,
 						maxDepth: 1,
@@ -120,9 +120,9 @@
 				});
 			});
 		}
-		
+
 	}
-	
+
 	$('div.bucket_pool').each(function() {
 		var answerInputId = $(this).attr('data-ans');
 		if ($(this).find('div.bucket.past_answers.hidden').length) {
@@ -136,5 +136,5 @@
 			});
 		}
 	});
-	
+
 })();
