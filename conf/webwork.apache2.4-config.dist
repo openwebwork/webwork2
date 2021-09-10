@@ -258,6 +258,9 @@ PerlModule WebworkWebservice
 #    <Location /webwork2/html2xml>
 #        Header set Access-Control-Allow-Origin "*"
 #    </Location>
+#    <Location /webwork2_files>
+#        Header set Access-Control-Allow-Origin "*"
+#    </Location>
 #</IfModule>
 
 
