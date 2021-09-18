@@ -294,8 +294,8 @@ my $ConfigStrings = [
 		type => 'number'
 	},
 	{	var => 'pg{options}{showCorrectOnRandomize}',
-		doc => 'Show the correct answer to the current problem before re-randomization.',
-		doc2 => 'Show the correct answer to the current problem on the last attempt before a new version is requestion.',
+		doc => x('Show the correct answer to the current problem before re-randomization.'),
+		doc2 => x('Show the correct answer to the current problem on the last attempt before a new version is requested.'),
 		type => 'boolean'
 	},
  	],		  
@@ -449,6 +449,49 @@ my $ConfigStrings = [
 		},
 
 	],
+	[x('LTI'),
+		{
+			var => 'LMS_name',
+			doc => x('The name of the LMS'),
+			doc2 => x('The name of the LMS. This is used in messages to users that direct them to go back to the LMS to access something in the WeBWorK course.'),
+			type => 'text'
+		},
+		{
+			var => 'LMS_url',
+			doc => x('A URL for the LMS'),
+			doc2 => x('An address that can be used to log in to the LMS. This is used in messages to users that direct them to go back to the LMS to access something in the WeBWorK course.'),
+			type => 'text',
+			width => 30,
+		},
+		{
+			var => 'external_auth',
+			doc => x('Require students to log in through the LMS'),
+			doc2 => x('If this is set, all users (including the instructor) must enter the WeBWorK course through the LMS. If a user reaches the regular WeBWorK login screen, they receive a message directing them back to the LMS.'),
+			type => 'boolean'
+		},
+		{
+			var => 'LTIGradeMode',
+			doc => x('Grade passback mode'),
+			doc2 => x('Sets how grades will be passed back from WeBWorK to the LMS.<dl><dt>course</dt><dd>Sends a single grade back to the LMS. This grade is calculated out of the total question set that has been assigned to students and made open. Therefore it can appear low, since it counts problem sets with future due dates as zero.</dd> <dt>homework</dt><dd>Sends back a score for each problem set (including for each quiz). To use this, the external links from the LMS must be problem set specific. For example, <code>webwork.myschool.edu/webwork2/course-name/problem_set_name</code>. If the problem set name has space characters, they should be underscores in these addresses. If the problem set is a quiz, it must have this format: <code>webwork.myschool.edu/webwork2/course-name/quiz_mode/problem_set_name</code>. Also, to initialize the communication between WeBWorK and the LMS, the student must follow each of these external learning tools at least one time. Since there must be a separate external tool link for each problem set, this option requires more maintenance of the LMS course.</dd></dl>'),
+			values => ['', qw(course homework)],
+			labels=>{'' => 'None', 'course' => 'Course', 'homework' => 'Homework'},
+			type => 'popuplist'
+		},
+		{
+			var => 'LMSManageUserData',
+			doc => x('Allow the LMS to update user account data'),
+			doc2 => x("WeBWorK will automatically create users when logging in via the LMS for the first time. If this flag is enabled then it will also keep the user account data (first name, last name, section, recitation) up to date with the LMS. If a user's information changes in the LMS then it will change in WeBWorK. However, any changes to the student data via WeBWorK will be overwritten the next time the student logs in."),
+			type => 'boolean'
+		},
+		{
+			var => 'debug_lti_parameters',
+			doc => x('Show LTI parameters (for debugging)'),
+			doc2 => x('When this is true, then when a user enters WeBWorK from an external tool link in the LMS, the bottom of the screen will display the data that the LMS passed to WeBWorK. This may be useful to debug LTI, especially because different LMS systems have different parameters.'),
+			type => 'boolean'
+		},
+	]
+#];
+
 ];
 	
 package WeBWorK::Localize::I18N;
