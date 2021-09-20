@@ -2257,8 +2257,7 @@ sub output_past_answer_button{
 sub output_email_instructor{
 	my $self = shift;
 	my $r = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $courseName = $urlpath->arg("courseID");
+	my $courseName = $r->urlpath->arg("courseID");
 	my $problem = $self->{problem};
 	my %will = %{ $self->{will} };
 	my $pg = $self->{pg};
