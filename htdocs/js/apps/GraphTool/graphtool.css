@@ -88,6 +88,10 @@
 	background-image: url("images/SelectTool.svg");
 }
 
+.gt-tool-button.gt-point-tool {
+	background-image: url("images/PointTool.svg");
+}
+
 .gt-tool-button.gt-line-tool {
 	background-image: url("images/LineTool.svg");
 }
