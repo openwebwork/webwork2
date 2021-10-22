@@ -318,11 +318,15 @@ function graphTool(containerId, options) {
 
 	// Point graph object
 	function Point(x, y, color) {
-		GraphObject.call(this, gt.createPoint(x, y));
-		this.baseObj.setAttribute({
+		GraphObject.call(this, gt.board.create('point', [x, y], {
+			size: 2, snapToGrid: true, snapSizeX: gt.snapSizeX, snapSizeY: gt.snapSizeY, withLabel: false,
 			strokeColor: color ? color : gt.underConstructionColor, fixed: gt.isStatic
-		});
-		if (!gt.isStatic) this.on('drag', gt.updateText);
+		}));
+		if (!gt.isStatic) {
+			this.on('down', function() { gt.board.containerObj.style.cursor = 'none'; });
+			this.on('up', function() { gt.board.containerObj.style.cursor = 'auto'; });
+			this.on('drag', gt.updateText);
+		}
 	};
 	Point.prototype = Object.create(GraphObject.prototype);
 	Object.defineProperty(Point.prototype, 'constructor',
