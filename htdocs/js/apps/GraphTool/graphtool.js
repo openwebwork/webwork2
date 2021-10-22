@@ -320,7 +320,8 @@ function graphTool(containerId, options) {
 	function Point(x, y, color) {
 		GraphObject.call(this, gt.board.create('point', [x, y], {
 			size: 2, snapToGrid: true, snapSizeX: gt.snapSizeX, snapSizeY: gt.snapSizeY, withLabel: false,
-			strokeColor: color ? color : gt.underConstructionColor, fixed: gt.isStatic
+			strokeColor: color ? color : gt.underConstructionColor, fixed: gt.isStatic,
+			highlightStrokeColor: gt.underConstructionColor, highlightFillColor: gt.pointHighlightColor
 		}));
 		if (!gt.isStatic) {
 			this.on('down', function() { gt.board.containerObj.style.cursor = 'none'; });
