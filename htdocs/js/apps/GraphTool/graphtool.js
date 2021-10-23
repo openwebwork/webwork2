@@ -43,7 +43,6 @@ function graphTool(containerId, options) {
 	gt.snapSizeY = options.snapSizeY ? options.snapSizeY : 1;
 	gt.isStatic = 'isStatic' in options ? options.isStatic : false;
 	var availableTools = options.availableTools ? options.availableTools : [
-		"PointTool",
 		"LineTool",
 		"CircleTool",
 		"VerticalParabolaTool",
