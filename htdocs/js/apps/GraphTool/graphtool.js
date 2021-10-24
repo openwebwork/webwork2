@@ -156,11 +156,11 @@ function graphTool(containerId, options) {
 		return Math.round(Math.round(x / snap) * snap * 100000) / 100000;
 	};
 
-	gt.setTextCoords = function(x, y) {
+	gt.setTextCoords = options.showCoordinateHints ? function(x, y) {
 		gt.current_pos_text.setText(
 			"(" + gt.snapRound(x, gt.snapSizeX) + ", " + gt.snapRound(y, gt.snapSizeY) + ")"
-		);
-	};
+		)
+	} : function() {};
 
 	gt.updateText = function() {
 		gt.html_input.value = gt.graphedObjs.reduce(
