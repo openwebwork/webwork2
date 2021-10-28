@@ -1397,7 +1397,7 @@ EOF
 # addresses specified here.
 # 
 # * If you want to disable feedback altogether, leave this empty and set
-#   $permissionLevels{submit_feeback} = undef;
+#   $permissionLevels{submit_feedback} = undef;
 #   This will cause the
 #   feedback button to go away as well.
 # 
