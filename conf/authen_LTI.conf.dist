@@ -19,7 +19,7 @@ $LMS_name = 'e.g., Blackboard, Canvas, Moodle, etc.';
 # Set debug_lti_parameters  to 1 to have LTI calling parameters printed to HTML page for
 # debugging.  This is useful when setting things up for the first time because
 # different LMS systems have different parameters
-$debug_lti_parameters = 1; 
+$debug_lti_parameters = 1;
 
 # To get more information on passing grades back to the LMS enmass set debug_lti_grade_passback
 # to one.  And set the LTIMassUpdateInterval to 60 (seconds).
@@ -29,22 +29,22 @@ $debug_lti_grade_passback = 0;
 # If the set has "no lis_source_did" then that set hasn't been assigned, or the user is an instructor
 # and not a student.
 
-# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and 
+# Setting both debug_lti_parameters and debug_lti_grade_passback will cause the full request and
 # response between the LMS and WW to be printed into apache error log file for each
 # user/set  update of the grade.
 
 # The switches above can be set in course.conf to enable debugging for just one course.
 
-# If you want even more information enable the debug facility for SubmitGrade.pm in 
-# the WeBWorK::Constants file.  
+# If you want even more information enable the debug facility for SubmitGrade.pm in
+# the WeBWorK::Constants file.
 # This will print extensive debug messages for all courses.
 
 # This first section enables LTI authentication.
 # Failover to Basic_TheLastOption is necessary to authenticate with
-# cookie keys.  
+# cookie keys.
 
 ###################
-$authen{user_module} = [ 
+$authen{user_module} = [
 	{  "*" => "WeBWorK::Authen::LTIAdvanced", }, #preferred authorization method
 	{  "*" => "WeBWorK::Authen::Basic_TheLastOption",}  #fallback authorization method
 ];
@@ -54,7 +54,7 @@ $authen{user_module} = [
 # system, e.g., Basic_TheLastOption, then the following line
 # must be commented out.
 # If it is uncommented and the value = 1,
-# then, if the authentication sequence reaches 
+# then, if the authentication sequence reaches
 # Basic_TheLastOption, then WeBWorK::Login
 # will display a screen directing the user
 # back to an external authentication system.
@@ -65,7 +65,7 @@ $authen{user_module} = [
 # NOTE:  If external authentication is disabled
 # then you should probably also prevent students
 # from changing their passwords (because they cant use them).
-# To do this ucomment the following
+# To do this uncomment the following
 
 #  $permissionLevels{change_password} = "ta";
 
@@ -177,7 +177,7 @@ $preferred_source_of_username = "lis_person_contact_email_primary";
 #$preferred_source_of_student_id = "ext_d2l_orgdefinedid";
 
 ################################################################################
-# LTI Basic Authentication Parameters 
+# LTI Basic Authentication Parameters
 ################################################################################
 
 # This "shared secret" is entered in the LMS request form and needs to be
@@ -185,9 +185,9 @@ $preferred_source_of_username = "lis_person_contact_email_primary";
 # LMS and WeBWorK
 
 # You should choose your own secret word for security and should treat it
-# like a password. 
+# like a password.
 
-$LTIBasicConsumerSecret = "";  #This must be set  
+$LTIBasicConsumerSecret = "";  #This must be set
 
 # The purpose of the LTI nonces is to prevent man-in-the-middle attacks.
 # The NonceLifeTime (in seconds) must be short enought to prevent
@@ -203,7 +203,7 @@ $NonceLifeTime=60; # in seconds
 # user demographic data up to date with the LMS.  If a users information change
 # in the LMS then it will change in WeBWorK. However, any changes to the
 # student data via WeBWorK will be overwritten the next time the student
-# logs in.  
+# logs in.
 
 $LMSManageUserData=1;
 
@@ -215,10 +215,10 @@ $LMSManageUserData=1;
 #  $permissionLevels{change_email} = "ta";
 
 
-# This allows you to override the URL that Oauth will use to validate the 
+# This allows you to override the URL that Oauth will use to validate the
 # authentication.  This is important if you have some sort of setup (e.g. load
-# distributing) where the path in the LMS does not match the path that ends up 
-# in the webwork page 
+# distributing) where the path in the LMS does not match the path that ends up
+# in the webwork page
 
 #$LTIBasicToThisSiteURL = "";
 
@@ -233,7 +233,7 @@ $LMSManageUserData=1;
 # There are two modes under which this can occur.
 #
 # Single Course Grade Mode:  $LTIGradeMode = "course";
-# 
+#
 # In this mode you create a single Link/Assignment which points to your
 # WeBWorK Course address.  E.G. In Blackboard
 # Name: WeBWorK
@@ -245,7 +245,7 @@ $LMSManageUserData=1;
 # which is determined by their percentage total homework grade in WeBWorK.
 # This total homework grade is the same as the grade that is reported on the
 # grades page.  You can change the weight of sets by altering the weight of
-# the problems in the set.  
+# the problems in the set.
 #
 # Individual Homework Grade Mode:  $LTIGradeMode = "homework";
 #
@@ -261,13 +261,13 @@ $LMSManageUserData=1;
 # by their percentage homework grade on the Set which the Link/Assignment
 # points to.  Students need to use the Link/Assignment in the LMS at least once
 # to enable grade passback.  In particular when working in this mode it is
-# recommended that you only allow students to log in via the LMS.  
+# recommended that you only allow students to log in via the LMS.
 #
 #    Note: For both of these modes only the grades are passed back.  In
 # particular nothing else about the Link/Assignment in the LMS and the
 # homework set in WeBWorK is syncronized.  In particular the total number of
 # points/problems, the due dates, the open dates are not kept in sync
-# automatically.  
+# automatically.
 
 #$LTIGradeMode = "course";
 #$LTIGradeMode = "homework";
@@ -286,7 +286,7 @@ $LTIGradeOnSubmit = 1;
 $lti_check_prior = 0; # default is off - old setting - always update with no check
 
 # The system periodically updates student grades on the LMS.  This
-# variable controls how often that happens.  Set to -1 to disable.  
+# variable controls how often that happens.  Set to -1 to disable.
 
 $LTIMassUpdateInterval = 86400; #in seconds
 
@@ -326,7 +326,7 @@ $LTIMassUpdateInterval = 86400; #in seconds
 $LTIAccountCreationCutoff = "ta";
 
 ################################################################################
-# Local routines  
+# Local routines
 ################################################################################
 
 # These local routines can be used to modify and override various elements of
@@ -347,7 +347,7 @@ $LTIAccountCreationCutoff = "ta";
 #  # The user object to be modified
 #  my $user = shift;
 #
-#  # Parse context_id for additional information.  E.G.  
+#  # Parse context_id for additional information.  E.G.
 #  my @course_id=split /-/, $self -> {"context_id"};
 #  $user->{"section"} = $course_id[4];
 
@@ -360,7 +360,7 @@ $LTIAccountCreationCutoff = "ta";
 
 # When users are added to the system they are also assigned all visible sets
 # This routine can be used to modify the sets before they are assigned.  E.G.
-# extend due dates based off the number of problems students have to do 
+# extend due dates based off the number of problems students have to do
 
 #$LTI_modify_user_set = sub {
 #  # The self object from LTIAdvanced.pm
@@ -376,11 +376,11 @@ $LTIAccountCreationCutoff = "ta";
 
 #   my $niceDueTime = $globalSet->due_date + $reasonableNumberOfDays*86400;
 #   my $niceAnswerTime = $niceDueTime + 600;
-  
+
 #   $userSet->due_date($niceDueTime);
 #   $userSet->answer_date($niceAnswerTime);
 
 #};
-  
+
 
 1; #final line of the file to reassure perl that it was read properly.
