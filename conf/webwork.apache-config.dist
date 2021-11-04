@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/conf/webwork.apache-config.dist,v 1.23 2008/06/24 22:54:04 gage Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -17,9 +17,9 @@
 # This file configures Apache to handle requests for WeBWorK. To install WeBWorK
 # support in your Apache configuration, add the following line to the end of
 # your Apache configuration file (usually apache.conf or httpd.conf):
-# 
+#
 #     Include /path/to/webwork.apache-config
-# 
+#
 # Customize the variables below to match your WeBWorK installation.
 
 # Uncomment the ScriptAliasMatch to allow access to show-source.cgi
@@ -59,27 +59,27 @@ require Apache::WeBWorK; # force compilation of pretty much everything
 
 # At this point, the following configuration variables should be present for use
 # in wiring WeBWorK into Apache:
-# 
+#
 #     $webwork_url            The base URL handled by Apache::WeBWorK.
 #     $webwork_dir            The path to the base webwork2 directory.
 #     $pg_dir                 The path to the base pg directory.
-#     
+#
 #     $webwork_htdocs_url     The base URL of the WeBWorK htdocs directory.
 #     $webwork_htdocs_dir     The path to the WeBWorK htdocs directory.
-#     
+#
 #     $webwork_courses_url    The base URL of the WeBWorK courses directory.
 #     $webwork_courses_dir    The path to the WeBWorK courses directory.
 
 # Define the location that is handled by the Apache::WeBWorK module, and tell
 # Perl where to find the libraries Apache::WeBWorK needs to run.
-# 
+#
 $Location{$webwork_url} = {
 	SetHandler => "perl-script",
 	PerlHandler => "Apache::WeBWorK",
 };
 
 # Provide access to system-wide resources.
-# 
+#
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
 # make sure old alias is available even if we use lighttpd
 push @Alias, [ "/webwork2_files" => $webwork_htdocs_dir ];
@@ -91,7 +91,7 @@ $Directory{$webwork_htdocs_dir} = {
 };
 
 # Provide access to course-specific resources.
-# 
+#
 push @AliasMatch, [ "$webwork_courses_url/([^/]*)/(.*)", "$webwork_courses_dir/\$1/html/\$2" ];
 $Directory{"$webwork_courses_dir/*/html"} = {
 	Order => "allow,deny",
@@ -102,7 +102,7 @@ $Directory{"$webwork_courses_dir/*/html"} = {
 
 # If WeBWorK is on the root, exempt the static directories from being handled
 # by Apache::WeBWorK.
-# 
+#
 if ($webwork_url eq "") {
 	$Location{$webwork_courses_url} = { SetHandler => "none" };
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
@@ -126,9 +126,9 @@ $PerlConfig .= <<EOF;
 # #	PerlHandler Apache::XMLRPC::Lite
 # #	PerlSetVar dispatch_to "WeBWorK::RPC WeBWorK::RPC::CourseManagement"
 # #</Location>
-# 
+#
 # ########## XMLRPC installation ##########
-# # 
+# #
 # #PerlModule WebworkWebservice
 # #<Location /mod_xmlrpc>
 # #	SetHandler perl-script
@@ -138,9 +138,9 @@ $PerlConfig .= <<EOF;
 # #	Order Allow,Deny
 # #	Allow from All
 # #</Location>
-# 
+#
 # ##########  RQP installation ##########
-# # 
+# #
 # #PerlModule RQP
 # ##<Location /rqp>
 # ##	SetHandler perl-script
@@ -156,19 +156,19 @@ $PerlConfig .= <<EOF;
 # #	Order Allow,Deny
 # #	Allow from All
 # #</Location>
-# 
+#
 # ########## SOAP installation ##########
-# # 
+# #
 # #PerlModule WebworkWebservice
 # #<Location /mod_soap>
 # #	SetHandler perl-script
 # #	PerlHandler Apache::SOAP
-# #	PerlSetVar dispatch_to "WebworkXMLRPC" 
+# #	PerlSetVar dispatch_to "WebworkXMLRPC"
 # #	PerlSetVar options "compress_threshold => 10000"
 # #	Order Allow,Deny
 # #	Allow from All
 # #</Location>
-# 
+#
 # PerlModule WebworkSOAP
 
 # #WEBWORK SOAP CONFIGURATION
@@ -194,4 +194,3 @@ $PerlConfig .= <<EOF;
 EOF
 
 </Perl>
-
