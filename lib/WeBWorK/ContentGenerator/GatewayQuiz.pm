@@ -1113,8 +1113,6 @@ sub pre_header_initialize {
 			$pg = $self->getProblemHTML($self->{effectiveUser},
 				$set, $formFields,
 				$ProblemN);
-			WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
-			if ($self->{will}->{useMathQuill});
 		}
 		push(@pg_results, $pg);
 	}
@@ -2298,6 +2296,7 @@ sub getProblemHTML {
 			processAnswers  => 1,
 			QUIZ_PREFIX     => 'Q' .
 			sprintf("%04d",$problemNumber) . '_',
+			useMathQuill    => $self->{will}->{useMathQuill},
 		},
 	);
 
@@ -2385,15 +2384,6 @@ sub output_JS{
 				src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript",
 				src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
-	}
-
-
-	# MathQuill interface
-	if ($self->{will}->{useMathQuill}) {
-		print qq{<link href="$site_url/js/apps/MathQuill/mathquill.css" rel="stylesheet" />};
-		print qq{<link href="$site_url/js/apps/MathQuill/mqeditor.css" rel="stylesheet" />};
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
 	}
 
 	print CGI::start_script({type=>"text/javascript",

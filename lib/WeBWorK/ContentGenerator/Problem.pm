@@ -752,6 +752,7 @@ sub pre_header_initialize {
 			processAnswers  => 1,
 			permissionLevel => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			useMathQuill => $will{useMathQuill},
 		},
 	);
 
@@ -805,9 +806,6 @@ sub pre_header_initialize {
 	$self->{can}  = \%can;
 	$self->{will} = \%will;
 	$self->{pg} = $pg;
-
-	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
-	if ($self->{will}->{useMathQuill});
 
 	#### process and log answers ####
 	$self->{scoreRecordedMessage} = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::process_and_log_answer($self) || "";
@@ -2340,12 +2338,6 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 
-	# MathQuill live rendering 
-	if ($self->{will}->{useMathQuill}) {
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
-	}
-	
 	# This is for knowls
         # Javascript and style for knowls
         print qq{
@@ -2413,12 +2405,6 @@ sub output_CSS {
 	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />\n";
 	}
 	
-	#style for mathquill
-	if ($self->{will}->{useMathQuill}) {
-		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />\n";
-		print "<link href=\"$site_url/js/apps/MathQuill/mqeditor.css\" rel=\"stylesheet\" />\n";
-	}
-
 	# Style for the image dialog
 	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
 
