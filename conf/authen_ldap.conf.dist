@@ -31,7 +31,7 @@ $authen{ldap_options} = {
 	# base to use when searching for user's DN
 	# Edit the data below:
 	net_ldap_base => "ou=people,dc=myschool,dc=edu",
-	
+
         # Use a Bind account if set to 1
         bindAccount => 0,
 
@@ -42,7 +42,7 @@ $authen{ldap_options} = {
 	# entered by the user. The net_ldap_rdn setting tells the LDAP
 	# backend what part of your LDAP schema you want to use as the RDN.
 	# The correct value for net_ldap_rdn will depend on your LDAP setup.
-	# 
+	#
 	# Uncomment this line if you use Active Directory.
 	#net_ldap_rdn => "sAMAccountName",
 	#

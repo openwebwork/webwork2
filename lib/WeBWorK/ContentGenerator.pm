@@ -1711,7 +1711,7 @@ sub feedbackMacro_form {
 	    if ($key eq 'pg_object') {
 	        my $tmp = $value->{body_text};
 	        $tmp .= CGI::p(CGI::b("Note: "). CGI::i($value->{result}->{msg})) if $value->{result}->{msg} ;
-	        $result .= CGI::hidden($key, encode_base64($tmp, "") );
+	        $result .= CGI::hidden($key, encode_base64(Encode::encode('UTF-8', $tmp), "") );
 	    } else {
 			$result .= CGI::hidden($key, $value) . "\n";
 		}

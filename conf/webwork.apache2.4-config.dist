@@ -85,7 +85,6 @@ die "webwork.apach2-config: Can't establish initial Course environment" unless r
 #  set important configuration variables (from defaults.config)
 
 my $webwork_url = $ce->{webwork_url};                    # e.g.  /webwork2
-# my $pg_dir = $ce->{pg_dir};                              # e.g.  /opt/webwork/pg
 my $webwork_htdocs_url = $ce->{webwork_htdocs_url};      # e.g.  /webwork2_files
 my $webwork_htdocs_dir = $ce->{webwork_htdocs_dir};      # e.g.  /opt/webwork/webwork2/htdocs
 my $webwork_courses_url = $ce->{webwork_courses_url};    # e.g.  /webwork2_course_files
@@ -107,7 +106,7 @@ $ENV{WEBWORK_SERVER_ADMIN} = $webwork_server_admin_email;
 #    the code and version of the code being used on the server.
 #    The useful information will be in the Apache error.log file, with a UID
 #    displayed also in the HTML error page to help match up records.
-# Warning: The Apache error.log is available to system adminstrators but not to
+# Warning: The Apache error.log is available to system administrators but not to
 #    users with staff level accounts in the courses, so using the more secure
 #    settings requires more cooperation from the system administrators when
 #    debugging data is needed.
@@ -261,6 +260,9 @@ PerlModule WebworkWebservice
 
 #<IfModule mod_headers.c>
 #    <Location /webwork2/html2xml>
+#        Header set Access-Control-Allow-Origin "*"
+#    </Location>
+#    <Location /webwork2_files>
 #        Header set Access-Control-Allow-Origin "*"
 #    </Location>
 #</IfModule>

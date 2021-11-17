@@ -250,7 +250,9 @@ sub submit_grade {
   # which should be dependent on the student + the assignment if a
   # "homework" level sourcedid. This part can be used twice
   my $uuid_p1 = create_uuid_as_string(UUID_SHA1, UUID_NS_URL, $sourcedid);
-  my $uuid_p2;
+
+  # Second part is a time dependent portion
+  my $uuid_p2 = create_uuid_as_string(UUID_TIME);
 
   my $lti_check_prior = $ce->{lti_check_prior} // 0; # Should we first poll the LMS for the current grade
 
@@ -296,13 +298,9 @@ EOS
     warn("Retrieving prior grade using sourcedid: $sourcedid") if
       $ce->{debug_lti_parameters};
 
-
     $requestGen = Net::OAuth->request("consumer");
 
     $requestGen->add_required_message_params('body_hash');
-
-    # Generate a better nonce, second part is a time dependent portion
-    $uuid_p2 = create_uuid_as_string(UUID_TIME);
 
     $gradeRequest = $requestGen->new(
 		  request_url => $request_url,
