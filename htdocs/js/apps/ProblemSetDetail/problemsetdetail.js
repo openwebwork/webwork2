@@ -18,29 +18,29 @@
 		maxLevels: 6,
 	});
 
-	$('.psd_view').tooltip();
-	$('.psd_edit').tooltip();
-	$('.pdr_render').tooltip();
-	$('.pdr_grader').tooltip();
-	$('.pdr_handle > i').tooltip();
+	document.querySelectorAll('.psd_view,.psd_edit,.pdr_render,.pdr_grader,.pdr_handle > i').forEach(
+		(el) => new bootstrap.Tooltip(el)
+	);
 
 	if ($('#psd_list').hasClass('disable_renumber')) {
 		$('#psd_list').nestedSortable({ disabled:true});
 	}
 
 	// The actual expand collapse icon is controlled by css
-	$('.pdr_collapse').on('click', function() {
-		$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
-		$(this).tooltip('destroy');
-		if ($(this).closest('li').hasClass('mjs-nestedSortable-collapsed')) {
-			$(this).tooltip({ title: $(this).attr('data-expand-text'), container: this });
-		} else {
-			$(this).tooltip({ title: $(this).attr('data-collapse-text'), container: this });
-		}
-
-	}).each(function() {
-		$(this).tooltip({title:$(this).attr('data-expand-text'),
-			container: this});
+	document.querySelectorAll('.pdr_collapse').forEach((collapse) => {
+		collapse.tooltip = new bootstrap.Tooltip(collapse, { title: collapse.dataset.expandText, container: collapse });
+		collapse.addEventListener('click', () => {
+			$(collapse).closest('li')
+				.toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
+			collapse.tooltip.dispose();
+			if ($(collapse).closest('li').hasClass('mjs-nestedSortable-collapsed')) {
+				collapse.tooltip =
+					new bootstrap.Tooltip(collapse, { title: collapse.dataset.expandText, container: collapse });
+			} else {
+				collapse.tooltip =
+					new bootstrap.Tooltip(collapse, { title: collapse.dataset.collapseText, container: collapse });
+			}
+		});
 	});
 
 	// This is for the render buttons
@@ -80,20 +80,20 @@
 	$('#psd_expand_all').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');
-		$('.pdr_collapse').each(function () {
-			$(this).tooltip('destroy');
-			$(this).tooltip({title:$(this).attr('data-collapse-text'),
-				container:this});
+		document.querySelectorAll('.pdr_collapse').forEach((collapse) => {
+			collapse.tooltip.dispose();
+			collapse.tooltip =
+				new bootstrap.Tooltip(collapse, { title: collapse.dataset.collapseText, container: collapse });
 		});
 	});
 
 	$('#psd_collapse_all').click(function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').addClass('mjs-nestedSortable-collapsed').removeClass('mjs-nestedSortable-expanded');
-		$('.pdr_collapse').each(function () {
-			$(this).tooltip('destroy');
-			$(this).tooltip({title:$(this).attr('data-expand-text'),
-				container:this});
+		document.querySelectorAll('.pdr_collapse').forEach((collapse) => {
+			collapse.tooltip.dispose();
+			collapse.tooltip =
+				new bootstrap.Tooltip(collapse, { title: collapse.dataset.expandText, container: collapse });
 		});
 	});
 
@@ -172,7 +172,7 @@
 
 	$('#psd_list').on('sortupdate', set_prob_num_fields);
 
-	$('#psd_renumber').click(function (event) {
+	$('#psd_renumber').on('click', function (event) {
 		event.preventDefault();
 		set_prob_num_fields();
 	});
@@ -243,7 +243,9 @@
 			ro.processAnswers = 0;
 			ro.showFooter = 0;
 			ro.displayMode = $('#problem_displaymode').val();
-			ro.extra_header_text = "<style>html{overflow-y:hidden;}body{padding:0;background:#f5f5f5;.container-fluid{padding:0px;}</style>";
+			ro.extra_header_text = '<style>' +
+				'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
+				'</style>';
 			if (window.location.port) ro.forcePortNumber = window.location.port;
 
 			$.ajax({type:'post',

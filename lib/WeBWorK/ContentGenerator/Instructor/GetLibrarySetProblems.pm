@@ -1,12 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
@@ -85,7 +85,7 @@ sub prepare_activity_entry {
 }
 
 ## This is for searching the disk for directories containing pg files.
-## to make the recursion work, this returns an array where the first 
+## to make the recursion work, this returns an array where the first
 ## item is the number of pg files in the directory.  The second is a
 ## list of directories which contain pg files.
 ##
@@ -243,7 +243,7 @@ sub get_past_problem_files {
 		$val |= ADDED if($r->param("trial$count"));
 		$val |= HIDDEN if($r->param("hideme$count"));
 		$val |= MOVED if($r->param("moved$count"));
-		push @found, [$r->param("filetrial$count"), $val];			
+		push @found, [$r->param("filetrial$count"), $val];
 		$count++;
 	}
 	$count = 1;
@@ -277,7 +277,7 @@ sub make_data_row {
 	     $localSet ne NO_LOCAL_SET_STRING ) {
 		$setRecord = $db->getGlobalSet( $localSet );
 	}
-	my $isGatewaySet = ( defined($setRecord) && 
+	my $isGatewaySet = ( defined($setRecord) &&
 			     $setRecord->assignment_type =~ /gateway/ );
 
 	my %problem_div_settings = (
@@ -301,7 +301,7 @@ sub make_data_row {
 			  problemID=>"1"),
 			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
 		  ), target=>"WW_Editor"}, "Edit it" );
-	
+
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
 		if not defined $displayMode or $displayMode eq "None";
@@ -340,7 +340,7 @@ sub make_data_row {
 	if(!($self->{isInSet}{$sourceFileName})){
 
   	print CGI::div({-class=>"problem libraryProblem", -align=>"left", -draggable=>"true", -href=>"#", -id=>"$cnt"},
-  		CGI::p({},"File name: $sourceFileName "), 
+  		CGI::p({},"File name: $sourceFileName "),
   		CGI::p({}, $edit_link, " ", $try_link),
   		CGI::p(CGI::checkbox(-id=>"hideme$cnt", -name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1)),
   		CGI::p(CGI::checkbox((%add_box_data),-override=>1)),
@@ -351,7 +351,7 @@ sub make_data_row {
 	}
 	else{
 	  print CGI::div({-class=>"problem libraryProblem used", -align=>"left", -draggable=>"true", -href=>"#", -id=>"$cnt"},
-  		CGI::p({},"File name: $sourceFileName "), 
+  		CGI::p({},"File name: $sourceFileName "),
   		CGI::p({}, $edit_link, " ", $try_link),
   		CGI::p(CGI::checkbox(-id=>"hideme$cnt", -name=>"hideme$cnt",-value=>1,-label=>"Don't show this problem on the next update",-override=>1)),
   		CGI::p(CGI::checkbox((%add_box_data),-override=>1)),
@@ -392,20 +392,20 @@ sub pre_header_initialize {
     ##  as we go through the if/else tree
     $self->{current_library_set} =  $r->param('library_sets');
     $self->{current_myset_set} = $r->param('myset_sets');
-    if (not defined($self->{current_myset_set}) 
+    if (not defined($self->{current_myset_set})
 		or $self->{current_myset_set} eq "Select a Homework Set"
 		or $self->{current_myset_set} eq NO_LOCAL_SET_STRING) {
       my @all_db_sets = $db->listGlobalSets;
 	    @all_db_sets = sortByName(undef, @all_db_sets);
 	    $self->{current_myset_set} = shift(@all_db_sets);
 	  }
-    
+
 	##	These directories will have individual buttons
 	%problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
 
 	my $userName = $r->param('user');
-	my $user = $db->getUser($userName); # checked 
-	die "record for user $userName (real user) does not exist." 
+	my $user = $db->getUser($userName); # checked
+	die "record for user $userName (real user) does not exist."
 		unless defined $user;
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
@@ -440,9 +440,9 @@ sub pre_header_initialize {
 	my @myset_files=();
 	my $use_previous_problems = 1;
 	my $first_shown = $r->param('first_shown') || 0;
-	my $last_shown = $r->param('last_shown'); 
+	my $last_shown = $r->param('last_shown');
 	if (not defined($last_shown)) {
-		$last_shown = -1; 
+		$last_shown = -1;
 	}
 	my @all_past_list = (); # these are include requested, but not shown
 	my $j = 0;
@@ -456,7 +456,7 @@ sub pre_header_initialize {
 	my $browse_which = $r->param('browse_which') || 'browse_npl_library';
 	my $gridded = $r->param('gridify') || 'false';
 
-	
+
 
 	## check for problem lib buttons
 	my $browse_lib = '';
@@ -526,10 +526,10 @@ sub pre_header_initialize {
 
 		##### View problems selected from the a set in this course
   } elsif ($r->param('edit_mysets_set')){
-  
+
     my $set_to_display = $self->{current_library_set};
 		  debug("set_to_display is $set_to_display");
-		  if (not defined($set_to_display) 
+		  if (not defined($set_to_display)
 		  		or $set_to_display eq "Select a Homework Set"
 		  		or $set_to_display eq NO_LOCAL_SET_STRING) {
 		  	$self->addbadmessage("You need to select a set from this course to view.");
@@ -543,25 +543,25 @@ sub pre_header_initialize {
 		  		die "global $problem for set $set_to_display not found." unless
 		  			$problemRecord;
 		  		push @pg_files, $problemRecord->source_file;
-  
+
 		  	}
 		  	@pg_files = sortByName(undef,@pg_files);
 		  	$use_previous_problems=0;
 		  }
 
 		##### View from the library database
- 
+
 	} elsif ($r->param('lib_view')) {
 		@pg_files=();
 		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
 		my ($result, $tolibpath);
 		for $result (@dbsearch) {
 			$tolibpath = "Library/$result->{path}/$result->{filename}";
-			
+
 			## Too clunky!!!!
 			push @pg_files, $tolibpath;
 		}
-		$use_previous_problems=0; 
+		$use_previous_problems=0;
 
 		##### View a set from a set*.def
 
@@ -569,14 +569,14 @@ sub pre_header_initialize {
 
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
-		if (not defined($set_to_display) 
+		if (not defined($set_to_display)
 				or $set_to_display eq "Select a Set Definition File"
 				or $set_to_display eq NO_LOCAL_SET_STRING) {
 			$self->addbadmessage("You need to select a set definition file to view.");
 		} else {
 			@pg_files= $self->read_set_def($set_to_display);
 		}
-		$use_previous_problems=0; 
+		$use_previous_problems=0;
 
 		##### Edit the current local homework set
 
@@ -605,22 +605,22 @@ sub pre_header_initialize {
 				$newSetRecord = $db->{set}->{record}->new();
 				$newSetRecord->set_id($newSetName);
 				$newSetRecord->set_header("defaultHeader");
-				$newSetRecord->hardcopy_header("defaultHeader");				# It's convenient to set the due date two weeks from now so that it is 
-				# not accidentally available to students.  
-				
+				$newSetRecord->hardcopy_header("defaultHeader");				# It's convenient to set the due date two weeks from now so that it is
+				# not accidentally available to students.
+
 				my $dueDate = time+2*60*60*24*7;
 				my $display_tz = $ce->{siteDefaults}{timezone};
 				my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
 				my $dueTime = $ce->{pg}{timeAssignDue};
-				
+
 				# We replace the due time by the one from the config variable
 				# and try to bring it back to unix time if possible
 				$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
-				
+
 				$dueDate = $self->parseDateTime($fDueDate, $display_tz);
 				$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
 				$newSetRecord->due_date($dueDate);
-				$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});	
+				$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
 
 				eval {$db->addGlobalSet($newSetRecord)};
 				if ($@) {
@@ -644,12 +644,12 @@ sub pre_header_initialize {
 		## first handle problems to be added before we hide them
 		my($localSet, @selected);
 
-		my @add_pg_files = grep {(($_->[1] & ADDED)) != 0 } @{$self->{past_problems}}; 
+		my @add_pg_files = grep {(($_->[1] & ADDED)) != 0 } @{$self->{past_problems}};
 		my @add_selected = map {$_->[0]} @add_pg_files;
-		
+
 		my @delete_pg_files = grep {(($_->[1] & DELETED)) != 0} @{$self->{past_problems}};
 		my @delete_selected = map {$_->[0]} @delete_pg_files;
-		
+
 		my @move_pg_files = grep {(($_->[1] & MOVED)) != 0} @{$self->{past_problems}};
 		my @move_selected = map {$_->[0]} @move_pg_files;
 
@@ -661,15 +661,15 @@ sub pre_header_initialize {
 
 		if (scalar(@add_selected)>0) {	# if some are to be added, they need a place to go
 			$localSet = $r->param('myset_sets');
-			if (not defined($localSet) or 
-					$localSet eq SELECT_SET_STRING or 
+			if (not defined($localSet) or
+					$localSet eq SELECT_SET_STRING or
 		            $localSet eq NO_LOCAL_SET_STRING) {
-				$self->addbadmessage('You are trying to add problems to something, 
+				$self->addbadmessage('You are trying to add problems to something,
 				but you did not select a "Target Set" name as a target.');
 			} else {
 				my $newSetRecord  = $db->getGlobalSet($localSet);
 				if (not defined($newSetRecord)) {
-					$self->addbadmessage("You are trying to add problems to $localSet, 
+					$self->addbadmessage("You are trying to add problems to $localSet,
 					but that set does not seem to exist!  I bet you used your \"Back\" button.");
 				} else {
 					my $addcount = add_selected($self, $db, $localSet);
@@ -682,15 +682,15 @@ sub pre_header_initialize {
 		}
 		if (scalar(@delete_selected)>0) {	# if some are to be added, they need a place to go
 			$localSet = $r->param('myset_sets');
-			if (not defined($localSet) or 
-					$localSet eq SELECT_SET_STRING or 
+			if (not defined($localSet) or
+					$localSet eq SELECT_SET_STRING or
 		            $localSet eq NO_LOCAL_SET_STRING) {
-				$self->addbadmessage('You are trying to add problems to something, 
+				$self->addbadmessage('You are trying to add problems to something,
 				but you did not select a "Target Set" name as a target.');
 			} else {
 				my $newSetRecord  = $db->getGlobalSet($localSet);
 				if (not defined($newSetRecord)) {
-					$self->addbadmessage("You are trying to delete problems to $localSet, 
+					$self->addbadmessage("You are trying to delete problems to $localSet,
 					but that set does not seem to exist!  I bet you used your \"Back\" button.");
 				} else {
 					my $deletecount = delete_selected($self, $db, $localSet);
@@ -705,15 +705,15 @@ sub pre_header_initialize {
 			$localSet = $r->param('myset_sets');
 			my $otherSet = $self->{current_library_set};
 			if (not defined($localSet) or not defined($otherSet) or
-					$localSet eq SELECT_SET_STRING or 
+					$localSet eq SELECT_SET_STRING or
 		            $localSet eq NO_LOCAL_SET_STRING) {
-				$self->addbadmessage('You are trying to add problems to something, 
+				$self->addbadmessage('You are trying to add problems to something,
 				but you did not select a "Target Set" name as a target.');
 			} else {
 				my $newSetRecord  = $db->getGlobalSet($localSet);
 				my $otherNewSetRecord = $db->getGlobalSet($otherSet);
 				if (not defined($newSetRecord) or not defined($otherNewSetRecord)) {
-					$self->addbadmessage("You are trying to move problems from $otherSet to $localSet, 
+					$self->addbadmessage("You are trying to move problems from $otherSet to $localSet,
 					but that set does not seem to exist!  I bet you used your \"Back\" button.");
 				} else {
 					my $addcount = add_selected($self, $db, $localSet);
@@ -737,7 +737,7 @@ sub pre_header_initialize {
 					@all_past_list[($last_shown+1)..(scalar(@all_past_list)-1)]);
 		$last_shown = $first_shown+$maxShown -1; debug("last_shown 3: ", $last_shown);
 		$last_shown = (scalar(@all_past_list)-1) if($last_shown>=scalar(@all_past_list)); debug("last_shown 4: ", $last_shown);
-		
+
 		#want to reorder in addition to anything else
     if ($r->param('isReordered')){
     #this might work, i'm not sure if this is the right ID
@@ -751,7 +751,7 @@ sub pre_header_initialize {
 		$self->addgoodmessage("It sees the next_page parameter, last shown is: $last_shown and first shown is: $first_shown");
 		@past_marks = ();
 	} elsif ($r->param('prev_page')) {
-		$last_shown = $first_shown-1; 
+		$last_shown = $first_shown-1;
 		$first_shown = $last_shown - $maxShown+1;
 
 		$first_shown = 0 if($first_shown<0);
@@ -779,7 +779,7 @@ sub pre_header_initialize {
   #I'm worried this will break something
   my $default_set = $self->{current_myset_set};
 	  #debug("set_to_display is $default_set");
-	  if (not defined($default_set) 
+	  if (not defined($default_set)
   		or $default_set eq "Select a Homework Set"
   		or $default_set eq NO_LOCAL_SET_STRING) {
   		$self->addbadmessage("You need to select a set from this course to view.");
@@ -793,11 +793,11 @@ sub pre_header_initialize {
   			die "global $problem for set $default_set not found." unless
   				$problemRecord;
   			push @myset_files, $problemRecord->source_file;
-  
+
   		}
   	  #@myset_files = sortByName(undef,@myset_files);
   	}
- 
+
 	############# List of local sets
 
 	# DBFIXME sorting in database, please!
@@ -808,7 +808,7 @@ sub pre_header_initialize {
 		@pg_files = @all_past_list;
 	} else {
 		$first_shown = 0;
-		$last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown; 
+		$last_shown = scalar(@pg_files)<$maxShown ? scalar(@pg_files) : $maxShown;
 		$last_shown--;		# to make it an array index
 		@past_marks = ();
 	}
@@ -857,8 +857,8 @@ sub body {
 	### Check that this is a professor
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-		print "User $userName returned " . 
-			$authz->hasPermissions($user, "modify_problem_sets") . 
+		print "User $userName returned " .
+			$authz->hasPermissions($user, "modify_problem_sets") .
 	" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
 		CGI::em("You are not authorized to access the Instructor tools.")));
@@ -866,11 +866,11 @@ sub body {
 
 	my $showHints = $r->param('showHints');
 	my $showSolutions = $r->param('showSolutions');
-	
+
 	##########	Extract information computed in pre_header_initialize
 
 	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown}; 
+	my $last_shown = $self->{last_shown};
 	my $browse_which = $self->{browse_which};
 	my $gridded = $self->{gridded};
 	my $problem_seed = $self->{problem_seed}||1234;
@@ -923,14 +923,14 @@ sub body {
 	}
 	$self->{isInSet} = \%isInSet;
   my $jj;
- 
-	  	  
+
+
 	    	#some work for the moved controls
 				my $list_of_local_sets = $self->{all_db_sets};
 				my $have_local_sets = scalar(@$list_of_local_sets);
 				my $library_selected = $self->{current_library_set};
 				my $set_selected = $r->param('local_sets');
-			
+
 				if($have_local_sets ==0) {
 					$list_of_local_sets = [NO_LOCAL_SET_STRING];
 				} elsif (not defined($set_selected) or $set_selected eq ""
@@ -938,7 +938,7 @@ sub body {
 					unshift @{$list_of_local_sets}, SELECT_SET_STRING;
 					$set_selected = SELECT_SET_STRING;
 				}
-			
+
 				# Tidy this list up since it is used in two different places
 				if ($list_of_local_sets->[0] eq SELECT_SET_STRING) {
 					shift @{$list_of_local_sets};
@@ -962,9 +962,9 @@ sub body {
 	        print CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1);
           print '<div id="setmaker_library_problems" class="problemList">';
 	        ########## Now print problems
-	          for ($jj=0; $jj<scalar(@pg_html); $jj++) { 
+	          for ($jj=0; $jj<scalar(@pg_html); $jj++) {
 		          $pg_files[$jj] =~ s|^$ce->{courseDirs}->{templates}/?||;
-		          $self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1,         $self->{past_marks}->[$jj]); 
+		          $self->make_data_row($pg_files[$jj+$first_shown], $pg_html[$jj], $jj+1,         $self->{past_marks}->[$jj]);
 	          }
           print '</div>';
           print '<p><button type="button" onclick="increaseLibAcross();">+</button><span id="libAcross">4</span><button type="button" onclick="decreaseLibAcross();">-</button><span> problems across</span></p>';
@@ -992,9 +992,9 @@ sub body {
 	        print '</div>';
 	        #close setmaker_library
 	      print '</div>';
-	
 
-	return "";	
+
+	return "";
 }
 
 =head1 AUTHOR

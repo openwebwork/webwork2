@@ -546,7 +546,7 @@ sub webwork_logo {
 		CGI::img({
 			src => "$htdocs/themes/$theme/images/webwork_logo.svg",
 			alt => $r->maketext("to courses page")
-		},'')
+		})
 	);
 	return "";
 }
@@ -568,7 +568,7 @@ sub institution_logo {
 		CGI::img({
 			src => "$htdocs/themes/$theme/images/" . $ce->{institutionLogo},
 			alt => $r->maketext("to [_1] main web site", $ce->{institutionName})
-		},'')
+		})
 	);
 	return "";
 }
@@ -751,9 +751,9 @@ sub links {
 		my $new_anchor;
 		if ($active) {
 			# add active class for current location
-			$new_anchor = CGI::a({href=>$new_systemlink, class=>"active", %target}, $text);
+			$new_anchor = CGI::a({ href => $new_systemlink, class => 'nav-link active', %target }, $text);
 		} else {
-			$new_anchor = CGI::a({href=>$new_systemlink, %target}, "$text");
+			$new_anchor = CGI::a({ href => $new_systemlink, class => 'nav-link', %target }, "$text");
 		}
 
 		return $new_anchor;
@@ -781,25 +781,23 @@ sub links {
 	my %systemlink_args;
 	$systemlink_args{params} = \%params if %params;
 
-	print CGI::start_ul();
-	print CGI::start_li({class => "nav-header"});
-	print CGI::h2($r->maketext("Main Menu"));
-	print CGI::end_li();
-	print CGI::start_li(); # Courses
+	print CGI::start_ul({ class => 'nav flex-column bg-light' });
+	print CGI::a({ class => "navbar-brand" }, $r->maketext("Main Menu"));
+	print CGI::start_li({ class => 'nav-item' }); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
 	print CGI::end_li(); # end Courses
 
 	if (defined $courseID) {
 		if ($authen->was_verified) {
-			print CGI::start_li(); # Homework Sets
-                        my $primaryMenuName = $r->maketext("Homework Sets");
-                        $primaryMenuName = $r->maketext("Course Administration") if ($ce->{courseName} eq 'admin');
+			print CGI::start_li({ class => 'nav-item' }); # Homework Sets
+				my $primaryMenuName = $r->maketext("Homework Sets");
+				$primaryMenuName = $r->maketext("Course Administration") if ($ce->{courseName} eq 'admin');
 			print &$makelink("${pfx}ProblemSets", text=>$primaryMenuName, urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 			print CGI::end_li();
 			if (defined $setID) {
-			    print CGI::start_li();
-				print CGI::start_ul();
-				print CGI::start_li(); # $setID
+			    print CGI::start_li({ class => 'nav-item' });
+				print CGI::start_ul({ class => 'nav flex-column' });
+				print CGI::start_li({ class => 'nav-item' }); # $setID
 				# show a link if we're displaying a homework set, or a version
 				#    of a gateway assignment; to know if it's a gateway
 				#    assignment, we have to get the set record.
@@ -816,9 +814,9 @@ sub links {
 			    print CGI::end_li();
 
 				if (defined $problemID) {
-				    print CGI::start_li();
-					print CGI::start_ul();
-					print CGI::start_li(); # $problemID
+				    print CGI::start_li({ class => 'nav-item' });
+					print CGI::start_ul({ class => 'nav flex-column' });
+					print CGI::start_li({ class => 'nav-item' }); # $problemID
 					print &$makelink("${pfx}Problem", text=>$r->maketext("Problem [_1]", $prettyProblemID), urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args);
 					print CGI::end_li(); # end $problemID
 					print CGI::end_ul();
@@ -829,43 +827,54 @@ sub links {
 			}
 
 
-				print CGI::li(&$makelink("${pfx}Options", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+			print CGI::li({ class => 'nav-item' },
+				&$makelink("${pfx}Options", urlpath_args => { %args }, systemlink_args => \%systemlink_args));
 
-			print CGI::li(&$makelink("${pfx}Grades", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+			print CGI::li({ class => 'nav-item' },
+				&$makelink("${pfx}Grades", urlpath_args => { %args }, systemlink_args => \%systemlink_args));
 
 			if ($ce->{achievementsEnabled}) {
-			    print CGI::li(&$makelink("${pfx}Achievements", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
-
+				print CGI::li({ class => 'nav-item' },
+					&$makelink("${pfx}Achievements", urlpath_args => { %args }, systemlink_args => \%systemlink_args));
 			}
 
 			if ($authz->hasPermissions($userID, "access_instructor_tools")) {
 				$pfx .= "Instructor::";
 
-				print CGI::start_li(); # Instructor Tools
+				print CGI::start_li({ class => 'nav-item' }); # Instructor Tools
 				print &$makelink("${pfx}Index", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				print CGI::end_li();
-				print CGI::start_li();
-				print CGI::start_ul();
+				print CGI::start_li({ class => 'nav-item' });
+				print CGI::start_ul({ class => 'nav flex-column' });
 
                 #class list editor
-				print CGI::li(&$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li({ class => 'nav-item' }, &$makelink("${pfx}UserList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 
 				# Homework Set Editor
-				print CGI::li(&$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li({ class => 'nav-item' }, &$makelink("${pfx}ProblemSetList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
 
 				## only show editor link for non-versioned sets
 				if (defined $setID && $setID !~ /,v\d+$/ ) {
-				    print CGI::start_li();
-				    print CGI::start_ul();
+				    print CGI::start_li({ class => 'nav-item' });
+				    print CGI::start_ul({ class => 'nav flex-column' });
 
-					print CGI::start_li();
-					print &$makelink("${pfx}ProblemSetDetail", text => "$prettySetID", urlpath_args => { %args, setID => $setID }, systemlink_args => \%systemlink_args);
+					print CGI::start_li({ class => 'nav-item' });
+					print &$makelink("${pfx}ProblemSetDetail",
+					   	text => "$prettySetID",
+					   	urlpath_args => { %args, setID => $setID },
+					   	systemlink_args => \%systemlink_args);
 					print CGI::end_li();
 
 					if (defined $problemID) {
-					    print CGI::start_li();
-					    print CGI::start_ul();
-						print CGI::li(&$makelink("${pfx}PGProblemEditor", text=>"$prettyProblemID", urlpath_args=>{%args,setID=>$setID,problemID=>$problemID}, systemlink_args=>\%systemlink_args, target=>"WW_Editor"));
+					    print CGI::start_li({ class => 'nav-item' });
+					    print CGI::start_ul({ class => 'nav flex-column' });
+						print CGI::li({ class => 'nav-item' },
+							&$makelink("${pfx}PGProblemEditor",
+								text => "$prettyProblemID",
+								urlpath_args => { %args, setID => $setID, problemID => $problemID },
+								systemlink_args => \%systemlink_args,
+								target => "WW_Editor")
+						);
 					    print CGI::end_ul();
 					    print CGI::end_li();
 					}
@@ -874,56 +883,85 @@ sub links {
 				    print CGI::end_li();
 				}
 
-				print CGI::li(&$makelink("${pfx}SetMaker", text=>$r->maketext("Library Browser"), urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				print CGI::li({ class => 'nav-item' },
+					&$makelink("${pfx}SetMaker",
+						text => $r->maketext("Library Browser"),
+						urlpath_args => { %args },
+						systemlink_args => \%systemlink_args));
 
-				print CGI::start_li(); # Stats
+				print CGI::start_li({ class => 'nav-item' }); # Stats
 				print &$makelink("${pfx}Stats", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
-					print CGI::start_ul();
+					print CGI::start_ul({ class => 'nav flex-column' });
 					if ($userID ne $eUserID) {
-						print CGI::li(&$makelink("${pfx}Stats", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
+						print CGI::li({ class => 'nav-item' },
+							&$makelink("${pfx}Stats",
+							   	text => "$eUserID",
+							   	urlpath_args => { %args,statType => "student", userID => $eUserID },
+							   	systemlink_args => \%systemlink_args));
 					}
 					if (defined $setID) {
 						# make sure we don't try to send a versioned
 						#    set id in to the stats link
 						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
 						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-						print CGI::li(&$makelink("${pfx}Stats", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
+						print CGI::li({ class => 'nav-item' },
+						   	&$makelink("${pfx}Stats",
+							   	text => "$nvPretty",
+							   	urlpath_args => { %args,statType => "set", setID => $nvSetID },
+							   	systemlink_args => \%systemlink_args));
 					}
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Stats
 
-				print CGI::start_li(); # Student Progress
+				print CGI::start_li({ class => 'nav-item' }); # Student Progress
 				print &$makelink("${pfx}StudentProgress", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
 				if ($userID ne $eUserID or defined $setID) {
-					print CGI::start_ul();
+					print CGI::start_ul({ class => 'nav flex-column' });
 					if ($userID ne $eUserID) {
-						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$eUserID", urlpath_args=>{%args,statType=>"student",userID=>$eUserID}, systemlink_args=>\%systemlink_args));
+						print CGI::li({ class => 'nav-item' },
+							&$makelink("${pfx}StudentProgress",
+							   	text => "$eUserID",
+							   	urlpath_args => { %args, statType => "student", userID => $eUserID },
+							   	systemlink_args => \%systemlink_args));
 					}
 					if (defined $setID) {
 						# make sure we don't try to send a versioned
 						#    set id in to the stats link
 						my ( $nvSetID ) = ( $setID =~ /(.+?)(,v\d+)?$/ );
 						my ( $nvPretty ) = ( $prettySetID =~ /(.+?)(,v\d+)?$/ );
-						print CGI::li(&$makelink("${pfx}StudentProgress", text=>"$nvPretty", urlpath_args=>{%args,statType=>"set",setID=>$nvSetID}, systemlink_args=>\%systemlink_args));
+						print CGI::li({ class => 'nav-item' },
+						   	&$makelink("${pfx}StudentProgress",
+							   	text => "$nvPretty",
+							   	urlpath_args => { %args, statType => "set", setID => $nvSetID },
+							   	systemlink_args => \%systemlink_args));
 					}
 					print CGI::end_ul();
 				}
 				print CGI::end_li(); # end Student Progress
 
 				if ($authz->hasPermissions($userID, "score_sets")) {
-					print CGI::li(&$makelink("${pfx}Scoring", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+					print CGI::li({ class => 'nav-item' },
+					   	&$makelink("${pfx}Scoring",
+						   	urlpath_args => { %args },
+						   	systemlink_args => \%systemlink_args));
 				}
 
 				#Show achievement editor for instructors
 				if ($ce->{achievementsEnabled} && $authz->hasPermissions($userID, "edit_achievements")) {
-				    print CGI::li(&$makelink("${pfx}AchievementList", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+				    print CGI::li({ class => 'nav-item' },
+						&$makelink("${pfx}AchievementList",
+						   	urlpath_args => { %args },
+							systemlink_args => \%systemlink_args));
 				    if (defined $achievementID ) {
-					print CGI::start_li();
-					print CGI::start_ul();
-					print CGI::start_li(); # $achievementID
-					print &$makelink("${pfx}AchievementEditor", text=>"$prettyAchievementID", urlpath_args=>{%args,achievementID=>$achievementID}, systemlink_args=>\%systemlink_args);
+					print CGI::start_li({ class => 'nav-item' });
+					print CGI::start_ul({ class => 'nav flex-column' });
+					print CGI::start_li({ class => 'nav-item' }); # $achievementID
+					print &$makelink("${pfx}AchievementEditor",
+					   	text => "$prettyAchievementID",
+					   	urlpath_args => { %args, achievementID => $achievementID },
+					   	systemlink_args => \%systemlink_args);
 					print CGI::end_ul();
 					print CGI::end_li();
 				    }
@@ -931,23 +969,37 @@ sub links {
 				}
 
 				if ($authz->hasPermissions($userID, "send_mail")) {
-					print CGI::li(&$makelink("${pfx}SendMail", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+					print CGI::li({ class => 'nav-item' },
+						&$makelink("${pfx}SendMail",
+						   	urlpath_args => { %args },
+						   	systemlink_args => \%systemlink_args));
 				}
 
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
-					print CGI::li(&$makelink("${pfx}FileManager", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+					print CGI::li({ class => 'nav-item' },
+						&$makelink("${pfx}FileManager",
+							urlpath_args => { %args },
+							systemlink_args => \%systemlink_args));
 				}
 
 				if ($authz->hasPermissions($userID, "manage_course_files")) {
-					print CGI::li(&$makelink("${pfx}Config", urlpath_args=>{%args}, systemlink_args=>\%systemlink_args));
+					print CGI::li({ class => 'nav-item' },
+					   	&$makelink("${pfx}Config",
+						   	urlpath_args => { %args },
+						   	systemlink_args => \%systemlink_args));
 				}
-				print CGI::li({}, $self->helpMacro('instructor_links', $r->maketext('Help')));
-				print CGI::li({}, $self->help());
+				print CGI::li({ class => 'nav-item' },
+					$self->helpMacro('instructor_links', { label => $r->maketext('Help'), class => 'nav-link' }));
+				print CGI::li({ class => 'nav-item' }, $self->help({ class => 'nav-link' }));
 				if ($authz->hasPermissions($userID, "manage_course_files") # show this only on the FileManager page
 				     && $r->urlpath->module eq "WeBWorK::ContentGenerator::Instructor::FileManager") {
 				    my %augmentedSystemLinks = %systemlink_args;
 				    $augmentedSystemLinks{params}->{archiveCourse}=1;
-					print CGI::li(&$makelink("${pfx}FileManager", text=>$r->maketext("Archive this Course"),urlpath_args=>{%args}, systemlink_args=>\%augmentedSystemLinks));
+					print CGI::li({ class => 'nav-item' },
+						&$makelink("${pfx}FileManager",
+							text => $r->maketext("Archive this Course"),
+							urlpath_args => { %args },
+						   	systemlink_args => \%augmentedSystemLinks));
 				}
 				print CGI::end_ul();
 				print CGI::end_li(); # end Instructor Tools
@@ -956,7 +1008,8 @@ sub links {
 			if (exists $ce->{webworkURLs}{bugReporter} and $ce->{webworkURLs}{bugReporter} ne ""
 				and $authz->hasPermissions($userID, "report_bugs")) {
 				print CGI::li({class=>'divider', 'aria-hidden'=>'true'},"");
-				print CGI::li(CGI::a({href=>$ce->{webworkURLs}{bugReporter}}, $r->maketext("Report bugs")));
+				print CGI::li({ class => 'nav-item' },
+					CGI::a({ href => $ce->{webworkURLs}{bugReporter}, class => 'nav-link' }, $r->maketext("Report bugs")));
 			}
 
 		} # /* authentication was_verified */
@@ -1000,14 +1053,17 @@ sub loginstatus {
 		my $signOutIcon = CGI::i({ class=> "icon fas fa-sign-out-alt", aria_hidden => "true", data_alt => "signout" }, "");
 
 		if ($eUserID eq $userID) {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) .
-				CGI::a({ href => $logoutURL, class => "btn btn-small" }, $r->maketext("Log Out") . " " . $signOutIcon);
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID))
+				. CGI::a({ href => $logoutURL, class => "btn btn-light btn-sm ms-2" },
+				$r->maketext("Log Out") . " " . $signOutIcon);
 		} else {
-			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID)) .
-				CGI::a({ href => $logoutURL, class => "btn btn-small" }, $r->maketext("Log Out") . " " . $signOutIcon);
+			print $r->maketext("Logged in as [_1].", HTML::Entities::encode_entities($userID))
+				. CGI::a({ href => $logoutURL, class => "btn btn-light btn-sm ms-2" },
+				$r->maketext("Log Out") . " " . $signOutIcon);
 			print CGI::br();
-			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID)) .
-				CGI::a({ href => $stopActingURL, class => "btn btn-small" }, $r->maketext("Stop Acting") . " " . $signOutIcon);
+			print $r->maketext("Acting as [_1].", HTML::Entities::encode_entities($eUserID))
+				. CGI::a({ href => $stopActingURL, class => "btn btn-light btn-sm ms-2" },
+				$r->maketext("Stop Acting") . " " . $signOutIcon);
 		}
 	} else {
 		print $r->maketext("Not logged in.");
@@ -1177,13 +1233,12 @@ $self->{status_message}, if it is present.
 sub message {
 	my ($self) = @_;
 
-	print "\n<!-- BEGIN " . __PACKAGE__ . "::message -->\n";
+	print '<!-- BEGIN ' . __PACKAGE__ . '::message -->';
 	print $self->{status_message}
-	    if exists $self->{status_message};
+		if exists $self->{status_message};
+	print '<!-- END ' . __PACKAGE__ . '::message -->';
 
-	print "<!-- END " . __PACKAGE__ . "::message -->\n";
-
-	return "";
+	return '';
 }
 
 =item title()
@@ -1258,17 +1313,13 @@ WeBWorK::URLPath node for the current system location will be used.
 sub help {
 	my $self = shift;
 	my $args = shift;
+
 	my $name = $args->{name};
-
-	# old naming scheme
-	#$name = lc($self->r->urlpath->name) unless defined($name);
-	#$name =~ s/\s/_/g;
-
 	$name = $self->r->urlpath->module unless defined($name);
 	$name =~ s/WeBWorK::ContentGenerator:://;
 	$name =~ s/://g;
 
-	$self->helpMacro($name);
+	$self->helpMacro($name, $args);
 }
 
 =item url($args)
@@ -1508,13 +1559,13 @@ sub pathMacro {
 		next unless $name =~/\S/;  #skip blank names. Blanks can happen for course header and set header files.
 		if ($url and not $args{textonly}) {
 		    if($args{style} eq "bootstrap"){
-		        push @result, CGI::li(CGI::a({-href=>"$url?$auth"}, lc($name)));
+		        push @result, CGI::li({ class => 'breadcrumb-item' }, CGI::a({ href => "$url?$auth" }, lc($name)));
 		    } else {
 			    push @result, CGI::a({-href=>"$url?$auth"}, lc($name));
 		    }
 		} else {
 		    if($args{style} eq "bootstrap"){
-                push @result, CGI::li({-class=>"active"}, $name);
+                push @result, CGI::li({ class => "breadcrumb-item active" }, $name);
             } else {
 			    push @result, $name;
 			}
@@ -1595,9 +1646,9 @@ sub navMacro {
 		my $direction = shift @links;
 		my $html = ($direction && $args{style} eq "buttons") ? $direction : $name;
 		push @result, $url
-		  ? CGI::a({-href=>"$url?$auth$tail", -class=>"nav_button"}, $html)
-		  : CGI::span({-class=>"gray_button"}, $html);
-	      }
+			? CGI::a({ href => "$url?$auth$tail", class => "btn btn-primary" }, $html)
+			: CGI::span({ class => "btn btn-primary disabled" }, $html);
+	}
 
 	return join($args{separator}, @result) . "\n";
 }
@@ -1607,24 +1658,27 @@ sub navMacro {
 This escape is represented by a question mark which links to an html page in the
 helpFiles  directory.  Currently the link is made to the file $name.html
 
+The optional argument $args is a hash that may contain the keys label or class.
+$args->{label} is the displayed label, and $args->{class} is added to the html class attribute if defined.
+
 =cut
 
 sub helpMacro {
 	my $self = shift;
 	my $name = shift;
-	my $label = shift; #optional
+	my $args = shift;
 
-	my $ce   = $self->r->ce;
+	my $ce = $self->r->ce;
 	$name = 'no_help' unless -e "$ce->{webworkDirs}{local_help}/$name.html";
 
-	return CGI::a({
-			href => $ce->{webworkURLs}{local_help} . "/$name.html",
+	return CGI::a(
+		{
+			href   => $ce->{webworkURLs}{local_help} . "/$name.html",
 			target => 'ww_help',
-			# FIXME: Replace inline javascript
-			onclick => "window.open(this.href,this.target,'width=550,height=350,scrollbars=yes,resizable=yes')"
+			class  => 'help-macro ' . ($args->{class} // '')
 		},
-		defined($label) ? $label
-		: CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => " ? " }, '')
+		$args->{label}
+			// CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => " ? " }, '')
 	);
 }
 
@@ -1689,7 +1743,7 @@ sub feedbackMacro_email {
 	    next if $key eq 'pg_object';    # not used in internal feedback mechanism
 		$result .= CGI::hidden($key, $value) . "\n";
 	}
-	$result .= CGI::p(CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
+	$result .= CGI::p(CGI::submit({ name => "feedbackForm", value => $feedbackName, class => 'btn btn-primary' }));
 	$result .= CGI::end_form() . "\n";
 
 	return $result;
@@ -1716,7 +1770,8 @@ sub feedbackMacro_form {
 			$result .= CGI::hidden($key, $value) . "\n";
 		}
 	}
-	$result .= CGI::p({-align=>"left"}, CGI::submit(-name=>"feedbackForm", -value=>$feedbackName));
+	$result .= CGI::p({-align=>"left"},
+		CGI::submit({ name => "feedbackForm", value => $feedbackName, class => 'btn btn-primary' }));
 	$result .= CGI::end_form() . "\n";
 
 	return $result;

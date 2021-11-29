@@ -1,0 +1,949 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+
+/* General styles */
+
+table caption {
+	font-weight: bold;
+	font-size: larger;
+	color: black;
+}
+
+.help-popup {
+	cursor: pointer;
+}
+
+.font-sm {
+	font-size: calc(var(--bs-body-font-size, 0.85rem) * 0.875);
+}
+
+.font-xs {
+	font-size: calc(var(--bs-body-font-size, 0.85rem) * 0.8);
+}
+
+.required-field {
+	color: red;
+}
+
+/* Warning, Success, Error, and Alert styles */
+div, label, span {
+	&.WarningMessage {
+		background-color: #d69191; /* red */
+		padding: 3px;
+	}
+
+	&.ResultsWithoutError {
+		color: inherit;
+		background-color: #8f8; /* green */
+	}
+
+	&.ResultsWithError {
+		color: #bf5454; /* red */
+		background-color: inherit;
+	}
+
+	&.ResultsAlert {
+		color: #ca5000; /* orange */
+		background-color: inherit;
+	}
+}
+
+/* CodeMirror overrides */
+.CodeMirror-code {
+	outline: none;
+	direction: ltr !important;
+}
+
+/* Screen Reader */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+.sr-only-focusable:active,
+.sr-only-focusable:focus {
+	position: static;
+	width: auto;
+	height: auto;
+	margin: 0;
+	overflow: visible;
+	clip: auto;
+}
+
+.sr-only-glyphicon {
+	position: absolute;
+	width: 1em;
+	height: 1em;
+	padding: 0;
+	margin: 0;
+	margin-left: -1em;
+	overflow: hidden;
+	clip: rect(0px, 0px, 0px, 0px);
+	border: 0 none;
+}
+
+/* Banner */
+#masthead {
+	background-color: var(--bs-primary, #038);
+	margin: 0;
+	padding: 0;
+
+	a {
+		color: var(--ww-primary-foreground-color, white);
+
+		&:hover {
+			text-decoration: none;
+		}
+	}
+}
+
+.webwork_logo {
+	display: flex;
+	align-items: center;
+	padding: 5px 0;
+	background-color: var(--ww-logo-background-color, #104aad);
+
+	img {
+		max-height: 57px;
+		max-width: 100%;
+	}
+
+	a {
+		display: block;
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
+	}
+}
+
+.institution_logo {
+	display: flex;
+	align-items: center;
+	padding: 8px 0;
+	max-height: 67px;
+
+	img {
+		max-height: 51px;
+		max-width: 100%;
+	}
+
+	a {
+		display: block;
+		margin-left: 0.5rem;
+		margin-right: 0.5rem;
+	}
+}
+
+#loginstatus {
+	padding: 5px 5px 5px 0;
+	color: var(--ww-primary-foreground-color, white);
+	text-align: right;
+	font-size: 0.85em;
+	font-weight: normal;
+
+	a {
+		color: black;
+
+		&:first-child {
+			margin-bottom: 5px;
+		}
+	}
+}
+
+/* Site Navigation */
+#site-navigation {
+	line-height: 1.2rem;
+	width: 20%;
+	min-width: 20%;
+	flex: 0 0 auto;
+	margin-right: 1rem;
+	overflow-x: hidden;
+	transition-property: width, min-width, padding;
+	transition-duration: 0.3s;
+
+	@media only screen and (max-width: 992px) {
+		min-width: 180px;
+	}
+
+	&.toggle-width {
+		width: 0;
+		min-width: 0;
+		margin-right: 0;
+	}
+
+	@media only screen and (max-width: 768px) {
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: 100%;
+		z-index: 100;
+		background-color: white;
+		width: 0;
+		min-width: 0;
+		margin-right: 0;
+		transition: none;
+		overflow-y: hidden;
+
+		&.toggle-width {
+			padding: 0.5rem 0.25rem;
+			box-shadow: 4px 0 4px 2px rgba(0, 0, 0, 0.2);
+			width: 40%;
+			min-width: 200px;
+			overflow-y: auto;
+		}
+	}
+
+	.navbar-brand {
+		text-transform: uppercase;
+		padding-left: 1rem;
+		color: black;
+		font-weight: bold;
+		font-size: 0.9rem;
+		opacity: 0.5;
+	}
+
+	.info-box {
+		margin-top: 0.5rem;
+	}
+
+	.nav {
+		li {
+			font-size: small;
+		}
+
+		.nav-item {
+			max-width: 100%;
+
+			.nav-link {
+				padding-top: 0.2rem;
+				padding-bottom: 0.2rem;
+
+				&.active {
+					background-color: var(--bs-primary, #038);
+					color: var(--ww-primary-foreground-color, white);
+				}
+			}
+		}
+	}
+
+	#site-links > ul {
+		border: 1px solid #e6e6e6;
+	}
+
+	ul.nav {
+		li a:hover {
+			background: #e1e1e1;
+		}
+
+		ul.nav {
+			padding-left: 0.5rem;
+			padding-right: 0.5rem;
+		}
+	}
+}
+
+#content {
+	max-width: calc(80% - 1rem);
+	transition-property: max-width;
+	transition-duration: 0.3s;
+
+	@media only screen and (max-width: 992px) {
+		max-width: calc(100% - 180px - 1rem);
+	}
+
+	&.toggle-width {
+		max-width: 100%;
+	}
+
+	@media only screen and (max-width: 768px) {
+		max-width: 100%;
+	}
+}
+
+.no-scroll {
+	height: 100%;
+	overflow-y: hidden;
+}
+
+.sidebar-backdrop {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	z-index: 99;
+	max-width: 100vw;
+	max-height: 100vh;
+	background-color: rgba(0, 0, 0, 0.4);
+}
+
+#toggle-sidebar-icon i {
+	transition: 0.3s;
+
+	&.toggle-icon {
+		transform: rotate(180deg);
+	}
+
+	@media only screen and (max-width: 768px) {
+		transform: rotate(180deg);
+
+		&.toggle-icon {
+			transform: none;
+		}
+	}
+}
+
+/* Progress Bar */
+div {
+	&.progress {
+		height: 20px;
+		max-width: 100%;
+		border: 1px solid #B6B6B4;
+		background-color: #DDDDDD;
+		border-radius: 5px;
+		margin-bottom: 10px;
+		position: relative;
+	}
+
+	&.correct-progress {
+		background-color: #8F8; /* same color used as 'correct' */
+		border: 2px solid #00FF00;
+		border-radius: 4px;
+		display: inline-block;
+		box-sizing: border-box;
+		text-align: center;
+	}
+
+	&.incorrect-progress {
+		background-color: #FF9494; /* same color used as 'incorrect' */
+		border: 2px solid #FF0000;
+		border-radius: 4px;
+		display: inline-block;
+		box-sizing: border-box;
+	}
+
+	&.inprogress-progress {
+		background-color: #FFFF00; /* yellow */
+		border: 2px solid #FBB117; /* beer border*/
+		border-radius: 4px;
+		display: inline-block;
+		box-sizing: border-box;
+	}
+
+	&.unattempted-progress {
+		background-color: transparent;
+		display: inline-block;
+		box-sizing: border-box;
+	}
+}
+
+/* Breadcrumb */
+#breadcrumb-navigation {
+	.breadcrumb {
+		display: flex;
+		margin-bottom: 0;
+		padding-left: 0.5rem;
+		background-color: #f5f5f5;
+		min-height: 38px;
+		align-items: center;
+		border: 1px solid #e6e6e6;
+		border-radius: 4px;
+	}
+}
+
+#toggle-sidebar {
+	margin-right: 5px;
+	width: 35px;
+	height: 38px;
+}
+
+/* Main Content */
+h1.page-title {
+	font-size: 31.5px;
+	line-height: 35px;
+}
+
+h2.page-title {
+	border-bottom: 1px solid #ccc;
+}
+
+.problem-sub-header {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.Warnings {
+	code {
+		white-space: normal;
+	}
+}
+
+/* Question nav section */
+.sticky-nav {
+	display: flex;
+	flex-wrap: wrap;
+	align-content: space-between;
+	justify-content: space-between;
+	z-index: 1;
+	position: sticky;
+	top: 0;
+	background-color: white;
+	margin-bottom: 1rem;
+	padding: 0.25rem;
+	margin-left: 0;
+	width: 100%;
+	border-radius: 0 0 4px 4px;
+	box-shadow: 0 0.1rem 0.2rem 1px gray;
+	box-sizing: border-box;
+
+	& > div {
+		flex-shrink: 1;
+		width: auto;
+		margin: 0;
+		padding: 0.25rem;
+	}
+}
+
+.user-nav .student-nav-selector .dropdown-menu {
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+/* Message section */
+.Message:not(:empty) {
+	display: inline-block;
+	margin-bottom: 0.5rem;
+}
+
+.font-visible { font-weight: bold; }
+.font-hidden { font-style: italic; }
+
+.admin-messagebox {
+	background-color: #FFFFCC;
+	width: 60%;
+	padding: 10px;
+	text-align: left;
+}
+
+/* Home Page */
+ul.courses-list {
+	list-style-type: none;
+	margin: 0;
+
+	a {
+		border: 1px solid #e6e6e6;
+		display: block;
+		padding: 0.5em;
+		margin-bottom: 0.5em;
+		background: #f6f6f6;
+		width: 95%;
+		font-weight: bold;
+
+		&:hover {
+			text-decoration: none;
+			background: var(--bs-primary, #038);
+			color: var(--ww-primary-foreground-color, white);
+		}
+	}
+}
+
+/* past answers page */
+.past-answer-table {
+	td {
+		white-space: nowrap;
+		min-width: 20px;
+	}
+
+	.table-rule {
+		border-top: 3px solid #d5d5d5;
+		padding-top: 5px;
+	}
+
+	.essay,
+	.comment {
+		min-width: 400px;
+		white-space: normal;
+	}
+}
+
+/* Homework Sets */
+.problem_set_table {
+	td a {
+		font-weight: bold;
+		font-size: 13px;
+	}
+
+	tr.gw-version td.gw-version {
+		padding-left: 40px;
+	}
+
+	a.gw-parenthetical {
+		font-weight: normal;
+	}
+
+	.hardcopy, .hardcopy-link {
+		text-align: center;
+	}
+
+	/* These are for indenting problems on jitar sets */
+	.nested-problem-1 {
+		margin-left: 10px;
+	}
+
+	.nested-problem-2 {
+		margin-left: 20px;
+	}
+
+	.nested-problem-3 {
+		margin-left: 30px;
+	}
+
+	.nested-problem-4 {
+		margin-left: 40px;
+	}
+
+	.nested-problem-5 {
+		margin-left: 50px;
+	}
+
+	.nested-problem-6 {
+		margin-left: 60px;
+	}
+}
+
+/* These are for indenting problems on jitar sets */
+.problem-list {
+	.nested-problem-1 {
+		padding-left: 20px;
+	}
+
+	.nested-problem-2 {
+		padding-left: 23px;
+	}
+
+	.nested-problem-3 {
+		padding-left: 26px;
+	}
+
+	.nested-problem-4 {
+		padding-left: 29px;
+	}
+
+	.nested-problem-5 {
+		padding-left: 32px;
+	}
+
+	.nested-problem-6 {
+		padding-left: 35px;
+	}
+}
+
+/* Info Box */
+.info-box {
+	padding: 0.5em;
+	border-radius: 8px;
+	border: 1px solid #e6e6e6;
+	background: #f6f6f6;
+
+	h2, h3, h4, h5, h6 {
+		background: var(--bs-primary, #038);
+		border-radius: 8px;
+		color: var(--ww-primary-foreground-color, white);
+		margin: 0 0 0.5em 0;
+		padding: 0;
+		line-height: 30px;
+		font-size: 1.1em;
+		text-align: center;
+	}
+
+	dl {
+		margin: 1ex .5em 1ex 1ex;
+		padding: 0;
+		font-size: 80%;
+	}
+
+	li, dt {
+		line-height: 1.2rem;
+	}
+
+	dt {
+		font-weight: bold
+	}
+
+	dd {
+		line-height: 1.2rem;
+	}
+
+	dd p {
+		margin-top: 0;
+	}
+
+	a.more {
+		float: left;
+		font-size: 80%;
+		font-style: italic;
+		margin-bottom: 1ex;
+		margin-right: .5em;
+	}
+
+	form {
+		margin-bottom: 0px;
+	}
+}
+
+/* Library Browser */
+.library-browser-table {
+	.InfoPanel {
+		text-align: center;
+	}
+
+	#library_sets {
+		max-width: 50%
+	}
+}
+
+.lb-problem-row div.card {
+	background-color: #f5f5f5;
+	margin-top: 10px;
+	margin-bottom: 0px;
+}
+
+.lb-mlt-group {
+	border: 2px solid black;
+	width: 100%;
+	margin-top: 10px;
+
+	div:first-child.lb-problem-row > div.card {
+		margin-top: 0px;
+	}
+}
+
+/* Footer */
+#footer {
+	display: block;
+	font-size: 0.8em;
+	color: #767676;
+	text-align: center;
+	padding: 1em;
+	margin-top: 1em;
+
+	p {
+		/* Overrides bootstrap default so there's no weird space */
+		margin-bottom: 0;
+	}
+
+	a {
+		color: #555;
+	}
+}
+
+input.changed[type=text] { /* orange */
+	border-color: #ca5000;
+	outline: 0;
+	outline: thin dotted \9;
+	box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(202, 80, 0, 0.6);
+	color: inherit;
+}
+
+.results-popover {
+	cursor: pointer;
+}
+
+/* Styles for the instructor comment box */
+.answerComments {
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: 1em;
+	padding: 2px 5px 2px 5px;
+	max-width: 80%;
+	background-color: #E8E8E8;
+	border-style: outset;
+	border-width: 1px;
+	border-spacing: 2px;
+	border-color: gray;
+	border-radius: 0.25rem;
+}
+
+.submit-buttons-container {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 0.25rem;
+	row-gap: 0.25rem;
+}
+
+/* Styles used when editing a temporary file */
+.temporaryFile { font-style: italic; color: #ca5000; background-color: inherit; }
+
+/* Text colors for Auditing, Current, and Dropped students */
+.Audit { font-style: normal; color: purple; background-color: inherit; }
+.Enrolled { font-weight: normal; color: black; background-color: inherit; }
+.Drop { font-style: italic; color: gray; background-color: inherit; }
+
+/* Styles for the PGProblemEditor Page */
+
+#editor {
+	background-color: #FFFFFF;
+	margin-left: 0px;
+	width: 750px;
+
+	.tab-content {
+		min-height: 140px;
+	}
+}
+
+#render-modal {
+	.modal-dialog {
+		width: 90vw;
+		max-width: unset;
+		height: 86vh;
+	}
+
+	.modal-content {
+		height: 100%;
+	}
+
+	.modal-body {
+		overflow: hidden;
+		padding: 0;
+	}
+}
+
+#pg_editor_frame_id {
+	overflow: auto;
+	border: none;
+	width: 100%;
+	height: 100%;
+}
+
+/* Page loading busy indicator */
+/* Currently only used on the problem editor page. */
+.page-loading-busy-indicator {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	background: rgba(0, 0, 0, .5);
+	z-index: 105;
+
+	.busy-text {
+		position: relative;
+		color: white;
+		font-size: 1.4em;
+		top: calc(50% - 4em);
+		margin: auto;
+		width: 100%;
+		text-align: center;
+	}
+
+	i {
+		color: white;
+		position: absolute;
+		left: calc(50% - 30px);
+		top: calc(50% - 30px);
+	}
+}
+
+/* Problem Set Detail */
+#problem_set_form {
+	input[name=add_n_problems] {
+		flex-basis: 50px;
+	}
+
+	.input-append {
+		width: 100%;
+	}
+}
+
+#psd_list {
+	padding-left: 0px;
+
+	li.ui-sortable-placeholder,
+	li.psd_list_row {
+		list-style-type: none;
+	}
+}
+
+.problem_detail_row {
+	background-color: #f5f5f5;
+}
+
+.pdr_placeholder {
+	height: 100px;
+	width: 90%;
+	border-style: dashed;
+	border-width: 1px;	
+	border-radius: 5px;
+	margin-bottom: 20px;
+}
+
+.pdr_handle {
+	font-size: large;
+}
+
+.pdr_collapse {
+	cursor: pointer;
+	font-size: large;
+	display: none;
+}
+
+.psd_list_row {
+	&.mjs-nestedSortable-collapsed > div > div > div > div > span.pdr_collapse:after {
+		font-family: "Font Awesome 5 Free";
+		font-weight: 900;
+		content: '\f054';
+	}
+
+	&.mjs-nestedSortable-expanded > div > div > div > div > span.pdr_collapse:after {
+		font-family: "Font Awesome 5 Free";
+		font-weight: 900;
+		content: '\f078';
+	}
+}
+
+#psd_list {
+	&:not(.disable_renumber) .pdr_handle {
+		cursor: move;
+	}
+
+	li.mjs-nestedSortable-collapsed > ol {
+		display: none;
+	}
+
+	li.mjs-nestedSortable-branch .pdr_collapse {
+		display: inline-block;
+	}
+
+	li.mjs-nestedSortable-leaf .pdr_collapse {
+		display: none;
+	}
+}
+
+.psr_render_area iframe {
+	width: 100%;
+	border-radius: 5px;
+}
+
+/* Grades */
+.grades-course-total,
+.grades-course-total th {
+	font-weight: bold;
+	font-size: 105%;
+}
+
+/* Course Configuration */
+.config-tabs {
+	a {
+		&.nav-link {
+			font-weight: bold;
+			color: inherit;
+			border-radius: 0;
+		}
+
+		&:not(.active) {
+			background-color: #f6f6f6;
+		}
+
+		&:not(.active):hover {
+			background-color: #e1e1e1;
+			color: inherit;
+		}
+
+		&:focus {
+			z-index: 2;
+		}
+	}
+}
+
+/* File manager */
+.file-manager-btn {
+	margin-bottom: 0.25rem;
+	margin-top: 0.25rem;
+}
+
+.file-manager-editor {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+}
+
+/* Problem set list */
+.set_table .input-append .form-control-sm {
+	max-width: 11rem;
+}
+
+/* Date picker */
+.input-append {
+	white-space: nowrap;
+	display: inline-flex;
+
+	input {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		border-right: 0;
+	}
+
+	.ui-datepicker-trigger {
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
+}
+
+/* Problem graders */
+
+.NeedsGrading { font-weight: bold; }
+
+#problem-grader-form {
+	.graded-answer:not(:last-child),
+	.essay-answer:not(:last-child) {
+		border-bottom: 1px solid #d5d5d5;
+		margin-bottom: 2px;
+		padding-bottom: 5px;
+	}
+}
+
+.problem-grader-table {
+	.col-fixed {
+		width: 11rem;
+		min-width: 11rem;
+		white-space: nowrap;
+	}
+
+	.problem-grader-message {
+		font-weight: bold;
+		transition: 3s ease-in all;
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+
+		&.alert-success, &.alert-danger {
+			transition: none;
+			border-radius: 3px;
+		}
+	}
+}
+
+/* Equation editor bugfixes */
+#eqEditorDiv {
+	overflow: visible;
+}
+
+#openEqEditor {
+	min-height: 35px;
+	min-width: 43px;
+}

@@ -12,13 +12,13 @@
 <!--
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -27,30 +27,31 @@
 -->
 
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/bootstrap.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
+<link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/js/apps/Problem/problem.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <!--#if can="output_achievement_CSS"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
 <!--#endif-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/gateway.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/gateway.css"/>
 <!--#if exists="math4-coloring.css"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
 <!--#endif-->
 <!--#if exists="math4-overrides.css"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
 <!--#endif-->
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
+<script src="<!--#url type="webwork" name="htdocs"-->/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
+<script src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>
 <!--#if exists="math4-overrides.js"-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>	
+<script src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>
 <!--#endif-->
 <!-- [gateway] since the left-side menus are gone, don't indent the main content area -->
 
@@ -60,70 +61,69 @@
 </head>
 <body>
 <a href="#content" id="stmc-link" class="sr-only sr-only-focusable">Skip to main content</a>
+
 <div class="container-fluid">
 <!-- Header -->
-<div id = "masthead" class="row-fluid">
-	<div class="span2 webwork_logo">
+<div id = "masthead" class="row">
+	<div class="col-md-2 webwork_logo">
 		<!--#webwork_logo-->
 	</div>
-	<div class="span6 institution_logo">
+	<div class="col-md-6 institution_logo">
 		<!--#institution_logo-->
 	</div>
-	<div id="loginstatus" class="span4">
+	<div id="loginstatus" class="col-md-4">
 		<!--#loginstatus-->
 	</div>
 </div>
-	<!-- Breadcrumb -->
-	<div class="row-fluid"><div class="span12">
-	<ul class="breadcrumb">
-		<!--#path style="bootstrap" text="<li><span class='divider'>/</span></li>"-->
-	</ul>
-	</div></div>
 
-<div class="row-fluid">
+<!-- Breadcrumb -->
+<div id="breadcrumb-row" class="row my-2">
+	<div class="col-12 d-flex align-items-center">
+		<nav id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation" class="w-100">
+			<ol class="breadcrumb">
+				<!--#path style="bootstrap" text=""-->
+			</ol>
+		</nav>
+	</div>
+</div>
 
-  <div id="content" class="span12">
-		
-	<!--#if can="info"-->
-	<!--<div id="page-info">-->
-		<!--<div class="info-box" id="fisheye">-->
+<div class="row">
+	<div id="content" class="col-12 toggle-width">
+		<!--#if can="info"-->
 			<!--#info-->
-		<!--</div>-->
-	<!--</div>-->
-	<!--#endif-->
-	
-	<!--#if can="nav"-->
-	<!--#nav separator="  "-->
-	<!--#endif-->
-	
-	<!--#if can="title"-->
-	<h1><!--#title--></h1>
-	<!--#endif-->
-	
-	<!--#if can="message"-->
-		<div class="Message"><!--#message--></div>
-	<!--#endif-->
+		<!--#endif-->
 
-	<!--#if can="body"-->
-	<div class="Body" <!--#output_problem_lang_and_dir-->>
-		<!--#body-->
-	</div>
-	<!--#endif-->
-	
-	<!--#if warnings="1"-->
-	<div class="Warnings">
-		<!--#warnings-->
-	</div>
-	<!--#endif-->
-	
-</div> <!-- content -->
+		<!--#if can="nav"-->
+			<!--#nav separator="  "-->
+		<!--#endif-->
+
+		<!--#if can="title"-->
+			<h1><!--#title--></h1>
+		<!--#endif-->
+
+		<!--#if can="message"-->
+			<div class="Message"><!--#message--></div>
+		<!--#endif-->
+
+		<!--#if can="body"-->
+		<div class="Body" <!--#output_problem_lang_and_dir-->>
+			<!--#body-->
+		</div>
+		<!--#endif-->
+
+		<!--#if warnings="1"-->
+		<div class="Warnings">
+			<!--#warnings-->
+		</div>
+		<!--#endif-->
+	</div> <!-- #content -->
+</div><!-- .row -->
+</div><!-- .container-fluid -->
 
 <!-- Footer -->
 <div id="footer">
 	<!--#footer-->
 </div>
-
-</div></div> <!-- big-wrapper -->
 
 </body>
 </html>

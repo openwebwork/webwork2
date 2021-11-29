@@ -64,7 +64,7 @@ function init_webservice(command) {
   } else {
     alert("missing hidden credentials: user "
       + myUser + " session_key " + mySessionKey+ " courseID "
-      + myCourseID, "alert-error");
+      + myCourseID, "alert-danger");
     return null;
   }
   mydefaultRequestObject.xml_command = command;
@@ -97,7 +97,7 @@ function tag_widget(id, path) {
   // Only show the status menu if we are looking at something in Pending
   var shortpath = path.replace(/^.*templates\//,'');
   if(/^Pending\//.test(shortpath)) {
-  
+
     $el.append('<select id="'+id+'stat"></select>');
     var stat = $('#'+id+'stat');
     stat.append('<option value="A">Accept</option>');
@@ -216,11 +216,11 @@ tag_widget_update = function(who, what, where, values) {
   mydefaultRequestObject.library_sections = sect;
   var subcommand = "getAllDBsubjects";
   if(who == 'level') {
-    $('#'+where+who).val(level); 
+    $('#'+where+who).val(level);
     return tag_widget_update('stat','get',where,values);
   }
   if(who == 'stat') {
-    $('#'+where+who).val(stat); 
+    $('#'+where+who).val(stat);
     return true;
   }
   if(what == 'clear') {
@@ -237,13 +237,13 @@ tag_widget_update = function(who, what, where, values) {
   var arr = readfromtaxo(who, [subj, chap, sect]);
   arr.splice(0,0,all);
   setselectbyid(where+who, arr);
-  if(values.DBsubject && who=='subjects') { 
-	$('#'+where+who).val(values.DBsubject); 
+  if(values.DBsubject && who=='subjects') {
+	$('#'+where+who).val(values.DBsubject);
   }
-  if(values.DBchapter && who=='chapters') { 
+  if(values.DBchapter && who=='chapters') {
 	$('#'+where+who).val(values.DBchapter);
   }
-  if(values.DBsection && who=='sections') { 
+  if(values.DBsection && who=='sections') {
 	$('#'+where+who).val(values.DBsection);
   }
   tag_widget_update(child[who], 'get',where, values);

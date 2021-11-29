@@ -1,0 +1,141 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+
+/* gateway styles */
+
+div.gwMessage { 
+	background-color: #ffeeaa;
+	box-shadow: 3px 3px 3px darkgray;
+	margin: 1em 0;
+	padding: 0.5em;
+	border-radius: 3px;
+}
+
+.Message {
+	display: block;
+}
+
+div#gwTimer {
+	background-color:#ffeeaa;
+	color: black;
+	position: fixed; 
+	right: 1em;
+	top: 3.5em;
+	padding: 0.5em;
+	text-align: center;
+	z-index: 2;
+	box-shadow: 3px 3px 0.5em darkgray;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+
+} 
+
+#gwScoreSummary {
+	background-color:#ffeeaa;
+	color: black;
+	box-shadow: 3px 3px 0.5em darkgray;
+	font-family:Times serif;
+	z-index: 1;
+	font-size: 85%;
+	border-color: #ffeeaa;
+	border: 2px;
+	width: 15em;
+	top: 8em;
+	right: 2em;
+	padding: 10px;
+	position: fixed;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+
+	table {
+		border:0;
+
+		td, th {
+			margin-left:.2em;
+		}
+	}
+}
+
+table.attemptResults { width: unset; }
+
+span.resultsWithError, span.resultsWithoutError {
+	padding: 0.2em 1em;
+	box-shadow: 2px 2px 3px darkgray;
+	margin-bottom: 0.5em;
+	margin-right: 1em;
+	border-radius: 3px;
+}
+span.resultsWithError { background-color: #d69191; }
+span.resultsWithoutError { background-color: #88ff88;  }
+div.ResultsWithoutError { background-color: #88ff88; }
+div.ResultsWithError { background-color: #d69191; }
+div.ResultsWithoutError, div.ResultsWithError {
+	padding: 0.5em;
+	box-shadow: 3px 3px 3px darkgray;
+	border-radius: 3px;
+	color: black;
+}
+
+.gwProblem {
+	background-color: #fafafa;
+	padding: 0.5em;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+
+	h2 {
+		display: inline-block;
+		font-size: 16px;
+		margin-right: 5px;
+		line-height: 1.8;
+	}
+}
+
+.gwNavigation {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+	text-align: center;
+
+	th, td {
+		padding: 0 0.5rem;
+	}
+
+	th {
+		text-align:right;
+		font-weight: bold;
+		padding-right: 1rem;
+	}
+
+	colgroup.page {
+		border-left: solid 1pt black;
+		border-right: solid 1pt black;
+	}
+
+	.page.active {
+		background-color: #ffeeaa;
+	}
+}
+
+div.gwDivider {
+	margin: 0px 0px 10px 0px;
+}
+
+/* Override the pg style so that the problem-content is not offset in gateway quizzes. */
+.problem-content {
+	padding: unset;
+	background-color: unset;
+	border: unset;
+	box-shadow: unset;
+}

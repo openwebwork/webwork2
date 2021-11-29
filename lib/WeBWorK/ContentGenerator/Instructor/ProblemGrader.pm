@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Skeleton.pm,v 1.5 2006/07/08 14:07:34 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -63,7 +62,7 @@ sub head {
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '');
 
 	return "";
 
@@ -202,15 +201,19 @@ sub body {
 		push(@answerTypes,$answerHash{$_}->{type});
 	}
 
-	print CGI::p($pg->{body_text});
+	print CGI::div({ class => 'problem-content col-md-12 col-lg-10' }, $pg->{body_text});
 
 	print CGI::start_form({method=>"post", action => $self->systemLink($urlpath, authen=>0),
 			id=>"problem-grader-form", name=>"problem-grader-form" });
 
-	my $selectAll = CGI::input({-type=>'button', -name=>'check_all', -value=>$r->maketext('Mark All'),
-			onClick => "\$('.mark_correct').each(function () { if (\$(this).attr('checked')) {\$(this).attr('checked',false);} else {\$(this).attr('checked',true);}});" });
+	my $selectAll = CGI::input({
+		type => 'button',
+	   	id => 'check_all_mark_corrects',
+	   	value => $r->maketext('Mark All'),
+		class => 'btn btn-secondary btn-sm'
+	});
 
-	print CGI::start_table({width=>"1020px"});
+	print CGI::start_div({ class => 'table-responsive' }), CGI::start_table({ width => '1020px' });
 	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Section"), $r->maketext("Name"),
 				"&nbsp;",$r->maketext("Latest Answers"),"&nbsp;",$r->maketext("Mark Correct")."<br>".$selectAll,
 				"&nbsp;", $r->maketext("Score (%)"), "&nbsp;", $r->maketext("Comment")]));
@@ -308,20 +311,21 @@ sub body {
 
 					$answer = HTML::Entities::encode_entities($answer);
 					$answer =~ s/\n/<br>/g;
-					$userAnswerString .= CGI::p({class=>'essay-answer'},
-						$answer);
+					$userAnswerString .= CGI::div({ class => 'essay-answer' }, $answer);
 
 				} elsif ($answerTypes[$i] eq 'Value (Formula)') {
 					#if its a formula then render it and color it
-					$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ?
-								"color:#006600": "color:#660000" },
-							'`'.HTML::Entities::encode_entities($answer).'`'));
+					$userAnswerString .= CGI::div({
+							class => 'graded-answer',
+						   	style => $scores[$i] ? "color:#006600" : "color:#660000"
+					   	}, '`' . HTML::Entities::encode_entities($answer).'`');
 
 				}else {
 					# if it isnt an essay then don't render it but color it
-					$userAnswerString .= CGI::p(CGI::div({class => 'graded-answer', style => $scores[$i] ?
-								"color:#006600": "color:#660000" },
-							HTML::Entities::encode_entities($answer)));
+					$userAnswerString .= CGI::div({
+							class => 'graded-answer',
+							style => $scores[$i] ?  "color:#006600": "color:#660000"
+						}, HTML::Entities::encode_entities($answer));
 				}
 			}
 
@@ -339,9 +343,18 @@ sub body {
 		#create form for scoring
 
 		my $commentBox = '';
-		$commentBox = CGI::textarea({name=>"$userID.comment", value=>"$comment", rows=>3, cols=>30,}) .
-			CGI::br().CGI::input({-class=>'preview', -type=>'button', -name=>"$userID.preview", -value=>"Preview" })
-			unless $noCommentField;
+		$commentBox = CGI::textarea({
+			   name => "$userID.comment",
+			   value => "$comment",
+			   rows => 3,
+			   class => 'form-control'
+		   }) .
+		CGI::br() . CGI::input({
+			class => 'preview btn btn-secondary btn-sm',
+			type => 'button',
+			name => "$userID.preview",
+			value => "Preview"
+		}) unless $noCommentField;
 
 
 		# this selects the score available in the drop down that is just above the student score
@@ -352,41 +365,53 @@ sub body {
 			}
 		}
 
-		print CGI::Tr({-valign=>"top"},
+		print CGI::Tr({ valign => "top" },
 			CGI::td({},[
 					$userRecord->section,
-					CGI::div({class=>
-							$userProblem->flags =~ /needs_grading/
-							? "NeedsGrading $statusClass" :
-							$statusClass}, CGI::a({href => $viewProblemLink, target=>"WW_View"}, $prettyName)), " ",
-
+					CGI::div({
+						class => $userProblem->flags =~ /needs_grading/
+							? "NeedsGrading $statusClass"
+							: $statusClass
+					}, CGI::a({ href => $viewProblemLink, target => "WW_View" }, $prettyName)), " ",
 					$userAnswerString, " ",
 					CGI::checkbox({
-							type=>"checkbox",
-							class=>"mark_correct",
-							name=>"$userID.mark_correct",
-							value=>"1",
-							label=>"",
+						type => "checkbox",
+						class => "mark_correct form-check-input",
+						name => "$userID.mark_correct",
+						value => "1",
+						label => "",
 
-						}), " ",
-					CGI::popup_menu(-name=>"$userID.score",
-						-class=> "score-selector",
-						-values => \@scores,
-						-default => $selectedScore,
-						-labels => \%dropDown)
-					," ", $commentBox
+					}), " ",
+					CGI::popup_menu({
+						name => "$userID.score",
+						class => "score-selector form-select form-select-sm",
+						values => \@scores,
+						default => $selectedScore,
+						labels => \%dropDown
+					}) ," ",
+				   	$commentBox
 				])
 		);
 		print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
 	}
 
-	print CGI::end_table();
+	print CGI::end_table(), CGI::end_div();
 	print $self->hidden_authen_fields;
-	print CGI::submit({name=>"assignGrades", value=>$r->maketext("Save")});
+	print CGI::submit({ name => "assignGrades", value => $r->maketext("Save"), class => 'btn btn-primary' });
 
 	print CGI::end_form();
 
 	return "";
+}
+
+sub output_CSS {
+	my $self     = shift;
+	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
+
+	# PG styles
+	print CGI::Link({ rel => 'stylesheet', href => "$site_url/js/apps/Problem/problem.css" });
+
+	return '';
 }
 
 1;

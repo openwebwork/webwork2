@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader:
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -161,93 +160,90 @@ sub initialize {
 }
 
 sub body {
-	my ($self) = @_;
-	my $r = $self->r;
-	my $urlpath = $r->urlpath;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
-	my $courseID = $urlpath->arg("courseID");
+	my ($self)        = @_;
+	my $r             = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $db            = $r->db;
+	my $ce            = $r->ce;
+	my $authz         = $r->authz;
+	my $courseID      = $urlpath->arg("courseID");
 	my $editForUserID = $urlpath->arg("userID");
-	my $userID = $r->param("user");
+	my $userID        = $r->param("user");
 
 	my @editForSets = $r->param("editForSets");
 
-	return CGI::div({class => "ResultsWithError"}, "You are not authorized to edit user specific information.")
+	return CGI::div({ class => "ResultsWithError" }, "You are not authorized to edit user specific information.")
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
-	my $UserRecord = $db->getUser($editForUserID);
+	my $UserRecord       = $db->getUser($editForUserID);
 	my $PermissionRecord = $db->getPermissionLevel($editForUserID);
-	my @UserSetIDs = $db->listUserSets($editForUserID);
+	my @UserSetIDs       = $db->listUserSets($editForUserID);
 
 	my $userName = $UserRecord->first_name . " " . $UserRecord->last_name;
 
 	# templates for getting field names
-	my $userTemplate = $self->{userTemplate};
+	my $userTemplate            = $self->{userTemplate};
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate};
 
 	# This table can be consulted when display-ready forms of field names are needed.
-	my %prettyFieldNames = map { $_ => $_ }
-		$userTemplate->FIELDS();
+	my %prettyFieldNames = map { $_ => $_ } $userTemplate->FIELDS();
 
-
-	my @dateFields         = @{DATE_FIELDS_ORDER()};
-	my $rh_dateFieldLabels =  DATE_FIELDS();
-
-
-	# create a link to the SetsAssignedToUser page
-# 	my $editSetsPath = $urlpath->newFromModule(
-# 		"WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser", $r,
-# 		courseID => $courseID,
-# 		userID => $userID,
-# 	);
-# 	my $editSetsAssignedToUserURL = $self->systemLink($editSetsPath);
+	my @dateFields         = @{ DATE_FIELDS_ORDER() };
+	my $rh_dateFieldLabels = DATE_FIELDS();
 
 	# create a message about how many sets have been assigned to this user
- 	my $setCount = $db->countUserSets($editForUserID);
-# 	my $userCountMessage =  CGI::a({href=>$editSetsAssignedToUserURL}, $setCount . " sets.");
-# 	$userCountMessage = "The user " . CGI::b($userName . " ($editForUserID)") . " has been assigned " . $userCountMessage;
-	my $basicInfoPage = $urlpath->new(type =>'instructor_user_list',
-					args =>{
-						courseID => $courseID,
-	                }
-	    );
-		my $basicInfoUrl = $self->systemLink($basicInfoPage,
-		                                     params =>{visible_users => $editForUserID,
-		                                               editMode      => 1,
-		                                              }
-		);
-
-	print CGI::h4({align=>'center'},$r->maketext("Edit")," ",CGI::a({href=>$basicInfoUrl},$r->maketext('class list data'))," ",$r->maketext("for  [_1] ([_2]) who has been assigned [_3] sets.",$userName, $editForUserID, $setCount));
-
-
-	print CGI::br();
-
-	my $userDetailPage = $urlpath->new(type =>'instructor_user_detail',
-					                       args =>{
-						                             courseID => $courseID,
-						                             userID   => $editForUserID, #FIXME eventually this should be a list??
-	                }
+	my $setCount = $db->countUserSets($editForUserID);
+	my $basicInfoPage = $urlpath->new(
+		type => 'instructor_user_list',
+		args => {
+			courseID => $courseID,
+		}
 	);
-	my $userDetailUrl = $self->systemLink($userDetailPage,authen=>0);
+	my $basicInfoUrl = $self->systemLink(
+		$basicInfoPage,
+		params => {
+			visible_users => $editForUserID,
+			editMode      => 1,
+		}
+	);
+
+	print CGI::div(
+		{ class => 'text-center my-3' },
+		CGI::h2(
+			{ class => 'fs-6' },
+			$r->maketext(
+				"Edit [_1] for  [_2] ([_3]) who has been assigned [_4] sets.",
+				CGI::a({ href => $basicInfoUrl }, $r->maketext('class list data')),
+				$userName, $editForUserID, $setCount
+			)
+		)
+	);
+
+	my $userDetailPage = $urlpath->new(
+		type => 'instructor_user_detail',
+		args => {
+			courseID => $courseID,
+			userID   => $editForUserID,    #FIXME eventually this should be a list??
+		}
+	);
+	my $userDetailUrl = $self->systemLink($userDetailPage, authen => 0);
 
 	# DBFIXME all we need here is set IDs
 	# DBFIXME do sorting in DB
 	my %GlobalSetRecords = map { $_->set_id => $_ } $db->getGlobalSets($db->listGlobalSets());
-	my @UserSetRefs = map { [$editForUserID, $_] } sortByName(undef, @UserSetIDs);
-	my %UserSetRecords = map { $_->set_id => $_ } $db->getUserSets(@UserSetRefs);
-	my @MergedSetRefs = map { [$editForUserID, $_] } sortByName(undef, @UserSetIDs);
+	my @UserSetRefs      = map { [ $editForUserID, $_ ] } sortByName(undef, @UserSetIDs);
+	my %UserSetRecords   = map { $_->set_id => $_ } $db->getUserSets(@UserSetRefs);
+	my @MergedSetRefs    = map { [ $editForUserID, $_ ] } sortByName(undef, @UserSetIDs);
 	my %MergedSetRecords = map { $_->set_id => $_ } $db->getMergedSets(@MergedSetRefs);
 
 	# get set versions of versioned sets
 	my %UserSetVersionRecords;
 	my %UserSetMergedVersionRecords;
-	foreach my $setid ( keys( %UserSetRecords ) ) {
-		if ( $GlobalSetRecords{$setid}->assignment_type =~ /gateway/ ) {
-			my @setVersionRefs = map { [$editForUserID, $setid, $_] }
-				$db->listSetVersions( $editForUserID, $setid );
-			if ( @setVersionRefs ) {
-				$UserSetVersionRecords{$setid} = [ $db->getSetVersions(@setVersionRefs) ];
+	foreach my $setid (keys(%UserSetRecords)) {
+		if ($GlobalSetRecords{$setid}->assignment_type =~ /gateway/) {
+			my @setVersionRefs = map { [ $editForUserID, $setid, $_ ] } $db->listSetVersions($editForUserID, $setid);
+			if (@setVersionRefs) {
+				$UserSetVersionRecords{$setid}       = [ $db->getSetVersions(@setVersionRefs) ];
 				$UserSetMergedVersionRecords{$setid} = [ $db->getMergedSetVersions(@setVersionRefs) ];
 			}
 		}
@@ -257,121 +253,152 @@ sub body {
 	# Assigned sets form
 	########################################
 
-	print CGI::start_form( {method=>'post',action=>$userDetailUrl, name=>'UserDetail', id=>'UserDetail'}),"\n";
+	print CGI::start_form({ method => 'post', action => $userDetailUrl, name => 'UserDetail', id => 'UserDetail' });
 	print $self->hidden_authen_fields();
 
 	print CGI::div(
-	    CGI::submit({name=>"assignAll", value => $r->maketext("Assign All Sets to Current User"),
-			 onClick => "\$('input[name*=\"assignment\"]').attr('checked',1);"
-			})), , CGI::br();
+		{ class => 'mb-2' },
+		CGI::submit({
+			name    => "assignAll",
+			value   => $r->maketext("Assign All Sets to Current User"),
+			onClick => "\$('input[name*=\"assignment\"]').attr('checked',1);",
+			class   => 'btn btn-primary'
+		})
+	);
 
-
-	########################################
 	# Print warning
-	########################################
-	print CGI::div({-class=>'ResultsWithError'},
-		       $r->maketext("Do not uncheck a set unless you know what you are doing."),
-		       CGI::br(),
-		       $r->maketext("There is NO undo for unassigning a set."));
+	print CGI::div(
+		{ class => 'ResultsWithError fs-6' },
+		$r->maketext('Do not uncheck a set unless you know what you are doing.'),
+	);
+	print CGI::div({ class => 'ResultsWithError fs-6 mb-2' }, $r->maketext('There is NO undo for unassigning a set.'));
+	print CGI::div(
+		{ class => 'fs-6 mb-2' },
+		$r->maketext(
+			'To change status (scores or grades) for this student for one set, click on the individual set link.')
+	);
+	print CGI::div(
+		{ class => 'ResultsWithError fs-6 mb-2' },
+		$r->maketext(
+			'When you uncheck a homework set (and save the changes), you destroy all of the data for that set for '
+				. 'this student.   If you reassign the set, the student will receive a new version of each problem. '
+				. 'Make sure this is what you want to do before unchecking sets.'
+		)
+	);
 
-	print CGI::p($r->maketext("To change status (scores or grades) for this student for one set, click on the individual set link."));
+	print CGI::div(
+		{ class => 'mb-2' },
+		CGI::submit({
+			name  => 'save_button',
+			label => $r->maketext('Save changes'),
+			class => 'btn btn-primary'
+		})
+	);
 
-	print CGI::div({-class=>'ResultsWithError'},$r->maketext("When you uncheck a homework set (and save the changes), you destroy all of the data for that set for this student.   If you reassign the set, the student will receive a new version of each problem. Make sure this is what you want to do before unchecking sets."));
-
-	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
-
-	print CGI::start_table({ border=> 1,cellpadding=>5}),"\n";
-	print CGI::Tr(
-		CGI::th({align=>'center',colspan=>3}, "Sets assigned to $userName ($editForUserID)")
-	),"\n";
-	print CGI::Tr(
-		CGI::th({ -align => "center"}, [
-			"Assigned",
-			"Edit set for $editForUserID",
-			"Dates",
-		])
-	),"\n";
+	print CGI::div({ class => 'table-responsive' });
+	print CGI::start_table({ class => 'table table-bordered table-sm font-sm align-middle' });
+	print CGI::Tr(CGI::th({ class => 'text-center', colspan => 3 }, "Sets assigned to $userName ($editForUserID)"));
+	print CGI::Tr(CGI::th({ class => 'text-center' }, [ 'Assigned', "Edit set for $editForUserID", 'Dates', ]));
 
 	# get a list of sets to show
 	# DBFIXME already have this data
-	my @setsToShow = sortByName( undef, $db->listGlobalSets() );
+	my @setsToShow = sortByName(undef, $db->listGlobalSets());
 
 	# insert any set versions that we have
 	if (@setsToShow) {
-	  my $i = $#setsToShow;
-	  if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
-	    push( @setsToShow, map{ $_->set_id . ",v" . $_->version_id }
-		  @{$UserSetVersionRecords{$setsToShow[$i]}} );
-	  }
-	  $i--;
-	  my $numit = 0;
-	  while ( $i>=0 ) {
-	    if ( defined( $UserSetVersionRecords{$setsToShow[$i]} ) ) {
-	      splice( @setsToShow, $i+1, 0,
-		      map{ $_->set_id . ",v" . $_->version_id }
-		      @{$UserSetVersionRecords{$setsToShow[$i]}} );
-	    }
-	    $i--;
-	    $numit++;
-	    # just to be safe
-		last if $numit >= 150;
-	  }
-	  warn("Truncated display of sets at 150 in UserDetail.pm.  This is a brake to avoid spiraling into the abyss.  If you really have more than 150 sets in your course, reset the limit at about line 370 in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.") if ( $numit == 150 );
+		my $i = $#setsToShow;
+		if (defined($UserSetVersionRecords{ $setsToShow[$i] })) {
+			push(@setsToShow,
+				map { $_->set_id . ",v" . $_->version_id } @{ $UserSetVersionRecords{ $setsToShow[$i] } });
+		}
+		$i--;
+		my $numit = 0;
+		while ($i >= 0) {
+			if (defined($UserSetVersionRecords{ $setsToShow[$i] })) {
+				splice(@setsToShow, $i + 1, 0,
+					map { $_->set_id . ",v" . $_->version_id } @{ $UserSetVersionRecords{ $setsToShow[$i] } });
+			}
+			$i--;
+			$numit++;
+			# just to be safe
+			last if $numit >= 150;
+		}
+		warn(
+			'Truncated display of sets at 150 in UserDetail.pm.  This is a brake to avoid spiraling into the abyss.  '
+				. 'If you really have more than 150 sets in your course, reset the limit at about line 370 in '
+				. 'webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.')
+			if ($numit == 150);
 	}
 
-	foreach my $setID ( @setsToShow ) {
+	for my $setID (@setsToShow) {
 		# catch the versioned sets that we just added
 		my $setVersion = 0;
-		my $fullSetID = $setID;
-		if ( $setID =~ /,v(\d+)$/ ) {
+		my $fullSetID  = $setID;
+		if ($setID =~ /,v(\d+)$/) {
 			$setVersion = $1;
 			$setID =~ s/,v\d+$//;
 		}
 
 		my $GlobalSetRecord = $GlobalSetRecords{$setID};
-		my $UserSetRecord = (! $setVersion) ? $UserSetRecords{$setID} :
-			$UserSetVersionRecords{$setID}->[$setVersion-1];
-		my $MergedSetRecord = (! $setVersion) ?  $MergedSetRecords{$setID} :
-			$UserSetMergedVersionRecords{$setID}->[$setVersion-1];
-		my $setListPage = $urlpath->new(type =>'instructor_set_detail',
-					args =>{
-						courseID => $courseID,
-						setID    => $fullSetID
-	                }
+		my $UserSetRecord =
+			(!$setVersion) ? $UserSetRecords{$setID} : $UserSetVersionRecords{$setID}->[ $setVersion - 1 ];
+		my $MergedSetRecord =
+			(!$setVersion) ? $MergedSetRecords{$setID} : $UserSetMergedVersionRecords{$setID}->[ $setVersion - 1 ];
+		my $setListPage = $urlpath->new(
+			type => 'instructor_set_detail',
+			args => {
+				courseID => $courseID,
+				setID    => $fullSetID
+			}
 		);
-		my $url = $self->systemLink($setListPage,
-		                      params =>{effectiveUser => $editForUserID,
-		                                editForUser   => $editForUserID,
-		});
+		my $url = $self->systemLink(
+			$setListPage,
+			params => {
+				effectiveUser => $editForUserID,
+				editForUser   => $editForUserID,
+			}
+		);
 
-		my $setName = ( $setVersion ) ? "$setID (version $setVersion)" : $setID;
+		my $setName = ($setVersion) ? "$setID (version $setVersion)" : $setID;
 
-		print CGI::Tr(
-			CGI::td({ -align => "center" }, [
-				($setVersion) ? "" : CGI::checkbox({ type => 'checkbox',
-								name => "set.$fullSetID.assignment",
-								label => '',
-								value => 'assigned',
-								checked => (defined $MergedSetRecord)}),
-				defined($MergedSetRecord) ? CGI::b(CGI::a({href=>$url},$setName, ) ) : CGI::b($setID, ),
-				join "\n", $self->DBFieldTable($GlobalSetRecord, $UserSetRecord, $MergedSetRecord, "set", $setID, \@dateFields, $rh_dateFieldLabels),
-			])
-		),"\n";
+		print CGI::Tr(CGI::td(
+			{ align => 'center' },
+			[
+				$setVersion ? "" : CGI::checkbox({
+					type            => 'checkbox',
+					name            => "set.$fullSetID.assignment",
+					label           => '',
+					value           => 'assigned',
+					checked         => defined $MergedSetRecord,
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				}),
+				defined($MergedSetRecord) ? CGI::b(CGI::a({ href => $url }, $setName)) : CGI::b($setID),
+				join "\n",
+				$self->DBFieldTable(
+					$GlobalSetRecord, $UserSetRecord, $MergedSetRecord, 'set',
+					$setID, \@dateFields, $rh_dateFieldLabels
+				),
+			]
+			)),
+			"\n";
 	}
-	print CGI::end_table(),"\n";
-	print CGI::p(CGI::submit(-name=>'save_button',-label=>$r->maketext('Save changes'),));
-	print CGI::end_form(),"\n";
-	########################################
+	print CGI::end_table(), CGI::end_div();
+	print CGI::submit({
+		name  => 'save_button',
+		label => $r->maketext('Save changes'),
+		class => 'btn btn-primary'
+	});
+	print CGI::end_form();
+
 	# Print warning
-	########################################
-
-	CGI::div( {class=>'ResultsWithError'},
-				"There is NO undo for this function.
-				 Do not use it unless you know what you are doing!  When you unassign
-				 sets using this button, or by unchecking their set names, you destroy all
-				 of the data for those sets for this student."
+	CGI::div(
+		{ class => 'ResultsWithError' },
+		'There is NO undo for this function.'
+			. 'Do not use it unless you know what you are doing!  When you unassign'
+			. 'sets using this button, or by unchecking their set names, you destroy all'
+			. 'of the data for those sets for this student.'
 	);
-
 
 	return '';
 }
@@ -453,70 +480,79 @@ sub checkDates {
 }
 
 sub DBFieldTable {
-	my ($self, $GlobalRecord, $UserRecord, $MergedRecord, $recordType,
-	    $recordID, $fieldsRef, $rh_fieldLabels) = @_;
+	my ($self, $GlobalRecord, $UserRecord, $MergedRecord, $recordType, $recordID, $fieldsRef, $rh_fieldLabels) = @_;
 
-	return CGI::div({class => "ResultsWithError"}, "No record exists for $recordType $recordID") unless defined $GlobalRecord;
+	return CGI::div({ class => 'ResultsWithError' }, "No record exists for $recordType $recordID")
+		unless defined $GlobalRecord;
 
 	# modify record name if we're dealing with versioned sets
 	my $isVersioned = 0;
-	if ( $recordType eq "set" && defined($MergedRecord) &&
-	     $MergedRecord->assignment_type =~ /gateway/ &&
-	     $MergedRecord->can( "version_id" ) ) {
-		$recordID .= ",v" . $MergedRecord->version_id;
+	if ($recordType eq 'set'
+		&& defined($MergedRecord)
+		&& $MergedRecord->assignment_type =~ /gateway/
+		&& $MergedRecord->can('version_id'))
+	{
+		$recordID .= ',v' . $MergedRecord->version_id;
 		$isVersioned = 1;
 	}
-	my $r = $self->r;
-        my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 	my @fields = @$fieldsRef;
 	my @results;
-	foreach my $field (@fields) {
-                #Skip reduced credit dates for sets which don't have them
-	        next unless ($field ne 'reduced_scoring_date' ||
-			     ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} &&
-			      $GlobalRecord->enable_reduced_scoring));
+	for my $field (@fields) {
+		#Skip reduced credit dates for sets which don't have them
+		next
+			unless $field ne 'reduced_scoring_date'
+			|| ($ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $GlobalRecord->enable_reduced_scoring);
 
 		my $globalValue = $GlobalRecord->$field;
-		my $userValue = defined $UserRecord ? $UserRecord->$field : $globalValue;
-		my $mergedValue  = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
+		my $userValue   = defined $UserRecord   ? $UserRecord->$field   : $globalValue;
+		my $mergedValue = defined $MergedRecord ? $MergedRecord->$field : $globalValue;
 
 		push @results,
-			[$r->maketext($rh_fieldLabels->{$field}).' ',
-			 defined $UserRecord ?
-				CGI::checkbox({
-					type => "checkbox",
-					name => "$recordType.$recordID.$field.override",
-					id => "$recordType.$recordID.$field.override_id",
-					label => "",
-					value => $field,
-					checked => ($r->param("$recordType.$recordID.$field.override") || $mergedValue ne $globalValue || ($isVersioned && $field ne 'reduced_scoring_date')) ? 1 : 0
-				}) : "",
-				defined $UserRecord ?
-					(CGI::input({
-							name => "$recordType.$recordID.$field",
-							id => "$recordType.$recordID.${field}_id",
-							type => "text",
-							value => $userValue ? $self->formatDateTime($userValue,'','%m/%d/%Y at %I:%M%P') : "",
-							onchange => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
-							onkeyup => "\$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked', this.value != '')",
-							placeholder => x("None Specified"),
-							onblur => "if (this.value == '') \$('input[id=\"$recordType.$recordID.$field.override_id\"]').prop('checked',false);",
-							size => 25,
-							class => $field eq "open_date" ? "datepicker-group" : "",
-							data_enable_datepicker => $ce->{options}{useDateTimePicker}
-						})
-					) : "",
-				$self->formatDateTime($globalValue,'','%m/%d/%Y at %I:%M%P'),
-			]
-
+			[
+			$r->maketext($rh_fieldLabels->{$field}) . ' ',
+			defined $UserRecord
+			? CGI::checkbox({
+				type    => 'checkbox',
+				name    => "$recordType.$recordID.$field.override",
+				id      => "$recordType.$recordID.$field.override_id",
+				label   => '',
+				value   => $field,
+				checked => $r->param("$recordType.$recordID.$field.override")
+					|| $mergedValue ne $globalValue
+					|| ($isVersioned && $field ne 'reduced_scoring_date'),
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			})
+			: '',
+			defined $UserRecord
+			? (CGI::input({
+				name     => "$recordType.$recordID.$field",
+				id       => "$recordType.$recordID.${field}_id",
+				type     => 'text',
+				value    => $userValue ? $self->formatDateTime($userValue, '', '%m/%d/%Y at %I:%M%P') : '',
+				onchange =>
+					qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
+				onkeyup =>
+					qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
+				placeholder => x('None Specified'),
+				onblur      =>
+					qq{if (this.value == '') \$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked',false);},
+				class => 'form-control form-control-sm w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+				data_enable_datepicker => $ce->{options}{useDateTimePicker}
+			}))
+			: '',
+			$self->formatDateTime($globalValue, '', '%m/%d/%Y at %I:%M%P'),
+			];
 	}
 
 	my @table;
-	foreach my $row (@results) {
-		push @table, CGI::Tr(CGI::td({-align => "center"}, $row));
+	for my $row (@results) {
+		push @table, CGI::Tr(CGI::td({ class => 'px-1 text-nowrap' }, $row));
 	}
 
-	return CGI::start_table({class => 'UserDetail-date-table', border=> 0}), @table, CGI::end_table();
+	return CGI::table({ class => 'UserDetail-date-table' }, @table);
 }
 
 #Tells template to output stylesheet and js for Jquery-UI
@@ -528,7 +564,7 @@ sub output_JS {
 	my $self = shift;
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	# Print javaScript and style for dateTimePicker	
+	# Print javaScript and style for dateTimePicker
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/jquery-ui-timepicker-addon.css" });
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/DatePicker/datepicker.css" });
 	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => undef }, "");

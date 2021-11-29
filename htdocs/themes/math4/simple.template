@@ -29,41 +29,41 @@
 <link rel="icon" type="x-image/icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 
 <!-- CSS Loads -->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/bootstrap.css"/>
 <link href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
 <!--#if can="output_jquery_ui"-->
-	<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
+	<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <!--#endif-->
 <!--#if can="output_achievement_CSS"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/achievements.css"/>
 <!--#endif-->
 <!--#if can="output_CSS"-->
 	<!--#output_CSS-->
 <!--#endif-->
 <!--#if exists="math4-coloring.css"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4-coloring.css"/>
 <!--#endif-->
 <!--#if exists="math4-overrides.css"-->
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4-overrides.css"/>
 <!--#endif-->
 
 <!-- JS Loads -->
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6" defer></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/apps/MathJaxConfig/mathjax-config.js" defer></script>
+<script src="<!--#url type="webwork" name="MathJax"-->" id="MathJax-script" defer></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
 <!--#if can="output_jquery_ui"-->
-	<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
+	<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <!--#endif-->
-<script type="text/javascript" src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js" defer></script>
 <!--#if can="output_JS"-->
 	<!--#output_JS-->
 <!--#endif-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
+<script src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>	
 <!--#if exists="math4-overrides.js"-->
-<script type="text/javascript" src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>	
+<script src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>	
 <!--#endif-->
 
 <title><!--#path style="text" text=" : " textonly="1"--></title>
@@ -76,12 +76,12 @@
 <!-- Bootstrap Fluid Layout Scaffolding start -->
 <div class="container-fluid">
 
-<div id="body-row" class="row-fluid">
+<div id="body-row" class="row">
 
 
 <!-- Main Content Area -->
 
-<div id="content" class="span10" >
+<div id="content" class="col-md-10" >
 
 	<!-- Header Text for problem --> 
 	<!--#if can="post_header_text"-->
@@ -93,53 +93,54 @@
 
 	<!-- Indicate presence of perl warnings -->
 	<!--#if warnings="1"-->
-	<div class="row-fluid">
-		<div class="span12 alert alert-error">
+	<div class="row g-0">
+		<div class="col-12 alert alert-danger">
 			<strong>Warning</strong> -- there may be something wrong with this question. Please inform your instructor including the warning messages below.
 		</div>
 	</div>
 	<!--#endif-->
     <!--       
 	<!--#if can="output_tag_info"-->
-		<div class="row-fluid">
-		  <div class="span12">
+		<div class="row">
+		  <div class="col-12">
 			<!--#output_tag_info-->
 		</div></div>
 		<!--#endif-->
 	-->
 	 <!--#if can="output_problem_body"--> 
-	    <!-- ==== in this case print body parts ELSE print entire body -->		<div class="row-fluid">
-		  <div class="Body span12">
+	    <!-- ==== in this case print body parts ELSE print entire body -->
+		<div class="row">
+		  <div class="Body col-12">
 
 			<!--#if can="output_custom_edit_message"-->
-			<div class="row-fluid"><div class="span10">
+			<div class="row"><div class="col-lg-10">
 				<!--#output_custom_edit_message-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 			<!--#if can="output_summary"-->
-			<div class="row-fluid"><div class="span10">
+			<div class="row"><div class="col-lg-10">
 					<!--#output_summary-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 
 			<!--#if can="output_achievement_message"-->
-			<div class="row-fluid"><div class="span10">
+			<div class="row"><div class="col-lg-10">
 					<!--#output_achievement_message-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 			
 			<!--#if can="output_comments" "-->
-			<div class="row-fluid"><div class="span10">
+			<div class="row"><div class="col-lg-10">
 				  <!--#output_comments-->
-			</div><div class="span2"></div></div>
+			</div></div>
 			<!--#endif-->
 				
 
 
 
 			<!--#if can="output_form_start"-->
-			<div class="row-fluid">
-			  <div class="span10">
+			<div class="row">
+			  <div class="col-lg-10">
 				<!--#output_form_start-->
 			    <!--#if can="output_hidden_info"-->
 				     <!--#output_hidden_info-->
@@ -199,22 +200,23 @@
 			</div>
 		<!--#endif-->
 
-		</div><div class="span2"></div></div>
-                </div></div>
+		</div></div>
+	</div></div>
 
 	<!-- ====  end printing body parts   -->
 	<!--#else-->
-	<!-- ==== couldn't print body parts so we'll print entire body -->	         <div class="row-fluid">
+	<!-- ==== couldn't print body parts so we'll print entire body -->
+	<div class="row">
 	  <!--#if can="info"-->
-	  <div class="body span8">
+	  <div class="body col-md-8">
 	  <!--#else-->
-	    <div class="body span12">
+	    <div class="body col-12">
 	  <!--#endif-->
 	      <!--#body-->
 	</div>
 	<!-- inserted body as a whole -->
 	<!--#if can="info"-->
-	<div id="info-panel-right" class="span4 info-box">
+	<div id="info-panel-right" class="col-md-4 order-md-last order-first">
 	  <!--  styles could be different for different pages so they are not set here -->
 	  <!--#info-->
 	</div>
@@ -229,7 +231,7 @@
 
 
 <!-- Bootstrap Fluid Layout Scaffolding stop -->
-</div> <!-- row-fluid -->
+</div> <!-- row -->
 </div> <!-- container-fluid -->
 
 

@@ -21,13 +21,13 @@ ENDPROBLEMTEMPLATE
 
 # CSS loads - as an array of href values
 $json_output->{head_part100_AVI} = [
-	"/webwork2_files/js/vendor/bootstrap/css/bootstrap.css",
-	"/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css",
+	'$themeDir/bootstrap.css',
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css",
 	"/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css",
 	"/webwork2_files/css/knowlstyle.css",
 	"/webwork2_files/js/apps/ImageView/imageview.css",
 	'$themeDir/math4.css',
+	"/webwork2_files/js/apps/Problem/problem.css",
 	'$themeDir/math4-coloring.css',
 	'$themeDir/math4-overrides.css',
 ];
@@ -36,12 +36,10 @@ $json_output->{head_part100_AVI} = [
 $json_output->{head_part200_AVI} = [
 	"/webwork2_files/node_modules/jquery/dist/jquery.min.js",
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
-	"/webwork2_files/js/vendor/bootstrap/js/bootstrap.js",
 	"/webwork2_files/js/apps/InputColor/color.js",
 	"/webwork2_files/js/apps/Base64/Base64.js",
 	"/webwork2_files/js/vendor/underscore/underscore.js",
 	"/webwork2_files/js/legacy/vendor/knowl.js",
-	"/webwork2_files/js/apps/Problem/problem.js",
 	"/webwork2_files/js/apps/ImageView/imageview.js",
 	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
 ];
@@ -49,10 +47,12 @@ $json_output->{head_part200_AVI} = [
 # JS loads - as an array of href values - the ones which need defer are in head_part201_AVI
 #     mathjax/es5/tex-chtml.js also needs id="MathJax-script" in the <script> tag
 $json_output->{head_part201_AVI} = [
+	"/webwork2_files/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
 	"https://polyfill.io/v3/polyfill.min.js?features=es6",
 	"/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
 	"/webwork2_files/mathjax/es5/tex-chtml.js",
 	'$themeDir/math4/math4.js',
+	"/webwork2_files/js/apps/Problem/problem.js",
 ];
 
 $json_output->{head_part300_VI} = '$problemHeadText';
@@ -64,8 +64,8 @@ $json_output->{body_part001} = "<body>";
 
 $json_output->{body_part100} = <<'ENDPROBLEMTEMPLATE';
 <div class="container-fluid">
-<div class="row-fluid">
-<div class="span12 problem">
+<div class="row">
+<div class="col-12 problem">
 ENDPROBLEMTEMPLATE
 
 $json_output->{body_part300_VI} = '$answerTemplate';

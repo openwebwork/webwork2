@@ -38,7 +38,8 @@
 			constrainInput: false,
 			onClose: update,
 		});
-		open_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
+		open_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
+			.addClass('btn btn-secondary btn-sm');
 
 		due_rule.datetimepicker({
 			showOn: "button",
@@ -49,7 +50,8 @@
 			constrainInput: false,
 			onClose: update,
 		});
-		due_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
+		due_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
+			.addClass('btn btn-secondary btn-sm');
 
 		answer_rule.datetimepicker({
 			showOn: "button",
@@ -60,7 +62,8 @@
 			constrainInput: false,
 			onClose: update,
 		});
-		answer_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
+		answer_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
+			.addClass('btn btn-secondary btn-sm');
 
 		if (reduced) {
 			reduced_rule.datetimepicker({
@@ -72,7 +75,8 @@
 				constrainInput: false,
 				onClose: update,
 			});
-			reduced_rule.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
+			reduced_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
+				.addClass('btn btn-secondary btn-sm');
 		}
 
 		var getDate = function(element) {
@@ -137,8 +141,9 @@
 			ampm: true,
 			timeFormat: 'hh:mmtt',
 			separator: ' at ',
-			constrainInput: false, 
+			constrainInput: false,
 		});
-		importDateShift.parent().addClass('input-append').find('.ui-datepicker-trigger').addClass('btn');
+		importDateShift.parent().addClass('input-append').find('.ui-datepicker-trigger')
+			.addClass('btn btn-secondary btn-sm');
 	}
 })();

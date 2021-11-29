@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/Preflight.pm,v 1.8 2006/09/25 22:14:53 sh002i Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -38,7 +37,7 @@ sub initialize {
 	my $authz      = $r->authz;
 	my $courseName = $urlpath->arg("courseID");
 	my $user       = $r->param('user');
-	
+
 	# Check permissions
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
 }
@@ -52,29 +51,29 @@ sub body {
 	my $ce            = $r->ce;
 	my $authz         = $r->authz;
 	my $root          = $ce->{webworkURLs}->{root};
-	my $courseName    = $urlpath->arg('courseID');  
+	my $courseName    = $urlpath->arg('courseID');
 	my $setName       = $r->param('setID') || "";     # these are passed in the search args in this case
 	my $problemNumber = $r->param('problemID') || "";
 	if ($problemNumber =~ /\!(\d+)/) { $problemNumber = $1 };
 	my $user          = $r->param('user');
 	my $key           = $r->param('key');
 	my $studentUser   = $r->param('studentUser') || "";
-	
+
 	# Check permissions
 	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 
-	
+
 	my $showAnswersPage   = $urlpath->newFromModule($urlpath->module, $r, courseID => $courseName);
 	my $showAnswersURL    = $self->systemLink($showAnswersPage,authen => 0 );
-	
+
 	my ($safeUser, $safeCourse) = (showHTML($studentUser), showHTML($courseName));
 	my ($safeSet, $safeProb) = (showHTML($setName), showHTML($problemNumber));
 
 	my @defaultOrder = qw(user_id set_id problem_id date answers);
 
 	my %prettyFieldNames;
-	
+
 	@prettyFieldNames{qw(
 		user_id
 		set_id
@@ -85,15 +84,15 @@ sub body {
 		"User ID",
 		"Set Name",
 		"Problem Number",
-		"Date", 
+		"Date",
 		"Answers",
 	);
 	$prettyFieldNames{nofield} = "";
-	
+
 	#####################################################################
 	# print form
 	#####################################################################
-	
+
 	# FIXME why are we filtering out users with non-word characters in their userIDs?
 	my @userIDs = grep /\w/, sort $db->listUsers();
 	# DBFIXME for these "get all" type queries, we shouldn't need the lists of setIDs
@@ -116,7 +115,7 @@ sub body {
 		size => 10,
 #		multiple => 0,
 	}, @Users);
-	
+
 	my $scrolling_set_list = scrollingRecordList({
 		name => "setID",
 		request => $r,
@@ -126,7 +125,7 @@ sub body {
 		default => "Select one or more sets: ",
 #		hide_sort => 1,
 #		hide_format => 1,
-#		hide_filter => 1,		
+#		hide_filter => 1,
 		size => 10,
 #		multiple => 0,
 	}, @GlobalSets);
@@ -135,14 +134,14 @@ sub body {
 		name => "problemID",
 		request => $r,
 		default => "Select one or more problems: ",
-		default_filters => ["all"],		
+		default_filters => ["all"],
 #		hide_sort => 1,
 #		hide_format => 1,
-#		hide_filter => 1,		
+#		hide_filter => 1,
 		size => 10,
 #		multiple => 0,
 	}, @GlobalProblems);
-	
+
 	my @selected_fields = $r->param("selected_fields");
 	my @selected_answers = $r->param("selected_answers");
 
@@ -151,21 +150,21 @@ sub body {
 		"\n\n",
 		CGI::hr(),
 		CGI::start_form(
-			-method => "post", 
-			-action => $showAnswersURL, 
+			-method => "post",
+			-action => $showAnswersURL,
 			-target => 'information',
 		),
 			CGI::start_table(
-				-border => "0", 
-				-cellpadding => "0", 
+				-border => "0",
+				-cellpadding => "0",
 				-cellspacing => "0",
 			),
 				CGI::Tr(
 					CGI::td({style=>"width:33%"}, $scrolling_user_list),
 					CGI::td({style=>"width:33%"}, $scrolling_set_list),
-					CGI::td({style=>"width:33%"}, $scrolling_problem_list),					
+					CGI::td({style=>"width:33%"}, $scrolling_problem_list),
 				),
-				CGI::Tr({}, 
+				CGI::Tr({},
 					CGI::submit(
 						-name => 'action',
 						-value => 'Past Answers for',
@@ -181,7 +180,7 @@ sub body {
 #					CGI::textfield(
 #						-name => 'setID1',
 #						-value => $safeSet,
-#						-size => 10, 
+#						-size => 10,
 #					),
 #					" &nbsp; \n Problem:  &nbsp;",
 #					CGI::textfield(
@@ -207,7 +206,7 @@ sub body {
 #					),
 #				),
 				CGI::Tr({},
-					CGI::td({}, 
+					CGI::td({},
 						"Select which fields to show: " . CGI::br(),
 						CGI::scrolling_list(
 							-name => "selected_fields",
@@ -230,9 +229,9 @@ sub body {
 					),
 				),
 			CGI::end_table({}),
-		CGI::end_form({}),	
+		CGI::end_form({}),
 	);
-	
+
 	#####################################################################
 	# create ordering system
 	#####################################################################
@@ -245,24 +244,24 @@ sub body {
 		# print result table of answers
 		#####################################################################
 		my $answer_log    = $self->{ce}->{courseFiles}->{logs}->{'answer_log'};
-	
+
 		$studentUser = $r->param('studentUser') if ( defined($r->param('studentUser')) );
 		my ($safeUser, $safeCourse) = (showHTML($studentUser), showHTML($courseName));
 		my ($safeSet, $safeProb) = (showHTML($setName), showHTML($problemNumber));
-	
-		
+
+
 		print CGI::h3( "Past Answers for " . ($safeUser ? "user $safeUser " : '' ) . ($safeSet ? "set $safeSet " : '' ) . ($safeSet and $safeProb ? ', ' : '') . ($safeProb ? "problem $safeProb" : ''));
-	
+
 		$studentUser = "[^|]*"    if (not defined $studentUser or $studentUser eq ""    or $studentUser eq "*");
 		$setName = "[^|]*"  if ($setName eq ""  or $setName eq "*");
 		$problemNumber = "[^|]*" if ($problemNumber eq "" or $problemNumber eq "*");
 
 		#my $pattern = "^[[^]]*]|[^|]*\\|$setName\\|$problemNumber\\|";
 		my $pattern = "\\|$studentUser\\|$setName\\|$problemNumber\\|";
-		
+
 		our ($lastdate, $lasttime, $lastID, $lastn);
-		
-		
+
+
 		if (open(LOG,"$answer_log")) {
 			my $line;
 			local ($lastdate, $lasttime, $lastID, $lastn) = ("",0,"",0);
@@ -270,12 +269,12 @@ sub body {
 			$self->{lasttime}       = '';
 			$self->{lastID}         = '';
 			$self->{lastn}          = '';
-		  
+
 			# get data from file
-			
+
 			my @lines = grep(/$pattern/,<LOG>); close(LOG);
 			chomp(@lines);
-						
+
 			my $maxcount = 0;
 			foreach my $newline (@lines) {
 				my @words = split /\t/, $newline;
@@ -283,7 +282,7 @@ sub body {
 				$maxcount = $count if $count > $maxcount;
 			}
 			@selected_answers = (1..$maxcount) unless @selected_answers;
-			
+
 #			print "<CENTER>\n";
 			print CGI::start_table({
 					-border => "1",
@@ -291,7 +290,7 @@ sub body {
 #					-cellspacing => '0',
 					-onload => "",
 				}) . "\n";
-			
+
 			my @tableHeaders;
 			foreach (@fieldOrder) {
 				push @tableHeaders, $prettyFieldNames{$_} unless $_ eq "answers";
@@ -311,14 +310,14 @@ sub body {
 				$fakeRecord{problem_id} = "$3";
 				$fakeRecord{date} = $4; #$self->formatDateTime($4);
 				$fakeRecord{answers} = [ split "\t", "$5", -1 ] if $5; # the -1 stops split from dropping any trailing null fields
-				my @answers = map { $_ ? showHTML($_) : CGI::small(CGI::i("empty")) } @{ $fakeRecord{answers} }; 
+				my @answers = map { $_ ? showHTML($_) : CGI::small(CGI::i("empty")) } @{ $fakeRecord{answers} };
 				shift @answers;	# first field is always empty
 				$fakeRecord{answers} = \@answers;
-				
+
 
 				my @tableCells;
 				foreach (@fieldOrder) {
-				
+
 					#push @tableCells, showHTML($fakeRecord{$_});
 				}
 
@@ -327,7 +326,7 @@ sub body {
 				#print join " ", map { "$_ = $fakeRecord{$_}" } keys %fakeRecord;
 				#print CGI::br();
 #				print CGI::Tr({}, CGI::td({}, \@tableCells));
-			
+
 				#print $self->tableRow(split("\t",$line."\tx"));
 			}
 
@@ -340,7 +339,7 @@ sub body {
 			#####################################################################
 			# print array of records
 			#####################################################################
-			
+
 			foreach my $record (@Records) {
 				my @tableCells;
 				foreach (@fieldOrder) {
@@ -360,24 +359,24 @@ sub body {
 						push @tableCells, $record->{$_};
 					}
 				}
-				
+
 				print CGI::Tr({}, CGI::td({}, \@tableCells));
 			}
-				
-			# print a horizontal line 
+
+			# print a horizontal line
 			#print CGI::Tr({}, CGI::td({colspan => $lastn}, CGI::hr({size => 3})));
 			print CGI::end_table({});
 #			print "\n</CENTER>\n\n";
 			print CGI::p(
 	        	      CGI::i("No entries for " . ($safeUser ? "user $safeUser " : '' ) . ($safeSet ? "set $safeSet " : '' ) . ($safeSet and $safeProb ? ', ' : '') . ($safeProb ? "problem $safeProb" : ''))
 			) unless @lines;
-			
+
 		} else {
 			print CGI::em("Can't open the access log $answer_log");
 		}
 	}
 
-		
+
 	return "";
 }
 
@@ -434,7 +433,7 @@ sub tableRow {
 
 sub byUserID      { $a->{user_id}      cmp $b->{user_id}    }
 sub bySetID       { lc($a->{set_id})   cmp lc($b->{set_id})     }
-sub byProblemID   { $a->{problem_id}   <=> $b->{problem_id} }  
+sub byProblemID   { $a->{problem_id}   <=> $b->{problem_id} }
 sub byDate        { $a->{date}         cmp $b->{date}       }
 
 sub byUSPD	{ &byUserID || &bySetID || &byProblemID || &byDate }

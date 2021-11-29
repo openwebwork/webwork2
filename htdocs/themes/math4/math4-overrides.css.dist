@@ -302,7 +302,7 @@ div#gwScoreSummary {
 
 /* Misc */
 .temporaryFile { 
-    color: #FF6600; b
+    color: #FF6600;
     background-color: inherit; 
 }
 
