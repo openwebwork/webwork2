@@ -89,9 +89,9 @@ window.answerQuills = {};
 					(returnString, curButton) => {
 						return returnString +
 							"<button type='button' id='" + curButton.id + '-' + answerQuill.attr('id') +
-							"' class='symbol-button btn btn-inverse' " +
+							"' class='symbol-button btn btn-dark' " +
 							"' data-latex='" + curButton.latex +
-							"' data-toggle='tooltip' title='" + curButton.tooltip + "'>" +
+							"' data-bs-toggle='tooltip' title='" + curButton.tooltip + "'>" +
 							"<span id='icon-" + curButton.id + '-' + answerQuill.attr('id') + "'>"
 							+ curButton.icon +
 							'</span>' +
@@ -104,29 +104,11 @@ window.answerQuills = {};
 				MQ.StaticMath($('#icon-' + this.id)[0]);
 			});
 
-			// There is a bug in bootstrap version 2.3.2 that makes the "placement: left" option fail for tooltips.
-			// This ugly hackery fixes the position of the tooltip.
-			function positionTooltip(tooltip, element) {
-				var $tooltip = $(tooltip);
-				$tooltip.css('display', 'none');
-				$tooltip.find('.tooltip-inner').css('display', 'none');
-				var $element = $(element);
-				setTimeout(function () {
-					$tooltip.css('display', 'block');
-					$tooltip.find('.tooltip-inner').css({ whiteSpace: 'nowrap', display: 'block' });
-					$tooltip.addClass('left')
-						.css({
-							top: ($element.position().top + ($element.outerHeight() - $tooltip.outerHeight()) / 2) + 'px',
-							right: $element.outerWidth() + 4 + 'px',
-							left: 'unset'
-						});
-					$tooltip.find('.tooltip-arrow').css({ left: 'unset' });
-					$tooltip.addClass('in');
-				}, 0);
-			}
-
-			$('.symbol-button[data-toggle="tooltip"]').tooltip({
-				trigger: 'hover', placement: positionTooltip, delay: { show: 500, hide: 0 }
+			answerQuill.toolbar.tooltips = [];
+			document.querySelectorAll('.symbol-button[data-bs-toggle="tooltip"]').forEach((symbolButton) => {
+				answerQuill.toolbar.tooltips.push(new bootstrap.Tooltip(symbolButton, {
+					placement: 'left', trigger: 'hover', delay: { show: 500, hide: 0 }
+				}));
 			});
 
 			$('.symbol-button').on('click', function() {
@@ -152,6 +134,7 @@ window.answerQuills = {};
 				return;
 			if (answerQuill.toolbar) {
 				$(window).off('resize.adjustWidth');
+				answerQuill.toolbar.tooltips.forEach((tooltip) => tooltip.dispose());
 				answerQuill.toolbar.remove();
 				delete answerQuill.toolbar;
 			}
@@ -159,11 +142,18 @@ window.answerQuills = {};
 
 		// Trigger an answer preview when the enter key is pressed in an answer box.
 		answerQuill.on('keypress.preview', (e) => {
-			if (e.key == 'Enter' || e.which == 13 || e.keyCode == 13) {
-				// For homework
+			if (e.key == 'Enter' || e.which == 13) {
+				// Ensure that the toolbar and any open tooltips are removed.
+				answerQuill.toolbar?.tooltips.forEach((tooltip) => tooltip.dispose());
+				answerQuill.toolbar?.remove();
+				delete answerQuill.toolbar;
+
+				// For ww2 homework
 				$('#previewAnswers_id').trigger('click');
 				// For gateway quizzes
 				$('input[name=previewAnswers]').trigger('click');
+				// For ww3
+				$('#previewAnswers').trigger('click');
 			}
 		});
 
