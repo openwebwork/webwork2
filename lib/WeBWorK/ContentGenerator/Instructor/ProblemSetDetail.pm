@@ -2806,8 +2806,8 @@ sub output_JS {
 	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => undef }, "");
 	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef}, "");
 
-	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/ImageView/imageview.css" });
-	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js" }, "");
+	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
+	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::script({ src => "$site_url/js/apps/Base64/Base64.js" }, "");

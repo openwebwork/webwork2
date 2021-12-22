@@ -40,7 +40,6 @@ $json_output->{head_part200_AVI} = [
 	"/webwork2_files/js/apps/Base64/Base64.js",
 	"/webwork2_files/js/vendor/underscore/underscore.js",
 	"/webwork2_files/js/legacy/vendor/knowl.js",
-	"/webwork2_files/js/apps/ImageView/imageview.js",
 	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
 ];
 
@@ -53,6 +52,7 @@ $json_output->{head_part201_AVI} = [
 	"/webwork2_files/mathjax/es5/tex-chtml.js",
 	'$themeDir/math4/math4.js',
 	"/webwork2_files/js/apps/Problem/problem.js",
+	"/webwork2_files/js/apps/ImageView/imageview.js",
 ];
 
 $json_output->{head_part300_VI} = '$problemHeadText';

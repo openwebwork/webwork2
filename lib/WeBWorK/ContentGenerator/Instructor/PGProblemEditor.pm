@@ -2089,8 +2089,8 @@ sub output_JS{
 		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PG.js"}), CGI::end_script();
 	}
 
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/ImageView/imageview.css\"/>";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
+	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
 	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
 	print CGI::script({ src => "$site_url/js/apps/PGProblemEditor/pgproblemeditor.js", defer => "" }, "");

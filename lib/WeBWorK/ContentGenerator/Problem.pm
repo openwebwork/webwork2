@@ -2452,7 +2452,7 @@ sub output_JS{
 	print CGI::script({ src => "$site_url/js/apps/Problem/problem.js", defer => undef }, '');
 
 	# This is for the image dialog
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
@@ -2499,7 +2499,7 @@ sub output_CSS {
 	}
 
 	# Style for the image dialog
-	print "<link href=\"$site_url/js/apps/ImageView/imageview.css\" rel=\"stylesheet\" />\n";
+	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}

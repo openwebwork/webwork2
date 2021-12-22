@@ -2094,7 +2094,7 @@ sub output_JS {
 
 	print CGI::script({ src => "$webwork_htdocs_url/js/legacy/vendor/knowl.js" }, '');
 
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/ImageView/imageview.js" },                      '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/ImageView/imageview.js", defer => undef },      '');
 	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
 	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => undef },        '');
 
@@ -2122,7 +2122,7 @@ sub output_CSS {
 
 	print qq!<link href="$webwork_htdocs_url/node_modules/jquery-ui-themes/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
 
-	print qq{<link href="$webwork_htdocs_url/js/apps/ImageView/imageview.css" rel="stylesheet" type="text/css" />};
+	print CGI::Link({ rel => "stylesheet", href => "$webwork_htdocs_url/js/apps/ImageView/imageview.css" });
 
 	print qq{<link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
 

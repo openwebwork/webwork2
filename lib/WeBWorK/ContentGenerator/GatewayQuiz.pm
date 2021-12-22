@@ -2460,8 +2460,8 @@ sub output_JS{
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 
 	# This is for the image dialog
-	print qq{<link href="$site_url/js/apps/ImageView/imageview.css" rel="stylesheet" />};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
+	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
