@@ -3,7 +3,7 @@
 	// problem list, if its enabled
 
 	$('#psd_list').nestedSortable({
-		handle: 'span.pdr_handle',
+		handle: '.pdr_handle',
 		placeholder: 'pdr_placeholder',
 		tolerance: 'intersect',
 		toleranceElement: '> div',
@@ -44,23 +44,27 @@
 	});
 
 	// This is for the render buttons
-	$('.pdr_render').click(function(event) {
-		event.preventDefault();
-		var id = this.id.match(/^pdr_render_(\d+)/)[1];
-		var renderArea = $('#psr_render_area_' + id);
-		var iframe = renderArea.find('#psr_render_iframe_' + id);
-		if (iframe[0] && iframe[0].iFrameResizer) {
-			iframe[0].iFrameResizer.close();
-		} else if (renderArea.html() != "") {
-			renderArea.html('')
-		} else {
-			renderArea.html("Loading Please Wait...");
-			render(id);
-		}
+	document.querySelectorAll('.pdr_render').forEach((renderButton) => {
+		renderButton.addEventListener('click', (event) => {
+			event.preventDefault();
+			const id = renderButton.id.match(/^pdr_render_(\d+)/)[1];
+			const renderArea = document.getElementById(`psr_render_area_${id}`);
+			const iframe = document.getElementById(`psr_render_iframe_${id}`);
+			if (iframe && iframe.iFrameResizer) {
+				iframe.iFrameResizer.close();
+			} else if (renderArea.innerHTML != '') {
+				renderArea.innerHTML = '';
+			} else {
+				collapsibles[id]?.show();
+				renderArea.innerHTML = 'Loading Please Wait...';
+				render(id);
+			}
+		});
 	});
 
-	$('#psd_render_all').click(async function (event) {
+	$('#psd_render_all').on('click', async function (event) {
 		event.preventDefault();
+		Object.keys(collapsibles).forEach((row) => collapsibles[row].show());
 		var renderAreas = $('.psr_render_area');
 		for (var renderArea of renderAreas) {
 			$(renderArea).html('Loading Please Wait...');
@@ -68,7 +72,7 @@
 		}
 	});
 
-	$('#psd_hide_all').click(function (event) {
+	$('#psd_hide_all').on('click', function (event) {
 		event.preventDefault();
 		$('.psr_render_area').each(function() {
 			var iframe = $(this).find('[id^=psr_render_iframe_]');
@@ -76,8 +80,25 @@
 		});
 	});
 
-	// This is for collapsing and expanding the tree
-	$('#psd_expand_all').click(function (event) {
+	const collapsibles = Array.from(document.querySelectorAll('.psd_list_row')).reduce((accum, row) => {
+		const problemID = row.id.match(/^psd_list_(\d+)/)[1];
+		accum[problemID] =
+			new bootstrap.Collapse(document.getElementById(`pdr_details_${problemID}`), { toggle: false });
+		return accum;
+	}, {});
+
+	document.getElementById('psd_expand_details')?.addEventListener('click', (event) => {
+		event.preventDefault();
+		Object.keys(collapsibles).forEach((row) => collapsibles[row].show());
+	});
+
+	document.getElementById('psd_collapse_details')?.addEventListener('click', (event) => {
+		event.preventDefault();
+		Object.keys(collapsibles).forEach((row) => collapsibles[row].hide());
+	});
+
+	// This is for collapsing and expanding the JITAR tree
+	$('#psd_expand_all').on('click', function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').removeClass('mjs-nestedSortable-collapsed').addClass('mjs-nestedSortable-expanded');
 		document.querySelectorAll('.pdr_collapse').forEach((collapse) => {
@@ -87,7 +108,7 @@
 		});
 	});
 
-	$('#psd_collapse_all').click(function (event) {
+	$('#psd_collapse_all').on('click', function (event) {
 		event.preventDefault();
 		$('li.psd_list_row').addClass('mjs-nestedSortable-collapsed').removeClass('mjs-nestedSortable-expanded');
 		document.querySelectorAll('.pdr_collapse').forEach((collapse) => {
@@ -191,7 +212,7 @@
 	}
 
 	async function render(id) {
-		return new Promise(function(resolve, reject) {
+		return new Promise(function(resolve) {
 			var renderArea = $('#psr_render_area_' + id);
 
 			var ro = {

@@ -687,22 +687,23 @@ sub FieldHTML {
 	}
 
 	if ($edit) {
-		$inputType = CGI::font(
-			{ class => 'visible w-100' },
-			CGI::input({
-				type        => 'text',
-				name        => "$recordType.$recordID.$field",
-				id          => "$recordType.$recordID.${field}_id",
-				value       => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
-				size        => $properties{size}                         || 5,
-				placeholder => $field =~ /_date/ ? x('None Specified') : '',
-				onChange    => $onChange,
-				onkeyup     => $onKeyUp,
-				onblur      => $uncheckBox,
-				class => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
-				data_enable_datepicker => $r->ce->{options}{useDateTimePicker}
-			})
-		);
+		$inputType = CGI::input({
+			type     => 'text',
+			name     => "$recordType.$recordID.$field",
+			id       => "$recordType.$recordID.${field}_id",
+			value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+			size     => $properties{size}                         || 5,
+			onChange => $onChange,
+			onkeyup  => $onKeyUp,
+			onblur   => $uncheckBox,
+			class    => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+			$field =~ /_date/
+			? (
+				data_enable_datepicker => $r->ce->{options}{useDateTimePicker},
+				placeholder            => x('None Specified')
+			)
+			: ()
+		});
 
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
@@ -744,21 +745,21 @@ sub FieldHTML {
 	push @return,
 		$check
 		? CGI::input({
-		type  => 'checkbox',
-		name  => "$recordType.$recordID.$field.override",
-		id    => "$recordType.$recordID.$field.override_id",
-		label => '',
-		value => $field,
-		$r->param("$recordType.$recordID.$field.override")
-			|| ($userValue ne ($labels{''} // '') || $blankfield) ? (checked => 1) : (),
-		class => 'form-check-input'
+			type  => 'checkbox',
+			name  => "$recordType.$recordID.$field.override",
+			id    => "$recordType.$recordID.$field.override_id",
+			value => $field,
+			$r->param("$recordType.$recordID.$field.override")
+				|| ($userValue ne ($labels{''} // '') || $blankfield) ? (checked => 1) : (),
+			class => 'form-check-input'
 		})
 		: ''
 		if $forUsers;
 
 	push @return,
 		$forUsers && $check
-		? CGI::label({ for => "$recordType.$recordID.$field.override_id" }, $r->maketext($properties{name}))
+		? CGI::label({ for => "$recordType.$recordID.$field.override_id", class => 'form-check-label' },
+		$r->maketext($properties{name}))
 		: $r->maketext($properties{name});
 
 	push @return,
@@ -2391,9 +2392,9 @@ sub body {
 		# the spacing and formatting is done via bootstrap.
 		print CGI::h2($r->maketext('Problems'));
 		print CGI::div(
-			{ class => 'col-12 d-flex flex-wrap mb-3' },
+			{ id => 'psd_toolbar', class => 'col-12 d-flex flex-wrap mb-3' },
 			CGI::div(
-				{ id => 'psd_toolbar', class => 'btn-group w-auto me-3 py-1' },
+				{ class => 'btn-group w-auto me-3 py-1' },
 				$forOneUser ? '' : CGI::a(
 					{ href => '#', id => 'psd_renumber', class => 'btn btn-secondary' },
 					$r->maketext('Renumber Problems')
@@ -2402,12 +2403,30 @@ sub body {
 					{ href => '#', id => 'psd_render_all', class => 'btn btn-secondary' },
 					$r->maketext('Render All')
 				),
-				CGI::a({ href => '#', id => 'psd_hide_all', class => 'btn btn-secondary' }, $r->maketext('Hide All')),
-				$isJitarSet ? CGI::a({ href => '#', id => 'psd_expand_all', class => 'btn btn-secondary' },
-					$r->maketext('Expand All')) : '',
-				$isJitarSet ? CGI::a({ href => '#', id => 'psd_collapse_all', class => 'btn btn-secondary' },
-					$r->maketext('Collapse All')) : ''
+				CGI::a({ href => '#', id => 'psd_hide_all', class => 'btn btn-secondary' }, $r->maketext('Hide All'))
 			),
+			$forUsers ? '' : CGI::div(
+				{ class => 'btn-group w-auto me-3 py-1' },
+				CGI::a(
+					{ href => '#', id => 'psd_expand_details', class => 'btn btn-secondary' },
+					$r->maketext('Expand All Details')
+				),
+				CGI::a(
+					{ href => '#', id => 'psd_collapse_details', class => 'btn btn-secondary' },
+					$r->maketext('Collapse All Details')
+				)
+			),
+			$isJitarSet ? CGI::div(
+				{ class => 'btn-group w-auto me-3 py-1' },
+				CGI::a(
+					{ href => '#', id => 'psd_expand_all', class => 'btn btn-secondary' },
+					$r->maketext('Expand All Nesting')
+				),
+				CGI::a(
+					{ href => '#', id => 'psd_collapse_all', class => 'btn btn-secondary' },
+					$r->maketext('Collapse All Nesting')
+				)
+			) : '',
 			CGI::div(
 				{ class => 'input-group d-inline-flex flex-nowrap w-auto py-1' },
 				CGI::span({ class => 'input-group-text' }, $r->maketext('Display Mode:')),
@@ -2547,132 +2566,171 @@ sub body {
 				);
 			}
 
-			my $pdr_block_1 = CGI::div(
-				{ class => 'pdr_block_1' },
-				CGI::div(
-					{ class => 'd-flex align-items-center mb-1' },
-					CGI::span(
-						{ class => 'pdr_handle me-2', id => "pdr_handle_$problemID" },
-						CGI::span({ class => 'pdr_problem_number' }, $problemNumber) . ' '
-							. (
-							$forUsers ? '' : CGI::i(
-								{
-									class      => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
-									data_title => $r->maketext('Move')
-								},
-								''
-							)
-							)
-					),
-					$collapseButton,
-					CGI::input({
-						type  => 'hidden',
-						name  => "prob_num_$problemID",
-						id    => "prob_num_$problemID",
-						value => $lastProblemNumber
-					}),
-					CGI::input({
-						type  => 'hidden',
-						name  => "prob_parent_id_$problemID",
-						id    => "prob_parent_id_$problemID",
-						value => $parentID
-					}),
-					CGI::a(
-						{
-							href              => '#',
-							class             => 'pdr_render btn btn-secondary btn-sm',
-							id                => "pdr_render_$problemID",
-							data_bs_toggle    => 'tooltip',
-							data_bs_placement => 'top',
-							data_bs_title     => $r->maketext('Render Problem')
-						},
-						CGI::i({ class => 'icon far fa-image', data_alt => $r->maketext('Render') }, '')
-					),
-					(
-						$showLinks ? CGI::a(
-							{
-								class             => 'psd_edit btn btn-secondary btn-sm',
-								href              => $editProblemLink,
-								target            => 'WW_Editor',
-								data_bs_toggle    => 'tooltip',
-								data_bs_placement => 'top',
-								data_bs_title     => $r->maketext('Edit Problem')
-							},
-							CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => $r->maketext('Edit') }, '')
-						) : ''
-					),
-					(
-						$showLinks ? CGI::a(
-							{
-								class             => 'psd_view btn btn-secondary btn-sm',
-								href              => $viewProblemLink,
-								target            => 'WW_View',
-								data_bs_toggle    => 'tooltip',
-								data_bs_placement => 'top',
-								data_bs_title     => $r->maketext('Open in New Window')
-							},
-							CGI::i({ class => 'icon far fa-eye', data_alt => $r->maketext('View') }, '')
-						) : ''
-					),
-					$gradingLink
-				),
-				(
-					$forUsers ? '' : CGI::div(
-						{ class => 'form-check form-check-inline font-sm' },
-						CGI::checkbox({
-							name            => 'deleteProblem',
-							value           => $problemID,
-							label           => $r->maketext('Delete it?'),
-							class           => 'form-check-input',
-							labelattributes => { class => 'form-check-label' }
-						})
-					)
-				),
-				(
-					$forOneUser ? '' : CGI::div(
-						{ class => 'form-check form-check-inline font-sm' },
-						CGI::checkbox({
-							name            => 'markCorrect',
-							id              => "problem.${problemID}.mark_correct",
-							value           => $problemID,
-							label           => $r->maketext('Mark Correct?'),
-							class           => 'form-check-input',
-							labelattributes => { class => 'form-check-label' }
-						})
-					)
-				)
-			);
-
-			my $pdr_block_2 = CGI::div(
-				{ class => 'pdr_block_2' },
-				$self->FieldTable(
-					$userToShow,                 $setID,         $problemID,
-					$GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()
-				)
-			);
-
-			my @source_file_string = $self->FieldHTML($userToShow, $setID, $problemID, $GlobalProblems{$problemID},
+			my @source_file_parts = $self->FieldHTML($userToShow, $setID, $problemID, $GlobalProblems{$problemID},
 				$problemToShow, 'source_file');
 
-			$source_file_string[3] .= CGI::input({
-				type  => 'hidden',
-				id    => "problem_${problemID}_default_source_file",
-				value => $GlobalProblems{$problemID}->source_file()
-			});
-
-			my $pdr_block_3 = CGI::div(
-				{ class => 'pdr_block_3 font-sm col-lg-8 col-md-7' },
-				@source_file_string,
-				($repeatFile ? CGI::div({ class => 'ResultsWithError fw-bold' }, $repeatFile) : ''),
+			push(
+				@problemRow,
 				CGI::div(
-					{ class => 'psr_render_area', id => "psr_render_area_$problemID" },
-					$error ? CGI::div({ class => 'ResultsWithError fw-bold' }, $error) : ''
+					{ class => 'problem_detail_row card d-flex flex-column p-2 mb-3 g-0' },
+					CGI::div(
+						{ class => 'pdr_block_1 row' },
+						CGI::div(
+							{ class => 'col-md-4 col-10 order-1 d-flex align-items-center' },
+							CGI::div(
+								{ class => 'pdr_handle me-2 text-nowrap', id => "pdr_handle_$problemID" },
+								CGI::span({ class => 'pdr_problem_number' }, $problemNumber) . ' ',
+								$forUsers ? '' : CGI::i(
+									{
+										class      => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
+										data_title => $r->maketext('Move')
+									},
+									''
+								)
+							),
+							$collapseButton,
+							CGI::input({
+								type  => 'hidden',
+								name  => "prob_num_$problemID",
+								id    => "prob_num_$problemID",
+								value => $lastProblemNumber
+							}),
+							CGI::input({
+								type  => 'hidden',
+								name  => "prob_parent_id_$problemID",
+								id    => "prob_parent_id_$problemID",
+								value => $parentID
+							}),
+							CGI::a(
+								{
+									href              => '#',
+									class             => 'pdr_render btn btn-secondary btn-sm',
+									id                => "pdr_render_$problemID",
+									data_bs_toggle    => 'tooltip',
+									data_bs_placement => 'top',
+									data_bs_title     => $r->maketext('Render Problem')
+								},
+								CGI::i({ class => 'icon far fa-image', data_alt => $r->maketext('Render') }, '')
+							),
+							(
+								$showLinks ? CGI::a(
+									{
+										class             => 'psd_edit btn btn-secondary btn-sm',
+										href              => $editProblemLink,
+										target            => 'WW_Editor',
+										data_bs_toggle    => 'tooltip',
+										data_bs_placement => 'top',
+										data_bs_title     => $r->maketext('Edit Problem')
+									},
+									CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => $r->maketext('Edit') }, '')
+								) : ''
+							),
+							(
+								$showLinks ? CGI::a(
+									{
+										class             => 'psd_view btn btn-secondary btn-sm',
+										href              => $viewProblemLink,
+										target            => 'WW_View',
+										data_bs_toggle    => 'tooltip',
+										data_bs_placement => 'top',
+										data_bs_title     => $r->maketext('Open in New Window')
+									},
+									CGI::i({ class => 'icon far fa-eye', data_alt => $r->maketext('View') }, '')
+								) : ''
+							),
+							$gradingLink
+						),
+						CGI::div(
+							{ class => 'col-md-2 col-3 order-md-2 order-3' },
+							$forUsers ? CGI::div(
+								{
+									class => 'form-check form-check-inline col-form-label col-form-label-sm text-nowrap'
+								},
+								$source_file_parts[0],
+								$source_file_parts[1]
+							) : CGI::label(
+								{ class => 'col-auto col-form-label col-form-label-sm text-nowrap' },
+								$source_file_parts[0]
+							)
+						),
+						CGI::div(
+							{ class => ($forUsers ? 'col-md-6' : 'col-md-5') . ' col-9 order-md-3 order-4' },
+							$source_file_parts[ $forUsers ? 3 : 2 ],
+							CGI::input({
+								type  => 'hidden',
+								id    => "problem_${problemID}_default_source_file",
+								value => $GlobalProblems{$problemID}->source_file()
+							})
+						),
+						$forUsers ? '' : CGI::div(
+							{
+								class => 'col-md-1 col-2 d-flex align-items-center justify-content-end '
+									. 'order-md-last order-2'
+							},
+							qq{<button class="accordion-button" type="button" data-bs-toggle="collapse"
+									data-bs-target="#pdr_details_$problemID" aria-expanded="true"
+									aria-controls="pdr_details_$problemID"></button>}
+						)
+					),
+					CGI::div(
+						{ id => "pdr_details_$problemID", class => 'collapse show mt-1' },
+						CGI::div(
+							{ class => 'row' },
+							CGI::div(
+								{ class => 'col-md-6 d-flex flex-row order-md-first order-last' },
+								(
+									$forUsers ? '' : CGI::div(
+										{ class => 'form-check form-check-inline form-control-sm' },
+										CGI::checkbox({
+											name            => 'deleteProblem',
+											value           => $problemID,
+											label           => $r->maketext('Delete it?'),
+											class           => 'form-check-input',
+											labelattributes => { class => 'form-check-label' }
+										})
+									)
+								),
+								(
+									$forOneUser ? '' : CGI::div(
+										{ class => 'form-check form-check-inline form-control-sm' },
+										CGI::checkbox({
+											name            => 'markCorrect',
+											id              => "problem.${problemID}.mark_correct",
+											value           => $problemID,
+											label           => $r->maketext('Mark Correct?'),
+											class           => 'form-check-input',
+											labelattributes => { class => 'form-check-label' }
+										})
+									)
+								)
+							),
+							$forUsers
+							? CGI::div({ class => 'col-md-6 offset-md-0 offset-3 font-sm order-md-last order-first' },
+								$source_file_parts[4])
+							: ''
+						),
+
+						CGI::div(
+							{ class => 'row' },
+							CGI::div(
+								{ class => 'col-md-5' },
+								$self->FieldTable(
+									$userToShow,                 $setID,         $problemID,
+									$GlobalProblems{$problemID}, $problemToShow, $setRecord->assignment_type()
+								)
+							),
+							CGI::div(
+								{ class => 'font-sm col-md-7' },
+								($repeatFile ? CGI::div({ class => 'ResultsWithError fw-bold' }, $repeatFile) : ''),
+								CGI::div(
+									{ class => 'psr_render_area', id => "psr_render_area_$problemID" },
+									$error ? CGI::div({ class => 'ResultsWithError fw-bold' }, $error) : ''
+								)
+							)
+						)
+					)
 				)
 			);
-
-			push @problemRow,
-				CGI::div({ class => 'problem_detail_row row card flex-row p-2 mb-3 g-0' },
-				CGI::div({ class => 'col-lg-4 col-md-5' }, $pdr_block_1, $pdr_block_2), $pdr_block_3);
 		}
 
 		# If a jitar set then print nested lists, otherwise print an unordered list.
