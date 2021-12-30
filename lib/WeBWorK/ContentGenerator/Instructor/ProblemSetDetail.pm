@@ -561,7 +561,12 @@ sub FieldTable {
 			'',
 			$r->maketext('Attempts'),
 			'',
-			($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0)
+			CGI::textfield({
+				readonly => undef,
+				value    => ($problemRecord->num_correct || 0) + ($problemRecord->num_incorrect || 0),
+				size     => 5,
+				class    => 'form-control form-control-sm'
+			})
 		]))
 			if $forOneUser;
 	}
@@ -777,7 +782,17 @@ sub FieldHTML {
 
 	push @return, $inputType;
 
-	push @return, $gDisplVal if $forUsers;
+	push @return,
+		(
+			$gDisplVal ne ''
+			? CGI::textfield({
+				readonly => undef,
+				value    => $gDisplVal,
+				size     => $properties{size} || 5,
+				class    => 'form-control form-control-sm'
+			})
+			: ''
+		) if $forUsers;
 
 	return @return;
 }
@@ -884,7 +899,15 @@ sub extraSetFields {
 						})
 					)
 				);
-				push(@tds, join(', ', @globalLocations));
+				push(
+					@tds,
+					CGI::textarea({
+						readonly => undef,
+						value    => join("\n", @globalLocations),
+						rows     => 4,
+						class    => 'form-control form-control-sm'
+					})
+				);
 			}
 			$ipFields .= CGI::Tr({ valign => 'top' }, CGI::td([@tds]));
 		}
@@ -2705,11 +2728,11 @@ sub body {
 								)
 							),
 							$forUsers
-							? CGI::div({ class => 'col-md-6 offset-md-0 offset-3 font-sm order-md-last order-first' },
+							? CGI::div(
+								{ class => 'col-md-6 offset-md-0 col-9 offset-3 font-sm order-md-last order-first' },
 								$source_file_parts[4])
 							: ''
 						),
-
 						CGI::div(
 							{ class => 'row' },
 							CGI::div(
