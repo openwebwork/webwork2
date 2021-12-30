@@ -1668,6 +1668,12 @@ sub helpMacro {
 	my $name = shift;
 	my $args = shift;
 
+	my $label = $args->{label}
+		// CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => " ? " }, '');
+	delete $args->{label};
+
+	$args->{class} = 'help-macro ' . ($args->{class} // '');
+
 	my $ce = $self->r->ce;
 	$name = 'no_help' unless -e "$ce->{webworkDirs}{local_help}/$name.html";
 
@@ -1675,10 +1681,9 @@ sub helpMacro {
 		{
 			href   => $ce->{webworkURLs}{local_help} . "/$name.html",
 			target => 'ww_help',
-			class  => 'help-macro ' . ($args->{class} // '')
+			%$args
 		},
-		$args->{label}
-			// CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => " ? " }, '')
+		$label
 	);
 }
 

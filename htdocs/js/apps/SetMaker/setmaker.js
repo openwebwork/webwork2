@@ -434,13 +434,19 @@
 				if (iframe[0] && iframe[0].iFrameResizer) iframe[0].iFrameResizer.resize();
 				else await render(area.id.match(/^pgrow(\d+)/)[1]);
 			}
-			$('#mlt' + cnt).text("L");
-			$('#mlt' + cnt).attr("title", "Show less like this");
+			const mltIcon = document.getElementById(`mlt${cnt}`);
+			mltIcon.textContent = 'L';
+			mltIcon.dataset.bsTitle = mltIcon.dataset.lessText;
+			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
 			count = -count;
 		} else {
 			unshownAreas.hide();
-			$('#mlt' + cnt).text("M");
-			$('#mlt' + cnt).attr("title", "Show " + unshownAreas.length + " more like this");
+			const mltIcon = document.getElementById(`mlt${cnt}`);
+			mltIcon.textContent = 'M';
+			mltIcon.dataset.bsTitle = mltIcon.dataset.moreText;
+			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
+			new bootstrap.Tooltip(mltIcon, { fallbackPlacements: [] })
 		}
 		$('#lastshown').text(n1 - count);
 		$('#totalshown').text(n2 - count);
@@ -485,4 +491,7 @@
 	$("select[name=local_sets]").on("change", markinset);
 	$("span[name=dont_show]").on('click', function() { delrow($(this).data('row-cnt')); });
 	$(".lb-mlt-parent").on('click', function() {togglemlt($(this).data('mlt-cnt'), $(this).data('mlt-noshow-class'));});
+
+	document.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle]')
+		.forEach((el) => new bootstrap.Tooltip(el, { fallbackPlacements: [] }));
 })();

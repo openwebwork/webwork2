@@ -1257,7 +1257,7 @@ sub make_data_row {
 	my $isGatewaySet = (defined($setRecord) && $setRecord->assignment_type =~ /gateway/);
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
-	my $edit_link    = CGI::a(
+	my $edit_link = CGI::a(
 		{
 			href => $self->systemLink(
 				$urlpath->newFromModule(
@@ -1271,10 +1271,12 @@ sub make_data_row {
 					problemSeed    => $problem_seed
 				}
 			),
-			id     => "editit$cnt",
-			target => "WW_Editor",
-			title  => "Edit it",
-			class  => 'ms-1'
+			id                => "editit$cnt",
+			target            => "WW_Editor",
+			data_bs_title     => $r->maketext('Edit it'),
+			class             => 'btn btn-sm btn-secondary',
+			data_bs_toggle    => 'tooltip',
+			data_bs_placement => 'top'
 		},
 		CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, "")
 	);
@@ -1301,10 +1303,12 @@ sub make_data_row {
 					displayMode    => $displayMode,
 				}
 			),
-			target => "WW_View",
-			title  => "Try it",
-			id     => "tryit$cnt",
-			class  => 'text-decoration-none ms-1'
+			target            => "WW_View",
+			data_bs_title     => $r->maketext('Try it'),
+			id                => "tryit$cnt",
+			class             => 'text-decoration-none btn btn-sm btn-secondary',
+			data_bs_toggle    => 'tooltip',
+			data_bs_placement => 'top'
 		},
 		CGI::i({ class => 'far fa-eye' }, '')
 	);
@@ -1316,12 +1320,15 @@ sub make_data_row {
 		my $numchild = scalar(@{ $sourceFileData->{children} });
 		$mlt = CGI::span(
 			{
-				class                 => 'lb-mlt-parent ms-1',
+				class                 => 'lb-mlt-parent btn btn-sm btn-secondary',
 				id                    => "mlt$cnt",
 				data_mlt_cnt          => $cnt,
 				data_mlt_noshow_class => $noshowclass,
-				title                 => "Show $numchild more like this",
-				style                 => 'cursor:pointer'
+				data_less_text        => $r->maketext('Show less like this'),
+				data_more_text        => $r->maketext('Show [_1] more like this', $numchild),
+				data_bs_title         => $r->maketext('Show [_1] more like this', $numchild),
+				data_bs_toggle        => 'tooltip',
+				data_bs_placement     => 'top'
 			},
 			'M'
 		);
@@ -1349,9 +1356,10 @@ sub make_data_row {
 	my $rerand = $isstatic ? '' : CGI::a(
 		{
 			data_target_problem => $cnt,
-			class               => 'rerandomize_problem_button ms-1',
-			title               => "Randomize",
-			style               => 'cursor:pointer'
+			class               => 'rerandomize_problem_button btn btn-sm btn-secondary',
+			data_bs_title       => $r->maketext('Randomize'),
+			data_bs_toggle      => 'tooltip',
+			data_bs_placement   => 'top'
 		},
 		CGI::i({ class => 'fas fa-random' }, '')
 	);
@@ -1359,13 +1367,16 @@ sub make_data_row {
 		{ class => 'motag' },
 		$isMO
 		? $self->helpMacro(
-			"UsesMathObjects",
+			'UsesMathObjects',
 			{
 				label => CGI::img({
-					src   => '/webwork2_files/images/pibox.png',
-					title => 'Uses Math Objects',
-					alt   => 'Uses Math Objects'
-				})
+					src => '/webwork2_files/images/pi.svg',
+					alt => $r->maketext('Uses Math Objects')
+				}),
+				class             => 'btn btn-sm btn-secondary',
+				data_bs_title     => $r->maketext('Uses Math Objects'),
+				data_bs_toggle    => 'tooltip',
+				data_bs_placement => 'top'
 			}
 			)
 		: ''
@@ -1420,11 +1431,13 @@ sub make_data_row {
 				CGI::div(
 					{ class => 'lb-problem-add d-flex align-items-center mb-1' },
 					CGI::button({
-						name             => 'add_me',
-						value            => $r->maketext('Add'),
-						title            => 'Add problem to target set',
-						data_source_file => $sourceFileName,
-						class            => 'btn btn-primary btn-sm'
+						name              => 'add_me',
+						value             => $r->maketext('Add'),
+						data_bs_title     => $r->maketext('Add problem to target set'),
+						data_source_file  => $sourceFileName,
+						class             => 'btn btn-primary btn-sm',
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'top'
 					}),
 				),
 				CGI::div({ class => 'd-flex justify-content-center align-items-center mb-1' }, $problem_stats),
@@ -1435,11 +1448,12 @@ sub make_data_row {
 					$try_link,
 					CGI::span(
 						{
-							name         => 'dont_show',
-							title        => 'Hide this problem',
-							style        => 'cursor:pointer',
-							data_row_cnt => $cnt,
-							class        => 'ms-1'
+							name              => 'dont_show',
+							data_bs_title     => $r->maketext('Hide this problem'),
+							data_row_cnt      => $cnt,
+							class             => 'btn btn-sm btn-secondary',
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'top'
 						},
 						'X'
 					)

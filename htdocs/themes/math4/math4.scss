@@ -635,6 +635,22 @@ ul.courses-list {
 	}
 }
 
+.lb-problem-icons {
+	.btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		width: 27.85px;
+		height: 27.85px;
+
+		img {
+			max-height: 15px;
+			max-width: 15px;
+		}
+	}
+}
+
 /* Footer */
 #footer {
 	display: block;
