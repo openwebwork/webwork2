@@ -47,21 +47,21 @@ EOT
 ####################################################
 #
 # The items below are printed out only when set is displayed on screen
-# 
+#
 ####################################################
 TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 
 $BBOLD WeBWorK  Assignment \{ protect_underbar($setNumber) \}  is due :  $formattedDueDate. $EBOLD
 $PAR
-Here's the list of 
+Here's the list of
 \{ htmlLink(qq!http://webwork.maa.org/wiki/Available_Functions!,"functions and symbols") \}
  which WeBWorK understands.
 $BR
 EOT
 
 ####################################################
-# Uncomment and edit the lines below if this course has a web page. Note that this is comment in Perl mode. 
-# IMPORTANT: Make sure the EOT at the bottom is at the beginning of a line with no spaces preceeding it.
+# Uncomment and edit the lines below if this course has a web page. Note that this is comment in Perl mode.
+# IMPORTANT: Make sure the EOT at the bottom is at the beginning of a line with no spaces preceding it.
 #TEXT(MODES(TeX =>"",HTML=>EV3(<<'EOT')));
 #See the course web page for information \{ htmlLink(qq!http://yoururl/yourcourse!,"your course name") \}
 #EOT

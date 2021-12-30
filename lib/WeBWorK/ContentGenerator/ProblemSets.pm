@@ -669,8 +669,11 @@ sub setListRow {
 	  
 	  if ( defined( $set->assignment_type() ) && 
 	       $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
-	    $startTime = localtime($set->version_creation_time() || 0); #fixes error message for undefined creation_time
-	    
+			$startTime = $self->formatDateTime(
+				$set->version_creation_time() || 0, #fixes error message for undefined creation_time
+				undef, $ce->{studentDateDisplayFormat}
+			);
+
 	    if ( $authz->hasPermissions($user, "view_hidden_work") || 
 		 $set->hide_score() eq 'N' || 
 		 ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
