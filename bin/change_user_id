@@ -19,12 +19,15 @@ use warnings;
 use File::Copy;
 use File::Basename;
 
+my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::DB;
 use WeBWorK::Utils qw(runtime_use readFile);
@@ -50,7 +53,7 @@ die "Error: $old_user_id does not exist!" unless $db->existsUser($old_user_id);
 
 unless($db->existsUser($new_user_id)) {
     my $user = $db->getUser($old_user_id);
-    $user->{user_id}=$new_user_id; 
+    $user->{user_id}=$new_user_id;
     $user->{comment} = $user->{comment}."Record created from $old_user_id record";
     $db->addUser($user);
 }
@@ -66,7 +69,7 @@ unless($db->existsPermissionLevel($new_user_id)) {
     $permission->{user_id} = $new_user_id;
     $db->addPermissionLevel($permission);
 }
-    
+
 
 my @old_user_sets = $db->listUserSets($old_user_id);
 foreach(@old_user_sets) {
@@ -80,8 +83,8 @@ foreach(@old_user_sets) {
         next if /user_id|set_id/;
         $new_set->$_($old_set->$_);
     }
-    
-    $db->putUserSet($new_set) unless $db->existsUserSet($new_user_id,$set_id); 
+
+    $db->putUserSet($new_set) unless $db->existsUserSet($new_user_id,$set_id);
     my @global_problems = grep { defined $_} $db->getAllGlobalProblems($set_id);
     foreach(@global_problems) {
         if($db->existsUserProblem($old_user_id,$set_id,$_->{problem_id})) {
