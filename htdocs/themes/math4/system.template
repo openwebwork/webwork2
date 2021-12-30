@@ -136,10 +136,8 @@
 <div id="content" class="flex-grow-1 toggle-width">
 <!--#endif-->
 	<!--#if can="nav"-->
-	<div class="problem-nav row sticky-nav" role="navigation" aria-label="problem navigation">
 		<!-- Question Navigation, e.g.: Prev, Up, Next for homeworks -->
-		<!--#nav style="buttons" imageprefix="/webwork2_files/images/nav" imagesuffix=".gif" separator="  "-->
-	</div>
+		<!--#nav style="buttons" separator=""-->
 	<!--#endif-->
 
 	<!-- Page Title -->

@@ -94,7 +94,7 @@
 		<!--#endif-->
 
 		<!--#if can="nav"-->
-			<!--#nav separator="  "-->
+			<!--#nav-->
 		<!--#endif-->
 
 		<!--#if can="title"-->

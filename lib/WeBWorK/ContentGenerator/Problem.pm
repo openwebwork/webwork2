@@ -1069,13 +1069,14 @@ sub nav {
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	return "" if ( $self->{invalidSet} );
-
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id;
 	my $problemID = $self->{problem}->problem_id if !($self->{invalidProblem});
 	my $userID = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
+
+	my $mergedSet = $db->getMergedSet($eUserID, $setID);
+	return '' if $self->{invalidSet} || !$mergedSet;
 
 	# Set up a student navigation for those that have permission to act as a student.
 	my $userNav = "";
@@ -1190,9 +1191,6 @@ sub nav {
 		);
 	}
 
-	my $mergedSet = $db->getMergedSet($eUserID,$setID);
-	return "" unless $mergedSet;
-
 	my $isJitarSet = ($mergedSet->assignment_type eq 'jitar');
 
 	my ($prevID, $nextID);
@@ -1252,13 +1250,14 @@ sub nav {
 	}
 
 	my $tail = "";
-
 	$tail .= "&displayMode=".$self->{displayMode} if defined $self->{displayMode};
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
 	$tail .= "&showProblemGrader=" . $self->{will}{showProblemGrader}
 		if defined $self->{will}{showProblemGrader};
-	return $userNav . CGI::div({ class => 'd-flex submit-buttons-container' }, $self->navMacro($args, $tail, @links));
+
+	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
+		$userNav, CGI::div({ class => 'd-flex submit-buttons-container' }, $self->navMacro($args, $tail, @links)));
 }
 
 sub path {

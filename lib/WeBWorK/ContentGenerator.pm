@@ -424,7 +424,6 @@ message() template escape handler.
 
 =cut
 
-
 sub addgoodmessage {
 	my ($self, $message) = @_;
 	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $message));
@@ -436,7 +435,6 @@ Adds a failure message to the list of messages to be printed by the
 message() template escape handler.
 
 =cut
-
 
 sub addbadmessage {
 	my ($self, $message) = @_;
@@ -1080,19 +1078,12 @@ Links to the previous, next, and parent objects.
 
 $args is a reference to a hash containing the following fields:
 
- style       => text|image
- imageprefix => prefix to prepend to base image URL
- imagesuffix => suffix to append to base image URL
+ style       => text|buttons
  separator   => HTML to place in between links
 
-If C<style> is "image", image URLs are constructed by prepending C<imageprefix>
-and postpending C<imagesuffix> to the image base names defined by the
-implementor. (Examples of base names include "Prev", "Next", "ProbSet", and
-"Up"). Each concatenated string should form an absolute URL to an image file.
 For example:
 
- <!--#nav style="images" imageprefix="/webwork2_files/images/nav"
-          imagesuffix=".gif" separator="  "-->
+ <!--#nav style="buttons" separator=" "-->
 
 =cut
 
@@ -1616,17 +1607,16 @@ sub siblingsMacro {
 
 =item navMacro($args, $tail, @links)
 
-Helper macro for the C<#nav> escape sequence: $args is a hash reference
-containing the "style", "imageprefix", "imagesuffix", and "separator" arguments
-to the escape. @siblings consists of ordered tuples of the form:
+Helper macro for the C<#nav> escape sequence: C<$args> is a hash reference
+containing the "style" and "separator" arguments to the escape.
+C<@siblings> consists of ordered tuples of the form:
 
  "Link Name", URL, ImageBaseName
 
 If the sibling should not have a link associated with it, the URL should be left
-empty. ImageBaseName is placed between the C<imageprefix> and C<imagesuffix>.
-Authentication data is added to each URL so you don't have to. $tail is appended
-to each URL, after the authentication information. A fully-formed nav line is
-returned, suitable for returning by a function implementing the C<#nav> escape.
+empty.  C<$tail> is appended to each URL, after the authentication information.
+A fully-formed nav line is returned, suitable for returning by a function
+implementing the C<#nav> escape.
 
 =cut
 

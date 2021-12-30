@@ -113,7 +113,8 @@ sub nav {
 	my $problemSetsPage = $urlpath->parent;
 
 	my @links = ($r->maketext("Homework Sets"), $r->location . $problemSetsPage->path, $r->maketext("Homework Sets"));
-	return CGI::div($self->navMacro($args, '', @links));
+	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
+		CGI::div($self->navMacro($args, '', @links)));
 }
 
 sub title {

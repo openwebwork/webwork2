@@ -418,15 +418,9 @@ sub initialize {
 		} else {
 			return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to perform this action.")));
 		}
-
-
-
 	} else {
-
 		$self->addgoodmessage($r->maketext("Please select action to be performed."));
 	}
-
-
 }
 
 sub body {
