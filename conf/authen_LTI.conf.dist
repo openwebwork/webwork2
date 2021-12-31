@@ -376,14 +376,14 @@ $ConfigValues = [@$ConfigValues,
 		},
 		{
 			var => 'external_auth',
-			doc => 'Require students to log in through the LMS',
+			doc => 'Require users to log in through the LMS',
 			doc2 => 'If this is set, all users (including the instructor) must enter the WeBWorK course through the LMS. If a user reaches the regular WeBWorK login screen, they receive a message directing them back to the LMS.',
 			type => 'boolean'
 		},
 		{
 			var => 'LTIGradeMode',
 			doc => 'Grade passback mode',
-			doc2 => 'Sets how grades will be passed back from WeBWorK to the LMS.<dl><dt>course</dt><dd>Sends a single grade back to the LMS. This grade is calculated out of the total question set that has been assigned to students and made open. Therefore it can appear low, since it counts problem sets with future due dates as zero.</dd> <dt>homework</dt><dd>Sends back a score for each problem set (including for each quiz). To use this, the external links from the LMS must be problem set specific. For example, <code>webwork.myschool.edu/webwork2/course-name/problem_set_name</code>. If the problem set name has space characters, they should be underscores in these addresses. If the problem set is a quiz, it must have this format: <code>webwork.myschool.edu/webwork2/course-name/quiz_mode/problem_set_name</code>. Also, to initialize the communication between WeBWorK and the LMS, the student must follow each of these external learning tools at least one time. Since there must be a separate external tool link for each problem set, this option requires more maintenance of the LMS course.</dd></dl>',
+			doc2 => 'Sets how grades will be passed back from WeBWorK to the LMS.<dl><dt>course</dt><dd>Sends a single grade back to the LMS. This grade is calculated out of the total question set that has been assigned to a user and made open. Therefore it can appear low, since it counts problem sets with future due dates as zero.</dd> <dt>homework</dt><dd>Sends back a score for each problem set (including for each quiz). To use this, the external links from the LMS must be problem set specific. For example, <code>webwork.myschool.edu/webwork2/course-name/problem_set_name</code>. If the problem set name has space characters, they should be underscores in these addresses. If the problem set is a quiz, it must have this format: <code>webwork.myschool.edu/webwork2/course-name/quiz_mode/problem_set_name</code>. Also, to initialize the communication between WeBWorK and the LMS, the user must follow each of these external learning tools at least one time. Since there must be a separate external tool link for each problem set, this option requires more maintenance of the LMS course.</dd></dl>',
 			values => ['', qw(course homework)],
 			labels=>{'' => 'None', 'course' => 'Course', 'homework' => 'Homework'},
 			type => 'popuplist'
@@ -391,7 +391,7 @@ $ConfigValues = [@$ConfigValues,
 		{
 			var => 'LMSManageUserData',
 			doc => 'Allow the LMS to update user account data',
-			doc2 => "WeBWorK will automatically create users when logging in via the LMS for the first time. If this flag is enabled then it will also keep the user account data (first name, last name, section, recitation) up to date with the LMS. If a user's information changes in the LMS then it will change in WeBWorK. However, any changes to the student data via WeBWorK will be overwritten the next time the student logs in.",
+			doc2 => "WeBWorK will automatically create users when logging in via the LMS for the first time. If this flag is enabled then it will also keep the user account data (first name, last name, section, recitation) up to date with the LMS. If a user's information changes in the LMS then it will change in WeBWorK. However, any changes to the user data via WeBWorK will be overwritten the next time the user logs in.",
 			type => 'boolean'
 		},
 		{
