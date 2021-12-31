@@ -85,7 +85,7 @@
 				data: {
 					user: user,
 					session_key: sessionKey,
-					xml_command: saveData.versionId ? 'putProblemVersion' : 'putUserProblem',
+					xml_command: saveData.versionId !== '0' ? 'putProblemVersion' : 'putUserProblem',
 					courseID: saveData.courseId,
 					user_id: saveData.studentId,
 					set_id: saveData.setId,
@@ -95,9 +95,9 @@
 				},
 				timeout: 10000,
 				success: () => {
-					if (saveData.pastAnswerId) {
+					if (saveData.pastAnswerId !== '0') {
 						// Save the comment.
-						const comment = document.getElementById(`comment_problem${saveData.problemId}`).value;
+						const comment = document.getElementById(`comment_problem${saveData.problemId}`)?.value;
 						$.ajax(basicWebserviceURL, {
 							type: 'post',
 							data: {
@@ -124,7 +124,7 @@
 						});
 					} else {
 						messageArea.classList.add('alert-success');
-						messageArea.text('Score saved.');
+						messageArea.textContent = 'Score saved.';
 						setTimeout(() => messageArea.classList.remove('alert-success'), 100);
 					}
 				},
