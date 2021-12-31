@@ -30,9 +30,6 @@ use WeBWorK::Utils qw(readFile dequote);
 use WeBWorK::DB::Utils qw(grok_vsetID);
 use WeBWorK::ContentGenerator::GatewayQuiz qw(can_recordAnswers);
 
-
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-
 # This content generator is NOT logged in.
 # FIXME  I'm not sure this is really what we want for the proctor login,
 # FIXME  but I also don't know what this actually does, so I'm ignoring it
@@ -199,7 +196,7 @@ sub body {
 	# if invalid authentication is found.  If this is done, it's a signal to
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
-	my $authen_error = MP2 ? $r->notes->get('authen_error') : $r->notes('authen_error');
+	my $authen_error = $r->notes->get('authen_error');
 	if ($authen_error) {
 		print CGI::div({ class => 'alert alert-danger' }, $authen_error);
 	}

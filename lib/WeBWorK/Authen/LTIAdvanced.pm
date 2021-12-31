@@ -34,21 +34,12 @@ use WeBWorK::Localize;
 use WeBWorK::ContentGenerator::Instructor;
 use URI::Escape;
 use Net::OAuth;
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
 
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
 
-BEGIN {
-  if (MP2) {
-    require APR::SockAddr;
-    APR::SockAddr->import();
-    require Apache2::Connection;
-    Apache2::Connection->import();
-    require APR::Request::Error;
-    APR::Request::Error->import;
-  }
-}
-
+use APR::SockAddr;
+use Apache2::Connection;
+use APR::Request::Error;
 
 =head1 CONSTRUCTOR
 

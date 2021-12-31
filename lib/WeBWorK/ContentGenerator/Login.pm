@@ -30,11 +30,6 @@ use WeBWorK::CGI;
 use WeBWorK::Utils qw(readFile dequote jitar_id_to_seq);
 use Encode;
 
-
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
-use Encode;
-
-
 # This content generator is NOT logged in.
 # BUT one must return a 1 so that error messages can be displayed.
 sub if_loggedin {
@@ -176,7 +171,7 @@ sub body {
 	# if invalid authentication is found.  If this is done, it's a signal to
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
-	my $authen_error = MP2 ? $r->notes->get("authen_error") : $r->notes("authen_error");
+	my $authen_error = $r->notes->get("authen_error");
 	$authen_error = Encode::decode("UTF-8",$authen_error);
 
 	if ($authen_error) {

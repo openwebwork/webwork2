@@ -60,8 +60,9 @@ use URI::Escape;
 use Carp;
 use Scalar::Util qw(weaken);
 
-
-use constant MP2 => ( exists $ENV{MOD_PERL_API_VERSION} and $ENV{MOD_PERL_API_VERSION} >= 2 );
+use APR::SockAddr;
+use Apache2::Connection;
+use APR::Request::Error;
 
 use Caliper::Sensor;
 use Caliper::Entity;
@@ -77,18 +78,6 @@ our $GENERIC_ERROR_MESSAGE = "";  # define in new
 #####################
 
 #use constant GENERIC_ERROR_MESSAGE => "Invalid user ID or password.";
-
-
-BEGIN {
-	if (MP2) {
-		require APR::SockAddr;
-		APR::SockAddr->import();
-		require Apache2::Connection;
-		Apache2::Connection->import();
-		require APR::Request::Error;
-		APR::Request::Error->import;
-	}
-}
 
 ################################################################################
 # Public API
@@ -243,9 +232,10 @@ sub verify {
 		}
         #warn "LOGIN FAILED: log_error: $log_error; user error: $error";
 		$self->maybe_kill_cookie;
-		if (defined($error) and $error=~/\S/ and $r->can('notes') ) { # if error message has a least one non-space character.
-			MP2? $r->notes->set(authen_error => $error) : $r->notes("authen_error" => $error);
-		      # FIXME this is a hack to accomodate the webworkservice remixes
+		# if error message has a least one non-space character.
+		if (defined($error) and $error =~ /\S/ and $r->can('notes')) {
+			$r->notes->set(authen_error => $error);
+			# FIXME this is a hack to accomodate the webworkservice remixes
 		}
 	}
 
@@ -957,42 +947,38 @@ sub write_log_entry {
 
 	my $APACHE24 = 0;
 	# If its apache 2.4 then it has to also mod perl 2.0 or better
-	if (MP2) {
-	    my $version;
+	my $version;
 
-	    # check to see if the version is manually defined
-	    if (defined($ce->{server_apache_version}) &&
-		$ce->{server_apache_version}) {
+	# check to see if the version is manually defined
+	if (defined($ce->{server_apache_version})
+		&& $ce->{server_apache_version})
+	{
 		$version = $ce->{server_apache_version};
-	    # otherwise try and get it from the banner
-	    } elsif (Apache2::ServerUtil::get_server_banner() =~
-	  m:^Apache/(\d\.\d+):) {
+		# otherwise try and get it from the banner
+	} elsif (Apache2::ServerUtil::get_server_banner() =~ m:^Apache/(\d\.\d+):) {
 		$version = $1;
-	    }
-
-	    if ($version) {
-		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
-	    }
 	}
+
+	if ($version) {
+		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
+	}
+
 	# If its apache 2.4 then the API has changed
 	my $connection;
 	my $user_agent;
 	eval {$connection = $r->connection};
-	if ($@) { # no connection available
+	if ($@) {
+		# no connection available
 		$remote_host = "UNKNOWN" unless defined $remote_host;
 		$remote_port = "UNKNOWN" unless defined $remote_port;
-		$user_agent = "UNKNOWN";
+		$user_agent  = "UNKNOWN";
 	} else {
 		if ($APACHE24) {
 			$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
 			$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
-		} elsif (MP2) {
+		} else {
 			$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
 			$remote_port = $r->connection->remote_addr->port   || "UNKNOWN";
-		} else {
-			($remote_port, $remote_host) = unpack_sockaddr_in($r->connection->remote_addr);
-			$remote_host = defined $remote_host ? inet_ntoa($remote_host) : "UNKNOWN";
-			$remote_port = "UNKNOWN" unless defined $remote_port;
 		}
 
 		$user_agent = $r->headers_in->{"User-Agent"};
