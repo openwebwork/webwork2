@@ -372,7 +372,7 @@ sub body {
 		 "|",
 		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"manage_locations"})}, $r->maketext("Manage Locations")),
 		 "|",
-		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"hide_inactive_course"})}, $r->maketext("Hide Inactive Courses")),
+		CGI::a({href=>$self->systemLink($urlpath, params=>{subDisplay=>"hide_inactive_course"})}, $r->maketext("Hide Courses")),
 		CGI::hr(),
 		$methodMessage,
 		
@@ -3041,7 +3041,7 @@ sub hide_inactive_course_form {
 		@hideCourseIDs = sort {lc($a) cmp lc ($b) } @courseIDs;
 	}
 	
-	print CGI::h2($r->maketext("Hide Inactive Courses"));
+	print CGI::h2($r->maketext("Hide Courses"));
 	
 		print CGI::p($r->maketext('Select the course(s) you want to hide (or unhide) and then click "Hide Courses" (or "Unhide Courses"). Hiding a course that is already hidden does no harm (the action is skipped). Likewise unhiding a course that is already visible does no harm (the action is skipped).  Hidden courses are still active but are not listed in the list of WeBWorK courses on the opening page.  To access the course, an instructor or student must know the full URL address for the course.')
 	);
