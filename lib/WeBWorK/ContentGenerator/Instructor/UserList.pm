@@ -267,7 +267,8 @@ sub body {
 	my $userTemplate            = $self->{userTemplate}            = $db->newUser;
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to access the instructor tools.")))
+	return CGI::div({ class => 'alert alert-danger p-1' },
+		$r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	# This table can be consulted when display-ready forms of field names are needed.
@@ -334,13 +335,15 @@ sub body {
 
 	$self->{editMode} = $r->param("editMode") || 0;
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify student data")))
+	return CGI::div({ class => 'alert alert-danger p-1' },
+		$r->maketext("You are not authorized to modify student data"))
 		if $self->{editMode} and not $authz->hasPermissions($user, "modify_student_data");
 
 
 	$self->{passwordMode} = $r->param("passwordMode") || 0;
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify student data")))
+	return CGI::div({ class => 'alert alert-danger p-1' },
+		$r->maketext("You are not authorized to modify student data"))
 		if $self->{passwordMode} and not $authz->hasPermissions($user, "modify_student_data");
 
 	if (defined $r->param("labelSortMethod")) {
@@ -381,11 +384,18 @@ sub body {
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
 			print CGI::p(
-			    CGI::div({class=>"ResultsWithoutError"}, $r->maketext("Result of last action performed: [_1]", CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams)))),
+				CGI::div(
+					{ class => 'alert alert-success p-1' },
+					$r->maketext(
+						"Result of last action performed: [_1]",
+						CGI::i($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams))
+					)
+				),
 				CGI::hr()
 			);
 		} else {
-			return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to perform this action.")));
+			return CGI::div({ class => 'alert alert-danger p-1' },
+				$r->maketext("You are not authorized to perform this action."));
 		}
 	}
 
@@ -1033,7 +1043,7 @@ sub delete_form {
 
 	return CGI::div(
 		CGI::div(
-			{ class => 'row ResultsWithError mb-2' },
+			{ class => 'd-inline-block alert alert-danger p-1 mb-2' },
 			CGI::em($r->maketext('Warning: Deletion destroys all user-related data and is not undoable!'))
 		),
 		CGI::div(
@@ -1855,8 +1865,13 @@ sub recordEditHTML {
 	if ($passwordMode) {
 		if ($User->user_id eq $user) {
 			# Don't allow a professor to change their own password from this form.
-			push(@tableCells,
-				CGI::div({ -class => "ResultsWithError" }, $r->maketext("You may not change your own password here!")));
+			push(
+				@tableCells,
+				CGI::div(
+					{ class => 'alert alert-danger px-1 py-0 m-0' },
+					$r->maketext("You may not change your own password here!")
+				)
+			);
 		} else {
 			my $fieldName = 'user.' . $User->user_id . '.' . 'new_password';
 			push @tableCells,

@@ -331,8 +331,9 @@ sub initialize {
 	# templates for getting field names
 	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
 
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("You are not authorized to access the instructor tools."))
-		unless $authz->hasPermissions($user, "access_instructor_tools");
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext('You are not authorized to access the instructor tools.'))
+		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
 	########## set initial values for state fields
 
@@ -365,14 +366,16 @@ sub initialize {
 	$self->{editMode} = $r->param("editMode") || 0;
 
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify homework sets.")))
-	  if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p($r->maketext('You are not authorized to modify homework sets.')))
+		if $self->{editMode} and not $authz->hasPermissions($user, 'modify_problem_sets');
 
 
 	$self->{exportMode} = $r->param("exportMode") || 0;
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify set definition files.")))
-		if $self->{exportMode} and not $authz->hasPermissions($user, "modify_set_def_files");
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p($r->maketext('You are not authorized to modify set definition files.')))
+		if $self->{exportMode} and not $authz->hasPermissions($user, 'modify_set_def_files');
 
 	$self->{primarySortField} = $r->param("primarySortField") || "due_date";
 	$self->{secondarySortField} = $r->param("secondarySortField") || "open_date";
@@ -413,10 +416,11 @@ sub initialize {
 			}
 			my %actionParams = $self->getActionParams($actionID);
 			my %tableParams = $self->getTableParams();
-			$self->addmessage(CGI::div($r->maketext("Results of last action performed").": "));
+			$self->addmessage(CGI::div({ class => 'mb-1' }, $r->maketext("Results of last action performed") . ": "));
 			$self->addmessage($self->$actionHandler(\%genericParams, \%actionParams, \%tableParams));
 		} else {
-			return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to perform this action.")));
+			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+				CGI::p($r->maketext("You are not authorized to perform this action.")));
 		}
 	} else {
 		$self->addgoodmessage($r->maketext("Please select action to be performed."));
@@ -439,17 +443,17 @@ sub body {
 	# templates for getting field names
 	my $setTemplate = $self->{setTemplate} = $db->newGlobalSet;
 
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("You are not authorized to access the instructor tools."))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("You are not authorized to access the instructor tools."))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify homework sets.")))
-	  if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p($r->maketext("You are not authorized to modify homework sets.")))
+		if $self->{editMode} and not $authz->hasPermissions($user, "modify_problem_sets");
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p($r->maketext("You are not authorized to modify set definition files.")))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p($r->maketext("You are not authorized to modify set definition files.")))
 		if $self->{exportMode} and not $authz->hasPermissions($user, "modify_set_def_files");
-
-
-
 
 	# This table can be consulted when display-ready forms of field names are needed.
 	my %prettyFieldNames = map { $_ => $_ }
@@ -812,7 +816,7 @@ sub filter_handler {
 		$self->{visibleSetIDs} = \@unvisibleSetIDs;
 	}
 
-	return $result;
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
 }
 
 sub sort_form {
@@ -889,7 +893,8 @@ sub sort_handler {
 		visible	=> $r->maketext("Visibility"),
 	);
 
-	return $r->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary});
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
+		$r->maketext("Sort by [_1] and then by [_2]", $names{$primary}, $names{$secondary}));
 }
 
 
@@ -940,7 +945,7 @@ sub edit_handler {
 	}
 	$self->{editMode} = 1;
 
-	return $result;
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
 }
 
 sub publish_form {
@@ -1009,24 +1014,30 @@ sub publish_handler {
 
 	my @setIDs;
 
-	if ($scope eq "none") { # FIXME: double negative "Make no sets hidden" might make professor expect all sets to be made visible.
-	  @setIDs = ();
-	  $result = CGI::div({class=>"ResultsWithError"},$r->maketext("No change made to any set"));
+	if ($scope eq "none") {
+		@setIDs = ();
+		$result = CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
-	  @setIDs = @{ $self->{allSetIDs} };
-	  $result = $value ?
-	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets made visible for all students")) :
-	      CGI::div({class=>"ResultsWithoutError"},$r->maketext("All sets hidden from all students")) ;
+		@setIDs = @{ $self->{allSetIDs} };
+		$result =
+			$value
+			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("All sets made visible for all students"))
+			: CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("All sets hidden from all students"));
 	} elsif ($scope eq "visible") {
-	  @setIDs = @{ $self->{visibleSetIDs} };
-	  $result = $value ?
-	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible sets made visible for all students")) :
-		    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All visible hidden from all students")) ;
+		@setIDs = @{ $self->{visibleSetIDs} };
+		$result = $value
+			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("All visible sets made visible for all students"))
+			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("All visible hidden from all students"));
 	} elsif ($scope eq "selected") {
-	  @setIDs = @{ $genericParams->{selected_sets} };
-	  $result = $value ?
-	    CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets made visible for all students")) :
-	      CGI::div({class=>"ResultsWithoutError"},$r->maketext("All selected sets hidden from all students")) ;
+		@setIDs = @{ $genericParams->{selected_sets} };
+		$result = $value
+			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("All selected sets made visible for all students"))
+			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("All selected sets hidden from all students"));
 	}
 
 	# can we use UPDATE here, instead of fetch/change/store?
@@ -1034,8 +1045,7 @@ sub publish_handler {
 
 	map { $_->visible("$value") if $_; $db->putGlobalSet($_); } @sets;
 
-	return $result
-
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
 }
 
 sub score_form {
@@ -1106,7 +1116,7 @@ sub delete_form {
 
 	return CGI::div(
 		CGI::div(
-			{ class => 'row ResultsWithError mb-2' },
+			{ class => 'd-inline-block alert alert-danger p-1 mb-2' },
 			CGI::em($r->maketext('Warning: Deletion destroys all user-related data and is not undoable!'))
 		),
 		CGI::div(
@@ -1164,7 +1174,7 @@ sub delete_handler {
 	$self->{selectedSetIDs} = [ keys %selectedSetIDs ];
 
 	my $num = @setIDsToDelete;
-	 return CGI::div({class=>"ResultsWithoutError"},  $r->maketext("deleted [_1] sets", $num) );
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext('deleted [_1] sets', $num));
 }
 
 sub create_form {
@@ -1223,12 +1233,20 @@ sub create_handler {
 	my $ce     = $r->ce;
 
 	my $newSetID = $actionParams->{"action.create.name"}->[0];
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: set name cannot exceed 100 characters.")) if (length($newSetID) > 100);
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: no set name specified!")) unless $newSetID =~ /\S/;
-	return CGI::div({class => "ResultsWithError"},
-			$r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetID)
-			. " " . $r->maketext("No set created.")
-                       ) if $db->existsGlobalSet($newSetID);
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Failed to create new set: set name cannot exceed 100 characters."))
+		if (length($newSetID) > 100);
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Failed to create new set: no set name specified!"))
+		unless $newSetID =~ /\S/;
+	return CGI::div(
+		{ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext(
+			"The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",
+			$newSetID)
+			. " "
+			. $r->maketext("No set created.")
+	) if $db->existsGlobalSet($newSetID);
 
 	my $newSetRecord = $db->newGlobalSet;
 	my $oldSetID = $self->{selectedSetIDs}->[0];
@@ -1262,7 +1280,9 @@ sub create_handler {
 		$newSetRecord->assignment_type('default');
 		$db->addGlobalSet($newSetRecord);
 	} elsif ($type eq "copy") {
-		return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: no set selected for duplication!")) unless $oldSetID =~ /\S/;
+		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext('Failed to duplicate set: no set selected for duplication!'))
+			unless $oldSetID =~ /\S/;
 		$newSetRecord = $db->getGlobalSet($oldSetID);
 		$newSetRecord->set_id($newSetID);
 		$db->addGlobalSet($newSetRecord);
@@ -1301,9 +1321,11 @@ sub create_handler {
 	push @{ $self->{visibleSetIDs} }, $newSetID;
 	push @{ $self->{allSetIds} }, $newSetID;
 
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new set: [_1]", $@)) if $@;
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('Failed to create new set: [_1]', $@))
+		if $@;
 
-	 return CGI::div({class=>"ResultsWithoutError"},$r->maketext("Successfully created new set [_1]", $newSetID));
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
+		$r->maketext('Successfully created new set [_1]', $newSetID));
 
 }
 
@@ -1440,8 +1462,13 @@ sub import_handler {
 	my $numAdded = @$added;
 	my $numSkipped = @$skipped;
 
-   return CGI::div(
-		{class=>"ResultsWithoutError"},	$r->maketext("[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])", $numAdded, $numSkipped, join(", ", @$skipped)));
+	return CGI::div(
+		{ class => 'alert alert-success p-1 mb-0' },
+		$r->maketext(
+			"[_1] sets added, [_2] sets skipped. Skipped sets: ([_3])",
+		   	$numAdded, $numSkipped, join(", ", @$skipped)
+		)
+	);
 }
 
 sub export_form {
@@ -1492,7 +1519,7 @@ sub export_handler {
 	}
 	$self->{exportMode} = 1;
 
-	return   CGI::div({class=>"ResultsWithoutError"},  $result);
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
 }
 
 sub cancelExport_form {
@@ -1516,7 +1543,7 @@ sub cancelExport_handler {
 	}
 	$self->{exportMode} = 0;
 
-	return CGI::div({class=>"ResultsWithError"},  $r->maketext("export abandoned"));
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('export abandoned'));
 }
 
 sub saveExport_form {
@@ -1548,11 +1575,17 @@ sub saveExport_handler {
 
 	my $numExported = @$exported;
 	my $numSkipped = @$skipped;
-	my $resultFont = ($numSkipped)? "ResultsWithError" : "ResultsWithoutError";
+	my $resultFont = $numSkipped ? 'alert-danger' : 'alert-success';
 
 	my @reasons = map { "set $_ - " . $reason->{$_} } keys %$reason;
 
-	return 	CGI::div({class=>$resultFont}, $r->maketext("[_1] sets exported, [_2] sets skipped. Skipped sets: ([_3])", $numExported, $numSkipped, (($numSkipped) ? CGI::ul(CGI::li(\@reasons)) : "")));
+	return CGI::div(
+		{ class => "alert $resultFont p-1 mb-0" },
+		$r->maketext(
+			'[_1] sets exported, [_2] sets skipped. Skipped sets: ([_3])',
+			$numExported, $numSkipped, ($numSkipped) ? CGI::ul(CGI::li(\@reasons)) : ''
+		)
+	);
 
 }
 
@@ -1577,7 +1610,7 @@ sub cancelEdit_handler {
 	}
 	$self->{editMode} = 0;
 
-	return CGI::div({class=>"ResultsWithError"}, $r->maketext("changes abandoned"));
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext('changes abandoned'));
 }
 
 sub saveEdit_form {
@@ -1623,20 +1656,25 @@ sub saveEdit_handler {
 		my $curr_time = time;
 		my $seconds_per_year = 31_556_926;
 		my $cutoff = $curr_time + $seconds_per_year*10;
-		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
+		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext("Error: open date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->open_date > $cutoff;
-		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID))
+		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext("Error: close date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->due_date > $cutoff;
-		return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
+		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext("Error: answer date cannot be more than 10 years from now in set [_1]", $setID))
 			if $Set->answer_date > $cutoff;
 
 		# Check that the open, due and answer dates are in increasing order.
 		# Bail if this is not correct.
-		if ($Set->open_date > $Set->due_date)  {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Close date must come after open date in set [_1]", $setID));
+		if ($Set->open_date > $Set->due_date) {
+			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+				$r->maketext("Error: Close date must come after open date in set [_1]", $setID));
 		}
 		if ($Set->due_date > $Set->answer_date) {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Answer date must come after close date in set [_1]", $setID));
+			return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+				$r->maketext("Error: Answer date must come after close date in set [_1]", $setID));
 		}
 
 		# check that the reduced scoring date is in the right place
@@ -1650,7 +1688,12 @@ sub saveEdit_handler {
 		    $Set->reduced_scoring_date
 		    && ($Set->reduced_scoring_date > $Set->due_date
 			|| $Set->reduced_scoring_date < $Set->open_date)) {
-			return CGI::div({class=>'ResultsWithError'}, $r->maketext("Error: Reduced scoring date must come between the open date and close date in set [_1]", $setID));
+			return CGI::div(
+				{ class => 'alert alert-danger p-1 mb-0' },
+				$r->maketext(
+					"Error: Reduced scoring date must come between the open date and close date in set [_1]", $setID
+				)
+			);
 		}
 
 		$db->putGlobalSet($Set);
@@ -1666,7 +1709,7 @@ sub saveEdit_handler {
 
 	$self->{editMode} = 0;
 
-	return CGI::div({class=>"ResultsWithOutError"}, $r->maketext("changes saved") );
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("changes saved"));
 }
 
 sub duplicate_form {
@@ -1698,11 +1741,18 @@ sub duplicate_handler {
 	my $db = $r->db;
 
 	my $oldSetID = $self->{selectedSetIDs}->[0];
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: no set selected for duplication!")) unless defined($oldSetID) and $oldSetID =~ /\S/;
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Failed to duplicate set: no set selected for duplication!"))
+		unless defined($oldSetID)
+		and $oldSetID =~ /\S/;
 	my $newSetID = $actionParams->{"action.duplicate.name"}->[0];
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: no set name specified!")) unless $newSetID =~ /\S/;
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Failed to duplicate set: no set name specified!"))
+		unless $newSetID =~ /\S/;
 	# DBFIXME checking for existence -- don't need to fetch
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: set [_1] already exists!", $newSetID)) if defined $db->getGlobalSet($newSetID);
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Failed to duplicate set: set [_1] already exists!", $newSetID))
+		if defined $db->getGlobalSet($newSetID);
 
 	my $newSet = $db->getGlobalSet($oldSetID);
 	$newSet->set_id($newSetID);
@@ -1716,7 +1766,8 @@ sub duplicate_handler {
 
 	push @{ $self->{visibleSetIDs} }, $newSetID;
 
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate set: [_1]", $@)) if $@;
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("Failed to duplicate set: [_1]", $@))
+		if $@;
 
 	return $r->maketext("Success");
 }

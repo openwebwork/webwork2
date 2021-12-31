@@ -549,7 +549,7 @@ sub View {
 	} elsif ($file =~ m/\.(gif|jpg|png)/i) {
 		print CGI::img({src=>$fileManagerURL, border=>0});
 	} else {
-		print CGI::div({class=>"ResultsWithError"},
+		print CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 			"The file $file does not appear to be a text or image file.");
 	}
 }
@@ -850,9 +850,8 @@ sub Delete {
 				))
 				: ""
 			),
-			CGI::p(
-				{ class => "ResultsWithError" }, $r->maketext("There is no undo for deleting files or directories!")
-			),
+			CGI::p({ class => 'alert alert-danger p-1 mb-3' },
+				$r->maketext("There is no undo for deleting files or directories!")),
 			CGI::p($r->maketext("Really delete the items listed above?")),
 			CGI::div(
 				{ class => 'd-flex justify-content-evenly' },

@@ -656,8 +656,10 @@ sub body {
 		print "User $userName returned " .
 			$authz->hasPermissions($user, "modify_problem_sets") .
 			" for permission";
-		return(CGI::div({class=>'ResultsWithError'},
-		  CGI::em($r->maketext("You are not authorized to access the Instructor tools."))));
+		return (CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em($r->maketext("You are not authorized to access the Instructor tools."))
+		));
 	}
 
 	if ($r->param('show_long_doc')) {

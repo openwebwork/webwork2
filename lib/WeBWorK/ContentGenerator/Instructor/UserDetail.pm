@@ -45,7 +45,8 @@ sub initialize {
 	my $userID = $r->param("user");
 	my $editForUserID = $urlpath->arg("userID");
 
-	return CGI::div({class => "ResultsWithError"}, "You are not authorized to edit user specific information.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to edit user specific information.")
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
 	# templates for getting field names
@@ -172,7 +173,7 @@ sub body {
 
 	my @editForSets = $r->param("editForSets");
 
-	return CGI::div({ class => "ResultsWithError" }, "You are not authorized to edit user specific information.")
+	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit user specific information.")
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
 	my $UserRecord       = $db->getUser($editForUserID);
@@ -268,17 +269,17 @@ sub body {
 
 	# Print warning
 	print CGI::div(
-		{ class => 'ResultsWithError fs-6' },
-		$r->maketext('Do not uncheck a set unless you know what you are doing.'),
+		{ class => 'alert alert-danger p-1 mb-2' },
+		CGI::div({ class => 'mb-1' }, $r->maketext('Do not uncheck a set unless you know what you are doing.')),
+		CGI::div($r->maketext('There is NO undo for unassigning a set.'))
 	);
-	print CGI::div({ class => 'ResultsWithError fs-6 mb-2' }, $r->maketext('There is NO undo for unassigning a set.'));
 	print CGI::div(
 		{ class => 'fs-6 mb-2' },
 		$r->maketext(
 			'To change status (scores or grades) for this student for one set, click on the individual set link.')
 	);
 	print CGI::div(
-		{ class => 'ResultsWithError fs-6 mb-2' },
+		{ class => 'alert alert-danger p-1 fs-6 mb-2' },
 		$r->maketext(
 			'When you uncheck a homework set (and save the changes), you destroy all of the data for that set for '
 				. 'this student.   If you reassign the set, the student will receive a new version of each problem. '
@@ -392,11 +393,11 @@ sub body {
 	print CGI::end_form();
 
 	# Print warning
-	CGI::div(
-		{ class => 'ResultsWithError' },
-		'There is NO undo for this function.'
-			. 'Do not use it unless you know what you are doing!  When you unassign'
-			. 'sets using this button, or by unchecking their set names, you destroy all'
+	print CGI::div(
+		{ class => 'alert alert-danger p-1 mt-3' },
+		'There is NO undo for this function. '
+			. 'Do not use it unless you know what you are doing!  When you unassign '
+			. 'sets by unchecking set names and clicking save, you destroy all '
 			. 'of the data for those sets for this student.'
 	);
 
@@ -482,7 +483,7 @@ sub checkDates {
 sub DBFieldTable {
 	my ($self, $GlobalRecord, $UserRecord, $MergedRecord, $recordType, $recordID, $fieldsRef, $rh_fieldLabels) = @_;
 
-	return CGI::div({ class => 'ResultsWithError' }, "No record exists for $recordType $recordID")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "No record exists for $recordType $recordID")
 		unless defined $GlobalRecord;
 
 	# modify record name if we're dealing with versioned sets

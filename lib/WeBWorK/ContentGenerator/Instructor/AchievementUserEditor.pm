@@ -47,19 +47,35 @@ sub initialize {
 
 	#Check and see if we need to assign or unassign things
 	if (defined $r->param('assignToAll')) {
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Achievement has been assigned to all users.")));
-		%selectedUsers = map {$_ => 1} @users;
+		$self->addmessage(CGI::div(
+			{ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("Achievement has been assigned to all users.")
+		));
+		%selectedUsers      = map { $_ => 1 } @users;
 		$doAssignToSelected = 1;
-	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
-		%selectedUsers = ( );
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Achievement has been unassigned to all students.")));
+	} elsif (defined $r->param('unassignFromAll')
+		&& defined($r->param('unassignFromAllSafety'))
+		&& $r->param('unassignFromAllSafety') == 1)
+	{
+		%selectedUsers = ();
+		$self->addmessage(
+			CGI::div(
+				{ class => 'alert alert-danger p-1 mb-0' },
+				$r->maketext("Achievement has been unassigned to all students.")
+			)
+		);
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Achievement has been assigned to selected users.")));
+		$self->addmessage(
+			CGI::div(
+				{ class => 'alert alert-success p-1 mb-0' },
+				$r->maketext("Achievement has been assigned to selected users.")
+			)
+		);
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param("unassignFromAll")) {
-	   # no action taken
-	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, $r->maketext("No action taken")));
+		# no action taken
+		$self->addmessage(CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("No action taken")));
 	}
 
 	#do actual assignment and unassignment
@@ -136,7 +152,7 @@ sub body {
 	my $achievementID  = $urlpath->arg("achievementID");
 	my $user           = $r->param('user');
 
-	return CGI::div({ class => "ResultsWithError" }, CGI::p("You are not authorized to edit achievements."))
+	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit achievements.")
 		unless $authz->hasPermissions($user, "edit_achievements");
 
 	# DBFIXME duplicate call
@@ -154,9 +170,11 @@ sub body {
 		CGI::i($r->maketext("This action will not overwrite existing users."))
 	);
 
-	print CGI::div({ class => 'ResultsWithError' },
-		$r->maketext('Do not uncheck students, unless you know what you are doing.'));
-	print CGI::div({ class => 'ResultsWithError mb-2' }, $r->maketext('There is NO undo for unassigning students.'));
+	print CGI::div(
+		{ class => 'alert alert-danger p-1 mb-2' },
+		CGI::div({ class => 'mb-1' }, $r->maketext('Do not uncheck students, unless you know what you are doing.')),
+		CGI::div($r->maketext('There is NO undo for unassigning students.'))
+	);
 	print CGI::p($r->maketext(
 		"When you unassign by unchecking a student's name, you destroy all of the data for achievement [_1] "
 			. 'for this student. Make sure this is what you want to do.',
@@ -248,7 +266,7 @@ sub body {
 	print CGI::hr()
 		. CGI::div(
 			CGI::div(
-				{ class => 'ResultsWithError mb-2' },
+				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					"There is NO undo for this function.  Do not use it unless you know what you are doing!  "
 						. "When you unassign a student using this button, or by unchecking their name, you destroy all "

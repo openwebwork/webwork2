@@ -53,19 +53,19 @@ sub initialize {
 
 	if (defined $r->param('assignToAll')) {
 		debug("assignSetToAllUsers($setID)");
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Problems have been assigned to all current users.")));
+		$self->addbadmessage($r->maketext("Problems have been assigned to all current users."));
 		$self->assignSetToAllUsers($setID);
 		debug("done assignSetToAllUsers($setID)");
 	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
 		%selectedUsers = ( $globalUserID => 1 );
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Problems for all students have been unassigned.")));
+		$self->addgoodmessage($r->maketext("Problems for all students have been unassigned."));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-	   	$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Problems for selected students have been reassigned.")));
+	   	$self->addgoodmessage($r->maketext("Problems for selected students have been reassigned."));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param("unassignFromAll")) {
 	   # no action taken
-	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, $r->maketext("No action taken")));
+	   $self->addbadmessage($r->maketext("No action taken"));
 	}
 
 	if ($doAssignToSelected) {
@@ -109,10 +109,10 @@ sub body {
 	my $setID       = $urlpath->arg('setID');
 	my $user        = $r->param('user');
 
-	return CGI::div({ class => 'ResultsWithError' }, CGI::p('You are not authorized to acces the Instructor tools.'))
+	return CGI::div({ class => 'alert alert-danger p-1' }, 'You are not authorized to acces the Instructor tools.')
 		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	return CGI::div({ class => 'ResultsWithError' }, CGI::p('You are not authorized to assign homework sets.'))
+	return CGI::div({ class => 'alert alert-danger p-1' }, 'You are not authorized to assign homework sets.')
 		unless $authz->hasPermissions($user, 'assign_problem_sets');
 
 	# DBFIXME duplicate call
@@ -136,9 +136,12 @@ sub body {
 		CGI::i($r->maketext('This action can take a long time if there are many students.'))
 	);
 
-	print CGI::div({ class => 'ResultsWithError' },
-		$r->maketext('Do not uncheck students, unless you know what you are doing.'));
-	print CGI::div({ class => 'ResultsWithError mb-2' }, $r->maketext('There is NO undo for unassigning students.'));
+
+	print CGI::div(
+		{ class => 'alert alert-danger p-1 mb-2' },
+		CGI::div({ class => 'mb-1' }, $r->maketext('Do not uncheck students, unless you know what you are doing.')),
+		CGI::div($r->maketext('There is NO undo for unassigning students.'))
+	);
 
 	print CGI::div(
 		{ class => 'mb-2' },
@@ -245,7 +248,7 @@ sub body {
 	print CGI::hr()
 		. CGI::div(
 			CGI::div(
-				{ class => 'ResultsWithError mb-2' },
+				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
 						. 'When you unassign a student using this button, or by unchecking their name, you destroy all '

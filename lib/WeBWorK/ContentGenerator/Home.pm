@@ -50,7 +50,7 @@ sub info {
 		if (-f $site_info) {
 			my $text = eval { readFile($site_info) };
 			if ($@) {
-				$result = CGI::div({class=>"ResultsWithError"}, $@);
+				$result = CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $@);
 			} elsif ($text =~ /\S/) {
 				$result = $text;
 			}

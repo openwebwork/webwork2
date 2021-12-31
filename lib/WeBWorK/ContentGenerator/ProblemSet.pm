@@ -319,7 +319,7 @@ sub info {
 	}
 
 	if ($pg->{flags}->{error_flag}) {
-		print CGI::div({class=>"ResultsWithError"}, $self->errorOutput($pg->{errors}, $pg->{body_text}));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $self->errorOutput($pg->{errors}, $pg->{body_text}));
 	} else {
 		print $pg->{body_text};
 	}
@@ -342,10 +342,16 @@ sub body {
 
 	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
 
-	if ( $self->{invalidSet} ) {
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p($r->maketext("The selected problem set ([_1]) is not a valid set for [_2]", $setName, $effectiveUser).":"),
-			CGI::p($self->{invalidSet}));
+	if ($self->{invalidSet}) {
+		return CGI::div(
+			{ class => 'alert alert-danger' },
+			CGI::div(
+				{ class => 'mb-3' },
+				$r->maketext("The selected problem set ([_1]) is not a valid set for [_2]", $setName, $effectiveUser)
+					. ":"
+			),
+			CGI::div($self->{invalidSet})
+		);
 	}
 
 	my $isJitarSet = ($set->assignment_type eq 'jitar');

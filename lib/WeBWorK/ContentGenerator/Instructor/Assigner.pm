@@ -84,10 +84,11 @@ sub body {
 	my $user = $r->param('user');
 
 	# Check permissions
-	return CGI::div({ class => "ResultsWithError" }, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({ class => "ResultsWithError" }, "You are not authorized to assign homework sets.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to assign homework sets.")
 		unless $authz->hasPermissions($user, "assign_problem_sets");
 
 	print CGI::p(
@@ -175,10 +176,10 @@ sub body {
 				class => 'btn btn-primary mb-2'
 			}),
 			CGI::div(
-				{ class => 'ResultsWithError' },
-				$r->maketext('Do not unassign students unless you know what you are doing.')
+				{ class => 'alert alert-danger p-1 mb-2' },
+				CGI::div({ class => 'mb-1' }, $r->maketext('Do not unassign students unless you know what you are doing.')),
+				CGI::div($r->maketext('There is NO undo for unassigning students.'))
 			),
-			CGI::div({ class => 'ResultsWithError mb-2' }, $r->maketext('There is NO undo for unassigning students.')),
 			CGI::div(
 				{ class => 'd-flex align-items-center' },
 				CGI::submit({

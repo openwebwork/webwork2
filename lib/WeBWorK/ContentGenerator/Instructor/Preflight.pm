@@ -60,7 +60,8 @@ sub body {
 	my $studentUser   = $r->param('studentUser') || "";
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($r->param("user"), "access_instructor_tools");
 
 

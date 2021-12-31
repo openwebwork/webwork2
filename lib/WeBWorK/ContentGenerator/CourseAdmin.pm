@@ -394,9 +394,10 @@ sub body {
 
 
 	if (@errors) {
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p($r->maketext("Please correct the following errors and try again:")),
-			CGI::ul(CGI::li(\@errors)),
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			CGI::div({ class => 'mb-1' }, $r->maketext("Please correct the following errors and try again:")),
+			CGI::ul({ class => 'mb-1' }, CGI::li(\@errors)),
 		);
 	}
 
@@ -838,7 +839,8 @@ sub do_add_course {
 	};
 	if ($@) {
 		my $error = $@;
-		print CGI::div({class=>"ResultsWithError"},
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p("An error occured while creating the course $add_courseID:"),
 			CGI::tt(CGI::escapeHTML($error)),
 		);
@@ -895,13 +897,14 @@ sub do_add_course {
 			eval { $db->addPassword($Password)               }; warn $@ if $@;
 			eval { $db->addPermissionLevel($PermissionLevel) }; warn $@ if $@;
 		}
-		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p($r->maketext("Successfully created the course [_1]", $add_courseID)),
+		print CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' },
+			$r->maketext("Successfully created the course [_1]", $add_courseID),
 		);
 		my $newCoursePath = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r,
 			courseID => $add_courseID);
 		my $newCourseURL = $self->systemLink($newCoursePath, authen => 0);
-		print CGI::div({style=>"text-align: center"},
+		print CGI::div({ class => 'text-center mb-2'},
 			CGI::a({href=>$newCourseURL}, $r->maketext("Log into [_1]",$add_courseID)),
 		);
 	}
@@ -1385,12 +1388,14 @@ sub do_retitle_course {
 	};
 	if ($@) {
 		my $error = $@;
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p( $r->maketext("An error occured while changing the title of the course [_1].", $rename_oldCourseID)),
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			CGI::p($r->maketext("An error occured while changing the title of the course [_1].", $rename_oldCourseID)),
 			CGI::tt(CGI::escapeHTML($error)),
 		);
 	} else {
-		print CGI::div({class=>"ResultsWithoutError"},
+		print CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' },
 			($title_checkbox) ? CGI::div($r->maketext("The title of the course [_1] has been changed from [_2] to [_3]",$rename_oldCourseID, $rename_oldCourseTitle, $rename_newCourseTitle))
 			:'',
 			($institution_checkbox) ? CGI::div($r->maketext("The institution associated with the course [_1] has been changed from [_2] to [_3]",$rename_oldCourseID, $rename_oldCourseInstitution, $rename_newCourseInstitution))
@@ -1467,12 +1472,14 @@ sub do_rename_course {
 	};
 	if ($@) {
 		my $error = $@;
-		print CGI::div({class=>"ResultsWithError"},
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p( $r->maketext("An error occured while renaming the course [_1] to [_2]:", $rename_oldCourseID, $rename_newCourseID)),
 			CGI::tt(CGI::escapeHTML($error)),
 		);
 	} else {
-		print CGI::div({class=>"ResultsWithoutError"},
+		print CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' },
 			CGI::p($title_message),
 			CGI::p($institution_message),
 			CGI::p($r->maketext("Successfully renamed the course [_1] to [_2]", $rename_oldCourseID, $rename_newCourseID)),
@@ -1735,8 +1742,9 @@ sub do_delete_course {
 
 	if ($@) {
 		my $error = $@;
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p( $r->maketext("An error occured while deleting the course [_1]:", $delete_courseID)),
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			CGI::p($r->maketext("An error occured while deleting the course [_1]:", $delete_courseID)),
 			CGI::tt(CGI::escapeHTML($error)),
 		);
 	} else {
@@ -1757,8 +1765,9 @@ sub do_delete_course {
 			$db->putUser($User);
 		}
 
-		print CGI::div({class=>"ResultsWithoutError"},
-			       CGI::p($r->maketext("Successfully deleted the course [_1].",$delete_courseID)),
+		print CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' },
+			$r->maketext("Successfully deleted the course [_1].", $delete_courseID),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tDeleted",
@@ -1927,7 +1936,7 @@ sub archive_course_form {
 					value           => 1,
 					label           => $r->maketext('Delete course after archiving. Caution there is no undo!'),
 					class           => 'form-check-input',
-					labelattributes => { class => 'form-check-label ResultsWithError' }
+					labelattributes => { class => 'form-check-label alert alert-danger py-0 px-1 mb-0' }
 				})
 			)
 		)
@@ -2242,13 +2251,15 @@ sub do_archive_course {
 
 	if ($@) {
 		my $error = $@;
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p( $r->maketext("An error occured while archiving the course [_1]:", $archive_courseID)),
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			CGI::p($r->maketext("An error occured while archiving the course [_1]:", $archive_courseID)),
 			CGI::tt(CGI::escapeHTML($error)),
 		);
 	} else {
-		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p($r->maketext("Successfully archived the course [_1].", $archive_courseID)),
+		print CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' },
+			$r->maketext("Successfully archived the course [_1].", $archive_courseID)
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tarchived",
@@ -2268,7 +2279,8 @@ sub do_archive_course {
 
 			if ($@) {
 				my $error = $@;
-				print CGI::div({class=>"ResultsWithError"},
+				print CGI::div(
+					{ class => 'alert alert-danger p-1 mb-2' },
 					CGI::p($r->maketext("An error occured while deleting the course [_1]:", $archive_courseID)),
 					CGI::tt(CGI::escapeHTML($error)),
 				);
@@ -2290,8 +2302,9 @@ sub do_archive_course {
 					$db->putUser($User);
 				}
 
-				print CGI::div({class=>"ResultsWithoutError"},
-					CGI::p($r->maketext("Successfully deleted the course [_1].", $archive_courseID)),
+				print CGI::div(
+					{ class => 'alert alert-success p-1 mb-2' },
+					$r->maketext("Successfully deleted the course [_1].", $archive_courseID),
 				);
 			}
 
@@ -2531,13 +2544,15 @@ sub do_unarchive_course {
 
 	if ($@) {
 		my $error = $@;
-		print CGI::div({class=>"ResultsWithError"},
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
 			CGI::p($r->maketext("An error occured while archiving the course [_1]:", $unarchive_courseID)),
 			CGI::tt(CGI::escapeHTML($error)),
 		);
 	} else {
-		print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p($r->maketext("Successfully unarchived [_1] to the course [_2]", $unarchive_courseID, $new_courseID)),
+		print CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' },
+			$r->maketext("Successfully unarchived [_1] to the course [_2]", $unarchive_courseID, $new_courseID),
 		);
 		 writeLog($ce, "hosted_courses", join("\t",
 	    	"\tunarchived",
@@ -2642,7 +2657,7 @@ sub upgrade_course_form {
 			CGI::a({ href => $self->systemLink($urlpath, authen => 0) }, $courseID),
 			CGI::code($tempCE->{dbLayoutName},),
 			$directories_ok ? '' : CGI::span(
-				{ class => 'ResultsWithError' },
+				{ class => 'alert alert-danger p-1 mb-0' },
 				$r->maketext('Directory structure or permissions need to be repaired. ')
 			),
 			$tables_ok
@@ -3016,7 +3031,7 @@ sub manage_location_form {
 	print CGI::div(
 		{ class => 'row mb-2' },
 		CGI::div(
-			{ class => 'ResultsWithError' },
+			{ class => 'text-danger' },
 			CGI::em($r->maketext('Deletion deletes all location data and related addresses, and is not undoable!'))
 		)
 	);
@@ -3147,18 +3162,18 @@ sub add_location_handler {
 	}
 
 	if ( ! @addresses || ! $locationID || ! $locationDescr ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("Missing required input data. Please check that you have filled in all of the create location fields and resubmit."));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("Missing required input data. Please check that you have filled in all of the create location fields and resubmit."));
 	} elsif ( $badAddr ) {
 		$r->param("new_location_addresses", $locationAddr);
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("Address(es) [_1] is(are) not in a recognized form.  Please check your data entry and resubmit.",$badAddr));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("Address(es) [_1] is(are) not in a recognized form.  Please check your data entry and resubmit.",$badAddr));
 	} elsif ( $db->existsLocation( $locationID ) ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("A location with the name [_1] already exists in the database.  Did you mean to edit that location instead?",$locationID));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("A location with the name [_1] already exists in the database.  Did you mean to edit that location instead?",$locationID));
 	} elsif ( $badLocAddr ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("Address(es) [_1] already exist in the database.  THIS SHOULD NOT HAPPEN!  Please double check the integrity of the WeBWorK database before continuing.", $badLocAddr));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("Address(es) [_1] already exist in the database.  THIS SHOULD NOT HAPPEN!  Please double check the integrity of the WeBWorK database before continuing.", $badLocAddr));
 	} else {
 		# add the location
 		my $locationObj = $db->newLocation;
@@ -3182,8 +3197,9 @@ sub add_location_handler {
 		$r->param('new_location_description','');
 		$r->param('new_location_addresses','');
 
-		print CGI::div({-class=>"ResultsWithoutError"},
-			       $r->maketext("Location [_1] has been created, with addresses [_2].", $locationID, join(', ', @addresses)));
+		print CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' },
+			$r->maketext("Location [_1] has been created, with addresses [_2].", $locationID, join(', ', @addresses)));
 	}
 
 	$self->manage_location_form;
@@ -3207,22 +3223,22 @@ sub delete_location_handler {
 
 	my $badID;
 	if ( ! $locationID ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("Please provide a location name to delete."));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("Please provide a location name to delete."));
 
 	} elsif ( $badID = $self->existsLocations_helper( @delLocations ) ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("No location with name [_1] exists in the database", $badID));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("No location with name [_1] exists in the database", $badID));
 
 	} elsif ( ! $confirm || $confirm ne 'true' ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("Location deletion requires confirmation."));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("Location deletion requires confirmation."));
 	} else {
 		foreach ( @delLocations ) {
 			$db->deleteLocation( $_ );
 		}
-		print CGI::div({-class=>"ResultsWithoutError"},
-			       $r->maketext("Deleted Location(s): [_1]", join(', ', @delLocations)));
+		print CGI::div({ class => 'alert alert-success p-1 mb-2' },
+			$r->maketext("Deleted Location(s): [_1]", join(', ', @delLocations)));
 		$r->param('manage_location_action','none');
 		$r->param('delete_location','');
 	}
@@ -3346,7 +3362,7 @@ sub edit_location_form {
 		}));
 	} else {
 		print CGI::div(
-			{ class => 'ResultsWithError' },
+			{ class => 'alert alert-danger p-1 mb-2' },
 			$r->maketext(
 				'Location [_1] does not exist in the WeBWorK database.  Please check your input '
 					. '(perhaps you need to reload the location management page?).',
@@ -3370,13 +3386,13 @@ sub edit_location_handler {
 
 	# gut check
 	if ( ! $locationID ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("No location specified to edit?! Please check your input data."));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("No location specified to edit. Please check your input data."));
 		$self->manage_location_form;
 
 	} elsif ( ! $db->existsLocation( $locationID ) ) {
-		print CGI::div({-class=>"ResultsWithError"},
-			       $r->maketext("Location [_1] does not exist in the WeBWorK database.  Please check your input (perhaps you need to reload the location management page?).", $locationID));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			$r->maketext("Location [_1] does not exist in the WeBWorK database.  Please check your input (perhaps you need to reload the location management page?).", $locationID));
 		$self->manage_location_form;
 	} else {
 		my $location = $db->getLocation($locationID);
@@ -3454,14 +3470,13 @@ sub edit_location_handler {
 		$badMsg .= $r->maketext("Address(es) [_1] is(are) not in a recognized form.  Please check your data entry and try again.",$badAddr) . CGI::br() if ( $badAddr );
 		$badMsg .= $r->maketext('Address(es) [_1] in the delete list is(are) not in the location [_2], and so were skipped.',join(', ', @noDel),$locationID) if ( @noDel );
 
-		print CGI::div({-class=>"ResultsWithError"}, $badMsg)
-			if ( $badMsg );
-		if ( $doneMsg || $addrMsg ) {
-			print CGI::div({-class=>"ResultsWithoutError"},
-				       CGI::p({}, $doneMsg, $addrMsg));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $badMsg)
+			if ($badMsg);
+		if ($doneMsg || $addrMsg) {
+			print CGI::div({ -class => 'alert alert-danger p-1 mb-2' }, CGI::p({}, $doneMsg, $addrMsg));
 		} else {
-			print CGI::div({-class=>"ResultsWithError"},
-				       $r->maketext("No valid changes submitted for location [_1].", $locationID));
+			print CGI::div({ -class => 'alert alert-danger p-1 mb-2' },
+				$r->maketext("No valid changes submitted for location [_1].", $locationID));
 		}
 
 		$self->edit_location_form;
@@ -3676,9 +3691,10 @@ sub do_hide_inactive_course {
   }
 
 	if (@failed_courses) {
-		print CGI::div({class=>"ResultsWithError"},
-			       CGI::p($r->maketext("Errors occured while hiding the courses listed below when attempting to create the file hide_directory in the course's directory. Check the ownership and permissions of the course's directory, e.g [_1]", "$coursesDir/$failed_courses[0]/")),
-			CGI::p("@failed_courses"),
+		print CGI::div({ class => 'alert alert-danger p-1 mb-2' },
+			CGI::p($r->maketext("Errors occured while hiding the courses listed below when attempting to create the file hide_directory in the course's directory. Check the ownership and permissions of the course's directory, e.g [_1]",
+					"$coursesDir/$failed_courses[0]/")),
+			join(CGI::br(), @failed_courses)
 		);
 	}
 	my $succeeded_message = '';
@@ -3688,12 +3704,11 @@ sub do_hide_inactive_course {
 	}
 
 	if ($succeeded_count) {
-		$succeeded_message = $r->maketext("The following courses were successfully hidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
+		$succeeded_message = CGI::p($r->maketext("The following courses were successfully hidden:"))
+			. join(CGI::br(), @succeeded_courses);
 	}
 	if ($succeeded_count or $already_hidden_count) {
-			print CGI::div({class=>"ResultsWithoutError"},
-			CGI::p("$succeeded_message"),
-		);
+		print CGI::div({ class => 'alert alert-success p-1 mb-2' }, $succeeded_message);
 	}
 }
 
@@ -3754,17 +3769,20 @@ sub do_unhide_inactive_course {
 	}
 
 	if ($succeeded_count) {
-		$succeeded_message = $r->maketext("The following courses were successfully unhidden:" . CGI::br() . "[_1]", join(CGI::br(), @succeeded_courses));
+		$succeeded_message = CGI::p($r->maketext("The following courses were successfully unhidden:"))
+			. join(CGI::br(), @succeeded_courses);
 	}
 	if ($succeeded_count or $already_visible_count) {
-		print CGI::div({class=>"ResultsWithoutError"},
-		CGI::p("$succeeded_message"),
-		);
+		print CGI::div({ class => 'alert alert-success p-1 mb-2' }, $succeeded_message);
 	}
 	if (@failed_courses) {
-		print CGI::div({class=>"ResultsWithError"},
-			CGI::p($r->maketext("Errors occured while unhiding the courses listed below when attempting delete the file hide_directory in the course's directory. Check the ownership and permissions of the course's directory, e.g [_1]", "$coursesDir/$failed_courses[0]/")),
-			CGI::p("@failed_courses"),
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2' },
+			CGI::p($r->maketext(
+				"Errors occured while unhiding the courses listed below when attempting delete the file hide_directory in the course's directory. Check the ownership and permissions of the course's directory, e.g [_1]",
+				"$coursesDir/$failed_courses[0]/"
+			)),
+			join(CGI::br(), @failed_courses)
 		);
 	}
 }
@@ -3984,13 +4002,15 @@ sub upgrade_notification {
 
     chdir($ce->{webwork_dir});
 
-    if ($upgradesAvailable) {
-	$upgradeMessage = CGI::Tr(CGI::th($r->maketext('The following upgrades are available for your WeBWorK system:'))).$upgradeMessage;
-	return CGI::center(CGI::table({class=>"admin-messagebox"},$upgradeMessage));
-    } else {
-	return CGI::center(CGI::div({class=>"ResultsWithoutError"},
-				    $r->maketext('Your systems are up to date!')));
-    }
+	if ($upgradesAvailable) {
+		$upgradeMessage =
+			CGI::Tr(CGI::th($r->maketext('The following upgrades are available for your WeBWorK system:')))
+			. $upgradeMessage;
+		return CGI::center(CGI::table({ class => "admin-messagebox" }, $upgradeMessage));
+	} else {
+		return CGI::center(CGI::div(
+			{ class => 'alert alert-success p-1 mb-2' }, $r->maketext('Your systems are up to date!')));
+	}
 
 }
 

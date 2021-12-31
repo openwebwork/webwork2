@@ -88,7 +88,7 @@ sub info {
 			my $text = eval { readFile($login_info) };
 			if ($@) {
 				$result .= CGI::h2($r->maketext("Login Info"));
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
 			} elsif ($text =~ /\S/) {
 				$result .= CGI::h2($r->maketext("Login Info"));
 				$result .= $text;
@@ -102,7 +102,7 @@ sub info {
 			my $text = eval { readFile($site_info) };
 			if ($@) {
 				$result .= CGI::h2($r->maketext("Site Information"));
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
 			} elsif ($text =~ /\S/) {
 				$result .= CGI::h2($r->maketext("Site Information"));
 				$result .= $text;
@@ -180,9 +180,7 @@ sub body {
 	$authen_error = Encode::decode("UTF-8",$authen_error);
 
 	if ($authen_error) {
-		print CGI::div({class=>"ResultsWithError", tabindex=>'0'},
-			CGI::p($authen_error)
-		);
+		print CGI::div({ class => 'alert alert-danger', tabindex => '0' }, $authen_error);
 	}
 
 	if ($externalAuth ) {

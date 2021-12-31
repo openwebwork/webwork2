@@ -87,7 +87,12 @@ sub initialize {
 
 	# if we need to gothrough and update grades
 	if ($r->param('assignGrades')) {
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, $r->maketext("Grades have been saved for all current users.")));
+		$self->addmessage(
+			CGI::div(
+				{ class => 'alert alert-success p-1 mb-0' },
+				$r->maketext("Grades have been saved for all current users.")
+			)
+		);
 
 		my @users = $db->listUsers;
 
@@ -156,11 +161,13 @@ sub body {
 	);
 
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to acces the Instructor tools."))
-	unless $authz->hasPermissions($userID, "access_instructor_tools");
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p("You are not authorized to acces the Instructor tools."))
+		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to grade homework sets."))
-	unless $authz->hasPermissions($userID, "score_sets");
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p("You are not authorized to grade homework sets."))
+		unless $authz->hasPermissions($userID, "score_sets");
 
 	# DBFIXME duplicate call
 	my @users = $db->listUsers;
@@ -168,9 +175,9 @@ sub body {
 	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
 	my $user = $db->getUser($userID);
 
-	return CGI::div({class=>"ResultsWithError"},
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 		CGI::p($r->maketext("This set needs to be assigned to you before you can grade it.")))
-	unless $set && $problem;
+		unless $set && $problem;
 
 	#set up a silly problem to render the problem text
 	my $pg = WeBWorK::PG->new(

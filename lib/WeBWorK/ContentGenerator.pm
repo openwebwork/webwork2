@@ -426,7 +426,7 @@ message() template escape handler.
 
 sub addgoodmessage {
 	my ($self, $message) = @_;
-	$self->addmessage(CGI::div({class=>"ResultsWithoutError"}, $message));
+	$self->addmessage(CGI::div({ class => 'alert alert-success p-1 mb-2' }, $message));
 }
 
 =item addbadmessage($message)
@@ -438,7 +438,7 @@ message() template escape handler.
 
 sub addbadmessage {
 	my ($self, $message) = @_;
-	$self->addmessage(CGI::div({class=>"ResultsWithError"}, $message));
+	$self->addmessage(CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $message));
 }
 
 =item prepare_activity_entry()

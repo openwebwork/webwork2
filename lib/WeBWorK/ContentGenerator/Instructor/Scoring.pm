@@ -160,10 +160,11 @@ sub body {
 	my $scoringFileName = $self->{scoringFileName};
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to score sets.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to score sets.")
 		unless $authz->hasPermissions($user, "score_sets");
 
 	print CGI::div(

@@ -65,8 +65,8 @@
 			() => window.open(helpLink.href, helpLink.target, 'width=550,height=350,scrollbars=yes,resizable=yes'))
 	);
 
-	// Focus on a ResultsWithError element if one is around and focusable.
-	Array.from(document.querySelectorAll('.ResultsWithError')).shift()?.focus();
+	// Focus on an alert-danger element if one is around and focusable.
+	Array.from(document.querySelectorAll('.alert-danger')).shift()?.focus();
 
 	// ComboBox (see lib/WeBWorK/HTML/ComboBox.pm)
 	// This changes the textbox text to the currently selected option in the select menu.

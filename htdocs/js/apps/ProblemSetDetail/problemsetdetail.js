@@ -222,7 +222,7 @@
 			};
 
 			if (!(ro.userID && ro.courseID && ro.session_key)) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
 					.text("Missing hidden credentials: user, session_key, courseID"));
 				resolve();
 				return;
@@ -241,7 +241,7 @@
 			}
 
 			if (ro.sourceFilePath.startsWith('group')) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError'})
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0'})
 					.text("Problem source is drawn from a grouping set."));
 				resolve();
 				return;
@@ -276,7 +276,7 @@
 			}).done(function (data) {
 				// Give nicer file not found error
 				if (/this problem file was empty/i.test(data)) {
-					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
 						.text('No Such File or Directory!'));
 					resolve();
 					return;
@@ -284,7 +284,7 @@
 				// Give nicer session timeout error
 				if (/Can\'t authenticate -- session may have timed out/i.test(data) ||
 					/Webservice.pm: Error when trying to authenticate./i.test(data)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
 						.text("Can't authenticate -- session may have timed out."));
 					resolve();
 					return;
@@ -292,7 +292,7 @@
 				// Give nicer problem rendering error
 				if (/error caught by translator while processing problem/i.test(data) ||
 					/error message for command: renderproblem/i.test(data)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
 						.text('There was an error rendering this problem!'));
 					resolve();
 					return;
@@ -305,7 +305,7 @@
 				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
 				iframe[0].addEventListener('load', function() { resolve(); });
 			}).fail(function (data) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
 					.text(basicWebserviceURL + ': ' + data.statusText));
 				resolve();
 			});

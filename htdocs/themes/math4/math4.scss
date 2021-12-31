@@ -36,29 +36,6 @@ table caption {
 	color: red;
 }
 
-/* Warning, Success, Error, and Alert styles */
-div, label, span {
-	&.WarningMessage {
-		background-color: #d69191; /* red */
-		padding: 3px;
-	}
-
-	&.ResultsWithoutError {
-		color: inherit;
-		background-color: #8f8; /* green */
-	}
-
-	&.ResultsWithError {
-		color: #bf5454; /* red */
-		background-color: inherit;
-	}
-
-	&.ResultsAlert {
-		color: #ca5000; /* orange */
-		background-color: inherit;
-	}
-}
-
 /* CodeMirror overrides */
 .CodeMirror-code {
 	outline: none;
@@ -872,6 +849,23 @@ input.changed[type=text] { /* orange */
 .grades-course-total th {
 	font-weight: bold;
 	font-size: 105%;
+}
+
+span {
+	&.correct {
+		color: inherit; /* green */
+		background-color: #8f8;
+	}
+
+	&.incorrect {
+		color: #bf5454; /* red */
+		background-color: inherit;
+	}
+
+	&.unattempted {
+		color: inherit;
+		background-color: #88ecff;
+	}
 }
 
 /* Course Configuration */

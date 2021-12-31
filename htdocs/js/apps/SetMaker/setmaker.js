@@ -14,11 +14,11 @@
 	}
 
 	function goodmsg(msg) {
-		$(".Message").html('<div class="ResultsWithoutError">'+msg+"</div>");
+		$(".Message").html('<div class="alert alert-success p-1 mb-2">'+msg+"</div>");
 	}
 
 	function badmsg(msg) {
-		$(".Message").html('<div class="ResultsWithError">'+msg+"</div>");
+		$(".Message").html('<div class="alert alert-danger p-1 mb-2">'+msg+"</div>");
 	}
 
 	function init_webservice(command) {
@@ -349,7 +349,7 @@
 			};
 
 			if (!(ro.userID && ro.courseID && ro.session_key)) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 					.text("Missing hidden credentials: user, session_key, courseID"));
 				resolve();
 				return;
@@ -380,14 +380,14 @@
 				// Give nicer session timeout error
 				if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
 					/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 						.text("Can't authenticate -- session may have timed out."));
 					resolve();
 					return;
 				}
 				// Give nicer file not found error
 				if (/this problem file was empty/i.test(data.html)) {
-					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 						.text('No Such File or Directory!'));
 					resolve();
 					return;
@@ -396,7 +396,7 @@
 				if ((data.pg_flags && data.pg_flags.error_flag) ||
 					/error caught by translator while processing problem/i.test(data.html) ||
 					/error message for command: renderproblem/i.test(data.html)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'ResultsWithError' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 						.text('There was an error rendering this problem!'));
 					resolve();
 					return;
@@ -412,7 +412,7 @@
 				}
 				iframe[0].srcdoc = data.html;
 			}).fail(function (data) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'ResultsWithError' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mb-0' })
 					.text(basicRendererURL + ': ' + data.statusText));
 				resolve();
 			});

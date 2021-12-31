@@ -65,7 +65,7 @@ sub info {
 			my $text = eval { readFile($site_info) };
 			if ($@) {
 				$result .= CGI::h2($r->maketext("Site Information"));
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
 			} elsif ($text =~ /\S/) {
 				$result .= CGI::h2($r->maketext("Site Information"));
 				$result .= $text;
@@ -91,7 +91,7 @@ sub info {
 			my $text = eval { readFile($login_info) };
 			if ($@) {
 				$result .= CGI::h2("Login Info");
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
 			} elsif ($text =~ /\S/) {
 				$result .= CGI::h2("Login Info");
 				$result .= $text;
@@ -201,7 +201,7 @@ sub body {
 	# generating module.
 	my $authen_error = MP2 ? $r->notes->get('authen_error') : $r->notes('authen_error');
 	if ($authen_error) {
-		print CGI::div({ class => 'ResultsWithError' }, CGI::p($authen_error));
+		print CGI::div({ class => 'alert alert-danger' }, $authen_error);
 	}
 
 	# also print a message about submission times if we're submitting

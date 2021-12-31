@@ -1323,13 +1323,15 @@ sub body {
 			$usernote = " (acted as by $user)";
 		}
 
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected problem set (" .
-				$urlpath->arg("setID") . ") is not " .
-				"a valid set for $effectiveUser" .
-				"$usernote:"),
+		return CGI::div(
+			{ class => 'ResultsWithError mb-2' },
+			CGI::p($r->maketext(
+				"The selected problem set ([_1]) is not a valid set for [_2][_3]:",
+			   	$urlpath->arg("setID"), $effectiveUser, $usernote
+			)),
 			CGI::p($self->{invalidSet}),
-			$newlink);
+			$newlink
+		);
 	}
 
 	my $tmplSet = $self->{tmplSet};
@@ -1882,14 +1884,17 @@ sub body {
 			print CGI::hidden({-name=>"serverDueTime", -value=>$set->due_date()}), "\n";
 			print CGI::end_form();
 		}
-		if ($timeLeft < 1 && $timeLeft > 0 &&
-			!$authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
-			print CGI::span({-class=>"resultsWithError"},
-				CGI::b($r->maketext("You have less than 1 minute to complete this test.")."\n"));
-		} elsif ($timeLeft <= 0 &&
-			!$authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
-			print CGI::span({-class=>"resultsWithError"},
-				CGI::b($r->maketext("You are out of time.  Press grade now!")."\n"));
+		if ($timeLeft < 1
+			&& $timeLeft > 0
+			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
+		{
+			print CGI::div({ class => 'ResultsWithError d-inline-block mb-2' },
+				CGI::b($r->maketext("You have less than 1 minute to complete this test.") . "\n"));
+		} elsif ($timeLeft <= 0
+			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
+		{
+			print CGI::div({ class => "ResultsWithError d-inline-block mb-2" },
+				CGI::b($r->maketext("You are out of time.  Press grade now!") . "\n"));
 		}
 		# if there are multiple attempts per version, indicate the
 		#    number remaining, and if we've submitted a multiple
@@ -2069,10 +2074,11 @@ sub body {
 				if ($pg->{flags}->{showPartialCorrectAnswers}>=0 && $submitAnswers) {
 					if ($scoreRecordedMessage[$probOrder[$i]] !~
 						$r->maketext("Your score on this problem was recorded.")) {
-						$recordMessage = CGI::span({class=>"resultsWithError"},
+						$recordMessage = CGI::div(
+							{ class => "ResultsWithError d-inline-block mb-2" },
 							$r->maketext("ANSWERS NOT RECORDED --"),
-							$scoreRecordedMessage[$probOrder[$i]]);
-
+							$scoreRecordedMessage[ $probOrder[$i] ]
+						);
 					}
 					$resultsTable =
 					$self->attemptResults($pg, 1, $will{showCorrectAnswers},
@@ -2080,16 +2086,18 @@ sub body {
 						$canShowProblemScores, 1);
 
 				} elsif ($will{checkAnswers} || $will{showProblemGrader}) {
-					$recordMessage = CGI::span({class=>"resultsWithError"},
+					$recordMessage = CGI::div(
+						{ class => "ResultsWithError d-inline-block mb-2" },
 						$r->maketext("ANSWERS ONLY CHECKED -- "),
-						$r->maketext("ANSWERS NOT RECORDED"));
+						$r->maketext("ANSWERS NOT RECORDED")
+					);
 
 					$resultsTable = $self->attemptResults($pg, 1, $will{showCorrectAnswers},
 						$pg->{flags}->{showPartialCorrectAnswers} && $canShowProblemScores,
 						$canShowProblemScores, 1);
 
 				} elsif ($previewAnswers) {
-					$recordMessage = CGI::span({class=>"resultsWithError"},
+					$recordMessage = CGI::div({ class => "ResultsWithError d-inline-block mb-2" },
 						$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED"));
 					$resultsTable = $self->attemptResults($pg, 1, 0, 0, 0, 1);
 				}

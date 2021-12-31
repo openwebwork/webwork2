@@ -172,7 +172,7 @@ sub initialize {
 	my $root = $ce->{webworkURLs}->{root};
 
 	#check permissions
-	return CGI::div({class => "ResultsWithError"}, "You are not authorized to edit achievements.")
+	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit achievements.")
 		unless $authz->hasPermissions($user, "edit_achievements");
 
 	########## set initial values for state fields
@@ -226,7 +226,7 @@ sub initialize {
 		}
 		my %actionParams = $self->getActionParams($actionID);
 		my %tableParams = $self->getTableParams();
-		$self->addmessage( CGI::div($r->maketext("Results of last action performed: ")));
+		$self->addmessage(CGI::div({ class => 'mb-1' }, $r->maketext("Results of last action performed: ")));
 		$self->addmessage(
 		       $self->$actionHandler(\%genericParams, \%actionParams, \%tableParams),
 			       CGI::hr()
@@ -253,7 +253,7 @@ sub body {
 
 	my $root = $ce->{webworkURLs}->{root};
 
-	return CGI::div({class => "ResultsWithError"}, "You are not authorized to edit achievements.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to edit achievements.")
 		unless $authz->hasPermissions($user, "edit_achievements");
 
 	my $actionID = $self->{actionID};
@@ -613,7 +613,9 @@ sub score_handler {
 	$scoreFilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{scoring}, $scoreFilePath);
 
 	local *SCORE;
-	open SCORE, ">$scoreFilePath" or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]", $scoreFilePath));
+	open SCORE, ">$scoreFilePath"
+		or return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext("Failed to open [_1]", $scoreFilePath));
 
 	#print out header info
 	print SCORE $r->maketext("username, last name, first name, section, achievement level, achievement score,");
@@ -674,7 +676,8 @@ sub score_handler {
 	my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {action=>"View", files => "${courseName}_achievement_scores.csv", pwd=>"scoring"});
 
 
-	return CGI::div({class=>"ResultsWithoutError"},  $r->maketext("Achievement scores saved to [_1]",CGI::a({href=>$fileManagerURL},$scoreFileName)));
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
+		$r->maketext("Achievement scores saved to [_1]", CGI::a({ href => $fileManagerURL }, $scoreFileName)));
 }
 
 
@@ -686,7 +689,7 @@ sub delete_form {
 	return join(
 		'',
 		CGI::div(
-			{ class => 'ResultsWithError mb-2' },
+			{ class => 'd-inline-block alert alert-danger p-1 mb-2' },
 			CGI::em($r->maketext('Deletion destroys all achievement-related data and is not undoable!'))
 		),
 		CGI::div(
@@ -739,7 +742,7 @@ sub delete_handler {
 	$self->{selectedAchievementIDs} = [ keys %selectedAchievementIDs ];
 
 	my $num = @achievementIDsToDelete;
-	return CGI::div({class=>"ResultsWithoutError"},  $r->maketext("Deleted [quant,_1,achievement]", $num));
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("Deleted [quant,_1,achievement]", $num));
 }
 
 #form for creating achievement
@@ -783,8 +786,12 @@ sub create_handler {
 
 	#create achievement
 	my $newAchievementID = $actionParams->{"action.create.id"}->[0];
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new achievement: no achievement ID specified!")) unless $newAchievementID =~ /\S/;
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Achievement [_1] exists.  No achievement created",$newAchievementID)) if $db->existsAchievement($newAchievementID);
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Failed to create new achievement: no achievement ID specified!"))
+		unless $newAchievementID =~ /\S/;
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Achievement [_1] exists.  No achievement created", $newAchievementID))
+		if $db->existsAchievement($newAchievementID);
 	my $newAchievementRecord = $db->newAchievement;
 	my $oldAchievementID = $self->{selectedAchievementIDs}->[0];
 
@@ -798,7 +805,9 @@ sub create_handler {
 		$newAchievementRecord->test(BLANK_ACHIEVEMENT());
 		$db->addAchievement($newAchievementRecord);
 	} elsif ($type eq "copy") {
-		return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to duplicate achievement: no achievement selected for duplication!")) unless $oldAchievementID =~ /\S/;
+		return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext("Failed to duplicate achievement: no achievement selected for duplication!"))
+			unless $oldAchievementID =~ /\S/;
 		$newAchievementRecord = $db->getAchievement($oldAchievementID);
 		$newAchievementRecord->achievement_id($newAchievementID);
 		$db->addAchievement($newAchievementRecord);
@@ -814,10 +823,12 @@ sub create_handler {
 	#add to local list of achievements
 	push @{ $self->{allAchievementIDs} }, $newAchievementID;
 
-	return CGI::div({class => "ResultsWithError"}, $r->maketext("Failed to create new achievement: [_1]",$@)) if $@;
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Failed to create new achievement: [_1]", $@))
+		if $@;
 
-	return CGI::div({class=>"ResultsWithoutError"},$r->maketext("Successfully created new achievement [_1]", $newAchievementID) );
-
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
+		$r->maketext("Successfully created new achievement [_1]", $newAchievementID));
 }
 
 #form for importing achievements
@@ -868,7 +879,8 @@ sub import_handler {
 
 	#open file name
 	my $fh;
-	open $fh, "$filePath" or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]",$filePath));
+	open $fh, "$filePath"
+		or return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("Failed to open [_1]", $filePath));
 
 	#read in lines from file
 	my $count = 0;
@@ -940,8 +952,8 @@ sub import_handler {
 
 	$self->{allAchievementIDs} = [ keys %allAchievementIDs ];
 
-	return CGI::div(
-	    {class=>"ResultsWithoutError"}, $r->maketext("Imported [quant,_1,achievement]", $count));
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' },
+		$r->maketext("Imported [quant,_1,achievement]", $count));
 }
 
 #form for exporting
@@ -982,7 +994,7 @@ sub export_handler {
 	}
 	$self->{exportMode} = 1;
 
-	return   CGI::div({class=>"ResultsWithoutError"},  $result);
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
 }
 
 
@@ -998,7 +1010,7 @@ sub cancelExport_handler {
 
 	$self->{exportMode} = 0;
 
-	return CGI::div({class=>"ResultsWithError"},  $r->maketext("export abandoned"));
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("export abandoned"));
 }
 
 #handler and form for actually exporting
@@ -1030,7 +1042,8 @@ sub saveExport_handler {
 	$FilePath = WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{achievements}, $FilePath);
 	#open file
 	my $fh;
-	open $fh, ">$FilePath" or return CGI::div({class=>"ResultsWithError"}, $r->maketext("Failed to open [_1]", $FilePath));
+	open $fh, ">$FilePath"
+		or return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("Failed to open [_1]", $FilePath));
 
 	my $csv = Text::CSV->new({eol=>"\n"});
 	my @achievements = $db->getAchievements(@achievementIDsToExport);
@@ -1071,7 +1084,7 @@ sub cancelEdit_handler {
 
 	$self->{editMode} = 0;
 
-	return CGI::div({class=>"ResultsWithError"}, $r->maketext("changes abandoned"));
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("changes abandoned"));
 }
 
 #form and handler for saving edits
@@ -1121,7 +1134,7 @@ sub saveEdit_handler {
 
 	$self->{editMode} = 0;
 
-	return CGI::div({class=>"ResultsWithoutError"}, $r->maketext("changes saved" ));
+	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("changes saved"));
 }
 
 ################################################################################

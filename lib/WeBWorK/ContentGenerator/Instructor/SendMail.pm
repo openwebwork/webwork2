@@ -509,10 +509,12 @@ sub body {
 	my $user            = $r->param('user');
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to access instructor tools"))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p("You are not authorized to access instructor tools"))
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, CGI::p("You are not authorized to send mail to students"))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		CGI::p("You are not authorized to send mail to students"))
 		unless $authz->hasPermissions($user, "send_mail");
 
 	if ($response eq 'preview') {

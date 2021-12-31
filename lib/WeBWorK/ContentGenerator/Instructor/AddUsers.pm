@@ -111,10 +111,10 @@ sub body {
 	my $user        = $r->param('user');
 
 	# Check permissions
-	return CGI::div({ class => "ResultsWithError" }, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({ class => "ResultsWithError" }, "You are not authorized to modify student data.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to modify student data.")
 		unless $authz->hasPermissions($user, "modify_student_data");
 
 	return join(

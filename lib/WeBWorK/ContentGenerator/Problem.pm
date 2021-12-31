@@ -2134,7 +2134,10 @@ sub output_summary{
 
 	} elsif ($will{checkAnswers} || $self->{will}{showProblemGrader}) {
 	    # print this if user checked answers
-	    print CGI::div({class=>'ResultsWithError'},$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")), CGI::br();
+		print CGI::div(
+			{ class => 'ResultsWithError d-inline-block mb-3' },
+			$r->maketext("ANSWERS ONLY CHECKED -- ANSWERS NOT RECORDED")
+		);
 	    print $self->attemptResults($pg,
 	    	1, # showAttemptAnswers
 	    	$will{showCorrectAnswers}, # showCorrectAnswers
@@ -2148,16 +2151,20 @@ sub output_summary{
 	    # show attempt previews
 	} elsif ($previewAnswers) {
 	  # print this if user previewed answers
-	    print CGI::div({class=>'ResultsWithError'},$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")),CGI::br(),$self->attemptResults($pg, 1, 0, 0, 0, 1);
+		print CGI::div(
+				{ class => 'ResultsWithError d-inline-block mb-3' },
+				$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED")
+			),
+			$self->attemptResults($pg, 1, 0, 0, 0, 1);
 	    # show attempt answers
 	    # don't show correct answers
 	    # don't show attempt results (correctness)
 	    # show attempt previews
-	  }
+	}
 
-	  print CGI::div({class=>'ResultsWithError'},
-		  $r->maketext("ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary).")),
-	  CGI::br() if ($self->{resubmitDetected});
+	print CGI::div({ class => 'ResultsWithError d-inline-block mb-3' },
+		$r->maketext("ATTEMPT NOT ACCEPTED -- Please submit answers again (or request new version if neccessary)."))
+		if ($self->{resubmitDetected});
 
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;

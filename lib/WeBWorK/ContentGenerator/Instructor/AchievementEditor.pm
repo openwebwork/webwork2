@@ -182,7 +182,7 @@ sub body {
 	my $user = $r->param('user');
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to edit achievements.")
+	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit achievements.")
 		unless $authz->hasPermissions($user, "edit_achievements");
 
 	# Gathering info

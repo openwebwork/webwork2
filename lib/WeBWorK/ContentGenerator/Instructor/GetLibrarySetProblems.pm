@@ -286,9 +286,10 @@ sub make_data_row {
 		get_problem_lang_and_dir($pg->{flags}, $self->r->ce->{perProblemLangAndDirSettingMode}, $self->r->ce->{language})
 	);
 
-	my $problem_output = $pg->{flags}->{error_flag} ?
-		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div( \%problem_div_settings, $pg->{body_text});
+	my $problem_output =
+		$pg->{flags}->{error_flag}
+		? CGI::div({ class => 'alert alert-danger p-1 mb-0' }, CGI::em("This problem produced an error"))
+		: CGI::div(\%problem_div_settings,                     $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 
@@ -860,8 +861,10 @@ sub body {
 		print "User $userName returned " .
 			$authz->hasPermissions($user, "modify_problem_sets") .
 	" for permission";
-		return(CGI::div({class=>'ResultsWithError'},
-		CGI::em("You are not authorized to access the Instructor tools.")));
+		return (CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em("You are not authorized to access the Instructor tools.")
+		));
 	}
 
 	my $showHints = $r->param('showHints');

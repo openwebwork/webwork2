@@ -183,13 +183,13 @@ table.attemptResults {
 		}
 
 		&.ResultsWithError {
-			background-color: #d69191; /* red */
-			color: #000
+			background-color: #d69191; /* Light Red */
+			color: black;
 		}
 	}
 
 	span.answer-preview {
-		display: inline-block;
+		display: block;
 		width: 100%;
 		height: 100%;
 	}
@@ -205,47 +205,40 @@ table.attemptResults {
 }
 
 div, label, span {
-	&.WarningMessage {
-		background-color: #d69191; /* red */
-		padding: 3px;
-	}
-
 	&.ResultsWithoutError {
-		color: inherit;
-		background-color: #8f8; /* green */
+		color: #0f5132; /* Dark Green */
+		background-color: #8f8; /* Light Green */
+		padding: 0.25rem;
+		border: 1px solid transparent;
+		border-radius: 0.25rem;
+		box-shadow: 3px 3px 3px darkgray;
 	}
 
 	&.ResultsWithError {
-		color: #bf5454; /* red */
-		background-color: inherit;
+		color: #400; /* Dark Red */
+		background-color: #d69191; /* Light Red */
+		padding: 0.25rem;
+		border: 1px solid transparent;
+		border-radius: 0.25rem;
+		box-shadow: 3px 3px 3px darkgray;
 	}
 
 	&.ResultsAlert {
-		color: #ca5000; /* orange */
-		background-color: inherit;
-	}
-}
-
-span {
-	&.correct {
-		color: inherit; /* green */
-		background-color: #8f8;
-	}
-
-	&.incorrect {
-		color: #bf5454; /* red */
-		background-color: inherit;
-	}
-
-	&.unattempted {
-		color: inherit;
-		background-color: #88ecff;
+		color: #0e038c; /* Dark Blue */
+		background-color: #fbd2b8; /* Light Orange */
+		padding: 0.25rem;
+		border: 1px solid transparent;
+		border-radius: 0.25rem;
+		box-shadow: 3px 3px 3px darkgray;
 	}
 }
 
 /* Comments */
 
 div.AuthorComment {
-	background-color: #00E0E0;
+	background-color: #00e0e0;
 	color: black;
+	padding: 0.25rem;
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
 }

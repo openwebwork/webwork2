@@ -33,107 +33,114 @@ use WeBWorK::Localize;
 
 sub body {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+	my $db     = $r->db;
+	my $authz  = $r->authz;
 
 	my $userID = $r->param("user");
-	my $User = $db->getUser($userID);
+	my $User   = $db->getUser($userID);
 	die "record not found for user '$userID'." unless defined $User;
 
 	my $eUserID = $r->param('effectiveUser');
-	my $EUser = $db->getUser($eUserID); # checked
+	my $EUser   = $db->getUser($eUserID);       # checked
 	die "record not found for effective user '$eUserID'." unless defined $EUser;
 
-	my $user_name = $User->first_name . " " . $User->last_name;
+	my $user_name   = $User->first_name . " " . $User->last_name;
 	my $e_user_name = $EUser->first_name . " " . $EUser->last_name;
 
 	my $changeOptions = $r->param("changeOptions");
-	my $currP = $r->param("currPassword");
-	my $newP = $r->param("newPassword");
-	my $confirmP = $r->param("confirmPassword");
-	my $newA = $r->param("newAddress");
+	my $currP         = $r->param("currPassword");
+	my $newP          = $r->param("newPassword");
+	my $confirmP      = $r->param("confirmPassword");
+	my $newA          = $r->param("newAddress");
 
-	print CGI::start_form(-method=>"POST", -action=>$r->uri);
+	print CGI::start_form(-method => "POST", -action => $r->uri);
 	print $self->hidden_authen_fields;
 
 	print CGI::h2($r->maketext("Change Password"));
 
-	my $Password = eval {$db->getPassword($User->user_id)}; # checked
-	# Its ok if the $Password doesn't exist because students
-	# might be setting it for the first time.
-	warn $r->maketext("Can't get password record for user '[_1]': [_2]",$userID,$@) if $@;
-
+	my $Password = eval { $db->getPassword($User->user_id) };   # checked
+																# Its ok if the $Password doesn't exist because students
+																# might be setting it for the first time.
+	warn $r->maketext("Can't get password record for user '[_1]': [_2]", $userID, $@) if $@;
 
 	if ($changeOptions and ($currP or $newP or $confirmP)) {
 
 		if ($authz->hasPermissions($userID, "change_password")) {
 
-		  my $EPassword = eval {$db->getPassword($EUser->user_id)}; # checked
-		  warn $r->maketext("Can't get password record for effective user '[_1]': [_2]",$eUserID,$@) if $@;
+			my $EPassword = eval { $db->getPassword($EUser->user_id) };    # checked
+			warn $r->maketext("Can't get password record for effective user '[_1]': [_2]", $eUserID, $@) if $@;
 
-		  #Check that either password is not defined or if it is
-		  #defined then we have the right one.
-		  if ((not defined $Password) || (crypt($currP // '', $Password->password) eq $Password->password)) {
-		    if ($newP or $confirmP) {
-		      if ($newP eq $confirmP) {
-			if (not defined $EPassword) {
-			  $EPassword = $db->newPassword();
-			  $EPassword->user_id($EUser->user_id);
-			  $EPassword->password(cryptPassword($newP));
-			  eval {$db->addPassword($EPassword)};
-			  $Password = $Password // $EPassword;
-			  if ($@) {
-			    print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
-					   CGI::p($r->maketext("Couldn't change [_1]'s password: [_2]",$e_user_name,$@)));
-			  } else {
-			    print CGI::div({class=>"ResultsWithoutError"},
-					   CGI::p($r->maketext("[_1]'s password has been changed.",$e_user_name)),
-					  );
-			  }
+			#Check that either password is not defined or if it is
+			#defined then we have the right one.
+			if ((not defined $Password) || (crypt($currP // '', $Password->password) eq $Password->password)) {
+				if ($newP or $confirmP) {
+					if ($newP eq $confirmP) {
+						if (not defined $EPassword) {
+							$EPassword = $db->newPassword();
+							$EPassword->user_id($EUser->user_id);
+							$EPassword->password(cryptPassword($newP));
+							eval { $db->addPassword($EPassword) };
+							$Password = $Password // $EPassword;
+							if ($@) {
+								print CGI::div({ class => 'alert alert-danger', tabindex => '-1' },
+									$r->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							} else {
+								print CGI::div(
+									{ class => 'alert alert-success' },
+									$r->maketext("[_1]'s password has been changed.", $e_user_name),
+								);
+							}
 
-			} else {
+						} else {
 
-			    $EPassword->password(cryptPassword($newP));
-			    eval { $db->putPassword($EPassword) };
-			    $Password = $Password // $EPassword;
-			    if ($@) {
-			      print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
-					     CGI::p($r->maketext("Couldn't change [_1]'s password: [_2]",$e_user_name,$@)));
-			    } else {
-			      print CGI::div({class=>"ResultsWithoutError"},
-					     CGI::p($r->maketext("[_1]'s password has been changed.",$e_user_name)),
-					    );
-			    }
+							$EPassword->password(cryptPassword($newP));
+							eval { $db->putPassword($EPassword) };
+							$Password = $Password // $EPassword;
+							if ($@) {
+								print CGI::div({ class => 'alert alert-danger', tabindex => '-1' },
+									$r->maketext("Couldn't change [_1]'s password: [_2]", $e_user_name, $@));
+							} else {
+								print CGI::div(
+									{ class => 'alert alert-success' },
+									$r->maketext("[_1]'s password has been changed.", $e_user_name),
+								);
+							}
 
-			  }
-		      } else {
-			print CGI::div({class=>"ResultsWithError", tabindex=>'-1'},
-				       CGI::p(
-					      $r->maketext("The passwords you entered in the [_1] and [_2] fields don't match. Please retype your new password and try again.", CGI::b($r->maketext("[_1]'s New Password",$e_user_name)), CGI::b($r->maketext("Confirm [_1]'s New Password",$e_user_name)))
-					     ),
-				      );
-		      }
-		    } else {
-		      print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-				     CGI::p($r->maketext("[_1]'s new password cannot be blank.",$e_user_name)),
+						}
+					} else {
+						print CGI::div(
+							{ class => 'alert alert-danger', tabindex => '-1' },
+							$r->maketext(
+								"The passwords you entered in the [_1] and [_2] fields don't match. Please retype your new password and try again.",
+								CGI::b($r->maketext("[_1]'s New Password",         $e_user_name)),
+								CGI::b($r->maketext("Confirm [_1]'s New Password", $e_user_name))
+							)
+						);
+					}
+				} else {
+					print CGI::div(
+						{ class => 'alert alert-danger', tabindex => '-1' },
+						$r->maketext("[_1]'s new password cannot be blank.", $e_user_name),
 					);
-		    }
-		  } else {
-		    print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-				   CGI::p($r->maketext("The password you entered in the [_1] field does not match your current password. Please retype your current password and try again.", CGI::b($r->maketext("[_1]'s Current Password",$user_name)))
-					 ),
-				  );
-		  }
+				}
+			} else {
+				print CGI::div(
+					{ class => 'alert alert-danger', tabindex => '-1' },
+					$r->maketext(
+						"The password you entered in the [_1] field does not match your current password. Please retype your current password and try again.",
+						CGI::b($r->maketext("[_1]'s Current Password", $user_name))
+					)
+				);
+			}
 
 		} else {
-		  print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-				 CGI::p($r->maketext("You do not have permission to change your password.")))
-		    unless $changeOptions and ($currP or $newP or $confirmP); # avoid double message
+			print CGI::div({ class => 'alert alert-danger', tabindex => '-1' },
+				$r->maketext("You do not have permission to change your password."))
+				unless $changeOptions and ($currP or $newP or $confirmP);    # avoid double message
 		}
-
-	      }
+	}
 
 	if ($authz->hasPermissions($userID, "change_password")) {
 		print CGI::div(
@@ -167,7 +174,7 @@ sub body {
 						CGI::password_field({ name => "newPassword", id => "newPassword", class => 'form-control' })
 					)
 				),
-			   	CGI::div(
+				CGI::div(
 					{ class => 'row mb-2' },
 					CGI::label(
 						{ 'for' => 'confirmPassword', class => 'col-form-label col-sm-6' },
@@ -199,20 +206,20 @@ sub body {
 			if ($@) {
 				$EUser->email_address($oldA);
 				print CGI::div(
-					{ class => "ResultsWithError", tabindex => '-1' },
-					CGI::p($r->maketext("Couldn't change your email address: [_1]", $@)),
+					{ class => 'alert alert-danger', tabindex => '-1' },
+					$r->maketext("Couldn't change your email address: [_1]", $@),
 				);
 			} else {
 				print CGI::div(
-					{ class => "ResultsWithoutError" },
-					CGI::p($r->maketext("Your email address has been changed.")),
+					{ class => 'alert alert-success' },
+					$r->maketext("Your email address has been changed."),
 				);
 			}
 
 		} else {
 			print CGI::div(
-				{ class => "ResultsWithError", tabindex => '-1' },
-				CGI::p($r->maketext("You do not have permission to change email addresses.")),
+				{ class => 'alert alert-danger p-1 mb-0', tabindex => '-1' },
+				$r->maketext("You do not have permission to change email addresses."),
 			);
 		}
 	}
@@ -261,53 +268,61 @@ sub body {
 
 	if ($changeOptions) {
 
-	    if ((defined($r->param('displayMode')) &&
-			$EUser->displayMode() ne $r->param('displayMode')) ||
-		(defined($r->param('showOldAnswers')) &&
-			$EUser->showOldAnswers() ne $r->param('showOldAnswers')) ||
-		(defined($r->param('useMathView')) &&
-			 $EUser->useMathView() ne $r->param('useMathView'))) {
+		if (
+			(defined($r->param('displayMode')) && $EUser->displayMode() ne $r->param('displayMode'))
+			|| (defined($r->param('showOldAnswers'))
+				&& $EUser->showOldAnswers() ne $r->param('showOldAnswers'))
+			|| (defined($r->param('useMathView'))
+				&& $EUser->useMathView() ne $r->param('useMathView'))
+			)
+		{
 
-		$EUser->displayMode($r->param('displayMode'));
-		$EUser->showOldAnswers($r->param('showOldAnswers'));
-		$EUser->useMathView($r->param('useMathView'));
+			$EUser->displayMode($r->param('displayMode'));
+			$EUser->showOldAnswers($r->param('showOldAnswers'));
+			$EUser->useMathView($r->param('useMathView'));
 
-		eval { $db->putUser($EUser) };
-		if ($@) {
-		    print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-				   CGI::p($r->maketext("Couldn't save your display options: [_1]",$@)),
-			);
-		} else {
-		    print CGI::div({class=>"ResultsWithoutError"},
-				   CGI::p($r->maketext("Your display options have been saved.")),
-			);
+			eval { $db->putUser($EUser) };
+			if ($@) {
+				print CGI::div(
+					{ class => 'alert alert-danger', tabindex => '-1' },
+					$r->maketext("Couldn't save your display options: [_1]", $@),
+				);
+			} else {
+				print CGI::div(
+					{ class => 'alert alert-success' },
+					$r->maketext("Your display options have been saved."),
+				);
+			}
 		}
-	    }
 
-	    if ((defined($r->param('displayMode')) &&
-			$EUser->displayMode() ne $r->param('displayMode')) ||
-		(defined($r->param('showOldAnswers')) &&
-			$EUser->showOldAnswers() ne $r->param('showOldAnswers')) ||
-		(defined($r->param('useWirisEditor')) &&
-			 $EUser->useWirisEditor() ne $r->param('useWirisEditor')) ||
-		(defined($r->param('useMathQuill')) &&
-			 $EUser->useMathQuill() ne $r->param('useMathQuill'))) {
-		$EUser->displayMode($r->param('displayMode'));
-		$EUser->showOldAnswers($r->param('showOldAnswers'));
-		$EUser->useWirisEditor($r->param('useWirisEditor'));
-		$EUser->useMathQuill($r->param('useMathQuill'));
+		if (
+			(defined($r->param('displayMode')) && $EUser->displayMode() ne $r->param('displayMode'))
+			|| (defined($r->param('showOldAnswers'))
+				&& $EUser->showOldAnswers() ne $r->param('showOldAnswers'))
+			|| (defined($r->param('useWirisEditor'))
+				&& $EUser->useWirisEditor() ne $r->param('useWirisEditor'))
+			|| (defined($r->param('useMathQuill'))
+				&& $EUser->useMathQuill() ne $r->param('useMathQuill'))
+			)
+		{
+			$EUser->displayMode($r->param('displayMode'));
+			$EUser->showOldAnswers($r->param('showOldAnswers'));
+			$EUser->useWirisEditor($r->param('useWirisEditor'));
+			$EUser->useMathQuill($r->param('useMathQuill'));
 
-		eval { $db->putUser($EUser) };
-		if ($@) {
-		    print CGI::div({class=>"ResultsWithError",tabindex=>'-1'},
-				   CGI::p($r->maketext("Couldn't save your display options: [_1]",$@)),
-			);
-		} else {
-		    print CGI::div({class=>"ResultsWithoutError"},
-				   CGI::p($r->maketext("Your display options have been saved.")),
-			);
+			eval { $db->putUser($EUser) };
+			if ($@) {
+				print CGI::div(
+					{ class => 'alert alert-danger', tabindex => '-1' },
+					$r->maketext("Couldn't save your display options: [_1]", $@),
+				);
+			} else {
+				print CGI::div(
+					{ class => 'alert alert-success p-1 mb-0' },
+					$r->maketext("Your display options have been saved."),
+				);
+			}
 		}
-	    }
 	}
 
 	my $result = '';

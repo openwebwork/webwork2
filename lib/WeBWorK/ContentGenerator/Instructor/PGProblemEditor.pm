@@ -446,10 +446,11 @@ sub body {
 	my $make_local_copy = $r->param('make_local_copy');
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to modify problems.")
 		unless $authz->hasPermissions($user, "modify_student_data");
 
 	# Gathering info

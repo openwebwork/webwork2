@@ -134,8 +134,8 @@ sub body {
 	my $courseID = $urlpath->arg("courseID");
 	my $userID = $r->param("user");
 
-	if ( $self->{keyError} ) {
-		print CGI::div({class=>"ResultsWithError"}, $self->{keyError});
+	if ($self->{keyError}) {
+		print CGI::div({ class => 'alert alert-danger' }, $self->{keyError});
 	}
 
 	my $problemSets = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets", $r, courseID => $courseID);

@@ -51,11 +51,14 @@ sub initialize {
 	if (defined $r->param("assignToAll")) {
 		$self->assignAllSetsToUser($userID);
 		debug("assignAllSetsToUser($userID)");
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User has been assigned to all current sets."));
+		$self->addgoodmessage($r->maketext('User has been assigned to all current sets.'));
 		debug("done assignAllSetsToUsers($userID)");
-	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
+	} elsif (defined $r->param('unassignFromAll')
+		&& defined($r->param('unassignFromAllSafety'))
+		&& $r->param('unassignFromAllSafety') == 1)
+	{
 		if ($userID ne $globalUserID) {
-		  $self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User has been unassigned from all sets."));
+			$self->addgoodmessage($r->maketext('User has been unassigned from all sets.'));
 			$self->unassignAllSetsFromUser($userID);
 		}
 	} elsif (defined $r->param('assignToSelected')) {
@@ -69,7 +72,7 @@ sub initialize {
 		my $User = $db->getUser($userID); # checked
 		die "record not found for $userID.\n" unless $User;
 
-		$self->addmessage(CGI::div({class=>'ResultsWithoutError'}, "User's sets have been reassigned."));
+		$self->addgoodmessage($r->maketext("User's sets have been reassigned."));
 
 		unless ($User->user_id eq $globalUserID) {
 
@@ -94,7 +97,7 @@ sub initialize {
 		}
 	} elsif (defined $r->param("unassignFromAll")) {
 	   # no action taken
-	   $self->addmessage(CGI::div({class=>'ResultsWithError'}, "No action taken"));
+	   $self->addbadmessage($r->maketext('No action taken'));
 	}
 }
 
@@ -128,10 +131,11 @@ sub body {
 	my $setsAssignedToUserURL = $self->systemLink($setsAssignedToUserPage, authen => 0);
 
 	# check authorization
-	return CGI::div({ class => 'ResultsWithError' }, CGI::p('You are not authorized to access the Instructor tools.'))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		'You are not authorized to access the Instructor tools.')
 		unless $authz->hasPermissions($user, 'access_instructor_tools');
 
-	return CGI::div({ class => 'ResultsWithError' }, CGI::p('You are not authorized to assign homework sets.'))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, 'You are not authorized to assign homework sets.')
 		unless $authz->hasPermissions($user, 'assign_problem_sets');
 
 	# get list of sets
@@ -156,8 +160,11 @@ sub body {
 			CGI::submit({ name => 'assignToAll', value => 'Assign All Sets', class => 'btn btn-primary' }));
 	}
 
-	print CGI::div({ class => 'ResultsWithError fs-6' }, 'Do not uncheck a set unless you know what you are doing.',);
-	print CGI::div({ class => 'ResultsWithError fs-6 mb-2' }, 'There is NO undo for unassigning a set.');
+	print CGI::div(
+		{ class => 'alert alert-danger p-1 mb-2 fs-6' },
+		CGI::div({ class => 'mb-1' }, 'Do not uncheck a set unless you know what you are doing.'),
+		CGI::div('There is NO undo for unassigning a set.')
+	);
 
 	print CGI::div(
 		{ class => 'fs-6 mb-2' },
@@ -223,7 +230,7 @@ sub body {
 	print CGI::hr()
 		. CGI::div(
 			CGI::div(
-				{ class => 'ResultsWithError mb-2' },
+				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					'There is NO undo for this function.  '
 						. 'Do not use it unless you know what you are doing!  When you unassign '

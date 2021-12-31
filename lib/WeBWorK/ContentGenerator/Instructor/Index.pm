@@ -295,7 +295,8 @@ sub body {
 	my $courseName = $self->{courseName};
 	my $user = $r->param("user");
 
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to access the Instructor tools.")
 	unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	print CGI::p({},$r->maketext("Use the interface below to quickly access commonly-used instructor tools, or select a tool from the list to the left."), CGI::br(),

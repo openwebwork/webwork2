@@ -66,8 +66,10 @@ sub body {
 		print "User $userName returned " .
 			$authz->hasPermissions($user, "modify_problem_sets") .
 			" for permission";
-		return(CGI::div({class=>'ResultsWithError'},
-		  CGI::em("You are not authorized to access the Instructor tools.")));
+		return (CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em("You are not authorized to access the Instructor tools.")
+		));
 	}
 
 	my $path1 = $r->param('path1') || '';

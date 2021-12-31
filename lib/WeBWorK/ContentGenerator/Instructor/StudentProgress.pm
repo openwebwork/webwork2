@@ -138,7 +138,7 @@ sub body {
 	my $type       = $self->{type};
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}. CGI::p("You are not authorized to access instructor tools"))
+	return CGI::div({ class => 'alert alert-danger p-1' } . "You are not authorized to access instructor tools")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
 	if ($type eq 'student') {

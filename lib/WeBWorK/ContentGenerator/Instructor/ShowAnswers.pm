@@ -72,7 +72,9 @@ sub initialize {
 	  $selectedUsers = [$user];
 	}
 
-	return CGI::span({class=>'ResultsWithError'}, $r->maketext('You must provide a student ID, a set ID, and a problem number.')) unless $selectedUsers  && $selectedSets && $selectedProblems;
+	return CGI::div({ class => 'alert alert-danger' },
+		$r->maketext('You must provide a student ID, a set ID, and a problem number.'))
+		unless $selectedUsers && $selectedSets && $selectedProblems;
 
 	my %records;
 	my %prettyProblemNumbers;

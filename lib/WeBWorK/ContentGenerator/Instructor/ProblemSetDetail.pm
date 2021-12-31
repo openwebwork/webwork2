@@ -2016,15 +2016,19 @@ sub body {
 
 	my $userRecord = $db->getUser($userID) or die $r->maketext("No record for user [_1].", $userID);
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, $r->maketext("You are not authorized to access the Instructor tools."))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("You are not authorized to access the Instructor tools."))
 		unless $authz->hasPermissions($userRecord->user_id, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, $r->maketext("You are not authorized to modify problems."))
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("You are not authorized to modify problems."))
 		unless $authz->hasPermissions($userRecord->user_id, "modify_problem_sets");
 
 	my @editForUser = $r->param('editForUser');
 
-	return CGI::div({class=>"ResultsWithError"}, $r->maketext("Versions of a set can only be edited for one user at a time.")) if ( $editingSetVersion && @editForUser != 1 );
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		$r->maketext("Versions of a set can only be edited for one user at a time."))
+		if ($editingSetVersion && @editForUser != 1);
 
 	# Check that every user that we're editing for has a valid UserSet
 	my @assignedUsers;
@@ -2042,10 +2046,23 @@ sub body {
 		$r->param("editForUser", \@editForUser);
 
 		if (scalar @editForUser && scalar @unassignedUsers) {
-			print CGI::div({class=>"ResultsWithError"}, $r->maketext("The following users are NOT assigned to this set and will be ignored: [_1]", CGI::b(join(", ", @unassignedUsers))) );
+			print CGI::div(
+				{ class => 'alert alert-danger p-1 mb-0' },
+				$r->maketext(
+					"The following users are NOT assigned to this set and will be ignored: [_1]",
+					CGI::b(join(", ", @unassignedUsers))
+				)
+			);
 		} elsif (scalar @editForUser == 0) {
-			print CGI::div({class=>"ResultsWithError"}, $r->maketext("None of the selected users are assigned to this set: [_1]", CGI::b(join(", ", @unassignedUsers))));
-			print CGI::div({class=>"ResultsWithError"}, $r->maketext("Global set data will be shown instead of user specific data"));
+			print CGI::div(
+				{ class => 'alert alert-danger p-1 mb-0' },
+				$r->maketext(
+					"None of the selected users are assigned to this set: [_1]",
+					CGI::b(join(", ", @unassignedUsers))
+				)
+			);
+			print CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+				$r->maketext("Global set data will be shown instead of user specific data"));
 		}
 	}
 
@@ -2056,7 +2073,13 @@ sub body {
 	# and check that if we're editing a set version for a user, that
 	#    it exists as well
 	if ( $editingSetVersion && ! $db->existsSetVersion( $editForUser[0], $setID, $editingSetVersion ) ) {
-		return CGI::div({class=>"ResultsWithError"}, $r->maketext("The set-version ([_1], version [_2]) is not assigned to user [_3].", $setID, $editingSetVersion, $editForUser[0]));
+		return CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			$r->maketext(
+				"The set-version ([_1], version [_2]) is not assigned to user [_3].",
+				$setID, $editingSetVersion, $editForUser[0]
+			)
+		);
 	}
 
 	# If you're editing for users, initially their records will be different but
@@ -2220,16 +2243,16 @@ sub body {
 	print CGI::input({type=>"hidden", id=>"hidden_set_id", name=>"setID", value=>$setID});
 	print CGI::input({type=>"hidden", id=>"hidden_version_id", name=>"versionID", value=>$editingSetVersion}) if $editingSetVersion;
 
-	print CGI::div({ class => 'mt-3' },
+	print CGI::div({ class => 'my-3 submit-buttons-container' },
 		CGI::submit({
 			name => "submit_changes",
 			value => $r->maketext("Save Changes"),
-			class => 'btn btn-primary me-1'
-		}) .
+			class => 'btn btn-primary'
+		}),
 		CGI::submit({
 			name => "undo_changes",
 			value => $r->maketext("Reset Form"),
-			class => 'btn btn-primary me-1'
+			class => 'btn btn-primary'
 		})
 	);
 
@@ -2744,10 +2767,12 @@ sub body {
 							),
 							CGI::div(
 								{ class => 'font-sm col-md-7' },
-								($repeatFile ? CGI::div({ class => 'ResultsWithError fw-bold' }, $repeatFile) : ''),
+								$repeatFile
+								? CGI::div({ class => 'alert alert-danger p-1 mb-0 fw-bold' }, $repeatFile)
+								: '',
 								CGI::div(
 									{ class => 'psr_render_area', id => "psr_render_area_$problemID" },
-									$error ? CGI::div({ class => 'ResultsWithError fw-bold' }, $error) : ''
+									$error ? CGI::div({ class => 'alert alert-danger p-1 mb-0 fw-bold' }, $error) : ''
 								)
 							)
 						)
@@ -2853,16 +2878,16 @@ sub body {
 		)
 	}
 
-	print CGI::div({ class => 'mt-3' },
+	print CGI::div({ class => 'mt-3 submit-buttons-container align-items-center' },
 		CGI::submit({
 			name => 'submit_changes',
 			value => $r->maketext('Save Changes'),
-			class => 'btn btn-primary me-1'
-		}) .
+			class => 'btn btn-primary'
+		}),
 		CGI::submit({
 			name => 'undo_changes',
 			value => $r->maketext('Reset Form'),
-			class => 'btn btn-primary me-1'
+			class => 'btn btn-primary'
 		}),
 		$r->maketext('(Any unsaved changes will be lost.)')
 	);

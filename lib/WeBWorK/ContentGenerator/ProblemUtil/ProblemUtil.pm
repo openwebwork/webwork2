@@ -527,19 +527,25 @@ sub check_invalid{
 	my $urlpath = $r->urlpath;
 	my $effectiveUser = $r->param('effectiveUser');
 
-	if ( $self->{invalidSet} ) {
-		return CGI::div({class=>"ResultsWithError"},
-				CGI::p("The selected problem set (" .
-				       $urlpath->arg("setID") . ") is not " .
-				       "a valid set for $effectiveUser:"),
-				CGI::p($self->{invalidSet}));
-	}
-
-	elsif ($self->{invalidProblem}) {
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected problem (" . $urlpath->arg("problemID") . ") is not a valid problem for set " . $self->{set}->set_id . "."));
-	}
-	else{
+	if ($self->{invalidSet}) {
+		return CGI::div(
+			{ class => 'alert alert-danger' },
+			CGI::p(
+				"The selected problem set (" . $urlpath->arg("setID") . ") is not " . "a valid set for $effectiveUser:"
+			),
+			CGI::p($self->{invalidSet})
+		);
+	} elsif ($self->{invalidProblem}) {
+		return CGI::div(
+			{ class => 'alert alert-danger' },
+			CGI::p(
+				"The selected problem ("
+					. $urlpath->arg("problemID")
+					. ") is not a valid problem for set "
+					. $self->{set}->set_id . "."
+			)
+		);
+	} else {
 		return "valid";
 	}
 

@@ -110,9 +110,7 @@ sub info {
 		if (-f $course_info_path) { #check that it's a plain  file
 			my $text = eval { readFile($course_info_path) };
 			if ($@) {
-				print CGI::div({class=>'ResultsWithError'},
-					CGI::p("$@"),
-				);
+				print CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $@);
 			} else {
 				print $text;
 			}

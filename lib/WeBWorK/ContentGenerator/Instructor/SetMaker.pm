@@ -530,8 +530,10 @@ sub browse_library_panel {
 	my $libraryRoot = $r->{ce}{problemLibrary}{root};
 
 	unless ($libraryRoot) {
-		print CGI::Tr(CGI::td(CGI::div(
-			{ class => 'ResultsWithError', align => "center" }, "The problem library has not been installed.")));
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
+			"The problem library has not been installed."
+		);
 		return;
 	}
 	# Test if the Library directory link exists.  If not, try to make it
@@ -552,19 +554,19 @@ HERE
 	my $libraryVersion = $r->{ce}{problemLibrary}{version} || 2;
 	if ($libraryVersion == 1) {
 		#return $self->browse_library_panel1;
-		print CGI::Tr(CGI::td(CGI::div(
-			{ class => 'ResultsWithError', align => "center" },
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
 			"Problem library version 1 is no longer supported."
-		)));
+		);
 		return;
 	} elsif ($libraryVersion >= 2) {
 		return $self->browse_library_panel2 if ($self->{library_basic} == 1);
 		return $self->browse_library_panel2adv;
 	} else {
-		print CGI::Tr(CGI::td(CGI::div(
-			{ class => 'ResultsWithError', align => "center" },
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
 			"The problem library version is set to an illegal value."
-		)));
+		);
 		return;
 	}
 }
@@ -1978,7 +1980,9 @@ sub body {
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
 		print "User $userName returned " . $authz->hasPermissions($userName, "modify_problem_sets") . " for permission";
 		return (CGI::div(
-			{ class => 'ResultsWithError' }, CGI::em("You are not authorized to access the Instructor tools.")));
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em("You are not authorized to access the Instructor tools.")
+		));
 	}
 
 	my $showHints = $r->param('showHints');
