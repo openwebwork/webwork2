@@ -8,9 +8,11 @@
 	border-radius: 5px;
 	text-align: center;
 }
+
 .nestable-label {
 	margin: 10px 0 10px 0;
 }
+
 .dd, .dd-list, .dd-item {
 	display: block;
 	position: relative;
@@ -19,6 +21,7 @@
 	padding: 0;
 	min-height: 30px;
 }
+
 .dd-empty, .dd-handle, .dd-placeholder {
 	display: block;
 	position: relative;
@@ -28,29 +31,35 @@
 	box-sizing: border-box;
 	border-radius: 5px;
 }
+
 .dd-handle {
 	background: #f5f5f5 !important;
 	border: 1px solid #388E8E !important;
 	text-align: center !important;
 	height: auto !important;
 }
+
 .dd-handle:hover {
 	cursor: pointer;
 	background: #EEE3CE;
 	color: #222;
 }
+
 .dd-placeholder {
 	background: #f2fbff;
 	border: 1px dashed #b6bcbf;
 }
+
 .dd-dragel {
 	position: absolute;
 	pointer-events: none;
 	z-index: 9999;
 }
+
 .dd-dragel > .dd-item .dd-handle {
 	margin-top: 0;
 }
+
 .dd-dragel .dd-handle {
 	-webkit-box-shadow: 2px 4px 6px 0 rgba(0,0,0,.1);
 	box-shadow: 2px 4px 6px 0 rgba(0,0,0,.1);
