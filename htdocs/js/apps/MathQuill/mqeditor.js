@@ -117,7 +117,7 @@ window.answerQuills = {};
 					$tooltip.addClass('left')
 						.css({
 							top: ($element.position().top + ($element.outerHeight() - $tooltip.outerHeight()) / 2) + 'px',
-							right: $element.outerWidth() + 4 + 'px',
+							right: answerQuill.toolbar.width() - $element.position().left + 'px',
 							left: 'unset'
 						});
 					$tooltip.find('.tooltip-arrow').css({ left: 'unset' });
@@ -138,6 +138,7 @@ window.answerQuills = {};
 			// toolbar by the problem or if the window height is excessively small, those may be incorrect.  So this
 			// adjusts the width in those cases.
 			const adjustWidth = () => {
+				if (!answerQuill.toolbar) return;
 				const left = answerQuill.toolbar.find('.symbol-button:first-child')[0].getBoundingClientRect().left;
 				const right = answerQuill.toolbar.find('.symbol-button:last-child')[0].getBoundingClientRect().right;
 				answerQuill.toolbar.css({ width: `${right - left + 8}px` });
@@ -159,7 +160,7 @@ window.answerQuills = {};
 
 		// Trigger an answer preview when the enter key is pressed in an answer box.
 		answerQuill.on('keypress.preview', (e) => {
-			if (e.key == 'Enter' || e.which == 13 || e.keyCode == 13) {
+			if (e.key == 'Enter') {
 				// For homework
 				$('#previewAnswers_id').trigger('click');
 				// For gateway quizzes
