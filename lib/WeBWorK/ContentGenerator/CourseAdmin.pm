@@ -381,7 +381,7 @@ sub body {
 			[ 'unarchive_course',     $r->maketext('Unarchive Course') ],
 			[ 'upgrade_course',       $r->maketext('Upgrade Courses') ],
 			[ 'manage_locations',     $r->maketext('Manage Locations') ],
-			[ 'hide_inactive_course', $r->maketext('Hide Inactive Courses') ],
+			[ 'hide_inactive_course', $r->maketext('Hide Courses') ],
 		)
 	);
 	print CGI::hr({ class => 'mt-0' });
@@ -3528,7 +3528,7 @@ sub hide_inactive_course_form {
 		@hideCourseIDs = sort { lc($a) cmp lc($b) } @courseIDs;
 	}
 
-	print CGI::h2($r->maketext('Hide Inactive Courses'));
+	print CGI::h2($r->maketext('Hide Courses'));
 
 	print CGI::p($r->maketext(
 		'Select the course(s) you want to hide (or unhide) and then click "Hide Courses" (or "Unhide Courses"). '
