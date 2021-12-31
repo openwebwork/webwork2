@@ -1232,7 +1232,7 @@ sub is_restricted {
 	  	  my $restrictor =  $db->getGlobalSet($_);
 		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0);
 		  # round to evade machine rounding error
-		  $r_score = sprintf("%.2f", "$r_score");
+		  $r_score = sprintf("%.2f", $r_score);
 		  if($r_score < $restriction) {
 	  	    push @needed,$_;
 		  }
