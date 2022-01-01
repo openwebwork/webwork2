@@ -29,7 +29,7 @@
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link href="<!--#url type="webwork" name="htdocs"-->/css/knowlstyle.css" rel="stylesheet" type="text/css" />
+<link href="<!--#url type="webwork" name="htdocs"-->/js/apps/Knowl/knowlstyle.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
 <link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <!--#if can="output_achievement_CSS"-->

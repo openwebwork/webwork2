@@ -2585,7 +2585,7 @@ sub output_JS {
 	my $self = shift;
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	# Print javaScript and style for dateTimePicker	
+	# Print javaScript and style for dateTimePicker
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/jquery-ui-timepicker-addon.css" });
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/DatePicker/datepicker.css" });
 	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => undef }, "");
@@ -2596,8 +2596,8 @@ sub output_JS {
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::script({ src => "$site_url/js/apps/Base64/Base64.js" }, "");
-	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/knowlstyle.css" });
-	print CGI::script({ src => "$site_url/js/legacy/vendor/knowl.js" }, "");
+	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/Knowl/knowlstyle.css" });
+	print CGI::script({ src => "$site_url/js/apps/Knowl/knowl.js" }, "");
 
 	print CGI::script({ src => "$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js" }, "");
 	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");

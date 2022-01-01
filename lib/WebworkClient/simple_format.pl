@@ -11,7 +11,7 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" type="text/css" href="/webwork2_files/css/knowlstyle.css"/>
+<link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/Knowl/knowlstyle.css"/>
 <link rel="stylesheet" type="text/css" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
 <link rel="stylesheet" href="$themeDir/math4.css"/>
 <link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
@@ -27,7 +27,7 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script type="text/javascript" src="/webwork2_files/js/apps/InputColor/color.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Base64/Base64.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script type="text/javascript" src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
+<script type="text/javascript" src="/webwork2_files/js/apps/Knowl/knowl.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/Problem/problem.js"></script>
 <script type="text/javascript" src="/webwork2_files/js/apps/ImageView/imageview.js"></script>
 <script type="text/javascript" src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>

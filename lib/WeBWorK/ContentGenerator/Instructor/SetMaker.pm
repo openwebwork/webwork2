@@ -1,12 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
@@ -87,7 +87,7 @@ sub prepare_activity_entry {
 }
 
 ## This is for searching the disk for directories containing pg files.
-## to make the recursion work, this returns an array where the first 
+## to make the recursion work, this returns an array where the first
 ## item is the number of pg files in the directory.  The second is a
 ## list of directories which contain pg files.
 ##
@@ -124,7 +124,7 @@ sub get_library_sets {
 	my @dirs = grep {!$ignoredir{$_} and -d "$dir/$_"} @lis;
 	if ($top == 1) {@dirs = grep {!$problib{$_}} @dirs}
 	# Never include Library at the top level
-	if ($top == 1) {@dirs = grep {$_ ne 'Library'} @dirs} 
+	if ($top == 1) {@dirs = grep {$_ ne 'Library'} @dirs}
 	foreach my $subdir (@dirs) {
 		my @results = get_library_sets(0, "$dir/$subdir");
 		$pgcount += shift @results; push(@pgdirs,@results);
@@ -310,7 +310,7 @@ sub get_past_problem_files {
 		my $val = 0;
 		$val |= ADDED if($r->param("trial$count"));
 		$val |= HIDDEN if($r->param("hideme$count"));
-		push @found, [$r->param("filetrial$count"), $val];			
+		push @found, [$r->param("filetrial$count"), $val];
 		$count++;
 	}
 	return(\@found);
@@ -392,7 +392,7 @@ sub view_problems_line {
 	my $defaultSolutions = $r->param('showSolutions') || SHOW_SOLUTIONS_DEFAULT;
 	$result .= "&nbsp;".CGI::checkbox(-name=>"showSolutions",-checked=>$defaultSolutions,-label=>$r->maketext("Solutions"));
 	$result .= "\n".CGI::hidden(-name=>"original_displayMode", -default=>$mydisplayMode)."\n";
-	
+
 	return($result);
 }
 
@@ -401,11 +401,11 @@ sub view_problems_line {
 #####	 Version 1 is local problems
 sub browse_local_panel {
 	my $self = shift;
-	my $r = $self->r;	
+	my $r = $self->r;
 	my $library_selected = shift;
 	my $lib = shift || ''; $lib =~ s/^browse_//;
 	my $name = ($lib eq '')? $r->maketext('Local') : Encode::decode("UTF-8",$problib{$lib});
-    
+
 	my $list_of_prob_dirs= get_problem_directories($r,$lib);
 	if(scalar(@$list_of_prob_dirs) == 0) {
 		$library_selected = $r->maketext("Found no directories containing problems");
@@ -431,7 +431,7 @@ sub browse_local_panel {
 	}
 	print CGI::Tr({}, CGI::td({-class=>"InfoPanel"}, $r->maketext("[_1] Problems:", $name).' ',
 		              CGI::popup_menu(@popup_menu_args),
-		              CGI::br(), 
+		              CGI::br(),
 		              $view_problem_line,
 	));
 }
@@ -439,31 +439,31 @@ sub browse_local_panel {
 #####	 Version 2 is local homework sets
 sub browse_mysets_panel {
 	my $self = shift;
-	my $r = $self->r;	
+	my $r = $self->r;
 	my $library_selected = shift;
 	my $list_of_local_sets = shift;
 	my $default_value = $r->maketext("Select a Homework Set");
 
 	if(scalar(@$list_of_local_sets) == 0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
-	} elsif (not $library_selected or $library_selected eq $default_value) { 
-		unshift @{$list_of_local_sets},	 $default_value; 
-		$library_selected = $default_value; 
-	} 
+	} elsif (not $library_selected or $library_selected eq $default_value) {
+		unshift @{$list_of_local_sets},	 $default_value;
+		$library_selected = $default_value;
+	}
 
 	my $view_problem_line = view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r);
 	print CGI::Tr({},
 		CGI::td({-class=>"InfoPanel"}, $r->maketext("Browse from:").' ',
-		CGI::popup_menu(-name=> 'library_sets', 
-		                -values=>$list_of_local_sets, 
+		CGI::popup_menu(-name=> 'library_sets',
+		                -values=>$list_of_local_sets,
 		                -default=> $library_selected),
-		CGI::br(), 
+		CGI::br(),
 		$view_problem_line
 	));
 }
 
 #####	 Version 3 is the problem library
-# 
+#
 # This comes in 3 forms, problem library version 1, and for version 2 there
 # is the basic, and the advanced interfaces.  This function checks what we are
 # supposed to do, or aborts if the problem library has not been installed.
@@ -477,7 +477,7 @@ sub browse_library_panel {
 	my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
 
 	unless($libraryRoot) {
-		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
+		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"},
 			"The problem library has not been installed.")));
 		return;
 	}
@@ -503,7 +503,7 @@ HERE
 		return $self->browse_library_panel2	if($self->{library_basic}==1);
 		return $self->browse_library_panel2adv;
 	} else {
-		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"}, 
+		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"},
 			"The problem library version is set to an illegal value.")));
 		return;
 	}
@@ -513,7 +513,7 @@ sub browse_library_panel1 {
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	
+
 	my @chaps = WeBWorK::Utils::ListingDB::getAllChapters($r->{ce});
 	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}->{all};
@@ -532,7 +532,7 @@ sub browse_library_panel1 {
 		CGI::start_table(),
 			CGI::Tr({},
 				CGI::td([$r->maketext("Chapter:"),
-					CGI::popup_menu(-name=> 'library_chapters', 
+					CGI::popup_menu(-name=> 'library_chapters',
 					                -values=>\@chaps,
 					                -default=> $chapter_selected
 					),
@@ -540,7 +540,7 @@ sub browse_library_panel1 {
 			CGI::Tr({},
 				CGI::td($r->maketext("Section:")),
 				CGI::td({-colspan=>2},
-					CGI::popup_menu(-name=> 'library_sections', 
+					CGI::popup_menu(-name=> 'library_sections',
 					                -values=>\@sects,
 					                -default=> $section_selected
 			))),
@@ -584,7 +584,7 @@ sub browse_library_panel2 {
 		CGI::start_table({-width=>"100%"}),
 		CGI::Tr({},
 			CGI::td([$r->maketext("Subject:"),
-				CGI::popup_menu(-name=> 'library_subjects', 
+				CGI::popup_menu(-name=> 'library_subjects',
 					            -values=>\@subjs,
 					            -default=> $subject_selected
 				)]),
@@ -595,14 +595,14 @@ sub browse_library_panel2 {
 		),
 		CGI::Tr({},
 			CGI::td([$r->maketext("Chapter:"),
-				CGI::popup_menu(-name=> 'library_chapters', 
+				CGI::popup_menu(-name=> 'library_chapters',
 					            -values=>\@chaps,
 					            -default=> $chapter_selected
 		    )]),
 		),
 		CGI::Tr({},
 			CGI::td([$r->maketext("Section:"),
-			CGI::popup_menu(-name=> 'library_sections', 
+			CGI::popup_menu(-name=> 'library_sections',
 					        -values=>\@sects,
 					        -default=> $section_selected
 		    )]),
@@ -611,7 +611,7 @@ sub browse_library_panel2 {
 		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
 		 CGI::end_table(),
 	 ));
-	
+
 }
 
 sub browse_library_panel2adv {
@@ -675,7 +675,7 @@ sub browse_library_panel2adv {
 									 -default=>$selected{textbook},
 									 -onchange=>"submit();return true");
 
-	
+
 	my $library_keywords = $r->param('library_keywords') || '';
 
 	my $view_problem_line = view_problems_line('lib_view', $r->maketext('View Problems'), $self->r);
@@ -711,8 +711,8 @@ sub browse_library_panel2adv {
 		CGI::Tr(CGI::td({-colspan=>4, -align=>"center"}, $r->maketext('All Selected Constraints Joined by "And"'))),
 		CGI::Tr({},
 			CGI::td([$r->maketext("Subject:"),
-				CGI::popup_menu(-name=> 'library_subjects', 
-					            -values=>\@subjs,	
+				CGI::popup_menu(-name=> 'library_subjects',
+					            -values=>\@subjs,
 					            -default=> $selected{dbsubject}
 				)]),
 			CGI::td({-colspan=>2, -align=>"right"},
@@ -720,7 +720,7 @@ sub browse_library_panel2adv {
 					-style=> $right_button_style))),
 		CGI::Tr({},
 			CGI::td([$r->maketext("Chapter:"),
-				CGI::popup_menu(-name=> 'library_chapters', 
+				CGI::popup_menu(-name=> 'library_chapters',
 					            -values=>\@chaps,
 					            -default=> $selected{dbchapter}
 		    )]),
@@ -730,7 +730,7 @@ sub browse_library_panel2adv {
 		),
 		CGI::Tr({},
 			CGI::td([$r->maketext("Section:"),
-			CGI::popup_menu(-name=> 'library_sections', 
+			CGI::popup_menu(-name=> 'library_sections',
 					        -values=>\@sects,
 					        -default=> $selected{dbsection}
 		    )]),
@@ -743,7 +743,7 @@ sub browse_library_panel2adv {
 		 ),
 		 CGI::Tr({},
 			CGI::td([$r->maketext("Text chapter:"),
-			CGI::popup_menu(-name=> 'library_textchapter', 
+			CGI::popup_menu(-name=> 'library_textchapter',
 					        -values=>\@textchaps,
 					        -default=> $selected{textchapter},
 							-onchange=>"submit();return true"
@@ -751,7 +751,7 @@ sub browse_library_panel2adv {
 		 ),
 		 CGI::Tr({},
 			CGI::td([$r->maketext("Text section:"),
-			CGI::popup_menu(-name=> 'library_textsection', 
+			CGI::popup_menu(-name=> 'library_textsection',
 					        -values=>\@textsecs,
 					        -default=> $selected{textsection},
 							-onchange=>"submit();return true"
@@ -771,7 +771,7 @@ sub browse_library_panel2adv {
 		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
 		 CGI::end_table(),
 	 ));
-	
+
 }
 
 
@@ -790,9 +790,9 @@ sub browse_setdef_panel {
 	my @list_of_set_defs = sort(get_set_defs($ce->{courseDirs}{templates}));
 	if(scalar(@list_of_set_defs) == 0) {
 		@list_of_set_defs = ($r->maketext(NO_LOCAL_SET_STRING));
-	} elsif (not $library_selected or $library_selected eq $default_value) { 
-		unshift @list_of_set_defs, $default_value; 
-		$library_selected = $default_value; 
+	} elsif (not $library_selected or $library_selected eq $default_value) {
+		unshift @list_of_set_defs, $default_value;
+		$library_selected = $default_value;
 	}
 	my $view_problem_line = view_problems_line('view_setdef_set', $r->maketext('View Problems'), $self->r);
 	my $popupetc = CGI::popup_menu(-name=> 'library_sets',
@@ -819,7 +819,7 @@ sub make_top_row {
 	my $library_selected = $self->{current_library_set};
 	my $set_selected = $r->param('local_sets');
 	my (@dis1, @dis2, @dis3, @dis4) = ();
-	@dis1 =	 (-disabled=>1) if($browse_which eq 'browse_npl_library');	 
+	@dis1 =	 (-disabled=>1) if($browse_which eq 'browse_npl_library');
 	@dis2 =	 (-disabled=>1) if($browse_which eq 'browse_local');
 	@dis3 =	 (-disabled=>1) if($browse_which eq 'browse_mysets');
 	@dis4 =	 (-disabled=>1) if($browse_which eq 'browse_setdefs');
@@ -847,21 +847,21 @@ sub make_top_row {
 
 	print CGI::Tr(CGI::td({-class=>"InfoPanel"}, $r->maketext("Add problems to").' ',
 		CGI::b($r->maketext("Target Set:").' '),
-		CGI::popup_menu(-name=> 'local_sets', 
-						-values=>$list_of_local_sets, 
+		CGI::popup_menu(-name=> 'local_sets',
+						-values=>$list_of_local_sets,
 						-default=> $set_selected,
 						-override=>1),
 		CGI::submit(-name=>"edit_local", -value=>$r->maketext("Edit Target Set")),
 		CGI::hidden(-name=>"selfassign", -default=>0,-override=>1).
-		CGI::br(), 
-		CGI::br(), 
+		CGI::br(),
+		CGI::br(),
 		CGI::submit(-name=>"new_local_set", -value=>$r->maketext("Create a New Set in This Course:"),
 		#CGI::button(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
 		-onclick=>"document.mainform.selfassign.value=1"      #       $myjs
 		#-onclick=>"createNewSet()"      #       $myjs
 		),
 		"  ",
-		CGI::textfield(-name=>"new_set_name", 
+		CGI::textfield(-name=>"new_set_name",
 					   -example=>$r->maketext("Name for new set here"),
 					   -override=>1, -size=>30),
 	));
@@ -901,9 +901,9 @@ sub make_top_row {
     # For next/previous buttons
 	my ($next_button, $prev_button) = ("", "");
 	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown}; 
+	my $last_shown = $self->{last_shown};
 	my $first_index = $self->{first_index};
-	my $last_index = $self->{last_index}; 
+	my $last_index = $self->{last_index};
 	my @pg_files = @{$self->{pg_files}};
 	if ($first_index > 0) {
 		$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex",
@@ -963,16 +963,16 @@ sub make_data_row {
 
 	my $problem_seed = $self->{'problem_seed'} || 1234;
 	my $edit_link = CGI::a({href=>$self->systemLink(
-				$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r, 
+				$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
 					courseID =>$urlpath->arg("courseID"),
 					setID=>"Undefined_Set",
 					problemID=>"1"),
-				params=>{sourceFilePath => "$sourceFileName", 
+				params=>{sourceFilePath => "$sourceFileName",
 					problemSeed=> $problem_seed}
-			), 
+			),
 			id=> "editit$cnt",
 			target=>"WW_Editor", title=>"Edit it"}, CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
-	
+
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
 		if not defined $displayMode or $displayMode eq "None";
@@ -982,7 +982,7 @@ sub make_data_row {
 	$pathArgs{problemID} = "1" if ( ! $isGatewaySet );
 
 	my $try_link = CGI::a({href=>$self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module", $r, 
+		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module", $r,
 			%pathArgs ),
 			params =>{
 				effectiveUser => scalar($self->r->param('user')),
@@ -991,7 +991,7 @@ sub make_data_row {
 				sourceFilePath => "$sourceFileName",
 				displayMode => $displayMode,
 			}
-		), target=>"WW_View", 
+		), target=>"WW_View",
 			title=>"Try it",
 			id=>"tryit$cnt",
 			style=>"text-decoration: none"}, '<i class="far fa-eye" ></i>');
@@ -1000,7 +1000,7 @@ sub make_data_row {
 		CGI::i(CGI::b($self->{isInSet}{$sourceFileName} ? " (in target set)" : "&nbsp;")));
 	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
 
-	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "), 
+	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "),
 
 	my $mlt = '';
 	my ($mltstart, $mltend) = ('','');
@@ -1037,7 +1037,7 @@ sub make_data_row {
 	$MOtag = '<span class="motag">'.$MOtag.'</span>';
 
 	# get statistics to display
-	
+
 	my $global_problem_stats = '';
 	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
 	    my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
@@ -1050,8 +1050,8 @@ sub make_data_row {
 					   wwRound(0,100*$stats->{average_status}).'%;&nbsp;';
 	    }
 	}
-	
-		
+
+
 	my $local_problem_stats = '';
 	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
 	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
@@ -1207,13 +1207,13 @@ sub pre_header_initialize {
 	##  Grab library sets to display from parameters list.  We will
 	##  modify this as we go through the if/else tree
 	$self->{current_library_set} =  $r->param('library_sets');
-    
+
 	##	These directories will have individual buttons
 	%problib = %{$ce->{courseFiles}{problibs}} if $ce->{courseFiles}{problibs};
 
 	my $userName = $r->param('user');
-	my $user = $db->getUser($userName); # checked 
-	die "record for user $userName (real user) does not exist." 
+	my $user = $db->getUser($userName); # checked
+	die "record for user $userName (real user) does not exist."
 		unless defined $user;
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
@@ -1246,14 +1246,14 @@ sub pre_header_initialize {
 	my @pg_files=();
 	my $use_previous_problems = 1;
 	my $first_shown = $r->param('first_shown') || 0;
-	my $last_shown = $r->param('last_shown'); 
+	my $last_shown = $r->param('last_shown');
 	if (not defined($last_shown)) {
-		$last_shown = -1; 
+		$last_shown = -1;
 	}
 	my $first_index = $r->param('first_index') || 0;
 	my $last_index = $r->param('last_index');
 	if (not defined($last_index)) {
-		$last_index = -1; 
+		$last_index = -1;
 	}
 	my $total_probs = $r->param('total_probs') || 0;
 	my @all_past_list = (); # these are include requested, but not shown
@@ -1352,7 +1352,7 @@ sub pre_header_initialize {
 
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
-		if (not defined($set_to_display) 
+		if (not defined($set_to_display)
 				or $set_to_display eq "Select a Homework Set"
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage($r->maketext("You need to select a set from this course to view."));
@@ -1375,9 +1375,9 @@ sub pre_header_initialize {
 		}
 
 		##### View from the library database
- 
+
 	} elsif ($r->param('lib_view')) {
- 
+
 		@pg_files=();
 		my @dbsearch = WeBWorK::Utils::ListingDB::getSectionListings($r);
 		@pg_files = process_search($r, @dbsearch);
@@ -1389,15 +1389,15 @@ sub pre_header_initialize {
 
 		my $set_to_display = $self->{current_library_set};
 		debug("set_to_display is $set_to_display");
-		if (not defined($set_to_display) 
+		if (not defined($set_to_display)
 				or $set_to_display eq "Select a Set Definition File"
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage($r->maketext("You need to select a set definition file to view."));
 		} else {
 			@pg_files= $self->read_set_def($set_to_display);
 			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
-		}	
-		$use_previous_problems=0; 
+		}
+		$use_previous_problems=0;
 
 		##### Edit the current local homework set
 
@@ -1429,23 +1429,23 @@ sub pre_header_initialize {
 				$newSetRecord->set_id($newSetName);
 				$newSetRecord->set_header("defaultHeader");
 				$newSetRecord->hardcopy_header("defaultHeader");
-				# It's convenient to set the due date two weeks from now so that it is 
-				# not accidentally available to students.  
-				
+				# It's convenient to set the due date two weeks from now so that it is
+				# not accidentally available to students.
+
 				my $dueDate = time+2*60*60*24*7;
 				my $display_tz = $ce->{siteDefaults}{timezone};
 				my $fDueDate = $self->formatDateTime($dueDate, $display_tz, "%m/%d/%Y at %I:%M%P");
 				my $dueTime = $ce->{pg}{timeAssignDue};
-				
+
 				# We replace the due time by the one from the config variable
 				# and try to bring it back to unix time if possible
 				$fDueDate =~ s/\d\d:\d\d(am|pm|AM|PM)/$dueTime/;
-				
+
 				$dueDate = $self->parseDateTime($fDueDate, $display_tz);
 				$newSetRecord->open_date($dueDate - 60*$ce->{pg}{assignOpenPriorToDue});
 				$newSetRecord->due_date($dueDate);
-				$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});	
-				
+				$newSetRecord->answer_date($dueDate + 60*$ce->{pg}{answersOpenAfterDueDate});
+
 				$newSetRecord->visible(1);
 				$newSetRecord->enable_reduced_scoring(0);
 				$newSetRecord->assignment_type('default');
@@ -1476,7 +1476,7 @@ sub pre_header_initialize {
 		$last_index = end_prob_group($last_index, @all_past_list);
 	} elsif ($r->param('prev_page')) {
 		# Can set first/last index, but not problem yet
-		$last_index = $first_index-1; 
+		$last_index = $first_index-1;
 		my $oli = 0;
 		my $cnt = 0;
 		while(($oli = prev_prob_group($first_index, @all_past_list)) != -1 and $cnt<$maxShown) {
@@ -1505,7 +1505,7 @@ sub pre_header_initialize {
 		;
 	}				##### end of the if elsif ...
 
- 
+
 	############# List of local sets
 
 	# DBFIXME sorting in database, please!
@@ -1554,7 +1554,7 @@ sub pre_header_initialize {
 
 
         my $library_stats_handler = '';
-	
+
 	if ($ce->{problemLibrary}{showLibraryGlobalStats} ||
 	   $ce->{problemLibrary}{showLibraryLocalStats} ) {
 	    $library_stats_handler = WeBWorK::Utils::LibraryStats->new($ce);
@@ -1571,7 +1571,7 @@ sub pre_header_initialize {
 	$self->{pg_files} = \@pg_files;
 	$self->{all_db_sets} = \@all_db_sets;
 	$self->{library_basic} = $library_basic;
-	$self->{library_stats_handler} = $library_stats_handler; 
+	$self->{library_stats_handler} = $library_stats_handler;
 }
 
 
@@ -1598,8 +1598,8 @@ sub body {
 	### Check that this is a professor
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-		print "User $userName returned " . 
-			$authz->hasPermissions($userName, "modify_problem_sets") . 
+		print "User $userName returned " .
+			$authz->hasPermissions($userName, "modify_problem_sets") .
 	" for permission";
 		return(CGI::div({class=>'ResultsWithError'},
 		CGI::em("You are not authorized to access the Instructor tools.")));
@@ -1607,14 +1607,14 @@ sub body {
 
 	my $showHints = $r->param('showHints');
 	my $showSolutions = $r->param('showSolutions');
-	
+
 	##########	Extract information computed in pre_header_initialize
 
 	my $first_shown = $self->{first_shown};
-	my $last_shown = $self->{last_shown}; 
+	my $last_shown = $self->{last_shown};
 	my $first_index = $self->{first_index};
-	my $last_index = $self->{last_index}; 
-	my $total_probs = $self->{total_probs}; 
+	my $last_index = $self->{last_index};
+	my $total_probs = $self->{total_probs};
 	my $browse_which = $self->{browse_which};
 	my $problem_seed = $self->{problem_seed}||1234;
 	my @pg_files = @{$self->{pg_files}};
@@ -1651,7 +1651,7 @@ sub body {
 	}
 
 	print CGI::hidden(-name=>'first_shown', -value=>$first_shown,-override=>1);
-	
+
 	print CGI::hidden(-name=>'last_shown', -value=>$last_shown, -override=>1);
 	print CGI::hidden(-name=>'first_index', -value=>$first_index);
 	print CGI::hidden(-name=>'last_index', -value=>$last_index);
@@ -1694,7 +1694,7 @@ sub body {
 	#	 }
 	print CGI::end_form(), "\n";
 
-	return "";	
+	return "";
 }
 
 sub output_JS {
@@ -1708,7 +1708,7 @@ sub output_JS {
 	print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
 	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 
-	print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/legacy/vendor/knowl.js"></script>};
+	print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/apps/Knowl/knowl.js"></script>};
 
 	print qq!<script src="$webwork_htdocs_url/js/apps/ImageView/imageview.js"></script>!;
 	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
@@ -1718,7 +1718,7 @@ sub output_JS {
 		print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
 		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
 			my $taxo = '[]';
-			$taxo = join("", <TAXONOMY>); 
+			$taxo = join("", <TAXONOMY>);
 			close TAXONOMY;
 			print qq!\n<script>var taxo = $taxo ;</script>!;
 		} else {
@@ -1740,7 +1740,7 @@ sub output_CSS {
 
 	print qq{<link href="$webwork_htdocs_url/js/apps/ImageView/imageview.css" rel="stylesheet" type="text/css" />};
 
-	print qq{<link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+	print qq{<link href="$webwork_htdocs_url/js/apps/Knowl/knowlstyle.css" rel="stylesheet" type="text/css" />};
 
 	return '';
 

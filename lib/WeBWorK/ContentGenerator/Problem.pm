@@ -249,7 +249,7 @@ sub can_useWirisEditor {
 
     return $ce->{pg}->{specialPGEnvironmentVars}->{entryAssist} eq 'WIRIS';
 }
-    
+
 sub can_useMathQuill {
     my ($self, $User, $EffectiveUser, $Set, $Problem, $submitAnswers) = @_;
     my $ce= $self->r->ce;
@@ -711,7 +711,7 @@ sub pre_header_initialize {
 		}
 		$db->putUserProblem($problem) if $problem->{prCount} > -1;
 	}
-	
+
 	# final values for options
 	my %will;
 	foreach (keys %must) {
@@ -777,7 +777,7 @@ sub pre_header_initialize {
 			$will{recordAnswers} = 0;
 		}
 	}
-	
+
 	##### update and fix hint/solution options after PG processing #####
 
 	$can{showHints}     &&= $pg->{flags}->{hintExists}
@@ -1775,7 +1775,7 @@ sub output_score_summary{
 		if ($attempts_before_rr == 0);
 	}
 	$prMessage = "" if (after($set->due_date) or before($set->open_date));
-	
+
 	my $problem_status    = $problem->status || 0;
 	my $lastScore = wwRound(0, $problem_status * 100).'%'; # Round to whole number
 	my $attemptsLeft = $problem->max_attempts - $attempts;
@@ -2340,17 +2340,17 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 
-	# MathQuill live rendering 
+	# MathQuill live rendering
 	if ($self->{will}->{useMathQuill}) {
 		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
 		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
 	}
-	
+
 	# This is for knowls
         # Javascript and style for knowls
         print qq{
            <script type="text/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
-           <script type="text/javascript" src="$site_url/js/legacy/vendor/knowl.js"></script>};
+           <script type="text/javascript" src="$site_url/js/apps/Knowl/knowl.js"></script>};
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
@@ -2381,13 +2381,18 @@ sub output_JS{
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
-		for (@{$self->{pg}{flags}{extra_js_files}}) {
-			next if $jsFiles{$_->{file}};
-			$jsFiles{$_->{file}} = 1;
-			my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
+		for (@{ $self->{pg}{flags}{extra_js_files} }) {
+			next if $jsFiles{ $_->{file} };
+			$jsFiles{ $_->{file} } = 1;
+			my %attributes = ref($_->{attributes}) eq "HASH" ? %{ $_->{attributes} } : ();
 			if ($_->{external}) {
-				print CGI::script({ src => $_->{file} , %attributes }, "");
-			} elsif (!$_->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}") {
+				print CGI::script({ src => $_->{file}, %attributes }, "");
+			} elsif (
+				!$_->{external}
+				&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
+					|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
+				)
+			{
 				print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
 			} else {
 				print "<!-- $_ is not available in htdocs/ on this server -->\n";
@@ -2405,14 +2410,14 @@ sub output_CSS {
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
-        # Javascript and style for knowls
-        print "<link href=\"$site_url/css/knowlstyle.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
+	# Javascript and style for knowls
+	print CGI::Link({ href => "$site_url/js/apps/Knowl/knowlstyle.css", rel => 'stylesheet' });
 
 	#style for mathview
 	if ($self->{will}->{useMathView}) {
 	    print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />\n";
 	}
-	
+
 	#style for mathquill
 	if ($self->{will}->{useMathQuill}) {
 		print "<link href=\"$site_url/js/apps/MathQuill/mathquill.css\" rel=\"stylesheet\" />\n";
@@ -2425,21 +2430,28 @@ sub output_CSS {
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
 	# which can be set in course.conf (the value should be an anonomous array).
-	my %cssFiles;
-	# Avoid duplicates
+	my @cssFiles;
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
 	if (ref($self->{pg}{flags}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_->{file}} = $_->{external} for @{$self->{pg}{flags}{extra_css_files}};
+		push @cssFiles, @{ $self->{pg}{flags}{extra_css_files} };
 	}
-	for (keys(%cssFiles)) {
-		if ($cssFiles{$_}) {
-			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$_\" />\n";
-		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
+	my %cssFilesAdded;    # Used to avoid duplicates
+	for (@cssFiles) {
+		next if $cssFilesAdded{ $_->{file} };
+		$cssFilesAdded{ $_->{file} } = 1;
+		if ($_->{external}) {
+			print CGI::Link({ rel => 'stylesheet', href => $_->{file} });
+		} elsif (
+			!$_->{external}
+			&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
+				|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
+			)
+		{
+			print CGI::Link({ rel => 'stylesheet', href => "$site_url/$_->{file}" });
 		} else {
-			print "<!-- $_ is not available in htdocs/ on this server -->\n";
+			print "<!-- $_->{file} is not available in htdocs/ on this server -->\n";
 		}
 	}
 
