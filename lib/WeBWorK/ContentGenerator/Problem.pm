@@ -2429,9 +2429,6 @@ sub output_JS{
 		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => "" }, "");
 	}
 
-	# Is this needed anymore?
-	print CGI::script({ src => "$site_url/js/vendor/underscore/underscore.js" }, "");
-
 	# Javascript for knowls
 	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js" }, "");
 

@@ -2975,9 +2975,18 @@ sub output_JS {
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
 	# Print javaScript and style for dateTimePicker
-	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/jquery-ui-timepicker-addon.css" });
+	print CGI::Link({
+		rel  => "stylesheet",
+		href => "$site_url/node_modules/jquery-ui-timepicker-addon/dist/jquery-ui-timepicker-addon.css"
+	});
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/DatePicker/datepicker.css" });
-	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => undef }, "");
+	print CGI::script(
+		{
+			src   => "$site_url/node_modules/jquery-ui-timepicker-addon/dist/jquery-ui-timepicker-addon.js",
+			defer => undef
+		},
+		""
+	);
 	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef}, "");
 
 	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => undef }, "");
