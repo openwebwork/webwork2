@@ -16,17 +16,17 @@
 			else elt.removeClass('changed');
 		}
 
-		open_rule.change({ orig_value: open_rule.val() }, toggleChanged)
-			.blur(function() {update();});
-		due_rule.change({ orig_value: due_rule.val() }, toggleChanged)
-			.blur(function() {update();});
-		answer_rule.change({ orig_value: answer_rule.val() }, toggleChanged)
-			.blur(function() {update();});
+		open_rule.on('change', { orig_value: open_rule.val() }, toggleChanged)
+			.on('blur', function() {update();});
+		due_rule.on('change', { orig_value: due_rule.val() }, toggleChanged)
+			.on('blur', function() {update();});
+		answer_rule.on('change', { orig_value: answer_rule.val() }, toggleChanged)
+			.on('blur', function() {update();});
 
 		if (reduced) {
 			var reduced_rule = $('input[id="' + name + '.reduced_scoring_date_id"]');
-			reduced_rule.change({ orig_value: reduced_rule.val() }, toggleChanged)
-				.blur(function() {update();});
+			reduced_rule.on('change', { orig_value: reduced_rule.val() }, toggleChanged)
+				.on('blur', function() {update();});
 		}
 
 		open_rule.datetimepicker({
@@ -38,8 +38,7 @@
 			constrainInput: false,
 			onClose: update,
 		});
-		open_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
-			.addClass('btn btn-secondary btn-sm');
+		open_rule.parent().find('.ui-datepicker-trigger').addClass('btn btn-secondary btn-sm');
 
 		due_rule.datetimepicker({
 			showOn: "button",
@@ -50,8 +49,7 @@
 			constrainInput: false,
 			onClose: update,
 		});
-		due_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
-			.addClass('btn btn-secondary btn-sm');
+		due_rule.parent().find('.ui-datepicker-trigger').addClass('btn btn-secondary btn-sm');
 
 		answer_rule.datetimepicker({
 			showOn: "button",
@@ -62,8 +60,7 @@
 			constrainInput: false,
 			onClose: update,
 		});
-		answer_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
-			.addClass('btn btn-secondary btn-sm');
+		answer_rule.parent().find('.ui-datepicker-trigger').addClass('btn btn-secondary btn-sm');
 
 		if (reduced) {
 			reduced_rule.datetimepicker({
@@ -75,7 +72,7 @@
 				constrainInput: false,
 				onClose: update,
 			});
-			reduced_rule.parent().addClass('input-append').find('.ui-datepicker-trigger')
+			reduced_rule.parent().find('.ui-datepicker-trigger')
 				.addClass('btn btn-secondary btn-sm');
 		}
 
@@ -86,7 +83,6 @@
 			} else {
 				return element.datetimepicker('getDate');
 			}
-
 		}
 
 		var update = function() {
@@ -116,7 +112,6 @@
 				answerDate = new Date(dueDate);
 				answer_rule.datetimepicker('setDate',answerDate);
 			}
-
 		}
 	});
 
@@ -143,7 +138,6 @@
 			separator: ' at ',
 			constrainInput: false,
 		});
-		importDateShift.parent().addClass('input-append').find('.ui-datepicker-trigger')
-			.addClass('btn btn-secondary btn-sm');
+		importDateShift.parent().find('.ui-datepicker-trigger').addClass('btn btn-secondary btn-sm');
 	}
 })();

@@ -21,7 +21,7 @@ window.addEventListener('DOMContentLoaded', function () {
 	/* attach a viewer to each answer input */
 	document.querySelectorAll('.codeshard').forEach(input => {
 		/* create button and attach it to side of input */
-		$(input).wrap('<div class="input-append">');
+		$(input).wrap('<div class="input-group d-inline-flex flex-nowrap w-auto">');
 
 		/* define the button and place it */
 		var button = $('<a>', {
@@ -33,7 +33,7 @@ window.addEventListener('DOMContentLoaded', function () {
 		$(input).parent().append(button);
 
 		/* generate the mathviewer */
-		var mviewer = new MathViewer(input, button, $(input).parent('.input-append'));
+		var mviewer = new MathViewer(input, button, $(input).parent('.input-group'));
 		mviewer.initialize();
 
 		/* set mviewer behavior specific to problem inputs */

@@ -692,7 +692,8 @@ sub FieldHTML {
 	}
 
 	if ($edit) {
-		$inputType = CGI::input({
+		$inputType = $field =~ /_date/ ? CGI::start_div({ class => 'input-group input-group-sm' }) : '';
+		$inputType .= CGI::input({
 			type     => 'text',
 			name     => "$recordType.$recordID.$field",
 			id       => "$recordType.$recordID.${field}_id",
@@ -709,7 +710,7 @@ sub FieldHTML {
 			)
 			: ()
 		});
-
+		$inputType .= $field =~ /_date/ ? CGI::end_div() : '';
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys

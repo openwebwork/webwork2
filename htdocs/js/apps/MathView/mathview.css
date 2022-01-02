@@ -8,17 +8,6 @@
 	height : 60px;
 }
 
-.mv-container.input-append input {
-	border-top-right-radius: 0;
-	border-bottom-right-radius: 0;
-	border-right: 0;
-}
-
-.mv-container.input-append .codeshard-btn {
-	border-top-left-radius: 0;
-	border-bottom-left-radius: 0;
-}
-
 .mv-container .popover .tab-content {
 	height: 145px;
 	margin-top: 20px;

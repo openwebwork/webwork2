@@ -1406,14 +1406,17 @@ sub import_form {
 			),
 			CGI::div(
 				{ class => 'col-auto' },
-				CGI::textfield({
-					id                     => 'import_date_shift',
-					name                   => 'action.import.start.date',
-					size                   => '27',
-					value                  => $actionParams{'action.import.start.date'}[0] || '',
-					class                  => 'form-control form-control-sm',
-					data_enable_datepicker => $ce->{options}{useDateTimePicker}
-				})
+				CGI::div(
+					{ class => 'input-group input-group-sm' },
+					CGI::textfield({
+						id                     => 'import_date_shift',
+						name                   => 'action.import.start.date',
+						size                   => '27',
+						value                  => $actionParams{'action.import.start.date'}[0] || '',
+						class                  => 'form-control',
+						data_enable_datepicker => $ce->{options}{useDateTimePicker}
+					})
+				)
 			)
 		),
 		$authz->hasPermissions($user, 'assign_problem_sets') ? CGI::div(
@@ -2618,18 +2621,21 @@ sub fieldEditHTML {
 	}
 
 	if ($type eq "number" || $type eq "text") {
-		return CGI::input({
-			type  => "text",
-			name  => $fieldName,
-			id    => "${fieldName}_id",
-			value => $value,
-			size  => $size,
-			class => 'form-control form-control-sm w-auto ' . ($fieldName =~ /\.open_date/ ? " datepicker-group" : ""),
-			placeholder => $fieldName =~ /\.(open_date|due_date|answer_date)/
-			? $self->r->maketext("None Specified")
-			: "",
-			data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker}
-		});
+		return CGI::div(
+			{ class => 'input-group input-group-sm flex-nowrap' },
+			CGI::input({
+				type        => "text",
+				name        => $fieldName,
+				id          => "${fieldName}_id",
+				value       => $value,
+				size        => $size,
+				class       => 'form-control w-auto ' . ($fieldName =~ /\.open_date/ ? " datepicker-group" : ""),
+				placeholder => $fieldName =~ /\.(open_date|due_date|answer_date)/
+					? $self->r->maketext("None Specified")
+					: "",
+				data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker}
+			})
+		);
 	}
 
 	if ($type eq "filelist") {

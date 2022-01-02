@@ -759,10 +759,6 @@ input.changed[type=text] { /* orange */
 	input[name=add_n_problems] {
 		flex-basis: 50px;
 	}
-
-	.input-append {
-		width: 100%;
-	}
 }
 
 #psd_list {
@@ -904,25 +900,8 @@ span {
 }
 
 /* Problem set list */
-.set_table .input-append .form-control-sm {
+.set_table .input-group .form-control {
 	max-width: 11rem;
-}
-
-/* Date picker */
-.input-append {
-	white-space: nowrap;
-	display: inline-flex;
-
-	input {
-		border-top-right-radius: 0;
-		border-bottom-right-radius: 0;
-		border-right: 0;
-	}
-
-	.ui-datepicker-trigger {
-		border-top-left-radius: 0;
-		border-bottom-left-radius: 0;
-	}
 }
 
 /* Problem graders */

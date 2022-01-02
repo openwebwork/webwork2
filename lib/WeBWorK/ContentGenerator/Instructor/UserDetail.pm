@@ -528,21 +528,24 @@ sub DBFieldTable {
 			})
 			: '',
 			defined $UserRecord
-			? (CGI::input({
-				name     => "$recordType.$recordID.$field",
-				id       => "$recordType.$recordID.${field}_id",
-				type     => 'text',
-				value    => $userValue ? $self->formatDateTime($userValue, '', '%m/%d/%Y at %I:%M%P') : '',
-				onchange =>
-					qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
-				onkeyup =>
-					qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
-				placeholder => x('None Specified'),
-				onblur      =>
-					qq{if (this.value == '') \$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked',false);},
-				class => 'form-control form-control-sm w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
-				data_enable_datepicker => $ce->{options}{useDateTimePicker}
-			}))
+			? CGI::div(
+				{ class => 'input-group input-group-sm flex-nowrap' },
+				CGI::input({
+					name     => "$recordType.$recordID.$field",
+					id       => "$recordType.$recordID.${field}_id",
+					type     => 'text',
+					value    => $userValue ? $self->formatDateTime($userValue, '', '%m/%d/%Y at %I:%M%P') : '',
+					onchange =>
+						qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
+					onkeyup =>
+						qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
+						placeholder => x('None Specified'),
+					onblur      =>
+						qq{if (this.value == '') \$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked',false);},
+					class => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+					data_enable_datepicker => $ce->{options}{useDateTimePicker}
+				})
+			)
 			: '',
 			$self->formatDateTime($globalValue, '', '%m/%d/%Y at %I:%M%P'),
 			];
