@@ -945,25 +945,6 @@ sub write_log_entry {
 
 	my ($remote_host, $remote_port);
 
-	my $APACHE24 = 0;
-	# If its apache 2.4 then it has to also mod perl 2.0 or better
-	my $version;
-
-	# check to see if the version is manually defined
-	if (defined($ce->{server_apache_version})
-		&& $ce->{server_apache_version})
-	{
-		$version = $ce->{server_apache_version};
-		# otherwise try and get it from the banner
-	} elsif (Apache2::ServerUtil::get_server_banner() =~ m:^Apache/(\d\.\d+):) {
-		$version = $1;
-	}
-
-	if ($version) {
-		$APACHE24 = version->parse($version) >= version->parse('2.4.0');
-	}
-
-	# If its apache 2.4 then the API has changed
 	my $connection;
 	my $user_agent;
 	eval {$connection = $r->connection};
@@ -973,13 +954,8 @@ sub write_log_entry {
 		$remote_port = "UNKNOWN" unless defined $remote_port;
 		$user_agent  = "UNKNOWN";
 	} else {
-		if ($APACHE24) {
-			$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
-			$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
-		} else {
-			$remote_host = $r->connection->remote_addr->ip_get || "UNKNOWN";
-			$remote_port = $r->connection->remote_addr->port   || "UNKNOWN";
-		}
+		$remote_host = $r->connection->client_addr->ip_get || "UNKNOWN";
+		$remote_port = $r->connection->client_addr->port   || "UNKNOWN";
 
 		$user_agent = $r->headers_in->{"User-Agent"};
 	}

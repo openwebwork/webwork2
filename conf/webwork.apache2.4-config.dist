@@ -22,10 +22,6 @@
 # Customize the variable $webwork_dir below to match the location of your
 # WeBWorK installation.
 #
-# ATTENTION APACHE 2.2 USERS: There is a bug in mod_perl 2.0.2 that prevents the
-#                             FollowSymlinksOption from working when specified
-#                             in a <Perl> section. See below for workaround.
-
 
 # Uncomment the ScriptAliasMatch to allow access to show-source.cgi
 # This allows the "show source" button to work for demonstration "courses"
