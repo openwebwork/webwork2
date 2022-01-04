@@ -65,9 +65,15 @@
 	$('#psd_render_all').on('click', async function (event) {
 		event.preventDefault();
 		Object.keys(collapsibles).forEach((row) => collapsibles[row].show());
-		var renderAreas = $('.psr_render_area');
-		for (var renderArea of renderAreas) {
-			$(renderArea).html('Loading Please Wait...');
+		document.querySelectorAll('li.psd_list_row').forEach((nest) => {
+			nest.classList.remove('mjs-nestedSortable-collapsed');
+			nest.classList.add('mjs-nestedSortable-expanded');
+		});
+		const renderAreas = document.querySelectorAll('.psr_render_area');
+		for (const renderArea of renderAreas) {
+			renderArea.innerHTML = '<div class="alert alert-success p-1 mt-2">Loading Please Wait...</div>';
+		}
+		for (const renderArea of renderAreas) {
 			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
 		}
 	});
@@ -222,7 +228,7 @@
 			};
 
 			if (!(ro.userID && ro.courseID && ro.session_key)) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
 					.text("Missing hidden credentials: user, session_key, courseID"));
 				resolve();
 				return;
@@ -241,7 +247,7 @@
 			}
 
 			if (ro.sourceFilePath.startsWith('group')) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0'})
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2'})
 					.text("Problem source is drawn from a grouping set."));
 				resolve();
 				return;
@@ -276,7 +282,7 @@
 			}).done(function (data) {
 				// Give nicer file not found error
 				if (/this problem file was empty/i.test(data)) {
-					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
+					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
 						.text('No Such File or Directory!'));
 					resolve();
 					return;
@@ -284,7 +290,7 @@
 				// Give nicer session timeout error
 				if (/Can\'t authenticate -- session may have timed out/i.test(data) ||
 					/Webservice.pm: Error when trying to authenticate./i.test(data)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
 						.text("Can't authenticate -- session may have timed out."));
 					resolve();
 					return;
@@ -292,7 +298,7 @@
 				// Give nicer problem rendering error
 				if (/error caught by translator while processing problem/i.test(data) ||
 					/error message for command: renderproblem/i.test(data)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
+					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
 						.text('There was an error rendering this problem!'));
 					resolve();
 					return;
@@ -305,7 +311,7 @@
 				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
 				iframe[0].addEventListener('load', function() { resolve(); });
 			}).fail(function (data) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-error p-1 mb-0' })
+				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
 					.text(basicWebserviceURL + ': ' + data.statusText));
 				resolve();
 			});
