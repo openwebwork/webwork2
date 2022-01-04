@@ -411,6 +411,7 @@ sub body {
 
 	if (@problemNumbers) {
 		# This table contains a summary, a caption, and scope variables for the columns.
+		print CGI::div({ class => 'table-responsive' });
 		print CGI::start_table({
 				class => "problem_set_table table caption-top font-sm",
 				summary => $r->maketext("This table shows the problems that are in this problem set.  " .
@@ -455,6 +456,7 @@ sub body {
 
 		print CGI::end_tbody();
 		print CGI::end_table();
+		print CGI::end_div();
 	} else {
 		print CGI::p($r->maketext("This homework set contains no problems."));
 	}
@@ -522,12 +524,15 @@ sub problemListRow($$$$$) {
 	}
 
 	# if the problem is trestricted we show that it exists but its greyed out
-	if ($isJitarSet && !$authz->hasPermissions($problem->user_id, "view_unopened_sets") &&
-		is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID)) {
-		$interactive = CGI::span({class=>$linkClasses." disabled-problem"}, $r->maketext("Problem [_1]", $problemNumber));
+	if ($isJitarSet
+		&& !$authz->hasPermissions($problem->user_id, "view_unopened_sets")
+		&& is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID))
+	{
+		$interactive = CGI::span({ class => $linkClasses . " disabled-problem text-nowrap" },
+			$r->maketext("Problem [_1]", $problemNumber));
 	} else {
-		$interactive = CGI::a({-href=>$interactiveURL, -class=>$linkClasses}, $r->maketext("Problem [_1]", $problemNumber));
-
+		$interactive = CGI::a({ href => $interactiveURL, class => $linkClasses . " text-nowrap" },
+			$r->maketext("Problem [_1]", $problemNumber));
 	}
 
 	my $attempts = $problem->num_correct + $problem->num_incorrect;
