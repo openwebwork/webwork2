@@ -804,13 +804,13 @@ input.changed[type=text] { /* orange */
 }
 
 .psd_list_row {
-	&.mjs-nestedSortable-collapsed > div > div > div > div > span.pdr_collapse:after {
+	&.mjs-nestedSortable-collapsed > div > div > div > span.pdr_collapse:after {
 		font-family: "Font Awesome 5 Free";
 		font-weight: 900;
 		content: '\f054';
 	}
 
-	&.mjs-nestedSortable-expanded > div > div > div > div > span.pdr_collapse:after {
+	&.mjs-nestedSortable-expanded > div > div > div > span.pdr_collapse:after {
 		font-family: "Font Awesome 5 Free";
 		font-weight: 900;
 		content: '\f078';
