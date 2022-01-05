@@ -5,7 +5,8 @@
     "scripts": {
         "generate-css": "sass --style compressed --no-source-map themes js/apps",
         "sass-watch": "sass --watch themes js/apps",
-        "prepare": "npm run generate-css"
+        "prepare": "npm run generate-css",
+        "postprepare": "npx postcss ./**/*.css --use autoprefixer --replace"
     },
     "repository": {
         "type": "git",
@@ -13,6 +14,7 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "5.15.2",
+        "autoprefixer": "^10.4.1",
         "bootstrap": "^5.1.3",
         "codemirror": "^5.14.3",
         "iframe-resizer": "^4.3.1",
@@ -21,6 +23,8 @@
         "jquery-ui-themes": "1.12.0",
         "mathjax": "^3.1.2",
         "nestedSortable": "^1.3.4",
+        "postcss": "^8.4.5",
+        "postcss-cli": "^9.1.0",
         "sass": "^1.44.0"
     }
 }
