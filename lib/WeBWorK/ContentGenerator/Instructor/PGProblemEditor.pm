@@ -505,11 +505,11 @@ sub body {
 			tooltip => 'Documentation from source code for PG modules and macro files. Often the most up-to-date information.',
 		}, {
 			#'http://demo.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',
-			label   => $r->maketext('PGLab'),
-			url     => $ce->{webworkURLs}{PGLabHelpURL},
-			target  => 'PGLab',
-			tooltip => 'Test snippets of PG code in interactive lab.  This is a good way to learn the PG language.',
-		}, {
+		# 	label   => $r->maketext('PGLab'),
+		# 	url     => $ce->{webworkURLs}{PGLabHelpURL},
+		# 	target  => 'PGLab',
+		# 	tooltip => 'Test snippets of PG code in interactive lab.  This is a good way to learn the PG language.',
+		# }, {
 			#'https://courses1.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
 			label   => $r->maketext('PGML'),
 			url     => $ce->{webworkURLs}{PGMLHelpURL},
