@@ -181,8 +181,7 @@ window.answerQuills = {};
 					result.attr('href',
 						"javascript:void(window.answerQuills['" + answerLabel + "'].textarea.focus())");
 				}
-			}
-			);
+			});
 		}
 
 		window.answerQuills[answerLabel] = answerQuill;
