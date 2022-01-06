@@ -3,12 +3,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/bin/wwdb_upgrade,v 1.17 2007/08/13 22:59:50 sh002i Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -20,12 +20,15 @@ use warnings;
 use Getopt::Std;
 use Data::Dumper;
 
+my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils::CourseIntegrityCheck;
 use WeBWorK;
@@ -44,7 +47,7 @@ my $courseName = "tmp_course";
 
 my $ce = new WeBWorK::CourseEnvironment(
                {webwork_dir=>$ENV{WEBWORK_ROOT},
-                courseName=> $courseName               
+                courseName=> $courseName
                });
 
 
