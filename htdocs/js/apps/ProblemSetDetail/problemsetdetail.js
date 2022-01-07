@@ -43,6 +43,24 @@
 		});
 	});
 
+	// Set up the tooltips for the button that expands/contracts details.
+	document.querySelectorAll('.pdr_detail_collapse').forEach((button) => {
+		const options = { title: button.dataset.collapseText, placement: 'top', offset: [-20, 0], fallbackPlacements: [] };
+		let tooltip = new bootstrap.Tooltip(button, options);
+		console.log(button.dataset.bsTarget.replace('#', ''));
+		const detailCollapse = document.getElementById(button.dataset.bsTarget.replace('#', ''));
+		detailCollapse?.addEventListener('hide.bs.collapse', () => {
+			tooltip.dispose();
+			options.title = button.dataset.expandText;
+			tooltip = new bootstrap.Tooltip(button, options);
+		})
+		detailCollapse?.addEventListener('show.bs.collapse', () => {
+			tooltip.dispose();
+			options.title = button.dataset.collapseText;
+			tooltip = new bootstrap.Tooltip(button, options);
+		})
+	});
+
 	// This is for the render buttons
 	document.querySelectorAll('.pdr_render').forEach((renderButton) => {
 		renderButton.addEventListener('click', (event) => {
@@ -167,29 +185,33 @@
 
 	// This enables and disables problem fields that don't make sense
 	// based on the position of the problem
-	var disable_fields = function () {
+	const disable_fields = function () {
 		var array = $('#psd_list').nestedSortable("toArray");
 
-		$('.psd_list_row').each(function () {
-			var id = this.id.match(/^psd_list_(\d+)/)[1];
+		document.querySelectorAll('.psd_list_row').forEach((row) => {
+			var id = row.id.match(/^psd_list_(\d+)/)[1];
 
 			// If it has children then attempts to open is enabled
-			var has_children = false;
-			for (var i = 0; i < array.length; i++) {
-				if (!has_children && array[i].parent_id == id) {
-					$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').removeClass('hidden');
+			let has_children = false;
+			for (item of array) {
+				if (!has_children && item.parent_id === id) {
+					document.getElementById(`problem.${id}.att_to_open_children_id`)
+						?.closest('tr').classList.remove('d-none');
 					has_children = true;
-				} else if (array[i].id == id) {
+				} else if (item.id == id) {
 					// If its a top level problem counts_for_parent is disabled
-					if (!array[i].parent_id) {
-						$('#problem\\.'+id+'\\.counts_parent_grade_id').parents('tr:first').addClass('hidden');
+					if (!item.parent_id) {
+						document.getElementById(`problem.${id}.counts_parent_grade_id`)
+							?.closest('tr').classList.add('d-none');
 					} else {
-						$('#problem\\.'+id+'\\.counts_parent_grade_id').parents('tr:first').removeClass('hidden');
+						document.getElementById(`problem.${id}.counts_parent_grade_id`)
+							?.closest('tr').classList.remove('d-none');
 					}
 				}
 			}
 			if (!has_children) {
-				$('#problem\\.'+id+'\\.att_to_open_children_id').parents('tr:first').addClass('hidden');
+				document.getElementById(`problem.${id}.att_to_open_children_id`)
+					?.closest('tr').classList.add('d-none');
 			}
 		});
 	}

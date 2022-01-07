@@ -2606,8 +2606,8 @@ sub body {
 				$collapseButton    = CGI::span(
 					{
 						class              => 'pdr_collapse me-2',
-						data_expand_text   => $r->maketext('Expand'),
-						data_collapse_text => $r->maketext('Collapse')
+						data_expand_text   => $r->maketext('Expand Nesting'),
+						data_collapse_text => $r->maketext('Collapse Nesting')
 					},
 					''
 				);
@@ -2714,9 +2714,12 @@ sub body {
 								class => 'col-md-1 col-2 d-flex align-items-center justify-content-end '
 									. 'order-md-last order-2'
 							},
-							qq{<button class="accordion-button" type="button" data-bs-toggle="collapse"
-									data-bs-target="#pdr_details_$problemID" aria-expanded="true"
-									aria-controls="pdr_details_$problemID"></button>}
+							qq{<button class="accordion-button pdr_detail_collapse ps-0 w-auto" type="button"
+									data-bs-toggle="collapse" data-bs-target="#pdr_details_$problemID"
+									aria-expanded="true" aria-controls="pdr_details_$problemID"
+									data-expand-text="${\($r->maketext('Expand Details'))}"
+									data-collapse-text="${\($r->maketext('Collapse Details'))}"
+									></button>}
 						)
 					),
 					CGI::div(
