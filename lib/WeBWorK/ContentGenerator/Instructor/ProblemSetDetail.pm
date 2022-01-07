@@ -2609,7 +2609,7 @@ sub body {
 						data_expand_text   => $r->maketext('Expand Nesting'),
 						data_collapse_text => $r->maketext('Collapse Nesting')
 					},
-					''
+					CGI::i({ class => 'fas fa-chevron-right' }, '')
 				);
 			}
 

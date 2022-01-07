@@ -803,18 +803,12 @@ input.changed[type=text] { /* orange */
 	display: none;
 }
 
-.psd_list_row {
-	&.mjs-nestedSortable-collapsed > div > div > div > span.pdr_collapse:after {
-		font-family: "Font Awesome 5 Free";
-		font-weight: 900;
-		content: '\f054';
-	}
+.pdr_collapse i {
+	transition: 0.3s;
+}
 
-	&.mjs-nestedSortable-expanded > div > div > div > span.pdr_collapse:after {
-		font-family: "Font Awesome 5 Free";
-		font-weight: 900;
-		content: '\f078';
-	}
+.psd_list_row.mjs-nestedSortable-expanded > div > div > div > span.pdr_collapse > i {
+	transform: rotate(90deg);
 }
 
 #psd_list {

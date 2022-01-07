@@ -47,7 +47,6 @@
 	document.querySelectorAll('.pdr_detail_collapse').forEach((button) => {
 		const options = { title: button.dataset.collapseText, placement: 'top', offset: [-20, 0], fallbackPlacements: [] };
 		let tooltip = new bootstrap.Tooltip(button, options);
-		console.log(button.dataset.bsTarget.replace('#', ''));
 		const detailCollapse = document.getElementById(button.dataset.bsTarget.replace('#', ''));
 		detailCollapse?.addEventListener('hide.bs.collapse', () => {
 			tooltip.dispose();
