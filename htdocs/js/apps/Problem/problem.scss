@@ -169,6 +169,15 @@ table.attemptResults {
 		background-color: #ddd;
 	}
 
+	.ArrayLayout {
+		td {
+			border-style: none;
+			border-width: 0px;
+			padding: 0px;
+			background-color: transparent;
+		}
+	}
+
 	.popover {
 		max-width: 100%;
 	}
