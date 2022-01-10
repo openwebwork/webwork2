@@ -2606,8 +2606,8 @@ sub body {
 				$collapseButton    = CGI::span(
 					{
 						class              => 'pdr_collapse me-2',
-						data_expand_text   => $r->maketext('Expand Nesting'),
-						data_collapse_text => $r->maketext('Collapse Nesting')
+						data_expand_text   => $r->maketext('Expand Nested Problems'),
+						data_collapse_text => $r->maketext('Collapse Nested Problems')
 					},
 					CGI::i({ class => 'fas fa-chevron-right' }, '')
 				);
@@ -2629,8 +2629,8 @@ sub body {
 								CGI::span({ class => 'pdr_problem_number' }, $problemNumber) . ' ',
 								$forUsers ? '' : CGI::i(
 									{
-										class      => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
-										data_title => $r->maketext('Move')
+										class         => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
+										data_bs_title => $r->maketext('Move')
 									},
 									''
 								)
@@ -2717,8 +2717,8 @@ sub body {
 							qq{<button class="accordion-button pdr_detail_collapse ps-0 w-auto" type="button"
 									data-bs-toggle="collapse" data-bs-target="#pdr_details_$problemID"
 									aria-expanded="true" aria-controls="pdr_details_$problemID"
-									data-expand-text="${\($r->maketext('Expand Details'))}"
-									data-collapse-text="${\($r->maketext('Collapse Details'))}"
+									data-expand-text="${\($r->maketext('Expand Problem Details'))}"
+									data-collapse-text="${\($r->maketext('Collapse Problem Details'))}"
 									></button>}
 						)
 					),
