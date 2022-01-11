@@ -757,8 +757,12 @@ sub filter_form {
 					width         => '50',
 					aria_required => 'true',
 					class         => 'form-control form-control-sm'
-				}),
+				})
 			)
+		),
+		CGI::div(
+			{ id => 'filter_err_msg', class => 'alert alert-danger p-1 mb-2 d-inline-flex d-none' },
+			$r->maketext('Please enter in a value to match in the filter field.')
 		)
 	);
 }
