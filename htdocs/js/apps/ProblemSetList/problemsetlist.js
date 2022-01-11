@@ -26,4 +26,38 @@
 
 	if (filter_select) filterElementToggle();
 	filter_select?.addEventListener('change', filterElementToggle);
+
+	// This will make the popup menu alternate between a single selection and a multiple selection menu.
+	const importAmtSelect = document.getElementById('import_amt_select');
+	if (importAmtSelect) {
+		importAmtSelect.addEventListener('change', () => {
+			const numSelect = document.problemsetlist['action.import.number'];
+			const number = parseInt(numSelect.options[numSelect.selectedIndex].value);
+			document.problemsetlist['action.import.source'].size = number;
+			document.problemsetlist['action.import.source'].multiple = number > 1 ? true : false;
+			document.problemsetlist['action.import.name'].value = number > 1 ? '(taken from filenames)' : '';
+			document.problemsetlist['action.import.name'].readOnly = number > 1 ? true : false;
+			document.problemsetlist['action.import.name'].disabled = number > 1 ? true : false;
+		});
+	}
+
+	// Initialize the date/time picker for the import form.
+	const importDateShift = document.getElementById('import_date_shift');
+	if (importDateShift) {
+		flatpickr(importDateShift.parentNode, {
+			allowInput: true,
+			enableTime: true,
+			minuteIncrement: 1,
+			dateFormat: 'm/d/Y at h:iK',
+			clickOpens: false,
+			disableMobile: true,
+			wrap: true,
+			plugins: [
+				new confirmDatePlugin({
+					confirmText: importDateShift.dataset.doneText,
+					showAlways: true, theme: 'dark'
+				})
+			],
+		});
+	}
 })();

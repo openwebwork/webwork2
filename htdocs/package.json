@@ -16,6 +16,7 @@
         "@fortawesome/fontawesome-free": "5.15.2",
         "bootstrap": "^5.1.3",
         "codemirror": "^5.14.3",
+        "flatpickr": "^4.6.9",
         "iframe-resizer": "^4.3.1",
         "jquery": "3.5.1",
         "jquery-ui-dist": "1.12.1",

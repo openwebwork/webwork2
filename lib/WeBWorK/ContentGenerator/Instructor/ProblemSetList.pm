@@ -165,22 +165,22 @@ use constant  FIELD_PROPERTIES => {
 		access => "readonly",
 	},
 	open_date => {
-		type => "text",
+		type => "date",
 		size => 22,
 		access => "readwrite",
 	},
-        reduced_scoring_date => {
-		type => "text",
+	reduced_scoring_date => {
+		type => "date",
 		size => 22,
 		access => "readwrite",
 	},
 	due_date => {
-		type => "text",
+		type => "date",
 		size => 22,
 		access => "readwrite",
 	},
 	answer_date => {
-		type => "text",
+		type => "date",
 		size => 22,
 		access => "readwrite",
 	},
@@ -1411,15 +1411,21 @@ sub import_form {
 			CGI::div(
 				{ class => 'col-auto' },
 				CGI::div(
-					{ class => 'input-group input-group-sm' },
+					{ class => 'input-group input-group-sm flatpickr' },
 					CGI::textfield({
 						id                     => 'import_date_shift',
 						name                   => 'action.import.start.date',
 						size                   => '27',
 						value                  => $actionParams{'action.import.start.date'}[0] || '',
 						class                  => 'form-control',
-						data_enable_datepicker => $ce->{options}{useDateTimePicker}
-					})
+						data_enable_datepicker => $ce->{options}{useDateTimePicker},
+						data_input             => undef,
+						data_done_text         => $r->maketext('Done')
+					}),
+					CGI::a(
+						{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
+						CGI::i({ class => 'fas fa-calendar-alt' }, '')
+					)
 				)
 			)
 		),
@@ -2624,21 +2630,38 @@ sub fieldEditHTML {
 		return $value;
 	}
 
-	if ($type eq "number" || $type eq "text") {
+	if ($type eq 'number' || $type eq 'text') {
 		return CGI::div(
 			{ class => 'input-group input-group-sm flex-nowrap' },
 			CGI::input({
-				type        => "text",
+				type  => 'text',
+				name  => $fieldName,
+				id    => "${fieldName}_id",
+				value => $value,
+				size  => $size,
+				class => 'form-control w-auto'
+			})
+		);
+	}
+
+	if ($type eq 'date') {
+		return CGI::div(
+			{ class => 'input-group input-group-sm flex-nowrap flatpickr' },
+			CGI::textfield({
 				name        => $fieldName,
 				id          => "${fieldName}_id",
 				value       => $value,
 				size        => $size,
-				class       => 'form-control w-auto ' . ($fieldName =~ /\.open_date/ ? " datepicker-group" : ""),
-				placeholder => $fieldName =~ /\.(open_date|due_date|answer_date)/
-					? $self->r->maketext("None Specified")
-					: "",
-				data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker}
-			})
+				class       => 'form-control w-auto ' . ($fieldName =~ /\.open_date/ ? ' datepicker-group' : ''),
+				placeholder => $self->r->maketext("None Specified"),
+				data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker},
+				data_input             => undef,
+				data_done_text         => $self->r->maketext('Done')
+			}),
+			CGI::a(
+				{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
+				CGI::i({ class => 'fas fa-calendar-alt' }, '')
+			)
 		);
 	}
 
@@ -2971,19 +2994,23 @@ sub output_jquery_ui{
 }
 
 sub output_JS {
-	my $self = shift;
+	my $self     = shift;
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	# Print javaScript and style for dateTimePicker
-	print CGI::Link({ rel => "stylesheet",  href => "$site_url/css/jquery-ui-timepicker-addon.css" });
-	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/DatePicker/datepicker.css" });
-	print CGI::script({ src => "$site_url/js/apps/DatePicker/jquery-ui-timepicker-addon.js", defer => undef }, "");
-	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef}, "");
+	# Print javascript and style for the flatpickr date/time picker.
+	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/flatpickr.min.css" });
+	print CGI::Link(
+		{ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css" });
+	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/themes/dark.css" });
+	print CGI::script({ src => "$site_url/node_modules/flatpickr/dist/flatpickr.min.js", defer => undef }, '');
+	print CGI::script(
+		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef }, '');
 
-	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => undef }, "");
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js",         defer => undef }, "");
 	print CGI::script({ src => "$site_url/js/apps/ProblemSetList/problemsetlist.js", defer => undef }, "");
-	print CGI::script({ src => "$site_url/js/apps/ShowHide/show_hide.js", defer => undef }, '');
-	print CGI::script({ src => "$site_url/js/apps/SelectAll/selectall.js", defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/ShowHide/show_hide.js",            defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/SelectAll/selectall.js",           defer => undef }, '');
 
 	return "";
 }
