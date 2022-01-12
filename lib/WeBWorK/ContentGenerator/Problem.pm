@@ -2200,16 +2200,6 @@ sub output_summary{
 	}
     }
 
-
-	if (!$previewAnswers && ($checkAnswers || $showPartialCorrectAnswers)) {
-		# Only color answers if not previewing and when partialCorrectAnswers is set or when
-		# checkAnswers is submitted.
-		print CGI::start_script({type=>"text/javascript"}),
-			"\$(function () {color_inputs([",
-			join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],[",
-			join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "])});",
-			CGI::end_script();
-	}
 	return "";
 }
 
@@ -2400,7 +2390,7 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/InputColor/color.js", defer => undef }, '');
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();

@@ -36,7 +36,6 @@ $json_output->{head_part100_AVI} = [
 $json_output->{head_part200_AVI} = [
 	"/webwork2_files/node_modules/jquery/dist/jquery.min.js",
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
-	"/webwork2_files/js/apps/InputColor/color.js",
 	"/webwork2_files/js/apps/Base64/Base64.js",
 	"/webwork2_files/js/vendor/underscore/underscore.js",
 	"/webwork2_files/js/apps/Knowls/knowl.js",
@@ -51,6 +50,7 @@ $json_output->{head_part201_AVI} = [
 	"/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
 	"/webwork2_files/mathjax/es5/tex-chtml.js",
 	'$themeDir/math4/math4.js',
+	"/webwork2_files/js/apps/InputColor/color.js",
 	"/webwork2_files/js/apps/Problem/problem.js",
 	"/webwork2_files/js/apps/ImageView/imageview.js",
 ];

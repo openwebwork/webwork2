@@ -345,7 +345,6 @@ sub attemptResults {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
-	my $colorAnswers = $showAttemptResults;
 	my $ce = $self->{ce};
 
 	# for color coding the responses.
@@ -390,26 +389,7 @@ sub attemptResults {
 
 	my $answerTemplate = $tbl->answerTemplate;
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
-	push(@{$self->{correct_ids}}, @{$tbl->correct_ids}) if $colorAnswers;
-	push(@{$self->{incorrect_ids}}, @{$tbl->incorrect_ids}) if $colorAnswers;
 	return $answerTemplate;
-}
-
-sub handle_input_colors {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $site_url = $ce->{webworkURLs}{htdocs};
-
-	return if $self->{previewAnswers};  # don't color previewed answers
-
-	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript"}),
-		"color_inputs([",
-	   	join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],\n[",
-		join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "]);",
-		CGI::end_script();
 }
 
 sub get_instructor_comment {
@@ -2177,8 +2157,6 @@ sub body {
 			}
 		}
 
-		$self->handle_input_colors;
-
 		print CGI::div($jumpLinks, "\n");
 		print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 
@@ -2425,6 +2403,9 @@ sub output_JS{
 			print "<!-- $_->{file} is not available in htdocs/ on this server -->\n";
 		}
 	}
+
+	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
+	print CGI::script({ src => "$site_url/js/apps/InputColor/color.js", defer => undef }, '');
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();

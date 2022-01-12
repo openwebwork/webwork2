@@ -154,9 +154,6 @@ use CGI;
 # Object contains display mode
 # Object contains or creates Image generator
 # object returns table
-# object returns color map for answer blanks
-# object returns javaScript for handling the color map
-
 
 sub new {
 	my $class = shift;
@@ -279,7 +276,7 @@ sub formatAnswerRow {
 		$resultString = $self->maketext("[_1]% correct", wwRound(0, $answerScore * 100));
 	}
 	my $attemptResults = CGI::td({ class => $resultStringClass },
-		CGI::a({ href => "javascript:document.getElementById(\"$ans_id\").focus()" }, $self->nbsp($resultString)));
+		CGI::a({ href => '#', data_answer_id => $ans_id }, $self->nbsp($resultString)));
 
 	my $row = join('',
 			  ($self->showAnswerNumbers) ? CGI::td({},$answerNumber):'',
@@ -438,20 +435,6 @@ sub createSummary {
 	return $summary;   # return formatted version of summary in class "attemptResultsSummary" div
 }
 ################################################
-
-
-sub color_answer_blanks {
-	my $self = shift;
-	my $out = join('',
-		CGI::start_script({type=>"text/javascript"}),
-		"\$(function() {color_inputs([",
-	   	join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],\n[",
-		join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}),
-		"])});",
-		CGI::end_script()
-	);
-	return $out;
-}
 
 ############################################
 # utility subroutine -- prevents unwanted line breaks
