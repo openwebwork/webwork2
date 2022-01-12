@@ -57,18 +57,18 @@
 		line-height: 20px;
 	}
 
-	select, input[type=text] {
+	select, input[type=text], input[type=radio] {
 		&.correct {
 			border-color: rgba(81, 153, 81, 0.8); /* green */
 			outline: 0;
-			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(81, 153, 81, 0.6);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px 2px rgba(81, 153, 81, 0.6);
 			color: inherit;
 		}
 
 		&.incorrect {
 			border-color: rgba(191, 84, 84, 0.8); /* red */
 			outline: 0;
-			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(191, 84, 84, 0.6);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px 2px rgba(191, 84, 84, 0.6);
 			color:inherit;
 		}
 	}
@@ -83,22 +83,17 @@
 		&[multipele], &[size] {
 			height: auto;
 		}
-
-		&:focus {
-			outline: thin dotted #333;
-			outline-offset: -2px;
-		}
 	}
 
 	textarea {
 		max-width: 100%;
 	}
 
-	input[type=text], textarea {
+	input[type=text], input[type=radio], textarea, select {
 		&:focus {
 			border-color: rgba(82, 168, 236, 0.8);
 			outline: 0;
-			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px 2px rgba(82, 168, 236, 0.6);
 		}
 	}
 
