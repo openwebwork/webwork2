@@ -102,7 +102,7 @@
 
 	// Set up popovers in the attemptResults table.
 	document.querySelectorAll('table.attemptResults td span.answer-preview').forEach((popover) => {
-		if (popover.dataset.bsContent) new bootstrap.Popover(popover, {trigger: 'click'});
+		if (popover.dataset.bsContent) new bootstrap.Popover(popover, {trigger: 'click', html: true, sanitize: false});
 	});
 
 	// Sets up problems to rescale the image accoring to attr height width and not native height width.

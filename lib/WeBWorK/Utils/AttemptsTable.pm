@@ -470,7 +470,6 @@ sub formatToolTip {
 				data_bs_toggle => "popover",
 				data_bs_content => $answer,
 				data_bs_placement => "bottom",
-				data_bs_html => "true"
 			},
 			$self->nbsp($formattedAnswer))
 	);
