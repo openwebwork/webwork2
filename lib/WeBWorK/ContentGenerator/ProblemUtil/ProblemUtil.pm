@@ -418,7 +418,8 @@ sub process_editorLink{
 
 # output_main_form subroutine.
 
-# prints out the main form for the page.  This particular subroutine also takes in $editorLink and $scoreRecordedMessage as required parameters. Also uses CGI_labeled_input for its input elements for accessibility reasons.  Also prints out the score summary where applicable.
+# prints out the main form for the page.  This particular subroutine also takes in $editorLink and $scoreRecordedMessage
+# as required parameters.  Also prints out the score summary where applicable.
 
 sub output_main_form{
 
