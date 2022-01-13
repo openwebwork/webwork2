@@ -426,7 +426,8 @@
 		var n1 = $('#lastshown').text();
 		var n2 = $('#totalshown').text();
 
-		if($('#mlt' + cnt).text() == 'M') {
+		const mltIcon = document.getElementById(`mlt${cnt}`);
+		if(mltIcon.textContent == 'M') {
 			unshownAreas.show();
 			// Render any problems that were hidden that have not yet been rendered.
 			for (let area of unshownAreas) {
@@ -434,7 +435,6 @@
 				if (iframe[0] && iframe[0].iFrameResizer) iframe[0].iFrameResizer.resize();
 				else await render(area.id.match(/^pgrow(\d+)/)[1]);
 			}
-			const mltIcon = document.getElementById(`mlt${cnt}`);
 			mltIcon.textContent = 'L';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.lessText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
@@ -442,7 +442,6 @@
 			count = -count;
 		} else {
 			unshownAreas.hide();
-			const mltIcon = document.getElementById(`mlt${cnt}`);
 			mltIcon.textContent = 'M';
 			mltIcon.dataset.bsTitle = mltIcon.dataset.moreText;
 			bootstrap.Tooltip.getInstance(mltIcon)?.dispose();
@@ -459,12 +458,6 @@
 			.html(data)
 			.dialog({width:'70%'});
 	}
-
-	// Set up the problem rerandomization buttons.
-	$(".rerandomize_problem_button").on('click', function() {
-		var targetProblem = $(this).data('target-problem');
-		render(targetProblem);
-	});
 
 	// Find all render areas
 	var renderAreas = $('.psr_render_area');
@@ -489,9 +482,30 @@
 	$("input[name=select_all]").on('click', function() { addme('', 'all'); });
 	$("input[name=add_me]").on('click', function() { addme($(this).data('source-file'), 'one'); });
 	$("select[name=local_sets]").on("change", markinset);
-	$("span[name=dont_show]").on('click', function() { delrow($(this).data('row-cnt')); });
-	$(".lb-mlt-parent").on('click', function() {togglemlt($(this).data('mlt-cnt'), $(this).data('mlt-noshow-class'));});
 
-	document.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle]')
+	// This is a convenience method for attaching both a click and keydown handler to spans that are inert by default.
+	const attachEventListeners = (button, handler) => {
+		button.addEventListener('click', handler);
+		button.addEventListener('keydown', (e) => {
+			if (e.key === ' ' || e.key === 'Enter') {
+				e.preventDefault();
+				handler();
+			}
+		});
+	};
+
+	// Set up the problem rerandomization buttons.
+	document.querySelectorAll('.rerandomize_problem_button').forEach((button) =>
+		attachEventListeners(button, () => render(button.dataset.targetProblem)));
+
+	document.querySelectorAll('.dont-show').forEach((button) =>
+		attachEventListeners(button, () => delrow(button.dataset.rowCnt)));
+
+	document.querySelectorAll('.lb-mlt-parent').forEach((button) =>
+		attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass)));
+
+	document.querySelectorAll('.info-button').forEach((popover) => new bootstrap.Popover(popover));
+
+	document.querySelectorAll('.lb-problem-add [data-bs-toggle], .lb-problem-icons [data-bs-toggle=tooltip]')
 		.forEach((el) => new bootstrap.Tooltip(el, { fallbackPlacements: [] }));
 })();

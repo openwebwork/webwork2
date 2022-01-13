@@ -1330,7 +1330,9 @@ sub make_data_row {
 				data_more_text        => $r->maketext('Show [_1] more like this', $numchild),
 				data_bs_title         => $r->maketext('Show [_1] more like this', $numchild),
 				data_bs_toggle        => 'tooltip',
-				data_bs_placement     => 'top'
+				data_bs_placement     => 'top',
+				tabindex              => 0,
+				role                  => 'button'
 			},
 			'M'
 		);
@@ -1355,32 +1357,44 @@ sub make_data_row {
 
 	my $level = 0;
 
-	my $rerand = $isstatic ? '' : CGI::a(
+	my $rerand = $isstatic ? '' : CGI::span(
 		{
 			data_target_problem => $cnt,
 			class               => 'rerandomize_problem_button btn btn-sm btn-secondary',
 			data_bs_title       => $r->maketext('Randomize'),
 			data_bs_toggle      => 'tooltip',
-			data_bs_placement   => 'top'
+			data_bs_placement   => 'top',
+			tabindex            => 0,
+			role                => 'button',
+			aria_label          => 'rerandomize problem'
 		},
-		CGI::i({ class => 'fas fa-random' }, '')
+		CGI::i({ class => 'fas fa-random', aria_hidden => 'true' }, '')
 	);
 	my $MOtag = CGI::span(
 		{ class => 'motag' },
 		$isMO
-		? $self->helpMacro(
-			'UsesMathObjects',
+		? CGI::span(
 			{
-				label => CGI::img({
-					src => '/webwork2_files/images/pi.svg',
-					alt => $r->maketext('Uses Math Objects')
-				}),
-				class             => 'btn btn-sm btn-secondary',
-				data_bs_title     => $r->maketext('Uses Math Objects'),
-				data_bs_toggle    => 'tooltip',
-				data_bs_placement => 'top'
-			}
-			)
+				class           => 'info-button btn btn-sm btn-secondary',
+				title           => $r->maketext('Uses Math Objects'),
+				data_bs_content => $r->maketext(
+					'Some WeBWorK problems are programmed using what are called <i>Math Objects</i>. '
+						. 'These problems are preferred by some people because they '
+						. 'provide a more consistent collection of messages to faulty student '
+						. 'answers, particularly for answers which are way off base.'
+				),
+				data_bs_toggle    => 'popover',
+				data_bs_placement => 'top',
+				data_bs_html      => 'true',
+				data_bs_trigger   => 'hover focus',
+				tabindex          => 0,
+				role              => 'button'
+			},
+			CGI::img({
+				src => $r->ce->{webworkURLs}{htdocs} . '/images/pi.svg',
+				alt => $r->maketext('Uses Math Objects')
+			})
+		)
 		: ''
 	);
 
@@ -1390,14 +1404,76 @@ sub make_data_row {
 	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
 		my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
 		if ($stats->{students_attempted}) {
-			$global_problem_stats =
-				$self->helpMacro("Global_Usage_Data", { label => $r->maketext('GLOBAL Usage') }) . ': '
-				. $stats->{students_attempted} . ', '
-				. $self->helpMacro("Global_Average_Attempts_Data", { label => $r->maketext('Attempts') }) . ': '
-				. wwRound(2, $stats->{average_attempts}) . ', '
-				. $self->helpMacro("Global_Average_Status_Data", { label => $r->maketext('Status') }) . ': '
-				. wwRound(0, 100 * $stats->{average_status})
-				. '%;&nbsp;';
+			$global_problem_stats = CGI::div(
+				{ class => 'd-inline-block font-sm text-nowrap' },
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Global Usage Data'),
+						data_bs_content => $r->maketext(
+							'Global data on problem usage is contributed by many institutions using '
+								. 'WeBWorK all over the world. The Usage figure is the total number of  '
+								. 'individuals who have attemped this problem at least once. A high figure '
+								. 'represents a problem which has been assigned to many students and is  '
+								. 'both popular with instructors and likely bug free.'
+						),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('GLOBAL Usage') . ': '
+				),
+				$stats->{students_attempted} . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Global Attempts'),
+						data_bs_content => $r->maketext(
+							'The Attempts figure is the global average of the number of attempts '
+								. '(both correct and incorrect) individuals take on this problem.  '
+								. 'A high figure may represent a difficult problem.  Note that problems '
+								. 'with multiple parts may have higher average attempts since many students  '
+								. 'will submit an answer to each part before continuing and each such  '
+								. 'submittal counts as an attempt.'
+						),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Attempts') . ': '
+				),
+				wwRound(2, $stats->{average_attempts}) . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Global Status'),
+						data_bs_content => CGI::p($r->maketext(
+							'The Status figure is the global average of the Status '
+								. 'individuals have earned on this problem. The Status is the percentage '
+								. 'correct (from 0% to 100%) recorded for the problem.  A low figure may  '
+								. 'represent a difficult problem.  The Status is often fairly high since  '
+								. 'many students will work on a problem until they get it correct or nearly so.'
+						))
+							. CGI::p({ class => 'mb-0' }, $r->maketext(
+							'Reviewing a problem and looking at both the average Attempts and  '
+								. 'average Status should give instructors valuable information about '
+								. 'the difficulty of the problem.'
+							)),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_html      => 'true',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Status') . ': '
+				),
+				wwRound(0, 100 * $stats->{average_status})
+			);
 		}
 	}
 
@@ -1405,21 +1481,87 @@ sub make_data_row {
 	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
 		my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
 		if ($stats->{students_attempted}) {
-			$local_problem_stats =
-				$self->helpMacro("Local_Usage_Data", { label => $r->maketext('LOCAL Usage') }) . ': '
-				. $stats->{students_attempted} . ', '
-				. $self->helpMacro("Local_Average_Attempts_Data", { label => $r->maketext('Attempts') }) . ': '
-				. wwRound(2, $stats->{average_attempts}) . ', '
-				. $self->helpMacro("Local_Average_Status_Data", { label => $r->maketext('Status') }) . ': '
-				. wwRound(0, 100 * $stats->{average_status})
-				. '%&nbsp;';
+			$local_problem_stats = CGI::div(
+				{ class => 'd-inline-block font-sm text-nowrap' },
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Local Usage Data'),
+						data_bs_content => CGI::p($r->maketext(
+							'Local data on problem usage is generated and maintained by your institution. '
+								. 'The Usage figure is the total number of local '
+								. 'individuals who have attemped this problem at least once. A high figure '
+								. 'represents a problem which has been assigned to many students and is  '
+								. 'both popular with instructors and likely bug free.'
+						))
+							. CGI::p({ class => 'mb-0' }, $r->maketext(
+							'Local data is generated when your systems admin runs the script '
+								. 'update-OPL-statistics.'
+							)),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						data_bs_html      => 'true',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('LOCAL Usage') . ': '
+				),
+				$stats->{students_attempted} . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Local Attempts'),
+						data_bs_content => $r->maketext(
+							'The Attempts figure is the local average of the number of attempts '
+								. '(both correct and incorrect) individuals at your institution take on this problem. '
+								. 'A high figure may represent a difficult problem.  Note that problems '
+								. 'with multiple parts may have higher average attempts since many students  '
+								. 'will submit an answer to each part before continuing and each such  '
+								. 'submittal counts as an attempt.'
+						),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Attempts') . ': '
+				),
+				wwRound(2, $stats->{average_attempts}) . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Local Status'),
+						data_bs_content => CGI::p($r->maketext(
+							'The Status figure is the local average of the Status '
+								. 'individuals at your institution have earned on this problem. The Status is the '
+								. 'percentage correct (from 0% to 100%) recorded for the problem.  A low figure may  '
+								. 'represent a difficult problem.  The Status is often fairly high since  '
+								. 'many students will work on a problem until they get it correct or nearly so.'
+						))
+							. CGI::p({ class => 'mb-0' }, $r->maketext(
+							'Reviewing a problem and looking at both the average Attempts and  '
+								. 'average Status should give instructors valuable information about '
+								. 'the difficulty of the problem.'
+							)),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_html      => 'true',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Status') . ': '
+				),
+				wwRound(0, 100 * $stats->{average_status})
+			);
 		}
 	}
 
 	my $problem_stats = '';
 	if ($global_problem_stats || $local_problem_stats) {
-		$problem_stats =
-			CGI::span({ class => 'lb-problem-stats font-sm' }, $global_problem_stats . $local_problem_stats);
+		$problem_stats = $global_problem_stats . $local_problem_stats;
 	}
 
 	print $mltstart;
@@ -1442,7 +1584,8 @@ sub make_data_row {
 						data_bs_placement => 'top'
 					}),
 				),
-				CGI::div({ class => 'd-flex justify-content-center align-items-center mb-1' }, $problem_stats),
+				CGI::div({ class => 'd-flex flex-wrap align-items-center mb-1 gap-2' },
+					$problem_stats),
 				CGI::div(
 					{ class => 'lb-problem-icons mb-1 d-flex align-items-center' },
 					$MOtag, $mlt, $rerand,
@@ -1450,14 +1593,16 @@ sub make_data_row {
 					$try_link,
 					CGI::span(
 						{
-							name              => 'dont_show',
+							class             => 'dont-show btn btn-sm btn-secondary',
 							data_bs_title     => $r->maketext('Hide this problem'),
 							data_row_cnt      => $cnt,
-							class             => 'btn btn-sm btn-secondary',
 							data_bs_toggle    => 'tooltip',
-							data_bs_placement => 'top'
+							data_bs_placement => 'top',
+							tabindex          => 0,
+							role              => 'button',
+							aria_label        => 'hide this problem'
 						},
-						'X'
+						CGI::i({ class => 'fas fa-times', aria_hidden => 'true' }, '')
 					)
 				)
 			),
