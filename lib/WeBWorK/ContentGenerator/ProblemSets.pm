@@ -343,9 +343,7 @@ sub body {
 	foreach my $set (@sets) {
 		die "set $set not defined" unless $set;
 
-		# Generate the versioned quiz rows, but delay printing them until after the template is printed.  On this pass
-		# the gw_quiz_version_in_progress flag will be set if a quiz is currently in progress, in which case the quiz
-		# begin dialog is disabled for the template.
+		# Generate the versioned quiz rows, but delay printing them until after the template is printed.
 		my @versions;
 		if (defined($gwSetNames{$set->set_id})) {
 			foreach my $vset (@{$vSetTree{$set->set_id}}) {
@@ -362,7 +360,6 @@ sub body {
 				$authz->hasPermissions($user, "view_unopened_sets"), $existVersions, $db);
 		}
 		print $_ for @versions;
-		delete $self->{gw_quiz_version_in_progress};
 	}
 
 	print CGI::end_tbody();
@@ -488,7 +485,6 @@ sub setListRow {
 			} elsif ( time() > $set->due_date() + $self->r->ce->{gatewayGracePeriod} ) {
 				$status = $r->maketext("Over time, closed.");
 			} else {
-				$self->{gw_quiz_version_in_progress} = 1;
 				$status = $self->set_due_msg($set,1);
 			}
 			# we let people go back to old tests
@@ -559,7 +555,6 @@ sub setListRow {
 							class             => 'set-id-tooltip',
 							data_bs_toggle    => 'tooltip',
 							data_bs_placement => 'right',
-							data_open => $setIsOpen && $effectiveUser eq $user && !$self->{gw_quiz_version_in_progress},
 							data_bs_title => $globalSet->description(),
 							href          => $interactiveURL
 						},
@@ -810,15 +805,6 @@ sub restricted_progression_msg {
   }
 
   return $status;
-}
-
-sub output_JS {
-	my $self = shift;
-	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
-
-	print CGI::script({ src => "$site_url/js/apps/ProblemSets/problemsets.js", defer => '' }, "");
-
-	return "";
 }
 
 1;

@@ -452,6 +452,9 @@ sub pre_header_initialize {
 	# should we allow a new version to be created when acting as a user?
 	my $verCreateOK = defined($r->param('createnew_ok')) ? $r->param('createnew_ok') : 0;
 
+	# Has the user confirmed the start of a new version?
+	my $newVerConfirmed = defined($r->param('new_version_confirmed')) ? $r->param('new_version_confirmed') : 0;
+
 	# user checks
 	my $User = $db->getUser($userName);
 	die "record for user $userName (real user) does not exist." unless defined $User;
@@ -719,82 +722,88 @@ sub pre_header_initialize {
 		# if no specific version is requested, we can create a new one if
 		#    need be
 		if (!$requestedVersion) {
-			if (($maxAttempts == -1 ||
-					$totalNumVersions < $maxAttempts)
-				&&
-				($setVersionNumber == 0 ||
-					(
-						($currentNumAttempts>=$maxAttemptsPerVersion
-							||
-							$timeNow >= $set->due_date + $grace)
-						&&
-						(! $versionsPerInterval
-							||
-							$currentNumVersions < $versionsPerInterval)
+			if (
+				($maxAttempts == -1 || $totalNumVersions < $maxAttempts)
+				&& (
+					$setVersionNumber == 0
+					|| (($currentNumAttempts >= $maxAttemptsPerVersion || $timeNow >= $set->due_date + $grace)
+						&& (!$versionsPerInterval || $currentNumVersions < $versionsPerInterval))
+				)
+				&& (
+					$effectiveUserName eq $userName
+					|| (
+						$authz->hasPermissions($userName, "record_answers_when_acting_as_student")
+						|| ($authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student")
+							&& $verCreateOK)
 					)
 				)
-				&&
-				($effectiveUserName eq $userName ||
-					($authz->hasPermissions($userName, "record_answers_when_acting_as_student") ||
-						($authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student") && $verCreateOK)))
+			)
+			{
+				if (!$newVerConfirmed
+					&& $set->version_time_limit
+					&& $effectiveUserName eq $userName
+					&& $self->{assignment_type} ne 'proctored_gateway')
+				{
+					$self->{set} = $set;
+					$self->{confirmStartNewVersion} = 1;
+					return;
+				} else {
+					# assign set, get the right name, version
+					#    number, etc., and redefine the $set
+					#    and $Problem we're working with
+					my $setTmpl = $db->getUserSet($effectiveUserName,$setName);
+					WeBWorK::ContentGenerator::Instructor::assignSetVersionToUser($self, $effectiveUserName, $setTmpl);
+					$setVersionNumber++;
 
-			) {
-				# assign set, get the right name, version
-				#    number, etc., and redefine the $set
-				#    and $Problem we're working with
-				my $setTmpl = $db->getUserSet($effectiveUserName,$setName);
-				WeBWorK::ContentGenerator::Instructor::assignSetVersionToUser($self, $effectiveUserName, $setTmpl);
-				$setVersionNumber++;
+					# get a clean version of the set to save,
+					#    and the merged version to use in the
+					#    rest of the routine
+					my $cleanSet = $db->getSetVersion($effectiveUserName, $setName, $setVersionNumber);
+					$set = $db->getMergedSetVersion($effectiveUserName, $setName, $setVersionNumber);
 
-				# get a clean version of the set to save,
-				#    and the merged version to use in the
-				#    rest of the routine
-				my $cleanSet = $db->getSetVersion($effectiveUserName, $setName, $setVersionNumber);
-				$set = $db->getMergedSetVersion($effectiveUserName, $setName, $setVersionNumber);
+					$Problem = $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionNumber, 1);
 
-				$Problem = $db->getMergedProblemVersion($effectiveUserName, $setName, $setVersionNumber, 1);
+					# because we're creating this on the fly,
+					#    it should be visible
+					$set->visible(1);
+					# set up creation time, open and due dates
+					my $ansOffset = $set->answer_date() - $set->due_date();
+					$set->version_creation_time($timeNow);
+					$set->open_date($timeNow);
+					# figure out the due date, taking into account
+					#    any time limit cap
+					my $dueTime = ($timeLimit == 0 || ($set->time_limit_cap && $timeNow+$timeLimit > $set->due_date))
+						? $set->due_date : $timeNow+$timeLimit;
 
-				# because we're creating this on the fly,
-				#    it should be visible
-				$set->visible(1);
-				# set up creation time, open and due dates
-				my $ansOffset = $set->answer_date() - $set->due_date();
-				$set->version_creation_time($timeNow);
-				$set->open_date($timeNow);
-				# figure out the due date, taking into account
-				#    any time limit cap
-				my $dueTime = ($timeLimit == 0 || ($set->time_limit_cap && $timeNow+$timeLimit > $set->due_date))
-					? $set->due_date : $timeNow+$timeLimit;
+					$set->due_date($dueTime);
+					$set->answer_date($set->due_date + $ansOffset);
+					$set->version_last_attempt_time(0);
 
-				$set->due_date($dueTime);
-				$set->answer_date($set->due_date + $ansOffset);
-				$set->version_last_attempt_time(0);
+					# put this new info into the database.  we
+					#    put back that data which we need for the
+					#    version, and leave blank any information
+					#    that we'd like to inherit from the user
+					#    set or global set.  we set the data which
+					#    determines if a set is open, because we
+					#    don't want the set version to reopen after
+					#    it's complete
+					$cleanSet->version_creation_time($set->version_creation_time);
+					$cleanSet->open_date($set->open_date);
+					$cleanSet->due_date($set->due_date);
+					$cleanSet->answer_date($set->answer_date);
+					$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
+					$cleanSet->version_time_limit($set->version_time_limit);
+					$cleanSet->attempts_per_version($set->attempts_per_version);
+					$cleanSet->assignment_type($set->assignment_type);
+					$db->putSetVersion($cleanSet);
 
-				# put this new info into the database.  we
-				#    put back that data which we need for the
-				#    version, and leave blank any information
-				#    that we'd like to inherit from the user
-				#    set or global set.  we set the data which
-				#    determines if a set is open, because we
-				#    don't want the set version to reopen after
-				#    it's complete
-				$cleanSet->version_creation_time($set->version_creation_time);
-				$cleanSet->open_date($set->open_date);
-				$cleanSet->due_date($set->due_date);
-				$cleanSet->answer_date($set->answer_date);
-				$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
-				$cleanSet->version_time_limit($set->version_time_limit);
-				$cleanSet->attempts_per_version($set->attempts_per_version);
-				$cleanSet->assignment_type($set->assignment_type);
-				$db->putSetVersion($cleanSet);
+					# we have a new set version, so it's open
+					$versionIsOpen = 1;
 
-				# we have a new set version, so it's open
-				$versionIsOpen = 1;
-
-				# also reset the number of attempts for this
-				#    set to zero
-				$currentNumAttempts = 0;
-
+					# also reset the number of attempts for this
+					#    set to zero
+					$currentNumAttempts = 0;
+				}
 			} elsif ($maxAttempts != -1 && $totalNumVersions > $maxAttempts) {
 				$self->{invalidSet} = "No new versions of this assignment are available, " .
 					"because you have already taken the maximum number allowed.";
@@ -1276,6 +1285,11 @@ sub nav {
 	return "";
 }
 
+sub title {
+	my $self = shift;
+	return $self->r->urlpath->arg('setID') =~ s/_/ /gr;
+}
+
 sub body {
 	my $self = shift();
 	my $r = $self->r;
@@ -1324,14 +1338,101 @@ sub body {
 		}
 
 		return CGI::div(
-			{ class => 'ResultsWithError mb-2' },
+			{ class => 'ResultsWithError mb-2 p-3' },
 			CGI::p($r->maketext(
 				"The selected problem set ([_1]) is not a valid set for [_2][_3]:",
 			   	$urlpath->arg("setID"), $effectiveUser, $usernote
 			)),
-			CGI::p($self->{invalidSet}),
+			CGI::p({ class => 'mb-0' }, $self->{invalidSet}),
 			$newlink
 		);
+	}
+
+	if ($self->{confirmStartNewVersion}) {
+		my $seconds = $self->{set}->version_time_limit;
+
+		my $hours = int($seconds / 3600);
+		$seconds %= 3600;
+
+		my $minutes = int($seconds / 60);
+		$seconds %= 60;
+
+		# This is a bit ugly, but there does not seem to be a better way to do this that will work well for translation.
+		# Perhaps seconds could be rounded out and omitted.  Then only the 2nd and last cases below are needed.
+		my $timeText = '';
+		if ($hours && $minutes && $seconds) {
+			$timeText = $r->maketext(
+				'You will have [quant,_1,hour], [quant,_2,minute], and [quant,_3,second] to complete the quiz.',
+				$hours, $minutes, $seconds);
+		} elsif ($hours && $minutes) {
+			$timeText = $r->maketext('You will have [quant,_1,hour] and [quant,_2,minute] to complete the quiz.',
+				$hours, $minutes);
+		} elsif ($minutes && $seconds) {
+			$timeText = $r->maketext('You will have [quant,_1,minute] and [quant,_2,second] to complete the quiz.',
+				$minutes, $seconds);
+		} elsif ($hours && $seconds) {
+			$timeText = $r->maketext('You will have [quant,_1,hour] and [quant,_2,second] to complete the quiz.',
+				$hours, $seconds);
+		} else {
+			# Translation Note: In this case only one of hours, minutes, and seconds is non-zero, so the zero case of
+			# the "quant" will be used for the other two.
+			$timeText =
+				$r->maketext('You will have [quant,_1,hour,hours,][quant,_2,minute,minutes,]'
+					. '[quant,_3,second,seconds,] to complete the quiz.',
+				$hours, $minutes, $seconds);
+		}
+
+		print CGI::div(
+			{ class => 'gwConfirmStart container-fluid' },
+			CGI::div(
+				{ class => 'gwConfirmStart card text-center my-3' },
+				CGI::div(
+					{ class => 'card-header' },
+					CGI::h3({ class => 'mb-0' }, $r->maketext('Confirm Start of Timed Quiz'))
+				),
+				CGI::div(
+					{ class => 'card-body bg-warning bg-opacity-50' },
+					CGI::h5(
+						{ class => 'card-title' },
+						$r->maketext('[_1] is a timed quiz.', $urlpath->arg('setID') =~ s/_/ /gr)
+					),
+					CGI::p({ class => 'card-text' }, $timeText),
+					CGI::p({ class => 'card-text' }, $r->maketext('Click "Begin" below to start.'))
+				),
+				CGI::div(
+					{ class => 'submit-buttons-container card-footer justify-content-evenly' },
+					CGI::a(
+						{
+							class => 'btn btn-secondary',
+							href  => $self->systemLink(
+								$urlpath->newFromModule(
+									'WeBWorK::ContentGenerator::ProblemSets', $r,
+									courseID => $urlpath->arg('courseID')
+								),
+								params => { effectiveUser => $effectiveUser, user => $user }
+							)
+						},
+						$r->maketext('Cancel')
+					),
+					CGI::a(
+						{
+							class => 'btn btn-primary',
+							href  => $self->systemLink(
+								$urlpath->newFromModule(
+									$urlpath->module, $r,
+									courseID => $urlpath->arg('courseID'),
+									setID    => $urlpath->arg("setID")
+								),
+								params => { effectiveUser => $effectiveUser, user => $user, new_version_confirmed => 1 }
+							)
+						},
+						$r->maketext('Begin')
+					)
+				)
+			)
+		);
+
+		return '';
 	}
 
 	my $tmplSet = $self->{tmplSet};
@@ -2144,7 +2245,7 @@ sub body {
 
 				# Initialize the problem graders for the problem.
 				if ($self->{will}{showProblemGrader}) {
-					my $problem_grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader(
+					my $problem_grader = WeBWorK::ContentGenerator::Instructor::SingleProblemGrader->new(
 						$self->r, $pg, $problems[$probOrder[$i]]);
 					$problem_grader->insertGrader;
 				}
