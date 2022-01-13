@@ -499,7 +499,11 @@
 		attachEventListeners(button, () => render(button.dataset.targetProblem)));
 
 	document.querySelectorAll('.dont-show').forEach((button) =>
-		attachEventListeners(button, () => delrow(button.dataset.rowCnt)));
+		attachEventListeners(button, () => {
+			bootstrap.Tooltip.getInstance(button)?.hide();
+			delrow(button.dataset.rowCnt);
+		})
+	);
 
 	document.querySelectorAll('.lb-mlt-parent').forEach((button) =>
 		attachEventListeners(button, () => togglemlt(button.dataset.mltCnt, button.dataset.mltNoshowClass)));
