@@ -587,6 +587,11 @@ sub display_form {
 					-checked => defined($r->param("printStudentAnswers"))? $r->param("printStudentAnswers") : 1, # checked by default
 					-label   => $r->maketext("Student answers"),
 				),
+				CGI::checkbox(
+					-name    => "showComments",
+					-checked => scalar($r->param("showComments")) || 0,
+					-label   => $r->maketext("Comments"),
+				),
 				$canShowCorrectAnswers ? 
 				CGI::checkbox(
 					-name    => "showCorrectAnswers",
@@ -1212,10 +1217,11 @@ sub write_problem_tex {
 	my $versionName = $MergedSet->set_id . 
 		(( $versioned ) ?  ",v" . $MergedSet->version_id : '');
 
-	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
+	my $showCorrectAnswers  = $r->param("showCorrectAnswers")  || 0;
 	my $printStudentAnswers = $r->param("printStudentAnswers") || 0;
-	my $showHints           = $r->param("showHints")          || 0;
-	my $showSolutions       = $r->param("showSolutions")      || 0;
+	my $showHints           = $r->param("showHints")           || 0;
+	my $showSolutions       = $r->param("showSolutions")       || 0;
+	my $showComments        = $r->param("showComments")        || 0;
 
 	unless( ( $authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or
 		  ( time > $MergedSet->answer_date or 
@@ -1377,6 +1383,26 @@ sub write_problem_tex {
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
+	}
+
+	if ($showComments) {
+        my $courseID = $r->urlpath->arg("courseID");
+		my $setID = $MergedProblem->set_id;
+		my $versionID = ref($MergedProblem) =~ /::ProblemVersion/ ? $MergedProblem->version_id : 0;
+		my $studentID = $MergedProblem->user_id;
+		my $problemID = $MergedProblem->problem_id;
+		my $userPastAnswerID = $db->latestProblemPastAnswer($courseID, $studentID,
+			$setID . ($versionID ? ",v$versionID" : ""), $problemID);
+		my $pastAnswer = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
+		my $comment = $pastAnswer && $pastAnswer->comment_string ? $pastAnswer->comment_string : "";
+
+		my $commentMsg = "\\par{\\small{\\it ".
+			$r->maketext("Instructor Feedback:").
+			"}\n".
+			"\\vspace{-\\parskip}\n".
+			"\\begin{verbatim}$comment\\end{verbatim}\n".
+			"\\par\n";
+		print $FH $commentMsg if $comment;
 	}
 	
 	# write the list of correct answers is appropriate; ANSWER_ENTRY_ORDER
