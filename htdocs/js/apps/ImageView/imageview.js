@@ -200,7 +200,7 @@
 					repositionModal(left - (width - initialWidth) / 2, top - (height - initialHeight) / 2);
 				}
 
-				modal.focus();
+				dialog.focus();
 			};
 
 			// Make the dialog draggable

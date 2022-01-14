@@ -154,7 +154,10 @@ window.answerQuills = {};
 				// For gateway quizzes
 				$('input[name=previewAnswers]').trigger('click');
 				// For ww3
-				$('#previewAnswers').trigger('click');
+				const previewButtonId =
+					answerQuill.textarea.closest('[name=problemMainForm]')[0]?.id
+						.replace('problemMainForm', 'previewAnswers');
+				if (previewButtonId) document.getElementById(previewButtonId)?.click();
 			}
 		});
 

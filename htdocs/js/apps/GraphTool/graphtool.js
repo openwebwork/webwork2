@@ -1,3 +1,5 @@
+/* global JXG, bootstrap, $ */
+
 'use strict';
 
 function graphTool(containerId, options) {
@@ -6,7 +8,7 @@ function graphTool(containerId, options) {
 
 	var graphContainer = document.getElementById(containerId);
 	if (getComputedStyle(graphContainer).width == '0px') {
-		setTimeout(() => graphTool(containerId, options), 100);
+		setTimeout(function () { graphTool(containerId, options); }, 100);
 		return;
 	}
 
@@ -80,7 +82,7 @@ function graphTool(containerId, options) {
 	};
 
 	// Merge options that are set by the problem.  Note that this is the last usage of jQuery in this file.
-	if ('JSXGraphOptions' in options) $.extend(true, cfgOptions, cfgOptions, options.JSXGraphOptions);
+	if ('JSXGraphOptions' in options) $.extend(true, cfgOptions, options.JSXGraphOptions);
 
 	function setupBoard() {
 		gt.board = JXG.JSXGraph.initBoard(containerId + '_graph', cfgOptions);
@@ -131,7 +133,7 @@ function graphTool(containerId, options) {
 			});
 		}
 
-		window.addEventListener('resize', function(e) {
+		window.addEventListener('resize', function() {
 			if (gt.board.canvasWidth != graphDiv.offsetWidth - 2 || gt.board.canvasHeight != graphDiv.offsetHeight - 2)
 			{
 				gt.board.resizeContainer(graphDiv.offsetWidth - 2, graphDiv.offsetHeight - 2, true);
@@ -273,7 +275,7 @@ function graphTool(containerId, options) {
 		if ('dashedButton' in gt) gt.dashedButton.disabled = !gt.drawSolid;
 	};
 	GraphObject.prototype.update = function() { };
-	GraphObject.prototype.fillCmp = function(point) { return 1; };
+	GraphObject.prototype.fillCmp = function(/* point */) { return 1; };
 	GraphObject.prototype.remove = function() {
 		Object.values(this.definingPts).forEach(function(obj) {
 			gt.board.removeObject(obj);
@@ -338,10 +340,12 @@ function graphTool(containerId, options) {
 	};
 	Line.strId = 'line';
 	Line.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (points.length < 2) return false;
 		var point1 = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
 		var point2 = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), point1);
@@ -376,10 +380,12 @@ function graphTool(containerId, options) {
 	};
 	Circle.strId = 'circle';
 	Circle.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (points.length < 2) return false;
 		var center = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
 		var point = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), center);
@@ -458,14 +464,17 @@ function graphTool(containerId, options) {
 	};
 	Parabola.strId = 'parabola';
 	Parabola.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (points.length < 2) return false;
 		var vertex = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
 		var point = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), vertex, true);
-		return new gt.graphObjectTypes.parabola(vertex, point, /vertical/.test(string), /solid/.test(string), gt.curveColor);
+		return new gt.graphObjectTypes.parabola(vertex, point,
+			/vertical/.test(string), /solid/.test(string), gt.curveColor);
 	};
 
 	// Fill graph object
@@ -610,10 +619,12 @@ function graphTool(containerId, options) {
 	};
 	Fill.strId = 'fill';
 	Fill.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (!points.length) return false;
 		return new gt.graphObjectTypes.fill(gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1])));
 	};
@@ -762,7 +773,7 @@ function graphTool(containerId, options) {
 		gt.board.update();
 		gt.selectTool.activate();
 	};
-	GenericTool.prototype.updateHighlights = function(coords) { return false; };
+	GenericTool.prototype.updateHighlights = function(/* coords */) { return false; };
 	GenericTool.prototype.removeHighlights = function() {
 		Object.keys(this.hlObjs).forEach(function(obj) {
 			gt.board.removeObject(this[obj]);
@@ -1183,7 +1194,7 @@ function graphTool(containerId, options) {
 		var yesButton = document.createElement('button');
 		yesButton.classList.add('btn', 'btn-primary');
 		yesButton.textContent = 'Yes';
-		yesButton.addEventListener('click', () => { yesAction(); bsModal.hide(); });
+		yesButton.addEventListener('click', function () { yesAction(); bsModal.hide(); });
 
 		var noButton = document.createElement('button');
 		noButton.classList.add('btn', 'btn-primary');
@@ -1198,7 +1209,7 @@ function graphTool(containerId, options) {
 		var bsModal = new bootstrap.Modal(modal);
 		bsModal.show();
 		document.querySelector('.modal-backdrop').style.opacity = '0.2';
-		modal.addEventListener('hidden.bs.modal', () => { bsModal.dispose(); modal.remove(); });
+		modal.addEventListener('hidden.bs.modal', function () { bsModal.dispose(); modal.remove(); });
 	}
 
 	// Delete the selected object.
@@ -1252,7 +1263,7 @@ function graphTool(containerId, options) {
 		gt.solidButton.classList.add('btn', 'btn-light', 'gt-button', 'gt-tool-button', 'gt-solid-tool');
 		gt.solidButton.type = 'button';
 		gt.solidButton.disabled = true;
-		gt.solidButton.addEventListener('click', () => toggleSolidity(gt.solidButton, true));
+		gt.solidButton.addEventListener('click', function () { toggleSolidity(gt.solidButton, true); });
 		solidButtonDiv.append(gt.solidButton);
 		solidDashBox.append(solidButtonDiv);
 
@@ -1263,7 +1274,7 @@ function graphTool(containerId, options) {
 		gt.dashedButton = document.createElement('button');
 		gt.dashedButton.classList.add('btn', 'btn-light', 'gt-button', 'gt-tool-button', 'gt-dashed-tool');
 		gt.dashedButton.type = 'button';
-		gt.dashedButton.addEventListener('click', () => toggleSolidity(gt.dashedButton, false));
+		gt.dashedButton.addEventListener('click', function () { toggleSolidity(gt.dashedButton, false); });
 		dashedButtonDiv.append(gt.dashedButton);
 		solidDashBox.append(dashedButtonDiv);
 		container.append(solidDashBox);
@@ -1305,7 +1316,7 @@ function graphTool(containerId, options) {
 					Object.defineProperty(customTool.prototype, 'constructor',
 						{ value: customTool, enumerable: false, writable: true });
 				} else {
-					customTool = function() {
+					customTool = function(container) {
 						toolObject.initialize.call(this, gt, container);
 					};
 				}
@@ -1387,14 +1398,15 @@ function graphTool(containerId, options) {
 		var tmpIsStatic = gt.isStatic;
 		gt.isStatic = objectsAreStatic;
 		var objectRegexp = /{(.*?)}/g;
-		var objectData;
-		while (objectData = objectRegexp.exec(data)) {
+		var objectData = objectRegexp.exec(data);
+		while (objectData) {
 			var obj = GraphObject.restore(objectData[1]);
 			if (obj !== false)
 			{
 				if (objectsAreStatic) gt.staticObjs.push(obj);
 				else gt.graphedObjs.push(obj);
 			}
+			objectData = objectRegexp.exec(data);
 		}
 		gt.isStatic = tmpIsStatic;
 		gt.updateObjects();
