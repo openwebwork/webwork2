@@ -1391,7 +1391,7 @@ sub write_problem_tex {
 			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans} // "";
 			# alternate itemize bullets disappear without extra newline here...
 			# newline also required after \begin{lstlisting}
-			$stuAnswers .= "\\item\\begin{lstlisting}\n$stuAns\\end{verbatim}\n\n";
+			$stuAnswers .= "\\item\\begin{lstlisting}\n$stuAns\\end{lstlisting}\n\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
