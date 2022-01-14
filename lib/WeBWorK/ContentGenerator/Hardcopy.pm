@@ -1389,7 +1389,9 @@ sub write_problem_tex {
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
 			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans} // "";
-			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
+			# alternate itemize bullets disappear without extra newline here...
+			# newline also required after \begin{lstlisting}
+			$stuAnswers .= "\\item\\begin{lstlisting}\n$stuAns\\end{verbatim}\n\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
@@ -1409,7 +1411,7 @@ sub write_problem_tex {
 			$r->maketext("Instructor Feedback:").
 			"}\n".
 			"\\vspace{-\\parskip}\n".
-			"\\begin{verbatim}$comment\\end{verbatim}\n".
+			"\\begin{lstlisting}\n$comment\\end{lstlisting}\n".
 			"\\par\n";
 		print $FH $commentMsg if $comment;
 	}
