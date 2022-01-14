@@ -1179,10 +1179,9 @@ sub write_problem_tex {
 	my $MergedProblem;
 	if ($problemID) {
 		# a non-zero problem ID was given -- load that problem
-	        # we use $versioned to determine which merging routine to use
+	    # we use $versioned to determine which merging routine to use
 		if ( $versioned ) {
 			$MergedProblem = $db->getMergedProblemVersion($MergedSet->user_id, $MergedSet->set_id, $MergedSet->version_id, $problemID);
-
 		} else {
 			$MergedProblem = $db->getMergedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID); # checked
 		}
@@ -1364,15 +1363,26 @@ sub write_problem_tex {
 	# print the list of student answers if it is requested
 	if (  $printStudentAnswers && 
 	     $MergedProblem->problem_id != 0 && @ans_entry_order ) {
-			my $recScore = $pg->{state}->{recorded_score};
-			my $corrMsg = '';
-			if ( $recScore == 1 ) {
-				$corrMsg = ' '.$r->maketext('(correct)');
-			} elsif ( $recScore == 0 ) {
-				$corrMsg = ' '.$r->maketext('(incorrect)');
+			my $pgScore = $pg->{state}->{recorded_score};
+			my $corrMsg = ' submitted: ';
+			if ( $pgScore == 1 ) {
+				$corrMsg .= $r->maketext('(correct)');
+			} elsif ( $pgScore == 0 ) {
+				$corrMsg .= $r->maketext('(incorrect)');
 			} else {
-				$corrMsg = " ".$r->maketext('(score [_1])',$recScore);
+				$corrMsg .= $r->maketext('(score [_1])',$pgScore);
 			}
+
+			$corrMsg .= "\n \\\\ \n recorded: ";
+			my $recScore = $MergedProblem->status;
+			if ( $recScore == 1 ) {
+				$corrMsg .= $r->maketext('(correct)');
+			} elsif ( $recScore == 0 ) {
+				$corrMsg .= $r->maketext('(incorrect)');
+			} else {
+				$corrMsg .= $r->maketext('(score [_1])',$recScore);
+			}
+
 			my $stuAnswers = "\\par{\\small{\\it ".
 			  $r->maketext("Answer(s) submitted:").
 			  "}\n" .
@@ -1386,13 +1396,12 @@ sub write_problem_tex {
 	}
 
 	if ($showComments) {
-        my $courseID = $r->urlpath->arg("courseID");
-		my $setID = $MergedProblem->set_id;
-		my $versionID = ref($MergedProblem) =~ /::ProblemVersion/ ? $MergedProblem->version_id : 0;
-		my $studentID = $MergedProblem->user_id;
-		my $problemID = $MergedProblem->problem_id;
-		my $userPastAnswerID = $db->latestProblemPastAnswer($courseID, $studentID,
-			$setID . ($versionID ? ",v$versionID" : ""), $problemID);
+		my $userPastAnswerID = $db->latestProblemPastAnswer(
+			$r->urlpath->arg("courseID"), 
+			$MergedProblem->user_id,
+			$versionName, 
+			$MergedProblem->problem_id);
+
 		my $pastAnswer = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
 		my $comment = $pastAnswer && $pastAnswer->comment_string ? $pastAnswer->comment_string : "";
 
