@@ -6,5 +6,5 @@
 	});
 
 	// Prevent problems which are disabled from acting as links
-	$('.problem-list .disabled-problem').parent().addClass('disabled').on('click', (e) => e.preventDefault());
+	$('.problem-list .disabled-problem').addClass('disabled').on('click', (e) => e.preventDefault());
 })();

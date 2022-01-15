@@ -296,37 +296,46 @@ div {
 		border-radius: 5px;
 		margin-bottom: 10px;
 		position: relative;
+		align-items: center;
 	}
 
 	&.correct-progress {
+		color: black;
 		background-color: #8F8; /* same color used as 'correct' */
-		border: 2px solid #00FF00;
+		box-shadow: inset 0 0 2px 1px #00FF00;
 		border-radius: 4px;
 		display: inline-block;
 		box-sizing: border-box;
 		text-align: center;
+		height: 100%;
 	}
 
 	&.incorrect-progress {
+		color: black;
 		background-color: #FF9494; /* same color used as 'incorrect' */
-		border: 2px solid #FF0000;
+		box-shadow: inset 0 0 2px 1px #FF0000;
 		border-radius: 4px;
 		display: inline-block;
 		box-sizing: border-box;
+		height: 100%;
 	}
 
 	&.inprogress-progress {
+		color: black;
 		background-color: #FFFF00; /* yellow */
-		border: 2px solid #FBB117; /* beer border*/
+		box-shadow: inset 0 0 2px 1px #FBB117; /* beer border*/
 		border-radius: 4px;
 		display: inline-block;
 		box-sizing: border-box;
+		height: 100%;
 	}
 
 	&.unattempted-progress {
+		color: black;
 		background-color: transparent;
 		display: inline-block;
 		box-sizing: border-box;
+		height: 100%;
 	}
 }
 
