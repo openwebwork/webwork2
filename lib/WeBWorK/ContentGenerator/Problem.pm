@@ -2350,7 +2350,7 @@ sub output_JS{
         # Javascript and style for knowls
         print qq{
            <script type="text/javascript" src="$site_url/js/vendor/underscore/underscore.js"></script>
-           <script type="text/javascript" src="$site_url/js/apps/Knowl/knowl.js"></script>};
+           <script type="text/javascript" src="$site_url/js/apps/Knowls/knowl.js"></script>};
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
@@ -2411,7 +2411,7 @@ sub output_CSS {
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# Javascript and style for knowls
-	print CGI::Link({ href => "$site_url/js/apps/Knowl/knowlstyle.css", rel => 'stylesheet' });
+	print CGI::Link({ href => "$site_url/js/apps/Knowls/knowl.css", rel => 'stylesheet' });
 
 	#style for mathview
 	if ($self->{will}->{useMathView}) {

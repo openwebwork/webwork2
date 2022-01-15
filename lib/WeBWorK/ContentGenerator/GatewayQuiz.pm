@@ -2405,7 +2405,7 @@ sub output_JS{
 	}
 
 	print CGI::start_script({type=>"text/javascript",
-			src=>"$site_url/js/apps/Knowl/knowl.js"}),CGI::end_script();
+			src=>"$site_url/js/apps/Knowls/knowl.js"}),CGI::end_script();
 
 	# This is for the problem grader
 	if ($self->{will}{showProblemGrader}) {

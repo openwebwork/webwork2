@@ -1708,7 +1708,7 @@ sub output_JS {
 	print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
 	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
 
-	print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/apps/Knowl/knowl.js"></script>};
+	print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/apps/Knowls/knowl.js"></script>};
 
 	print qq!<script src="$webwork_htdocs_url/js/apps/ImageView/imageview.js"></script>!;
 	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
@@ -1740,7 +1740,7 @@ sub output_CSS {
 
 	print qq{<link href="$webwork_htdocs_url/js/apps/ImageView/imageview.css" rel="stylesheet" type="text/css" />};
 
-	print qq{<link href="$webwork_htdocs_url/js/apps/Knowl/knowlstyle.css" rel="stylesheet" type="text/css" />};
+	print qq{<link href="$webwork_htdocs_url/js/apps/Knowls/knowl.css" rel="stylesheet" type="text/css" />};
 
 	return '';
 
