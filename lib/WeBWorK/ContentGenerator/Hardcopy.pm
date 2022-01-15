@@ -1388,10 +1388,10 @@ sub write_problem_tex {
 			  "}\n" .
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
-			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans} // "";
+			my $stuAns = $pg->{answers}{$ansName}{preview_latex_string} || "\\text{no response}";
 			# alternate itemize bullets disappear without extra newline here...
 			# newline also required after \begin{lstlisting}
-			$stuAnswers .= "\\item\\begin{lstlisting}\n$stuAns\\end{lstlisting}\n\n";
+			$stuAnswers .= "\\item\n\$\\displaystyle $stuAns\$\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
@@ -1425,8 +1425,8 @@ sub write_problem_tex {
 	    "\\vspace{-\\parskip}\\begin{itemize}\n";
 		
 		foreach my $ansName (@ans_entry_order) {
-			my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};
-			$correctTeX .= "\\item\\begin{verbatim}$correctAnswer\\end{verbatim}\n";
+			my $correctAnswer = $pg->{answers}{$ansName}{correct_ans_latex_string} || "\\text{".$pg->{answers}{$ansName}{correct_ans}."}";
+			$correctTeX .= "\\item\n\$\\displaystyle $correctAnswer\$\n";
 			# FIXME: What about vectors (where TeX will complain about < and > outside of math mode)?
 		}
 		
