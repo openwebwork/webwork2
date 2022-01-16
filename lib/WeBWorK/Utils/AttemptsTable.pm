@@ -322,7 +322,8 @@ sub answerTemplate {
     	#$self->{essayFlag} = 1;
     }
 	my $answerTemplate = "";
-	$answerTemplate .= CGI::h3($self->maketext("Results for this submission")) if $self->showHeadline;
+	$answerTemplate .= CGI::h3({ class => 'attemptResultsHeader' }, $self->maketext("Results for this submission"))
+		if $self->showHeadline;
 	$answerTemplate .= CGI::table({ class => 'attemptResults table table-sm table-bordered' }, @tableRows);
     ### "results for this submission" is better than "attempt results" for a headline
     $answerTemplate .= ($self->showSummary)? $self->createSummary() : '';
@@ -403,7 +404,7 @@ sub createSummary {
 				$summary .= CGI::div($self->maketext('Some answers will be graded later.'));
 			} else {
 				$summary .=
-					CGI::div({ class => 'ResultsWithError' }, $self->maketext('The answer above is NOT correct.'));
+					CGI::div({ class => 'ResultsWithError mb-2' }, $self->maketext('The answer above is NOT correct.'));
 			}
 		} else {
 			if ($numCorrect + $numEssay == scalar @answerNames) {
