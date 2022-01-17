@@ -1,7 +1,13 @@
 package WebworkSOAP::Classes::Permission;
 
-# _ATTR user_id       $string user_id
-# _ATTR permission    $string permission
+=pod
+
+=begin WSDL
+    _ATTR user_id       $string user_id
+    _ATTR permission    $string permission
+=end WSDL
+
+=cut
 
 sub new {
     my $self = shift;

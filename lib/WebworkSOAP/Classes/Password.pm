@@ -1,7 +1,13 @@
 package WebworkSOAP::Classes::Password;
 
-# _ATTR user_id       $string user_id
-# _ATTR password      $string password
+=pod
+
+=begin WSDL
+    _ATTR user_id       $string user_id
+    _ATTR password      $string password
+=end WSDL
+
+=cut
 
 sub new {
     my $self = shift;
