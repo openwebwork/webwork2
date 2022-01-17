@@ -21,7 +21,7 @@ on_fire,"You're on Fire!",210,one_timer,"default,jitar","Complete 10 problems in
 complete_one_set,"One Set Wonder",401,complete_sets,default,"Get 100% on one homework set.",10,,complete_one_set.at,complete_one_set.png
 complete_five_sets,"High Five",402,complete_sets,default,"Get 100% on five homework sets.",10,5,complete_five_sets.at,complete_five_sets.png
 complete_ten_sets,"One For Each Finger",403,complete_sets,default,"Get 100% on ten homework sets.",10,10,complete_ten_sets.at,complete_ten_sets.png
-complete_twenty_sets,"Mathbox Twenty",403,complete_sets,default,"Get 100% on twenty homework sets.",20,20,complete_twenty_sets.at,complete_twenty_sets.png
+complete_twenty_sets,"Mathbox Twenty",404,complete_sets,default,"Get 100% on twenty homework sets.",20,20,complete_twenty_sets.at,complete_twenty_sets.png
 complete_thirty_sets,"The Long Road",405,complete_sets,default,"Get 100% on thirty homework sets.",20,30,complete_thirty_sets.at,complete_thirty_sets.png
 complete_all_sets,Perfection,406,complete_sets,default,"Get 100% on all homework sets.",30,35,complete_all_sets.at,complete_all_sets.png
 complete_one_problem,"The First Step",501,complete_problems,"default,jitar","Earn 100% on a homework problem.",10,,complete_one_problem.at,complete_one_problem.png

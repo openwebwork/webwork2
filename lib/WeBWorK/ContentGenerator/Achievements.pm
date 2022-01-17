@@ -301,7 +301,11 @@ sub body {
 
 		@achievements = sortAchievements(@achievements);
 		my $previousCategory = $achievements[0]->category;
-
+		my $previousNumber = $achievements[0]->number;
+		my $chainName = $achievements[0]->achievement_id =~ s/^([^_]*_).*$/$1/r;
+		my $chainCount = 0;
+		my $chainStart = 0;
+	
 		#Loop through achievements and
 		foreach my $achievement (@achievements) {
 			#skip the level achievements and only show achievements assigned to user
@@ -313,12 +317,33 @@ sub body {
 			if ($previousCategory ne $achievement->category) {
 			print CGI::br();
 			}
+
+			#setup up chain achievements
+			my $isChain = 1;
+			if (! $achievement->max_counter ||
+				$achievement->max_counter == 0 ||
+				$previousCategory ne $achievement->category ||
+				$previousNumber + 1 != $achievement->number ||
+				$achievement->achievement_id !~ /^$chainName/ )
+			{
+				$isChain = 0;
+				$chainCount = 0;
+				$chainName = $achievement->achievement_id =~ s/^([^_]*_).*$/$1/r;
+			}
+			$previousNumber = $achievement->number;
 			$previousCategory = $achievement->category;
 
 			my $userAchievement = $db->getUserAchievement($userID,$achievement->achievement_id);
 
 			#dont show unearned secret achievements
 			next if ($achievement->category eq 'secret' and not $userAchievement->earned);
+
+			#dont show chain achievements (beyond first)
+			$chainCount++ if ($isChain && !$userAchievement->earned);
+			if ($chainCount == 0) {
+				$chainStart = $userAchievement->earned ? 1 : 0;
+			}
+			next if ($isChain && ($chainCount > 1 || ($chainCount == '1' && $chainStart == '0')));
 
 			#print achievement and associated progress bar (if there is one)
 			print CGI::start_div(
