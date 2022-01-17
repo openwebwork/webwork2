@@ -254,6 +254,8 @@ sub checkForAchievements {
 			$userAchievements->{$achievement_id} = $earned;
 
 			if ($achievement->category eq 'level') {
+				# Store prev_level_points in globalData, used for level progress bar.
+				$globalData->{'prev_level_points'} = $globalUserAchievement->next_level_points;
 				$globalUserAchievement->level_achievement_id($achievement_id);
 				$globalUserAchievement->next_level_points($nextLevelPoints);
 			}

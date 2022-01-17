@@ -72,12 +72,14 @@
        This hash will persist from evaluation to evaluation and, like
        $localData, you can store whatever you like in here.  This data 
        will be accessable from *every* achievement and is unique to the 
-       user.  There are two variables stored in this hash that are 
+       user.  There are three variables stored in this hash that are
        maintained by the system. 
        - $globalData->completeSets : This is the number of sets which 
          the student has earned 100% on
        - $globalData->complete Problems : This is the number of problems 
          which the student has earned 100% on
+       - $globalData->prev_level_points : This is the number of points
+         to reach current level which is used with level progress bar.
        Warning: The achievements are always evaluated in the order they 
        are listed the Instructors achievement editor page.  To make matters
        more complicated, achievements which have already been earned are 

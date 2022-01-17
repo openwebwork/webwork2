@@ -29,7 +29,7 @@ use strict;
 use warnings;
 
 use CGI;
-use WeBWorK::Utils qw( sortAchievements );
+use WeBWorK::Utils qw( sortAchievements thaw_base64 );
 
 sub head {
 	my ($self) = @_;
@@ -182,9 +182,18 @@ sub body {
 		print CGI::h1($achievement->name);
 
 		if ($globalUserAchievements->next_level_points) {
-			my $levelpercentage =
-				int(100 * $globalUserAchievements->achievement_points / $globalUserAchievements->next_level_points);
-			$levelpercentage = $levelpercentage <= 100 ? $levelpercentage : 100;
+
+			# get prev_level_points from globalData frozen_hash in database
+			my $globalData = {};
+			if ($globalUserAchievements->frozen_hash) {
+				$globalData = thaw_base64($globalUserAchievements->frozen_hash);
+			}
+			my $prev_level = ($globalData->{prev_level_points}) ? $globalData->{prev_level_points} : 0;
+			my $level_goal = $globalUserAchievements->next_level_points - $prev_level;
+			my $level_prog = $globalUserAchievements->achievement_points - $prev_level;
+			$level_prog = $level_prog >= 0 ? $level_prog : 0;
+			$level_prog = $level_prog <= $level_goal ? $level_prog : $level_goal;
+			my $levelpercentage = int(100*$level_prog/$level_goal);
 
 			print CGI::start_div({
 				class      => 'levelouterbar',
@@ -193,7 +202,9 @@ sub body {
 			});
 			print CGI::div({ class => 'levelinnerbar', style => "width:$levelpercentage\%" }, '');
 			print CGI::end_div();
+			print CGI::div(CGI::strong($r->maketext('Level Progress:')) . " $level_prog/$level_goal");
 		}
+		print CGI::div(CGI::strong($r->maketext('Total Points:')) . ' ' . $globalUserAchievements->achievement_points);
 		print CGI::end_div();
 		print CGI::end_div();
 	}
