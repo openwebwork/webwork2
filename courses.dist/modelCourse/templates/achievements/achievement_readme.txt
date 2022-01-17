@@ -49,6 +49,16 @@
        DBchapter and DBsection Note:  These values are not super stable and are likely to change
        from problem to problem and year to year
 
+  - $userAchievements: this hash stores all assigned achievements for
+      the current user. The keys are the achievement_id and the values
+      are 0 or 1 for if the achievement has been earned. Changes to this
+      variable will be accessible by achievements down the line in the
+      current evaluation loop, but will not be saved across evaluations.
+      Note: This variable is updated if an achievement is earned,
+      but only achievements further down the evaluation chain will
+      see the update. So when depending on other achievements place
+      make sure they are run first.
+
   - $localData : this is a hash which stores data for this user and 
       achievement (changes to this variable *will* be saved!)
       This hash will persist from evaluation to evaluation.  You can 

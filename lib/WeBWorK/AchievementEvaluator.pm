@@ -100,6 +100,7 @@ sub checkForAchievements {
 	our $nextLevelPoints   = $globalUserAchievement->next_level_points;
 	our $localData         = {};
 	our $globalData        = {};
+	our $userAchievements  = {};
 	our $tags;
 	our @setProblems;
 	our @courseDateTime = (
@@ -120,8 +121,14 @@ sub checkForAchievements {
 
 	#Thaw_Base64 globalData hash
 	if ($globalUserAchievement->frozen_hash) {
-
 		$globalData = thaw_base64($globalUserAchievement->frozen_hash);
+	}
+
+	#Generate hash of user achievements:
+	foreach my $achievement (@achievements) {
+		next unless $achievement->enabled;
+		my $userAchievement = $db->getUserAchievement($user_id, $achievement->achievement_id);
+		$userAchievements->{$achievement->achievement_id} = $userAchievement->earned if $userAchievement;
 	}
 
 	#Update a couple of "standard" variables in globalData hash.
@@ -188,10 +195,11 @@ sub checkForAchievements {
 	# $nextLevelPoints - only should be used by 'level' achievements
 	# $set - the set data
 	# $achievementPoints - the number of achievmeent points
+	# $userAchievements - hash of enabled achievement_id => earned
 	# $tags -this is the tag data associated to the problem from the problem library
 	# @courseDateTime - array of time information in course timezone (sec,min,hour,day,month,year,day_of_week)
 
-	$compartment->share(qw( $problem @setProblems $localData $maxCounter
+	$compartment->share(qw( $problem @setProblems $localData $maxCounter $userAchievements
 		$globalData $counter $nextLevelPoints $set $achievementPoints $tags @courseDateTime));
 
 	#load any preamble code
@@ -241,6 +249,9 @@ sub checkForAchievements {
 		#if we have a new achievement then update achievement points
 		if ($earned) {
 			$userAchievement->earned(1);
+
+			# update userAchievements hash with earned status.
+			$userAchievements->{$achievement_id} = $earned;
 
 			if ($achievement->category eq 'level') {
 				$globalUserAchievement->level_achievement_id($achievement_id);
