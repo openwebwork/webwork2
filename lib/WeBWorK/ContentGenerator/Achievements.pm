@@ -193,12 +193,11 @@ sub body {
 			});
 			print CGI::div({ class => 'levelinnerbar', style => "width:$levelpercentage\%" }, '');
 			print CGI::end_div();
-			print CGI::end_div();
 		}
 		print CGI::end_div();
 		print CGI::end_div();
 	}
-
+	print CGI::end_div();
 
 	#print any items they have if they have items
 	if ($ce->{achievementItemsEnabled} && $self->{achievementItems}) {
