@@ -28,7 +28,6 @@ input[type="text"].codeshard.mq-edit {
 }
 
 .quill-toolbar {
-	box-sizing: border-box;
 	max-height: 95vh;
 	position: fixed;
 	font-size: .75em;
@@ -43,7 +42,7 @@ input[type="text"].codeshard.mq-edit {
 	top: 50%;
 	right: 10px;
 	width: 53px;
-    transform: translateY(-50%);
+	transform: translateY(-50%);
 	z-index: 1001;
 }
 

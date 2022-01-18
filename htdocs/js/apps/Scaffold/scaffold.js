@@ -1,18 +1,33 @@
-window.addEventListener('DOMContentLoaded', function() {
-	var sections = $('.section-div > .accordion-body.collapse');
-	sections.on('show', function(e) {
-		if (e.target != this) return;
-		this.style.display = 'block';
+(() => {
+	const attachListeners = (node) => {
+		node.querySelectorAll('.collapse').forEach((section) => {
+			section.addEventListener('shown.bs.collapse', () => {
+				// Reflow MathQuill answer boxes so that their contents are rendered correctly
+				if (window.answerQuills) {
+					Object.keys(answerQuills).forEach(
+						(quill) => { if (section.querySelector('#' + quill)) answerQuills[quill].mathField.reflow(); }
+					);
+				}
+			});
+		})
+	};
 
-		// Reflow MathQuill answer boxes contained in the section so that their contents are rendered correctly.
-		var section = this;
-		if (window.answerQuills) {
-			Object.keys(answerQuills).forEach(
-				function(quill) { if (section.querySelector('#' + quill)) answerQuills[quill].mathField.reflow(); }
-			);
-		}
+	// Set up any scaffolds already on the page.
+	document.querySelectorAll('.section-div').forEach(attachListeners);
+
+	// Observer that sets up scaffolds.
+	const observer = new MutationObserver((mutationsList) => {
+		mutationsList.forEach((mutation) => {
+			mutation.addedNodes.forEach((node) => {
+				if (node instanceof Element) {
+					if (node.classList.contains('section-div')) attachListeners(node);
+					else node.querySelectorAll('.section-div').forEach(attachListeners);
+				}
+			});
+		});
 	});
+	observer.observe(document.body, { childList: true, subtree: true });
 
-	// Hide the accordion content while collapsed to remove its contents from the tab order.
-	sections.on('hidden', function(e) { if (e.target != this) return; this.style.display = 'none'; });
-});
+	// Stop the mutation observer when the window is closed.
+	window.addEventListener('unload', () => observer.disconnect());
+})();

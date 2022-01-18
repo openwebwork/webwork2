@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSet.pm,v 1.94 2009/11/02 16:54:15 apizer Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -113,8 +112,9 @@ sub nav {
 	#my $problemSetsPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSets",  $r, courseID => $courseID);
 	my $problemSetsPage = $urlpath->parent;
 
-	my @links = ($r->maketext("Homework Sets") , $r->location . $problemSetsPage->path, $r->maketext("Homework Sets"));
-	return $self->navMacro($args, '', @links);
+	my @links = ($r->maketext("Homework Sets"), $r->location . $problemSetsPage->path, $r->maketext("Homework Sets"));
+	return CGI::div({ class => 'row sticky-nav', role => 'navigation', aria_label => 'problem navigation' },
+		CGI::div($self->navMacro($args, '', @links)));
 }
 
 sub title {
@@ -194,7 +194,7 @@ sub siblings {
 
 	print CGI::start_div({class=>"info-box", id=>"fisheye"});
 	print CGI::h2($r->maketext("Sets"));
-	print CGI::start_ul();
+	print CGI::start_ul({ class => 'nav flex-column bg-light' });
 
 	debug("Begin printing sets from listUserSets()");
 	foreach my $setID (@setIDs) {
@@ -202,10 +202,11 @@ sub siblings {
 			courseID => $courseID, setID => $setID);
 		my $pretty_set_id = $setID;
 		$pretty_set_id =~ s/_/ /g;
-		print CGI::li(
+		print CGI::li({ class => 'nav-item' },
 			CGI::a({
 					href => $self->systemLink($setPage),
 					id => $pretty_set_id,
+					class => 'nav-link'
 				}, $pretty_set_id)
 		) ;
 	}
@@ -305,13 +306,20 @@ sub info {
 	}
 
 	if ($editorURL) {
-		print CGI::h2({}, $r->maketext("Set Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[Edit~]")));
+		print CGI::h2(
+			{ class => 'd-flex align-items-center justify-content-center' },
+			$r->maketext("Set Info"),
+			CGI::a(
+				{ href => $editorURL, target => "WW_Editor", class => 'btn btn-sm btn-info m-1' },
+				$r->maketext("Edit")
+			)
+		);
 	} else {
 		print CGI::h2($r->maketext("Set Info"));
 	}
 
 	if ($pg->{flags}->{error_flag}) {
-		print CGI::div({class=>"ResultsWithError"}, $self->errorOutput($pg->{errors}, $pg->{body_text}));
+		print CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $self->errorOutput($pg->{errors}, $pg->{body_text}));
 	} else {
 		print $pg->{body_text};
 	}
@@ -334,10 +342,16 @@ sub body {
 
 	my $set = $db->getMergedSet($effectiveUser, $setName);  # checked
 
-	if ( $self->{invalidSet} ) {
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p($r->maketext("The selected problem set ([_1]) is not a valid set for [_2]", $setName, $effectiveUser).":"),
-			CGI::p($self->{invalidSet}));
+	if ($self->{invalidSet}) {
+		return CGI::div(
+			{ class => 'alert alert-danger' },
+			CGI::div(
+				{ class => 'mb-3' },
+				$r->maketext("The selected problem set ([_1]) is not a valid set for [_2]", $setName, $effectiveUser)
+					. ":"
+			),
+			CGI::div($self->{invalidSet})
+		);
 	}
 
 	my $isJitarSet = ($set->assignment_type eq 'jitar');
@@ -397,18 +411,23 @@ sub body {
 
 	if (@problemNumbers) {
 		# This table contains a summary, a caption, and scope variables for the columns.
+		print CGI::div({ class => 'table-responsive' });
 		print CGI::start_table({
-				-class=>"problem_set_table problem_table",
-				-summary=>$r->maketext("This table shows the problems that are in this problem set.  The columns from left to right are: name of the problem, current number of attempts made, number of attempts remaining, the point worth, and the completion status.  Click on the link on the name of the problem to take you to the problem page.")
+				class => "problem_set_table table caption-top font-sm",
+				summary => $r->maketext("This table shows the problems that are in this problem set.  " .
+					"The columns from left to right are: name of the problem, current number of attempts made, " .
+					"number of attempts remaining, the point worth, and the completion status.  Click on the " .
+					"link on the name of the problem to take you to the problem page.")
 			});
 		print CGI::caption($r->maketext("Problems"));
-		my $AdjustedStatusPopover = "&nbsp;".CGI::a({
-				class=>'help-popup',
-				href=>'#',
-				'data-content'=>$r->maketext('The adjusted status of a problem is the larger of the problem\'s status and the weighted average of the status of those problems which count towards the parent grade.'),
-				'data-placement'=>'top',
-				'data-toggle'=>'popover'
-			},'&#9072');
+		my $AdjustedStatusPopover = "&nbsp;" . CGI::a({
+				class => 'help-popup',
+				data_bs_content => $r->maketext('The adjusted status of a problem is the larger of the problem\'s ' .
+					'status and the weighted average of the status of those problems which count towards the ' .
+					'parent grade.'),
+				data_bs_placement => 'top',
+				data_bs_toggle => 'popover'
+			}, CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, ""));
 
 		my $thRow = [ CGI::th($r->maketext("Name")),
 			CGI::th($r->maketext("Attempts")),
@@ -416,7 +435,7 @@ sub body {
 			CGI::th($r->maketext("Worth")),
 			CGI::th($r->maketext("Status")) ];
 		if ($isJitarSet) {
-			push @$thRow, CGI::th($r->maketext("Adjusted Status").$AdjustedStatusPopover);
+			push @$thRow, CGI::th($r->maketext("Adjusted Status") . $AdjustedStatusPopover);
 			push @$thRow, CGI::th($r->maketext("Counts for Parent"));
 		}
 
@@ -424,7 +443,8 @@ sub body {
 			push @$thRow, CGI::th($r->maketext("Grader"));
 		}
 
-		print CGI::Tr({}, @$thRow);
+		print CGI::thead(CGI::Tr(@$thRow));
+		print CGI::start_tbody();
 
 		@problemNumbers = sort { $a <=> $b } @problemNumbers;
 
@@ -434,7 +454,9 @@ sub body {
 			print $self->problemListRow($set, $problem, $db, $canScoreProblems, $isJitarSet);
 		}
 
+		print CGI::end_tbody();
 		print CGI::end_table();
+		print CGI::end_div();
 	} else {
 		print CGI::p($r->maketext("This homework set contains no problems."));
 	}
@@ -453,7 +475,13 @@ sub body {
 	);
 	print CGI::end_div();
 
-	print CGI::div({-class=>"problem_set_options"}, CGI::a({href=>$hardcopyURL}, $r->maketext("Download PDF or TeX Hardcopy for Current Set"))).CGI::br();
+	print CGI::div(
+		{ class => "problem_set_options mb-2" },
+		CGI::a(
+			{ href => $hardcopyURL, class => 'btn btn-primary' },
+			$r->maketext("Download PDF or TeX Hardcopy for Current Set")
+		)
+	);
 
 	return "";
 }
@@ -496,12 +524,15 @@ sub problemListRow($$$$$) {
 	}
 
 	# if the problem is trestricted we show that it exists but its greyed out
-	if ($isJitarSet && !$authz->hasPermissions($problem->user_id, "view_unopened_sets") &&
-		is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID)) {
-		$interactive = CGI::span({class=>$linkClasses." disabled-problem"}, $r->maketext("Problem [_1]", $problemNumber));
+	if ($isJitarSet
+		&& !$authz->hasPermissions($problem->user_id, "view_unopened_sets")
+		&& is_jitar_problem_closed($db, $ce, $problem->user_id, $setID, $problemID))
+	{
+		$interactive = CGI::span({ class => $linkClasses . " disabled-problem text-nowrap" },
+			$r->maketext("Problem [_1]", $problemNumber));
 	} else {
-		$interactive = CGI::a({-href=>$interactiveURL, -class=>$linkClasses}, $r->maketext("Problem [_1]", $problemNumber));
-
+		$interactive = CGI::a({ href => $interactiveURL, class => $linkClasses . " text-nowrap" },
+			$r->maketext("Problem [_1]", $problemNumber));
 	}
 
 	my $attempts = $problem->num_correct + $problem->num_incorrect;

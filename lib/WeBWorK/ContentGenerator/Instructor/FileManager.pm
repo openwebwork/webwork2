@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright © 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/FileManager.pm,v 1.30 2007/09/08 21:15:16 dpvc Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE. See either the GNU General Public License or the
@@ -63,10 +62,10 @@ sub pre_header_initialize {
 	my $r = $self->r;
 	my $authz = $r->authz;
 	my $user = $r->param('user');
-	
+
 	# we don't need to return an error here, because body() will print an error for us :)
 	return unless $authz->hasPermissions($user, "manage_course_files");
-	
+
 	my $action = $r->param('action');
 	$self->Download if ($action && ($action eq 'Download' || $action eq $r->maketext("Download")));
 	my $file = $r->param('download');
@@ -123,7 +122,7 @@ sub body {
 	my $courseName = $urlpath->arg('courseID');
 	my $user       = $r->param('user');
 	my $key        = $r->param('key');
-	
+
 	return CGI::em("You are not authorized to manage course files")
 		unless $authz->hasPermissions($user, "manage_course_files");
 
@@ -152,25 +151,25 @@ sub body {
 	my $action = $r->param('action') || $r->param('formAction') || $r->param("confirmed") || 'Init';
 	#$self->addgoodmessage("|$action|");
 	if($action eq "Refresh" 	|| $action eq $r->maketext("Refresh")) {$self->Refresh;}
-	elsif($action eq "Cancel" 	|| $action eq $r->maketext("Cancel")) {$self->Refresh;} 
-	elsif($action eq "Directory"|| $action eq $r->maketext("Directory")) {$self->Go;} 
-	elsif($action eq "Go" 		|| $action eq $r->maketext("Go")) {$self->Go;} 
-	elsif($action eq "View" 	|| $action eq $r->maketext("View")) {$self->View;} 
-	elsif($action eq "Edit" 	|| $action eq $r->maketext("Edit")) {$self->Edit;} 
-	elsif($action eq "Download" 	|| $action eq $r->maketext("Download")) {$self->Refresh;} 
-	elsif($action eq "Copy" 	|| $action eq $r->maketext("Copy")) {$self->Copy;} 
-	elsif($action eq "Rename" 	|| $action eq $r->maketext("Rename")) {$self->Rename;} 
-	elsif($action eq "Delete" 	|| $action eq $r->maketext("Delete")) {$self->Delete;} 
-	elsif($action eq "Make Archive" || $action eq $r->maketext("Make Archive")) {$self->MakeArchive;} 
-	elsif($action eq "Unpack" 	|| $action eq $r->maketext("Unpack")) {$self->UnpackArchive;} 
-	elsif($action eq "New Folder"	|| $action eq $r->maketext("New Folder")) {$self->NewFolder;} 
-	elsif($action eq "New File" 	|| $action eq $r->maketext("New File")) {$self->NewFile;} 
-	elsif($action eq "Upload" 	|| $action eq $r->maketext("Upload")) {$self->Upload;} 
-	elsif($action eq "Revert" 	|| $action eq $r->maketext("Revert")) {$self->Edit;} 
-	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;} 
-	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;} 
-	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;} 
-	elsif($action eq "^"        || $action eq "\\") {$self->ParentDir;} 
+	elsif($action eq "Cancel" 	|| $action eq $r->maketext("Cancel")) {$self->Refresh;}
+	elsif($action eq "Directory"|| $action eq $r->maketext("Directory")) {$self->Go;}
+	elsif($action eq "Go" 		|| $action eq $r->maketext("Go")) {$self->Go;}
+	elsif($action eq "View" 	|| $action eq $r->maketext("View")) {$self->View;}
+	elsif($action eq "Edit" 	|| $action eq $r->maketext("Edit")) {$self->Edit;}
+	elsif($action eq "Download" 	|| $action eq $r->maketext("Download")) {$self->Refresh;}
+	elsif($action eq "Copy" 	|| $action eq $r->maketext("Copy")) {$self->Copy;}
+	elsif($action eq "Rename" 	|| $action eq $r->maketext("Rename")) {$self->Rename;}
+	elsif($action eq "Delete" 	|| $action eq $r->maketext("Delete")) {$self->Delete;}
+	elsif($action eq "Make Archive" || $action eq $r->maketext("Make Archive")) {$self->MakeArchive;}
+	elsif($action eq "Unpack" 	|| $action eq $r->maketext("Unpack")) {$self->UnpackArchive;}
+	elsif($action eq "New Folder"	|| $action eq $r->maketext("New Folder")) {$self->NewFolder;}
+	elsif($action eq "New File" 	|| $action eq $r->maketext("New File")) {$self->NewFile;}
+	elsif($action eq "Upload" 	|| $action eq $r->maketext("Upload")) {$self->Upload;}
+	elsif($action eq "Revert" 	|| $action eq $r->maketext("Revert")) {$self->Edit;}
+	elsif($action eq "Save As" 	|| $action eq $r->maketext("Save As")) {$self->SaveAs;}
+	elsif($action eq "Save" 	|| $action eq $r->maketext("Save")) {$self->Save;}
+	elsif($action eq "Init" 	|| $action eq $r->maketext("Init")) {$self->Init;}
+	elsif($action eq "^"        || $action eq "\\") {$self->ParentDir;}
 	else {
 	  $self->addbadmessage("Unknown action");
 	  $self->Refresh;
@@ -203,7 +202,7 @@ sub body {
         $self->addgoodmessage($r->maketext("Archiving course as [_1].tar.gz. Reload FileManager to see it.",$courseID));
     	WeBWorK::Utils::CourseManagement::archiveCourse(%options);
     	$self->addgoodmessage($r->maketext("Course archived."));
-    	
+
     }
 	print CGI::hidden({name=>'pwd',value=>$self->{pwd}});
 	print CGI::hidden({name=>'formAction',value=>""});
@@ -253,9 +252,7 @@ sub Refresh {
 		$files = []; $filelabels = {};
 	}
 
-	#
 	# Some JavaScript to make things easier for the user
-	#
 	print CGI::script(<<EOF);
 		function doForm(action) {
 			var form = window.document.getElementById('FileManager');
@@ -276,7 +273,7 @@ sub Refresh {
 			disableButton('Copy',state);
 			disableButton('Delete',state);
 			disableButton('MakeArchive',state);
-			checkArchive(files,state);
+			checkArchive(files, state);
 		}
 		function checkFile() {
 			var file = window.document.getElementById('file');
@@ -288,113 +285,193 @@ sub Refresh {
 			var state = (file.value == "");
 			disableButton('Upload',state);
 		}
-		function checkArchive(files,disabled) {
-			var button = document.getElementById('MakeArchive');
-			//button.value = 'Make Archive';
+		function checkArchive(files, disabled) {
 			if (disabled) return;
-			if (!files.childNodes[files.selectedIndex].value.match(/\\.(tar|tar\\.gz|tgz)\$/)) return;
+			var button = document.getElementById('MakeArchive');
+			button.value = 'Make Archive';
+			if (!files.children[files.selectedIndex].value?.match(/\\.(tar|tar\\.gz|tgz)\$/)) return;
 			for (var i = files.selectedIndex+1; i < files.length; i++)
-			  {if (files.childNodes[i].selected) return}
+			  {if (files.children[i].selected) return}
 			button.value = 'Unpack Archive';
 		}
 EOF
 
-	#
-	# Start the table
-	#
-	print CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3, style=>"margin:1em 0 0 3em"});
-
-	#
 	# Directory menu and date/size checkbox
-	#
-	print CGI::Tr({},
-		CGI::td({colspan=>2},
-			CGI::input({type=>"submit", name=>"action", value => "^", ($isTop? (disabled=>1): ())}),
-			CGI::popup_menu(
-				-name => "directory",
-				-values => $dirs,
-				-labels => $dirlabels,
-				-style => "width:25em",
-				-onChange => "doForm('Go')"
-			),
-			CGI::noscript(CGI::input({type=>"submit",name=>"action",value=>"Go"}))
+	print CGI::div(
+		{ class => 'row' },
+		CGI::div(
+			{ class => 'col-md-8 mb-2' },
+			CGI::div(
+				{ class => 'input-group input-group-sm' },
+				CGI::submit({
+					name  => "action",
+					value => "^",
+					($isTop ? (disabled => 1) : ()),
+					class => 'btn btn-sm btn-secondary'
+				}),
+				CGI::popup_menu({
+					name     => "directory",
+					values   => $dirs,
+					labels   => $dirlabels,
+					class    => 'form-select',
+					onChange => "doForm('Go')"
+				})
+			)
 		),
-		CGI::td(CGI::small(CGI::checkbox(
-			-name => 'dates',
-			-checked => $self->getFlag('dates'),
-			-value => 1,
-			-label => $r->maketext('Show Date & Size'),
-			-onClick => 'doForm("Refresh")',
-		))),
+		CGI::div(
+			{ class => 'col-md-4 mb-2' },
+			CGI::div(
+				{ class => 'form-check font-sm' },
+				CGI::checkbox({
+					name            => 'dates',
+					checked         => $self->getFlag('dates'),
+					value           => 1,
+					class           => 'form-check-input',
+					label           => $r->maketext('Show Date & Size'),
+					labelattributes => { class => 'form-check-label' },
+					onClick         => 'doForm("Refresh")'
+				})
+			)
+		)
 	);
 
-	#
 	# Directory Listing and column of buttons
-	#
-	my %button = (type=>"submit",name=>"action",style=>"width:10em");
-	my $width = ($self->getFlag('dates') && scalar(@{$files}) > 0) ? "": " width:30em";
-	print CGI::Tr({valign=>"middle"},
-		fixSpaces(CGI::td(CGI::scrolling_list(
-			-name => "files", id => "files",
-			-style => "font-family:monospace; $width",
-			-size => 17,
-			-multiple => 1,
-			-values => $files,
-			-labels => $filelabels,
-			-onDblClick => "doForm('View')",
-			-onChange => "checkFiles()"
-		))),
-		CGI::td({width=>15}),
-		CGI::td({},
-			CGI::start_table({border=>0,cellpadding=>0,cellspacing=>3}),
-			CGI::Tr([
-				CGI::td(CGI::input({%button,value=>$r->maketext("View"),id=>"View"})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Edit"),id=>"Edit"})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Download"),id=>"Download"})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Rename"),id=>"Rename"})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Copy"),id=>"Copy"})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Delete"),id=>"Delete"})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Make Archive"),id=>"MakeArchive"})),
-				CGI::td({height=>10}),
-				CGI::td(CGI::input({%button,value=>$r->maketext("New File")})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("New Folder")})),
-				CGI::td(CGI::input({%button,value=>$r->maketext("Refresh")})),
-			]),
-			CGI::end_table(),
+	my %button = (name => "action", style => "width:10em", class => 'file-manager-btn btn btn btn-sm btn-secondary');
+	my $width = ($self->getFlag('dates') && scalar(@{$files}) > 0) ? "" : " width:30em";
+	print CGI::div(
+		{ class => 'row' },
+		CGI::div(
+			{ class => 'col-md-8 mb-2' },
+			fixSpaces(CGI::scrolling_list({
+				name       => "files",
+				id         => "files",
+				class      => "form-select font-monospace",
+				size       => 17,
+				multiple   => 1,
+				values     => $files,
+				labels     => $filelabels,
+				onDblClick => "doForm('View')",
+				onChange   => "checkFiles()"
+			}))
+		),
+		CGI::div(
+			{ class => 'col-md-4 mb-2' },
+			CGI::div(
+				{ class => 'd-md-flex flex-column justify-content-evenly' },
+				CGI::submit({ %button, value => $r->maketext("View"),         id => "View" }),
+				CGI::submit({ %button, value => $r->maketext("Edit"),         id => "Edit" }),
+				CGI::submit({ %button, value => $r->maketext("Download"),     id => "Download" }),
+				CGI::submit({ %button, value => $r->maketext("Rename"),       id => "Rename" }),
+				CGI::submit({ %button, value => $r->maketext("Copy"),         id => "Copy" }),
+				CGI::submit({ %button, value => $r->maketext("Delete"),       id => "Delete" }),
+				CGI::submit({ %button, value => $r->maketext("Make Archive"), id => "MakeArchive" }),
+				CGI::div({ style => 'height: 10px' }, ''),
+				CGI::submit({ %button, value => $r->maketext("New File") }),
+				CGI::submit({ %button, value => $r->maketext("New Folder") }),
+				CGI::submit({ %button, value => $r->maketext("Refresh") }),
+			)
+		)
+	);
+
+	# Upload button and checkboxes
+	print CGI::div(
+		{ class => 'row' },
+		CGI::div(
+			{ class => 'col-md-8' },
+			CGI::div(
+				{ class => 'input-group input-group-sm mb-2' },
+				CGI::submit({
+					name  => "action",
+					style => "width:7em",
+					value => $r->maketext("Upload"),
+					id    => "Upload",
+					class => 'btn btn-sm btn-primary'
+				}),
+				CGI::input({
+					type     => "file",
+					name     => "file",
+					id       => "file",
+					onChange => "checkFile()",
+					class    => 'form-control form-control-sm'
+				})
+			)
+		)
+	);
+
+	print CGI::div(
+		{ class => 'row' },
+		CGI::div(
+			{ class => 'col-md-8' },
+			CGI::div(
+				{ class => 'input-group input-group-sm mb-2' },
+				CGI::span({ class => 'input-group-text' }, $r->maketext('Format') . ':'),
+				CGI::div(
+					{ class => 'input-group-text flex-grow-1' },
+					CGI::radio_group({
+						name            => 'format',
+						values          => [ $r->maketext('Text'), $r->maketext('Binary'), $r->maketext('Automatic') ],
+						default         => $self->getFlag('format', 'Automatic'),
+						class           => 'form-check-input me-2',
+						labelattributes => { class => 'form-check-label me-4' }
+					})
+				)
+			)
+		)
+	);
+
+	print CGI::div(
+		{ class => 'row' },
+		CGI::div(
+			{ class => 'col-md-8' },
+			CGI::div(
+				{ class => 'input-group input-group-sm mb-2' },
+				CGI::div(
+					{ class => 'input-group-text flex-grow-1' },
+					CGI::checkbox({
+						name            => 'overwrite',
+						checked         => $self->getFlag('overwrite'),
+						value           => 1,
+						class           => 'form-check-input me-2',
+						label           => $r->maketext('Overwrite existing files silently'),
+						labelattributes => { class => 'form-check-label' }
+					})
+				)
+			)
 		),
 	);
 
-	#
-	# Upload button and checkboxes
-	#
-	print CGI::Tr([
-		CGI::td(),
-		CGI::td({colspan=>3},
-		  CGI::input({type=>"submit",name=>"action",style=>"width:7em",value=>$r->maketext("Upload"),id=>"Upload"}),
-		  CGI::input({type=>"file",name=>"file",id=>"file",size=>40,onChange=>"checkFile()"}),
-		  CGI::br(),
-		  CGI::small(join(' &nbsp; ',$r->maketext('Format').':',
-		    CGI::radio_group(-name=>'format', -value=>[$r->maketext('Text'),$r->maketext('Binary'),$r->maketext('Automatic')],
-				     -default=>$self->getFlag('format','Automatic')))),
-		),
-	]);
-	print CGI::Tr([
-		CGI::td(),
-		CGI::td({colspan=>3},
-		  CGI::small(CGI::checkbox(-name=>'overwrite',-checked=>$self->getFlag('overwrite'),-value=>1,
-					   -label=>$r->maketext('Overwrite existing files silently'))),
-		  CGI::br(),
-		  CGI::small(CGI::checkbox(-name=>'unpack',-checked=>$self->getFlag('unpack'),-value=>1,
-					   -label=>$r->maketext('Unpack archives automatically'))),
-		  CGI::small(CGI::checkbox(-name=>'autodelete',-checked=>$self->getFlag('autodelete'),-value=>1,
-					   -label=>$r->maketext('then delete them'))),
-		),
-	]);
+	print CGI::div(
+		{ class => 'row' },
+		CGI::div(
+			{ class => 'col-md-8' },
+			CGI::div(
+				{ class => 'input-group input-group-sm' },
+				CGI::div(
+					{ class => 'input-group-text' },
+					CGI::checkbox({
+						name            => 'unpack',
+						checked         => $self->getFlag('unpack'),
+						value           => 1,
+						class           => 'form-check-input me-2',
+						label           => $r->maketext('Unpack archives automatically'),
+						labelattributes => { class => 'form-check-label' }
+					})
+				),
+				CGI::div(
+					{ class => 'input-group-text flex-grow-1' },
+					CGI::checkbox({
+						name            => 'autodelete',
+						checked         => $self->getFlag('autodelete'),
+						value           => 1,
+						class           => 'form-check-input me-2',
+						label           => $r->maketext('then delete them'),
+						labelattributes => { class => 'form-check-label' }
+					})
+				)
+			)
+		)
+	);
 
-	#
-	# End the table
-	# 
-	print CGI::end_table();
 	print CGI::script("checkFiles(); checkFile();");
 }
 
@@ -472,7 +549,7 @@ sub View {
 	} elsif ($file =~ m/\.(gif|jpg|png)/i) {
 		print CGI::img({src=>$fileManagerURL, border=>0});
 	} else {
-		print CGI::div({class=>"ResultsWithError"},
+		print CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 			"The file $file does not appear to be a text or image file.");
 	}
 }
@@ -491,7 +568,7 @@ sub Edit {
 	my $authz = $r->authz;
 
 	# if its a restricted file, dont allow the web editor to edit it unless
-	# that option has been set for the course.  
+	# that option has been set for the course.
 	foreach my $restrictedFile (@{$ce->{uneditableCourseFiles}}) {
 	    if (File::Spec->canonpath($file) eq
 		File::Spec->canonpath("$self->{courseRoot}/$restrictedFile") &&
@@ -506,7 +583,7 @@ sub Edit {
 		$self->Refresh; return;
 	}
 
-	
+
 
 	unless (-f $file) {
 		$self->addbadmessage($r->maketext("You can only edit text files"));
@@ -517,8 +594,8 @@ sub Edit {
 		$self->RefreshEdit($data,$filename);
 	} else {
 		$self->addbadmessage($r->maketext("The file does not appear to be a text file"));
-		$self->Refresh; 
-	}	
+		$self->Refresh;
+	}
 	return;
 }
 
@@ -578,24 +655,54 @@ sub RefreshEdit {
 	my $pwd = shift || $self->{pwd};
 	my $name = "$pwd/$file"; $name =~ s!^\./?!!;
 
-	my %button = (type=>"submit",name=>"action",style=>"width:6em");
+	my %button = (name => "action", class => 'btn btn-sm btn-secondary w-100');
 
-	print CGI::p();
-	print CGI::start_table({border=>0,cellspacing=>0,cellpadding=>2, width=>"95%", align=>"center"});
-	print CGI::Tr([
-		CGI::td({align=>"center",style=>"background-color:#CCCCCC"},CGI::b($name)),
-		CGI::td(CGI::textarea(-name=>"data",-default=>$data,-override=>1,-rows=>30,-columns=>80,"dir"=>"auto",
-				-style=>"width:100%")), ## can't seem to get variable height to work
-		CGI::td({align=>"center", nowrap=>1},
-			CGI::input({%button,value=>$r->maketext("Cancel")}),"&nbsp;",
-			CGI::input({%button,value=>$r->maketext("Revert")}),"&nbsp;",
-			CGI::input({%button,value=>$r->maketext("Save")}),,"&nbsp;",
-			CGI::input({%button,value=>$r->maketext("Save As")}),
-			CGI::input({type=>"text",name=>"name",size=>20,style=>"width:50%"}),
+	print join(
+		'',
+		CGI::div(
+			{ class => 'd-flex' },
+			CGI::div({ align => "center", class => 'col-12 bg-dark text-white' }, CGI::b($name))
 		),
-	]);
-	print CGI::end_table();
-	print CGI::hidden({name=>"files", value=>$file});
+		CGI::div(
+			{ class => 'd-flex' },
+			CGI::div(
+				{ class => 'col-12' },
+				CGI::textarea({
+					name     => "data",
+					default  => $data,
+					override => 1,
+					rows     => 30,
+					columns  => 80,
+					dir      => "auto",
+					class    => "file-manager-editor form-control",
+				})
+			)
+		),
+		CGI::div(
+			{ class => 'row' },
+			CGI::div({ class => 'col-md-2 col-4 my-2' }, CGI::submit({ %button, value => $r->maketext("Cancel") })),
+			CGI::div({ class => 'col-md-2 col-4 my-2' }, CGI::submit({ %button, value => $r->maketext("Revert") })),
+			CGI::div({ class => 'col-md-2 col-4 my-2' }, CGI::submit({ %button, value => $r->maketext("Save") })),
+			CGI::div(
+				{ class => 'col-md-6 col-12 my-2' },
+				CGI::div(
+					{ class => 'input-group' },
+					CGI::submit({
+						name  => "action",
+						class => 'btn btn-sm btn-secondary',
+						value => $r->maketext("Save As")
+					}),
+					CGI::input({
+						type  => "text",
+						name  => "name",
+						size  => 20,
+						class => 'form-control form-control-sm'
+					})
+				)
+			)
+		)
+	);
+	print CGI::hidden({ name => "files", value => $file });
 	$self->HiddenFlags;
 }
 
@@ -605,7 +712,7 @@ sub RefreshEdit {
 #
 sub Copy {
 	my $self = shift;
-	my $r = $self->r;	
+	my $r = $self->r;
         my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $original = $self->getFile('copy'); return unless $original;
 	my $oldfile = "$dir/$original";
@@ -637,7 +744,7 @@ sub Copy {
 #
 sub Rename {
 	my $self = shift;
-	my $r = $self->r;	
+	my $r = $self->r;
         my $dir = "$self->{courseRoot}/$self->{pwd}";
 	my $original = $self->getFile('rename'); return unless $original;
 	my $oldfile = "$dir/$original";
@@ -662,7 +769,7 @@ sub Rename {
 #
 sub Delete {
 	my $self = shift;
-	my $r = $self->r;	
+	my $r = $self->r;
 	my @files = $self->r->param('files');
 	if (scalar(@files) == 0) {
 		$self->addbadmessage($r->maketext("You must select at least one file to delete"));
@@ -729,25 +836,33 @@ sub Delete {
 		#
 		# Put up the confirmation dialog box
 		#
-		print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 5em"});
-		print CGI::Tr(
-			CGI::td(
-			  CGI::b($r->maketext("Warning").': '),$r->maketext("You have requested that the following items be deleted"),
-			  CGI::ul(CGI::li(\@filelist)),
-			    ((grep { -d "$dir/$_" } @files)?
-					 CGI::p({style=>"width:500"},$r->maketext("Some of these files are directories. Only delete directories if you really know what you are doing. You can seriously damage your course if you delete the wrong thing.")): ""),
-			  CGI::p({style=>"color:red"},$r->maketext("There is no undo for deleting files or directories!")),
-			  CGI::p($r->maketext("Really delete the items listed above?")),
-			  CGI::div({style=>"float:left; padding-left:3ex"},
-			    CGI::input({type=>"submit",name=>"action",value=>"Cancel"})),
-			  CGI::div({style=>"float:right; padding-right:3ex"},
-			    CGI::input({type=>"submit",name=>"action",value=>"Delete"})),
+		print CGI::start_div({ class => 'card w-75 mx-auto' });
+		print CGI::div(
+			{ class => 'card-body' },
+			CGI::b($r->maketext("Warning") . ': '),
+			$r->maketext("You have requested that the following items be deleted"),
+			CGI::ul(CGI::li(\@filelist)),
+			(
+				(grep { -d "$dir/$_" } @files)
+				? CGI::p($r->maketext(
+					"Some of these files are directories. Only delete directories if you really know what you are "
+						. "doing. You can seriously damage your course if you delete the wrong thing."
+				))
+				: ""
 			),
+			CGI::p({ class => 'alert alert-danger p-1 mb-3' },
+				$r->maketext("There is no undo for deleting files or directories!")),
+			CGI::p($r->maketext("Really delete the items listed above?")),
+			CGI::div(
+				{ class => 'd-flex justify-content-evenly' },
+				CGI::submit({ name => "action", value => "Cancel", class => 'btn btn-sm btn-secondary' }),
+				CGI::submit({ name => "action", value => "Delete", class => 'btn btn-sm btn-secondary' })
+			)
 		);
-		print CGI::end_table();
+		print CGI::end_div();
 
-		print CGI::hidden({name=>"confirmed",value=>"Delete"});
-		foreach my $file (@files) {print CGI::hidden({name=>"files",value=>$file})}
+		print CGI::hidden({ name => "confirmed", value => "Delete" });
+		foreach my $file (@files) { print CGI::hidden({ name => "files", value => $file }); }
 		$self->HiddenFlags;
 	}
 }
@@ -771,7 +886,7 @@ sub MakeArchive {
 	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -cvzf ".shell_quote($archive,@files);
 	@files = readpipe $tar." 2>&1";
 	if ($? == 0) {
-		my $n = scalar(@files); 
+		my $n = scalar(@files);
 		$self->addgoodmessage($r->maketext("Archive '[_1]' created successfully ([quant, _2, file])",$archive, $n));
 	} else {
 		$self->addbadmessage($r->maketext("Can't create archive '[_1]': command returned [_2]",$archive,systemError($?)));
@@ -803,7 +918,7 @@ sub unpack {
 	my $tar = "cd ".shell_quote($dir)." && $self->{ce}{externalPrograms}{tar} -vx${z}f ".shell_quote($archive);
 	my @files = readpipe $tar." 2>&1";
 	if ($? == 0) {
-		my $n = scalar(@files); 
+		my $n = scalar(@files);
 		$self->addgoodmessage($r->maketext("[quant,_1,file] unpacked successfully",$n));
 		return 1;
 	} else {
@@ -862,7 +977,7 @@ sub NewFolder {
 #
 sub Download {
 	my $self = shift;
-	my $r = $self->r;	
+	my $r = $self->r;
 	my $pwd = $self->checkPWD($self->r->param('pwd') || HOME);
 	return unless $pwd;
 	my $filename = $self->getFile("download"); return unless $filename;
@@ -905,7 +1020,7 @@ sub Upload {
 
 	if (-e "$dir/$name") {
 		unless ($self->r->param('overwrite') || $action eq "Overwrite" || $action eq $r->maketext("Overwrite")) {
-			
+
 			$self->Confirm($r->maketext("File <b>[_1]</b> already exists. Overwrite it, or rename it as:",$name).CGI::p(),uniqueName($dir,$name),$r->maketext("Rename"),$r->maketext("Overwrite"));
 			#$self->Confirm("File ".CGI::b($name)." already exists. Overwrite it, or rename it as:".CGI::p(),uniqueName($dir,$name),"Rename","Overwrite");
 			print CGI::hidden({name=>"action",value=>"Upload"});
@@ -918,7 +1033,7 @@ sub Upload {
 	my $file = "$dir/$name";
 	my $type = $self->getFlag('format','Automatic');
 	my $data;
-	
+
 	#
 	#  Check if we need to convert linebreaks
 	#
@@ -931,14 +1046,14 @@ sub Upload {
 		$upload->dispose;
 		$data =~ s/\r\n?/\n/g;
 		if (open(UPLOAD,">:encoding(UTF-8)",$file)) {
-			my $backup_data=$data; 
+			my $backup_data=$data;
 			my $success= utf8::decode($data); # try to decode as utf8
 			unless ($success){
 				warn "Trying to convert file $file from latin1? to UTF-8";
 				utf8::upgrade($backup_data); # try to convert data from latin1 to utf8.
 				$data=$backup_data;
 			}
-		  print UPLOAD $data; # print massaged data to file. 
+		  print UPLOAD $data; # print massaged data to file.
 		  close(UPLOAD)}
 		  else {$self->addbadmessage($r->maketext("Can't create file '[_1]': [_2]", $name, $!))}
 	} else {
@@ -969,23 +1084,24 @@ sub Confirm {
 	my $message = shift; my $value = shift;
 	my $button = shift; my $button2 = shift;
 
-	print CGI::p();
-	print CGI::start_table({border=>1,cellspacing=>2,cellpadding=>20, style=>"margin: 1em 0 0 3em"});
-	print CGI::Tr(
-		CGI::td({align=>"CENTER"},
-		  $message,
-		  CGI::input({type=>"text",name=>"name",size=>50,value=>$value}),
-		  CGI::p(), CGI::center(
-		    CGI::div({style=>"float:right; padding-right:3ex"},
-		      CGI::input({type=>"submit",name=>"formAction",value=>$button})), # this will be the default
-		    CGI::div({style=>"float:left; padding-left:3ex"},
-		    CGI::input({type=>"submit",name=>"formAction",value=>$r->maketext("Cancel")})),
-		    ($button2 ? CGI::input({type=>"submit",name=>"formAction",value=>$button2}): ()),
-		  ),
-		),
-	      );
-	print CGI::end_table();
-	print CGI::hidden({name=>"confirmed", value=>$button});
+	print CGI::start_div({ class => 'card w-75 mx-auto' });
+	print CGI::div(
+		{ class => 'card-body' },
+		$message,
+		CGI::input({ type => "text", name => "name", size => 50, value => $value }),
+		CGI::div(
+			{ class => 'd-flex justify-content-evenly mt-3' },
+			CGI::submit({ name => "formAction", value => $r->maketext("Cancel"), class => 'btn btn-sm btn-secondary' }),
+			CGI::submit({ name => "formAction", value => $button,                class => 'btn btn-sm btn-secondary' }),
+			(
+				$button2
+				? CGI::submit({ name => "formAction", value => $button2, class => 'btn btn-sm btn-secondary' })
+				: ()
+			)
+		)
+	);
+	print CGI::end_div();
+	print CGI::hidden({ name => "confirmed", value => $button });
 	$self->HiddenFlags;
 	print CGI::script("window.document.FileManager.name.focus()");
 }
@@ -1032,7 +1148,7 @@ sub directoryMenu {
 	my $dir  = shift; $dir =~ s!^\.(/|$)!!;
 	my @dirs = split('/',$dir);
 	my $menu = ""; my $pwd;
-	
+
 	my (@values,%labels);
 	while (scalar(@dirs)) {
 		$pwd = join('/',(@dirs)[0..$#dirs]);
@@ -1135,10 +1251,10 @@ sub checkPWD {
 	$pwd =~ s!//+!/!g;               # remove duplicate slashes
 	$pwd =~ s!(^|/)~!$1_!g;          # remove ~user references
 	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;  # remove dot directories
-	
+
 	# remove dir/.. constructions
 	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
-	
+
 	$pwd =~ s!/$!!;                        # remove trailing /
 	return if ($pwd =~ m!(^|/)\.\.(/|$)!); # Error if outside the root
 
@@ -1236,7 +1352,7 @@ sub verifyName {
 sub verifyPath {
 	my $self = shift; my $path = shift; my $name = shift;
 	my $r = $self->r;
-	
+
 	if ($path) {
 		unless ($path =~ m![^-_.a-zA-Z0-9 /]!) {
 			unless ($path =~ m!^/!) {
@@ -1284,10 +1400,7 @@ sub showHTML {
 #
 sub isText {
 	my $string = shift;
-
-	#return $string !~ m/[^\s\x20-\x7E]{4}/;
 	return utf8::is_utf8($string);
-	# return $string !~ m/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]{2}/;
 }
 
 ##################################################

@@ -1,11 +1,10 @@
-// Cause achievement popups to appear and then go away 
-$(window).on("load", function() {
-	$('#achievementModal').modal('show');
-	setTimeout(function() { $('#achievementModal').modal('hide'); }, 5000);
-});
+(() => {
+	// Cause achievement popups to appear and then go away
+	document.querySelectorAll('.cheevo-toast').forEach((toast) => {
+		const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+		bsToast.show();
+	});
 
-$(function() {    
 	// Prevent problems which are disabled from acting as links
-	$('.problem-list .disabled-problem').parent().addClass('disabled')
-		.click(function (e) { e.preventDefault(); });
-})
+	$('.problem-list .disabled-problem').addClass('disabled').on('click', (e) => e.preventDefault());
+})();
