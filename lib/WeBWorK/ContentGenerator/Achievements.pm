@@ -169,7 +169,7 @@ sub body {
 	}
 
 	if ($achievement) {
-		print CGI::start_div({ class => 'd-flex align-items-center' });
+		print CGI::start_div({ class => 'd-flex align-items-center gap-3' });
 		my $imgSrc;
 		if ($achievement->{icon}) {
 			$imgSrc = $ce->{courseURLs}->{achievements} . "/" . $achievement->{icon};
