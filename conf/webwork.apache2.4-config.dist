@@ -195,6 +195,11 @@ if ($webwork_url eq "") {
 	$Location{$webwork_htdocs_url} = { SetHandler => "none" };
 }
 
+# Uncomment the line below, and the WebworkSOAP and WSDL handlers sections below
+# that to use the WebworkSOAP handlers.  Make sure that you change the value to
+# something more secure.
+#$WeBWorK::SeedCE{soap_authen_key} = "123456789123456789";
+
 </Perl>
 
 ####################################################################
