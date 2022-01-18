@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: 
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -40,7 +39,7 @@ our @EXPORT_OK = qw(
 
 sub dropdownRecordList {
 	my ($options, @Records) = @_;
-	
+
 	my %options = (default_filters=>[],default_sort=>"",default_format=>"",%$options);
 	# %options must contain:
 	#  name - name of scrolling list -- use $r->param("$name")
@@ -52,12 +51,12 @@ sub dropdownRecordList {
 	#  allowed_filters - hashref, mapping field name to list of allowed values (unimpl.)
 	#  size - number of rows shown in scrolling list
 	#  multiple - are multiple selections allowed?
-	
+
 	croak "name not found in options" unless exists $options{name};
 	croak "request not found in options" unless exists $options{request};
 	my $name = $options{name};
 	my $r = $options{request};
-	
+
 	my $default_sort = $options{default_sort} || "";
 	my $default_format = $options{default_format} || "";
 
@@ -65,22 +64,22 @@ sub dropdownRecordList {
 
 	my $size = $options{size};
 	my $multiple = $options{multiple};
-	
+
 	my $sorts = [];
 	my $sort_labels = {};
 	my $selected_sort = "";
-	
+
 	my $formats = [];
 	my $format_labels = {};
 	my $selected_format = "";
-	
+
 	my $filters = [];
 	my $filter_labels = {};
 	my @selected_filters= ();
-	
+
 	my @ids = ();
 	my %labels = ();
-	
+
 	my @selected_records = $r->param("$name");
 
 	if (@Records) {
@@ -94,39 +93,39 @@ sub dropdownRecordList {
 		else {
 			@selected_filters = @default_filters;
 		}
-	
+
 		($sorts, $sort_labels) = getSortsForClass($class);
 		$selected_sort = $r->param("$name!sort")
 			|| $default_sort
 			|| (@$sorts ? $sorts->[0] : "");
-		
+
 		($formats, $format_labels) = getFormatsForClass($class);
 		$selected_format = $r->param("$name!format")
 			|| $default_format
 			|| (@$formats ? $formats->[0] : "");
-		
+
 		@Records = filterRecords({filter=>\@selected_filters},@Records);
-		
+
 		@Records = sortRecords({preset=>$selected_sort}, @Records);
-		
+
 		# generate IDs from keyfields
 		my @keyfields = $class->KEYFIELDS;
 		foreach my $Record (@Records) {
 			push @ids, join("!", map { $Record->$_ } @keyfields);
 		}
-		
+
 		# generate labels hash
 		@labels{@ids} = @Records;
 		%labels = formatRecords({preset=>$selected_format}, %labels);
 	}
-	
+
 	my %sort_popup_options = (
 		-name => "$name!sort",
 		-values => $sorts,
 		-default => $selected_sort,
 		-labels => $sort_labels,
 	);
-	
+
 	my %format_popup_options = (
 		-name => "$name!format",
 		-values => $formats,
@@ -152,27 +151,31 @@ sub dropdownRecordList {
 	);
 	$list_options{-size} = $size if $size;
 	$list_options{-multiple} = $multiple if $multiple;
-	
+
 	my $value = $r->param($name) || "";
-	
+
 	map { $size = 4 + length if length > $size } values %{ $options{values} };
 
 	my %textfield_options = (
 			name => $name,
 			value => $value,
 			size => $size,		# we need to calculate this to be the same as the popup_menu
-	);	
-	
+	);
+
 	return CGI::div({-class=>"ScrollingRecordList"},
 		CGI::textfield(%textfield_options),
 		CGI::scrolling_list(%list_options)
 	);
-	
-	return CGI::div({-class=>"ScrollingRecordList"},
+
+	return CGI::div({ class => "ScrollingRecordList" },
 		$r->maketext("Sort:").' ', CGI::popup_menu(%sort_popup_options), CGI::br(),
 		$r->maketext("Format:").' ', CGI::popup_menu(%format_popup_options), CGI::br(),
 		$r->maketext("Filter:").' ', CGI::scrolling_list(%filter_options), CGI::br(),
-		CGI::submit("$name!refresh", $->maketext("Change Display Settings")), CGI::br(),
+		CGI::submit({
+			name => "$name!refresh",
+			value => $->maketext("Change Display Settings"),
+			class => 'btn btn-secondary'
+		}), CGI::br(),
 		CGI::scrolling_list(%list_options)
 	);
 }

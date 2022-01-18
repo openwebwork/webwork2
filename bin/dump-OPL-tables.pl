@@ -18,12 +18,17 @@
 # This script dumps the OPL library tables to a dump file.
 use strict;
 
-# Get the necessary packages, including adding webwork to our path.  
+# Get the necessary packages, including adding webwork to our path.
 
-BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
-	   unless($ENV{WEBWORK_ROOT});}
+my $pg_dir;
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+}
+
 use lib "$ENV{WEBWORK_ROOT}/lib";
-
+use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 
 use String::ShellQuote;

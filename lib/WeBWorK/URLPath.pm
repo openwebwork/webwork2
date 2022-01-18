@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2012 The openWeBWorK Project, http://github.com/openwebwork
-# $CVSHeader: webwork2/lib/WeBWorK/URLPath.pm,v 1.36 2008/04/29 19:27:34 sh002i Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -33,7 +32,7 @@ use WeBWorK::Utils qw(x);
 use Scalar::Util qw(weaken);
 {
 	no warnings "redefine";
-	
+
 	sub debug {
 		my ($label, $indent, @message) = @_;
 		my $header = " "x$indent;
@@ -46,16 +45,16 @@ use Scalar::Util qw(weaken);
 
 PLEASE FOR THE LOVE OF GOD UPDATE THIS IF YOU CHANGE THE HEIRARCHY BELOW!!!
 
-Note:  Only database keyfield values can be used as path parameters.  
+Note:  Only database keyfield values can be used as path parameters.
 
  root                                /
- 
+
  course_admin                        /admin/ -> logout, options, instructor_tools
  html2xml                            /html2xml/
  pgtotex                             /pgtotex/
  instructorXMLHandler                /instructorXMLHandler/
  set_list                            /$courseID/
- 
+
  equation_display                    /$courseID/equation/
  feedback                            /$courseID/feedback/
  gateway_quiz                        /$courseID/quiz_mode/$setID/
@@ -68,19 +67,19 @@ Note:  Only database keyfield values can be used as path parameters.
  options                             /$courseID/options/
  #test                               /$courseID/test/
  #render                             /$courseID/render/
- 
+
  instructor_tools                    /$courseID/instructor/
- 
+
  instructor_user_list                /$courseID/instructor/users/
  instructor_user_detail              /$courseID/instructor/users/$userID/
  instructor_sets_assigned_to_user    /$courseID/instructor/users/$userID/sets/
- 
+
  instructor_set_list                 /$courseID/instructor/sets/
  instructor_set_detail               /$courseID/instructor/sets/$setID/
  instructor_users_assigned_to_set    /$courseID/instructor/sets/$setID/users/
- 
+
  instructor_problem_grader           /$courseID/instructor/grader/$setID/$problemID
- 
+
  instructor_add_users                /$courseID/instructor/add_users/
  instructor_set_assigner             /$courseID/instructor/assigner/
  instructor_file_transfer            /$courseID/instructor/files/
@@ -90,7 +89,7 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
  instructor_compare                  /$courseID/instructor/compare/
- 
+
  instructor_problem_editor           /$courseID/instructor/pgProblemEditor/
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
  instructor_problem_editor_withset_withproblem
@@ -99,17 +98,17 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
- 
+
  instructor_preflight                /$courseID/instructor/preflight/
- 
+
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
  instructor_user_statistics          /$courseID/instructor/stats/student/$userID/
- 
+
  instructor_progress                 /$courseID/instructor/StudentProgress/
  instructor_set_progress             /$courseID/instructor/StudentProgress/set/$setID/
  instructor_user_progress            /$courseID/instructor/StudentProgress/student/$userID/
- 
+
  problem_list                        /$courseID/$setID/
  problem_detail                      /$courseID/$setID/$problemID/
  show_me_another                     /$courseID/$setID/$problemID/show_me_another
@@ -151,7 +150,7 @@ our %pathTypes = (
 		produce => 'admin/',
 		display => 'WeBWorK::ContentGenerator::CourseAdmin',
 	},
-	
+
 	################################################################################
 	html2xml => {
 		name    => 'html2xml',
@@ -191,9 +190,9 @@ our %pathTypes = (
 		produce => '$courseID/',
 		display => 'WeBWorK::ContentGenerator::ProblemSets',
 	},
-	
+
 	################################################################################
-	
+
 	equation_display => {
 		name    => x('Equation Display'),
 		parent  => 'set_list',
@@ -313,15 +312,15 @@ our %pathTypes = (
 	#	produce => 'render/',
 	#	display => 'WeBWorK::ContentGenerator::ProblemRenderer',
 	#},
-	
+
 	################################################################################
-	
+
 	instructor_tools => {
 		name    => x('Instructor Tools'),
 		parent  => 'set_list',
 		kids    => [ qw/
 			instructor_user_list instructor_set_list
-			instructor_add_users instructor_achievement_list 
+			instructor_add_users instructor_achievement_list
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor
 			instructor_set_maker
@@ -329,7 +328,7 @@ our %pathTypes = (
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
 			instructor_preflight instructor_statistics
-			instructor_progress			
+			instructor_progress
 			instructor_problem_grader
 			/ ],
 		match   => qr|^instructor/|,
@@ -337,9 +336,9 @@ our %pathTypes = (
 		produce => 'instructor/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Index',
 	},
-	
+
 	################################################################################
-	
+
 	instructor_user_list => {
 		name    => x('Classlist Editor'),
 		parent  => 'instructor_tools',
@@ -367,9 +366,9 @@ our %pathTypes = (
 		produce => 'sets/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetsAssignedToUser',
 	},
-	
+
 	################################################################################
-	
+
 	instructor_set_list => {
 		name    => x('Hmwk Sets Editor'),
 		parent  => 'instructor_tools',
@@ -410,9 +409,9 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::Instructor::ProblemGrader',
 	},
 
-	
+
 	################################################################################
-	
+
 	instructor_add_users => {
 		name    => x('Add Users'),
 		parent  => 'instructor_tools',
@@ -549,9 +548,9 @@ our %pathTypes = (
 		produce => 'preflight/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Preflight',
 	},
-	
+
 	################################################################################
-	
+
 	instructor_statistics => {
 		name    => x('Statistics'),
 		parent  => 'instructor_tools',
@@ -579,12 +578,12 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Stats',
 	},
-	
+
 	################################################################################
 
         instructor_achievement_list => {
                 name    =>  x('Achievement Editor'),
-                parent  =>  'instructor_tools', 
+                parent  =>  'instructor_tools',
                 kids    =>  [ qw/instructor_achievement_editor instructor_achievement_user_editor/ ],
                 match   =>  qr|^achievement_list/|,
                 capture =>  [ qw// ],
@@ -594,7 +593,7 @@ our %pathTypes = (
 
         instructor_achievement_editor => {
 	        name    => x('Achievement Evaluator Editor'),
-                parent  => 'instructor_achievement_list', 
+                parent  => 'instructor_achievement_list',
                 kids => [ qw// ],
                 match => qr|^([^/]+)/editor/|,
 		capture => [ qw/achievementID/ ],
@@ -604,7 +603,7 @@ our %pathTypes = (
 
         instructor_achievement_user_editor => {
 	        name    => x('Achievement User Editor'),
-                parent  => 'instructor_achievement_list', 
+                parent  => 'instructor_achievement_list',
                 kids => [ qw// ],
 		match   => qr|^([^/]+)/users/|,
 		capture => [ qw/achievementID/ ],
@@ -614,7 +613,7 @@ our %pathTypes = (
 
 
 	################################################################################
-	
+
 	instructor_progress => {
 		name    => x('Student Progress'),
 		parent  => 'instructor_tools',
@@ -642,9 +641,9 @@ our %pathTypes = (
 		produce => 'student/$userID/',
 		display => 'WeBWorK::ContentGenerator::Instructor::StudentProgress',
 	},
-	
+
 	################################################################################
-	
+
 	problem_list => {
 		name    => '[_2]',
 		parent  => 'set_list',
@@ -673,7 +672,7 @@ our %pathTypes = (
 		display => 'WeBWorK::ContentGenerator::ShowMeAnother',
 	},
 
-	
+
 );
 
 =for comment
@@ -702,7 +701,7 @@ a handy template:
 
 Creates a new WeBWorK::URLPath. %fields may contain the following:
 
- type => the internal path type associated with this 
+ type => the internal path type associated with this
  args => a reference to a hash associating path arguments with values
 
 This constructor is used internally. Refer to newFromPath() and newFromModule()
@@ -732,11 +731,11 @@ is invalid, an exception is thrown.
 
 sub newFromPath {
 	my ($invocant,  $path, $r) = @_;
-	
+
 	my ($type, %args) = getPathType($path);
 	croak "no type matches path $path" unless $type;
 	croak "URLPath requires a request object parent as second element" unless (ref($r) =~/WeBWorK::Request/);
-	
+
 	return $invocant->new(
 		type => $type,
 		r    => $r,             # will point to the parent request object (for access to the $ce)
@@ -753,11 +752,11 @@ and path arguments given. If no type matches, an exception is thrown.
 
 sub newFromModule {
 	my ($invocant, $module, $r, %args) = @_;
-	
+
 	my $type = getModuleType($module, keys %args);
 	croak "URLPath requires a request object parent as second element" unless (ref($r) =~/WeBWorK::Request/);
 	croak "no type matches module $module with args", map { " $_=>$args{$_}" } keys %args unless $type;
-	
+
 	return $invocant->new(
 		type => $type,
 		r    => $r,
@@ -786,7 +785,7 @@ Returns the path type of the WeBWorK::URLPath.
 sub type {
 	my ($self) = @_;
 	my $type = $self->{type};
-	
+
 	return $type;
 }
 
@@ -799,7 +798,7 @@ Returns a hash of arguments derived from the WeBWorK::URLPath.
 sub args {
 	my ($self) = @_;
 	my %args = %{ $self->{args} };
-	
+
 	return %args;
 }
 
@@ -812,7 +811,7 @@ Returns the named argument, as derived from the WeBWorK::URLPath.
 sub arg {
 	my ($self, $name) = @_;
 	my %args = %{ $self->{args} };
-	
+
 	return $args{$name};
 }
 
@@ -836,13 +835,13 @@ sub name {
 	my ($self) = @_;
 	my $type = $self->{type};
 	my %args = $self->args;
-	
+
 	my $name = $pathTypes{$type}->{name};
 	$name = $self->{r}->maketext($name, $args{userID} // '',
 				     $args{setID} // '',
 				     $args{problemID} // '',
 				     $args{courseID} // '');   # translate the display name
-	
+
 	return $name;
 }
 
@@ -855,7 +854,7 @@ Returns the name of the module that will handle this WeBWorK::URLPath.
 sub module {
 	my ($self) = @_;
 	my $type = $self->{type};
-	
+
 	return $pathTypes{$type}->{display};
 }
 
@@ -879,10 +878,10 @@ Returns an undefined value if the URLPath has no parent.
 sub parent {
 	my ($self) = @_;
 	my $type = $self->{type};
-	
+
 	my $newType = $pathTypes{$self->{type}}->{parent};
 	return undef unless $newType;
-	
+
 	# remove any arguments added by the current node (and therefore not needed by the parent)
 	my @currArgs = @{ $pathTypes{$type}->{capture} };
 	my %newArgs = %{ $self->{args} };
@@ -902,7 +901,7 @@ Pass additional arguments needed by the child in C<%newArgs>.
 sub child {
 	my ($self, $module, %newArgs) = @_;
 	my $type = $self->{type};
-	
+
 	my @kids = @{ $pathTypes{$type}->{kids} };
 	my $newType;
 	foreach my $kid (@kids) {
@@ -911,7 +910,7 @@ sub child {
 			last;
 		}
 	}
-	
+
 	if ($newType) {
 		return $self->new(type => $newType, args => \%newArgs);
 	} else {
@@ -929,10 +928,10 @@ sub path {
 	my ($self) = @_;
 	my $type = $self->type;
 	my %args = %{ $self->{args} };
-	
+
 	my $path = buildPathFromType($type);
 	$path = interpolate($path, %args);
-	
+
 	return $path;
 }
 
@@ -969,9 +968,9 @@ does not exist in %symbols, it is left alone.
 
 sub interpolate {
 	my ($string, %symbols) = @_;
-	
+
 	$string =~ s/\$(\w+)/exists $symbols{$1} ? $symbols{$1} : "\$$1"/eg;
-	
+
 	return $string;
 }
 
@@ -993,10 +992,10 @@ If conversion fails, a false value is returned.
 
 sub getPathType($) {
 	my ($path) = @_;
-	
+
 	my %args;
 	my $context = visitPathTypeNode("root", $path, \%args, 0);
-	
+
 	return $context, %args;
 }
 
@@ -1012,13 +1011,13 @@ sub getModuleType {
 	@args = sort @args;
 	my %args;
 	@args{@args} = ();
-	
+
 	NODE: foreach my $nodeID (keys %pathTypes) {
 		my $node = $pathTypes{$nodeID};
-		
+
 		# module name matches?
 		next NODE unless defined $node->{display} and $node->{display} eq $module;
-		
+
 		# collect all captures from here to root
 		my @captures;
 		my $tmpNodeID = $nodeID;
@@ -1027,20 +1026,20 @@ sub getModuleType {
 			push @captures, @{ $tmpNode->{capture} };
 			$tmpNodeID = $tmpNode->{parent};
 		}
-		
+
 		# same number of captures?
 		next NODE unless @captures == @args;
-		
+
 		# same captures?
 		@captures = sort @captures;
 		for (my $i = 0; $i < @args; $i++) {
 			next NODE unless $args[$i] eq $captures[$i];
 		}
-		
+
 		# if we got here, this node matches
 		return $nodeID;
 	}
-	
+
 	return 0; # no node matches
 }
 
@@ -1053,14 +1052,14 @@ the string may contain scalar variables ripe for interpolation.
 
 sub buildPathFromType($) {
 	my ($type) = @_;
-	
+
 	my $path = "";
-	
+
 	while ($type) {
 		$path = $pathTypes{$type}->{produce} . $path;
 		$type = $pathTypes{$type}->{parent};
 	};
-	
+
 	return $path;
 }
 
@@ -1083,16 +1082,16 @@ sub visitPathTypeNode($$$$);
 sub visitPathTypeNode($$$$) {
 	my ($nodeID, $path, $argsRef, $indent) = @_;
 	debug("visitPathTypeNode", $indent, "visiting node $nodeID with path $path");
-	
+
 	unless (exists $pathTypes{$nodeID}) {
 		debug("visitPathTypeNode", $indent, "node $nodeID doesn't exist in node list: failed");
 		die "node $nodeID doesn't exist in node list: failed";
 	}
-	
+
 	my %node = %{ $pathTypes{$nodeID} };
 	my $match = $node{match};
 	my @capture_names = @{ $node{capture} };
-	
+
 	# attempt to match $path against $match.
 	debug("visitPathTypeNode", $indent, "trying to match $match: ");
 	if ($path =~ s/($match)//) {
@@ -1133,15 +1132,15 @@ sub visitPathTypeNode($$$$) {
 		debug("", 0, "failed.");
 		return 0;
 	}
-	
+
 	##### if we're here we matched #####
-	
+
 	# if there's no more path left, then this node is the one! return $nodeID
 	if ($path eq "") {
 		debug("visitPathTypeNode", $indent, "no path left, type is $nodeID");
 		return $nodeID;
 	}
-	
+
 	# otherwise, we have to send the remaining path to the node's children
 	debug("visitPathTypeNode", $indent, "but path remains: $path");
 	my @kids = @{ $node{kids} };
@@ -1159,7 +1158,7 @@ sub visitPathTypeNode($$$$) {
 	} else {
 		debug("visitPathTypeNode", $indent, "no children to claim the remaining path: failed.");
 	}
-	
+
 	# in both of the above cases, we matched but couldn't provide children that
 	# would consume the rest of the path. so we return -1, causing the whole
 	# stack to unwind. WHEEEEEEE!

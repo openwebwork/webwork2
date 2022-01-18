@@ -16,11 +16,16 @@
 # Artistic License for more details.
 ##############################################################################
 
-# This script dumps the local OPL statistics table and uploads it.  
+# This script dumps the local OPL statistics table and uploads it.
 
-BEGIN{ die('You need to set the WEBWORK_ROOT environment variable.\n')
-	   unless($ENV{WEBWORK_ROOT});}
+my $pg_dir;
+BEGIN {
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+}
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 
 use WeBWorK::CourseEnvironment;
 
@@ -50,7 +55,7 @@ $db = shell_quote($db);
 
 $ENV{'MYSQL_PWD'}=$dbpass;
 
-my $mysqldump_command = $ce->{externalPrograms}->{mysqldump};  
+my $mysqldump_command = $ce->{externalPrograms}->{mysqldump};
 
 # Conditionally add --column-statistics=0 as MariaDB databases do not support it
 # see: https://serverfault.com/questions/912162/mysqldump-throws-unknown-table-column-statistics-in-information-schema-1109
@@ -70,18 +75,18 @@ my $done;
 my $desc;
 my $input;
 
-do { 
+do {
 
   print "\nWe would appreciate it if you could provide \nsome basic information to help us \nkeep track of the data we receive.\n\n";
-  
+
   $desc  = "File:\n$output_file\n";
-  
+
   print "What university is this data for?\n";
-  
+
   $desc .=  "University:\n";
   $input = <STDIN>;
   $desc .=  $input;
-  
+
   print "What department is this data for?\n";
 
   $desc .=  "Department:\n";
@@ -89,37 +94,37 @@ do {
   $desc .=  $input;
 
   print "What is your name?\n";
-  
+
   $desc .=  "Name:\n";
   $input = <STDIN>;
   $desc .=  $input;
-  
+
   print "What is your email address?\n";
-  
+
   $desc .=  "Email:\n";
   $input = <STDIN>;
   $desc .=  $input;
-  
+
   print "Have you uploaded data from this server before?\n";
-  
+
   $desc .=  "Uploaded Previously:\n";
   $input = <STDIN>;
   $desc .=  $input;
-  
+
   print "Approximately what years does this data span?\n";
-  
+
   $desc .=  "Years:\n";
   $input = <STDIN>;
   $desc .=  $input;
-  
+
   print "Approximately how many classes are included?\n";
-  
+
   $desc .=  "Number of Classes:\n";
   $input = <STDIN>;
   $desc .=  $input;
-  
+
   print "Additional Comments?\n";
-  
+
   $desc .=  "Additional Comments:\n";
   $input = <STDIN>;
   $desc .=  $input;
@@ -129,17 +134,17 @@ do {
   print $desc."\n";
 
   my $answered;
-  
+
   do {
     print "Please choose one of the following:\n";
     print "1. Upload Data\n";
     print "2. Reenter above information.\n";
     print "3. Cancel.\n";
     print "[1/2/3]? ";
-    
+
     $input = <STDIN>;
     chomp $input;
-    
+
     if ($input eq '3') {
       exit;
     } elsif ($input eq '2') {
@@ -151,10 +156,10 @@ do {
     } else {
       $answered = 0;
     }
-    
+
   } while (!$answered);
-  
-  
+
+
 } while (!$done);
 
 my $desc_file = "$domainname-$time-desc.txt";
