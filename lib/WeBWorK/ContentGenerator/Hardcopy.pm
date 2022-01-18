@@ -1388,9 +1388,14 @@ sub write_problem_tex {
 			  "}\n" .
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
-			my $stuAns = $pg->{answers}{$ansName}{preview_latex_string} || "\\text{no response}";
-			# alternate itemize bullets disappear without extra newline here...
-			# newline also required after \begin{lstlisting}
+			my $stuAns;
+			if (defined $pg->{answers}{$ansName}{preview_latex_string} && $pg->{answers}{$ansName}{preview_latex_string} ne '') {
+				$stuAns = $pg->{answers}{$ansName}{preview_latex_string};
+			} elsif (defined $pg->{answers}{$ansName}{original_student_ans} && $pg->{answers}{$ansName}{original_student_ans} ne '') {
+				$stuAns = "\\text{".$pg->{answers}{$ansName}{original_student_ans}."}";
+			} else {
+				$stuAns = "\\text{no response}";
+			}
 			$stuAnswers .= "\\item\n\$\\displaystyle $stuAns\$\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
@@ -1427,7 +1432,6 @@ sub write_problem_tex {
 		foreach my $ansName (@ans_entry_order) {
 			my $correctAnswer = $pg->{answers}{$ansName}{correct_ans_latex_string} || "\\text{".$pg->{answers}{$ansName}{correct_ans}."}";
 			$correctTeX .= "\\item\n\$\\displaystyle $correctAnswer\$\n";
-			# FIXME: What about vectors (where TeX will complain about < and > outside of math mode)?
 		}
 		
 		$correctTeX .= "\\end{itemize}}\\par\n";
