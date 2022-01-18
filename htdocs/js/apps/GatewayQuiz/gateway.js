@@ -1,12 +1,12 @@
 /***********************************************************
  *
- * Javascript for gateway tests.  
+ * Javascript for gateway tests.
  *
  * This file includes the routines allowing navigation
- * within gateway tests, manages the timer, and posts 
+ * within gateway tests, manages the timer, and posts
  * alerts when test time is winding up.
  *
- * The code here relies heavily on the existence of form elements 
+ * The code here relies heavily on the existence of form elements
  * created by GatewayQuiz.pm
  *
  ***********************************************************/
@@ -23,7 +23,7 @@ function jumpTo(ref) {  // scrolling javascript function
 	return false; // prevent link from being followed
 }
 
-// timer for gateway 
+// timer for gateway
 var theTimer;		// variable for the timer
 var browserTime;	// on load, the time on the client's computer
 var serverTime;		// on load, the time on the server
@@ -55,7 +55,7 @@ function runtimer() {
 }
 
 function updateTimer() {
-	// update the timer 
+	// update the timer
 	var dateNow = new Date();
 	browserTime = Math.round(dateNow.getTime()/1000);
 	var remainingTime = serverDueTime - browserTime + 1.*timeDelta;
@@ -65,20 +65,20 @@ function updateTimer() {
 	}
 }
 
-function checkAlert() { 
+function checkAlert() {
 	// check to see if we should put up a low time alert
 	var dateNow = new Date();
 	browserTime = Math.round(dateNow.getTime()/1000);
 	var timeRemaining = serverDueTime - browserTime + 1.*timeDelta;
 
 	if ( timeRemaining <= 0 ) {
-		alert("* You are out of time! *\n" + 
+		alert("* You are out of time! *\n" +
 			"* Press grade now!     *");
 	} else if ( timeRemaining <= 45 && timeRemaining > 40 ) {
-		alert("* You have less than 45 seconds left! *\n" + 
+		alert("* You have less than 45 seconds left! *\n" +
 			"*      Press Grade very soon!         *");
 	} else if ( timeRemaining <= 90 && timeRemaining > 85 ) {
-		alert("* You only have less than 90 sec left to complete  *\n" + 
+		alert("* You only have less than 90 sec left to complete  *\n" +
 			"* this assignment. You should finish it very soon! *");
 	}
 	if ( timeRemaining > 0 ) {
@@ -105,9 +105,10 @@ function toMinSec(t) {
 // Start timer after the DOM is ready
 $(setTimeout(runtimer, 500));
 
-// Clear out the achievement model if there is one
-$(window).on("load", function() {
-	$('#achievementModal').modal('show');
-	setTimeout(function(){$('#achievementModal').modal('hide');},8000);
+// Show the achievement toast if there is one.
+document.addEventListener('load', () => {
+	document.querySelectorAll('.cheevo-toast').forEach((toast) => {
+		const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+		bsToast.show();
+	});
 });
-

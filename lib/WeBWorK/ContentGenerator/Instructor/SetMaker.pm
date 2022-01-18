@@ -363,42 +363,84 @@ sub get_problem_directories {
 	return (\@all_problem_directories);
 }
 
-############# Everyone has a view problems line.	Abstract it
+# All of the browsing panel versions have a view problems line. Abstract it.
 sub view_problems_line {
 	my $internal_name = shift;
-	my $label = shift;
-	my $r = shift; # so we can get parameter values
-	my $result = CGI::submit(-name=>"$internal_name", -value=>$label);
+	my $label         = shift;
+	my $r             = shift;    # so we can get parameter values
 
-	my %display_modes = %{WeBWorK::PG::DISPLAY_MODES()};
-	my @active_modes = grep { exists $display_modes{$_} }
-		@{$r->ce->{pg}->{displayModes}};
+	my $result = CGI::start_div({ class => 'd-flex flex-wrap justify-content-center' });
+
+	$result .= CGI::submit({ name => $internal_name, value => $label, class => 'btn btn-secondary btn-sm mb-2' });
+
+	# Give a choice of display modes.
+	my %display_modes = %{ WeBWorK::PG::DISPLAY_MODES() };
+	my @active_modes  = grep { exists $display_modes{$_} } @{ $r->ce->{pg}{displayModes} };
 	push @active_modes, 'None';
-	# We have our own displayMode since its value may be None, which is illegal
-	# in other modules.
-	my $mydisplayMode = $r->param('mydisplayMode') || $r->ce->{pg}->{options}->{displayMode};
-	$result .= ' '.$r->maketext('Display Mode:').' '.CGI::popup_menu(-name=> 'mydisplayMode',
-	                                                            -values=>\@active_modes,
-	                                                            -default=> $mydisplayMode);
-	# Now we give a choice of the number of problems to show
-	my $defaultMax = $r->param('max_shown') || MAX_SHOW_DEFAULT;
-	$result .= ' '.$r->maketext('Max. Shown:').' '.
-		CGI::popup_menu(-name=> 'max_shown',
-		                -values=>[5,10,15,20,25,30,50,'All'],
-		                -default=> $defaultMax);
-	# Option of whether to show hints and solutions
-	my $defaultHints = $r->param('showHints') || SHOW_HINTS_DEFAULT;
-	$result .= "&nbsp;".CGI::checkbox(-name=>"showHints",-checked=>$defaultHints,-label=>$r->maketext("Hints"));
-	my $defaultSolutions = $r->param('showSolutions') || SHOW_SOLUTIONS_DEFAULT;
-	$result .= "&nbsp;".CGI::checkbox(-name=>"showSolutions",-checked=>$defaultSolutions,-label=>$r->maketext("Solutions"));
-	$result .= "\n".CGI::hidden(-name=>"original_displayMode", -default=>$mydisplayMode)."\n";
 
-	return($result);
+	# We have our own displayMode since its value may be None, which is illegal in other modules.
+	my $mydisplayMode = $r->param('mydisplayMode') || $r->ce->{pg}->{options}->{displayMode};
+	$result .= CGI::div(
+		{ class => 'd-inline-block ms-2 mb-2' },
+		CGI::label(
+			{ for => 'mydisplayMode', class => 'col-form-label col-form-label-sm' },
+			$r->maketext('Display Mode:')
+		),
+		CGI::popup_menu({
+			name    => 'mydisplayMode',
+			id      => 'mydisplayMode',
+			values  => \@active_modes,
+			default => $mydisplayMode,
+			class   => 'form-select form-select-sm d-inline w-auto'
+		}),
+		CGI::hidden({ name => "original_displayMode", default => $mydisplayMode })
+	);
+
+	# Now we give a choice of the number of problems to show.
+	$result .= CGI::div(
+		{ class => 'd-inline-block ms-2 mb-2' },
+		CGI::label({ for => 'max_shown', class => 'col-form-label col-form-label-sm' }, $r->maketext('Max. Shown:')),
+		CGI::popup_menu({
+			name    => 'max_shown',
+			id      => 'max_shown',
+			values  => [ 5, 10, 15, 20, 25, 30, 50, 'All' ],
+			default => $r->param('max_shown') || MAX_SHOW_DEFAULT,
+			class   => 'form-select form-select-sm d-inline w-auto'
+		})
+	);
+
+	# Option of whether to show hints and solutions
+	$result .= CGI::div(
+		{ class => 'd-inline-block ms-2 mb-2' },
+		CGI::div(
+			{ class => 'form-check form-check-inline ms-2' },
+			CGI::checkbox({
+				name            => "showHints",
+				checked         => $r->param('showHints') || SHOW_HINTS_DEFAULT,
+				label           => $r->maketext("Hints"),
+				class           => 'form-check-input me-1',
+				labelattributes => { class => 'form-check-label col-form-label-sm' }
+			})
+		),
+		CGI::div(
+			{ class => 'form-check form-check-inline ms-2' },
+			CGI::checkbox({
+				name            => "showSolutions",
+				checked         => $r->param('showSolutions') || SHOW_SOLUTIONS_DEFAULT,
+				label           => $r->maketext("Solutions"),
+				class           => 'form-check-input me-1',
+				labelattributes => { class => 'form-check-label col-form-label-sm' }
+			})
+		)
+	);
+
+	$result .= CGI::end_div();
+
+	return $result;
 }
 
-
-### The browsing panel has three versions
-#####	 Version 1 is local problems
+# The browsing panel has three versions.
+# Version 1 is local problems
 sub browse_local_panel {
 	my $self = shift;
 	my $r = $self->r;
@@ -418,25 +460,32 @@ sub browse_local_panel {
 		}
 	}
 	debug("library is $lib and sets are $library_selected");
-	my $view_problem_line = view_problems_line('view_local_set', $r->maketext('View Problems'), $self->r);
-	my @popup_menu_args = (
-		-name => 'library_sets',
-		-values => $list_of_prob_dirs,
-		-default => $library_selected,
-	);
-	# make labels without the $lib prefix -- reduces the width of the popup menu
+
+	my $popup_menu_args = {
+		name    => 'library_sets',
+		id      => 'library_sets',
+		values  => $list_of_prob_dirs,
+		default => $library_selected,
+		class   => 'form-select form-select-sm d-inline w-auto'
+	};
+
+	# Make labels without the $lib prefix.  This reduces the width of the popup menu.
 	if (length($lib)) {
-		my %labels = map { my($l)=$_=~/^$lib\/(.*)$/;$_=>$l } @$list_of_prob_dirs;
-		push @popup_menu_args, -labels => \%labels;
+		$popup_menu_args->{labels} = { map { my ($l) = $_ =~ /^$lib\/(.*)$/; $_ => $l } @$list_of_prob_dirs };
 	}
-	print CGI::Tr({}, CGI::td({-class=>"InfoPanel"}, $r->maketext("[_1] Problems:", $name).' ',
-		              CGI::popup_menu(@popup_menu_args),
-		              CGI::br(),
-		              $view_problem_line,
-	));
+
+	print CGI::div(
+		{ class => "InfoPanel" },
+		CGI::div(
+			{ class => 'mb-2' },
+			CGI::label({ for => 'library_sets', class => 'col-form-label-sm' }, $r->maketext("[_1] Problems:", $name)),
+			CGI::popup_menu($popup_menu_args)
+		),
+		view_problems_line('view_local_set', $r->maketext('View Problems'), $self->r),
+	);
 }
 
-#####	 Version 2 is local homework sets
+# Version 2 is local homework sets
 sub browse_mysets_panel {
 	my $self = shift;
 	my $r = $self->r;
@@ -451,40 +500,46 @@ sub browse_mysets_panel {
 		$library_selected = $default_value;
 	}
 
-	my $view_problem_line = view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r);
-	print CGI::Tr({},
-		CGI::td({-class=>"InfoPanel"}, $r->maketext("Browse from:").' ',
-		CGI::popup_menu(-name=> 'library_sets',
-		                -values=>$list_of_local_sets,
-		                -default=> $library_selected),
-		CGI::br(),
-		$view_problem_line
-	));
+	print CGI::div(
+		{ class => "InfoPanel" },
+		CGI::div(
+			{ class => 'mb-2' },
+			CGI::label({ for => 'library_sets', class => 'col-form-label-sm' }, $r->maketext("Browse from:")),
+			CGI::popup_menu({
+				name    => 'library_sets',
+				id      => 'library_sets',
+				values  => $list_of_local_sets,
+				default => $library_selected,
+				class   => 'form-select form-select-sm d-inline w-auto'
+			})
+		),
+		view_problems_line('view_mysets_set', $r->maketext('View Problems'), $self->r)
+	);
 }
 
-#####	 Version 3 is the problem library
-#
-# This comes in 3 forms, problem library version 1, and for version 2 there
-# is the basic, and the advanced interfaces.  This function checks what we are
-# supposed to do, or aborts if the problem library has not been installed.
+# Version 3 is the problem library
+# This comes in 3 forms: problem library version 1, problem library version 2 basic, and problem library version 2
+# advanced.  This function checks what we are supposed to do, or aborts if the problem library has not been installed.
 
 sub browse_library_panel {
-	my $self=shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $self = shift;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
 
 	# See if the problem library is installed
-	my $libraryRoot = $r->{ce}->{problemLibrary}->{root};
+	my $libraryRoot = $r->{ce}{problemLibrary}{root};
 
-	unless($libraryRoot) {
-		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"},
-			"The problem library has not been installed.")));
+	unless ($libraryRoot) {
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
+			"The problem library has not been installed."
+		);
 		return;
 	}
 	# Test if the Library directory link exists.  If not, try to make it
-	unless(-d "$ce->{courseDirs}->{templates}/Library") {
-		unless(symlink($libraryRoot, "$ce->{courseDirs}->{templates}/Library")) {
-			my $msg =	 <<"HERE";
+	unless (-d "$ce->{courseDirs}{templates}/Library") {
+		unless (symlink($libraryRoot, "$ce->{courseDirs}{templates}/Library")) {
+			my $msg = <<"HERE";
 You are missing the directory <code>templates/Library</code>, which is needed
 for the Problem Library to function.	It should be a link pointing to
 <code>$libraryRoot</code>, which you set in <code>conf/site.conf</code>.
@@ -496,19 +551,27 @@ HERE
 	}
 
 	# Now check what version we are supposed to use
-	my $libraryVersion = $r->{ce}->{problemLibrary}->{version} || 1;
-	if($libraryVersion == 1) {
-		return $self->browse_library_panel1;
-	} elsif($libraryVersion >= 2) {
-		return $self->browse_library_panel2	if($self->{library_basic}==1);
+	my $libraryVersion = $r->{ce}{problemLibrary}{version} || 2;
+	if ($libraryVersion == 1) {
+		#return $self->browse_library_panel1;
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
+			"Problem library version 1 is no longer supported."
+		);
+		return;
+	} elsif ($libraryVersion >= 2) {
+		return $self->browse_library_panel2 if ($self->{library_basic} == 1);
 		return $self->browse_library_panel2adv;
 	} else {
-		print CGI::Tr(CGI::td(CGI::div({class=>'ResultsWithError', align=>"center"},
-			"The problem library version is set to an illegal value.")));
+		print CGI::div(
+			{ class => 'alert alert-danger p-1 mb-2', align => "center" },
+			"The problem library version is set to an illegal value."
+		);
 		return;
 	}
 }
 
+# FIXME:  This needs to be deleted.  The methods called here are commented out in WeBWorK::Utils::ListingDB.
 sub browse_library_panel1 {
 	my $self = shift;
 	my $r = $self->r;
@@ -536,7 +599,12 @@ sub browse_library_panel1 {
 					                -values=>\@chaps,
 					                -default=> $chapter_selected
 					),
-					CGI::submit(-name=>"lib_select_chapter", -value=>"Update Section List")])),
+					CGI::submit({
+						name => "lib_select_chapter",
+						value => "Update Section List",
+						class => 'btn btn-secondary btn-sm'
+					})
+				])),
 			CGI::Tr({},
 				CGI::td($r->maketext("Section:")),
 				CGI::td({-colspan=>2},
@@ -552,8 +620,7 @@ sub browse_library_panel1 {
 
 sub browse_library_panel2 {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r    = $self->r;
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
 	unshift @subjs, LIB2_DATA->{dbsubject}{all};
@@ -561,105 +628,143 @@ sub browse_library_panel2 {
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
 	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 
-	my @sects=();
+	my @sects = ();
 	@sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
 	unshift @sects, LIB2_DATA->{dbsection}{all};
 
-	my $subject_selected = $r->param('library_subjects') || LIB2_DATA->{dbsubject}{all};
-	my $chapter_selected = $r->param('library_chapters') || LIB2_DATA->{dbchapter}{all};
-	my $section_selected =	$r->param('library_sections') || LIB2_DATA->{dbsection}{all};
-
-	my $view_problem_line = view_problems_line('lib_view', $r->maketext('View Problems'), $self->r);
-
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
-	if($count_line==0) {
+	if ($count_line == 0) {
 		$count_line = $r->maketext("There are no matching WeBWorK problems");
 	} else {
 		$count_line = $r->maketext("There are [_1] matching WeBWorK problems", $count_line);
 	}
 
-	print CGI::Tr({},
-	    CGI::td({-class=>"InfoPanel"},
-		CGI::hidden(-name=>"library_is_basic", -default=>1,-override=>1),
-		CGI::start_table({-width=>"100%"}),
-		CGI::Tr({},
-			CGI::td([$r->maketext("Subject:"),
-				CGI::popup_menu(-name=> 'library_subjects',
-					            -values=>\@subjs,
-					            -default=> $subject_selected
-				)]),
-#			CGI::td({-colspan=>2, -align=>"right"},
-#				CGI::submit(-name=>"lib_select_subject", -value=>"Update Chapter/Section Lists"))
-			CGI::td({-colspan=>2, -align=>"right"},
-					CGI::submit(-name=>"library_advanced", -value=>$r->maketext("Advanced Search")))
+	print CGI::div(
+		CGI::hidden({ name => 'library_is_basic', default => 1, override => 1 }),
+		CGI::div(
+			{ class => 'row mb-2' },
+			CGI::div({ class => 'col-md-3' }, ''),
+			CGI::div(
+				{ class => 'col-md-6 col-sm-8' },
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_subjects', class => 'col-2 col-form-label col-form-label-sm' },
+						$r->maketext('Subject:')
+					),
+					CGI::div(
+						{ class => 'col-10' },
+						CGI::popup_menu({
+							name    => 'library_subjects',
+							id      => 'library_subjects',
+							values  => \@subjs,
+							default => $r->param('library_subjects') || LIB2_DATA->{dbsubject}{all},
+							class   => 'form-select form-select-sm'
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_chapters', class => 'col-2 col-form-label col-form-label-sm' },
+						$r->maketext('Chapter:')
+					),
+					CGI::div(
+						{ class => 'col-10' },
+						CGI::popup_menu({
+							name    => 'library_chapters',
+							id      => 'library_chapters',
+							values  => \@chaps,
+							default => $r->param('library_chapters') || LIB2_DATA->{dbchapter}{all},
+							class   => 'form-select form-select-sm'
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_sections', class => 'col-2 col-form-label col-form-label-sm' },
+						$r->maketext('Section:')
+					),
+					CGI::div(
+						{ class => 'col-10' },
+						CGI::popup_menu({
+							name    => 'library_sections',
+							id      => 'library_sections',
+							values  => \@sects,
+							default => $r->param('library_sections') || LIB2_DATA->{dbsection}{all},
+							class   => 'form-select form-select-sm'
+						})
+					)
+				)
+			),
+			CGI::div(
+				{ class =>
+						'col-md-3 col-sm-4 mb-1 d-flex flex-sm-column justify-content-sm-start justify-content-center'
+				},
+				CGI::submit({
+					name  => 'library_advanced',
+					value => $r->maketext("Advanced Search"),
+					class => 'btn btn-secondary btn-sm',
+					style => 'max-width:9rem'
+				})
+			)
 		),
-		CGI::Tr({},
-			CGI::td([$r->maketext("Chapter:"),
-				CGI::popup_menu(-name=> 'library_chapters',
-					            -values=>\@chaps,
-					            -default=> $chapter_selected
-		    )]),
-		),
-		CGI::Tr({},
-			CGI::td([$r->maketext("Section:"),
-			CGI::popup_menu(-name=> 'library_sections',
-					        -values=>\@sects,
-					        -default=> $section_selected
-		    )]),
-		 ),
-		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
-		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
-		 CGI::end_table(),
-	 ));
-
+		view_problems_line('lib_view', $r->maketext('View Problems'), $self->r),
+		CGI::div(
+			{ class => 'text-center', id => 'library_count_line' },
+			CGI::label({ class => 'col-form-label-sm' }, $count_line)
+		)
+	);
 }
 
 sub browse_library_panel2adv {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $right_button_style = "width: 18ex";
+	my $r    = $self->r;
+
+	my $right_button_style = 'max-width:9rem';
 
 	my @subjs = WeBWorK::Utils::ListingDB::getAllDBsubjects($r);
-	if(! grep { $_ eq $r->param('library_subjects') } @subjs) {
+	if (!grep { $_ eq $r->param('library_subjects') } @subjs) {
 		$r->param('library_subjects', '');
 	}
 	unshift @subjs, LIB2_DATA->{dbsubject}{all};
 
 	my @chaps = WeBWorK::Utils::ListingDB::getAllDBchapters($r);
-	if(! grep { $_ eq $r->param('library_chapters') } @chaps) {
+	if (!grep { $_ eq $r->param('library_chapters') } @chaps) {
 		$r->param('library_chapters', '');
 	}
 	unshift @chaps, LIB2_DATA->{dbchapter}{all};
 
 	my @sects = WeBWorK::Utils::ListingDB::getAllDBsections($r);
-	if(! grep { $_ eq $r->param('library_sections') } @sects) {
+	if (!grep { $_ eq $r->param('library_sections') } @sects) {
 		$r->param('library_sections', '');
 	}
 	unshift @sects, LIB2_DATA->{dbsection}{all};
 
-	my $texts = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
-	my @textarray = map { $_->[0] }  @{$texts};
+	my $texts      = WeBWorK::Utils::ListingDB::getDBTextbooks($r);
+	my @textarray  = map { $_->[0] } @{$texts};
 	my %textlabels = ();
 	for my $ta (@{$texts}) {
-		$textlabels{$ta->[0]} = $ta->[1]." by ".$ta->[2]." (edition ".$ta->[3].")";
+		$textlabels{ $ta->[0] } = $ta->[1] . " by " . $ta->[2] . " (edition " . $ta->[3] . ")";
 	}
-	if(! grep { $_ eq $r->param('library_textbook') } @textarray) {
+	if (!grep { $_ eq $r->param('library_textbook') } @textarray) {
 		$r->param('library_textbook', '');
 	}
 	unshift @textarray, LIB2_DATA->{textbook}{all};
-	my $atb = LIB2_DATA->{textbook}{all}; $textlabels{$atb} = LIB2_DATA->{textbook}{all};
+	my $atb = LIB2_DATA->{textbook}{all};
+	$textlabels{$atb} = LIB2_DATA->{textbook}{all};
 
 	my $textchap_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textchapter');
-	my @textchaps = map { $_->[0] } @{$textchap_ref};
-	if(! grep { $_ eq $r->param('library_textchapter') } @textchaps) {
+	my @textchaps    = map { $_->[0] } @{$textchap_ref};
+	if (!grep { $_ eq $r->param('library_textchapter') } @textchaps) {
 		$r->param('library_textchapter', '');
 	}
 	unshift @textchaps, LIB2_DATA->{textchapter}{all};
 
 	my $textsec_ref = WeBWorK::Utils::ListingDB::getDBTextbooks($r, 'textsection');
-	my @textsecs = map { $_->[0] } @{$textsec_ref};
-	if(! grep { $_ eq $r->param('library_textsection') } @textsecs) {
+	my @textsecs    = map { $_->[0] } @{$textsec_ref};
+	if (!grep { $_ eq $r->param('library_textsection') } @textsecs) {
 		$r->param('library_textsection', '');
 	}
 	unshift @textsecs, LIB2_DATA->{textsection}{all};
@@ -669,142 +774,263 @@ sub browse_library_panel2adv {
 		$selected{$j} = $r->param(LIB2_DATA->{$j}{name}) || LIB2_DATA->{$j}{all};
 	}
 
-	my $text_popup = CGI::popup_menu(-name => 'library_textbook',
-									 -values =>\@textarray,
-									 -labels => \%textlabels,
-									 -default=>$selected{textbook},
-									 -onchange=>"submit();return true");
-
-
-	my $library_keywords = $r->param('library_keywords') || '';
-
-	my $view_problem_line = view_problems_line('lib_view', $r->maketext('View Problems'), $self->r);
+	my $text_popup = CGI::popup_menu({
+		name     => 'library_textbook',
+		id       => 'library_textbook',
+		values   => \@textarray,
+		labels   => \%textlabels,
+		default  => $selected{textbook},
+		onchange => "submit();return true",
+		class    => 'form-select form-select-sm'
+	});
 
 	my $count_line = WeBWorK::Utils::ListingDB::countDBListings($r);
-	if($count_line==0) {
+	if ($count_line == 0) {
 		$count_line = "There are no matching WeBWorK problems";
 	} else {
 		$count_line = "There are $count_line matching WeBWorK problems";
 	}
 
 	# Formatting level checkboxes by hand
-	my @selected_levels_arr = $r->param('level');
-	my %selected_levels = ();
-	for my $j (@selected_levels_arr) {
-		$selected_levels{$j} = 1;
-	}
-	my $mylevelline = '<table width="100%"><tr>';
-	for my $j (1..6) {
-		my $selected = '';
-		$selected = ' checked' if(defined($selected_levels{$j}));
-		$mylevelline .= "<td><label><input type='checkbox' name='level' value='$j' ";
-		$mylevelline .= "$selected />$j</label></td>";
-	}
-	$mylevelline .= "<td>".$self->helpMacro("Levels")."</td>";
-	$mylevelline .= '</tr></table>';
+	my %selected_levels = map { $_ => 1 } $r->param('level');
 
-	print CGI::Tr({},
-	  CGI::td({-class=>"InfoPanel"},
-		CGI::hidden(-name=>"library_is_basic", -default=>2,-override=>1),
-		CGI::start_table({-width=>"100%"}),
-		# Html done by hand since it is temporary
-		CGI::Tr(CGI::td({-colspan=>4, -align=>"center"}, $r->maketext('All Selected Constraints Joined by "And"'))),
-		CGI::Tr({},
-			CGI::td([$r->maketext("Subject:"),
-				CGI::popup_menu(-name=> 'library_subjects',
-					            -values=>\@subjs,
-					            -default=> $selected{dbsubject}
-				)]),
-			CGI::td({-colspan=>2, -align=>"right"},
-				CGI::submit(-name=>"lib_select_subject", -value=>$r->maketext("Update Menus"),
-					-style=> $right_button_style))),
-		CGI::Tr({},
-			CGI::td([$r->maketext("Chapter:"),
-				CGI::popup_menu(-name=> 'library_chapters',
-					            -values=>\@chaps,
-					            -default=> $selected{dbchapter}
-		    )]),
-			CGI::td({-colspan=>2, -align=>"right"},
-					CGI::submit(-name=>"library_reset", -value=>$r->maketext("Reset"),
-					-style=>$right_button_style))
+	my $mylevelline = CGI::div(
+		{ class => 'd-flex justify-content-between align-items-center' },
+		(
+			map {
+				CGI::div(
+					{ class => 'form-check form-check-inline' },
+					CGI::checkbox({
+						name            => 'level',
+						value           => $_,
+						label           => $_,
+						class           => 'form-check-input',
+						checked         => defined($selected_levels{$_}),
+						labelattributes => { class => 'form-check-label col-form-label-sm' }
+					})
+				)
+			} 1 .. 6
 		),
-		CGI::Tr({},
-			CGI::td([$r->maketext("Section:"),
-			CGI::popup_menu(-name=> 'library_sections',
-					        -values=>\@sects,
-					        -default=> $selected{dbsection}
-		    )]),
-			CGI::td({-colspan=>2, -align=>"right"},
-					CGI::submit(-name=>"library_basic", -value=>$r->maketext("Basic Search"),
-					-style=>$right_button_style))
-		 ),
-		 CGI::Tr({},
-			CGI::td([$r->maketext("Textbook:"), $text_popup]),
-		 ),
-		 CGI::Tr({},
-			CGI::td([$r->maketext("Text chapter:"),
-			CGI::popup_menu(-name=> 'library_textchapter',
-					        -values=>\@textchaps,
-					        -default=> $selected{textchapter},
-							-onchange=>"submit();return true"
-		    )]),
-		 ),
-		 CGI::Tr({},
-			CGI::td([$r->maketext("Text section:"),
-			CGI::popup_menu(-name=> 'library_textsection',
-					        -values=>\@textsecs,
-					        -default=> $selected{textsection},
-							-onchange=>"submit();return true"
-		    )]),
-		 ),
-		 CGI::Tr({},
-				 CGI::td($r->maketext("Level:")),
-				 "<td>$mylevelline</td>"
-		 ),
-		 CGI::Tr({},
-		     CGI::td($r->maketext("Keywords:")),CGI::td({-colspan=>2},
-			 CGI::textfield(-name=>"library_keywords",
-							-default=>$library_keywords,
-							-override=>1,
-							-size=>40))),
-		 CGI::Tr(CGI::td({-colspan=>3}, $view_problem_line)),
-		 CGI::Tr(CGI::td({-colspan=>3, -align=>"center", -id=>"library_count_line"}, $count_line)),
-		 CGI::end_table(),
-	 ));
+		$self->helpMacro("Levels")
+	);
 
+	print CGI::div(
+		CGI::hidden({ name => "library_is_basic", default => 2, override => 1 }),
+		CGI::div(
+			{ class => 'text-center' },
+			CGI::label({ class => 'col-form-label-sm pt-0' }, $r->maketext('All Selected Constraints Joined by "And"'))
+		),
+		CGI::div(
+			{ class => 'row mb-1' },
+			CGI::div({ class => 'col-md-3 mb-1' }, ''),
+			CGI::div(
+				{ class => 'col-md-6 col-sm-8 mb-1' },
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_subjects', class => 'col-3 col-form-label col-form-label-sm' },
+						$r->maketext('Subject:')
+					),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::popup_menu({
+							name    => 'library_subjects',
+							id      => 'library_subjects',
+							values  => \@subjs,
+							default => $selected{dbsubject},
+							class   => 'form-select form-select-sm',
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_chapters', class => 'col-3 col-form-label col-form-label-sm' },
+						$r->maketext('Chapter:')
+					),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::popup_menu({
+							name    => 'library_chapters',
+							id      => 'library_chapters',
+							values  => \@chaps,
+							default => $selected{dbchapter},
+							class   => 'form-select form-select-sm',
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_sections', class => 'col-3 col-form-label col-form-label-sm' },
+						$r->maketext('Section:')
+					),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::popup_menu({
+							name    => 'library_sections',
+							id      => 'library_sections',
+							values  => \@sects,
+							default => $selected{dbsection},
+							class   => 'form-select form-select-sm',
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_textbook', class => 'col-3 col-form-label col-form-label-sm' },
+						$r->maketext('Textbook:')
+					),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::popup_menu({
+							name     => 'library_textbook',
+							id       => 'library_textbook',
+							values   => \@textarray,
+							labels   => \%textlabels,
+							default  => $selected{textbook},
+							onchange => "submit();return true",
+							class    => 'form-select form-select-sm'
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_textchapter', class => 'col-3 col-form-label col-form-label-sm text-nowrap' },
+						$r->maketext('Text chapter:')
+					),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::popup_menu({
+							name     => 'library_textbook',
+							id       => 'library_textbook',
+							values   => \@textarray,
+							labels   => \%textlabels,
+							default  => $selected{textbook},
+							onchange => "submit();return true",
+							class    => 'form-select form-select-sm'
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_textsection', class => 'col-3 col-form-label col-form-label-sm text-nowrap' },
+						$r->maketext('Text section:')
+					),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::popup_menu({
+							name     => 'library_textsection',
+							id       => 'library_textsection',
+							values   => \@textsecs,
+							default  => $selected{textsection},
+							onchange => "submit();return true",
+							class    => 'form-select form-select-sm',
+						})
+					)
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label({ class => 'col-3 col-form-label col-form-label-sm' }, $r->maketext("Level:")),
+					CGI::div({ class => 'col-9' }, $mylevelline),
+				),
+				CGI::div(
+					{ class => 'row mb-1' },
+					CGI::label(
+						{ for => 'library_keywords', class => 'col-3 col-form-label col-form-label-sm' },
+						$r->maketext("Keywords:")
+					),
+					CGI::div(
+						{ class => 'col-9' },
+						CGI::textfield({
+							name     => "library_keywords",
+							id       => "library_keywords",
+							default  => $r->param('library_keywords') || '',
+							override => 1,
+							class    => 'form-control form-control-sm'
+						})
+					),
+				)
+			),
+			CGI::div(
+				{ class =>
+						'col-md-3 col-sm-4 mb-1 d-flex flex-sm-column justify-content-sm-start justify-content-center'
+				},
+				CGI::submit({
+					name  => "lib_select_subject",
+					value => $r->maketext("Update Menus"),
+					style => $right_button_style,
+					class => 'btn btn-secondary btn-sm mb-1'
+				}),
+				CGI::submit({
+					name  => "library_reset",
+					value => $r->maketext("Reset"),
+					style => $right_button_style,
+					class => 'btn btn-secondary btn-sm mb-1 ms-sm-0 ms-2'
+				}),
+				CGI::submit({
+					name  => "library_basic",
+					value => $r->maketext("Basic Search"),
+					style => $right_button_style,
+					class => 'btn btn-secondary btn-sm mb-1 ms-sm-0 ms-2'
+				})
+			)
+		),
+		view_problems_line('lib_view', $r->maketext('View Problems'), $self->r),
+		CGI::div(
+			{ class => 'text-center', id => 'library_count_line' },
+			CGI::label({ class => 'col-form-label-sm' }, $count_line)
+		)
+	);
 }
 
-
-#####	 Version 4 is the set definition file panel
-
+# Version 4 is the set definition file panel
 sub browse_setdef_panel {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $self             = shift;
+	my $r                = $self->r;
+	my $ce               = $r->ce;
 	my $library_selected = shift;
-	my $default_value = "Select a Set Definition File";
-	# in the following line, the parens after sort are important. if they are
+	my $default_value    = 'Select a Set Definition File';
+
+	# In the following line, the parens after sort are important. If they are
 	# omitted, sort will interpret get_set_defs as the name of the comparison
 	# function, and ($ce->{courseDirs}{templates}) as a single element list to
-	# be sorted. *barf*
+	# be sorted.
 	my @list_of_set_defs = sort(get_set_defs($ce->{courseDirs}{templates}));
-	if(scalar(@list_of_set_defs) == 0) {
-		@list_of_set_defs = ($r->maketext(NO_LOCAL_SET_STRING));
-	} elsif (not $library_selected or $library_selected eq $default_value) {
+
+	if (scalar(@list_of_set_defs) == 0) {
+		print CGI::div(
+			{ class => 'InfoPanel' },
+			CGI::label(
+				{ class => 'col-form-label-sm' },
+				$r->maketext('There are no set definition files in this course to look at.')
+			)
+		);
+		return;
+	}
+
+	if (!$library_selected || $library_selected eq $default_value) {
 		unshift @list_of_set_defs, $default_value;
 		$library_selected = $default_value;
 	}
-	my $view_problem_line = view_problems_line('view_setdef_set', $r->maketext('View Problems'), $self->r);
-	my $popupetc = CGI::popup_menu(-name=> 'library_sets',
-                                -values=>\@list_of_set_defs,
-                                -default=> $library_selected).
-		CGI::br().  $view_problem_line;
-	if($list_of_set_defs[0] eq $r->maketext(NO_LOCAL_SET_STRING)) {
-		$popupetc = $r->maketext("there are no set definition files in this course to look at.")
-	}
-	print CGI::Tr(CGI::td({-class=>"InfoPanel"}, $r->maketext("Browse from:")." ",
-		$popupetc
-	));
+
+	print CGI::div(
+		{ class => 'InfoPanel' },
+		CGI::div(
+			{ class => 'mb-2' },
+			CGI::label({ class => 'col-form-label-sm' }, $r->maketext('Browse from:')),
+			CGI::popup_menu({
+				name    => 'library_sets',
+				values  => \@list_of_set_defs,
+				default => $library_selected,
+				class => 'form-select form-select-sm d-inline w-auto'
+			})
+		),
+		view_problems_line('view_setdef_set', $r->maketext('View Problems'), $self->r)
+	);
 }
 
 sub make_top_row {
@@ -824,65 +1050,122 @@ sub make_top_row {
 	@dis3 =	 (-disabled=>1) if($browse_which eq 'browse_mysets');
 	@dis4 =	 (-disabled=>1) if($browse_which eq 'browse_setdefs');
 
-	##	Make buttons for additional problem libraries
-	my $libs = '';
-	foreach my $lib (sort(keys(%problib))) {
-		$libs .= ' '. CGI::submit(-name=>"browse_$lib", -value=>Encode::decode("UTF-8",$problib{$lib}),
-																 ($browse_which eq "browse_$lib")? (-disabled=>1): ())
-			if (-d "$ce->{courseDirs}{templates}/$lib");
-	}
-	$libs = CGI::br().$r->maketext("or Problems from").$libs if $libs ne '';
+	my $these_widths = "width:9.3rem";
 
-	my $these_widths = "width: 24ex";
-
-	if($have_local_sets ==0) {
-		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
-	} elsif (not defined($set_selected) or $set_selected eq ""
-	  or $set_selected eq $r->maketext(SELECT_SET_STRING)) {
+	if ($have_local_sets == 0) {
+		$list_of_local_sets = [ $r->maketext(NO_LOCAL_SET_STRING) ];
+	} elsif (!$set_selected || $set_selected eq $r->maketext(SELECT_SET_STRING)) {
 		unshift @{$list_of_local_sets}, $r->maketext(SELECT_SET_STRING);
 		$set_selected = $r->maketext(SELECT_SET_STRING);
 	}
-	#my $myjs = 'document.mainform.selfassign.value=confirm("Should I assign the new set to you now?\nUse OK for yes and Cancel for no.");true;';
-        my $courseID = $self->r->urlpath->arg("courseID");
+	my $courseID = $self->r->urlpath->arg("courseID");
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel"}, $r->maketext("Add problems to").' ',
-		CGI::b($r->maketext("Target Set:").' '),
-		CGI::popup_menu(-name=> 'local_sets',
-						-values=>$list_of_local_sets,
-						-default=> $set_selected,
-						-override=>1),
-		CGI::submit(-name=>"edit_local", -value=>$r->maketext("Edit Target Set")),
-		CGI::hidden(-name=>"selfassign", -default=>0,-override=>1).
-		CGI::br(),
-		CGI::br(),
-		CGI::submit(-name=>"new_local_set", -value=>$r->maketext("Create a New Set in This Course:"),
-		#CGI::button(-name=>"new_local_set", -value=>"Create a New Set in This Course:",
-		-onclick=>"document.mainform.selfassign.value=1"      #       $myjs
-		#-onclick=>"createNewSet()"      #       $myjs
+	print CGI::hr({ class => 'mt-0 mb-2' });
+
+	print CGI::div(
+		{ class => 'd-flex flex-wrap justify-content-center' },
+		CGI::div(
+			{ class => 'd-flex flex-wrap justify-content-center mb-2' },
+			CGI::label(
+				{ for => 'local_sets', class => 'col-form-label-sm' },
+				$r->maketext('Add problems to') . ' ' . CGI::b($r->maketext('Target Set:'))
+			),
+			CGI::popup_menu({
+				name     => 'local_sets',
+				id       => 'local_sets',
+				values   => $list_of_local_sets,
+				default  => $set_selected,
+				override => 1,
+				class    => 'form-select form-select-sm d-inline w-auto mx-2',
+			})
 		),
-		"  ",
-		CGI::textfield(-name=>"new_set_name",
-					   -example=>$r->maketext("Name for new set here"),
-					   -override=>1, -size=>30),
-	));
+		CGI::submit({
+			name  => "edit_local",
+			value => $r->maketext("Edit Target Set"),
+			class => 'btn btn-primary btn-sm mb-2'
+		}),
+		CGI::hidden({ name => 'selfassign', default => 0, override => 1 }),
+	);
 
-	print CGI::Tr(CGI::td({class=>'table-separator'}));
+	print CGI::div(
+		{ class => 'd-flex flex-wrap justify-content-center' },
+		CGI::submit({
+			name    => "new_local_set",
+			value   => $r->maketext("Create a New Set in This Course:"),
+			onclick => "document.library_browser_form.selfassign.value=1",
+			class   => 'btn btn-primary btn-sm mb-2 mx-2'
+		}),
+		CGI::textfield({
+			name     => "new_set_name",
+			example  => $r->maketext("Name for new set here"),
+			override => 1,
+			size     => 30,
+			class    => 'form-control form-control-sm d-inline w-auto mb-2'
+		})
+	);
+
+	print CGI::hr({ class => 'mt-0 mb-2' });
 
 	# Tidy this list up since it is used in two different places
 	if ($list_of_local_sets->[0] eq $r->maketext(SELECT_SET_STRING)) {
 		shift @{$list_of_local_sets};
 	}
 
-	print CGI::Tr(CGI::td({-class=>"InfoPanel"},
-		$r->maketext("Browse").' ',
-		CGI::submit(-name=>"browse_npl_library", -value=>$r->maketext("Open Problem Library"), -style=>$these_widths, @dis1),
-		CGI::submit(-name=>"browse_local", -value=>$r->maketext("Local Problems"), -style=>$these_widths, @dis2),
-		CGI::submit(-name=>"browse_mysets", -value=>$r->maketext("From This Course"), -style=>$these_widths, @dis3),
-		CGI::submit(-name=>"browse_setdefs", -value=>$r->maketext("Set Definition Files"), -style=>$these_widths, @dis4),
-		$libs,
-	));
+	print CGI::div(
+		{ class => 'd-flex justify-content-center' },
+		CGI::label({ class => 'col-form-label-sm mb-2 me-1' }, $r->maketext("Browse")),
+		CGI::div(
+			{ class => 'd-flex flex-wrap justify-content-center' },
+			CGI::submit({
+				name  => "browse_npl_library",
+				value => $r->maketext("Open Problem Library"),
+				style => $these_widths,
+				class => 'btn btn-secondary btn-sm mb-2 mx-1',
+				@dis1
+			}),
+			CGI::submit({
+				name  => "browse_local",
+				value => $r->maketext("Local Problems"),
+				style => $these_widths,
+				class => 'btn btn-secondary btn-sm mb-2 mx-1',
+				@dis2
+			}),
+			CGI::submit({
+				name  => "browse_mysets",
+				value => $r->maketext("From This Course"),
+				style => $these_widths,
+				class => 'btn btn-secondary btn-sm mb-2 mx-1',
+				@dis3
+			}),
+			CGI::submit({
+				name  => "browse_setdefs",
+				value => $r->maketext("Set Definition Files"),
+				style => $these_widths,
+				class => 'btn btn-secondary btn-sm mb-2 mx-1',
+				@dis4
+			})
+		)
+	);
 
-	print CGI::hr();
+	# Make buttons for additional problem libraries
+	my $libs = '';
+	foreach my $lib (sort(keys(%problib))) {
+		$libs .= CGI::submit({
+			name  => "browse_$lib",
+			value => Encode::decode("UTF-8", $problib{$lib}),
+			class => 'btn btn-secondary btn-sm ms-2 mb-2',
+			($browse_which eq "browse_$lib") ? (disabled => undef) : ()
+		})
+			if (-d "$ce->{courseDirs}{templates}/$lib");
+	}
+
+	print CGI::div(
+		{ class => 'd-flex justify-content-center' },
+		CGI::label({ class => 'col-form-label-sm mb-2' }, $r->maketext("or Problems from")),
+		CGI::div({ class => 'd-flex flex-wrap justify-content-center' }, $libs)
+	) if $libs ne '';
+
+	print CGI::hr({ class => 'mt-0 mb-2' });
 
 	if ($browse_which eq 'browse_local') {
 		$self->browse_local_panel($library_selected);
@@ -896,7 +1179,7 @@ sub make_top_row {
 		$self->browse_local_panel($library_selected,$browse_which);
 	}
 
-	print CGI::Tr(CGI::td({class=>'table-separator'}));
+	print CGI::hr({ class => 'mt-0 mb-2' });
 
     # For next/previous buttons
 	my ($next_button, $prev_button) = ("", "");
@@ -906,197 +1189,439 @@ sub make_top_row {
 	my $last_index = $self->{last_index};
 	my @pg_files = @{$self->{pg_files}};
 	if ($first_index > 0) {
-		$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex",
-						 -value=>$r->maketext("Previous page"));
+		$prev_button = CGI::submit({
+			name => "prev_page",
+			style => $these_widths,
+			value => $r->maketext("Previous page"),
+			class => 'btn btn-secondary btn-sm mx-1 mb-2'
+		});
 	}
 	# This will have to be trickier with MLT
-	if ((1+$last_index)<scalar(@pg_files)) {
-		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
-						 -value=>$r->maketext("Next page"));
+	if ((1 + $last_index) < scalar(@pg_files)) {
+		$next_button = CGI::submit({
+			name => "next_page",
+		   	style => $these_widths,
+			value => $r->maketext("Next page"),
+			class => 'btn btn-secondary btn-sm mx-1 mb-2'
+		});
 	}
 
-	print CGI::Tr({},
-		CGI::td({-class=>"InfoPanel"},
-			CGI::start_table({-border=>"0"}),
-			CGI::Tr({}, CGI::td({ -align=>"center"},
-					CGI::button(-name=>"select_all", -style=>$these_widths,
-						-value=>$r->maketext("Add All")),
-					CGI::submit(-name=>"cleardisplay",
-						-style=>$these_widths,
-						-value=>$r->maketext("Clear Problem Display")),
-					$prev_button, " ", $next_button
-				)),
-			CGI::end_table()));
+	print CGI::div(
+		{ class => 'd-flex flex-wrap justify-content-center' },
+		CGI::button({
+			name  => "select_all",
+			style => $these_widths,
+			value => $r->maketext("Add All"),
+			class => 'btn btn-primary btn-sm mx-1 mb-2'
+		}),
+		CGI::submit({
+			name  => "cleardisplay",
+			style => $these_widths,
+			value => $r->maketext("Clear Problem Display"),
+			class => 'btn btn-secondary btn-sm mx-1 mb-2'
+		}),
+		$prev_button,
+		$next_button
+	);
 }
 
-
 sub make_data_row {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->{ce};
+	my $self           = shift;
+	my $r              = $self->r;
+	my $ce             = $r->{ce};
 	my $sourceFileData = shift;
 	my $sourceFileName = $sourceFileData->{filepath};
-	my $pg_file = shift;
-	my $isstatic = $sourceFileData->{static};
-	my $isMO = $sourceFileData->{MO};
+	my $pg_file        = shift;
+	my $isstatic       = $sourceFileData->{static};
+	my $isMO           = $sourceFileData->{MO};
+
 	if (not defined $isMO) {
 		($isMO, $isstatic) = getDBextras($r, $sourceFileName);
 	}
-	my $cnt = shift;
+	my $cnt        = shift;
 	my $mltnumleft = shift;
 
-	$sourceFileName =~ s|^./||; # clean up top ugliness
+	$sourceFileName =~ s|^./||;    # clean up top ugliness
 
 	my $urlpath = $self->r->urlpath;
-	my $db = $self->r->db;
+	my $db      = $self->r->db;
 
 	## to set up edit and try links elegantly we want to know if
 	##    any target set is a gateway assignment or not
 	my $localSet = $self->r->param('local_sets');
 	my $setRecord;
-	if ( defined($localSet) && $localSet ne $r->maketext(SELECT_SET_STRING) &&
-	     $localSet ne $r->maketext(NO_LOCAL_SET_STRING) ) {
-		$setRecord = $db->getGlobalSet( $localSet );
+	if (defined($localSet)
+		&& $localSet ne $r->maketext(SELECT_SET_STRING)
+		&& $localSet ne $r->maketext(NO_LOCAL_SET_STRING))
+	{
+		$setRecord = $db->getGlobalSet($localSet);
 	}
 	my $isGatewaySet = (defined($setRecord) && $setRecord->assignment_type =~ /gateway/);
 
-
 	my $problem_seed = $self->{'problem_seed'} || 1234;
-	my $edit_link = CGI::a({href=>$self->systemLink(
-				$urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
-					courseID =>$urlpath->arg("courseID"),
-					setID=>"Undefined_Set",
-					problemID=>"1"),
-				params=>{sourceFilePath => "$sourceFileName",
-					problemSeed=> $problem_seed}
+	my $edit_link = CGI::a(
+		{
+			href => $self->systemLink(
+				$urlpath->newFromModule(
+					"WeBWorK::ContentGenerator::Instructor::PGProblemEditor", $r,
+					courseID  => $urlpath->arg("courseID"),
+					setID     => "Undefined_Set",
+					problemID => "1"
+				),
+				params => {
+					sourceFilePath => $sourceFileName,
+					problemSeed    => $problem_seed
+				}
 			),
-			id=> "editit$cnt",
-			target=>"WW_Editor", title=>"Edit it"}, CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, ""));
+			id                => "editit$cnt",
+			target            => "WW_Editor",
+			data_bs_title     => $r->maketext('Edit it'),
+			class             => 'btn btn-sm btn-secondary',
+			data_bs_toggle    => 'tooltip',
+			data_bs_placement => 'top'
+		},
+		CGI::i({ class => 'icon fas fa-pencil-alt', data_alt => 'edit', aria_hidden => "true" }, "")
+	);
 
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
 		if not defined $displayMode or $displayMode eq "None";
-	my $module = ( $isGatewaySet ) ? "GatewayQuiz" : "Problem";
-	my %pathArgs = ( courseID =>$urlpath->arg("courseID"),
-			setID=>"Undefined_Set" );
-	$pathArgs{problemID} = "1" if ( ! $isGatewaySet );
+	my $module   = ($isGatewaySet) ? "GatewayQuiz" : "Problem";
+	my %pathArgs = (
+		courseID => $urlpath->arg("courseID"),
+		setID    => "Undefined_Set"
+	);
+	$pathArgs{problemID} = "1" if (!$isGatewaySet);
 
-	my $try_link = CGI::a({href=>$self->systemLink(
-		$urlpath->newFromModule("WeBWorK::ContentGenerator::$module", $r,
-			%pathArgs ),
-			params =>{
-				effectiveUser => scalar($self->r->param('user')),
-				editMode => "SetMaker",
-				problemSeed=> $problem_seed,
-				sourceFilePath => "$sourceFileName",
-				displayMode => $displayMode,
-			}
-		), target=>"WW_View",
-			title=>"Try it",
-			id=>"tryit$cnt",
-			style=>"text-decoration: none"}, '<i class="far fa-eye" ></i>');
-
-	my $inSet = CGI::span({ class => "lb-inset", id => "inset$cnt" },
-		CGI::i(CGI::b($self->{isInSet}{$sourceFileName} ? " (in target set)" : "&nbsp;")));
-	my $fpathpop = "<span id=\"thispop$cnt\">$sourceFileName</span>";
-
-	# saved CGI::span({-style=>"float:left ; text-align: left"},"File name: $sourceFileName "),
+	my $try_link = CGI::a(
+		{
+			href => $self->systemLink(
+				$urlpath->newFromModule("WeBWorK::ContentGenerator::$module", $r, %pathArgs),
+				params => {
+					effectiveUser  => scalar($self->r->param('user')),
+					editMode       => "SetMaker",
+					problemSeed    => $problem_seed,
+					sourceFilePath => "$sourceFileName",
+					displayMode    => $displayMode,
+				}
+			),
+			target            => "WW_View",
+			data_bs_title     => $r->maketext('Try it'),
+			id                => "tryit$cnt",
+			class             => 'text-decoration-none btn btn-sm btn-secondary',
+			data_bs_toggle    => 'tooltip',
+			data_bs_placement => 'top'
+		},
+		CGI::i({ class => 'far fa-eye' }, '')
+	);
 
 	my $mlt = '';
-	my ($mltstart, $mltend) = ('','');
-	my $noshowclass = 'NS'.$cnt;
-	$noshowclass = 'MLT'.$sourceFileData->{morelt} if $sourceFileData->{morelt};
-	if($sourceFileData->{children}) {
-		my $numchild = scalar(@{$sourceFileData->{children}});
-		$mlt = "<span class='lb-mlt-parent' id='mlt$cnt' data-mlt-cnt='$cnt' data-mlt-noshow-class='$noshowclass' title='Show $numchild more like this' style='cursor:pointer'>M</span>";
+	my ($mltstart, $mltend) = ('', '');
+	my $noshowclass = $sourceFileData->{morelt} ? "MLT$sourceFileData->{morelt}" : "NS$cnt";
+	if ($sourceFileData->{children}) {
+		my $numchild = scalar(@{ $sourceFileData->{children} });
+		$mlt = CGI::span(
+			{
+				class                 => 'lb-mlt-parent btn btn-sm btn-secondary',
+				id                    => "mlt$cnt",
+				data_mlt_cnt          => $cnt,
+				data_mlt_noshow_class => $noshowclass,
+				data_less_text        => $r->maketext('Show less like this'),
+				data_more_text        => $r->maketext('Show [_1] more like this', $numchild),
+				data_bs_title         => $r->maketext('Show [_1] more like this', $numchild),
+				data_bs_toggle        => 'tooltip',
+				data_bs_placement     => 'top',
+				tabindex              => 0,
+				role                  => 'button'
+			},
+			'M'
+		);
 		$noshowclass = "NS$cnt";
-		$mltstart = "<tr><td><table id='mlt-table$cnt' class='lb-mlt-group'>\n";
+		$mltstart    = CGI::start_div({ id => "mlt-table$cnt", class => 'lb-mlt-group' });
 	}
-	$mltend = "</table></td></tr>\n" if($mltnumleft==0);
-	my $noshow = '';
-	$noshow = 'display: none' if($sourceFileData->{noshow});
+	$mltend = CGI::end_div() if ($mltnumleft == 0);
+	my $noshow = $sourceFileData->{noshow} ? 'display:none' : '';
 
 	# Include tagwidget?
 	my $tagwidget = '';
-	my $user = scalar($r->param('user'));
+	my $user      = scalar($r->param('user'));
 	if ($r->authz->hasPermissions($user, "modify_tags")) {
-		my $tagid = 'tagger'.$cnt;
-		$tagwidget =  CGI::div({id=>$tagid}, '');
-		my $templatedir = $r->ce->{courseDirs}->{templates};
-		my $sourceFilePath = $templatedir .'/'. $sourceFileName;
+		my $tagid = 'tagger' . $cnt;
+		$tagwidget = CGI::div({ id => $tagid }, '');
+		my $templatedir    = $r->ce->{courseDirs}->{templates};
+		my $sourceFilePath = $templatedir . '/' . $sourceFileName;
 		$sourceFilePath =~ s/'/\\'/g;
 		my $site_url = $r->ce->{webworkURLs}->{htdocs};
-		#$tagwidget .= CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}). CGI::end_script();
-		$tagwidget .= CGI::start_script({type=>"text/javascript"}). "mytw$cnt = new tag_widget('$tagid','$sourceFilePath')".CGI::end_script();
+		$tagwidget .= CGI::script("mytw$cnt = new tag_widget('$tagid','$sourceFilePath')");
 	}
 
-	my $level =0;
+	my $level = 0;
 
-	my $rerand = $isstatic ? '' : qq{<span style="display: inline-block" class="rerandomize_problem_button" data-target-problem="$cnt" title="Randomize"><i class="fas fa-random"></i></span>};
-	my $MOtag = $isMO ?  $self->helpMacro("UsesMathObjects",'<img src="/webwork2_files/images/pibox.png" border="0" title="Uses Math Objects" alt="Uses Math Objects" />') : '';
-	$MOtag = '<span class="motag">'.$MOtag.'</span>';
+	my $rerand = $isstatic ? '' : CGI::span(
+		{
+			data_target_problem => $cnt,
+			class               => 'rerandomize_problem_button btn btn-sm btn-secondary',
+			data_bs_title       => $r->maketext('Randomize'),
+			data_bs_toggle      => 'tooltip',
+			data_bs_placement   => 'top',
+			tabindex            => 0,
+			role                => 'button',
+			aria_label          => 'rerandomize problem'
+		},
+		CGI::i({ class => 'fas fa-random', aria_hidden => 'true' }, '')
+	);
+	my $MOtag = CGI::span(
+		{ class => 'motag' },
+		$isMO
+		? CGI::span(
+			{
+				class           => 'info-button btn btn-sm btn-secondary',
+				title           => $r->maketext('Uses Math Objects'),
+				data_bs_content => $r->maketext(
+					'Some WeBWorK problems are programmed using what are called <i>Math Objects</i>. '
+						. 'These problems are preferred by some people because they '
+						. 'provide a more consistent collection of messages to faulty student '
+						. 'answers, particularly for answers which are way off base.'
+				),
+				data_bs_toggle    => 'popover',
+				data_bs_placement => 'top',
+				data_bs_html      => 'true',
+				data_bs_trigger   => 'hover focus',
+				tabindex          => 0,
+				role              => 'button'
+			},
+			CGI::img({
+				src => $r->ce->{webworkURLs}{htdocs} . '/images/pi.svg',
+				alt => $r->maketext('Uses Math Objects')
+			})
+		)
+		: ''
+	);
 
-	# get statistics to display
+	# Get statistics to display
 
 	my $global_problem_stats = '';
 	if ($ce->{problemLibrary}{showLibraryGlobalStats}) {
-	    my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
-	    if ($stats->{students_attempted}) {
-		$global_problem_stats =    $self->helpMacro("Global_Usage_Data",$r->maketext('GLOBAL Usage')).': '.
-					   $stats->{students_attempted}.', '.
-                                           $self->helpMacro("Global_Average_Attempts_Data",$r->maketext('Attempts')).': '.
-					   wwRound(2,$stats->{average_attempts}).', '.
-                                           $self->helpMacro("Global_Average_Status_Data",$r->maketext('Status')).': '.
-					   wwRound(0,100*$stats->{average_status}).'%;&nbsp;';
-	    }
+		my $stats = $self->{library_stats_handler}->getGlobalStats($sourceFileName);
+		if ($stats->{students_attempted}) {
+			$global_problem_stats = CGI::div(
+				{ class => 'd-inline-block font-sm text-nowrap' },
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Global Usage Data'),
+						data_bs_content => $r->maketext(
+							'Global data on problem usage is contributed by many institutions using '
+								. 'WeBWorK all over the world. The Usage figure is the total number of  '
+								. 'individuals who have attemped this problem at least once. A high figure '
+								. 'represents a problem which has been assigned to many students and is  '
+								. 'both popular with instructors and likely bug free.'
+						),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('GLOBAL Usage') . ': '
+				),
+				$stats->{students_attempted} . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Global Attempts'),
+						data_bs_content => $r->maketext(
+							'The Attempts figure is the global average of the number of attempts '
+								. '(both correct and incorrect) individuals take on this problem.  '
+								. 'A high figure may represent a difficult problem.  Note that problems '
+								. 'with multiple parts may have higher average attempts since many students  '
+								. 'will submit an answer to each part before continuing and each such  '
+								. 'submittal counts as an attempt.'
+						),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Attempts') . ': '
+				),
+				wwRound(2, $stats->{average_attempts}) . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Global Status'),
+						data_bs_content => CGI::p($r->maketext(
+							'The Status figure is the global average of the Status '
+								. 'individuals have earned on this problem. The Status is the percentage '
+								. 'correct (from 0% to 100%) recorded for the problem.  A low figure may  '
+								. 'represent a difficult problem.  The Status is often fairly high since  '
+								. 'many students will work on a problem until they get it correct or nearly so.'
+						))
+							. CGI::p({ class => 'mb-0' }, $r->maketext(
+							'Reviewing a problem and looking at both the average Attempts and  '
+								. 'average Status should give instructors valuable information about '
+								. 'the difficulty of the problem.'
+							)),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_html      => 'true',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Status') . ': '
+				),
+				wwRound(0, 100 * $stats->{average_status})
+			);
+		}
 	}
-
 
 	my $local_problem_stats = '';
 	if ($ce->{problemLibrary}{showLibraryLocalStats}) {
-	    my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
-	    if ($stats->{students_attempted}) {
-		$local_problem_stats =     $self->helpMacro("Local_Usage_Data",$r->maketext('LOCAL Usage')).': '.
-					   $stats->{students_attempted}.', '.
-                                           $self->helpMacro("Local_Average_Attempts_Data",$r->maketext('Attempts')).': '.
-					   wwRound(2,$stats->{average_attempts}).', '.
-                                           $self->helpMacro("Local_Average_Status_Data",$r->maketext('Status')).': '.
-					   wwRound(0,100*$stats->{average_status}).'%&nbsp;';
-	    }
+		my $stats = $self->{library_stats_handler}->getLocalStats($sourceFileName);
+		if ($stats->{students_attempted}) {
+			$local_problem_stats = CGI::div(
+				{ class => 'd-inline-block font-sm text-nowrap' },
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Local Usage Data'),
+						data_bs_content => CGI::p($r->maketext(
+							'Local data on problem usage is generated and maintained by your institution. '
+								. 'The Usage figure is the total number of local '
+								. 'individuals who have attemped this problem at least once. A high figure '
+								. 'represents a problem which has been assigned to many students and is  '
+								. 'both popular with instructors and likely bug free.'
+						))
+							. CGI::p({ class => 'mb-0' }, $r->maketext(
+							'Local data is generated when your systems admin runs the script '
+								. 'update-OPL-statistics.'
+							)),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						data_bs_html      => 'true',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('LOCAL Usage') . ': '
+				),
+				$stats->{students_attempted} . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Local Attempts'),
+						data_bs_content => $r->maketext(
+							'The Attempts figure is the local average of the number of attempts '
+								. '(both correct and incorrect) individuals at your institution take on this problem. '
+								. 'A high figure may represent a difficult problem.  Note that problems '
+								. 'with multiple parts may have higher average attempts since many students  '
+								. 'will submit an answer to each part before continuing and each such  '
+								. 'submittal counts as an attempt.'
+						),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Attempts') . ': '
+				),
+				wwRound(2, $stats->{average_attempts}) . ', ',
+				CGI::span(
+					{
+						class           => 'info-button text-primary',
+						title           => $r->maketext('Local Status'),
+						data_bs_content => CGI::p($r->maketext(
+							'The Status figure is the local average of the Status '
+								. 'individuals at your institution have earned on this problem. The Status is the '
+								. 'percentage correct (from 0% to 100%) recorded for the problem.  A low figure may  '
+								. 'represent a difficult problem.  The Status is often fairly high since  '
+								. 'many students will work on a problem until they get it correct or nearly so.'
+						))
+							. CGI::p({ class => 'mb-0' }, $r->maketext(
+							'Reviewing a problem and looking at both the average Attempts and  '
+								. 'average Status should give instructors valuable information about '
+								. 'the difficulty of the problem.'
+							)),
+						data_bs_toggle    => 'popover',
+						data_bs_placement => 'top',
+						data_bs_html      => 'true',
+						data_bs_trigger   => 'hover focus',
+						tabindex          => 0,
+						role              => 'button'
+					},
+					$r->maketext('Status') . ': '
+				),
+				wwRound(0, 100 * $stats->{average_status})
+			);
+		}
 	}
 
-        my $problem_stats = '';
-        if ($global_problem_stats or $local_problem_stats) {
-                $problem_stats = CGI::span({class=>"lb-problem-stats"},
-                                    $global_problem_stats . $local_problem_stats );
-        }
-
+	my $problem_stats = '';
+	if ($global_problem_stats || $local_problem_stats) {
+		$problem_stats = $global_problem_stats . $local_problem_stats;
+	}
 
 	print $mltstart;
 	# Print the cell
-	print CGI::Tr({ align => "left", id => "pgrow$cnt", style => $noshow, class => "lb-problem-row $noshowclass" },
-		CGI::td(CGI::div({ class => 'well' },
-				CGI::div({-class=>"lb-problem-header"},
-					CGI::span({ class => "lb-problem-add" },
-						CGI::button(-name=>"add_me",
-							value => $r->maketext("Add"),
-							title => "Add problem to target set",
-							data_source_file => $sourceFileName)),
-					CGI::span({-class=>"lb-problem-icons"},
-						$MOtag, $mlt, $rerand,
-						$edit_link, " ", $try_link,
-						CGI::span({
-								name => "dont_show", title => "Hide this problem",
-								style => "cursor: pointer", data_row_cnt => $cnt
-							}, "X")),
-					$problem_stats,
+	print CGI::div(
+		{ id => "pgrow$cnt", style => $noshow, class => "lb-problem-row $noshowclass" },
+		CGI::div(
+			{ class => 'card p-2' },
+			CGI::div(
+				{ class => 'lb-problem-header d-flex flex-wrap justify-content-between' },
+				CGI::div(
+					{ class => 'lb-problem-add d-flex align-items-center mb-1' },
+					CGI::button({
+						name              => 'add_me',
+						value             => $r->maketext('Add'),
+						data_bs_title     => $r->maketext('Add problem to target set'),
+						data_source_file  => $sourceFileName,
+						class             => 'btn btn-primary btn-sm',
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'top'
+					}),
 				),
-				CGI::div({ class => "lb-problem-sub-header" }, CGI::span({ class => "lb-problem-path" }, $sourceFileName) . $inSet),
-				CGI::hidden(-name=>"filetrial$cnt", -default=>$sourceFileName,-override=>1),
-				$tagwidget,
-				CGI::div(CGI::div({ class => "psr_render_area", id => "psr_render_area_$cnt", data_pg_file => $pg_file }))
+				CGI::div({ class => 'd-flex flex-wrap align-items-center mb-1 gap-2' },
+					$problem_stats),
+				CGI::div(
+					{ class => 'lb-problem-icons mb-1 d-flex align-items-center' },
+					$MOtag, $mlt, $rerand,
+					$edit_link,
+					$try_link,
+					CGI::span(
+						{
+							class             => 'dont-show btn btn-sm btn-secondary',
+							data_bs_title     => $r->maketext('Hide this problem'),
+							data_row_cnt      => $cnt,
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'top',
+							tabindex          => 0,
+							role              => 'button',
+							aria_label        => 'hide this problem'
+						},
+						CGI::i({ class => 'fas fa-times', aria_hidden => 'true' }, '')
+					)
+				)
+			),
+			CGI::div(
+				{ class => 'lb-problem-sub-header d-flex' },
+				CGI::div({ class => 'lb-problem-path font-sm flex-grow-1 flex-shrink-1' }, $sourceFileName),
+				CGI::div(
+					{ class => 'lb-inset text-nowrap', id => "inset$cnt" },
+					$self->{isInSet}{$sourceFileName} ? CGI::i(CGI::b('(in target set)')) : ''
+				)
+			),
+			CGI::hidden({ name => "filetrial$cnt", default => $sourceFileName, override => 1 }),
+			$tagwidget,
+			CGI::div(
+				CGI::div({ class => 'psr_render_area', id => "psr_render_area_$cnt", data_pg_file => $pg_file }, ''),
+				''
 			)
-		));
+		)
+	);
 	print $mltend;
 }
 
@@ -1598,11 +2123,11 @@ sub body {
 	### Check that this is a professor
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-		print "User $userName returned " .
-			$authz->hasPermissions($userName, "modify_problem_sets") .
-	" for permission";
-		return(CGI::div({class=>'ResultsWithError'},
-		CGI::em("You are not authorized to access the Instructor tools.")));
+		print "User $userName returned " . $authz->hasPermissions($userName, "modify_problem_sets") . " for permission";
+		return (CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em("You are not authorized to access the Instructor tools.")
+		));
 	}
 
 	my $showHints = $r->param('showHints');
@@ -1639,10 +2164,9 @@ sub body {
 
 	##########	Top part
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
-	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform', -id=>'mainform'}),
+	print CGI::start_form({ method => "POST", action => $r->uri, name => 'library_browser_form' }),
 		$self->hidden_authen_fields,
-                CGI::hidden({id=>'hidden_courseID',name=>'courseID',default=>$courseID }),
-			'<div align="center">';
+		CGI::hidden({ id => 'hidden_courseID', name => 'courseID', default => $courseID });
 	print CGI::hidden(-name=>'browse_which', -value=>$browse_which,-override=>1),
 		CGI::hidden(-name=>'problem_seed', -value=>$problem_seed, -override=>1);
 	for ($j = 0 ; $j < scalar(@pg_files) ; $j++) {
@@ -1657,8 +2181,9 @@ sub body {
 	print CGI::hidden(-name=>'last_index', -value=>$last_index);
 	print CGI::hidden(-name=>'total_probs', -value=>$total_probs);
 
-	print CGI::start_table({class=>"library-browser-table"});
-	$self->make_top_row('all_db_sets'=>\@all_db_sets, 'browse_which'=> $browse_which);
+	print CGI::start_div({ class => 'library-browser-table' });
+	$self->make_top_row('all_db_sets' => \@all_db_sets, 'browse_which' => $browse_which);
+	print CGI::end_div();
 
 	########## Now print problems
 	my ($jj,$mltnumleft)=(0,-1);
@@ -1673,59 +2198,81 @@ sub body {
 	}
 
 	########## Finish things off
-	print CGI::end_table();
-	print '</div>';
-	#	 if($first_shown>0 or (1+$last_shown)<scalar(@pg_files)) {
 	my ($next_button, $prev_button) = ("", "");
 	if ($first_index > 0) {
-		$prev_button = CGI::submit(-name=>"prev_page", -style=>"width:15ex",
-						 -value=>$r->maketext("Previous page"));
+		$prev_button = CGI::submit({
+			name => "prev_page",
+			value => $r->maketext("Previous page"),
+			class => 'btn btn-secondary btn-sm'
+		});
 	}
 	if ((1+$last_index)<scalar(@pg_files)) {
-		$next_button = CGI::submit(-name=>"next_page", -style=>"width:15ex",
-						 -value=>$r->maketext("Next page"));
+		$next_button = CGI::submit({
+			name => "next_page",
+			value => $r->maketext("Next page"),
+			class => 'btn btn-secondary btn-sm'
+		});
 	}
-	if (scalar(@pg_files)>0) {
-		print CGI::p(CGI::span({-id=>'what_shown'}, CGI::span({-id=>'firstshown'}, $first_shown+1)."-".CGI::span({-id=>'lastshown'}, $last_shown+1))." ".$r->maketext("of")." ".CGI::span({-id=>'totalshown'}, $total_probs).
-			" ".$r->maketext("shown").".", $prev_button, " ", $next_button,
+	if (scalar(@pg_files) > 0) {
+		print CGI::div(
+			{ class => 'my-2' },
+			CGI::span(
+				{ id => 'what_shown' },
+				CGI::span({ id => 'firstshown' }, $first_shown + 1) . "-"
+					. CGI::span({ id => 'lastshown' }, $last_shown + 1)
+				)
+				. " "
+				. $r->maketext("of") . " "
+				. CGI::span({ id => 'totalshown' }, $total_probs) . " "
+				. $r->maketext("shown") . ".",
+			$prev_button,
+			" ",
+			$next_button,
 		);
-		print CGI::p($r->maketext('Some problems shown above represent multiple similar problems from the database.  If the (top) information line for a problem has a letter M for "More", hover your mouse over the M  to see how many similar problems are hidden, or click on the M to see the problems.  If you click to view these problems, the M becomes an L, which can be clicked on to hide the problems again.'));
+		print CGI::p(
+			$r->maketext(
+				'Some problems shown above represent multiple similar problems from the database.  If the (top) '
+					. 'information line for a problem has a letter M for "More", hover your mouse over the M  to '
+					. 'see how many similar problems are hidden, or click on the M to see the problems.  If you click '
+					. 'to view these problems, the M becomes an L, which can be clicked on to hide the problems again.'
+				)
+		);
 	}
-	#	 }
-	print CGI::end_form(), "\n";
+
+	print CGI::end_form();
 
 	return "";
 }
 
 sub output_JS {
-	my ($self) = @_;
-	my $ce = $self->r->ce;
+	my ($self)             = @_;
+	my $ce                 = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-	print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js"></script>!;
-	print qq!<script src="$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js"></script>!;
-	print qq!<script src="$webwork_htdocs_url/js/vendor/underscore/underscore.js"></script>!;
-	print qq!<script src="$webwork_htdocs_url/js/vendor/backbone/backbone.js"></script>!;
-	print CGI::start_script({type=>"text/javascript", src=>"$webwork_htdocs_url/js/apps/Base64/Base64.js"}), CGI::end_script();
+	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js" }, '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js" },  '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/underscore/underscore.js" },                '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/backbone/backbone.js" },                    '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Base64/Base64.js" },                          '');
 
-	print qq{<script type="text/javascript" src="$webwork_htdocs_url/js/apps/Knowls/knowl.js"></script>};
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Knowls/knowl.js" }, '');
 
-	print qq!<script src="$webwork_htdocs_url/js/apps/ImageView/imageview.js"></script>!;
-	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => "" }, "");
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/ImageView/imageview.js", defer => undef },      '');
+	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => undef },        '');
+
 	if ($self->r->authz->hasPermissions(scalar($self->r->param('user')), "modify_tags")) {
-		my $site_url = $ce->{webworkURLs}->{htdocs};
-		print qq!<script src="$site_url/js/apps/TagWidget/tagwidget.js"></script>!;
-		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
-			my $taxo = '[]';
-			$taxo = join("", <TAXONOMY>);
+		print CGI::script({ src => "$ce->{webworkURLs}{htdocs}/js/apps/TagWidget/tagwidget.js" }, '');
+		if (open(TAXONOMY, $ce->{webworkDirs}{root} . '/htdocs/DATA/tagging-taxonomy.json')) {
+			my $taxo = join("", <TAXONOMY>);
 			close TAXONOMY;
-			print qq!\n<script>var taxo = $taxo ;</script>!;
+			print CGI::script("var taxo = $taxo;");
 		} else {
-			print qq!\n<script>var taxo = [] ;</script>!;
-			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+			print CGI::script("var taxo = [];");
+			print CGI::script("alert('Could not load the OPL taxonomy from the server.');");
 		}
 	}
+
 	return '';
 }
 
@@ -1738,9 +2285,9 @@ sub output_CSS {
 
 	print qq!<link href="$webwork_htdocs_url/node_modules/jquery-ui-themes/themes/ui-lightness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>!;
 
-	print qq{<link href="$webwork_htdocs_url/js/apps/ImageView/imageview.css" rel="stylesheet" type="text/css" />};
+	print CGI::Link({ rel => "stylesheet", href => "$webwork_htdocs_url/js/apps/ImageView/imageview.css" });
 
-	print qq{<link href="$webwork_htdocs_url/js/apps/Knowls/knowl.css" rel="stylesheet" type="text/css" />};
+	print CGI::Link({ rel => "stylesheet", href => "$webwork_htdocs_url/js/apps/Knowls/knowl.css" });
 
 	return '';
 

@@ -1,12 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
@@ -95,7 +95,7 @@ sub make_myset_data_row {
 	     $localSet ne NO_LOCAL_SET_STRING ) {
 		$setRecord = $db->getGlobalSet( $localSet );
 	}
-	my $isGatewaySet = ( defined($setRecord) && 
+	my $isGatewaySet = ( defined($setRecord) &&
 			     $setRecord->assignment_type =~ /gateway/ );
 
 	my %problem_div_settings = (
@@ -105,9 +105,10 @@ sub make_myset_data_row {
 		get_problem_lang_and_dir($pg->{flags}, $self->r->ce->{perProblemLangAndDirSettingMode}, $self->r->ce->{language})
 	);
 
-	my $problem_output = $pg->{flags}->{error_flag} ?
-		CGI::div({class=>"ResultsWithError"}, CGI::em("This problem produced an error"))
-		: CGI::div( \%problem_div_settings, $pg->{body_text});
+	my $problem_output =
+		$pg->{flags}->{error_flag}
+		? CGI::div({ class => 'alert alert-danger p-1 mb-0' }, CGI::em("This problem produced an error"))
+		: CGI::div(\%problem_div_settings,                     $pg->{body_text});
 	$problem_output .= $pg->{flags}->{comment} if($pg->{flags}->{comment});
 
 
@@ -120,9 +121,9 @@ sub make_myset_data_row {
 			  problemID=>"1"),
 			params=>{sourceFilePath => "$sourceFileName", problemSeed=> $problem_seed}
 		  ), target=>"WW_Editor"}, "Edit it" );
-	
+
 	my %delete_box_data = ( -id=>"deleted$cnt".'myset' ,-name=>"deleted$cnt",-value=>1,-label=>"Delete this problem from the target set on the next update");
-	
+
 	my $displayMode = $self->r->param("mydisplayMode");
 	$displayMode = $self->r->ce->{pg}->{options}->{displayMode}
 		if not defined $displayMode or $displayMode eq "None";
@@ -144,7 +145,7 @@ sub make_myset_data_row {
 		), target=>"WW_View"}, "Try it");
 
 	print CGI::div({-class=>"problem myProblem", -draggable=>"true", -href=>"#", -id=>("$cnt".'myset')},
-		CGI::p({},"File name: $sourceFileName "), 
+		CGI::p({},"File name: $sourceFileName "),
   	CGI::p({}, $edit_link, " ", $try_link),
 		CGI::p(CGI::checkbox((%delete_box_data),-override=>1)),
 		CGI::hidden(-id=>"filetrial$cnt".'myset', -name=>"mysetfiletrial$cnt", -default=>$sourceFileName,-override=>1),
@@ -168,19 +169,19 @@ sub pre_header_initialize {
 	$self->{error}=0;
 	my $ce = $r->ce;
 	my $db = $r->db;
-	
+
     $self->{current_myset_set} = $r->param('myset_sets');
-    if (not defined($self->{current_myset_set}) 
+    if (not defined($self->{current_myset_set})
 		or $self->{current_myset_set} eq "Select a Homework Set"
 		or $self->{current_myset_set} eq NO_LOCAL_SET_STRING) {
       my @all_db_sets = $db->listGlobalSets;
 	    @all_db_sets = sortByName(undef, @all_db_sets);
 	    $self->{current_myset_set} = shift(@all_db_sets);
 	  }
-	
+
 	my $userName = $r->param('user');
-	my $user = $db->getUser($userName); # checked 
-	die "record for user $userName (real user) does not exist." 
+	my $user = $db->getUser($userName); # checked
+	die "record for user $userName (real user) does not exist."
 		unless defined $user;
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
@@ -192,7 +193,7 @@ sub pre_header_initialize {
   #I'm worried this will break something
   my $default_set = $self->{current_myset_set};
 	  #debug("set_to_display is $default_set");
-	  if (not defined($default_set) 
+	  if (not defined($default_set)
   		or $default_set eq "Select a Homework Set"
   		or $default_set eq NO_LOCAL_SET_STRING) {
   		$self->addbadmessage("You need to select a set from this course to view.");
@@ -206,7 +207,7 @@ sub pre_header_initialize {
   			die "global $problem for set $default_set not found." unless
   				$problemRecord;
   			push @myset_files, $problemRecord->source_file;
-  
+
   		}
   	  #@myset_files = sortByName(undef,@myset_files);
   	}
@@ -247,16 +248,17 @@ sub body {
 	### Check that this is a professor
 	my $authz = $r->authz;
 	unless ($authz->hasPermissions($userName, "modify_problem_sets")) {
-		print "User $userName returned " . 
-			$authz->hasPermissions($user, "modify_problem_sets") . 
-	" for permission";
-		return(CGI::div({class=>'ResultsWithError'},
-		CGI::em("You are not authorized to access the Instructor tools.")));
+		print "User $userName returned " .
+			$authz->hasPermissions($user, "modify_problem_sets") . " for permission";
+		return (CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em("You are not authorized to access the Instructor tools.")
+		));
 	}
 
 	my $showHints = $r->param('showHints');
 	my $showSolutions = $r->param('showSolutions');
-	
+
 	##########	Extract information computed in pre_header_initialize
 
 
@@ -280,17 +282,17 @@ sub body {
 		showHints => $showHints,
 		showSolutions => $showSolutions,
   );
-  
+
   my $jj;
 	print '<div id="mysets_problems" class="problemList">';
-	  for ($jj=0; $jj<scalar(@myset_html); $jj++) { 
+	  for ($jj=0; $jj<scalar(@myset_html); $jj++) {
 	    $myset_files[$jj] =~ s|^$ce->{courseDirs}->{templates}/?||;
-	    $self->make_myset_data_row($myset_files[$jj], $myset_html[$jj], $jj+1); 
+	    $self->make_myset_data_row($myset_files[$jj], $myset_html[$jj], $jj+1);
 	  }
 	print '</div>';
-	
 
-	return "";	
+
+	return "";
 }
 
 =head1 AUTHOR

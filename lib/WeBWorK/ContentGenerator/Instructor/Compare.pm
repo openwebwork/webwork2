@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $ $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.	 See either the GNU General Public License or the
@@ -67,8 +66,10 @@ sub body {
 		print "User $userName returned " .
 			$authz->hasPermissions($user, "modify_problem_sets") .
 			" for permission";
-		return(CGI::div({class=>'ResultsWithError'},
-		  CGI::em("You are not authorized to access the Instructor tools.")));
+		return (CGI::div(
+			{ class => 'alert alert-danger p-1 mb-0' },
+			CGI::em("You are not authorized to access the Instructor tools.")
+		));
 	}
 
 	my $path1 = $r->param('path1') || '';
@@ -89,15 +90,13 @@ sub body {
 	print CGI::start_form({-method=>"POST", -action=>$r->uri, -name=>'mainform'}),
 		$self->hidden_authen_fields;
 	print CGI::p('File 1: ', CGI::textfield(-name=>"path1",
-																					-default=>"$path1",
-																					-override=>1, -size=>90));
+			-default=>"$path1",
+			-override=>1, -size=>90));
 	print CGI::p('File 2: ', CGI::textfield(-name=>"path2",
-																					-default=>"$path2",
-																					-override=>1, -size=>90));
-	print CGI::p(CGI::submit(-name=>"show_me",
-													 -value=>"Show Files"));
-	print CGI::p(CGI::submit(-name=>"clear",
-													 -value=>"Clear"));
+			-default=>"$path2",
+			-override=>1, -size=>90));
+	print CGI::p(CGI::submit({ name => "show_me", value => "Show Files", class => 'btn btn-primary' }));
+	print CGI::p(CGI::submit({ name => "clear", value => "Clear", class => 'btn btn-primary' }));
 	print CGI::end_form(), "\n";
 
 	for $j (@rendered) {
@@ -116,7 +115,7 @@ sub body {
 			# If you have hdiff installed, you can get colorized diffs
 			my $diffout = `hdiff -t " " -c "File 1" -C "File 2" -N $ce->{courseDirs}->{templates}/$pathlist[0] $ce->{courseDirs}->{templates}/$pathlist[1]`;
 			print $diffout;
-		} else { 
+		} else {
 			# Here we call diff.  Basic version first
 			my $diffout = `diff -u $ce->{courseDirs}->{templates}/$pathlist[0] $ce->{courseDirs}->{templates}/$pathlist[1]`;
 			print "\n<pre>\n";
@@ -125,7 +124,7 @@ sub body {
 		}
 	}
 
-	return "";	
+	return "";
 }
 
 

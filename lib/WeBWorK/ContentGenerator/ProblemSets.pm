@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/ProblemSets.pm,v 1.94 2010/01/31 02:31:04 apizer Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -51,7 +50,7 @@ sub if_can {
 
     # we only print the info box if the viewer has permission
     # to edit it or if its not the standard template box.
-    
+
     my $course_info_path = $ce->{courseDirs}->{templates} . "/"
       . $ce->{courseFiles}->{course_info};
     my $text = DEFAULT_COURSE_INFO_TXT;
@@ -61,7 +60,7 @@ sub if_can {
     }
     return $authz->hasPermissions($user, "access_instructor_tools") ||
 	  $text ne DEFAULT_COURSE_INFO_TXT;
-    
+
   }
 }
 
@@ -72,15 +71,15 @@ sub info {
 	my $db = $r->db;
 	my $urlpath = $r->urlpath;
 	my $authz = $r->authz;
-	
+
 	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param("user");
-	
+
 	my $course_info = $ce->{courseFiles}->{course_info};
-	
+
 	if (defined $course_info and $course_info) {
 		my $course_info_path = $ce->{courseDirs}->{templates} . "/$course_info";
-			
+
 		# deal with instructor crap
 		my $editorURL;
 		if ($authz->hasPermissions($user, "access_instructor_tools")) {
@@ -90,23 +89,28 @@ sub info {
 				die "sourceFilePath is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates});
 				$self->addmessage(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:").' ', $course_info_path));
 			}
-			
+
 			my $editorPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Instructor::PGProblemEditor",  $r, courseID => $courseID);
 			$editorURL = $self->systemLink($editorPage, params => { file_type => "course_info" });
 		}
-		
+
 		if ($editorURL) {
-			print CGI::h2($r->maketext("Course Info"), CGI::a({href=>$editorURL, target=>"WW_Editor"}, $r->maketext("~[Edit~]")));
+			print CGI::h2(
+				{ class => 'd-flex align-items-center justify-content-center' },
+				$r->maketext("Course Info"),
+				CGI::a(
+					{ href => $editorURL, target => "WW_Editor", class => 'btn btn-sm btn-info m-1' },
+					$r->maketext("Edit")
+				)
+			);
 		} else {
 			print CGI::h2($r->maketext("Course Info"));
 		}
-		die "course info path is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates}, 1); 
+		die "course info path is unsafe!" unless path_is_subdir($course_info_path, $ce->{courseDirs}->{templates}, 1);
 		if (-f $course_info_path) { #check that it's a plain  file
 			my $text = eval { readFile($course_info_path) };
 			if ($@) {
-				print CGI::div({class=>"ResultsWithError"},
-					CGI::p("$@"),
-				);
+				print CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $@);
 			} else {
 				print $text;
 			}
@@ -121,7 +125,7 @@ sub help {   # non-standard help, since the file path includes the course name
 	my $name = $args->{name};
 	$name = lc('course home') unless defined($name);
 	$name =~ s/\s/_/g;
-	$self->helpMacro($name);
+	$self->helpMacro($name, { class => 'nav-link' });
 }
 sub templateName {
 	my $self = shift;
@@ -139,14 +143,14 @@ sub initialize {
 	my $r = $self->r;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
-	
+
 	my $user               = $r->param("user");
 	my $effectiveUser      = $r->param("effectiveUser");
 	if ($authz->hasPermissions($user, "access_instructor_tools")) {
 		# get result and send to message
 		my $status_message = $r->param("status_message");
 		$self->addmessage(CGI::p("$status_message")) if $status_message;
-	
+
 
 	}
 }
@@ -157,16 +161,16 @@ sub body {
 	my $db = $r->db;
 	my $authz = $r->authz;
 	my $urlpath = $r->urlpath;
-	
+
 	my $user            = $r->param("user");
 	my $effectiveUser   = $r->param("effectiveUser");
 	my $sort            = $r->param("sort") || "status";
-	
+
 	my $courseName      = $urlpath->arg("courseID");
-	
+
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",  $r, courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
-	
+
 # we have to get sets and versioned sets separately
 	# DBFIXME don't get ID lists, use WHERE clauses and iterators
 	my @setIDs = $db->listUserSets($effectiveUser);
@@ -176,7 +180,7 @@ sub body {
 	my @sets = $db->getMergedSets( @userSetIDs );
 
 	debug("Begin fixing merged sets");
-	
+
 	# Database fix (in case of undefined visible values)
 	# this may take some extra time the first time but should NEVER need to be run twice
 	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
@@ -204,8 +208,8 @@ sub body {
 		}
 	}
 
-# gateways/versioned sets require dealing with output data slightly 
-# differently, so check for those here	
+# gateways/versioned sets require dealing with output data slightly
+# differently, so check for those here
 	debug("Begin set-type check");
 	my $existVersions = 0;
 	my @gwSets = ();
@@ -213,9 +217,9 @@ sub body {
 	my %gwSetNames = ();  # this is necessary because we get a setname
 	                      #    for all versions of g/w tests
 	foreach ( @sets ) {
-	    if ( defined( $_->assignment_type() ) && 
+	    if ( defined( $_->assignment_type() ) &&
 		 $_->assignment_type() =~ /gateway/ ) {
-		$existVersions = 1; 
+		$existVersions = 1;
 
 		push( @gwSets, $_ ) if ( ! defined($gwSetNames{$_->set_id}) );
 		$gwSetNames{$_->set_id} = 1;
@@ -246,49 +250,73 @@ sub body {
 		? CGI::span($r->maketext("Status"))
 		: CGI::a({href=>$self->systemLink($urlpath, params=>{sort=>"status"})}, $r->maketext("Status"));
 # print the start of the form
-	if ($authz->hasPermissions($user, "view_multiple_sets")) { 
+	if ($authz->hasPermissions($user, "view_multiple_sets")) {
 	    print CGI::start_form(-name=>"problem-sets-form", -id=>"problem-sets-form", -method=>"POST",-action=>$actionURL),
 	    $self->hidden_authen_fields;
 	}
-	
-# and send the start of the table
-# UPDATE - ghe3
-# This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
-	print CGI::start_table({ -class=>"problem_set_table", -summary=>$r->maketext("This table lists out the available homework sets for this class, along with its current status. Click on the link on the name of the homework set to take you to the problems in that homework set. You can also select sets for download to PDF or TeX format using the checkboxes next to the problem set names, and then clicking on the 'Generate Hardcopy for Select Sets' button at the end of the table. There is also a clear button and an Email Instructor button at the end of the table.")});
-	print CGI::caption($r->maketext("Homework Sets"));
-	if ( ! $existVersions ) {
-		print CGI::Tr(
-			CGI::th({-scope=>"col"},$nameHeader),
-			CGI::th({-scope=>"col"},$statusHeader),
-			CGI::th({-scope=>"col", class=>"hardcopy"},CGI::i({
-				class => "icon far fa-arrow-alt-circle-down",
-				aria_hidden => "true",
-				title => $r->maketext("Generate Hardcopy"),
-				data_alt => $r->maketext("Generate Hardcopy")
-			}, '')),
-		);
+
+	# and send the start of the table
+	# This table now contains a summary and a caption, scope attributes for the column headers, and no longer prints a
+	# column for 'Sel.' (due to it having been merged with the second column for accessibility purposes).
+	print CGI::start_div({ class => 'table-responsive' });
+	print CGI::start_table({
+		class    => 'problem_set_table table table-sm caption-top font-sm',
+		-summary => $r->maketext(
+			'This table lists the available homework sets for this class, along with their current status. Click on '
+				. 'the name of the homework set to view the problems in that homework set.  You can also select '
+				. 'sets to download in PDF or TeX format by checking the checkboxes next to the problem set '
+				. 'names, and then click on the "Generate Hardcopy for Selected Sets" button at the end of the '
+				. 'table.  There is also a clear button and an Email Instructor button at the end of the table.'
+		)
+	});
+	print CGI::caption($r->maketext('Homework Sets'));
+	if (!$existVersions) {
+		print CGI::thead(CGI::Tr(
+			CGI::th({ -scope => 'col' }, $nameHeader),
+			CGI::th({ -scope => 'col' }, $statusHeader),
+			CGI::th(
+				{ -scope => 'col', class => 'hardcopy' },
+				CGI::i(
+					{
+						class       => 'icon far fa-arrow-alt-circle-down fa-lg',
+						aria_hidden => 'true',
+						title       => $r->maketext('Generate Hardcopy'),
+						data_alt    => $r->maketext('Generate Hardcopy')
+					},
+					''
+				)
+			),
+		));
 	} else {
-		print CGI::Tr(
-			CGI::th({-scope=>"col"},$nameHeader),
-			CGI::th({-scope=>"col"},$statusHeader),
-			CGI::th({-scope=>"col"},$r->maketext("Score")),
-			CGI::th({-scope=>"col"},$r->maketext("Start Date")),
-			CGI::th({-scope=>"col", class=>"hardcopy"},CGI::i({
-				class => "icon far fa-arrow-alt-circle-down",
-				aria_hidden => "true",
-				title => $r->maketext("Generate Hardcopy"),
-				data_alt => $r->maketext("Generate Hardcopy")
-			}, '')),
-		);
+		print CGI::thead(CGI::Tr(
+			CGI::th({ -scope => 'col' }, $nameHeader),
+			CGI::th({ -scope => 'col' }, $statusHeader),
+			CGI::th({ -scope => 'col' }, $r->maketext('Score')),
+			CGI::th({ -scope => 'col' }, $r->maketext('Start Date')),
+			CGI::th(
+				{ -scope => 'col', class => 'hardcopy' },
+				CGI::i(
+					{
+						class       => 'icon far fa-arrow-alt-circle-down fa-lg',
+						aria_hidden => 'true',
+						title       => $r->maketext('Generate Hardcopy'),
+						data_alt    => $r->maketext('Generate Hardcopy')
+					},
+					''
+				)
+			),
+		));
 	}
 
 	debug("Begin sorting merged sets");
 
-# before building final set lists, exclude proctored gateway sets 
+	print CGI::start_tbody();
+
+# before building final set lists, exclude proctored gateway sets
 #    for users without permission to view them
 	my $viewPr = $authz->hasPermissions( $user, "view_proctored_tests" );
 	@gwSets = grep {$_->assignment_type !~ /proctored/ || $viewPr} @gwSets;
-	
+
 	if ( $sort eq 'name' ) {
 		@sets = sortByName("set_id", @nonGWsets, @gwSets);
 	} elsif ( $sort eq 'status' ) {
@@ -336,43 +364,31 @@ sub body {
 		print $_ for @versions;
 		delete $self->{gw_quiz_version_in_progress};
 	}
-	
-	print CGI::end_table();
+
+	print CGI::end_tbody();
+	print CGI::end_table(), CGI::end_div();
 	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
-# 	print CGI::p(CGI::submit(-name=>"hardcopy", -label=>$r->maketext("Download Hardcopy for Selected [plural,_1,Set,Sets]",$pl)));
 
 	# UPDATE - ghe3
 	# Added reset button to form.
 
-	if ($authz->hasPermissions($user, "view_multiple_sets")) {
-	    print CGI::start_div({-class=>"problem_set_options"});
-	    print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"reset", -id=>"clear", -input_attr=>{ -value=>$r->maketext("Clear")}).CGI::end_p();
-	    print CGI::start_p().WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"hardcopy",-input_attr=>{-name=>"hardcopy", -value=>$r->maketext("Generate Hardcopy for Select Sets")}).CGI::end_p();
-	    print CGI::end_div();
-	    print CGI::end_form();
+	if ($authz->hasPermissions($user, 'view_multiple_sets')) {
+		print CGI::start_div({ class => 'problem_set_options' });
+		print CGI::start_p()
+			. CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-info' })
+			. CGI::end_p();
+		print CGI::start_p()
+			. CGI::submit({
+				id    => 'hardcopy',
+				name  => 'hardcopy',
+				value => $r->maketext('Generate Hardcopy for Selected Sets'),
+				class => 'btn btn-info'
+			})
+			. CGI::end_p();
+		print CGI::end_div();
+		print CGI::end_form();
 	}
-	
-	## feedback form url
-	#my $feedbackPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Feedback",  $r, courseID => $courseName);
-	#my $feedbackURL = $self->systemLink($feedbackPage, authen => 0); # no authen info for form action
-	#
-	##print feedback form
-	#print
-	#	CGI::start_form(-method=>"POST", -action=>$feedbackURL),"\n",
-	#	$self->hidden_authen_fields,"\n",
-	#	CGI::hidden("module",             __PACKAGE__),"\n",
-	#	CGI::hidden("set",                ''),"\n",
-	#	CGI::hidden("problem",            ''),"\n",
-	#	CGI::hidden("displayMode",        ''),"\n",
-	#	CGI::hidden("showOldAnswers",     ''),"\n",
-	#	CGI::hidden("showCorrectAnswers", ''),"\n",
-	#	CGI::hidden("showHints",          ''),"\n",
-	#	CGI::hidden("showSolutions",      ''),"\n",
-	#	CGI::p({-align=>"left"},
-	#		CGI::submit(-name=>"feedbackForm", -label=>"Email instructor")
-	#	),
-	#	CGI::end_form(),"\n";
-	
+
 	print $self->feedbackMacro(
 		module => __PACKAGE__,
 		set => "",
@@ -383,7 +399,7 @@ sub body {
 		showHints => "",
 		showSolutions => "",
 	);
-	
+
 	return "";
 }
 
@@ -402,63 +418,66 @@ sub setListRow {
 	my $globalSet = $db->getGlobalSet($set->set_id);
 	$gwtype = 0 if ( ! defined( $gwtype ) );
 	$tmplSet = $set if ( ! defined( $tmplSet ) );
-	
+
 	my $name = $set->set_id;
-	my @restricted = $ce->{options}{enableConditionalRelease} ?  
+	my @restricted = $ce->{options}{enableConditionalRelease} ?
 	  is_restricted($db, $set, $effectiveUser) : ();
 	# The set shouldn't be shown if the LTI grade mode is set to homework and we dont
-	# have a source did to use to send back grades.  
+	# have a source did to use to send back grades.
 	my $LTIRestricted = defined($ce->{LTIGradeMode}) && $ce->{LTIGradeMode} eq 'homework'
 	  && !$set->lis_source_did;
 
-	
+
 	my $urlname = ( $gwtype == 1 ) ? "$name,v" . $set->version_id : $name;
 
 	my $courseName      = $urlpath->arg("courseID");
-	
+
 	my $problemSetPage;
 
-	if ( ! defined( $set->assignment_type() ) || 
+	if ( ! defined( $set->assignment_type() ) ||
 	     $set->assignment_type() !~ /gateway/ ) {
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r, 
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProblemSet", $r,
 				      courseID => $courseName, setID => $urlname);
 	} elsif( $set->assignment_type() !~ /proctored/ ) {
 
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r, 
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::GatewayQuiz", $r,
 				      courseID => $courseName, setID => $urlname);
 	} else {
 
-	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProctoredGatewayQuiz", $r, 
+	    $problemSetPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::ProctoredGatewayQuiz", $r,
 				      courseID => $courseName, setID => $urlname);
 	}
 
 	my $interactiveURL = $self->systemLink($problemSetPage);
 
-  # check to see if this is a template gateway assignment
-	$gwtype = 2 if ( defined( $set->assignment_type() ) && 
-			 $set->assignment_type() =~ /gateway/ && ! $gwtype );
-  # and get problemRecords if we're dealing with a versioned set, so that
-  #    we can test status and scores
-  # FIXME: should we really have to get the merged 
-  # problem_versions here?  it looks that way, because
-  # otherwise we don't inherit things like the problem
-  # value properly.
+	# check to see if this is a template gateway assignment
+	$gwtype = 2 if ( defined( $set->assignment_type() ) &&
+		$set->assignment_type() =~ /gateway/ && ! $gwtype );
+	# and get problemRecords if we're dealing with a versioned set, so that
+	# we can test status and scores
+	# FIXME: should we really have to get the merged
+	# problem_versions here?  it looks that way, because
+	# otherwise we don't inherit things like the problem
+	# value properly.
 	my @problemRecords;
-	@problemRecords = 
-		$db->getAllProblemVersions($set->user_id(), $set->set_id(),
-					   $set->version_id()) 
+	@problemRecords = $db->getAllProblemVersions($set->user_id(), $set->set_id(), $set->version_id())
 		if ( $gwtype == 1 );
 
-  # the conditional here should be redundant.  ah well.
-#	$interactiveURL =~ s|/quiz_mode/|/proctored_quiz_mode/| if 
-#	    ( defined( $set->assignment_type() ) && 
-#	      $set->assignment_type() eq 'proctored_gateway' );
 	my $display_name = $name;
 	$display_name =~ s/_/ /g;
-# this is the link to the homework assignment, it has tooltip with the hw description 
-	my $interactive = CGI::a({class=>"set-id-tooltip", "data-toggle"=>"tooltip", "data-placement"=>"right", title=>"", "data-original-title"=>$globalSet->description(),href=>$interactiveURL}, "$display_name");
+	# this is the link to the homework assignment, it has tooltip with the hw description
+	my $interactive = CGI::a(
+		{
+			class             => 'set-id-tooltip',
+			data_bs_toggle    => 'tooltip',
+			data_bs_placement => 'right',
+			data_bs_title     => $globalSet->description(),
+			href              => $interactiveURL
+		},
+		$display_name
+	);
 	my $control = "";
-	
+
 	my $setIsOpen = 0;
 	my $status = '';
 	if ( $gwtype ) {
@@ -478,12 +497,11 @@ sub setListRow {
 			my $vnum = $set->version_id;
 			$interactive = CGI::a(
 				{
-					class=>"set-id-tooltip gw-parenthetical",
-					"data-toggle"=>"tooltip",
-					"data-placement"=>"right",
-					title=>"",
-					"data-original-title"=>$globalSet->description(),
-					href=>$interactiveURL
+					class             => 'set-id-tooltip gw-parenthetical',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'right',
+					data_bs_title     => $globalSet->description(),
+					href              => $interactiveURL
 				},
 				$r->maketext("(version&nbsp;[_1])", $vnum)
 			);
@@ -506,12 +524,11 @@ sub setListRow {
 					# reset the link
 					$interactive = CGI::a(
 						{
-							class=>"set-id-tooltip",
-							"data-toggle"=>"tooltip",
-							"data-placement"=>"right",
-							title=>"",
-							"data-original-title"=>$globalSet->description(),
-							href=>$interactiveURL
+							class             => 'set-id-tooltip',
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'right',
+							data_bs_title     => $globalSet->description(),
+							href              => $interactiveURL
 						},
 						$display_name
 					);
@@ -539,13 +556,12 @@ sub setListRow {
 					# reset the link
 					$interactive = CGI::a(
 						{
-							class=>"set-id-tooltip",
-							"data-toggle"=>"tooltip",
-							"data-placement"=>"right",
+							class             => 'set-id-tooltip',
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'right',
 							data_open => $setIsOpen && $effectiveUser eq $user && !$self->{gw_quiz_version_in_progress},
-							title=>"",
-							"data-original-title"=>$globalSet->description(),
-							href=>$interactiveURL
+							data_bs_title => $globalSet->description(),
+							href          => $interactiveURL
 						},
 						$display_name
 					);
@@ -559,24 +575,22 @@ sub setListRow {
 				if ( $authz->hasPermissions( $user, "record_answers_after_due_date" ) ) {
 					$interactive = CGI::a(
 						{
-							class=>"set-id-tooltip",
-							"data-toggle"=>"tooltip",
-							"data-placement"=>"right",
-							title=>"",
-							"data-original-title"=>$globalSet->description(),
-							href=>$interactiveURL
+							class             => 'set-id-tooltip',
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'right',
+							data_bs_title     => $globalSet->description(),
+							href              => $interactiveURL
 						},
 						$display_name
 					);
 				} else {
 					$interactive = CGI::a(
 						{
-							class=>"set-id-tooltip",
-							"data-toggle"=>"tooltip",
-							"data-placement"=>"right",
-							title=>"",
-							"data-original-title"=>$globalSet->description(),
-							href=>$interactiveURL
+							class             => 'set-id-tooltip',
+							data_bs_toggle    => 'tooltip',
+							data_bs_placement => 'right',
+							data_bs_title     => $globalSet->description(),
+							href              => $interactiveURL
 						},
 						$display_name
 					);
@@ -586,26 +600,26 @@ sub setListRow {
 	# old conditional
 	} elsif (time < $set->open_date) {
 		$status = $r->maketext("Will open on [_1].", $self->formatDateTime($set->open_date,undef,$ce->{studentDateDisplayFormat}));
-	  
+
 	  if (@restricted) {
 	    my $restriction = ($set->restricted_status)*100;
 	    $status .= restricted_progression_msg($r,1,$restriction,@restricted);
 	  }
-	  
+
 	  $control = "" unless $preOpenSets;
 	  $interactive = $display_name unless $preOpenSets;
-	  
+
 	} elsif (time < $set->due_date) {
-	  
+
 	  $status = $self->set_due_msg($set,0);
-	  
+
 	  if (@restricted) {
 	    my $restriction = ($set->restricted_status)*100;
 	    $control = "" unless $preOpenSets;
 	    $interactive = $display_name unless $preOpenSets;
-	    
+
 	    $status .= restricted_progression_msg($r,0,$restriction, @restricted);
-	    
+
 	    $setIsOpen = 0;
 	  } elsif ($LTIRestricted) {
 	    $status .= CGI::br().$r->maketext("You must log into this set via your Learning Management System ([_1]).", $ce->{LMS_name});
@@ -615,7 +629,7 @@ sub setListRow {
 	  } else {
 	    $setIsOpen = 1;
 	  }
-	  
+
 	} elsif (time < $set->answer_date) {
 	  $status = $r->maketext("Closed, answers on [_1].", $self->formatDateTime($set->answer_date,undef,$ce->{studentDateDisplayFormat}));
 	} elsif ($set->answer_date <= time and time < $set->answer_date +RECENT ) {
@@ -623,68 +637,74 @@ sub setListRow {
 	} else {
 	  $status = $r->maketext("Closed, answers available.");
 	}
-	
+
 	if ($multiSet) {
 	  if ( $gwtype < 2 ) {
-	    $control = CGI::input({
-				   -type=>"checkbox",
-				   -id=>$name . ($gwtype ? ",v" . $set->version_id : ''), 
-				   -name=>"selected_sets",
-				   -value=>$name . ($gwtype ? ",v" . $set->version_id : '')
-				  });
+		$control = CGI::input({
+			type  => 'checkbox',
+			id    => $name . ($gwtype ? ',v' . $set->version_id : ''),
+			name  => 'selected_sets',
+			value => $name . ($gwtype ? ',v' . $set->version_id : ''),
+			class => 'form-check-input'
+		});
 	    # make sure interactive is the label for control
 	    $interactive = CGI::label({"for"=>$name . ($gwtype ? ",v" . $set->version_id : '')},$interactive);
-	    
+
 	  } else {
 	    $control = '';
 	  }
 	} else {
-	  if ( $gwtype < 2 && after($set->open_date) && 
+	  if ( $gwtype < 2 && after($set->open_date) &&
 	       (!@restricted || after($set->due_date))) {
 	    my $n = $name  . ($gwtype ? ",v" . $set->version_id : '');
 	    my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, courseID => $courseName, setID => $urlname);
-	    
-	    my $link = $self->systemLink($hardcopyPage,
-					 params=>{selected_sets=>$n});
-	    $control = CGI::a({class=>"hardcopy-link", href=>$link},
-			CGI::i({
-					class => "icon far fa-arrow-alt-circle-down", aria_hidden => "true",
-					title => $r->maketext("Download [_1]", $set->set_id =~ s/_/ /gr),
-					data_alt => $r->maketext("Download [_1]", $set->set_id =~ s/_/ /gr)
-				}, ''));
+
+		my $link = $self->systemLink($hardcopyPage, params => { selected_sets => $n });
+		$control = CGI::a(
+			{ class => 'hardcopy-link', href => $link },
+			CGI::i(
+				{
+					class       => 'icon far fa-arrow-alt-circle-down fa-lg',
+					aria_hidden => 'true',
+					title       => $r->maketext('Download [_1]', $set->set_id =~ s/_/ /gr),
+					data_alt    => $r->maketext('Download [_1]', $set->set_id =~ s/_/ /gr)
+				},
+				''
+			)
+		);
 	  } else {
 	    $control = '';
 	  }
 	}
-	
+
 	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
-	
+
 	$status = CGI::span({class=>$visiblityStateClass}, $status) if $preOpenSets;
-	
+
 	# check to see if we need to return a score and a date column
 	if ( ! $existVersions ) {
 	  return CGI::Tr(CGI::td([$interactive, $status]),CGI::td({class => "hardcopy"}, $control));
 	} else {
 	  my ( $startTime, $score );
-	  
-	  if ( defined( $set->assignment_type() ) && 
+
+	  if ( defined( $set->assignment_type() ) &&
 	       $set->assignment_type() =~ /gateway/ && $gwtype == 1 ) {
 			$startTime = $self->formatDateTime(
 				$set->version_creation_time() || 0, #fixes error message for undefined creation_time
 				undef, $ce->{studentDateDisplayFormat}
 			);
 
-	    if ( $authz->hasPermissions($user, "view_hidden_work") || 
-		 $set->hide_score() eq 'N' || 
+	    if ( $authz->hasPermissions($user, "view_hidden_work") ||
+		 $set->hide_score() eq 'N' ||
 		 ( $set->hide_score eq 'BeforeAnswerDate' && time > $tmplSet->answer_date() ) ) {
 	      # find score
-	      
+
 	      # DBFIXME we can do this math in the database, i think
 	      my $possible = 0;
 	      $score = 0;
 	      foreach my $pRec ( @problemRecords ) {
 		my $pval = $pRec->value() ? $pRec->value() : 1;
-		if ( defined( $pRec ) && 
+		if ( defined( $pRec ) &&
 		     $score ne 'undef' ) {
 		  $score += $pRec->status()*$pval || 0;
 		} else {
@@ -701,7 +721,7 @@ sub setListRow {
 	    $startTime = '&nbsp;';
 	    $score = $startTime;
 	  }
-	  
+
 	  return CGI::Tr(($gwtype == 1) ? {class => 'gw-version'} : {},
 		  CGI::td(($gwtype == 1) ? {class => 'gw-version'} : ($gwtype == 2) ? {class => 'gw-template'} : {},$interactive).
 		  CGI::td([$status, $score, $startTime]),
@@ -713,15 +733,15 @@ sub byname { $a->set_id cmp $b->set_id; }
 
 sub byUrgency {
 	my $mytime = time;
-	my @a_parts = ($a->answer_date + RECENT <= $mytime) ?  (4, $a->open_date, $a->due_date, $a->set_id) 
+	my @a_parts = ($a->answer_date + RECENT <= $mytime) ?  (4, $a->open_date, $a->due_date, $a->set_id)
 		: ($a->answer_date <= $mytime and $mytime < $a->answer_date + RECENT) ? (3, $a-> answer_date, $a-> due_date, $a->set_id)
 		: ($a->due_date <= $mytime and $mytime < $a->answer_date ) ? (2, $a->answer_date, $a->due_date, $a->set_id)
-		: ($mytime < $a->open_date) ? (1, $a->open_date, $a->due_date, $a->set_id) 
+		: ($mytime < $a->open_date) ? (1, $a->open_date, $a->due_date, $a->set_id)
 		: (0, $a->due_date, $a->open_date, $a->set_id);
-	my @b_parts = ($b->answer_date + RECENT <= $mytime) ?  (4, $b->open_date, $b->due_date, $b->set_id) 
+	my @b_parts = ($b->answer_date + RECENT <= $mytime) ?  (4, $b->open_date, $b->due_date, $b->set_id)
 		: ($b->answer_date <= $mytime and $mytime < $b->answer_date + RECENT) ? (3, $b-> answer_date, $b-> due_date, $b->set_id)
 		: ($b->due_date <= $mytime and $mytime < $b->answer_date ) ? (2, $b->answer_date, $b->due_date, $b->set_id)
-		: ($mytime < $b->open_date) ? (1, $b->open_date, $b->due_date, $b->set_id) 
+		: ($mytime < $b->open_date) ? (1, $b->open_date, $b->due_date, $b->set_id)
 		: (0, $b->due_date, $b->open_date, $b->set_id);
 	my $returnIt=0;
 	while (scalar(@a_parts) > 1) {
@@ -747,7 +767,7 @@ sub set_due_msg {
   my $ce = $r->ce;
   my $set = shift;
   my $gwversion = shift;
-  my $status = ''; 
+  my $status = '';
 
   my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date < $set->due_date;
   my $reduced_scoring_date = $set->reduced_scoring_date;
@@ -757,13 +777,13 @@ sub set_due_msg {
 
   if ($enable_reduced_scoring &&
       $t < $reduced_scoring_date) {
-    
+
     $status .= $r->maketext("Open, due [_1].",$beginReducedScoringPeriod) . CGI::br() . $r->maketext("Afterward reduced credit can be earned until [_1].", $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
   } else {
     if ($gwversion) {
       $status = $r->maketext("Open, complete by [_1].",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
     } else {
-      $status = $r->maketext("Open, closes [_1].",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));  
+      $status = $r->maketext("Open, closes [_1].",  $self->formatDateTime($set->due_date(),undef,$ce->{studentDateDisplayFormat}));
     }
 
     if ($enable_reduced_scoring && $reduced_scoring_date &&
@@ -773,8 +793,8 @@ sub set_due_msg {
   }
 
   return $status;
-}  
-  
+}
+
 
 sub restricted_progression_msg {
   my $r = shift;

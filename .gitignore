@@ -30,9 +30,11 @@ WeBWorK.sublime-workspace
 conf/*.apache-config
 math4-overrides.css
 math4-overrides.js
-htdocs/themes/math4/images/*
-htdocs/themes/math4-green/images/*
-htdocs/themes/math4-red/images/*
+htdocs/themes/*/images/*
+htdocs/themes/*/*.css
+htdocs/themes/*/*.css.map
+htdocs/js/apps/Problem/problem.css
+htdocs/js/apps/Problem/problem.css.map
 htdocs/package-lock.json
 DATA/*
 *.swp

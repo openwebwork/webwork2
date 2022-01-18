@@ -291,13 +291,16 @@ sub formatRenderedProblem {
 	# Submit buttons (all are shown by default)
 	my $showPreviewButton = $self->{inputs_ref}{showPreviewButton} // "";
 	my $previewButton = $showPreviewButton eq "0" ? '' :
-		'<input type="submit" name="preview" id="previewAnswers_id" value="' . $mt->maketext("Preview My Answers") . '">';
+		'<input type="submit" name="preview" id="previewAnswers_id" class="btn btn-primary mb-1" value="'
+	   	. $mt->maketext("Preview My Answers") . '">';
 	my $showCheckAnswersButton = $self->{inputs_ref}{showCheckAnswersButton} // "";
 	my $checkAnswersButton = $showCheckAnswersButton eq "0" ? '' :
-		'<input type="submit" name="WWsubmit" value="' . $mt->maketext("Check Answers") . '">';
+		'<input type="submit" name="WWsubmit" class="btn btn-primary mb-1" value="'
+	   	. $mt->maketext("Check Answers") . '">';
 	my $showCorrectAnswersButton = $self->{inputs_ref}{showCorrectAnswersButton} // "";
 	my $correctAnswersButton = $showCorrectAnswersButton eq "0" ? '' :
-		'<input type="submit" name="WWcorrectAns" value="' . $mt->maketext("Show Correct Answers") . '">';
+		'<input type="submit" name="WWcorrectAns" class="btn btn-primary mb-1" value="'
+	   	. $mt->maketext("Show Correct Answers") . '">';
 
 	my $showSolutions = $self->{inputs_ref}{showSolutions} // "";
 	my $showHints = $self->{inputs_ref}{showHints} // "";

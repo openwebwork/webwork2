@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.76 2009/07/18 02:52:51 gage Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -59,7 +58,7 @@ sub checkForAchievements {
 	return '' if $set_id eq $excludedSet;
     }
     our $set = $db->getMergedSet($user_id,$problem->set_id);
-    my @allAchievementIDs = $db->listAchievements; 
+    my @allAchievementIDs = $db->listAchievements;
     my @achievements = $db->getAchievements(@allAchievementIDs);
     @achievements = sortAchievements(@achievements);
     my $globalUserAchievement = $db->getGlobalUserAchievement($user_id);
@@ -73,22 +72,22 @@ sub checkForAchievements {
     # update its assignment_type to include 'default'.
     # This whole block of code can be removed once people have had time
     # to transition over.  (I.E. around 2017)
-    
+
     foreach my $achievement (@achievements) {
       unless ($achievement->assignment_type || $achievement->number) {
 	$achievement->assignment_type('default');
 	$db->putAchievement($achievement);
       }
     }
-    
+
     ### End Transition Code.  ###
-    
-    
+
+
     # If its a gateway set get the current version
     if ($isGatewaySet) {
 	$set = $db->getSetVersion($user_id, $set_id, $options{setVersion});
-    } 
-    
+    }
+
     # If no global data then initialize
     if (not $globalUserAchievement) {
 	$globalUserAchievement = $db->newGlobalUserAchievement();
@@ -97,20 +96,20 @@ sub checkForAchievements {
 	$db->addGlobalUserAchievement($globalUserAchievement);
     }
 
-    #update the problem with stuff from the pg. 
+    #update the problem with stuff from the pg.
     # this is kind of a hack.  The achievement checking happens *before* the system has
-    # updated $problem with the new results from $pg.  So we cheat and update the 
+    # updated $problem with the new results from $pg.  So we cheat and update the
     # important bits here.  The only thing that gets left behind is last_answer, which is
-    # still the previous last answer. 
-    
-    # $pg->{result} reflects the current submission, $pg->{state} holds the best result 
+    # still the previous last answer.
+
+    # $pg->{result} reflects the current submission, $pg->{state} holds the best result
     # close the unlimited achievement points loophole by only using the current result!
     $problem->status($pg->{result}->{score});
     $problem->sub_status($pg->{state}->{sub_recorded_score});
     $problem->attempted(1);
     $problem->num_correct($pg->{state}->{num_of_correct_ans});
     $problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-    
+
     #These need to be "our" so that they can share to the safe container
     our $counter;
     our $maxCounter;
@@ -150,7 +149,7 @@ sub checkForAchievements {
 
     # for gateway sets we have to do check all of the problems to see
     # if we need to reward points since we submit all at once
-    # otherwise we only do the main problem. 
+    # otherwise we only do the main problem.
     my @problemsToCheck = ($problem);
 
     if ($isGatewaySet) {
@@ -161,7 +160,7 @@ sub checkForAchievements {
 
 	if ($thisProblem->status == 1 && $thisProblem->num_correct == 1) {
 	    $globalUserAchievement->achievement_points(
-		$globalUserAchievement->achievement_points + 
+		$globalUserAchievement->achievement_points +
 		$ce->{achievementPointsPerProblem});
 	    #this variable is shared and should be considered iffy
 	    $achievementPoints += $ce->{achievementPointsPerProblem};
@@ -181,7 +180,7 @@ sub checkForAchievements {
 	}
 	$index++;
     }
-    
+
     if ($allcorrect) {
 	$globalData->{'completeSets'}++;
     }
@@ -196,7 +195,7 @@ sub checkForAchievements {
     }
 
     #These variables are shared with the safe compartment.  The achievement evaulators
-    # have access too 
+    # have access too
     # $problem - the problem data;
     # @setProblems - the problem data for everything from this set;
     # $localData - the hash that is used only for this achievement
@@ -209,7 +208,7 @@ sub checkForAchievements {
     # $tags -this is the tag data associated to the problem from the problem library
     # @courseDateTime - array of time information in course timezone (sec,min,hour,day,month,year,day_of_week)
 
-    $compartment->share(qw( $problem @setProblems $localData $maxCounter 
+    $compartment->share(qw( $problem @setProblems $localData $maxCounter
              $globalData $counter $nextLevelPoints $set $achievementPoints $tags @courseDateTime));
 
     #load any preamble code
@@ -217,13 +216,13 @@ sub checkForAchievements {
     local $/;
     my $preamble = '';
     my $source;
-    if (-e 
+    if (-e
 	"$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}") {
 	open(PREAMB, '<', "$ce->{courseDirs}->{achievements}/$ce->{achievementPreambleFile}");
 	$preamble = <PREAMB>;
 	close(PREAMB);
     }
-    #loop through the various achievements, see if they have been obtained, 
+    #loop through the various achievements, see if they have been obtained,
     foreach my $achievement (@achievements) {
 	#skip achievements not assigned, not enabled, and that are already earned, or if it doesn't match the set type
 	next unless $achievement->enabled;
@@ -260,7 +259,7 @@ sub checkForAchievements {
 	#if we have a new achievement then update achievement points
 	if ($earned) {
 	    $userAchievement->earned(1);
-	
+
 	    if ($achievement->category eq 'level') {
 			$globalUserAchievement->level_achievement_id($achievement_id);
 			$globalUserAchievement->next_level_points($nextLevelPoints);
@@ -270,53 +269,58 @@ sub checkForAchievements {
 	    my $imgSrc = $ce->{server_root_url};
 	    if ($achievement->{icon}) {
 			$imgSrc .= $ce->{courseURLs}->{achievements}."/".$achievement->{icon};
-	    } else {           
+	    } else {
 			$imgSrc .= $ce->{webworkURLs}->{htdocs}."/images/defaulticon.png";
 	    }
 
-	    $cheevoMessage .=  CGI::start_div({id=>"test", class=>'cheevopopupouter modal-body'});
-	    $cheevoMessage .=  CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
-	    $cheevoMessage .= CGI::start_div({class=>'cheevopopuptext'});  
-	    if ($achievement->category eq 'level') {
-		
-			$cheevoMessage = $cheevoMessage . CGI::h2("$achievement->{name}");
-			#print out description as part of message if we are using items
-			
-			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled} ?  $achievement->{description} : $r->maketext("Congratulations, you earned a new level!"));
-			$cheevoMessage .= CGI::end_div();
+	    $cheevoMessage .= CGI::start_div({
+			   	class => 'cheevo-toast toast hide',
+				role => 'alert',
+				aria_live => 'polite',
+				aria_atomic => 'true'
+		   	});
+		$cheevoMessage .= CGI::start_div({ class => 'toast-body d-flex align-items-center' });
 
+	    $cheevoMessage .= CGI::img({src=>$imgSrc, alt=>'Achievement Icon'});
+
+	    $cheevoMessage .= CGI::start_div({class=>'cheevopopuptext'});
+	    if ($achievement->category eq 'level') {
+			$cheevoMessage = $cheevoMessage . CGI::h2("$achievement->{name}");
+			# Print the description as part of the message if we are using items.
+			$cheevoMessage .= CGI::div($ce->{achievementItemsEnabled}
+				? $achievement->{description}
+				: $r->maketext("Congratulations, you earned a new level!"));
 	    } else {
-		
-			$cheevoMessage .=  CGI::h2("$achievement->{name}");
-			$cheevoMessage .=  CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
-			$cheevoMessage .= CGI::end_div();
+			$cheevoMessage .= CGI::h2("$achievement->{name}");
+			$cheevoMessage .= CGI::div("<i>$achievement->{points} Points</i>: $achievement->{description}");
 	    }
-	    
-	    # this feature doesn't really work anymore because
-	    # of a change in facebooks api
-	    #if facebook integration is enables then create a facebook popup
+		$cheevoMessage .= CGI::end_div();
+
+		# This feature doesn't really work anymore because of a change in facebook's api.
+	    # If facebook integration is enabled, then create a facebook popup.
 	    if ($ce->{allowFacebooking}&& $globalUserAchievement->facebooker) {
 			$cheevoMessage .= CGI::div({id=>'fb-root'},'');
 			$cheevoMessage .= CGI::script({src=>'http://connect.facebook.net/en_US/all.js'},'');
 			$cheevoMessage .= CGI::start_script();
-			
+
 			$cheevoMessage .= "FB.init({appId:'".$ce->{facebookAppId}."', cookie:true,status:true, xfbml:true });\n";
-	
+
 			my $facebookmessage;
 			if ($achievement->category eq 'level') {
 				$facebookmessage = sprintf("I leveled up and am now a %s",$achievement->{name});
 			} else {
 				$facebookmessage = sprintf("%s: %s",$achievement->{name},$achievement->{description});
 			}
-		
+
 			$cheevoMessage .= "FB.ui({ method: 'feed', display: 'popup', picture: '$imgSrc', description: '$facebookmessage'});\n";
 			$cheevoMessage .= CGI::end_script();
-
 	    }
-	        
-	    $cheevoMessage .= CGI::end_div();
-	    
-	        
+
+		$cheevoMessage .= q{<button type="button" class="btn-close me-2 m-auto"
+								data-bs-dismiss="toast" aria-label="Close"></button>};
+	    $cheevoMessage .= CGI::end_div() . CGI::end_div();
+
+
 	    my $points = $achievement->points;
 	    #just in case points is an ininitialzied variable
 	    $points = 0 unless $points;
@@ -325,21 +329,24 @@ sub checkForAchievements {
 		$globalUserAchievement->achievement_points + $points);
 	    #this variable is shared and should be considered iffy
 	    $achievementPoints += $points;
-	}    
-	
+	}
+
 	#update counter, nfreeze_base64 localData and store
 	$userAchievement->counter($counter);
-	$userAchievement->frozen_hash(nfreeze_base64($localData));	
+	$userAchievement->frozen_hash(nfreeze_base64($localData));
 	$db->putUserAchievement($userAchievement);
-	
+
     }  #end for loop
-    
+
     #nfreeze_base64 globalData and store
     $globalUserAchievement->frozen_hash(nfreeze_base64($globalData));
     $db->putGlobalUserAchievement($globalUserAchievement);
 
     if ($cheevoMessage) {
-	$cheevoMessage = CGI::div({id=>"achievementModal", class=>"modal hide fade"},$cheevoMessage);
+		$cheevoMessage = CGI::div({
+				class => "cheevo-toast-container toast-container " .
+					"position-absolute top-0 start-50 translate-middle-x p-3"
+			}, $cheevoMessage);
     }
 
     return $cheevoMessage;
