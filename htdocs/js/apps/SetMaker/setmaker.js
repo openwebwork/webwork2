@@ -136,7 +136,7 @@
 	function setselect(selname, newarray) {
 		var sel = $('[name="'+selname+'"]');
 		sel.empty();
-		$.each(newarray, function (i, val) {
+		$.each(newarray, function (_i, val) {
 			sel.append($("<option></option>").val(val).html(val));
 		});
 	}
@@ -265,7 +265,7 @@
 			mymltMtext = mymltM.text();
 		}
 		$('#pgrow'+num).remove();
-		delFromPGList(num, path);
+		delFromPGList(path);
 		if((mymlt > 0) && mymltMtext=='M') { // delete hidden problems
 			var table_num = num;
 			while((newmlt = $('[name="all_past_mlt'+ APLindex +'"]')) && newmlt.val() == mymlt) {
@@ -273,7 +273,7 @@
 				num++;
 				path = $('[name="filetrial'+ num +'"]').val();
 				$('#pgrow'+num).remove();
-				delFromPGList(num, path);
+				delFromPGList(path);
 			}
 			$('#mlt-table'+table_num).remove();
 		} else if ((mymlt > 0) && $('.MLT'+mymlt).length == 0) {
@@ -315,7 +315,7 @@
 		return j;
 	}
 
-	function delFromPGList(num, path) {
+	function delFromPGList(path) {
 		var j = findAPLindex(path);
 		j++;
 		while ($('[name="all_past_list'+ j +'"]').length>0) {
@@ -365,6 +365,14 @@
 			ro.processAnswers = 0;
 			ro.showFooter = 0;
 			ro.displayMode = $('select[name=mydisplayMode]').val();
+
+			// Abort if the display mode is not set to None
+			if (ro.displayMode === "None") {
+				renderArea.html($('<div/>'));
+				resolve();
+				return;
+			}
+
 			ro.send_pg_flags = 1;
 			ro.extra_header_text = '<style>' +
 				'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
@@ -459,24 +467,21 @@
 			.dialog({width:'70%'});
 	}
 
-	// Render all problems if the display mode is not set to None
-	if (document.querySelector('select[name=mydisplayMode]')?.value !== "None") {
-		// Find all render areas
-		const renderAreas = $('.psr_render_area');
+	// Find all render areas
+	const renderAreas = $('.psr_render_area');
 
-		// Add the loading message to all render areas.
-		for (let renderArea of renderAreas) {
-			$(renderArea).html('Loading Please Wait...');
-		}
-
-		// Render all visible problems on the page
-		(async function() {
-			for (let renderArea of renderAreas) {
-				if (!$(renderArea).is(':visible')) continue;
-				await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
-			}
-		})();
+	// Add the loading message to all render areas.
+	for (let renderArea of renderAreas) {
+		$(renderArea).html('Loading Please Wait...');
 	}
+
+	// Render all visible problems on the page
+	(async function() {
+		for (let renderArea of renderAreas) {
+			if (!$(renderArea).is(':visible')) continue;
+			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
+		}
+	})();
 
 	$("select[name=library_chapters]").on("change", function() { lib_update('sections', 'get'); });
 	$("select[name=library_subjects]").on("change", function() { lib_update('chapters', 'get'); });
