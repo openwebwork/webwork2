@@ -1,6 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2021 The WeBWorK Project, http://openwebwork.sf.net/
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -446,10 +446,11 @@ sub body {
 	my $make_local_copy = $r->param('make_local_copy');
 
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
+		"You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
 
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify problems.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to modify problems.")
 		unless $authz->hasPermissions($user, "modify_student_data");
 
 	# Gathering info
@@ -534,10 +535,17 @@ sub body {
 	my @PG_Editor_References;
 	foreach my $link (@PG_Editor_Reference_Links) {
 		push(@PG_Editor_References,
-			CGI::a({
-					href => $link->{url}, target => $link->{target}, title => $link->{tooltip},
-					class => "reference-link btn btn-small btn-info", data_toggle => "tooltip", data_placement => 'bottom'
-				}, $link->{label})
+			CGI::a(
+				{
+					href              => $link->{url},
+					target            => $link->{target},
+					title             => $link->{tooltip},
+					class             => 'reference-link btn btn-sm btn-info',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom'
+				},
+				$link->{label}
+			)
 		);
 	}
 
@@ -610,11 +618,11 @@ sub body {
 	my $force_field = (not_blank( $self->{sourceFilePath})) ?
 		CGI::hidden(-name=>'sourceFilePath', -default=>$self->{sourceFilePath}) : '';
 
-	print CGI::p($header),
-	CGI::start_form({
-			method => "POST", id => "editor", name => "editor",
-			action => $uri, enctype => "application/x-www-form-urlencoded",
-			class => "form-inline span9"
+	print CGI::div({ class => 'mb-2' }, $header),
+		CGI::start_form({
+			method => 'POST', id => 'editor', name => 'editor',
+			action => $uri, enctype => 'application/x-www-form-urlencoded',
+			class => 'col-md-9'
 		}),
 		$self->hidden_authen_fields,
 		$force_field,
@@ -637,41 +645,79 @@ sub body {
 	my @contentArr;
 
 	for my $actionID (@formsToShow) {
-		my $actionForm = "${actionID}_form";
+		my $actionForm    = "${actionID}_form";
 		my $line_contents = $self->$actionForm($self->getActionParams($actionID));
-		my $active = "";
-		my $id = "action_$actionID";
+		my $active        = "";
 
 		if ($line_contents) {
-			$active = "active", $default_choice = $actionID unless $default_choice;
-			push(@tabArr, CGI::li({ class => $active },
-					CGI::a({ href => "#$id", data_toggle => "tab", class => "action-link", data_action => $actionID },
-						$r->maketext($actionFormTitles{$actionID}))));
-			push(@contentArr, CGI::div({ class => "tab-pane pg_editor_action_div $active", id => $id }, $line_contents));
+			$active = " active", $default_choice = $actionID unless $default_choice;
+			push(
+				@tabArr,
+				CGI::li(
+					{ class => 'nav-item', role => 'presentation' },
+					CGI::a(
+						{
+							href           => "#$actionID",
+							class          => "nav-link action-link$active",
+							id             => "$actionID-tab",
+							data_action    => $actionID,
+							data_bs_toggle => "tab",
+							data_bs_target => "#$actionID",
+							role           => 'tab',
+							aria_controls  => $actionID,
+							aria_selected  => $active ? 'true' : 'false'
+						},
+						$r->maketext($actionFormTitles{$actionID})
+					)
+				)
+			);
+			push(
+				@contentArr,
+				CGI::div(
+					{
+						class            => "tab-pane pg_editor_action_div fade" . ($active ? " show$active" : ''),
+						id               => $actionID,
+						role             => 'tabpanel',
+						aria_labelled_by => "$actionID-tab"
+					},
+					$line_contents
+				)
+			);
 		}
 	}
 
 	print CGI::hidden(-name => 'action', -id => 'current_action', -value => $default_choice);
-	print CGI::div({ class => "tabbable" },
-		CGI::ul({ class => "nav nav-tabs" }, @tabArr),
-		CGI::div({ class => "tab-content" }, @contentArr)
-	);
+	print CGI::div(CGI::ul({ class => 'nav nav-tabs mb-2', role => 'tablist' }, @tabArr),
+		CGI::div({ class => "tab-content" }, @contentArr));
 
-	print CGI::div(WeBWorK::CGI_labeled_input(-type => "submit", -id => "submit_button_id",
-			-input_attr => { -name => 'submit', -value => $r->maketext("Take Action!") }));
+	print CGI::div(CGI::submit({
+		id    => "submit_button_id",
+		name  => 'submit',
+		value => $r->maketext("Take Action!"),
+		class => 'btn btn-primary'
+	}));
 
 	print  CGI::end_form();
 
-	print CGI::start_div({id=>"render-modal", class=>"modal hide fade"});
-	print CGI::start_div({class=>'modal-header'});
-	print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
-	print CGI::h3($r->maketext("Problem Viewer"));
+	print CGI::start_div({ id    => 'render-modal', class => 'modal hide fade', tabindex => '-1' });
+	print CGI::start_div({ class => 'modal-dialog modal-dialog-centered' });
+	print CGI::start_div({ class => 'modal-content' });
+	print CGI::start_div({ class => 'modal-header' });
+	print CGI::h5({ class => 'modal-title' }, $r->maketext('Problem Viewer'));
+	print '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>';
 	print CGI::end_div();
-	print CGI::start_div({class=>"modal-body"});
-	print CGI::iframe({ id => "pg_editor_frame_id", name => "pg_editor_frame"}, "");
+	print CGI::start_div({ class => 'modal-body' });
+	print CGI::iframe({ id => 'pg_editor_frame_id', name => 'pg_editor_frame' }, '');
 	print CGI::end_div();
-	print CGI::start_div({-class=>"modal-footer"});
-	print CGI::button({type=>"button", value=>$r->maketext("Close"), "data-dismiss"=>"modal"});
+	print CGI::start_div({ class => 'modal-footer' });
+	print CGI::button({
+		type            => 'button',
+		value           => $r->maketext('Close'),
+		data_bs_dismiss => 'modal',
+		class           => 'btn btn-primary'
+	});
+	print CGI::end_div();
+	print CGI::end_div();
 	print CGI::end_div();
 	print CGI::end_div();
 
@@ -1155,24 +1201,66 @@ sub fresh_edit_handler {
 
 sub view_form {
 	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-	my $file_type     = $self->{file_type};
-	return "" if $file_type eq 'hardcopy_header';  # these can't yet be edited from temporary files #FIXME
-	my $output_string = "";
+	my $r         = $self->r;
+	my $file_type = $self->{file_type};
+
+	# FIXME: These can't yet be edited from temporary files
+	return '' if $file_type eq 'hardcopy_header';
+
 	unless ($file_type eq 'course_info' || $file_type eq 'options_info') {
-		$output_string .= join("",
-			WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_view_seed_id", -label_text=>$r->maketext("Using what seed?: "),
-				-input_attr=>{-name=>'action.view.seed',-value=>$self->{problemSeed}}),
-			CGI::br(),
-			WeBWorK::CGI_labeled_input(-type=>"select", -id=>"action_view_displayMode_id", -label_text=>$r->maketext("Using what display mode?: "),
-				-input_attr=>{-name=>'action.view.displayMode', -values=>$self->r->ce->{pg}->{displayModes}, -default=>$self->{displayMode}}),
-			CGI::br(),
-			CGI::div({ class => "pg_editor_new_window_div" },
-				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindowView", -label_text => $r->maketext("Open in new window")))
+		return CGI::div(
+			CGI::div(
+				{ class => 'row align-items-center mb-2' },
+				CGI::label(
+					{ for => 'action_view_seed_id', class => 'col-form-label col-auto' },
+					$r->maketext('Using what seed?')
+				),
+				CGI::div(
+					{ class => 'col-auto' },
+					CGI::textfield({
+						id    => 'action_view_seed_id',
+						name  => 'action.view.seed',
+						value => $self->{problemSeed},
+						class => 'form-control form-control-sm'
+					})
+				)
+			),
+			CGI::div(
+				{ class => 'row align-items-center mb-2' },
+				CGI::label(
+					{ for => 'action_view_displayMode_id', class => 'col-form-label col-auto' },
+					$r->maketext('Using what display mode?')
+				),
+				CGI::div(
+					{ class => 'col-auto' },
+					CGI::popup_menu({
+						id      => 'action_view_displayMode_id',
+						name    => 'action.view.displayMode',
+						values  => $self->r->ce->{pg}{displayModes},
+						class   => 'form-select form-select-sm d-inline w-auto',
+						default => $self->{displayMode}
+					})
+				)
+			),
+			CGI::div(
+				{ class => 'row g-0 mb-2' },
+				CGI::div(
+					{ class => 'form-check mb-2' },
+					CGI::input({
+						type  => 'checkbox',
+						id    => 'newWindowView',
+						class => 'form-check-input'
+					}),
+					CGI::label(
+						{ for => 'newWindowView', class => 'form-check-label' },
+						$r->maketext('Open in new window')
+					)
+				)
+			)
 		);
 	}
 
-	return $output_string;  #FIXME  add -labels to the pop up menu
+	return '';
 }
 
 sub view_handler {
@@ -1297,34 +1385,65 @@ sub view_handler {
 }
 
 sub add_problem_form {
-	my $self            = shift;
-	my %actionParams    = @_;
-	my $r               = $self->r;
-	my $setName         = $self->{setID} // ''; # Allow numeric 0 for $setName
-	my $problemNumber   = $self->{problemID} ;
+	my $self          = shift;
+	my %actionParams  = @_;
+	my $r             = $self->r;
+	my $setName       = $self->{setID} // '';    # Allow numeric 0 for $setName
+	my $problemNumber = $self->{problemID};
 
-	my $filePath        = $self->{inputFilePath};
-	$setName   =~ s|^set||;
+	return '' if $self->{file_type} eq 'course_info' || $self->{file_type} eq 'options_info';
+
+	my $filePath = $self->{inputFilePath};
+	$setName =~ s|^set||;
 	my @allSetNames = sort $r->db->listGlobalSets;
-	for (my $j=0; $j<scalar(@allSetNames); $j++) {
+	for (my $j = 0; $j < scalar(@allSetNames); $j++) {
 		$allSetNames[$j] =~ s|^set||;
 		$allSetNames[$j] =~ s|\.def||;
 	}
-	my $labels = {
-		problem         => 'problem',
-		set_header      => 'set header',
-		hardcopy_header => 'hardcopy header',
-	};
-	return "" if $self->{file_type} eq 'course_info' || $self->{file_type} eq 'options_info';
-	return join(" ",
-		WeBWorK::CGI_labeled_input(-type=>"select", -id=>"action_add_problem_target_set_id", -label_text=>$r->maketext("Add to what set?").": ",
-			-input_attr=>{name=>'action.add_problem.target_set', values=>\@allSetNames, default=>$setName}),
-		CGI::br(),
-		WeBWorK::CGI_labeled_input(-type=>"select", -id=>"action_add_problem_file_type_id", -label_text=>$r->maketext("Add as what filetype?").": ",
-			-input_attr=>{name=>'action.add_problem.file_type', values=>['problem','set_header', 'hardcopy_header'], labels=>$labels, default=>$self->{file_type}}),
-		CGI::br()
-	);  #FIXME  add -lables to the pop up menu
-	return "";
+
+	return CGI::div(
+		CGI::div(
+			{ class => 'row align-items-center mb-2' },
+			CGI::label(
+				{ for => 'action_add_problem_target_set_id', class => 'col-form-label col-auto' },
+				$r->maketext('Add to what set?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id      => 'action_add_problem_target_set_id',
+					name    => 'action.add_problem.target_set',
+					values  => \@allSetNames,
+					class   => 'form-select form-select-sm d-inline w-auto',
+					default => $setName
+				})
+			)
+		),
+		CGI::div(
+			{ class => 'row align-items-center mb-2' },
+			CGI::label(
+				{ for => 'action_add_problem_file_type_id', class => 'col-form-label col-auto' },
+				$r->maketext('Add as what filetype?')
+			),
+			CGI::div(
+				{ class => 'col-auto' },
+				CGI::popup_menu({
+					id     => 'action_add_problem_file_type_id',
+					name   => 'action.add_problem.file_type',
+					values => [ 'problem', 'set_header', 'hardcopy_header' ],
+					labels => {
+						problem         => 'problem',
+						set_header      => 'set header',
+						hardcopy_header => 'hardcopy header',
+					},
+					class   => 'form-select form-select-sm d-inline w-auto',
+					default => $self->{file_type}
+				})
+			)
+		)
+	);
+
+	return '';
 }
 
 sub add_problem_handler {
@@ -1458,17 +1577,29 @@ sub add_problem_handler {
 sub save_form {
 	my ($self, %actionParams) = @_;
 	my $r = $self->r;
-	#return "" unless defined($self->{tempFilePath}) and -e $self->{tempFilePath};
-	if ($self->{editFilePath} =~ /$BLANKPROBLEM$/ ) {
-		return "";  #Can't save blank problems without changing names
+
+	if ($self->{editFilePath} =~ /$BLANKPROBLEM$/) {
+		# Can't save blank problems without changing names.
+		return '';
 	} elsif (-w $self->{editFilePath}) {
-
-		return $r->maketext("Save to [_1] and View", CGI::b($self->shortPath($self->{editFilePath}))) .
-			CGI::div({ class => "pg_editor_new_window_div" },
-				WeBWorK::CGI_labeled_input(-type => "checkbox", -id => "newWindowSave", -label_text => $r->maketext("Open in new window")));
-
+		return CGI::div(
+			CGI::div(
+				{ class => 'mb-2' },
+				$r->maketext('Save to [_1] and View', CGI::b($self->shortPath($self->{editFilePath})))
+			),
+			CGI::div(
+				{ class => 'form-check mb-2' },
+				CGI::input({
+					type  => 'checkbox',
+					id    => 'newWindowSave',
+					class => 'form-check-input'
+				}),
+				CGI::label({ for => 'newWindowSave', class => 'form-check-label' }, $r->maketext('Open in new window'))
+			)
+		);
 	} else {
-		return ""; #"Can't save -- No write permission";
+		# Can't save -- No write permission;
+		return '';
 	}
 }
 
@@ -1599,63 +1730,114 @@ sub save_handler {
 	$self->reply_with_redirect($viewURL);
 }
 
-sub save_as_form {  # calls the save_as_handler
+# Calls the save_as_handler
+sub save_as_form {
 	my ($self, %actionParams) = @_;
-	my $r = $self->r;
-	my $editFilePath  = $self->{editFilePath};
+	my $r            = $self->r;
+	my $editFilePath = $self->{editFilePath};
 
-	my $templatesDir  =  $self->r->ce->{courseDirs}->{templates};
-	my $setID         = $self->{setID};
-	my $fullSetID     = $self->{fullSetID};
+	my $templatesDir = $self->r->ce->{courseDirs}->{templates};
+	my $setID        = $self->{setID};
+	my $fullSetID    = $self->{fullSetID};
 
-	my $fileDir = dirname($editFilePath);
-	my $shortFilePath =  $editFilePath;
-	$shortFilePath   =~ s|^$templatesDir/||;
-	$shortFilePath   =  'local/'.$shortFilePath
-		if (! -w $fileDir );  # suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
-	$shortFilePath =~ s|^.*/|| if $shortFilePath =~ m|^/|;  # if it is still an absolute path don't suggest a file path to save to.
+	my $fileDir       = dirname($editFilePath);
+	my $shortFilePath = $editFilePath;
+	$shortFilePath =~ s|^$templatesDir/||;
 
-	my $probNum = ($self->{file_type} eq 'problem')? "$self->{problemID}" : "header";
-	my $andRelink = '';
+	# Suggest that modifications be saved to the "local" subdirectory if its not in a writeable directory
+	$shortFilePath = 'local/' . $shortFilePath
+		if (!-w $fileDir);
 
-	my $can_add_problem_to_set = not_blank($setID)  && $setID ne 'Undefined_Set' && $self->{file_type} ne 'blank_problem';
-	# don't addor replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
+	# If it is still an absolute path don't suggest a file path to save to.
+	$shortFilePath =~ s|^.*/||
+		if $shortFilePath =~ m|^/|;
+
+	my $probNum = ($self->{file_type} eq 'problem') ? $self->{problemID} : 'header';
+
+	# Don't add or replace problems to sets if the set is the Undefined_Set or if the problem is the blank_problem.
+	my $can_add_problem_to_set =
+		not_blank($setID) && $setID ne 'Undefined_Set' && $self->{file_type} ne 'blank_problem';
 
 	my $prettyProbNum = $probNum;
 	if ($setID) {
 		my $set = $self->r->db->getGlobalSet($setID);
-
-		$prettyProbNum = join('.',jitar_id_to_seq($probNum))
-		if ($self->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
+		$prettyProbNum = join('.', jitar_id_to_seq($probNum))
+			if ($self->{file_type} eq 'problem' && $set && $set->assignment_type eq 'jitar');
 	}
 
-	my $replace_problem_in_set  = ($can_add_problem_to_set)?
-	WeBWorK::CGI_labeled_input(-type=>'radio', -id=>'action_save_as_saveMode_rename_id', -label_text=>$r->maketext("Replace current problem: [_1]",CGI::strong("$fullSetID/$prettyProbNum")), -input_attr=>{
-			name      => "action.save_as.saveMode",
-			value     => "rename",
-			checked    =>1,
-		}).CGI::br() : '';
-	my $add_problem_to_set = ($can_add_problem_to_set) ?
-		WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_new_problem_id", -label_text=>$r->maketext("Append to end of [_1] set", CGI::strong("$fullSetID")), -input_attr=>{
-				-name      => "action.save_as.saveMode",
-				-value     => 'add_to_set_as_new_problem',
-			}).CGI::br() : '';
-	my $rh_new_problem_options = {
-		# -type      => 'radio',
-		-name      => "action.save_as.saveMode",
-		-value     => "new_independent_problem",
-	};
-	$rh_new_problem_options->{checked}=1 unless $can_add_problem_to_set;
-	my $create_new_problem       =  WeBWorK::CGI_labeled_input(-type=>'radio', -id=>"action_save_as_saveMode_independent_problem_id", -label_text=>$r->maketext("Create unattached problem"), -input_attr=>$rh_new_problem_options).CGI::br();
-
-	$andRelink = CGI::br(). $replace_problem_in_set . $add_problem_to_set . $create_new_problem;
-
-	return WeBWorK::CGI_labeled_input(-type=>"text", -id=>"action_save_as_target_file_id", -label_text=>$r->maketext("Save file to:")." [TMPL]/", -input_attr=>{
-			-name=>'action.save_as.target_file', -size=>60, -value=>"$shortFilePath",
-		}).
-		CGI::hidden(-name=>'action.save_as.source_file', -value=>$editFilePath ).
-		CGI::hidden(-name=>'action.save_as.file_type',-value=>$self->{file_type}).
-		$andRelink;
+	return CGI::div(
+		CGI::div(
+			{ class => 'row align-items-center mb-2' },
+			CGI::label(
+				{ for => 'action_save_as_target_file_id', class => 'col-form-label col-auto' },
+				$r->maketext('Save file to:')
+			),
+			CGI::div(
+				{ class => 'col-auto d-inline-flex' },
+				CGI::div(
+					{ class => 'input-group input-group-sm' },
+					CGI::label({ for => 'action_save_as_target_file_id', class => 'input-group-text' }, '[TMPL]/'),
+					CGI::textfield({
+						id    => 'action_save_as_target_file_id',
+						name  => 'action.save_as.target_file',
+						size  => 60,
+						value => $shortFilePath,
+						class => 'form-control form-control-sm'
+					})
+				)
+			),
+			CGI::hidden({ name => 'action.save_as.source_file', value => $editFilePath }),
+			CGI::hidden({ name => 'action.save_as.file_type',   value => $self->{file_type} })
+		),
+		(
+			$can_add_problem_to_set ? CGI::div(
+				{ class => 'form-check' },
+				CGI::input({
+					type    => 'radio',
+					id      => 'action_save_as_saveMode_rename_id',
+					name    => 'action.save_as.saveMode',
+					value   => 'rename',
+					checked => 1,
+					class   => 'form-check-input',
+				}),
+				CGI::label(
+					{ for => 'action_save_as_saveMode_rename_id', class => 'form-check-label' },
+					$r->maketext('Replace current problem: [_1]', CGI::strong("$fullSetID/$prettyProbNum"))
+				)
+			) : ''
+		),
+		(
+			$can_add_problem_to_set ? CGI::div(
+				{ class => 'form-check' },
+				CGI::input({
+					type  => 'radio',
+					id    => 'action_save_as_saveMode_new_problem_id',
+					name  => 'action.save_as.saveMode',
+					value => 'add_to_set_as_new_problem',
+					class => 'form-check-input',
+				}),
+				CGI::label(
+					{ for => 'action_save_as_saveMode_new_problem_id', class => 'form-check-label' },
+					$r->maketext('Append to end of [_1] set', CGI::strong($fullSetID))
+				)
+			) : ''
+		),
+		CGI::div(
+			{ class => 'form-check' },
+			CGI::input({
+				type  => 'radio',
+				id    => 'action_save_as_saveMode_independent_problem_id',
+				name  => 'action.save_as.saveMode',
+				value => 'new_independent_problem',
+				class => 'form-check-input',
+				$can_add_problem_to_set ? () : (checked => 1)
+			}),
+			CGI::label(
+				{ for => 'action_save_as_saveMode_independent_problem_id', class => 'form-check-label' },
+				$r->maketext('Create unattached problem')
+			)
+		)
+	);
 }
 # suggestions for improvement
 # save as ......
@@ -1900,8 +2082,8 @@ sub output_JS{
 		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PG.js"}), CGI::end_script();
 	}
 
-	print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/ImageView/imageview.css\"/>";
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
+	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
 	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
 	print CGI::script({ src => "$site_url/js/apps/PGProblemEditor/pgproblemeditor.js", defer => "" }, "");

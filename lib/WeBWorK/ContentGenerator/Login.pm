@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2019 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Login.pm,v 1.47 2012/06/08 22:59:55 wheeler Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -50,14 +49,14 @@ sub title {
     # using the url arguments won't break if the set/problem are invalid
     my $setID = WeBWorK::ContentGenerator::underscore2nbsp($self->r->urlpath->arg("setID"));
     my $problemID = $self->r->urlpath->arg("problemID");
-    
+
     # if its a problem page for a jitar set we print the pretty version of the id
     if ($problemID) {
 	my $set = $r->db->getGlobalSet($setID);
 	if ($set && $set->assignment_type eq 'jitar') {
 	    $problemID = join('.',jitar_id_to_seq($problemID));
 	}
-    
+
 	return $r->maketext("[_1]: Problem [_2]",$setID, $problemID);
     }
 
@@ -73,31 +72,23 @@ sub info {
 	my ($self) = @_;
 	my $r = $self->r;
 	my $ce = $r->ce;
-	
+
 	my $result;
 	# This section should be kept in sync with the Home.pm version
 	# list the login info first.
-	
+
 	# FIXME this is basically the same code as below... TIME TO REFACTOR!
 	my $login_info = $ce->{courseFiles}->{login_info};
 
 	if (defined $login_info and $login_info) {
 		# login info is relative to the templates directory, apparently
 		$login_info = $ce->{courseDirs}->{templates} . "/$login_info";
-		
-		# deal with previewing a temporary file
-		# FIXME: DANGER: this code allows viewing of any file
-		# FIXME: this code is disabled because PGProblemEditor no longer uses editFileSuffix
-		#if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
-		#		and defined $r->param("editFileSuffix")) {
-		#	$login_info .= $r->param("editFileSuffix");
-		#}
-		
+
 		if (-f $login_info) {
 			my $text = eval { readFile($login_info) };
 			if ($@) {
 				$result .= CGI::h2($r->maketext("Login Info"));
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
 			} elsif ($text =~ /\S/) {
 				$result .= CGI::h2($r->maketext("Login Info"));
 				$result .= $text;
@@ -107,45 +98,35 @@ sub info {
 
 	my $site_info = $ce->{webworkFiles}->{site_info};
 	if (defined $site_info and $site_info) {
-		# deal with previewing a temporary file
-		# FIXME: DANGER: this code allows viewing of any file
-		# FIXME: this code is disabled because PGProblemEditor no longer uses editFileSuffix
-		#if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
-		#		and defined $r->param("editFileSuffix")) {
-		#	$site_info .= $r->param("editFileSuffix");
-		#}
-		
 		if (-f $site_info) {
 			my $text = eval { readFile($site_info) };
 			if ($@) {
 				$result .= CGI::h2($r->maketext("Site Information"));
-				$result .= CGI::div({class=>"ResultsWithError"}, $@);
+				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
 			} elsif ($text =~ /\S/) {
 				$result .= CGI::h2($r->maketext("Site Information"));
 				$result .= $text;
 			}
 		}
 	}
-	
 
-	
 	if (defined $result and $result ne "") {
-#		return CGI::div({-class=>"info-wrapper"},CGI::div({class=>"info-box", id=>"InfoPanel"}, $result));
 	    return $result;
 	} else {
 		return "";
 	}
 }
 
-sub links {
-	my @return = (" ");
-	return( @return);
+# Override the if_can method to disable links for the login page.
+sub if_can {
+	my ($self, $arg) = @_;
+	return $arg eq 'links' ? 0 : $self->SUPER::if_can($arg);
 }
 
 sub pre_header_initialize {
 	my ($self) = @_;
 	my $authen = $self->r->authen;
-	
+
 	if ( defined($authen->{redirect}) && $authen->{redirect} ) {
 		$self->reply_with_redirect($authen->{redirect});
 	}
@@ -172,26 +153,26 @@ sub body {
 
 	# The following line may not work when a sequence of authentication modules
     # are used, because the preferred module might be external, e.g., LTIBasic,
-    # but a non-external one, e.g., Basic_TheLastChance or 
+    # but a non-external one, e.g., Basic_TheLastChance or
     # even just WeBWorK::Authen, might handle the ongoing session management.
     # So this should be set in the course environment when a sequence of
 	# authentication modules is used..
 	#my $externalAuth = (defined($auth->{external_auth}) && $auth->{external_auth} ) ? 1 : 0;
 	my $externalAuth = ((defined($ce->{external_auth}) && $ce->{external_auth})
  		or (defined($auth->{external_auth}) && $auth->{external_auth}) ) ? 1 : 0;
-	
+
 	# get some stuff together
 	my $user = $r->param("user") || "";
 	my $key = $r->param("key");
 	my $passwd = $r->param("passwd") || "";
 	my $course = $urlpath->arg("courseID");
 	my $practiceUserPrefix = $ce->{practiceUserPrefix};
-	
+
 	# don't fill in the user ID for practice users
 	# (they should use the "Guest Login" button)
 	$user = "" if $user =~ m/^$practiceUserPrefix/;
-	
-	# WeBWorK::Authen::verify will set the note "authen_error" 
+
+	# WeBWorK::Authen::verify will set the note "authen_error"
 	# if invalid authentication is found.  If this is done, it's a signal to
 	# us to yell at the user for doing that, since Authen isn't a content-
 	# generating module.
@@ -199,15 +180,14 @@ sub body {
 	$authen_error = Encode::decode("UTF-8",$authen_error);
 
 	if ($authen_error) {
-		print CGI::div({class=>"ResultsWithError", tabindex=>'0'},
-			CGI::p($authen_error)
-		);
+		print CGI::div({ class => 'alert alert-danger', tabindex => '0' }, $authen_error);
 	}
 
 	if ($externalAuth ) {
-		my $LMS = ($ce->{LMS_url}) ? CGI::a({href => $ce->{LMS_url}},$ce->{LMS_name}) : $ce->{LMS_name};
+		my $LMS = ($ce->{LMS_url}) ? CGI::a({ href => $ce->{LMS_url} },$ce->{LMS_name}) : $ce->{LMS_name};
 		if (!$authen_error || $r->authen() eq "WeBWorK::Authen::LTIBasic") {
-			print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). Please return to that system to access this course.', CGI::strong($course), $LMS));
+			print CGI::p($r->maketext('The course [_1] uses an external authentication system ([_2]). ' .
+					'Please return to that system to access this course.', CGI::strong($course), $LMS));
 		} else {
 			print CGI::p($r->maketext("_EXTERNAL_AUTH_MESSAGE", CGI::strong($course), $LMS));
 		}
@@ -216,62 +196,61 @@ sub body {
 		if ($ce -> {session_management_via} ne "session_cookie") {
 			print CGI::p($r->maketext("_LOGIN_MESSAGE", CGI::b($r->maketext("Remember Me"))));
 		}
-	
-		print CGI::start_form({-method=>"POST", -action=>$r->uri, -id=>"login_form"});
 
-	
+		print CGI::start_form({ method => "POST", action => $r->uri, id => "login_form" });
+
 		# preserve the form data posted to the requested URI
 		my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
-	
-		#FIXME:  This next line can be removed in time.  MEG 1/27/2005
-		# warn "Error in filtering fields : |", join("|",@fields_to_print),"|" if grep {m/user/} @fields_to_print;
-		# the above test was an attempt to discover why "user" was 
-		# being multiply defined.  We caught that error, but this 
-		# warning causes trouble with UserList.pm which now has 
-		# fields visible_users and prev_visible_users
-	
-	
-		# Important note. If hidden_fields is passed an empty array 
-		# it prints ALL parameters as hidden fields.  That is not 
-		# what we want in this case, so we don't print at all if 
+
+		# Important note. If hidden_fields is passed an empty array
+		# it prints ALL parameters as hidden fields.  That is not
+		# what we want in this case, so we don't print at all if
 		# @fields_to_print is empty.
 		print $self->hidden_fields(@fields_to_print) if @fields_to_print > 0;
-	
-	
-		# print CGI::table({class=>"FormLayout"}, 
-			# CGI::Tr([
-				# CGI::td([
-		  		# "Username:",
-		  		# CGI::input({-type=>"text", -name=>"user", -value=>"$user"}),
-				# ]),CGI::br(),
-				# CGI::td([
-		  		# "Password:",
-		  		# CGI::input({-type=>"password", -name=>"passwd", -value=>"$passwd"}),
-				# ]),CGI::br(),
-				# CGI::td([
-		  		# "",
-		  		# CGI::checkbox(
-				# -name=>"send_cookie",
-				# -label=>"Remember Me",
-		  		# ),
-				# ]),
-	  		# ])
-		# );
-		
-		print CGI::br(),CGI::br();
-		print WeBWorK::CGI_labeled_input(-type=>"text", -id=>"uname", -label_text=>$r->maketext("Username").": ", -input_attr=>{-name=>"user", -value=>"$user",'aria-required'=>'true'}, -label_attr=>{-id=>"uname_label"});
-		print CGI::br();
-		print WeBWorK::CGI_labeled_input(-type=>"password", -id=>"pswd", -label_text=>$r->maketext("Password").": ", -input_attr=>{-name=>"passwd", -value=>"$passwd",'aria-required'=>'true'}, -label_attr=>{-id=>"pswd_label"});
-		print CGI::br();
-		if ($ce -> {session_management_via} ne "session_cookie") {
-			print WeBWorK::CGI_labeled_input(-type=>"checkbox", -id=>"rememberme", -label_text=>$r->maketext("Remember Me"), -input_attr=>{-name=>"send_cookie", -value=>"on"});
+
+		print CGI::start_div({ class => 'col-xl-5 col-lg-6 col-md-7 col-sm-8 my-3' });
+		print CGI::div(
+			{ class => 'form-floating mb-2' },
+			CGI::textfield({
+				id            => 'uname',
+				name          => 'user',
+				value         => $user,
+				aria_required => 'true',
+				class         => 'form-control',
+				placeholder   => ''
+			}),
+			CGI::label({ for => 'uname' }, $r->maketext('Username'))
+		);
+		print CGI::div(
+			{ class => 'form-floating mb-2' },
+			CGI::password_field({
+				id            => 'pswd',
+				name          => 'passwd',
+				value         => $passwd,
+				aria_required => 'true',
+				class         => 'form-control',
+				placeholder   => ''
+			}),
+			CGI::label({ for => 'uname' }, $r->maketext('Password'))
+		);
+
+		if ($ce->{session_management_via} ne 'session_cookie') {
+			print CGI::start_div({ class => 'form-check form-control-lg mb-2' });
+			print CGI::checkbox({
+				id              => 'rememberme',
+				label           => $r->maketext('Remember Me'),
+				name            => 'send_cookie',
+				value           => 'on',
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			});
+			print CGI::end_div();
 		}
-		print CGI::br();
-		print WeBWorK::CGI_labeled_input(-type=>"submit", -input_attr=>{-value=>$r->maketext("Continue")});
-		print CGI::br();
-#		print CGI::end_form();
-	
-		# figure out if there are any valid practice users
+
+		print CGI::submit({ type => "submit", value => $r->maketext("Continue"), class => 'btn btn-primary' });
+		print CGI::end_div();
+
+		# Determine if there are valid practice users.
 		# DBFIXME do this with a WHERE clause
 		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
 		my @GuestUsers = $db->getUsers(@guestUserIDs);
@@ -280,23 +259,25 @@ sub body {
 			next unless defined $GuestUser->status;
 			next unless $GuestUser->status ne "";
 			push @allowedGuestUsers, $GuestUser
-				if $ce->status_abbrev_has_behavior($GuestUser->status, "allow_course_access");
+			if $ce->status_abbrev_has_behavior($GuestUser->status, "allow_course_access");
 		}
-	
-		# form for guest login (it cant' be two forms because of
-		#  duplicate ids
+
+		# Guest login
 		if (@allowedGuestUsers) {
-#			print CGI::start_form({-method=>"POST", -action=>$r->uri});
-		
 			# preserve the form data posted to the requested URI
 			my @fields_to_print = grep { not m/^(user|passwd|key|force_passwd_authen)$/ } $r->param;
-#			print $self->hidden_fields(@fields_to_print);
-			print CGI::br();
+			print CGI::start_div({ class => 'my-3' });
 			print CGI::p($r->maketext("_GUEST_LOGIN_MESSAGE", CGI::b($r->maketext("Guest Login"))));
-			print CGI::input({-type=>"submit", -name=>"login_practice_user", -value=>$r->maketext("Guest Login")});
-	    
-	    		print CGI::end_form();
+			print CGI::input({
+				type  => "submit",
+				name  => "login_practice_user",
+				value => $r->maketext("Guest Login"),
+				class => 'btn btn-primary'
+			});
+			print CGI::end_div();
 		}
+
+		print CGI::end_form();
 	}
 	return "";
 }

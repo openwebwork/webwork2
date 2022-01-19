@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Problem.pm,v 1.225 2010/05/28 21:29:48 gage Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -127,7 +126,7 @@ sub process_and_log_answer{
 		if (defined $pureProblem) {
 			# store answers in DB for sticky answers
 			my %answersToStore;
-			
+
 			# store last answer to database for use in "sticky" answers
 			$problem->last_answer($encoded_last_answer_string);
 			$pureProblem->last_answer($encoded_last_answer_string);
@@ -419,7 +418,12 @@ sub output_main_form{
 	my %will = %{ $self->{will} };
 
 	print "\n";
-	print CGI::start_form(-method=>"POST", -action=> $r->uri,-name=>"problemMainForm", onsubmit=>"submitAction()");
+	print CGI::start_form({
+		method  => "POST",
+		action  => $r->uri,
+		name    => "problemMainForm",
+		class   => 'problem-main-form'
+	});
 	print $self->hidden_authen_fields;
 	print CGI::hidden({-name=>'startTime', -value=>$startTime});
 	print CGI::end_form();
@@ -459,8 +463,8 @@ sub output_footer{
 			CGI::hidden(-name => 'problemID', -value=>$problem->problem_id), "\n",
 			CGI::hidden(-name => 'setID',  -value=>$problem->set_id), "\n",
 			CGI::hidden(-name => 'studentUser',    -value=>$problem->user_id), "\n",
-			CGI::p( {-align=>"left"},
-				CGI::submit(-name => 'action',  -value=>'Show Past Answers')
+			CGI::p({ -align=>"left" },
+				CGI::submit({ name => 'action',  value => 'Show Past Answers', class => 'btn btn-primary' })
 			), "\n",
 			CGI::end_form();
 	}
@@ -468,7 +472,7 @@ sub output_footer{
 
 	print $self->feedbackMacro(
 		module             => __PACKAGE__,
-		courseId           => $courseName,	
+		courseId           => $courseName,
 		set                => $self->{set}->set_id,
 		problem            => $problem->problem_id,
 		problemPath        => $problem->source_file,
@@ -500,19 +504,25 @@ sub check_invalid{
 	my $urlpath = $r->urlpath;
 	my $effectiveUser = $r->param('effectiveUser');
 
-	if ( $self->{invalidSet} ) {
-		return CGI::div({class=>"ResultsWithError"},
-				CGI::p("The selected problem set (" .
-				       $urlpath->arg("setID") . ") is not " .
-				       "a valid set for $effectiveUser:"),
-				CGI::p($self->{invalidSet}));
-	}
-
-	elsif ($self->{invalidProblem}) {
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected problem (" . $urlpath->arg("problemID") . ") is not a valid problem for set " . $self->{set}->set_id . "."));
-	}
-	else{
+	if ($self->{invalidSet}) {
+		return CGI::div(
+			{ class => 'alert alert-danger' },
+			CGI::p(
+				"The selected problem set (" . $urlpath->arg("setID") . ") is not " . "a valid set for $effectiveUser:"
+			),
+			CGI::p($self->{invalidSet})
+		);
+	} elsif ($self->{invalidProblem}) {
+		return CGI::div(
+			{ class => 'alert alert-danger' },
+			CGI::p(
+				"The selected problem ("
+					. $urlpath->arg("problemID")
+					. ") is not a valid problem for set "
+					. $self->{set}->set_id . "."
+			)
+		);
+	} else {
 		return "valid";
 	}
 

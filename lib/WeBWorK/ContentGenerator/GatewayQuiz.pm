@@ -1,7 +1,6 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/GatewayQuiz.pm,v 1.54 2008/07/01 13:12:56 glarose Exp $
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
@@ -1107,7 +1106,7 @@ sub pre_header_initialize {
 
 		# if we don't have to translate this problem, just store a placeholder in the array.
 		my $pg = 0;
-		# this is the actual translation of each problem.  errors are 
+		# this is the actual translation of each problem.  errors are
 		#    stored in @{$self->{errors}} in each case
 		if ((grep /^$pIndex$/, @probsToDisplay) || $submitAnswers) {
 			$pg = $self->getProblemHTML($self->{effectiveUser},
@@ -1212,21 +1211,27 @@ sub nav {
 
 		# Set up the student nav.
 		print join("",
-			CGI::start_div({ class => "row-fluid sticky-nav", role => "navigation", aria_label => "user navigation"}),
+			CGI::start_div({ class => "row sticky-nav", role => "navigation", aria_label => "user navigation"}),
 			CGI::start_div({ class => 'user-nav' }),
 			$prevTest
 			? CGI::a({
 					href => sprintf($self->systemLink($setPage, params => { effectiveUser => $prevTest->user_id,
 								currentPage => $self->{pageNumber},
 								showProblemGrader => $self->{will}{showProblemGrader} }), $prevTest->{setVersion}),
-					data_toggle => "tooltip", data_placement => "top",
+					data_bs_toggle => "tooltip",
+				   	data_bs_placement => "top",
 					title => "$prevTest->{displayName} (version $prevTest->{setVersion})",
-					class => "nav_button student-nav-button"
+					class => "btn btn-primary student-nav-button"
 				}, $r->maketext("Previous Test"))
-			: CGI::span({ class => "gray_button" }, $r->maketext("Previous Test")),
+			: CGI::span({ class => "btn btn-primary disabled" }, $r->maketext("Previous Test")),
 			" ",
 			CGI::start_span({ class => "btn-group student-nav-selector" }),
-			CGI::a({ class => "btn btn-primary dropdown-toggle", role => "button", data_toggle => "dropdown" },
+			CGI::a({
+				   	class => "btn btn-primary dropdown-toggle",
+				   	role => "button",
+				   	data_bs_toggle => "dropdown",
+					aria_expanded => "false"
+			   	},
 				$userRecords[$currentTestIndex]{displayName} .
 				" (version $userRecords[$currentTestIndex]{setVersion}) " .
 				CGI::span({ class => "caret" }, "")),
@@ -1234,10 +1239,14 @@ sub nav {
 			(
 				map {
 					CGI::li(
-					CGI::a({ tabindex => "-1", style => $_->{currentTest} ? "background-color: #8F8" : "",
+					CGI::a({
+					   	tabindex => "-1",
+					   	style => $_->{currentTest} ? "background-color: #8F8" : "",
+						class => 'dropdown-item',
 						href => sprintf($self->systemLink($setPage, params => { effectiveUser => $_->user_id,
 									currentPage => $self->{pageNumber},
-									showProblemGrader => $self->{will}{showProblemGrader} }), $_->{setVersion}) },
+									showProblemGrader => $self->{will}{showProblemGrader} }), $_->{setVersion})
+				   	},
 					"$_->{displayName} (version $_->{setVersion})" )
 					)
 				}
@@ -1251,11 +1260,12 @@ sub nav {
 					href => sprintf($self->systemLink($setPage, params => { effectiveUser => $nextTest->user_id,
 								currentPage => $self->{pageNumber},
 								showProblemGrader => $self->{will}{showProblemGrader} }), $nextTest->{setVersion}),
-					data_toggle => "tooltip", data_placement => "top",
+					data_bs_toggle => "tooltip",
+				   	data_bs_placement => "top",
 					title => "$nextTest->{displayName} (version $nextTest->{setVersion})",
-					class => "nav_button student-nav-button"
+					class => "btn btn-primary student-nav-button"
 				}, $r->maketext("Next Test"))
-			: CGI::span({ class => "gray_button" }, $r->maketext("Next Test")),
+			: CGI::span({ class => "btn btn-primary disabled" }, $r->maketext("Next Test")),
 			CGI::end_div(),
 			CGI::end_div()
 		);
@@ -1311,13 +1321,15 @@ sub body {
 			$usernote = " (acted as by $user)";
 		}
 
-		return CGI::div({class=>"ResultsWithError"},
-			CGI::p("The selected problem set (" .
-				$urlpath->arg("setID") . ") is not " .
-				"a valid set for $effectiveUser" .
-				"$usernote:"),
+		return CGI::div(
+			{ class => 'ResultsWithError mb-2' },
+			CGI::p($r->maketext(
+				"The selected problem set ([_1]) is not a valid set for [_2][_3]:",
+			   	$urlpath->arg("setID"), $effectiveUser, $usernote
+			)),
 			CGI::p($self->{invalidSet}),
-			$newlink);
+			$newlink
+		);
 	}
 
 	my $tmplSet = $self->{tmplSet};
@@ -1528,7 +1540,7 @@ sub body {
 				$LTIGradeResult = $grader->submit_set_grade($effectiveUser, $setName);
 			}
 		}
-		
+
 		# Finally, log student answers if we're submitting answers,
 		# provided that we can record answers.  Note that this will log an overtime submission
 		# (or any case where someone submits the test, or spoofs a request to submit a test).
@@ -1870,14 +1882,17 @@ sub body {
 			print CGI::hidden({-name=>"serverDueTime", -value=>$set->due_date()}), "\n";
 			print CGI::end_form();
 		}
-		if ($timeLeft < 1 && $timeLeft > 0 &&
-			!$authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
-			print CGI::span({-class=>"resultsWithError"},
-				CGI::b($r->maketext("You have less than 1 minute to complete this test.")."\n"));
-		} elsif ($timeLeft <= 0 &&
-			!$authz->hasPermissions($user, "record_answers_when_acting_as_student")) {
-			print CGI::span({-class=>"resultsWithError"},
-				CGI::b($r->maketext("You are out of time.  Press grade now!")."\n"));
+		if ($timeLeft < 1
+			&& $timeLeft > 0
+			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
+		{
+			print CGI::div({ class => 'ResultsWithError d-inline-block mb-2' },
+				CGI::b($r->maketext("You have less than 1 minute to complete this test.") . "\n"));
+		} elsif ($timeLeft <= 0
+			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
+		{
+			print CGI::div({ class => "ResultsWithError d-inline-block mb-2" },
+				CGI::b($r->maketext("You are out of time.  Press grade now!") . "\n"));
 		}
 		# if there are multiple attempts per version, indicate the
 		#    number remaining, and if we've submitted a multiple
@@ -1926,19 +1941,25 @@ sub body {
 			print CGI::end_div();
 		}
 
-		if ($canShowWork && $set->set_id ne "Undefined_Set") {
-			print $r->maketext("The test (which is version [_1]) may  no longer be submitted for a grade.",$versionNumber);
-			print " " . $r->maketext("You may still check your answers.") if $can{showScore};
-
-			# print a "printme" link if we're allowed to see our
-			#    work
-			my $link = $ce->{webworkURLs}->{root} . '/' .
-				$ce->{courseName} . '/hardcopy/' .
-				$set->set_id . ',v' . $set->version_id . '/?' .
-				$self->url_authen_args;
-			my $printmsg = CGI::div({-class=>'gwPrintMe'},
-				CGI::a({-href=>$link}, $r->maketext("Print Test")));
-			print $printmsg;
+		if ($canShowWork && $set->set_id ne 'Undefined_Set') {
+			print CGI::start_div({ class => 'row' });
+			print CGI::div(
+				{ class => 'col-md-10 mb-1' },
+				$r->maketext('The test (which is version [_1]) may  no longer be submitted for a grade.',
+					$versionNumber)
+					. ($can{showScore} ? (' ' . $r->maketext('You may still check your answers.')) : '')
+			);
+			# Display a "printme" link if we're allowed to see our work
+			my $link =
+				$ce->{webworkURLs}{root} . '/'
+				. $ce->{courseName}
+				. '/hardcopy/'
+				. $set->set_id . ',v'
+				. $set->version_id . '/?'
+				. $self->url_authen_args;
+			print CGI::div({ class => 'col-md-2 text-end mb-1' },
+				CGI::a({ href => $link, class => 'btn btn-info' }, $r->maketext('Print Test')));
+			print CGI::end_div();
 		}
 	}
 
@@ -1970,21 +1991,21 @@ sub body {
 	} else {
 		my $startTime = $r->param('startTime') || time();
 
-		print CGI::start_form({-name=>"gwquiz", -method=>"POST", -action=>$action}),
+		print CGI::start_form({ name => "gwquiz", method => "POST", action => $action, class => 'problem-main-form' }),
 			$self->hidden_authen_fields,
 			$self->hidden_proctor_authen_fields;
 
-		# hacks to use a javascript link to trigger previews and jump to 
+		# hacks to use a javascript link to trigger previews and jump to
 		# subsequent pages of a multipage test
 		print CGI::hidden({-name=>'pageChangeHack', -value=>''}),
 			CGI::br();
 		print CGI::hidden({-name=>'startTime', -value=>$startTime});
-		if ($numProbPerPage && $numPages > 1) { 
+		if ($numProbPerPage && $numPages > 1) {
 			print CGI::hidden({-name=>'newPage', -value=>''});
 			print CGI::hidden({-name=>'currentPage', -value=>$pageNumber});
 		}
 
-		# the link for a preview; for a multipage test, this also needs to 
+		# the link for a preview; for a multipage test, this also needs to
 		# keep track of what page we're on
 		my $jsprevlink = 'javascript:';
 		$jsprevlink .= "document.gwquiz.newPage.value=\"$pageNumber\";" if ($numProbPerPage && $numPages > 1);
@@ -2011,7 +2032,7 @@ sub body {
 			push (@cols, (CGI::colgroup({class => 'page'},CGI::col({class => 'problem'}) x $numProbPerPage) x $numPages));
 			my @pages;
 			for my $i (1 .. $numPages) {
-				my $pn = ($i == $pageNumber) ? $i : 
+				my $pn = ($i == $pageNumber) ? $i :
 					CGI::a({-href=>'javascript:document.gwquiz.pageChangeHack.value=1;' .
 							"document.gwquiz.newPage.value=\"$i\";" .
 							'document.gwquiz.previewAnswers.click();'}, $i);
@@ -2051,10 +2072,11 @@ sub body {
 				if ($pg->{flags}->{showPartialCorrectAnswers}>=0 && $submitAnswers) {
 					if ($scoreRecordedMessage[$probOrder[$i]] !~
 						$r->maketext("Your score on this problem was recorded.")) {
-						$recordMessage = CGI::span({class=>"resultsWithError"},
+						$recordMessage = CGI::div(
+							{ class => "ResultsWithError d-inline-block mb-2" },
 							$r->maketext("ANSWERS NOT RECORDED --"),
-							$scoreRecordedMessage[$probOrder[$i]]);
-
+							$scoreRecordedMessage[ $probOrder[$i] ]
+						);
 					}
 					$resultsTable =
 					$self->attemptResults($pg, 1, $will{showCorrectAnswers},
@@ -2062,16 +2084,18 @@ sub body {
 						$canShowProblemScores, 1);
 
 				} elsif ($will{checkAnswers} || $will{showProblemGrader}) {
-					$recordMessage = CGI::span({class=>"resultsWithError"},
+					$recordMessage = CGI::div(
+						{ class => "ResultsWithError d-inline-block mb-2" },
 						$r->maketext("ANSWERS ONLY CHECKED -- "),
-						$r->maketext("ANSWERS NOT RECORDED"));
+						$r->maketext("ANSWERS NOT RECORDED")
+					);
 
 					$resultsTable = $self->attemptResults($pg, 1, $will{showCorrectAnswers},
 						$pg->{flags}->{showPartialCorrectAnswers} && $canShowProblemScores,
 						$canShowProblemScores, 1);
 
 				} elsif ($previewAnswers) {
-					$recordMessage = CGI::span({class=>"resultsWithError"},
+					$recordMessage = CGI::div({ class => "ResultsWithError d-inline-block mb-2" },
 						$r->maketext("PREVIEW ONLY -- ANSWERS NOT RECORDED"));
 					$resultsTable = $self->attemptResults($pg, 1, 0, 0, 0, 1);
 				}
@@ -2108,9 +2132,11 @@ sub body {
 					print CGI::end_div();
 				}
 
-				print CGI::div({class=>"problem-content"}, $pg->{body_text}),
-					CGI::p($pg->{result}->{msg} ? CGI::b($r->maketext("Note")).': ' : "", CGI::i($pg->{result}->{msg}));
-				print CGI::p({class=>"gwPreview"}, CGI::a({-href=>"$jsprevlink"}, $r->maketext("preview answers")));
+				print CGI::div({ class => 'problem-content col-lg-10' }, $pg->{body_text});
+				print CGI::div({ class => 'mb-2' }, CGI::b($r->maketext("Note")) . ': ', CGI::i($pg->{result}{msg}))
+					if $pg->{result}{msg};
+				print CGI::div({ class => 'text-end mb-2' },
+					CGI::a({ href => $jsprevlink, class => 'btn btn-secondary' }, $r->maketext('preview answers')));
 
 				print $resultsTable if $resultsTable;
 
@@ -2154,37 +2180,67 @@ sub body {
 		print CGI::div($jumpLinks, "\n");
 		print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 
+		print CGI::start_div({ class => 'checkboxes-container col-12 my-2' });
 		if ($can{showCorrectAnswers}) {
-			print CGI::checkbox(
-				-name    => "showCorrectAnswers",
-				-checked => $want{showCorrectAnswers} || $want{showProblemGrader},
-				-label   => $r->maketext("Show correct answers"),
+			print CGI::div(
+				{ class => 'form-check' },
+				CGI::checkbox({
+					name            => "showCorrectAnswers",
+					checked         => $want{showCorrectAnswers} || $want{showProblemGrader},
+					label           => $r->maketext("Show correct answers"),
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				})
 			);
 		}
 		if ($can{showSolutions}) {
-			print CGI::checkbox(
-				-name    => "showSolutions",
-				-checked => $will{showSolutions} || $want{showProblemGrader},
-				-label   => $r->maketext("Show Solutions"),
+			print CGI::div(
+				{ class => 'form-check' },
+				CGI::checkbox({
+					name            => "showSolutions",
+					checked         => $will{showSolutions} || $want{showProblemGrader},
+					label           => $r->maketext("Show Solutions"),
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				})
 			);
 		}
 		if ($can{showProblemGrader}) {
-			print CGI::checkbox(
-				-name    => "showProblemGrader",
-				-checked => $want{showProblemGrader},
-				-label   => $r->maketext("Show problem graders"),
+			print CGI::div(
+				{ class => 'form-check' },
+				CGI::checkbox({
+					name            => "showProblemGrader",
+					checked         => $want{showProblemGrader},
+					label           => $r->maketext("Show problem graders"),
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				})
 			);
 		}
+		print CGI::end_div();
 
-		print CGI::p(
-			CGI::submit(-name => "previewAnswers", -label => $r->maketext("Preview Test")),
-			($can{recordAnswersNextTime}
-				? CGI::submit(-name=>"submitAnswers", -label=>$r->maketext("Grade Test")) : " "),
-			($can{checkAnswersNextTime} && !$can{recordAnswersNextTime}
-				? CGI::submit(-name=>"checkAnswers", -label=>$r->maketext("Check Test")) : " "),
-			($numProbPerPage && $numPages > 1 && $can{recordAnswersNextTime}
-				? CGI::br() . CGI::em($r->maketext("Note: grading the test grades all problems, not just those on this page."))
-				: " "));
+		print CGI::start_div({ class => 'submit-buttons-container col-12 mb-2' });
+		print CGI::submit({
+				name => "previewAnswers",
+			   	label => $r->maketext("Preview Test"),
+				class => 'btn btn-primary mb-1'
+			});
+		print CGI::submit({
+				name => "submitAnswers",
+			   	label => $r->maketext("Grade Test"),
+				class => 'btn btn-primary mb-1'
+			})
+			if $can{recordAnswersNextTime};
+		print CGI::submit({
+				name => "checkAnswers",
+			   	label => $r->maketext("Check Test"),
+				class => 'btn btn-primary mb-1'
+			})
+			if $can{checkAnswersNextTime} && !$can{recordAnswersNextTime};
+		print CGI::end_div();
+
+		print CGI::p(CGI::em($r->maketext("Note: grading the test grades all problems, not just those on this page.")))
+			if $numProbPerPage && $numPages > 1 && $can{recordAnswersNextTime};
 
 		print(CGI::hidden(
 				-name   => 'sourceFilePath',
@@ -2217,7 +2273,11 @@ sub body {
 			print CGI::hidden(-name => 'selected_problems', -value=>"$prob"), "\n";
 		}
 
-		print CGI::p(CGI::submit(-name => 'action',  -value=>$r->maketext('Show Past Answers'))), "\n";
+		print CGI::p(CGI::submit({
+					name => 'action',
+					value => $r->maketext('Show Past Answers'),
+					class => 'btn btn-primary'
+				})), "\n";
 
 		print CGI::end_form();
 	}
@@ -2391,16 +2451,15 @@ sub output_JS{
 
 	# This is for the problem grader
 	if ($self->{will}{showProblemGrader}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ProblemGrader/problemgrader.js"}),
-			CGI::end_script();
+		print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '')
 	}
 
 	#This is for page specfific js
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
 
 	# This is for the image dialog
-	print qq{<link href="$site_url/js/apps/ImageView/imageview.css" rel="stylesheet" />};
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/ImageView/imageview.js"}), CGI::end_script();
+	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
+	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
