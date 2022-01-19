@@ -11,7 +11,7 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" href="$themeDir/bootstrap.css"/>
 <link rel="stylesheet" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <link rel="stylesheet" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" href="/webwork2_files/css/knowlstyle.css"/>
+<link rel="stylesheet" href="/webwork2_files/js/apps/Knowls/knowl.css"/>
 <link rel="stylesheet" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
 <link rel="stylesheet" href="$themeDir/math4.css"/>
 <link rel="stylesheet" href="/webwork2_files/js/apps/Problem/problem.css"/>
@@ -28,7 +28,7 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <script src="/webwork2_files/js/apps/InputColor/color.js"></script>
 <script src="/webwork2_files/js/apps/Base64/Base64.js"></script>
 <script src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script src="/webwork2_files/js/legacy/vendor/knowl.js"></script>
+<script src="/webwork2_files/js/apps/Knowls/knowl.js"></script>
 <script src="/webwork2_files/js/vendor/jquery/modules/jquery.json.min.js"></script>
 <script src="/webwork2_files/js/vendor/jquery/modules/jstorage.js"></script>
 <script src="/webwork2_files/js/apps/LocalStorage/localstorage.js"></script>
