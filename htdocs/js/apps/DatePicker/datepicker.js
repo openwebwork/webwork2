@@ -34,12 +34,7 @@
 				clickOpens: false,
 				disableMobile: true,
 				wrap: true,
-				plugins: [
-					new confirmDatePlugin({
-						confirmText: rule.dataset.doneText ?? 'Done',
-						showAlways: true, theme: 'dark'
-					})
-				],
+				plugins: [ new confirmDatePlugin({ confirmText: rule.dataset.doneText ?? 'Done', showAlways: true }) ],
 				onChange() {
 					if (rule.value.toLowerCase() !== orig_value) rule.classList.add('changed');
 					else rule.classList.remove('changed');

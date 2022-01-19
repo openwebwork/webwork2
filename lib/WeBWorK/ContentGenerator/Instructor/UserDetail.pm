@@ -578,7 +578,6 @@ sub output_JS {
 	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/flatpickr.min.css" });
 	print CGI::Link(
 		{ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css" });
-	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/themes/dark.css" });
 	print CGI::script({ src => "$site_url/node_modules/flatpickr/dist/flatpickr.min.js", defer => undef }, '');
 	print CGI::script(
 		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');

@@ -52,11 +52,7 @@
 			clickOpens: false,
 			disableMobile: true,
 			wrap: true,
-			plugins: [
-				new confirmDatePlugin({
-					confirmText: importDateShift.dataset.doneText,
-					showAlways: true, theme: 'dark'
-				})
+			plugins: [ new confirmDatePlugin({ confirmText: importDateShift.dataset.doneText, showAlways: true })
 			],
 		});
 	}
