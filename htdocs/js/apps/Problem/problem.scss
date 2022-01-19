@@ -1,0 +1,248 @@
+/* WeBWorK Online Homework Delivery System
+ * Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of either: (a) the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any later
+ * version, or (b) the "Artistic License" which comes with this package.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
+ * Artistic License for more details.
+ */
+
+/* Styles used in pg problems and by the attempts table. */
+
+.problem-main-form {
+	margin: 0.5rem 0 0;
+}
+
+.problem-content {
+	min-height: 20px;
+	padding: 0.75rem;
+	margin-bottom: 1rem;
+	background-color: #f5f5f5;
+	border: 1px solid #e3e3e3;
+	border-radius: 4px;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+
+	p {
+		margin-top: 1rem;
+		margin-bottom: 1rem;
+	}
+
+	/* Problem elements */
+	label, input[type=text], select, textarea {
+		font-size: 16px;
+		font-weight: normal;
+		line-height: 18px;
+		width: auto;
+	}
+
+	select, textarea, input[type=text] {
+		display: inline-block;
+		padding: 4px 6px;
+		margin-bottom: 0;
+		color: #555;
+		vertical-align: middle;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+		background-color: white;
+	}
+
+	input[type=text] {
+		height: 30px;
+		font-size: 14px;
+		line-height: 20px;
+	}
+
+	select, input[type=text], input[type=radio] {
+		&.correct {
+			border-color: rgba(81, 153, 81, 0.8); /* green */
+			outline: 0;
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px 2px rgba(81, 153, 81, 0.6);
+			color: inherit;
+		}
+
+		&.incorrect {
+			border-color: rgba(191, 84, 84, 0.8); /* red */
+			outline: 0;
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px 2px rgba(191, 84, 84, 0.6);
+			color:inherit;
+		}
+	}
+
+	input[type=radio] {
+		margin-right: 0.25rem;
+	}
+
+	select {
+		cursor: pointer;
+
+		&[multiple], &[size] {
+			height: auto;
+		}
+	}
+
+	textarea {
+		max-width: 100%;
+	}
+
+	input[type=text], input[type=radio], textarea, select {
+		&:focus {
+			border-color: rgba(82, 168, 236, 0.8);
+			outline: 0;
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px 2px rgba(82, 168, 236, 0.6);
+		}
+	}
+
+	table {
+		thead, tbody, tfoot, tr, td, th {
+			border: revert;
+		}
+	}
+}
+
+/* Answer template */
+
+.attemptResultsHeader {
+	margin-bottom: 0.5rem;
+	padding: 0;
+	font-size: 1.4875rem;
+	font-weight: bold;
+	line-height: 1.2;
+}
+
+table.attemptResults {
+	border-style: outset;
+	border-width: 1px;
+	margin-bottom: 1em;
+	border-spacing: 1px;
+	width: 100%;
+	border: 1px solid #ddd;
+	border-collapse: separate;
+	border-radius: 4px;
+
+	thead:first-child tr:first-child > th:first-child,
+	tbody:first-child tr:first-child > td:first-child,
+	tbody:first-child tr:first-child > th:first-child {
+		border-top-left-radius: 4px;
+	}
+
+	thead:first-child tr:first-child > th:last-child,
+	tbody:first-child tr:first-child > td:last-child,
+	tbody:first-child tr:first-child > th:last-child {
+		border-top-right-radius: 4px;
+	}
+
+	thead:last-child tr:last-child > th:first-child,
+	tbody:last-child tr:last-child > td:first-child,
+	tbody:last-child tr:last-child > th:first-child,
+	tfoot:last-child tr:last-child > td:first-child,
+	tfoot:last-child tr:last-child > th:first-child {
+		border-bottom-left-radius: 4px;
+	}
+
+	thead:last-child tr:last-child > th:last-child,
+	tbody:last-child tr:last-child > td:last-child,
+	tbody:last-child tr:last-child > th:last-child,
+	tfoot:last-child tr:last-child > td:last-child,
+	tfoot:last-child tr:last-child > th:last-child {
+		border-bottom-right-radius: 4px;
+	}
+
+	td, th {
+		border-style: inset;
+		border-width: 1px;
+		text-align: center;
+		vertical-align: middle;
+		padding: 2px 5px;
+		color: inherit;
+		border-color: #ddd;
+		background-color: #ddd;
+	}
+
+	.ArrayLayout {
+		td {
+			border-style: none;
+			border-width: 0px;
+			padding: 0px;
+			background-color: transparent;
+		}
+	}
+
+	.popover {
+		max-width: 100%;
+	}
+
+	td {
+		&.FeedbackMessage {
+			background-color: #ede275; /* Harvest Gold */
+		}
+
+		&.ResultsWithoutError {
+			background-color: #8f8;
+		}
+
+		&.ResultsWithError {
+			background-color: #d69191; /* Light Red */
+			color: black;
+		}
+	}
+
+	span.answer-preview {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	a, a span {
+		color: #038;
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+div, label, span {
+	&.ResultsWithoutError {
+		color: #0f5132; /* Dark Green */
+		background-color: #8f8; /* Light Green */
+		padding: 0.25rem;
+		border: 1px solid transparent;
+		border-radius: 0.25rem;
+		box-shadow: 3px 3px 3px darkgray;
+	}
+
+	&.ResultsWithError {
+		color: #400; /* Dark Red */
+		background-color: #d69191; /* Light Red */
+		padding: 0.25rem;
+		border: 1px solid transparent;
+		border-radius: 0.25rem;
+		box-shadow: 3px 3px 3px darkgray;
+	}
+
+	&.ResultsAlert {
+		color: #0e038c; /* Dark Blue */
+		background-color: #fbd2b8; /* Light Orange */
+		padding: 0.25rem;
+		border: 1px solid transparent;
+		border-radius: 0.25rem;
+		box-shadow: 3px 3px 3px darkgray;
+	}
+}
+
+/* Comments */
+
+div.AuthorComment {
+	background-color: #00e0e0;
+	color: black;
+	padding: 0.25rem;
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
+}
