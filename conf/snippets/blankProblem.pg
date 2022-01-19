@@ -8,7 +8,7 @@ loadMacros("PG.pl",
            "PGauxiliaryFunctions.pl",
            "PGgraphmacros.pl",
           );
- 
+
 ## Do NOT show partial correct answers
 $showPartialCorrectAnswers = 0;
 TEXT(beginproblem());

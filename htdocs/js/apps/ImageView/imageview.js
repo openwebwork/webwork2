@@ -1,10 +1,11 @@
-"use strict";
+'use strict';
 
-(function() {
-	function imageViewDialog() {
-		var elt = $(this);
-		var img = this.cloneNode(true);
-		var imgType = img.tagName.toLowerCase();
+/* global bootstrap */
+
+(() => {
+	const imageViewDialog = function() {
+		const img = this.cloneNode(true);
+		const imgType = img.tagName.toLowerCase();
 		img.classList.remove('image-view-elt');
 		img.removeAttribute('tabindex');
 		img.removeAttribute('role');
@@ -12,78 +13,142 @@
 		img.removeAttribute('height');
 		img.removeAttribute('style');
 
-		var imgHtml = img.outerHTML;
+		let imgHtml = img.outerHTML;
 		if (imgType == 'svg') {
-			var ids = imgHtml.match(/\bid="[^"]*"/g);
+			const ids = imgHtml.match(/\bid="[^"]*"/g);
 			if (ids) {
 				// Sort the ids from longest to shortest.
-				ids.sort(function(a, b) { return b.length - a.length; });
-				ids.forEach(function(id) {
-					var idString = id.replace(/id="(.*)"/, "$1");
-					imgHtml = imgHtml.replaceAll(idString, "viewDialog" + idString);
+				ids.sort((a, b) => b.length - a.length);
+				ids.forEach((id) => {
+					const idString = id.replace(/id="(.*)"/, '$1');
+					imgHtml = imgHtml.replaceAll(idString, 'viewDialog' + idString);
 				});
 			}
 		}
 
-		var modal = $('<div class="modal image-view-dialog" tabindex="-1" data-keyboard="true" role="dialog" aria-label="image view dialog">' +
-			'<div class="modal-header">' +
-			'<button type="button" class="btn zoom-in" aria-label="zoom in">' +
-			'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-zoom-in" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/><path d="M10.344 11.742c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1 6.538 6.538 0 0 1-1.398 1.4z"/><path fill-rule="evenodd" d="M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0V7H3.5a.5.5 0 0 1 0-1H6V3.5a.5.5 0 0 1 .5-.5z"/></svg>' +
-			'</button>' +
-			'<button type="button" class="btn zoom-out" aria-label="zoom out">' +
-			'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-zoom-out" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/><path d="M10.344 11.742c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1 6.538 6.538 0 0 1-1.398 1.4z"/><path fill-rule="evenodd" d="M3 6.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/></svg>' +
-			'</button>' +
-			'<span class="drag-handle">&nbsp;</span>' +
-			'<button type="button" class="close" data-dismiss="modal" aria-label="close">' +
-			'<span aria-hidden="true">&times;</span>' +
-			'</button>' +
-			'</div>' +
-			'<div class="modal-body">' + imgHtml + '</div>' +
-			'</div>'
-		);
-		modal.css('margin', '0px');
+		const modal = document.createElement('div');
+		modal.classList.add('modal', 'image-view-dialog');
+		modal.ariaLabel = 'image view dialog';
+		modal.tabIndex = -1;
 
-		var body = modal.find('.modal-body');
-		var header = modal.find('.modal-header');
-		var dragHandle = header.find('.drag-handle');
-		var zoomIn = header.find('.zoom-in');
-		var zoomOut = header.find('.zoom-out');
+		const dialog = document.createElement('div');
+		dialog.classList.add('modal-dialog');
 
-		modal.on('shown', function () {
+		const content = document.createElement('div');
+		content.classList.add('modal-content');
+
+		const header = document.createElement('div');
+		header.classList.add('modal-header');
+
+		const zoomInButton = document.createElement('button');
+		zoomInButton.type = 'button';
+		zoomInButton.classList.add('btn', 'zoom-in');
+		zoomInButton.ariaLabel = 'zoom in';
+
+		const zoomInSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		zoomInSVG.classList.add('bi', 'bi-zoom-in');
+		zoomInSVG.setAttribute('width', 16);
+		zoomInSVG.setAttribute('height', 16);
+		zoomInSVG.setAttribute('fill', 'currentColor');
+		zoomInSVG.setAttribute('viewBox', '0 0 16 16');
+		zoomInSVG.setAttribute('aria-hidden', true);
+		const zoomInPath1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		zoomInPath1.setAttribute('fill-rule', 'evenodd');
+		zoomInPath1.setAttribute('d',
+			'M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z');
+		const zoomInPath2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		zoomInPath2.setAttribute('d',
+			'M10.344 11.742c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 ' +
+			'1.007 0 0 0-.115-.1 6.538 6.538 0 0 1-1.398 1.4z');
+		const zoomInPath3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		zoomInPath3.setAttribute('fill-rule', 'evenodd');
+		zoomInPath3.setAttribute('d',
+			'M6.5 3a.5.5 0 0 1 .5.5V6h2.5a.5.5 0 0 1 0 1H7v2.5a.5.5 0 0 1-1 0V7H3.5a.5.5 0 0 1 ' +
+			'0-1H6V3.5a.5.5 0 0 1 .5-.5z');
+		zoomInSVG.append(zoomInPath1, zoomInPath2, zoomInPath3);
+
+		const zoomOutButton = document.createElement('button');
+		zoomOutButton.type = 'button';
+		zoomOutButton.classList.add('btn', 'zoom-in');
+		zoomOutButton.ariaLabel = 'zoom in';
+
+		const zoomOutSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		zoomOutSVG.classList.add('bi', 'bi-zoom-out');
+		zoomOutSVG.setAttribute('width', 16);
+		zoomOutSVG.setAttribute('height', 16);
+		zoomOutSVG.setAttribute('fill', 'currentColor');
+		zoomOutSVG.setAttribute('viewBox', '0 0 16 16');
+		zoomOutSVG.setAttribute('aria-hidden', true);
+		const zoomOutPath1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		zoomOutPath1.setAttribute('fill-rule', 'evenodd');
+		zoomOutPath1.setAttribute('d',
+			'M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z');
+		const zoomOutPath2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		zoomOutPath2.setAttribute('d',
+			'M10.344 11.742c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 ' +
+			'0 0 0-.115-.1 6.538 6.538 0 0 1-1.398 1.4z');
+		const zoomOutPath3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+		zoomOutPath3.setAttribute('fill-rule', 'evenodd');
+		zoomOutPath3.setAttribute('d',
+			'M3 6.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z');
+		zoomOutSVG.append(zoomOutPath1, zoomOutPath2, zoomOutPath3);
+
+		const dragHandle = document.createElement('span');
+		dragHandle.classList.add('drag-handle');
+		dragHandle.textContent = '\u00A0';
+
+		const closeButton = document.createElement('button');
+		closeButton.type = 'button';
+		closeButton.classList.add('btn-close');
+		closeButton.dataset.bsDismiss = 'modal';
+		closeButton.ariaLabel = 'close';
+
+		const body = document.createElement('div');
+		body.classList.add('modal-body');
+		body.innerHTML = imgHtml;
+
+		zoomInButton.append(zoomInSVG);
+		zoomOutButton.append(zoomOutSVG);
+		header.append(zoomInButton, zoomOutButton, dragHandle, closeButton);
+		content.append(header, body);
+		dialog.append(content);
+		modal.append(dialog);
+
+		let onWinResize;
+
+		modal.addEventListener('shown.bs.modal', () => {
 			// Find the natural dimensions of the image.
-			var naturalWidth, naturalHeight;
+			let naturalWidth, naturalHeight;
 			if (imgType == 'img') {
-				naturalWidth = elt.prop('naturalWidth');
-				naturalHeight = elt.prop('naturalHeight');
+				naturalWidth = this.naturalWidth;
+				naturalHeight = this.naturalHeight;
 			} else if (imgType == 'svg') {
-				var svg = modal.find('.modal-body svg');
-				var viewBoxDims = svg.prop('viewBox').baseVal;
+				const svg = body.querySelector('svg');
+				const viewBoxDims = svg.viewBox.baseVal;
 				// This assumes the units of the view box dimensions are points.
 				naturalWidth = viewBoxDims.width * 4 / 3;
 				naturalHeight = viewBoxDims.height * 4 / 3;
 			}
 
-			var headerHeight = header.outerHeight();
+			const headerHeight = header.offsetHeight;
 
 			// Initial image maximum width and height
-			var maxWidth = window.innerWidth - 18;
-			var maxHeight = window.innerHeight - headerHeight - 18;
+			let maxWidth = window.innerWidth - 18;
+			let maxHeight = window.innerHeight - headerHeight - 18;
 
 			// Dialog maximum width and height
-			modal.css({
-				'max-width': maxWidth + 16,
-				'max-height': maxHeight + headerHeight + 16
-			});
+			dialog.style.maxWidth = (maxWidth + 18) + 'px';
+			dialog.style.maxHeight = (maxHeight + headerHeight + 18) + 'px';
 
-			// Initial image width and height.
-			var width = naturalWidth;
-			var height = naturalHeight;
+			// Initial image width and height
+			let width = naturalWidth;
+			let height = naturalHeight;
 
 			// Dialog position
-			var left;
-			var top;
+			let left;
+			let top;
 
-			function repositionModal(x, y) {
+			const repositionModal = (x, y) => {
 				if (x < 0 || width >= maxWidth) left = 0;
 				else if (x + width > maxWidth) left = maxWidth - width;
 				else left = x;
@@ -91,14 +156,15 @@
 				else if (y + height > maxHeight) top = maxHeight - height;
 				else top = y;
 
-				modal.css({ 'left': left + 'px', 'top': top + 'px' });
-			}
+				dialog.style.left = left + 'px';
+				dialog.style.top = top + 'px';
+			};
 
 			// Resize the modal.  Care is taken to maintain the aspect ratio.
-			function zoom(factor, initial) {
+			const zoom = (factor, initial) => {
 				// Save the current dimensions for repositioning later.
-				var initialWidth = width;
-				var initialHeight = height;
+				const initialWidth = width;
+				const initialHeight = height;
 
 				// Determine the width and height after applying the zoom factor.
 				if (factor * width > maxWidth || factor * height > maxHeight) {
@@ -121,8 +187,10 @@
 				}
 
 				// Resize the modal
-				body.css({ width: width + "px", height: height + "px" });
-				modal.css({ width: (width + 16) + "px", height: (height + headerHeight + 16) + "px" });
+				body.style.width = width + 'px';
+				body.style.height = height + 'px';
+				dialog.style.width = (width + 18) + 'px';
+				dialog.style.height = (height + headerHeight + 18) + 'px';
 
 				// Re-position the modal.
 				if (initial) {
@@ -132,42 +200,49 @@
 					repositionModal(left - (width - initialWidth) / 2, top - (height - initialHeight) / 2);
 				}
 
-				modal.focus();
+				dialog.focus();
 			};
 
 			// Make the dialog draggable
-			dragHandle.on('pointerdown', function(e) {
+			dragHandle.addEventListener('pointerdown', (e) => {
 				e.preventDefault();
 
 				// Save the position of the pointer event relative to the top left corner of the dialog.
-				var pointerPosX = e.originalEvent.offsetX + dragHandle[0].offsetLeft;
-				var pointerPosY = e.originalEvent.offsetY + dragHandle[0].offsetTop;
+				const pointerPosX = e.offsetX + dragHandle.offsetLeft;
+				const pointerPosY = e.offsetY + dragHandle.offsetTop;
 
-				dragHandle.on('pointermove.ImageViewDrag', function(e) {
+				const imageViewDrag = (e) => {
 					e.preventDefault();
-					repositionModal(e.originalEvent.clientX - pointerPosX, e.originalEvent.clientY - pointerPosY);
-				});
-				dragHandle[0].setPointerCapture(e.originalEvent.pointerId);
-			});
+					repositionModal(e.clientX - pointerPosX, e.clientY - pointerPosY);
+				};
 
-			dragHandle.on('lostpointercapture', function(e) {
-				e.preventDefault();
-				dragHandle.off('pointermove.ImageViewDrag');
+				dragHandle.addEventListener('pointermove', imageViewDrag);
+				dragHandle.setPointerCapture(e.pointerId);
+				dragHandle.addEventListener('lostpointercapture', (e) => {
+					e.preventDefault();
+					dragHandle.removeEventListener('pointermove', imageViewDrag);
+				}, { once: true });
+
 			});
 
 			// Set up the zoom in and zoom out click handlers.
-			zoomIn.click(function(e) { this.blur(); zoom(1.25); });
-			zoomOut.click(function(e) { this.blur(); zoom(0.8); });
+			zoomInButton.addEventListener('click', () => { zoomInButton.blur(); zoom(1.25); });
+			zoomOutButton.addEventListener('click', () => { zoomOutButton.blur(); zoom(0.8); });
 
-			$(window).on('resize.ImageView', function(e) {
+			onWinResize = () => {
 				maxWidth = window.innerWidth - 18;
 				maxHeight = window.innerHeight - headerHeight - 18;
-				modal.css({ 'max-width': maxWidth + 16, 'max-height': maxHeight + headerHeight + 16 });
+				dialog.style.maxWidth = (maxWidth + 18) + 'px';
+				dialog.style.maxHeight = (maxHeight + headerHeight + 18) + 'px';
+
+				// Update the dialog position and size
 				zoom(1);
-			});
+			};
+
+			window.addEventListener('resize', onWinResize);
 
 			// The + or = key zooms in and the - key zooms out.
-			modal.on('keydown', function(e) {
+			modal.addEventListener('keydown', (e) => {
 				if (e.key === '=' || e.key === '+') zoom(1.25);
 				if (e.key === '-') zoom(0.8);
 
@@ -177,58 +252,65 @@
 					height = naturalHeight;
 					zoom(1);
 				}
-            });
+			});
 
 			// The mouse wheel zooms in and out also.
-			modal.on('wheel', function(e) {
+			dialog.addEventListener('wheel', (e) => {
 				e.preventDefault();
-				if (e.originalEvent.deltaY < 0) zoom(1.25);
-				if (e.originalEvent.deltaY > 0) zoom(0.8);
+				if (e.deltaY < 0) zoom(1.25);
+				if (e.deltaY > 0) zoom(0.8);
 			});
 
 			// Perform the initial zoom
 			zoom(1, true);
 
-			// Make the backdrop a little lighter
-			$('.modal-backdrop').css('opacity', '0.2');
+			// Make the backdrop a little lighter and set the size
+			const backdrop = document.querySelector('.modal-backdrop');
+			backdrop.style.opacity = '0.2';
 		});
-		modal.on('hidden', function() {
+		modal.addEventListener('hidden.bs.modal', () => {
+			bsModal.dispose();
 			modal.remove();
-			$(window).off("resize.ImageView");
-			elt.focus();
-		})
-		modal.modal('show');
-	}
+			window.removeEventListener('resize', onWinResize);
+			this.focus();
+		});
+		const bsModal = new bootstrap.Modal(modal);
+		bsModal.show();
+	};
 
-	function keyHandler(e) {
+	const keyHandler = function(e) {
 		if (e.key === ' ' || e.key === 'Enter') {
 			e.preventDefault();
 			imageViewDialog.call(this);
 		}
-	}
+	};
 
-	$(function() {
-		// Set up images that are already in the page.
-		$('.image-view-elt').on('click.ImageView', imageViewDialog).on('keydown.ImageView', keyHandler);
+	// Set up images that are already in the page.
+	document.querySelectorAll('.image-view-elt').forEach((elt) => {
+		elt.addEventListener('click', imageViewDialog);
+		elt.addEventListener('keydown', keyHandler);
+	});
 
-		// Deal with images that are added to the page later.
-		var observer = new MutationObserver(function(mutationsList, observer) {
-			mutationsList.forEach(function(mutation) {
-				$(mutation.addedNodes).each(function() {
-					if (this.classList && this.classList.contains('image-view-elt')) {
-						$(this).off('click.ImageView').on('click.ImageView', imageViewDialog)
-							.off('keydown.ImageView').on('keydown.ImageView', keyHandler);
-					} else {
-						$(this).find('.image-view-elt')
-							.off('click.ImageView').on('click.ImageView', imageViewDialog)
-							.off('keydown.ImageView').on('keydown.ImageView', keyHandler);
-					}
-				});
+	const attachListeners = (node) => {
+		node.removeEventListener('click', imageViewDialog);
+		node.removeEventListener('keydown', keyHandler);
+		node.addEventListener('click', imageViewDialog);
+		node.addEventListener('keydown', keyHandler);
+	};
+
+	// Deal with images that are added to the page later.
+	const observer = new MutationObserver((mutationsList) => {
+		mutationsList.forEach((mutation) => {
+			mutation.addedNodes.forEach((node) => {
+				if (node instanceof Element) {
+					if (node.classList.contains('image-view-elt')) attachListeners(node);
+					else node.querySelectorAll('.image-view-elt').forEach(attachListeners);
+				}
 			});
 		});
-		observer.observe($('body')[0], { childList: true, subtree: true });
-
-		// Stop the mutation observer when the window is closed.
-		window.addEventListener('unload', function() { observer.disconnect(); });
 	});
+	observer.observe(document.body, { childList: true, subtree: true });
+
+	// Stop the mutation observer when the window is closed.
+	window.addEventListener('unload', () => observer.disconnect());
 })();

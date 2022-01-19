@@ -3,17 +3,17 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/bin/pg-append-textbook-tags,v 1.1 2007/10/17 16:56:16 sh002i Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
 # Artistic License for more details.
-# 
+#
 # Contributed by W.H. Freeman; Bedford, Freeman, and Worth Publishing Group.
 ################################################################################
 
@@ -24,12 +24,15 @@ use IO::File;
 use Data::Dumper;# $Data::Dumper::Indent = 0;
 use Getopt::Long;
 
+my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 use WeBWorK::NPL qw/read_tags format_tags/;
 
 sub main {
@@ -42,22 +45,22 @@ sub main {
 
 sub add_tags_to_file {
 	my ($new_tags, $file) = @_;
-	
+
 	my $pgfile = new IO::File($file, '+<encoding("UTF-8")') or do {
 		warn "Failed to open file $file for editing: $!\n";
 		warn "New tags will not be written to this file.\n";
 		return;
 	};
-	
+
 	my $old_tags = {};
 	read_tags($pgfile, $old_tags, 1); # 1==extra_editing_info
 	my $pos = $old_tags->{_pos};
 	my $rest = $old_tags->{_rest};
 	my $maxtextbook = $old_tags->{_maxtextbook};
 	print "pos=$pos maxtextbook=$maxtextbook\n";
-	
+
 	my @tagstrings = format_tags($new_tags, $maxtextbook+1);
-	
+
 	seek $pgfile, $pos, 0;
 	foreach my $string (@tagstrings) {
 		$string =~ s/^/## /gm;

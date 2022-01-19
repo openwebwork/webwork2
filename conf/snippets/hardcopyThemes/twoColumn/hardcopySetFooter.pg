@@ -1,6 +1,6 @@
-# 
+#
 # hardcopySetFooter.pg - generic hardcopy set footer file
-# 
+#
 
 DOCUMENT();
 loadMacros(
