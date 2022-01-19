@@ -2397,23 +2397,31 @@ sub output_JS{
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
 	# which can be set in course.conf (the value should be an anonomous array).
-	my %cssFiles;
+	my @cssFiles;
 	if (ref($ce->{pg}{specialPGEnvironmentVars}{extra_css_files}) eq "ARRAY") {
-		$cssFiles{$_} = 0 for @{$ce->{pg}{specialPGEnvironmentVars}{extra_css_files}};
+		push(@cssFiles, { file => $_, external => 0 }) for @{ $ce->{pg}{specialPGEnvironmentVars}{extra_css_files} };
 	}
-	for my $pg (@{$self->{ra_pg_results}}) {
+	for my $pg (@{ $self->{ra_pg_results} }) {
 		next unless ref($pg);
 		if (ref($pg->{flags}{extra_css_files}) eq "ARRAY") {
-			$cssFiles{$_->{file}} = $_->{external} for @{$pg->{flags}{extra_css_files}};
+			push @cssFiles, @{ $pg->{flags}{extra_css_files} };
 		}
 	}
-	for (keys(%cssFiles)) {
-		if ($cssFiles{$_}) {
-			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$_\" />\n";
-		} elsif (!$cssFiles{$_} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_") {
-			print "<link rel=\"stylesheet\" type=\"text/css\" href=\"${site_url}/$_\" />\n";
+	my %cssFilesAdded;    # Used to avoid duplicates
+	for (@cssFiles) {
+		next if $cssFilesAdded{ $_->{file} };
+		$cssFilesAdded{ $_->{file} } = 1;
+		if ($_->{external}) {
+			print CGI::Link({ rel => 'stylesheet', href => $_->{file} });
+		} elsif (
+			!$_->{external}
+			&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
+				|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
+			)
+		{
+			print CGI::Link({ rel => 'stylesheet', href => "$site_url/$_->{file}" });
 		} else {
-			print "<!-- $_ is not available in htdocs/ on this server -->\n";
+			print "<!-- $_->{file} is not available in htdocs/ on this server -->\n";
 		}
 	}
 
@@ -2447,7 +2455,7 @@ sub output_JS{
 	}
 
 	print CGI::start_script({type=>"text/javascript",
-			src=>"$site_url/js/vendor/other/knowl.js"}),CGI::end_script();
+			src=>"$site_url/js/apps/Knowls/knowl.js"}),CGI::end_script();
 
 	# This is for the problem grader
 	if ($self->{will}{showProblemGrader}) {
@@ -2463,17 +2471,22 @@ sub output_JS{
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
-	for my $pg (@{$self->{ra_pg_results}}) {
+	for my $pg (@{ $self->{ra_pg_results} }) {
 		next unless ref($pg);
 		if (ref($pg->{flags}{extra_js_files}) eq "ARRAY") {
-			for (@{$pg->{flags}{extra_js_files}}) {
-				next if $jsFiles{$_->{file}};
-				$jsFiles{$_->{file}} = 1;
+			for (@{ $pg->{flags}{extra_js_files} }) {
+				next if $jsFiles{ $_->{file} };
+				$jsFiles{ $_->{file} } = 1;
 
-				my %attributes = ref($_->{attributes}) eq "HASH" ? %{$_->{attributes}} : ();
+				my %attributes = ref($_->{attributes}) eq "HASH" ? %{ $_->{attributes} } : ();
 				if ($_->{external}) {
 					print CGI::script({ src => $_->{file}, %attributes }, "");
-				} elsif (!$_->{external} && -f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}") {
+				} elsif (
+					!$_->{external}
+					&& (-f "$WeBWorK::Constants::WEBWORK_DIRECTORY/htdocs/$_->{file}"
+						|| -f "$WeBWorK::Constants::PG_DIRECTORY/htdocs/$_->{file}")
+					)
+				{
 					print CGI::script({ src => "$site_url/$_->{file}", %attributes }, "");
 				} else {
 					print "<!-- $_ is not available in htdocs/ on this server -->\n";

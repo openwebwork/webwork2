@@ -26,7 +26,7 @@ use strict;
 use warnings;
 
 $WeBWorK::Constants::WEBWORK_DIRECTORY = $ENV{WEBWORK_ROOT} unless defined($WeBWorK::Constants::WEBWORK_DIRECTORY);
-
+$WeBWorK::Constants::PG_DIRECTORY = $ENV{PG_ROOT} unless defined($WeBWorK::Constants::PG_DIRECTORY);
 
 ################################################################################
 # WeBWorK::Debug
@@ -97,7 +97,7 @@ $WeBWorK::PG::ImageGenerator::DvipngArgs = "-bgTransparent -D120 -q -depth";
 
 # If true, don't delete temporary files
 #
-$WeBWorK::PG::ImageGenerator::PreserveTempFiles = 0; 
+$WeBWorK::PG::ImageGenerator::PreserveTempFiles = 0;
 # TeX to prepend to equations to be processed.
 #
 $WeBWorK::PG::ImageGenerator::TexPreamble = <<'EOF';
