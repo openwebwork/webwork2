@@ -33,8 +33,6 @@ math4-overrides.js
 htdocs/themes/*/images/*
 htdocs/themes/*/*.css
 htdocs/themes/*/*.css.map
-htdocs/js/apps/Problem/problem.css
-htdocs/js/apps/Problem/problem.css.map
 htdocs/package-lock.json
 DATA/*
 *.swp
