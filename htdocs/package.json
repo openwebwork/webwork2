@@ -3,9 +3,9 @@
     "description": "Third party javascript for WeBWorK",
     "license": "GPL-2.0+",
     "scripts": {
-        "generate-css": "sass --style compressed --no-source-map themes js/apps",
+        "generate-css": "sass --style compressed --no-source-map themes",
         "css-prefix": "npx postcss themes/*/bootstrap.css --use autoprefixer --replace --no-map",
-        "sass-watch": "sass --watch themes js/apps",
+        "sass-watch": "sass --watch themes",
         "prepare": "npm run generate-css && npm run css-prefix"
     },
     "repository": {

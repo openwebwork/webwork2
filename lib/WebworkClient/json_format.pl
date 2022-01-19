@@ -24,7 +24,7 @@ $json_output->{head_part100_AVI} = [
 	'$themeDir/bootstrap.css',
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css",
 	"/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-	"/webwork2_files/css/knowlstyle.css",
+	"/webwork2_files/js/apps/Knowls/knowl.css",
 	"/webwork2_files/js/apps/ImageView/imageview.css",
 	'$themeDir/math4.css',
 	"/webwork2_files/js/apps/Problem/problem.css",
@@ -39,7 +39,7 @@ $json_output->{head_part200_AVI} = [
 	"/webwork2_files/js/apps/InputColor/color.js",
 	"/webwork2_files/js/apps/Base64/Base64.js",
 	"/webwork2_files/js/vendor/underscore/underscore.js",
-	"/webwork2_files/js/legacy/vendor/knowl.js",
+	"/webwork2_files/js/apps/Knowls/knowl.js",
 	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
 ];
 
