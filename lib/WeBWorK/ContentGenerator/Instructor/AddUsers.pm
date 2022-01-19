@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/ContentGenerator/Instructor/AddUsers.pm,v 1.24 2007/08/13 22:59:55 sh002i Exp $
-# 
+# Copyright &copy; 2000-2021 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -21,38 +20,36 @@ use base qw(WeBWorK::ContentGenerator::Instructor);
 
 WeBWorK::ContentGenerator::Instructor::AddUsers - Menu interface for adding users
 
-
 =cut
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
 use WeBWorK::CGI;
 use WeBWorK::Utils qw/cryptPassword trim_spaces/;
 
 sub initialize {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
-	my $authz = $r->authz;
-	
+	my $r      = $self->r;
+	my $db     = $r->db;
+	my $ce     = $r->ce;
+	my $authz  = $r->authz;
+
 	my $user = $r->param('user');
-	
+
 	# Check permissions
 	return unless ($authz->hasPermissions($user, "access_instructor_tools"));
 	return unless ($authz->hasPermissions($user, "modify_student_data"));
-	
+
 	if (defined($r->param('addStudents'))) {
 		my @userIDs;
-		my $numberOfStudents    = $r->param('number_of_students');
+		my $numberOfStudents = $r->param('number_of_students');
 		warn "Internal error -- the number of students to be added has not been included" unless defined $numberOfStudents;
-		foreach my $i (1..$numberOfStudents) {
-		    my $new_user_id  = trim_spaces($r->param("new_user_id_$i"));
-		    my $new_password = cryptPassword($r->param("student_id_$i"));
-		    next unless defined($new_user_id) and $new_user_id;
+		foreach my $i (1 .. $numberOfStudents) {
+			my $new_user_id  = trim_spaces($r->param("new_user_id_$i"));
+			my $new_password = cryptPassword($r->param("student_id_$i"));
+			next unless defined($new_user_id) and $new_user_id;
 			push @userIDs, $new_user_id;
-		    
+
 			my $newUser            = $db->newUser;
 			my $newPermissionLevel = $db->newPermissionLevel;
 			my $newPassword        = $db->newPassword;
@@ -108,101 +105,155 @@ sub body {
 	my $ce     = $r->ce;
 	my $db     = $r->db;
 	my $authz  = $r->authz;
-	
-	my $courseName = $r->urlpath->arg("courseID");
+
+	my $courseName  = $r->urlpath->arg("courseID");
 	my $authen_args = $self->url_authen_args();
-	my $user = $r->param('user');
-	
+	my $user        = $r->param('user');
+
 	# Check permissions
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to access the Instructor tools.")
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to access the Instructor tools.")
 		unless $authz->hasPermissions($user, "access_instructor_tools");
-	
-	return CGI::div({class=>"ResultsWithError"}, "You are not authorized to modify student data.")
+
+	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, "You are not authorized to modify student data.")
 		unless $authz->hasPermissions($user, "modify_student_data");
 
-	
-	return join("", 
-	
+	return join(
+		"",
+
 		CGI::hr(),
+		CGI::p(defined($self->{studentEntryReport}) ? $self->{studentEntryReport} : ''),
 		CGI::p(
-			defined($self->{studentEntryReport})
-				? $self->{studentEntryReport}
-				: ''
+			$r->maketext(
+				"Enter information below for students you wish to add. Each student's password will initially be set to their student ID."
+			)
 		),
-		CGI::p($r->maketext("Enter information below for students you wish to add. Each student's password will initially be set to their student ID.")),
 		$self->addStudentForm,
 	);
 }
 
 sub addStudentForm {
-	my $self                  = shift;
-	my $r                     = $self->r;
-	my $db                    = $r->db;
-	my $ce                    = $r->ce;
-	my $numberOfStudents      = $r->param("number_of_students") || 5;
-	
+	my $self             = shift;
+	my $r                = $self->r;
+	my $db               = $r->db;
+	my $ce               = $r->ce;
+	my $numberOfStudents = $r->param("number_of_students") || 5;
 
-	
 	# Add a student form
-	
+
 	my @entryLines = ();
-	foreach my $i (1..$numberOfStudents) {
-		push( @entryLines, 		
-			CGI::Tr({},
-				CGI::td({},
-					[ CGI::input({type=>'text', class=>"last-name-input", name=>"last_name_$i"}),
-					  CGI::input({type=>'text', class=>"first-name-input", name=>"first_name_$i"}),
-					  CGI::input({type=>'text', class=>"student-id-input", name=>"student_id_$i",size=>"16",'aria-required'=>'true'}),
-					  CGI::input({type=>'text', class=>"user-id-input", name=>"new_user_id_$i",size=>"10",'aria-required'=>'true'}),
-					  CGI::input({type=>'text', class=>"email-input", name=>"email_address_$i"}),
-					  CGI::input({type=>'text', class=>"section-input", name=>"section_$i",size=>"10"}),
-					  CGI::input({type=>'text', class=>"recitation-input", name=>"recitation_$i",size=>"10"}),
-					  CGI::input({type=>'text', class=>"comment-input", name=>"comment_$i"}),
-					]
-				)
-			),"\n",
+	foreach my $i (1 .. $numberOfStudents) {
+		push(
+			@entryLines,
+			CGI::Tr(CGI::td([
+				CGI::input({
+					type  => 'text',
+					class => "last-name-input",
+					name  => "last_name_$i",
+					size  => '10',
+					class => 'form-control form-control-sm w-auto'
+				}),
+				CGI::input({
+					type  => 'text',
+					class => "first-name-input",
+					name  => "first_name_$i",
+					size  => '10',
+					class => 'form-control form-control-sm w-auto'
+				}),
+				CGI::input({
+					type          => 'text',
+					class         => "student-id-input",
+					name          => "student_id_$i",
+					size          => "16",
+					class         => 'form-control form-control-sm w-auto'
+				}),
+				CGI::input({
+					type          => 'text',
+					class         => "user-id-input",
+					name          => "new_user_id_$i",
+					size          => "10",
+					aria_required => 'true',
+					class         => 'form-control form-control-sm w-auto',
+				}),
+				CGI::input({
+					type  => 'text',
+					class => "email-input",
+					name  => "email_address_$i",
+					class => 'form-control form-control-sm w-auto'
+				}),
+				CGI::input({
+					type  => 'text',
+					class => "section-input",
+					name  => "section_$i",
+					size  => "4",
+					class => 'form-control form-control-sm w-auto'
+				}),
+				CGI::input({
+					type  => 'text',
+					class => "recitation-input",
+					name  => "recitation_$i",
+					size  => "4",
+					class => 'form-control form-control-sm w-auto'
+				}),
+				CGI::input({
+					type  => 'text',
+					class => "comment-input",
+					name  => "comment_$i",
+					class => 'form-control form-control-sm w-auto'
+				}),
+			]))
 		);
 	}
 
-	return join("",		
-		CGI::start_form({method=>"post", action=>$r->uri(),name=>"add_users"}),
-		$self->hidden_authen_fields(),"\n",
-		CGI::submit(-name=>"Create", -value=>$r->maketext("Create")),"&nbsp;&nbsp;","\n",
-		CGI::input({type=>'text', name=>'number_of_students', value=>$numberOfStudents,size => 3}), " ".$r->maketext("entry rows."),"\n",
-		CGI::end_form(),"\n",
-		CGI::hr(),
-		
-		CGI::start_form({method=>"post", action=>$r->uri(), name =>"new-users-form", id=>"new-users-form"}),
+	return join(
+		"",
+		CGI::start_form({ method => "post", action => $r->uri(), name => "add_users" }),
 		$self->hidden_authen_fields(),
-		CGI::input({type=>'hidden', name => "number_of_students", value => $numberOfStudents}),
-		CGI::start_table({border=>'1', cellpadding=>'2'}),
-		CGI::Tr({},
-			CGI::th({},
-				[$r->maketext('Last Name'), $r->maketext('First Name'), $r->maketext('Student ID').CGI::span({class=>"required-field"},'*'), $r->maketext('Login Name').CGI::span({class=>"required-field"},'*'), $r->maketext('Email Address'), $r->maketext('Section'),$r->maketext('Recitation'), $r->maketext('Comment')]
-			)
+		CGI::div(
+			{ class => 'input-group d-inline-flex w-auto' },
+			CGI::submit({ name => "Create", value => $r->maketext("Create"), class => 'btn btn-primary' }),
+			CGI::textfield({
+				name  => 'number_of_students',
+				value => $numberOfStudents,
+				size  => 3,
+				class => 'form-control'
+			}),
+			CGI::span({ class => 'input-group-text' }, $r->maketext("entry rows.")),
 		),
-		@entryLines,
-		CGI::end_table(),    
-		
+		CGI::end_form(),
+		CGI::hr(),
 
-		
+		CGI::start_form({ method => "post", action => $r->uri(), name => "new-users-form", id => "new-users-form" }),
+		$self->hidden_authen_fields(),
+		CGI::input({ type => 'hidden', name => "number_of_students", value => $numberOfStudents }),
+		CGI::start_table({ class => 'table table-sm table-bordered' }),
+		CGI::Tr(CGI::th([
+			$r->maketext('Last Name'),
+			$r->maketext('First Name'),
+			$r->maketext('Student ID'),
+			$r->maketext('Login Name') . CGI::span({ class => "required-field" }, '*'),
+			$r->maketext('Email Address'),
+			$r->maketext('Section'),
+			$r->maketext('Recitation'),
+			$r->maketext('Comment')
+		])),
+		@entryLines,
+		CGI::end_table(),
+
 		CGI::p($r->maketext("Select sets below to assign them to the newly-created users.")),
-		CGI::scrolling_list(
-			-name     => "assignSets",
-			-values   => [ $db->listGlobalSets ],
-			-size     => 10,
-			-multiple => "1",
-		),
+		CGI::scrolling_list({
+			name     => "assignSets",
+			values   => [ $db->listGlobalSets ],
+			size     => 10,
+			multiple => "1",
+			class    => 'form-select w-auto mb-2'
+		}),
 		CGI::p(
-			CGI::submit({name=>"addStudents", value=>$r->maketext("Add Students")}),
+			CGI::submit({ name => "addStudents", value => $r->maketext("Add Students"), class => 'btn btn-primary' }),
 		),
-		CGI::end_form(),		
+		CGI::end_form(),
 
 	);
 }
-
-
-
 
 1;
 

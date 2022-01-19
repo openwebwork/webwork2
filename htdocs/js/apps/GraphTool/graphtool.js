@@ -1,17 +1,14 @@
-"use strict"
+/* global JXG, bootstrap, $ */
 
-// Polyfill for IE11.
-if (!Object.values) Object.values = function(o) {
-	return Object.keys(o).map(function(i) { return o[i]; });
-};
+'use strict';
 
 function graphTool(containerId, options) {
 	// Do nothing if the graph has already been created.
-	if (document.getElementById(containerId + "_graph")) return;
+	if (document.getElementById(containerId + '_graph')) return;
 
-	var graphContainer = $('#' + containerId);
-	if (graphContainer.css('width') == '0px') {
-		setTimeout(function() { graphTool(containerId, options); }, 100);
+	var graphContainer = document.getElementById(containerId);
+	if (getComputedStyle(graphContainer).width == '0px') {
+		setTimeout(function () { graphTool(containerId, options); }, 100);
 		return;
 	}
 
@@ -21,34 +18,34 @@ function graphTool(containerId, options) {
 
 	// dark blue
 	// > 13:1 with white
-	gt.curveColor = '#0000a6'
+	gt.curveColor = '#0000a6';
 
 	// blue
 	// > 9:1 with white
-	gt.focusCurveColor = '#0000f5'
+	gt.focusCurveColor = '#0000f5';
 
 	// fillColor must use 6-digit hex
 	// medium purple
 	// 3:1 with white
 	// 4.5:1 with #0000a6
 	// > 3:1 with #0000f5
-	gt.fillColor  = '#a384e5'
+	gt.fillColor  = '#a384e5';
 
 	// strict contrast ratios are less important for these colors
-	gt.pointColor = 'orange'
-	gt.pointHighlightColor = 'yellow'
-	gt.underConstructionColor = 'orange'
+	gt.pointColor = 'orange';
+	gt.pointHighlightColor = 'yellow';
+	gt.underConstructionColor = 'orange';
 
 	gt.snapSizeX = options.snapSizeX ? options.snapSizeX : 1;
 	gt.snapSizeY = options.snapSizeY ? options.snapSizeY : 1;
 	gt.isStatic = 'isStatic' in options ? options.isStatic : false;
 	var availableTools = options.availableTools ? options.availableTools : [
-		"LineTool",
-		"CircleTool",
-		"VerticalParabolaTool",
-		"HorizontalParabolaTool",
-		"FillTool",
-		"SolidDashTool"
+		'LineTool',
+		'CircleTool',
+		'VerticalParabolaTool',
+		'HorizontalParabolaTool',
+		'FillTool',
+		'SolidDashTool'
 	];
 
 	// These are the icons used for the fill tool and fill graph object.
@@ -84,11 +81,11 @@ function graphTool(containerId, options) {
 		grid: { gridX: gt.snapSizeX, gridY: gt.snapSizeY },
 	};
 
-	// Merge options that are set by the problem.
-	if ('JSXGraphOptions' in options) $.extend(true, cfgOptions, cfgOptions, options.JSXGraphOptions);
+	// Merge options that are set by the problem.  Note that this is the last usage of jQuery in this file.
+	if ('JSXGraphOptions' in options) $.extend(true, cfgOptions, options.JSXGraphOptions);
 
 	function setupBoard() {
-		gt.board = JXG.JSXGraph.initBoard(containerId + "_graph", cfgOptions);
+		gt.board = JXG.JSXGraph.initBoard(containerId + '_graph', cfgOptions);
 		gt.board.suspendUpdate();
 
 		// Move the axes defining points to the end so that the arrows go to the board edges.
@@ -114,12 +111,14 @@ function graphTool(containerId, options) {
 			anchorX: 'left', anchorY: 'top', highlight: false,
 			color: 'black', fixed: true, useMathJax: true
 		});
-		gt.current_pos_text = gt.board.create('text', [
-			function() { return gt.board.getBoundingBox()[2] - 5 / gt.board.unitX; },
-			function() { return gt.board.getBoundingBox()[3] + 5 / gt.board.unitY; }, ""],
+		gt.current_pos_text = gt.board.create('text',
+			[
+				function() { return gt.board.getBoundingBox()[2] - 5 / gt.board.unitX; },
+				function() { return gt.board.getBoundingBox()[3] + 5 / gt.board.unitY; }, ''
+			],
 			{ anchorX: 'right', anchorY: 'bottom', fixed: true });
 		// Overwrite the popup infobox for points.
-		gt.board.highlightInfobox = function (x, y, el) { return gt.board.highlightCustomInfobox('', el); }
+		gt.board.highlightInfobox = function (x, y, el) { return gt.board.highlightCustomInfobox('', el); };
 
 		if (!gt.isStatic) {
 			gt.board.on('move', function(e) {
@@ -129,15 +128,15 @@ function graphTool(containerId, options) {
 					gt.setTextCoords(coords.usrCoords[1], coords.usrCoords[2]);
 			});
 
-			$(document).on('keydown.ToolDeactivate', function(e) {
+			document.addEventListener('keydown', function(e) {
 				if (e.key === 'Escape') gt.selectTool.activate();
 			});
 		}
 
-		$(window).resize(function(e) {
-			if (gt.board.canvasWidth != graphDiv.width() || gt.board.canvasHeight != graphDiv.height())
+		window.addEventListener('resize', function() {
+			if (gt.board.canvasWidth != graphDiv.offsetWidth - 2 || gt.board.canvasHeight != graphDiv.offsetHeight - 2)
 			{
-				gt.board.resizeContainer(graphDiv.width(), graphDiv.height(), true);
+				gt.board.resizeContainer(graphDiv.offsetWidth - 2, graphDiv.offsetHeight - 2, true);
 				gt.graphedObjs.forEach(function(object) { object.onResize(); });
 				gt.staticObjs.forEach(function(object) { object.onResize(); });
 			}
@@ -158,15 +157,15 @@ function graphTool(containerId, options) {
 
 	gt.setTextCoords = function(x, y) {
 		gt.current_pos_text.setText(
-			"(" + gt.snapRound(x, gt.snapSizeX) + ", " + gt.snapRound(y, gt.snapSizeY) + ")"
+			'(' + gt.snapRound(x, gt.snapSizeX) + ', ' + gt.snapRound(y, gt.snapSizeY) + ')'
 		);
 	};
 
 	gt.updateText = function() {
 		gt.html_input.value = gt.graphedObjs.reduce(
 			function(val, obj) {
-				return val + (val.length ? "," : "") + "{" + obj.stringify() + "}";
-			}, "");
+				return val + (val.length ? ',' : '') + '{' + obj.stringify() + '}';
+			}, '');
 	};
 
 	gt.getMouseCoords = function(e) {
@@ -272,11 +271,11 @@ function graphTool(containerId, options) {
 		});
 		this.baseObj.setAttribute({ strokeColor: gt.focusCurveColor, strokeWidth: 3 });
 		gt.drawSolid = this.baseObj.getAttribute('dash') == 0;
-		if ('solidButton' in gt) gt.solidButton.prop('disabled', gt.drawSolid);
-		if ('dashedButton' in gt) gt.dashedButton.prop('disabled', !gt.drawSolid);
+		if ('solidButton' in gt) gt.solidButton.disabled = gt.drawSolid;
+		if ('dashedButton' in gt) gt.dashedButton.disabled = !gt.drawSolid;
 	};
 	GraphObject.prototype.update = function() { };
-	GraphObject.prototype.fillCmp = function(point) { return 1; };
+	GraphObject.prototype.fillCmp = function(/* point */) { return 1; };
 	GraphObject.prototype.remove = function() {
 		Object.values(this.definingPts).forEach(function(obj) {
 			gt.board.removeObject(obj);
@@ -286,7 +285,7 @@ function graphTool(containerId, options) {
 	GraphObject.prototype.setSolid = function(solid) {
 		this.baseObj.setAttribute({ dash: solid ? 0 : 2 });
 	};
-	GraphObject.prototype.stringify = function() { return ""; };
+	GraphObject.prototype.stringify = function() { return ''; };
 	GraphObject.prototype.id = function() { return this.baseObj.id; };
 	GraphObject.prototype.on = function(e, handler, context) { this.baseObj.on(e, handler, context); };
 	GraphObject.prototype.off = function(e, handler) { this.baseObj.off(e, handler); };
@@ -330,21 +329,23 @@ function graphTool(containerId, options) {
 	Line.prototype.stringify = function() {
 		return [
 			Line.strId, this.baseObj.getAttribute('dash') == 0 ? 'solid' : 'dashed',
-			"(" + gt.snapRound(this.definingPts.point1.X(), gt.snapSizeX) + "," +
-			gt.snapRound(this.definingPts.point1.Y(), gt.snapSizeY) + ")",
-			"(" + gt.snapRound(this.definingPts.point2.X(), gt.snapSizeX) + "," +
-			gt.snapRound(this.definingPts.point2.Y(), gt.snapSizeY) + ")"
-		].join(",");
+			'(' + gt.snapRound(this.definingPts.point1.X(), gt.snapSizeX) + ',' +
+			gt.snapRound(this.definingPts.point1.Y(), gt.snapSizeY) + ')',
+			'(' + gt.snapRound(this.definingPts.point2.X(), gt.snapSizeX) + ',' +
+			gt.snapRound(this.definingPts.point2.Y(), gt.snapSizeY) + ')'
+		].join(',');
 	};
 	Line.prototype.fillCmp = function(point) {
 		return gt.sign(JXG.Math.innerProduct(point, this.baseObj.stdform));
 	};
-	Line.strId = "line";
+	Line.strId = 'line';
 	Line.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (points.length < 2) return false;
 		var point1 = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
 		var point2 = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), point1);
@@ -366,23 +367,25 @@ function graphTool(containerId, options) {
 	Circle.prototype.stringify = function() {
 		return [
 			Circle.strId, (this.baseObj.getAttribute('dash') == 0 ? 'solid' : 'dashed'),
-			"(" + gt.snapRound(this.definingPts.center.X(), gt.snapSizeX) + "," +
-			gt.snapRound(this.definingPts.center.Y(), gt.snapSizeY) + ")",
-			"(" + gt.snapRound(this.definingPts.point.X(), gt.snapSizeX) + "," +
-			gt.snapRound(this.definingPts.point.Y(), gt.snapSizeY) + ")"
-		].join(",");
+			'(' + gt.snapRound(this.definingPts.center.X(), gt.snapSizeX) + ',' +
+			gt.snapRound(this.definingPts.center.Y(), gt.snapSizeY) + ')',
+			'(' + gt.snapRound(this.definingPts.point.X(), gt.snapSizeX) + ',' +
+			gt.snapRound(this.definingPts.point.Y(), gt.snapSizeY) + ')'
+		].join(',');
 	};
 	Circle.prototype.fillCmp = function(point) {
 		return gt.sign(this.baseObj.stdform[3] *
 			(point[1] * point[1] + point[2] * point[2])
 			+ JXG.Math.innerProduct(point, this.baseObj.stdform));
 	};
-	Circle.strId = "circle";
+	Circle.strId = 'circle';
 	Circle.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (points.length < 2) return false;
 		var center = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
 		var point = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), center);
@@ -447,11 +450,11 @@ function graphTool(containerId, options) {
 		return [
 			Parabola.strId, this.baseObj.getAttribute('dash') == 0 ? 'solid' : 'dashed',
 			this.vertical ? 'vertical' : 'horizontal',
-			"(" + gt.snapRound(this.definingPts.vertex.X(), gt.snapSizeX) + "," +
-			gt.snapRound(this.definingPts.vertex.Y(), gt.snapSizeY) + ")",
-			"(" + gt.snapRound(this.definingPts.point.X(), gt.snapSizeX) + "," +
-			gt.snapRound(this.definingPts.point.Y(), gt.snapSizeY) + ")"
-		].join(",");
+			'(' + gt.snapRound(this.definingPts.vertex.X(), gt.snapSizeX) + ',' +
+			gt.snapRound(this.definingPts.vertex.Y(), gt.snapSizeY) + ')',
+			'(' + gt.snapRound(this.definingPts.point.X(), gt.snapSizeX) + ',' +
+			gt.snapRound(this.definingPts.point.Y(), gt.snapSizeY) + ')'
+		].join(',');
 	};
 	Parabola.prototype.fillCmp = function(point) {
 		if (this.vertical)
@@ -459,16 +462,19 @@ function graphTool(containerId, options) {
 		else
 			return gt.sign(point[1] - this.baseObj.X(point[2]));
 	};
-	Parabola.strId = "parabola";
+	Parabola.strId = 'parabola';
 	Parabola.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (points.length < 2) return false;
 		var vertex = gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1]));
 		var point = gt.createPoint(parseFloat(points[1][0]), parseFloat(points[1][1]), vertex, true);
-		return new gt.graphObjectTypes.parabola(vertex, point, /vertical/.test(string), /solid/.test(string), gt.curveColor);
+		return new gt.graphObjectTypes.parabola(vertex, point,
+			/vertical/.test(string), /solid/.test(string), gt.curveColor);
 	};
 
 	// Fill graph object
@@ -594,7 +600,7 @@ function graphTool(containerId, options) {
 	Fill.prototype.onResize = function() {
 		this.definingPts.icon.setPosition(JXG.COORDS_BY_USER,
 			[this.definingPts.point.X() - 12 / gt.board.unitX,
-				this.definingPts.point.Y() - 12 / gt.board.unitY])
+				this.definingPts.point.Y() - 12 / gt.board.unitY]);
 		gt.board.update();
 	};
 	Fill.prototype.updateTextCoords = function(coords) {
@@ -607,16 +613,18 @@ function graphTool(containerId, options) {
 	Fill.prototype.stringify = function() {
 		return [
 			Fill.strId,
-			"(" + gt.snapRound(this.baseObj.X(), gt.snapSizeX) + "," +
-			gt.snapRound(this.baseObj.Y(), gt.snapSizeY) + ")"
-		].join(",");
+			'(' + gt.snapRound(this.baseObj.X(), gt.snapSizeX) + ',' +
+			gt.snapRound(this.baseObj.Y(), gt.snapSizeY) + ')'
+		].join(',');
 	};
-	Fill.strId = "fill";
+	Fill.strId = 'fill';
 	Fill.restore = function(string) {
-		var pointData;
+		var pointData = gt.pointRegexp.exec(string);
 		var points = [];
-		while (pointData = gt.pointRegexp.exec(string))
-		{ points.push(pointData.slice(1, 3)); }
+		while (pointData) {
+			points.push(pointData.slice(1, 3));
+			pointData = gt.pointRegexp.exec(string);
+		}
 		if (!points.length) return false;
 		return new gt.graphObjectTypes.fill(gt.createPoint(parseFloat(points[0][0]), parseFloat(points[0][1])));
 	};
@@ -669,7 +677,7 @@ function graphTool(containerId, options) {
 			}
 			if ('update' in graphObject) {
 				customGraphObject.prototype.update = function() {
-					graphObject.update.call(this, gt)
+					graphObject.update.call(this, gt);
 				};
 			}
 			if ('onResize' in graphObject) {
@@ -684,7 +692,7 @@ function graphTool(containerId, options) {
 			}
 			if ('fillCmp' in graphObject) {
 				customGraphObject.prototype.fillCmp = function(point) {
-					return graphObject.fillCmp.call(this, gt, point)
+					return graphObject.fillCmp.call(this, gt, point);
 				};
 			}
 			if ('remove' in graphObject) {
@@ -695,22 +703,22 @@ function graphTool(containerId, options) {
 			}
 			if ('setSolid' in graphObject) {
 				customGraphObject.prototype.setSolid = function(solid) {
-					graphObject.setSolid.call(this, gt, solid)
+					graphObject.setSolid.call(this, gt, solid);
 				};
 			}
 			if ('on' in graphObject) {
 				customGraphObject.prototype.on = function(e, handler, context) {
-					graphObject.on.call(this, e, handler, context)
+					graphObject.on.call(this, e, handler, context);
 				};
 			}
 			if ('off' in graphObject) {
 				customGraphObject.prototype.off = function(e, handler) {
-					graphObject.off.call(this, e, handler)
+					graphObject.off.call(this, e, handler);
 				};
 			}
 			if ('stringify' in graphObject) {
 				customGraphObject.prototype.stringify = function() {
-					return [customGraphObject.strId, graphObject.stringify.call(this, gt)].join(",");
+					return [customGraphObject.strId, graphObject.stringify.call(this, gt)].join(',');
 				};
 			}
 			if ('restore' in graphObject) {
@@ -738,18 +746,24 @@ function graphTool(containerId, options) {
 	// At this point the updateHighlights method is the only one that this
 	// doesn't need to be done with.
 	function GenericTool(container, name, tooltip) {
-		this.button = $("<button type=button class='btn gt-button gt-tool-button gt-" +
-			name + "-tool' data-toggle='tooltip' title='" + tooltip + "'>&nbsp;</button>");
+		var div = document.createElement('div');
+		div.classList.add('gt-button-div');
+		div.dataset.bsToggle = 'tooltip';
+		div.title = tooltip;
+		this.button = document.createElement('button');
+		this.button.type = 'button';
+		this.button.classList.add('btn', 'btn-light', 'gt-button', 'gt-tool-button', 'gt-' + name + '-tool');
 		var this_tool = this;
-		this.button.on('click', function () { this_tool.activate(); });
-		container.append(this.button);
+		this.button.addEventListener('click', function () { this_tool.activate(); });
+		div.append(this.button);
+		container.append(div);
 		this.hlObjs = {};
 	}
 	GenericTool.prototype.activate = function() {
 		gt.activeTool.deactivate();
 		gt.activeTool = this;
 		this.button.blur();
-		this.button.prop('disabled', true);
+		this.button.disabled = true;
 		if (gt.selectedObj) { gt.selectedObj.blur(); }
 		gt.selectedObj = null;
 	};
@@ -759,7 +773,7 @@ function graphTool(containerId, options) {
 		gt.board.update();
 		gt.selectTool.activate();
 	};
-	GenericTool.prototype.updateHighlights = function(coords) { return false; };
+	GenericTool.prototype.updateHighlights = function(/* coords */) { return false; };
 	GenericTool.prototype.removeHighlights = function() {
 		Object.keys(this.hlObjs).forEach(function(obj) {
 			gt.board.removeObject(this[obj]);
@@ -767,12 +781,12 @@ function graphTool(containerId, options) {
 		}, this.hlObjs);
 	};
 	GenericTool.prototype.deactivate = function() {
-		this.button.prop('disabled', false);
+		this.button.disabled = false;
 		this.removeHighlights();
 	};
 
 	// Select tool
-	function SelectTool(container) { GenericTool.call(this, container, "select", "Object Selection Tool"); }
+	function SelectTool(container) { GenericTool.call(this, container, 'select', 'Object Selection Tool'); }
 	SelectTool.prototype = Object.create(GenericTool.prototype);
 	Object.defineProperty(SelectTool.prototype, 'constructor',
 		{ value: SelectTool, enumerable: false, writable: true });
@@ -819,7 +833,7 @@ function graphTool(containerId, options) {
 
 	// Line graphing tool
 	function LineTool(container, iconName, tooltip) {
-		GenericTool.call(this, container, iconName ? iconName : "line", tooltip ? tooltip : "Line Tool");
+		GenericTool.call(this, container, iconName ? iconName : 'line', tooltip ? tooltip : 'Line Tool');
 	}
 	LineTool.prototype = Object.create(GenericTool.prototype);
 	Object.defineProperty(LineTool.prototype, 'constructor',
@@ -898,7 +912,7 @@ function graphTool(containerId, options) {
 
 	// Circle graphing tool
 	function CircleTool(container, iconName, tooltip) {
-		GenericTool.call(this, container, iconName ? iconName : "circle", tooltip ? tooltip : "Circle Tool");
+		GenericTool.call(this, container, iconName ? iconName : 'circle', tooltip ? tooltip : 'Circle Tool');
 	}
 	CircleTool.prototype = Object.create(GenericTool.prototype);
 	Object.defineProperty(CircleTool.prototype, 'constructor',
@@ -978,8 +992,8 @@ function graphTool(containerId, options) {
 	// Parabola graphing tool
 	function ParabolaTool(container, vertical, iconName, tooltip) {
 		GenericTool.call(this, container,
-			iconName ? iconName : (vertical ? "vertical-parabola" : "horizontal-parabola"),
-			tooltip ? tooltip : (vertical ? "Vertical Parabola Tool" : "Horizontal Parabola Tool"));
+			iconName ? iconName : (vertical ? 'vertical-parabola' : 'horizontal-parabola'),
+			tooltip ? tooltip : (vertical ? 'Vertical Parabola Tool' : 'Horizontal Parabola Tool'));
 		this.vertical = vertical;
 	}
 	ParabolaTool.prototype = Object.create(GenericTool.prototype);
@@ -1075,7 +1089,7 @@ function graphTool(containerId, options) {
 
 	// Fill tool
 	function FillTool(container, iconName, tooltip) {
-		GenericTool.call(this, container, iconName ? iconName : "fill", tooltip ? tooltip : "Region Shading Tool");
+		GenericTool.call(this, container, iconName ? iconName : 'fill', tooltip ? tooltip : 'Region Shading Tool');
 	}
 	FillTool.prototype = Object.create(GenericTool.prototype);
 	Object.defineProperty(FillTool.prototype, 'constructor',
@@ -1128,17 +1142,74 @@ function graphTool(containerId, options) {
 	// Draw objects solid or dashed. Makes the currently selected object (if
 	// any) solid or dashed, and anything drawn while the tool is selected will
 	// be drawn solid or dashed.
-	function toggleSolidity(e) {
-		this.blur();
-		if ('solidButton' in gt) gt.solidButton.prop('disabled', e.data.solid);
-		if ('dashedButton' in gt) gt.dashedButton.prop('disabled', !e.data.solid);
+	function toggleSolidity(button, drawSolid) {
+		button.blur();
+		if ('solidButton' in gt) gt.solidButton.disabled = drawSolid;
+		if ('dashedButton' in gt) gt.dashedButton.disabled = !drawSolid;
 		if (gt.selectedObj)
 		{
-			gt.selectedObj.setSolid(e.data.solid);
+			gt.selectedObj.setSolid(drawSolid);
 			gt.updateText();
 		}
-		gt.drawSolid = e.data.solid;
+		gt.drawSolid = drawSolid;
 		gt.activeTool.updateHighlights();
+	}
+
+	function confirmDialog(title, titleId, message, yesAction) {
+		var modal = document.createElement('div');
+		modal.classList.add('modal', 'modal-dialog-centered', 'gt-modal');
+		modal.tabIndex = -1;
+		modal.setAttribute('aria-labelledby', titleId);
+		modal.setAttribute('aria-hidden', 'true');
+
+		var modalDialog = document.createElement('div');
+		modalDialog.classList.add('modal-dialog');
+		var modalContent = document.createElement('div');
+		modalContent.classList.add('modal-content');
+
+		var modalHeader = document.createElement('div');
+		modalHeader.classList.add('modal-header');
+
+		var titleH3 = document.createElement('h3');
+		titleH3.id = titleId;
+		titleH3.textContent = title;
+
+		var closeButton = document.createElement('button');
+		closeButton.type = 'button';
+		closeButton.classList.add('btn-close');
+		closeButton.dataset.bsDismiss = 'modal';
+		closeButton.setAttribute('aria-label', 'close');
+
+		modalHeader.append(titleH3, closeButton);
+
+		var modalBody = document.createElement('div');
+		modalBody.classList.add('modal-body');
+		var modalBodyContent = document.createElement('div');
+		modalBodyContent.textContent = message;
+		modalBody.append(modalBodyContent);
+
+		var modalFooter = document.createElement('div');
+		modalFooter.classList.add('modal-footer');
+
+		var yesButton = document.createElement('button');
+		yesButton.classList.add('btn', 'btn-primary');
+		yesButton.textContent = 'Yes';
+		yesButton.addEventListener('click', function () { yesAction(); bsModal.hide(); });
+
+		var noButton = document.createElement('button');
+		noButton.classList.add('btn', 'btn-primary');
+		noButton.dataset.bsDismiss = 'modal';
+		noButton.textContent = 'No';
+
+		modalFooter.append(yesButton, noButton);
+		modalContent.append(modalHeader, modalBody, modalFooter);
+		modalDialog.append(modalContent);
+		modal.append(modalDialog);
+
+		var bsModal = new bootstrap.Modal(modal);
+		bsModal.show();
+		document.querySelector('.modal-backdrop').style.opacity = '0.2';
+		modal.addEventListener('hidden.bs.modal', function () { bsModal.dispose(); modal.remove(); });
 	}
 
 	// Delete the selected object.
@@ -1146,36 +1217,21 @@ function graphTool(containerId, options) {
 		this.blur();
 		if (!gt.selectedObj) return;
 
-		var modal = $('<div class="modal" tabindex="-1" role="dialog" aria-labelledby="deleteObjectDialog" aria-hidden="true">'
-			+ '<div class="modal-header">'
-			+ '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>'
-			+ '<h3 id="deleteObjectDialog">Delete Selected Object</h3>'
-			+ '</div>'
-			+ '<div class="modal-body">'
-			+ '<div>Do you want to delete the selected object?</div>'
-			+ '</div>'
-			+ '<div class="modal-footer">'
-			+ '<button class="btn btn-primary" id="gt-confirm-delete">Yes</button>'
-			+ '<button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">No</button>'
-			+ '</div>'
-			+ '</div>');
-		modal.modal('show');
-		$('.modal-backdrop').css('opacity', '0.2');
-		modal.on('hidden', function() { modal.remove(); });
-
-		$('#gt-confirm-delete').on('click', function() {
-			for (var i = 0; i < gt.graphedObjs.length; ++i) {
-				if (gt.graphedObjs[i].id() === gt.selectedObj.id()) {
-					gt.graphedObjs[i].remove();
-					gt.graphedObjs.splice(i, 1);
-					break;
+		confirmDialog('Delete Selected Object', 'deleteObjectDialog',
+			'Do you want to delete the selected object?',
+			function() {
+				for (var i = 0; i < gt.graphedObjs.length; ++i) {
+					if (gt.graphedObjs[i].id() === gt.selectedObj.id()) {
+						gt.graphedObjs[i].remove();
+						gt.graphedObjs.splice(i, 1);
+						break;
+					}
 				}
+				gt.selectedObj = null;
+				gt.updateObjects();
+				gt.updateText();
 			}
-			gt.selectedObj = null;
-			gt.updateObjects();
-			gt.updateText();
-			modal.modal('hide');
-		});
+		);
 	}
 
 	// Remove all graphed objects.
@@ -1183,46 +1239,44 @@ function graphTool(containerId, options) {
 		this.blur();
 		if (gt.graphedObjs.length == 0) return;
 
-		var modal = $('<div class="modal" tabindex="-1" role="dialog" aria-labelledby="clearGraphDialog" aria-hidden="true">'
-			+ '<div class="modal-header">'
-			+ '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>'
-			+ '<h3 id="clearGraphDialog">Delete Selected Object</h3>'
-			+ '</div>'
-			+ '<div class="modal-body">'
-			+ '<div>Do you want to remove all graphed objects?</div>'
-			+ '</div>'
-			+ '<div class="modal-footer">'
-			+ '<button class="btn btn-primary" id="gt-confirm-clear">Yes</button>'
-			+ '<button class="btn btn-primary" data-dismiss="modal" aria-hidden="true">No</button>'
-			+ '</div>'
-			+ '</div>');
-		modal.modal('show');
-		$('.modal-backdrop').css('opacity', '0.2');
-		modal.on('hidden', function() { modal.remove(); });
-
-		$('#gt-confirm-clear').on('click', function() {
-			gt.graphedObjs.forEach(function(obj) { obj.remove(); });
-			gt.graphedObjs = [];
-			gt.selectedObj = null;
-			gt.selectTool.activate();
-			gt.html_input.value = "";
-			modal.modal('hide');
-		});
+		confirmDialog('Clear Graph', 'clearGraphDialog',
+			'Do you want to remove all graphed objects?',
+			function() {
+				gt.graphedObjs.forEach(function(obj) { obj.remove(); });
+				gt.graphedObjs = [];
+				gt.selectedObj = null;
+				gt.selectTool.activate();
+				gt.html_input.value = '';
+			}
+		);
 	}
 
 	function SolidDashTool(container) {
-		var solidDashBox = $("<div class='gt-solid-dash-box'></div>");
+		var solidDashBox = document.createElement('div');
+		solidDashBox.classList.add('gt-solid-dash-box');
 		// The draw solid button is active by default.
-		gt.solidButton =
-			$("<button type=button class='btn gt-button gt-tool-button gt-solid-tool' " +
-				"data-toggle='tooltip' title='Make Selected Object Solid' disabled>&nbsp;</button>")
-			.on('click', { solid: true }, toggleSolidity);
-		solidDashBox.append(gt.solidButton);
-		gt.dashedButton =
-			$("<button type=button class='btn gt-button gt-tool-button gt-dashed-tool' " +
-				"data-toggle='tooltip' title='Make Selected Object Dashed'>&nbsp;</button>")
-			.on('click', { solid: false }, toggleSolidity);
-		solidDashBox.append(gt.dashedButton);
+		var solidButtonDiv = document.createElement('div');
+		solidButtonDiv.classList.add('gt-button-div', 'gt-solid-button-div');
+		solidButtonDiv.dataset.bsToggle = 'tooltip';
+		solidButtonDiv.title = 'Make Selected Object Solid';
+		gt.solidButton = document.createElement('button');
+		gt.solidButton.classList.add('btn', 'btn-light', 'gt-button', 'gt-tool-button', 'gt-solid-tool');
+		gt.solidButton.type = 'button';
+		gt.solidButton.disabled = true;
+		gt.solidButton.addEventListener('click', function () { toggleSolidity(gt.solidButton, true); });
+		solidButtonDiv.append(gt.solidButton);
+		solidDashBox.append(solidButtonDiv);
+
+		var dashedButtonDiv = document.createElement('div');
+		dashedButtonDiv.classList.add('gt-button-div', 'gt-dashed-button-div');
+		dashedButtonDiv.dataset.bsToggle = 'tooltip';
+		dashedButtonDiv.title = 'Make Selected Object Dashed';
+		gt.dashedButton = document.createElement('button');
+		gt.dashedButton.classList.add('btn', 'btn-light', 'gt-button', 'gt-tool-button', 'gt-dashed-tool');
+		gt.dashedButton.type = 'button';
+		gt.dashedButton.addEventListener('click', function () { toggleSolidity(gt.dashedButton, false); });
+		dashedButtonDiv.append(gt.dashedButton);
+		solidDashBox.append(dashedButtonDiv);
 		container.append(solidDashBox);
 	}
 
@@ -1236,11 +1290,14 @@ function graphTool(containerId, options) {
 	};
 
 	// Create the tools and html elements.
-	var graphDiv = $("<div id='" + containerId + "_graph' class='jxgbox graphtool-graph'></div>");
+	var graphDiv = document.createElement('div');
+	graphDiv.id = containerId + '_graph';
+	graphDiv.classList.add('jxgbox', 'graphtool-graph');
 	graphContainer.append(graphDiv);
 
 	if (!gt.isStatic) {
-		var buttonBox = $("<div class='gt-toolbar-container'></div>");
+		var buttonBox = document.createElement('div');
+		buttonBox.classList.add('gt-toolbar-container');
 		gt.selectTool = new SelectTool(buttonBox);
 
 		// Load any custom tools.
@@ -1259,7 +1316,7 @@ function graphTool(containerId, options) {
 					Object.defineProperty(customTool.prototype, 'constructor',
 						{ value: customTool, enumerable: false, writable: true });
 				} else {
-					customTool = function() {
+					customTool = function(container) {
 						toolObject.initialize.call(this, gt, container);
 					};
 				}
@@ -1302,19 +1359,35 @@ function graphTool(containerId, options) {
 			if (tool in gt.toolTypes) {
 				new gt.toolTypes[tool](buttonBox);
 			} else
-				console.log("Unknown tool: " + tool);
+				console.log('Unknown tool: ' + tool);
 		});
 
-		buttonBox.append($("<button type=button class='btn gt-button' " +
-			"data-toggle='tooltip' title='Delete Selected Object'>Delete</button>")
-			.on('click', deleteObject));
-		buttonBox.append($("<button type=button class='btn gt-button' " +
-			"data-toggle='tooltip' title='Clear All Objects From Graph'>Clear</button>")
-			.on('click', clearGraph));
+		var deleteButton = document.createElement('button');
+		deleteButton.type = 'button';
+		deleteButton.classList.add('btn', 'btn-light', 'gt-button');
+		deleteButton.dataset.bsToggle = 'tooltip';
+		deleteButton.title = 'Delete Selected Object';
+		deleteButton.textContent = 'Delete';
+		deleteButton.addEventListener('click', deleteObject);
+		buttonBox.append(deleteButton);
+
+		var clearButton = document.createElement('button');
+		clearButton.type = 'button';
+		clearButton.classList.add('btn', 'btn-light', 'gt-button');
+		clearButton.dataset.bsToggle = 'tooltip';
+		clearButton.title = 'Clear All Objects From Graph';
+		clearButton.textContent = 'Clear';
+		clearButton.addEventListener('click', clearGraph);
+		buttonBox.append(clearButton);
 
 		graphContainer.append(buttonBox);
 
-		$('.gt-button[data-toggle="tooltip"]').tooltip({ trigger: 'hover', placement: 'bottom', delay: { show: 1000, hide: 0 } });
+		document.querySelectorAll('.gt-button-div[data-bs-toggle="tooltip"],.gt-button[data-bs-toggle="tooltip"]')
+			.forEach(function(tooltip) {
+				new bootstrap.Tooltip(tooltip, {
+					placement: 'bottom', trigger: 'hover', delay: { show: 500, hide: 0 }
+				});
+			});
 	}
 
 	setupBoard();
@@ -1325,14 +1398,15 @@ function graphTool(containerId, options) {
 		var tmpIsStatic = gt.isStatic;
 		gt.isStatic = objectsAreStatic;
 		var objectRegexp = /{(.*?)}/g;
-		var objectData;
-		while (objectData = objectRegexp.exec(data)) {
+		var objectData = objectRegexp.exec(data);
+		while (objectData) {
 			var obj = GraphObject.restore(objectData[1]);
 			if (obj !== false)
 			{
-				if (objectsAreStatic) gt.staticObjs.push(obj)
+				if (objectsAreStatic) gt.staticObjs.push(obj);
 				else gt.graphedObjs.push(obj);
 			}
+			objectData = objectRegexp.exec(data);
 		}
 		gt.isStatic = tmpIsStatic;
 		gt.updateObjects();

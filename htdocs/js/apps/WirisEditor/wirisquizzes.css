@@ -615,7 +615,7 @@ ul.wiristestassertionslist span {
 }
 
 span.wirisembeddedmathinput,
-input.wirisembeddedmathinput,
+input.wirisembeddedmathinput[type=text],
 img.wirisembeddedmathinput,
 input.wirisembeddedauthoringfield,
 img.wirisembeddedauthoringfield {
@@ -641,7 +641,7 @@ input.wirisembeddedtextinput{
  There exist the monochrome version for icons. Please use editor16b.png, 
  studio16b.png and studio24b.png respectively if you need it.
 */
-input.wirisembeddedmathinput,
+input.wirisembeddedmathinput[type=text],
 img.wirisembeddedmathinput {
 	background: #fff url("editor16.png") no-repeat;	
 }
@@ -666,11 +666,12 @@ span.wirisembeddedstudioinput {
     background-position: center center;
 }
 
-input.wirisembeddedmathinput,
+input.wirisembeddedmathinput[type=text],
 input.wirisembeddedauthoringfield {
 	height: 16px;
     width: 100px;
 	background-position: 105px 3px;
+	box-sizing: content-box;
 }
 .formulation input.wirisembeddedmathinput[type="text"] {
 	width: 100px;
