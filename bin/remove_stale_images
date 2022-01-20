@@ -3,12 +3,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/bin/remove_stale_images,v 1.7 2008/06/24 22:54:03 gage Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -69,12 +69,15 @@ use Pod::Usage;
 use File::Find;
 use DBI;
 
+my $pg_dir;
 BEGIN {
-	die "WEBWORK_ROOT not found in environment.\n"
-		unless exists $ENV{WEBWORK_ROOT};
+	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
+	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
+	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
 }
 
 use lib "$ENV{WEBWORK_ROOT}/lib";
+use lib "$pg_dir/lib";
 use WeBWorK::CourseEnvironment;
 use WeBWorK::Utils qw(runtime_use readFile);
 
@@ -254,7 +257,7 @@ if($depthConnection) { # clean out database and put back in good values
 
 ## The rest is updating the equation cache if we deleted images and there is a cache
 exit() unless($deloption and $num_removed);
-exit() unless ($cachePath); 
+exit() unless ($cachePath);
 print "Updating the equation cache\n";
 my ($perms, $uid, $groupID) = (stat $cachePath)[2,4,5]; #Get values from current cache file
 my $cachevalues = readFile($cachePath);

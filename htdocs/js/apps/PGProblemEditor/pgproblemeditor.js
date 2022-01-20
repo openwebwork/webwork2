@@ -1,7 +1,7 @@
 (function () {
 	if (CodeMirror) {
 		cm = CodeMirror.fromTextArea(
-			$("#problemContents")[0], {
+			document.getElementById("problemContents"), {
 				mode: "PG",
 				indentUnit: 4,
 				tabMode: "spaces",
@@ -16,43 +16,51 @@
 		cm.setSize("100%", 400);
 	}
 
-	$(document).keydown(function(e){
-		if (e.keyCode === 27) $('#render-modal').modal('hide');
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') bsModal.hide();
 	});
 
-	$('#render-modal').modal({ keyboard: true, show: false });
+	const bsModal = new bootstrap.Modal(document.getElementById('render-modal'), { keyboard: true, show: false });
 
-	var busyIndicator = null;
+	let busyIndicator = null;
 
-	$('#pg_editor_frame_id').on('load', function () {
+	const frame = document.getElementById('pg_editor_frame_id');
+	frame?.addEventListener('load', () => {
 		if (busyIndicator) {
 			busyIndicator.remove();
 			busyIndicator = null;
 		}
-		var contents = $('#pg_editor_frame_id').contents();
-		if (contents[0].URL == "about:blank") return;
-		contents.find("head").append("<style>#site-navigation,#toggle-sidebar,#masthead,#breadcrumb-row,#footer{display:none;}</style>");
-		contents.find('#content').removeClass('span10');
-		$('#render-modal').modal('show');
+		if (frame.contentDocument.URL == 'about:blank') return;
+		const style = frame.contentDocument.createElement('style');
+		style.type = 'text/css';
+		style.textContent = '#site-navigation,#toggle-sidebar,#masthead,#breadcrumb-row,' +
+			'#footer,.sticky-nav{display:none !important;}';
+		frame.contentDocument.head.appendChild(style);
+		frame.contentDocument.getElementById('content').classList.remove('col-md-10');
+		frame.contentWindow.addEventListener('resize',
+			() => frame.contentDocument.getElementById('content').classList.remove('col-md-10')
+		);
+		bsModal.show();
 	});
 
-	$('#submit_button_id').on('click', function() {
-		var actionView = document.getElementById('action_view');
-		var actionSave = document.getElementById('action_save');
+	document.getElementById('submit_button_id')?.addEventListener('click', () => {
+		const actionView = document.getElementById('view');
+		const actionSave = document.getElementById('save');
 
-		var target = "_self";
-		if ((actionView && actionView.classList.contains('active')) || (actionSave && actionSave.classList.contains('active'))) {
-			target = document.getElementById("newWindow").checked ? "WW_View" : "pg_editor_frame";
-		}
+		let target = "_self";
+		if (actionView && actionView.classList.contains('active'))
+			target = document.getElementById("newWindowView").checked ? "WW_View" : "pg_editor_frame";
+		else if (actionSave && actionSave.classList.contains('active'))
+			target = document.getElementById("newWindowSave").checked ? "WW_View" : "pg_editor_frame";
 
-		$("#editor").attr('target', target);
+		document.getElementById('editor').target = target;
 
 		if (target == "pg_editor_frame") {
-			busyIndicator = $('<div class="page-loading-busy-indicator" data-backdrop="static" data-keyboard="false">' +
-				'<div class="busy-text"><h2>Loading...</h2></div>' +
-				'<div><i class="fas fa-circle-notch fa-spin fa-3x"></i></div>' +
-				'</div>');
-			$('body').append(busyIndicator);
+			busyIndicator = document.createElement('div');
+			busyIndicator.classList.add('page-loading-busy-indicator');
+			busyIndicator.innerHTML = '<div class="busy-text"><h2>Loading...</h2></div>' +
+				'<div><i class="fas fa-circle-notch fa-spin fa-3x"></i></div>';
+			document.body.appendChild(busyIndicator);
 		}
 	});
 })();
