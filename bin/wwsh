@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
@@ -25,11 +25,15 @@ use strict;
 use warnings;
 
 
-my $pg_dir;
+my ($pg_dir, $bin_dir);
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
 	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
 	die "The pg directory must be defined in PG_ROOT" unless (-e $pg_dir);
+
+	use File::Basename qw/dirname/;
+	use Cwd qw/abs_path/;
+	$bin_dir = abs_path(dirname(__FILE__));
 }
 
 our $ce;
@@ -64,7 +68,7 @@ Available modules: Data::Dumper
 
 EOF
 print "courseID: $courseID and scriptFile:  $scriptFile\n--------------------------------\n";
-do "$scriptFile";
+do "$bin_dir/$scriptFile";
 if ($@) {
 	print "errors ", $@,"\n" ;
 } else {
