@@ -24,14 +24,11 @@ WeBWorK::ContentGenerator::Instructor::SendMail - Entry point for User-specific 
 
 use strict;
 use warnings;
-#use CGI qw(-nosticky );
+
 use WeBWorK::CGI;
 use Email::Address::XS;
 use HTML::Entities;
-#use Mail::Sender;
-use Email::Simple;
-use Email::Sender::Simple qw(sendmail);
-use Email::Sender::Transport::SMTP qw();
+use Email::Stuffer;
 use Try::Tiny;
 use Data::Dump qw/dump/;
 use WeBWorK::Debug;
@@ -945,126 +942,96 @@ sub get_merge_file_names   {
 }
 
 sub mail_message_to_recipients {
-	my $self                  = shift;
-	my $r                     = $self->r;
-	my $ce                    = $r->ce;
-	my $subject               = $self->{subject};
-	my $from                  = $self->{from};
-	my @recipients            = @{$self->{ra_send_to}};
-	my $rh_merge_data         = $self->{rh_merge_data};
-	my $merge_file            = $self->{merge_file};
-	my $result_message        = '';
-	my $failed_messages        = 0;
-	my $error_messages         = '';
-	foreach my $recipient (@recipients) {
-			$error_messages = '';
+	my $self            = shift;
+	my $r               = $self->r;
+	my $ce              = $r->ce;
+	my $subject         = $self->{subject};
+	my $from            = $self->{from};
+	my @recipients      = @{ $self->{ra_send_to} };
+	my $rh_merge_data   = $self->{rh_merge_data};
+	my $merge_file      = $self->{merge_file};
+	my $result_message  = '';
+	my $failed_messages = 0;
+	my $error_messages  = '';
 
-			my $ur      = $self->{db}->getUser($recipient); #checked
-			unless ($ur) {
-				$error_messages .= "Record for user $recipient not found\n";
-				next;
-			}
-			unless ($ur->email_address=~/\S/) { #unless address contains a non-blank charachter
-				$error_messages .="User $recipient does not have an email address -- skipping\n";
-				next;
-			}
+	for my $recipient (@recipients) {
+		$error_messages = '';
 
-			my $msg = eval { $self->process_message($ur,$rh_merge_data) };
-			$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
-
-			my $transport = $self->createEmailSenderTransportSMTP();
-			my $return_path_for_errors = $ce->{mail}->{set_return_path};
-			# createEmailSenderTransportSMTP is defined in ContentGenerator
-			# return_path_for_errors is the address used to report returned email. It is an argument
-			# used in sendmail() (aka Email::Simple::sendmail).
-			# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then
-			# uses that to set "Return-Path".
-			# references:
-			#  stackoverflow:
-			#    https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
-			#  Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
-
-			my $email = Email::Simple->create(
-				header => [
-					To => $ur->email_address,
-					From => $from,
-					Subject => $subject,
-					"Content-Type" => "text/plain; charset=UTF-8" ],
-				body => Encode::encode("UTF-8",$msg)
-			);
-			$email->header_set("X-Remote-Host: ",$self->{remote_host});
-
-
-			try {
-				if ($return_path_for_errors) {
-					sendmail($email,{transport => $transport, from=>$return_path_for_errors});
-				}
-				else {
-					sendmail($email,{transport => $transport});
-				}
-				debug "email sent successfully to " . $ur->email_address;
-			} catch {
-				  debug "error sending email: $_";
-				  debug dump $@;
-					$error_messages .= "Error sending email: $_";
-					next;
-			};
-
-		  $result_message .= $r->maketext("Msg sent to [_1] at [_2].", $recipient, $ur->email_address)."\n" unless $error_messages;
-		} continue { #update failed messages before continuing loop
-			if ($error_messages) {
-				$failed_messages++;
-		    	$result_message .= $error_messages;
-		    }
+		my $ur = $self->{db}->getUser($recipient);    #checked
+		unless ($ur) {
+			$error_messages .= "Record for user $recipient not found\n";
+			next;
 		}
-		my $courseName = $self->r->urlpath->arg("courseID");
-		my $number_of_recipients = scalar(@recipients) - $failed_messages;
-	        $result_message = $r->maketext("A message with the subject line \"[_1]\" has been sent to [quant,_2,recipient] in the class [_3].  There were [_4] message(s) that could not be sent.", $subject, $number_of_recipients, $courseName, $failed_messages)."\n\n".$result_message;
+		unless ($ur->email_address =~ /\S/) {         #unless address contains a non-blank charachter
+			$error_messages .= "User $recipient does not have an email address -- skipping\n";
+			next;
+		}
+
+		my $msg = eval { $self->process_message($ur, $rh_merge_data) };
+		$error_messages .= "There were errors in processing user $recipient, merge file $merge_file. \n$@\n" if $@;
+
+		my $email = Email::Stuffer->to($ur->email_address)->from($from)->subject($subject)
+			->text_body(Encode::encode('UTF-8', $msg))->header('X-Remote-Host' => $self->{remote_host});
+
+		# $ce->{mail}{set_return_path} is the address used to report returned email if defined and non empty.
+		# It is an argument used in sendmail() (aka Email::Stuffer::send_or_die).
+		# For arcane historical reasons sendmail actually sets the field "MAIL FROM" and the smtp server then
+		# uses that to set "Return-Path".
+		# references:
+		#  https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
+		#  https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+		try {
+			$email->send_or_die({
+				# createEmailSenderTransportSMTP is defined in ContentGenerator
+				transport => $self->createEmailSenderTransportSMTP(),
+				$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
+			});
+			debug 'email sent successfully to ' . $ur->email_address;
+		} catch {
+			debug "Error sending email: $_";
+			debug dump $@;
+			$error_messages .= "Error sending email: $_";
+			next;
+		};
+
+		$result_message .= $r->maketext("Message sent to [_1] at [_2].", $recipient, $ur->email_address) . "\n"
+			unless $error_messages;
+	} continue {    #update failed messages before continuing loop
+		if ($error_messages) {
+			$failed_messages++;
+			$result_message .= $error_messages;
+		}
+	}
+	my $courseName           = $self->r->urlpath->arg("courseID");
+	my $number_of_recipients = scalar(@recipients) - $failed_messages;
+	$result_message = $r->maketext(
+		"A message with the subject line \"[_1]\" has been sent to [quant,_2,recipient] in the class [_3].  "
+			. "There were [_4] message(s) that could not be sent.",
+		$subject, $number_of_recipients, $courseName, $failed_messages)
+		. "\n\n"
+		. $result_message;
 
 }
 
 sub email_notification {
-	my $self = shift;
-	my $r  = $self->r;
-	my $ce = $r->ce;
+	my $self           = shift;
 	my $result_message = shift;
-	# find info on mailer and sender
-	# use the defaultFrom address.
+	my $ce             = $self->r->ce;
 
-	# find info on instructor recipient and message
-	my $subject="WeBWorK email sent";
-
-	my $mailing_errors = "";
-
-	# createEmailSenderTransportSMTP is defined in ContentGenerator
-	my $transport = $self->createEmailSenderTransportSMTP();
-
-	my $return_path_for_errors = $ce->{mail}->{set_return_path};
-	my $email = Email::Simple->create(
-		header => [
-			To => $self->{defaultFrom},
-			From => $self->{defaultFrom},
-			Subject => $subject,
-			"Content-Type" => "text/plain; charset=UTF-8"
-		],
-		body => Encode::encode("UTF-8",$result_message),
-	);
-	$email->header_set("X-Remote-Host: ",$self->{remote_host});
+	my $email = Email::Stuffer->to($self->{defaultFrom})->from($self->{defaultFrom})->subject('WeBWorK email sent')
+		->text_body(Encode::encode('UTF-8', $result_message))->header('X-Remote-Host' => $self->{remote_host});
 
 	try {
-		if ($return_path_for_errors) {
-			sendmail($email,{transport => $transport, from=>$return_path_for_errors});
-		}
-		else {
-			sendmail($email,{transport => $transport});
-		}
+		$email->send_or_die({
+			# createEmailSenderTransportSMTP is defined in ContentGenerator
+			transport => $self->createEmailSenderTransportSMTP(),
+			$ce->{mail}{set_return_path} ? (from => $ce->{mail}{set_return_path}) : ()
+		});
 	} catch {
-			warn "Error sending email: $_";
-			next;
+		warn "Error sending email: $_";
 	};
 
-    warn "\nWW::Instructor::SendMail:: instructor message ". $self->{subject}
-					." sent from ", $self->{defaultFrom},"\n";
+	warn "\nWW::Instructor::SendMail:: instructor message sent from $self->{defaultFrom}\n";
 }
 
 sub getRecord {

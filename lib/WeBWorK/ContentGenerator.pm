@@ -61,6 +61,7 @@ use HTML::Scrubber;
 use WeBWorK::Utils qw(jitar_id_to_seq fetchEmailRecipients generateURLs);
 use WeBWorK::Authen::LTIAdvanced::SubmitGrade;
 use Encode;
+use Email::Sender::Transport::SMTP;
 
 our $TRACE_WARNINGS = 0;   # set to 1 to trace channel used by warning message
 
@@ -2345,31 +2346,32 @@ Wrapper that creates an Email::Sender::Transport::SMTP object
 
 sub createEmailSenderTransportSMTP {
 	my $self = shift;
-	my $ce = $self->r->ce;
+	my $ce   = $self->r->ce;
 	my $transport;
-	if (defined $ce->{mail}->{smtpPort} ) {
+	if (defined $ce->{mail}->{smtpPort}) {
 		$transport = Email::Sender::Transport::SMTP->new({
-			host => $ce->{mail}->{smtpServer},
-			ssl => $ce->{mail}->{tls_allowed}//0, ## turn off ssl security by default
-			port => $ce->{mail}->{smtpPort},
+			host    => $ce->{mail}->{smtpServer},
+			ssl     => $ce->{mail}->{tls_allowed} // 0,    ## turn off ssl security by default
+			port    => $ce->{mail}->{smtpPort},
 			timeout => $ce->{mail}->{smtpTimeout},
 			# debug => 1,
 		});
 	} else {
 		$transport = Email::Sender::Transport::SMTP->new({
-			host => $ce->{mail}->{smtpServer},
-			ssl => $ce->{mail}->{tls_allowed}//0, ## turn off ssl security by default
+			host    => $ce->{mail}->{smtpServer},
+			ssl     => $ce->{mail}->{tls_allowed} // 0,    ## turn off ssl security by default
 			timeout => $ce->{mail}->{smtpTimeout},
 			# debug => 1,
 		});
 	}
-# 		warn "port is ", $transport->port();
-# 		warn "ssl is ", $transport->ssl();
-# 		warn "tls_allowed is ", $ce->{mail}->{tls_allowed}//'';
-#         warn " smtpPort is set to ", $ce->{mail}->{smtpPort}//'';
+	#warn "port is ", $transport->port();
+	#warn "ssl is ", $transport->ssl();
+	#warn "tls_allowed is ", $ce->{mail}->{tls_allowed}//'';
+	#warn "smtpPort is set to ", $ce->{mail}->{smtpPort}//'';
 
-    return $transport;
+	return $transport;
 }
+
 =back
 
 =head1 AUTHOR
