@@ -25,7 +25,7 @@ use strict;
 use warnings;
 
 
-my ($pg_dir, $bin_dir);
+my $pg_dir;
 BEGIN {
 	die "WEBWORK_ROOT not found in environment.\n" unless exists $ENV{WEBWORK_ROOT};
 	$pg_dir = $ENV{PG_ROOT} // "$ENV{WEBWORK_ROOT}/../pg";
@@ -48,7 +48,7 @@ unless ($courseID and $scriptFile) {
 	die "usage: $0 courseID  scriptFile\n";
 }
 
-die "You must pass scriptFile in as a path to the file" unless -e $scriptFile;
+die 'You must pass scriptFile in as a path to the file' unless -e $scriptFile;
 
 $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
@@ -66,7 +66,7 @@ Available modules: Data::Dumper
 
 EOF
 print "courseID: $courseID and scriptFile:  $scriptFile\n--------------------------------\n";
-do "$scriptFile";
+do $scriptFile;
 if ($@) {
 	print "errors ", $@,"\n" ;
 } else {
