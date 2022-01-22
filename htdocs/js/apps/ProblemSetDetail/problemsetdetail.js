@@ -147,6 +147,7 @@
 				elt.collapseButton.tooltip.dispose();
 				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton.firstElementChild,
 					{ title: elt.collapseButton.dataset.collapseText, container: elt.collapseButton });
+				if (Sortable.dragged) elt.collapseButton.tooltip.disable();
 			});
 		}
 	});
