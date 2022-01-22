@@ -975,13 +975,13 @@ sub print_nested_list {
 	# any remaining keys are references to child nodes which need to be
 	# printed in a sub list.
 	my @keys = keys %$nestedHash;
+	print CGI::start_ol({ class => 'sortable-branch collapse', id => "psd_sublist_$id" });
 	if (@keys) {
-		print CGI::start_ol({ class => 'sortable-branch collapse', id => "psd_sublist_$id" });
 		for (sort { $a <=> $b } @keys) {
 			print_nested_list($nestedHash->{$_});
 		}
-		print CGI::end_ol();
 	}
+	print CGI::end_ol();
 
 	print CGI::end_li();
 }
@@ -2815,7 +2815,7 @@ sub body {
 				{ id => 'psd_list', class => 'sortable-branch' . ($forUsers ? ' disable_renumber' : '') },
 				map {
 					CGI::li(
-						{ class => 'psd_list_item sortable-no-nesting', id => 'psd_list_item_' . $problemIDList[$_] },
+						{ class => 'psd_list_item', id => "psd_list_item_$problemIDList[$_]" },
 						$problemRow[$_])
 				} 0 .. $#problemIDList
 			);

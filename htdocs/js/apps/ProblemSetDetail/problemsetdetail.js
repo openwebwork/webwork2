@@ -2,40 +2,6 @@
 	// Use the sortablejs drag and drop library to drive the problem list.
 	const container = document.getElementById('psd_list');
 
-	const setupCollapseButton = (button, collapse) => {
-		button.dataset.bsTarget = `#${collapse.id}`;
-		button.setAttribute('aria-expanded', collapse.classList.contains('show') ? 'true' : 'false');
-		button.setAttribute('aria-controls', collapse.id);
-		collapse.addEventListener('hide.bs.collapse', () => {
-			button.tooltip.dispose();
-			button.tooltip = new bootstrap.Tooltip(button, { title: button.dataset.expandText, container: button });
-		});
-		collapse.addEventListener('show.bs.collapse', () => {
-			button.tooltip.dispose();
-			button.tooltip = new bootstrap.Tooltip(button, { title: button.dataset.collapseText, container: button });
-		});
-	};
-
-	const initializeDropElement = (elt) => {
-		elt.subList = document.createElement('ol');
-		elt.subList.id = elt.id.replace('psd_list_item_', 'psd_sublist_');
-		elt.subList.classList.add('sortable-branch', 'collapse', 'show');
-		elt.append(elt.subList);
-
-		if (elt.collapseButton) setupCollapseButton(elt.collapseButton, elt.subList);
-
-		setSortable(elt.subList);
-	};
-
-	const removeDropListIfEmpty = (list) => {
-		if (!list.firstElementChild) {
-			delete list.parentNode.subList;
-			list.collapse.dispose();
-			Sortable.get(list)?.destroy();
-			list.remove();
-		}
-	};
-
 	// This tracks the x coordinate of the pointer during a drag and is used to restrict the dragged element from being
 	// inserted into a sublist if the drag is not far enough to the right.
 	let lastX = -1;
@@ -44,14 +10,11 @@
 		lastX = evt.clientX;
 		const y = evt.clientY;
 
-		const elt = document.elementFromPoint(lastX, y)?.closest('.psd_list_item');
-		if (!elt || !Sortable.dragged || Sortable.dragged === elt) return;
-
-		// Add a sublist when a drag passes over a nestable problem that does not already have a sublist.
-		if (!elt.classList.contains('sortable-no-nesting') && !elt.subList) initializeDropElement(elt);
-
-		// Expand a sublist if a drag is over it.
-		if (elt.subList && elt.collapseButton && lastX > elt.collapseButton.getBoundingClientRect().left)
+		// Look for a list item a little above the current pointer position.
+		// If there is a collapsed list item there, then expand it.
+		const elt = document.elementFromPoint(lastX, y - 50)?.closest('.psd_list_item');
+		if (elt && Sortable.dragged && Sortable.dragged !== elt && elt.subList && elt.collapseButton
+			&& lastX > elt.collapseButton.getBoundingClientRect().left)
 			bootstrap.Collapse.getInstance(elt.subList).show();
 	};
 
@@ -80,7 +43,10 @@
 	};
 
 	const setSortable = (list) => {
-		if (list.classList.contains('collapse')) list.collapse = new bootstrap.Collapse(list, { toggle: false })
+		// Set up the bootstrap collapses.  Note that if a list is empty, then the collapse is shown.  Since it is empty
+		// you still see nothing, but dragging into the list is smoother because it doesn't need to be expanded first.
+		if (list.classList.contains('collapse'))
+			list.collapse = new bootstrap.Collapse(list, { toggle: !list.querySelector('.psd_list_item') })
 
 		if (list.id === container.id) list.nestDepth = 0;
 		else list.nestDepth = list.parentNode.closest('.sortable-branch').nestDepth + 1;
@@ -91,7 +57,7 @@
 			group: {
 				name: 'psd_list',
 				put: (to, from) => from.el.nestDepth > to.el.nestDepth ||
-					lastX > to.el.parentNode.querySelector('.pdr_handle').getBoundingClientRect().right + 20
+					lastX > to.el.parentNode.querySelector('.pdr_handle').getBoundingClientRect().right
 			},
 			handle: '.pdr_handle',
 			draggable: '> .psd_list_item',
@@ -102,8 +68,9 @@
 			swapThreshold: 0.5,
 			forceFallback: true,
 			onStart(evt) {
-				// If the dragged item has is a child list, then collapse it while dragging.
-				if (evt.item.subList && evt.item.subList.classList.contains('show')) {
+				// If the dragged item has a non-empty child list, then collapse it while dragging.
+				if (evt.item.subList && evt.item.subList.classList.contains('show')
+					&& evt.item.subList.querySelector('.psd_list_item')) {
 					hiddenCollapse = bootstrap.Collapse.getInstance(evt.item.subList);
 					hiddenCollapse.hide();
 					evt.item.subList.addEventListener('shown.bs.collapse', () => hiddenCollapse = null, { once: true });
@@ -113,9 +80,6 @@
 			},
 			onEnd() {
 				container.removeEventListener('pointermove', pointerMove, { passive: true });
-
-				// Clean up any empty lists created during the drag.
-				container.querySelectorAll('.sortable-branch').forEach(removeDropListIfEmpty);
 
 				if (hiddenCollapse?._isTransitioning)
 					hiddenCollapse._element.addEventListener('hidden.bs.collapse',
@@ -131,20 +95,19 @@
 					hiddenCollapse._element.addEventListener('hidden.bs.collapse',
 						() => hiddenCollapse?.show(), { once: true });
 				else hiddenCollapse?.show();
-
-				// If the last child was removed from this sortable list, then remove it.
-				removeDropListIfEmpty(list);
 			},
-			onChange() {
+			onChange(evt) {
 				container.querySelectorAll('.sortable-branch').forEach((list) => {
-					if (!list.firstElementChild) list.parentNode.collapseButton?.classList.add('d-none');
-					else list.parentNode.collapseButton?.classList.remove('d-none');
+					if (list.firstElementChild) list.parentNode.collapseButton?.classList.remove('d-none');
+					else list.parentNode.collapseButton?.classList.add('d-none');
 				});
+				if (evt.from.querySelectorAll('.psd_list_item').length < 2)
+					evt.from.parentNode.collapseButton?.classList.add('d-none');
 			}
 		});
 	};
 
-	container.querySelectorAll('.psd_list_item').forEach((elt) => {
+	container?.querySelectorAll('.psd_list_item').forEach((elt) => {
 		elt.subList = elt.querySelector('.sortable-branch');
 
 		// Set up the buttons that expand/contract JITAR nesting.
@@ -152,13 +115,33 @@
 		if (elt.collapseButton) {
 			elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton,
 				{ title: elt.collapseButton.dataset.expandText, container: elt.collapseButton });
-			if (elt.subList) setupCollapseButton(elt.collapseButton, elt.subList);
-			else elt.collapseButton.classList.add('d-none');
+
+			elt.collapseButton.dataset.bsTarget = `#${elt.subList.id}`;
+
+			const hasChildren = elt.subList.querySelector('.psd_list_item');
+			elt.collapseButton.setAttribute('aria-expanded', !hasChildren);
+			if (!hasChildren) {
+				elt.collapseButton.classList.remove('collapsed');
+				elt.collapseButton.classList.add('d-none')
+			};
+
+			elt.collapseButton.setAttribute('aria-controls', elt.subList.id);
+
+			elt.subList.addEventListener('hide.bs.collapse', () => {
+				elt.collapseButton.tooltip.dispose();
+				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton,
+					{ title: elt.collapseButton.dataset.expandText, container: elt.collapseButton });
+			});
+			elt.subList.addEventListener('show.bs.collapse', () => {
+				elt.collapseButton.tooltip.dispose();
+				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton,
+					{ title: elt.collapseButton.dataset.collapseText, container: elt.collapseButton });
+			});
 		}
 	});
 
-	setSortable(container);
-	container.querySelectorAll('.sortable-branch').forEach(setSortable);
+	if (container) setSortable(container);
+	container?.querySelectorAll('.sortable-branch').forEach(setSortable);
 
 	// Recursively convert the sortable list to a tree.  Each entry of the tree has the problem id, the parent id if it
 	// has a parent, and a list of the child problems (each of which is again an entry of the tree).
@@ -280,7 +263,7 @@
 	}
 
 	// Run disableFields on page load.
-	disableFields();
+	if (container) disableFields();
 
 	// Setup the renumber problems button.
 	document.getElementById('psd_renumber')?.addEventListener('click', () => {
