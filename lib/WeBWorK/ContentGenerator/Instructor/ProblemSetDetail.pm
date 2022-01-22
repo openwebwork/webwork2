@@ -2612,7 +2612,7 @@ sub body {
 						aria_expanded      => 'false',
 						role               => 'button'
 					},
-					CGI::i({ class => 'fas fa-chevron-right' }, '')
+					CGI::i({ class => 'fas fa-chevron-right', data_bs_toggle => 'tooltip' }, '')
 				);
 			}
 
@@ -2632,8 +2632,9 @@ sub body {
 								CGI::span({ class => 'pdr_problem_number' }, $problemNumber) . ' ',
 								$forUsers ? '' : CGI::i(
 									{
-										class         => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
-										data_bs_title => $r->maketext('Move')
+										class          => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
+										data_bs_title  => $r->maketext('Move'),
+										data_bs_toggle => 'tooltip'
 									},
 									''
 								)

@@ -68,6 +68,11 @@
 			swapThreshold: 0.5,
 			forceFallback: true,
 			onStart(evt) {
+				// Disable tooltips during a drag.
+				container.querySelectorAll('[data-bs-toggle]').forEach(
+					(tooltip) => bootstrap.Tooltip.getInstance(tooltip)?.disable()
+				);
+
 				// If the dragged item has a non-empty child list, then collapse it while dragging.
 				if (evt.item.subList && evt.item.subList.classList.contains('show')
 					&& evt.item.subList.querySelector('.psd_list_item')) {
@@ -81,10 +86,16 @@
 			onEnd() {
 				container.removeEventListener('pointermove', pointerMove, { passive: true });
 
+				// Expand the dragged item if it was collapsed at the start.
 				if (hiddenCollapse?._isTransitioning)
 					hiddenCollapse._element.addEventListener('hidden.bs.collapse',
 						() => hiddenCollapse?.show(), { once: true });
 				else hiddenCollapse?.show();
+
+				// Re-enable tooltips at the end of a drag.
+				container.querySelectorAll('[data-bs-toggle]').forEach(
+					(tooltip) => bootstrap.Tooltip.getInstance(tooltip)?.enable()
+				);
 			},
 			onSort() {
 				setProblemNumberFields();
@@ -113,14 +124,14 @@
 		// Set up the buttons that expand/contract JITAR nesting.
 		elt.collapseButton = elt.querySelector('.problem_detail_row').querySelector('.pdr_collapse');
 		if (elt.collapseButton) {
-			elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton,
+			elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton.firstElementChild,
 				{ title: elt.collapseButton.dataset.expandText, container: elt.collapseButton });
 
 			elt.collapseButton.dataset.bsTarget = `#${elt.subList.id}`;
 
 			const hasChildren = elt.subList.querySelector('.psd_list_item');
-			elt.collapseButton.setAttribute('aria-expanded', !hasChildren);
 			if (!hasChildren) {
+				elt.collapseButton.setAttribute('aria-expanded', true);
 				elt.collapseButton.classList.remove('collapsed');
 				elt.collapseButton.classList.add('d-none')
 			};
@@ -129,12 +140,12 @@
 
 			elt.subList.addEventListener('hide.bs.collapse', () => {
 				elt.collapseButton.tooltip.dispose();
-				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton,
+				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton.firstElementChild,
 					{ title: elt.collapseButton.dataset.expandText, container: elt.collapseButton });
 			});
 			elt.subList.addEventListener('show.bs.collapse', () => {
 				elt.collapseButton.tooltip.dispose();
-				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton,
+				elt.collapseButton.tooltip = new bootstrap.Tooltip(elt.collapseButton.firstElementChild,
 					{ title: elt.collapseButton.dataset.collapseText, container: elt.collapseButton });
 			});
 		}
