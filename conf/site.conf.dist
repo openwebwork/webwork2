@@ -331,7 +331,10 @@ $mail{tls_allowed} = 0;
 # https://maulwuff.de/research/ssl-debugging.html
 
 # Set maxAttachmentSize to the maximum number of megabytes to allow for the size of
-# files attached to feedback emails.
+# files attached to feedback emails.  Note that this should be set to match the
+# limitations of the email server chosen above, and should be set to a value greater
+# than zero or no attatchments will work.  This is not intended to be a configuration
+# option to disable attachments.
 
 $mail{maxAttachmentSize} = 10;
 

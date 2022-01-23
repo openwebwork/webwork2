@@ -387,7 +387,7 @@ sub feedbackForm {
 			})
 		)
 	);
-	print CGI::div({ class => 'mb-3' }, CGI::i($message)) if $message;
+	print CGI::div({ class => 'alert alert-danger mb-3' }, $message) if $message;
 	print CGI::div(
 		{ class => 'mb-3' },
 		CGI::label({ for => 'feedback', class => 'form-label' }, CGI::b($r->maketext('E-mail:'))),
