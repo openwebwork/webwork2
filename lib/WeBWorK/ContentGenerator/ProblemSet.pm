@@ -29,7 +29,7 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after);
+use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after grade_set);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -355,11 +355,17 @@ sub body {
 	}
 
 	my $isJitarSet = ($set->assignment_type eq 'jitar');
+	my $isGateway = ($set->assignment_type =~ /gateway/);
 
-
-	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r,
-		courseID => $courseID, setID => $setName);
-	my $hardcopyURL = $self->systemLink($hardcopyPage);
+	my ($hardcopyPage, $hardcopyURL);
+	if ($isGateway) {
+		$hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r, courseID => $courseID);
+		$hardcopyURL = $self->systemLink($hardcopyPage, authen => 0);
+	} else {
+		$hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r,
+			courseID => $courseID, setID => $setName);
+		$hardcopyURL = $self->systemLink($hardcopyPage);
+	}
 
 	my $enable_reduced_scoring =  $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring && $set->reduced_scoring_date &&$set->reduced_scoring_date != $set->due_date;
 
@@ -371,96 +377,389 @@ sub body {
 		my $beginReducedScoringPeriod =  $self->formatDateTime($reduced_scoring_date);
 
 		if (before($reduced_scoring_date)) {
-			print CGI::div({class=>"ResultsAlert"},
+			print CGI::div({class=>"alert alert-warning mb-3"},
 				$r->maketext("After the reduced scoring period begins all work counts for [_1]% of its value.",
 					$reducedScoringPerCent));
 
 		} elsif (between($reduced_scoring_date, $set->due_date())) {
-			print CGI::div({class=>"ResultsAlert"},
+			print CGI::div({class=>"alert alert-warning mb-3"},
 				$r->maketext("This set is in its reduced scoring period.  All work counts for [_1]% of its value.",
 					$reducedScoringPerCent));
 		} else {
-			print CGI::div({class=>"ResultsAlert"},
+			print CGI::div({class=>"alert alert-warning mb-3"},
 				$r->maketext("This set had a reduced scoring period that started on [_1] and ended on [_2].  During that period all work counted for [_3]% of its value.",
 					$beginReducedScoringPeriod, $dueDate, $reducedScoringPerCent));
 		}
 	}
 
-	# DBFIXME use iterator
-	my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
+	# If gateway list quiz versions.
+	my $multiSet = $authz->hasPermissions($user, "view_multiple_sets");
+	if ($isGateway) {
+		my $timeNow = time;
+		my @setVers = $db->listSetVersions($effectiveUser, $set->set_id);
+		my $timeLimit = $set->version_time_limit() / 60 || 0;
 
-	# Check permissions and see if any of the problems have are gradeable
-	my $canScoreProblems = 0;
-	if ($authz->hasPermissions($user, "access_instructor_tools") &&
-		$authz->hasPermissions($user, "score_sets")) {
+		# Compute how many versions have been launched within timeInterval
+		#     to determine if a new version can be created, if a version
+		#     can be continued, and the date a next version can be started.
+		#     If there is an open version with no submits, add button to
+		#     continue the first such version found.
+		#     Build a data hash for each version that is used to create the
+		#     quiz versions table.
+		my $continueVersion = 0;
+		my $currentVersions = 0;
+		my $lastTime = 0;
+		my $timeInterval = $set->time_interval() || 0;
+		my $maxVersions = $set->versions_per_interval() || 0;
+		my @versData = ();
+		foreach my $ver (@setVers) {
+			my $verSet = $db->getSetVersion($effectiveUser, $set->set_id, $ver);
 
-		my @setUsers = $db->listSetUsers($setName);
-		my @gradeableProblems;
-
-		foreach my $problemID (@problemNumbers) {
-			my $problem = $db->getGlobalProblem($setName, $problemID);
-
-			if ($problem->flags =~ /essay/)  {
-				$canScoreProblems = 1;
-				$gradeableProblems[$problemID] = 1;
+			# Count number of versions in current timeInterval
+			if (!$timeInterval || $verSet->version_creation_time() > ($timeNow - $timeInterval)) {
+				$currentVersions++;
+				$lastTime = $verSet->version_creation_time()
+				if ($lastTime == 0 || $lastTime > $verSet->version_creation_time);
 			}
+			
+			# Get a problem to determine how many submits have been made.
+			my @ProblemNums = $db->listUserProblems($effectiveUser, $set->set_id);
+			my $Problem = $db->getMergedProblemVersion($effectiveUser, $set->set_id, $ver, $ProblemNums[0]);
+			my $verSubmits = (defined($Problem) && $Problem->num_correct() ne '')
+				? $Problem->num_correct() + $Problem->num_incorrect() : 0;
+			my $maxSubmits = (defined($Problem) && defined($Problem->max_attempts()) &&
+				$Problem->max_attempts()) ? $Problem->max_attempts() : -1;
+
+
+			# Build data hash for this version
+			my $data = {};
+			$data->{id} = $set->set_id.',v'.$ver;
+			$data->{version} = $ver;
+			$data->{start} = $self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
+
+			my $timeLeft = int(($verSet->due_date - $timeNow)/60);
+			if (defined($verSet->version_last_attempt_time) && $verSet->version_last_attempt_time > 0) {
+				if ($timeNow < $verSet->due_date && ($maxSubmits <= 0 ||
+						($maxSubmits > 0 && $verSubmits <= $maxSubmits))
+				) {
+					$data->{end} = $r->maketext("Additional submissions avilable. [_1] min remain.", $timeLeft);
+				} else {
+					$data->{end} = $self->formatDateTime($verSet->version_last_attempt_time,
+						undef, $ce->{studentDateDisplayFormat});
+				}
+			} elsif ($timeNow < $verSet->due_date) {
+				$data->{end} = $r->maketext("Test not yet submitted. [_1] min remain.", $timeLeft);
+			} else {
+				$data->{end} = $r->maketext("No submissions. Over time.");
+			}
+
+			# Status Logic:
+			#     Assuming it is always after the open date for test versions.
+			if ($timeNow < $verSet->due_date()) {
+				if ($maxSubmits > 0 && $verSubmits >= $maxSubmits) {
+					$data->{status} = $r->maketext('Completed.');
+				} elsif ($verSubmits >= 1) {
+					$data->{status} = $r->maketext('Open. Submitted.');
+				} else {
+					$data->{status} = $r->maketext('Open.');
+					$continueVersion = $ver if $continueVersion == 0;
+				}
+			} else {
+				if ($verSubmits > 0) {
+					$data->{status} = $r->maketext('Completed.');
+				} else {
+					$data->{status} = $r->maketext('Closed.');
+				}
+			}
+			if ($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate'
+					&& $timeNow >= $set->answer_date)) {
+				$data->{status} .= ' ' . $r->maketext('Answers Available.');
+			}
+
+			$data->{score} = '&nbsp;';
+			# Only show score if user has permission and assignment has at least one submit.
+			if ($authz->hasPermissions($user, 'view_hidden_work') ||
+				($set->hide_score eq 'N' && $verSubmits >= 1) ||
+				($set->hide_score eq 'BeforeAnswerDate' && $timeNow > $set->answer_date))
+			{
+				my ($total, $possible) = grade_set($db, $verSet, $verSet->set_id, $effectiveUser, 1);
+				$total = wwRound(2, $total);
+				$data->{score} = "$total/$possible";
+			}
+			push @versData, $data;
 		}
 
-		$self->{gradeableProblems} = \@gradeableProblems if $canScoreProblems;
-	}
+		my $urlModule = ($set->assignment_type() =~ /proctored/) ?
+			'WeBWorK::ContentGenerator::ProctoredGatewayQuiz' :
+			'WeBWorK::ContentGenerator::GatewayQuiz';
 
-	if (@problemNumbers) {
-		# This table contains a summary, a caption, and scope variables for the columns.
-		print CGI::div({ class => 'table-responsive' });
+		# Display continue open test button if open non submitted version found.
+		if ($continueVersion > 0) {
+			my $interactiveURL = $self->systemLink(
+				$urlpath->newFromModule($urlModule, $r,
+					courseID => $courseID, setID => $set->set_id.',v'.$continueVersion)
+			);
+			print CGI::start_div({-class => 'problem_set_options'});
+			print CGI::a(
+				{ href => $interactiveURL, class => 'btn btn-primary' },
+				$r->maketext('Continue Open Test')
+			);
+			print CGI::end_div();
+			print CGI::br();
+
+		# Otherwise display start new test button if avaiable.
+		} elsif (
+			(
+				$timeNow >= $set->open_date ||
+				$authz->hasPermissions($user, "view_hidden_sets")
+			) &&
+			$timeNow <= $set->due_date &&
+			!(
+				$ce->{options}{enableConditionalRelease} &&
+				is_restricted($db, $set, $effectiveUser)
+			) &&
+			($maxVersions <= 0 || $currentVersions < $maxVersions)
+		) {
+			my $interactiveURL = $self->systemLink(
+				$urlpath->newFromModule($urlModule, $r,
+					courseID => $courseID, setID => $set->set_id)
+			);
+			print CGI::start_div({-class=>"problem_set_options"});
+			print CGI::a(
+				{ href => $interactiveURL, class => 'btn btn-primary' },
+				$r->maketext('Start New Test')
+			);
+			print CGI::end_div();
+			print CGI::br();
+
+		# Message about if/when next version will be available.
+		} else {
+			my $msg = $r->maketext('No more tests available.');
+
+			# Can they open a test in the future?
+			if ($timeInterval > 0) {
+				my $nextTime = ($currentVersions == $maxVersions) ? $lastTime + $timeInterval : $timeNow + $timeInterval;
+				if ($nextTime < $set->due_date) {
+					$msg = $r->maketext('Next test will be available by [_1].',
+						$self->formatDateTime($nextTime, 0, $ce->{studentDateDisplayFormat}));
+				}
+			}
+
+			# Is it past due date?
+			if ($timeNow >= $set->due_date) {
+				$msg = $r->maketext('Test is closed.');
+			}
+
+			print CGI::div(CGI::p(CGI::strong($msg)));
+			print CGI::br();
+		}
+
+		# Start of form for hardcopy of test versions.
+		if ($multiSet) {
+			print CGI::start_form(
+				-name   => 'problem-sets-form',
+				-id     => 'problem-sets-form',
+				-method => 'POST',
+				-action => $hardcopyURL
+			),
+			$self->hidden_authen_fields;
+		}
+
+		print CGI::start_div({ class => 'table-responsive' });
 		print CGI::start_table({
-				class => "problem_set_table table caption-top font-sm",
-				summary => $r->maketext("This table shows the problems that are in this problem set.  " .
-					"The columns from left to right are: name of the problem, current number of attempts made, " .
-					"number of attempts remaining, the point worth, and the completion status.  Click on the " .
-					"link on the name of the problem to take you to the problem page.")
-			});
-		print CGI::caption($r->maketext("Problems"));
-		my $AdjustedStatusPopover = "&nbsp;" . CGI::a({
-				class => 'help-popup',
-				data_bs_content => $r->maketext('The adjusted status of a problem is the larger of the problem\'s ' .
-					'status and the weighted average of the status of those problems which count towards the ' .
-					'parent grade.'),
-				data_bs_placement => 'top',
-				data_bs_toggle => 'popover'
-			}, CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, ""));
+				class    => 'problem_set_table table table-sm caption-top font-sm',
+				summary => $r->maketext(
+					'This table lists the current attempts for this test/quiz, '
+					. 'along with its status, score, start date, and close date. '
+					. 'Click on the version link to access that version. '
+					. 'There is also a Generate Hardcopy and Email Instrucotr button below.'
+				)
+		});
+		print CGI::caption($r->maketext('Test Versions'));
+		print CGI::thead(CGI::Tr(
+			CGI::th({ -scope => 'col'}, 'Versions'),
+			CGI::th({ -scope => 'col'}, 'Status'),
+			CGI::th({ -scope => 'col'}, 'Score'),
+			CGI::th({ -scope => 'col'}, 'Start'),
+			CGI::th({ -scope => 'col'}, 'End'),
+			CGI::th(
+				{ -scope => 'col', class => 'hardcopy'},
+				CGI::i(
+					{
+						class => 'icon far fa-lg fa-arrow-alt-circle-down',
+						aria_hidden => 'true',
+						title => $r->maketext('Generate Hardcopy'),
+						data_alt => $r->maketext('Generate Hardcopy')
+					},
+					''
+				)
+			),
+		));
 
-		my $thRow = [ CGI::th($r->maketext("Name")),
-			CGI::th($r->maketext("Attempts")),
-			CGI::th($r->maketext("Remaining")),
-			CGI::th($r->maketext("Worth")),
-			CGI::th($r->maketext("Status")) ];
-		if ($isJitarSet) {
-			push @$thRow, CGI::th($r->maketext("Adjusted Status") . $AdjustedStatusPopover);
-			push @$thRow, CGI::th($r->maketext("Counts for Parent"));
-		}
-
-		if ($canScoreProblems) {
-			push @$thRow, CGI::th($r->maketext("Grader"));
-		}
-
-		print CGI::thead(CGI::Tr(@$thRow));
 		print CGI::start_tbody();
+		foreach my $ver (@versData) {
+			# Download hardcopy.
+			my $control = '';
+			if ($multiSet) {
+				$control = CGI::input({
+					type  => 'checkbox',
+					id    => $ver->{id},
+					name  => 'selected_sets',
+					value => $ver->{id},
+					class => 'form-check-input'
+				});
+			
+			# Only display download option if answers are avaialbe.
+			} elsif ($ver->{status} =~ /Answers/) {
+				my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r,
+					courseID => $courseID, setID => $ver->{id});
+				my $link = $self->systemLink($hardcopyPage, params => { selected_sets => $ver->{id} });
+				$control = CGI::a(
+					{ class => 'hardcopy-link', href => $link },
+					CGI::i(
+						{
+							class       => 'icon far fa-arrow-alt-circle-down fa-lg',
+							aria_hidden => 'true',
+							title       => $r->maketext('Download [_1]', $ver->{id} =~ s/_/ /gr),
+							data_alt    => $r->maketext('Download [_1]', $ver->{id} =~ s/_/ /gr)
+						},
+						''
+					)
+				);
+			}
 
-		@problemNumbers = sort { $a <=> $b } @problemNumbers;
+			my $interactive = $r->maketext('Version #[_1]', $ver->{version});
+			if ($authz->hasPermissions($user, 'view_hidden_work') ||
+				$ver->{status} =~ /Open/ || $ver->{status} =~ /Answers/)
+			{
+				my $interactiveURL = $self->systemLink(
+					$urlpath->newFromModule($urlModule, $r,
+						courseID => $courseID, setID => $ver->{id} ));
+				$interactive = CGI::a(
+					{
+						title => '',
+						href  => $interactiveURL
+					},
+					$interactive
+				);
+			}
 
-		foreach my $problemNumber (@problemNumbers) {
-			my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
-			die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
-			print $self->problemListRow($set, $problem, $db, $canScoreProblems, $isJitarSet);
+			print CGI::Tr(
+				CGI::td($interactive),
+				CGI::td(CGI::strong($ver->{status})),
+				CGI::td([$ver->{score}, $ver->{start}, $ver->{end}]),
+				CGI::td({class => 'hardcopy'}, $control)
+			);
 		}
-
 		print CGI::end_tbody();
 		print CGI::end_table();
 		print CGI::end_div();
-	} else {
-		print CGI::p($r->maketext("This homework set contains no problems."));
-	}
 
+	# Normal set, list problems
+	} else {
+
+		# DBFIXME use iterator
+		my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
+
+		# Check permissions and see if any of the problems have are gradeable
+		my $canScoreProblems = 0;
+		if ($authz->hasPermissions($user, "access_instructor_tools") &&
+			$authz->hasPermissions($user, "score_sets")) {
+
+			my @setUsers = $db->listSetUsers($setName);
+			my @gradeableProblems;
+
+			foreach my $problemID (@problemNumbers) {
+				my $problem = $db->getGlobalProblem($setName, $problemID);
+
+				if ($problem->flags =~ /essay/)  {
+					$canScoreProblems = 1;
+					$gradeableProblems[$problemID] = 1;
+				}
+			}
+
+			$self->{gradeableProblems} = \@gradeableProblems if $canScoreProblems;
+		}
+
+		if (@problemNumbers) {
+			# This table contains a summary, a caption, and scope variables for the columns.
+			print CGI::div({ class => 'table-responsive' });
+			print CGI::start_table({
+					class => "problem_set_table table caption-top font-sm",
+					summary => $r->maketext("This table shows the problems that are in this problem set.  " .
+						"The columns from left to right are: name of the problem, current number of attempts made, " .
+						"number of attempts remaining, the point worth, and the completion status.  Click on the " .
+						"link on the name of the problem to take you to the problem page.")
+				});
+			print CGI::caption($r->maketext("Problems"));
+			my $AdjustedStatusPopover = "&nbsp;" . CGI::a({
+					class => 'help-popup',
+					data_bs_content => $r->maketext('The adjusted status of a problem is the larger of the problem\'s ' .
+						'status and the weighted average of the status of those problems which count towards the ' .
+						'parent grade.'),
+					data_bs_placement => 'top',
+					data_bs_toggle => 'popover'
+				}, CGI::i({ class => "icon fas fa-question-circle", aria_hidden => "true", data_alt => "Help Icon" }, ""));
+
+			my $thRow = [ CGI::th($r->maketext("Name")),
+				CGI::th($r->maketext("Attempts")),
+				CGI::th($r->maketext("Remaining")),
+				CGI::th($r->maketext("Worth")),
+				CGI::th($r->maketext("Status")) ];
+			if ($isJitarSet) {
+				push @$thRow, CGI::th($r->maketext("Adjusted Status") . $AdjustedStatusPopover);
+				push @$thRow, CGI::th($r->maketext("Counts for Parent"));
+			}
+
+			if ($canScoreProblems) {
+				push @$thRow, CGI::th($r->maketext("Grader"));
+			}
+
+			print CGI::thead(CGI::Tr(@$thRow));
+			print CGI::start_tbody();
+
+			@problemNumbers = sort { $a <=> $b } @problemNumbers;
+
+			foreach my $problemNumber (@problemNumbers) {
+				my $problem = $db->getMergedProblem($effectiveUser, $setName, $problemNumber); # checked
+				die "problem $problemNumber in set $setName for user $effectiveUser not found." unless $problem;
+				print $self->problemListRow($set, $problem, $db, $canScoreProblems, $isJitarSet);
+			}
+
+			print CGI::end_tbody();
+			print CGI::end_table();
+			print CGI::end_div();
+		} else {
+			print CGI::p($r->maketext("This homework set contains no problems."));
+		}
+
+	} # End Gateway vs Normal assignment conditional
+
+	# Display hardcopy button
+	if ($isGateway && $multiSet) {
+		print CGI::start_div({ class => 'problem_set_options' });
+		print CGI::start_p()
+			. CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-primary' })
+			. CGI::end_p();
+		print CGI::start_p()
+			. CGI::submit({
+				id => 'hardcopy',
+				name => 'hardcopy',
+				value => $r->maketext('Download PDF or TeX Hardcopy for Selected Tests'),
+				class => 'btn btn-primary'
+			})
+			. CGI::end_p();
+		print CGI::end_div();
+		print CGI::end_form();
+	} elsif (! $isGateway) {
+		print CGI::div(
+			{ class => "problem_set_options mb-2" },
+			CGI::a(
+				{ href => $hardcopyURL, class => 'btn btn-primary' },
+				$r->maketext("Download PDF or TeX Hardcopy for Current Set")
+			)
+		);
+	}
 
 	print CGI::start_div({-class=>"problem_set_options"});
 	print $self->feedbackMacro(
@@ -474,14 +773,6 @@ sub body {
 		showSolutions => "",
 	);
 	print CGI::end_div();
-
-	print CGI::div(
-		{ class => "problem_set_options mb-2" },
-		CGI::a(
-			{ href => $hardcopyURL, class => 'btn btn-primary' },
-			$r->maketext("Download PDF or TeX Hardcopy for Current Set")
-		)
-	);
 
 	return "";
 }

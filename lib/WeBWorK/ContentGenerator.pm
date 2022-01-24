@@ -796,18 +796,18 @@ sub links {
 			    print CGI::start_li({ class => 'nav-item' });
 				print CGI::start_ul({ class => 'nav flex-column' });
 				print CGI::start_li({ class => 'nav-item' }); # $setID
-				# show a link if we're displaying a homework set, or a version
-				#    of a gateway assignment; to know if it's a gateway
+				# show a link which depends on if it is a versioned gateway
+				#    assignment or not; to know if it's a gateway
 				#    assignment, we have to get the set record.
 				my ($globalSetID) = ( $setID =~ /(.+?)(,v\d+)?$/ );
 				my $setRecord = $db->getGlobalSet( $globalSetID );
 			    if ($setRecord->assignment_type eq 'jitar'  && defined $problemID) {
 				$prettyProblemID = join('.',jitar_id_to_seq($problemID));
 			    }
-				if ( $setRecord->assignment_type !~ /gateway/ ) {
-					print &$makelink("${pfx}ProblemSet", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
-				} elsif ($setID =~ /,v(\d)+$/) {
+				if ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v\(d\)+$/) {
 					print &$makelink("${pfx}GatewayQuiz", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+				} else {
+					print &$makelink("${pfx}ProblemSet", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				}
 			    print CGI::end_li();
 
