@@ -96,11 +96,16 @@ sub scoring_info {
 
 	# get out if the files don't exist
 	if (!(-e "$scoringDirectory/$merge_file" && -e "$filePath")) {
-	  if ($r->authz->hasPermissions($userID, "access_instructor_tools")) {
-	    return  $r->maketext('There is no additional grade information.  A message about additional grades can go in in ~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be edited using the "Email" link and the "File Manager" link in the left margin.', $message_file, $merge_file);
-	  } else {
-	    return '';
-	  }
+		if ($r->authz->hasPermissions($userID, "access_instructor_tools")) {
+			return $r->maketext(
+				'There is no additional grade information.  A message about additional grades can go in '
+					. '~[TMPL~]/email/[_1]. It is merged with the file ~[Scoring~]/[_2]. These files can be '
+					. 'edited using the "Email" link and the "File Manager" link in the left margin.',
+				$message_file, $merge_file
+			);
+		} else {
+			return '';
+		}
 	}
 
 	my $rh_merge_data   = $self->read_scoring_file("$merge_file", "$delimiter");
@@ -134,21 +139,20 @@ sub scoring_info {
 
 	my $endCol        = @COL;
 	# for safety, only evaluate special variables
-	# FIXME /e is not required for simple variable interpolation
 	my $msg = $text;
-	$msg =~ s/(\$PAR)/<p>/ge;
-	$msg =~ s/(\$BR)/<br>/ge;
+	$msg =~ s/(\$PAR)/<p>/g;
+	$msg =~ s/(\$BR)/<br>/g;
 
- 	$msg =~ s/\$SID/$SID/ge;
- 	$msg =~ s/\$LN/$LN/ge;
- 	$msg =~ s/\$FN/$FN/ge;
- 	$msg =~ s/\$STATUS/$STATUS/ge;
- 	$msg =~ s/\$SECTION/$SECTION/ge;
- 	$msg =~ s/\$RECITATION/$RECITATION/ge;
- 	$msg =~ s/\$EMAIL/$EMAIL/ge;
- 	$msg =~ s/\$LOGIN/$LOGIN/ge;
+ 	$msg =~ s/\$SID/$SID/g;
+ 	$msg =~ s/\$LN/$LN/g;
+ 	$msg =~ s/\$FN/$FN/g;
+ 	$msg =~ s/\$STATUS/$STATUS/g;
+ 	$msg =~ s/\$SECTION/$SECTION/g;
+ 	$msg =~ s/\$RECITATION/$RECITATION/g;
+ 	$msg =~ s/\$EMAIL/$EMAIL/g;
+ 	$msg =~ s/\$LOGIN/$LOGIN/g;
 	if (defined($COL[1])) {		# prevents extraneous error messages.
-		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1] if defined($COL[$1])/ge
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/g
 	}
 	else {						# prevents extraneous $COL's in email message
 		$msg =~ s/\$COL\[(\-?\d+)\]//g
@@ -184,78 +188,59 @@ sub displayStudentStats {
 	die "record for user $studentName not found" unless $studentRecord;
 	my $root = $ce->{webworkURLs}->{root};
 
-######################################################################
-# Get all sets (including versions of gateway quizzes) assigned to this user
-######################################################################
+	######################################################################
+	# Get all sets (including versions of gateway quizzes) assigned to this user
+	######################################################################
 
-	# first get all non-versioned-sets; listUserSets will return all
-	#    homework assignments, plus the template gateway sets.
-	# DBFIXME use iterator instead of setIDs
-	my @setIDs    = sort( $db->listUserSets($studentName) );
-	# to figure out which of these are gateways (that is, versioned),
-	#    we need to also have the actual (merged) set objects
-	my @sets = $db->getMergedSets( map {[$studentName, $_]} @setIDs );
-	# to be able to find the set objects later, make a handy hash
+	# First get all merged sets for this user ordered by set_id.
+	my @sets = $db->getMergedSetsWhere({ user_id => $studentName }, 'set_id');
+	# To be able to find the set objects later, make a handy hash of set ids to set objects.
 	my %setsByID = ( map {$_->set_id => $_} @sets );
 
-######################################################
-# before going through the table generating loop, find all the
-#    set versions for the sets in our list
-#
-# info for refactoring:
-# input:  list of regular sets (from $db->getMergedSets(studentID, setID )
-# input:  $db
-# input: \%setsByID
-# output: \%setVersionsByID  ---  a pointer to a list of version names.
-# update: \%setsByID ---  indexed by full set name, value is the set record
-# output: \@allSetIDs   -- full names of sets (the gateway template and the versioned tests)
-#############################################
-	my %setVersionsByID = ();
-	my @allSetIDs = ();
-	foreach my $set ( @sets ) {
+	######################################################
+	# Before going through the table generating loop, find all the
+	# set versions for the sets in our list.
+	#############################################
+	my %setVersionsCount;
+	my @allSetIDs;
+	foreach my $set (@sets) {
 		my $setName = $set->set_id();
-		#
-		# FIXME: Here, as in many other locations, we assume that
-		#    there is a one-to-one matching between versioned sets
-		#    and gateways.  we really should have two flags,
-		#    $set->assignment_type and $set->versioned.  I'm not
-		#    adding that yet, however, so this will continue to
-		#    use assignment_type...
-		#
-		if ( defined($set->assignment_type) &&
-		     $set->assignment_type =~ /gateway/ ) {
-			my @vList = $db->listSetVersions($studentName,$setName);
-			# we have to have the merged set versions to
-			#    know what each of their assignment types
-			#    are (because proctoring can change)
-			my @setVersions = $db->getMergedSetVersions( map {[$studentName, $setName, $_]} @vList );
 
-			# add the set versions to our list of sets
-			foreach ( @setVersions ) {
-				$setsByID{$_->set_id . ",v" . $_->version_id} = $_;
-			}
-			# flag the existence of set versions for this set
-			$setVersionsByID{$setName} = [ @vList ];
-			# and save the set names for display
-			push( @allSetIDs, $setName );
-			push( @allSetIDs, map { "$setName,v$_" } @vList );
+		# FIXME: Here, as in many other locations, we assume that
+		# there is a one-to-one matching between versioned sets
+		# and gateways.  we really should have two flags,
+		# $set->assignment_type and $set->versioned.  I'm not
+		# adding that yet, however, so this will continue to
+		# use assignment_type...
+		if (defined $set->assignment_type && $set->assignment_type =~ /gateway/)
+		{
+			# We have to have the merged set versions to know what each of their assignment types are
+			# (because proctoring can change this).
+			my @setVersions =
+				$db->getMergedSetVersionsWhere({ user_id => $studentName, set_id => { like => "$setName,\%" } });
+
+			# Add the set versions to our list of sets.
+			$setsByID{ $_->set_id . ",v" . $_->version_id } = $_ for (@setVersions);
+
+			# Flag the existence of set versions for this set.
+			$setVersionsCount{$setName} = scalar @setVersions;
+
+			# Save the set names for display.
+			push(@allSetIDs, $setName);
+			push(@allSetIDs, map { $_->set_id . ",v" . $_->version_id } @setVersions);
 
 		} else {
-			push( @allSetIDs, $setName );
-			$setVersionsByID{$setName} = "None";
+			push(@allSetIDs, $setName);
 		}
 	}
 
-
-#########################################################################################
+	#########################################################################################
 	my $fullName = join("", $studentRecord->first_name," ", $studentRecord->last_name);
 	my $effectiveUser = $studentRecord->user_id();
 	my $act_as_student_url = "$root/$courseName/?user=".$r->param("user").
 			"&effectiveUser=$effectiveUser&key=".$r->param("key");
 
-
-	# FIXME: why is the following not "print CGI::h3($fullName);"?  Hmm.
-	print CGI::h3($fullName ),
+	print CGI::h3($fullName);
 
 	###############################################################
 	#  Print table
@@ -297,20 +282,21 @@ sub displayStudentStats {
 		my $set = $setsByID{ $setName };
 		my $setID = $set->set_id();  #FIXME   setName and setID should be the same
 
-		# now, if the set is a template gateway set and there
-		#    are no versions, we acknowledge that the set exists
-		#    and the student hasn't attempted it; otherwise, we
-		#    skip it and let the versions speak for themselves
-		if ( defined( $set->assignment_type() ) &&
-		     $set->assignment_type() =~ /gateway/ &&
-		     ref( $setVersionsByID{ $setName } ) ) {
-			if ( @{$setVersionsByID{$setName}} ) {
-				next;
-			} else {
-				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)),
-						     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("No versions of this assignment have been taken.")))) );
-				next;
-			}
+		# If the set is a template gateway set and there
+		# are no versions, we acknowledge that the set exists
+		# and the student hasn't attempted it. Otherwise, we
+		# skip it and let the versions speak for themselves.
+		if (defined $setVersionsCount{$setName}) {
+			next if $setVersionsCount{$setName};
+			push @rows,
+				CGI::Tr(
+					CGI::td(WeBWorK::ContentGenerator::underscore2sp($setID)),
+					CGI::td(
+						{ colspan => ($max_problems + 2) },
+						CGI::em($r->maketext("No versions of this assignment have been taken."))
+					)
+				);
+			next;
 		}
 		# if the set has hide_score set, then we need to skip printing
 		#    the score as well
@@ -557,19 +543,12 @@ sub grade_set {
 		my $num_of_attempts = 0;
 
 		debug("Begin collecting problems for set $setName");
-		# DBFIXME: to collect the problem records, we have to know
-		#    which merge routines to call.  Should this really be an
-		#    issue here?  That is, shouldn't the database deal with
-		#    it invisibly by detecting what the problem types are?
-		#    oh well.
 
-		my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
-		my $num_of_problems  = @problemRecords || 0;
-		my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0;
-
-		if ( $setIsVersioned ) {
-			@problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
-		}   # use versioned problems instead (assume that each version has the same number of problems.
+		my @problemRecords =
+			$setIsVersioned
+			? $db->getAllMergedProblemVersions($studentName, $setID, $set->version_id)
+			: $db->getAllMergedUserProblems($studentName, $setID);
+		my $num_of_problems  = @problemRecords;
 
 	# for jitar sets we only use the top level problems
 	if ($set->assignment_type eq 'jitar') {
@@ -636,11 +615,12 @@ sub grade_set {
 			my $num_incorrect = $problemRecord->num_incorrect   || 0;
 			$num_of_attempts  += $num_correct + $num_incorrect;
 
-#######################################################
+			#######################################################
 			# This is a fail safe mechanism that makes sure that
 			# the problem is marked as attempted if the status has
 			# been set or if the problem has been attempted
 			# DBFIXME this should happen in the database layer, not here!
+			# Oh wait, it does.  This is obsolete fix up code and should be deleted.
 			if (!$attempted && ($status || $num_correct || $num_incorrect )) {
 				$attempted = 1;
 				$problemRecord->attempted('1');
@@ -653,7 +633,7 @@ sub grade_set {
 					$db->putUserProblem($problemRecord );
 				}
 			}
-######################################################
+			######################################################
 
 			# sanity check that the status (score) is
 			# between 0 and 1

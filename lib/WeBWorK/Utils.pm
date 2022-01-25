@@ -1262,13 +1262,10 @@ sub grade_set {
   #    it invisibly by detecting what the problem types are?
   #    oh well.
 
-  my @problemRecords = $db->getAllMergedUserProblems( $studentName, $setID );
-  my $num_of_problems  = @problemRecords || 0;
-  my $max_problems     = defined($num_of_problems) ? $num_of_problems : 0;
-
-  if ( $setIsVersioned ) {
-    @problemRecords = $db->getAllMergedProblemVersions( $studentName, $setID, $set->version_id );
-  }   # use versioned problems instead (assume that each version has the same number of problems.
+  my @problemRecords =
+    $setIsVersioned
+    ? $db->getAllMergedProblemVersions($studentName, $setID, $set->version_id)
+    : $db->getAllMergedUserProblems($studentName, $setID);
 
   # for jitar sets we only use the top level problems
   if ($set->assignment_type eq 'jitar') {
@@ -1720,30 +1717,23 @@ sub jitar_problem_finished {
 
 # requires a CG object, and a permission type
 # a user may also be submitted, in case we need to filter by section
-# could require the db, course environment and authz separately... why tho?
 
 sub fetchEmailRecipients {
-	my ($self, $permissionType, $sender) = @_; # sender argument is optional
-	my $r = $self->r;
-	my $db = $r->db;
-	my $ce = $r->ce;
+	my ($self, $permissionType, $sender) = @_;    # sender argument is optional
+	my $r     = $self->r;
+	my $db    = $r->db;
+	my $ce    = $r->ce;
 	my $authz = $r->authz;
-	my @recipients;
 
-  return unless $permissionType;
+	return unless $permissionType;
 
-	foreach my $potentialRecipient ($db->listUsers()) {
-		if ($authz->hasPermissions($potentialRecipient, $permissionType)) {
-			my $validRecipient = $db->getUser($potentialRecipient);
-			next if $ce->{feedback_by_section} and defined $sender
-					and defined $validRecipient->section and defined $sender->section
-					and $validRecipient->section ne $sender->section;
-			if ($validRecipient and $validRecipient->email_address) {
-					push @recipients, $validRecipient->rfc822_mailbox;
-			}
-		}
-	}
-	return @recipients;
+	return
+		map { $_->rfc822_mailbox } grep { $authz->hasPermissions($_->user_id, $permissionType) } $db->getUsersWhere({
+			email_address => { '!=', undef },
+			$ce->{feedback_by_section}
+			&& defined $sender
+			&& defined $sender->section ? (section => $sender->section) : (),
+		});
 }
 
 # Requires a CG object.

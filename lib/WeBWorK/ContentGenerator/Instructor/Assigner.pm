@@ -97,38 +97,21 @@ sub body {
 		)
 	);
 
-	# DBFIXME shouldn't have to get the user id list
-	# DBFIXME mark's filtering should happen in a WHERE clause
-	my @userIDs = $db->listUsers;
-	my @Users   = $db->getUsers(@userIDs);
+	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# user if such restrictions are defined.
+	my @Users = $db->getUsersWhere({
+		user_id => { not_like => 'set_id:%' },
+		$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+		? (
+			-or => [
+				$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+				$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+			]
+			)
+		: ()
+	});
 
-	# Mark's Edits for filtering
-	my @myUsers;
-
-	my (@viewable_sections, @viewable_recitations);
-
-	if (defined($ce->{viewable_sections}->{$user})) { @viewable_sections = @{ $ce->{viewable_sections}->{$user} }; }
-	if (defined($ce->{viewable_recitations}->{$user})) {
-		@viewable_recitations = @{ $ce->{viewable_recitations}->{$user} };
-	}
-	if (@viewable_sections or @viewable_recitations) {
-		foreach my $student (@Users) {
-			my $keep = 0;
-			foreach my $sec (@viewable_sections) {
-				if ($student->section() eq $sec) { $keep = 1; }
-			}
-			foreach my $rec (@viewable_recitations) {
-				if ($student->section() eq $rec) { $keep = 1; }
-			}
-			if ($keep) { push @myUsers, $student; }
-		}
-		@Users = @myUsers;
-	}
-	# End Mark's Edits
-
-	# DBFIXME shouldn't have to get the set ID list
-	my @globalSetIDs = $db->listGlobalSets;
-	my @GlobalSets   = $db->getGlobalSets(@globalSetIDs);
+	my @GlobalSets   = $db->getGlobalSetsWhere();
 
 	print CGI::start_form({ method => 'post', action => $r->uri() });
 	print $self->hidden_authen_fields();

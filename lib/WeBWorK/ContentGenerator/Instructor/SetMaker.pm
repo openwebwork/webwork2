@@ -325,7 +325,7 @@ sub add_selected {
 	my @past_problems = @{$self->{past_problems}};
 	my @selected = @past_problems;
 	my (@path, $file, $selected, $freeProblemID);
-	# DBFIXME count would work just as well
+
 	my $addedcount=0;
 
 	for $selected (@selected) {
@@ -454,7 +454,7 @@ sub browse_local_panel {
 		unshift @{$list_of_prob_dirs}, $library_selected;
 	} else {
 		my $default_value = $r->maketext(SELECT_LOCAL_STRING);
-		if (not $library_selected or $library_selected eq $default_value) {
+		if (!defined $library_selected or $library_selected eq $default_value) {
 			unshift @{$list_of_prob_dirs},	$default_value;
 			$library_selected = $default_value;
 		}
@@ -495,7 +495,7 @@ sub browse_mysets_panel {
 
 	if(scalar(@$list_of_local_sets) == 0) {
 		$list_of_local_sets = [$r->maketext(NO_LOCAL_SET_STRING)];
-	} elsif (not $library_selected or $library_selected eq $default_value) {
+	} elsif (!defined $library_selected or $library_selected eq $default_value) {
 		unshift @{$list_of_local_sets},	 $default_value;
 		$library_selected = $default_value;
 	}
@@ -1012,7 +1012,7 @@ sub browse_setdef_panel {
 		return;
 	}
 
-	if (!$library_selected || $library_selected eq $default_value) {
+	if (!defined $library_selected || $library_selected eq $default_value) {
 		unshift @list_of_set_defs, $default_value;
 		$library_selected = $default_value;
 	}
@@ -1054,7 +1054,7 @@ sub make_top_row {
 
 	if ($have_local_sets == 0) {
 		$list_of_local_sets = [ $r->maketext(NO_LOCAL_SET_STRING) ];
-	} elsif (!$set_selected || $set_selected eq $r->maketext(SELECT_SET_STRING)) {
+	} elsif (!defined $set_selected || $set_selected eq $r->maketext(SELECT_SET_STRING)) {
 		unshift @{$list_of_local_sets}, $r->maketext(SELECT_SET_STRING);
 		$set_selected = $r->maketext(SELECT_SET_STRING);
 	}
@@ -1830,11 +1830,9 @@ sub pre_header_initialize {
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_local')) {
 		$browse_which = 'browse_local';
-		#$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_mysets')) {
 		$browse_which = 'browse_mysets';
-		$self->{current_library_set} = "";
 		$use_previous_problems = 0; @pg_files = (); ## clear old problems
 	} elsif ($r->param('browse_setdefs')) {
 		$browse_which = 'browse_setdefs';
@@ -1882,21 +1880,9 @@ sub pre_header_initialize {
 				or $set_to_display eq $r->maketext(NO_LOCAL_SET_STRING)) {
 			$self->addbadmessage($r->maketext("You need to select a set from this course to view."));
 		} else {
-			# DBFIXME don't use ID list, use an iterator
-			my @problemList = $db->listGlobalProblems($set_to_display);
-			my $problem;
-			@pg_files=();
-			for $problem (@problemList) {
-				my $problemRecord = $db->getGlobalProblem($set_to_display, $problem); # checked
-				die "global $problem for set $set_to_display not found." unless
-					$problemRecord;
-				push @pg_files, $problemRecord->source_file;
-
-			}
-			# Don't sort, leave them in the order they appeared in the set
-			#@pg_files = sortByName(undef,@pg_files);
-			@pg_files = map {{'filepath'=> $_, 'morelt'=>0}} @pg_files;
-			$use_previous_problems=0;
+			@pg_files = map { { 'filepath' => $_->source_file, 'morelt' => 0 } }
+				$db->getGlobalProblemsWhere({ set_id => $set_to_display });
+			$use_previous_problems = 0;
 		}
 
 		##### View from the library database
@@ -1949,8 +1935,7 @@ sub pre_header_initialize {
 			} elsif (defined($newSetRecord)) {
 			    $self->addbadmessage($r->maketext("The set name '[_1]' is already in use.  Pick a different name if you would like to start a new set.",$newSetName));
 			} else {			# Do it!
-				# DBFIXME use $db->newGlobalSet
-				$newSetRecord = $db->{set}->{record}->new();
+				$newSetRecord = $db->newGlobalSet();
 				$newSetRecord->set_id($newSetName);
 				$newSetRecord->set_header("defaultHeader");
 				$newSetRecord->hardcopy_header("defaultHeader");
@@ -2031,11 +2016,8 @@ sub pre_header_initialize {
 	}				##### end of the if elsif ...
 
 
-	############# List of local sets
-
-	# DBFIXME sorting in database, please!
-	my @all_db_sets = $db->listGlobalSets;
-	@all_db_sets = sortByName(undef, @all_db_sets);
+	# Get the list of local sets sorted by set_id.
+	my @all_db_sets = map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id');
 
 	if ($use_previous_problems) {
 		@pg_files = @all_past_list;
@@ -2147,20 +2129,14 @@ sub body {
 
 	my @plist = map {$_->{filepath}} @pg_files[$first_index..$last_index];
 
-	my %isInSet;
-	my $setName = $r->param("local_sets");
-	if ($setName) {
-		# DBFIXME where clause, iterator
-		# DBFIXME maybe instead of hashing here, query when checking source files?
-		# DBFIXME definitely don't need to be making full record objects
-		# DBFIXME SELECT source_file FROM whatever_problem WHERE set_id=? GROUP BY source_file ORDER BY NULL;
-		# DBFIXME (and stick result directly into hash)
-		foreach my $problem ($db->listGlobalProblems($setName)) {
-			my $problemRecord = $db->getGlobalProblem($setName, $problem);
-			$isInSet{$problemRecord->source_file} = 1;
+	# If there are problems to view and a target set is selected, then create a hash of source files in the target set.
+	if (@plist) {
+		my $setName = $r->param("local_sets");
+		if (defined $setName) {
+			$self->{isInSet} =
+				{ map { $_->[0] => 1 } $db->{problem}->get_fields_where(['source_file'], { set_id => $setName }) };
 		}
 	}
-	$self->{isInSet} = \%isInSet;
 
 	##########	Top part
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};

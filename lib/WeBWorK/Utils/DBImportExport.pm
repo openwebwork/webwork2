@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Utils/DBImportExport.pm,v 1.10 2006/09/26 15:57:41 sh002i Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -70,7 +70,7 @@ our %NEW_SUBS = (
 	problem_user => sub { $_[0]->newUserProblem },
 );
 
-# each subroutine should take a WeBWorK::DB object and a subclass of 
+# each subroutine should take a WeBWorK::DB object and a subclass of
 # WeBWorK::DB::Record, and should add that record into a table in the given
 # database.
 our %ADD_SUBS = (
@@ -84,7 +84,7 @@ our %ADD_SUBS = (
 	problem_user => sub { $_[0]->addUserProblem($_[1]) },
 );
 
-# each subroutine should take a WeBWorK::DB object and a subclass of 
+# each subroutine should take a WeBWorK::DB object and a subclass of
 # WeBWorK::DB::Record, and should put that record into a table in the given
 # database.
 our %PUT_SUBS = (
@@ -144,10 +144,10 @@ Unimplemented.
 # DBFIXME this whole module is a MESS! we need efficient dump/restore functionality in the abstraction layer!
 sub dbExport {
 	my (%options) = @_;
-	
+
 	croak "options: 'xml' required.\n" unless exists $options{xml};
 	croak "options: 'db' required.\n" unless exists $options{db};
-	
+
 	my @tables = exists $options{tables} ? @{$options{tables}} : ();
 	@tables = @TABLE_ORDER unless @tables;
 	my %tables;
@@ -155,11 +155,11 @@ sub dbExport {
 
 	my $writer = new XML::Writer(OUTPUT => $options{xml}, NEWLINES => 0, DATA_MODE => 1);
 	$writer->startTag("webwork", version => $DB_VERSION);
-	
+
 	#foreach my $table (@TABLE_ORDER) {
 	#	next unless exists $tables{$table}; # skip unrequested tables
 	#	$writer->startTag($table."s"); # plural
-	#	
+	#
 	#	my @Records = $EXPORT_SUBS{$table}->($options{db});
 	#	foreach my $Record (@Records) {
 	#		next unless $Record; # skip undefined records
@@ -172,15 +172,13 @@ sub dbExport {
 	#	$writer->endTag;
 	#	delete $tables{$table}; # finished with that table
 	#}
-	
+
 	my $db = $options{db};
-	
+
 	if (exists $tables{user}) {
 		$writer->startTag("users");
-		my @recordIDs = $db->listUsers;
-		foreach my $recordID (@recordIDs) {
-			my $Record = $db->getUser($recordID);
-			next unless $Record;
+		my @records = $db->getUsersWhere();
+		foreach my $Record (@records) {
 			$writer->startTag("user");
 			foreach my $field ($Record->FIELDS) {
 				$writer->dataElement($field, $Record->$field);
@@ -190,7 +188,7 @@ sub dbExport {
 		$writer->endTag; # users
 		delete $tables{user}; # finished with that table
 	}
-	
+
 	if (exists $tables{password}) {
 		$writer->startTag("passwords");
 		my @recordIDs = $db->listPasswords;
@@ -206,7 +204,7 @@ sub dbExport {
 		$writer->endTag; # passwords
 		delete $tables{password}; # finished with that table
 	}
-	
+
 	if (exists $tables{permission}) {
 		$writer->startTag("permissions");
 		my @recordIDs = $db->listPermissionLevels;
@@ -222,7 +220,7 @@ sub dbExport {
 		$writer->endTag; # permissions
 		delete $tables{permission}; # finished with that table
 	}
-	
+
 	if (exists $tables{key}) {
 		$writer->startTag("keys");
 		my @recordIDs = $db->listKeys;
@@ -238,7 +236,7 @@ sub dbExport {
 		$writer->endTag; # keys
 		delete $tables{key}; # finished with that table
 	}
-	
+
 	if (exists $tables{set}) {
 		$writer->startTag("sets");
 		my @recordIDs = $db->listGlobalSets;
@@ -254,7 +252,7 @@ sub dbExport {
 		$writer->endTag; # sets
 		delete $tables{set}; # finished with that table
 	}
-	
+
 	if (exists $tables{problem}) {
 		$writer->startTag("problems");
 		my @setIDs = $db->listGlobalSets;
@@ -279,7 +277,7 @@ sub dbExport {
 		$writer->endTag; # problems
 		delete $tables{problem}; # finished with that table
 	}
-	
+
 	if (exists $tables{set_user}) {
 		$writer->startTag("set_users");
 		my @userIDs = $db->listUsers;
@@ -298,7 +296,7 @@ sub dbExport {
 		$writer->endTag; # set_users
 		delete $tables{set_user}; # finished with that table
 	}
-	
+
 	if (exists $tables{problem_user}) {
 		$writer->startTag("problem_users");
 		my @userIDs = $db->listUsers;
@@ -329,14 +327,14 @@ sub dbExport {
 		$writer->endTag; # problem_users
 		delete $tables{problem_user}; # finished with that table
 	}
-	
+
 	$writer->endTag; # webwork
 	$writer->end;
-	
+
 	foreach my $table (keys %tables) {
 		warn "skipped unknown table \"$table\".\n";
 	}
-	
+
 	return ();
 }
 
@@ -380,17 +378,17 @@ duplicate records. If not set, duplicate records are skipped.
 # DBFIXME this whole module is a MESS! we need efficient dump/restore functionality in the abstraction layer!
 sub dbImport {
 	my (%options) = @_;
-	
+
 	croak "options: 'xml' required.\n" unless exists $options{xml};
 	croak "options: 'db' required.\n" unless exists $options{db};
-	
+
 	my $replace = exists $options{conflict} && $options{conflict} eq "replace";
-	
+
 	my @tables = exists $options{tables} ? @{$options{tables}} : ();
 	@tables = @TABLE_ORDER unless @tables;
 	my %tables;
 	@tables{@tables} = ();
-	
+
 	my ($parser, $tree);
 	eval {
 		$parser = new XML::Parser(Style => "EasyTree");
@@ -399,13 +397,13 @@ sub dbImport {
 	if ($@) {
 		return "Failed to parse XML document: $@";
 	}
-	
+
 	# find "webwork" node
 	my ($root_element) = findNodes($tree, "e", "webwork");
 	unless (defined $root_element) {
 		return "Format error: 'webwork' element not found.";
 	}
-	
+
 	# verify version
 	unless (exists $root_element->{attrib}->{version}) {
 		return "Version mismatch: XML document has no version attribute.";
@@ -414,26 +412,26 @@ sub dbImport {
 		return "Version mismatch: XML document has version \""
 			. $root_element->{attrib}->{version} . "\" (expected $DB_VERSION).";
 	}
-	
+
 	my @nonfatal_errors;
-	
+
 	TABLE: foreach my $table (@TABLE_ORDER) {
 		next TABLE unless exists $tables{$table}; # skip unrequested tables
-		
+
 		my ($table_element) = findNodes($root_element->{content}, "e", $table."s");
 		unless ($table_element) {
 			push @nonfatal_errors, "Format error: '${table}s' element not found.";
 			next TABLE;
 		}
-		
+
 		my $add_sub = $ADD_SUBS{$table};
 		my $put_sub = $PUT_SUBS{$table};
-		
+
 		my @record_elements = findNodes($table_element->{content}, "e", $table);
 		foreach my $record_element (@record_elements) {
 			my $Record = $NEW_SUBS{$table}->($options{db});
 			element2record($record_element, $Record);
-			
+
 			eval { $options{db}->$add_sub($Record) };
 			if ($@) {
 				if ($@ =~ m/exists/) {
@@ -451,7 +449,7 @@ sub dbImport {
 			}
 		}
 	}
-	
+
 	return @nonfatal_errors;
 }
 
@@ -471,7 +469,7 @@ sub element2record {
 	my ($element, $Record) = @_;
 	my %fields;
 	@fields{$Record->FIELDS} = ();
-	
+
 	foreach my $field_element (@{$element->{content}}) {
 		my $type = $field_element->{type};
 		my $name = $field_element->{name};
@@ -487,7 +485,7 @@ sub element2record {
 			warn "found duplicate element with name '$name', ignoring.\n";
 			next;
 		}
-		
+
 		$fields{$name}++;
 		my ($content_node) = findNodes($field_element->{content}, "t", undef);
 		unless ($content_node) {

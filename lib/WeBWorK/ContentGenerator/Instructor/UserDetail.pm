@@ -53,6 +53,9 @@ sub initialize {
 	my $userTemplate = $self->{userTemplate} = $db->newUser;
 	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
 
+	# Get the list of sets and the global set records and cache them for later use.  This list is sorted by set_id.
+	$self->{setRecords} = [ $db->getGlobalSetsWhere({}, 'set_id') ];
+
 	# first check to see if a save form has been submitted
 	return '' unless ($r->param('save_button') ||
 			  $r->param('assignAll'));
@@ -60,16 +63,12 @@ sub initialize {
 	# As it stands we need to check each set to see if it is still assigned
 	# the forms are not currently set up to simply transmit changes
 
-	#Get the list of sets and the global set records
-	# DBFIXME shouldn't need set IDs to get records
-	my @setIDs = $db->listGlobalSets;
-	my @setRecords = grep { defined $_ } $db->getGlobalSets(@setIDs);
-
 	my @assignedSets = ();
-	foreach my $setID (@setIDs) {
+	foreach my $set (@{ $self->{setRecords} }) {
 	    # add sets to the assigned list if the parameter is checked or the
 	    # assign all button is pushed.  (already assigned sets will be
 	    # skipped later)
+		my $setID = $set->set_id;
 	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
@@ -95,7 +94,7 @@ sub initialize {
 
 	# go through each possible set
 	debug(" parameters ", join(" ", $r->param()) );
-	foreach my $setRecord (@setRecords) {
+	foreach my $setRecord (@{ $self->{setRecords} }) {
 		my $setID = $setRecord->set_id;
 		# does the user want it to be assigned to the selected user
 		if (exists $selectedSets{$setID}) {
@@ -177,8 +176,6 @@ sub body {
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
 	my $UserRecord       = $db->getUser($editForUserID);
-	my $PermissionRecord = $db->getPermissionLevel($editForUserID);
-	my @UserSetIDs       = $db->listUserSets($editForUserID);
 
 	my $userName = $UserRecord->first_name . " " . $UserRecord->last_name;
 
@@ -229,13 +226,10 @@ sub body {
 	);
 	my $userDetailUrl = $self->systemLink($userDetailPage, authen => 0);
 
-	# DBFIXME all we need here is set IDs
-	# DBFIXME do sorting in DB
-	my %GlobalSetRecords = map { $_->set_id => $_ } $db->getGlobalSets($db->listGlobalSets());
-	my @UserSetRefs      = map { [ $editForUserID, $_ ] } sortByName(undef, @UserSetIDs);
-	my %UserSetRecords   = map { $_->set_id => $_ } $db->getUserSets(@UserSetRefs);
-	my @MergedSetRefs    = map { [ $editForUserID, $_ ] } sortByName(undef, @UserSetIDs);
-	my %MergedSetRecords = map { $_->set_id => $_ } $db->getMergedSets(@MergedSetRefs);
+	my %GlobalSetRecords = map { $_->set_id => $_ } @{ $self->{setRecords} };
+	my %UserSetRecords =
+		map { $_->set_id => $_ } $db->getUserSetsWhere({ user_id => $editForUserID, set_id => { not_like => '%,v%' } });
+	my %MergedSetRecords = map { $_->set_id => $_ } $db->getMergedSetsWhere({ user_id => $editForUserID });
 
 	# get set versions of versioned sets
 	my %UserSetVersionRecords;
@@ -301,9 +295,8 @@ sub body {
 	print CGI::Tr(CGI::th({ class => 'text-center', colspan => 3 }, "Sets assigned to $userName ($editForUserID)"));
 	print CGI::Tr(CGI::th({ class => 'text-center' }, [ 'Assigned', "Edit set for $editForUserID", 'Dates', ]));
 
-	# get a list of sets to show
-	# DBFIXME already have this data
-	my @setsToShow = sortByName(undef, $db->listGlobalSets());
+	# Create a list of sets to show
+	my @setsToShow = map { $_->set_id } @{ $self->{setRecords} };
 
 	# insert any set versions that we have
 	if (@setsToShow) {
@@ -324,11 +317,15 @@ sub body {
 			# just to be safe
 			last if $numit >= 150;
 		}
+		# FIXME:  This message is completely incorrect, and the limit implemented above is totally not working.  All
+		# global sets are already in the @setsToShow list.  So if there are more than 150 sets, they will still all be
+		# displayed.  This just stops adding versioned sets to the list when you reach the 150th set.  Should the $numit
+		# protection just be removed, or should this be made to actually work?
 		warn(
 			'Truncated display of sets at 150 in UserDetail.pm.  This is a brake to avoid spiraling into the abyss.  '
-				. 'If you really have more than 150 sets in your course, reset the limit at about line 370 in '
-				. 'webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.')
-			if ($numit == 150);
+				. 'If you really have more than 150 sets in your course, reset the limit at line '
+				. (__LINE__ - 5) . ' in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.')
+			if ($numit >= 150);
 	}
 
 	for my $setID (@setsToShow) {
@@ -381,8 +378,7 @@ sub body {
 					$setID, \@dateFields, $rh_dateFieldLabels
 				),
 			]
-			)),
-			"\n";
+		));
 	}
 	print CGI::end_table(), CGI::end_div();
 	print CGI::submit({

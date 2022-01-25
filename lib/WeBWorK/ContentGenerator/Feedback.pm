@@ -368,7 +368,6 @@ sub getFeedbackRecipients {
 	my @recipients;
 
 	# send to all users with permission to receive_feedback and an email address
-	# DBFIXME iterator?
 	foreach my $rcptName ($db->listUsers()) {
 		if ($authz->hasPermissions($rcptName, "receive_feedback")) {
 			my $rcpt = $db->getUser($rcptName); # checked

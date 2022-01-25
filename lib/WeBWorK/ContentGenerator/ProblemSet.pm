@@ -29,7 +29,8 @@ use WeBWorK::CGI;
 use WeBWorK::PG;
 use URI::Escape;
 use WeBWorK::Debug;
-use WeBWorK::Utils qw(sortByName path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after grade_set);
+use WeBWorK::Utils qw(path_is_subdir is_restricted is_jitar_problem_closed is_jitar_problem_hidden
+	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id wwRound before between after grade_set);
 use WeBWorK::Localize;
 
 sub initialize {
@@ -62,25 +63,6 @@ sub initialize {
 	# $self->{invalidSet} is set by ContentGenerator.pm
 	return if $self->{invalidSet};
 	return unless defined($set);
-
-	# Database fix (in case of undefined visible values)
-	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
-	# make sure visible is set to 0 or 1
-
-	if ($set->visible ne "0" and $set->visible ne "1") {
-		my $globalSet = $db->getGlobalSet($set->set_id);
-		$globalSet->visible("1"); # defaults to visible
-		$db->putGlobalSet($globalSet);
-		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
-	}
-
-	# When a set is created enable_reduced_scoring is null, so we have to set it
-	if ($set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
-		my $globalSet = $db->getGlobalSet($set->set_id);
-		$globalSet->enable_reduced_scoring("0"); # defaults to disabled
-		$db->putGlobalSet($globalSet);
-		$set = $db->getMergedSet($effectiveUserName, $set->set_id);
-	}
 
 	my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
 	my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
@@ -168,15 +150,18 @@ sub siblings {
 	my $user = $r->param('user');
 	my $eUserID = $r->param("effectiveUser");
 
-	# note that listUserSets does not list versioned sets
-	# DBFIXME do filtering in WHERE clause, use iterator for results :)
-	my @setIDs = sortByName(undef, $db->listUserSets($eUserID));
+	# Note that listUserSets does not list versioned sets, but listUserSetsWhere does.  On the other hand, listUserSets
+	# can not sort in the database, while listUserSetsWhere can.
+	my @setIDs =
+		map { $_->[1] } $db->listUserSetsWhere({ user_id => $eUserID, set_id => { not_like => '%,v%' } }, 'set_id');
 
 	# do not show hidden siblings unless user is allowed to view hidden sets, and
 	# exclude gateway tests in all cases
-	if ( $authz->hasPermissions($user, "view_hidden_sets") ) {
-		@setIDs = grep {my $gs = $db->getGlobalSet( $_ );
-			$gs->assignment_type() !~ /gateway/} @setIDs;
+	if ($authz->hasPermissions($user, "view_hidden_sets")) {
+		@setIDs = grep {
+			my $gs = $db->getGlobalSet($_);
+			$gs->assignment_type() !~ /gateway/
+		} @setIDs;
 
 	} else {
 		@setIDs = grep {
@@ -424,7 +409,7 @@ sub body {
 				$lastTime = $verSet->version_creation_time()
 				if ($lastTime == 0 || $lastTime > $verSet->version_creation_time);
 			}
-			
+
 			# Get a problem to determine how many submits have been made.
 			my @ProblemNums = $db->listUserProblems($effectiveUser, $set->set_id);
 			my $Problem = $db->getMergedProblemVersion($effectiveUser, $set->set_id, $ver, $ProblemNums[0]);
@@ -484,7 +469,7 @@ sub body {
 			# only honored before the answer_date if it also equals the due_date.
 			# Using $set->answer_date since the template date is what is currently used to decide
 			# if answers are available.
-			my $canShowAns = (($verSet->hide_work eq 'N' && 
+			my $canShowAns = (($verSet->hide_work eq 'N' &&
 					($verSet->due_date == $verSet->answer_date || $timeNow >= $set->answer_date)) ||
 				($verSet->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date)) ? 1 : 0;
 			if ($timeNow < $verSet->due_date()) {
@@ -699,7 +684,7 @@ sub body {
 					value => $ver->{id},
 					class => 'form-check-input'
 				});
-			
+
 			# Only display download option if answers are available.
 			} elsif ($ver->{show_download}) {
 				my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r,
@@ -754,7 +739,6 @@ sub body {
 	# Normal set, list problems
 	} else {
 
-		# DBFIXME use iterator
 		my @problemNumbers = WeBWorK::remove_duplicates($db->listUserProblems($effectiveUser, $setName));
 
 		# Check permissions and see if any of the problems have are gradeable

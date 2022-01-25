@@ -384,73 +384,6 @@ sub display_form {
 	# get format names hash for radio buttons
 	my %format_labels = map { $_ => $r->maketext($HC_FORMATS{$_}{name}) || $_ } @formats;
 
-	# get users for selection
-	my @Users;
-	if ($perm_multiuser) {
-		# if we're allowed to select multiple users, get all the users
-		# DBFIXME shouldn't need to pass list of users, should use iterator for results?
-		@Users = $db->getUsers($db->listUsers);
-	} else {
-		# otherwise, we get our own record only
-		@Users = $db->getUser($eUserID);
-	}
-
-	# get sets for selection
-	# DBFIXME should use WHERE clause to filter on open_date and visible, rather then getting all
-	my @globalSetIDs;
-	my @GlobalSets;
-	if ($perm_multiuser) {
-		# if we're allowed to select sets for multiple users, get all sets.
-		@globalSetIDs = $db->listGlobalSets;
-		@GlobalSets = $db->getGlobalSets(@globalSetIDs);
-	} else {
-		# otherwise, only get the sets assigned to the effective user.
-		# note that we are getting GlobalSets, but using the list of UserSets assigned to the
-		# effective user. this is because if we pass UserSets  to ScrollingRecordList it will
-		# give us composite IDs back, which is a pain in the ass to deal with.
-		@globalSetIDs = $db->listUserSets($eUserID);
-		@GlobalSets = $db->getGlobalSets(@globalSetIDs);
-	}
-	# we also want to get the versioned sets for this user
-	# FIXME: this is another place where we assume that there is a
-	#    one-to-one correspondence between assignment_type =~ gateway
-	#    and versioned sets.  I think we really should have a
-	#    "is_versioned" flag on set objects instead.
-	my @versionedSets = grep {$_->assignment_type =~ /gateway/} @GlobalSets;
-	my @SetVersions = ();
-	foreach my $v (@versionedSets) {
-		my @usv = map { [$eUserID, $v->set_id, $_] } ( $db->listSetVersions( $eUserID, $v->set_id ) );
-		push( @SetVersions, $db->getSetVersions( @usv ) );
-	}
-	# FIXME: this is a hideous, horrible hack.  the identifying key for
-	#    a global set is the set_id.  those for a set version are the
-	#    set_id and version_id.  but this means that we have trouble
-	#    displaying them both together in HTML::scrollingRecordList.
-	#    so we brutally play tricks with the set_id here, which probably
-	#    is not very robust, and certainly is aesthetically displeasing.
-	#    yuck.
-	foreach ( @SetVersions ) {
-		$_->set_id($_->set_id . ",v" . $_->version_id);
-	}
-
-	# filter out unwanted sets
-	my @WantedGlobalSets;
-	foreach my $i (0 .. $#GlobalSets) {
-		my $Set = $GlobalSets[$i];
-		unless (defined $Set) {
-			warn "\$GlobalSets[$i] (ID $globalSetIDs[$i]) not defined -- skipping";
-			next;
-		}
-		next unless $Set->open_date <= time or $perm_unopened;
-		next unless $Set->visible or $perm_view_hidden;
-		# also skip gateway sets, for which we have to have a
-		#    version to print something
-		next if $Set->assignment_type =~ /gateway/;
-		push @WantedGlobalSets, $Set;
-	}
-
-	my $button_label = $perm_multiuser ? $r->maketext("Generate hardcopy for selected sets and selected users") : $r->maketext("Generate Hardcopy");
-
 	print CGI::start_form(-name=>"hardcopy-form", -id=>"hardcopy-form", -method=>"POST", -action=>$r->uri);
 	print $self->hidden_authen_fields();
 	print CGI::hidden("in_hc_form", 1);
@@ -459,6 +392,34 @@ sub display_form {
 	my $canShowSolutions = 0;
 
 	if ($perm_multiuser and $perm_multiset) {
+		# Get all users for selection.
+		my @Users = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+
+		# Get sets for selection.
+		# Note that we are getting GlobalSets instead of using the list of UserSets assigned to the
+		# user.  This is because if we pass UserSets to ScrollingRecordList it will
+		# give us composite IDs back, which is a pain in the ass to deal with.
+		my @GlobalSets = $db->getGlobalSetsWhere(
+			{ $perm_unopened ? () : (open_date => { '<=' => time }), $perm_view_hidden ? () : (visible => 1) });
+
+		# We also want to get the versioned sets for this user.
+		# FIXME: This is another place where we assume that there is a one-to-one correspondence between
+		# assignment_type =~ gateway and versioned sets.  I think we really should have a "is_versioned" flag on set
+		# objects instead.
+		my @SetVersions = ();
+		for my $v (grep { $_->assignment_type =~ /gateway/ } @GlobalSets) {
+			# FIXME: The set_id change here is a hideous, horrible hack.  The identifying key for a global set is the
+			# set_id.  Those for a set version are the set_id and version_id.  But this means that we have trouble
+			# displaying them both together in HTML::scrollingRecordList.  So we brutally play tricks with the set_id
+			# here, which probably is not very robust, and certainly is aesthetically displeasing.  Yuck.
+			push(@SetVersions,
+				map { $_->set_id($_->set_id . ",v" . $_->version_id); $_ }
+					$db->getSetVersionsWhere({ user_id => $eUserID, set_id => { like => $v->set_id . ',v%' } }));
+		}
+
+		# Filter out global gateway sets.  Only the versioned sets may be printed.
+		my @WantedGlobalSets = grep { $_->assignment_type !~ /gateway/ } @GlobalSets;
+
 		print CGI::p($r->maketext(
 			"Select the homework sets for which to generate hardcopy versions. You may"
 				. " also select multiple users from the users list. You will receive hardcopy"
@@ -506,65 +467,59 @@ sub display_form {
 		$canShowSolutions      = 1;
 
 	} else {    # single user mode
-		#FIXME -- do a better job of getting the set and the user when in the single set mode
+		my $user = $db->getUser($eUserID);
+
 		my $selected_set_id = $r->param("selected_sets");
 		$selected_set_id = '' unless defined $selected_set_id;
 
-		my $selected_user_id = $Users[0]->user_id;
-		print CGI::hidden("selected_sets",   $selected_set_id ),
-		      CGI::hidden( "selected_users", $selected_user_id);
+		my $selected_user_id = $user->user_id;
+		print CGI::hidden("selected_sets", $selected_set_id), CGI::hidden("selected_users", $selected_user_id);
 
- 		my $mergedSet;
- 		if ( $selected_set_id =~ /(.*),v(\d+)$/ ) {
- 		    # showing answers is more complicated for gateway tests
- 		    my $the_set_id = $1;
- 		    my $the_set_version = $2;
- 		    $mergedSet = $db->getMergedSetVersion( $selected_user_id,
- 							   $the_set_id,
- 							   $the_set_version );
- 		    my $mergedProblem = $db->getMergedProblemVersion(
- 			$selected_user_id, $the_set_id, $the_set_version, 1 );
+		my $mergedSet;
+		if ($selected_set_id =~ /(.*),v(\d+)$/) {
+			# Determining if answers can be shown is more complicated for gateway tests.
+			my $the_set_id      = $1;
+			my $the_set_version = $2;
+			$mergedSet = $db->getMergedSetVersion($selected_user_id, $the_set_id, $the_set_version);
+			my $mergedProblem = $db->getMergedProblemVersion($selected_user_id, $the_set_id, $the_set_version, 1);
 
- 		    # then the parameters we need to know to determine
- 		    #    if correct answers may be shown are
- 		    my $maxAttempts = $mergedSet->attempts_per_version() || 0;
- 		    my $attemptsUsed = $mergedProblem->num_correct + $mergedProblem->num_incorrect || 0;
+			# Get the parameters needed to determine if correct answers may be shown.
+			my $maxAttempts  = $mergedSet->attempts_per_version()                          || 0;
+			my $attemptsUsed = $mergedProblem->num_correct + $mergedProblem->num_incorrect || 0;
 
- 		    $canShowCorrectAnswers = $perm_view_answers ||
- 			( defined($mergedSet) && defined($mergedProblem) &&
- 			  ( ( after($mergedSet->answer_date) ||
- 			       ( ( $attemptsUsed >= $maxAttempts &&
-                                   $maxAttempts != 0 ) ||
-                                 after($mergedSet->due_date +
-                                       ($mergedSet->answer_date -
-                                        $mergedSet->due_date)) )
- 			    ) &&
- 			    ( ( $mergedSet->hide_score eq 'N' &&
- 				$mergedSet->hide_score_by_problem ne 'Y' ) ||
- 			      ( $mergedSet->hide_score eq 'BeforeAnswerDate' &&
- 				after($mergedSet->answer_date) )
- 			    )
- 			  )
- 			);
+			$canShowCorrectAnswers = $perm_view_answers
+				|| (
+					defined($mergedSet)
+					&& defined($mergedProblem)
+					&& (
+						(
+							after($mergedSet->answer_date) || (($attemptsUsed >= $maxAttempts && $maxAttempts != 0)
+								|| after($mergedSet->due_date + ($mergedSet->answer_date - $mergedSet->due_date)))
+						)
+						&& (
+							($mergedSet->hide_score eq 'N' && $mergedSet->hide_score_by_problem ne 'Y')
+							|| ($mergedSet->hide_score eq 'BeforeAnswerDate'
+								&& after($mergedSet->answer_date))
+						)
+					)
+				);
 
- 		} else {
- 		    $mergedSet = $db->getMergedSet($selected_user_id,
- 						   $selected_set_id);
+		} else {
+			$mergedSet = $db->getMergedSet($selected_user_id, $selected_set_id);
 
- 		    $canShowCorrectAnswers = $perm_view_answers ||
- 			(defined($mergedSet) && after($mergedSet->answer_date));
- 		}
-	        # make display for versioned sets a bit nicer
+			$canShowCorrectAnswers = $perm_view_answers
+				|| (defined($mergedSet) && after($mergedSet->answer_date));
+		}
+		# Make display for versioned sets a bit nicer
 		$selected_set_id =~ s/,v(\d+)$/ (version $1)/;
 
-		# FIXME!
-		print CGI::p($r->maketext("Download hardcopy of set [_1] for [_2]?", $selected_set_id, $Users[0]->first_name." ".$Users[0]->last_name));
+		print CGI::p($r->maketext(
+			"Download hardcopy of set [_1] for [_2]?",
+			$selected_set_id,
+			$user->first_name . " " . $user->last_name
+		));
 
- 		$canShowSolutions = $canShowCorrectAnswers;
- 		# $canShowSolutions = $perm_view_answers ||
- 		#     (defined($mergedSet) && after($mergedSet->answer_date));
-
-
+		$canShowSolutions = $canShowCorrectAnswers;
 	}
 
 	# Using maketext on the next line would trigger errors when a local hardcopyTheme is installed.
@@ -708,7 +663,9 @@ sub display_form {
 			{ class => '' },
 			CGI::submit({
 				name  => "generate_hardcopy",
-				value => $button_label,
+				value => $perm_multiuser
+					? $r->maketext("Generate hardcopy for selected sets and selected users")
+					: $r->maketext("Generate Hardcopy"),
 				class => 'btn btn-primary'
 			})
 		)
@@ -1176,8 +1133,8 @@ sub write_set_tex {
 	my $divider = $ce->{webworkFiles}->{hardcopySnippets}->{problemDivider} // "$themeDir/hardcopyProblemDivider.tex";
 
 	# get list of problem IDs
-	# DBFIXME use ORDER BY in database
-	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($MergedSet->user_id, $MergedSet->set_id);
+	my @problemIDs = map { $_->[2] }
+		$db->listUserProblemsWhere({ user_id => $MergedSet->user_id, set_id => $MergedSet->set_id }, 'problem_id');
 
 	# for versioned sets (gateways), we might have problems in a random
 	# order; reset the order of the problemIDs if this is the case
@@ -1185,9 +1142,9 @@ sub write_set_tex {
 	     $MergedSet->problem_randorder ) {
 		my @newOrder = ();
 
-	# to set the same order each time we set the random seed to the psvn,
- 	# and to avoid messing with the system random number generator we use
-	# our own PGrandom object
+		# to set the same order each time we set the random seed to the psvn,
+		# and to avoid messing with the system random number generator we use
+		# our own PGrandom object
 		my $pgrand = PGrandom->new();
 		$pgrand->srand( $MergedSet->psvn );
 		while ( @problemIDs ) {

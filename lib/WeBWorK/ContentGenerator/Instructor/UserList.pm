@@ -303,25 +303,24 @@ sub body {
 	$self->{prettyFieldNames} = \%prettyFieldNames;
 	########## set initial values for state fields
 
-	# exclude set-level proctors
-	my @allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
-	# DBFIXME count would work
-	$self->{totalSets} = $db->listGlobalSets; # save for use in "assigned sets" links
-	$self->{allUserIDs} = \@allUserIDs;
+	# Get a list of all users except set-level proctors from the database.
+	my @allUsers = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
+	$self->{allUserIDs} = [ map { $_->user_id } @allUsers ];
 
-	# DBFIXME filter in the database
+	# Get the number of sets in the course for use in the "assigned sets" links.
+	$self->{totalSets} = $db->countGlobalSets;
+
 	if (defined $r->param("visable_user_string")) {
-		my @visableUserIDs = split /:/, $r->param("visable_user_string");
-		$self->{visibleUserIDs} = [ @visableUserIDs ];
+		$self->{visibleUserIDs} = [ split /:/, $r->param("visable_user_string") ];
 	} elsif (defined $r->param("visible_users")) {
 		$self->{visibleUserIDs} = [ $r->param("visible_users") ];
 	} elsif (defined $r->param("no_visible_users")) {
 		$self->{visibleUserIDs} = [];
 	} else {
-		if ((@allUserIDs > HIDE_USERS_THRESHHOLD) and (not defined $r->param("show_all_users") )) {
+		if ((@{ $self->{allUserIDs} } > HIDE_USERS_THRESHHOLD) and (not defined $r->param("show_all_users"))) {
 			$self->{visibleUserIDs} = [];
 		} else {
-			$self->{visibleUserIDs} = [ @allUserIDs ];
+			$self->{visibleUserIDs} = [ @{ $self->{allUserIDs} } ];
 		}
 	}
 
@@ -357,14 +356,12 @@ sub body {
 		$self->{ternarySortField} = $r->param("ternarySortField") || "student_id";
 	}
 
-	# DBFIXME use an iterator
-	my @allUsers = $db->getUsers(@allUserIDs);
 	my (%sections, %recitations);
-	foreach my $User (@allUsers) {
-		push @{$sections{defined $User->section ? $User->section : ""}}, $User->user_id;
-		push @{$recitations{defined $User->recitation ? $User->recitation : ""}}, $User->user_id;
+	for my $User (@allUsers) {
+		push @{ $sections{ defined $User->section       ? $User->section    : '' } }, $User->user_id;
+		push @{ $recitations{ defined $User->recitation ? $User->recitation : '' } }, $User->user_id;
 	}
-	$self->{sections} = \%sections;
+	$self->{sections}    = \%sections;
 	$self->{recitations} = \%recitations;
 
 	########## call action handler
@@ -399,33 +396,15 @@ sub body {
 		}
 	}
 
-	########## retrieve possibly changed values for member fields
-
-	#@allUserIDs = @{ $self->{allUserIDs} }; # do we need this one?
-	# DBFIXME instead of re-listing, why not add added users to $self->{allUserIDs} ?
-	# exclude set-level proctors
-	@allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers; # recompute value in case some were added
-	my @visibleUserIDs = @{ $self->{visibleUserIDs} };
-	my @prevVisibleUserIDs = @{ $self->{prevVisibleUserIDs} };
-	my @selectedUserIDs = @{ $self->{selectedUserIDs} };
+	# Retrieve values for member fields
 	my $editMode = $self->{editMode};
 	my $passwordMode = $self->{passwordMode};
 	my $primarySortField = $self->{primarySortField};
 	my $secondarySortField = $self->{secondarySortField};
 	my $ternarySortField = $self->{ternarySortField};
 
-	#warn "visibleUserIDs=@visibleUserIDs\n";
-	#warn "prevVisibleUserIDs=@prevVisibleUserIDs\n";
-	#warn "selectedUserIDs=@selectedUserIDs\n";
-	#warn "editMode=$editMode\n";
-	#warn "passwordMode=$passwordMode\n";
-	#warn "primarySortField=$primarySortField\n";
-	#warn "secondarySortField=$secondarySortField\n";
-	#warn "ternarySortField=$ternarySortField\n";
-
-	########## get required users
-
-	my @Users = grep { defined $_ } @visibleUserIDs ? $db->getUsers(@visibleUserIDs) : ();
+	# Get requested users
+	my @Users = @{ $self->{visibleUserIDs} } ? $db->getUsers(@{ $self->{visibleUserIDs} }) : ();
 
 	my %sortSubs = %{ SORT_SUBS() };
 	my $primarySortSub = $sortSubs{$primarySortField};
@@ -433,7 +412,6 @@ sub body {
 	my $ternarySortSub = $sortSubs{$ternarySortField};
 
 	# add permission level to user record hash so we can sort it if necessary
-	# DBFIXME this calls for a join... (i'd like the User record to contain permission level info)
 	if ($primarySortField eq 'permission' or $secondarySortField eq 'permission' or $ternarySortField eq 'permission') {
 		foreach my $User (@Users) {
 			next unless $User;
@@ -443,12 +421,12 @@ sub body {
 	}
 
 
-#	# don't forget to sort in opposite order of importance
-#	@Users = sort $secondarySortSub @Users;
-#	@Users = sort $primarySortSub @Users;
-#	#@Users = sort byLnFnUid @Users;
+	#	# don't forget to sort in opposite order of importance
+	#	@Users = sort $secondarySortSub @Users;
+	#	@Users = sort $primarySortSub @Users;
+	#	#@Users = sort byLnFnUid @Users;
 
-#   Always have a definite sort order even if first three sorts don't determine things
+	#   Always have a definite sort order even if first three sorts don't determine things
 	@Users = sort {
 		&$primarySortSub
 			||
@@ -468,9 +446,8 @@ sub body {
 
 	for (my $i = 0; $i < @Users; $i++) {
 		my $User = $Users[$i];
-# FIXME  utf8, utf8mb4 debugging codes
-#		warn "UserList: user  name, ".$User->first_name." ".$User->last_name."\n";
-		# DBFIX we maybe already have the permission level from above (for use in sorting)
+		# FIXME  utf8, utf8mb4 debugging codes
+		#		warn "UserList: user  name, ".$User->first_name." ".$User->last_name."\n";
 		my $PermissionLevel = $db->getPermissionLevel($User->user_id); # checked
 
 		# DBFIXME this should go in the DB layer
@@ -515,16 +492,16 @@ sub body {
 
 	print "\n<!-- state data here -->\n";
 
-	if (@visibleUserIDs) {
-		print CGI::hidden(-name=>"visible_users", -value=>\@visibleUserIDs);
+	if (@{ $self->{visibleUserIDs} }) {
+		print CGI::hidden(-name => "visible_users", -value => $self->{visibleUserIDs});
 	} else {
-		print CGI::hidden(-name=>"no_visible_users", -value=>"1");
+		print CGI::hidden(-name => "no_visible_users", -value => "1");
 	}
 
-	if (@prevVisibleUserIDs) {
-		print CGI::hidden(-name=>"prev_visible_users", -value=>\@prevVisibleUserIDs);
+	if (@{ $self->{prevVisibleUserIDs} }) {
+		print CGI::hidden(-name => "prev_visible_users", -value => $self->{prevVisibleUserIDs});
 	} else {
-		print CGI::hidden(-name=>"no_prev_visible_users", -value=>"1");
+		print CGI::hidden(-name => "no_prev_visible_users", -value => "1");
 	}
 
 	print CGI::hidden(-name=>"editMode", -value=>$editMode);
@@ -613,23 +590,21 @@ sub body {
 
 	########## print table
 
-	print CGI::p({},$r->maketext("Showing [_1] out of [_2] users", scalar @Users, scalar @allUserIDs));
+	print CGI::p($r->maketext("Showing [_1] out of [_2] users", scalar @Users, scalar @{ $self->{allUserIDs} }));
 
 	print CGI::p($r->maketext("If a password field is left blank, the student's current password will be maintained.")) if $passwordMode;
 	if ($editMode) {
-
-
 		print CGI::p($r->maketext('Click on the login name to edit individual problem set data, (e.g. due dates) for these students.'));
 	}
+
 	$self->printTableHTML(\@Users, \@PermissionLevels, \%prettyFieldNames,
 		editMode => $editMode,
 		passwordMode => $passwordMode,
-		selectedUserIDs => \@selectedUserIDs,
+		selectedUserIDs => $self->{selectedUserIDs},
 		primarySortField => $primarySortField,
 		secondarySortField => $secondarySortField,
-		visableUserIDs => \@visibleUserIDs,
+		visableUserIDs => $self->{visibleUserIDs},
 	);
-
 
 	########## print end of form
 
@@ -758,7 +733,6 @@ sub filter_form {
 
 # this action handler modifies the "visibleUserIDs" field based on the contents
 # of the "action.filter.scope" parameter and the "selected_users"
-# DBFIXME filtering should happen in the database!
 sub filter_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
@@ -782,20 +756,18 @@ sub filter_handler {
 		$result = $r->maketext("showing matching users");
 		my $regex = $actionParams->{"action.filter.user_ids"}->[0];
 		my $field = $actionParams->{"action.filter.field"}->[0];
-		my @userRecords = $db->getUsers(@{$self->{allUserIDs}});
+		my @userRecords = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } });
 		my @userIDs;
 		my %permissionLabels = reverse %{$ce->{userRoles}};
-		foreach my $record (@userRecords) {
-			next unless $record;
-
+		for my $record (@userRecords) {
 			# add permission level to user record hash so we can match it if necessary
 			# also change permission level and status to their text
 			# labels
 			if ($field eq "permission") {
 				my $permissionLevel = $db->getPermissionLevel($record->user_id);
-        	                $record->{permission} = $permissionLabels{$permissionLevel->permission};
+				$record->{permission} = $permissionLabels{$permissionLevel->permission};
 			} elsif ($field eq 'status') {
-			    $record->{status} = $ce->status_abbrev_to_name($record->{status});
+				$record->{status} = $ce->status_abbrev_to_name($record->{status});
 			}
 			push @userIDs, $record->user_id if $record->{$field} =~ /^$regex/i;
 		}
@@ -1078,9 +1050,6 @@ sub delete_handler {
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
 
 	my @userIDsToDelete = ();
-	#if ($scope eq "visible") {
-	#	@userIDsToDelete = @{ $self->{visibleUserIDs} };
-	#} elsif ($scope eq "selected") {
 	if ($scope eq "selected") {
 		@userIDsToDelete = @{ $self->{selectedUserIDs} };
 	}
@@ -1107,7 +1076,7 @@ sub delete_handler {
 	$self->{visibleUserIDs} = [ keys %visibleUserIDs ];
 	$self->{selectedUserIDs} = [ keys %selectedUserIDs ];
 
-	return $error ? $error : $r->maketext("deleted [_1] users", $num);
+	return $r->maketext("Deleted [_1] users.", $num) . ($error ? " $error" : '');
 }
 
 sub add_form {
@@ -1237,6 +1206,7 @@ sub import_handler {
 
 	# make new users visible... do we really want to do this? probably.
 	push @{ $self->{visibleUserIDs} }, @$added;
+	push @{ $self->{allUserIDs} }, @$added;
 
 	my $numReplaced = @$replaced;
 	my $numAdded = @$added;
@@ -1618,6 +1588,7 @@ sub importUsersFromCSV {
 			$db->putPassword($Password);
 			push @replaced, $user_id;
 		} else {
+			$allUserIDs{$user_id} = 1;
 			$db->addUser($User);
 			$db->addPermissionLevel($PermissionLevel);
 			$db->addPassword($Password);
@@ -1639,7 +1610,6 @@ sub exportUsersToCSV {
 
 	my @records;
 
-	# DBFIXME use an iterator here
 	my @Users = $db->getUsers(@userIDsToExport);
 	my @Passwords = $db->getPasswords(@userIDsToExport);
 	my @PermissionLevels = $db->getPermissionLevels(@userIDsToExport);
@@ -1822,13 +1792,10 @@ sub recordEditHTML {
 	}
 
 	# Login Status
-	if ($editMode or $passwordMode) {
-		# column not there
-	} else {
+	if (!$editMode && !$passwordMode) {
 		# check to see if a user is currently logged in
-		# DBFIXME use a WHERE clause
-		my $Key = $db->getKey($User->user_id);
-		my $is_active = ($Key and time <= $Key->timestamp()+$ce->{sessionKeyTimeout}); # cribbed from check_session
+		my $is_active = $db->existsKeyWhere(
+			{ user_id => $User->user_id, timestamp => { '>=' => time - $ce->{sessionKeyTimeout} } });
 		push @tableCells, $is_active ? CGI::b($r->maketext("Active")) : CGI::em($r->maketext("Inactive"));
 	}
 

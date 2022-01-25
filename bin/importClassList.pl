@@ -2,12 +2,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2019 The WeBWorK Project, http://openwebwork.sf.net/
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -56,13 +56,13 @@ my $replaceExisting = "none"; # Always set to "none" so no existing accounts are
 my @replaceList =();          # Empty list
 my (@replaced, @added, @skipped);
 
-# This was copied with MINOR changes from lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm 
+# This was copied with MINOR changes from lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm
 # FIXME REFACTOR this belongs in a utility class so that addcourse can use it!
 # (we need a whole suite of higher-level import/export functions somewhere)
 sub importUsersFromCSV {
 	my ($fileName, $createNew, $replaceExisting, @replaceList) = @_;
 
-	my @allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
+	my @allUserIDs = $db->listUsers;
 	my %allUserIDs = map { $_ => 1 } @allUserIDs;
 
 	my %replaceOK;
@@ -73,42 +73,42 @@ sub importUsersFromCSV {
 	} elsif ($replaceExisting eq "any") {
 		%replaceOK = %allUserIDs;
 	}
-	
+
 	my $default_permission_level = $ce->{default_permission_level};
-	
+
 	my (@replaced, @added, @skipped);
-	
+
 	# get list of hashrefs representing lines in classlist file
 	my @classlist = parse_classlist("$fileName");
-	
+
 	# Default status is enrolled -- fetch abbreviation for enrolled
 	my $default_status_abbrev = $ce->{statuses}->{Enrolled}->{abbrevs}->[0];
-	
+
 	foreach my $record (@classlist) {
 		my %record = %$record;
 		my $user_id = $record{user_id};
-		
+
 		print "Saw user_id = $user_id\n";
 
 		unless (WeBWorK::DB::check_user_id($user_id) ) {  # try to catch lines with bad characters
 			push @skipped, $user_id;
 			next;
 		}
-		
+
 		if (exists $allUserIDs{$user_id} and not exists $replaceOK{$user_id}) {
 			push @skipped, $user_id;
 			next;
 		}
-		
+
 		if (not exists $allUserIDs{$user_id} and not $createNew) {
 			push @skipped, $user_id;
 			next;
 		}
-		
+
 		# set default status is status field is "empty"
 		$record{status} = $default_status_abbrev
 			unless defined $record{status} and $record{status} ne "";
-		
+
 		# set password from student ID if password field is "empty"
 		if (not defined $record{password} or $record{password} eq "") {
 			if (defined $record{student_id} and $record{student_id} =~ /\S/) {
@@ -119,15 +119,15 @@ sub importUsersFromCSV {
 				$record{password} = "";
 			}
 		}
-		
+
 		# set default permission level if permission level is "empty"
 		$record{permission} = $default_permission_level
 			unless defined $record{permission} and $record{permission} ne "";
-		
+
 		my $User = $db->newUser(%record);
 		my $PermissionLevel = $db->newPermissionLevel(user_id => $user_id, permission => $record{permission});
 		my $Password = $db->newPassword(user_id => $user_id, password => $record{password});
-		
+
 		# DBFIXME use REPLACE
 		if (exists $allUserIDs{$user_id}) {
 			$db->putUser($User);
