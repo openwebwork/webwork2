@@ -24,7 +24,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" <!--#output_course_lang_and_dir-->>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/bootstrap.css"/>
 <style>
     body{
 
@@ -45,9 +45,9 @@
         margin-right:25%;
     }
 </style>
-<link rel="stylesheet" type="text/css" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/css/bootstrap-responsive.css"/>
 <script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script><!-- FIXMEJS-->
-<script src="<!--#url type="webwork" name="htdocs"-->/js/vendor/bootstrap/js/bootstrap.js"></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
 <title><!--#path style="text" text=" : " textonly="1"--></title>
 <!--#head-->
 </head>

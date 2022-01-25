@@ -8,7 +8,7 @@ loadMacros("PG.pl",
            "PGauxiliaryFunctions.pl",
            "PGgraphmacros.pl",
           );
- 
+
 ## Do NOT show partial correct answers
 $showPartialCorrectAnswers = 0;
 
@@ -23,7 +23,7 @@ enter elementary expressions such as \( 2\wedge3 \) instead of 8, \( sin(3*pi/2)
 of -1, \( e\wedge (ln(2)) \) instead of 2,
 \( (2+tan(3))*(4-sin(5))\wedge6-7/8 \) instead of 27620.3413, etc.
 
-Here's the 
+Here's the
 \{
 htmlLink(qq!http://webwork.math.rochester.edu/webwork_system_html/docs/docs/pglanguage/availablefunctions.html!,"list of the functions") \}
 which WeBWorK understands.
