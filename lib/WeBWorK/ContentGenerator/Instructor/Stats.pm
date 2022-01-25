@@ -34,8 +34,6 @@ use WeBWorK::Utils qw(readDirectory list2hash max sortByName jitar_id_to_seq jit
 # The table format has been borrowed from the Grades.pm module
 sub initialize {
 	my $self     = shift;
-	# FIXME  are there args here?
-	my @components = @_;
 	my $r          = $self->{r};
 	my $urlpath    = $r->urlpath;
 	my $type       = $urlpath->arg("statType") || '';
@@ -61,8 +59,6 @@ sub initialize {
 		$self->{set_due_date} = $setRecord->due_date;
 		$self->{setRecord}   = $setRecord;
  	}
-
-
 }
 
 
@@ -175,39 +171,62 @@ sub body {
 
 	return '';
 }
+
 sub index {
-	my $self          = shift;
-	my $r             = $self->r;
-	my $urlpath       = $r->urlpath;
-	my $ce            = $r->ce;
-	my $db            = $r->db;
-	my $courseName    = $urlpath->arg("courseID");
+	my $self       = shift;
+	my $r          = $self->r;
+	my $urlpath    = $r->urlpath;
+	my $ce         = $r->ce;
+	my $db         = $r->db;
+	my $user       = $r->param('user');
+	my $courseName = $urlpath->arg("courseID");
 
-	# DBFIXME sort in database
-	my @studentList   = sort $db->listUsers;
-	my @setList       = sort  $db->listGlobalSets;
+	my @setList = map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id');
 
-
-	my @setLinks      = ();
-	my @studentLinks  = ();
-	foreach my $set (@setList) {
-	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module, $r,
-	                                                      courseID => $courseName,
-	                                                      statType => 'set',
-	                                                      setID    => $set
-	    );
-		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) }, WeBWorK::ContentGenerator::underscore2sp($set));
+	my @setLinks     = ();
+	my @studentLinks = ();
+	for my $set (@setList) {
+		my $setStatisticsPage = $urlpath->newFromModule(
+			$urlpath->module, $r,
+			courseID => $courseName,
+			statType => 'set',
+			setID    => $set
+		);
+		push @setLinks,
+			CGI::a({ href => $self->systemLink($setStatisticsPage) }, WeBWorK::ContentGenerator::underscore2sp($set));
 	}
 
-	foreach my $student (@studentList) {
-	    my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module, $r,
-	                                                      courseID => $courseName,
-	                                                      statType => 'student',
-	                                                      userID   => $student
-	    );
-		push @studentLinks, CGI::a({-href=>$self->systemLink($userStatisticsPage,
-		                                                     prams=>{effectiveUser => $student}
-		                                                     )},"  $student" ),;
+	# Get a list of students sorted by user_id.
+	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
+	my @studentRecords = $db->getUsersWhere(
+		{
+			user_id => { not_like => 'set_id:%' },
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
+		},
+		[qw/last_name first_name user_id/]
+	);
+
+	for my $student (@studentRecords) {
+		my $first_name = $student->first_name;
+		my $last_name  = $student->last_name;
+		my $user_id    = $student->user_id;
+
+		my $userStatisticsPage = $urlpath->newFromModule(
+			$urlpath->module, $r,
+			courseID => $courseName,
+			statType => 'student',
+			userID   => $student->user_id
+		);
+		push @studentLinks,
+			CGI::a({ href => $self->systemLink($userStatisticsPage) }, "$last_name, $first_name  ($user_id)");
 	}
 
 	print CGI::div(
@@ -224,6 +243,7 @@ sub index {
 		)
 	);
 }
+
 ###################################################
 # Determines the percentage of students whose score is greater than a given value
 # The percentages are fixed at 75, 50, 25 and 5%
@@ -292,8 +312,6 @@ sub displaySets {
 	}
 
 	my $sort_method_name = $r->param('sort');
-	# DBFIXME duplicate call
-	my @studentList      = $db->listUsers;
 
    	my @index_list                           = ();  # list of all student index
 	my @score_list                           = ();  # list of all student total percentage scores
@@ -321,11 +339,14 @@ sub displaySets {
 ###############################################################
 
 	my $max_num_problems  = 0;
+
 	# get user records
 	debug("Begin obtaining problem records for  set $setName");
-	# DBFIXME use an iterator
-	my @userRecords  = $db->getUsers(@studentList);
+	my @userRecords = $db->getUsersWhere({
+		user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ]
+	});
 	debug("End obtaining user records for set $setName");
+
     debug("begin main loop");
  	my @augmentedUserRecords    = ();
  	my $number_of_active_students;
@@ -337,14 +358,13 @@ sub displaySets {
     # $user
     # $setName
     # @userRecords
-    #               @problemRecords  these are fetched for each student in @userRecords
+    # @problemRecords  these are fetched for each student in @userRecords
     #
     ###################################
 
 	foreach my $studentRecord (@userRecords)   {
 		next unless ref($studentRecord);
 		my $student = $studentRecord->user_id;
-		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
 		next unless $ce->status_abbrev_has_behavior($studentRecord->status, "include_in_stats");
 		$number_of_active_students++;
 	    my $string          = '';
@@ -357,7 +377,6 @@ sub displaySets {
 
 		debug("Begin obtaining problem records for user $student set $setName");
 
-		# DBFIXME use an iterator
 		my @problemRecords;
 		if ( $setRecord->assignment_type =~ /gateway/ ) {
 			my @setVersions = $db->listSetVersions($student, $setName);
@@ -694,7 +713,6 @@ print  CGI::p($r->maketext('The percentage of active students with correct answe
 
 	#show a grading link if necc
 	my $gradingLink = "";
-	my @setUsers = $db->listSetUsers($setName);
 	my @GradeableRows;
 	my $showGradeRow = 0;
 	unshift (@GradeableRows, CGI::td({}, $r->maketext("Manual Grader")));

@@ -251,9 +251,7 @@ sub body {
 		print CGI::end_div();
 
 		# Determine if there are valid practice users.
-		# DBFIXME do this with a WHERE clause
-		my @guestUserIDs = grep m/^$practiceUserPrefix/, $db->listUsers;
-		my @GuestUsers = $db->getUsers(@guestUserIDs);
+		my @GuestUsers = $db->getUsersWhere({ user_id => { like => "$practiceUserPrefix\%" } });
 		my @allowedGuestUsers;
 		foreach my $GuestUser (@GuestUsers) {
 			next unless defined $GuestUser->status;

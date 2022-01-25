@@ -30,7 +30,6 @@ use WeBWorK::Debug;
 use WeBWorK::ContentGenerator::Grades;
 use WeBWorK::Utils qw(jitar_id_to_seq jitar_problem_adjusted_status wwRound);
 #use WeBWorK::Utils qw(readDirectory list2hash max sortByName);
-use WeBWorK::Utils::SortRecords qw/sortRecords/;
 use WeBWorK::Utils::Grades qw/list_set_versions/;
 use WeBWorK::DB::Record::UserSet;  #FIXME -- this is only used in one spot.
 
@@ -165,7 +164,6 @@ sub body {
 	} elsif( $type eq 'set') {
 		$self->displaySets($self->{setName});
 	} elsif ($type eq '') {
-
 		$self->index;
 	} else {
 		warn "Don't recognize statistics display type: |$type|";
@@ -176,6 +174,7 @@ sub body {
 	return '';
 
 }
+
 sub index {
 	my $self          = shift;
 	my $r             = $self->r;
@@ -183,67 +182,57 @@ sub index {
 	my $ce            = $r->ce;
 	my $db            = $r->db;
 	my $courseName    = $urlpath->arg("courseID");
-	my @studentList   = sort $db->listUsers;
-	my @setList       = sort  $db->listGlobalSets;
 
-## Edit to filter out students you aren't allowed to see
-#
-	# DBFIXME do filtering in database
-	my @myUsers;
-#	my @studentRecords = $db->getUsers;  #this is never used
 	my $user = $r->param("user");
 
-	my (@viewable_sections, @viewable_recitations);
-	if (defined $ce->{viewable_sections}->{$user})
-		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined $ce->{viewable_recitations}->{$user})
-		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
-	if (@viewable_sections or @viewable_recitations){
-		foreach my $studentL (@studentList){
-			my $keep = 0;
-			my $student = $db->getUser($studentL);
-			foreach my $sec (@viewable_sections){
-				if ($student->section() eq $sec){$keep = 1; last;}
-			}
-			foreach my $rec (@viewable_recitations){
-				if ($student->recitation() eq $rec){$keep = 1; last;}
-			}
-			if ($keep) {push @myUsers, $studentL;}
-		}
-#	@studentList = @myUsers;
-	}
-	else {@myUsers = @studentList;}
+	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
+	my @studentRecords = $db->getUsersWhere(
+		{
+			user_id => { not_like => 'set_id:%' },
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user} ? (section => { -in => $ce->{viewable_sections}{$user} }) : (),
+					$ce->{viewable_recitations}{$user}
+					? (recitation => { -in => $ce->{viewable_recitations}{$user} })
+					: ()
+				]
+				)
+			: ()
+		},
+		[qw/last_name first_name user_id/]
+	);
 
-	# DBFIXME sort in database
-	my @studentRecords = $db->getUsers(@myUsers);
-	my @sortedStudentRecords = sortRecords({fields=>[qw/last_name first_name user_id/]}, @studentRecords);
+	my @setList = map { $_->[0] } $db->listGlobalSetsWhere({}, 'set_id');
 
 	my @setLinks      = ();
 	my @studentLinks  = ();
-	foreach my $set (@setList) {
-	    my $setStatisticsPage   = $urlpath->newFromModule($urlpath->module, $r,
-	                                                      courseID => $courseName,
-	                                                      statType => 'set',
-	                                                      setID    => $set
-	    );
-	    my $prettySetID = $set;
-	    $prettySetID =~ s/_/ /g;
-		push @setLinks, CGI::a({-href=>$self->systemLink($setStatisticsPage) }, $prettySetID);
+	for my $set (@setList) {
+		my $setStatisticsPage = $urlpath->newFromModule(
+			$urlpath->module, $r,
+			courseID => $courseName,
+			statType => 'set',
+			setID    => $set
+		);
+		my $prettySetID = $set;
+		$prettySetID =~ s/_/ /g;
+		push @setLinks, CGI::a({ -href => $self->systemLink($setStatisticsPage) }, $prettySetID);
 	}
 
-	foreach my $studentRecord (@sortedStudentRecords) {
-		my $first_name = $studentRecord->first_name;
-		my $last_name = $studentRecord->last_name;
-		my $user_id = $studentRecord->user_id;
-		my $userStatisticsPage  = $urlpath->newFromModule($urlpath->module, $r,
-	                                                      courseID => $courseName,
-	                                                      statType => 'student',
-	                                                      userID   => $user_id
-	    );
+	for my $studentRecord (@studentRecords) {
+		my $first_name         = $studentRecord->first_name;
+		my $last_name          = $studentRecord->last_name;
+		my $user_id            = $studentRecord->user_id;
+		my $userStatisticsPage = $urlpath->newFromModule(
+			$urlpath->module, $r,
+			courseID => $courseName,
+			statType => 'student',
+			userID   => $user_id
+		);
 
-		push @studentLinks, CGI::a({-href=>$self->systemLink($userStatisticsPage,
-		                                                     prams=>{effectiveUser => $studentRecord->user_id}
-		                                                     )},"  $last_name, $first_name  ($user_id)" ),;
+		push @studentLinks,
+			CGI::a({ href => $self->systemLink($userStatisticsPage) }, "$last_name, $first_name  ($user_id)");
 	}
 
 	print CGI::div(
@@ -260,6 +249,7 @@ sub index {
 		)
 	);
 }
+
 ###################################################
 sub displaySets {
 	my $self             = shift;
@@ -278,14 +268,11 @@ sub displaySets {
 	my $secondary_sort_method_name = $r->param('secondary_sort');
 	my $ternary_sort_method_name = $r->param('ternary_sort');
 
-	# DBFIXME duplicate call!
-	my @studentList      = $db->listUsers;
-
-# another versioning/gateway change.  in many cases we don't want or need
-# all of the columns that are put in here by default, so we add a set of
-# flags for which columns to show.  for versioned sets we may also want to
-# only see the best score, so we include that as an option also.
-# these are ignored for non-versioned sets
+	# another versioning/gateway change.  in many cases we don't want or need
+	# all of the columns that are put in here by default, so we add a set of
+	# flags for which columns to show.  for versioned sets we may also want to
+	# only see the best score, so we include that as an option also.
+	# these are ignored for non-versioned sets
 	my %showColumns = ( 'name' => 1, 'score' => 1, 'outof' => 1,
 			    'date' => 0, 'testtime' => 0, 'index' => 1,
 			    'problems' => 1, 'section' => 1, 'recit' => 1,
@@ -327,17 +314,16 @@ sub displaySets {
 		user_id => 'login name',
 	);
 
-# get versioning information
+	# get versioning information
 	my $setIsVersioned =
 	    ( defined($GlobalSet->assignment_type()) &&
 	      $GlobalSet->assignment_type() =~ /gateway/ ) ? 1 : 0;
 
-# reset column view options based on whether the set is versioned and, if so,
-# the input parameters
+	# reset column view options based on whether the set is versioned and, if so,
+	# the input parameters
 	if ( $setIsVersioned ) {
-  # the returning parameter lets us set defaults for versioned sets
-		my $ret = defined($r->param('returning')) ?
-			$r->param('returning') : 0;
+		  # the returning parameter lets us set defaults for versioned sets
+		my $ret = defined($r->param('returning')) ? $r->param('returning') : 0;
 		$showColumns{'date'} = ($ret && !defined($r->param('show_date'))) ? $r->param('show_date') : 1;
 		$showColumns{'testtime'} = ($ret && !defined($r->param('show_testtime'))) ? $r->param('show_testtime'):1;
 		$showColumns{'index'} = ($ret && defined($r->param('show_index'))) ? $r->param('show_index') : 0;
@@ -348,65 +334,41 @@ sub displaySets {
 		$showBestOnly = ($ret && defined($r->param('show_best_only'))) ? $r->param('show_best_only') : 0;
 	}
 
-###############################################################
-#  Print tables
-###############################################################
+	###############################################################
+	#  Print tables
+	###############################################################
 
 	my $max_num_problems  = 0;
-	# get user records
+
+	# Get all users except the set level proctors and practice users, and restrict to the sections or recitations that
+	# ar allowed for the user if such restrictions are defined.  This list is sorted by last_name, then first_name, then
+	# user_id.
 	debug("Begin obtaining user records for set $setName");
-	my @userRecords  = $db->getUsers(@studentList);
+	my @studentRecords = $db->getUsersWhere(
+		{
+			user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
+		},
+		[qw/last_name first_name user_id/]
+	);
 	debug("End obtaining user records for set $setName");
+
     debug("begin main loop");
  	my @augmentedUserRecords    = ();
  	my $number_of_active_students;
 
-## Edit to filter out students
-#
-	my @myUsers;
-	my $ActiveUser = $r->param("user");
-	my (@viewable_sections, @viewable_recitations);
-	if (defined $ce->{viewable_sections}->{$user})
-		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined $ce->{viewable_recitations}->{$user})
-		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
-	if (@viewable_sections or @viewable_recitations){
-		foreach my $student (@userRecords){
-			my $keep = 0;
-			foreach my $sec (@viewable_sections){
-				if ($student->section() eq $sec){$keep = 1; last;}
-			}
-			foreach my $rec (@viewable_recitations){
-				if ($student->recitation() eq $rec){$keep = 1; last;}
-			}
-			if ($keep) {push @myUsers, $student;}
-		}
-	}
-	else {@myUsers = @userRecords;}
-	foreach my $studentRecord (@myUsers)   {
-		next unless ref($studentRecord);
+	foreach my $studentRecord (@studentRecords)   {
 		my $studentName = $studentRecord->user_id;
-		next if $studentRecord->last_name =~/^practice/i;  # don't show practice users
 		next unless $ce->status_abbrev_has_behavior($studentRecord->status, "include_in_stats");
 		$number_of_active_students++;
 
-# build list of versioned sets for this student user
-# 		my @allSetNames = ();
-# 		my $notAssignedSet = 0;
-# 		if ( $setIsVersioned ) {
-# 			my @setVersions = $db->listSetVersions($studentName, $setName);
-# 			@allSetNames = map { "$setName,v$_" } @setVersions;
-# 			# if there aren't any set versions, is it because
-# 			#    the user isn't assigned the set (e.g., is a
-# 			#    proctor), or because the user hasn't completed
-# 			#    any versions?
-# 			if ( ! @setVersions ) {
-# 				$notAssignedSet = 1 if (! $db->existsUserSet($studentName,$setName));
-# 			}
-#
-# 		} else {
-# 			@allSetNames = ( "$setName" );
-# 		}
         my( $ra_allSetVersionNames, $notAssignedSet) = list_set_versions($db, $studentName, $setName, $setIsVersioned);
         my @allSetVersionNames = @{$ra_allSetVersionNames};
 
@@ -467,136 +429,6 @@ sub displaySets {
 						       );
 			my $probNum         = 0;
 			my $act_as_student_url = '';
-
-
-#
-# 			# add on the scores for this problem
-# 			if (defined($attempted) and $attempted) {
-# 				$number_of_students_attempting_problem{$probID}++;
-# 				push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-# 				$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-# 				$h_problemData{$probID}                               = $num_incorrect;
-# 				$total_num_of_attempts_for_set                       += $num_of_attempts;
-# 				$correct_answers_for_problem{$probID}                += $status;
-# 			}
-
-#
-# 			# DBFIXME: to collect the problem records, we have
-# 			#    to know which merge routines to call.  Should
-# 			#    this really be an issue here?  That is,
-# 			#    shouldn't the database deal with it invisibly
-# 			#    by detecting what the problem types are?
-# 			# DBFIXME sort in database
-# 			my $userSet;
-# 			my @problemRecords = ();
-# 			if ( $setIsVersioned ) {
-# 				my ($setN,$vNum) = ($sN =~ /(.+),v(\d+)$/);
-# 				@problemRecords = sort {$a->problem_id <=> $b->problem_id } $db->getAllMergedProblemVersions( $student, $setN, $vNum );
-# 				# we'll also need information from the set
-# 				#    as we set up the display below, so get
-# 				#    the merged userset as well
-# 				$userSet = $db->getMergedSetVersion($studentRecord->user_id, $setN, $vNum);
-#
-# 			} else {
-# 				@problemRecords = sort {$a->problem_id <=> $b->problem_id} $db->getAllMergedUserProblems( $student, $sN );
-# 			}
-# 			debug("End obtaining problem records for user $student set $sN");
-# 			my $num_of_problems = @problemRecords;
-# 			$max_num_problems = ($max_num_problems>= $num_of_problems) ? $max_num_problems : $num_of_problems;
-# 			########################################
-# 			# Notes for factoring the calculation in this loop.
-# 			#
-# 			# Inputs include:
-# 			#   @problemRecords
-# 			# returns
-# 			#   $num_of_attempts
-# 			#   $status
-# 			# updates
-# 			#   $number_of_students_attempting_problem{$probID}++;
-# 			#   @{ $attempts_list_for_problem{$probID} }
-# 			#   $number_of_attempts_for_problem{$probID}
-# 			#   $total_num_of_attempts_for_set
-# 			#   $correct_answers_for_problem{$probID}
-# 			#
-# 			#   $string (formatting output)
-# 			#   $twoString (more formatted output)
-# 			#   $longtwo (a combination of $string and $twostring)
-# 			#   $total
-# 			#   $totalRight
-# 			###################################
-#
-# 			foreach my $problemRecord (@problemRecords) {
-# 				next unless ref($problemRecord);
-# 				# warn "Can't find record for problem $prob in set $setName for $student";
-# 				# FIXME check the legitimate reasons why a student record might not be defined
-# 				###########################################
-# 				# Grab data from the database
-# 				###########################################
-# 				# It's possible that
-# 				# $problemRecord->num_correct or
-# 				# $problemRecord->num_correct
-# 				# or $problemRecord->status is an empty
-# 				# or blank string instead of 0.
-# 				# The || clause fixes this and prevents
-# 				# warning messages in the comparisons below.
-#
-# 				my $probID          = $problemRecord->problem_id;
-# 				my $attempted       = $problemRecord->attempted;
-# 				my $num_correct     = $problemRecord->num_correct     || 0;
-# 				my $num_incorrect   = $problemRecord->num_incorrect   || 0;
-# 				my $num_of_attempts = $num_correct + $num_incorrect;
-# 				# initialize the number of correct answers
-# 				# for this problem if the value has not been
-# 				# defined.
-# 				$correct_answers_for_problem{$probID} = 0
-# 					unless defined($correct_answers_for_problem{$probID});
-#
-# 				## This doesn't work - Fix it
-# 				my $probValue = $problemRecord->value;
-# 				# set default problem value here
-# 				# FIXME?? set defaults here?
-# 				$probValue = 1 unless defined($probValue) and
-# 					$probValue ne "";
-#
-# 				my $status  = $problemRecord->status || 0;
-#
-# 				# sanity check that the status (score) is
-# 				# between 0 and 1
-# 				my $valid_status = ($status>=0 && $status<=1)?1:0;
-#
-# 				###########################################
-# 				# Determine the string $longStatus which
-# 				# will display the student's current score
-# 				###########################################
-# 				my $longStatus = '';
-# 				if (!$attempted){
-# 					$longStatus     = '.';
-# 				} elsif   ($valid_status) {
-# 					$longStatus     = int(100*$status+.5);
-# 					$longStatus='C' if ($longStatus==100);
-# 				} else	{
-# 					$longStatus 	= 'X';
-# 				}
-#
-# 				$string     .= fourSpaceFill($longStatus);
-# 				$twoString  .= fourSpaceFill($num_incorrect);
-#
-# 				$total      += $probValue;
-# 				$totalRight += round_score($status*$probValue)
-# 					if $valid_status;
-#
-# 				# add on the scores for this problem
-# 				if (defined($attempted) and $attempted) {
-# 					$number_of_students_attempting_problem{$probID}++;
-# 					push( @{ $attempts_list_for_problem{$probID} } ,     $num_of_attempts);
-# 					$number_of_attempts_for_problem{$probID}             += $num_of_attempts;
-# 					$h_problemData{$probID}                               = $num_incorrect;
-# 					$total_num_of_attempts_for_set                       += $num_of_attempts;
-# 					$correct_answers_for_problem{$probID}                += $status;
-# 				}
-#
-# 			}  # end of problem record loop
-
 
 			# for versioned tests we might be displaying the
 			# test date and test time
@@ -746,8 +578,7 @@ sub displaySets {
 
 	# construct header
 	my $problem_header = '';
-	# DBFIXME sort in database
-	my @list_problems = sort {$a<=> $b } $db->listGlobalProblems($setName );
+	my @list_problems = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $setName }, 'problem_id');
 
 	# for a jitar set we only get the top level problems
 	if($GlobalSet->assignment_type eq 'jitar') {
@@ -1169,7 +1000,7 @@ sub grade_set {
 			my $num_incorrect = $problemRecord->num_incorrect   || 0;
 			$num_of_attempts  = $num_correct + $num_incorrect;
 
-#######################################################
+			#######################################################
 			# This is a fail safe mechanism that makes sure that
 			# the problem is marked as attempted if the status has
 			# been set or if the problem has been attempted
@@ -1186,7 +1017,7 @@ sub grade_set {
 					$db->putUserProblem($problemRecord );
 				}
 			}
-######################################################
+			######################################################
 
 			# sanity check that the status (score) is
 			# between 0 and 1

@@ -43,10 +43,8 @@ sub initialize {
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "assign_problem_sets");
 
-	# get the global user, if there is one
-	my $globalUserID = "";
-	$globalUserID = $db->{set}->{params}->{globalUserID}
-		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
+	# Get a list of all set records sorted by set_id.
+	$self->{set_records} = [ $db->getGlobalSetsWhere({}, 'set_id') ];
 
 	if (defined $r->param("assignToAll")) {
 		$self->assignAllSetsToUser($userID);
@@ -57,15 +55,10 @@ sub initialize {
 		&& defined($r->param('unassignFromAllSafety'))
 		&& $r->param('unassignFromAllSafety') == 1)
 	{
-		if ($userID ne $globalUserID) {
-			$self->addgoodmessage($r->maketext('User has been unassigned from all sets.'));
-			$self->unassignAllSetsFromUser($userID);
-		}
+		$self->addgoodmessage($r->maketext('User has been unassigned from all sets.'));
+		$self->unassignAllSetsFromUser($userID);
 	} elsif (defined $r->param('assignToSelected')) {
-		# get list of all sets and a hash for checking selectedness
-		# DBFIXME shouldn't need to get set list, should use iterator
-		my @setIDs = $db->listGlobalSets;
-		my @setRecords = grep { defined $_ } $db->getGlobalSets(@setIDs);
+		# Create hash for checking if a set is selected.
 		my %selectedSets = map { $_ => 1 } $r->param("selected");
 
 		# get current user
@@ -74,25 +67,22 @@ sub initialize {
 
 		$self->addgoodmessage($r->maketext("User's sets have been reassigned."));
 
-		unless ($User->user_id eq $globalUserID) {
+		my %userSets = map { $_ => 1 } $db->listUserSets($userID);
 
-			my %userSets = map { $_ => 1 } $db->listUserSets($userID);
-
-			# go through each possible set
-			foreach my $setRecord (@setRecords) {
-				my $setID = $setRecord->set_id;
-				# does the user want it to be assigned to the selected user
-				if (exists $selectedSets{$setID}) {
-					unless ($userSets{$setID}) {	# skip users already in the set
-						debug("assignSetToUser($userID, $setID)");
-						$self->assignSetToUser($userID, $setRecord);
-						debug("done assignSetToUser($userID, $setID)");
-					}
-				} else {
-					# user asked to NOT have the set assigned to the selected user
-					next unless $userSets{$setID};	# skip users not in the set
-					$db->deleteUserSet($userID, $setID);
+		# go through each possible set
+		foreach my $setRecord (@{ $self->{set_records} }) {
+			my $setID = $setRecord->set_id;
+			# does the user want it to be assigned to the selected user
+			if (exists $selectedSets{$setID}) {
+				unless ($userSets{$setID}) {	# skip users already in the set
+					debug("assignSetToUser($userID, $setID)");
+					$self->assignSetToUser($userID, $setRecord);
+					debug("done assignSetToUser($userID, $setID)");
 				}
+			} else {
+				# user asked to NOT have the set assigned to the selected user
+				next unless $userSets{$setID};	# skip users not in the set
+				$db->deleteUserSet($userID, $setID);
 			}
 		}
 	} elsif (defined $r->param("unassignFromAll")) {
@@ -138,27 +128,12 @@ sub body {
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, 'You are not authorized to assign homework sets.')
 		unless $authz->hasPermissions($user, 'assign_problem_sets');
 
-	# get list of sets
-	# DBFIXME this is a duplicate call!
-	my @setIDs = $db->listGlobalSets;
-	my @Sets   = $db->getGlobalSets(@setIDs);
-
-	# Sort by set name only  -- I find this most useful for the instructor pages
-	@Sets = sort { lc($a->set_id) cmp lc($b->set_id) } @Sets;
-
 	print CGI::start_form(
 		{ id => 'set-user-form', name => 'set-user-form', method => 'post', action => $setsAssignedToUserURL });
 	print $self->hidden_authen_fields;
 
-	# get the global user, if there is one
-	my $globalUserID = '';
-	$globalUserID = $db->{set}->{params}->{globalUserID}
-		if ref $db->{set} eq 'WeBWorK::DB::Schema::GlobalTableEmulator';
-
-	if ($userID ne $globalUserID) {
-		print CGI::div({ class => 'my-2' },
-			CGI::submit({ name => 'assignToAll', value => 'Assign All Sets', class => 'btn btn-primary' }));
-	}
+	print CGI::div({ class => 'my-2' },
+		CGI::submit({ name => 'assignToAll', value => 'Assign All Sets', class => 'btn btn-primary' }));
 
 	print CGI::div(
 		{ class => 'alert alert-danger p-1 mb-2 fs-6' },
@@ -179,12 +154,10 @@ sub body {
 	print CGI::Tr(CGI::th({ class => 'text-center' }, 'Assigned'),
 		CGI::th([ 'Set Name', 'Close Date', '' ]));
 
-	foreach my $Set (@Sets) {
+	foreach my $Set (@{ $self->{set_records} }) {
 		my $setID = $Set->set_id;
 
-		# this is true if $Set is assigned to the selected user
-		# DBFIXME testing for existence -- don't need to fetch record
-		my $UserSet           = $db->getUserSet($userID, $setID);    # checked
+		my $UserSet           = $db->getUserSet($userID, $setID);
 		my $currentlyAssigned = defined $UserSet;
 
 		my $prettyDate;
@@ -207,9 +180,7 @@ sub body {
 			CGI::td(
 				{ class => 'text-center' },
 				(
-					$userID eq $globalUserID
-					? ''    # no checkboxes for global user!
-					: CGI::checkbox({
+					CGI::checkbox({
 						type    => 'checkbox',
 						name    => 'selected',
 						checked => $currentlyAssigned,

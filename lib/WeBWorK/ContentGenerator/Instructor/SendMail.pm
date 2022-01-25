@@ -113,7 +113,7 @@ sub initialize {
 	}
 
 	#  get user record
-	my $ur = $self->{db}->getUser($user);
+	my $ur = $db->getUser($user);
 
 	# store data
 	# rfc822_mailbox was modified to use RFC 2047 "MIME-Header" encoding.
@@ -126,109 +126,85 @@ sub initialize {
 	$self->{default_msg_file}	    =   $default_msg_file;
 	$self->{old_default_msg_file}   =   $old_default_msg_file;
 	$self->{merge_file}             =   $mergefile;
-	#$self->{preview_user}           =   (defined($r->param('preview_user')))    ? $r->param('preview_user') : $user;
 	# an expermiment -- share the scrolling list for preivew and sendTo actions.
 	my @classList                   =   (defined($r->param('classList')))    ? $r->param('classList') : ($user);
 	$self->{preview_user}           =   $classList[0] || $user;
 
 	#############################################################################################
-	#	gather database data
+	# Gather database data
 	#############################################################################################
-	# FIXME  this might be better done in body? We don't always need all of this data. or do we?
-	# DBFIXME shouldn't need ID list
-	# DBFIXME do filtering in database
-	my @users =  $db->listUsers;
-	my @Users = $db->getUsers(@users);
-	# filter out users who don't get included in email (fixes bug #938)
+	# Get all users except set level proctors and practice users.  If the current user has restrictions on viewable
+	# sections or recitations, those are filtered out as well.  The users are sorted by user_id.
+	my @Users = $db->getUsersWhere(
+		{
+			user_id => [ -and => { not_like => 'set_id:%' }, { not_like => "$ce->{practiceUserPrefix}\%" } ],
+			-or     => [
+				$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+				$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+			]
+		},
+		'user_id'
+	);
+
+	# Filter out users who don't get included in email
 	@Users = grep { $ce->status_abbrev_has_behavior($_->status, "include_in_email") } @Users;
-	my @user_records = ();
 
-	## Mark's code to prefilter userlist
-	# DBFIXME more filtering that we can do in the database
-
-
-	my (@viewable_sections,@viewable_recitations);
-
-	if (defined $ce->{viewable_sections}->{$user})
-		{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined $ce->{viewable_recitations}->{$user})
-		{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
-
-	if (@viewable_sections or @viewable_recitations){
-		foreach my $student (@Users){
-			my $keep = 0;
-			foreach my $sec (@viewable_sections){
-				if ($student->section() eq $sec){$keep = 1;}
-			}
-			foreach my $rec (@viewable_recitations){
-				if ($student->recitation() eq $rec){$keep = 1;}
-			}
-			if ($keep) {push @user_records, $student;}
-		}
-	}
-	else {@user_records = @Users;}
-
-	## End Mark's code
-
-
-	# replace the user names by a sorted version.
-	@users                         =  map {$_->user_id} @user_records;
-	# store data
-	$self->{ra_users}              =   \@users;
-	$self->{ra_user_records}       =   \@user_records;
+	# Cache the user records for later use.
+	$self->{ra_user_records} = \@Users;
 
 	#############################################################################################
-	#	gather list of recipients
+	# Gather list of recipients
 	#############################################################################################
-	my @send_to                    =   ();
-	my $recipients                 = $r->param('send_to');
-	if (defined($recipients) and $recipients eq 'all_students') {  #only active students #FIXME status check??
-
-		## Add code so that only people who pass the current filters are added to our list of recipients.
-		#	@user_records = filterRecords({filter=\@selected_filters},@user_records);
-		#  I wasn't able to make this work
-		#  I edited the selection button to make that clear.
-		#
-
-		foreach my $ur (@user_records) {
-			push(@send_to,$ur->user_id)
-				if $ce->status_abbrev_has_behavior($ur->status, "include_in_email")
-					and not $ur->user_id =~ /practice/;
-		}
-	} elsif (defined($recipients) and $recipients eq 'studentID' ) {
-		@send_to                   = $r->param('classList');
-	} else {
-		# no recipients have been defined -- probably the first time on the page
+	my @send_to;
+	my $recipients = $r->param('send_to') // '';
+	if ($recipients eq 'all_students') {
+		@send_to = map { $_->user_id } @Users;
+	} elsif ($recipients eq 'studentID') {
+		@send_to = $r->param('classList');
 	}
-	$self->{ra_send_to}               = \@send_to;
+
+	$self->{ra_send_to} = \@send_to;
+
 	#################################################################
 	# Check the validity of the input file name
 	#################################################################
+
 	my $input_file = '';
-	#make sure an input message file was submitted and exists
-	#else use the default message
-	if ( defined($openfilename) ) {
-		if ( -e "${emailDirectory}/$openfilename") {
-			if ( -R "${emailDirectory}/$openfilename") {
+	# Make sure an input message file was submitted and exists.
+	# Otherwise use the default message.
+	if (defined($openfilename)) {
+		if (-e "${emailDirectory}/$openfilename") {
+			if (-R "${emailDirectory}/$openfilename") {
 				$input_file = $openfilename;
 			} else {
-				$self->addbadmessage(CGI::p(join("",
-								 $r->maketext("The file [_1]/[_2] is not readable by the webserver.",$emailDirectory,$openfilename) ,CGI::br(),
-								 $r->maketext("Check that it's permissions are set correctly."),
+				$self->addbadmessage(CGI::p(join(
+					"",
+					$r->maketext(
+						"The file [_1]/[_2] is not readable by the webserver.",
+						$emailDirectory, $openfilename
+					),
+					CGI::br(),
+					$r->maketext("Check that it's permissions are set correctly."),
 				)));
 			}
 		} else {
 			$input_file = $default_msg_file;
-			$self->addbadmessage(CGI::p(join("",
-				  $r->maketext("The file [_1]/[_2] cannot be found.",$emailDirectory, $openfilename ) ,CGI::br(),
-							 $r->maketext("Check whether it exists and whether the directory [_1] can be read by the webserver.", $emailDirectory),CGI::br(),
-							 $r->maketext("Using contents of the default message [_1] instead.", $default_msg_file),
+			$self->addbadmessage(CGI::p(join(
+				"",
+				$r->maketext("The file [_1]/[_2] cannot be found.", $emailDirectory, $openfilename),
+				CGI::br(),
+				$r->maketext(
+					"Check whether it exists and whether the directory [_1] can be read by the webserver.",
+					$emailDirectory
+				),
+				CGI::br(),
+				$r->maketext("Using contents of the default message [_1] instead.", $default_msg_file),
 			)));
 		}
 	} else {
-		$input_file     = $default_msg_file;
+		$input_file = $default_msg_file;
 	}
-	$self->{input_file} =$input_file;
+	$self->{input_file} = $input_file;
 
 	#################################################################
 	# Determine the file name to save message into
@@ -329,8 +305,6 @@ sub initialize {
 	$self->{remote_host}            =    $remote_host;
 	$self->{r_text}                 =    $r_text;
 
-
-
 	###################################################################################
 	#Determine the appropriate script action from the buttons
 	###################################################################################
@@ -353,7 +327,6 @@ sub initialize {
 	#		'selected studentIDs'
 	#     error actions (various)
 
-
 	#############################################################################################
 	# if no form is submitted, gather data needed to produce the mail form and return
 	#############################################################################################
@@ -366,10 +339,6 @@ sub initialize {
 
 		return '';
 	}
-
-
-
-
 
 	#############################################################################################
 	# If form is submitted deal with filled out forms
@@ -442,10 +411,10 @@ sub initialize {
 			}
 		}
 
-	    # check that recipients have been selected.
-		my @recipients            = @{$self->{ra_send_to}};
-		unless (@recipients) {
-			$self->addbadmessage(CGI::p($r->maketext("No recipients selected. Please select one or more recipients from the list below.")));
+	    # Check that recipients have been selected.
+		unless (@{ $self->{ra_send_to} }) {
+			$self->addbadmessage(
+				$r->maketext('No recipients selected. Please select one or more recipients from the list below.'));
 			return;
 		}
 
@@ -520,8 +489,11 @@ sub body {
 	if ($response eq 'preview') {
 		$self->print_preview($setID);
 	} elsif ($response eq 'send_email' and $self->{ra_send_to} and @{$self->{ra_send_to}}){
-		my $message = CGI::i($r->maketext("Email is being sent to [quant,_1,recipient]. You will be notified by email when the task is completed.  This may take several minutes if the class is large.",scalar(@{$self->{ra_send_to}}))
-		);
+		my $message = CGI::i($r->maketext(
+			"Email is being sent to [quant,_1,recipient]. You will be notified by email
+				when the task is completed.  This may take several minutes if the class is
+				large.", scalar(@{ $self->{ra_send_to} })
+		));
 		$self->addgoodmessage($message);
 		$self->{message} .= $message;
 
@@ -549,7 +521,7 @@ sub print_preview {
 
 	my ($msg, $preview_header) = $self->process_message($ur,$rh_merge_data,1); # 1 == for preview
 
-	my $recipients  = join(" ",@{$self->{ra_send_to} });
+	my $recipients = join(" ", @{ $self->{ra_send_to} });
 	my $errorMessage =  defined($self->{submit_message}) ?  CGI::i($self->{submit_message} ) : '' ;
 
 	# Format message keeping the preview_header lined up
@@ -578,14 +550,11 @@ sub print_preview {
 
 	$msg = join("",$errorMessage,$preview_header,$msg);
 
-	return join("", '<div dir="ltr"><pre>',$msg,"\n","\n",
-				   '</pre></div>',
-				   CGI::p($r->maketext('Use browser back button to return from preview mode')),
-				   CGI::h3($r->maketext('Emails to be sent to the following:')),
-				   $recipients, "\n",
-
-	);
-
+	return
+		CGI::div({ class => 'mb-3', dir => 'ltr' }, CGI::pre($msg))
+		. CGI::p($r->maketext('Use browser back button to return from preview mode.'))
+		. CGI::h3($r->maketext('Emails to be sent to the following:'))
+		. $recipients;
 }
 
 sub print_form {
@@ -608,19 +577,6 @@ sub print_form {
 
 	my $userTemplate            = $db->newUser;
 	my $permissionLevelTemplate = $db->newPermissionLevel;
-
-	# This code will require changing if the permission and user tables ever have different keys.
-	my @users           = sort @{ $self->{ra_users} };
-	my $ra_user_records = $self->{ra_user_records};
-	my %classlistLabels = ();
-	foreach my $ur (@{$ra_user_records}) {
-		$classlistLabels{ $ur->user_id } =
-			$ur->user_id . ': '
-			. $ur->last_name . ', '
-			. $ur->first_name . ' -- '
-			. $ur->section . " / "
-			. $ur->recitation;
-	}
 
 	##############################################################################################################
 
@@ -794,7 +750,7 @@ sub print_form {
 								multiple            => 1,
 								refresh_button_name => $r->maketext('Update settings and refresh page'),
 							},
-							@{$ra_user_records}
+							@{ $self->{ra_user_records} }
 						)
 					),
 					CGI::div(
@@ -856,7 +812,7 @@ sub print_form {
 
 	# Create a textbox with the subject and a textarea with the message.
 	# Print the actual body of message.
-	print CGI::p($self->{message}) if defined($self->{message});
+	print CGI::div({ class => 'alert alert-info p-1 my-2' }, $self->{message}) if defined($self->{message});
 	print CGI::div(
 		{ class => 'mb-2' },
 		CGI::label(
@@ -1160,16 +1116,16 @@ sub process_message {
 	my $endCol = @COL;
 	# for safety, only evaluate special variables
  	my $msg = $text;
-	$msg =~ s/\$SID/$SID/ge;
- 	$msg =~ s/\$LN/$LN/ge;
- 	$msg =~ s/\$FN/$FN/ge;
- 	$msg =~ s/\$STATUS/$STATUS/ge;
- 	$msg =~ s/\$SECTION/$SECTION/ge;
- 	$msg =~ s/\$RECITATION/$RECITATION/ge;
- 	$msg =~ s/\$EMAIL/$EMAIL/ge;
- 	$msg =~ s/\$LOGIN/$LOGIN/ge;
+	$msg =~ s/\$SID/$SID/g;
+ 	$msg =~ s/\$LN/$LN/g;
+ 	$msg =~ s/\$FN/$FN/g;
+ 	$msg =~ s/\$STATUS/$STATUS/g;
+ 	$msg =~ s/\$SECTION/$SECTION/g;
+ 	$msg =~ s/\$RECITATION/$RECITATION/g;
+ 	$msg =~ s/\$EMAIL/$EMAIL/g;
+ 	$msg =~ s/\$LOGIN/$LOGIN/g;
 	if (defined($COL[1])) {		# prevents extraneous error messages.
-		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/ge
+		$msg =~ s/\$COL\[(\-?\d+)\]/$COL[$1]/g
 	}
 	else {						# prevents extraneous $COL's in email message
 		$msg =~ s/\$COL\[(\-?\d+)\]//g

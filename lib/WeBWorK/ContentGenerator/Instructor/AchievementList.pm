@@ -267,7 +267,6 @@ sub body {
 
 	########## get achievements
 
-	# DBFIXME use an iterator
 	my @Achievements = $db->getAchievements(@allAchievementIDs);
 
 	# sort Achievments.  Achievements are always sorted by in the order they are evaluated

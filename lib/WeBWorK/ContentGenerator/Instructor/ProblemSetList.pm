@@ -136,12 +136,11 @@ use constant FIELD_PERMS => {
 use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_sets prev_visible_sets no_prev_visible_set editMode exportMode primarySortField secondarySortField)];
 
 use constant SORT_SUBS => {
-	set_id		=> \&bySetID,
-	open_date	=> \&byOpenDate,
-	due_date	=> \&byDueDate,
-	answer_date	=> \&byAnswerDate,
-	visible	=> \&byVisible,
-
+	set_id      => \&bySetID,
+	open_date   => \&byOpenDate,
+	due_date    => \&byDueDate,
+	answer_date => \&byAnswerDate,
+	visible     => \&byVisible,
 };
 
 # note that field_properties for some fields, in particular, gateway
@@ -279,21 +278,19 @@ sub pre_header_initialize {
 		if ($scope eq "none") {
 			return $r->maketext("No sets selected for scoring");
 		} elsif ($scope eq "all") {
-#			@setsToScore = @{ $r->param("allSetIDs") };
-		    @setsToScore = $db->listGlobalSets;
-
+			@setsToScore = $db->listGlobalSets;
 		} elsif ($scope eq "visible") {
 			@setsToScore = @{ $r->param("visibleSetIDs") };
 		} elsif ($scope eq "selected") {
 			@setsToScore = $r->param("selected_sets");
 		}
 
-		my $uri = $self->systemLink( $urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring', $r, courseID=>$courseName),
-						params=>{
-							scoreSelected=>"ScoreSelected",
-							selectedSet=>\@setsToScore,
-#							recordSingleSetScores=>''
-						}
+		my $uri = $self->systemLink(
+			$urlpath->newFromModule('WeBWorK::ContentGenerator::Instructor::Scoring', $r, courseID => $courseName),
+			params => {
+				scoreSelected => "ScoreSelected",
+				selectedSet   => \@setsToScore,
+			}
 		);
 
 		$self->reply_with_redirect($uri);
@@ -325,21 +322,19 @@ sub initialize {
 
 	########## set initial values for state fields
 
-	my @allSetIDs = $db->listGlobalSets;
-	# DBFIXME count would suffice here :P
-	my @users = $db->listUsers;
-	$self->{allSetIDs} = \@allSetIDs;
-	$self->{totalUsers} = scalar @users;
+	my @allSets = $db->getGlobalSetsWhere();
+	$self->{allSetIDs} = [ map { $_->set_id } @allSets ];
+	$self->{totalUsers} = $db->countUsers;
 
 	if (defined $r->param("visible_sets")) {
 		$self->{visibleSetIDs} = [ $r->param("visible_sets") ];
 	} elsif (defined $r->param("no_visible_sets")) {
 		$self->{visibleSetIDs} = [];
 	} else {
-		if (@allSetIDs > HIDE_SETS_THRESHOLD) {
+		if (@{ $self->{allSetIDs} } > HIDE_SETS_THRESHOLD) {
 			$self->{visibleSetIDs} = [];
 		} else {
-			$self->{visibleSetIDs} = [ @allSetIDs ];
+			$self->{visibleSetIDs} = $self->{allSetIDs};
 		}
 	}
 
@@ -372,8 +367,6 @@ sub initialize {
 	#########################################
 	# collect date information from sets
 	#########################################
-
-	my @allSets = $db->getGlobalSets(@allSetIDs);
 
 	my (%open_dates, %due_dates, %answer_dates);
 	foreach my $Set (@allSets) {
@@ -453,7 +446,7 @@ sub body {
 		filename
 		set_id
 		open_date
-                reduced_scoring_date
+		reduced_scoring_date
 		due_date
 		answer_date
 		visible
@@ -465,41 +458,26 @@ sub body {
 		$r->maketext("Set Definition Filename"),
 		$r->maketext("Edit Set Data"),
 		$r->maketext("Open Date"),
-	        $r->maketext("Reduced Scoring Date"),
+		$r->maketext("Reduced Scoring Date"),
 		$r->maketext("Close Date"),
 		$r->maketext("Answer Date"),
 		$r->maketext("Visible"),
-	        $r->maketext("Reduced Scoring"),
+		$r->maketext("Reduced Scoring"),
 		$r->maketext("Hide Hints")
 	);
 
-
-
 	my $actionID = $self->{actionID};
 
-	########## retrieve possibly changed values for member fields
-
-	my @allSetIDs = @{ $self->{allSetIDs} }; # do we need this one? YES, deleting or importing a set will change this.
-	my @visibleSetIDs = @{ $self->{visibleSetIDs} };
-	my @prevVisibleSetIDs = @{ $self->{prevVisibleSetIDs} };
-	my @selectedSetIDs = @{ $self->{selectedSetIDs} };
+	# Retrieve values for member fields
 	my $editMode = $self->{editMode};
 	my $exportMode = $self->{exportMode};
 	my $primarySortField = $self->{primarySortField};
 	my $secondarySortField = $self->{secondarySortField};
 
-	#warn "visibleSetIDs=@visibleSetIDs\n";
-	#warn "prevVisibleSetIDs=@prevVisibleSetIDs\n";
-	#warn "selectedSetIDs=@selectedSetIDs\n";
-	#warn "editMode=$editMode\n";
-	#warn "exportMode = $exportMode\n";
+	# Get requested sets
+	my @Sets = @{ $self->{visibleSetIDs} } ? $db->getGlobalSets(@{ $self->{visibleSetIDs} }) : ();
 
-	########## get required users
-
-	# DBFIXME use an iterator
-	my @Sets = grep { defined $_ } @visibleSetIDs ? $db->getGlobalSets(@visibleSetIDs) : ();
-
-	# presort users
+	# presort sets
 	my %sortSubs = %{ SORT_SUBS() };
 	my $primarySortSub = $sortSubs{$primarySortField};
 	my $secondarySortSub = $sortSubs{$secondarySortField};
@@ -542,16 +520,16 @@ sub body {
 
 	print "\n<!-- state data here -->\n";
 
-	if (@visibleSetIDs) {
-		print CGI::hidden(-name=>"visible_sets", -value=>\@visibleSetIDs);
+	if (@{ $self->{visibleSetIDs} }) {
+		print CGI::hidden(-name => "visible_sets", -value => $self->{visibleSetIDs});
 	} else {
 		print CGI::hidden(-name=>"no_visible_sets", -value=>"1");
 	}
 
-	if (@prevVisibleSetIDs) {
-		print CGI::hidden(-name=>"prev_visible_sets", -value=>\@prevVisibleSetIDs);
+	if (@{ $self->{prevVisibleSetIDs} }) {
+		print CGI::hidden(-name => "prev_visible_sets", -value => $self->{prevVisibleSetIDs});
 	} else {
-		print CGI::hidden(-name=>"no_prev_visible_sets", -value=>"1");
+		print CGI::hidden(-name => "no_prev_visible_sets", -value => "1");
 	}
 
 	print CGI::hidden(-name=>"editMode", -value=>$editMode);
@@ -644,12 +622,19 @@ sub body {
 	$prettyFieldNames{enable_reduced_scoring} = $r->maketext('Enable Reduced Scoring') if $editMode;
 
 
-	print CGI::p({},$r->maketext("Showing [_1] out of [_2] sets.", scalar @visibleSetIDs, scalar @allSetIDs));
+	print CGI::p(
+		$r->maketext(
+			"Showing [_1] out of [_2] sets.",
+			scalar @{ $self->{visibleSetIDs} },
+			scalar @{ $self->{allSetIDs} }
+		)
+	);
 
-	$self->printTableHTML(\@Sets, \%prettyFieldNames,
-		editMode => $editMode,
-		exportMode => $exportMode,
-		selectedSetIDs => \@selectedSetIDs,
+	$self->printTableHTML(
+		\@Sets, \%prettyFieldNames,
+		editMode       => $editMode,
+		exportMode     => $exportMode,
+		selectedSetIDs => $self->{selectedSetIDs},
 	);
 
 	########## print end of form
@@ -756,7 +741,7 @@ sub filter_form {
 sub filter_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r = $self->r ;
+	my $r  = $self->r;
 	my $db = $r->db;
 
 	my $result;
@@ -771,37 +756,25 @@ sub filter_handler {
 		$self->{visibleSetIDs} = [];
 	} elsif ($scope eq "selected") {
 		$result = $r->maketext("showing selected sets");
-		$self->{visibleSetIDs} = $genericParams->{selected_sets}; # an arrayref
+		$self->{visibleSetIDs} = $genericParams->{selected_sets};
 	} elsif ($scope eq "match_ids") {
-                $result = $r->maketext("showing matching sets");
-		my @setIDs = split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}->[0];
-		$self->{visibleSetIDs} = \@setIDs;
+		$result = $r->maketext("showing matching sets");
+		$self->{visibleSetIDs} = [ split /\s*,\s*/, $actionParams->{"action.filter.set_ids"}[0] ];
 	} elsif ($scope eq "match_open_date") {
-                $result = $r->maketext("showing matching sets");
-		my $open_date = $actionParams->{"action.filter.open_date"}->[0];
-		$self->{visibleSetIDs} = $self->{open_dates}->{$open_date}; # an arrayref
+		$result = $r->maketext("showing matching sets");
+		$self->{visibleSetIDs} = $self->{open_dates}{ $actionParams->{"action.filter.open_date"}[0] };
 	} elsif ($scope eq "match_due_date") {
-                $result = $r->maketext("showing matching sets");
-		my $due_date = $actionParams->{"action.filter.due_date"}->[0];
-		$self->{visibleSetIDs} = $self->{due_date}->{$due_date}; # an arrayref
+		$result = $r->maketext("showing matching sets");
+		$self->{visibleSetIDs} = $self->{due_date}{ $actionParams->{"action.filter.due_date"}[0] };
 	} elsif ($scope eq "match_answer_date") {
-                $result = $r->maketext("showing matching sets");
-		my $answer_date = $actionParams->{"action.filter.answer_date"}->[0];
-		$self->{visibleSetIDs} = $self->{answer_dates}->{$answer_date}; # an arrayref
+		$result = $r->maketext("showing matching sets");
+		$self->{visibleSetIDs} = $self->{answer_dates}{ $actionParams->{"action.filter.answer_date"}[0] };
 	} elsif ($scope eq "visible") {
-                $result = $r->maketext("showing visible sets");
-		# DBFIXME do filtering in the database, please!
-		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @visibleSetIDs = grep { $_->visible } @setRecords;
-		@visibleSetIDs = map {$_->set_id} @visibleSetIDs;
-		$self->{visibleSetIDs} = \@visibleSetIDs;
+		$result = $r->maketext("showing visible sets");
+		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 1 }) ];
 	} elsif ($scope eq "unvisible") {
-                $result = $r->maketext("showing hidden sets");
-		# DBFIXME do filtering in the database, please!
-		my @setRecords = $db->getGlobalSets(@{$self->{allSetIDs}});
-		my @unvisibleSetIDs = grep { not $_->visible } @setRecords;
-		@unvisibleSetIDs = map {$_->set_id} @unvisibleSetIDs;
-		$self->{visibleSetIDs} = \@unvisibleSetIDs;
+		$result = $r->maketext("showing hidden sets");
+		$self->{visibleSetIDs} = [ $db->listGlobalSetsWhere({ visible => 0 }) ];
 	}
 
 	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
@@ -990,7 +963,7 @@ sub publish_form {
 sub publish_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r = $self->r;
+	my $r  = $self->r;
 	my $db = $r->db;
 
 	my $result = "";
@@ -1007,31 +980,29 @@ sub publish_handler {
 		$result = CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("No change made to any set"));
 	} elsif ($scope eq "all") {
 		@setIDs = @{ $self->{allSetIDs} };
-		$result =
-			$value
+		$result = $value
 			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
-			$r->maketext("All sets made visible for all students"))
+				$r->maketext("All sets made visible for all students"))
 			: CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("All sets hidden from all students"));
 	} elsif ($scope eq "visible") {
 		@setIDs = @{ $self->{visibleSetIDs} };
 		$result = $value
 			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
-			$r->maketext("All visible sets made visible for all students"))
+				$r->maketext("All visible sets made visible for all students"))
 			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
-			$r->maketext("All visible hidden from all students"));
+				$r->maketext("All visible hidden from all students"));
 	} elsif ($scope eq "selected") {
 		@setIDs = @{ $genericParams->{selected_sets} };
 		$result = $value
 			? CGI::div({ class => 'alert alert-success p-1 mb-0' },
-			$r->maketext("All selected sets made visible for all students"))
+				$r->maketext("All selected sets made visible for all students"))
 			: CGI::div({ class => 'alert alert-success p-1 mb-0' },
-			$r->maketext("All selected sets hidden from all students"));
+				$r->maketext("All selected sets hidden from all students"));
 	}
 
-	# can we use UPDATE here, instead of fetch/change/store?
+	# Can we use UPDATE here, instead of fetch/change/store?
 	my @sets = $db->getGlobalSets(@setIDs);
-
-	map { $_->visible("$value") if $_; $db->putGlobalSet($_); } @sets;
+	map { $_->visible($value); $db->putGlobalSet($_); } @sets;
 
 	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $result);
 }
@@ -1134,11 +1105,10 @@ sub delete_form {
 sub delete_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 
-	my $r      = $self->r;
-	my $db     = $r->db;
+	my $r  = $self->r;
+	my $db = $r->db;
 
 	my $scope = $actionParams->{"action.delete.scope"}->[0];
-
 
 	my @setIDsToDelete = ();
 
@@ -1146,8 +1116,8 @@ sub delete_handler {
 		@setIDsToDelete = @{ $self->{selectedSetIDs} };
 	}
 
-	my %allSetIDs = map { $_ => 1 } @{ $self->{allSetIDs} };
-	my %visibleSetIDs = map { $_ => 1 } @{ $self->{visibleSetIDs} };
+	my %allSetIDs      = map { $_ => 1 } @{ $self->{allSetIDs} };
+	my %visibleSetIDs  = map { $_ => 1 } @{ $self->{visibleSetIDs} };
 	my %selectedSetIDs = map { $_ => 1 } @{ $self->{selectedSetIDs} };
 
 	foreach my $setID (@setIDsToDelete) {
@@ -1157,8 +1127,8 @@ sub delete_handler {
 		$db->deleteGlobalSet($setID);
 	}
 
-	$self->{allSetIDs} = [ keys %allSetIDs ];
-	$self->{visibleSetIDs} = [ keys %visibleSetIDs ];
+	$self->{allSetIDs}      = [ keys %allSetIDs ];
+	$self->{visibleSetIDs}  = [ keys %visibleSetIDs ];
 	$self->{selectedSetIDs} = [ keys %selectedSetIDs ];
 
 	my $num = @setIDsToDelete;
@@ -1552,7 +1522,6 @@ sub saveExport_form {
 sub saveExport_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
 	my $r           = $self->r;
-	my $db          = $r->db;
 
 	my @setIDsToExport = @{ $self->{selectedSetIDs} };
 
@@ -1583,7 +1552,6 @@ sub saveExport_handler {
 			$numExported, $numSkipped, ($numSkipped) ? CGI::ul(CGI::li(\@reasons)) : ''
 		)
 	);
-
 }
 
 sub cancelEdit_form {
@@ -1715,35 +1683,38 @@ sub saveEdit_handler {
 
 sub bySetID         { $a->set_id         cmp $b->set_id         }
 
-#FIXME  eventually we may be able to remove these checks, if we can trust
-# that the dates are always defined
-# dates which are the empty string '' or undefined  are treated as 0
-sub byOpenDate      {
-					  my $result = eval{( $a->open_date || 0 )      <=> ( $b->open_date || 0 ) };
-                      return $result unless $@;
-                      warn "Open date not correctly defined.";
-                      return 0;
-}
-sub byDueDate       {
-					  my $result = eval{( $a->due_date || 0 )     <=> ( $b->due_date || 0 )   };
-                      return $result unless $@;
-                      warn "Close date not correctly defined.";
-                      return 0;
-}
-sub byAnswerDate    {
-					  my $result = eval{( $a->answer_date || 0)    <=> ( $b->answer_date || 0 )  };
-                      return $result unless $@;
-                      warn "Answer date not correctly defined.";
-                      return 0;
-}
-sub byVisible     {
-					  my $result = eval{$a->visible      cmp $b->visible   };
-                      return $result unless $@;
-                      warn "Visibility status not correctly defined.";
-                      return 0;
+#FIXME: Eventually we may be able to remove these checks, if we can trust
+# that the dates are always defined.
+# Dates which are the empty string '' or undefined are treated as 0.
+sub byOpenDate {
+	my $result = eval { ($a->open_date || 0) <=> ($b->open_date || 0) };
+	return $result unless $@;
+	warn "Open date not correctly defined.";
+	return 0;
 }
 
-sub byOpenDue       { &byOpenDate || &byDueDate }
+sub byDueDate {
+	my $result = eval { ($a->due_date || 0) <=> ($b->due_date || 0) };
+	return $result unless $@;
+	warn "Close date not correctly defined.";
+	return 0;
+}
+
+sub byAnswerDate {
+	my $result = eval { ($a->answer_date || 0) <=> ($b->answer_date || 0) };
+	return $result unless $@;
+	warn "Answer date not correctly defined.";
+	return 0;
+}
+
+sub byVisible {
+	my $result = eval { $a->visible cmp $b->visible };
+	return $result unless $@;
+	warn "Visibility status not correctly defined.";
+	return 0;
+}
+
+sub byOpenDue { &byOpenDate || &byDueDate }
 
 ################################################################################
 # utilities
@@ -1782,15 +1753,9 @@ sub importSetsFromDef {
 			unless -r "$dir/$fileName";
 	}
 
-	my @allSetIDs = $db->listGlobalSets();
-	# FIXME: getGlobalSets takes a lot of time just for checking to see if a set already exists
-	# 	this could be avoided by waiting until the call to addGlobalSet below
-	#	and checking to see if the error message says that the set already exists
-	#	but if the error message is ever changed the code here might be broken
-	#	then again, one call to getGlobalSets and skipping unnecessary calls to addGlobalSet
-	#	could be faster than no call to getGlobalSets and lots of unnecessary calls to addGlobalSet
-	# DBFIXME all we need here is set IDs, right? why fetch entire records?
-	my %allSets = map { $_->set_id => 1 if $_} $db->getGlobalSets(@allSetIDs); # checked
+	# Get a list of set ids of existing sets in the course.  This is used to
+	# ensure that an imported set does not already exist.
+	my %allSets = map { $_ => 1 } $db->listGlobalSets();
 
 	my (@added, @skipped);
 
@@ -1798,7 +1763,15 @@ sub importSetsFromDef {
 
 		debug("$set_definition_file: reading set definition file");
 		# read data in set definition file
-		my ($setName, $paperHeaderFile, $screenHeaderFile, $openDate, $dueDate, $answerDate, $ra_problemData, $assignmentType, $enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval, $versionsPerInterval, $versionTimeLimit, $problemRandOrder, $problemsPerPage, $hideScore, $hideScoreByProblem, $hideWork,$timeCap,$restrictIP,$restrictLoc,$relaxRestrictIP,$description,$emailInstructor,$restrictProbProgression) = $self->readSetDef($set_definition_file);
+		my (
+			$setName,              $paperHeaderFile,    $screenHeaderFile,   $openDate,
+			$dueDate,              $answerDate,         $ra_problemData,     $assignmentType,
+			$enableReducedScoring, $reducedScoringDate, $attemptsPerVersion, $timeInterval,
+			$versionsPerInterval,  $versionTimeLimit,   $problemRandOrder,   $problemsPerPage,
+			$hideScore,            $hideScoreByProblem, $hideWork,           $timeCap,
+			$restrictIP,           $restrictLoc,        $relaxRestrictIP,    $description,
+			$emailInstructor,      $restrictProbProgression
+		) = $self->readSetDef($set_definition_file);
 		my @problemList = @{$ra_problemData};
 
 		# Use the original name if form doesn't specify a new one.
@@ -1835,9 +1808,9 @@ sub importSetsFromDef {
 		$newSetRecord->email_instructor($emailInstructor);
 		$newSetRecord->restrict_prob_progression($restrictProbProgression);
 
-	# gateway/version data.  these should are all initialized to ''
-        #   by readSetDef, so for non-gateway/versioned sets they'll just
-        #   be stored as null
+		# gateway/version data.  these should are all initialized to ''
+        # by readSetDef, so for non-gateway/versioned sets they'll just
+        # be stored as null
 		$newSetRecord->assignment_type($assignmentType);
 		$newSetRecord->attempts_per_version($attemptsPerVersion);
 		$newSetRecord->time_interval($timeInterval);
@@ -1885,18 +1858,17 @@ sub importSetsFromDef {
 		my $freeProblemID = WeBWorK::Utils::max($db->listGlobalProblems($setName)) + 1;
 		foreach my $rh_problem (@problemList) {
 			$self->addProblemToSet(
-			  setName => $setName,
-			  sourceFile => $rh_problem->{source_file},
-			  problemID => $rh_problem->{problemID} ? $rh_problem->{problemID} : $freeProblemID++,
-			  value => $rh_problem->{value},
-			  maxAttempts => $rh_problem->{max_attempts},
-			  showMeAnother => $rh_problem->{showMeAnother},
-			  prPeriod => $rh_problem->{prPeriod},
-			  attToOpenChildren => $rh_problem->{attToOpenChildren},
-			    countsParentGrade => $rh_problem->{countsParentGrade}
-			    );
+				setName           => $setName,
+				sourceFile        => $rh_problem->{source_file},
+				problemID         => $rh_problem->{problemID} ? $rh_problem->{problemID} : $freeProblemID++,
+				value             => $rh_problem->{value},
+				maxAttempts       => $rh_problem->{max_attempts},
+				showMeAnother     => $rh_problem->{showMeAnother},
+				prPeriod          => $rh_problem->{prPeriod},
+				attToOpenChildren => $rh_problem->{attToOpenChildren},
+				countsParentGrade => $rh_problem->{countsParentGrade}
+			);
 		}
-
 
 		if ($assign eq "all") {
 			$self->assignSetToAllUsers($setName);
@@ -1909,19 +1881,18 @@ sub importSetsFromDef {
 
 	#if there is a start date we have to reopen all of the sets that were added and shift the dates
 	if ($startdate) {
-	    #the shift for all of the dates is from the min date to the start date
-	    my $dateshift = $startdate - $mindate;
+		#the shift for all of the dates is from the min date to the start date
+		my $dateshift = $startdate - $mindate;
 
-	    foreach my $setID (@added) {
-		my $setRecord = $db->getGlobalSet($setID);
-		$setRecord->open_date($setRecord->open_date + $dateshift);
-		$setRecord->reduced_scoring_date($setRecord->reduced_scoring_date + $dateshift);
-		$setRecord->due_date($setRecord->due_date + $dateshift);
-		$setRecord->answer_date($setRecord->answer_date + $dateshift);
-		$db->putGlobalSet($setRecord);
-	    }
+		foreach my $setID (@added) {
+			my $setRecord = $db->getGlobalSet($setID);
+			$setRecord->open_date($setRecord->open_date + $dateshift);
+			$setRecord->reduced_scoring_date($setRecord->reduced_scoring_date + $dateshift);
+			$setRecord->due_date($setRecord->due_date + $dateshift);
+			$setRecord->answer_date($setRecord->answer_date + $dateshift);
+			$db->putGlobalSet($setRecord);
+		}
 	}
-
 
 	return \@added, \@skipped;
 }
@@ -2355,7 +2326,7 @@ sub readSetDef {
 }
 
 sub exportSetsToDef {
-    	my ($self, %filenames) = @_;
+	my ($self, %filenames) = @_;
 
 	my $r        = $self->r;
 	my $ce       = $r->ce;
@@ -2363,7 +2334,7 @@ sub exportSetsToDef {
 
 	my (@exported, @skipped, %reason);
 
-SET:	foreach my $set (keys %filenames) {
+SET: foreach my $set (keys %filenames) {
 
 		my $fileName = $filenames{$set};
 		$fileName .= ".def" unless $fileName =~ m/\.def$/;
@@ -2405,52 +2376,44 @@ SET:	foreach my $set (keys %filenames) {
 		my $emailInstructor = $setRecord->email_instructor;
 		my $restrictProbProgression = $setRecord->restrict_prob_progression;
 
-		my @problemList = $db->listGlobalProblems($set);
+		my @problemList = $db->getGlobalProblemsWhere({ set_id => $set }, 'problem_id');
 
 		my $problemList  = '';
-		foreach my $prob (sort {$a <=> $b} @problemList) {
-			# DBFIXME use an iterator?
-			my $problemRecord = $db->getGlobalProblem($set, $prob); # checked
-			unless (defined $problemRecord) {
-				push @skipped, $set;
-				$reason{$set} = $r->maketext("No record found for problem [_1].", $prob);
-				next SET;
-			}
-			my $problem_id    = $problemRecord->problem_id();
+		for my $problemRecord (@problemList) {
+			my $problem_id = $problemRecord->problem_id();
 
 			if ($setRecord->assignment_type eq 'jitar') {
-			    $problem_id = join('.',jitar_id_to_seq($problem_id));
+				$problem_id = join('.', jitar_id_to_seq($problem_id));
 			}
 
-			my $source_file   = $problemRecord->source_file();
-			my $value         = $problemRecord->value();
-			my $max_attempts  = $problemRecord->max_attempts();
-			my $showMeAnother  = $problemRecord->showMeAnother();
-			my $prPeriod		= $problemRecord->prPeriod();
+			my $source_file       = $problemRecord->source_file();
+			my $value             = $problemRecord->value();
+			my $max_attempts      = $problemRecord->max_attempts();
+			my $showMeAnother     = $problemRecord->showMeAnother();
+			my $prPeriod          = $problemRecord->prPeriod();
 			my $countsParentGrade = $problemRecord->counts_parent_grade();
 			my $attToOpenChildren = $problemRecord->att_to_open_children();
 
 			# backslash-escape commas in fields
-			$source_file =~ s/([,\\])/\\$1/g;
-			$value =~ s/([,\\])/\\$1/g;
-			$max_attempts =~ s/([,\\])/\\$1/g;
+			$source_file   =~ s/([,\\])/\\$1/g;
+			$value         =~ s/([,\\])/\\$1/g;
+			$max_attempts  =~ s/([,\\])/\\$1/g;
 			$showMeAnother =~ s/([,\\])/\\$1/g;
-			$prPeriod =~ s/([,\\])/\\$1/g;
+			$prPeriod      =~ s/([,\\])/\\$1/g;
 
 			# This is the new way of saving problem information
 			# the labelled list makes it easier to add variables and
 			# easier to tell when they are missing
-			$problemList     .= "problem_start\n";
-			$problemList     .= "problem_id = $problem_id\n";
-			$problemList     .= "source_file = $source_file\n";
-			$problemList     .= "value = $value\n";
-			$problemList     .= "max_attempts = $max_attempts\n";
-			$problemList     .= "showMeAnother = $showMeAnother\n";
-			$problemList     .= "prPeriod = $prPeriod\n";
-			$problemList     .= "counts_parent_grade = $countsParentGrade\n";
-			$problemList     .= "att_to_open_children = $attToOpenChildren \n";
-			$problemList     .= "problem_end\n"
-
+			$problemList .= "problem_start\n";
+			$problemList .= "problem_id = $problem_id\n";
+			$problemList .= "source_file = $source_file\n";
+			$problemList .= "value = $value\n";
+			$problemList .= "max_attempts = $max_attempts\n";
+			$problemList .= "showMeAnother = $showMeAnother\n";
+			$problemList .= "prPeriod = $prPeriod\n";
+			$problemList .= "counts_parent_grade = $countsParentGrade\n";
+			$problemList .= "att_to_open_children = $attToOpenChildren \n";
+			$problemList .= "problem_end\n";
 		}
 
 		# gateway fields
@@ -2624,10 +2587,10 @@ sub recordEditHTML {
 
 	my $users = $db->countSetUsers($Set->set_id);
 	my $totalUsers = $self->{totalUsers};
-	# DBFIXME count would suffice
-	my $problems = $db->listGlobalProblems($Set->set_id);
 
-        my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
+	my $problems = $db->countGlobalProblems($Set->set_id);
+
+	my $usersAssignedToSetURL  = $self->systemLink($urlpath->new(type=>'instructor_users_assigned_to_set', args=>{courseID => $courseName, setID => $Set->set_id} ));
 	my $prettySetID = $Set->set_id;
 	$prettySetID =~ s/_/ /g;
 	my $problemListURL  = $self->systemLink($urlpath->new(type=>'instructor_set_detail', args=>{courseID => $courseName, setID => $Set->set_id} ));

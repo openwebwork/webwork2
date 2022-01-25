@@ -69,7 +69,7 @@ my (@replaced, @added, @skipped);
 sub importUsersFromCSV {
 	my ($fileName, $createNew, $replaceExisting, @replaceList) = @_;
 
-	my @allUserIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
+	my @allUserIDs = $db->listUsers;
 	my %allUserIDs = map { $_ => 1 } @allUserIDs;
 
 	my %replaceOK;

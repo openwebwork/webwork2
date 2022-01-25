@@ -164,42 +164,10 @@ sub body {
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",  $r, courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
 
-# we have to get sets and versioned sets separately
-	# DBFIXME don't get ID lists, use WHERE clauses and iterators
-	my @setIDs = $db->listUserSets($effectiveUser);
-	my @userSetIDs = map {[$effectiveUser, $_]} @setIDs;
+	# we have to get sets and versioned sets separately
 
 	debug("Begin collecting merged sets");
-	my @sets = $db->getMergedSets( @userSetIDs );
-
-	debug("Begin fixing merged sets");
-
-	# Database fix (in case of undefined visible values)
-	# this may take some extra time the first time but should NEVER need to be run twice
-	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
-	# DBFIXME this should be in the database layer (along with other "fixes" of its ilk)
-	foreach my $set (@sets) {
-		# make sure visible is set to 0 or 1
-		if ( $set and $set->visible ne "0" and $set->visible ne "1") {
-			my $globalSet = $db->getGlobalSet($set->set_id);
-			$globalSet->visible("1");	# defaults to visible
-			$db->putGlobalSet($globalSet);
-			$set = $db->getMergedSet($effectiveUser, $set->set_id);
-		} else {
-			die "set $set not defined" unless $set;
-		}
-	}
-	foreach my $set (@sets) {
-		# make sure enable_reduced_scoring is set to 0 or 1
-		if ( $set and $set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
-			my $globalSet = $db->getGlobalSet($set->set_id);
-			$globalSet->enable_reduced_scoring("0");	# defaults to disabled
-			$db->putGlobalSet($globalSet);
-			$set = $db->getMergedSet($effectiveUser, $set->set_id);
-		} else {
-			die "set $set not defined" unless $set;
-		}
-	}
+	my @sets = $db->getMergedSetsWhere({ user_id => $effectiveUser });
 
 	# Remove proctored gateway sets for users without permission to view them
 	my $viewPr = $authz->hasPermissions( $user, "view_proctored_tests" );
@@ -286,9 +254,6 @@ sub body {
 	print CGI::end_tbody();
 	print CGI::end_table(), CGI::end_div();
 	my $pl = ($authz->hasPermissions($user, "view_multiple_sets") ? "s" : "");
-
-	# UPDATE - ghe3
-	# Added reset button to form.
 
 	if ($authz->hasPermissions($user, 'view_multiple_sets')) {
 		print CGI::div({ class => 'mb-3' },

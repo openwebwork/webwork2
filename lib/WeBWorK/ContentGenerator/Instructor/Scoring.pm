@@ -60,32 +60,26 @@ sub initialize {
 	$self->{padFields}  = defined($r->param('padFields') ) ? 1 : 0;
 	$self->{includePercentEachSet} = defined($r->param('includePercentEachSet') ) ? 1 : 0;
 
+	# Save the list of global sets sorted by set_id.
+	my @setRecords = $db->getGlobalSetsWhere({}, 'set_id');
+	$self->{ra_set_ids} = [ map { $_->set_id } @setRecords ];
+	$self->{rh_set_records} = { map { $_->set_id => $_ } @setRecords };
+
 	if (defined $scoreSelected && @selected && $scoringFileNameOK) {
 
 		my @totals                 = ();
 		my $recordSingleSetScores  = $r->param('recordSingleSetScores');
 
-		# pre-fetch users
+		# Get all users sorted by last_name, then first_name, then user_id.
 		debug("pre-fetching users");
-		# DBFIXME shouldn't need ID list
-		my @Users = $db->getUsers($db->listUsers);
+		my @Users = $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, qw/last_name first_name user_id/);
 		my %Users;
-		foreach my $User (@Users) {
-			next unless $User;
+		my @sortedUserIDs;
+		for my $User (@Users) {
 			next unless $ce->status_abbrev_has_behavior($User->status, "include_in_scoring");
-			$Users{$User->user_id} = $User;
+			push @sortedUserIDs, $User->user_id;
+			$Users{ $User->user_id } = $User;
 		}
-		# DBFIXME use an ORDER BY clause in the database
-		my @sortedUserIDs = sort {
-			lc($Users{$a}->last_name) cmp lc($Users{$b}->last_name)
-				||
-			lc($Users{$a}->first_name) cmp lc($Users{$b}->first_name)
-				||
-			lc($Users{$a}->user_id) cmp lc($Users{$b}->user_id)
-			}
-
-			keys %Users;
-		#my @userInfo = (\%Users, \@sortedUserIDs);
 		debug("done pre-fetching users");
 
 		my $scoringType            = ($recordSingleSetScores) ?'everything':'totals';
@@ -126,17 +120,6 @@ sub initialize {
 			);
 		}
 	}
-
-	# Obtaining list of sets:
-	my @setNames =  $db->listGlobalSets();
-	my @set_records = ();
-	# DBFIXME shouldn't need ID list
-	@set_records = $db->getGlobalSets( @setNames);
-
-
-	# store data
-	$self->{ra_sets}              =   \@setNames; # ra_sets IS NEVER USED AGAIN!!!!!
-	$self->{ra_set_records}       =   \@set_records;
 }
 
 
@@ -302,8 +285,7 @@ sub scoreSet {
 	$format = "normal" unless $format eq "full" or $format eq "everything" or $format eq "totals" or $format eq "info";
 	my $columnsPerProblem = ($format eq "full" or $format eq "everything") ? 3 : 1;
 
-	# DBFIXME these have already been fetched in ra_set_records
-	my $setRecord = $db->getGlobalSet($setID); #checked
+	my $setRecord = $self->{rh_set_records}{$setID};
 	die "global set $setID not found. " unless $setRecord;
 	#my %users;
 	#my %userStudentID=();
@@ -903,17 +885,9 @@ sub maxLength {
 sub popup_set_form {
 	my $self = shift;
 
-	# This code will require changing if the permission and user tables ever have different keys.
-	my @setNames;
-	my %setLabels;
-	for my $sr (sort { $a->set_id cmp $b->set_id } @{ $self->{ra_set_records} }) {
-		$setLabels{ $sr->set_id } = $sr->set_id;
-		push(@setNames, $sr->set_id);    # reorder sets
-	}
 	return CGI::scrolling_list({
 		name     => 'selectedSet',
-		values   => \@setNames,
-		labels   => \%setLabels,
+		values   => $self->{ra_set_ids},
 		size     => 10,
 		multiple => 1,
 		class    => 'form-select'

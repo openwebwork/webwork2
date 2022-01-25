@@ -20,6 +20,7 @@ use base qw(WeBWorK::ContentGenerator);
 use WeBWorK::Utils qw(sortByName );
 use WeBWorK::PG;
 use HTML::Entities;
+
 =head1 NAME
 
 =cut
@@ -27,22 +28,21 @@ use HTML::Entities;
 use strict;
 use warnings;
 
-
 sub pre_header_initialize {
 
-	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
-	my $authz = $r->authz;
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
+	my $authz   = $r->authz;
 	my $urlpath = $r->urlpath;
 
-	my $setName = $urlpath->arg("setID");
-	my $problemNumber = $r->urlpath->arg("problemID");
-	my $userName = $r->param('user');
+	my $setName           = $urlpath->arg("setID");
+	my $problemNumber     = $r->urlpath->arg("problemID");
+	my $userName          = $r->param('user');
 	my $effectiveUserName = $r->param('effectiveUser');
-	my $key = $r->param('key');
-	my $editMode = $r->param("editMode");
+	my $key               = $r->param('key');
+	my $editMode          = $r->param("editMode");
 
 	# Check permissions
 	return unless $authz->hasPermissions($userName, "access_instructor_tools");
@@ -51,14 +51,14 @@ sub pre_header_initialize {
 	my $user = $db->getUser($userName);
 	die "Couldn't find user $user" unless $user;
 
-	my $displayMode  = $user->displayMode ? $user->displayMode : $ce->{pg}->{options}->{displayMode};
-	$self->{displayMode}    = $displayMode;
+	my $displayMode = $user->displayMode ? $user->displayMode : $ce->{pg}->{options}->{displayMode};
+	$self->{displayMode} = $displayMode;
 }
 
 sub head {
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
@@ -68,14 +68,14 @@ sub head {
 
 }
 
-
 sub initialize {
 	my ($self)     = @_;
 	my $r          = $self->r;
 	my $urlpath    = $r->urlpath;
 	my $authz      = $r->authz;
 	my $db         = $r->db;
-	my $courseName     = $urlpath->arg("courseID");
+	my $ce         = $r->ce;
+	my $courseName = $urlpath->arg("courseID");
 	my $setID      = $urlpath->arg("setID");
 	my $problemID  = $urlpath->arg("problemID");
 	my $user       = $r->param('user');
@@ -84,27 +84,38 @@ sub initialize {
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "score_sets");
 
+	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# user if such restrictions are defined.  The users are sorted first by section, then by last name.
+	$self->{users} = [
+		$db->getUsersWhere(
+			{
+				user_id => { not_like => 'set_id:%' },
+				-or     => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+			},
+			[qw/section last_name/]
+		)
+	];
 
 	# if we need to gothrough and update grades
 	if ($r->param('assignGrades')) {
-		$self->addmessage(
-			CGI::div(
-				{ class => 'alert alert-success p-1 mb-0' },
-				$r->maketext("Grades have been saved for all current users.")
-			)
-		);
+		$self->addmessage(CGI::div(
+			{ class => 'alert alert-success p-1 mb-0' },
+			$r->maketext("Grades have been saved for all current users.")
+		));
 
-		my @users = $db->listUsers;
-
-		foreach my $userID (@users) {
-			my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+		for my $user (@{ $self->{users} }) {
+			my $userID      = $user->user_id;
+			my $userProblem = $db->getUserProblem($userID, $setID, $problemID);
 			next unless $userProblem && defined($r->param("$userID.score"));
 			#update grades and set flags
 			$userProblem->{flags} =~ s/needs_grading/graded/;
-			if  ($r->param("$userID.mark_correct")) {
+			if ($r->param("$userID.mark_correct")) {
 				$userProblem->status(1);
 			} else {
-				my $newscore = $r->param("$userID.score")/100;
+				my $newscore = $r->param("$userID.score") / 100;
 				if ($newscore != $userProblem->status) {
 					$userProblem->status($newscore);
 				}
@@ -114,7 +125,7 @@ sub initialize {
 
 			#if the instructor added a comment we should save that to the latest answer
 			if ($r->param("$userID.comment")) {
-				my $comment = $r->param("$userID.comment");
+				my $comment          = $r->param("$userID.comment");
 				my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID);
 
 				if ($userPastAnswerID) {
@@ -127,25 +138,24 @@ sub initialize {
 	}
 }
 
-
 sub body {
-	my ($self)         = @_;
-	my $r              = $self->r;
-	my $urlpath        = $r->urlpath;
-	my $db             = $r->db;
-	my $ce             = $r->ce;
-	my $authz          = $r->authz;
-	my $webworkRoot    = $ce->{webworkURLs}->{root};
-	my $courseName     = $urlpath->arg("courseID");
-	my $setID          = $urlpath->arg("setID");
-	my $problemID      = $urlpath->arg("problemID");
-	my $userID           = $r->param('user');
-	my $key = $r->param('key');
-	my $displayMode   = $self->{displayMode};
-	my $formFields = { WeBWorK::Form->new_from_paramable($r)->Vars };
+	my ($self)      = @_;
+	my $r           = $self->r;
+	my $urlpath     = $r->urlpath;
+	my $db          = $r->db;
+	my $ce          = $r->ce;
+	my $authz       = $r->authz;
+	my $webworkRoot = $ce->{webworkURLs}->{root};
+	my $courseName  = $urlpath->arg("courseID");
+	my $setID       = $urlpath->arg("setID");
+	my $problemID   = $urlpath->arg("problemID");
+	my $userID      = $r->param('user');
+	my $key         = $r->param('key');
+	my $displayMode = $self->{displayMode};
+	my $formFields  = { WeBWorK::Form->new_from_paramable($r)->Vars };
 
 	# to make grabbing these options easier, we'll pull them out now...
-	my %imagesModeOptions = %{$ce->{pg}->{displayModeOptions}->{images}};
+	my %imagesModeOptions = %{ $ce->{pg}->{displayModeOptions}->{images} };
 
 	# set up some display stuff
 	my $imgGen = WeBWorK::PG::ImageGenerator->new(
@@ -160,7 +170,6 @@ sub body {
 		dvipng_depth_db => $imagesModeOptions{dvipng_depth_db},
 	);
 
-
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 		CGI::p("You are not authorized to acces the Instructor tools."))
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
@@ -169,11 +178,9 @@ sub body {
 		CGI::p("You are not authorized to grade homework sets."))
 		unless $authz->hasPermissions($userID, "score_sets");
 
-	# DBFIXME duplicate call
-	my @users = $db->listUsers;
-	my $set = $db->getMergedSet($userID, $setID); # checked
-	my $problem = $db->getMergedProblem($userID, $setID, $problemID); # checked
-	my $user = $db->getUser($userID);
+	my $set     = $db->getMergedSet($userID, $setID);                    # checked
+	my $problem = $db->getMergedProblem($userID, $setID, $problemID);    # checked
+	my $user    = $db->getUser($userID);
 
 	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
 		CGI::p($r->maketext("This set needs to be assigned to you before you can grade it.")))
@@ -186,107 +193,82 @@ sub body {
 		$key,
 		$set,
 		$problem,
-		$set->psvn, # FIXME: this field should be removed
+		$set->psvn,    # FIXME: this field should be removed
 		$formFields,
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => 0,
-			showSolutions   => 0,
-			refreshMath2img => 0,
-			processAnswers  => 1,
-			permissionLevel => $db->getPermissionLevel($userID)->permission,
+		{              # translation options
+			displayMode              => $displayMode,
+			showHints                => 0,
+			showSolutions            => 0,
+			refreshMath2img          => 0,
+			processAnswers           => 1,
+			permissionLevel          => $db->getPermissionLevel($userID)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($userID)->permission,
 		},
 	);
-
 
 	# check to see what type the answers are.  right now it only checks for essay but could do more
 	my %answerHash = %{ $pg->{answers} };
 	my @answerTypes;
 
 	foreach (sortByName(undef, keys %answerHash)) {
-		push(@answerTypes,$answerHash{$_}->{type});
+		push(@answerTypes, $answerHash{$_}->{type});
 	}
 
 	print CGI::div({ class => 'problem-content col-md-12 col-lg-10' }, $pg->{body_text});
 
-	print CGI::start_form({method=>"post", action => $self->systemLink($urlpath, authen=>0),
-			id=>"problem-grader-form", name=>"problem-grader-form" });
+	print CGI::start_form({
+		method => "post",
+		action => $self->systemLink($urlpath, authen => 0),
+		id     => "problem-grader-form",
+		name   => "problem-grader-form"
+	});
 
 	my $selectAll = CGI::input({
-		type => 'button',
-	   	id => 'check_all_mark_corrects',
-	   	value => $r->maketext('Mark All'),
+		type  => 'button',
+		id    => 'check_all_mark_corrects',
+		value => $r->maketext('Mark All'),
 		class => 'btn btn-secondary btn-sm'
 	});
 
 	print CGI::start_div({ class => 'table-responsive' }), CGI::start_table({ width => '1020px' });
-	print CGI::Tr({-valign=>"top"}, CGI::th([$r->maketext("Section"), $r->maketext("Name"),
-				"&nbsp;",$r->maketext("Latest Answers"),"&nbsp;",$r->maketext("Mark Correct")."<br>".$selectAll,
-				"&nbsp;", $r->maketext("Score (%)"), "&nbsp;", $r->maketext("Comment")]));
-	print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
+	print CGI::Tr(
+		{ -valign => "top" },
+		CGI::th([
+			$r->maketext("Section"), $r->maketext("Name"),
+			"&nbsp;",                $r->maketext("Latest Answers"),
+			"&nbsp;",                $r->maketext("Mark Correct") . "<br>" . $selectAll,
+			"&nbsp;",                $r->maketext("Score (%)"),
+			"&nbsp;",                $r->maketext("Comment")
+		])
+	);
+	print CGI::Tr(
+		CGI::td([ CGI::hr(), CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "&nbsp;" ]));
 
-	my $viewProblemPage = $urlpath->new(type => 'problem_detail',
-		args => { courseID => $courseName, setID => $setID, problemID => $problemID });
+	my $viewProblemPage = $urlpath->new(
+		type => 'problem_detail',
+		args => { courseID => $courseName, setID => $setID, problemID => $problemID }
+	);
 
 	my %dropDown;
 	my $delta = $ce->{options}{problemGraderScoreDelta};
 	#construct the drop down.
-	for (my $i=int(100/$delta); $i>=0; $i--) {
-		$dropDown{$i*$delta}=$i*$delta;
+	for (my $i = int(100 / $delta); $i >= 0; $i--) {
+		$dropDown{ $i * $delta } = $i * $delta;
 	}
 
-	my @scores = sort {$b <=> $a} keys %dropDown;
-
-	my @myUsers = ();
-	my (@viewable_sections, @viewable_recitations);
-	if (defined $ce->{viewable_sections}->{$userID}) {
-		@viewable_sections = @{$ce->{viewable_sections}->{$userID}};
-	}
-	if (defined $ce->{viewable_recitations}->{$userID}) {
-		@viewable_recitations = @{$ce->{viewable_recitations}->{$userID}};
-	}
-	if (@viewable_sections or @viewable_recitations) {
-		foreach my $studentL (@users){
-			my $keep = 0;
-			my $student = $db->getUser($studentL);
-			foreach my $sec (@viewable_sections){
-				if ($student->section() eq $sec){$keep = 1; last;}
-			}
-			foreach my $rec (@viewable_recitations){
-				if ($student->recitation() eq $rec){$keep = 1; last;}
-			}
-			if ($keep) {push @myUsers, $studentL;}
-		}
-	}
-	else {@myUsers = @users;}
-
-
-	# get user records
-	my @userRecords  = ();
-	foreach my $currentUser ( @myUsers) {
-		my $userObj = $db->getUser($currentUser); #checked
-		die "Unable to find user object for $currentUser. " unless $userObj;
-		push (@userRecords, $userObj );
-	}
-
-	@userRecords = sort {
-		( lc($a->section) cmp lc($b->section) ) ||
-		( lc($a->last_name) cmp lc($b->last_name ))
-	} @userRecords;
-
+	my @scores = sort { $b <=> $a } keys %dropDown;
 
 	#for each user get their latest answer from the past answer db
-	foreach my $userRecord (@userRecords) {
+	foreach my $userRecord (@{ $self->{users} }) {
 
 		my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || "";
 
-		my $userID = $userRecord->user_id;
-		my $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => $userID });
+		my $userID           = $userRecord->user_id;
+		my $viewProblemLink  = $self->systemLink($viewProblemPage, params => { effectiveUser => $userID });
 		my $userPastAnswerID = $db->latestProblemPastAnswer($courseName, $userID, $setID, $problemID);
 		my $userAnswerString;
-		my $comment = "";
-		my $userProblem = $db->getUserProblem($userID,$setID,$problemID);
+		my $comment        = "";
+		my $userProblem    = $db->getUserProblem($userID, $setID, $problemID);
 		my $noCommentField = 0;
 
 		next unless $userProblem;
@@ -294,17 +276,18 @@ sub body {
 		if ($userPastAnswerID && $userProblem) {
 
 			my $userPastAnswer = $db->getPastAnswer($userPastAnswerID);
-			my @scores = split(//,$userPastAnswer->scores);
-			my @answers = split(/\t/,$userPastAnswer->answer_string);
+			my @scores         = split(//,   $userPastAnswer->scores);
+			my @answers        = split(/\t/, $userPastAnswer->answer_string);
 			$comment = $userPastAnswer->comment_string;
 
 			#Skip this answer if the pg file doesn't match the current pg file
-			if (defined($userPastAnswer->source_file) &&
-				$userPastAnswer->source_file ne $problem->source_file) {
+			if (defined($userPastAnswer->source_file)
+				&& $userPastAnswer->source_file ne $problem->source_file)
+			{
 				next;
 			}
 
-			for (my $i = 0; $i<= $#answers; $i++) {
+			for (my $i = 0; $i <= $#answers; $i++) {
 
 				my $answer = $answers[$i];
 
@@ -322,47 +305,52 @@ sub body {
 
 				} elsif ($answerTypes[$i] eq 'Value (Formula)') {
 					#if its a formula then render it and color it
-					$userAnswerString .= CGI::div({
+					$userAnswerString .= CGI::div(
+						{
 							class => 'graded-answer',
-						   	style => $scores[$i] ? "color:#006600" : "color:#660000"
-					   	}, '`' . HTML::Entities::encode_entities($answer).'`');
+							style => $scores[$i] ? "color:#006600" : "color:#660000"
+						},
+						'`' . HTML::Entities::encode_entities($answer) . '`'
+					);
 
-				}else {
+				} else {
 					# if it isnt an essay then don't render it but color it
-					$userAnswerString .= CGI::div({
+					$userAnswerString .= CGI::div(
+						{
 							class => 'graded-answer',
-							style => $scores[$i] ?  "color:#006600": "color:#660000"
-						}, HTML::Entities::encode_entities($answer));
+							style => $scores[$i] ? "color:#006600" : "color:#660000"
+						},
+						HTML::Entities::encode_entities($answer)
+					);
 				}
 			}
 
 		} else {
-			$noCommentField = 1;
+			$noCommentField   = 1;
 			$userAnswerString = "There are no answers for this student.";
 		}
 
-		my $score = int(100*$userProblem->status);
+		my $score = int(100 * $userProblem->status);
 
-		my $prettyName = $userRecord->last_name
-		. ", "
-		. $userRecord->first_name;
+		my $prettyName = $userRecord->last_name . ", " . $userRecord->first_name;
 
 		#create form for scoring
 
 		my $commentBox = '';
 		$commentBox = CGI::textarea({
-			   name => "$userID.comment",
-			   value => "$comment",
-			   rows => 3,
-			   class => 'form-control'
-		   }) .
-		CGI::br() . CGI::input({
-			class => 'preview btn btn-secondary btn-sm',
-			type => 'button',
-			name => "$userID.preview",
-			value => "Preview"
-		}) unless $noCommentField;
-
+			name  => "$userID.comment",
+			value => "$comment",
+			rows  => 3,
+			class => 'form-control'
+		})
+			. CGI::br()
+			. CGI::input({
+				class => 'preview btn btn-secondary btn-sm',
+				type  => 'button',
+				name  => "$userID.preview",
+				value => "Preview"
+			})
+			unless $noCommentField;
 
 		# this selects the score available in the drop down that is just above the student score
 		my $selectedScore = 0;
@@ -372,34 +360,44 @@ sub body {
 			}
 		}
 
-		print CGI::Tr({ valign => "top" },
-			CGI::td({},[
-					$userRecord->section,
-					CGI::div({
+		print CGI::Tr(
+			{ valign => "top" },
+			CGI::td([
+				$userRecord->section,
+				CGI::div(
+					{
 						class => $userProblem->flags =~ /needs_grading/
-							? "NeedsGrading $statusClass"
-							: $statusClass
-					}, CGI::a({ href => $viewProblemLink, target => "WW_View" }, $prettyName)), " ",
-					$userAnswerString, " ",
-					CGI::checkbox({
-						type => "checkbox",
-						class => "mark_correct form-check-input",
-						name => "$userID.mark_correct",
-						value => "1",
-						label => "",
+						? "NeedsGrading $statusClass"
+						: $statusClass
+					},
+					CGI::a({ href => $viewProblemLink, target => "WW_View" }, $prettyName)
+				),
+				" ",
+				$userAnswerString,
+				" ",
+				CGI::checkbox({
+					type  => "checkbox",
+					class => "mark_correct form-check-input",
+					name  => "$userID.mark_correct",
+					value => "1",
+					label => "",
 
-					}), " ",
-					CGI::popup_menu({
-						name => "$userID.score",
-						class => "score-selector form-select form-select-sm",
-						values => \@scores,
-						default => $selectedScore,
-						labels => \%dropDown
-					}) ," ",
-				   	$commentBox
-				])
+				}),
+				" ",
+				CGI::popup_menu({
+					name    => "$userID.score",
+					class   => "score-selector form-select form-select-sm",
+					values  => \@scores,
+					default => $selectedScore,
+					labels  => \%dropDown
+				}),
+				" ",
+				$commentBox
+			])
 		);
-		print CGI::Tr(CGI::td([CGI::hr(), CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"",CGI::hr(),"&nbsp;"]));
+		print CGI::Tr(
+			CGI::td([ CGI::hr(), CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "&nbsp;" ])
+		);
 	}
 
 	print CGI::end_table(), CGI::end_div();

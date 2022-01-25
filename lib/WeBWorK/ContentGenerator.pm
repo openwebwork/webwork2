@@ -694,18 +694,12 @@ sub links {
 
 	my $prettyProblemID = $problemID;
 
-	# it's possible that the setID and the problemID are invalid, since they're just taken from the URL path info
+	# It's possible that the setID and the problemID are invalid, since they're just taken from the URL path info.
 	if ($authen->was_verified) {
-		# DBFIXME testing for existence by keyfields -- don't need fetch record
-		if (defined $setID and $db->getUserSet($eUserID, $setID)) {
-
-			if (defined $problemID and $db->getUserProblem($eUserID, $setID, $problemID)) {
-				# both set and poblem exist -- do nothing
-			} else {
-				$problemID = undef;
-			}
+		if (defined $setID && $db->existsUserSet($eUserID, $setID)) {
+			$problemID = undef unless (defined $problemID && $db->existsUserProblem($eUserID, $setID, $problemID));
 		} else {
-			$setID = undef;
+			$setID     = undef;
 			$problemID = undef;
 		}
 	}
@@ -1228,12 +1222,7 @@ $self->{status_message}, if it is present.
 
 sub message {
 	my ($self) = @_;
-
-	print '<!-- BEGIN ' . __PACKAGE__ . '::message -->';
-	print $self->{status_message}
-		if exists $self->{status_message};
-	print '<!-- END ' . __PACKAGE__ . '::message -->';
-
+	print $self->{status_message} if $self->{status_message};
 	return '';
 }
 
