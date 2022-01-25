@@ -719,26 +719,29 @@ sub pre_header_initialize {
 		# if no specific version is requested, we can create a new one if
 		#    need be
 		if (!$requestedVersion) {
-			if (($maxAttempts == -1 ||
-					$totalNumVersions < $maxAttempts)
-				&&
-				($setVersionNumber == 0 ||
-					(
-						($currentNumAttempts>=$maxAttemptsPerVersion
-							||
-							$timeNow >= $set->due_date + $grace)
-						&&
-						(! $versionsPerInterval
-							||
-							$currentNumVersions < $versionsPerInterval)
+			if (
+				($maxAttempts == -1 || $totalNumVersions < $maxAttempts)
+				&& (
+					$setVersionNumber == 0
+					|| (
+						(
+							($maxAttemptsPerVersion == 0 && $currentNumAttempts > 0)
+							|| ($maxAttemptsPerVersion != 0 && $currentNumAttempts >= $maxAttemptsPerVersion)
+							|| $timeNow >= $set->due_date + $grace
+						)
+						&& (!$versionsPerInterval || $currentNumVersions < $versionsPerInterval)
 					)
 				)
-				&&
-				($effectiveUserName eq $userName ||
-					($authz->hasPermissions($userName, "record_answers_when_acting_as_student") ||
-						($authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student") && $verCreateOK)))
-
-			) {
+				&& (
+					$effectiveUserName eq $userName
+					|| (
+						$authz->hasPermissions($userName, "record_answers_when_acting_as_student")
+						|| ($authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student")
+							&& $verCreateOK)
+					)
+				)
+				)
+			{
 				# assign set, get the right name, version
 				#    number, etc., and redefine the $set
 				#    and $Problem we're working with
