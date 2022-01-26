@@ -598,6 +598,16 @@ sub display_form {
 							labelattributes => { class => 'form-check-label' }
 						})
 					),
+					CGI::div(
+						{ class => 'input-group-text' },
+						CGI::checkbox({
+							name            => "showComments",
+							checked         => scalar($r->param("showComments")) || 0,
+							label           => $r->maketext("Comments"),
+							class           => 'form-check-input me-2',
+							labelattributes => { class => 'form-check-label' }
+						})
+					),
 					$canShowCorrectAnswers ? CGI::div(
 						{ class => 'input-group-text' },
 						CGI::checkbox({
@@ -1225,10 +1235,9 @@ sub write_problem_tex {
 	my $MergedProblem;
 	if ($problemID) {
 		# a non-zero problem ID was given -- load that problem
-	        # we use $versioned to determine which merging routine to use
+	    # we use $versioned to determine which merging routine to use
 		if ( $versioned ) {
 			$MergedProblem = $db->getMergedProblemVersion($MergedSet->user_id, $MergedSet->set_id, $MergedSet->version_id, $problemID);
-
 		} else {
 			$MergedProblem = $db->getMergedProblem($MergedSet->user_id, $MergedSet->set_id, $problemID); # checked
 		}
@@ -1263,10 +1272,11 @@ sub write_problem_tex {
 	my $versionName = $MergedSet->set_id .
 		(( $versioned ) ?  ",v" . $MergedSet->version_id : '');
 
-	my $showCorrectAnswers  = $r->param("showCorrectAnswers") || 0;
+	my $showCorrectAnswers  = $r->param("showCorrectAnswers")  || 0;
 	my $printStudentAnswers = $r->param("printStudentAnswers") || 0;
-	my $showHints           = $r->param("showHints")          || 0;
-	my $showSolutions       = $r->param("showSolutions")      || 0;
+	my $showHints           = $r->param("showHints")           || 0;
+	my $showSolutions       = $r->param("showSolutions")       || 0;
+	my $showComments        = $r->param("showComments")        || 0;
 
 	unless( ( $authz->hasPermissions($userID, "show_correct_answers_before_answer_date") or
 		  ( time > $MergedSet->answer_date or
@@ -1409,25 +1419,62 @@ sub write_problem_tex {
 	# print the list of student answers if it is requested
 	if (  $printStudentAnswers &&
 	     $MergedProblem->problem_id != 0 && @ans_entry_order ) {
-			my $recScore = $pg->{state}->{recorded_score};
-			my $corrMsg = '';
-			if ( $recScore == 1 ) {
-				$corrMsg = ' '.$r->maketext('(correct)');
-			} elsif ( $recScore == 0 ) {
-				$corrMsg = ' '.$r->maketext('(incorrect)');
+			my $pgScore = $pg->{state}->{recorded_score};
+			my $corrMsg = ' submitted: ';
+			if ( $pgScore == 1 ) {
+				$corrMsg .= $r->maketext('(correct)');
+			} elsif ( $pgScore == 0 ) {
+				$corrMsg .= $r->maketext('(incorrect)');
 			} else {
-				$corrMsg = " ".$r->maketext('(score [_1])',$recScore);
+				$corrMsg .= $r->maketext('(score [_1])',$pgScore);
 			}
+
+			$corrMsg .= "\n \\\\ \n recorded: ";
+			my $recScore = $MergedProblem->status;
+			if ( $recScore == 1 ) {
+				$corrMsg .= $r->maketext('(correct)');
+			} elsif ( $recScore == 0 ) {
+				$corrMsg .= $r->maketext('(incorrect)');
+			} else {
+				$corrMsg .= $r->maketext('(score [_1])',$recScore);
+			}
+
 			my $stuAnswers = "\\par{\\small{\\it ".
 			  $r->maketext("Answer(s) submitted:").
 			  "}\n" .
 			"\\vspace{-\\parskip}\\begin{itemize}\n";
 		for my $ansName ( @ans_entry_order ) {
-			my $stuAns = $pg->{answers}->{$ansName}->{original_student_ans} // "";
-			$stuAnswers .= "\\item\\begin{verbatim}$stuAns\\end{verbatim}\n";
+			my $stuAns;
+			if (defined $pg->{answers}{$ansName}{preview_latex_string} && $pg->{answers}{$ansName}{preview_latex_string} ne '') {
+				$stuAns = $pg->{answers}{$ansName}{preview_latex_string};
+			} elsif (defined $pg->{answers}{$ansName}{original_student_ans} && $pg->{answers}{$ansName}{original_student_ans} ne '') {
+				$stuAns = "\\text{".$pg->{answers}{$ansName}{original_student_ans}."}";
+			} else {
+				$stuAns = "\\text{no response}";
+			}
+			$stuAnswers .= "\\item\n\$\\displaystyle $stuAns\$\n";
 		}
 		$stuAnswers .= "\\end{itemize}}$corrMsg\\par\n";
 		print $FH $stuAnswers;
+	}
+
+	if ($showComments) {
+		my $userPastAnswerID = $db->latestProblemPastAnswer(
+			$r->urlpath->arg("courseID"),
+			$MergedProblem->user_id,
+			$versionName,
+			$MergedProblem->problem_id);
+
+		my $pastAnswer = $userPastAnswerID ? $db->getPastAnswer($userPastAnswerID) : 0;
+		my $comment = $pastAnswer && $pastAnswer->comment_string ? $pastAnswer->comment_string : "";
+
+		my $commentMsg = "\\par{\\small{\\it ".
+			$r->maketext("Instructor Feedback:").
+			"}\n".
+			"\\vspace{-\\parskip}\n".
+			"\\begin{lstlisting}\n$comment\\end{lstlisting}\n".
+			"\\par\n";
+		print $FH $commentMsg if $comment;
 	}
 
 	# write the list of correct answers is appropriate; ANSWER_ENTRY_ORDER
@@ -1439,9 +1486,8 @@ sub write_problem_tex {
 	    "\\vspace{-\\parskip}\\begin{itemize}\n";
 
 		foreach my $ansName (@ans_entry_order) {
-			my $correctAnswer = $pg->{answers}->{$ansName}->{correct_ans};
-			$correctTeX .= "\\item\\begin{verbatim}$correctAnswer\\end{verbatim}\n";
-			# FIXME: What about vectors (where TeX will complain about < and > outside of math mode)?
+			my $correctAnswer = $pg->{answers}{$ansName}{correct_ans_latex_string} || "\\text{".$pg->{answers}{$ansName}{correct_ans}."}";
+			$correctTeX .= "\\item\n\$\\displaystyle $correctAnswer\$\n";
 		}
 
 		$correctTeX .= "\\end{itemize}}\\par\n";
