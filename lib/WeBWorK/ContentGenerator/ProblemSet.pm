@@ -397,6 +397,7 @@ sub body {
 	if ($isGateway) {
 		my $timeNow = time;
 		my @setVers = $db->listSetVersions($effectiveUser, $set->set_id);
+		my $totalVersions = scalar @setVers;
 		my $timeLimit = $set->version_time_limit() / 60 || 0;
 
 		# Compute how many versions have been launched within timeInterval
@@ -565,8 +566,10 @@ sub body {
 			$self->hidden_authen_fields;
 		}
 
-		print CGI::start_div({ class => 'table-responsive' });
-		print CGI::start_table({
+
+		if ($totalVersions > 0) {
+			print CGI::start_div({ class => 'table-responsive' });
+			print CGI::start_table({
 				class    => 'problem_set_table table table-sm caption-top font-sm',
 				summary => $r->maketext(
 					'This table lists the current attempts for this test/quiz, '
@@ -574,29 +577,30 @@ sub body {
 					. 'Click on the version link to access that version. '
 					. 'There is also a Generate Hardcopy and Email Instrucotr button below.'
 				)
-		});
-		print CGI::caption($r->maketext('Test Versions'));
-		print CGI::thead(CGI::Tr(
-			CGI::th({ -scope => 'col'}, 'Versions'),
-			CGI::th({ -scope => 'col'}, 'Status'),
-			CGI::th({ -scope => 'col'}, 'Score'),
-			CGI::th({ -scope => 'col'}, 'Start'),
-			CGI::th({ -scope => 'col'}, 'End'),
-			CGI::th(
-				{ -scope => 'col', class => 'hardcopy'},
-				CGI::i(
-					{
-						class => 'icon far fa-lg fa-arrow-alt-circle-down',
-						aria_hidden => 'true',
-						title => $r->maketext('Generate Hardcopy'),
-						data_alt => $r->maketext('Generate Hardcopy')
-					},
-					''
-				)
-			),
-		));
+			});
+			print CGI::caption($r->maketext('Test Versions'));
+			print CGI::thead(CGI::Tr(
+				CGI::th({ -scope => 'col'}, 'Versions'),
+				CGI::th({ -scope => 'col'}, 'Status'),
+				CGI::th({ -scope => 'col'}, 'Score'),
+				CGI::th({ -scope => 'col'}, 'Start'),
+				CGI::th({ -scope => 'col'}, 'End'),
+				CGI::th(
+					{ -scope => 'col', class => 'hardcopy'},
+					CGI::i(
+						{
+							class => 'icon far fa-lg fa-arrow-alt-circle-down',
+							aria_hidden => 'true',
+							title => $r->maketext('Generate Hardcopy'),
+							data_alt => $r->maketext('Generate Hardcopy')
+						},
+						''
+					)
+				),
+			));
+			print CGI::start_tbody();
+		}
 
-		print CGI::start_tbody();
 		foreach my $ver (@versData) {
 			# Download hardcopy.
 			my $control = '';
@@ -651,9 +655,13 @@ sub body {
 				CGI::td({class => 'hardcopy'}, $control)
 			);
 		}
-		print CGI::end_tbody();
-		print CGI::end_table();
-		print CGI::end_div();
+		if ($totalVersions > 0) {
+			print CGI::end_tbody();
+			print CGI::end_table();
+			print CGI::end_div();
+		} else {
+			print CGI::div(CGI::p($r->maketext('No versions of this test have been taken.')));
+		}
 
 	# Normal set, list problems
 	} else {
