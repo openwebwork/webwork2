@@ -11,10 +11,7 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <link rel="stylesheet" href="$themeDir/bootstrap.css"/>
 <link rel="stylesheet" href="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css"/>
 <link rel="stylesheet" href="/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
-<link rel="stylesheet" href="/webwork2_files/js/apps/Knowls/knowl.css"/>
-<link rel="stylesheet" href="/webwork2_files/js/apps/ImageView/imageview.css"/>
 <link rel="stylesheet" href="$themeDir/math4.css"/>
-<link rel="stylesheet" href="/webwork2_files/js/apps/Problem/problem.css"/>
 <link rel="stylesheet" href="$themeDir/math4-coloring.css"/>
 <link rel="stylesheet" href="$themeDir/math4-overrides.css"/>
 
@@ -25,13 +22,9 @@ $sticky_format = <<'ENDPROBLEMTEMPLATE';
 <script src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
 <script src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <script src="/webwork2_files/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js" defer></script>
-<script src="/webwork2_files/js/apps/Base64/Base64.js"></script>
 <script src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
-<script src="/webwork2_files/js/apps/Knowls/knowl.js" defer></script>
 <script src="/webwork2_files/js/apps/LocalStorage/localstorage.js" defer></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" defer></script>
-<script src="/webwork2_files/js/apps/ImageView/imageview.js" defer></script>
 <script src="/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js"></script>
 <script src="$themeDir/math4.js" defer></script>
 <script src="$themeDir/math4-overrides.js" defer></script>

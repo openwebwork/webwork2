@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/PG.pm,v 1.76 2009/07/18 02:52:51 gage Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -43,11 +43,11 @@ sub new {
 	shift; # throw away invocant -- we don't need it
 	my ($ce, $user, $key, $set, $problem, $psvn, $formFields,
 		$translationOptions) = @_;
-	
+
 	my $renderer = $ce->{pg}->{renderer};
-	
+
 	runtime_use $renderer;
-	
+
 	return $renderer->new(@_);
 }
 
@@ -72,49 +72,49 @@ sub defineProblemEnvir {
 		$key,
 		$set,
 		$problem,
-		$psvn, 
+		$psvn,
 		$formFields,
 		$translationOptions,
 		$extras,
 	) = @_;
-	
+
 	my %envir;
 
 	debug("in WEBWORK::PG");
-	
+
 	# ----------------------------------------------------------------------
-	
+
 	# PG environment variables
 	# from docs/pglanguage/pgreference/environmentvariables as of 06/25/2002
 	# any changes are noted by "ADDED:" or "REMOVED:"
-	
+
 	# Vital state information
 	# ADDED: displayModeFailover, displayHintsQ, displaySolutionsQ,
 	#        refreshMath2img, texDisposition
 
 	$envir{psvn}                = $psvn;  #'problem set version number' (associated with homework set)
-	$envir{psvn}                = $envir{psvn}//$set->psvn; # use set value of psvn unless there is an explicit override. 
+	$envir{psvn}                = $envir{psvn}//$set->psvn; # use set value of psvn unless there is an explicit override.
 	# update problemUUID from submitted form, and fall back to the earlier name problemIdentifierPrefix if necessary
-	$envir{problemUUID}         =  	   $formFields->{problemUUID} // 
+	$envir{problemUUID}         =  	   $formFields->{problemUUID} //
 	                                   $formFields->{problemIdentifierPrefix} //
 	                                   $envir{problemUUID}//
 	                                   0;
 	$envir{psvnNumber}          = "psvnNumber-is-deprecated-Please-use-psvn-Instead"; #FIXME
 	$envir{probNum}             = $problem->problem_id;
 	$envir{questionNumber}      = $envir{probNum};
-	$envir{fileName}            = $problem->source_file;	 
-	$envir{probFileName}        = $envir{fileName};		 
+	$envir{fileName}            = $problem->source_file;
+	$envir{probFileName}        = $envir{fileName};
 	$envir{problemSeed}         = $problem->problem_seed;
 	$envir{displayMode}         = translateDisplayModeNames($translationOptions->{displayMode});
-#	$envir{languageMode}        = $envir{displayMode};	# don't believe this is ever used. 
-	$envir{outputMode}          = $envir{displayMode};	 
-	$envir{displayHintsQ}       = $translationOptions->{showHints};	 
+#	$envir{languageMode}        = $envir{displayMode};	# don't believe this is ever used.
+	$envir{outputMode}          = $envir{displayMode};
+	$envir{displayHintsQ}       = $translationOptions->{showHints};
 	$envir{displaySolutionsQ}   = $translationOptions->{showSolutions};
 	$envir{texDisposition}      = "pdf"; # in webwork2, we use pdflatex
-	
+
 	# Problem Information
 	# ADDED: courseName, formatedDueDate, enable_reduced_scoring
-	
+
 	$envir{openDate}            = $set->open_date;
 	$envir{formattedOpenDate}   = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone});
 	$envir{OpenDateDayOfWeek}   = formatDateTime($envir{openDate}, $ce->{siteDefaults}{timezone}, "%A", $ce->{siteDefaults}{locale});
@@ -173,15 +173,15 @@ sub defineProblemEnvir {
 	$envir{sessionKey}          = $key;
 	$envir{courseName}          = $ce->{courseName};
 	$envir{enable_reduced_scoring} = $ce->{pg}{ansEvalDefaults}{enableReducedScoring} && $set->enable_reduced_scoring;
-	
+
 	$envir{language}            = $ce->{language};
-	$envir{language_subroutine} = WeBWorK::Localize::getLoc($envir{language}); 
+	$envir{language_subroutine} = WeBWorK::Localize::getLoc($envir{language});
 	$envir{reducedScoringDate} = $set->reduced_scoring_date;
 	$envir{formattedReducedScoringDate} = formatDateTime($envir{reducedScoringDate}, $ce->{siteDefaults}{timezone});
-	
+
 	# Student Information
 	# ADDED: studentID
-	
+
 	$envir{sectionName}      = $user->section;
 	$envir{sectionNumber}    = $envir{sectionName};
 	$envir{recitationName}   = $user->recitation;
@@ -192,17 +192,17 @@ sub defineProblemEnvir {
 	$envir{studentID}        = $user->student_id;
 	$envir{permissionLevel}  = $translationOptions->{permissionLevel};  # permission level of actual user
 	$envir{effectivePermissionLevel}  = $translationOptions->{effectivePermissionLevel}; # permission level of user assigned to this question
-	
-	
+
+
 	# Answer Information
 	# REMOVED: refSubmittedAnswers
-	
+
 	$envir{inputs_ref} = $formFields;
-	
+
 	# External Programs
 	# ADDED: externalLaTeXPath, externalDvipngPath,
 	#        externalGif2EpsPath, externalPng2EpsPath
-	
+
 	$envir{externalLaTeXPath}    = $ce->{externalPrograms}->{latex};
 	$envir{externalDvipngPath}   = $ce->{externalPrograms}->{dvipng};
 	$envir{externalGif2EpsPath}  = $ce->{externalPrograms}->{gif2eps};
@@ -219,7 +219,7 @@ sub defineProblemEnvir {
 	# ADDED: macrosPath
 	# REMOVED: macrosDirectory, courseScriptsDirectory
 	# ADDED: LaTeXMathML
-	
+
 	$envir{cgiDirectory}           = undef;
 	$envir{cgiURL}                 = undef;
 	$envir{classDirectory}         = undef;
@@ -242,27 +242,27 @@ sub defineProblemEnvir {
 	$envir{localHelpURL}           = $ce->{webworkURLs}->{local_help}."/";
 	$envir{MathJaxURL}             = $ce->{webworkURLs}->{MathJax};
 	$envir{server_root_url}        = $ce->{server_root_url}|| '';
-	
+
 	# Information for sending mail
-	
+
 	$envir{mailSmtpServer} = $ce->{mail}->{smtpServer};
 	$envir{mailSmtpSender} = $ce->{mail}->{smtpSender};
 	$envir{ALLOW_MAIL_TO}  = $ce->{mail}->{allowedRecipients};
-	
+
 	# Default values for evaluating answers
-	
+
 	my $ansEvalDefaults = $ce->{pg}->{ansEvalDefaults};
 	$envir{$_} = $ansEvalDefaults->{$_} foreach (keys %$ansEvalDefaults);
-	
+
 	# ----------------------------------------------------------------------
-	
+
 	# ADDED: ImageGenerator for images mode
 	if (defined $extras->{image_generator}) {
 		#$envir{imagegen} = $extras->{image_generator};
 		# only allow access to the add() method
 		$envir{imagegen} = new WeBWorK::Utils::RestrictedClosureClass($extras->{image_generator}, 'add','addToTeXPreamble', 'refresh');
 	}
-	
+
 	if (defined $extras->{mailer}) {
 		#my $rmailer = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer},
 		#	qw/Open SendEnc Close Cancel skipped_recipients error error_msg/);
@@ -271,15 +271,18 @@ sub defineProblemEnvir {
 		$envir{mailer} = new WeBWorK::Utils::RestrictedClosureClass($extras->{mailer}, "add_message");
 	}
 	# ADDED use_opaque_prefix and use_site_prefix
-	
+
 	$envir{use_site_prefix}     = $translationOptions->{use_site_prefix};
 	$envir{use_opaque_prefix}   = $translationOptions->{use_opaque_prefix};
-	
+
 	# Other things...
 	$envir{QUIZ_PREFIX}              = $translationOptions->{QUIZ_PREFIX}//''; # used by quizzes
 	$envir{PROBLEM_GRADER_TO_USE}    = $ce->{pg}->{options}->{grader};
 	$envir{PRINT_FILE_NAMES_FOR}     = $ce->{pg}->{specialPGEnvironmentVars}->{PRINT_FILE_NAMES_FOR};
 	$envir{useMathQuill}             = $translationOptions->{useMathQuill};
+	$envir{useMathView}              = $translationOptions->{useMathView};
+	$envir{mathViewLocale}           = $ce->{pg}{options}{mathViewLocale};
+	$envir{useWirisEditor}           = $translationOptions->{useWirisEditor};
 
         #  ADDED: __files__
         #    an array for mapping (eval nnn) to filenames in error messages
@@ -288,14 +291,14 @@ sub defineProblemEnvir {
 	  pg   => $ce->{pg}{directories}{root}, # ditto
 	  tmpl => $ce->{courseDirs}{templates}, # ditto
 	};
-	
+
 	# variables for interpreting capa problems and other things to be
         # seen in a pg file
 	my $specialPGEnvironmentVarHash = $ce->{pg}->{specialPGEnvironmentVars};
 	for my $SPGEV (keys %{$specialPGEnvironmentVarHash}) {
 		$envir{$SPGEV} = $specialPGEnvironmentVarHash->{$SPGEV};
 	}
-	
+
 	return \%envir;
 }
 
@@ -430,7 +433,7 @@ a reference to a hash containing the following data:
 
 =over
 
-=item displayMode 
+=item displayMode
 
 one of "plainText", "formattedText", "MathJax" or "images"
 
@@ -515,7 +518,7 @@ Generate a problem environment hash to pass to the renderer.
 
 =item translateDisplayModeNames NAME
 
-NAME contains 
+NAME contains
 
 =back
 

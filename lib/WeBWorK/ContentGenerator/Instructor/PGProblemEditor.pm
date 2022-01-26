@@ -2055,40 +2055,22 @@ sub revert_handler {
 	# no redirect is needed
 }
 
-sub output_JS{
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	if ($ce->{options}->{PGMathView}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
-		print "<link href=\"$site_url/js/apps/MathView/mathview.css\" rel=\"stylesheet\" />";
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
-	}
-
-	if ($ce->{options}->{PGWirisEditor}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
-	}
+sub output_JS {
+	my $self     = shift;
+	my $ce       = $self->r->ce;
+	my $site_url = $ce->{webworkURLs}{htdocs};
 
 	if ($ce->{options}->{PGCodeMirror}) {
-		print qq{<link rel="stylesheet" type="text/css" href="$site_url/node_modules/codemirror/lib/codemirror.css"/>};
-		print CGI::start_script({src=>"$site_url/node_modules/codemirror/lib/codemirror.js"}), CGI::end_script();
-		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PGaddons.js"}), CGI::end_script();
-		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PG.js"}), CGI::end_script();
+		print CGI::Link({ href => "$site_url/node_modules/codemirror/lib/codemirror.css", rel => 'stylesheet' });
+		print CGI::script({ src => "$site_url/node_modules/codemirror/lib/codemirror.js" }, '');
+		print CGI::script({ src => "$site_url/js/apps/PGCodeMirror/PGaddons.js" },          '');
+		print CGI::script({ src => "$site_url/js/apps/PGCodeMirror/PG.js" },                '');
 	}
 
-	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
-	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js",           defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/PGProblemEditor/pgproblemeditor.js", defer => undef }, '');
 
-	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
-	print CGI::script({ src => "$site_url/js/apps/PGProblemEditor/pgproblemeditor.js", defer => "" }, "");
-
-	return "";
+	return '';
 }
 
 # Tells template to output stylesheet and js for Jquery-UI

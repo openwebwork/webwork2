@@ -24,10 +24,7 @@ $json_output->{head_part100_AVI} = [
 	'$themeDir/bootstrap.css',
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.css",
 	"/webwork2_files/node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-	"/webwork2_files/js/apps/Knowls/knowl.css",
-	"/webwork2_files/js/apps/ImageView/imageview.css",
 	'$themeDir/math4.css',
-	"/webwork2_files/js/apps/Problem/problem.css",
 	'$themeDir/math4-coloring.css',
 	'$themeDir/math4-overrides.css',
 ];
@@ -36,7 +33,6 @@ $json_output->{head_part100_AVI} = [
 $json_output->{head_part200_AVI} = [
 	"/webwork2_files/node_modules/jquery/dist/jquery.min.js",
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
-	"/webwork2_files/js/apps/Base64/Base64.js",
 	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
 ];
 
@@ -44,14 +40,12 @@ $json_output->{head_part200_AVI} = [
 #     mathjax/es5/tex-chtml.js also needs id="MathJax-script" in the <script> tag
 $json_output->{head_part201_AVI} = [
 	"/webwork2_files/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
-	"/webwork2_files/js/apps/Knowls/knowl.js",
 	"https://polyfill.io/v3/polyfill.min.js?features=es6",
 	"/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
 	"/webwork2_files/mathjax/es5/tex-chtml.js",
 	'$themeDir/math4/math4.js',
 	"/webwork2_files/js/apps/InputColor/color.js",
 	"/webwork2_files/js/apps/Problem/problem.js",
-	"/webwork2_files/js/apps/ImageView/imageview.js",
 ];
 
 $json_output->{head_part300_VI} = '$problemHeadText';

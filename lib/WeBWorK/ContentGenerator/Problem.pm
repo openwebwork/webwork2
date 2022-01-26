@@ -745,16 +745,18 @@ sub pre_header_initialize {
 		$problem,
 		$set->psvn,
 		$formFields,
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => $will{showHints},
-			showResourceInfo => $will{showResourceInfo},
-			showSolutions   => $will{showSolutions},
-			refreshMath2img => $will{showHints} || $will{showSolutions},
-			processAnswers  => 1,
-			permissionLevel => $db->getPermissionLevel($userName)->permission,
+		{    # translation options
+			displayMode              => $displayMode,
+			showHints                => $will{showHints},
+			showResourceInfo         => $will{showResourceInfo},
+			showSolutions            => $will{showSolutions},
+			refreshMath2img          => $will{showHints} || $will{showSolutions},
+			processAnswers           => 1,
+			permissionLevel          => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-			useMathQuill => $will{useMathQuill},
+			useMathQuill             => $will{useMathQuill},
+			useMathView              => $will{useMathView},
+			useWirisEditor           => $will{useWirisEditor},
 		},
 	);
 
@@ -2374,47 +2376,12 @@ sub output_hidden_info {
 }
 
 # output_JS subroutine
-
-# outputs all of the Javascript needed for this page.
-# The main javascript needed here is color.js, which colors input fields based on whether or not
-# they are correct when answers are submitted.  When a problem attempts results, it prints out hidden fields containing identification
-# information for the fields that were correct and the fields that were incorrect.  color.js collects of the correct and incorrect fields into
-# two arrays using the information gathered from the hidden fields, and then loops through and changes the styles so
-# that the colors will show up correctly.
-
+# Outputs all of the JavaScript needed for this page.
 sub output_JS{
 	my $self = shift;
 	my $r = $self->r;
 	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::script({ src => "$site_url/js/apps/InputColor/color.js", defer => undef }, '');
-
-	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
-
-	# This is for MathView.
-	if ($self->{will}{useMathView}) {
-		if (grep(/MathJax/, @{ $ce->{pg}{displayModes} })) {
-			print CGI::script(qq{mathView_basepath = "$site_url/images/mathview/";});
-			print CGI::script({ src => "$site_url/js/apps/MathView/$ce->{pg}{options}{mathViewLocale}" }, '');
-			print CGI::script({ src => "$site_url/js/apps/MathView/mathview.js" }, '');
-		} else {
-			warn("MathJax must be installed and enabled as a display mode for the math viewer to work");
-		}
-	}
-
-	# WirisEditor
-	if ($self->{will}->{useWirisEditor}) {
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
-	}
-
-	# Javascript for knowls
-	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js", defer => undef}, '');
+	my $site_url = $ce->{webworkURLs}{htdocs};
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
@@ -2438,9 +2405,6 @@ sub output_JS{
 	# This is for any page specific js.  Right now its just used for achievement popups
 	print CGI::script({ src => "$site_url/js/apps/Problem/problem.js", defer => undef }, '');
 
-	# This is for the image dialog
-	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
-
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	if (ref($self->{pg}{flags}{extra_js_files}) eq "ARRAY") {
 		my %jsFiles;
@@ -2463,29 +2427,13 @@ sub output_JS{
 		}
 	}
 
-	return "";
+	return '';
 }
 
 sub output_CSS {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
-
-	# PG styles
-	print CGI::Link({ rel => 'stylesheet', href => "$site_url/js/apps/Problem/problem.css" });
-
-	# Style for knowls
-	print CGI::Link({ href => "$site_url/js/apps/Knowls/knowl.css", rel => 'stylesheet' });
-
-	# Style for mathview
-	if ($self->{will}{useMathView}) {
-		print qq{<link href="$site_url/js/apps/MathView/mathview.css" rel="stylesheet" />};
-	}
-
-	# Style for the image dialog
-	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
+	my $self     = shift;
+	my $ce       = $self->r->ce;
+	my $site_url = $ce->{webworkURLs}{htdocs};
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
@@ -2515,7 +2463,7 @@ sub output_CSS {
 		}
 	}
 
-	return "";
+	return '';
 }
 
 sub output_achievement_CSS {
