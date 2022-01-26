@@ -347,10 +347,6 @@ sub attemptResults {
 	my $showAttemptPreview = shift || 0;
 	my $ce = $self->{ce};
 
-	# for color coding the responses.
-	$self->{correct_ids} = [] unless $self->{correct_ids};
-	$self->{incorrect_ids} = [] unless $self->{incorrect_ids};
-
 	# to make grabbing these options easier, we'll pull them out now...
 	my %imagesModeOptions = %{$ce->{pg}{displayModeOptions}{images}};
 

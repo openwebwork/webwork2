@@ -40,9 +40,6 @@ use 5.010;
 	);
 	$tbl->{imgGen}->render(refresh => 1) if $tbl->displayMode eq 'images';
 	my $answerTemplate = $tbl->answerTemplate;
-	# this also collects the correct_ids and incorrect_ids
-	$self->{correct_ids}   = $tbl->correct_ids;
-	$self->{incorrect_ids} = $tbl->incorrect_ids;
 
 
 =head1 DESCRIPTION
@@ -111,10 +108,6 @@ Returns HTML which formats the analysis of the student's answers to the problem.
 =head2 Read/Write Properties
 
 =over 4
-
-=item correct_ids, incorrect_ids,
-
-These are references to lists of the ids of the correct answers and the incorrect answers respectively.
 
 =item showMessages,
 
@@ -185,7 +178,7 @@ sub new {
 	$self->mk_ro_accessors(qw(showAnswerNumbers showAttemptAnswers showHeadline
 	                          showAttemptPreviews showAttemptResults
 	                          showCorrectAnswers showSummary));
-	$self->mk_accessors(qw(correct_ids incorrect_ids showMessages  summary));
+	$self->mk_accessors(qw(showMessages  summary));
 	# sanity check and initialize imgGenerator.
 	_init($self, %options);
 	return $self;
@@ -260,7 +253,6 @@ sub formatAnswerRow {
 
 	my $feedbackMessageClass = ($answerMessage eq "") ? "" : $self->maketext("FeedbackMessage");
 
-	my (@correct_ids, @incorrect_ids);
 	my $resultString;
 	my $resultStringClass;
 	if ($answerScore >= 1) {
@@ -269,7 +261,7 @@ sub formatAnswerRow {
 	} elsif (($rh_answer->{type} // '') eq 'essay') {
 		$resultString = $self->maketext("Ungraded");
 		$self->{essayFlag} = 1;
-	} elsif (defined($answerScore) and $answerScore == 0) {
+	} elsif ($answerScore == 0) {
 		$resultStringClass = "ResultsWithError";
 		$resultString      = $self->maketext("incorrect");
 	} else {
@@ -299,8 +291,6 @@ sub answerTemplate {
 	my $self = shift;
 	my $rh_answers = $self->{answers};
 	my @tableRows;
-	my @correct_ids;
-	my @incorrect_ids;
 
 	push @tableRows,CGI::Tr(
 			($self->showAnswerNumbers) ? CGI::th("#"):'',
@@ -314,9 +304,6 @@ sub answerTemplate {
 	my $answerNumber     = 1;
     foreach my $ans_id (@{ $self->answerOrder() }) {
     	push @tableRows, CGI::Tr($self->formatAnswerRow($rh_answers->{$ans_id}, $ans_id, $answerNumber++));
-    	push @correct_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) >= 1;
-    	push @incorrect_ids,   $ans_id if ($rh_answers->{$ans_id}->{score}//0) < 1;
-    	#$self->{essayFlag} = 1;
     }
 	my $answerTemplate = "";
 	$answerTemplate .= CGI::h3({ class => 'attemptResultsHeader' }, $self->maketext("Results for this submission"))
@@ -325,8 +312,6 @@ sub answerTemplate {
     ### "results for this submission" is better than "attempt results" for a headline
     $answerTemplate .= ($self->showSummary)? $self->createSummary() : '';
     $answerTemplate = "" unless $self->answersSubmitted; # only print if there is at least one non-blank answer
-    $self->correct_ids(\@correct_ids);
-    $self->incorrect_ids(\@incorrect_ids);
     $answerTemplate;
 }
 #################################################
