@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ################################################################################
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
@@ -48,6 +48,8 @@ unless ($courseID and $scriptFile) {
 	die "usage: $0 courseID  scriptFile\n";
 }
 
+die 'You must pass scriptFile in as a path to the file' unless -e $scriptFile;
+
 $ce = WeBWorK::CourseEnvironment->new({
 	webwork_dir => $ENV{WEBWORK_ROOT},
 	courseName => $courseID,
@@ -64,7 +66,7 @@ Available modules: Data::Dumper
 
 EOF
 print "courseID: $courseID and scriptFile:  $scriptFile\n--------------------------------\n";
-do "$scriptFile";
+do $scriptFile;
 if ($@) {
 	print "errors ", $@,"\n" ;
 } else {
