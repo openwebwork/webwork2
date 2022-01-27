@@ -368,10 +368,7 @@ sub setListRow {
 			},
 			'') .
 			' ' .
-			CGI::span(
-				{ class => 'gwquiz-info', data_time_limit => $set->{version_time_limit} },
-				$display_name
-			);
+			CGI::span($display_name);
 	}
 
 	# this is the link to the homework assignment, it has tooltip with the hw description
@@ -554,15 +551,6 @@ sub restricted_progression_msg {
   }
 
   return $status;
-}
-
-sub output_JS {
-	my $self = shift;
-	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
-
-	print CGI::script({ src => "$site_url/js/apps/ProblemSets/problemsets.js", defer => '' }, "");
-
-	return "";
 }
 
 1;
