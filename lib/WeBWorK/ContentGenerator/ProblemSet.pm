@@ -415,7 +415,7 @@ sub body {
 		my $maxVersions = $set->versions_per_interval() || 0;
 		my @versData = ();
 		foreach my $ver (@setVers) {
-			my $verSet = $db->getSetVersion($effectiveUser, $set->set_id, $ver);
+			my $verSet = $db->getMergedSetVersion($effectiveUser, $set->set_id, $ver);
 
 			# Count number of versions in current timeInterval
 			if (!$timeInterval || $verSet->version_creation_time() > ($timeNow - $timeInterval)) {
@@ -429,17 +429,15 @@ sub body {
 			my $Problem = $db->getMergedProblemVersion($effectiveUser, $set->set_id, $ver, $ProblemNums[0]);
 			my $verSubmits = (defined($Problem) && $Problem->num_correct() ne '')
 				? $Problem->num_correct() + $Problem->num_incorrect() : 0;
-			my $maxSubmits = (defined($Problem) && defined($Problem->max_attempts()) &&
-				$Problem->max_attempts()) ? $Problem->max_attempts() : -1;
+			my $maxSubmits = $verSet->attempts_per_version() || 0;
 
-
-			# Build data hash for this version
+			# Build data hash for this version.
 			my $data = {};
 			$data->{id} = $set->set_id.',v'.$ver;
 			$data->{version} = $ver;
 			$data->{start} = $self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
 
-			# Display time left for timed quizes, otherwise display close date.
+			# Display time left for timed quizzes, otherwise display close date.
 			my $timeLeftText = '';
 			if ($timeLimit > 0) {
 				my $minutes = int(($verSet->due_date - $timeNow)/60);
@@ -463,10 +461,10 @@ sub body {
 
 			if (defined($verSet->version_last_attempt_time) && $verSet->version_last_attempt_time > 0) {
 				if ($timeNow < $verSet->due_date && ($maxSubmits <= 0 ||
-						($maxSubmits > 0 && $verSubmits <= $maxSubmits))
+						($maxSubmits > 0 && $verSubmits < $maxSubmits))
 				) {
 					if ($verSubmits > 0) {
-						$data->{end} = $r->maketext('Additional submissions avilable.') . " $timeLeftText";
+						$data->{end} = $r->maketext('Additional submissions available.') . " $timeLeftText";
 					} else {
 						$data->{end} = $timeLeftText;
 					}
@@ -480,11 +478,18 @@ sub body {
 				$data->{end} = $r->maketext("No submissions. Over time.");
 			}
 
-			# Status Logic:
-			#     Assuming it is always after the open date for test versions.
+			# Status Logic: Assuming it is always after the open date for test versions.
+			# Matching can_showCorrectAnswer method where hide_work eq 'N' is
+			# only honored before the answer_date if it also equals the due_date.
+			# Using $set->answer_date since the template date is what is currently used to decide
+			# if answers are available.
+			my $canShowAns = (($verSet->hide_work eq 'N' && 
+					($verSet->due_date == $verSet->answer_date || $timeNow >= $set->answer_date)) ||
+				($verSet->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date)) ? 1 : 0;
 			if ($timeNow < $verSet->due_date()) {
 				if ($maxSubmits > 0 && $verSubmits >= $maxSubmits) {
 					$data->{status} = $r->maketext('Completed.');
+					$data->{status} .= $r->maketext(' Answers Available.') if ($canShowAns);
 				} elsif ($verSubmits >= 1) {
 					$data->{status} = $r->maketext('Open. Submitted.');
 				} else {
@@ -500,17 +505,20 @@ sub body {
 				} else {
 					$data->{status} = $r->maketext('Closed.');
 				}
+				$data->{status} .= $r->maketext(' Answers Available.') if ($canShowAns);
 			}
-			if (($verSubmits > 0 || $timeNow >= $verSet->due_date) && ($set->hide_work eq 'N' ||
-					($set->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date))) {
-				$data->{status} .= ' ' . $r->maketext('Answers Available.');
-			}
+
+			# Only show download link if work is not hidden.
+			# Only show version link if the set is open or if works is not hidden.
+			$data->{show_download} = ($verSet->hide_work eq 'N' ||
+				($verSet->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date)) ? 1 : 0;
+			$data->{show_link} = ($data->{status} =~ /Open/ || $data->{show_download});
 
 			$data->{score} = '&nbsp;';
 			# Only show score if user has permission and assignment has at least one submit.
 			if ($authz->hasPermissions($user, 'view_hidden_work') ||
-				($set->hide_score eq 'N' && $verSubmits >= 1) ||
-				($set->hide_score eq 'BeforeAnswerDate' && $timeNow > $set->answer_date))
+				($verSet->hide_score eq 'N' && $verSubmits >= 1) ||
+				($verSet->hide_score eq 'BeforeAnswerDate' && $timeNow > $set->answer_date))
 			{
 				my ($total, $possible) = grade_set($db, $verSet, $verSet->set_id, $effectiveUser, 1);
 				$total = wwRound(2, $total);
@@ -563,7 +571,7 @@ sub body {
 				)
 			);
 
-		# Otherwise display start new test button if avaiable.
+		# Otherwise display start new test button if available.
 		} elsif (
 			(
 				$timeNow >= $set->open_date ||
@@ -691,8 +699,8 @@ sub body {
 					class => 'form-check-input'
 				});
 			
-			# Only display download option if answers are avaialbe.
-			} elsif ($ver->{status} =~ /Answers/) {
+			# Only display download option if answers are available.
+			} elsif ($ver->{show_download}) {
 				my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r,
 					courseID => $courseID, setID => $ver->{id});
 				my $link = $self->systemLink($hardcopyPage, params => { selected_sets => $ver->{id} });
@@ -711,9 +719,7 @@ sub body {
 			}
 
 			my $interactive = $r->maketext('Version #[_1]', $ver->{version});
-			if ($authz->hasPermissions($user, 'view_hidden_work') ||
-				$ver->{status} =~ /Open/ || $ver->{status} =~ /Answers/)
-			{
+			if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
 				my $interactiveURL = $self->systemLink(
 					$urlpath->newFromModule($urlModule, $r,
 						courseID => $courseID, setID => $ver->{id} ));
