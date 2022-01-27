@@ -298,19 +298,17 @@ sub body {
 	# Added reset button to form.
 
 	if ($authz->hasPermissions($user, 'view_multiple_sets')) {
-		print CGI::start_div({ class => 'problem_set_options' });
-		print CGI::start_p()
-			. CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-info' })
-			. CGI::end_p();
-		print CGI::start_p()
-			. CGI::submit({
+		print CGI::div({ class => 'mb-3' },
+			CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-info' })
+		);
+		print CGI::div({ class => 'mb-3' },
+			CGI::submit({
 				id    => 'hardcopy',
 				name  => 'hardcopy',
 				value => $r->maketext('Generate Hardcopy for Selected Sets'),
 				class => 'btn btn-info'
 			})
-			. CGI::end_p();
-		print CGI::end_div();
+		);
 		print CGI::end_form();
 	}
 

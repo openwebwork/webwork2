@@ -500,13 +500,11 @@ sub body {
 				$urlpath->newFromModule($urlModule, $r,
 					courseID => $courseID, setID => $set->set_id.',v'.$continueVersion)
 			);
-			print CGI::start_div({-class => 'problem_set_options'});
-			print CGI::a(
-				{ href => $interactiveURL, class => 'btn btn-primary' },
-				$r->maketext('Continue Open Test')
+			print CGI::div({ class => 'mb-3' },
+				CGI::a({ href => $interactiveURL, class => 'btn btn-primary' },
+					$r->maketext('Continue Open Test')
+				)
 			);
-			print CGI::end_div();
-			print CGI::br();
 
 		# Otherwise display start new test button if avaiable.
 		} elsif (
@@ -525,13 +523,11 @@ sub body {
 				$urlpath->newFromModule($urlModule, $r,
 					courseID => $courseID, setID => $set->set_id)
 			);
-			print CGI::start_div({-class=>"problem_set_options"});
-			print CGI::a(
-				{ href => $interactiveURL, class => 'btn btn-primary' },
-				$r->maketext('Start New Test')
+			print CGI::div({ class=> 'mb-3'},
+				CGI::a({ href => $interactiveURL, class => 'btn btn-primary' },
+					$r->maketext('Start New Test')
+				)
 			);
-			print CGI::end_div();
-			print CGI::br();
 
 		# Message about if/when next version will be available.
 		} else {
@@ -552,7 +548,6 @@ sub body {
 			}
 
 			print CGI::div(CGI::p(CGI::strong($msg)));
-			print CGI::br();
 		}
 
 		# Start of form for hardcopy of test versions.
@@ -580,13 +575,13 @@ sub body {
 			});
 			print CGI::caption($r->maketext('Test Versions'));
 			print CGI::thead(CGI::Tr(
-				CGI::th({ -scope => 'col'}, 'Versions'),
-				CGI::th({ -scope => 'col'}, 'Status'),
-				CGI::th({ -scope => 'col'}, 'Score'),
-				CGI::th({ -scope => 'col'}, 'Start'),
-				CGI::th({ -scope => 'col'}, 'End'),
+				CGI::th({ scope => 'col'}, 'Versions'),
+				CGI::th({ scope => 'col'}, 'Status'),
+				CGI::th({ scope => 'col'}, 'Score'),
+				CGI::th({ scope => 'col'}, 'Start'),
+				CGI::th({ scope => 'col'}, 'End'),
 				CGI::th(
-					{ -scope => 'col', class => 'hardcopy'},
+					{ scope => 'col', class => 'hardcopy'},
 					CGI::i(
 						{
 							class => 'icon far fa-lg fa-arrow-alt-circle-down',
@@ -641,7 +636,10 @@ sub body {
 						courseID => $courseID, setID => $ver->{id} ));
 				$interactive = CGI::a(
 					{
-						title => '',
+						class             => 'set-id-tooltip',
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'right',
+						data_bs_title     => $set->description(),
 						href  => $interactiveURL
 					},
 					$interactive
@@ -745,42 +743,40 @@ sub body {
 
 	# Display hardcopy button
 	if ($isGateway && $multiSet) {
-		print CGI::start_div({ class => 'problem_set_options' });
-		print CGI::start_p()
-			. CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-primary' })
-			. CGI::end_p();
-		print CGI::start_p()
-			. CGI::submit({
+		print CGI::div({ class => 'mb-3' },
+			CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-primary' })
+		);
+		print CGI::div({ class => 'mb-3' },
+			CGI::submit({
 				id => 'hardcopy',
 				name => 'hardcopy',
 				value => $r->maketext('Download PDF or TeX Hardcopy for Selected Tests'),
 				class => 'btn btn-primary'
 			})
-			. CGI::end_p();
-		print CGI::end_div();
+		);
 		print CGI::end_form();
 	} elsif (! $isGateway) {
 		print CGI::div(
-			{ class => "problem_set_options mb-2" },
+			{ class => 'mb-3' },
 			CGI::a(
 				{ href => $hardcopyURL, class => 'btn btn-primary' },
-				$r->maketext("Download PDF or TeX Hardcopy for Current Set")
+				$r->maketext('Download PDF or TeX Hardcopy for Current Set')
 			)
 		);
 	}
 
-	print CGI::start_div({-class=>"problem_set_options"});
-	print $self->feedbackMacro(
-		module => __PACKAGE__,
-		set => $self->{set}->set_id,
-		problem => "",
-		displayMode => $self->{displayMode},
-		showOldAnswers => "",
-		showCorrectAnswers => "",
-		showHints => "",
-		showSolutions => "",
+	print CGI::div({ class => 'mb-3' },
+		$self->feedbackMacro(
+			module => __PACKAGE__,
+			set => $self->{set}->set_id,
+			problem => "",
+			displayMode => $self->{displayMode},
+			showOldAnswers => "",
+			showCorrectAnswers => "",
+			showHints => "",
+			showSolutions => "",
+		)
 	);
-	print CGI::end_div();
 
 	return "";
 }
