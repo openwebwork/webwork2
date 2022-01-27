@@ -465,7 +465,11 @@ sub body {
 				if ($timeNow < $verSet->due_date && ($maxSubmits <= 0 ||
 						($maxSubmits > 0 && $verSubmits <= $maxSubmits))
 				) {
-					$data->{end} = $r->maketext('Additional submissions avilable.') . " $timeLeftText";
+					if ($verSubmits > 0) {
+						$data->{end} = $r->maketext('Additional submissions avilable.') . " $timeLeftText";
+					} else {
+						$data->{end} = $timeLeftText;
+					}
 				} else {
 					$data->{end} = $self->formatDateTime($verSet->version_last_attempt_time,
 						undef, $ce->{studentDateDisplayFormat});
