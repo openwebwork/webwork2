@@ -299,7 +299,7 @@ sub body {
 
 	if ($authz->hasPermissions($user, 'view_multiple_sets')) {
 		print CGI::div({ class => 'mb-3' },
-			CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-info' })
+			CGI::reset({ id => 'clear', value => $r->maketext('Deselect All Sets'), class => 'btn btn-info' })
 		);
 		print CGI::div({ class => 'mb-3' },
 			CGI::submit({

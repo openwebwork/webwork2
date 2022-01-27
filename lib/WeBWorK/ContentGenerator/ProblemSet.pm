@@ -834,7 +834,7 @@ sub body {
 	# Display hardcopy button
 	if ($isGateway && $multiSet && $totalVersions > 0) {
 		print CGI::div({ class => 'mb-3' },
-			CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-primary' })
+			CGI::reset({ id => 'clear', value => $r->maketext('Deselect All Test Versions'), class => 'btn btn-primary' })
 		);
 		print CGI::div({ class => 'mb-3' },
 			CGI::submit({
