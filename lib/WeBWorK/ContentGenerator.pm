@@ -804,10 +804,15 @@ sub links {
 			    if ($setRecord->assignment_type eq 'jitar'  && defined $problemID) {
 				$prettyProblemID = join('.',jitar_id_to_seq($problemID));
 			    }
-				if ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v\(d\)+$/) {
-					print &$makelink("${pfx}GatewayQuiz", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+				if ($setRecord->assignment_type =~ /proctor/ && $setID =~ /,v(\d)+$/) {
+					print &$makelink("${pfx}ProctoredGatewayQuiz", text=>"$prettySetID",
+						urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+				} elsif ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v(\d)+$/) {
+					print &$makelink("${pfx}GatewayQuiz", text=>"$prettySetID",
+						urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				} else {
-					print &$makelink("${pfx}ProblemSet", text=>"$prettySetID", urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
+					print &$makelink("${pfx}ProblemSet", text=>"$prettySetID",
+						urlpath_args=>{%args,setID=>$setID}, systemlink_args=>\%systemlink_args);
 				}
 			    print CGI::end_li();
 
