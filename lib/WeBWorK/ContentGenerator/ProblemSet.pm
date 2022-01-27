@@ -398,7 +398,7 @@ sub body {
 		my $timeNow = time;
 		my @setVers = $db->listSetVersions($effectiveUser, $set->set_id);
 		my $totalVersions = scalar @setVers;
-		my $timeLimit = $set->version_time_limit() / 60 || 0;
+		my $timeLimit = $set->version_time_limit() || 0;
 
 		# Compute how many versions have been launched within timeInterval
 		#     to determine if a new version can be created, if a version
@@ -408,6 +408,7 @@ sub body {
 		#     Build a data hash for each version that is used to create the
 		#     quiz versions table.
 		my $continueVersion = 0;
+		my $continueTimeLeft = 0;
 		my $currentVersions = 0;
 		my $lastTime = 0;
 		my $timeInterval = $set->time_interval() || 0;
@@ -438,18 +439,39 @@ sub body {
 			$data->{version} = $ver;
 			$data->{start} = $self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
 
-			my $timeLeft = int(($verSet->due_date - $timeNow)/60);
+			# Display time left for timed quizes, otherwise display close date.
+			my $timeLeftText = '';
+			if ($timeLimit > 0) {
+				my $minutes = int(($verSet->due_date - $timeNow)/60);
+				my $hours = int($minutes/60);
+				$minutes %= 60;
+
+				# Two cases to format time to work well with translation.
+				if ($hours && $minutes) {
+					$timeLeftText = $r->maketext('[quant,_1,hour] and [quant,_2,minute] remain.',
+						$hours, $minutes);
+				} else {
+					# Translation Note: In this case only one of hours or minutes is non-zero,
+					#  so the zero case of the "quant" will be used for the other two.
+					$timeLeftText = $r->maketext('[quant,_1,hour,hours,][quant,_2,minute,minutes,] remain.',
+						$hours, $minutes);
+				}
+			} else {
+				$timeLeftText = $r->maketext('Closes on [_1]',
+					$self->formatDateTime($verSet->due_date, undef, $ce->{studentDateDisplayFormat}));
+			}
+
 			if (defined($verSet->version_last_attempt_time) && $verSet->version_last_attempt_time > 0) {
 				if ($timeNow < $verSet->due_date && ($maxSubmits <= 0 ||
 						($maxSubmits > 0 && $verSubmits <= $maxSubmits))
 				) {
-					$data->{end} = $r->maketext("Additional submissions avilable. [_1] min remain.", $timeLeft);
+					$data->{end} = $r->maketext('Additional submissions avilable.') . " $timeLeftText";
 				} else {
 					$data->{end} = $self->formatDateTime($verSet->version_last_attempt_time,
 						undef, $ce->{studentDateDisplayFormat});
 				}
 			} elsif ($timeNow < $verSet->due_date) {
-				$data->{end} = $r->maketext("Test not yet submitted. [_1] min remain.", $timeLeft);
+				$data->{end} = $r->maketext('Test not yet submitted.') . " $timeLeftText";
 			} else {
 				$data->{end} = $r->maketext("No submissions. Over time.");
 			}
@@ -463,7 +485,10 @@ sub body {
 					$data->{status} = $r->maketext('Open. Submitted.');
 				} else {
 					$data->{status} = $r->maketext('Open.');
-					$continueVersion = $ver if $continueVersion == 0;
+					if ($continueVersion == 0) {
+						$continueVersion = $ver;
+						$continueTimeLeft = int(($verSet->due_date - $timeNow)/60);
+					}
 				}
 			} else {
 				if ($verSubmits > 0) {
@@ -496,6 +521,34 @@ sub body {
 
 		# Display continue open test button if open non submitted version found.
 		if ($continueVersion > 0) {
+			my $continueText = $r->maketext('Click continue button below to resume current test.');
+
+			if ($timeLimit > 0) {
+				my $minutes = $continueTimeLeft;
+				my $hours = int($minutes/60);
+				$minutes %= 60;
+				my $timeText = '';
+
+				# Two cases to format time to work well with translation.
+				if ($hours && $minutes) {
+					$timeText = $r->maketext('You have [quant,_1,hour] and [quant,_2,minute]'
+						. ' remaining to complete the test.',
+						$hours, $minutes);
+				} else {
+					# Translation Note: In this case only one of hours or minutes is non-zero,
+					# so the zero case of the "quant" will be used for the other two.
+					$timeText = $r->maketext('You have [quant,_1,hour,hours,]'
+						. '[quant,_2,minute,minutes,] remaining to complete the test.',
+						$hours, $minutes);
+				}
+				$continueText .= ' ' . CGI::strong($timeText);
+			}
+			print CGI::p($continueText);
+
+			if ($set->assignment_type =~ /proctor/) {
+				print CGI::p($r->maketext('This test requires a proctor password to continue.'));
+			}
+
 			my $interactiveURL = $self->systemLink(
 				$urlpath->newFromModule($urlModule, $r,
 					courseID => $courseID, setID => $set->set_id.',v'.$continueVersion)
@@ -519,6 +572,32 @@ sub body {
 			) &&
 			($maxVersions <= 0 || $currentVersions < $maxVersions)
 		) {
+			# Print time limit for timed tests
+			my $startText = $r->maketext('Click start button below to start a new version.');
+			if ($timeLimit > 0) {
+				my $hours = int($timeLimit / 3600);
+				my $minutes = int(($timeLimit % 3600)/60);
+				my $timeText = '';
+
+				# Two cases to format time to work well with translation.
+				if ($hours && $minutes) {
+					$timeText = $r->maketext('You will have [quant,_1,hour] and [quant,_2,minute] to complete the test.',
+						$hours, $minutes);
+				} else {
+					# Translation Note: In this case only one of hours or minutes is non-zero,
+					# so the zero case of the "quant" will be used for the other two.
+					$timeText = $r->maketext('You will have [quant,_1,hour,hours,]'
+						. '[quant,_2,minute,minutes,] to complete the test.',
+						$hours, $minutes);
+				}
+				$startText .= ' ' . CGI::strong($timeText);
+			}
+			print CGI::p($startText);
+
+			if ($set->assignment_type =~ /proctor/) {
+				print CGI::p($r->maketext('This test requires a proctor password to start.'));
+			}
+
 			my $interactiveURL = $self->systemLink(
 				$urlpath->newFromModule($urlModule, $r,
 					courseID => $courseID, setID => $set->set_id)
