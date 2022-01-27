@@ -472,8 +472,8 @@ sub body {
 					$data->{status} = $r->maketext('Closed.');
 				}
 			}
-			if ($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate'
-					&& $timeNow >= $set->answer_date)) {
+			if (($verSubmits > 0 || $timeNow >= $verSet->due_date) && ($set->hide_work eq 'N' ||
+					($set->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date))) {
 				$data->{status} .= ' ' . $r->maketext('Answers Available.');
 			}
 
