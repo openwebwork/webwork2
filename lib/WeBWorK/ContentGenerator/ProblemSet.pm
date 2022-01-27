@@ -394,10 +394,11 @@ sub body {
 
 	# If gateway list quiz versions.
 	my $multiSet = $authz->hasPermissions($user, "view_multiple_sets");
+	my $totalVersions = 0;
 	if ($isGateway) {
 		my $timeNow = time;
 		my @setVers = $db->listSetVersions($effectiveUser, $set->set_id);
-		my $totalVersions = scalar @setVers;
+		$totalVersions = scalar @setVers;
 		my $timeLimit = $set->version_time_limit() || 0;
 
 		# Compute how many versions have been launched within timeInterval
@@ -642,7 +643,7 @@ sub body {
 		}
 
 		# Start of form for hardcopy of test versions.
-		if ($multiSet) {
+		if ($multiSet && $totalVersions > 0) {
 			print CGI::start_form(
 				-name   => 'problem-sets-form',
 				-id     => 'problem-sets-form',
@@ -831,7 +832,7 @@ sub body {
 	} # End Gateway vs Normal assignment conditional
 
 	# Display hardcopy button
-	if ($isGateway && $multiSet) {
+	if ($isGateway && $multiSet && $totalVersions > 0) {
 		print CGI::div({ class => 'mb-3' },
 			CGI::reset({ id => 'clear', value => $r->maketext('Clear'), class => 'btn btn-primary' })
 		);
