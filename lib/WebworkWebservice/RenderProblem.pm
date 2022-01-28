@@ -37,7 +37,6 @@ use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::PG::IO;
 use WeBWorK::PG::ImageGenerator;
-use WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil qw(insert_mathquill_responses);
 use Encode qw(encode);
 use Benchmark;
 
@@ -351,6 +350,7 @@ sub renderProblem {
 		permissionLevel => $rh->{envir}->{permissionLevel} || 0,
 		effectivePermissionLevel => $rh->{envir}->{effectivePermissionLevel}
 		|| $rh->{envir}->{permissionLevel} || 0,
+		useMathQuill    => $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill',
 	};
 
 	my $formFields = $rh->{envir}->{inputs_ref};
@@ -386,8 +386,6 @@ sub renderProblem {
 	);
 
 	$self->{formFields} = $formFields;
-	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
-	if $ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill';
 
 	my ($internal_debug_messages, $pgwarning_messages, $pgdebug_messages);
 	if (ref($pg->{pgcore}) eq 'PGcore') {
