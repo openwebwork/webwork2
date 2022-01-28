@@ -1221,7 +1221,9 @@ sub is_restricted {
 	my @needed;
 	if ($set->restricted_release ) {
 	        my @proposed_sets = split(/\s*,\s*/,$set->restricted_release);
-		my $restriction =  $set->restricted_status  ||  0;
+		my $restriction = $set->restricted_status  ||  0;
+		# round to evade machine rounding error
+		$restriction = sprintf("%.2f", $restriction);
 		my @good_sets;
 		foreach(@proposed_sets) {
 		  push @good_sets,$_ if $db->existsGlobalSet($_);
@@ -1229,6 +1231,8 @@ sub is_restricted {
 		foreach(@good_sets) {
 	  	  my $restrictor =  $db->getGlobalSet($_);
 		  my $r_score = grade_set($db,$restrictor,$_, $studentName,0);
+		  # round to evade machine rounding error
+		  $r_score = sprintf("%.2f", $r_score);
 		  if($r_score < $restriction) {
 	  	    push @needed,$_;
 		  }
