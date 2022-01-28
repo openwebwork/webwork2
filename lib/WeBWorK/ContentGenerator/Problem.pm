@@ -2421,9 +2421,6 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
 	}
 
-	# Is this needed anymore?
-	print CGI::script({ src => "$site_url/js/vendor/underscore/underscore.js" }, "");
-
 	# Javascript for knowls
 	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js", defer => undef}, '');
 

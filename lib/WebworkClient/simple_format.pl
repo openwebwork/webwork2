@@ -26,7 +26,6 @@ $simple_format = <<'ENDPROBLEMTEMPLATE';
 <script src="/webwork2_files/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
 <script src="/webwork2_files/js/apps/InputColor/color.js"></script>
 <script src="/webwork2_files/js/apps/Base64/Base64.js"></script>
-<script src="/webwork2_files/js/vendor/underscore/underscore.js"></script>
 <script src="/webwork2_files/js/apps/Knowls/knowl.js" defer></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" defer></script>
 <script src="/webwork2_files/js/apps/ImageView/imageview.js" defer></script>

@@ -38,7 +38,6 @@ $json_output->{head_part200_AVI} = [
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
 	"/webwork2_files/js/apps/InputColor/color.js",
 	"/webwork2_files/js/apps/Base64/Base64.js",
-	"/webwork2_files/js/vendor/underscore/underscore.js",
 	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
 ];
 
