@@ -147,6 +147,7 @@ sub pre_header_initialize {
 		processAnswers  => 0,
 		permissionLevel => $db->getPermissionLevel($userName)->permission,
 		effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+		useMathQuill    => $self->{will}{useMathQuill}
 	    },
 	    );
 
@@ -177,7 +178,8 @@ sub pre_header_initialize {
 			processAnswers  => 0,
 			permissionLevel => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-                    },
+			useMathQuill    => $self->{will}{useMathQuill}
+					},
 		    );
 
                 # check to see if we've found a new version
@@ -229,6 +231,7 @@ sub pre_header_initialize {
 		    processAnswers  => 0,
 		    permissionLevel => $db->getPermissionLevel($userName)->permission,
 		    effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			useMathQuill    => $self->{will}{useMathQuill}
 		},
 		);
 
@@ -299,6 +302,7 @@ sub pre_header_initialize {
 			processAnswers  => 1,
 			permissionLevel => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			useMathQuill    => $self->{will}{useMathQuill}
 		},
 	);
 
@@ -326,8 +330,6 @@ sub pre_header_initialize {
 
 	$self->{showMeAnother} = \%showMeAnother;
 	$self->{pg} = $pg;
-	WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::insert_mathquill_responses($self, $pg)
-	if ($self->{will}->{useMathQuill});
 }
 
 # We disable showOldAnswers because old answers are answers to the original
