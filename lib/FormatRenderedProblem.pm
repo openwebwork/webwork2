@@ -308,12 +308,12 @@ sub formatRenderedProblem {
 	# Regular Perl warning messages generated with warn.
 	my $warnings = '';
 	if ($rh_result->{pg_warnings}) {
-		$warnings .= qq{<div style="background-color:pink">PG WARNINGS<br>} .
-			decode_utf8_base64($rh_result->{pg_warnings}) . "</div>";
+		$warnings .= qq{<div class="alert alert-danger mb-2 p-1"><h3>Warning Messages</h3>} .
+			join('<br>', split("\n", decode_utf8_base64($rh_result->{pg_warnings}))) . "</div>";
 	}
 	if ($rh_result->{translator_warnings}) {
-		$warnings .= qq{<div style="background-color:pink"><p>TRANSLATOR WARNINGS</p><p>} .
-			decode_utf8_base64($rh_result->{translator_warnings}) . "</p></div>";
+		$warnings .= qq{<div class="alert alert-danger mb-2 p-1"><h3>Translator Warnings</h3>} .
+			join('<br>', split("\n", decode_utf8_base64($rh_result->{translator_warnings}))) . "</p></div>";
 	}
 
 	# PG debug messages generated with DEBUG_message();
@@ -409,7 +409,7 @@ sub formatRenderedProblem {
 	$template =~ s/(\$\w+)/$1/gee;
 
 	return $template unless $self->{inputs_ref}{send_pg_flags};
-	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags} });
+	return JSON->new->utf8(0)->encode({ html => $template, pg_flags => $rh_result->{flags}, warnings => $warnings });
 }
 
 sub saveGradeToLTI {

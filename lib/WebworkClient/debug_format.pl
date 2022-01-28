@@ -86,7 +86,6 @@ $LTIGradeMessage
 </div></div>
 <HR>
 
-<h3> Perl warning section </h3>
 $warnings
 <h3> PG Warning section </h3>
 $PG_warning_messages

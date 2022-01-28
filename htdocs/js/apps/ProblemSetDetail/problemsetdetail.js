@@ -69,11 +69,12 @@
 			const iframe = document.getElementById(`psr_render_iframe_${id}`);
 			if (iframe && iframe.iFrameResizer) {
 				iframe.iFrameResizer.close();
+				renderArea.innerHTML = '';
 			} else if (renderArea.innerHTML != '') {
 				renderArea.innerHTML = '';
 			} else {
 				collapsibles[id]?.show();
-				renderArea.innerHTML = 'Loading Please Wait...';
+				renderArea.innerHTML = '<div class="alert alert-success p-1 mb-0">Loading Please Wait...</div>';
 				render(id);
 			}
 		});
@@ -88,7 +89,7 @@
 		});
 		const renderAreas = document.querySelectorAll('.psr_render_area');
 		for (const renderArea of renderAreas) {
-			renderArea.innerHTML = '<div class="alert alert-success p-1 mt-2">Loading Please Wait...</div>';
+			renderArea.innerHTML = '<div class="alert alert-success p-1 mb-0">Loading Please Wait...</div>';
 		}
 		for (const renderArea of renderAreas) {
 			await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
@@ -100,6 +101,7 @@
 		$('.psr_render_area').each(function() {
 			var iframe = $(this).find('[id^=psr_render_iframe_]');
 			if (iframe[0] && iframe[0].iFrameResizer) iframe[0].iFrameResizer.close();
+			this.innerHTML = '';
 		});
 	});
 
@@ -232,7 +234,7 @@
 		(async function() {
 			var renderAreas = $('.psr_render_area');
 			for (var renderArea of renderAreas) {
-				$(renderArea).html('Loading Please Wait...');
+				$(renderArea).html('<div class="alert alert-success p-1 mb-0">Loading Please Wait...</div>');
 				await render(renderArea.id.match(/^psr_render_area_(\d+)/)[1]);
 			}
 		})();
@@ -249,7 +251,7 @@
 			};
 
 			if (!(ro.userID && ro.courseID && ro.session_key)) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
+				renderArea.html($('<div/>', { 'class': 'alert alert-danger p-1 mb-0 fw-bold' })
 					.text("Missing hidden credentials: user, session_key, courseID"));
 				resolve();
 				return;
@@ -268,7 +270,7 @@
 			}
 
 			if (ro.sourceFilePath.startsWith('group')) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2'})
+				renderArea.html($('<div/>', { 'class': 'alert alert-danger p-1 mb-0 fw-bold' })
 					.text("Problem source is drawn from a grouping set."));
 				resolve();
 				return;
@@ -291,6 +293,7 @@
 			ro.processAnswers = 0;
 			ro.showFooter = 0;
 			ro.displayMode = $('#problem_displaymode').val();
+			ro.send_pg_flags = 1;
 			ro.extra_header_text = '<style>' +
 				'html{overflow-y:hidden;}body{padding:1px;background:#f5f5f5;}.container-fluid{padding:0px;}' +
 				'</style>';
@@ -299,27 +302,29 @@
 			$.ajax({type:'post',
 				url: basicWebserviceURL,
 				data: ro,
+				dataType: 'json',
 				timeout: 10000, //milliseconds
 			}).done(function (data) {
-				// Give nicer file not found error
-				if (/this problem file was empty/i.test(data)) {
-					renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
-						.text('No Such File or Directory!'));
-					resolve();
-					return;
-				}
 				// Give nicer session timeout error
-				if (/Can\'t authenticate -- session may have timed out/i.test(data) ||
-					/Webservice.pm: Error when trying to authenticate./i.test(data)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
+				if (!data.html || /Can\'t authenticate -- session may have timed out/i.test(data.html) ||
+					/Webservice.pm: Error when trying to authenticate./i.test(data.html)) {
+					renderArea.html($('<div/>', { 'class': 'alert alert-danger p-1 mb-0 fw-bold' })
 						.text("Can't authenticate -- session may have timed out."));
 					resolve();
 					return;
 				}
+				// Give nicer file not found error
+				if (/this problem file was empty/i.test(data.html)) {
+					renderArea.html($('<div/>', { 'class': 'alert alert-danger p-1 mb-0 fw-bold' })
+						.text('No Such File or Directory!'));
+					resolve();
+					return;
+				}
 				// Give nicer problem rendering error
-				if (/error caught by translator while processing problem/i.test(data) ||
-					/error message for command: renderproblem/i.test(data)) {
-					renderArea.html($('<div/>',{ style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
+				if ((data.pg_flags && data.pg_flags.error_flag) ||
+					/error caught by translator while processing problem/i.test(data.html) ||
+					/error message for command: renderproblem/i.test(data.html)) {
+					renderArea.html($('<div/>', { 'class': 'alert alert-danger p-1 mb-0 fw-bold' })
 						.text('There was an error rendering this problem!'));
 					resolve();
 					return;
@@ -327,12 +332,14 @@
 
 				var iframe = $("<iframe/>", { id: "psr_render_iframe_" + id });
 				renderArea.html(iframe);
+				if (data.pg_flags && data.pg_flags.comment) iframe.after($(data.pg_flags.comment));
+				if (data.warnings) iframe.after($(data.warnings));
 				iframe[0].style.border = 'none';
-				iframe[0].srcdoc = data;
+				iframe[0].srcdoc = data.html;
 				iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
 				iframe[0].addEventListener('load', function() { resolve(); });
 			}).fail(function (data) {
-				renderArea.html($('<div/>', { style: 'font-weight:bold', 'class': 'alert alert-danger p-1 mt-2' })
+				renderArea.html($('<div/>', { 'class': 'alert alert-danger p-1 mb-0 fw-bold' })
 					.text(basicWebserviceURL + ': ' + data.statusText));
 				resolve();
 			});

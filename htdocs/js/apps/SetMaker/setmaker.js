@@ -374,7 +374,7 @@
 			$.ajax({type:'post',
 				url: basicRendererURL,
 				data: ro,
-				dataType: "json",
+				dataType: 'json',
 				timeout: 10000, //milliseconds
 			}).done(function (data) {
 				// Give nicer session timeout error
@@ -407,6 +407,7 @@
 					iframe[0].style.border = 'none';
 					renderArea.html(iframe);
 					if (data.pg_flags && data.pg_flags.comment) iframe.after($(data.pg_flags.comment));
+					if (data.warnings) iframe.after($(data.warnings));
 					iFrameResize({ checkOrigin: false, warningTimeout: 20000, scrolling: 'omit' }, iframe[0]);
 					iframe[0].addEventListener('load', function() { resolve(); });
 				}
