@@ -137,8 +137,6 @@ use constant STATE_PARAMS => [qw(user effectiveUser key visible_sets no_visible_
 
 use constant SORT_SUBS => {
 	set_id		=> \&bySetID,
-#	set_header	=> \&bySetHeader,  # can't figure out why these are useful
-#	hardcopy_header	=> \&byHardcopyHeader,  # can't figure out why these are useful
 	open_date	=> \&byOpenDate,
 	due_date	=> \&byDueDate,
 	answer_date	=> \&byAnswerDate,
@@ -152,16 +150,6 @@ use constant  FIELD_PROPERTIES => {
 	set_id => {
 		type => "text",
 		size => 8,
-		access => "readonly",
-	},
-	set_header => {
-		type => "filelist",
-		size => 10,
-		access => "readonly",
-	},
-	hardcopy_header => {
-		type => "filelist",
-		size => 10,
 		access => "readonly",
 	},
 	open_date => {
@@ -464,8 +452,6 @@ sub body {
 		users
 		filename
 		set_id
-		set_header
-		hardcopy_header
 		open_date
                 reduced_scoring_date
 		due_date
@@ -478,8 +464,6 @@ sub body {
 		$r->maketext("Edit Assigned Users"),
 		$r->maketext("Set Definition Filename"),
 		$r->maketext("Edit Set Data"),
-		$r->maketext("Set Header"),
-		$r->maketext("Hardcopy Header"),
 		$r->maketext("Open Date"),
 	        $r->maketext("Reduced Scoring Date"),
 		$r->maketext("Close Date"),
@@ -1719,76 +1703,12 @@ sub saveEdit_handler {
 	return CGI::div({ class => 'alert alert-success p-1 mb-0' }, $r->maketext("changes saved"));
 }
 
-sub duplicate_form {
-	my ($self, %actionParams) = @_;
-
-	my $r = $self->r;
-	my @visible_sets = $r->param('visible_sets');
-
-	return "" unless @visible_sets == 1;
-
-	return join ("",
-		WeBWorK::CGI_labeled_input(
-			-type=>"text",
-			-id=>"duplicate_text",
-			-label_text=>$r->maketext("Duplicate this set and name it").": ",
-			-input_attr=>{
-				-name => "action.duplicate.name",
-				-value => $actionParams{"action.duplicate.name"}->[0] || "",
-				-width => "50",
-			}
-		),
-	);
-}
-
-sub duplicate_handler {
-	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-
-	my $r = $self->r;
-	my $db = $r->db;
-
-	my $oldSetID = $self->{selectedSetIDs}->[0];
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Failed to duplicate set: no set selected for duplication!"))
-		unless defined($oldSetID)
-		and $oldSetID =~ /\S/;
-	my $newSetID = $actionParams->{"action.duplicate.name"}->[0];
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Failed to duplicate set: no set name specified!"))
-		unless $newSetID =~ /\S/;
-	# DBFIXME checking for existence -- don't need to fetch
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' },
-		$r->maketext("Failed to duplicate set: set [_1] already exists!", $newSetID))
-		if defined $db->getGlobalSet($newSetID);
-
-	my $newSet = $db->getGlobalSet($oldSetID);
-	$newSet->set_id($newSetID);
-	eval {$db->addGlobalSet($newSet)};
-
-	# take all the problems from the old set and make them part of the new set
-	foreach ($db->getAllGlobalProblems($oldSetID)) {
-		$_->set_id($newSetID);
-		$db->addGlobalProblem($_);
-	}
-
-	push @{ $self->{visibleSetIDs} }, $newSetID;
-
-	return CGI::div({ class => 'alert alert-danger p-1 mb-0' }, $r->maketext("Failed to duplicate set: [_1]", $@))
-		if $@;
-
-	return $r->maketext("Success");
-}
-
 ################################################################################
 # sorts
 ################################################################################
 
 sub bySetID         { $a->set_id         cmp $b->set_id         }
 
-# I can't figure out why these are useful
-
-# sub bySetHeader     { $a->set_header     cmp $b->set_header     }
-# sub byHardcopyHeader { $a->hardcopy_header cmp $b->hardcopy_header }
 #FIXME  eventually we may be able to remove these checks, if we can trust
 # that the dates are always defined
 # dates which are the empty string '' or undefined  are treated as 0
@@ -2639,48 +2559,6 @@ sub fieldEditHTML {
 					: "",
 				data_enable_datepicker => $self->r->ce->{options}{useDateTimePicker}
 			})
-		);
-	}
-
-	if ($type eq "filelist") {
-		return WeBWorK::CGI_labeled_input(
-			-type=>"select",
-			-id=>$fieldName."_id",
-			-label_text=>ucfirst($fieldName),
-			-input_attr=>{
-				name => $fieldName,
-				value => [ sort keys %$headerFiles ],
-				labels => $headerFiles,
-				default => $value || 0,
-			}
-		),
-	}
-
-	if ($type eq "enumerable") {
-		my $matched = undef; # Whether a synonym match has occurred
-
-		# Process synonyms for enumerable objects
-		foreach my $synonym (keys %$synonyms) {
-			if ($synonym ne "*" and $value =~ m/$synonym/) {
-				$value = $synonyms->{$synonym};
-				$matched = 1;
-			}
-		}
-
-		if (!$matched and exists $synonyms->{"*"}) {
-			$value = $synonyms->{"*"};
-		}
-
-		return WeBWorK::CGI_labeled_input(
-			-type       => "select",
-			-id         => $fieldName . "_id",
-			-label_text => ucfirst($fieldName),
-			-input_attr => {
-				name    => $fieldName,
-				values  => [ keys %$items ],
-				default => $value,
-				labels  => $items,
-			}
 		);
 	}
 
