@@ -65,8 +65,6 @@ Note:  Only database keyfield values can be used as path parameters.
  hardcopy_preselect_set              /$courseID/hardcopy/$setID/
  logout                              /$courseID/logout/
  options                             /$courseID/options/
- #test                               /$courseID/test/
- #render                             /$courseID/render/
 
  instructor_tools                    /$courseID/instructor/
 
@@ -85,10 +83,7 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_file_transfer            /$courseID/instructor/files/
  instructor_file_manager             /$courseID/instructor/file_manager/
  instructor_set_maker                /$courseID/instructor/setmaker/
- instructor_get_target_set_problems  /$courseID/instructor/GetTargetSetProblems/
- instructor_get_library_set_problems /$courseID/instructor/GetLibrarySetProblems/
  instructor_config                   /$courseID/instructor/config/
- instructor_compare                  /$courseID/instructor/compare/
 
  instructor_problem_editor           /$courseID/instructor/pgProblemEditor/
  instructor_problem_editor_withset   /$courseID/instructor/pgProblemEditor/$setID/
@@ -98,8 +93,6 @@ Note:  Only database keyfield values can be used as path parameters.
  instructor_scoring                  /$courseID/instructor/scoring/
  instructor_scoring_download         /$courseID/instructor/scoringDownload/
  instructor_mail_merge               /$courseID/instructor/send_mail/
-
- instructor_preflight                /$courseID/instructor/preflight/
 
  instructor_statistics               /$courseID/instructor/stats/
  instructor_set_statistics           /$courseID/instructor/stats/set/$setID/
@@ -303,15 +296,6 @@ our %pathTypes = (
 		produce => 'options/',
 		display => 'WeBWorK::ContentGenerator::Options',
 	},
-	#render => {
-	#	name    => 'Render',
-	#	parent  => 'set_list',
-	#	kids    => [ qw// ],
-	#	match   => qr|^render/|,
-	#	capture => [ qw// ],
-	#	produce => 'render/',
-	#	display => 'WeBWorK::ContentGenerator::ProblemRenderer',
-	#},
 
 	################################################################################
 
@@ -324,10 +308,9 @@ our %pathTypes = (
 			instructor_set_assigner instructor_file_manager
 			instructor_problem_editor
 			instructor_set_maker
-			instructor_get_target_set_problems instructor_get_library_set_problems instructor_compare
 			instructor_config
 			instructor_scoring instructor_scoring_download instructor_mail_merge
-			instructor_preflight instructor_statistics
+			instructor_statistics
 			instructor_progress
 			instructor_problem_grader
 			/ ],
@@ -439,16 +422,6 @@ our %pathTypes = (
 		produce => 'config/',
 		display => 'WeBWorK::ContentGenerator::Instructor::Config',
 	},
-	instructor_compare => {
-		name    => x('File Compare'),
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^compare/|,
-		capture => [ qw// ],
-		#produce => 'comp/',
-		produce => 'compare/',
-		display => 'WeBWorK::ContentGenerator::Instructor::Compare',
-	},
 	instructor_set_maker => {
 		name    => x('Library Browser'),
 		parent  => 'instructor_tools',
@@ -457,24 +430,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'setmaker/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SetMaker',
-	},
-	instructor_get_target_set_problems => {
-		name    => x('Get Target Set Problems'),
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^GetTargetSetProblems/|,
-		capture => [ qw// ],
-		produce => 'GetTargetSetProblems/',
-		display => 'WeBWorK::ContentGenerator::Instructor::GetTargetSetProblems',
-	},
-	instructor_get_library_set_problems => {
-		name    => x('Get Library Set Problems'),
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^GetLibrarySetProblems/|,
-		capture => [ qw// ],
-		produce => 'GetLibrarySetProblems/',
-		display => 'WeBWorK::ContentGenerator::Instructor::GetLibrarySetProblems',
 	},
 	instructor_file_manager => {
 		name    => x('File Manager'),
@@ -538,15 +493,6 @@ our %pathTypes = (
 		capture => [ qw// ],
 		produce => 'send_mail/',
 		display => 'WeBWorK::ContentGenerator::Instructor::SendMail',
-	},
-	instructor_preflight => {
-		name    => x('Preflight Log'),
-		parent  => 'instructor_tools',
-		kids    => [ qw// ],
-		match   => qr|^preflight/|,
-		capture => [ qw// ],
-		produce => 'preflight/',
-		display => 'WeBWorK::ContentGenerator::Instructor::Preflight',
 	},
 
 	################################################################################

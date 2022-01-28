@@ -119,14 +119,7 @@ sub info {
 		return "";
 	}
 }
-sub help {   # non-standard help, since the file path includes the course name
-	my $self = shift;
-	my $args = shift;
-	my $name = $args->{name};
-	$name = lc('course home') unless defined($name);
-	$name =~ s/\s/_/g;
-	$self->helpMacro($name, { class => 'nav-link' });
-}
+
 sub templateName {
 	my $self = shift;
 	my $r = $self->r;
