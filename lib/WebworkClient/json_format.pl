@@ -37,8 +37,6 @@ $json_output->{head_part200_AVI} = [
 	"/webwork2_files/node_modules/jquery/dist/jquery.min.js",
 	"/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js",
 	"/webwork2_files/js/apps/Base64/Base64.js",
-	"/webwork2_files/js/vendor/underscore/underscore.js",
-	"/webwork2_files/js/apps/Knowls/knowl.js",
 	"/webwork2_files/node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js",
 ];
 
@@ -46,6 +44,7 @@ $json_output->{head_part200_AVI} = [
 #     mathjax/es5/tex-chtml.js also needs id="MathJax-script" in the <script> tag
 $json_output->{head_part201_AVI} = [
 	"/webwork2_files/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
+	"/webwork2_files/js/apps/Knowls/knowl.js",
 	"https://polyfill.io/v3/polyfill.min.js?features=es6",
 	"/webwork2_files/js/apps/MathJaxConfig/mathjax-config.js",
 	"/webwork2_files/mathjax/es5/tex-chtml.js",

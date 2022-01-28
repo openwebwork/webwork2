@@ -205,13 +205,6 @@ sub formatRenderedProblem {
 	$extra_header_text = $self->{inputs_ref}{extra_header_text} // '';
 	$problemHeadText .= $extra_header_text;
 
-	if ($ce->{pg}{specialPGEnvironmentVars}{entryAssist} eq 'MathQuill') {
-		$problemHeadText .= qq{<link href="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mathquill.css" rel="stylesheet" />} .
-			qq{<link href="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mqeditor.css" rel="stylesheet" />} .
-			qq{<script src="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mathquill.min.js" defer></script>} .
-			qq{<script src="$ce->{webworkURLs}{htdocs}/js/apps/MathQuill/mqeditor.js" defer></script>};
-	}
-
 	# Set up the problem language and direction
 	# PG files can request their language and text direction be set.  If we do
 	# not have access to a default course language, fall back to the
