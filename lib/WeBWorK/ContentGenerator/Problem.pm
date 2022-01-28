@@ -2422,7 +2422,7 @@ sub output_JS{
 	}
 
 	# Javascript for knowls
-	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js" }, "");
+	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js", defer => undef}, '');
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {

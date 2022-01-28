@@ -2250,7 +2250,7 @@ sub output_JS {
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
 	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Base64/Base64.js" },                            '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Knowls/knowl.js" },                             '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Knowls/knowl.js", defer => undef },             '');
 	print CGI::script({ src => "$webwork_htdocs_url/js/apps/ImageView/imageview.js", defer => undef },      '');
 	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
 	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => undef },        '');
