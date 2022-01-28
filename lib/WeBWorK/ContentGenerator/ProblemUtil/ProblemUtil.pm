@@ -316,8 +316,7 @@ sub create_ans_str_from_responses {
 		$isEssay2 = 1 if ($pg_answers_hash{$ans_id}->{ans_eval}{rh_ans}{type}//'') eq 'essay';
 		foreach my $response_id ($pg_answers_hash{$ans_id}->response_obj->response_labels) {
 			$answers_to_store{$response_id} = $problem->{formFields}->{$response_id};
-			#Math quill response items do not need to be stored -- they duplicate other response items
-			push @past_answers_order, $response_id unless ($response_id =~ /^MaThQuIlL_/);
+			push @past_answers_order, $response_id;
 			push @last_answer_order, $response_id;
 		 }
 	}
@@ -341,28 +340,6 @@ sub create_ans_str_from_responses {
     # past_answers_string is stored in past_answer table
     # encoded_last_answer_string is used in `last_answer` entry of the problem_user table
 	return ($past_answers_string,$encoded_last_answer_string, $scores2,$isEssay2);
-}
-
-# insert_mathquill_responses subroutine
-
-# Add responses to each answer's response group that store the latex form of the students'
-# answers and add corresponding hidden input boxes to the page.
-
-sub insert_mathquill_responses {
-	my ($self, $pg) = @_;
-	for my $answerLabel (keys %{$pg->{pgcore}->{PG_ANSWERS_HASH}}) {
-		my $mq_opts = $pg->{pgcore}{PG_ANSWERS_HASH}{$answerLabel}{ans_eval}{rh_ans}{mathQuillOpts} // "";
-		next if ($mq_opts && $mq_opts =~ /\s*disabled\s*/);
-		my $response_obj = $pg->{pgcore}->{PG_ANSWERS_HASH}->{$answerLabel}->response_obj;
-		for my $response ($response_obj->response_labels) {
-			next if (ref($response_obj->{responses}{$response}));
-			my $name = "MaThQuIlL_$response";
-			push(@{$response_obj->{response_order}}, $name);
-			$response_obj->{responses}{$name} = '';
-			my $value = defined($self->{formFields}{$name}) ? $self->{formFields}{$name} : '';
-			$pg->{body_text} .= CGI::hidden({ -name => $name, -id => $name, -value => $value, data_mq_opts => "$mq_opts" });
-		}
-	}
 }
 
 # process_editorLink subroutine
@@ -418,7 +395,8 @@ sub process_editorLink{
 
 # output_main_form subroutine.
 
-# prints out the main form for the page.  This particular subroutine also takes in $editorLink and $scoreRecordedMessage as required parameters. Also uses CGI_labeled_input for its input elements for accessibility reasons.  Also prints out the score summary where applicable.
+# prints out the main form for the page.  This particular subroutine also takes in $editorLink and $scoreRecordedMessage
+# as required parameters.  Also prints out the score summary where applicable.
 
 sub output_main_form{
 
@@ -624,24 +602,33 @@ sub jitar_send_warning_email {
     # at present, this does not seem to be necessary.
 
 
-#       createEmailSenderTransportSMTP is defined in ContentGenerator
-		my $transport = $self->createEmailSenderTransportSMTP();
-		my $email = Email::Simple->create(header => [
+	my $transport = $self->createEmailSenderTransportSMTP();
+	my $return_path_for_errors = $ce->{mail}->{set_return_path};
+	# createEmailSenderTransportSMTP is defined in ContentGenerator
+	# return_path_for_errors is the address used to report returned email. It is an argument
+	# used in sendmail() (aka Email::Simple::sendmail).
+	# For arcane historical reasons sendmail  actually sets the field "MAIL FROM" and the smtp server then
+	# uses that to set "Return-Path".
+	# references:
+	#  stackoverflow:
+	#     https://stackoverflow.com/questions/1235534/what-is-the-behavior-difference-between-return-path-reply-to-and-from
+	#  Email::Simple: https://metacpan.org/pod/Email::Sender::Manual::QuickStart#envelope-information
+
+	my $email = Email::Simple->create(header => [
 			"To" => join(",", @recipients),
 			"From" => $sender,
 			"Subject" => $subject,
 			"Content-Type" => "text/plain; charset=UTF-8"
 		]);
-
-		## extra headers
-		$email->header_set("X-WeBWorK-Course: ",$courseID) if defined $courseID;
-		if ($user) {
-			$email->header_set("X-WeBWorK-User: ",$user->user_id);
-			$email->header_set("X-WeBWorK-Section: ",$user->section);
-			$email->header_set("X-WeBWorK-Recitation: ",$user->recitation);
-		}
-		$email->header_set("X-WeBWorK-Set: ",$setID) if defined $setID;
-		$email->header_set("X-WeBWorK-Problem: ",$problemID) if defined $problemID;
+	## extra headers
+	$email->header_set("X-WeBWorK-Course: ",$courseID) if defined $courseID;
+	if ($user) {
+		$email->header_set("X-WeBWorK-User: ",$user->user_id);
+		$email->header_set("X-WeBWorK-Section: ",$user->section);
+		$email->header_set("X-WeBWorK-Recitation: ",$user->recitation);
+	}
+	$email->header_set("X-WeBWorK-Set: ",$setID) if defined $setID;
+	$email->header_set("X-WeBWorK-Problem: ",$problemID) if defined $problemID;
 
     my $full_name = $user->full_name;
     my $email_address = $user->email_address;
@@ -673,8 +660,13 @@ Comment:    $comment
 		## try to send the email
 
 		try {
-			sendmail($email,{transport => $transport});
-				debug("Successfully sent JITAR alert message");
+			if ($return_path_for_errors) {
+				sendmail($email,{transport => $transport, from=>$return_path_for_errors});
+			}
+			else {
+				sendmail($email,{transport => $transport});
+			}
+			debug("Successfully sent JITAR alert message");
 		} catch {
       $r->log_error("Failed to send JITAR alert message: $_");
 		};

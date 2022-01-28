@@ -1,1 +1,0 @@
-../../vendor/other/knowl.js

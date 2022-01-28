@@ -72,9 +72,6 @@ eval "use lib '$pg_dir/lib'"; die $@ if $@;
 $WeBWorK::Constants::PG_DIRECTORY = $pg_dir;
 $ENV{PG_ROOT} = $pg_dir;
 
-# moving WWSafe into $pg_dir/lib requires adding to lib
-
-eval "use lib '$pg_dir/lib'"; die $@ if $@;
 eval "use WeBWorK::CourseEnvironment"; die $@ if $@;
 
 # grab course environment (by reading webwork2/conf/defaults.config)
@@ -173,13 +170,29 @@ $Location{$webwork_url} = {
 	PerlHandler => "Apache::WeBWorK",
 };
 
-# Provide access to system-wide resources.
-#
+# Provide access to webwork2 and pg resources.
+# A resource from $webwork_htdocs_dir is used if present,
+# then $pg_dir/htdocs is checked if the file is not found there.
 push @Alias, [ $webwork_htdocs_url => $webwork_htdocs_dir ];
-$Directory{$webwork_htdocs_dir} = {
-        Require => "all granted",
-	Options => "FollowSymLinks",
-	AllowOverride => "none",
+push @Alias, [ "/pg_files" => "$pg_dir/htdocs" ];
+
+# The order of the directives is important for the rewrite to work, so a hash can not be used,
+# and we must construct the directory section by hand.
+push @PerlConfig, 
+	"<Directory $webwork_htdocs_dir>",
+	'	Require       all granted',
+	'	Options       FollowSymLinks',
+	'	AllowOverride none',
+	'	RewriteEngine on',
+	"	RewriteBase   $webwork_htdocs_url",
+	'	RewriteCond   %{REQUEST_FILENAME} !-f',
+	'	RewriteRule   ^(.*)$ /pg_files/$1 [L]',
+	'</Directory>';
+
+$Directory{"$pg_dir/htdocs"} = {
+	Require       => "all granted",
+	Options       => "FollowSymLinks",
+	AllowOverride => "none"
 };
 
 # Provide access to course-specific resources.

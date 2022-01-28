@@ -69,6 +69,7 @@ sub scrollingRecordList {
 
 	if (@Records) {
 		my $class = ref $Records[0];
+        $class = $1 if $class =~ /(.*)Version$/;
 
 		($filters, $filter_labels) = getFiltersForClass(@Records);
 		if (defined $r->param("$name!filter")) {

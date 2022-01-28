@@ -2249,14 +2249,8 @@ sub output_JS {
 	my $ce                 = $self->r->ce;
 	my $webwork_htdocs_url = $ce->{webwork_htdocs_url};
 
-	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/jquery/modules/jquery.ui.touch-punch.js" }, '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/jquery/modules/jquery.watermark.min.js" },  '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/underscore/underscore.js" },                '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/vendor/backbone/backbone.js" },                    '');
-	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Base64/Base64.js" },                          '');
-
-	print CGI::script({ src => "$webwork_htdocs_url/js/legacy/vendor/knowl.js" }, '');
-
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Base64/Base64.js" },                            '');
+	print CGI::script({ src => "$webwork_htdocs_url/js/apps/Knowls/knowl.js", defer => undef },             '');
 	print CGI::script({ src => "$webwork_htdocs_url/js/apps/ImageView/imageview.js", defer => undef },      '');
 	print CGI::script({ src => "$webwork_htdocs_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, '');
 	print CGI::script({ src => "$webwork_htdocs_url/js/apps/SetMaker/setmaker.js", defer => undef },        '');
@@ -2287,7 +2281,7 @@ sub output_CSS {
 
 	print CGI::Link({ rel => "stylesheet", href => "$webwork_htdocs_url/js/apps/ImageView/imageview.css" });
 
-	print qq{<link href="$webwork_htdocs_url/css/knowlstyle.css" rel="stylesheet" type="text/css" />};
+	print CGI::Link({ rel => "stylesheet", href => "$webwork_htdocs_url/js/apps/Knowls/knowl.css" });
 
 	return '';
 
