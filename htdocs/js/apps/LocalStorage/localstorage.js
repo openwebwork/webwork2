@@ -1,84 +1,61 @@
-var WWLocalStorage = function(givenContainer) {
+(() => {
+	const container = document.getElementById('problemMainForm');
+	const storeId = 'wwStickyAnswers';
 
-    var container;
+	const identifier = (document.querySelector("input[name='problemUUID']")?.value ?? '') +
+		(document.querySelector("input[name='sourceFilePath']")?.value ?? '') +
+		(document.querySelector("input[name='problemSource']")?.value ?? '') +
+		(document.querySelector("input[name='problemSeed']")?.value ?? '');
 
-    if (givenContainer) {
-	container = givenContainer;
-    } else {
-	container = $('#problemMainForm');
-    }
+	if (identifier === '') return;
 
-    var identifier = $("input[name='problemUUID']").val()+
-	$("input[name='sourceFilePath']").val()+
-	$("input[name='problemSource']").val()+
-	$("input[name='problemSeed']").val();
+	const storedData = localStorage.getItem(storeId);
+	const store = storedData ? JSON.parse(storedData) : {};
+	const problemData = store[identifier] ? store[identifier] : {};
 
-    var storedData = $.jStorage.get(identifier);
+	const storeData = function () {
+		if (!problemData.inputs) problemData.inputs = {};
 
-    if (!storedData) {
-	storedData = {};
-    }
-
-	var storeData = function () {
-		if (!storedData['inputs']) {
-			storedData['inputs'] = {};
-		}
-
-		var inputs = $(container).find(":input")
-			.each(function(index) {
-				var input = $(this);
-				var type = input.attr('type');
-				if (type && type.toUpperCase() == 'RADIO') {
-					var name = input.attr('name');
-					storedData['inputs'][name] = $('input[name="'+name+'"]:checked').val();
-				} else if (/AnSwEr/.test(input.attr('name'))) {
-					storedData['inputs'][input.attr('name')] = $(input).val();
-				}
-			});
-
-		$.jStorage.set(identifier,storedData);
-	}
-
-    $(container).find(":submit").click(storeData);
-
-    if (storedData) {
-	if (storedData['inputs']) {
-	    var keys = Object.keys(storedData['inputs']);
-	    
-	    keys.forEach(function(key) {
-		var input = $(container).find('[name="'+key+'"]');
-		
-		if (input.length > 0 &&
-		    $(input).attr('type').toUpperCase() == 'RADIO') {
-		 
-		    $(input).each(function () {
-			if ($(this).val() == storedData['inputs'][key]) {
-			    $(this).attr('checked',true);
+		container.querySelectorAll('input').forEach((input) => {
+			if (input.type && input.type.toUpperCase() == 'RADIO') {
+				if (input.checked) problemData.inputs[input.name] = input.value;
+			} else if (/AnSwEr/.test(input.name)) {
+				problemData.inputs[input.name] = input.value;
 			}
-		    });
-   
-		} else if (input.length > 0) {
-		    $(input).val(storedData['inputs'][key]);
+		});
+
+		store[identifier] = problemData;
+		localStorage.setItem(storeId, JSON.stringify(store));
+	}
+
+	container.addEventListener('submit', storeData);
+
+	if (problemData) {
+		if (problemData.inputs) {
+			const keys = Object.keys(problemData.inputs);
+
+			keys.forEach(function (key) {
+				container.querySelectorAll(`[name="${key}"]`).forEach((input) => {
+					if (input.type && input.type.toUpperCase() === 'RADIO') {
+						if (input.value === problemData.inputs[key]) input.checked = true;
+					} else {
+						input.value = problemData.inputs[key];
+					}
+				});
+			});
 		}
-	    });	    
+
+		const resultScore = document.getElementById('problem-result-score');
+		if (resultScore) {
+			if (!problemData['score'] || problemData['score'] < resultScore.value) {
+				problemData['score'] = resultScore.value;
+				store[identifier] = problemData;
+				localStorage.setItem(storeId, JSON.stringify(store));
+			}
+		}
+
+		const overallScore = document.getElementById('problem-overall-score');
+		if (overallScore)
+			overallScore.textContent = problemData['score'] ? `${Math.round(problemData['score'] * 100)}%` : '0%;';
 	}
-
-	if ($('#problem-result-score').length > 0) {
-	    if (!storedData['score'] ||
-		storedData['score'] < $('#problem-result-score').val()) {
-		storedData['score'] = $('#problem-result-score').val();
-		$.jStorage.set(identifier,storedData);
-	    }
-	}	    
-
-	if (storedData['score']) {
-	    $('#problem-overall-score').html(Math.round(storedData['score']*100)+'%');
-	} else {
-	    $('#problem-overall-score').html("0%");
-	}
-
-    }
-
-}
-
-    
+})();

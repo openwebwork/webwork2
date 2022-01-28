@@ -29,6 +29,7 @@
 <link rel="shortcut icon" href="<!--#url type="webwork" name="htdocs"-->/images/favicon.ico"/>
 <link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/bootstrap.css"/>
 <link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/node_modules/@fortawesome/fontawesome-free/css/all.min.css"/>
+<link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/js/apps/Knowls/knowl.css"/>
 <link rel="stylesheet" href="<!--#url type="webwork" name="theme"-->/math4.css"/>
 <link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/js/apps/Problem/problem.css"/>
 <link rel="stylesheet" href="<!--#url type="webwork" name="htdocs"-->/js/apps/Knowls/knowl.css"/>
@@ -49,6 +50,7 @@
 <script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery/dist/jquery.min.js"></script>
 <script src="<!--#url type="webwork" name="htdocs"-->/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <script src="<!--#url type="webwork" name="htdocs"-->/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="<!--#url type="webwork" name="htdocs"-->/js/apps/Knowls/knowl.js" defer></script>
 <script src="<!--#url type="webwork" name="theme"-->/math4.js" defer></script>
 <!--#if exists="math4-overrides.js"-->
 <script src="<!--#url type="webwork" name="theme"-->/math4-overrides.js" defer></script>
