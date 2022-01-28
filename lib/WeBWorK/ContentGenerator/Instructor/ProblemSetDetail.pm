@@ -2366,18 +2366,6 @@ sub body {
 			my $viewHeaderPage = $urlpath->new(type => $headerModules{$headerType}, args => { courseID => $courseID, setID => $setID });
 			my $viewHeaderLink = $self->systemLink($viewHeaderPage);
 
-			# this is a bit of a hack; the set header isn't shown
-			#    for gateway tests, and we run into trouble trying to
-			#    edit/view it in this context, so we don't show this
-			#    field for gateway tests
-			if ( $headerType eq 'set_header' &&
-		     	     $guaranteed_set->assignment_type =~ /gateway/ ) {
-				print CGI::Tr({}, CGI::td({},
-					      [ $r->maketext("Set Header"),
-					     	$r->maketext("Set headers are not used in display of gateway tests.")]));
-				next;
-			}
-
 			print CGI::Tr(CGI::td({}, [
 				CGI::start_table({border => 0, cellpadding => 0}) .
 				CGI::Tr(CGI::td($r->maketext($properties{$headerType}->{name}))) .
@@ -2940,8 +2928,9 @@ sub output_JS {
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::script({ src => "$site_url/js/apps/Base64/Base64.js" }, "");
+
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/Knowls/knowl.css" });
-	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js" }, "");
+	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js", defer => undef }, '');
 
 	print CGI::script({ src => "$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js" }, "");
 	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
