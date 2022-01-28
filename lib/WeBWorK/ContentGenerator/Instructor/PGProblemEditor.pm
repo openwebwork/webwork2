@@ -506,11 +506,11 @@ sub body {
 			tooltip => 'Documentation from source code for PG modules and macro files. Often the most up-to-date information.',
 		}, {
 			#'http://demo.webwork.rochester.edu/webwork2/wikiExamples/MathObjectsLabs2/2/?login_practice_user=true',
-			label   => $r->maketext('PGLab'),
-			url     => $ce->{webworkURLs}{PGLabHelpURL},
-			target  => 'PGLab',
-			tooltip => 'Test snippets of PG code in interactive lab.  This is a good way to learn the PG language.',
-		}, {
+		# 	label   => $r->maketext('PGLab'),
+		# 	url     => $ce->{webworkURLs}{PGLabHelpURL},
+		# 	target  => 'PGLab',
+		# 	tooltip => 'Test snippets of PG code in interactive lab.  This is a good way to learn the PG language.',
+		# }, {
 			#'https://courses1.webwork.maa.org/webwork2/cervone_course/PGML/1/?login_practice_user=true',
 			label   => $r->maketext('PGML'),
 			url     => $ce->{webworkURLs}{PGMLHelpURL},
@@ -2073,14 +2073,6 @@ sub output_JS{
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
-	}
-
-
-	if ($ce->{options}->{PGMathQuill}) {
-		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/mathquill/mathquill.css\"/>";
-		print "<link rel=\"stylesheet\" type=\"text/css\" href=\"$site_url/js/apps/mathquill/mqeditor.css\"/>";
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mathquill.min.js", defer => "" }, "");
-		print CGI::script({ src=>"$site_url/js/apps/MathQuill/mqeditor.js", defer => ""}, "");
 	}
 
 	if ($ce->{options}->{PGCodeMirror}) {

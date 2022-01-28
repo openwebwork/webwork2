@@ -1674,7 +1674,6 @@ sub fieldEditHTML {
 	my $type                 = $properties->{type};
 	my $access               = $properties->{access};
 	my $items                = $properties->{items};
-	my $synonyms             = $properties->{synonyms};
 
 	if ($type eq "email") {
 		if ($value eq '&nbsp;') {
@@ -1704,34 +1703,6 @@ sub fieldEditHTML {
 			size  => $size,
 			class => 'form-control form-control-sm d-inline w-auto'
 		});
-	}
-
-	if ($type eq "enumerable") {
-		my $matched = undef;    # Whether a synonym match has occurred
-
-		# Process synonyms for enumerable objects
-		foreach my $synonym (keys %$synonyms) {
-			if ($synonym ne "*" and $value =~ m/$synonym/) {
-				$value   = $synonyms->{$synonym};
-				$matched = 1;
-			}
-		}
-
-		if (!$matched and exists $synonyms->{"*"}) {
-			$value = $synonyms->{"*"};
-		}
-
-		return WeBWorK::CGI_labeled_input(
-			-type       => "select",
-			-id         => $fieldName . "_id",
-			-label_text => $r->maketext(ucfirst($fieldName)),
-			-input_attr => {
-				name    => $fieldName,
-				values  => [ keys %$items ],
-				default => $value,
-				labels  => $items,
-			}
-		);
 	}
 
 	if ($type eq "status") {
