@@ -455,7 +455,7 @@ sub checkSet {
 	#    content generator
 	if (defined($set->assignment_type) && 
 	    $set->assignment_type =~ /gateway/ && 
-	    ($node_name eq 'problem_list' || $node_name eq 'problem_detail')) {
+	    $node_name eq 'problem_detail') {
 		return $r->maketext("Requested set '[_1]' is a test/quiz assignment but the regular homework assignment content generator [_2] was called.  Try re-entering the set from the problem sets listing page.",$setName,$node_name);
 	} elsif ( (! defined($set->assignment_type) ||
 #		   $set->assignment_type eq 'homework') &&
@@ -468,8 +468,10 @@ sub checkSet {
 	#    have a valid proctor login; this is necessary to make sure that
 	#    someone doesn't use the unproctored url path to obtain access
 	#    to a proctored assignment.
+	#    Allow ProblemSet to list the proctored quiz versions.
 	if (defined($set->assignment_type) && 
 	    $set->assignment_type =~ /proctored/ &&
+	    $node_name ne 'problem_list' &&
 	    ! WeBWorK::Authen::Proctor->new($r,$ce,$db)->verify() ) {
 		return $r->maketext("Requested set '[_1]' is a proctored test/quiz assignment, but no valid proctor authorization has been obtained.",$setName);
 	}
