@@ -2177,7 +2177,7 @@ sub body {
 
 				# Initialize the problem graders for the problem.
 				if ($self->{will}{showProblemGrader}) {
-					my $problem_grader = new WeBWorK::ContentGenerator::Instructor::SingleProblemGrader(
+					my $problem_grader = WeBWorK::ContentGenerator::Instructor::SingleProblemGrader->new(
 						$self->r, $pg, $problems[$probOrder[$i]]);
 					$problem_grader->insertGrader;
 				}

@@ -658,13 +658,13 @@ sub body {
 				CGI::th({ scope => 'col'}, 'Start'),
 				CGI::th({ scope => 'col'}, 'End'),
 				CGI::th(
-					{ scope => 'col', class => 'hardcopy'},
+					{ scope => 'col', class => 'hardcopy' },
 					CGI::i(
 						{
-							class => 'icon far fa-lg fa-arrow-alt-circle-down',
+							class       => 'icon far fa-lg fa-arrow-alt-circle-down',
 							aria_hidden => 'true',
-							title => $r->maketext('Generate Hardcopy'),
-							data_alt => $r->maketext('Generate Hardcopy')
+							title       => $r->maketext('Generate Hardcopy'),
+							data_alt    => $r->maketext('Generate Hardcopy')
 						},
 						''
 					)
@@ -674,6 +674,23 @@ sub body {
 		}
 
 		foreach my $ver (@versData) {
+			my $interactive = $r->maketext('Version #[_1]', $ver->{version});
+			if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
+				my $interactiveURL = $self->systemLink(
+					$urlpath->newFromModule($urlModule, $r,
+						courseID => $courseID, setID => $ver->{id} ));
+				$interactive = CGI::a(
+					{
+						class             => 'set-id-tooltip',
+						data_bs_toggle    => 'tooltip',
+						data_bs_placement => 'right',
+						data_bs_title     => $set->description(),
+						href              => $interactiveURL
+					},
+					$interactive
+				);
+			}
+
 			# Download hardcopy.
 			my $control = '';
 			if ($multiSet) {
@@ -684,11 +701,15 @@ sub body {
 					value => $ver->{id},
 					class => 'form-check-input'
 				});
-
-			# Only display download option if answers are available.
+				# make sure interactive is the label for control
+				$interactive = CGI::label({ "for" => $ver->{id} }, $interactive);
 			} elsif ($ver->{show_download}) {
-				my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy", $r,
-					courseID => $courseID, setID => $ver->{id});
+				# Only display download option if answers are available.
+				my $hardcopyPage = $urlpath->newFromModule(
+					"WeBWorK::ContentGenerator::Hardcopy", $r,
+					courseID => $courseID,
+					setID    => $ver->{id}
+				);
 				my $link = $self->systemLink($hardcopyPage, params => { selected_sets => $ver->{id} });
 				$control = CGI::a(
 					{ class => 'hardcopy-link', href => $link },
@@ -701,23 +722,6 @@ sub body {
 						},
 						''
 					)
-				);
-			}
-
-			my $interactive = $r->maketext('Version #[_1]', $ver->{version});
-			if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
-				my $interactiveURL = $self->systemLink(
-					$urlpath->newFromModule($urlModule, $r,
-						courseID => $courseID, setID => $ver->{id} ));
-				$interactive = CGI::a(
-					{
-						class             => 'set-id-tooltip',
-						data_bs_toggle    => 'tooltip',
-						data_bs_placement => 'right',
-						data_bs_title     => $set->description(),
-						href  => $interactiveURL
-					},
-					$interactive
 				);
 			}
 
