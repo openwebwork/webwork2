@@ -379,20 +379,19 @@ sub body {
 
 	# If gateway list quiz versions.
 	my $multiSet = $authz->hasPermissions($user, "view_multiple_sets");
-	my $totalVersions = 0;
+	my @setVers;
 	if ($isGateway) {
 		my $timeNow = time;
-		my @setVers = $db->listSetVersions($effectiveUser, $set->set_id);
-		$totalVersions = scalar @setVers;
+		@setVers = $db->listSetVersions($effectiveUser, $set->set_id);
 		my $timeLimit = $set->version_time_limit() || 0;
 
 		# Compute how many versions have been launched within timeInterval
-		#     to determine if a new version can be created, if a version
-		#     can be continued, and the date a next version can be started.
-		#     If there is an open version with no submits, add button to
-		#     continue the first such version found.
-		#     Build a data hash for each version that is used to create the
-		#     quiz versions table.
+		# to determine if a new version can be created, if a version
+		# can be continued, and the date a next version can be started.
+		# If there is an open version that can be resumed, add a button to
+		# continue the last such version found.
+		# Build a data hash for each version that is used to create the
+		# quiz versions table.
 		my $continueVersion = 0;
 		my $continueTimeLeft = 0;
 		my $currentVersions = 0;
@@ -421,27 +420,13 @@ sub body {
 			my $data = {};
 			$data->{id} = $set->set_id.',v'.$ver;
 			$data->{version} = $ver;
-			$data->{start} = $self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
+			$data->{start} =
+				$self->formatDateTime($verSet->version_creation_time, undef, $ce->{studentDateDisplayFormat});
 
-			# Display time left for timed quizzes, otherwise display close date.
-			my $timeLeftText = '';
-			if ($timeLimit > 0) {
-				my $minutes = int(($verSet->due_date - $timeNow)/60);
-				my $hours = int($minutes/60);
-				$minutes %= 60;
-
-				# Two cases to format time to work well with translation.
-				if ($hours && $minutes) {
-					$timeLeftText = $r->maketext('[quant,_1,hour] and [quant,_2,minute] remain.',
-						$hours, $minutes);
-				} else {
-					# Translation Note: In this case only one of hours or minutes is non-zero,
-					#  so the zero case of the "quant" will be used for the other two.
-					$timeLeftText = $r->maketext('[quant,_1,hour,hours,][quant,_2,minute,minutes,] remain.',
-						$hours, $minutes);
-				}
-			} else {
-				$timeLeftText = $r->maketext('Closes on [_1]',
+			# Display close date if this is not a timed test.
+			my $closeText = '';
+			if (!$timeLimit) {
+				$closeText = $r->maketext('Closes on [_1]',
 					$self->formatDateTime($verSet->due_date, undef, $ce->{studentDateDisplayFormat}));
 			}
 
@@ -450,16 +435,16 @@ sub body {
 						($maxSubmits > 0 && $verSubmits < $maxSubmits))
 				) {
 					if ($verSubmits > 0) {
-						$data->{end} = $r->maketext('Additional submissions available.') . " $timeLeftText";
+						$data->{end} = $r->maketext('Additional submissions available.') . " $closeText";
 					} else {
-						$data->{end} = $timeLeftText;
+						$data->{end} = $closeText;
 					}
 				} else {
 					$data->{end} = $self->formatDateTime($verSet->version_last_attempt_time,
 						undef, $ce->{studentDateDisplayFormat});
 				}
 			} elsif ($timeNow < $verSet->due_date) {
-				$data->{end} = $r->maketext('Test not yet submitted.') . " $timeLeftText";
+				$data->{end} = $r->maketext('Test not yet submitted.') . " $closeText";
 			} else {
 				$data->{end} = $r->maketext("No submissions. Over time.");
 			}
@@ -472,17 +457,22 @@ sub body {
 			my $canShowAns = (($verSet->hide_work eq 'N' &&
 					($verSet->due_date == $verSet->answer_date || $timeNow >= $set->answer_date)) ||
 				($verSet->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date)) ? 1 : 0;
-			if ($timeNow < $verSet->due_date()) {
+			if ($timeNow < $verSet->due_date() + $ce->{gatewayGracePeriod}) {
 				if ($maxSubmits > 0 && $verSubmits >= $maxSubmits) {
 					$data->{status} = $r->maketext('Completed.');
 					$data->{status} .= $r->maketext(' Answers Available.') if ($canShowAns);
-				} elsif ($verSubmits >= 1) {
-					$data->{status} = $r->maketext('Open. Submitted.');
 				} else {
-					$data->{status} = $r->maketext('Open.');
-					if ($continueVersion == 0) {
-						$continueVersion = $ver;
-						$continueTimeLeft = int(($verSet->due_date - $timeNow)/60);
+					if ($verSubmits) {
+						$data->{status} = $r->maketext('Open. Submitted.');
+					} else {
+						$data->{status} = $r->maketext('Open.');
+					}
+					if (($maxSubmits == 0 && !$verSubmits) || $verSubmits < $maxSubmits) {
+						$continueVersion  = $verSet;
+						$continueTimeLeft =
+							$verSet->due_date +
+							($timeNow >= $verSet->due_date() ? $ce->{gatewayGracePeriod} : 0) -
+							$timeNow;
 					}
 				}
 			} else {
@@ -517,47 +507,74 @@ sub body {
 			'WeBWorK::ContentGenerator::ProctoredGatewayQuiz' :
 			'WeBWorK::ContentGenerator::GatewayQuiz';
 
-		# Display continue open test button if open non submitted version found.
-		if ($continueVersion > 0) {
-			my $continueText = $r->maketext('Click continue button below to resume current test.');
-
+		if ($continueVersion) {
+			# Display information about the current test and a continue open test button.
 			if ($timeLimit > 0) {
-				my $minutes = $continueTimeLeft;
-				my $hours = int($minutes/60);
-				$minutes %= 60;
-				my $timeText = '';
-
-				# Two cases to format time to work well with translation.
-				if ($hours && $minutes) {
-					$timeText = $r->maketext('You have [quant,_1,hour] and [quant,_2,minute]'
-						. ' remaining to complete the test.',
-						$hours, $minutes);
+				if ($timeNow >= $continueVersion->due_date()) {
+					# If the currently open test is in the grace period, display a mesage stating this.
+					print CGI::div(
+						{ class => 'alert alert-danger' },
+						$r->maketext(
+							'There is no time remaining on the currently open test. '
+								. 'Click continue below and then click "Grade Test" within [_1] seconds '
+								. 'to submit the test for a grade.',
+							$continueTimeLeft
+						)
+					);
 				} else {
-					# Translation Note: In this case only one of hours or minutes is non-zero,
-					# so the zero case of the "quant" will be used for the other two.
-					$timeText = $r->maketext('You have [quant,_1,hour,hours,]'
-						. '[quant,_2,minute,minutes,] remaining to complete the test.',
-						$hours, $minutes);
+					my $seconds = $continueTimeLeft;
+					my $hours   = int($seconds / 3600);
+					$seconds %= 3600;
+					my $minutes = int($seconds / 60);
+					$seconds %= 60;
+					my $timeText = '';
+
+					# Two cases to format time to work well with translation.
+					if ($hours && $minutes) {
+						print CGI::div(
+							{ class => 'alert alert-warning' },
+							$r->maketext(
+								'You have [quant,_1,hour] and [quant,_2,minute] '
+									. 'remaining to complete the currently open test.',
+								$hours, $minutes
+							)
+						);
+					} elsif ($hours || $minutes) {
+						# Translation Note: In this case only one of hours or minutes is non-zero,
+						# so the zero case of the "quant" will be used for the other one.
+						print CGI::div(
+							{ class => 'alert alert-warning' },
+							$r->maketext(
+								'You have [quant,_1,hour,hours,][quant,_2,minute,minutes,] '
+									. 'remaining to complete the currently open test.',
+								$hours, $minutes
+							)
+						);
+					} else {
+						print CGI::div(
+							{ class => 'alert alert-warning' },
+							$r->maketext(
+								'You have [quant,_1,second] remaining to complete the currently open test.', $seconds
+							)
+						);
+					}
 				}
-				$continueText .= ' ' . CGI::strong($timeText);
 			}
-			print CGI::p($continueText);
 
 			if ($set->assignment_type =~ /proctor/) {
-				print CGI::p($r->maketext('This test requires a proctor password to continue.'));
+				print CGI::div({ class => 'alert alert-warning' },
+					$r->maketext('This test requires a proctor password to continue.'));
 			}
 
 			my $interactiveURL = $self->systemLink(
 				$urlpath->newFromModule($urlModule, $r,
-					courseID => $courseID, setID => $set->set_id.',v'.$continueVersion)
+					courseID => $courseID, setID => $set->set_id . ',v' . $continueVersion->version_id)
 			);
 			print CGI::div({ class => 'mb-3' },
 				CGI::a({ href => $interactiveURL, class => 'btn btn-primary' },
 					$r->maketext('Continue Open Test')
 				)
 			);
-
-		# Otherwise display start new test button if available.
 		} elsif (
 			(
 				$timeNow >= $set->open_date ||
@@ -570,30 +587,40 @@ sub body {
 			) &&
 			($maxVersions <= 0 || $currentVersions < $maxVersions)
 		) {
+			# Display information about a new test and a start new test button.
 			# Print time limit for timed tests
-			my $startText = $r->maketext('Click start button below to start a new version.');
 			if ($timeLimit > 0) {
-				my $hours = int($timeLimit / 3600);
-				my $minutes = int(($timeLimit % 3600)/60);
+				my $hours    = int($timeLimit / 3600);
+				my $minutes  = int(($timeLimit % 3600) / 60);
 				my $timeText = '';
 
 				# Two cases to format time to work well with translation.
 				if ($hours && $minutes) {
-					$timeText = $r->maketext('You will have [quant,_1,hour] and [quant,_2,minute] to complete the test.',
-						$hours, $minutes);
+					print CGI::div(
+						{ class => 'alert alert-warning' },
+						$r->maketext(
+							'This is a timed test. '
+								. 'You will have [quant,_1,hour] and [quant,_2,minute] to complete the test.',
+							$hours, $minutes
+						)
+					);
 				} else {
 					# Translation Note: In this case only one of hours or minutes is non-zero,
-					# so the zero case of the "quant" will be used for the other two.
-					$timeText = $r->maketext('You will have [quant,_1,hour,hours,]'
-						. '[quant,_2,minute,minutes,] to complete the test.',
-						$hours, $minutes);
+					# so the zero case of the "quant" will be used for the other one.
+					print CGI::div(
+						{ class => 'alert alert-warning' },
+						$r->maketext(
+							'This is a timed test. You will have [quant,_1,hour,hours,]'
+								. '[quant,_2,minute,minutes,] to complete the test.',
+							$hours, $minutes
+						)
+					);
 				}
-				$startText .= ' ' . CGI::strong($timeText);
 			}
-			print CGI::p($startText);
 
 			if ($set->assignment_type =~ /proctor/) {
-				print CGI::p($r->maketext('This test requires a proctor password to start.'));
+				print CGI::div({ class => 'alert alert-warning' },
+					$r->maketext('This test requires a proctor password to start.'));
 			}
 
 			my $interactiveURL = $self->systemLink(
@@ -605,9 +632,8 @@ sub body {
 					$r->maketext('Start New Test')
 				)
 			);
-
-		# Message about if/when next version will be available.
 		} else {
+			# Message about if/when next version will be available.
 			my $msg = $r->maketext('No more tests available.');
 
 			# Can they open a test in the future?
@@ -621,14 +647,14 @@ sub body {
 
 			# Is it past due date?
 			if ($timeNow >= $set->due_date) {
-				$msg = $r->maketext('Test is closed.');
+				$msg = $r->maketext('This test is closed.');
 			}
 
-			print CGI::div(CGI::p(CGI::strong($msg)));
+			print CGI::div({ class => 'alert alert-dark' }, CGI::strong($msg));
 		}
 
 		# Start of form for hardcopy of test versions.
-		if ($multiSet && $totalVersions > 0) {
+		if ($multiSet && @setVers) {
 			print CGI::start_form(
 				-name   => 'problem-sets-form',
 				-id     => 'problem-sets-form',
@@ -638,8 +664,7 @@ sub body {
 			$self->hidden_authen_fields;
 		}
 
-
-		if ($totalVersions > 0) {
+		if (@setVers) {
 			print CGI::start_div({ class => 'table-responsive' });
 			print CGI::start_table({
 				class    => 'problem_set_table table table-sm caption-top font-sm',
@@ -647,7 +672,6 @@ sub body {
 					'This table lists the current attempts for this test/quiz, '
 					. 'along with its status, score, start date, and close date. '
 					. 'Click on the version link to access that version. '
-					. 'There is also a Generate Hardcopy and Email Instrucotr button below.'
 				)
 			});
 			print CGI::caption($r->maketext('Test Versions'));
@@ -674,14 +698,14 @@ sub body {
 		}
 
 		foreach my $ver (@versData) {
-			my $interactive = $r->maketext('Version #[_1]', $ver->{version});
+			my $interactive = $r->maketext('Version [_1]', $ver->{version});
 			if ($authz->hasPermissions($user, 'view_hidden_work') || $ver->{show_link}) {
 				my $interactiveURL = $self->systemLink(
 					$urlpath->newFromModule($urlModule, $r,
 						courseID => $courseID, setID => $ver->{id} ));
 				$interactive = CGI::a(
 					{
-						class             => 'set-id-tooltip',
+						class             => 'set-id-tooltip text-nowrap',
 						data_bs_toggle    => 'tooltip',
 						data_bs_placement => 'right',
 						data_bs_title     => $set->description(),
@@ -732,7 +756,7 @@ sub body {
 				CGI::td({class => 'hardcopy'}, $control)
 			);
 		}
-		if ($totalVersions > 0) {
+		if (@setVers) {
 			print CGI::end_tbody();
 			print CGI::end_table();
 			print CGI::end_div();
@@ -820,7 +844,7 @@ sub body {
 	} # End Gateway vs Normal assignment conditional
 
 	# Display hardcopy button
-	if ($isGateway && $multiSet && $totalVersions > 0) {
+	if ($isGateway && $multiSet && @setVers) {
 		print CGI::div({ class => 'mb-3' },
 			CGI::reset({ id => 'clear', value => $r->maketext('Deselect All Test Versions'), class => 'btn btn-primary' })
 		);
