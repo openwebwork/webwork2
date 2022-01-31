@@ -71,7 +71,7 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
 
 # we need to change FROM before setting the ENV variables
 
-FROM webwork-base:forWW216
+FROM webwork-base:forWW217
 
 ENV WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \
@@ -96,7 +96,6 @@ ENV WEBWORK_URL=/webwork2 \
 ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
     PG_ROOT=$APP_ROOT/pg \
     PATH=$PATH:$APP_ROOT/webwork2/bin
-
 # ==================================================================
 
 # Phase 3 - Install webwork2 and pg which were downloaded to /opt/base/ in phase 1
@@ -125,8 +124,8 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
     && cd $APP_ROOT/webwork2/ \
-      && chown www-data DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
-      && chmod -R u+w DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic   \
+      && chown www-data DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic \
+      && chmod -R u+w DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic   \
     && echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
       && /usr/sbin/locale-gen \
       && echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
@@ -134,7 +133,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
       &&   dpkg-reconfigure -f noninteractive tzdata \
     && cd $WEBWORK_ROOT/htdocs \
-      && npm install
+      && npm install --unsafe-perm \
+    && cd $APP_ROOT/pg/htdocs \
+      && npm install --unsafe-perm
 
 # These lines were moved into docker-entrypoint.sh so the bind mount of courses will be available
 #RUN cd $APP_ROOT/webwork2/courses.dist \

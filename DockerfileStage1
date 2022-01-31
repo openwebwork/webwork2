@@ -100,6 +100,8 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
+	libyaml-libyaml-perl \
+	sass \
 	make \
 	netpbm \
 	patch \

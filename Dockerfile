@@ -181,6 +181,8 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
+	libyaml-libyaml-perl \
+	sass \
 	make \
 	netpbm \
 	patch \
@@ -244,8 +246,8 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
     && cd $APP_ROOT/webwork2/ \
-      && chown www-data DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
-      && chmod -R u+w DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic   \
+      && chown www-data DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic \
+      && chmod -R u+w DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic   \
     && echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
       && /usr/sbin/locale-gen \
       && echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
@@ -253,7 +255,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
       &&   dpkg-reconfigure -f noninteractive tzdata \
     && cd $WEBWORK_ROOT/htdocs \
-      && npm install
+      && npm install --unsafe-perm \
+    && cd $APP_ROOT/pg/htdocs \
+      && npm install --unsafe-perm
 
 # These lines were moved into docker-entrypoint.sh so the bind mount of courses will be available
 #RUN cd $APP_ROOT/webwork2/courses.dist \

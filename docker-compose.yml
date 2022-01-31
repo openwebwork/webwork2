@@ -98,7 +98,7 @@ services:
         # If you are using the 2 stage build process uncomment the next line
         dockerfile: DockerfileStage2
         # and first run
-        #     docker build --tag webwork-base:forWW216 -f DockerfileStage1 .
+        #     docker build --tag webwork-base:forWW217 -f DockerfileStage1 .
         # and then
         #     docker-compose build
 
