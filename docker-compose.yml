@@ -95,9 +95,9 @@ services:
             - WEBWORK2_BRANCH=develop
             - PG_BRANCH=develop
 
-        # If you are using the 2 stage build process uncomment the next line
+        # If you would like a 1 stage build process comment out the next line, and just run "docker-compose build".
         dockerfile: DockerfileStage2
-        # and first run
+        # For the 2 stage build process run
         #     docker build --tag webwork-base:forWW216 -f DockerfileStage1 .
         # and then
         #     docker-compose build
@@ -234,7 +234,7 @@ services:
 
       # Extra Ubuntu packages to install during startup
       # Commenting the following line out will speed up container startup time.
-      ADD_APT_PACKAGES: nano less 
+      ADD_APT_PACKAGES: nano less
 
       # The system timezone for the container can be set using
       #SYSTEM_TIMEZONE: zone/city
