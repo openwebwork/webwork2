@@ -71,7 +71,7 @@ RUN echo Cloning branch $PG_BRANCH branch from $PG_GIT_URL \
 
 # we need to change FROM before setting the ENV variables
 
-FROM webwork-base:forWW216
+FROM webwork-base:forWW217
 
 ENV WEBWORK_URL=/webwork2 \
     WEBWORK_ROOT_URL=http://localhost \

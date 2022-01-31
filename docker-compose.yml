@@ -98,7 +98,7 @@ services:
         # If you would like a 1 stage build process comment out the next line, and just run "docker-compose build".
         dockerfile: DockerfileStage2
         # For the 2 stage build process run
-        #     docker build --tag webwork-base:forWW216 -f DockerfileStage1 .
+        #     docker build --tag webwork-base:forWW217 -f DockerfileStage1 .
         # and then
         #     docker-compose build
 
