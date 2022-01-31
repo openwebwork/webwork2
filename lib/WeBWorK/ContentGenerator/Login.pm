@@ -231,7 +231,7 @@ sub body {
 				class         => 'form-control',
 				placeholder   => ''
 			}),
-			CGI::label({ for => 'uname' }, $r->maketext('Password'))
+			CGI::label({ for => 'pswd' }, $r->maketext('Password'))
 		);
 
 		if ($ce->{session_management_via} ne 'session_cookie') {
