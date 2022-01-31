@@ -774,7 +774,7 @@ sub links {
 	$systemlink_args{params} = \%params if %params;
 
 	print CGI::start_ul({ class => 'nav flex-column bg-light' });
-	print CGI::a({ class => "navbar-brand" }, $r->maketext("Main Menu"));
+	print CGI::span({ class => 'navbar-brand' }, $r->maketext('Main Menu'));
 	print CGI::start_li({ class => 'nav-item' }); # Courses
 	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
 	print CGI::end_li(); # end Courses

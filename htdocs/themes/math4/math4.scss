@@ -33,7 +33,7 @@ table caption {
 }
 
 .required-field {
-	color: red;
+	color: #dc3545;
 }
 
 /* Screen Reader */
@@ -89,7 +89,7 @@ table caption {
 	display: flex;
 	align-items: center;
 	padding: 5px 0;
-	background-color: var(--ww-logo-background-color, #104aad);
+	background-color: var(--ww-logo-background-color, #104aac);
 
 	img {
 		max-height: 57px;
@@ -186,7 +186,7 @@ table caption {
 		color: black;
 		font-weight: bold;
 		font-size: 0.9rem;
-		opacity: 0.5;
+		opacity: 0.6;
 	}
 
 	.info-box {
@@ -372,6 +372,7 @@ h2.page-title {
 .Warnings {
 	code {
 		white-space: normal;
+		color: inherit;
 	}
 }
 
