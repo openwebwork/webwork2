@@ -806,9 +806,12 @@ sub ok {
     return 1;
   } else {
     # The nonce is in the database - so was used "recently" so should NOT be allowed
-    # Update timestamp - so deletion will be delayed from now and not from original timestamp.
-    $Key->timestamp($self->{"timestamp"});
-    $db->put($Key);
+    if ( $Key->timestamp <  $self->{"timestamp"} ) {
+      # Update timestamp - so deletion will be delayed from the most recent value
+      # of oauth_timestamp sent by the LTI consumer and not from an earlier timestamp.
+      $Key->timestamp($self->{"timestamp"});
+      $db->putKey($Key);
+    }
     return 0;
   }
 }

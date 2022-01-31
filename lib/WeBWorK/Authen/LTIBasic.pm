@@ -853,24 +853,26 @@ sub ok {
 	if ($self -> {timestamp} < time() - $ce->{NonceLifeTime}) {
 		return 0;
 	}
-	my $db = $self -> {r} -> {db};
-	my $Key = $db -> getKey($self -> {nonce});
+	my $db = $self->{r}->{db};
+	my $Key = $db->getKey($self->{nonce});
+
+	# If we *haven't* used this nonce before then we are OK.
 	if (! defined($Key) ) {
-		# nonce, timestamp are ok
-		$Key = $db -> newKey(user_id=>$self->{nonce}, 
-							key=>"nonce", 
-							timestamp=>$self->{"timestamp"},
+		# nonce, timestamp are ok.  Add the nonce so its not used again.
+		$Key = $db->newKey(user_id=>$self->{nonce},
+					key=>"nonce",
+					timestamp=>$self->{"timestamp"},
 					);
-		$db -> addKey($Key);
+		$db->addKey($Key);
 		return 1;
-	}
-	elsif ( $Key -> timestamp <  $self ->{"timestamp"} ) {
-		# nonce, timestamp pair is OK
-		$Key -> timestamp($self -> {"timestamp"});
-		$db -> put($Key);
-		return 1;
-	}
-	else {
+	} else {
+		# The nonce is in the database - so was used "recently" so should NOT be allowed
+		if ( $Key->timestamp < $self->{"timestamp"} ) {
+			# Update timestamp - so deletion will be delayed from the most recent value
+			# of oauth_timestamp sent by the LTI consumer and not from an earlier timestamp.
+			$Key->timestamp($self->{"timestamp"});
+			$db->putKey($Key);
+		}
 		return 0;
 	}
 }
