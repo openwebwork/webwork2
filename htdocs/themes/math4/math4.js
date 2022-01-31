@@ -92,7 +92,7 @@
 
 	// Turn help boxes into popovers
 	document.querySelectorAll('.help-popup').forEach((popover) => {
-		new bootstrap.Popover(popover, {trigger: 'hover'});
+		new bootstrap.Popover(popover, {trigger: 'hover focus'});
 	});
 
 	// Problem page popovers
