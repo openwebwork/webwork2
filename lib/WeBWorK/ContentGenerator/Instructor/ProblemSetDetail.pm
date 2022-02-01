@@ -692,25 +692,40 @@ sub FieldHTML {
 	}
 
 	if ($edit) {
-		$inputType = $field =~ /_date/ ? CGI::start_div({ class => 'input-group input-group-sm' }) : '';
-		$inputType .= CGI::input({
-			type     => 'text',
-			name     => "$recordType.$recordID.$field",
-			id       => "$recordType.$recordID.${field}_id",
-			value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
-			size     => $properties{size}                         || 5,
-			onChange => $onChange,
-			onkeyup  => $onKeyUp,
-			onblur   => $uncheckBox,
-			class    => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
-			$field =~ /_date/
-			? (
-				data_enable_datepicker => $r->ce->{options}{useDateTimePicker},
-				placeholder            => x('None Specified')
-			)
-			: ()
-		});
-		$inputType .= $field =~ /_date/ ? CGI::end_div() : '';
+		if ($field =~ /_date/) {
+			$inputType = CGI::div(
+				{ class => 'input-group input-group-sm flatpickr' },
+				CGI::textfield({
+					name     => "$recordType.$recordID.$field",
+					id       => "$recordType.$recordID.${field}_id",
+					value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+					size     => $properties{size}                         || 5,
+					onChange => $onChange,
+					onkeyup  => $onKeyUp,
+					onblur   => $uncheckBox,
+					class    => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+					data_enable_datepicker => $r->ce->{options}{useDateTimePicker},
+					placeholder            => x('None Specified'),
+					data_input             => undef,
+					data_done_text         => $self->r->maketext('Done')
+				}),
+				CGI::a(
+					{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
+					CGI::i({ class => 'fas fa-calendar-alt' }, '')
+				)
+			);
+		} else {
+			$inputType = CGI::textfield({
+				name     => "$recordType.$recordID.$field",
+				id       => "$recordType.$recordID.${field}_id",
+				value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+				size     => $properties{size}                         || 5,
+				onChange => $onChange,
+				onkeyup  => $onKeyUp,
+				onblur   => $uncheckBox,
+				class    => 'form-control form-control-sm'
+			});
+		}
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys
@@ -2898,21 +2913,16 @@ sub output_JS {
 	my $self = shift;
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	# Print javaScript and style for dateTimePicker
-	print CGI::Link({
-		rel  => "stylesheet",
-		href => "$site_url/node_modules/jquery-ui-timepicker-addon/dist/jquery-ui-timepicker-addon.min.css"
-	});
-	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/DatePicker/datepicker.css" });
+	# Print javascript and style for the flatpickr date/time picker.
+	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/flatpickr.min.css" });
+	print CGI::Link(
+		{ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css" });
+	print CGI::script({ src => "$site_url/node_modules/flatpickr/dist/flatpickr.min.js", defer => undef }, '');
 	print CGI::script(
-		{
-			src   => "$site_url/node_modules/jquery-ui-timepicker-addon/dist/jquery-ui-timepicker-addon.js",
-			defer => undef
-		},
-		""
-	);
-	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef}, "");
+		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef }, '');
 
+	# Print javascript and style for the imageview dialog.
 	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
 	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
