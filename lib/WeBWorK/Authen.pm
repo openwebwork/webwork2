@@ -574,7 +574,7 @@ sub maybe_send_cookie {
 	my $r = $self->{r};
 	my $ce = $r -> {ce};
 
-	my ($cookie_user, $cookie_key, $cookie_timestamp) = $self->fetchCookie;
+	my ($cookie_user, $cookie_key, $cookie_timestamp, $setID) = $self->fetchCookie;
 
 	# we send a cookie if any of these conditions are met:
 
@@ -601,7 +601,7 @@ sub maybe_send_cookie {
 
 	if ($used_cookie or $unused_valid_cookie or $user_requests_cookie or $session_management_via_cookies) {
 		#debug("Authen::maybe_send_cookie is sending a cookie");
-		$self->sendCookie($self->{user_id}, $self->{session_key});
+		$self->sendCookie($self->{user_id}, $self->{session_key}, $setID);
 	} else {
 		$self->killCookie;
 	}
@@ -738,8 +738,9 @@ sub unexpired_session_exists {
 # the key is returned
 sub create_session {
 	my ($self, $userID, $newKey) = @_;
-	my $ce = $self->{r}->ce;
-	my $db = $self->{r}->db;
+	my $r = $self->{r};
+	my $ce = $r->ce;
+	my $db = $r->db;
 
 	my $timestamp = time;
 	unless ($newKey) {
@@ -750,7 +751,12 @@ sub create_session {
 		$newKey = join ("", @chars[map rand(@chars), 1 .. $length]);
 	}
 
-	my $Key = $db->newKey(user_id => $userID, key => $newKey, timestamp => $timestamp);
+	my $setID =
+		$r->param('user')
+		&& !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed') ? $r->urlpath->arg("setID") : '';
+
+	my $Key = $db->newKey(user_id => $userID, key => $newKey, timestamp => $timestamp, set_id => $setID);
+
 	# DBFIXME this should be a REPLACE
 	eval { $db->deleteKey($userID) };
 	eval { $db->addKey($Key) };
@@ -851,10 +857,10 @@ sub fetchCookie {
 	if ($cookie) {
 		#debug("found a cookie for this course: '", $cookie->as_string, "'");
 	        debug("cookie has this value: '", $cookie->value, "'");
-		my ($userID, $key, $timestamp) = split "\t", $cookie->value;
+		my ($userID, $key, $timestamp, $setID) = split "\t", $cookie->value;
 		if (defined $userID and defined $key and $userID ne "" and $key ne "") {
 			debug("looks good, returning userID='$userID' key='$key'");
-			return( $userID, $key, $timestamp );
+			return ($userID, $key, $timestamp, $setID);
 		} else {
 			debug("malformed cookie. returning nothing.");
 			return;
@@ -866,17 +872,23 @@ sub fetchCookie {
 }
 
 sub sendCookie {
-	my ($self, $userID, $key) = @_;
+	my ($self, $userID, $key, $setID) = @_;
 	my $r = $self->{r};
 	my $ce = $r->ce;
 
 	my $courseID = $r->urlpath->arg("courseID");
 
+	# This sets the setID in the cookie on initial login.
+	$setID = $r->urlpath->arg("setID")
+		if !$setID
+		&& $r->param('user')
+		&& $r->authen->was_verified && !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+
  	my $timestamp = time();
 
 	my $cookie = WeBWorK::Cookie->new(
 		-name     => "WeBWorKCourseAuthen.$courseID",
-		-value    => "$userID\t$key\t$timestamp",
+		-value    => "$userID\t$key\t$timestamp" . ($setID ? "\t$setID" : ''),
 		-path     => $ce->{webworkURLRoot},
 		-samesite => $ce->{CookieSameSite},
 		-secure   => $ce->{CookieSecure}    # Warning: use 1 only if using https
@@ -928,6 +940,22 @@ sub killCookie {
 	#debug("about to add Set-Cookie header with this string: '", $cookie->as_string, "'");
  	eval {$r->headers_out->set("Set-Cookie" => $cookie->as_string);};
  	if ($@) {croak $@; }
+}
+
+# This method is only used for a user that does not have the navigation_allowed permission,
+# and is used to restrict that user to a specific set that the user is authenticated with.
+sub get_session_set_id {
+	my $self = shift;
+	my $setID;
+
+	if ($self->{r}{ce}{session_management_via} eq 'key') {
+		my $Key = $self->{r}{db}->getKey($self->{r}->param('user'));
+		return $Key->set_id;
+	} else {
+		my $setID;
+		(undef, undef, undef, $setID) = $self->fetchCookie;
+		return $setID;
+	}
 }
 
 ################################################################################

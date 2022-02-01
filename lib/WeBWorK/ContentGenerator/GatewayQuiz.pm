@@ -1126,10 +1126,12 @@ sub path {
 	my $root       = $ce->{webworkURLs}{root};
 	my $courseName = $ce->{courseName};
 
+	my $navigation_allowed = $r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+
 	return $self->pathMacro(
 		$args,
-		'Home'      => $root,
-		$courseName => "$root/$courseName",
+		'Home'      => $navigation_allowed ? $root : '',
+		$courseName => $navigation_allowed ? "$root/$courseName" : '',
 		$setName eq "Undefined_Set" || $self->{invalidSet}
 		? ($setName => '')
 		: (
