@@ -504,19 +504,29 @@ Create the link to the webwork installation landing page with a logo and alt tex
 =cut
 
 sub webwork_logo {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $theme = $r->param("theme") || $ce->{defaultTheme};
+	my $self   = shift;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
+	my $theme  = $r->param('theme') || $ce->{defaultTheme};
 	my $htdocs = $ce->{webwork_htdocs_url};
-	print CGI::a(
-		{href => $ce->{webwork_url}},
-		CGI::img({
+
+	if ($r->authen->was_verified && !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed')) {
+		# If navigation is restricted for this user, then the webwork logo is not a link to the courses page.
+		print CGI::span(CGI::img({
 			src => "$htdocs/themes/$theme/images/webwork_logo.svg",
-			alt => $r->maketext("to courses page")
-		})
-	);
-	return "";
+			alt => 'WeBWorK'
+		}));
+	} else {
+		print CGI::a(
+			{ href => $ce->{webwork_url} },
+			CGI::img({
+				src => "$htdocs/themes/$theme/images/webwork_logo.svg",
+				alt => $r->maketext('to courses page')
+			})
+		);
+	}
+
+	return '';
 }
 
 =item institution_logo()
@@ -657,6 +667,13 @@ sub links {
 	my $problemID = $urlpath->arg("problemID");
 	my $achievementID = $urlpath->arg("achievementID");
 
+	# Determine if navigation is restricted for this user.
+	my $restricted_navigation = $authen->was_verified && !$authz->hasPermissions($userID, 'navigation_allowed');
+
+	# If navigation is restricted and the setID was not in the urlpath,
+	# then obtain it from either a url parameter or a hidden field.
+	$setID = $r->param('setID') if $restricted_navigation && !$setID;
+
 	my $prettySetID = format_set_name_display($setID // '');
 	my $prettyAchievementID = $achievementID;
 	$prettyAchievementID =~ s/_/ /g if defined $prettyAchievementID;
@@ -744,33 +761,44 @@ sub links {
 
 	print CGI::h2({ class => 'navbar-brand mb-0' }, $r->maketext('Main Menu'));
 	print CGI::start_ul({ class => 'nav flex-column' });
-	print CGI::start_li({ class => 'nav-item' }); # Courses
-	print &$makelink("${pfx}Home", text=>$r->maketext("Courses"), systemlink_args=>{authen=>0});
-	print CGI::end_li(); # end Courses
+
+	print CGI::li({ class => 'nav-item' },
+		&$makelink("${pfx}Home", text => $r->maketext("Courses"), systemlink_args => { authen => 0 }))
+		unless $restricted_navigation;
 
 	if (defined $courseID) {
 		if ($authen->was_verified) {
-			print CGI::start_li({ class => 'nav-item' }); # Homework Sets
-				my $primaryMenuName = $r->maketext("Homework Sets");
-				$primaryMenuName = $r->maketext("Course Administration") if ($ce->{courseName} eq 'admin');
-			print &$makelink("${pfx}ProblemSets", text=>$primaryMenuName, urlpath_args=>{%args}, systemlink_args=>\%systemlink_args);
-			print CGI::end_li();
+			# Homework Sets or Course Administration
+			print CGI::li(
+				{ class => 'nav-item' },
+				$restricted_navigation ? CGI::span({ class => 'nav-link disabled' }, $r->maketext('Homework Sets'))
+				: &$makelink(
+					"${pfx}ProblemSets",
+					text => $ce->{courseName} eq 'admin' ? $r->maketext('Course Administration')
+					: $r->maketext('Homework Sets'),
+					urlpath_args    => {%args},
+					systemlink_args => \%systemlink_args
+				)
+			);
+
 			if (defined $setID) {
-			    print CGI::start_li({ class => 'nav-item' });
+				print CGI::start_li({ class => 'nav-item' });
 				print CGI::start_ul({ class => 'nav flex-column' });
-				print CGI::start_li({ class => 'nav-item' }); # $setID
-				# show a link which depends on if it is a versioned gateway
-				#    assignment or not; to know if it's a gateway
-				#    assignment, we have to get the set record.
-				my ($globalSetID) = ( $setID =~ /(.+?)(,v\d+)?$/ );
-				my $setRecord = $db->getGlobalSet( $globalSetID );
-			    if ($setRecord->assignment_type eq 'jitar'  && defined $problemID) {
-				$prettyProblemID = join('.', jitar_id_to_seq($problemID));
-			    }
+				print CGI::start_li({ class => 'nav-item' });          # $setID
+
+				# Show a link which depends on if it is a versioned gateway
+				# assignment or not; to know if it's a gateway
+				# assignment, we have to get the set record.
+				my ($globalSetID) = ($setID =~ /(.+?)(,v\d+)?$/);
+				my $setRecord = $db->getGlobalSet($globalSetID);
+
+				if ($setRecord->assignment_type eq 'jitar' && defined $problemID) {
+					$prettyProblemID = join('.', jitar_id_to_seq($problemID));
+				}
 				if ($setRecord->assignment_type =~ /proctor/ && $setID =~ /,v(\d)+$/) {
 					print &$makelink(
 						"${pfx}ProctoredGatewayQuiz",
-						text            => $prettySetID,
+						text            => "$prettySetID",
 						urlpath_args    => { %args, setID => $setID },
 						systemlink_args => \%systemlink_args,
 						link_attrs      => { dir => 'ltr' }
@@ -778,7 +806,7 @@ sub links {
 				} elsif ($setRecord->assignment_type =~ /gateway/ && $setID =~ /,v(\d)+$/) {
 					print &$makelink(
 						"${pfx}GatewayQuiz",
-						text            => $prettySetID,
+						text            => "$prettySetID",
 						urlpath_args    => { %args, setID => $setID },
 						systemlink_args => \%systemlink_args,
 						link_attrs      => { dir => 'ltr' }
@@ -786,32 +814,32 @@ sub links {
 				} else {
 					print &$makelink(
 						"${pfx}ProblemSet",
-						text            => $prettySetID,
+						text            => "$prettySetID",
 						urlpath_args    => { %args, setID => $setID },
 						systemlink_args => \%systemlink_args,
 						link_attrs      => { dir => 'ltr' }
 					);
 				}
-			    print CGI::end_li();
+				print CGI::end_li();
 
 				if (defined $problemID) {
-				    print CGI::start_li({ class => 'nav-item' });
+					print CGI::start_li({ class => 'nav-item' });
 					print CGI::start_ul({ class => 'nav flex-column' });
-					print CGI::start_li({ class => 'nav-item' }); # $problemID
+					print CGI::start_li({ class => 'nav-item' });          # $problemID
 					print &$makelink(
 						"${pfx}Problem",
 						text            => $r->maketext("Problem [_1]", $prettyProblemID),
 						urlpath_args    => { %args, setID => $setID, problemID => $problemID },
 						systemlink_args => \%systemlink_args
 					);
-					print CGI::end_li(); # end $problemID
+					print CGI::end_li();                                   # end $problemID
 					print CGI::end_ul();
-				    print CGI::end_li();
+					print CGI::end_li();                                   # end $setID
 				}
-				print CGI::end_ul();
-			    print CGI::end_li(); # end Homework Sets
-			}
 
+				print CGI::end_ul();
+				print CGI::end_li();                                       # end Homework Sets
+			}
 
 			print CGI::li({ class => 'nav-item' },
 				&$makelink("${pfx}Options", urlpath_args => {%args}, systemlink_args => \%systemlink_args))
@@ -820,7 +848,8 @@ sub links {
 					|| $authz->hasPermissions($userID, 'change_pg_display_settings'));
 
 			print CGI::li({ class => 'nav-item' },
-				&$makelink("${pfx}Grades", urlpath_args => { %args }, systemlink_args => \%systemlink_args));
+				&$makelink("${pfx}Grades", urlpath_args => {%args}, systemlink_args => \%systemlink_args))
+				unless $restricted_navigation;
 
 			if ($ce->{achievementsEnabled}) {
 				print CGI::li({ class => 'nav-item' },
@@ -1138,6 +1167,10 @@ sub path {
 	my $r       = $self->r;
 	my $urlpath = $r->urlpath;
 
+	# Determine if navigation is restricted for this user.
+	my $restrict_navigation =
+		$r->authen->was_verified && !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed');
+
 	my @path;
 
 	do {
@@ -1152,10 +1185,14 @@ sub path {
 				}
 			}
 		}
-		unshift @path, $name, $r->location . $urlpath->path;
+
+		# If navigation is restricted for this user and path, then don't provide the link.
+		unshift @path, $name,
+			$restrict_navigation && $urlpath->navigation_restricted ? '' : $r->location . $urlpath->path;
 	} while ($urlpath = $urlpath->parent);
 
-	$path[$#path] = '';    # We don't want the last path element to be a link.
+	# We don't want the last path element to be a link.
+	$path[$#path] = '';
 
 	print $self->pathMacro($args, @path);
 
@@ -1815,14 +1852,13 @@ sub hidden_fields {
 
 	@fields = $r->param unless @fields;
 
-	my $html = "";
+	my $html = '';
 	foreach my $param (@fields) {
-	    my @values = $r->param($param);
-	    foreach my $value (@values) {
-		next unless defined($value);
-#		$html .= CGI::hidden($param, $value); # (can't name these items when using real CGI)
-		$html .= CGI::hidden(-name=>$param, -default=>$value, -id=>"hidden_".$param); # (can't name these items when using real CGI)
-	    }
+		my @values = $r->param($param);
+		foreach my $value (@values) {
+			next unless defined($value);
+			$html .= CGI::hidden({ name => $param, default => $value, id => "hidden_" . $param });
+		}
 	}
 
 	return $html;
@@ -1836,9 +1872,16 @@ authentication.
 =cut
 
 sub hidden_authen_fields {
-	my ($self) = @_;
+	my $self = shift;
+	my $r    = $self->r;
 
-	return $self->hidden_fields("user", "effectiveUser", "key", "theme");
+	# If navigation is restricted for this user, then also add a hidden field to store the unique setID that this user
+	# is authorized to view.  This is used to keep this set visible in the site navigation.
+	if (!$r->authz->hasPermissions($r->param('user'), 'navigation_allowed')) {
+		return $self->hidden_fields('user', 'effectiveUser', 'key', 'theme', 'setID');
+	}
+
+	return $self->hidden_fields('user', 'effectiveUser', 'key', 'theme');
 }
 
 =item hidden_proctor_authen_fields()
@@ -2074,6 +2117,16 @@ sub systemLink {
 	$url = $r->ce->{apache_root_url} if $options{use_abs_url};
 	$url .= $r->location . $urlpath->path;
 	my $first = 1;
+
+	# If navigation is restricted for this user, then add the unique setID that this user is authorized to view as a url
+	# parameter to all links (except those that have the setID path parameter).  This is used to keep this set visible
+	# in the site navigation.
+	if ($r->authen->was_verified
+		&& !$urlpath->arg('setID')
+		&& !$r->authz->hasPermissions($r->param('user'), 'navigation_allowed'))
+	{
+		$params{setID} = $self->r->urlpath->arg('setID') || $r->param('setID');
+	}
 
 	foreach my $name (keys %params) {
 		my $value = $params{$name};

@@ -164,6 +164,15 @@ sub body {
 	my $hardcopyPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Hardcopy",  $r, courseID => $courseName);
 	my $actionURL = $self->systemLink($hardcopyPage, authen => 0); # no authen info for form action
 
+	# If navigation is restricted, then don't show the body and instead display a
+	# message informing the user to access assignments via an LMS.
+	unless ($authz->hasPermissions($r->param('user'), 'navigation_allowed')) {
+		my $LMS = $ce->{LMS_url} ? CGI::a({ href => $ce->{LMS_url} }, $ce->{LMS_name}) : $ce->{LMS_name};
+		print CGI::div({ class => 'alert alert-danger' },
+			$r->maketext('You must access assignments from your Course Management System ([_1]).', $LMS));
+		return '';
+	}
+
 	# we have to get sets and versioned sets separately
 
 	debug("Begin collecting merged sets");
