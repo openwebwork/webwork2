@@ -112,7 +112,7 @@
 <!--#if can="links" can="siblings" can="options"-->
 <div id="site-navigation" class="d-flex flex-column" role="navigation" aria-label="main navigation">
 	<!--#if can="links"-->
-		<div id="site-links">
+		<div id="site-links" class="bg-light">
 			<!--#links-->
 		</div>
 	<!--#endif-->
