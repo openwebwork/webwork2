@@ -25,7 +25,7 @@
 	const alertToast = (message, delay = 5000) => {
 		const toastContainer = document.createElement('div');
 		toastContainer.classList.add(
-			'toast-container', 'position-fixed', 'top-0', 'start-50',  'translate-middle-x', 'p-3');
+			'gwAlert', 'toast-container', 'position-fixed', 'top-0', 'start-50',  'translate-middle-x', 'p-3');
 		toastContainer.innerHTML =
 			'<div class="toast bg-white" role="alert" aria-live="assertive" aria-atomic="true">' +
 			'<div class="toast-header">' +
