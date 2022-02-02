@@ -891,9 +891,8 @@ sub siblings {
 	my $progressBarEnabled = $r->ce->{pg}->{options}->{enableProgressBar};
 
 
-	print CGI::start_div({class=>"info-box", id=>"fisheye"});
-	print CGI::h2($r->maketext("Problems"));
-	print CGI::start_ul({ class => 'nav flex-column problem-list' });
+	print CGI::start_div({ class => 'info-box', id => 'fisheye' });
+	print CGI::h2($r->maketext('Problems'));
 
 	my @items;
 
@@ -974,57 +973,64 @@ sub siblings {
 		my $progress_bar_inprogress_width  = $total_inprogress * 100 / $num_of_problems;
 		my $progress_bar_unattempted_width = $unattempted * 100 / $num_of_problems;
 
-		# construct the progress bar
-		#     CORRECT | IN PROGRESS | INCORRECT | UNATTEMPTED
+		# Construct the progress bar.
+		# CORRECT | IN PROGRESS | INCORRECT | UNATTEMPTED
 		my $progress_bar = CGI::start_div({
 			class      => 'progress set-id-tooltip',
 			aria_label => 'progress bar for current problem set',
 		});
 		if ($total_correct > 0) {
-			$progress_bar .= CGI::div({
-				class             => 'progress-bar correct-progress set-id-tooltip',
-				style             => "width:$progress_bar_correct_width%",
-				aria_label        => 'correct progress bar for current problem set',
-				data_bs_toggle    => 'tooltip',
-				data_bs_placement => 'bottom',
-				data_bs_title     => $r->maketext('Correct: [_1]/[_2]', $total_correct, $num_of_problems)
-			});
-			# perfect scores deserve some stars (&#9733;)
-			$progress_bar .= ($total_correct == $num_of_problems) ? '&#9733;Perfect&#9733;' : '';
-			$progress_bar .= CGI::end_div();
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar correct-progress set-id-tooltip',
+					style             => "width:$progress_bar_correct_width%",
+					aria_label        => 'correct progress bar for current problem set',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('Correct: [_1]/[_2]', $total_correct, $num_of_problems)
+				},
+				# perfect scores deserve some stars (&#9733;)
+				$total_correct == $num_of_problems ? '&#9733;Perfect&#9733;' : ''
+			);
 		}
 		if ($total_inprogress > 0) {
-			$progress_bar .= CGI::div({
-				class             => 'progress-bar inprogress-progress set-id-tooltip',
-				style             => "width:$progress_bar_inprogress_width%",
-				aria_label        => 'in progress bar for current problem set',
-				data_bs_toggle    => 'tooltip',
-				data_bs_placement => 'bottom',
-				data_bs_title     => $r->maketext('In progress: [_1]/[_2]', $total_inprogress, $num_of_problems)
-			});
-			$progress_bar .= CGI::end_div();
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar inprogress-progress set-id-tooltip',
+					style             => "width:$progress_bar_inprogress_width%",
+					aria_label        => 'in progress bar for current problem set',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('In progress: [_1]/[_2]', $total_inprogress, $num_of_problems)
+				},
+				''
+			);
 		}
 		if ($total_incorrect > 0) {
-			$progress_bar .= CGI::div({
-				class             => 'progress-bar incorrect-progress set-id-tooltip',
-				style             => "width:$progress_bar_incorrect_width%",
-				aria_label        => 'incorrect progress bar for current problem set',
-				data_bs_toggle    => 'tooltip',
-				data_bs_placement => 'bottom',
-				data_bs_title     => $r->maketext('Incorrect: [_1]/[_2]', $total_incorrect, $num_of_problems)
-			});
-			$progress_bar .= CGI::end_div();
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar incorrect-progress set-id-tooltip',
+					style             => "width:$progress_bar_incorrect_width%",
+					aria_label        => 'incorrect progress bar for current problem set',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('Incorrect: [_1]/[_2]', $total_incorrect, $num_of_problems)
+				},
+				''
+			);
 		}
 		if ($unattempted > 0) {
-			$progress_bar .= CGI::div({
-				class             => 'progress-bar unattempted-progress set-id-tooltip',
-				style             => "width:$progress_bar_unattempted_width%",
-				aria_label        => 'unattempted progress bar for current problem set',
-				data_bs_toggle    => 'tooltip',
-				data_bs_placement => 'bottom',
-				data_bs_title     => $r->maketext('Unattempted: [_1]/[_2]', $unattempted, $num_of_problems)
-			});
-			$progress_bar .= CGI::end_div();
+			$progress_bar .= CGI::div(
+				{
+					class             => 'progress-bar unattempted-progress set-id-tooltip',
+					style             => "width:$progress_bar_unattempted_width%",
+					aria_label        => 'unattempted progress bar for current problem set',
+					data_bs_toggle    => 'tooltip',
+					data_bs_placement => 'bottom',
+					data_bs_title     => $r->maketext('Unattempted: [_1]/[_2]', $unattempted, $num_of_problems)
+				},
+				''
+			);
 		}
 		# close the progress bar div
 		$progress_bar .= CGI::end_div();
@@ -1033,12 +1039,11 @@ sub siblings {
 		print $progress_bar;
 	}
 
-	print @items;
+	print CGI::ul({ class => 'nav flex-column problem-list' }, @items);
 
-	print CGI::end_ul();
 	print CGI::end_div();
 
-	return "";
+	return '';
 }
 
 sub nav {
@@ -1394,7 +1399,7 @@ sub title {
 	my $ce = $r->ce;
 	my $problem = $self->{problem};
 
-	$out .= CGI::start_div({ class => "problem-sub-header" });
+	$out .= CGI::start_span({ class => "problem-sub-header d-block" });
 
 	my $problemValue = $problem->value;
 	if (defined($problemValue) && $problemValue ne "") {
@@ -1410,7 +1415,7 @@ sub title {
 		$out .= " " . $problem->source_file;
 	}
 
-	$out .= CGI::end_div();
+	$out .= CGI::end_span();
 
 	return $out;
 }
@@ -1854,7 +1859,7 @@ sub output_submit_buttons {
 				data_bs_toggle    => 'tooltip',
 				data_bs_placement => 'right',
 				id                => 'SMA_button',
-				target            => '_wwsma',
+				target            => 'WW_Show_Me_Another',
 				data_bs_title     => $r->maketext(
 					'You can use this feature [quant,_1,more time,more times,as many times as you want] on this problem',
 					$showMeAnother{MaxReps} >= $showMeAnother{Count}

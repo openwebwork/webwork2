@@ -187,9 +187,9 @@ sub body {
 			$levelpercentage = $levelpercentage <= 100 ? $levelpercentage : 100;
 
 			print CGI::start_div({
-				class     => 'levelouterbar',
-				title     => $r->maketext("[_1]% Complete", $levelpercentage),
-				aria_labe => $r->maketext("[_1]% Complete", $levelpercentage)
+				class      => 'levelouterbar',
+				title      => $r->maketext("[_1]% Complete", $levelpercentage),
+				aria_label => $r->maketext("[_1]% Complete", $levelpercentage)
 			});
 			print CGI::div({ class => 'levelinnerbar', style => "width:$levelpercentage\%" }, '');
 			print CGI::end_div();
@@ -273,7 +273,7 @@ sub body {
 				# Note: we provide the item with some information about the current sets to help set up the form fields.
 				print $item->print_form(\@sets, \@setProblemCount, $r);
 				print CGI::hidden({ name => "useditem", value => $itemnumber });
-				print $self->hidden_authen_fields;
+				print $self->hidden_authen_fields =~ s/id=\"hidden_/id=\"achievement_hidden_/gr;
 				print CGI::end_div();
 				print CGI::start_div({ class => "modal-footer" });
 				print CGI::submit({ value => $r->maketext("Submit"), class => 'btn btn-primary' });

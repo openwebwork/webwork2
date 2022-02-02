@@ -6,8 +6,6 @@
 <head>
 <meta charset='utf-8'>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- This encourages IE to *not* use compatibility view, which breaks math4 -->
-<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 
 <!--
 ################################################################################
@@ -73,7 +71,7 @@
 <!-- Breadcrumb -->
 <div id="breadcrumb-row" class="row my-2">
 	<div class="col-12 d-flex align-items-center">
-		<nav id="breadcrumb-navigation" role="navigation" aria-label="breadcrumb navigation" class="w-100">
+		<nav id="breadcrumb-navigation" aria-label="breadcrumb navigation" class="w-100">
 			<ol class="breadcrumb">
 				<!--#path style="bootstrap" text=""-->
 			</ol>

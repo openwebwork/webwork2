@@ -225,6 +225,7 @@ sub addStudentForm {
 		CGI::start_form({ method => "post", action => $r->uri(), name => "new-users-form", id => "new-users-form" }),
 		$self->hidden_authen_fields(),
 		CGI::input({ type => 'hidden', name => "number_of_students", value => $numberOfStudents }),
+		CGI::start_div({ class => 'table-responsive' }),
 		CGI::start_table({ class => 'table table-sm table-bordered' }),
 		CGI::Tr(CGI::th([
 			$r->maketext('Last Name'),
@@ -238,6 +239,7 @@ sub addStudentForm {
 		])),
 		@entryLines,
 		CGI::end_table(),
+		CGI::end_div(),
 
 		CGI::p($r->maketext("Select sets below to assign them to the newly-created users.")),
 		CGI::scrolling_list({

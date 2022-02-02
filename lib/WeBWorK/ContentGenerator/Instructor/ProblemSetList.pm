@@ -1274,7 +1274,7 @@ sub import_form {
 					class => 'form-select form-select-sm',
 					size  => $actionParams{'action.import.number'}[0] || '1',
 					defined($actionParams{'action.import.number'}[0])
-						&& $actionParams{'action.import.number'}[0] == 8 ? (multiple => 'multiple') : ()
+						&& $actionParams{'action.import.number'}[0] ne '1' ? (multiple => undef) : ()
 				})
 			)
 		),
