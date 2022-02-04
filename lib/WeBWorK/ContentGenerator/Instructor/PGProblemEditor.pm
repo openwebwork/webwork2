@@ -2061,10 +2061,19 @@ sub output_JS {
 	my $site_url = $ce->{webworkURLs}{htdocs};
 
 	if ($ce->{options}->{PGCodeMirror}) {
-		print CGI::Link({ href => "$site_url/node_modules/codemirror/lib/codemirror.css", rel => 'stylesheet' });
-		print CGI::script({ src => "$site_url/node_modules/codemirror/lib/codemirror.js" }, '');
-		print CGI::script({ src => "$site_url/js/apps/PGCodeMirror/PGaddons.js" },          '');
-		print CGI::script({ src => "$site_url/js/apps/PGCodeMirror/PG.js" },                '');
+		print CGI::Link({ href => "$site_url/node_modules/codemirror/lib/codemirror.css",      rel => 'stylesheet' });
+		print CGI::Link({ href => "$site_url/node_modules/codemirror/addon/dialog/dialog.css", rel => 'stylesheet' });
+		print CGI::Link({ href => "$site_url/node_modules/codemirror/addon/search/matchesonscrollbar.css", rel => 'stylesheet' });
+		print CGI::Link({ href => "$site_url/js/apps/PGCodeMirror/codemirror.css", rel => 'stylesheet' });
+		print CGI::script({ src => "$site_url/node_modules/codemirror/lib/codemirror.js" },                  '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/dialog/dialog.js" },             '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/search.js" },             '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/searchcursor.js" },       '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/matchesonscrollbar.js" }, '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/match-highlighter.js" },  '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/scroll/annotatescrollbar.js" },  '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/edit/matchbrackets.js" },        '');
+		print CGI::script({ src => "$site_url/js/apps/PGCodeMirror/PG.js" },                                 '');
 	}
 
 	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js",           defer => undef }, '');

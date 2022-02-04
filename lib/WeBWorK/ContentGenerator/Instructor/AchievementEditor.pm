@@ -690,22 +690,31 @@ sub fresh_edit_handler {
 
 sub output_JS{
 	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r    = $self->r;
+	my $ce   = $r->ce;
 
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	if ($ce->{options}->{PGCodeMirror}) {
-		print qq{<link rel="stylesheet" type="text/css" href="$site_url/node_modules/codemirror/lib/codemirror.css"/>};
-		print CGI::start_script({src=>"$site_url/node_modules/codemirror/lib/codemirror.js"}), CGI::end_script();
-		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PGaddons.js"}), CGI::end_script();
-		print CGI::start_script({src=>"$site_url/js/apps/PGCodeMirror/PG.js"}), CGI::end_script();
+		print CGI::Link({ href => "$site_url/node_modules/codemirror/lib/codemirror.css",      rel => 'stylesheet' });
+		print CGI::Link({ href => "$site_url/node_modules/codemirror/addon/dialog/dialog.css", rel => 'stylesheet' });
+		print CGI::Link({ href => "$site_url/node_modules/codemirror/addon/search/matchesonscrollbar.css", rel => 'stylesheet' });
+		print CGI::Link({ href => "$site_url/js/apps/PGCodeMirror/codemirror.css", rel => 'stylesheet' });
+		print CGI::script({ src => "$site_url/node_modules/codemirror/lib/codemirror.js" },                  '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/dialog/dialog.js" },             '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/search.js" },             '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/searchcursor.js" },       '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/matchesonscrollbar.js" }, '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/search/match-highlighter.js" },  '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/scroll/annotatescrollbar.js" },  '');
+		print CGI::script({ src => "$site_url/node_modules/codemirror/addon/edit/matchbrackets.js" },        '');
+		print CGI::script({ src => "$site_url/js/apps/PGCodeMirror/PG.js" },                                 '');
 	}
 
-	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js", defer => "" }, "");
-	print CGI::script({ src => "$site_url/js/apps/AchievementEditor/achievementeditor.js", defer => "" }, "");
+	print CGI::script({ src => "$site_url/js/apps/ActionTabs/actiontabs.js",               defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/AchievementEditor/achievementeditor.js", defer => undef }, '');
 
-	return "";
+	return '';
 }
 
 1;
