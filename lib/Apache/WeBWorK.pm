@@ -240,34 +240,37 @@ sub htmlMessage($$$@) {
 <div style="text-align:left">
  <h1>WeBWorK error</h1>
  <p>An error occured while processing your request.</p>
- <p>For help, please send mail to this site's webmaster $admin, including all of the following information as well as what what you were doing when the error occured.</p>
+ <p>For help, please send mail to this site's webmaster $admin, including all of the following information as well as
+    what what you were doing when the error occured.</p>
  <h2>Error record identifier</h2>
- <p style="margin-left: 5em; color: #dc2a2a"><code>$uuid</code></p>
+ <p style="margin-left: 2em; color: #dc2a2a"><code>$uuid</code></p>
  <h2>Warning messages</h2>
  <ul>$warnings</ul>
  <h2>Error messages</h2>
- <p style="margin-left: 5em; color: #dc2a2a"><code>$exception</code></p>
+ <p style="margin-left: 2em; color: #dc2a2a"><code>$exception</code></p>
  <h2>Call stack</h2>
    <p>The following information can help locate the source of the problem.</p>
    <ul>$backtrace</ul>
  <h2>Request information</h2>
- <div style="margin-left: 5em;">
+ <div>
  <p>The HTTP request information is included in the following table.</p>
- <table border="1" aria-labelledby="req_info_summary1">
+ <div class="table-responsive">
+ <table class="table table-bordered caption-top" border="1" aria-labelledby="req_info_summary1">
   <caption id="req_info_summary1">HTTP request information</caption>
   <tr><th id="outer_item">Item</th><th id="outer_data">Data</th></tr>
   <tr><td headers="outer_item">Method</td><td headers="outer_data">$method</td></tr>
-  <tr><td headers="outer_item">URI</td headers="outer_data"><td headers="outer_data">$uri</td></tr>
-  <tr><td headers="outer_item"">HTTP Headers</td><td headers="outer_data">
-   <table width="90%" aria-labelledby="req_header_summary">
+  <tr><td headers="outer_item">URI</td><td headers="outer_data">$uri</td></tr>
+  <tr><td headers="outer_item">HTTP Headers</td><td headers="outer_data">
+   <table class="table table-bordered caption-top" aria-labelledby="req_header_summary">
     <caption id="req_header_summary">HTTP request headers</caption>
     $headers
    </table>
   </td></tr>
  </table>
  </div>
+ </div>
  <h2>Time generated:</h2>
- <p style="margin-left: 5em;">$time</p>
+ <p style="margin-left: 2em;">$time</p>
 </div>
 </main>
 EOF

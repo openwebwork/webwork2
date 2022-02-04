@@ -2,12 +2,12 @@
 # WeBWorK Online Homework Delivery System
 # Copyright &copy; 2000-2007 The WeBWorK Project, http://openwebwork.sf.net/
 # $CVSHeader: webwork2/lib/WeBWorK/Utils/ListingDB.pm,v 1.19 2007/08/13 22:59:59 sh002i Exp $
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -37,14 +37,12 @@ BEGIN
 {
 	require Exporter;
 	use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-	
+
 	$VERSION		=1.0;
 	@ISA		=qw(Exporter);
-	@EXPORT	=qw(
-	&createListing &updateListing &deleteListing &getAllChapters
-	&getAllSections &searchListings &getAllListings &getSectionListings
-	&getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
-	&getDBListings &countDBListings &getTables &getDBextras
+	@EXPORT = qw(
+		&deleteListing &getSectionListings &getAllDBsubjects &getAllDBchapters &getAllDBsections &getDBTextbooks
+		&getDBListings &countDBListings &getTables &getDBextras
 	);
 	%EXPORT_TAGS		=();
 	@EXPORT_OK		=qw();
@@ -119,7 +117,7 @@ sub getDB {
 
 =item getProblemTags($path) and setProblemTags($path, $subj, $chap, $sect)
 Get and set tags using full path and Tagging module
-                                                                                
+
 =cut
 
 sub getProblemTags {
@@ -162,8 +160,8 @@ sub setProblemTags {
 Both take a string and perform utility functions related to keywords.
 keywordcleaner splits a string, and uses kwtidy to regularize punctuation
 and case for an individual entry.
-                                                                                
-=cut                                                                            
+
+=cut
 
 sub kwtidy {
 	my $s = shift;
@@ -220,9 +218,9 @@ sub getDBextras {
 	return [$mo, $static];
 }
 
-=item getDBTextbooks($r)                                                    
+=item getDBTextbooks($r)
 Returns textbook dependent entries.
-                                                                                
+
 $r is a Apache request object so we can extract whatever parameters we want
 
 $thing is a string of either 'textbook', 'textchapter', or 'textsection' to
@@ -278,15 +276,15 @@ sub getDBTextbooks {
 	}
 
 	my $selectwhat = LIBRARY_STRUCTURE->{$thing}{select};
-	
+
 # 	my $query = "SELECT DISTINCT $selectwhat
-#           FROM `$tables{textbook}` tbk, `$tables{problem}` prob, 
+#           FROM `$tables{textbook}` tbk, `$tables{problem}` prob,
 # 			`$tables{pgfile_problem}` pg, `$tables{pgfile}` pgf,
 #             `$tables{dbsection}` s, `$tables{dbchapter}` c, `$tables{dbsubject}` t,
 # 			`$tables{chapter}` tc, `$tables{section}` ts
-#           WHERE ts.section_id=prob.section_id AND 
+#           WHERE ts.section_id=prob.section_id AND
 #             prob.problem_id=pg.problem_id AND
-#             s.DBchapter_id=c.DBchapter_id AND 
+#             s.DBchapter_id=c.DBchapter_id AND
 #             c.DBsubject_id=t.DBsubject_id AND
 #             pgf.DBsection_id=s.DBsection_id AND
 #             pgf.pgfile_id=pg.pgfile_id AND
@@ -294,13 +292,13 @@ sub getDBTextbooks {
 #             tc.textbook_id=tbk.textbook_id
 #             $extrawhere $textextrawhere ";
 	my $query = "SELECT DISTINCT $selectwhat
-          FROM `$tables{textbook}` tbk, `$tables{problem}` prob, 
+          FROM `$tables{textbook}` tbk, `$tables{problem}` prob,
 			`$tables{pgfile_problem}` pg, `$tables{pgfile}` pgf,
             `$tables{dbsection}` s, `$tables{dbchapter}` c, `$tables{dbsubject}` t,
 			`$tables{chapter}` tc, `$tables{section}` ts
-          WHERE ts.section_id=prob.section_id AND 
+          WHERE ts.section_id=prob.section_id AND
             prob.problem_id=pg.problem_id AND
-            s.DBchapter_id=c.DBchapter_id AND 
+            s.DBchapter_id=c.DBchapter_id AND
             c.DBsubject_id=t.DBsubject_id AND
             pgf.DBsection_id=s.DBsection_id AND
             pgf.pgfile_id=pg.pgfile_id AND
@@ -330,11 +328,11 @@ sub getDBTextbooks {
 }
 
 =item getAllDBsubjects($r)
-Returns an array of DBsubject names                                             
-                                                                                
+Returns an array of DBsubject names
+
 $r is the Apache request object
-                                                                                
-=cut                                                                            
+
+=cut
 
 sub getAllDBsubjects {
 	my $r = shift;
@@ -355,11 +353,11 @@ sub getAllDBsubjects {
 
 
 =item getAllDBchapters($r)
-Returns an array of DBchapter names                                             
-                                                                                
+Returns an array of DBchapter names
+
 $r is the Apache request object
-                                                                                
-=cut                                                                            
+
+=cut
 
 sub getAllDBchapters {
 	my $r = shift;
@@ -367,30 +365,30 @@ sub getAllDBchapters {
 	my $subject = $r->param('library_subjects');
 	return () unless($subject);
 	my $dbh = getDB($r->ce);
-# 	my $query = "SELECT DISTINCT c.name, c.DBchapter_id 
-#                                 FROM `$tables{dbchapter}` c, 
+# 	my $query = "SELECT DISTINCT c.name, c.DBchapter_id
+#                                 FROM `$tables{dbchapter}` c,
 # 				`$tables{dbsubject}` t
 #                  WHERE c.DBsubject_id = t.DBsubject_id AND
 #                  t.name = \"$subject\" ORDER BY c.DBchapter_id";
 # 	my $all_chaps_ref = $dbh->selectall_arrayref($query);
-	my $query = "SELECT DISTINCT c.name, c.DBchapter_id 
-                                FROM `$tables{dbchapter}` c, 
+	my $query = "SELECT DISTINCT c.name, c.DBchapter_id
+                                FROM `$tables{dbchapter}` c,
 				`$tables{dbsubject}` t
                  WHERE c.DBsubject_id = t.DBsubject_id AND
                  t.name = ? ORDER BY c.DBchapter_id";
 	my $all_chaps_ref = $dbh->selectall_arrayref($query, {},$subject);
- 
+
  	my @results = map { $_->[0] } @{$all_chaps_ref};
 	#@results = sortByName(undef, @results);
 	return @results;
 }
 
-=item getAllDBsections($r)                                            
-Returns an array of DBsection names                                             
-                                                                                
+=item getAllDBsections($r)
+Returns an array of DBsection names
+
 $r is the Apache request object
 
-=cut                                                                            
+=cut
 
 sub getAllDBsections {
 	my $r = shift;
@@ -400,14 +398,14 @@ sub getAllDBsections {
 	my $chapter = $r->param('library_chapters');
 	return () unless($chapter);
 	my $dbh = getDB($r->ce);
-# 	my $query = "SELECT DISTINCT s.name, s.DBsection_id 
+# 	my $query = "SELECT DISTINCT s.name, s.DBsection_id
 #                  FROM `$tables{dbsection}` s,
 #                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
 #                  WHERE s.DBchapter_id = c.DBchapter_id AND
 #                  c.DBsubject_id = t.DBsubject_id AND
 #                  t.name = \"$subject\" AND c.name = \"$chapter\" ORDER BY s.DBsection_id";
 # 	my $all_sections_ref = $dbh->selectall_arrayref($query);
-	my $query = "SELECT DISTINCT s.name, s.DBsection_id 
+	my $query = "SELECT DISTINCT s.name, s.DBsection_id
                  FROM `$tables{dbsection}` s,
                  `$tables{dbchapter}` c, `$tables{dbsubject}` t
                  WHERE s.DBchapter_id = c.DBchapter_id AND
@@ -420,13 +418,13 @@ sub getAllDBsections {
 	return @results;
 }
 
-=item getDBListings($r)                             
-Returns an array of hash references with the keys: path, filename.              
-                                                                                
+=item getDBListings($r)
+Returns an array of hash references with the keys: path, filename.
+
 $r is an Apache request object that has all needed data inside of it
 
 Here, we search on all known fields out of r
-                                                                                
+
 =cut
 
 sub getDBListings {
@@ -437,7 +435,7 @@ sub getDBListings {
 	my $subj = $r->param('library_subjects') || "";
 	my $chap = $r->param('library_chapters') || "";
 	my $sec = $r->param('library_sections') || "";
-	
+
 	# Make sure these strings are internally encoded in UTF-8
 	utf8::upgrade($subj);
 	utf8::upgrade($chap);
@@ -457,7 +455,7 @@ sub getDBListings {
 		($keywordstring, @keyword_params) = makeKeywordWhere($keywords) ;
 		$kw1 = ", `$tables{keyword}` kw, `$tables{pgfile_keyword}` pgkey";
 		$kw2 = " AND kw.keyword_id=pgkey.keyword_id AND
-			 pgkey.pgfile_id=pgf.pgfile_id $keywordstring"; 
+			 pgkey.pgfile_id=pgf.pgfile_id $keywordstring";
 #			makeKeywordWhere($keywords) ;
 	}
 
@@ -505,19 +503,19 @@ sub getDBListings {
 	my $selectwhat = 'DISTINCT pgf.pgfile_id';
 	$selectwhat = 'COUNT(' . $selectwhat . ')' if ($amcounter);
 
-# 	my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+# 	my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf,
 #          `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
 #         WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
 #               dbc.DBchapter_id = dbsc.DBchapter_id AND
-#               dbsc.DBsection_id = pgf.DBsection_id 
-#               \n $extrawhere 
+#               dbsc.DBsection_id = pgf.DBsection_id
+#               \n $extrawhere
 #               $kw2";
 
 	my $pg_id_ref;
-	
+
 	$dbh->do(qq{SET NAMES 'utf8mb4';}) if $ce->{ENABLE_UTF8MB4};
 	if($haveTextInfo) {
-		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf,
 			`$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj,
 			`$tables{pgfile_problem}` pgp, `$tables{problem}` prob, `$tables{textbook}` tbk ,
 			`$tables{chapter}` tc, `$tables{section}` ts $kw1
@@ -530,22 +528,22 @@ sub getDBListings {
 				  ts.chapter_id = tc.chapter_id AND
 				  prob.section_id = ts.section_id \n $extrawhere \n $textextrawhere
 				  $kw2";
-				  
+
 		#$query =~ s/\n/ /g;
 		#warn "text info: ", $query;
 		#warn "params: ", join(" | ",@select_parameters, @textInfo_parameters,@keyword_params);
-		
+
 		$pg_id_ref = $dbh->selectall_arrayref($query, {},@select_parameters, @textInfo_parameters, @keyword_params);
 
      } else {
-		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf, 
+		my $query = "SELECT $selectwhat from `$tables{pgfile}` pgf,
 			 `$tables{dbsection}` dbsc, `$tables{dbchapter}` dbc, `$tables{dbsubject}` dbsj $kw1
 			WHERE dbsj.DBsubject_id = dbc.DBsubject_id AND
 				  dbc.DBchapter_id = dbsc.DBchapter_id AND
-				  dbsc.DBsection_id = pgf.DBsection_id 
-				  \n $extrawhere 
+				  dbsc.DBsection_id = pgf.DBsection_id
+				  \n $extrawhere
 				  $kw2";
-				  
+
 		#$query =~ s/\n/ /g;
 		#warn "no text info: ", $query;
 		#warn "params: ", join(" | ",@select_parameters,@keyword_params);
@@ -561,15 +559,15 @@ sub getDBListings {
 	}
 	my @results=();
 	for my $pgid (@pg_ids) {
-# 		$query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p 
+# 		$query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p
 #           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id=\"$pgid\"";
 # 		my $row = $dbh->selectrow_arrayref($query);
-		my $query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p 
+		my $query = "SELECT path, filename, morelt_id, pgfile_id, static, MO FROM `$tables{pgfile}` pgf, `$tables{path}` p
           WHERE p.path_id = pgf.path_id AND pgf.pgfile_id= ? ";
 		my $row = $dbh->selectrow_arrayref($query,{},$pgid);
 
 		push @results, {'path' => $row->[0], 'filename' => $row->[1], 'morelt' => $row->[2], 'pgid'=> $row->[3], 'static' => $row->[4], 'MO' => $row->[5] };
-		
+
 	}
 	return @results;
 }
@@ -588,203 +586,6 @@ sub getMLTleader {
 	my $row = $dbh->selectrow_arrayref($query);
 	return $row->[0];
 }
-
-##############################################################################
-# input expected: keywords,<keywords>,chapter,<chapter>,section,<section>,path,<path>,filename,<filename>,author,<author>,instituition,<instituition>,history,<history>
-#
-#
-# Warning - this function is out of date (but currently unused)
-#
-
-# sub createListing {
-# 	my $ce = shift;
-# 	my %tables = getTables($ce);
-# 	my %listing_data = @_; 
-# 	my $classify_id;
-# 	my $dbh = getDB($ce);
-# 	#	my $dbh = WeBWorK::ProblemLibrary::DB::getDB();
-# 	my $query = "INSERT INTO classify
-# 		(filename,chapter,section,keywords)
-# 		VALUES
-# 		($listing_data{filename},$listing_data{chapter},$listing_data{section},$listing_data{keywords})";
-# 	$dbh->do($query);	 #TODO: watch out for comma delimited keywords, sections, chapters!
-# 
-# 	$query = "SELECT id FROM classify WHERE filename = $listing_data{filename}";
-# 	my $sth = $dbh->prepare($query);
-# 	$sth->execute();
-# 	if ($sth->rows())
-# 	{
-# 		($classify_id) = $sth->fetchrow_array;
-# 	}
-# 	else
-# 	{
-# 		#print STDERR "ListingDB::createListingPGfiles: $listing_data{filename} failed insert into classify table";
-# 		return 0;
-# 	};
-# 
-# 	$query = "INSERT INTO pgfiles
-#    (
-#    classify_id,
-#    path,
-#    author,
-#    institution,
-#    history
-#    )
-#    VALUES
-#   (
-#    $classify_id,
-#    $listing_data{path},
-#    $listing_data{author},
-#    $listing_data{institution},
-#    $listing_data{history}
-#    )";
-# 	
-# 	$dbh->do($query);
-# 	return 1;
-# }
-
-##############################################################################
-# input expected any pair of: keywords,<keywords data>,chapter,<chapter data>,section,<section data>,filename,<filename data>,author,<author data>,instituition,<instituition data>
-# returns an array of hash references
-#
-# Warning - out of date (and unusued)
-#
-
-# sub searchListings {
-# 	my $ce = shift;
-# 	my %tables = getTables($ce);
-# 	my %searchterms = @_;
-# 	#print STDERR "ListingDB::searchListings  input array @_\n";
-# 	my @results;
-# 	my ($row,$key);
-# 	my $dbh = getDB($ce);
-# 	my $query = "SELECT c.filename, p.path
-# 		FROM classify c, pgfiles p
-# 		WHERE c.id = p.classify_id";
-# 	foreach $key (keys %searchterms) {
-# 		$query .= " AND c.$key = $searchterms{$key}";
-# 	};
-# 	my $sth = $dbh->prepare($query);
-# 	$sth->execute();
-# 	if ($sth->rows())
-# 	{
-# 		while (1)
-# 		{
-# 			$row = $sth->fetchrow_hashref();
-# 			if (!defined($row))
-# 			{
-# 				last;
-# 			}
-# 			else
-# 			{
-# 				#print STDERR "ListingDB::searchListings(): found $row->{id}\n";
-# 				my $listing = $row;
-# 				push @results, $listing;
-# 			}
-# 		}
-# 	}
-# 	return @results;
-# }
-##############################################################################
-# returns a list of chapters
-#
-# Warning - out of date
-#
-
-# sub getAllChapters {
-# 	#print STDERR "ListingDB::getAllChapters\n";
-# 	my $ce = shift;
-# 	my %tables = getTables($ce);
-# 	my @results=();
-# 	my ($row,$listing);
-# 	my $query = "SELECT DISTINCT chapter FROM classify";
-# 	my $dbh = getDB($ce);
-# 	my $sth = $dbh->prepare($query);
-# 	$sth->execute();
-# 	while (1)
-# 	{
-# 		$row = $sth->fetchrow_array;
-# 		if (!defined($row))
-# 		{
-# 			last;
-# 		}
-# 		else
-# 		{
-# 			my $listing = $row;
-# 			push @results, $listing;
-# 			#print STDERR "ListingDB::getAllChapters $listing\n";
-# 		}
-# 	}
-# 	return @results;
-# }
-##############################################################################
-# input chapter
-# returns a list of sections
-#
-# Warning - out of date (and unused)
-#
-
-# sub getAllSections {
-# 	#print STDERR "ListingDB::getAllSections\n";
-# 	my $ce = shift;
-# 	my %tables = getTables($ce);
-# 	my $chapter = shift;
-# 	my @results=();
-# 	my ($row,$listing);
-# # 	my $query = "SELECT DISTINCT section FROM classify
-# # 				WHERE chapter = \'$chapter\'";
-# 	my $query = "SELECT DISTINCT section FROM classify
-# 				WHERE chapter = ? ";
-# 	my $dbh = getDB($ce);
-# #	my $sth = $dbh->prepare($query);
-# 	my $sth = $dbh->prepare($query, $chapter);
-# 
-# 	$sth->execute();
-# 	while (1)
-# 	{
-# 		$row = $sth->fetchrow_array;
-# 		if (!defined($row))
-# 		{
-# 			last;
-# 		}
-# 		else
-# 		{
-# 			my $listing = $row;
-# 			push @results, $listing;
-# 			#print STDERR "ListingDB::getAllSections $listing\n";
-# 		}
-# 	}
-# 	return @results;
-# }
-
-##############################################################################
-# returns an array of hash references
-#
-# Warning - out of date (and unused)
-#
-
-# sub getAllListings {
-# 	#print STDERR "ListingDB::getAllListings\n";
-# 	my $ce = shift;
-# 	my @results;
-# 	my ($row,$key);
-# 	my $dbh = getDB($ce);
-# 	my %tables = getTables($ce);
-# 	my $query = "SELECT c.*, p.path
-# 			FROM classify c, pgfiles p
-# 			WHERE c.pgfiles_id = p.pgfiles_id";
-# 	my $sth = $dbh->prepare($query);
-# 	$sth->execute();
-# 	while (1)
-# 	{
-# 		$row = $sth->fetchrow_hashref();
-# 		last if (!defined($row));
-# 		my $listing = $row;
-# 		push @results, $listing;
-# 		#print STDERR "ListingDB::getAllListings $listing\n";
-# 	}
-# 	return @results;
-# }
 
 ##############################################################################
 # input chapter, section
@@ -818,7 +619,7 @@ sub getSectionListings	{
 # 	my $dbh = getDB($ce);
 # 	my %tables = getTables($ce);
 # 	my $sth = $dbh->prepare($query);
-# 	
+#
 # 	$sth->execute();
     my $query = "SELECT c.*, p.path
 	FROM classify c, pgfiles p
@@ -826,7 +627,7 @@ sub getSectionListings	{
 	my $dbh = getDB($ce);
 	my %tables = getTables($ce);
 	my $sth = $dbh->prepare($query);
-	
+
 	$sth->execute($chapstring,$secstring);
 
 	while (1)
@@ -895,27 +696,9 @@ This module provides access to the database of classify in the
 system. This includes the filenames, along with the table of
 search terms.
 
-=head1 FUNCTION REFERENCE
-
-=over 4
-
-=item $result = createListing( %listing_data );
-
-Creates a new listing populated with data from %listing_data. On
-success, 1 is returned, 0 is returned on failure. The %listing_data
-hash has the following format:
-=cut
-
-=back
-
 =head1 AUTHOR
 
 Written by Bill Ziemer.
 Modified by John Jones.
 
 =cut
-
-
-##############################################################################
-# end of ListingDB.pm
-##############################################################################
