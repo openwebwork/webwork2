@@ -30,3 +30,11 @@
 	background-repeat: repeat-x;
 }
 
+/* Make the codemirror editor resizable and add border */
+.CodeMirror {
+	border: 1px solid #dddddd;
+	resize: both;
+	min-height: 200px;
+	min-width: 400px;
+}
+
