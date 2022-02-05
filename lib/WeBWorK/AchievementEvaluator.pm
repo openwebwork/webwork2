@@ -105,7 +105,6 @@ sub checkForAchievements {
     # $pg->{result} reflects the current submission, $pg->{state} holds the best result
     # close the unlimited achievement points loophole by only using the current result!
     $problem->status($pg->{result}->{score});
-    $problem->sub_status($pg->{state}->{sub_recorded_score});
     $problem->attempted(1);
     $problem->num_correct($pg->{state}->{num_of_correct_ans});
     $problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});

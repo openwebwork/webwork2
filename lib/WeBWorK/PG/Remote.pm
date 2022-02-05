@@ -99,8 +99,7 @@ EOF
 		extra_packages_to_load => [ @extra_packages_to_load ],
 		envir                  => $envir,
 		problem_state          => {
-			recorded_score       => $problem->status,
-			sub_recorded_score =>   $problem->sub_status,
+			recorded_score       => $problem->sub_status, # Using sub_status since it is the raw score.
 			num_of_correct_ans   => $problem->num_correct,
 			num_of_incorrect_ans => $problem->num_incorrect,
 		},

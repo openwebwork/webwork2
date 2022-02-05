@@ -43,14 +43,14 @@ BEGIN {
 		# periodic re-randomization number of attempts for the current seed
 		prCount => {type => "INT"},
 		problem_seed  => { type=>"INT" },
-		status        => { type=>"FLOAT" },
+		status        => { type=>"FLOAT" },   # The adjusted problem score
 		attempted     => { type=>"INT" },
 		last_answer   => { type=>"TEXT" },
 		num_correct   => { type=>"INT" },
 		num_incorrect => { type=>"INT" },
 		att_to_open_children => { type=>"INT" },
 		counts_parent_grade => { type=>"INT" },
-		sub_status    => { type=>"FLOAT" },    # A subsidiary status used to implement the reduced scoring period
+		sub_status    => { type=>"FLOAT" },    # The raw problem score before any adjustments
 		# a field for flags which need to be set
 		flags => { type=>"TEXT" },
 	);

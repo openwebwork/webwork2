@@ -1456,11 +1456,17 @@ sub body {
 
 			# next, store the state in the database if that makes sense
 			if ($submitAnswers && $will{recordAnswers}) {
-				$problems[$i]->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
+				# Reduced scoring adjustments
+				my $new_score = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::compute_reduced_score(
+						$self, $pureProblem, $set, $pg_results[$i]->{state}->{recorded_score});
+
+				$problems[$i]->status(wwRound(2,$new_score));
+				$problems[$i]->sub_status($pg_results[$i]->{state}->{recorded_score});
 				$problems[$i]->attempted(1);
 				$problems[$i]->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
 				$problems[$i]->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
-				$pureProblem->status(wwRound(2,$pg_results[$i]->{state}->{recorded_score}));
+				$pureProblem->status(wwRound(2,$new_score));
+				$pureProblem->sub_status($pg_results[$i]->{state}->{recorded_score});
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg_results[$i]->{state}->{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg_results[$i]->{state}->{num_of_incorrect_ans});
@@ -1746,8 +1752,9 @@ sub body {
 			my $pScore = 0;
 			my $numParts = 0;
 			if (ref($pg)) {  # then we have a pg object
-				###
-				$pScore = $pg->{state}->{recorded_score};
+				# Reduced scoring adjustments
+				$pScore = WeBWorK::ContentGenerator::ProblemUtil::ProblemUtil::compute_reduced_score(
+						$self, $problems[$i], $set, $pg->{state}->{recorded_score});
 				$probStatus[$i] = $pScore;
 				$numParts = 1;
 				###

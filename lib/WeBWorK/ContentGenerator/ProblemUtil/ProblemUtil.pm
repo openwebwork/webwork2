@@ -134,13 +134,16 @@ sub process_and_log_answer{
 
 			# store state in DB if it makes sense
 			if ($will{recordAnswers}) {
-				$problem->status($pg->{state}->{recorded_score});
-				$problem->sub_status($pg->{state}->{sub_recorded_score});
+				# Reduced scoring adjustments
+				my $new_score = compute_reduced_score($self, $problem, $set, $pg->{state}->{recorded_score});
+
+				$problem->status($new_score);
+				$problem->sub_status($pg->{state}->{recorded_score});
 				$problem->attempted(1);
 				$problem->num_correct($pg->{state}->{num_of_correct_ans});
 				$problem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
-				$pureProblem->status($pg->{state}->{recorded_score});
-				$pureProblem->sub_status($pg->{state}->{sub_recorded_score});
+				$pureProblem->status($new_score);
+				$pureProblem->sub_status($pg->{state}->{recorded_score});
 				$pureProblem->attempted(1);
 				$pureProblem->num_correct($pg->{state}->{num_of_correct_ans});
 				$pureProblem->num_incorrect($pg->{state}->{num_of_incorrect_ans});
@@ -673,6 +676,36 @@ Comment:    $comment
 
 
     return "";
+}
+
+# Determines if a set is in the reduced scoring period and applies
+# the reduced scoring adjustment to the portion of the score earned
+# during the reduced scoring period.
+sub compute_reduced_score {
+	my ($self, $problem, $set, $new_status) = @_;
+
+	my $r = $self->r;
+	my $reducedScoringEnabled = $r->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
+	my $reducedScoringValue = $r->{ce}->{pg}{ansEvalDefaults}{reducedScoringValue};
+
+	# If no adjustments need to be applied, return the full score.
+	if (! $reducedScoringEnabled
+			|| ! $set->enable_reduced_scoring
+			|| ! $set->reduced_scoring_date
+			|| $set->reduced_scoring_date == $set->due_date
+			|| time < $set->reduced_scoring_date
+			|| $reducedScoringValue == 1
+	) {
+		return $new_status;
+	}
+
+	# Invert the reduced scoring computation to get the portion of the
+	# grade earned before the reduced scoring date, then return the
+	# adjusted score by applying the reduced scoring adjustment to the
+	# portion done after the reduced scoring date.
+	my $pre_reduced_score = $problem->sub_status - ($problem->sub_status
+		- $problem->status) / (1 - $reducedScoringValue);
+	return $pre_reduced_score + $reducedScoringValue * ($new_status - $pre_reduced_score);
 }
 
 1;
