@@ -357,12 +357,9 @@ sub attemptResults {
 	# render equation images
 	my $answerTemplate = $tbl->answerTemplate;
 	   # answerTemplate collects all the formulas to be displayed in the attempts table
-	   # answerTemplate also collects the correct_ids and incorrect_ids
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
 	    # after all of the formulas have been collected the render command creates png's for them
 	    # refresh=>1 insures that we never reuse old images -- since the answers change frequently
-	$self->{correct_ids}   = $tbl->correct_ids;
-	$self->{incorrect_ids} = $tbl->incorrect_ids;
 	return $answerTemplate;
 
 }
@@ -2203,16 +2200,6 @@ sub output_summary{
 	}
     }
 
-
-	if (!$previewAnswers && ($checkAnswers || $showPartialCorrectAnswers)) {
-		# Only color answers if not previewing and when partialCorrectAnswers is set or when
-		# checkAnswers is submitted.
-		print CGI::start_script({type=>"text/javascript"}),
-			"\$(function () {color_inputs([",
-			join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],[",
-			join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "])});",
-			CGI::end_script();
-	}
 	return "";
 }
 
@@ -2403,7 +2390,7 @@ sub output_JS{
 	my $site_url = $ce->{webworkURLs}->{htdocs};
 
 	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
+	print CGI::script({ src => "$site_url/js/apps/InputColor/color.js", defer => undef }, '');
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
