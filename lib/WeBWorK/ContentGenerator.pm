@@ -1250,28 +1250,23 @@ associated with the current request.
 
 sub title {
 	my ($self, $args) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $db = $r->db;
+	my $r       = $self->r;
+	my $ce      = $r->ce;
+	my $db      = $r->db;
 	my $urlpath = $r->urlpath;
 
-	# If the urlpath name is the courseID, and if the course has
-	# a course title then display that instead.
-	if (defined($urlpath->arg("courseID")) &&
-	    $urlpath->name eq $urlpath->arg("courseID") &&
-	    $db->settingExists('courseTitle')) {
-	    print $db->getSettingValue('courseTitle');
+	# If the urlpath name is the courseID and the course has a course title then display that instead.
+	if (defined($urlpath->arg('courseID'))
+		&& $urlpath->name eq $urlpath->arg('courseID')
+		&& $db->settingExists('courseTitle'))
+	{
+		print $db->getSettingValue('courseTitle');
 	} else {
-	    # just display the urlpath name
-	    #print "\n<!-- BEGIN " . __PACKAGE__ . "::title -->\n";
-	    #print underscore2nbsp($r->urlpath->name);
-	    my $name = $urlpath->name;
-	    # $name =~ s/_/ /g;
-	    print $name;
-	    #print "<!-- END " . __PACKAGE__ . "::title -->\n";
+		# Display the urlpath name
+		print $urlpath->name =~ s/_/ /gr;
 	}
 
-	return "";
+	return '';
 }
 
 =item warnings()
@@ -1536,14 +1531,14 @@ we have systemLink().
 
 sub pathMacro {
 	my ($self, $args, @path) = @_;
-	my $r = $self->r;
+	my $r    = $self->r;
 	my %args = %$args;
-	$args{style} = "text" if $args{textonly};
+	$args{style} = 'text' if $args{textonly};
 
 	my $auth = $self->url_authen_args;
 	my $sep;
-	if ($args{style} eq "image") {
-		$sep = CGI::img({-src=>$args{image}, -alt=>$args{text}});
+	if ($args{style} eq 'image') {
+		$sep = CGI::img({ src => $args{image}, alt => $args{text} });
 	} else {
 		$sep = $args{text};
 	}
@@ -1551,24 +1546,29 @@ sub pathMacro {
 	my @result;
 	while (@path) {
 		my $name = shift @path;
-		my $url = shift @path;
-		next unless $name =~/\S/;  #skip blank names. Blanks can happen for course header and set header files.
+		my $url  = shift @path;
+
+		# Skip blank names. Blanks can happen for course header and set header files.
+		next unless $name =~ /\S/;
+
+		$name =~ s/_/ /g;
+
 		if ($url and not $args{textonly}) {
-		    if($args{style} eq "bootstrap"){
-		        push @result, CGI::li({ class => 'breadcrumb-item' }, CGI::a({ href => "$url?$auth" }, lc($name)));
-		    } else {
-			    push @result, CGI::a({-href=>"$url?$auth"}, lc($name));
-		    }
+			if ($args{style} eq 'bootstrap') {
+				push @result, CGI::li({ class => 'breadcrumb-item' }, CGI::a({ href => "$url?$auth" }, $name));
+			} else {
+				push @result, CGI::a({ href => "$url?$auth" }, $name);
+			}
 		} else {
-		    if($args{style} eq "bootstrap"){
-                push @result, CGI::li({ class => "breadcrumb-item active" }, $name);
-            } else {
-			    push @result, $name;
+			if ($args{style} eq 'bootstrap') {
+				push @result, CGI::li({ class => 'breadcrumb-item active' }, $name);
+			} else {
+				push @result, $name;
 			}
 		}
 	}
 
-	return join($sep, @result), "\n";
+	return join($sep, @result);
 }
 
 =item siblingsMacro(@siblings)

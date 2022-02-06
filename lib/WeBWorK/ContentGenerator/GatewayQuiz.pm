@@ -1117,15 +1117,28 @@ sub head {
 sub path {
 	my ($self, $args) = @_;
 
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
+	my $r          = $self->{r};
+	my $ce         = $self->{ce};
+	my $setName    = $r->urlpath->arg("setID");
+	my $root       = $ce->{webworkURLs}{root};
 	my $courseName = $ce->{courseName};
 
-	return $self->pathMacro($args, "Home" => "$root",
+	return $self->pathMacro(
+		$args,
+		'Home'      => $root,
 		$courseName => "$root/$courseName",
-		$setName => "");
+		$setName eq "Undefined_Set" || $self->{invalidSet}
+		? ($setName => '')
+		: (
+			$self->{set}->set_id => "$root/"
+				. $r->urlpath->newFromModule(
+				'WeBWorK::ContentGenerator::ProblemSet', $r,
+				courseID => $courseName,
+				setID    => $self->{set}->set_id
+			)->path,
+			'v' . $self->{set}->version_id => ''
+		),
+	);
 }
 
 sub nav {
