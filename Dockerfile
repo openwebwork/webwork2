@@ -104,7 +104,7 @@ ENV WEBWORK_ROOT=$APP_ROOT/webwork2 \
 # see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends --no-install-suggests \
+	&& apt-get install -y --no-install-recommends --no-install-suggests \
 	apache2 \
 	curl \
 	dvipng \
@@ -181,6 +181,7 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
+	libyaml-libyaml-perl \
 	make \
 	netpbm \
 	patch \
@@ -210,8 +211,8 @@ RUN apt-get update \
 	imagemagick \
 	jq \
 	npm \
-    && apt-get clean \
-    && rm -fr /var/lib/apt/lists/* /tmp/*
+	&& apt-get clean \
+	&& rm -fr /var/lib/apt/lists/* /tmp/*
 
 # Developers may want to add additional packages inside the image
 # such as: telnet vim mc file
@@ -244,8 +245,8 @@ COPY --from=base /opt/base/pg $APP_ROOT/pg
 RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && cd $APP_ROOT/pg/lib/chromatic && gcc color.c -o color  \
     && cd $APP_ROOT/webwork2/ \
-      && chown www-data DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic \
-      && chmod -R u+w DATA ../courses  htdocs/applets logs tmp $APP_ROOT/pg/lib/chromatic   \
+      && chown www-data DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic \
+      && chmod -R u+w DATA ../courses logs tmp $APP_ROOT/pg/lib/chromatic   \
     && echo "en_US ISO-8859-1\nen_US.UTF-8 UTF-8" > /etc/locale.gen \
       && /usr/sbin/locale-gen \
       && echo "locales locales/default_environment_locale select en_US.UTF-8\ndebconf debconf/frontend select Noninteractive" > /tmp/preseed.txt \
@@ -253,7 +254,9 @@ RUN echo "PATH=$PATH:$APP_ROOT/webwork2/bin" >> /root/.bashrc \
     && rm /etc/localtime /etc/timezone && echo "Etc/UTC" > /etc/timezone \
       &&   dpkg-reconfigure -f noninteractive tzdata \
     && cd $WEBWORK_ROOT/htdocs \
-      && npm install
+      && npm install --unsafe-perm \
+    && cd $PG_ROOT/htdocs \
+      && npm install --unsafe-perm
 
 # These lines were moved into docker-entrypoint.sh so the bind mount of courses will be available
 #RUN cd $APP_ROOT/webwork2/courses.dist \
@@ -287,7 +290,7 @@ RUN cd $APP_ROOT/webwork2/conf \
     && cp webwork.apache2.4-config.dist webwork.apache2.4-config \
     && cp $APP_ROOT/webwork2/conf/webwork.apache2.4-config /etc/apache2/conf-enabled/webwork.conf \
     && a2dismod mpm_event \
-    && a2enmod mpm_prefork \
+    && a2enmod mpm_prefork rewrite \
     && sed -i -e 's/Timeout 300/Timeout 1200/' /etc/apache2/apache2.conf \
     && sed -i -e 's/MaxRequestWorkers     150/MaxRequestWorkers     20/' \
 	  -e 's/MaxConnectionsPerChild   0/MaxConnectionsPerChild   100/' \
@@ -295,7 +298,6 @@ RUN cd $APP_ROOT/webwork2/conf \
     && cp $APP_ROOT/webwork2/htdocs/favicon.ico /var/www/html \
     && mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR \
     && mkdir /etc/ssl/local  \
-    && a2enmod rewrite \
     && sed -i -e 's/^<Perl>$/\
 	PerlPassEnv WEBWORK_URL\n\
 	PerlPassEnv WEBWORK_ROOT_URL\n\
