@@ -270,16 +270,29 @@ use constant FIELD_PROPERTIES => {
 	'hide_score:hide_score_by_problem' => {
 		name      => x("Show Scores on Finished Assignments?"),
 		type      => "choose",
-		choices   => [ qw( N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y ) ],
+		choices   => [ qw( N:N Y:Y BeforeAnswerDate:N BeforeVersionAnswerDate:N N:Y BeforeAnswerDate:Y BeforeVersionAnswerDate:Y ) ],
 		override  => "any",
-		labels    => { 'N:N' => 'Yes', 'Y:Y' => 'No', 'BeforeAnswerDate:N' => x('Only after set answer date'), 'N:Y' => x('Totals only (not problem scores)'), 'BeforeAnswerDate:Y' => x('Totals only, only after answer date') },
+		labels    => {
+			'N:N' => 'Yes',
+			'Y:Y' => 'No',
+			'BeforeAnswerDate:N' => x('Only after set answer date'),
+			'BeforeVersionAnswerDate:N' => x('Only after version answer date'),
+			'N:Y' => x('Totals only (not problem scores)'),
+			'BeforeAnswerDate:Y' => x('Totals only, only after answer set date'),
+			'BeforeVersionAnswerDate:Y' => x('Totals only, only after version answer date')
+		},
 	},
 	hide_work         => {
 		name      => x("Show Problems on Finished Tests"),
 		type      => "choose",
-		choices   => [ qw(N Y BeforeAnswerDate) ],
+		choices   => [ qw(N Y BeforeAnswerDate BeforeVersionAnswerDate) ],
 		override  => "any",
-		labels    => { 'N' => "Yes", 'Y' =>"No", 'BeforeAnswerDate' =>x('Only after set answer date') },
+		labels    => {
+			'N' => "Yes",
+			'Y' =>"No",
+			'BeforeAnswerDate' => x('Only after set answer date'),
+			'BeforeVersionAnswerDate' => x('Only after version answer date')
+		},
 	},
 
 	restrict_prob_progression => {

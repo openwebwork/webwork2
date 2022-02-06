@@ -223,8 +223,10 @@ sub pre_header_initialize {
 						$canShowScore{"$uid!$sid"} = 1;
 					} else {
 						my $userSet;
+						my $tmplSet;
 						if ( defined($v) ) {
 							$userSet = $db->getMergedSetVersion($uid,$s,$v);
+							$tmplSet = $db->getMergedSet($uid,$userSet->set_id)
 						} else {
 							$userSet = $db->getMergedSet($uid,$s);
 						}
@@ -245,6 +247,8 @@ sub pre_header_initialize {
 						     defined( $userSet->hide_work ) &&
 						     ( $userSet->hide_work eq 'Y' ||
 						       ( $userSet->hide_work eq 'BeforeAnswerDate' &&
+							 time < $tmplSet->answer_date ) ||
+						       ( $userSet->hide_work eq 'BeforeVersionAnswerDate' &&
 							 time < $userSet->answer_date ) ) ) {
 							$validation_failed = 1;
 							$self->addbadmessage($r->maketext("You are not permitted to generate a hardcopy for a set with hidden work."));
@@ -263,6 +267,8 @@ sub pre_header_initialize {
 						      $userSet->hide_score eq '' ) ||
 							( $userSet ->hide_score eq 'N' ||
 							  ( $userSet->hide_score eq 'BeforeAnswerDate' &&
+							    time >= $tmplSet->answer_date ) ||
+							  ( $userSet->hide_score eq 'BeforeVersionAnswerDate' &&
 							    time >= $userSet->answer_date ) );
 # 	die("hide_score = ", $userSet->hide_score, "; canshow{$uid!$sid} = ", (($canShowScore{"$uid!$sid"})?"True":"False"), "\n");
 
@@ -522,6 +528,7 @@ sub display_form {
  		    $mergedSet = $db->getMergedSetVersion( $selected_user_id,
  							   $the_set_id,
  							   $the_set_version );
+		    my $tmplSet = $db->getMergedSet( $selected_user_id, $the_set_id);
  		    my $mergedProblem = $db->getMergedProblemVersion(
  			$selected_user_id, $the_set_id, $the_set_version, 1 );
 
@@ -542,7 +549,9 @@ sub display_form {
  			    ( ( $mergedSet->hide_score eq 'N' &&
  				$mergedSet->hide_score_by_problem ne 'Y' ) ||
  			      ( $mergedSet->hide_score eq 'BeforeAnswerDate' &&
- 				after($mergedSet->answer_date) )
+				after($tmplSet->answer_date) ) ||
+			      ( $mergedSet->hide_score eq 'BeforeVersionAnswerDate' &&
+				after($mergedSet->answer_date) )
  			    )
  			  )
  			);

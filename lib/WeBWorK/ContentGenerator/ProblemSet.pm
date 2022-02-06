@@ -480,18 +480,22 @@ sub body {
 			}
 
 			# Status Logic: Assuming it is always after the open date for test versions.
-			# Matching can_showCorrectAnswer method where hide_work eq 'N' is
-			# only honored before the answer_date if it also equals the due_date.
-			# Using $set->answer_date since the template date is what is currently used to decide
-			# if answers are available.
-			my $canShowAns = (($verSet->hide_work eq 'N' && 
-					($verSet->due_date == $verSet->answer_date || $timeNow >= $set->answer_date)) ||
-				($verSet->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date)) ? 1 : 0;
-			if ($timeNow < $verSet->due_date()) {
-				if ($maxSubmits > 0 && $verSubmits >= $maxSubmits) {
-					$data->{status} = $r->maketext('Completed.');
-					$data->{status} .= $r->maketext(' Answers Available.') if ($canShowAns);
-				} elsif ($verSubmits >= 1) {
+			# Can show answers on completed versions, which are past the due date or
+			# have used up all available attempts. Using hide_score for answers since
+			# answers won't be shown if score is not.
+			my $verCompleted = (($timeNow >= $verSet->due_date() && $verSubmits > 0) ||
+				($maxSubmits > 0 && $verSubmits >= $maxSubmits));
+			my $canShowScore = ($verSet->hide_score eq 'N' ||
+				($verSet->hide_score eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date) ||
+				($verSet->hide_score eq 'BeforeVersionAnswerDate' && $timeNow >= $verSet->answer_date));
+			my $canShowWork = ($verSet->hide_work eq 'N' ||
+				($verSet->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date) ||
+				($verSet->hide_work eq 'BeforeVersionAnswerDate' && $timeNow >= $verSet->answer_date));
+			if ($verCompleted) {
+				$data->{status} = $r->maketext('Completed.');
+				$data->{status} .= $r->maketext(' Answers Available.') if ($canShowScore && $canShowWork);
+			} elsif ($timeNow < $verSet->due_date()) {
+				if ($verSubmits > 0) {
 					$data->{status} = $r->maketext('Open. Submitted.');
 				} else {
 					$data->{status} = $r->maketext('Open.');
@@ -501,26 +505,18 @@ sub body {
 					}
 				}
 			} else {
-				if ($verSubmits > 0) {
-					$data->{status} = $r->maketext('Completed.');
-				} else {
-					$data->{status} = $r->maketext('Closed.');
-				}
-				$data->{status} .= $r->maketext(' Answers Available.') if ($canShowAns);
+				$data->{status} = $r->maketext('Closed.');
+				$data->{status} .= $r->maketext(' Answers Available.') if ($canShowScore && $canShowWork);
 			}
 
 			# Only show download link if work is not hidden.
-			# Only show version link if the set is open or if works is not hidden.
-			$data->{show_download} = ($verSet->hide_work eq 'N' ||
-				($verSet->hide_work eq 'BeforeAnswerDate' && $timeNow >= $set->answer_date)) ? 1 : 0;
-			$data->{show_link} = ($data->{status} =~ /Open/ || $data->{show_download});
+			# Only show version link if the set is open or can see work.
+			$data->{show_download} = $canShowWork;
+			$data->{show_link} = ($data->{status} =~ /Open/ || $canShowWork);
 
 			$data->{score} = '&nbsp;';
 			# Only show score if user has permission and assignment has at least one submit.
-			if ($authz->hasPermissions($user, 'view_hidden_work') ||
-				($verSet->hide_score eq 'N' && $verSubmits >= 1) ||
-				($verSet->hide_score eq 'BeforeAnswerDate' && $timeNow > $set->answer_date))
-			{
+			if ($authz->hasPermissions($user, 'view_hidden_work') || $canShowScore) {
 				my ($total, $possible) = grade_set($db, $verSet, $verSet->set_id, $effectiveUser, 1);
 				$total = wwRound(2, $total);
 				$data->{score} = "$total/$possible";

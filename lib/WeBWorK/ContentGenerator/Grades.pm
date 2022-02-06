@@ -314,13 +314,19 @@ sub displayStudentStats {
 		}
 		# if the set has hide_score set, then we need to skip printing
 		#    the score as well
-		if ( defined( $set->hide_score ) &&
-		     ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
-		       ( $set->hide_score eq 'Y' ||
-			 ($set->hide_score eq 'BeforeAnswerDate' && time < $set->answer_date) ) ) ) {
-			push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(version_" . $set->version_id . ")")),
+		if ( defined( $set->hide_score ) ) {
+			# Get template set
+			my $tmplSet = $setsByID{ $setID };
+			if ( ! $authz->hasPermissions($r->param("user"), "view_hidden_work") &&
+				(	$set->hide_score eq 'Y' ||
+					($set->hide_score eq 'BeforeAnswerDate' && time < $tmplSet->answer_date) ||
+					($set->hide_score eq 'BeforeVersionAnswerDate' && time < $set->answer_date)
+				)
+			) {
+				push( @rows, CGI::Tr({}, CGI::td(WeBWorK::ContentGenerator::underscore2sp("${setID}_(version_" . $set->version_id . ")")),
 					     CGI::td({colspan=>($max_problems+2)}, CGI::em($r->maketext("Display of scores for this set is not allowed.")))) );
-			next;
+				next;
+			}
 		}
 
 		# otherwise, if it's a gateway, adjust the act-as url

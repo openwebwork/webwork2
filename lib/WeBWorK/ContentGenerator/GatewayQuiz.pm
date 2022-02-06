@@ -74,7 +74,8 @@ sub can_showOldAnswers {
 	return (before($Set->due_date()) ||
 		$authz->hasPermissions($User->user_id,"view_hidden_work") ||
 		($Set->hide_work() eq 'N' ||
-			($Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date)));
+			($Set->hide_work() eq 'BeforeAnswerDate' && time > $tmplSet->answer_date) ||
+			($Set->hide_work() eq 'BeforeVersionAnswerDate' && time > $Set->answer_date)));
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
@@ -84,8 +85,8 @@ sub can_showCorrectAnswers {
 		$tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
-	# gateway change here to allow correct answers to be viewed after all attempts
-	#   at a version are exhausted as well as if it's after the answer date
+	# gateway change here to allow correct answers to be viewed before the
+	# answer date if the answer date = due date and all attempts are exhausted.
 	# $addOne allows us to count the current submission
 	my $addOne = defined($submitAnswers) ? $submitAnswers : 0;
 	my $maxAttempts = $Set->attempts_per_version() || 0;
@@ -102,15 +103,15 @@ sub can_showCorrectAnswers {
 	#    so we should hide the correct answers if we aren not showing
 	#    scores GG.
 
+	my $canSeeAnswers = after($Set->answer_date) || ($Set->answer_date == $Set->due_date &&
+		$attemptsUsed >= $maxAttempts && $maxAttempts != 0);
 	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
 		($Set->hide_score eq 'N' ||
-			($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)) ||
+			($Set->hide_score eq 'BeforeVersionAnswerDate' && after($Set->answer_date)));
 
-	return (((after($Set->answer_date) ||
-				($attemptsUsed >= $maxAttempts && $maxAttempts != 0 &&
-					$Set->due_date() == $Set->answer_date())) ||
-			$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")) &&
-		($authz->hasPermissions($User->user_id, "view_hidden_work") || $canShowScores));
+	return (($canSeeAnswers || $authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")) &&
+		($canShowScores || $authz->hasPermissions($User->user_id, "view_hidden_work")));
 }
 
 sub can_showProblemGrader {
@@ -135,11 +136,11 @@ sub can_showSolutions {
 	my $authz = $self->r->authz;
 
 	# this is the same as can_showCorrectAnswers
-	# gateway change here to allow correct answers to be viewed after all attempts
-	#   at a version are exhausted as well as if it's after the answer date
+	# gateway change here to allow solutions to be viewed before the
+	# answer date if the answer date = due date and all attempts are exhausted.
 	# $addOne allows us to count the current submission
 	my $addOne = defined($submitAnswers) ? $submitAnswers : 0;
-	my $attempts_per_version = $Set->attempts_per_version() || 0;
+	my $maxAttempts = $Set->attempts_per_version() || 0;
 	my $attemptsUsed = $Problem->num_correct+$Problem->num_incorrect+$addOne || 0;
 
 	# this is complicated by trying to address hiding scores by problem---that
@@ -152,16 +153,15 @@ sub can_showSolutions {
 	#    so we should hide the correct answers if we aren not showing
 	#    scores GG.
 
+	my $canSeeAnswers = after($Set->answer_date) || ($Set->answer_date == $Set->due_date &&
+		$attemptsUsed >= $maxAttempts && $maxAttempts != 0);
 	my $canShowScores = $Set->hide_score_by_problem eq 'N' &&
 		($Set->hide_score eq 'N' ||
-			($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+			($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)) ||
+			($Set->hide_score eq 'BeforeVersionAnswerDate' && after($Set->answer_date)));
 
-	return (((after($Set->answer_date) ||
-				($attemptsUsed >= $attempts_per_version &&
-					$attempts_per_version != 0 &&
-					$Set->due_date() == $Set->answer_date())) ||
-			$authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")) &&
-		($authz->hasPermissions($User->user_id, "view_hidden_work") || $canShowScores));
+	return (($canSeeAnswers || $authz->hasPermissions($User->user_id, "show_correct_answers_before_answer_date")) &&
+		($canShowScores || $authz->hasPermissions($User->user_id, "view_hidden_work")));
 }
 
 # gateway change here: add $submitAnswers as an optional additional argument
@@ -264,7 +264,8 @@ sub can_checkAnswers {
 	#    scores GG.
 
 	my $canShowScores = $Set->hide_score_by_problem eq 'N' && ($Set->hide_score eq 'N' ||
-		($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)));
+		($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)) ||
+		($Set->hide_score eq 'BeforeVersionAnswerDate' && after($Set->answer_date)));
 
 	if (before($Set->open_date, $submitTime)) {
 		return $authz->hasPermissions($User->user_id, "check_answers_before_open_date");
@@ -302,12 +303,10 @@ sub can_showScore {
 		$tmplSet, $submitAnswers) = @_;
 	my $authz = $self->r->authz;
 
-	my $timeNow = defined($self->{timeNow}) ? $self->{timeNow} : time();
-
 	# address hiding scores by problem
 	my $canShowScores = ($Set->hide_score eq 'N' ||
-		($Set->hide_score eq 'BeforeAnswerDate' &&
-			after($tmplSet->answer_date)));
+		($Set->hide_score eq 'BeforeAnswerDate' && after($tmplSet->answer_date)) ||
+		($Set->hide_score eq 'BeforeVersionAnswerDate' && after($Set->answer_date)));
 
 	return ($authz->hasPermissions($User->user_id,"view_hidden_work") || $canShowScores);
 }
@@ -1722,7 +1721,9 @@ sub body {
 			$authz->hasPermissions($user, "view_hidden_work"));
 
 	my $canShowWork = $authz->hasPermissions($user, "view_hidden_work") ||
-		($set->hide_work eq 'N' || ($set->hide_work eq 'BeforeAnswerDate' && $timeNow>$tmplSet->answer_date));
+		($set->hide_work eq 'N' ||
+			($set->hide_work eq 'BeforeAnswerDate' && $timeNow > $tmplSet->answer_date) ||
+			($set->hide_work eq 'BeforeVersionAnswerDate' && $timeNow > $set->answer_date));
 
 	# for nicer answer checking on multi-page tests, we want to keep
 	#    track of any changes that someone made to a different page,
@@ -1827,6 +1828,9 @@ sub body {
 						$testNoun,$attemptScore,$totPossible));
 			} else {
 				if ($set->hide_score eq 'BeforeAnswerDate') {
+					print $r->maketext("(Your score on this [_1] is not available until [_2].)",
+						$testNoun, $self->formatDateTime($tmplSet->answer_date));
+				} elsif ($set->hide_score eq 'BeforeVersionAnswerDate') {
 					print $r->maketext("(Your score on this [_1] is not available until [_2].)",
 						$testNoun, $self->formatDateTime($set->answer_date));
 				} else {
@@ -1980,6 +1984,9 @@ sub body {
 	if (!$can{recordAnswersNextTime} && !$canShowWork) {
 		print CGI::start_div({class=>"gwProblem"});
 		if ($set->hide_work eq 'BeforeAnswerDate') {
+			print CGI::strong($r->maketext("Completed results for this assignment are not available until [_1]",
+					$self->formatDateTime($tmplSet->answer_date)));
+		} elsif ($set->hide_work eq 'BeforeVersionAnswerDate') {
 			print CGI::strong($r->maketext("Completed results for this assignment are not available until [_1]",
 					$self->formatDateTime($set->answer_date)));
 		} else {

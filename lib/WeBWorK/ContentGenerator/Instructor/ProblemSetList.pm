@@ -228,8 +228,8 @@ use constant  FIELD_PROPERTIES => {
 		access => "readonly",
 	},
 	# hide_score and hide_work should be drop down selects with
-	#    options 'N', 'Y' and 'BeforeAnswerDate'.  in that we don't
-	#    allow editing of these fields in this module, this is moot.
+	#    options 'N', 'Y', 'BeforeAnswerDate' and 'BeforeVersionAnswerDate'.
+	#    in that we don't allow editing of these fields in this module, this is moot.
 	hide_score => {
 		type => "text",
 		size => 16,
@@ -2122,17 +2122,17 @@ sub readSetDef {
 
 		# check that the values for hideWork and hideScore are valid
 		if ( $hideScore ne 'N' && $hideScore ne 'Y' &&
-		     $hideScore ne 'BeforeAnswerDate' ) {
+		     $hideScore ne 'BeforeAnswerDate' && $hideScore ne 'BeforeVersionAnswerDate' ) {
 			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScore)."\n");
 			$hideScore = 'N';
 		}
-		if ( $hideScoreByProblem ne 'N' && $hideScoreByProblem ne 'Y' &&
-		     $hideScoreByProblem ne 'BeforeAnswerDate' ) {
+		if ( $hideScoreByProblem ne 'N' && $hideScoreByProblem ne 'Y' ) {
 			warn($r->maketext("The value [_1] for the hideScore option is not valid; it will be replaced with 'N'.", $hideScoreByProblem)."\n");
 			$hideScoreByProblem = 'N';
 		}
 		if ( $hideWork ne 'N' && $hideWork ne 'Y' &&
-		     $hideWork ne 'BeforeAnswerDate' ) {
+		     $hideWork ne 'BeforeAnswerDate' &&
+		     $hideWork ne 'BeforeVersionAnswerDate' ) {
 			warn($r->maketext("The value [_1] for the hideWork option is not valid; it will be replaced with 'N'.", $hideWork)."\n");
 			$hideWork = 'N';
 		}
