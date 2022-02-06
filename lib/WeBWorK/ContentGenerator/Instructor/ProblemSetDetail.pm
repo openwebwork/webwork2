@@ -123,6 +123,8 @@ use constant FIELD_PROPERTIES => {
 		type      => "edit",
 		size      => "25",
 		override  => "any",
+		help_text => x("Each test version has its own answer date set to the version close date (based on time limit) plus the difference between the set answer date and close date. If the answer date equals the close date, students can see the answers when the test is finished."),
+		show_help => "gateway",
 	},
 	visible => {
 		name      => x("Visible to Students"),
@@ -241,6 +243,7 @@ use constant FIELD_PROPERTIES => {
 		default => "0",
 #		labels    => {	"" => 0 },
 		convertby => 60,
+		help_text => x("This and the following option configure how often students can start new test versions, which is based on number of versions taken in the last X minutes."),
 	},
 	versions_per_interval => {
 		name      => x("Number of Tests per Time Interval (0=infty)"),
@@ -268,7 +271,7 @@ use constant FIELD_PROPERTIES => {
 #		labels    => { "" => 0 },
 	},
 	'hide_score:hide_score_by_problem' => {
-		name      => x("Show Scores on Finished Assignments?"),
+		name      => x("Show Scores on Assignments?"),
 		type      => "choose",
 		choices   => [ qw( N:N Y:Y BeforeAnswerDate:N BeforeVersionAnswerDate:N N:Y BeforeAnswerDate:Y BeforeVersionAnswerDate:Y ) ],
 		override  => "any",
@@ -281,6 +284,7 @@ use constant FIELD_PROPERTIES => {
 			'BeforeAnswerDate:Y' => x('Totals only, only after answer set date'),
 			'BeforeVersionAnswerDate:Y' => x('Totals only, only after version answer date')
 		},
+		help_text => x("If set to 'Yes' or 'Totals only', students can see the respective score(s) after each submission. Students will only be able to see the answers if they can also see the scores."),
 	},
 	hide_work         => {
 		name      => x("Show Problems on Finished Tests"),
@@ -293,6 +297,7 @@ use constant FIELD_PROPERTIES => {
 			'BeforeAnswerDate' => x('Only after set answer date'),
 			'BeforeVersionAnswerDate' => x('Only after version answer date')
 		},
+		help_text => x("A test version is considered finished once all submissions have been used or the time limit is reached. Students will only be able to see the answers if they can also see the problems."),
 	},
 
 	restrict_prob_progression => {
@@ -776,6 +781,10 @@ sub FieldHTML {
 
 	my @return;
 
+	# Used to only show help_text on certain sets types.
+	my $show_help = 1;
+	$show_help = 0 if ($recordType eq 'set' && $properties{show_help} && $globalRecord->assignment_type !~ /$properties{show_help}/);
+
 	push @return,
 		$check
 		? CGI::input({
@@ -797,7 +806,7 @@ sub FieldHTML {
 		: $r->maketext($properties{name});
 
 	push @return,
-		$properties{help_text}
+		($properties{help_text} && $show_help)
 		? CGI::a(
 			{
 				class             => 'help-popup',
