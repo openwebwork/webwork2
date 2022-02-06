@@ -529,7 +529,7 @@ sub body {
 					$seconds %= 60;
 					my $timeText = '';
 
-					# Two cases to format time to work well with translation.
+					# Several cases are needed to format time to work well with translation.
 					if ($hours && $minutes) {
 						print CGI::div(
 							{ class => 'alert alert-warning' },
@@ -539,7 +539,7 @@ sub body {
 								$hours, $minutes
 							)
 						);
-					} elsif ($hours || $minutes) {
+					} elsif ($hours || ($minutes && (!$seconds || $seconds > 299))) {
 						# Translation Note: In this case only one of hours or minutes is non-zero,
 						# so the zero case of the "quant" will be used for the other one.
 						print CGI::div(
@@ -551,12 +551,25 @@ sub body {
 							)
 						);
 					} else {
-						print CGI::div(
-							{ class => 'alert alert-warning' },
-							$r->maketext(
-								'You have [quant,_1,second] remaining to complete the currently open test.', $seconds
-							)
-						);
+						if ($minutes) {
+							print CGI::div(
+								{ class => 'alert alert-warning' },
+								$r->maketext(
+									'You have [quant,_1,minute] and [quant,_2,second] '
+										. 'remaining to complete the currently open test.',
+									$minutes, $seconds
+								)
+							);
+
+						} else {
+							print CGI::div(
+								{ class => 'alert alert-warning' },
+								$r->maketext(
+									'You have [quant,_1,second] remaining to complete the currently open test.',
+									$seconds
+								)
+							);
+						}
 					}
 				}
 			}
