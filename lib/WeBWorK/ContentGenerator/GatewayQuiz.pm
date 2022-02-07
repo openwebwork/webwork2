@@ -345,12 +345,7 @@ sub attemptResults {
 	my $showAttemptResults = $showAttemptAnswers && shift;
 	my $showSummary = shift;
 	my $showAttemptPreview = shift || 0;
-	my $colorAnswers = $showAttemptResults;
 	my $ce = $self->{ce};
-
-	# for color coding the responses.
-	$self->{correct_ids} = [] unless $self->{correct_ids};
-	$self->{incorrect_ids} = [] unless $self->{incorrect_ids};
 
 	# to make grabbing these options easier, we'll pull them out now...
 	my %imagesModeOptions = %{$ce->{pg}{displayModeOptions}{images}};
@@ -390,26 +385,7 @@ sub attemptResults {
 
 	my $answerTemplate = $tbl->answerTemplate;
 	$tbl->imgGen->render(refresh => 1) if $tbl->displayMode eq 'images';
-	push(@{$self->{correct_ids}}, @{$tbl->correct_ids}) if $colorAnswers;
-	push(@{$self->{incorrect_ids}}, @{$tbl->incorrect_ids}) if $colorAnswers;
 	return $answerTemplate;
-}
-
-sub handle_input_colors {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-	my $site_url = $ce->{webworkURLs}{htdocs};
-
-	return if $self->{previewAnswers};  # don't color previewed answers
-
-	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/InputColor/color.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript"}),
-		"color_inputs([",
-	   	join(", ", map {"'$_'"} @{$self->{correct_ids} || []}), "],\n[",
-		join(", ", map {"'$_'"} @{$self->{incorrect_ids} || []}), "]);",
-		CGI::end_script();
 }
 
 sub get_instructor_comment {
@@ -1144,15 +1120,28 @@ sub head {
 sub path {
 	my ($self, $args) = @_;
 
-	my $r = $self->{r};
-	my $setName = $r->urlpath->arg("setID");
-	my $ce = $self->{ce};
-	my $root = $ce->{webworkURLs}->{root};
+	my $r          = $self->{r};
+	my $ce         = $self->{ce};
+	my $setName    = $r->urlpath->arg("setID");
+	my $root       = $ce->{webworkURLs}{root};
 	my $courseName = $ce->{courseName};
 
-	return $self->pathMacro($args, "Home" => "$root",
+	return $self->pathMacro(
+		$args,
+		'Home'      => $root,
 		$courseName => "$root/$courseName",
-		$setName => "");
+		$setName eq "Undefined_Set" || $self->{invalidSet}
+		? ($setName => '')
+		: (
+			$self->{set}->set_id => "$root/"
+				. $r->urlpath->newFromModule(
+				'WeBWorK::ContentGenerator::ProblemSet', $r,
+				courseID => $courseName,
+				setID    => $self->{set}->set_id
+			)->path,
+			'v' . $self->{set}->version_id => ''
+		),
+	);
 }
 
 sub nav {
@@ -2178,8 +2167,6 @@ sub body {
 			}
 		}
 
-		$self->handle_input_colors;
-
 		print CGI::div($jumpLinks, "\n");
 		print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 
@@ -2427,6 +2414,9 @@ sub output_JS{
 			print "<!-- $_->{file} is not available in htdocs/ on this server -->\n";
 		}
 	}
+
+	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
+	print CGI::script({ src => "$site_url/js/apps/InputColor/color.js", defer => undef }, '');
 
 	# The Base64.js file, which handles base64 encoding and decoding
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
