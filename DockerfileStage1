@@ -23,7 +23,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # see: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends --no-install-suggests \
+	&& apt-get install -y --no-install-recommends --no-install-suggests \
 	apache2 \
 	curl \
 	dvipng \
@@ -100,6 +100,7 @@ RUN apt-get update \
 	libjson-xs-perl \
 	libjson-maybexs-perl \
 	libcpanel-json-xs-perl \
+	libyaml-libyaml-perl \
 	make \
 	netpbm \
 	patch \
@@ -129,8 +130,8 @@ RUN apt-get update \
 	imagemagick \
 	jq \
 	npm \
-    && apt-get clean \
-    && rm -fr /var/lib/apt/lists/* /tmp/*
+	&& apt-get clean \
+	&& rm -fr /var/lib/apt/lists/* /tmp/*
 
 # Developers may want to add additional packages inside the image
 # such as: telnet vim mc file

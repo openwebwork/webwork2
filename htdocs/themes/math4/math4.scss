@@ -72,7 +72,7 @@ table caption {
 	margin: 0;
 	margin-left: -1em;
 	overflow: hidden;
-	clip: rect(0px, 0px, 0px, 0px);
+	clip: rect(0, 0, 0, 0);
 	border: 0 none;
 }
 
@@ -589,7 +589,7 @@ ul.courses-list {
 	}
 
 	form {
-		margin-bottom: 0px;
+		margin-bottom: 0;
 	}
 }
 
@@ -607,7 +607,7 @@ ul.courses-list {
 .lb-problem-row div.card {
 	background-color: #f5f5f5;
 	margin-top: 10px;
-	margin-bottom: 0px;
+	margin-bottom: 0;
 }
 
 .lb-mlt-group {
@@ -616,7 +616,7 @@ ul.courses-list {
 	margin-top: 10px;
 
 	div:first-child.lb-problem-row > div.card {
-		margin-top: 0px;
+		margin-top: 0;
 	}
 }
 
@@ -634,6 +634,14 @@ ul.courses-list {
 			max-width: 15px;
 		}
 	}
+}
+
+div.AuthorComment {
+	background-color: #00e0e0;
+	color: black;
+	padding: 0.25rem;
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
 }
 
 /* Footer */
@@ -701,7 +709,7 @@ input.changed[type=text] { /* orange */
 
 #editor {
 	background-color: #FFFFFF;
-	margin-left: 0px;
+	margin-left: 0;
 	width: 750px;
 
 	.tab-content {
@@ -769,15 +777,6 @@ input.changed[type=text] { /* orange */
 	}
 }
 
-#psd_list {
-	padding-left: 0px;
-
-	li.ui-sortable-placeholder,
-	li.psd_list_row {
-		list-style-type: none;
-	}
-}
-
 .problem_detail_row {
 	background-color: #f5f5f5;
 
@@ -808,32 +807,37 @@ input.changed[type=text] { /* orange */
 .pdr_collapse {
 	cursor: pointer;
 	font-size: large;
-	display: none;
+
+	& > i {
+		transition: 0.2s;
+	}
+
+	&:not(.collapsed) > i {
+		transform: rotate(90deg);
+	}
 }
 
-.pdr_collapse i {
-	transition: 0.3s;
-}
-
-.psd_list_row.mjs-nestedSortable-expanded > div > div > div > span.pdr_collapse > i {
-	transform: rotate(90deg);
+.sortable-ghost {
+	opacity: 0.5;
 }
 
 #psd_list {
+	padding-left: 0;
+	padding-bottom: 0.25rem;
+	margin-bottom: 0;
+
+	.psd_list_item {
+		list-style-type: none;
+	}
+
 	&:not(.disable_renumber) .pdr_handle {
 		cursor: move;
+		touch-action: none;
 	}
 
-	li.mjs-nestedSortable-collapsed > ol {
-		display: none;
-	}
-
-	li.mjs-nestedSortable-branch .pdr_collapse {
-		display: inline-block;
-	}
-
-	li.mjs-nestedSortable-leaf .pdr_collapse {
-		display: none;
+	ol.sortable-branch {
+		padding-left: 0;
+		margin-left: 2rem;
 	}
 }
 

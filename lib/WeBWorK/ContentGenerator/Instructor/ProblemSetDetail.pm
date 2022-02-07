@@ -692,25 +692,40 @@ sub FieldHTML {
 	}
 
 	if ($edit) {
-		$inputType = $field =~ /_date/ ? CGI::start_div({ class => 'input-group input-group-sm' }) : '';
-		$inputType .= CGI::input({
-			type     => 'text',
-			name     => "$recordType.$recordID.$field",
-			id       => "$recordType.$recordID.${field}_id",
-			value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
-			size     => $properties{size}                         || 5,
-			onChange => $onChange,
-			onkeyup  => $onKeyUp,
-			onblur   => $uncheckBox,
-			class    => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
-			$field =~ /_date/
-			? (
-				data_enable_datepicker => $r->ce->{options}{useDateTimePicker},
-				placeholder            => x('None Specified')
-			)
-			: ()
-		});
-		$inputType .= $field =~ /_date/ ? CGI::end_div() : '';
+		if ($field =~ /_date/) {
+			$inputType = CGI::div(
+				{ class => 'input-group input-group-sm flatpickr' },
+				CGI::textfield({
+					name     => "$recordType.$recordID.$field",
+					id       => "$recordType.$recordID.${field}_id",
+					value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+					size     => $properties{size}                         || 5,
+					onChange => $onChange,
+					onkeyup  => $onKeyUp,
+					onblur   => $uncheckBox,
+					class    => 'form-control form-control-sm' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+					data_enable_datepicker => $r->ce->{options}{useDateTimePicker},
+					placeholder            => x('None Specified'),
+					data_input             => undef,
+					data_done_text         => $self->r->maketext('Done')
+				}),
+				CGI::a(
+					{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
+					CGI::i({ class => 'fas fa-calendar-alt' }, '')
+				)
+			);
+		} else {
+			$inputType = CGI::textfield({
+				name     => "$recordType.$recordID.$field",
+				id       => "$recordType.$recordID.${field}_id",
+				value    => $r->param("$recordType.$recordID.$field") || ($forUsers ? $userValue : $globalValue),
+				size     => $properties{size}                         || 5,
+				onChange => $onChange,
+				onkeyup  => $onKeyUp,
+				onblur   => $uncheckBox,
+				class    => 'form-control form-control-sm'
+			});
+		}
 	} elsif ($choose) {
 		# Note that in popup menus, you're almost guaranteed to have the choices hashed to labels in %properties
 		# but $userValue and and $globalValue are the values in the hash not the keys
@@ -777,7 +792,7 @@ sub FieldHTML {
 				data_bs_placement => 'top',
 				data_bs_toggle    => 'popover'
 			},
-			CGI::i({ class => 'icon fas fa-question-circle', aria_hidden => 'true', data_alt => 'Help Icon' }, '')
+			CGI::i({ class => 'icon fas fa-question-circle', data_alt => 'Help Icon' }, '')
 		)
 		: '';
 
@@ -960,30 +975,30 @@ sub proctoredFieldHTML {
 # this is a recursive function which is used to print the tree structure
 # that jitar sets can have using nested unordered lists
 sub print_nested_list {
-    my $nestedHash = shift;
-    my $id = shift;
+	my $nestedHash = shift;
+	my $id         = $nestedHash->{id};
 
-    # this hash contains information about the problem at this node, which
-    # we print and then delete
-    if (defined $nestedHash->{'row'}) {
-	print CGI::start_li({class=>"psd_list_row",id=>"psd_list_".$nestedHash->{'id'}});
-	print  $nestedHash->{'row'};
-	delete $nestedHash->{'row'};
-	delete $nestedHash->{'id'}
-    }
+	# this hash contains information about the problem at this node, which
+	# we print and then delete
+	if (defined $nestedHash->{row}) {
+		print CGI::start_li({ class => 'psd_list_item', id => "psd_list_item_$id" });
+		print $nestedHash->{row};
+		delete $nestedHash->{row};
+		delete $nestedHash->{id};
+	}
 
-    # any remaining keys are references to child nodes which need to be
-    # printed in a sub list.
-    my @keys = keys %$nestedHash;
-    if (@keys) {
-	print CGI::start_ol();
-	foreach my $id (sort {$a <=> $b} @keys) {
-	    print_nested_list($nestedHash->{$id});
+	# any remaining keys are references to child nodes which need to be
+	# printed in a sub list.
+	my @keys = keys %$nestedHash;
+	print CGI::start_ol({ class => 'sortable-branch collapse', id => "psd_sublist_$id" });
+	if (@keys) {
+		for (sort { $a <=> $b } @keys) {
+			print_nested_list($nestedHash->{$_});
+		}
 	}
 	print CGI::end_ol();
-    }
 
-    print CGI::end_li();
+	print CGI::end_li();
 }
 
 # handles rearrangement necessary after changes to problem ordering
@@ -2431,34 +2446,34 @@ sub body {
 			CGI::div(
 				{ class => 'btn-group w-auto me-3 py-1' },
 				$forOneUser ? '' : CGI::a(
-					{ href => '#', id => 'psd_renumber', class => 'btn btn-secondary' },
+					{ id => 'psd_renumber', class => 'btn btn-secondary' },
 					$r->maketext('Renumber Problems')
 				),
 				CGI::a(
-					{ href => '#', id => 'psd_render_all', class => 'btn btn-secondary' },
+					{ id => 'psd_render_all', class => 'btn btn-secondary' },
 					$r->maketext('Render All')
 				),
-				CGI::a({ href => '#', id => 'psd_hide_all', class => 'btn btn-secondary' }, $r->maketext('Hide All'))
+				CGI::a({ id => 'psd_hide_all', class => 'btn btn-secondary' }, $r->maketext('Hide All'))
 			),
 			$forUsers ? '' : CGI::div(
 				{ class => 'btn-group w-auto me-3 py-1' },
 				CGI::a(
-					{ href => '#', id => 'psd_expand_details', class => 'btn btn-secondary' },
+					{ id => 'psd_expand_details', class => 'btn btn-secondary' },
 					$r->maketext('Expand All Details')
 				),
 				CGI::a(
-					{ href => '#', id => 'psd_collapse_details', class => 'btn btn-secondary' },
+					{ id => 'psd_collapse_details', class => 'btn btn-secondary' },
 					$r->maketext('Collapse All Details')
 				)
 			),
 			$isJitarSet ? CGI::div(
 				{ class => 'btn-group w-auto me-3 py-1' },
 				CGI::a(
-					{ href => '#', id => 'psd_expand_all', class => 'btn btn-secondary' },
+					{ id => 'psd_expand_all', class => 'btn btn-secondary' },
 					$r->maketext('Expand All Nesting')
 				),
 				CGI::a(
-					{ href => '#', id => 'psd_collapse_all', class => 'btn btn-secondary' },
+					{ id => 'psd_collapse_all', class => 'btn btn-secondary' },
 					$r->maketext('Collapse All Nesting')
 				)
 			) : '',
@@ -2593,11 +2608,14 @@ sub body {
 				$parentID          = seq_to_jitar_id(@seq) if @seq;
 				$collapseButton    = CGI::span(
 					{
-						class              => 'pdr_collapse me-2',
+						class              => 'pdr_collapse me-2 collapsed',
 						data_expand_text   => $r->maketext('Expand Nested Problems'),
-						data_collapse_text => $r->maketext('Collapse Nested Problems')
+						data_collapse_text => $r->maketext('Collapse Nested Problems'),
+						data_bs_toggle     => 'collapse',
+						aria_expanded      => 'false',
+						role               => 'button'
 					},
-					CGI::i({ class => 'fas fa-chevron-right' }, '')
+					CGI::i({ class => 'fas fa-chevron-right', data_bs_toggle => 'tooltip' }, '')
 				);
 			}
 
@@ -2617,8 +2635,9 @@ sub body {
 								CGI::span({ class => 'pdr_problem_number' }, $problemNumber) . ' ',
 								$forUsers ? '' : CGI::i(
 									{
-										class         => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
-										data_bs_title => $r->maketext('Move')
+										class          => $isJitarSet ? 'fas fa-arrows-alt' : 'fas fa-arrows-alt-v',
+										data_bs_title  => $r->maketext('Move'),
+										data_bs_toggle => 'tooltip'
 									},
 									''
 								)
@@ -2638,7 +2657,6 @@ sub body {
 							}),
 							CGI::a(
 								{
-									href              => '#',
 									class             => 'pdr_render btn btn-secondary btn-sm',
 									id                => "pdr_render_$problemID",
 									data_bs_toggle    => 'tooltip',
@@ -2781,7 +2799,7 @@ sub body {
 				my @id_seq = jitar_id_to_seq($problemIDList[$i]);
 
 				my $hashref = $nestedIDHash;
-				foreach my $num (@id_seq) {
+				for my $num (@id_seq) {
 					$hashref->{$num} = {} unless defined $hashref->{$num};
 					$hashref = $hashref->{$num};
 				}
@@ -2790,21 +2808,21 @@ sub body {
 			}
 
 			# now use recursion to print the nested lists
-			print CGI::start_ol({ id => 'psd_list', $forUsers ? (class => 'disable_renumber') : () });
-
-			for my $id (sort { $a <=> $b } keys %$nestedIDHash) {
-				print_nested_list($nestedIDHash->{$id});
+			print CGI::start_ol(
+				{ id => 'psd_list', class => 'sortable-branch' . ($forUsers ? ' disable_renumber' : '') });
+			for (sort { $a <=> $b } keys %$nestedIDHash) {
+				print_nested_list($nestedIDHash->{$_});
 			}
 			print CGI::end_ol();
-
 		} else {
-			print CGI::start_ol({ id => 'psd_list', $forUsers ? (class => 'disable_renumber') : () });
-			for (my $i = 0; $i <= $#problemIDList; $i++) {
-				print CGI::li(
-					{ class => 'psd_list_row mjs-nestedSortable-no-nesting', id => 'psd_list_' . $problemIDList[$i] },
-					$problemRow[$i]);
-			}
-			print CGI::end_ol();
+			print CGI::ol(
+				{ id => 'psd_list', class => 'sortable-branch' . ($forUsers ? ' disable_renumber' : '') },
+				map {
+					CGI::li(
+						{ class => 'psd_list_item', id => "psd_list_item_$problemIDList[$_]" },
+						$problemRow[$_])
+				} 0 .. $#problemIDList
+			);
 		}
 
 		print CGI::div(
@@ -2898,21 +2916,16 @@ sub output_JS {
 	my $self = shift;
 	my $site_url = $self->r->ce->{webworkURLs}{htdocs};
 
-	# Print javaScript and style for dateTimePicker
-	print CGI::Link({
-		rel  => "stylesheet",
-		href => "$site_url/node_modules/jquery-ui-timepicker-addon/dist/jquery-ui-timepicker-addon.min.css"
-	});
-	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/DatePicker/datepicker.css" });
+	# Print javascript and style for the flatpickr date/time picker.
+	print CGI::Link({ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/flatpickr.min.css" });
+	print CGI::Link(
+		{ rel => 'stylesheet', href => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.css" });
+	print CGI::script({ src => "$site_url/node_modules/flatpickr/dist/flatpickr.min.js", defer => undef }, '');
 	print CGI::script(
-		{
-			src   => "$site_url/node_modules/jquery-ui-timepicker-addon/dist/jquery-ui-timepicker-addon.js",
-			defer => undef
-		},
-		""
-	);
-	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef}, "");
+		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');
+	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef }, '');
 
+	# Print javascript and style for the imageview dialog.
 	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
 	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
 
@@ -2922,7 +2935,7 @@ sub output_JS {
 	print CGI::Link({ rel => "stylesheet",  href => "$site_url/js/apps/Knowls/knowl.css" });
 	print CGI::script({ src => "$site_url/js/apps/Knowls/knowl.js", defer => undef }, '');
 
-	print CGI::script({ src => "$site_url/node_modules/nestedSortable/jquery.mjs.nestedSortable.js" }, "");
+	print CGI::script({ src => "$site_url/node_modules/sortablejs/Sortable.min.js", defer => undef }, '');
 	print CGI::script({ src => "$site_url/node_modules/iframe-resizer/js/iframeResizer.min.js" }, "");
 
 	print CGI::script({ src=>"$site_url/js/apps/ProblemSetDetail/problemsetdetail.js", defer => undef }, "");

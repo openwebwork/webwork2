@@ -24,7 +24,7 @@ $debug_format = <<'ENDPROBLEMTEMPLATE';
 <script src="/webwork2_files/node_modules/jquery/dist/jquery.min.js"></script>
 <script src="/webwork2_files/node_modules/jquery-ui-dist/jquery-ui.min.js"></script>
 <script src="/webwork2_files/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" defer></script>
-<script src="/webwork2_files/js/apps/InputColor/color.js"></script>
+<script src="/webwork2_files/js/apps/InputColor/color.js" defer></script>
 <script src="/webwork2_files/js/apps/Base64/Base64.js"></script>
 <script src="/webwork2_files/js/apps/Knowls/knowl.js" defer></script>
 <script src="/webwork2_files/js/apps/Problem/problem.js" defer></script>
@@ -85,7 +85,6 @@ $LTIGradeMessage
 </div></div>
 <HR>
 
-<h3> Perl warning section </h3>
 $warnings
 <h3> PG Warning section </h3>
 $PG_warning_messages
