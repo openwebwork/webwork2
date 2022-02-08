@@ -1,13 +1,12 @@
 ################################################################################
 # WeBWorK Online Homework Delivery System
-# Copyright &copy; 2000-2018 The WeBWorK Project, http://openwebwork.sf.net/
-# $CVSHeader: webwork2/lib/WeBWorK/DB/Record/User.pm,v 1.12 2006/10/02 15:04:27 sh002i Exp $
-# 
+# Copyright &copy; 2000-2022 The WeBWorK Project, https://github.com/openwebwork
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of either: (a) the GNU General Public License as published by the
 # Free Software Foundation; either version 2, or (at your option) any later
 # version, or (b) the "Artistic License" which comes with this package.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the
@@ -29,30 +28,30 @@ use Encode qw(encode);
 
 BEGIN {
 	__PACKAGE__->_fields(
-		user_id       => { type=>"TINYBLOB NOT NULL", key=>1 },
-		first_name    => { type=>"TEXT" },
-		last_name     => { type=>"TEXT" },
-		email_address => { type=>"TEXT" },
-		student_id    => { type=>"TEXT" },
-		status        => { type=>"TEXT" },
-		section       => { type=>"TEXT" },
-		recitation    => { type=>"TEXT" },
-		comment       => { type=>"TEXT" },
-		displayMode   => { type=>"TEXT" },
-		showOldAnswers => { type=>"INT" },
-		useMathView   => { type=>"INT"  },
-		useWirisEditor   => { type=>"INT"  },
-		useMathQuill   => { type=>"INT"  },
-		lis_source_did  => { type=>"BLOB" },
+		user_id        => { type => "TINYBLOB NOT NULL", key => 1 },
+		first_name     => { type => "TEXT" },
+		last_name      => { type => "TEXT" },
+		email_address  => { type => "TEXT" },
+		student_id     => { type => "TEXT" },
+		status         => { type => "TEXT" },
+		section        => { type => "TEXT" },
+		recitation     => { type => "TEXT" },
+		comment        => { type => "TEXT" },
+		displayMode    => { type => "TEXT" },
+		showOldAnswers => { type => "INT" },
+		useMathView    => { type => "INT" },
+		useWirisEditor => { type => "INT" },
+		useMathQuill   => { type => "INT" },
+		lis_source_did => { type => "BLOB" },
 	);
 }
 
 sub full_name {
 	my ($self) = @_;
-	
+
 	my $first = $self->first_name;
-	my $last = $self->last_name;
-	
+	my $last  = $self->last_name;
+
 	if (defined $first and $first ne "" and defined $last and $last ne "") {
 		return "$first $last";
 	} elsif (defined $first and $first ne "") {
@@ -99,10 +98,10 @@ sub full_name {
 
 sub rfc822_mailbox {
 	my ($self) = @_;
-	
+
 	my $full_name = $self->full_name;
-	my $address = $self->email_address;
-	
+	my $address   = $self->email_address;
+
 	if (defined $address and $address ne "") {
 		if (defined $full_name and $full_name ne "") {
 			# Encode the user name using "MIME-Header" encoding,
