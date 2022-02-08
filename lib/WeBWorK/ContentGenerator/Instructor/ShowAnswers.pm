@@ -291,10 +291,14 @@ sub body {
 		# the user if such restrictions are defined.
 		my @Users = $db->getUsersWhere({
 			user_id => { not_like => 'set_id:%' },
-			-or     => [
-				$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
-				$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
-			]
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
 		});
 
 		my @GlobalSets = $db->getGlobalSetsWhere({}, 'set_id');
