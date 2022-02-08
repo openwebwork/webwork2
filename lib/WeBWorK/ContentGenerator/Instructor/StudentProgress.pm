@@ -185,7 +185,7 @@ sub index {
 
 	my $user = $r->param("user");
 
-	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
 	my @studentRecords = $db->getUsersWhere(
 		{
@@ -341,8 +341,8 @@ sub displaySets {
 	my $max_num_problems  = 0;
 
 	# Get all users except the set level proctors and practice users, and restrict to the sections or recitations that
-	# ar allowed for the user if such restrictions are defined.  This list is sorted by last_name, then first_name, then
-	# user_id.
+	# are allowed for the user if such restrictions are defined.  This list is sorted by last_name, then first_name,
+	# then user_id.
 	debug("Begin obtaining user records for set $setName");
 	my @studentRecords = $db->getUsersWhere(
 		{

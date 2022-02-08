@@ -197,7 +197,7 @@ sub index {
 	}
 
 	# Get a list of students sorted by user_id.
-	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
 	my @studentRecords = $db->getUsersWhere(
 		{

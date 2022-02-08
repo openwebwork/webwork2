@@ -302,7 +302,7 @@ sub body {
 	print CGI::p({},$r->maketext("Use the interface below to quickly access commonly-used instructor tools, or select a tool from the list to the left."), CGI::br(),
 		$r->maketext("Select user(s) and/or set(s) below and click the action button of your choice."));
 
-	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
 	my @Users = $db->getUsersWhere(
 		{

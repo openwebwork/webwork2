@@ -84,7 +84,7 @@ sub initialize {
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "score_sets");
 
-	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.  The users are sorted first by section, then by last name.
 	$self->{users} = [
 		$db->getUsersWhere(

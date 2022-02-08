@@ -97,7 +97,7 @@ sub body {
 		)
 	);
 
-	# Get all users except the set level proctors, and restrict to the sections or recitations that ar allowed for the
+	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
 	# user if such restrictions are defined.
 	my @Users = $db->getUsersWhere({
 		user_id => { not_like => 'set_id:%' },

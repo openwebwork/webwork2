@@ -306,26 +306,13 @@ sub body {
 				map { $_->set_id . ",v" . $_->version_id } @{ $UserSetVersionRecords{ $setsToShow[$i] } });
 		}
 		$i--;
-		my $numit = 0;
 		while ($i >= 0) {
 			if (defined($UserSetVersionRecords{ $setsToShow[$i] })) {
 				splice(@setsToShow, $i + 1, 0,
 					map { $_->set_id . ",v" . $_->version_id } @{ $UserSetVersionRecords{ $setsToShow[$i] } });
 			}
 			$i--;
-			$numit++;
-			# just to be safe
-			last if $numit >= 150;
 		}
-		# FIXME:  This message is completely incorrect, and the limit implemented above is totally not working.  All
-		# global sets are already in the @setsToShow list.  So if there are more than 150 sets, they will still all be
-		# displayed.  This just stops adding versioned sets to the list when you reach the 150th set.  Should the $numit
-		# protection just be removed, or should this be made to actually work?
-		warn(
-			'Truncated display of sets at 150 in UserDetail.pm.  This is a brake to avoid spiraling into the abyss.  '
-				. 'If you really have more than 150 sets in your course, reset the limit at line '
-				. (__LINE__ - 5) . ' in webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.')
-			if ($numit >= 150);
 	}
 
 	for my $setID (@setsToShow) {
