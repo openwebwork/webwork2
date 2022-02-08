@@ -63,7 +63,7 @@ my $replaceExisting = "none"; # Always set to "none" so no existing accounts are
 my @replaceList =();          # Empty list
 my (@replaced, @added, @skipped);
 
-# This was copied with MINOR changes from lib/WeBWorK/ContentGenerator/Instructor/UserList2.pm
+# This was copied with MINOR changes from lib/WeBWorK/ContentGenerator/Instructor/UserList.pm
 # FIXME REFACTOR this belongs in a utility class so that addcourse can use it!
 # (we need a whole suite of higher-level import/export functions somewhere)
 sub importUsersFromCSV {
