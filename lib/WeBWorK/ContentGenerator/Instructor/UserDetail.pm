@@ -85,67 +85,60 @@ sub initialize {
 	my $editUserRecord = $db->getUser($editForUserID);
 	die "record not found for $editForUserID.\n" unless $editUserRecord;
 
-	#Perform the desired assignments or deletions
+	# Perform the desired assignments or deletions
 	my %userSets = map { $_ => 1 } $db->listUserSets($editForUserID);
 
-	# go through each possible set
+	# Go through each possible set
 	debug(" parameters ", join(" ", $r->param()) );
-	foreach my $setRecord (@{ $self->{setRecords} }) {
+	for my $setRecord (@{ $self->{setRecords} }) {
 		my $setID = $setRecord->set_id;
-		# does the user want it to be assigned to the selected user
+		# Does the user want this set to be assigned to the selected user?
 		if (exists $selectedSets{$setID}) {
-		    # change by glarose, 2007/02/07: only assign set if the
-		    # user doesn't already have the set assigned.
-			$self->assignSetToUser($editForUserID, $setRecord) if ( ! $userSets{$setID} );
+			# Assign the set if it isn't assigned already.
+			$self->assignSetToUser($editForUserID, $setRecord) if (!$userSets{$setID});
 
-			#override dates
+			# Override dates
 			my $userSetRecord = $db->getUserSet($editForUserID, $setID);
-			# get the dates
-			#do checks to see if new dates meet criteria
-			my $rh_dates = $self->checkDates($setRecord,$setID);
-			unless  ( $rh_dates->{error} ) { #returns 1 if error
-				# if no error update database
-				foreach my $field (keys %{DATE_FIELDS()}) {
+
+			# Check to see if new dates meet criteria
+			my $rh_dates = $self->checkDates($setRecord, $setID);
+			unless ($rh_dates->{error}) {
+				# If no error update database
+				for my $field (keys %{ DATE_FIELDS() }) {
 					if (defined $r->param("set.$setID.$field.override")) {
 						$userSetRecord->$field($rh_dates->{$field});
 					} else {
-						$userSetRecord->$field(undef); #stop override
+						$userSetRecord->$field(undef);    #stop override
 					}
 				}
 				$db->putUserSet($userSetRecord);
 			}
 
-			# if the set is a gateway set, also check to see if we're
-			#    resetting the dates for any of the assigned set versions
-			if ( $setRecord->assignment_type =~ /gateway/ ) {
-				my @setVer = $db->listSetVersions( $editForUserID,
-								   $setID );
-				foreach my $ver ( @setVer ) {
-					my $setVersionRecord =
-						$db->getSetVersion( $editForUserID,
-								    $setID, $ver );
-					my $rh_dates = $self->checkDates($setVersionRecord,
-									 "$setID,v$ver");
-					unless ( $rh_dates->{error} ) {
-						foreach my $field ( keys %{DATE_FIELDS()} ) {
-							if ( defined( $r->param("set.$setID,v$ver.$field.override") ) ) {
+			# If the set is a gateway set, also check to see if we're
+			# resetting the dates for any of the assigned set versions
+			if ($setRecord->assignment_type =~ /gateway/) {
+				my @setVer =
+					$db->getSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } });
+				for my $setVersionRecord (@setVer) {
+					my $ver      = $setVersionRecord->version_id;
+					my $rh_dates = $self->checkDates($setVersionRecord, "$setID,v$ver");
+					unless ($rh_dates->{error}) {
+						for my $field (keys %{ DATE_FIELDS() }) {
+							if (defined($r->param("set.$setID,v$ver.$field.override"))) {
 								$setVersionRecord->$field($rh_dates->{$field});
 							} else {
 								$setVersionRecord->$field(undef);
 							}
 						}
-						$db->putSetVersion( $setVersionRecord );
+						$db->putSetVersion($setVersionRecord);
 					}
 				}
 			}
 
 		} else {
-			# user asked to NOT have the set assigned to the selected user
-			# debug("deleteUserSet($editForUserID, $setID)");
-		    # change by glarose, 2007/02/07: only do delete if user
-		    # had the set previously assigned
-			$db->deleteUserSet($editForUserID, $setID) if ( $userSets{$setID} );
-			# debug("done deleteUserSet($editForUserID, $setID)");
+			# The user asked to NOT have the set assigned to the selected user.
+			# Delete the set if set was previously assigned.
+			$db->deleteUserSet($editForUserID, $setID) if ($userSets{$setID});
 		}
 	}
 
