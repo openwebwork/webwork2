@@ -217,7 +217,7 @@ sub displayStudentStats {
 			# We have to have the merged set versions to know what each of their assignment types are
 			# (because proctoring can change this).
 			my @setVersions =
-				$db->getMergedSetVersionsWhere({ user_id => $studentName, set_id => { like => "$setName,\%" } });
+				$db->getMergedSetVersionsWhere({ user_id => $studentName, set_id => { like => "$setName,v\%" } });
 
 			# Add the set versions to our list of sets.
 			$setsByID{ $_->set_id . ",v" . $_->version_id } = $_ for (@setVersions);

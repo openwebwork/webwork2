@@ -2159,7 +2159,7 @@ sub body {
 			. CGI::em(
 			$r->maketext('To edit a specific student version of this set, edit (all of) her/his assigned sets.'))
 			: '';
-		my $vermsg = $editingSetVersion ? ", $editingSetVersion" : '';
+		my $vermsg = $editingSetVersion ? ",v$editingSetVersion" : '';
 
 		print CGI::div(
 			{ class => 'border border-dark mb-2' },
@@ -2413,8 +2413,10 @@ sub body {
 		%UserProblems = map { $_->problem_id => $_ } @userProblems;
 
 		if ($editingSetVersion) {
-			%MergedProblems = map { $_->problem_id => $_ }
-				$db->getMergedProblemVersionsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id');
+			%MergedProblems =
+				map { $_->problem_id => $_ }
+				$db->getMergedProblemVersionsWhere({ user_id => $editForUser[0], set_id => { like => "$setID,v\%" } },
+					'problem_id');
 		} else {
 			%MergedProblems = map { $_->problem_id => $_ }
 				$db->getMergedProblemsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id');
