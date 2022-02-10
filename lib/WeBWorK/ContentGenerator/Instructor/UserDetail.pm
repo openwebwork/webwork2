@@ -265,10 +265,10 @@ sub body {
 		if ($set->assignment_type =~ /gateway/) {
 			my @setVersions =
 				$db->getSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } },
-					[qw/set_id version_id/]);
+					'version_id');
 			my @mergedVersions =
 				$db->getMergedSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } },
-					'set_id');
+					\"(SUBSTRING(set_id,INSTR(set_id,',v')+2)+0)");
 			$self->outputSetRow($set, $setVersions[$_], $mergedVersions[$_], $setVersions[$_]->version_id)
 				for (0 .. $#setVersions);
 		}
