@@ -414,6 +414,9 @@ sub get_instructor_comment {
 sub pre_header_initialize {
 	my ($self)     = @_;
 
+	# if authz->checkSet has failed, this set is invalid, and no need to proceeded.
+	return if $self->{invalidSet};
+
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
@@ -1290,7 +1293,7 @@ sub body {
 
 	if ($self->{invalidSet} || $self->{invalidProblem}) {
 		# delete any proctor keys that are floating around
-		if ($self->{'assignment_type'} eq 'proctored_gateway') {
+		if (defined($self->{'assignment_type'}) && $self->{'assignment_type'} eq 'proctored_gateway') {
 			my $proctorID = $r->param('proctor_user');
 			if ($proctorID) {
 				eval{ $db->deleteKey("$effectiveUser,$proctorID"); };
