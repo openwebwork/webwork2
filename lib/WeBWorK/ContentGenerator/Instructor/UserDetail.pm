@@ -114,27 +114,36 @@ sub initialize {
 				$db->putUserSet($userSetRecord);
 			}
 
-			# If the set is a gateway set, also check to see if we're
-			# resetting the dates for any of the assigned set versions
+			# If the set is a gateway set, also check to see if we're resetting the dates for any of the assigned set
+			# versions, or if a version is to be deleted.
 			if ($setRecord->assignment_type =~ /gateway/) {
 				my @setVer =
 					$db->getSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } });
 				for my $setVersionRecord (@setVer) {
-					my $ver      = $setVersionRecord->version_id;
-					my $rh_dates = $self->checkDates($setVersionRecord, "$setID,v$ver");
-					unless ($rh_dates->{error}) {
-						for my $field (keys %{ DATE_FIELDS() }) {
-							if (defined($r->param("set.$setID,v$ver.$field.override"))) {
-								$setVersionRecord->$field($rh_dates->{$field});
-							} else {
-								$setVersionRecord->$field(undef);
+					my $ver = $setVersionRecord->version_id;
+					my $action = $r->param("set.$setID,v$ver.assignment");
+					if (defined $action) {
+						if ($action eq 'assigned') {
+							# This version is not to be deleted.
+							# Check to see if we're resetting the dates for this version.
+							my $rh_dates = $self->checkDates($setVersionRecord, "$setID,v$ver");
+							unless ($rh_dates->{error}) {
+								for my $field (keys %{ DATE_FIELDS() }) {
+									if (defined($r->param("set.$setID,v$ver.$field.override"))) {
+										$setVersionRecord->$field($rh_dates->{$field});
+									} else {
+										$setVersionRecord->$field(undef);
+									}
+								}
+								$db->putSetVersion($setVersionRecord);
 							}
+						} elsif ($action eq 'delete') {
+							# Delete this version.
+							$db->deleteSetVersion($editForUserID, $setID, $ver);
 						}
-						$db->putSetVersion($setVersionRecord);
 					}
 				}
 			}
-
 		} else {
 			# The user asked to NOT have the set assigned to the selected user.
 			# Delete the set if set was previously assigned.
@@ -212,10 +221,9 @@ sub body {
 	print CGI::div(
 		{ class => 'mb-2' },
 		CGI::submit({
-			name    => "assignAll",
-			value   => $r->maketext("Assign All Sets to Current User"),
-			onClick => "\$('input[name*=\"assignment\"]').attr('checked',1);",
-			class   => 'btn btn-primary'
+			name  => 'assignAll',
+			value => $r->maketext('Assign All Sets to Current User'),
+			class => 'btn btn-primary'
 		})
 	);
 
@@ -310,9 +318,9 @@ sub outputSetRow {
 	print CGI::Tr(CGI::td(
 		{ align => 'center' },
 		[
-			$version ? '' : CGI::checkbox({
+			CGI::checkbox({
 				type            => 'checkbox',
-				name            => "set.$setID.assignment",
+				name            => $version ? "set.$setID,v$version.assignment" : "set.$setID.assignment",
 				label           => '',
 				value           => 'assigned',
 				checked         => defined $mergedSet,
@@ -338,6 +346,7 @@ sub outputSetRow {
 				},
 				$version ? "$setID (version $version)" : $setID
 			))
+				. ($version ? CGI::hidden({ name => "set.$setID,v$version.assignment", value => 'delete' }) : '')
 			: CGI::b($setID),
 			join '',
 			$self->DBFieldTable($set, $userSet, $mergedSet, 'set', $setID, $dateFields, $dateFieldLabels),
@@ -453,48 +462,43 @@ sub DBFieldTable {
 
 		push @results,
 			[
-			$r->maketext($rh_fieldLabels->{$field}) . ' ',
-			defined $UserRecord
-			? CGI::checkbox({
-				type    => 'checkbox',
-				name    => "$recordType.$recordID.$field.override",
-				id      => "$recordType.$recordID.$field.override_id",
-				label   => '',
-				value   => $field,
-				checked => $r->param("$recordType.$recordID.$field.override")
+				$r->maketext($rh_fieldLabels->{$field}) . ' ',
+				defined $UserRecord
+				? CGI::checkbox({
+					type    => 'checkbox',
+					name    => "$recordType.$recordID.$field.override",
+					id      => "$recordType.$recordID.$field.override_id",
+					label   => '',
+					value   => $field,
+					checked => $r->param("$recordType.$recordID.$field.override")
 					|| $mergedValue ne $globalValue
 					|| ($isVersioned && $field ne 'reduced_scoring_date'),
-				class           => 'form-check-input',
-				labelattributes => { class => 'form-check-label' }
-			})
-			: '',
-			defined $UserRecord
-			? CGI::div(
-				{ class => 'input-group input-group-sm flex-nowrap flatpickr' },
-				CGI::input({
-					name     => "$recordType.$recordID.$field",
-					id       => "$recordType.$recordID.${field}_id",
-					type     => 'text',
-					value    => $userValue ? $self->formatDateTime($userValue, '', '%m/%d/%Y at %I:%M%P') : '',
-					onchange =>
-						qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
-					onkeyup =>
-						qq{\$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked', this.value != '')},
-					placeholder => x('None Specified'),
-					onblur      =>
-						qq{if (this.value == '') \$('input[id="$recordType.$recordID.$field.override_id"]').prop('checked',false);},
-					class => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
-					data_enable_datepicker => $ce->{options}{useDateTimePicker},
-					data_input             => undef,
-					data_done_text         => $self->r->maketext('Done')
-				}),
-				CGI::a(
-					{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
-					CGI::i({ class => 'fas fa-calendar-alt' }, '')
+					class           => 'form-check-input',
+					labelattributes => { class => 'form-check-label' }
+				})
+				: '',
+				defined $UserRecord
+				? CGI::div(
+					{ class => 'input-group input-group-sm flex-nowrap flatpickr' },
+					CGI::input({
+						name          => "$recordType.$recordID.$field",
+						id            => "$recordType.$recordID.${field}_id",
+						type          => 'text',
+						value         => $userValue ? $self->formatDateTime($userValue, '', '%m/%d/%Y at %I:%M%P') : '',
+						data_override => "$recordType.$recordID.$field.override_id",
+						placeholder   => x('None Specified'),
+						class         => 'form-control w-auto' . ($field eq 'open_date' ? ' datepicker-group' : ''),
+						data_enable_datepicker => $ce->{options}{useDateTimePicker},
+						data_input             => undef,
+						data_done_text         => $self->r->maketext('Done')
+					}),
+					CGI::a(
+						{ class => 'btn btn-secondary btn-sm', data_toggle => undef },
+						CGI::i({ class => 'fas fa-calendar-alt' }, '')
+					)
 				)
-			)
-			: '',
-			$self->formatDateTime($globalValue, '', '%m/%d/%Y at %I:%M%P'),
+				: '',
+				$self->formatDateTime($globalValue, '', '%m/%d/%Y at %I:%M%P'),
 			];
 	}
 
@@ -523,6 +527,9 @@ sub output_JS {
 	print CGI::script(
 		{ src => "$site_url/node_modules/flatpickr/dist/plugins/confirmDate/confirmDate.js", defer => undef }, '');
 	print CGI::script({ src => "$site_url/js/apps/DatePicker/datepicker.js", defer => undef }, '');
+
+	# Add javascript specifically for this module.
+	print CGI::script({ src => "$site_url/js/apps/UserDetail/userdetail.js", defer => undef }, '');
 
 	return '';
 
