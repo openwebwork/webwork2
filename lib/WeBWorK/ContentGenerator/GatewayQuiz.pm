@@ -32,7 +32,7 @@ use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
 use WeBWorK::Utils qw(writeLog writeCourseLog encodeAnswers decodeAnswers
-	ref2string makeTempDirectory path_is_subdir sortByName before after
+	ref2string makeTempDirectory path_is_subdir before after
 	between wwRound is_restricted);  # use the ContentGenerator formatDateTime, not the version in Utils
 use WeBWorK::DB::Utils qw(global2user user2global);
 use WeBWorK::Utils::Tasks qw(fake_set fake_set_version fake_problem);
@@ -1164,7 +1164,8 @@ sub nav {
 		my $courseName = $self->{ce}{courseName};
 
 		# Find all versions of this set that have been taken (excluding those taken by the current user).
-		my @users = grep { $_->[0] ne $user } $db->listSetVersionsWhere({ set_id => { like => "$setName,v\%" } });
+		my @users =
+			$db->listSetVersionsWhere({ user_id => { not_like => $user }, set_id => { like => "$setName,v\%" } });
 		my @userRecords = $db->getUsers(map { $_->[0] } @users);
 
 		# Format the student names for display, and associate the users with the test versions.

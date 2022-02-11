@@ -40,7 +40,7 @@ sub initialize {
 	# Check permissions
 	return unless $authz->hasPermissions($user, "edit_achievements");
 
-	my @users = $db->listUsers;
+	$self->{all_users} = [ $db->listUsers ];
 	my %selectedUsers = map {$_ => 1} $r->param('selected');
 
 	my $doAssignToSelected = 0;
@@ -51,7 +51,7 @@ sub initialize {
 			{ class => 'alert alert-success p-1 mb-0' },
 			$r->maketext("Achievement has been assigned to all users.")
 		));
-		%selectedUsers      = map { $_ => 1 } @users;
+		%selectedUsers      = map { $_ => 1 } @{ $self->{all_users} };
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('unassignFromAll')
 		&& defined($r->param('unassignFromAllSafety'))
@@ -82,7 +82,7 @@ sub initialize {
 	if ($doAssignToSelected) {
 
 		my %achievementUsers = map { $_ => 1 } $db->listAchievementUsers($achievementID);
-		foreach my $selectedUser (@users) {
+		foreach my $selectedUser (@{ $self->{all_users} }) {
 			if (exists $selectedUsers{$selectedUser} && $achievementUsers{$selectedUser}) {
 			    # update existing user data (in case fields were changed)
 			    my $userAchievement = $db->getUserAchievement($selectedUser,$achievementID);
@@ -155,8 +155,6 @@ sub body {
 	return CGI::div({ class => 'alert alert-danger p-1' }, "You are not authorized to edit achievements.")
 		unless $authz->hasPermissions($user, "edit_achievements");
 
-	# DBFIXME duplicate call
-	my @users = $db->listUsers;
 	print CGI::start_form({name=>"user-achievement-form", id=>"user-achievement-form", method=>"post", action => $self->systemLink( $urlpath, authen=>0) });
 
 	# Assign to everyone message
@@ -195,7 +193,7 @@ sub body {
 
 	# get user records
 	my @userRecords  = ();
-	foreach my $currentUser ( @users) {
+	for my $currentUser (@{ $self->{all_users} }) {
 		my $userObj = $db->getUser($currentUser); #checked
 		die "Unable to find user object for $currentUser. " unless $userObj;
 		push (@userRecords, $userObj );

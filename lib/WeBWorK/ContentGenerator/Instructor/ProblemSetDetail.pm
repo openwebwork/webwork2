@@ -1240,8 +1240,7 @@ sub initialize {
 			#    not the most robust treatment of the problem
 			#    (FIXME)
 
-			# DBFIXME use a WHERE clause, iterator
-			my @userRecords = $db->getUserSets(map { [$_, $setID] } @editForUser);
+			my @userRecords = $db->getUserSetsWhere({ user_id => [ @editForUser ], set_id => $setID });
 			# if we're editing a set version, we want to edit
 			#    edit that instead of the userset, so get it
 			#    too.
@@ -1526,8 +1525,7 @@ sub initialize {
 		# Save problem information
 		#####################################################################
 
-		# DBFIXME use a WHERE clause, iterator?
-		my @problemIDs = sort { $a <=> $b } $db->listGlobalProblems($setID);;
+		my @problemIDs = map { $_->[1] } $db->listGlobalProblemsWhere({ set_id => $setID }, 'problem_id');
 		my @problemRecords = $db->getGlobalProblems(map { [$setID, $_] } @problemIDs);
 		foreach my $problemRecord (@problemRecords) {
 			my $problemID = $problemRecord->problem_id;
@@ -1543,8 +1541,8 @@ sub initialize {
 				my @userProblemRecords;
 				if ( ! $editingSetVersion ) {
 					my @userProblemIDs = map { [$_, $setID, $problemID] } @userIDs;
-					# DBFIXME where clause? iterator?
-					@userProblemRecords = $db->getUserProblems(@userProblemIDs);
+					@userProblemRecords = $db->getUserProblemsWhere(
+						{ user_id => [@userIDs], set_id => $setID, problem_id => $problemID });
 				} else {
 					## (we know that we're only editing for one user)
 					@userProblemRecords =
@@ -1638,7 +1636,6 @@ sub initialize {
 				}
 				$db->putGlobalProblem($problemRecord) if $changed;
 
-
 				# sometimes (like for status) we might want to change an attribute in
 				# the userProblem record for every assigned user
 				# However, since this data is stored in the UserProblem records,
@@ -1654,10 +1651,7 @@ sub initialize {
 				}
 
 				if (keys %useful) {
-					# DBFIXME where clause, iterator
-					my @userIDs = $db->listProblemUsers($setID, $problemID);
-					my @userProblemIDs = map { [$_, $setID, $problemID] } @userIDs;
-					my @userProblemRecords = $db->getUserProblems(@userProblemIDs);
+					my @userProblemRecords = $db->getUserProblemsWhere({ set_id => $setID, problem_id => $problemID });
 					foreach my $record (@userProblemRecords) {
 						my $changed = 0; # keep track of any changes, if none are made, avoid unnecessary db accesses
 						foreach my $field ( keys %useful ) {
@@ -1680,8 +1674,10 @@ sub initialize {
 		#    version, because this only shows up when editing for users or editing the
 		#    global set/problem, not for one user)
 		foreach my $problemID ($r->param('markCorrect')) {
-			# DBFIXME where clause, iterator
-			my @userProblemIDs = map { [$_, $setID, $problemID] } ($forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID));
+			my @userProblemIDs =
+				$forUsers
+				? (map { [ $_, $setID, $problemID ] } @editForUser)
+				: $db->listUserProblemsWhere({ set_id => $setID, problem_id => $problemID });
 			# if the set is not a gateway set, this requires going through the
 			#    user_problems and resetting their status; if it's a gateway set,
 			#    then we have to go through every *version* of every user_problem.
@@ -1698,7 +1694,7 @@ sub initialize {
 					}
 				}
 			} else {
-				my @userIDs = ( $forUsers ) ? @editForUser : $db->listProblemUsers($setID, $problemID);
+				my @userIDs = $forUsers ? @editForUser : $db->listProblemUsers($setID, $problemID);
 				foreach my $uid ( @userIDs ) {
 					my @versions = $db->listSetVersions( $uid, $setID );
 					my @userProblemVersionIDs =
@@ -2051,7 +2047,6 @@ sub body {
 	my @unassignedUsers;
 	if (scalar @editForUser) {
 		foreach my $ID (@editForUser) {
-			# DBFIXME iterator
 			if ($db->getUserSet($ID, $setID)) {
 				unshift @assignedUsers, $ID;
 			} else {
@@ -2107,12 +2102,11 @@ sub body {
 	my $isGatewaySet = ( $setRecord->assignment_type =~ /gateway/ ) ? 1 : 0;
 	my $isJitarSet = ( $setRecord->assignment_type eq 'jitar' ) ? 1 : 0;
 
-	# DBFIXME no need to get ID lists -- counts would be fine
-	my $userCount        = $db->listUsers();
-	my $setCount         = $db->listGlobalSets(); # if $forOneUser;
-	my $setUserCount     = $db->countSetUsers($setID);
-# if $forOneUser;
-	my $userSetCount     = ($forOneUser && @editForUser) ? $db->countUserSets($editForUser[0]) : 0;
+	my $userCount    = $db->countUsers();
+	my $setCount     = $db->countGlobalSets();       # if $forOneUser;
+	my $setUserCount = $db->countSetUsers($setID);
+	# if $forOneUser;
+	my $userSetCount = ($forOneUser && @editForUser) ? $db->countUserSets($editForUser[0]) : 0;
 
 
 	my $editUsersAssignedToSetURL = $self->systemLink(
@@ -2127,12 +2121,6 @@ sub body {
 	my $setDetailPage  = $urlpath -> newFromModule($urlpath->module, $r, courseID => $courseID, setID => $setID);
 	my $fullsetDetailPage  = $urlpath -> newFromModule($urlpath->module, $r, courseID => $courseID, setID => $fullSetID);
 	my $setDetailURL   = $self->systemLink($fullsetDetailPage, authen=>0);
-
-	my $userCountMessage = CGI::a({href=>$editUsersAssignedToSetURL}, $self->userCountMessage($setUserCount, $userCount));
-	my $setCountMessage = CGI::a({href=>$editSetsAssignedToUserURL}, $self->setCountMessage($userSetCount, $setCount)) if $forOneUser;
-
-	$userCountMessage = $r->maketext("The set [_1] is assigned to [_2].", $setID, $userCountMessage);
-	$setCountMessage  = $r->maketext("The user [_1] has been assigned [_2].", $editForUser[0], $setCountMessage) if $forOneUser;
 
 	if ($forUsers) {
 	    ##############################################
@@ -2171,7 +2159,7 @@ sub body {
 			. CGI::em(
 			$r->maketext('To edit a specific student version of this set, edit (all of) her/his assigned sets.'))
 			: '';
-		my $vermsg = $editingSetVersion ? ", $editingSetVersion" : '';
+		my $vermsg = $editingSetVersion ? ",v$editingSetVersion" : '';
 
 		print CGI::div(
 			{ class => 'border border-dark mb-2' },
@@ -2413,31 +2401,29 @@ sub body {
 	# Display problem information
 	#####################################################################
 
-        my @problemIDList = sort {$a <=> $b} $db->listGlobalProblems($setID);
+	# Get global problem records for all problems sorted by problem id.
+	my @globalProblems = $db->getGlobalProblemsWhere({ set_id => $setID }, 'problem_id');
+	my @problemIDList  = map { $_->problem_id } @globalProblems;
+	my %GlobalProblems = map { $_->problem_id => $_ } @globalProblems;
 
-	# DBFIXME use iterators instead of getting all at once
-
-	# get global problem records for all problems in one go
-	my %GlobalProblems;
-	my @globalKeypartsRef = map { [$setID, $_] } @problemIDList;
-	# DBFIXME shouldn't need to get key list here
-	@GlobalProblems{@problemIDList} = $db->getGlobalProblems(@globalKeypartsRef);
-
-	# if needed, get user problem records for all problems in one go
+	# If editing for one user, get user problem records for all problems also sorted by problem_id.
 	my (%UserProblems, %MergedProblems);
 	if ($forOneUser) {
-		my @userKeypartsRef = map { [$editForUser[0], $setID, $_] } @problemIDList;
-		# DBFIXME shouldn't need to get key list here
-		@UserProblems{@problemIDList} = $db->getUserProblems(@userKeypartsRef);
-		if ( ! $editingSetVersion ) {
-			@MergedProblems{@problemIDList} = $db->getMergedProblems(@userKeypartsRef);
+		my @userProblems = $db->getUserProblemsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id');
+		%UserProblems = map { $_->problem_id => $_ } @userProblems;
+
+		if ($editingSetVersion) {
+			%MergedProblems =
+				map { $_->problem_id => $_ }
+				$db->getMergedProblemVersionsWhere({ user_id => $editForUser[0], set_id => { like => "$setID,v\%" } },
+					'problem_id');
 		} else {
-			my @userversionKeypartsRef = map { [$editForUser[0], $setID, $editingSetVersion, $_] } @problemIDList;
-			@MergedProblems{@problemIDList} = $db->getMergedProblemVersions(@userversionKeypartsRef);
+			%MergedProblems = map { $_->problem_id => $_ }
+				$db->getMergedProblemsWhere({ user_id => $editForUser[0], set_id => $setID }, 'problem_id');
 		}
 	}
 
-	if (scalar @problemIDList) {
+	if (scalar @globalProblems) {
 		# Create rows for problems.  This is done using divs instead of tables
 		# the spacing and formatting is done via bootstrap.
 		print CGI::h2($r->maketext('Problems'));

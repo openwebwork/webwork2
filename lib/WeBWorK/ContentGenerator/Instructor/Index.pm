@@ -302,39 +302,24 @@ sub body {
 	print CGI::p({},$r->maketext("Use the interface below to quickly access commonly-used instructor tools, or select a tool from the list to the left."), CGI::br(),
 		$r->maketext("Select user(s) and/or set(s) below and click the action button of your choice."));
 
-	# DBFIXME shouldn't need to use list of IDs, use iterator for results, marks edits in WHERE clause
-	# the grep here prevents set-level proctors from being displayed here
-	my @userIDs = grep {$_ !~ /^set_id:/} $db->listUsers;
-	my @Users = $db->getUsers(@userIDs);
+	# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for the
+	# user if such restrictions are defined.  This list is sorted by last_name, then first_name, then user_id.
+	my @Users = $db->getUsersWhere(
+		{
+			user_id => { not_like => 'set_id:%' },
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
+		},
+		[qw/last_name first_name user_id/]
+	);
 
-	## Mark's Edits for filtering
-	my @myUsers;
-
-	my (@viewable_sections,@viewable_recitations);
-
-	if (defined $ce->{viewable_sections}->{$user})
-	{@viewable_sections = @{$ce->{viewable_sections}->{$user}};}
-	if (defined $ce->{viewable_recitations}->{$user})
-	{@viewable_recitations = @{$ce->{viewable_recitations}->{$user}};}
-
-	if (@viewable_sections or @viewable_recitations){
-		foreach my $student (@Users){
-			my $keep = 0;
-			foreach my $sec (@viewable_sections){
-				if ($student->section() eq $sec){$keep = 1;}
-			}
-			foreach my $rec (@viewable_recitations){
-				if ($student->recitation() eq $rec){$keep = 1;}
-			}
-			if ($keep) {push @myUsers, $student;}
-		}
-		@Users = @myUsers;
-	}
-	## End Mark's Edits
-
-	# DBFIXME shouldn't need to use list of IDs, use iterator for results
-	my @globalSetIDs = $db->listGlobalSets;
-	my @GlobalSets = $db->getGlobalSets(@globalSetIDs);
+	my @GlobalSets = $db->getGlobalSetsWhere();
 
 	my @selected_users = $r->param("selected_users");
 	my @selected_sets = $r->param("selected_sets");

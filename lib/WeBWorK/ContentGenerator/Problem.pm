@@ -35,8 +35,9 @@ use WeBWorK::Form;
 use WeBWorK::PG;
 use WeBWorK::PG::ImageGenerator;
 use WeBWorK::PG::IO;
-use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
-	ref2string makeTempDirectory path_is_subdir sortByName before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished);
+use WeBWorK::Utils qw(readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted ref2string
+	makeTempDirectory path_is_subdir before after between wwRound is_jitar_problem_closed is_jitar_problem_hidden
+	jitar_problem_adjusted_status jitar_id_to_seq seq_to_jitar_id jitar_problem_finished);
 use WeBWorK::DB::Utils qw(global2user user2global);
 require WeBWorK::Utils::ListingDB;
 use URI::Escape;
@@ -437,26 +438,13 @@ sub pre_header_initialize {
 
 	die("You do not have permission to view unopened sets") unless $self->{isOpen};
 
-	# Database fix (in case of undefined visiblity state values)
-	# this is only necessary because some people keep holding to ww1.9 which did not have a visible field
-	# make sure visible is set to 0 or 1
-	if ( $set and $set->visible ne "0" and $set->visible ne "1") {
-		my $globalSet = $db->getGlobalSet($set->set_id);
-		$globalSet->visible("1");	# defaults to visible
-		$db->putGlobalSet($globalSet);
-		$set = $db->getMergedSet($effectiveUserName, $setName);
-	} else {
-		# don't do anything just yet, maybe we're a professor and we're
-		# fabricating a set or haven't assigned it to ourselves just yet
-	}
-		# When a set is created enable_reduced_scoring is null, so we have to set it
+	# When a set is created enable_reduced_scoring is null, so we have to set it
 	if ( $set and $set->enable_reduced_scoring ne "0" and $set->enable_reduced_scoring ne "1") {
 		my $globalSet = $db->getGlobalSet($set->set_id);
 		$globalSet->enable_reduced_scoring("0");	# defaults to disabled
 		$db->putGlobalSet($globalSet);
 		$set = $db->getMergedSet($effectiveUserName, $setName);
 	}
-
 
 	# obtain the merged problem for $effectiveUser
 	my $problem = $db->getMergedProblem($effectiveUserName, $setName, $problemNumber); # checked
@@ -886,19 +874,11 @@ sub siblings {
 	my $courseID = $urlpath->arg("courseID");
 	my $setID = $self->{set}->set_id;
 	my $eUserID = $r->param("effectiveUser");
-	my @problemIDs = sort { $a <=> $b } $db->listUserProblems($eUserID, $setID);
 
-	my $isJitarSet = 0;
+	my @problemRecords = $db->getMergedProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
+	my @problemIDs     = map { $_->problem_id } @problemRecords;
 
-	if ($setID) {
-	    my $set = $r->db->getGlobalSet($setID);
-	    if ($set && $set->assignment_type eq 'jitar') {
-		$isJitarSet = 1;
-	    }
-	}
-
-	my @where = map {[$eUserID, $setID, $_]} @problemIDs;
-	my @problemRecords = $db->getMergedProblems(@where);
+	my $isJitarSet = $setID && $self->{set}->assignment_type eq 'jitar' ? 1 : 0;
 
 	# variables for the progress bar
 	my $num_of_problems  = 0;
@@ -1083,15 +1063,15 @@ sub nav {
 	# Set up a student navigation for those that have permission to act as a student.
 	my $userNav = "";
 	if ($authz->hasPermissions($userID, "become_student") && $eUserID ne $userID) {
-		# Find all users for this set (except the current user).
-		my @userRecords = $db->getUsers(grep { $_ ne $userID } $db->listSetUsers($setID));
-
-		# Sort by last name, then first name, then user_id.
-		@userRecords = sort {
-			lc($a->last_name) cmp lc($b->last_name) ||
-			lc($a->first_name) cmp lc($b->first_name) ||
-			lc($a->user_id) cmp lc($b->user_id)
-		} @userRecords;
+		# Find all users for this set (except the current user) sorted by last_name, then first_name, then user_id.
+		my @userRecords = $db->getUsersWhere(
+			{
+				user_id => [
+					map { $_->[0] } $db->listUserSetsWhere({ set_id => $setID, user_id => { not_like => $userID } })
+				]
+			},
+			[qw/last_name first_name user_id/]
+		);
 
 		# Find the previous, current, and next users, and format the student names for display.
 		my $currentUserIndex = 0;
@@ -1200,10 +1180,8 @@ sub nav {
 	# for jitar sets finding the next or previous problem, and seeing if it
 	# is actually open is a bit more of a process.
 	if (!$self->{invalidProblem}) {
-		my @problemIDs = $db->listUserProblems($eUserID, $setID);
-
-		@problemIDs = sort { $a <=> $b } @problemIDs;
-
+		my @problemIDs =
+			map { $_->[2] } $db->listUserProblemsWhere({ user_id => $eUserID, set_id => $setID }, 'problem_id');
 
 		if ($isJitarSet) {
 		    my @processedProblemIDs;
@@ -1901,8 +1879,8 @@ sub output_score_summary{
 	#print jitar specific informaton for students. (and notify instructor
 	# if necessary
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
-	  my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
-	  @problemIDs = sort { $a <=> $b } @problemIDs;
+	  my @problemIDs =
+	    map { $_->[2] } $db->listUserProblemsWhere({ user_id => $effectiveUser, set_id => $set->set_id }, 'problem_id');
 
 	  # get some data
 	  my @problemSeqs;
@@ -2170,8 +2148,9 @@ sub output_summary{
 
 	if ($set->set_id ne 'Undefined_Set' && $set->assignment_type() eq 'jitar') {
 	my $hasChildren = 0;
-	my @problemIDs = $db->listUserProblems($effectiveUser, $set->set_id);
-	@problemIDs = sort { $a <=> $b } @problemIDs;
+
+	my @problemIDs =
+		map { $_->[2] } $db->listUserProblemsWhere({ user_id => $effectiveUser, set_id => $set->set_id }, 'problem_id');
 
 	# get some data
 	my @problemSeqs;
@@ -2219,10 +2198,6 @@ sub output_achievement_message{
 
 	my $r = $self->r;
 	my $ce = $r->ce;
-	my $db = $r->db;
-
-	my $authz = $r->authz;
-	my $user = $r->param('user');
 
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers}

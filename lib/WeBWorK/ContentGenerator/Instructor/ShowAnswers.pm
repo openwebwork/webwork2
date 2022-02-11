@@ -83,23 +83,23 @@ sub initialize {
   	foreach my $studentUser (@$selectedUsers) {
 	    my @sets;
 
-	    # search for selected sets assigned to students
-	    my @allSets = $db->listUserSets($studentUser);
-	    foreach my $setName (@allSets) {
-	      my $set = $db->getMergedSet($studentUser,$setName);
-	      if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/) {
-		my @versions = $db->listSetVersions($studentUser, $setName);
-		foreach my $version(@versions) {
-		  if (grep/^$setName,v$version$/,@$selectedSets) {
-		    $set = $db->getUserSet($studentUser,"$setName,v$version");
-		    push(@sets, $set);
-		  }
-		}
-	      } elsif (grep(/^$setName$/,@$selectedSets)) {
-		push (@sets, $set);
-	      }
+		# search for selected sets assigned to students
+		my @allSets = $db->listUserSets($studentUser);
+		foreach my $setName (@allSets) {
+			my $set = $db->getMergedSet($studentUser, $setName);
+			if (defined($set->assignment_type) && $set->assignment_type =~ /gateway/) {
+				my @versions = $db->listSetVersions($studentUser, $setName);
+				foreach my $version (@versions) {
+					if (grep /^$setName,v$version$/, @$selectedSets) {
+						$set = $db->getUserSet($studentUser, "$setName,v$version");
+						push(@sets, $set);
+					}
+				}
+			} elsif (grep(/^$setName$/, @$selectedSets)) {
+				push(@sets, $set);
+			}
 
-	    }
+		}
 
 	    next unless @sets;
 
@@ -287,37 +287,21 @@ sub body {
 	#only instructors should be able to veiw other people's answers.
 
 	if ($instructor) {
-		my @userIDs = grep { $_ !~ /^set_id:/ } $db->listUsers;
-		my @Users   = $db->getUsers(@userIDs);
+		# Get all users except the set level proctors, and restrict to the sections or recitations that are allowed for
+		# the user if such restrictions are defined.
+		my @Users = $db->getUsersWhere({
+			user_id => { not_like => 'set_id:%' },
+			$ce->{viewable_sections}{$user} || $ce->{viewable_recitations}{$user}
+			? (
+				-or => [
+					$ce->{viewable_sections}{$user}    ? (section    => $ce->{viewable_sections}{$user})    : (),
+					$ce->{viewable_recitations}{$user} ? (recitation => $ce->{viewable_recitations}{$user}) : ()
+				]
+				)
+			: ()
+		});
 
-		## Mark's Edits for filtering
-		my @myUsers;
-
-		my (@viewable_sections, @viewable_recitations);
-
-		if (defined $ce->{viewable_sections}->{$user}) { @viewable_sections = @{ $ce->{viewable_sections}->{$user} }; }
-		if (defined $ce->{viewable_recitations}->{$user}) {
-			@viewable_recitations = @{ $ce->{viewable_recitations}->{$user} };
-		}
-
-		if (@viewable_sections or @viewable_recitations) {
-			foreach my $student (@Users) {
-				my $keep = 0;
-				foreach my $sec (@viewable_sections) {
-					if ($student->section() eq $sec) { $keep = 1; }
-				}
-				foreach my $rec (@viewable_recitations) {
-					if ($student->recitation() eq $rec) { $keep = 1; }
-				}
-				if ($keep) { push @myUsers, $student; }
-			}
-			@Users = @myUsers;
-		}
-		## End Mark's Edits
-
-		# DBFIXME shouldn't need to use list of IDs, use iterator for results
-		my @globalSetIDs = $db->listGlobalSets;
-		my @GlobalSets   = $db->getGlobalSets(@globalSetIDs);
+		my @GlobalSets = $db->getGlobalSetsWhere({}, 'set_id');
 
 		my @expandedGlobalSetIDs;
 

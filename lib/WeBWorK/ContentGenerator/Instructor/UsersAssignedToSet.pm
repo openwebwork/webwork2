@@ -29,60 +29,60 @@ use CGI qw(-nosticky );
 use WeBWorK::Debug;
 
 sub initialize {
-	my ($self)     = @_;
-	my $r          = $self->r;
-	my $urlpath    = $r->urlpath;
-	my $authz      = $r->authz;
-	my $db         = $r->db;
-	my $setID      = $urlpath->arg("setID");
-	my $user       = $r->param('user');
+	my ($self)  = @_;
+	my $r       = $self->r;
+	my $urlpath = $r->urlpath;
+	my $authz   = $r->authz;
+	my $db      = $r->db;
+	my $setID   = $urlpath->arg("setID");
+	my $user    = $r->param('user');
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
 	return unless $authz->hasPermissions($user, "assign_problem_sets");
 
-	my @users = $db->listUsers;
-	my %selectedUsers = map {$_ => 1} $r->param('selected');
+	my %selectedUsers = map { $_ => 1 } $r->param('selected');
 
 	my $doAssignToSelected = 0;
-
-	# get the global user, if there is one
-	my $globalUserID = "";
-	$globalUserID = $db->{set}->{params}->{globalUserID}
-		if ref $db->{set} eq "WeBWorK::DB::Schema::GlobalTableEmulator";
 
 	if (defined $r->param('assignToAll')) {
 		debug("assignSetToAllUsers($setID)");
 		$self->addbadmessage($r->maketext("Problems have been assigned to all current users."));
 		$self->assignSetToAllUsers($setID);
 		debug("done assignSetToAllUsers($setID)");
-	} elsif (defined $r->param('unassignFromAll') and defined($r->param('unassignFromAllSafety')) and $r->param('unassignFromAllSafety')==1) {
-		%selectedUsers = ( $globalUserID => 1 );
+	} elsif (defined $r->param('unassignFromAll')
+		&& defined($r->param('unassignFromAllSafety'))
+		&& $r->param('unassignFromAllSafety') == 1)
+	{
+		%selectedUsers = ();
 		$self->addgoodmessage($r->maketext("Problems for all students have been unassigned."));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param('assignToSelected')) {
-	   	$self->addgoodmessage($r->maketext("Problems for selected students have been reassigned."));
+		$self->addgoodmessage($r->maketext("Problems for selected students have been reassigned."));
 		$doAssignToSelected = 1;
 	} elsif (defined $r->param("unassignFromAll")) {
-	   # no action taken
-	   $self->addbadmessage($r->maketext("No action taken"));
+		# no action taken
+		$self->addbadmessage($r->maketext("No action taken"));
 	}
 
+	# Get all user records and cache them for later use.
+	$self->{user_records} =
+		[ $db->getUsersWhere({ user_id => { not_like => 'set_id:%' } }, [qw/section last_name first_name/]) ];
+
 	if ($doAssignToSelected) {
-		my $setRecord = $db->getGlobalSet($setID); #checked
+		my $setRecord = $db->getGlobalSet($setID);
 		die "Unable to get global set record for $setID " unless $setRecord;
 
 		my %setUsers = map { $_ => 1 } $db->listSetUsers($setID);
-		foreach my $selectedUser (@users) {
+		for my $selectedUser (map { $_->user_id } @{ $self->{user_records} }) {
 			if (exists $selectedUsers{$selectedUser}) {
-				unless ($setUsers{$selectedUser}) {	# skip users already in the set
+				unless ($setUsers{$selectedUser}) {    # skip users already in the set
 					debug("assignSetToUser($selectedUser, ...)");
 					$self->assignSetToUser($selectedUser, $setRecord);
 					debug("done assignSetToUser($selectedUser, ...)");
 				}
 			} else {
-				next if $selectedUser eq $globalUserID;
-				next unless $setUsers{$selectedUser};	# skip users not in the set
+				next unless $setUsers{$selectedUser};    # skip users not in the set
 				$db->deleteUserSet($selectedUser, $setID);
 			}
 		}
@@ -115,16 +115,12 @@ sub body {
 	return CGI::div({ class => 'alert alert-danger p-1' }, 'You are not authorized to assign homework sets.')
 		unless $authz->hasPermissions($user, 'assign_problem_sets');
 
-	# DBFIXME duplicate call
-	my @users = $db->listUsers;
-	print CGI::start_form(
-		{
-			id     => 'user-set-form',
-			name   => 'user-set-form',
-			method => 'post',
-			action => $self->systemLink($urlpath, authen => 0)
-		}
-	);
+	print CGI::start_form({
+		id     => 'user-set-form',
+		name   => 'user-set-form',
+		method => 'post',
+		action => $self->systemLink($urlpath, authen => 0)
+	});
 
 	print CGI::div(
 		{ class => 'my-2' },
@@ -135,7 +131,6 @@ sub body {
 		}),
 		CGI::i($r->maketext('This action can take a long time if there are many students.'))
 	);
-
 
 	print CGI::div(
 		{ class => 'alert alert-danger p-1 mb-2' },
@@ -164,42 +159,25 @@ sub body {
 		])
 	));
 
-	# get user records
-	my @userRecords = ();
-	foreach my $currentUser (@users) {
-		my $userObj = $db->getUser($currentUser);    #checked
-		die "Unable to find user object for $currentUser. " unless $userObj;
-		push(@userRecords, $userObj);
-	}
-	@userRecords =
-		sort { (lc($a->section) cmp lc($b->section)) || (lc($a->last_name) cmp lc($b->last_name)) } @userRecords;
-
-	# get the global user, if there is one
-	my $globalUserID = '';
-	$globalUserID = $db->{set}->{params}->{globalUserID}
-		if ref $db->{set} eq 'WeBWorK::DB::Schema::GlobalTableEmulator';
-
 	# there are two set detail pages.  If we were sent here from the second one
 	# there will be a parameter we can use to get back to that one from these links
 	my $detailPageType = 'instructor_set_detail';
 	$detailPageType = $r->param('pageVersion') if ($r->param('pageVersion'));
 
 	print CGI::start_tbody();
-	for my $userRecord (@userRecords) {
+	for my $userRecord (@{ $self->{user_records} }) {
 
 		my $statusClass = $ce->status_abbrev_to_name($userRecord->status) || '';
 
 		my $user          = $userRecord->user_id;
-		my $userSetRecord = $db->getUserSet($user, $setID);                                   #checked
+		my $userSetRecord = $db->getUserSet($user, $setID);
 		my $prettyName    = $userRecord->last_name . ', ' . $userRecord->first_name;
 		my $dueDate       = $userSetRecord->due_date if ref($userSetRecord);
 		my $prettyDate    = $dueDate ? $self->formatDateTime($dueDate) : '';
 		print CGI::Tr(
 			CGI::td(
 				{ class => 'text-center' },
-				$user eq $globalUserID
-				? ''    # no checkbox for global user!
-				: CGI::checkbox({
+				CGI::checkbox({
 					type            => 'checkbox',
 					name            => 'selected',
 					checked         => defined($userSetRecord),
@@ -251,15 +229,15 @@ sub body {
 				{ class => 'alert alert-danger p-1 mb-3' },
 				$r->maketext(
 					'There is NO undo for this function.  Do not use it unless you know what you are doing!  '
-						. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
-						. "of the data for homework set $setID for this student.",
+					. 'When you unassign a student using this button, or by unchecking their name, you destroy all '
+					. "of the data for homework set $setID for this student.",
 				)
 			),
 			CGI::div(
 				{ class => 'd-flex flex-wrap align-items-center' },
 				CGI::submit({
-						name  => 'unassignFromAll',
-						value => $r->maketext('Unassign from All Users'),
+					name  => 'unassignFromAll',
+					value => $r->maketext('Unassign from All Users'),
 					class => 'btn btn-primary'
 				}),
 				CGI::radio_group({

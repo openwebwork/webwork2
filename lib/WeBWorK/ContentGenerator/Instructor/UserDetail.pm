@@ -49,9 +49,8 @@ sub initialize {
 		"You are not authorized to edit user specific information.")
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
-	# templates for getting field names
-	my $userTemplate = $self->{userTemplate} = $db->newUser;
-	my $permissionLevelTemplate = $self->{permissionLevelTemplate} = $db->newPermissionLevel;
+	# Get the list of sets and the global set records and cache them for later use.  This list is sorted by set_id.
+	$self->{setRecords} = [ $db->getGlobalSetsWhere({}, 'set_id') ];
 
 	# first check to see if a save form has been submitted
 	return '' unless ($r->param('save_button') ||
@@ -60,16 +59,12 @@ sub initialize {
 	# As it stands we need to check each set to see if it is still assigned
 	# the forms are not currently set up to simply transmit changes
 
-	#Get the list of sets and the global set records
-	# DBFIXME shouldn't need set IDs to get records
-	my @setIDs = $db->listGlobalSets;
-	my @setRecords = grep { defined $_ } $db->getGlobalSets(@setIDs);
-
 	my @assignedSets = ();
-	foreach my $setID (@setIDs) {
+	foreach my $set (@{ $self->{setRecords} }) {
 	    # add sets to the assigned list if the parameter is checked or the
 	    # assign all button is pushed.  (already assigned sets will be
 	    # skipped later)
+		my $setID = $set->set_id;
 	    push @assignedSets, $setID if defined($r->param("set.$setID.assignment"));
 	}
 
@@ -90,74 +85,64 @@ sub initialize {
 	my $editUserRecord = $db->getUser($editForUserID);
 	die "record not found for $editForUserID.\n" unless $editUserRecord;
 
-	#Perform the desired assignments or deletions
+	# Perform the desired assignments or deletions
 	my %userSets = map { $_ => 1 } $db->listUserSets($editForUserID);
 
-	# go through each possible set
+	# Go through each possible set
 	debug(" parameters ", join(" ", $r->param()) );
-	foreach my $setRecord (@setRecords) {
+	for my $setRecord (@{ $self->{setRecords} }) {
 		my $setID = $setRecord->set_id;
-		# does the user want it to be assigned to the selected user
+		# Does the user want this set to be assigned to the selected user?
 		if (exists $selectedSets{$setID}) {
-		    # change by glarose, 2007/02/07: only assign set if the
-		    # user doesn't already have the set assigned.
-			$self->assignSetToUser($editForUserID, $setRecord) if ( ! $userSets{$setID} );
+			# Assign the set if it isn't assigned already.
+			$self->assignSetToUser($editForUserID, $setRecord) if (!$userSets{$setID});
 
-			#override dates
+			# Override dates
 			my $userSetRecord = $db->getUserSet($editForUserID, $setID);
-			# get the dates
-			#do checks to see if new dates meet criteria
-			my $rh_dates = $self->checkDates($setRecord,$setID);
-			unless  ( $rh_dates->{error} ) { #returns 1 if error
-				# if no error update database
-				foreach my $field (keys %{DATE_FIELDS()}) {
+
+			# Check to see if new dates meet criteria
+			my $rh_dates = $self->checkDates($setRecord, $setID);
+			unless ($rh_dates->{error}) {
+				# If no error update database
+				for my $field (keys %{ DATE_FIELDS() }) {
 					if (defined $r->param("set.$setID.$field.override")) {
 						$userSetRecord->$field($rh_dates->{$field});
 					} else {
-						$userSetRecord->$field(undef); #stop override
+						$userSetRecord->$field(undef);    #stop override
 					}
 				}
 				$db->putUserSet($userSetRecord);
 			}
 
-			# if the set is a gateway set, also check to see if we're
-			#    resetting the dates for any of the assigned set versions
-			if ( $setRecord->assignment_type =~ /gateway/ ) {
-				my @setVer = $db->listSetVersions( $editForUserID,
-								   $setID );
-				foreach my $ver ( @setVer ) {
-					my $setVersionRecord =
-						$db->getSetVersion( $editForUserID,
-								    $setID, $ver );
-					my $rh_dates = $self->checkDates($setVersionRecord,
-									 "$setID,v$ver");
-					unless ( $rh_dates->{error} ) {
-						foreach my $field ( keys %{DATE_FIELDS()} ) {
-							if ( defined( $r->param("set.$setID,v$ver.$field.override") ) ) {
+			# If the set is a gateway set, also check to see if we're
+			# resetting the dates for any of the assigned set versions
+			if ($setRecord->assignment_type =~ /gateway/) {
+				my @setVer =
+					$db->getSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } });
+				for my $setVersionRecord (@setVer) {
+					my $ver      = $setVersionRecord->version_id;
+					my $rh_dates = $self->checkDates($setVersionRecord, "$setID,v$ver");
+					unless ($rh_dates->{error}) {
+						for my $field (keys %{ DATE_FIELDS() }) {
+							if (defined($r->param("set.$setID,v$ver.$field.override"))) {
 								$setVersionRecord->$field($rh_dates->{$field});
 							} else {
 								$setVersionRecord->$field(undef);
 							}
 						}
-						$db->putSetVersion( $setVersionRecord );
+						$db->putSetVersion($setVersionRecord);
 					}
 				}
 			}
 
 		} else {
-			# user asked to NOT have the set assigned to the selected user
-			# debug("deleteUserSet($editForUserID, $setID)");
-		    # change by glarose, 2007/02/07: only do delete if user
-		    # had the set previously assigned
-			$db->deleteUserSet($editForUserID, $setID) if ( $userSets{$setID} );
-			# debug("done deleteUserSet($editForUserID, $setID)");
+			# The user asked to NOT have the set assigned to the selected user.
+			# Delete the set if set was previously assigned.
+			$db->deleteUserSet($editForUserID, $setID) if ($userSets{$setID});
 		}
 	}
 
 	return '';
-
-
-
 }
 
 sub body {
@@ -177,20 +162,8 @@ sub body {
 		unless $authz->hasPermissions($userID, "access_instructor_tools");
 
 	my $UserRecord       = $db->getUser($editForUserID);
-	my $PermissionRecord = $db->getPermissionLevel($editForUserID);
-	my @UserSetIDs       = $db->listUserSets($editForUserID);
 
 	my $userName = $UserRecord->first_name . " " . $UserRecord->last_name;
-
-	# templates for getting field names
-	my $userTemplate            = $self->{userTemplate};
-	my $permissionLevelTemplate = $self->{permissionLevelTemplate};
-
-	# This table can be consulted when display-ready forms of field names are needed.
-	my %prettyFieldNames = map { $_ => $_ } $userTemplate->FIELDS();
-
-	my @dateFields         = @{ DATE_FIELDS_ORDER() };
-	my $rh_dateFieldLabels = DATE_FIELDS();
 
 	# create a message about how many sets have been assigned to this user
 	my $setCount = $db->countUserSets($editForUserID);
@@ -228,27 +201,6 @@ sub body {
 		}
 	);
 	my $userDetailUrl = $self->systemLink($userDetailPage, authen => 0);
-
-	# DBFIXME all we need here is set IDs
-	# DBFIXME do sorting in DB
-	my %GlobalSetRecords = map { $_->set_id => $_ } $db->getGlobalSets($db->listGlobalSets());
-	my @UserSetRefs      = map { [ $editForUserID, $_ ] } sortByName(undef, @UserSetIDs);
-	my %UserSetRecords   = map { $_->set_id => $_ } $db->getUserSets(@UserSetRefs);
-	my @MergedSetRefs    = map { [ $editForUserID, $_ ] } sortByName(undef, @UserSetIDs);
-	my %MergedSetRecords = map { $_->set_id => $_ } $db->getMergedSets(@MergedSetRefs);
-
-	# get set versions of versioned sets
-	my %UserSetVersionRecords;
-	my %UserSetMergedVersionRecords;
-	foreach my $setid (keys(%UserSetRecords)) {
-		if ($GlobalSetRecords{$setid}->assignment_type =~ /gateway/) {
-			my @setVersionRefs = map { [ $editForUserID, $setid, $_ ] } $db->listSetVersions($editForUserID, $setid);
-			if (@setVersionRefs) {
-				$UserSetVersionRecords{$setid}       = [ $db->getSetVersions(@setVersionRefs) ];
-				$UserSetMergedVersionRecords{$setid} = [ $db->getMergedSetVersions(@setVersionRefs) ];
-			}
-		}
-	}
 
 	########################################
 	# Assigned sets form
@@ -301,95 +253,35 @@ sub body {
 	print CGI::Tr(CGI::th({ class => 'text-center', colspan => 3 }, "Sets assigned to $userName ($editForUserID)"));
 	print CGI::Tr(CGI::th({ class => 'text-center' }, [ 'Assigned', "Edit set for $editForUserID", 'Dates', ]));
 
-	# get a list of sets to show
-	# DBFIXME already have this data
-	my @setsToShow = sortByName(undef, $db->listGlobalSets());
+	my %UserSetRecords =
+		map { $_->set_id => $_ } $db->getUserSetsWhere({ user_id => $editForUserID, set_id => { not_like => '%,v%' } });
+	my %MergedSetRecords = map { $_->set_id => $_ } $db->getMergedSetsWhere({ user_id => $editForUserID });
 
-	# insert any set versions that we have
-	if (@setsToShow) {
-		my $i = $#setsToShow;
-		if (defined($UserSetVersionRecords{ $setsToShow[$i] })) {
-			push(@setsToShow,
-				map { $_->set_id . ",v" . $_->version_id } @{ $UserSetVersionRecords{ $setsToShow[$i] } });
+	for my $set (@{ $self->{setRecords} }) {
+		my $setID = $set->set_id;
+
+		$self->outputSetRow($set, $UserSetRecords{$setID}, $MergedSetRecords{$setID});
+
+		if ($set->assignment_type =~ /gateway/) {
+			my @setVersions =
+				$db->getSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } },
+					'version_id');
+			my @mergedVersions =
+				$db->getMergedSetVersionsWhere({ user_id => $editForUserID, set_id => { like => "$setID,v\%" } },
+					\"(SUBSTRING(set_id,INSTR(set_id,',v')+2)+0)");
+			$self->outputSetRow($set, $setVersions[$_], $mergedVersions[$_], $setVersions[$_]->version_id)
+				for (0 .. $#setVersions);
 		}
-		$i--;
-		my $numit = 0;
-		while ($i >= 0) {
-			if (defined($UserSetVersionRecords{ $setsToShow[$i] })) {
-				splice(@setsToShow, $i + 1, 0,
-					map { $_->set_id . ",v" . $_->version_id } @{ $UserSetVersionRecords{ $setsToShow[$i] } });
-			}
-			$i--;
-			$numit++;
-			# just to be safe
-			last if $numit >= 150;
-		}
-		warn(
-			'Truncated display of sets at 150 in UserDetail.pm.  This is a brake to avoid spiraling into the abyss.  '
-				. 'If you really have more than 150 sets in your course, reset the limit at about line 370 in '
-				. 'webwork/lib/WeBWorK/ContentGenerator/Instructor/UserDetail.pm.')
-			if ($numit == 150);
 	}
 
-	for my $setID (@setsToShow) {
-		# catch the versioned sets that we just added
-		my $setVersion = 0;
-		my $fullSetID  = $setID;
-		if ($setID =~ /,v(\d+)$/) {
-			$setVersion = $1;
-			$setID =~ s/,v\d+$//;
-		}
-
-		my $GlobalSetRecord = $GlobalSetRecords{$setID};
-		my $UserSetRecord =
-			(!$setVersion) ? $UserSetRecords{$setID} : $UserSetVersionRecords{$setID}->[ $setVersion - 1 ];
-		my $MergedSetRecord =
-			(!$setVersion) ? $MergedSetRecords{$setID} : $UserSetMergedVersionRecords{$setID}->[ $setVersion - 1 ];
-		my $setListPage = $urlpath->new(
-			type => 'instructor_set_detail',
-			args => {
-				courseID => $courseID,
-				setID    => $fullSetID
-			}
-		);
-		my $url = $self->systemLink(
-			$setListPage,
-			params => {
-				effectiveUser => $editForUserID,
-				editForUser   => $editForUserID,
-			}
-		);
-
-		my $setName = ($setVersion) ? "$setID (version $setVersion)" : $setID;
-
-		print CGI::Tr(CGI::td(
-			{ align => 'center' },
-			[
-				$setVersion ? "" : CGI::checkbox({
-					type            => 'checkbox',
-					name            => "set.$fullSetID.assignment",
-					label           => '',
-					value           => 'assigned',
-					checked         => defined $MergedSetRecord,
-					class           => 'form-check-input',
-					labelattributes => { class => 'form-check-label' }
-				}),
-				defined($MergedSetRecord) ? CGI::b(CGI::a({ href => $url }, $setName)) : CGI::b($setID),
-				join "\n",
-				$self->DBFieldTable(
-					$GlobalSetRecord, $UserSetRecord, $MergedSetRecord, 'set',
-					$setID, \@dateFields, $rh_dateFieldLabels
-				),
-			]
-			)),
-			"\n";
-	}
 	print CGI::end_table(), CGI::end_div();
+
 	print CGI::submit({
 		name  => 'save_button',
 		label => $r->maketext('Save changes'),
 		class => 'btn btn-primary'
 	});
+
 	print CGI::end_form();
 
 	# Print warning
@@ -402,6 +294,55 @@ sub body {
 	);
 
 	return '';
+}
+
+sub outputSetRow {
+	my ($self, $set, $userSet, $mergedSet, $version) = @_;
+
+	my $urlpath       = $self->r->urlpath;
+	my $courseID      = $urlpath->arg('courseID');
+	my $editForUserID = $urlpath->arg('userID');
+	my $setID         = $set->set_id;
+
+	my $dateFields      = DATE_FIELDS_ORDER();
+	my $dateFieldLabels = DATE_FIELDS();
+
+	print CGI::Tr(CGI::td(
+		{ align => 'center' },
+		[
+			$version ? '' : CGI::checkbox({
+				type            => 'checkbox',
+				name            => "set.$setID.assignment",
+				label           => '',
+				value           => 'assigned',
+				checked         => defined $mergedSet,
+				class           => 'form-check-input',
+				labelattributes => { class => 'form-check-label' }
+			}),
+			defined($mergedSet)
+			? CGI::b(CGI::a(
+				{
+					href => $self->systemLink(
+						$urlpath->new(
+							type => 'instructor_set_detail',
+							args => {
+								courseID => $courseID,
+								setID    => $setID . ($version ? ",v$version" : '')
+							}
+						),
+						params => {
+							effectiveUser => $editForUserID,
+							editForUser   => $editForUserID,
+						}
+					)
+				},
+				$version ? "$setID (version $version)" : $setID
+			))
+			: CGI::b($setID),
+			join '',
+			$self->DBFieldTable($set, $userSet, $mergedSet, 'set', $setID, $dateFields, $dateFieldLabels),
+		]
+	));
 }
 
 sub checkDates {
