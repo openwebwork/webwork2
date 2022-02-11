@@ -414,6 +414,9 @@ sub get_instructor_comment {
 sub pre_header_initialize {
 	my ($self)     = @_;
 
+	# if authz->checkSet has failed, this set is invalid, and no need to proceeded.
+	return if $self->{invalidSet};
+
 	my $r = $self->r;
 	my $ce = $r->ce;
 	my $db = $r->db;
@@ -695,26 +698,29 @@ sub pre_header_initialize {
 		# if no specific version is requested, we can create a new one if
 		#    need be
 		if (!$requestedVersion) {
-			if (($maxAttempts == -1 ||
-					$totalNumVersions < $maxAttempts)
-				&&
-				($setVersionNumber == 0 ||
-					(
-						($currentNumAttempts>=$maxAttemptsPerVersion
-							||
-							$timeNow >= $set->due_date + $grace)
-						&&
-						(! $versionsPerInterval
-							||
-							$currentNumVersions < $versionsPerInterval)
+			if (
+				($maxAttempts == -1 || $totalNumVersions < $maxAttempts)
+				&& (
+					$setVersionNumber == 0
+					|| (
+						(
+							($maxAttemptsPerVersion == 0 && $currentNumAttempts > 0)
+							|| ($maxAttemptsPerVersion != 0 && $currentNumAttempts >= $maxAttemptsPerVersion)
+							|| $timeNow >= $set->due_date + $grace
+						)
+						&& (!$versionsPerInterval || $currentNumVersions < $versionsPerInterval)
 					)
 				)
-				&&
-				($effectiveUserName eq $userName ||
-					($authz->hasPermissions($userName, "record_answers_when_acting_as_student") ||
-						($authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student") && $verCreateOK)))
-
-			) {
+				&& (
+					$effectiveUserName eq $userName
+					|| (
+						$authz->hasPermissions($userName, "record_answers_when_acting_as_student")
+						|| ($authz->hasPermissions($userName, "create_new_set_version_when_acting_as_student")
+							&& $verCreateOK)
+					)
+				)
+				)
+			{
 				# assign set, get the right name, version
 				#    number, etc., and redefine the $set
 				#    and $Problem we're working with
@@ -1287,7 +1293,7 @@ sub body {
 
 	if ($self->{invalidSet} || $self->{invalidProblem}) {
 		# delete any proctor keys that are floating around
-		if ($self->{'assignment_type'} eq 'proctored_gateway') {
+		if (defined($self->{'assignment_type'}) && $self->{'assignment_type'} eq 'proctored_gateway') {
 			my $proctorID = $r->param('proctor_user');
 			if ($proctorID) {
 				eval{ $db->deleteKey("$effectiveUser,$proctorID"); };
@@ -1311,12 +1317,15 @@ sub body {
 		}
 
 		return CGI::div(
-			{ class => 'ResultsWithError mb-2' },
-			CGI::p($r->maketext(
-				"The selected problem set ([_1]) is not a valid set for [_2][_3]:",
-			   	$urlpath->arg("setID"), $effectiveUser, $usernote
-			)),
-			CGI::p($self->{invalidSet}),
+			{ class => 'alert alert-danger mb-2' },
+			CGI::div(
+				{ class => 'mb-2' },
+				$r->maketext(
+					"The selected problem set ([_1]) is not a valid set for [_2][_3]:",
+				   	$urlpath->arg("setID"), $effectiveUser, $usernote
+				)
+			),
+			CGI::div($self->{invalidSet}),
 			$newlink
 		);
 	}
@@ -2335,15 +2344,16 @@ sub getProblemHTML {
 		$mergedProblem,
 		$psvn,
 		$formFields,
-		{ # translation options
+		{    # translation options
 			displayMode     => $self->{displayMode},
 			showHints       => $showHints,
 			showSolutions   => $showSolutions,
 			refreshMath2img => $showHints || $showSolutions,
 			processAnswers  => 1,
-			QUIZ_PREFIX     => 'Q' .
-			sprintf("%04d",$problemNumber) . '_',
-			useMathQuill    => $self->{will}->{useMathQuill},
+			QUIZ_PREFIX     => 'Q' . sprintf("%04d", $problemNumber) . '_',
+			useMathQuill    => $self->{will}{useMathQuill},
+			useMathView     => $self->{will}{useMathView},
+			useWirisEditor  => $self->{will}{useWirisEditor},
 		},
 	);
 
@@ -2375,11 +2385,9 @@ sub getProblemHTML {
 }
 
 sub output_JS{
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $r->ce;
-
-	my $site_url = $ce->{webworkURLs}->{htdocs};
+	my $self     = shift;
+	my $ce       = $self->r->ce;
+	my $site_url = $ce->{webworkURLs}{htdocs};
 
 	# Add CSS files requested by problems via ADD_CSS_FILE() in the PG file
 	# or via a setting of $ce->{pg}{specialPGEnvironmentVars}{extra_css_files}
@@ -2412,49 +2420,13 @@ sub output_JS{
 		}
 	}
 
-	# The color.js file, which uses javascript to color the input fields based on whether they are correct or incorrect.
-	print CGI::script({ src => "$site_url/js/apps/InputColor/color.js", defer => undef }, '');
-
-	# The Base64.js file, which handles base64 encoding and decoding
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/Base64/Base64.js"}), CGI::end_script();
-
-	# This is for MathView.
-	if ($self->{will}->{useMathView}) {
-		if ((grep(/MathJax/,@{$ce->{pg}->{displayModes}}))) {
-			print qq{<link href="$site_url/js/apps/MathView/mathview.css" rel="stylesheet" />};
-			print CGI::start_script({type=>"text/javascript"});
-			print "mathView_basepath = \"$site_url/images/mathview/\";";
-			print CGI::end_script();
-			print CGI::start_script({type=>"text/javascript",
-					src=>"$site_url/js/apps/MathView/$ce->{pg}->{options}->{mathViewLocale}"}), CGI::end_script();
-			print CGI::start_script({type=>"text/javascript",
-					src=>"$site_url/js/apps/MathView/mathview.js"}), CGI::end_script();
-		} else {
-			warn ("MathJax must be installed and enabled as a display mode for the math viewer to work");
-		}
-	}
-
-	# WIRIS EDITOR
-	if ($self->{will}->{useWirisEditor}) {
-		print CGI::start_script({type=>"text/javascript",
-				src=>"$site_url/js/apps/WirisEditor/quizzes.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript",
-				src=>"$site_url/js/apps/WirisEditor/wiriseditor.js"}), CGI::end_script();
-		print CGI::start_script({type=>"text/javascript",
-				src=>"$site_url/js/apps/WirisEditor/mathml2webwork.js"}), CGI::end_script();
-	}
-
 	# This is for the problem grader
 	if ($self->{will}{showProblemGrader}) {
-		print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '')
+		print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '');
 	}
 
-	#This is for page specfific js
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/GatewayQuiz/gateway.js"}), CGI::end_script();
-
-	# This is for the image dialog
-	print CGI::Link({ rel => "stylesheet", href => "$site_url/js/apps/ImageView/imageview.css" });
-	print CGI::script({ src => "$site_url/js/apps/ImageView/imageview.js", defer => undef }, '');
+	# This is for page specfific js
+	print CGI::script({ src => "$site_url/js/apps/GatewayQuiz/gateway.js" }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
@@ -2482,7 +2454,7 @@ sub output_JS{
 		}
 	}
 
-	return "";
+	return '';
 }
 
 sub output_achievement_CSS {

@@ -132,24 +132,26 @@ sub pre_header_initialize {
 
 	# store text of original problem for later comparison with text from problem with new seed
 	my $showMeAnotherOriginalPG = WeBWorK::PG->new(
-	    $ce,
-	    $effectiveUser,
-	    $key,
-	    $set,
-	    $problem,
-	    $set->psvn, # FIXME: this field should be removed
-	    $formFields,
-	    { # translation options
-		displayMode     => 'plainText',
-		showHints       => 0,
-		showSolutions   => 0,
-		refreshMath2img => 0,
-		processAnswers  => 0,
-		permissionLevel => $db->getPermissionLevel($userName)->permission,
-		effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-		useMathQuill    => $self->{will}{useMathQuill}
-	    },
-	    );
+		$ce,
+		$effectiveUser,
+		$key,
+		$set,
+		$problem,
+		$set->psvn,
+		$formFields,
+		{    # translation options
+			displayMode              => 'plainText',
+			showHints                => 0,
+			showSolutions            => 0,
+			refreshMath2img          => 0,
+			processAnswers           => 0,
+			permissionLevel          => $db->getPermissionLevel($userName)->permission,
+			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			useMathQuill             => $self->{will}{useMathQuill},
+			useMathView              => $self->{will}{useMathView},
+			useWirisEditor           => $self->{will}{useWirisEditor},
+		},
+	);
 
 	# if showMeAnother is active, then output a new problem in a new tab with a new seed
 	if ($showMeAnother{active} and $can->{showMeAnother}) {
@@ -170,15 +172,17 @@ sub pre_header_initialize {
                     $problem,
                     $set->psvn, # FIXME: this field should be removed
                     $formFields,
-                    { # translation options
-			displayMode     => 'plainText',
-			showHints       => 0,
-			showSolutions   => 0,
-			refreshMath2img => 0,
-			processAnswers  => 0,
-			permissionLevel => $db->getPermissionLevel($userName)->permission,
-			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-			useMathQuill    => $self->{will}{useMathQuill}
+					{    # translation options
+						displayMode              => 'plainText',
+						showHints                => 0,
+						showSolutions            => 0,
+						refreshMath2img          => 0,
+						processAnswers           => 0,
+						permissionLevel          => $db->getPermissionLevel($userName)->permission,
+						effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+						useMathQuill             => $self->{will}{useMathQuill},
+						useMathView              => $self->{will}{useMathView},
+						useWirisEditor           => $self->{will}{useWirisEditor},
 					},
 		    );
 
@@ -223,15 +227,17 @@ sub pre_header_initialize {
 		$problem,
 		$set->psvn, # FIXME: this field should be removed
 		$formFields,
-		{ # translation options
-		    displayMode     => 'plainText',
-		    showHints       => 0,
-		    showSolutions   => 0,
-		    refreshMath2img => 0,
-		    processAnswers  => 0,
-		    permissionLevel => $db->getPermissionLevel($userName)->permission,
-		    effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-			useMathQuill    => $self->{will}{useMathQuill}
+		{    # translation options
+			displayMode              => 'plainText',
+			showHints                => 0,
+			showSolutions            => 0,
+			refreshMath2img          => 0,
+			processAnswers           => 0,
+			permissionLevel          => $db->getPermissionLevel($userName)->permission,
+			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
+			useMathQuill             => $self->{will}{useMathQuill},
+			useMathView              => $self->{will}{useMathView},
+			useWirisEditor           => $self->{will}{useWirisEditor},
 		},
 		);
 
@@ -294,15 +300,17 @@ sub pre_header_initialize {
 		$problem,
 		$set->psvn, # FIXME: this field should be removed
 		$formFields,
-		{ # translation options
-			displayMode     => $displayMode,
-			showHints       => $will->{showHints},
-			showSolutions   => $will->{showSolutions},
-			refreshMath2img => $will->{showHints} || $will->{showSolutions},
-			processAnswers  => 1,
-			permissionLevel => $db->getPermissionLevel($userName)->permission,
+		{    # translation options
+			displayMode              => $displayMode,
+			showHints                => $will->{showHints},
+			showSolutions            => $will->{showSolutions},
+			refreshMath2img          => $will->{showHints} || $will->{showSolutions},
+			processAnswers           => 1,
+			permissionLevel          => $db->getPermissionLevel($userName)->permission,
 			effectivePermissionLevel => $db->getPermissionLevel($effectiveUserName)->permission,
-			useMathQuill    => $self->{will}{useMathQuill}
+			useMathQuill             => $self->{will}{useMathQuill},
+			useMathView              => $self->{will}{useMathView},
+			useWirisEditor           => $self->{will}{useWirisEditor},
 		},
 	);
 
