@@ -1784,11 +1784,11 @@ sub body {
 	}
 	my $elapsedTime = int(($endTime - $set->open_date)/0.6 + 0.5)/100;
 
-	# also get number of remaining attempts (important for sets with
-	#    multiple attempts per version)
+	# Get the number of remaining attempts.
 	my $numLeft = ($set->attempts_per_version || 0) - $Problem->num_correct - $Problem->num_incorrect
 		- ($submitAnswers && $will{recordAnswers} ? 1 : 0);
-	my $attemptNumber = $Problem->num_correct + $Problem->num_incorrect;
+	my $attemptNumber =
+		$Problem->num_correct + $Problem->num_incorrect + ($submitAnswers && $will{recordAnswers} ? 1 : 0);
 
 	# a handy noun for when referring to a test
 	my $testNoun = (($set->attempts_per_version || 0) > 1) ? $r->maketext("submission") : $r->maketext("test");
@@ -1810,8 +1810,8 @@ sub body {
 				last;
 			}
 		}
-		print CGI::start_div({class=>$divClass});
 
+		print CGI::start_div({ class => $divClass . ' mb-3' });
 		if ($recdMsg) {
 			# then there was an error when saving the results
 			print CGI::strong($r->maketext("Your score on this [_1] was NOT recorded.",$testNounNum),
@@ -1842,18 +1842,20 @@ sub body {
 				$r->maketext("Your score was not successfully sent to the LMS.");
 			}
 		}
+		print CGI::end_div();
 
 		# finally, if there is another, recorded message, print that
 		#    too so that we know what's going on
-		print CGI::end_div();
-		if ($set->attempts_per_version > 1 && $attemptNumber > 1 &&
-			$recordedScore != $attemptScore && $can{showScore}) {
-			print CGI::start_div({class=>'gwMessage'});
-			my $recScore = wwRound(2,$recordedScore);
-			print $r->maketext("The recorded score for this version is  [_1]/[_2].",$recScore,$totPossible);
+		if ($set->attempts_per_version > 1
+			&& $attemptNumber > 0
+			&& $recordedScore != $attemptScore
+			&& $can{showScore})
+		{
+			print CGI::start_div({ class => 'gwMessage' });
+			my $recScore = wwRound(2, $recordedScore);
+			print $r->maketext("The recorded score for this version is  [_1]/[_2].", $recScore, $totPossible);
 			print CGI::end_div();
 		}
-
 	} elsif ($will{checkAnswers}) {
 		if ($can{showScore}) {
 			print CGI::start_div({class=>'gwMessage'});
@@ -1865,52 +1867,77 @@ sub body {
 		}
 	}
 
-	##### remaining output of test headers:
-	##### display timer or information about elapsed time, "printme" link,
-	##### and information about any recorded score if not submitAnswers or
-	##### checkAnswers
+	# Remaining output of test headers:
+	# Display timer or information about elapsed time, print link, and information about any recorded score if not
+	# submitAnswers or checkAnswers.
 	if ($can{recordAnswersNextTime}) {
+		my $timeLeft = $set->due_date() - $timeNow;    # This is in seconds
 
-		# print timer
-		my $timeLeft = $set->due_date() - $timeNow;  # this is in secs
-		# dont print the timer if there is over 24 hours because its kind of silly
+		# Print the timer if there is less than 24 hours left.
 		if ($timeLeft < 86400) {
-			print CGI::div({-id=>"gwTimer"},"\n");
-			print CGI::start_form({-name=>"gwTimeData", -method=>"POST", -action=>$r->uri});
-			print CGI::hidden({-name=>"serverTime", -value=>$timeNow}), "\n";
-			print CGI::hidden({-name=>"serverDueTime", -value=>$set->due_date()}), "\n";
-			print CGI::end_form();
+			print CGI::div(
+				{
+					id                   => 'gwTimer',
+					class                => 'alert alert-warning p-1',
+					data_server_time     => $timeNow,
+					data_server_due_time => $set->due_date(),
+					data_grace_period    => $ce->{gatewayGracePeriod},
+					data_alert_title     => $r->maketext('Test Time Notification'),
+					data_alert_three     => $r->maketext(
+						'You have less than 90 seconds left to complete this '
+							. 'assignment. You should finish it soon!'
+					),
+					data_alert_two => ('<div>' . $r->maketext('You have less than 45 seconds left!') . '</div>')
+						. (
+						($set->attempts_per_version > 1 && $attemptNumber > 0) ? ''
+						: '<div>' . $r->maketext('Press "Grade Test" soon!') . '</div>'
+						),
+					data_alert_one => ('<div>' . $r->maketext('You are out of time!') . '</div>')
+						. (
+						($set->attempts_per_version > 1 && $attemptNumber > 0) ? ''
+						: '<div>' . $r->maketext('Press "Grade Test" now!') . '</div>'
+						),
+					$user ne $effectiveUser ? (data_acting => 1) : ()
+				},
+				# '00:00:00' is a placeholder that is replaced by the actual time remaining via javascript.
+				$r->maketext('Remaining time: [_1]', '00:00:00')
+			);
 		}
-		if ($timeLeft < 1
-			&& $timeLeft > 0
-			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
+		if ($timeLeft < 60 && $timeLeft > 0 && !$authz->hasPermissions($user, 'record_answers_when_acting_as_student'))
 		{
 			print CGI::div({ class => 'ResultsWithError d-inline-block mb-2' },
-				CGI::b($r->maketext("You have less than 1 minute to complete this test.") . "\n"));
-		} elsif ($timeLeft <= 0
-			&& !$authz->hasPermissions($user, "record_answers_when_acting_as_student"))
-		{
-			print CGI::div({ class => "ResultsWithError d-inline-block mb-2" },
-				CGI::b($r->maketext("You are out of time.  Press grade now!") . "\n"));
+				CGI::b($r->maketext('You have less than 1 minute to complete this test.')));
+		} elsif ($timeLeft <= 0 && !$authz->hasPermissions($user, 'record_answers_when_acting_as_student')) {
+			print CGI::div(
+				{ class => 'ResultsWithError d-inline-block mb-2' },
+				CGI::b(
+					$r->maketext('You are out of time!') . ' '
+						. (
+						$set->attempts_per_version > 1 && $attemptNumber > 0
+					   	? '' : $r->maketext('Press "Grade Test" now!')
+						)
+				)
+			);
 		}
-		# if there are multiple attempts per version, indicate the
-		#    number remaining, and if we've submitted a multiple
-		#    attempt multi-page test, show the score on the previous
-		#    submission
+		# If there are multiple attempts per version, indicate the number remaining, and if we've submitted a multiple
+		# attempt multi-page test, show the score on the previous submission
 		if ($set->attempts_per_version > 1) {
-			print CGI::em($r->maketext("You have [_1] attempt(s) remaining on this test.",$numLeft));
+			print CGI::div({ class => 'alert alert-info p-1' },
+				CGI::em($r->maketext('You have [_1] attempt(s) remaining on this test.', $numLeft)));
 			if ($numLeft < $set->attempts_per_version && $numPages > 1 && $can{showScore}) {
-				print CGI::start_div({-id=>"gwScoreSummary"}),
-					CGI::strong({},$r->maketext("Score summary for last submit:"));
+				print CGI::start_div({ id => 'gwScoreSummary' }),
+					CGI::strong($r->maketext('Score summary for last submit:'));
 				print CGI::start_table();
-				print CGI::Tr({}, CGI::th({-align=>"left"}, $r->maketext("Prob")),
-					CGI::td(""), CGI::th($r->maketext("Status")),
-					CGI::td(""), CGI::th($r->maketext("Result")));
-				for (my $i=0; $i<@probStatus; $i++) {
-					print CGI::Tr({}, CGI::td({},[
-								($i+1), "", int(100*$probStatus[$probOrder[$i]]+0.5) . "%", "",
-								$probStatus[$probOrder[$i]] == 1 ? $r->maketext("Correct") : $r->maketext("Incorrect")
-							]));
+				print CGI::Tr(
+					CGI::th({ align => 'left' }, $r->maketext('Prob')),
+					CGI::td(''), CGI::th($r->maketext('Status')),
+					CGI::td(''), CGI::th($r->maketext('Result'))
+				);
+				for (my $i = 0; $i < @probStatus; $i++) {
+					print CGI::Tr(CGI::td([
+						($i + 1), '', int(100 * $probStatus[ $probOrder[$i] ] + 0.5) . '%',
+						'', $probStatus[ $probOrder[$i] ] == 1 ? $r->maketext('Correct') : $r->maketext('Incorrect')
+					]));
 				}
 				print CGI::end_table(), CGI::end_div();
 			}
@@ -1944,20 +1971,28 @@ sub body {
 			print CGI::start_div({ class => 'row' });
 			print CGI::div(
 				{ class => 'col-md-10 mb-1' },
-				$r->maketext('The test (which is version [_1]) may  no longer be submitted for a grade.',
-					$versionNumber)
-					. ($can{showScore} ? (' ' . $r->maketext('You may still check your answers.')) : '')
+				CGI::div(
+					{ class => 'alert alert-info p-1 mb-0' },
+					$r->maketext('The test (which is version [_1]) may  no longer be submitted for a grade.',
+						$versionNumber)
+						. ($can{showScore} ? (' ' . $r->maketext('You may still check your answers.')) : '')
+				)
 			);
-			# Display a "printme" link if we're allowed to see our work
-			my $link =
-				$ce->{webworkURLs}{root} . '/'
-				. $ce->{courseName}
-				. '/hardcopy/'
-				. $set->set_id . ',v'
-				. $set->version_id . '/?'
-				. $self->url_authen_args;
-			print CGI::div({ class => 'col-md-2 text-end mb-1' },
-				CGI::a({ href => $link, class => 'btn btn-info' }, $r->maketext('Print Test')));
+
+			# Display a print test link if the user is allowed to see work.
+			print CGI::div(
+				{ class => 'col-md-2 text-end mb-1' },
+				CGI::a(
+					{
+						href => "$ce->{webworkURLs}{root}/$ce->{courseName}/hardcopy/"
+							. $set->set_id . ',v'
+							. $set->version_id . '/?'
+							. $self->url_authen_args,
+						class => 'btn btn-info'
+					},
+					$r->maketext('Print Test')
+				)
+			);
 			print CGI::end_div();
 		}
 	}
@@ -1996,8 +2031,7 @@ sub body {
 
 		# hacks to use a javascript link to trigger previews and jump to
 		# subsequent pages of a multipage test
-		print CGI::hidden({-name=>'pageChangeHack', -value=>''}),
-			CGI::br();
+		print CGI::hidden({-name=>'pageChangeHack', -value=>''});
 		print CGI::hidden({-name=>'startTime', -value=>$startTime});
 		if ($numProbPerPage && $numPages > 1) {
 			print CGI::hidden({-name=>'newPage', -value=>''});
@@ -2017,7 +2051,7 @@ sub body {
 		for my $i (0 .. $#pg_results) {
 			my $pn = $i + 1;
 			if ($i >= $startProb && $i <= $endProb) {
-				push(@$probRow, CGI::a({-href=>"#", -onclick => "jumpTo($pn);return false;"}, $pn));
+				push(@$probRow, CGI::a({ href => "#", class => 'problem-jump-link', data_problem_number => $pn }, $pn));
 			} else {
 				push(@$probRow, $pn);
 			}
@@ -2100,7 +2134,9 @@ sub body {
 				}
 
 				print CGI::start_div({class=>"gwProblem"});
-				print CGI::div({-id=>"prob$i"}, $recordMessage);
+
+				# Output the jump to anchor.
+				print CGI::div({ id => "prob$i", tabindex => -1 }, $recordMessage);
 
 				# Output the problem header.
 				print CGI::h2($r->maketext("Problem [_1].", $problemNumber));
@@ -2154,12 +2190,7 @@ sub body {
 
 				print "\n", CGI::div({ class => 'gwDivider' }, ""), "\n";
 			} else {
-				# keep the jump to anchors so that jumping to
-				#    problem number 6 still works, even if
-				#    we're viewing only problems 5-7, etc.
-				print CGI::div({-id=>"prob$i"},""), "\n";
-				# and print out hidden fields with the current
-				#    last answers
+				# Print out hidden fields with the current last answers
 				my $curr_prefix = 'Q' . sprintf("%04d", $problemNumbers[$probOrder[$i]]) . '_';
 				my @curr_fields = grep {/^(?!previous).*$curr_prefix/} keys %{$self->{formFields}};
 				foreach my $curr_field (@curr_fields) {
@@ -2426,8 +2457,8 @@ sub output_JS{
 		print CGI::script({ src => "$site_url/js/apps/ProblemGrader/problemgrader.js", defer => undef }, '');
 	}
 
-	# This is for page specfific js
-	print CGI::script({ src => "$site_url/js/apps/GatewayQuiz/gateway.js" }, '');
+	#This is for page specfific js
+	print CGI::script({ src => "$site_url/js/apps/GatewayQuiz/gateway.js", defer => undef }, '');
 
 	# Add JS files requested by problems via ADD_JS_FILE() in the PG file.
 	my %jsFiles;
